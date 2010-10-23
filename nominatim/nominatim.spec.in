@@ -1,0 +1,55 @@
+
+%define svn @SVN@
+
+Summary: Nominatim OpenStreetMap geocoding database
+Name: 	 @PACKAGE@
+Group:	 Applications/Text
+Version: @VERSION@
+Release: 1.%{svn}%{?dist}
+
+License: GPL
+URL:     http://svn.openstreetmap.org/applications/utils/nominatim
+Source0: %{name}-%{version}-%{svn}.tar.bz2
+Source1: nominatim-svn.sh
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n) 
+
+BuildRequires: geos-devel
+BuildRequires: libxml2-devel
+BuildRequires: postgresql-devel
+BuildRequires: bzip2-devel
+BuildRequires: proj-devel
+
+%description
+Processes data imported using osm2pgsql from the communtiy mapping project
+at http://www.openstreetmap.org.
+
+%prep
+%setup -q  -n %{name}
+
+
+%build
+
+export CFLAGS="$RPM_OPT_FLAGS"
+export CXXFLAGS="$RPM_OPT_FLAGS"
+
+make all
+
+
+%install
+rm -rf $RPM_BUILD_ROOT
+install -D -p nominatim $RPM_BUILD_ROOT/usr/bin/nominatim
+
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-,root,root)
+%doc README.txt
+%{_bindir}/nominatim
+
+
+%changelog
+* Fri Sep 09 2010 Brian Quinion <nominatim@brian.quinion.co.uk> 0.1-1.20070316svn
+- Initial build

@@ -1,0 +1,89 @@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sysconfdir = @sysconfdir@
+datarootdir = @datarootdir@
+datadir = @datadir@
+
+PACKAGE = @PACKAGE_NAME@
+VERSION = @PACKAGE_VERSION@
+SVN:=$(shell svnversion)
+DATADIR = $(datadir)/$(PACKAGE)
+
+
+CC = @CC@ 
+CXX = @CXX@
+
+CFLAGS += -g -O2 -Wall -Wextra
+CFLAGS += $(shell xml2-config --cflags)
+CFLAGS += $(shell geos-config --cflags)
+CFLAGS += -I$(shell pg_config --includedir)
+CFLAGS += -DVERSION=\"$(VERSION)-$(SVN)\"
+CFLAGS += -DHAVE_PTHREAD
+CFLAGS += -DNOMINATIM_DATADIR=\"$(DATADIR)\"
+
+LDFLAGS += $(shell xml2-config --libs) 
+LDFLAGS += $(shell geos-config --libs)
+LDFLAGS += -L$(shell pg_config --libdir) -lpq
+LDFLAGS += -lbz2 -lz
+LDFLAGS += -g -lproj
+LDFLAGS += -lstdc++
+LDFLAGS += -lpthread
+
+SRCS:=$(wildcard *.c) $(wildcard *.cpp)
+OBJS:=$(SRCS:.c=.o)
+OBJS:=$(OBJS:.cpp=.o)
+DEPS:=$(SRCS:.c=.d)
+DEPS:=$(DEPS:.cpp=.d)
+
+APPS:=nominatim
+DATA:=default.style
+
+.PHONY: all clean $(PACKAGE).spec
+
+all: $(APPS)
+
+clean: 
+	rm -f $(APPS) $(OBJS) $(DEPS)
+	rm -f $(PACKAGE)-*.tar.bz2
+	rm -f nominatim.spec
+
+clean-all: clean
+	rm -rf autom4te.cache
+	rm -f config.h
+	rm -f config.log
+	rm -f config.status
+	rm -f configure
+	rm -f Makefile
+
+install: $(APPS)
+	mkdir -p $(DESTDIR)$(bindir)
+	install -m 0755 $(APPS) $(DESTDIR)$(bindir)
+	mkdir -p $(DESTDIR)$(DATADIR)
+	install -m 0644 $(DATA) $(DESTDIR)$(DATADIR)
+
+%.d: %.c
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-include $(DEPS)
+
+nominatim: $(OBJS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+$(PACKAGE).spec: $(PACKAGE).spec.in
+	sed -e "s/@PACKAGE@/$(PACKAGE)/g; s/@VERSION@/$(VERSION)/g; s/@SVN@/$(SVN)/g;" $^ > $@
+
+$(PACKAGE)-$(VERSION).tar.bz2: $(PACKAGE).spec
+	rm -fR tmp
+	mkdir -p tmp/nominatim
+	cp -p Makefile *.[ch] *.cpp README.txt nominatim-svn.sh tmp/nominatim
+	cp -p nominatim.spec tmp/
+	tar cjf $@ -C tmp .
+	rm -fR tmp
+
+rpm: $(PACKAGE)-$(VERSION).tar.bz2
+	rpmbuild -ta $^

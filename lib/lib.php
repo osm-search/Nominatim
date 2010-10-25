@@ -4,7 +4,7 @@
 	{
 		if (!$sUserError) $sUserError = $sError;
 		log('ERROR:'.$sError);
-		echo $sUserError;
+		echo $sUserError."\n";
 		exit;
 	}
 

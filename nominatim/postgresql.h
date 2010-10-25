@@ -7,6 +7,8 @@
 #define PG_OID_INT8			20
 #define PG_OID_INT4			23
 
+#include <byteswap.h>
+
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define PGint16(x)	(x)
 #define PGint32(x)	(x)

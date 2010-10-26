@@ -248,3 +248,5 @@ pf	"name"=>"Polynésie française", "name:af"=>"Franse Polynesië", "name:an"=>"
 \.
 
 CREATE INDEX idx_country_name_country_code ON country_name USING btree (country_code);
+
+insert into country_name values('im','name'=>'Isle of Man','en');

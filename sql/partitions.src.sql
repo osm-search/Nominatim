@@ -10,6 +10,9 @@ create type nearfeature as (
   distance float
 );
 
+CREATE TABLE location_area_country () INHERITS (location_area_large);
+CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);
+
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large);
 CREATE INDEX idx_location_area_large_-partition-_geometry ON location_area_large_-partition- USING GIST (geometry);
@@ -24,12 +27,20 @@ CREATE INDEX idx_location_area_roadfar_-partition-_geometry ON location_area_roa
 create or replace function getNearRoads(in_partition TEXT, point GEOMETRY) RETURNS setof nearplace AS $$
 DECLARE
   r nearplace%rowtype;
+  a BOOLEAN;
 BEGIN
 
 -- start
   IF in_partition = '-partition-' THEN
-    FOR r IN SELECT place_id FROM location_area_large WHERE partition = '-partition-' and ST_Contains(geometry, point) LOOP
+    a := FALSE;
+    FOR r IN SELECT place_id FROM location_area_roadnear_-partition- WHERE ST_Contains(geometry, point) ORDER BY ST_Distance(point, centroid) ASC LIMIT 1 LOOP
+      a := TRUE;
       RETURN NEXT r;
+      RETURN;
+    END LOOP;
+    FOR r IN SELECT place_id FROM location_area_roadfar_-partition- WHERE ST_Contains(geometry, point) ORDER BY ST_Distance(point, centroid) ASC LOOP
+      RETURN NEXT r;
+      RETURN;
     END LOOP;
     RETURN;
   END IF;
@@ -40,22 +51,20 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearFeatures(in_partition TEXT, point GEOMETRY, maxrank INTEGER) RETURNS setof nearfeature AS $$
+create or replace function getNearFeatures(in_partition TEXT, point GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeature AS $$
 DECLARE
   r nearfeature%rowtype;
 BEGIN
 
 -- start
   IF in_partition = '-partition-' THEN
-    FOR r IN SELECT
-      place_id,
-      keywords,
-      rank_address,
-      rank_search,
-      ST_Distance(place_centroid, centroid) as distance
-      FROM location_area_large
-      WHERE ST_Contains(area, point) and location_area_large.rank_search < maxrank
-      ORDER BY ST_Distance(place_centroid, centroid) ASC
+    FOR r IN 
+      SELECT place_id, keywords, rank_address, rank_search, ST_Distance(point, centroid) as distance FROM (
+        SELECT * FROM location_area_large_-partition- WHERE ST_Contains(geometry, point) and rank_search < maxrank
+        UNION ALL
+        SELECT * FROM location_area_country WHERE ST_Contains(geometry, point) and rank_search < maxrank
+      ) as location_area
+      ORDER BY rank_search desc, isin_tokens && keywords desc, isguess asc, rank_address asc, ST_Distance(point, centroid) ASC
     LOOP
       RETURN NEXT r;
     END LOOP;
@@ -89,15 +98,20 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaLarge(
-  in_partition TEXT, in_place_id bigint, in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
+  IF in_rank_search <= 4 THEN
+    INSERT INTO location_area_country values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    RETURN TRUE;
+  END IF;
+
 -- start
   IF in_partition = '-partition-' THEN
-    INSERT INTO location_area_large_-partition- values (in_partition, in_place_id, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    INSERT INTO location_area_large_-partition- values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 -- end
@@ -109,7 +123,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaRoadNear(
-  in_partition TEXT, in_place_id bigint, in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
@@ -117,7 +131,7 @@ BEGIN
 
 -- start
   IF in_partition = '-partition-' THEN
-    INSERT INTO location_area_roadnear_-partition- values (in_partition, in_place_id, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    INSERT INTO location_area_roadnear_-partition- values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 -- end
@@ -129,7 +143,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaRoadFar(
-  in_partition TEXT, in_place_id bigint, in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
@@ -137,7 +151,7 @@ BEGIN
 
 -- start
   IF in_partition = '-partition-' THEN
-    INSERT INTO location_area_roadfar_-partition- values (in_partition, in_place_id, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    INSERT INTO location_area_roadfar_-partition- values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 -- end

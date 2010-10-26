@@ -11,29 +11,42 @@
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
 		array('create-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
-		array('load-data', '', 0, 1, 0, 0, 'realpath', 'Import a osm file'),
+		array('load-data', '', 0, 1, 1, 1, 'realpath', 'Import a osm file'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+	$bDidSomething = false;
+
 	if ($aCMDResult['create-db'])
 	{
+		$bDidSomething = true;
 		// TODO: path detection, detection memory, etc.
-		passthru('createdb nominatim');
+//		passthru('createdb nominatim');
 		passthru('createlang plpgsql nominatim');
-		passthru('psql -f /mqdata/mapquest/postgres-9.0.1-server/share/contrib/_int.sql nominatim');
-		passthru('psql -f /mqdata/mapquest/postgres-9.0.1-server/share/contrib/hstore.sql nominatim');
-		passthru('psql -f /mqdata/mapquest/postgres-9.0.1-server/share/contrib/postgis-1.5/postgis.sql nominatim');
-		passthru('psql -f /mqdata/mapquest/postgres-9.0.1-server/share/contrib/postgis-1.5/spatial_ref_sys.sql nominatim');
+		passthru('psql -f '.CONST_Path_Postgresql_Contrib.'/_int.sql nominatim');
+		passthru('psql -f '.CONST_Path_Postgresql_Contrib.'/hstore.sql nominatim');
+		passthru('psql -f '.CONST_Path_Postgresql_Postgis.'/postgis.sql nominatim');
+		passthru('psql -f '.CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/country_name.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/country_osm_grid.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/gb_postcode.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/us_statecounty.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/us_state.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/data/worldboundaries.sql nominatim');
 	}
 
-	if ($aCMDResult['load-data'])
+	if (isset($aCMDResult['load-data']) && $aCMDResult['load-data'])
 	{
-		passthru(CONST_BasePath.'/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['load-data']);
+		$bDidSomething = true;
+		passthru(CONST_BasePath.'/osm2pgsql/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['load-data']);
+		passthru('psql -f '.CONST_BasePath.'/sql/functions.sql nominatim');
+		passthru('psql -f '.CONST_BasePath.'/sql/tables.sql nominatim');
 	}
 
 	if ($aCMDResult['create-partitions'])
 	{
+		$bDidSomething = true;
 		$sSQL = 'select distinct country_code from country_name order by country_code';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
@@ -57,4 +70,7 @@
 		exit;
 	}
 
-	showUsage($aCMDOptions, true);
+	if (!$bDidSomething)
+	{
+		showUsage($aCMDOptions, true);
+	}

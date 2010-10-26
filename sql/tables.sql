@@ -76,7 +76,8 @@ CREATE SEQUENCE seq_word start 1;
 drop table IF EXISTS location_area CASCADE;
 CREATE TABLE location_area (
   partition varchar(10),
-  place_id bigint,
+  place_id INTEGER,
+  country_code VARCHAR(2), 
   keywords INTEGER[],
   rank_search INTEGER NOT NULL,
   rank_address INTEGER NOT NULL,
@@ -91,7 +92,7 @@ CREATE TABLE location_area_roadfar () INHERITS (location_area);
 
 drop table IF EXISTS search_name;
 CREATE TABLE search_name (
-  place_id bigint,
+  place_id INTEGER,
   search_rank integer,
   address_rank integer,
   country_code varchar(2),
@@ -106,8 +107,8 @@ CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
 drop table IF EXISTS place_addressline;
 CREATE TABLE place_addressline (
-  place_id bigint,
-  address_place_id bigint,
+  place_id INTEGER,
+  address_place_id INTEGER,
   fromarea boolean,
   isaddress boolean,
   distance float,
@@ -118,7 +119,7 @@ CREATE INDEX idx_place_addressline_address_place_id on place_addressline USING B
 
 drop table IF EXISTS place_boundingbox CASCADE;
 CREATE TABLE place_boundingbox (
-  place_id bigint,
+  place_id INTEGER,
   minlat float,
   maxlat float,
   minlon float,
@@ -136,7 +137,7 @@ drop table IF EXISTS reverse_cache;
 CREATE TABLE reverse_cache (
   latlonzoomid integer,
   country_code varchar(2),
-  place_id bigint
+  place_id INTEGER
   );
 GRANT SELECT on reverse_cache to "www-data" ;
 GRANT INSERT on reverse_cache to "www-data" ;
@@ -149,27 +150,28 @@ CREATE TABLE country (
   country_default_language_code varchar(2)
   );
 SELECT AddGeometryColumn('country', 'geometry', 4326, 'POLYGON', 2);
-insert into country select iso3166::varchar(2), ARRAY[ROW('name:en',cntry_name)::keyvalue], null, 
+insert into country select iso3166::varchar(2), 'name:en'->cntry_name, null, 
   ST_Transform(geometryn(the_geom, generate_series(1, numgeometries(the_geom))), 4326) from worldboundaries;
 CREATE INDEX idx_country_country_code ON country USING BTREE (country_code);
 CREATE INDEX idx_country_geometry ON country USING GIST (geometry);
 
 drop table placex;
 CREATE TABLE placex (
-  place_id bigint NOT NULL,
+  place_id INTEGER NOT NULL,
   partition varchar(10),
   osm_type char(1),
-  osm_id bigint,
+  osm_id INTEGER,
   class TEXT NOT NULL,
   type TEXT NOT NULL,
   name HSTORE,
-  admin_level integer,
+  admin_level INTEGER,
   housenumber TEXT,
   street TEXT,
   isin TEXT,
   postcode TEXT,
   country_code varchar(2),
-  street_place_id bigint,
+  extratags HSTORE,
+  street_place_id INTEGER,
   rank_address INTEGER,
   rank_search INTEGER,
   indexed_status INTEGER,
@@ -182,14 +184,17 @@ CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id);
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search);
 CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address);
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry);
-CREATE INDEX idx_placex_indexed ON placex USING BTREE (indexed);
-CREATE INDEX idx_placex_pending ON placex USING BTREE (rank_search) where name IS NOT NULL and indexed = false;
-CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(geometry_sector,indexed,name),rank_search) 
-  where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
+
+--CREATE INDEX idx_placex_indexed ON placex USING BTREE (indexed);
+
+CREATE INDEX idx_placex_pending ON placex USING BTREE (rank_search) where indexed_status > 0;
+CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) where indexed_status > 0;
+
+--CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(geometry_sector,indexed,name),rank_search)  where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
+
 CREATE INDEX idx_placex_street_place_id ON placex USING BTREE (street_place_id) where street_place_id IS NOT NULL;
-CREATE INDEX idx_placex_gb_postcodesector ON placex USING BTREE (substring(upper(postcode) from '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$'))
-  where country_code = 'gb' and substring(upper(postcode) from '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$') is not null;
-CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed = false and class='place' and type='houses';
+CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed_status > 0 and class='place' and type='houses';
+
 CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id);
 CLUSTER placex USING idx_placex_sector;
 
@@ -203,40 +208,12 @@ GRANT INSERT on search_name to "www-data" ;
 GRANT SELECT on place_addressline to "www-data" ;
 GRANT INSERT ON place_addressline to "www-data" ;
 GRANT DELETE on place_addressline to "www-data" ;
-GRANT SELECT on location_point to "www-data" ;
 GRANT SELECT ON seq_word to "www-data" ;
 GRANT UPDATE ON seq_word to "www-data" ;
 GRANT INSERT ON word to "www-data" ;
 GRANT SELECT ON planet_osm_ways to "www-data" ;
 GRANT SELECT ON planet_osm_rels to "www-data" ;
-GRANT SELECT on location_point to "www-data" ;
 GRANT SELECT on location_area to "www-data" ;
-GRANT SELECT on location_point_26 to "www-data" ;
-GRANT SELECT on location_point_25 to "www-data" ;
-GRANT SELECT on location_point_24 to "www-data" ;
-GRANT SELECT on location_point_23 to "www-data" ;
-GRANT SELECT on location_point_22 to "www-data" ;
-GRANT SELECT on location_point_21 to "www-data" ;
-GRANT SELECT on location_point_20 to "www-data" ;
-GRANT SELECT on location_point_19 to "www-data" ;
-GRANT SELECT on location_point_18 to "www-data" ;
-GRANT SELECT on location_point_17 to "www-data" ;
-GRANT SELECT on location_point_16 to "www-data" ;
-GRANT SELECT on location_point_15 to "www-data" ;
-GRANT SELECT on location_point_14 to "www-data" ;
-GRANT SELECT on location_point_13 to "www-data" ;
-GRANT SELECT on location_point_12 to "www-data" ;
-GRANT SELECT on location_point_11 to "www-data" ;
-GRANT SELECT on location_point_10 to "www-data" ;
-GRANT SELECT on location_point_9 to "www-data" ;
-GRANT SELECT on location_point_8 to "www-data" ;
-GRANT SELECT on location_point_7 to "www-data" ;
-GRANT SELECT on location_point_6 to "www-data" ;
-GRANT SELECT on location_point_5 to "www-data" ;
-GRANT SELECT on location_point_4 to "www-data" ;
-GRANT SELECT on location_point_3 to "www-data" ;
-GRANT SELECT on location_point_2 to "www-data" ;
-GRANT SELECT on location_point_1 to "www-data" ;
 GRANT SELECT on country to "www-data" ;
 
 -- insert creates the location tagbles, creates location indexes if indexed == true

@@ -202,6 +202,11 @@ int main(int argc, char *argv[])
     }
     PQfinish(conn);
 
+    if (!index && !export && !import)
+    {
+       fprintf(stderr, "Please select index, export or import.\n");
+        exit(EXIT_FAILURE);
+    }
     if (index) nominatim_index(0, 30, threads, conninfo, file);
     if (export) nominatim_export(0, 30, conninfo, file);
     if (import) nominatim_import(conninfo, tagsfile, file);

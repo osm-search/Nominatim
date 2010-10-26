@@ -4,6 +4,10 @@
 	@define('CONST_Debug', false);
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
 
+	// Paths
+	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/9.0/contrib');
+	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-1.5');
+
 	// Website settings
 	@define('CONST_ClosedForIndexing', false);
 	@define('CONST_ClosedForIndexingExceptionIPs', '');

@@ -151,21 +151,33 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
     res = PQprepare(conn, "placex_details",
     	"select osm_type, osm_id, class, type, name, housenumber, country_code, ST_AsText(geometry), admin_level, rank_address, rank_search from placex where place_id = $1",
     	1, pg_prepare_params);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK) exit(EXIT_FAILURE);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Error preparing placex_details: %s", PQerrorMessage(conn));
+		exit(EXIT_FAILURE);
+	}
     PQclear(res);
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_address",
     	"select osm_type,osm_id,class,type,distance,cached_rank_address from place_addressline join placex on (address_place_id = placex.place_id) where isaddress and place_addressline.place_id = $1 and address_place_id != place_addressline.place_id order by cached_rank_address asc",
     	1, pg_prepare_params);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK) exit(EXIT_FAILURE);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Error preparing placex_address: %s", PQerrorMessage(conn));
+		exit(EXIT_FAILURE);
+	}
     PQclear(res);
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_names",
-    	"select (each(name)).key,(each(name)).value from (select keyvalueToHStore(name) as name from placex where place_id = $1) as x",
+    	"select (each(name)).key,(each(name)).value from (select name as name from placex where place_id = $1) as x",
     	1, pg_prepare_params);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK) exit(EXIT_FAILURE);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Error preparing placex_names: %s", PQerrorMessage(conn));
+		exit(EXIT_FAILURE);
+	}
     PQclear(res);
 }
 

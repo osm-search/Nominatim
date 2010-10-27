@@ -106,11 +106,11 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION transliteration(text) RETURNS text
-  AS '/home/brian/nominatim/live/osm2pgsql/gazetteer/gazetteer.so', 'transliteration'
+  AS '{modulepath}/nominatim.so', 'transliteration'
 LANGUAGE c IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION gettokenstring(text) RETURNS text
-  AS '/home/brian/nominatim/live/osm2pgsql/gazetteer/gazetteer.so', 'gettokenstring'
+  AS '{modulepath}/nominatim.so', 'gettokenstring'
 LANGUAGE c IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION make_standard_name(name TEXT) RETURNS TEXT
@@ -1004,12 +1004,14 @@ BEGIN
         NEW.rank_search := 26;
         NEW.rank_address := NEW.rank_search;
       ELSEIF NEW.type in ('house','building') THEN
-        NEW.rank_search := 28;
+        NEW.rank_search := 30;
         NEW.rank_address := NEW.rank_search;
       ELSEIF NEW.type in ('houses') THEN
         -- can't guarantee all required nodes loaded yet due to caching in osm2pgsql
         -- insert new point into place for each derived building
         --i := create_interpolation(NEW.osm_id, NEW.housenumber);
+        NEW.rank_search := 28;
+        NEW.rank_address := 0;
       END IF;
 
     ELSEIF NEW.class = 'boundary' THEN
@@ -1075,10 +1077,10 @@ BEGIN
       -- mark items within the geometry for re-indexing
 --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 -- work around bug in postgis
-      update placex set indexed = false where indexed and (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and ST_geometrytype(placex.geometry) = 'ST_Point';
-      update placex set indexed = false where indexed and (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and ST_geometrytype(placex.geometry) != 'ST_Point';
+      update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+       AND rank_search > NEW.rank_search and indexed = 0 and ST_geometrytype(placex.geometry) = 'ST_Point';
+      update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+       AND rank_search > NEW.rank_search and indexed = 0 and ST_geometrytype(placex.geometry) != 'ST_Point';
     END IF;
   ELSE
     -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
@@ -1103,7 +1105,7 @@ BEGIN
     END IF;
     IF diameter > 0 THEN
 --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
-      update placex set indexed = false where indexed and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+      update placex set indexed = 2 where indexed and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
     END IF;
 
   END IF;
@@ -1272,6 +1274,7 @@ BEGIN
             -- Try and find a way that is close roughly parellel to this line
             FOR relation IN SELECT place_id FROM placex
               WHERE ST_DWithin(location.geometry, placex.geometry, 0.001) and placex.rank_search = 26
+                and st_geometrytype(location.geometry) in ('ST_LineString')
               ORDER BY (ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,0))+
                         ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,0.5))+
                         ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,1))) ASC limit 1
@@ -1460,38 +1463,11 @@ BEGIN
 --END IF;
 
   -- mark everything linked to this place for re-indexing
-  UPDATE placex set indexed = false from place_addressline where address_place_id = OLD.place_id and placex.place_id = place_addressline.place_id and indexed;
+  UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
+    and placex.place_id = place_addressline.place_id and indexed_status = 0;
 
   -- do the actual delete
   DELETE FROM location_area where place_id = OLD.place_id;
-  DELETE FROM location_point where place_id = OLD.place_id;
-  DELETE FROM location_point_0 where place_id = OLD.place_id;
-  DELETE FROM location_point_1 where place_id = OLD.place_id;
-  DELETE FROM location_point_2 where place_id = OLD.place_id;
-  DELETE FROM location_point_3 where place_id = OLD.place_id;
-  DELETE FROM location_point_4 where place_id = OLD.place_id;
-  DELETE FROM location_point_5 where place_id = OLD.place_id;
-  DELETE FROM location_point_6 where place_id = OLD.place_id;
-  DELETE FROM location_point_7 where place_id = OLD.place_id;
-  DELETE FROM location_point_8 where place_id = OLD.place_id;
-  DELETE FROM location_point_9 where place_id = OLD.place_id;
-  DELETE FROM location_point_10 where place_id = OLD.place_id;
-  DELETE FROM location_point_11 where place_id = OLD.place_id;
-  DELETE FROM location_point_12 where place_id = OLD.place_id;
-  DELETE FROM location_point_13 where place_id = OLD.place_id;
-  DELETE FROM location_point_14 where place_id = OLD.place_id;
-  DELETE FROM location_point_15 where place_id = OLD.place_id;
-  DELETE FROM location_point_16 where place_id = OLD.place_id;
-  DELETE FROM location_point_17 where place_id = OLD.place_id;
-  DELETE FROM location_point_18 where place_id = OLD.place_id;
-  DELETE FROM location_point_19 where place_id = OLD.place_id;
-  DELETE FROM location_point_20 where place_id = OLD.place_id;
-  DELETE FROM location_point_21 where place_id = OLD.place_id;
-  DELETE FROM location_point_22 where place_id = OLD.place_id;
-  DELETE FROM location_point_23 where place_id = OLD.place_id;
-  DELETE FROM location_point_24 where place_id = OLD.place_id;
-  DELETE FROM location_point_25 where place_id = OLD.place_id;
-  DELETE FROM location_point_26 where place_id = OLD.place_id;
   DELETE FROM search_name where place_id = OLD.place_id;
   DELETE FROM place_addressline where place_id = OLD.place_id;
   DELETE FROM place_addressline where address_place_id = OLD.place_id;
@@ -1663,12 +1639,12 @@ BEGIN
     IF st_area(NEW.geometry) < 1 AND st_area(existinggeometry) < 1 THEN
 
       -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
-      update placex set indexed = false where indexed and 
+      update placex set indexed_status = 2 where indexed_status = 0 and 
           (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
           AND NOT (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
           AND rank_search > NEW.rank_search;
 
-      update placex set indexed = false where indexed and 
+      update placex set indexed_status = 2 where indexed_status = 0 and 
           (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
           AND NOT (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
           AND rank_search > NEW.rank_search;
@@ -1694,8 +1670,8 @@ BEGIN
     IF NOT update_location_nameonly(existingplacex.place_id, NEW.name) THEN
 
       IF st_area(NEW.geometry) < 0.5 THEN
-        UPDATE placex set indexed = false from place_addressline where address_place_id = existingplacex.place_id 
-          and placex.place_id = place_addressline.place_id and indexed;
+        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
+          and placex.place_id = place_addressline.place_id and indexed_status = 0;
       END IF;
 
     END IF;
@@ -1716,8 +1692,8 @@ BEGIN
 
       -- performance, can't take the load of re-indexing a whole country / huge area
       IF st_area(NEW.geometry) < 0.5 THEN
-        UPDATE placex set indexed = false from place_addressline where address_place_id = existingplacex.place_id 
-          and placex.place_id = place_addressline.place_id and indexed;
+        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
+          and placex.place_id = place_addressline.place_id and indexed_status = 0;
       END IF;
 
     END IF;
@@ -1773,14 +1749,14 @@ DECLARE
   found BOOLEAN;
 BEGIN
 
-  IF (array_upper(name, 1) is null) THEN
-    return null;
+  IF name is null THEN
+    RETURN null;
   END IF;
 
   search := languagepref;
 
   FOR j IN 1..array_upper(search, 1) LOOP
-    IF name ? search[j] AND trim(name->search[j] != '') THEN
+    IF name ? search[j] AND trim(name->search[j]) != '' THEN
       return trim(name->search[j]);
     END IF;
   END LOOP;
@@ -1869,28 +1845,24 @@ BEGIN
   search := languagepref;
   result := '{}';
 
---  UPDATE placex set indexed = false where indexed = true and place_id = for_place_id;
-  UPDATE placex set indexed = true where indexed = false and place_id = for_place_id;
-
   select country_code,housenumber,rank_address from placex where place_id = for_place_id into searchcountrycode,searchhousenumber,searchrankaddress;
 
   FOR location IN 
     select CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 ELSE rank_address END as rank_address,
-      CASE WHEN type = 'postcode' THEN 'name'->postcode ELSE name END as name,
+      CASE WHEN type = 'postcode' THEN 'name' => postcode ELSE name END as name,
       distance,length(name::text) as namelength 
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id and ((rank_address > 0 AND rank_address < searchrankaddress) OR address_place_id = for_place_id)
       and (placex.country_code IS NULL OR searchcountrycode IS NULL OR placex.country_code = searchcountrycode OR rank_address < 4)
       order by rank_address desc,fromarea desc,distance asc,rank_search desc,namelength desc
   LOOP
-    IF array_upper(search, 1) IS NOT NULL AND array_upper(location.name, 1) IS NOT NULL THEN
+    IF array_upper(search, 1) IS NOT NULL AND location.name IS NOT NULL THEN
       FOR j IN 1..array_upper(search, 1) LOOP
-        FOR k IN 1..array_upper(location.name, 1) LOOP
-          IF (found > location.rank_address AND location.name[k].key = search[j] AND location.name[k].value != '') AND NOT result && ARRAY[trim(location.name[k].value)] THEN
-            result[(100 - location.rank_address)] := trim(location.name[k].value);
-            found := location.rank_address;
-          END IF;
-        END LOOP;
+        IF (found > location.rank_address AND location.name ? search[j] AND location.name -> search[j] != ''
+            AND NOT result && ARRAY[location.name -> search[j]]) THEN
+          result[(100 - location.rank_address)] := trim(location.name -> search[j]);
+          found := location.rank_address;
+        END IF;
       END LOOP;
     END IF;
   END LOOP;
@@ -1931,8 +1903,7 @@ BEGIN
   search := languagepref;
   result := '{}';
 
---  UPDATE placex set indexed = false where indexed = true and place_id = for_place_id;
-  UPDATE placex set indexed = true where indexed = false and place_id = for_place_id;
+  UPDATE placex set indexed_status = 0 where indexed_status > 0 and place_id = for_place_id;
 
   select country_code,housenumber from placex where place_id = for_place_id into searchcountrycode,searchhousenumber;
 

@@ -1,5 +1,8 @@
 <?php
 
+	if (file_exists(CONST_BasePath.'/settings/local.php')) require_once(CONST_BasePath.'/settings/local.php');
+	if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
+
 	// General settings
 	@define('CONST_Debug', false);
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
@@ -23,5 +26,3 @@
 	@define('CONST_Search_AreaPolygons_Enabled', true);
 
 	@define('CONST_Suggestions_Enabled', false);
-
-

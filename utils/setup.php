@@ -73,6 +73,11 @@
 	{
 		$bDidSomething = true;
 		pgsqlRunScriptFile(CONST_BasePath.'/sql/tables.sql');
+
+		// re-run the functions
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
+		$sTemplate = str_replace('{modulepath}',CONST_BasePath.'/module', $sTemplate);
+		pgsqlRunScript($sTemplate);
 	}
 
 	if ($aCMDResult['create-partitions'] || isset($aCMDResult['all']))
@@ -104,7 +109,41 @@
 	if ($aCMDResult['load-data'] || isset($aCMDResult['all']))
 	{
 		$bDidSomething = true;
-		pgsqlRunScriptFile(CONST_BasePath.'/sql/loaddata.sql');
+
+		$oDB =& getDB();
+		if (!pg_query($oDB->connection, 'TRUNCATE placex')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE place_addressline')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE location_area')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'DROP SEQUENCE seq_place')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
+		echo '.';
+
+		$iInstances = 16;
+		$aDBInstances = array();
+		for($i = 0; $i < $iInstances; $i++)
+		{
+			$aDBInstances[$i] =& getDB(true);
+			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+			$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
+			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
+			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+		}
+		$bAnyBusy = true;
+		while($bAnyBusy)
+		{
+			$bAnyBusy = false;
+			for($i = 0; $i < $iInstances; $i++)
+			{
+				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+			}
+			sleep(1);
+			echo '.';
+		}
+		echo "\n";
 	}
 
 	if (!$bDidSomething)

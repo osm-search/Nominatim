@@ -1,9 +1,9 @@
 create type nearplace as (
-  place_id bigint
+  place_id integer
 );
 
 create type nearfeature as (
-  place_id bigint,
+  place_id integer,
   keywords int[],
   rank_address integer,
   rank_search integer,
@@ -11,16 +11,20 @@ create type nearfeature as (
 );
 
 CREATE TABLE location_area_country () INHERITS (location_area_large);
+CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id);
 CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);
 
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large);
+CREATE INDEX idx_location_area_large_-partition-_place_id ON location_area_large_-partition- USING BTREE (place_id);
 CREATE INDEX idx_location_area_large_-partition-_geometry ON location_area_large_-partition- USING GIST (geometry);
 
 CREATE TABLE location_area_roadnear_-partition- () INHERITS (location_area_roadnear);
+CREATE INDEX idx_location_area_roadnear_-partition-_place_id ON location_area_roadfar_-partition- USING BTREE (place_id);
 CREATE INDEX idx_location_area_roadnear_-partition-_geometry ON location_area_roadnear_-partition- USING GIST (geometry);
 
 CREATE TABLE location_area_roadfar_-partition- () INHERITS (location_area_roadfar);
+CREATE INDEX idx_location_area_roadfar_-partition-_place_id ON location_area_roadfar_-partition- USING BTREE (place_id);
 CREATE INDEX idx_location_area_roadfar_-partition-_geometry ON location_area_roadfar_-partition- USING GIST (geometry);
 -- end
 
@@ -77,15 +81,15 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function deleteLocationArea(in_partition TEXT, in_place_id bigint) RETURNS BOOLEAN AS $$
+create or replace function deleteLocationArea(in_partition TEXT, in_place_id integer) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
 -- start
   IF in_partition = '-partition-' THEN
-    DELETE from location_area_large_-partition- WHERE place_id = in_place_id;
-    DELETE from location_area_roadnear_-partition- WHERE place_id = in_place_id;
-    DELETE from location_area_roadfar_-partition- WHERE place_id = in_place_id;
+--    DELETE from location_area_large_-partition- WHERE place_id = in_place_id;
+--    DELETE from location_area_roadnear_-partition- WHERE place_id = in_place_id;
+--    DELETE from location_area_roadfar_-partition- WHERE place_id = in_place_id;
     RETURN TRUE;
   END IF;
 -- end
@@ -98,7 +102,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaLarge(
-  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id integer, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
@@ -123,7 +127,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaRoadNear(
-  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id integer, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
@@ -143,7 +147,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaRoadFar(
-  in_partition TEXT, in_place_id bigint, in_country_code VARCHAR(2), in_keywords INTEGER[], 
+  in_partition TEXT, in_place_id integer, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE

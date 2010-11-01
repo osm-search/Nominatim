@@ -96,6 +96,7 @@ CREATE TABLE search_name (
   place_id INTEGER,
   search_rank integer,
   address_rank integer,
+  importance FLOAT,
   country_code varchar(2),
   name_vector integer[],
   nameaddress_vector integer[]
@@ -172,7 +173,8 @@ CREATE TABLE placex (
   postcode TEXT,
   country_code varchar(2),
   extratags HSTORE,
-  street_place_id INTEGER,
+  parent_place_id INTEGER,
+  linked_place_id INTEGER,
   rank_address INTEGER,
   rank_search INTEGER,
   indexed_status INTEGER,
@@ -193,7 +195,7 @@ CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometr
 
 --CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(geometry_sector,indexed,name),rank_search)  where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
 
-CREATE INDEX idx_placex_street_place_id ON placex USING BTREE (street_place_id) where street_place_id IS NOT NULL;
+CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) where parent_place_id IS NOT NULL;
 CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed_status > 0 and class='place' and type='houses';
 
 CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id);

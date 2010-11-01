@@ -152,25 +152,28 @@
 	function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
 	{
 		// Try an exact match on the gb_postcode table
-		$sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where upper(postcode) = \''.$sPostcode.'\'';
+		$sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where postcode = \''.$sPostcode.'\'';
 		$aNearPostcodes = $oDB->getAll($sSQL);
 		if (PEAR::IsError($aNearPostcodes))
 		{
 			var_dump($sSQL, $aNearPostcodes);
 			exit;
 		}
+		
 
-		if (!sizeof($aNearPostcodes))
+		if (sizeof($aNearPostcodes))
 		{
-  			$sSQL = 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from placex where country_code::text = \'gb\'::text AND substring(upper(postcode) from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\' and class=\'place\' and type=\'postcode\' ';
-			$sSQL .= ' union ';
-			$sSQL .= 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where substring(upper(postcode) from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\'';
-			$aNearPostcodes = $oDB->getAll($sSQL);
-			if (PEAR::IsError($aNearPostcodes))
-			{
-				var_dump($sSQL, $aNearPostcodes);
-				exit;
-			}
+			return array(array('lat' => $aNearPostcodes[0]['lat'], 'lon' => $aNearPostcodes[0]['lon'], 'radius' => 0.005));
+		}
+
+		$sSQL = 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from placex where country_code::text = \'gb\'::text AND substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\' and class=\'place\' and type=\'postcode\' ';
+		$sSQL .= ' union ';
+		$sSQL .= 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\'';
+		$aNearPostcodes = $oDB->getAll($sSQL);
+		if (PEAR::IsError($aNearPostcodes))
+		{
+			var_dump($sSQL, $aNearPostcodes);
+			exit;
 		}
 
 		if (!sizeof($aNearPostcodes))
@@ -649,11 +652,8 @@
 				$sSep = '';
 				foreach($aRow['aAddress'] as $iWordID)
 				{
-//					if (!isset($aRow['aName'][$iWordID]))
-					{
-						echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-						$sSep = ', ';
-					}
+					echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
+					$sSep = ', ';
 				}
 				echo "</td>";
 

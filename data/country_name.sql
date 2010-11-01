@@ -249,4 +249,37 @@ pf	"name"=>"Polynésie française", "name:af"=>"Franse Polynesië", "name:an"=>"
 
 CREATE INDEX idx_country_name_country_code ON country_name USING btree (country_code);
 
+insert into country_name values('aq','name'=>'Antarctica',null);
+insert into country_name values('as','name'=>'American Samoa',null);
+insert into country_name values('aw','name'=>'Aruba',null);
+insert into country_name values('ax','name'=>'Aland Islands',null);
+insert into country_name values('bl','name'=>'Saint Barthélemy',null);
+insert into country_name values('bv','name'=>'Bouvet Island',null);
+insert into country_name values('eh','name'=>'Western Sahara',null);
+insert into country_name values('gh','name'=>'Ghana',null);
+insert into country_name values('gu','name'=>'Guam',null);
+insert into country_name values('hk','name'=>'Hong Kong',null);
+insert into country_name values('hm','name'=>'Heard Island and MaxDonald Islands',null);
 insert into country_name values('im','name'=>'Isle of Man','en');
+insert into country_name values('mf','name'=>'Saint Martin',null);
+insert into country_name values('mo','name'=>'Macao',null);
+insert into country_name values('mp','name'=>'Northern Mariana Islands',null);
+insert into country_name values('pr','name'=>'Puerto Rico');
+insert into country_name values('ps','name'=>'Palestinian Territory',null);
+insert into country_name values('pw','name'=>'Palau',null);
+insert into country_name values('sb','name'=>'Solomon Islands',null);
+insert into country_name values('sh','name'=>'Saint Helena',null);
+insert into country_name values('sj','name'=>'Svalbard and Jan Mayen',null);
+insert into country_name values('um','name'=>'United States Minor Outlying Islands',null);
+insert into country_name values('vi','name'=>'United States Virgin Islands',null);
+insert into country_name values('yt','name'=>'Mayotte',null);
+
+
+
+
+
+
+
+
+
+

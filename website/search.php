@@ -419,8 +419,11 @@
 										}
 										else
 										{
-											$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-											if (!sizeof($aSearch['aName']))
+											if (sizeof($aSearch['aName']))
+											{
+												$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+											}
+											else
 											{
 												$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												$aSearch['iNamePhrase'] = $iPhrase;
@@ -590,7 +593,7 @@
 					{
 						$iQueryLoop++;
 						// Must have a location term
-						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']))
+						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress'] && !$aSearch['fLon']))
 						{
 							if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
 							if (!$aSearch['sClass']) continue;
@@ -710,7 +713,7 @@
 								$oDB->query($sSQL);
 							
 								// Now they are indexed look for a house attached to a street we found
-								$sSQL = "select place_id from placex where street_place_id in (".$sPlaceIDs.") and housenumber ~* E'".$sHouseNumberRegex."'";
+								$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and housenumber ~* E'".$sHouseNumberRegex."'";
 								if (sizeof($aExcludePlaceIDs))
 								{
 									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";

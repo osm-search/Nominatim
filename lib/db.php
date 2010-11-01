@@ -1,10 +1,10 @@
 <?php
 	require_once('DB.php');
 
-	function &getDB()
+	function &getDB($bNew = false)
 	{
 		// Get the database object
-		$oDB =& DB::connect(CONST_Database_DSN, false);
+		$oDB =& DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), false);
 		if (PEAR::IsError($oDB))
 		{
 			fail($oDB->getMessage(), 'Unable to connect to the database');

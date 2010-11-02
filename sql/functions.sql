@@ -508,6 +508,20 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION get_country_code(place geometry, in_country_code VARCHAR(2)) RETURNS TEXT
+  AS $$
+DECLARE
+  nearcountry RECORD;
+BEGIN
+  FOR nearcountry IN select country_code from country_name where country_code = lower(in_country_code)
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
+  RETURN get_country_code(place);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR(2)) RETURNS TEXT
   AS $$
 DECLARE
@@ -882,9 +896,7 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  IF NEW.country_code is null THEN
-    NEW.country_code := get_country_code(NEW.geometry);
-  END IF;
+  NEW.country_code := get_country_code(NEW.geometry, NEW.country_code);
   NEW.geometry_sector := geometry_sector(NEW.geometry);
   NEW.partition := get_partition(NEW.geometry, NEW.country_code);
 
@@ -1159,15 +1171,6 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF NEW.country_code is null THEN
-    NEW.country_code := get_country_code(NEW.geometry);
-  END IF;
-  NEW.country_code := lower(NEW.country_code);
-  NEW.partition := NEW.country_code;
-  IF NEW.partition is null THEN
-    NEW.partition := 'none';
-  END IF;
-
   IF NEW.indexed_status = 0 and OLD.indexed_status != 0 THEN
 
     NEW.indexed_date = now();
@@ -1395,6 +1398,7 @@ BEGIN
     -- Process area matches
     location_rank_search := 100;
     location_distance := 0;
+--RAISE WARNING '%', NEW.partition;
     FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;

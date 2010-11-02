@@ -69,6 +69,17 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     PQclear(res);
 
     pg_prepare_params[0] = PG_OID_INT4;
+    res = PQprepare(conn, "index_nosectors",
+    	"select 0::integer,count(*) from placex where rank_search = $1 and indexed_status > 0",
+    	1, pg_prepare_params);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "Failed preparing index_sectors: %s\n", PQerrorMessage(conn));
+        exit(EXIT_FAILURE);
+    }
+    PQclear(res);
+
+    pg_prepare_params[0] = PG_OID_INT4;
     pg_prepare_params[1] = PG_OID_INT4;
     res = PQprepare(conn, "index_sector_places",
     	"select place_id from placex where rank_search = $1 and geometry_sector = $2 and indexed_status > 0",
@@ -76,6 +87,17 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "Failed preparing index_sector_places: %s\n", PQerrorMessage(conn));
+        exit(EXIT_FAILURE);
+    }
+    PQclear(res);
+
+    pg_prepare_params[0] = PG_OID_INT4;
+    res = PQprepare(conn, "index_nosector_places",
+    	"select place_id from placex where rank_search = $1 and indexed_status > 0 order by geometry_sector",
+    	1, pg_prepare_params);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "Failed preparing index_nosector_places: %s\n", PQerrorMessage(conn));
         exit(EXIT_FAILURE);
     }
     PQclear(res);
@@ -124,7 +146,10 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         paramValues[0] = (char *)&paramRank;
         paramLengths[0] = sizeof(paramRank);
         paramFormats[0] = 1;
-        resSectors = PQexecPrepared(conn, "index_sectors", 1, paramValues, paramLengths, paramFormats, 1);
+		if (rank < 16)
+	        resSectors = PQexecPrepared(conn, "index_nosectors", 1, paramValues, paramLengths, paramFormats, 1);
+		else
+	        resSectors = PQexecPrepared(conn, "index_sectors", 1, paramValues, paramLengths, paramFormats, 1);
         if (PQresultStatus(resSectors) != PGRES_TUPLES_OK)
         {
             fprintf(stderr, "index_sectors: SELECT failed: %s", PQerrorMessage(conn));
@@ -156,15 +181,18 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 	    	//printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
 
 			// Get all the place_id's for this sector
-	        paramRank = PGint32(rank);
-	        paramValues[0] = (char *)&paramRank;
-	        paramLengths[0] = sizeof(paramRank);
-	        paramFormats[0] = 1;
-	        paramSector = PGint32(sector);
+		    paramRank = PGint32(rank);
+	    	paramValues[0] = (char *)&paramRank;
+		    paramLengths[0] = sizeof(paramRank);
+		    paramFormats[0] = 1;
+	    	paramSector = PGint32(sector);
 	        paramValues[1] = (char *)&paramSector;
-	        paramLengths[1] = sizeof(paramSector);
-	        paramFormats[1] = 1;
-	        resPlaces = PQexecPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
+			paramLengths[1] = sizeof(paramSector);
+		    paramFormats[1] = 1;
+			if (rank < 16)
+		        resPlaces = PQexecPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+			else
+		        resPlaces = PQexecPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
 	        if (PQresultStatus(resPlaces) != PGRES_TUPLES_OK)
 	        {
 	            fprintf(stderr, "index_sector_places: SELECT failed: %s", PQerrorMessage(conn));
@@ -265,7 +293,7 @@ void *nominatim_indexThread(void * thread_data_in)
 
 		pthread_mutex_unlock( thread_data->count_mutex );
 
-		//printf("  Processing place_id %ld\n", place_id);
+//		printf("  Processing place_id %d\n", place_id);
 		paramPlaceID = PGint32(place_id);
         paramValues[0] = (char *)&paramPlaceID;
         paramLengths[0] = sizeof(paramPlaceID);

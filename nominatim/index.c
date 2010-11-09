@@ -133,12 +133,11 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 		writer = nominatim_exportXMLStart(structuredoutputfile);
 	}
 
-    fprintf(stderr, "Starting indexing rank (%i > %i ) using %i treads\n", rank_min, rank_max, num_threads);
+    fprintf(stderr, "Starting indexing rank (%i to %i) using %i treads\n", rank_min, rank_max, num_threads);
 
     for (rank = rank_min; rank <= rank_max; rank++)
     {
     	printf("Starting rank %d\n", rank);
-    	rankStartTime = time(0);
     	rankCountTuples = 0;
     	rankPerSecond = 0;
 
@@ -175,6 +174,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     		rankTotalTuples += PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1)));
     	}
 
+    	rankStartTime = time(0);
     	for (iSector = 0; iSector < PQntuples(resSectors); iSector++)
     	{
 			sector = PGint32(*((uint32_t *)PQgetvalue(resSectors, iSector, 0)));
@@ -271,13 +271,14 @@ void *nominatim_indexThread(void * thread_data_in)
 {
 	struct index_thread_data * thread_data = (struct index_thread_data * )thread_data_in;
 
-	PGresult * res;
+	PGresult   *res;
 
     const char *paramValues[1];
     int         paramLengths[1];
     int         paramFormats[1];
     uint32_t    paramPlaceID;
-    uint32_t place_id;
+    uint32_t 	place_id;
+	time_t 		updateStartTime;
 
 	while(1)
 	{
@@ -293,7 +294,9 @@ void *nominatim_indexThread(void * thread_data_in)
 
 		pthread_mutex_unlock( thread_data->count_mutex );
 
-//		printf("  Processing place_id %d\n", place_id);
+		if (verbose) printf("  Processing place_id %d\n", place_id);
+		
+		updateStartTime = time(0);
 		paramPlaceID = PGint32(place_id);
         paramValues[0] = (char *)&paramPlaceID;
         paramLengths[0] = sizeof(paramPlaceID);
@@ -306,6 +309,7 @@ void *nominatim_indexThread(void * thread_data_in)
             exit(EXIT_FAILURE);
         }
         PQclear(res);
+		if (difftime(time(0), updateStartTime) > 1) printf("  Slow place_id %d\n", place_id);
 
         if (thread_data->writer)
         {

@@ -46,7 +46,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION geometry_sector(place geometry) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry) RETURNS INTEGER
   AS $$
 DECLARE
   NEWgeometry geometry;
@@ -59,7 +59,7 @@ BEGIN
       RETURN 0;
     END IF;
   END IF;
-  RETURN (500-ST_X(ST_Centroid(NEWgeometry))::integer)*1000 + (500-ST_Y(ST_Centroid(NEWgeometry))::integer);
+  RETURN (partition*1000000) + (500-ST_X(ST_Centroid(NEWgeometry))::integer)*1000 + (500-ST_Y(ST_Centroid(NEWgeometry))::integer);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -81,26 +81,6 @@ BEGIN
     END IF;
   END IF;
   RETURN (500-ST_X(ST_Centroid(NEWgeometry))::integer)*1000 + (500-ST_Y(ST_Centroid(NEWgeometry))::integer);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION geometry_index(place geometry, indexed BOOLEAN, name HSTORE) RETURNS INTEGER
-  AS $$
-BEGIN
-IF indexed THEN RETURN NULL; END IF;
-IF name is null THEN RETURN NULL; END IF;
-RETURN geometry_sector(place);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION geometry_index(sector integer, indexed BOOLEAN, name HSTORE) RETURNS INTEGER
-  AS $$
-BEGIN
-IF indexed THEN RETURN NULL; END IF;
-IF name is null THEN RETURN NULL; END IF;
-RETURN sector;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -465,7 +445,7 @@ BEGIN
 --RAISE WARNING 'start: %', ST_AsText(place_centre);
 
   -- Try for a OSM polygon first
-  FOR nearcountry IN select country_code from location_area_country where country_code is not null and st_contains(geometry, place_centre) limit 1
+  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_contains(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
@@ -481,10 +461,16 @@ BEGIN
 --RAISE WARNING 'natural earth: %', ST_AsText(place_centre);
 
   -- Natural earth data (first fallback)
---  FOR nearcountry IN select country_code from country_naturalearthdata where st_contains(geometry, place_centre) limit 1
---  LOOP
---    RETURN nearcountry.country_code;
---  END LOOP;
+  FOR nearcountry IN select country_code from country_naturalearthdata where st_contains(geometry, place_centre) limit 1
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
+
+  -- Natural earth data (first fallback)
+  FOR nearcountry IN select country_code from country_naturalearthdata where st_distance(geometry, place_centre) < 0.5 limit 1
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
 
 --RAISE WARNING 'in country: %', ST_AsText(place_centre);
 
@@ -527,7 +513,7 @@ CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR
 DECLARE
   nearcountry RECORD;
 BEGIN
-  FOR nearcountry IN select distinct country_default_language_code from country where country_code = search_country_code limit 1
+  FOR nearcountry IN select distinct country_default_language_code from country_name where country_code = search_country_code limit 1
   LOOP
     RETURN lower(nearcountry.country_default_language_code);
   END LOOP;
@@ -536,17 +522,17 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_partition(place geometry, in_country_code VARCHAR(10)) RETURNS TEXT
+CREATE OR REPLACE FUNCTION get_partition(place geometry, in_country_code VARCHAR(10)) RETURNS INTEGER
   AS $$
 DECLARE
   place_centre GEOMETRY;
   nearcountry RECORD;
 BEGIN
-  FOR nearcountry IN select country_code from country_name where country_code = in_country_code
+  FOR nearcountry IN select partition from country_name where country_code = in_country_code
   LOOP
-    RETURN nearcountry.country_code;
+    RETURN nearcountry.partition;
   END LOOP;
-  RETURN 'none';
+  RETURN 0;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -565,7 +551,7 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION add_location(
     place_id INTEGER,
     country_code varchar(2),
-    partition varchar(10),
+    partition INTEGER,
     keywords INTEGER[],
     rank_search INTEGER,
     rank_address INTEGER,
@@ -584,6 +570,7 @@ DECLARE
   lat INTEGER;
   centroid GEOMETRY;
   secgeo GEOMETRY;
+  secbox GEOMETRY;
   diameter FLOAT;
   x BOOLEAN;
 BEGIN
@@ -610,9 +597,12 @@ BEGIN
     ELSE
       FOR lon IN xmin..(xmax-1) LOOP
         FOR lat IN ymin..(ymax-1) LOOP
-          secgeo := st_intersection(geometry, ST_SetSRID(ST_MakeBox2D(ST_Point(lon,lat),ST_Point(lon+1,lat+1)),4326));
-          IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
-            x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
+          secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(lon,lat),ST_Point(lon+1,lat+1)),4326);
+          IF st_intersects(geometry, secbox) THEN
+            secgeo := st_intersection(geometry, secbox);
+            IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
+              x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
+            END IF;
           END IF;
         END LOOP;
       END LOOP;
@@ -629,6 +619,8 @@ BEGIN
       diameter := 0.15;
     ELSEIF rank_search = 17 THEN
       diameter := 0.05;
+    ELSEIF rank_search = 21 THEN
+      diameter := 0.01;
     ELSEIF rank_search = 25 THEN
       diameter := 0.005;
     END IF;
@@ -654,6 +646,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_location(
+    partition INTEGER,
     place_id INTEGER,
     place_country_code varchar(2),
     name hstore,
@@ -666,7 +659,7 @@ CREATE OR REPLACE FUNCTION update_location(
 DECLARE
   b BOOLEAN;
 BEGIN
-  b := delete_location(place_id);
+  b := deleteLocationArea(partition, place_id);
   RETURN add_location(place_id, place_country_code, name, rank_search, rank_address, geometry);
 END;
 $$
@@ -865,6 +858,7 @@ DECLARE
   postcode TEXT;
   result BOOLEAN;
   country_code VARCHAR(2);
+  default_language VARCHAR(10);
   diameter FLOAT;
 BEGIN
 --  RAISE WARNING '%',NEW.osm_id;
@@ -897,8 +891,20 @@ BEGIN
   NEW.indexed_status := 1; --STATUS_NEW
 
   NEW.country_code := get_country_code(NEW.geometry, NEW.country_code);
-  NEW.geometry_sector := geometry_sector(NEW.geometry);
   NEW.partition := get_partition(NEW.geometry, NEW.country_code);
+  NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
+
+  -- copy 'name' to or from the default language (if there is a default language)
+  IF NEW.name is not null THEN
+    default_language := get_country_language_code(NEW.country_code);
+    IF default_language IS NOT NULL THEN
+      IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
+        NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
+      ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
+        NEW.name := NEW.name || ('name' => (NEW.name -> 'name:'||default_language));
+      END IF;
+    END IF;
+  END IF;
 
   IF NEW.admin_level > 15 THEN
     NEW.admin_level := 15;
@@ -1180,7 +1186,7 @@ BEGIN
       RETURN NEW;
     END IF;
 
-    DELETE FROM search_name WHERE place_id = NEW.place_id;
+    result := deleteSearchName(NEW.partition, NEW.place_id);
     DELETE FROM place_addressline WHERE place_id = NEW.place_id;
     DELETE FROM place_boundingbox where place_id = NEW.place_id;
 
@@ -1203,6 +1209,10 @@ BEGIN
     IF tagpairid IS NOT NULL THEN
       name_vector := name_vector + tagpairid;
     END IF;
+
+    FOR i IN 1..28 LOOP
+      address_havelevel[i] := false;
+    END LOOP;
 
 --RAISE WARNING '% %', NEW.place_id, NEW.rank_search;
 
@@ -1310,41 +1320,37 @@ BEGIN
       	address_street_word_id := get_name_id(make_standard_name(NEW.street));
 --RAISE WARNING 'street: % %', NEW.street, address_street_word_id;
         IF address_street_word_id IS NOT NULL THEN
-          FOR location IN SELECT place_id,ST_distance(NEW.geometry, search_name.centroid) as distance 
-            FROM search_name WHERE search_name.name_vector @> ARRAY[address_street_word_id]
-            AND ST_DWithin(NEW.geometry, search_name.centroid, 0.01) and search_rank between 22 and 27
-            ORDER BY ST_distance(NEW.geometry, search_name.centroid) ASC limit 1
-          LOOP
+          FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
 --RAISE WARNING 'streetname found nearby %',location;
             NEW.parent_place_id := location.place_id;
           END LOOP;
-        END IF;
-        -- Failed, fall back to nearest - don't just stop
-        IF NEW.parent_place_id IS NULL THEN
---RAISE WARNING 'unable to find streetname nearby % %',NEW.street,address_street_word_id;
---          RETURN null;
         END IF;
       END IF;
 
 --RAISE WARNING 'x4';
 
-      IF NEW.parent_place_id IS NULL THEN
-        FOR location IN SELECT place_id FROM getNearRoads(NEW.partition, place_centroid) LOOP
+      -- Still nothing, just use the nearest road
+--      IF NEW.parent_place_id IS NULL THEN
+--        FOR location IN SELECT place_id FROM getNearRoads(NEW.partition, place_centroid) LOOP
+--          NEW.parent_place_id := location.place_id;
+--        END LOOP;
+--      END IF;
+
+      search_diameter := 0.00005;
+      WHILE NEW.parent_place_id IS NULL AND search_diameter < 0.1 LOOP
+        FOR location IN SELECT place_id FROM placex
+          WHERE ST_DWithin(place_centroid, placex.geometry, search_diameter) and rank_search between 22 and 27
+          ORDER BY ST_distance(NEW.geometry, placex.geometry) ASC limit 1
+        LOOP
           NEW.parent_place_id := location.place_id;
         END LOOP;
-      END IF;
+        search_diameter := search_diameter * 2;
+      END LOOP;
 
 --RAISE WARNING 'x6 %',NEW.parent_place_id;
 
       -- If we didn't find any road fallback to standard method
       IF NEW.parent_place_id IS NOT NULL THEN
-
-        -- Some unnamed roads won't have been indexed, index now if needed
--- ALL are now indexed!
---        select count(*) from place_addressline where place_id = NEW.parent_place_id INTO parent_place_id_count;
---        IF parent_place_id_count = 0 THEN
---          UPDATE placex set indexed = true where indexed = false and place_id = NEW.parent_place_id;
---        END IF;
 
         -- Add the street to the address as zero distance to force to front of list
         INSERT INTO place_addressline VALUES (NEW.place_id, NEW.parent_place_id, true, true, 0, 26);
@@ -1370,8 +1376,10 @@ BEGIN
 
         -- Performance, it would be more acurate to do all the rest of the import process but it takes too long
         -- Just be happy with inheriting from parent road only
-        INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_address, 0, NEW.country_code,
-          name_vector, nameaddress_vector, place_centroid);
+        result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, place_centroid);
+        
+--        INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_address, 0, NEW.country_code,
+--          name_vector, nameaddress_vector, place_centroid);
 
         return NEW;
       END IF;
@@ -1423,16 +1431,10 @@ BEGIN
     IF array_upper(isin_tokens, 1) IS NOT NULL THEN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
 
-        FOR location IN SELECT place_id,search_name.name_vector,address_rank,
-          ST_Distance(place_centroid, search_name.centroid) as distance
-          FROM search_name
-          WHERE search_name.name_vector @> ARRAY[isin_tokens[i]]
-          AND search_rank < NEW.rank_search
-          AND (country_code = NEW.country_code OR address_rank < 4)
-          ORDER BY ST_distance(NEW.geometry, centroid) ASC limit 1
-        LOOP
-          nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
-          INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.address_rank], location.distance, location.address_rank);
+        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+          nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+          INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+          address_havelevel[location.rank_address] := true;
         END LOOP;
 
       END LOOP;
@@ -1445,8 +1447,9 @@ BEGIN
         result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
       END IF;
 
-      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.country_code, 
-        name_vector, nameaddress_vector, place_centroid);
+      result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, place_centroid);
+
+--      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.country_code, name_vector, nameaddress_vector, place_centroid);
     END IF;
 
   END IF;
@@ -1459,19 +1462,16 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION placex_delete() RETURNS TRIGGER
   AS $$
 DECLARE
+  b BOOLEAN;
 BEGIN
-
---IF OLD.rank_search < 26 THEN
---RAISE WARNING 'delete % % % % %',OLD.place_id,OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
---END IF;
 
   -- mark everything linked to this place for re-indexing
   UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
     and placex.place_id = place_addressline.place_id and indexed_status = 0;
 
   -- do the actual delete
-  DELETE FROM location_area where place_id = OLD.place_id;
-  DELETE FROM search_name where place_id = OLD.place_id;
+  b := deleteLocationArea(OLD.partition, OLD.place_id);
+  b := deleteSearchName(OLD.partition, OLD.place_id);
   DELETE FROM place_addressline where place_id = OLD.place_id;
   DELETE FROM place_addressline where address_place_id = OLD.place_id;
 

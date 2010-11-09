@@ -47,6 +47,7 @@
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturaleathdata.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
@@ -84,13 +85,13 @@
 	{
 		$bDidSomething = true;
 		$oDB =& getDB();
-		$sSQL = 'select distinct country_code from country_name order by country_code';
+		$sSQL = 'select partition from country_name order by country_code';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
 		}
-		$aPartitions[] = 'none';
+		$aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partitions.src.sql');
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
@@ -111,11 +112,19 @@
 		$bDidSomething = true;
 
 		$oDB =& getDB();
+		if (!pg_query($oDB->connection, 'TRUNCATE word')) fail(pg_last_error($oDB->connection));
+		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE placex')) fail(pg_last_error($oDB->connection));
 		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE place_addressline')) fail(pg_last_error($oDB->connection));
 		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE place_boundingbox')) fail(pg_last_error($oDB->connection));
+		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE location_area')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE search_name')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE search_name_blank')) fail(pg_last_error($oDB->connection));
 		echo '.';
 		if (!pg_query($oDB->connection, 'DROP SEQUENCE seq_place')) fail(pg_last_error($oDB->connection));
 		echo '.';
@@ -130,6 +139,7 @@
 			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
 			$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
 			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
+var_dump($sSQL);
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}
 		$bAnyBusy = true;

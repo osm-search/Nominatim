@@ -112,14 +112,6 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "nominatim SVN version %s\n\n", VERSION);
 
-    if (sizeof(int*) == 4) {
-        fprintf(stderr, "\n!! You are running this on 32bit system, so at most\n");
-        fprintf(stderr, "!! 3GB of RAM can be used. If you encounter unexpected\n");
-        fprintf(stderr, "!! exceptions during import, you should try running in slim\n");
-        fprintf(stderr, "!! mode using parameter -s.\n");
-        exit(EXIT_FAILURE);
-    }
-
     while (1) {
         int c, option_index = 0;
         static struct option long_options[] = {

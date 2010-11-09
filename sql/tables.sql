@@ -76,7 +76,7 @@ CREATE SEQUENCE seq_word start 1;
 
 drop table IF EXISTS location_area CASCADE;
 CREATE TABLE location_area (
-  partition varchar(10),
+  partition integer,
   place_id INTEGER,
   country_code VARCHAR(2), 
   keywords INTEGER[],
@@ -91,8 +91,8 @@ CREATE TABLE location_area_large () INHERITS (location_area);
 CREATE TABLE location_area_roadnear () INHERITS (location_area);
 CREATE TABLE location_area_roadfar () INHERITS (location_area);
 
-drop table IF EXISTS search_name;
-CREATE TABLE search_name (
+drop table IF EXISTS search_name_blank CASCADE;
+CREATE TABLE search_name_blank (
   place_id INTEGER,
   search_rank integer,
   address_rank integer,
@@ -101,9 +101,12 @@ CREATE TABLE search_name (
   name_vector integer[],
   nameaddress_vector integer[]
   );
+SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
+
+drop table IF EXISTS search_name;
+CREATE TABLE search_name () INHERITS (search_name_blank);
 CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector gin__int_ops);
 CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector gin__int_ops);
-SELECT AddGeometryColumn('search_name', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
@@ -160,7 +163,7 @@ CREATE INDEX idx_country_geometry ON country USING GIST (geometry);
 drop table placex;
 CREATE TABLE placex (
   place_id INTEGER NOT NULL,
-  partition varchar(10),
+  partition integer,
   osm_type char(1),
   osm_id INTEGER,
   class TEXT NOT NULL,

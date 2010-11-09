@@ -336,7 +336,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 		xmlTextWriterEndElement(writer);
 	}
 
-	if (PQntuples(resAddress)> 0)
+	if (PQntuples(resAddress) > 0)
 	{
 		xmlTextWriterStartElement(writer, BAD_CAST "address");
 		for(i = 0; i < PQntuples(resAddress); i++)

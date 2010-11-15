@@ -8,8 +8,8 @@
 	<base href="<?php echo CONST_Website_BaseURL;?>" />
 	<link href="nominatim.xml" rel="search" title="Nominatim Search" type="application/opensearchdescription+xml" />
 
-	<script src="OpenLayers.js"></script>
-	<script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+	<script src="js/OpenLayers.js"></script>
+	<script src="js/OpenStreetMap.js"></script>
 	<script src="prototype-1.6.0.3.js"></script>
 
 	<style>

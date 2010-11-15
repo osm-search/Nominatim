@@ -10,11 +10,14 @@
 		array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-		array('all', '', 0, 1, 1, 1, 'realpath', 'Do the complete process'),
+		array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
+		array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+
+		array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
 		array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
 		array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
-		array('import-data', '', 0, 1, 1, 1, 'realpath', 'Import a osm file'),
+		array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
 		array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
@@ -24,7 +27,7 @@
 
 	$bDidSomething = false;
 
-	if ($aCMDResult['create-db'] || isset($aCMDResult['all']))
+	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 		$oDB =& DB::connect(CONST_Database_DSN, false);
@@ -35,7 +38,7 @@
 		passthru('createdb nominatim');
 	}
 
-	if ($aCMDResult['create-db'] || isset($aCMDResult['all']))
+	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 		// TODO: path detection, detection memory, etc.
@@ -55,22 +58,22 @@
 		pgsqlRunScriptFile(CONST_BasePath.'/data/worldboundaries.sql');
 	}
 
-	if (isset($aCMDResult['all']) && !isset($aCMDResult['import-data'])) $aCMDResult['import-data'] = $aCMDResult['all'];
-	if (isset($aCMDResult['import-data']) && $aCMDResult['import-data'])
+	if ($aCMDResult['import-data'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
-		passthru(CONST_BasePath.'/osm2pgsql/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['import-data']);
+		passthru(CONST_BasePath.'/osm2pgsql/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['osm-file']);
 	}
 
-	if ($aCMDResult['create-functions'] || isset($aCMDResult['all']))
+	if ($aCMDResult['create-functions'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
+		if (!file_exists(CONST_BasePath.'/module/nominatim.so')) fail("nominatim module not built");
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
 		$sTemplate = str_replace('{modulepath}',CONST_BasePath.'/module', $sTemplate);
 		pgsqlRunScript($sTemplate);
 	}
 
-	if ($aCMDResult['create-tables'] || isset($aCMDResult['all']))
+	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 		pgsqlRunScriptFile(CONST_BasePath.'/sql/tables.sql');
@@ -81,7 +84,7 @@
 		pgsqlRunScript($sTemplate);
 	}
 
-	if ($aCMDResult['create-partitions'] || isset($aCMDResult['all']))
+	if ($aCMDResult['create-partitions'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 		$oDB =& getDB();
@@ -107,7 +110,7 @@
 		pgsqlRunScript($sTemplate);
 	}
 
-	if ($aCMDResult['load-data'] || isset($aCMDResult['all']))
+	if ($aCMDResult['load-data'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 
@@ -131,7 +134,19 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
-		$iInstances = 16;
+		// This is a pretty hard core defult - the number of processors in the box - 1
+		$iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
+		if ($iInstances < 1)
+		{
+			$iInstances = 1;
+			echo "WARNING: reseting threads to $iInstances\n";
+		}
+		if ($iInstances > getProcessorCount())
+		{
+			$iInstances = getProcessorCount();
+			echo "WARNING: reseting threads to $iInstances\n";
+		}
+
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{
@@ -139,7 +154,7 @@
 			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
 			$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
 			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
-var_dump($sSQL);
+			if ($aCMDResult['verbose']) echo "$sSQL\n";
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}
 		$bAnyBusy = true;

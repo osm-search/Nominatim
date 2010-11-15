@@ -24,7 +24,14 @@
                 $aLoadAverage = explode(' ',$sLoadAverage);
 		return (int)$aLoadAverage[0];
 	}
-	
+
+	function getProcessorCount()
+	{
+		$sCPU = file_get_contents('/proc/cpuinfo');
+		preg_match_all('#processor	: [0-9]+#', $sCPU, $aMatches);
+		return sizeof($aMatches[0]);
+	}
+
 	function bySearchRank($a, $b)
 	{
 		if ($a['iSearchRank'] == $b['iSearchRank']) return 0;
@@ -49,7 +56,7 @@
 		{
 			$_SERVER["HTTP_ACCEPT_LANGUAGE"] = $_GET['accept-language'];
 		}
-		
+
 		$aLanguages = array();
 		if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $aLanguagesParse, PREG_SET_ORDER))
 		{

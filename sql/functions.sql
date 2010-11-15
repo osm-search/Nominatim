@@ -2205,4 +2205,48 @@ CREATE AGGREGATE array_agg(INT[])
     initcond = '{}'
 );
 
+CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_startnumber INTEGER, 
+  in_endnumber INTEGER, interpolationtype TEXT, 
+  in_street TEXT, in_isin TEXT, in_postcode TEXT) RETURNS INTEGER
+  AS $$
+DECLARE
+  
+  startnumber INTEGER;
+  stepsize INTEGER;
+  housenum INTEGER;
+  newpoints INTEGER;
+  numberrange INTEGER;
 
+BEGIN
+
+  numberrange := in_endnumber - in_startnumber;
+
+  IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
+    startnumber := in_startnumber + 1;
+    stepsize := 2;
+  ELSE
+    IF (interpolationtype = 'odd' OR interpolationtype = 'even') THEN
+      startnumber := in_startnumber;
+      stepsize := 2;
+    ELSE -- everything else assumed to be 'all'
+      startnumber := in_startnumber;
+      stepsize := 1;
+    END IF;
+  END IF;
+
+--this is a one time operation - skip the delete
+--delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id and type = 'house' and place_id != prevnode.place_id;
+
+  newpoints := 0;
+  FOR housenum IN startnumber..in_endnumber BY stepsize LOOP
+    insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, 
+      country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
+    values ('T', nextval('seq_tigger_house'), 'place', 'house', null, housenum, in_street, in_isin, in_postcode,
+      'us', null, 30, 30, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-in_startnumber::float)/numberrange::float));
+    newpoints := newpoints + 1;
+  END LOOP;
+
+  RETURN newpoints;
+END;
+$$
+LANGUAGE plpgsql;

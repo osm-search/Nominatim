@@ -17,6 +17,7 @@
 	$bDeDupe = isset($_GET['dedupe'])?(bool)$_GET['dedupe']:true;
 	$bReverseInPlan = false;
 	$iLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
+	$iOffset = isset($_GET['offset'])?(int)$_GET['offset']:0;
 	$iMaxRank = 20;
 	if ($iLimit > 100) $iLimit = 100;
 
@@ -1024,4 +1025,4 @@
 
 	if (CONST_Debug) exit;
 
-	include('.htlib/output/search-'.$sOutputFormat.'.php');
+	include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');

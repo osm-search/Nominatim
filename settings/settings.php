@@ -5,7 +5,7 @@
 
 	// General settings
 	@define('CONST_Debug', false);
-	@define('CONST_Database_DSN', 'pgsql://brian@/nominatim');
+	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
 
 	// Paths
 	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/9.0/contrib');

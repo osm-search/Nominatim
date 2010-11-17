@@ -22,10 +22,24 @@
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
+		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 	$bDidSomething = false;
+
+	// This is a pretty hard core defult - the number of processors in the box - 1
+	$iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
+	if ($iInstances < 1)
+	{
+		$iInstances = 1;
+		echo "WARNING: resetting threads to $iInstances\n";
+	}
+	if ($iInstances > getProcessorCount())
+	{
+		$iInstances = getProcessorCount();
+		echo "WARNING: resetting threads to $iInstances\n";
+	}
 
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
@@ -134,19 +148,6 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
-		// This is a pretty hard core defult - the number of processors in the box - 1
-		$iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
-		if ($iInstances < 1)
-		{
-			$iInstances = 1;
-			echo "WARNING: reseting threads to $iInstances\n";
-		}
-		if ($iInstances > getProcessorCount())
-		{
-			$iInstances = getProcessorCount();
-			echo "WARNING: reseting threads to $iInstances\n";
-		}
-
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{
@@ -169,6 +170,60 @@
 			echo '.';
 		}
 		echo "\n";
+	}
+
+	if ($aCMDResult['import-tiger-data'] || $aCMDResult['all'])
+	{
+		$bDidSomething = true;
+
+		$aDBInstances = array();
+		for($i = 0; $i < $iInstances; $i++)
+		{
+			$aDBInstances[$i] =& getDB(true);
+		}
+
+		foreach(glob(CONST_BasePath.'/data/tiger2009/*.sql') as $sFile)
+		{
+			echo $sFile.': ';
+			$hFile = fopen($sFile, "r");
+			$sSQL = fgets($hFile, 100000);
+			$iLines = 0;
+
+			while(true)
+			{
+				for($i = 0; $i < $iInstances; $i++)
+				{
+					if (!pg_connection_busy($aDBInstances[$i]->connection))
+					{
+						while(pg_get_result($aDBInstances[$i]->connection));
+						$sSQL = fgets($hFile, 100000);
+						if (!$sSQL) break 2;
+						if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+						$iLines++;
+						if ($iLines == 1000)
+						{
+							echo ".";
+							$iLines = 0;
+						}
+					}
+				}
+				usleep(10);
+			}
+
+			fclose($hFile);
+	
+			$bAnyBusy = true;
+			while($bAnyBusy)
+			{
+				$bAnyBusy = false;
+				for($i = 0; $i < $iInstances; $i++)
+				{
+					if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+				}
+				usleep(10);
+			}
+			echo "\n";
+		}
 	}
 
 	if (!$bDidSomething)

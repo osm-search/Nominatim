@@ -575,8 +575,8 @@ DECLARE
   x BOOLEAN;
 BEGIN
 
-  IF rank_search > 26 THEN
-    RAISE EXCEPTION 'Adding location with rank > 26 (% rank %)', place_id, rank_search;
+  IF rank_search > 25 THEN
+    RAISE EXCEPTION 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
   END IF;
 
   x := deleteLocationArea(partition, place_id);
@@ -1318,10 +1318,8 @@ BEGIN
 
       IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
       	address_street_word_id := get_name_id(make_standard_name(NEW.street));
---RAISE WARNING 'street: % %', NEW.street, address_street_word_id;
         IF address_street_word_id IS NOT NULL THEN
           FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
---RAISE WARNING 'streetname found nearby %',location;
             NEW.parent_place_id := location.place_id;
           END LOOP;
         END IF;
@@ -1330,12 +1328,6 @@ BEGIN
 --RAISE WARNING 'x4';
 
       -- Still nothing, just use the nearest road
---      IF NEW.parent_place_id IS NULL THEN
---        FOR location IN SELECT place_id FROM getNearRoads(NEW.partition, place_centroid) LOOP
---          NEW.parent_place_id := location.place_id;
---        END LOOP;
---      END IF;
-
       search_diameter := 0.00005;
       WHILE NEW.parent_place_id IS NULL AND search_diameter < 0.1 LOOP
         FOR location IN SELECT place_id FROM placex
@@ -1465,15 +1457,25 @@ DECLARE
   b BOOLEAN;
 BEGIN
 
-  -- mark everything linked to this place for re-indexing
-  UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
-    and placex.place_id = place_addressline.place_id and indexed_status = 0;
+  IF OLD.rank_address < 30 THEN
 
-  -- do the actual delete
-  b := deleteLocationArea(OLD.partition, OLD.place_id);
-  b := deleteSearchName(OLD.partition, OLD.place_id);
+    -- mark everything linked to this place for re-indexing
+    UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
+      and placex.place_id = place_addressline.place_id and indexed_status = 0;
+
+    DELETE FROM place_addressline where address_place_id = OLD.place_id;
+
+  END IF;
+
+  IF OLD.rank_address < 26 THEN
+    b := deleteLocationArea(OLD.partition, OLD.place_id);
+  END IF;
+
+  IF OLD.name is not null THEN
+    b := deleteSearchName(OLD.partition, OLD.place_id);
+  END IF;
+
   DELETE FROM place_addressline where place_id = OLD.place_id;
-  DELETE FROM place_addressline where address_place_id = OLD.place_id;
 
   RETURN OLD;
 
@@ -2212,37 +2214,49 @@ CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_star
 DECLARE
   
   startnumber INTEGER;
+  endnumber INTEGER;
   stepsize INTEGER;
   housenum INTEGER;
   newpoints INTEGER;
   numberrange INTEGER;
+  rangestartnumber INTEGER;
 
 BEGIN
 
-  numberrange := in_endnumber - in_startnumber;
+  IF in_endnumber > in_startnumber THEN
+    startnumber = in_startnumber;
+    endnumber = in_endnumber;
+  ELSE
+    startnumber = in_endnumber;
+    endnumber = in_startnumber;
+  END IF;
+
+  numberrange := endnumber - startnumber;
+  rangestartnumber := startnumber;
 
   IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
-    startnumber := in_startnumber + 1;
+    startnumber := startnumber + 1;
     stepsize := 2;
   ELSE
     IF (interpolationtype = 'odd' OR interpolationtype = 'even') THEN
-      startnumber := in_startnumber;
       stepsize := 2;
     ELSE -- everything else assumed to be 'all'
-      startnumber := in_startnumber;
       stepsize := 1;
     END IF;
   END IF;
 
---this is a one time operation - skip the delete
---delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id and type = 'house' and place_id != prevnode.place_id;
+  -- Filter out really broken tiger data
+  IF numberrange > 0 AND (numberrange::float/stepsize::float > 500) AND ST_length(linegeo)/(numberrange::float/stepsize::float) < 0.000001 THEN
+    RAISE WARNING 'Road too short for number range % to % on %, % (%)',startnumber,endnumber,in_street,in_isin,ST_length(linegeo)/(numberrange::float/stepsize::float);    
+    RETURN 0;
+  END IF;
 
   newpoints := 0;
-  FOR housenum IN startnumber..in_endnumber BY stepsize LOOP
+  FOR housenum IN startnumber..endnumber BY stepsize LOOP
     insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, 
       country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
     values ('T', nextval('seq_tigger_house'), 'place', 'house', null, housenum, in_street, in_isin, in_postcode,
-      'us', null, 30, 30, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-in_startnumber::float)/numberrange::float));
+      'us', null, 30, 30, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
     newpoints := newpoints + 1;
   END LOOP;
 

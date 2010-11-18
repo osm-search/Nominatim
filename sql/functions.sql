@@ -1435,7 +1435,7 @@ BEGIN
     -- if we have a name add this to the name search table
     IF NEW.name IS NOT NULL THEN
 
-      IF NEW.rank_search <= 26 THEN
+      IF NEW.rank_search <= 25 THEN
         result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
       END IF;
 

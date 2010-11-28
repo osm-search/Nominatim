@@ -248,7 +248,6 @@ gettokenstring( PG_FUNCTION_ARGS )
 	str_replace(buffer, &len, &changes, " und ", 5, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " en ", 4, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " et ", 4, " ", 1, 0);
-	str_replace(buffer, &len, &changes, " e ", 3, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " y ", 3, " ", 1, 0);
 
 	// 'the' (and similar)

@@ -197,12 +197,14 @@ county_fips = {
 '02013' : 'Aleutians East, AK' ,
 '02016' : 'Aleutians West, AK' ,
 '02020' : 'Anchorage, AK' ,
+'02230' : 'Skagway Municipality' ,
 '02050' : 'Bethel, AK' ,
 '02060' : 'Bristol Bay, AK' ,
 '02068' : 'Denali, AK' ,
 '02070' : 'Dillingham, AK' ,
 '02090' : 'Fairbanks North Star, AK' ,
 '02100' : 'Haines, AK' ,
+'02105' : 'Hoonah-Angoon Census Area' ,
 '02110' : 'Juneau, AK' ,
 '02122' : 'Kenai Peninsula, AK' ,
 '02130' : 'Ketchikan Gateway, AK' ,
@@ -212,12 +214,15 @@ county_fips = {
 '02180' : 'Nome, AK' ,
 '02185' : 'North Slope, AK' ,
 '02188' : 'Northwest Arctic, AK' ,
+'02195' : 'Petersburg Census Area' , 
+'02198' : 'Prince of Wales-Hyder Census Area' ,
 '02201' : 'Prince of Wales-Outer Ketchikan, AK' ,
 '02220' : 'Sitka, AK' ,
 '02232' : 'Skagway-Hoonah-Angoon, AK' ,
 '02240' : 'Southeast Fairbanks, AK' ,
 '02261' : 'Valdez-Cordova, AK' ,
 '02270' : 'Wade Hampton, AK' ,
+'02275' : 'Wrangell City and Borough' ,
 '02280' : 'Wrangell-Petersburg, AK' ,
 '02282' : 'Yakutat, AK' ,
 '02290' : 'Yukon-Koyukuk, AK' ,
@@ -3690,6 +3695,10 @@ def addressways(waylist, nodelist, first_id):
 		rtags = []
 		ltags = []
 		tags = []
+                zipr = ''
+                zipl = ''
+                name = ''
+                county = ''
     		if "tiger:zip_right" in waykey:
 		    zipr = waykey["tiger:zip_right"]
                     rtags.append( "<tag k=\"addr:postcode\" v=\"%s\" />" % zipr )
@@ -3719,11 +3728,11 @@ def addressways(waylist, nodelist, first_id):
 		if right:
                     rlinestring = [];
                     for i, point in rsegment:
-                        rlinestring.append( "%f %f" % (point[0], point[1]) )
+                        rlinestring.append( "%f %f" % (point[1], point[0]) )
 		if left:
                     llinestring = [];
                     for i, point in lsegment:
-                        llinestring.append( "%f %f" % (point[0], point[1]) )
+                        llinestring.append( "%f %f" % (point[1], point[0]) )
 		if right:
                     rsegments.append( rsegment )
 		if left:
@@ -3786,7 +3795,7 @@ def addressways(waylist, nodelist, first_id):
 #                    ret.append( "</way>" )
 
                     ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
-                                ( ",".join(rlinestring), rfromadd, rtoadd, interpolationtype, name, county, zipr ) )
+                                ( ",".join(rlinestring), rfromadd.replace("'", "''"), rtoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipr.replace("'", "''") ) )
 
 		if left:
 		    id += 1
@@ -3811,7 +3820,7 @@ def addressways(waylist, nodelist, first_id):
 		    else:
                         interpolationtype = "all";
                     ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
-                                ( ",".join(llinestring), lfromadd, ltoadd, interpolationtype, name, county, zipl ) )
+                                ( ",".join(llinestring), lfromadd.replace("'", "''"), ltoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipl.replace("'", "''") ) )
 
     return ret
 

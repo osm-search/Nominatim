@@ -22,7 +22,9 @@
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
-		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data'),
+		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
+		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
+		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -64,11 +66,12 @@
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturaleathdata.sql');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/worldboundaries.sql');
 	}
 
@@ -76,6 +79,10 @@
 	{
 		$bDidSomething = true;
 		passthru(CONST_BasePath.'/osm2pgsql/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['osm-file']);
+
+		$oDB =& getDB();
+		$x = $oDB->getRow('select * from place limit 1');
+		if (!$x || PEAR::isError($x)) fail('No Data');
 	}
 
 	if ($aCMDResult['create-functions'] || $aCMDResult['all'])
@@ -121,6 +128,7 @@
 			}
 			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
 		}
+
 		pgsqlRunScript($sTemplate);
 	}
 
@@ -172,7 +180,7 @@
 		echo "\n";
 	}
 
-	if ($aCMDResult['import-tiger-data'] || $aCMDResult['all'])
+	if ($aCMDResult['import-tiger-data'])
 	{
 		$bDidSomething = true;
 
@@ -185,6 +193,7 @@
 		foreach(glob(CONST_BasePath.'/data/tiger2009/*.sql') as $sFile)
 		{
 			echo $sFile.': ';
+			if ((int)basename($sFile) <= 53033) continue;
 			$hFile = fopen($sFile, "r");
 			$sSQL = fgets($hFile, 100000);
 			$iLines = 0;
@@ -224,6 +233,29 @@
 			}
 			echo "\n";
 		}
+	}
+
+	if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])
+	{
+		$oDB =& getDB();
+		if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
+		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
+		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,country_code,";
+		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select country_code,postcode,";
+		$sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
+		$sSQL .= "from place where postcode is not null group by country_code,postcode) as x";
+		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+
+		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
+		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
+		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
+		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+	}
+
+	if ($aCMDResult['index'] || $aCMDResult['all'])
+	{
+		$bDidSomething = true;
+		passthru(CONST_BasePath.'/nominatim/nominatim -i -d nominatim -t '.$iInstances);
 	}
 
 	if (!$bDidSomething)

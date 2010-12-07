@@ -91,6 +91,20 @@ CREATE TABLE location_area_large () INHERITS (location_area);
 CREATE TABLE location_area_roadnear () INHERITS (location_area);
 CREATE TABLE location_area_roadfar () INHERITS (location_area);
 
+drop table IF EXISTS location_property CASCADE;
+CREATE TABLE location_property (
+  place_id INTEGER,
+  partition integer,
+  parent_place_id INTEGER,
+  housenumber TEXT,
+  postcode TEXT
+  );
+SELECT AddGeometryColumn('location_property', 'centroid', 4326, 'POINT', 2);
+CREATE TABLE location_property_tiger () INHERITS (location_property);
+CREATE INDEX idx_location_property_tiger_place_id ON location_property_tiger USING BTREE (place_id);
+CREATE INDEX idx_location_property_tiger_parent_place_id ON location_property_tiger USING BTREE (parent_place_id);
+CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id ON location_property_tiger USING BTREE (parent_place_id, housenumber);
+
 drop table IF EXISTS search_name_blank CASCADE;
 CREATE TABLE search_name_blank (
   place_id INTEGER,
@@ -250,3 +264,6 @@ CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(ge
   where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
 CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed = false and class='place' and type='houses';
 CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id);
+
+DROP SEQUENCE seq_postcodes;
+CREATE SEQUENCE seq_postcodes start 1;

@@ -697,12 +697,8 @@
 		$sSQL .= " length(name::text) as namelength ";
 	        $sSQL .= " from place_addressline join placex on (address_place_id = placex.place_id)";
         	$sSQL .= " where place_addressline.place_id = $iPlaceID and (rank_address > 0 OR address_place_id = $iPlaceID)";
-// and isaddress";
-	        if ($sCountryCode)
-        	{
-                	$sSQL .= " and (placex.country_code IS NULL OR placex.country_code = '".$sCountryCode."' OR rank_address < 4)";
-	        }
-        	$sSQL .= " order by cached_rank_address desc,fromarea desc,distance asc,rank_search desc,namelength desc";
+        	$sSQL .= " order by cached_rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc,namelength 
+desc";
 //var_dump($sSQL);
 	        $aAddressLines = $oDB->getAll($sSQL);
         	if (PEAR::IsError($aAddressLines))

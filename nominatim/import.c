@@ -18,10 +18,14 @@ typedef enum { FILEMODE_NONE, FILEMODE_ADD, FILEMODE_UPDATE, FILEMODE_DELETE } f
 
 #define MAX_FEATUREADDRESS 500
 #define MAX_FEATURENAMES 1000
+#define MAX_FEATUREEXTRATAGS 100
+#define MAX_FEATURENAMESTRING 100000
+#define MAX_FEATUREEXTRATAGSTRING 50000
 
 struct feature_address {
 	int			place_id;
 	int			rankAddress;
+	char			isAddress[2];
 	xmlChar *	type;
 	xmlChar *	id;
 	xmlChar *	key;
@@ -29,7 +33,7 @@ struct feature_address {
 	xmlChar *	distance;
 };
 
-struct feature_name {
+struct feature_tag {
 	xmlChar *	type;
 	xmlChar *	value;
 };
@@ -52,14 +56,16 @@ int 					fileType = FILETYPE_NONE;
 int 					fileMode = FILEMODE_ADD;
 PGconn *				conn;
 struct feature_address 	featureAddress[MAX_FEATUREADDRESS];
-struct feature_name 	featureName[MAX_FEATURENAMES];
+struct feature_tag	 	featureName[MAX_FEATURENAMES];
+struct feature_tag		featureExtraTag[MAX_FEATUREEXTRATAGS];
 struct feature 			feature;
 int 					featureAddressLines = 0;
 int 					featureNameLines = 0;
+int 					featureExtraTagLines = 0;
 int 					featureCount = 0;
 xmlHashTablePtr 		partionTableTagsHash;
-
-
+char					featureNameString[MAX_FEATURENAMESTRING];
+char					featureExtraTagString[MAX_FEATUREEXTRATAGSTRING];
 
 void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
 {
@@ -143,6 +149,19 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
     	if (featureNameLines >= MAX_FEATURENAMES)
     	{
             fprintf( stderr, "Too many name elements\n");
+            exit_nicely();
+    	}
+    	return;
+    }
+    if (xmlStrEqual(name, BAD_CAST "tags")) return;
+    if (xmlStrEqual(name, BAD_CAST "tag"))
+    {
+    	featureExtraTag[featureExtraTagLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    	featureExtraTag[featureExtraTagLines].value = xmlTextReaderReadString(reader);
+    	featureExtraTagLines++;
+    	if (featureExtraTagLines >= MAX_FEATUREEXTRATAGS)
+    	{
+            fprintf( stderr, "Too many extra tag elements\n");
             exit_nicely();
     	}
     	return;
@@ -248,6 +267,16 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
     	featureAddress[featureAddressLines].rankAddress =  atoi(value);
     	xmlFree(value);
 
+    	value = (char*)xmlTextReaderGetAttribute(reader, BAD_CAST "isaddress");
+    	if (!value)
+    	{
+            fprintf( stderr, "Address element missing rank\n");
+            exit_nicely();
+    	}
+	if (*value == 't') strcpy(featureAddress[featureAddressLines].isAddress, "t");
+	else strcpy(featureAddress[featureAddressLines].isAddress, "f");
+    	xmlFree(value);
+
     	featureAddress[featureAddressLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     	featureAddress[featureAddressLines].id = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
     	featureAddress[featureAddressLines].key = xmlTextReaderGetAttribute(reader, BAD_CAST "key");
@@ -273,7 +302,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
     const char *	paramValues[11];
     char *			place_id;
     char *			partionQueryName;
-	int i;
+	int i, namePos, lineTypeLen, lineValueLen;
 
     if (xmlStrEqual(name, BAD_CAST "feature"))
 	{
@@ -345,13 +374,69 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 			paramValues[2] = (const char *)feature.id;
 			paramValues[3] = (const char *)feature.key;
 			paramValues[4] = (const char *)feature.value;
-//			paramValues[5] = (const char *)feature.name;
-			paramValues[6] = (const char *)feature.adminLevel;
-			paramValues[7] = (const char *)feature.houseNumber;
-			paramValues[8] = (const char *)feature.rankAddress;
-			paramValues[9] = (const char *)feature.rankSearch;
-			paramValues[10] = (const char *)feature.geometry;
-			res = PQexecPrepared(conn, "placex_insert", 11, paramValues, NULL, NULL, 0);
+
+			featureNameString[0] = 0;
+			if (featureNameLines)
+			{
+				namePos = 0;
+				lineTypeLen = 0;
+				lineValueLen = 0;
+				for(i = 0; i < featureNameLines; i++)
+				{
+					lineTypeLen = strlen(BAD_CAST featureName[i].type);
+					lineValueLen = strlen(BAD_CAST featureName[i].value);
+					if (namePos+lineTypeLen+lineValueLen+7 > MAX_FEATURENAMESTRING)
+		            {
+        		        fprintf(stderr, "feature name too long: %s", (const char *)featureName[i].value);
+						break;
+		            }
+					if (namePos) strcpy(featureNameString+(namePos++), ",");
+					strcpy(featureNameString+(namePos++), "\"");
+					strcpy(featureNameString+namePos, BAD_CAST featureName[i].type);
+					namePos += lineTypeLen;
+					strcpy(featureNameString+namePos, "\"=>\"");
+					namePos += 4;
+					strcpy(featureNameString+namePos, BAD_CAST featureName[i].value);
+					namePos += lineValueLen;
+					strcpy(featureNameString+(namePos++), "\"");
+				}
+			}
+			paramValues[5] = (const char *)featureNameString;
+
+			featureExtraTagString[0] = 0;
+			if (featureExtraTagLines)
+			{
+				namePos = 0;
+				lineTypeLen = 0;
+				lineValueLen = 0;
+				for(i = 0; i < featureExtraTagLines; i++)
+				{
+					lineTypeLen = strlen(BAD_CAST featureExtraTag[i].type);
+					lineValueLen = strlen(BAD_CAST featureExtraTag[i].value);
+					if (namePos+lineTypeLen+lineValueLen+7 > MAX_FEATUREEXTRATAGSTRING)
+		            {
+        		        fprintf(stderr, "feature extra tag too long: %s", (const char *)featureExtraTag[i].value);
+						break;
+		            }
+					if (namePos) strcpy(featureExtraTagString+(namePos++),",");
+					strcpy(featureExtraTagString+(namePos++), "\"");
+					strcpy(featureExtraTagString+namePos, BAD_CAST featureExtraTag[i].type);
+					namePos += lineTypeLen;
+					strcpy(featureExtraTagString+namePos, "\"=>\"");
+					namePos += 4;
+					strcpy(featureExtraTagString+namePos, BAD_CAST featureExtraTag[i].value);
+					namePos += lineValueLen;
+					strcpy(featureExtraTagString+(namePos++), "\"");
+				}
+			}
+			paramValues[6] = (const char *)featureExtraTagString;
+
+			paramValues[7] = (const char *)feature.adminLevel;
+			paramValues[8] = (const char *)feature.houseNumber;
+			paramValues[9] = (const char *)feature.rankAddress;
+			paramValues[10] = (const char *)feature.rankSearch;
+			paramValues[11] = (const char *)feature.geometry;
+			res = PQexecPrepared(conn, "placex_insert", 12, paramValues, NULL, NULL, 0);
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			{
 				fprintf(stderr, "index_placex: INSERT failed: %s", PQerrorMessage(conn));
@@ -369,7 +454,8 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 				paramValues[3] = (const char *)featureAddress[i].id;
 				paramValues[4] = (const char *)featureAddress[i].key;
 				paramValues[5] = (const char *)featureAddress[i].value;
-				res = PQexecPrepared(conn, "place_addressline_insert", 6, paramValues, NULL, NULL, 0);
+				paramValues[6] = (const char *)featureAddress[i].isAddress;
+				res = PQexecPrepared(conn, "place_addressline_insert", 7, paramValues, NULL, NULL, 0);
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
 					fprintf(stderr, "place_addressline_insert: INSERT failed: %s", PQerrorMessage(conn));
@@ -555,9 +641,9 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
 	}
 
     res = PQprepare(conn, "placex_insert",
-        	"insert into placex (place_id,osm_type,osm_id,class,type,name,admin_level,housenumber,rank_address,rank_search,geometry) "
-        	"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, st_setsrid($11, 4326))",
-    	11, NULL);
+        	"insert into placex (place_id,osm_type,osm_id,class,type,name,extratags,admin_level,housenumber,rank_address,rank_search,geometry) "
+        	"values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, st_setsrid($12, 4326))",
+    	12, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
         fprintf(stderr, "Failed to prepare placex_insert: %s\n", PQerrorMessage(conn));
@@ -573,14 +659,14 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     	1, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-        fprintf(stderr, "Failed to prepare placex_insert: %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "Failed to prepare search_name_insert: %s\n", PQerrorMessage(conn));
     	exit(EXIT_FAILURE);
 	}
 
     res = PQprepare(conn, "place_addressline_insert",
         	"insert into place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address) "
-        	"select $1, place_id, false, true, $2, rank_address from placex where osm_type = $3 and osm_id = $4 and class = $5 and type = $6",
-    	6, NULL);
+        	"select $1, place_id, false, $7, $2, rank_address from placex where osm_type = $3 and osm_id = $4 and class = $5 and type = $6",
+    	7, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
         fprintf(stderr, "Failed to prepare place_addressline_insert: %s\n", PQerrorMessage(conn));

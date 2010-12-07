@@ -51,7 +51,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
 
     pg_prepare_params[0] = PG_OID_INT4;
     res = PQprepare(conn, "index_sectors",
-    	"select geometry_sector,count(*) from placex where rank_search = $1 and indexed = true group by geometry_sector order by geometry_sector",
+    	"select geometry_sector,count(*) from placex where rank_search = $1 and indexed_status = 0 group by geometry_sector order by geometry_sector",
     	1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) exit(EXIT_FAILURE);
     PQclear(res);
@@ -118,7 +118,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
 	            PQclear(resPlaces);
 	            exit(EXIT_FAILURE);
 	        }
-			if (PQftype(resPlaces, 0) != PG_OID_INT8)
+			if (PQftype(resPlaces, 0) != PG_OID_INT4)
 			{
 	            fprintf(stderr, "Place_id value has unexpected type\n");
 	            PQclear(resPlaces);
@@ -128,7 +128,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
 			tuples = PQntuples(resPlaces);
 			for(i = 0; i < tuples; i++)
 			{
-				nominatim_exportPlace(PGint64(*((uint64_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL);
+				nominatim_exportPlace(PGint32(*((uint32_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL);
 				rankTotalDone++;
 				if (rankTotalDone%1000 == 0) printf("Done %i (k)\n", rankTotalDone/1000);
 	        }
@@ -160,7 +160,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_address",
-    	"select osm_type,osm_id,class,type,distance,cached_rank_address from place_addressline join placex on (address_place_id = placex.place_id) where isaddress and place_addressline.place_id = $1 and address_place_id != place_addressline.place_id order by cached_rank_address asc",
+    	"select osm_type,osm_id,class,type,distance,cached_rank_address,isaddress from place_addressline join placex on (address_place_id = placex.place_id) where place_addressline.place_id = $1 and address_place_id != place_addressline.place_id order by cached_rank_address asc",
     	1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -171,11 +171,22 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_names",
-    	"select (each(name)).key,(each(name)).value from (select name as name from placex where place_id = $1) as x",
+    	"select (each(name)).key,(each(name)).value from (select name from placex where place_id = $1) as x",
     	1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Error preparing placex_names: %s", PQerrorMessage(conn));
+		exit(EXIT_FAILURE);
+	}
+    PQclear(res);
+
+    pg_prepare_params[0] = PG_OID_INT8;
+    res = PQprepare(conn, "placex_extratags",
+    	"select (each(extratags)).key,(each(extratags)).value from (select extratags from placex where place_id = $1) as x",
+    	1, pg_prepare_params);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "Error preparing placex_extratags: %s", PQerrorMessage(conn));
 		exit(EXIT_FAILURE);
 	}
     PQclear(res);
@@ -251,6 +262,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 	PGresult * 		res;
 	PGresult * 		resNames;
 	PGresult * 		resAddress;
+	PGresult * 		resExtraTags;
 
 	int 			i;
 
@@ -289,6 +301,14 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 		exit(EXIT_FAILURE);
 	}
 
+	resExtraTags = PQexecPrepared(conn, "placex_extratags", 1, paramValues, paramLengths, paramFormats, 0);
+	if (PQresultStatus(resExtraTags) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, "placex_extratags: SELECT failed: %s", PQerrorMessage(conn));
+		PQclear(resExtraTags);
+		exit(EXIT_FAILURE);
+	}
+
 	if (writer_mutex) pthread_mutex_lock( writer_mutex );
 
 	xmlTextWriterStartElement(writer, BAD_CAST "feature");
@@ -300,7 +320,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 	xmlTextWriterWriteAttribute(writer, BAD_CAST "rank", BAD_CAST PQgetvalue(res, 0, 9));
 	xmlTextWriterWriteAttribute(writer, BAD_CAST "importance", BAD_CAST PQgetvalue(res, 0, 10));
 
-	if (PQgetvalue(res, 0, 4) && strlen(PQgetvalue(res, 0, 4)))
+	if (PQntuples(resNames))
 	{
 		xmlTextWriterStartElement(writer, BAD_CAST "names");
 
@@ -348,10 +368,27 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 			xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(resAddress, i, 2));
 			xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(resAddress, i, 3));
 			xmlTextWriterWriteAttribute(writer, BAD_CAST "distance", BAD_CAST PQgetvalue(resAddress, i, 4));
+			xmlTextWriterWriteAttribute(writer, BAD_CAST "isaddress", BAD_CAST PQgetvalue(resAddress, i, 6));
 			xmlTextWriterEndElement(writer);
 		}
 		xmlTextWriterEndElement(writer);
 	}
+
+	if (PQntuples(resExtraTags))
+	{
+		xmlTextWriterStartElement(writer, BAD_CAST "tags");
+
+		for(i = 0; i < PQntuples(resExtraTags); i++)
+		{
+			xmlTextWriterStartElement(writer, BAD_CAST "tag");
+			xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(resExtraTags, i, 0));
+			xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(resExtraTags, i, 1));
+			xmlTextWriterEndElement(writer);
+		}
+
+		xmlTextWriterEndElement(writer);
+	}
+
 
 	xmlTextWriterStartElement(writer, BAD_CAST "osmGeometry");
 	xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(res, 0, 7));

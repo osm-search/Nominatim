@@ -123,6 +123,14 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 	    }
 	    PQclear(res);
 
+		res = PQexec(thread_data[i].conn, "set enable_seqscan = false");
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	    {
+	        fprintf(stderr, "Failed disabling sequential scan: %s\n", PQerrorMessage(conn));
+	        exit(EXIT_FAILURE);
+	    }
+	    PQclear(res);
+
 	    nominatim_exportCreatePreparedQueries(thread_data[i].conn);
 	}
 

@@ -31,8 +31,8 @@ body {
   float: right;
 }
     </style>
-	<script src="OpenLayers.js"></script>
-	<script src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+	<script src="js/OpenLayers.js"></script>
+	<script src="js/OpenStreetMap.js"></script>
 	<script src="prototype-1.6.0.3.js"></script>
 	<script type="text/javascript">
         
@@ -111,6 +111,12 @@ foreach($aPolyPoints as $aPolyPoint)
 	echo ' <div>Coverage: <span class="area">'.($aPointDetails['isarea']=='t'?'Polygon':'Point').'</span></div>';
 	$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 	if ($sOSMType) echo ' <div>OSM: <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
+	echo ' <div>Extra Tags: ';
+	foreach($aPointDetails['aExtraTags'] as $sKey => $sValue)
+	{
+		echo ' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>';
+	}
+	echo ' </div>';
 	echo '</div>';
 
 	echo '<h2>Address</h2>';

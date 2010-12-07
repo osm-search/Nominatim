@@ -7,7 +7,9 @@
 		$oDB =& DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), false);
 		if (PEAR::IsError($oDB))
 		{
-			fail($oDB->getMessage(), 'Unable to connect to the database');
+			var_dump(CONST_Database_DSN);
+			var_Dump($oDB);
+			fail($oDB->getMessage());
 		}
 		$oDB->setFetchMode(DB_FETCHMODE_ASSOC);
 		$oDB->query("SET DateStyle TO 'sql,european'");

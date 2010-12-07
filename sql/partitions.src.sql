@@ -31,6 +31,12 @@ CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USI
 CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector gin__int_ops);
 CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector gin__int_ops);
 
+CREATE TABLE location_property_-partition- () INHERITS (location_property);
+CREATE INDEX idx_location_property_-partition-_place_id ON location_property_-partition- USING BTREE (place_id);
+CREATE INDEX idx_location_property_-partition-_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id);
+CREATE INDEX idx_location_property_-partition-_housenumber_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id, housenumber);
+--CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid);
+
 -- end
 
 create or replace function getNearFeatures(in_partition INTEGER, point GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeature AS $$
@@ -46,7 +52,7 @@ BEGIN
         UNION ALL
         SELECT * FROM location_area_country WHERE ST_Contains(geometry, point) and rank_search < maxrank
       ) as location_area
-      ORDER BY rank_search desc, isin_tokens && keywords desc, isguess asc, rank_address asc, ST_Distance(point, centroid) ASC
+      ORDER BY rank_address desc, isin_tokens && keywords desc, isguess asc, ST_Distance(point, centroid) * CASE WHEN rank_address = 16 AND rank_search = 16 THEN 0.25 WHEN rank_address = 16 AND rank_search = 17 THEN 0.5 ELSE 1 END ASC
     LOOP
       RETURN NEXT r;
     END LOOP;
@@ -85,12 +91,14 @@ DECLARE
 BEGIN
 
   IF in_rank_search <= 4 THEN
+    DELETE FROM location_area_country where place_id = in_place_id;
     INSERT INTO location_area_country values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 
 -- start
   IF in_partition = -partition- THEN
+    DELETE FROM location_area_large_-partition- where place_id = in_place_id;
     INSERT INTO location_area_large_-partition- values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
@@ -169,10 +177,12 @@ create or replace function insertSearchName(
 DECLARE
 BEGIN
 
+  DELETE FROM search_name WHERE place_id = in_place_id;
   INSERT INTO search_name values (in_place_id, in_rank_search, in_rank_address, 0, in_country_code, 
     in_name_vector, in_nameaddress_vector, in_centroid);
 
   IF in_rank_search <= 4 THEN
+    DELETE FROM search_name_country WHERE place_id = in_place_id;
     INSERT INTO search_name_country values (in_place_id, in_rank_search, in_rank_address, 0, in_country_code, 
       in_name_vector, in_nameaddress_vector, in_centroid);
     RETURN TRUE;
@@ -180,6 +190,7 @@ BEGIN
 
 -- start
   IF in_partition = -partition- THEN
+    DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
     INSERT INTO search_name_-partition- values (in_place_id, in_rank_search, in_rank_address, 0, in_country_code, 
       in_name_vector, in_nameaddress_vector, in_centroid);
     RETURN TRUE;

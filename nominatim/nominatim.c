@@ -83,7 +83,8 @@ static void long_usage(char *arg0)
     fprintf(stderr, "   -v|--verbose\t\tVerbose output.\n");
     fprintf(stderr, "\n");
 
-    if (sizeof(int*) == 4) {
+    if (sizeof(int*) == 4)
+    {
         fprintf(stderr, "\n\nYou are running this on 32bit system - this will not work\n");
     }
 }
@@ -112,9 +113,11 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "nominatim SVN version %s\n\n", VERSION);
 
-    while (1) {
+    while (1)
+    {
         int c, option_index = 0;
-        static struct option long_options[] = {
+        static struct option long_options[] =
+        {
             {"help",     0, 0, 'h'},
 
             {"verbose",  0, 0, 'v'},
@@ -140,55 +143,86 @@ int main(int argc, char *argv[])
         if (c == -1)
             break;
 
-        switch (c) {
-            case 'v': verbose=1;  break;
-            case 'd': db=optarg;  break;
-            case 'U': username=optarg; break;
-            case 'W': pass_prompt=1; break;
-            case 'H': host=optarg; break;
-            case 'P': port=optarg; break;
-            case 'h': long_usage_bool=1; break;
-            case 'i': index=1; break;
-            case 'e': export=1; break;
-            case 'I': import=1; break;
-            case 't': threads=atoi(optarg); break;
-            case 'F': file=optarg; break;
-            case 'T': tagsfile=optarg; break;
-            case '?':
-            default:
-                short_usage(argv[0]);
-                exit(EXIT_FAILURE);
+        switch (c)
+        {
+        case 'v':
+            verbose=1;
+            break;
+        case 'd':
+            db=optarg;
+            break;
+        case 'U':
+            username=optarg;
+            break;
+        case 'W':
+            pass_prompt=1;
+            break;
+        case 'H':
+            host=optarg;
+            break;
+        case 'P':
+            port=optarg;
+            break;
+        case 'h':
+            long_usage_bool=1;
+            break;
+        case 'i':
+            index=1;
+            break;
+        case 'e':
+            export=1;
+            break;
+        case 'I':
+            import=1;
+            break;
+        case 't':
+            threads=atoi(optarg);
+            break;
+        case 'F':
+            file=optarg;
+            break;
+        case 'T':
+            tagsfile=optarg;
+            break;
+        case '?':
+        default:
+            short_usage(argv[0]);
+            exit(EXIT_FAILURE);
         }
     }
 
-    if (long_usage_bool) {
+    if (long_usage_bool)
+    {
         long_usage(argv[0]);
         exit(EXIT_FAILURE);
     }
 
     if (threads < 1) threads = 1;
 
-/*
-    if (argc == optind) {  // No non-switch arguments
-        short_usage(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-*/
-    if (index && import) {
+    /*
+        if (argc == optind) {  // No non-switch arguments
+            short_usage(argv[0]);
+            exit(EXIT_FAILURE);
+        }
+    */
+    if (index && import)
+    {
         fprintf(stderr, "Error: --index and --import options can not be used on the same database!\n");
         exit(EXIT_FAILURE);
     }
 
     if (pass_prompt)
         password = simple_prompt("Password:", 100, 0);
-    else {
+    else
+    {
         password = getenv("PGPASS");
     }
 
     // Test the database connection
     conninfo = build_conninfo(db, username, password, host, port);
     conn = PQconnectdb(conninfo);
-    if (PQstatus(conn) != CONNECTION_OK) {
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
         fprintf(stderr, "Connection to database failed: %s\n", PQerrorMessage(conn));
         exit(EXIT_FAILURE);
     }
@@ -196,7 +230,7 @@ int main(int argc, char *argv[])
 
     if (!index && !export && !import)
     {
-       fprintf(stderr, "Please select index, export or import.\n");
+        fprintf(stderr, "Please select index, export or import.\n");
         exit(EXIT_FAILURE);
     }
     if (index) nominatim_index(0, 30, threads, conninfo, file);

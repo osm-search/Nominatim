@@ -12,22 +12,26 @@ const char *build_conninfo(const char *db, const char *username, const char *pas
     strcat(conninfo, db);
     strcat(conninfo, "'");
 
-    if (username) {
+    if (username)
+    {
         strcat(conninfo, " user='");
         strcat(conninfo, username);
         strcat(conninfo, "'");
     }
-    if (password) {
+    if (password)
+    {
         strcat(conninfo, " password='");
         strcat(conninfo, password);
         strcat(conninfo, "'");
     }
-    if (host) {
+    if (host)
+    {
         strcat(conninfo, " host='");
         strcat(conninfo, host);
         strcat(conninfo, "'");
     }
-    if (port) {
+    if (port)
+    {
         strcat(conninfo, " port='");
         strcat(conninfo, port);
         strcat(conninfo, "'");

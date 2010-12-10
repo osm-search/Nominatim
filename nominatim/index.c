@@ -34,10 +34,12 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 	PGresult * res;
 	PGresult * resSectors;
 	PGresult * resPlaces;
+	PGresult * resNULL;
 
 	int rank;
 	int i;
 	int iSector;
+	int iResult;
 
     const char *paramValues[2];
     int         paramLengths[2];
@@ -183,85 +185,107 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     	}
 
     	rankStartTime = time(0);
-    	for (iSector = 0; iSector < PQntuples(resSectors); iSector++)
+    	for (iSector = 0; iSector <= PQntuples(resSectors); iSector++)
     	{
-			sector = PGint32(*((uint32_t *)PQgetvalue(resSectors, iSector, 0)));
-	    	//printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
-
-			// Get all the place_id's for this sector
-		    paramRank = PGint32(rank);
-	    	paramValues[0] = (char *)&paramRank;
-		    paramLengths[0] = sizeof(paramRank);
-		    paramFormats[0] = 1;
-	    	paramSector = PGint32(sector);
-	        paramValues[1] = (char *)&paramSector;
-			paramLengths[1] = sizeof(paramSector);
-		    paramFormats[1] = 1;
-			if (rank < 16)
-		        resPlaces = PQexecPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
-			else
-		        resPlaces = PQexecPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
-	        if (PQresultStatus(resPlaces) != PGRES_TUPLES_OK)
-	        {
-	            fprintf(stderr, "index_sector_places: SELECT failed: %s", PQerrorMessage(conn));
-	            PQclear(resPlaces);
-	            exit(EXIT_FAILURE);
-	        }
-			if (PQftype(resPlaces, 0) != PG_OID_INT4)
+			if (iSector > 0)
 			{
-	            fprintf(stderr, "Place_id value has unexpected type\n");
-	            PQclear(resPlaces);
-	            exit(EXIT_FAILURE);
+				resPlaces = PQgetResult(conn);
+	    	    if (PQresultStatus(resPlaces) != PGRES_TUPLES_OK)
+		        {
+		            fprintf(stderr, "index_sector_places: SELECT failed: %s", PQerrorMessage(conn));
+	            	PQclear(resPlaces);
+	        	    exit(EXIT_FAILURE);
+	    	    }
+				if (PQftype(resPlaces, 0) != PG_OID_INT4)
+				{
+	        	    fprintf(stderr, "Place_id value has unexpected type\n");
+	    	        PQclear(resPlaces);
+		            exit(EXIT_FAILURE);
+				}
+				resNULL = PQgetResult(conn);
+				if (resNULL != NULL)
+				{
+					fprintf(stderr, "Unexpected non-null response\n");
+					exit(EXIT_FAILURE);
+				}
 			}
 
-			count = 0;
-			rankPerSecond = 0;
-			tuples = PQntuples(resPlaces);
+			if (iSector < PQntuples(resSectors))
+			{
+				sector = PGint32(*((uint32_t *)PQgetvalue(resSectors, iSector, 0)));
+		    	//printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
 
-			if (tuples > 0)
-	        {
-				// Spawn threads
-				for (i = 0; i < num_threads; i++)
+				// Get all the place_id's for this sector
+			    paramRank = PGint32(rank);
+	    		paramValues[0] = (char *)&paramRank;
+		    	paramLengths[0] = sizeof(paramRank);
+			    paramFormats[0] = 1;
+		    	paramSector = PGint32(sector);
+	    	    paramValues[1] = (char *)&paramSector;
+				paramLengths[1] = sizeof(paramSector);
+			    paramFormats[1] = 1;
+				if (rank < 16)
+		    	    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+				else
+			        iResult = PQsendQueryPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
+				if (!iResult)
 				{
-					thread_data[i].res = resPlaces;
-					thread_data[i].tuples = tuples;
-					thread_data[i].count = &count;
-					thread_data[i].count_mutex = &count_mutex;
-					thread_data[i].writer = writer;
-					thread_data[i].writer_mutex = &writer_mutex;
-					pthread_create(&thread_data[i].thread, NULL, &nominatim_indexThread, (void *)&thread_data[i]);
+		            fprintf(stderr, "index_sector_places: SELECT failed: %s", PQerrorMessage(conn));
+	            	PQclear(resPlaces);
+	        	    exit(EXIT_FAILURE);
 				}
+			}
 
-				// Monitor threads to give user feedback
-				sleepcount = 0;
-				while(count < tuples)
-				{
-					usleep(1000);
+			if (iSector > 0)
+			{
+				count = 0;
+				rankPerSecond = 0;
+				tuples = PQntuples(resPlaces);
 
-					// Aim for one update per second
-					if (sleepcount++ > 500)
+				if (tuples > 0)
+		        {
+					// Spawn threads
+					for (i = 0; i < num_threads; i++)
 					{
-						rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
-						printf("  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
-						sleepcount = 0;
+						thread_data[i].res = resPlaces;
+						thread_data[i].tuples = tuples;
+						thread_data[i].count = &count;
+						thread_data[i].count_mutex = &count_mutex;
+						thread_data[i].writer = writer;
+						thread_data[i].writer_mutex = &writer_mutex;
+						pthread_create(&thread_data[i].thread, NULL, &nominatim_indexThread, (void *)&thread_data[i]);
 					}
+
+					// Monitor threads to give user feedback
+					sleepcount = 0;
+					while(count < tuples)
+					{
+						usleep(1000);
+
+						// Aim for one update per second
+						if (sleepcount++ > 500)
+						{
+							rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
+							printf("  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
+							sleepcount = 0;
+						}
+					}
+
+					// Wait for everything to finish
+					for (i = 0; i < num_threads; i++)
+					{
+						pthread_join(thread_data[i].thread, NULL);
+					}
+
+					rankCountTuples += tuples;
 				}
 
-				// Wait for everything to finish
-				for (i = 0; i < num_threads; i++)
-				{
-					pthread_join(thread_data[i].thread, NULL);
-				}
+				// Finished sector
+				rankPerSecond = (float)rankCountTuples / MAX(difftime(time(0), rankStartTime),1);
+				printf("  Done %i in %i @ %f per second - ETA (seconds): %f\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond, ((float)(rankTotalTuples - rankCountTuples))/rankPerSecond);
 
-				rankCountTuples += tuples;
+	            PQclear(resPlaces);
 	        }
-
-			// Finished sector
-			rankPerSecond = (float)rankCountTuples / MAX(difftime(time(0), rankStartTime),1);
-			printf("  Done %i in %i @ %f per second - ETA (seconds): %f\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond, ((float)(rankTotalTuples - rankCountTuples))/rankPerSecond);
-
-            PQclear(resPlaces);
-
     	}
         // Finished rank
 		printf("\r  Done %i in %i @ %f per second - FINISHED                      \n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);

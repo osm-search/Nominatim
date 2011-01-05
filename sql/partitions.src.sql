@@ -17,8 +17,8 @@ CREATE INDEX idx_location_area_country_geometry ON location_area_country USING G
 CREATE TABLE search_name_country () INHERITS (search_name_blank);
 CREATE INDEX idx_search_name_country_place_id ON search_name_country USING BTREE (place_id);
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid);
-CREATE INDEX idx_search_name_country_name_vector ON search_name_country USING GIN (name_vector gin__int_ops);
-CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector gin__int_ops);
+CREATE INDEX idx_search_name_country_name_vector ON search_name_country USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
 
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large);
@@ -28,14 +28,23 @@ CREATE INDEX idx_location_area_large_-partition-_geometry ON location_area_large
 CREATE TABLE search_name_-partition- () INHERITS (search_name_blank);
 CREATE INDEX idx_search_name_-partition-_place_id ON search_name_-partition- USING BTREE (place_id);
 CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USING GIST (centroid);
-CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector gin__int_ops);
-CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector gin__int_ops);
+CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
 
 CREATE TABLE location_property_-partition- () INHERITS (location_property);
 CREATE INDEX idx_location_property_-partition-_place_id ON location_property_-partition- USING BTREE (place_id);
 CREATE INDEX idx_location_property_-partition-_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id);
 CREATE INDEX idx_location_property_-partition-_housenumber_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id, housenumber);
 --CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid);
+
+CREATE TABLE location_road_-partition- (
+  partition integer,
+  place_id INTEGER,
+  country_code VARCHAR(2)
+  );
+SELECT AddGeometryColumn('location_road_-partition-', 'geometry', 4326, 'GEOMETRY', 2);
+CREATE INDEX idx_location_road_-partition-_geometry ON location_road_-partition- USING GIST (geometry);
+CREATE INDEX idx_location_road_-partition-_place_id ON location_road_-partition- USING BTREE (place_id);
 
 -- end
 
@@ -91,14 +100,12 @@ DECLARE
 BEGIN
 
   IF in_rank_search <= 4 THEN
-    DELETE FROM location_area_country where place_id = in_place_id;
     INSERT INTO location_area_country values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 
 -- start
   IF in_partition = -partition- THEN
-    DELETE FROM location_area_large_-partition- where place_id = in_place_id;
     INSERT INTO location_area_large_-partition- values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
@@ -142,7 +149,8 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestNamedRoadFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER) RETURNS setof nearfeature AS $$
+create or replace function getNearestNamedRoadFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER) 
+  RETURNS setof nearfeature AS $$
 DECLARE
   r nearfeature%rowtype;
 BEGIN
@@ -220,6 +228,118 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 
   RETURN FALSE;
+END
+$$
+LANGUAGE plpgsql;
+
+create or replace function insertLocationRoad(
+  in_partition INTEGER, in_place_id integer, in_country_code VARCHAR(2), in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+
+-- start
+  IF in_partition = -partition- THEN
+    DELETE FROM location_road_-partition- where place_id = in_place_id;
+    INSERT INTO location_road_-partition- values (in_partition, in_place_id, in_country_code, in_geometry);
+    RETURN TRUE;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
+  RETURN FALSE;
+END
+$$
+LANGUAGE plpgsql;
+
+create or replace function deleteRoad(in_partition INTEGER, in_place_id integer) RETURNS BOOLEAN AS $$
+DECLARE
+BEGIN
+
+-- start
+  IF in_partition = -partition- THEN
+    DELETE FROM location_road_-partition- where place_id = in_place_id;
+    RETURN TRUE;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
+
+  RETURN FALSE;
+END
+$$
+LANGUAGE plpgsql;
+
+create or replace function getNearestRoadFeature(in_partition INTEGER, point GEOMETRY) RETURNS setof nearfeature AS $$
+DECLARE
+  r nearfeature%rowtype;
+  search_diameter FLOAT;  
+BEGIN
+
+-- start
+  IF in_partition = -partition- THEN
+    search_diameter := 0.00005;
+    WHILE search_diameter < 0.1 LOOP
+      FOR r IN 
+        SELECT place_id, null, null, null,
+            ST_Distance(geometry, point) as distance
+            FROM location_road_-partition-
+            WHERE ST_DWithin(geometry, point, search_diameter) 
+        ORDER BY distance ASC limit 1
+      LOOP
+        RETURN NEXT r;
+        RETURN;
+      END LOOP;
+      search_diameter := search_diameter * 2;
+    END LOOP;
+    RETURN;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
+END
+$$
+LANGUAGE plpgsql;
+
+create or replace function getNearestParellelRoadFeature(in_partition INTEGER, line GEOMETRY) RETURNS setof nearfeature AS $$
+DECLARE
+  r nearfeature%rowtype;
+  search_diameter FLOAT;  
+  p1 GEOMETRY;
+  p2 GEOMETRY;
+  p3 GEOMETRY;
+BEGIN
+
+  IF st_geometrytype(line) not in ('ST_LineString') THEN
+    RETURN;
+  END IF;
+
+  p1 := ST_Line_Interpolate_Point(line,0);
+  p2 := ST_Line_Interpolate_Point(line,0.5);
+  p3 := ST_Line_Interpolate_Point(line,1);
+
+-- start
+  IF in_partition = -partition- THEN
+    search_diameter := 0.0005;
+    WHILE search_diameter < 0.01 LOOP
+      FOR r IN 
+        SELECT place_id, null, null, null,
+            ST_Distance(geometry, line) as distance
+            FROM location_road_-partition-
+            WHERE ST_DWithin(line, geometry, search_diameter)
+            ORDER BY (ST_distance(geometry, p1)+
+                      ST_distance(geometry, p2)+
+                      ST_distance(geometry, p3)) ASC limit 1
+      LOOP
+        RETURN NEXT r;
+        RETURN;
+      END LOOP;
+      search_diameter := search_diameter * 2;
+    END LOOP;
+    RETURN;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
 LANGUAGE plpgsql;

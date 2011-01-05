@@ -75,6 +75,8 @@ static void long_usage(char *arg0)
     fprintf(stderr, "   -i|--index\t\tIndex the database.\n");
     fprintf(stderr, "   -e|--export\t\tGenerate a structured file.\n");
     fprintf(stderr, "   -I|--import\t\tImport a structured file.\n");
+    fprintf(stderr, "   -r|--minrank\t\tMinimum / starting rank. (default: 0))\n");
+    fprintf(stderr, "   -R|--maxrank\t\tMaximum / finishing rank. (default: 30)\n");
     fprintf(stderr, "   -t|--threads\t\tNumber of threads to create for indexing.\n");
     fprintf(stderr, "   -F|--file\t\tfile to use (either to import or export).\n");
     fprintf(stderr, "   -T|--tagfile\t\tfile containing 'special' tag pairs\n");
@@ -102,6 +104,8 @@ int main(int argc, char *argv[])
     int index = 0;
     int export = 0;
     int import = 0;
+    int minrank = 0;
+    int maxrank = 30;
     int threads = 1;
     const char *file = NULL;
     const char *tagsfile = "partitionedtags.def";
@@ -135,11 +139,15 @@ int main(int argc, char *argv[])
             {"file",  1, 0, 'F'},
             {"tagsfile",  1, 0, 'T'},
 
+            {"minrank",  1, 0, 'r'},
+            {"maxrank",  1, 0, 'R'},
+
+
 
             {0, 0, 0, 0}
         };
 
-        c = getopt_long(argc, argv, "vhd:U:WH:P:ieIt:F:T:", long_options, &option_index);
+        c = getopt_long(argc, argv, "vhd:U:WH:P:ieIt:F:T:r:R:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -177,6 +185,12 @@ int main(int argc, char *argv[])
             break;
         case 't':
             threads=atoi(optarg);
+            break;
+        case 'r':
+            minrank=atoi(optarg);
+            break;
+        case 'R':
+            maxrank=atoi(optarg);
             break;
         case 'F':
             file=optarg;
@@ -233,8 +247,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Please select index, export or import.\n");
         exit(EXIT_FAILURE);
     }
-    if (index) nominatim_index(0, 30, threads, conninfo, file);
-    if (export) nominatim_export(0, 30, conninfo, file);
+    if (index) nominatim_index(minrank, maxrank, threads, conninfo, file);
+    if (export) nominatim_export(minrank, maxrank, conninfo, file);
     if (import) nominatim_import(conninfo, tagsfile, file);
 
     return 0;

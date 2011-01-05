@@ -281,21 +281,21 @@
 	function getClassTypes()
 	{
 		return array(
- 'boundary:adminitrative:2' => array('label'=>'Country','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:4' => array('label'=>'State','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:5' => array('label'=>'State District','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:6' => array('label'=>'County','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:8' => array('label'=>'City','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:9' => array('label'=>'City District','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:10' => array('label'=>'Suburb','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'boundary:adminitrative:11' => array('label'=>'Neighbourhood','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:2' => array('label'=>'Country','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:4' => array('label'=>'State','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:5' => array('label'=>'State District','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:6' => array('label'=>'County','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:8' => array('label'=>'City','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:9' => array('label'=>'City District','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:10' => array('label'=>'Suburb','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative:11' => array('label'=>'Neighbourhood','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'place:city' => array('label'=>'City','frequency'=>66,'icon'=>'poi_place_city','defzoom'=>12, 'defdiameter' => 0.32,),
  'place:country' => array('label'=>'Country','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>6, 'defdiameter' => 15,),
  'place:state' => array('label'=>'State','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>8, 'defdiameter' => 5.12,),
  'place:region' => array('label'=>'State','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>8, 'defdiameter' => 5.12,),
  'place:island' => array('label'=>'Island','frequency'=>288,'icon'=>'','defzoom'=>11, 'defdiameter' => 0.64,),
  'place:county' => array('label'=>'County','frequency'=>108,'icon'=>'poi_boundary_administrative','defzoom'=>10, 'defdiameter' => 1.28,),
- 'boundary:adminitrative' => array('label'=>'Administrative','frequency'=>413,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:administrative' => array('label'=>'Administrative','frequency'=>413,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'place:town' => array('label'=>'Town','frequency'=>1497,'icon'=>'poi_place_town','defzoom'=>14, 'defdiameter' => 0.08,),
  'place:village' => array('label'=>'Village','frequency'=>11230,'icon'=>'poi_place_village','defzoom'=>15, 'defdiameter' => 0.04,),
  'place:hamlet' => array('label'=>'Hamlet','frequency'=>7075,'icon'=>'poi_place_village','defzoom'=>15, 'defdiameter' => 0.04,),
@@ -438,6 +438,9 @@
  'amenity:shop' => array('label'=>'Shop','frequency'=>61,'icon'=>'',),
 
  'place:house' => array('label'=>'House','frequency'=>2086,'icon'=>'','defzoom'=>18,),
+ 'place:house_name' => array('label'=>'House','frequency'=>2086,'icon'=>'','defzoom'=>18,),
+ 'place:house_number' => array('label'=>'House Number','frequency'=>2086,'icon'=>'','defzoom'=>18,),
+ 'place:country_code' => array('label'=>'Country Code','frequency'=>2086,'icon'=>'','defzoom'=>18,),
 
 //
 
@@ -630,11 +633,17 @@
 	function _debugDumpGroupedSearches($aData, $aTokens)
 	{
 		$aWordsIDs = array();
-		foreach($aTokens as $sToken => $aWords)
+		if ($aTokens)
 		{
-			foreach($aWords as $aToken)
+			foreach($aTokens as $sToken => $aWords)
 			{
-				$aWordsIDs[$aToken['word_id']] = $sToken.'('.$aToken['word_id'].')';
+				if ($aWords)
+				{
+					foreach($aWords as $aToken)
+					{
+						$aWordsIDs[$aToken['word_id']] = $sToken.'('.$aToken['word_id'].')';
+					}
+				}
 			}
 		}
 		echo "<table border=\"1\">";
@@ -685,9 +694,40 @@
 
 	function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $bRaw = false)
 	{
-		$aHouseNumber = $oDB->getRow('select housenumber, get_name_by_language(name,ARRAY[\'addr:housename\']) as housename,rank_search from placex where place_id = '.$iPlaceID);
+		$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID)";
+		IF (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
+		$sSQL .= " order by rank_address desc,isaddress desc";
+	        $aAddressLines = $oDB->getAll($sSQL);
+        	if (PEAR::IsError($aAddressLines))
+	        {
+        	        var_dump($aAddressLines);
+                	exit;
+	        }
+		if ($bRaw) return $aAddressLines;
+//echo "<pre>";
+//var_dump($aAddressLines);
+		$aAddress = array();
+		$aClassType = getClassTypes();
+		foreach($aAddressLines as $aLine)
+		{
+			$aTypeLabel = false;
+			if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
+			elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
+			else $aTypeLabel = array('simplelabel'=>$aLine['class']);
+			if ($aTypeLabel && ($aLine['localname'] || $aLine['housenumber']))
+			{
+				$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
+				if (!isset($aAddress[$sTypeLabel]) && $aLine['localname']) $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
+			}
+		}
+//var_dump($aAddress);
+//exit;
+		return $aAddress;
+
+		$aHouseNumber = $oDB->getRow('select housenumber, get_name_by_language(name,ARRAY[\'addr:housename\']) as housename,rank_search,postcode from placex where place_id = '.$iPlaceID);
 		$sHouseNumber = $aHouseNumber['housenumber'];
 		$sHouseName = $aHouseNumber['housename'];
+		$sPostcode = $aHouseNumber['postcode'];
 		$iRank = $aHouseNumber['rank_search'];
 
 	        // Address
@@ -697,8 +737,8 @@
 		$sSQL .= " length(name::text) as namelength ";
 	        $sSQL .= " from place_addressline join placex on (address_place_id = placex.place_id)";
         	$sSQL .= " where place_addressline.place_id = $iPlaceID and (rank_address > 0 OR address_place_id = $iPlaceID)";
-        	$sSQL .= " order by cached_rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc,namelength 
-desc";
+		if (!$bRaw) $sSQL .= " and isaddress";
+        	$sSQL .= " order by cached_rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc,namelength desc";
 //var_dump($sSQL);
 	        $aAddressLines = $oDB->getAll($sSQL);
         	if (PEAR::IsError($aAddressLines))
@@ -731,6 +771,12 @@ desc";
 				$iMinRank = $aLine['rank_address'];
 			}
 		}
+
+		if ($sPostcode)
+		{
+			$aAddress['postcode'] = $sPostcode;
+		}
+
 		if ($iMinRank > 4 && $sCountryCode)
 		{
 			$sSQL = "select get_name_by_language(country_name.name,$sLanguagePrefArraySQL) as name";

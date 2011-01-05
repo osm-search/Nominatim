@@ -19,7 +19,7 @@ body {
   font-weight: bold;
 }
 .notused{
-  color:#aaa;
+  color:#ddd;
 }
 .noname{
   color:#800;
@@ -127,7 +127,7 @@ foreach($aPolyPoints as $aPolyPoint)
 	{	
 		$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
 
-		echo '<div class="line'.($iPrevRank<=$aAddressLine['rank_address'] || $sPrevLocalName == $aAddressLine['localname']?' notused':'').'">';
+		echo '<div class="line'.($aAddressLine['isaddress']=='f'?' notused':'').'">';
 		if (!($iPrevRank<=$aAddressLine['rank_address'] || $sPrevLocalName == $aAddressLine['localname']))
 		{
 			$iPrevRank = $aAddressLine['rank_address'];

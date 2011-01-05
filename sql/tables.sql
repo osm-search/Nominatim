@@ -69,7 +69,7 @@ CREATE TABLE word (
 SELECT AddGeometryColumn('word', 'location', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_word_word_id on word USING BTREE (word_id);
 CREATE INDEX idx_word_word_token on word USING BTREE (word_token);
-CREATE INDEX idx_word_trigram ON word USING gin(word_trigram gin_trgm_ops);
+--CREATE INDEX idx_word_trigram ON word USING gin(word_trigram gin_trgm_ops) WITH (fastupdate = off);
 GRANT SELECT ON word TO "www-data" ;
 DROP SEQUENCE seq_word;
 CREATE SEQUENCE seq_word start 1;
@@ -119,8 +119,8 @@ SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
 
 drop table IF EXISTS search_name;
 CREATE TABLE search_name () INHERITS (search_name_blank);
-CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector gin__int_ops);
-CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector gin__int_ops);
+CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
 CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
@@ -194,6 +194,7 @@ CREATE TABLE placex (
   linked_place_id INTEGER,
   rank_address INTEGER,
   rank_search INTEGER,
+  importance FLOAT,
   indexed_status INTEGER,
   indexed_date TIMESTAMP,
   geometry_sector INTEGER

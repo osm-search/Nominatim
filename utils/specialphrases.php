@@ -50,17 +50,20 @@
 
 	if ($aCMDResult['wiki-import'])
 	{
+		$aPairs = array();
+
 		foreach($aLanguageIn as $sLanguage)
 		{
 			$sURL = 'http://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
 			$sWikiPageXML = file_get_contents($sURL);
-			if (preg_match_all('#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN]) \\|\\| ([\\-YN])#', $sWikiPageXML, $aMatches, PREG_SET_ORDER))
+			if (preg_match_all('#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN])#', $sWikiPageXML, $aMatches, PREG_SET_ORDER))
 			{
 				foreach($aMatches as $aMatch)
 				{
 					$sLabel = $aMatch[1];
 					$sClass = $aMatch[2];
 					$sType = $aMatch[3];
+					$aPairs[$sClass.'|'.$sType] = array($sClass, $sType);
 
 					switch(trim($aMatch[4]))
 					{
@@ -68,7 +71,7 @@
 						echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType', 'near');\n";
 						break;
 					case 'in':
-						echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType','in');\n";
+						echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType', 'in');\n";
 						break;
 					default:
 						echo "select getorcreate_amenity(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType');\n";
@@ -76,5 +79,20 @@
 					}
 				}
 			}
+		}
+
+		foreach($aPairs as $aPair)
+		{
+
+			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
+			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
+			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
+
+			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_centroid ";
+			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING GIST (centroid);\n";
+
+			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_place_id ";
+			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id);\n";
+
 		}
 	}

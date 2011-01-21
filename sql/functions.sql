@@ -1966,18 +1966,23 @@ BEGIN
     INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
 
   IF for_place_id IS NULL THEN
+    select parent_place_id,'us', housenumber, 30, postcode, null from location_property_aux
+      WHERE place_id = in_place_id 
+      INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+  END IF;
 
+  IF for_place_id IS NULL THEN
     select parent_place_id, country_code, housenumber, rank_address, postcode, name from placex 
       WHERE place_id = in_place_id and rank_address = 30 
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
-
-    IF for_place_id IS NULL THEN
-      for_place_id := in_place_id;
-      select country_code, housenumber, rank_address, postcode, null from placex where place_id = for_place_id 
-        INTO searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
-    END IF;
-
   END IF;
+
+  IF for_place_id IS NULL THEN
+    for_place_id := in_place_id;
+    select country_code, housenumber, rank_address, postcode, null from placex where place_id = for_place_id 
+      INTO searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+  END IF;
+
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;
 
   found := 1000;
@@ -2350,6 +2355,47 @@ BEGIN
       ST_Line_Interpolate_Point(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
     newpoints := newpoints + 1;
   END LOOP;
+
+  RETURN newpoints;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION aux_create_property(pointgeo GEOMETRY, in_housenumber TEXT, 
+  in_street TEXT, in_isin TEXT, in_postcode TEXT, in_countrycode char(2)) RETURNS INTEGER
+  AS $$
+DECLARE
+
+  newpoints INTEGER;
+  place_centroid GEOMETRY;
+  partition INTEGER;
+  parent_place_id INTEGER;
+  location RECORD;
+  address_street_word_id INTEGER;  
+
+BEGIN
+
+  place_centroid := ST_Centroid(pointgeo);
+  partition := get_partition(place_centroid, in_countrycode);
+  parent_place_id := null;
+
+  address_street_word_id := get_name_id(make_standard_name(in_street));
+  IF address_street_word_id IS NOT NULL THEN
+    FOR location IN SELECT * from getNearestNamedRoadFeature(partition, place_centroid, address_street_word_id) LOOP
+      parent_place_id := location.place_id;
+    END LOOP;
+  END IF;
+
+  IF parent_place_id IS NULL THEN
+    FOR location IN SELECT place_id FROM getNearestRoadFeature(partition, place_centroid) LOOP
+      parent_place_id := location.place_id;
+    END LOOP;    
+  END IF;
+
+  newpoints := 0;
+  insert into location_property_aux (place_id, partition, parent_place_id, housenumber, postcode, centroid)
+    values (nextval('seq_place'), partition, parent_place_id, in_housenumber, in_postcode, place_centroid);
+  newpoints := newpoints + 1;
 
   RETURN newpoints;
 END;

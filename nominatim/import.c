@@ -16,11 +16,11 @@
 typedef enum { FILETYPE_NONE, FILETYPE_STRUCTUREDV0P1 } filetypes_t;
 typedef enum { FILEMODE_NONE, FILEMODE_ADD, FILEMODE_UPDATE, FILEMODE_DELETE } filemodes_t;
 
-#define MAX_FEATUREADDRESS 500
-#define MAX_FEATURENAMES 1000
-#define MAX_FEATUREEXTRATAGS 100
-#define MAX_FEATURENAMESTRING 100000
-#define MAX_FEATUREEXTRATAGSTRING 50000
+#define MAX_FEATUREADDRESS 5000
+#define MAX_FEATURENAMES 10000
+#define MAX_FEATUREEXTRATAGS 10000
+#define MAX_FEATURENAMESTRING 1000000
+#define MAX_FEATUREEXTRATAGSTRING 500000
 
 struct feature_address
 {
@@ -42,7 +42,7 @@ struct feature_tag
 
 struct feature
 {
-    int			placeID;
+    xmlChar *   placeID;
     xmlChar *	type;
     xmlChar *	id;
     xmlChar *	key;
@@ -92,7 +92,7 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
             else
             {
-                fprintf( stderr, "Unknown osmStructured version %f\n", version );
+                fprintf( stderr, "Unknown osmStructured version %f (%s)\n", version, value );
                 exit_nicely();
             }
         }
@@ -127,6 +127,7 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
 
     if (xmlStrEqual(name, BAD_CAST "feature"))
     {
+        feature.placeID = xmlTextReaderGetAttribute(reader, BAD_CAST "place_id");
         feature.type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
         feature.id = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
         feature.key = xmlTextReaderGetAttribute(reader, BAD_CAST "key");
@@ -140,32 +141,39 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
         feature.geometry = NULL;
         featureAddressLines = 0;
         featureNameLines = 0;
+		featureExtraTagLines = 0;
 
         return;
     }
     if (xmlStrEqual(name, BAD_CAST "names")) return;
     if (xmlStrEqual(name, BAD_CAST "name"))
     {
-        featureName[featureNameLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-        featureName[featureNameLines].value = xmlTextReaderReadString(reader);
-        featureNameLines++;
-        if (featureNameLines >= MAX_FEATURENAMES)
+        if (featureNameLines < MAX_FEATURENAMES)
         {
-            fprintf( stderr, "Too many name elements\n");
-            exit_nicely();
+	        featureName[featureNameLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    	    featureName[featureNameLines].value = xmlTextReaderReadString(reader);
+        	featureNameLines++;
+		}
+		else
+		{
+            fprintf( stderr, "Too many name elements (%s%s)\n", feature.type, feature.id);
+//            exit_nicely();
         }
         return;
     }
     if (xmlStrEqual(name, BAD_CAST "tags")) return;
     if (xmlStrEqual(name, BAD_CAST "tag"))
     {
-        featureExtraTag[featureExtraTagLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-        featureExtraTag[featureExtraTagLines].value = xmlTextReaderReadString(reader);
-        featureExtraTagLines++;
-        if (featureExtraTagLines >= MAX_FEATUREEXTRATAGS)
+        if (featureExtraTagLines < MAX_FEATUREEXTRATAGS)
+		{
+	        featureExtraTag[featureExtraTagLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    	    featureExtraTag[featureExtraTagLines].value = xmlTextReaderReadString(reader);
+        	featureExtraTagLines++;
+		}
+		else
         {
-            fprintf( stderr, "Too many extra tag elements\n");
-            exit_nicely();
+            fprintf( stderr, "Too many extra tag elements (%s%s)\n", feature.type, feature.id);
+//            exit_nicely();
         }
         return;
     }
@@ -261,36 +269,39 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
     }
     if (isAddressLine)
     {
-        value = (char*)xmlTextReaderGetAttribute(reader, BAD_CAST "rank");
-        if (!value)
-        {
-            fprintf( stderr, "Address element missing rank\n");
-            exit_nicely();
-        }
-        featureAddress[featureAddressLines].rankAddress =  atoi(value);
-        xmlFree(value);
+        if (featureAddressLines < MAX_FEATUREADDRESS)
+		{
+	        value = (char*)xmlTextReaderGetAttribute(reader, BAD_CAST "rank");
+    	    if (!value)
+	        {
+    	        fprintf( stderr, "Address element missing rank\n");
+        	    exit_nicely();
+	        }
+    	    featureAddress[featureAddressLines].rankAddress =  atoi(value);
+        	xmlFree(value);
 
-        value = (char*)xmlTextReaderGetAttribute(reader, BAD_CAST "isaddress");
-        if (!value)
-        {
-            fprintf( stderr, "Address element missing rank\n");
-            exit_nicely();
-        }
-        if (*value == 't') strcpy(featureAddress[featureAddressLines].isAddress, "t");
-        else strcpy(featureAddress[featureAddressLines].isAddress, "f");
-        xmlFree(value);
+	        value = (char*)xmlTextReaderGetAttribute(reader, BAD_CAST "isaddress");
+    	    if (!value)
+        	{
+	            fprintf( stderr, "Address element missing rank\n");
+    	        exit_nicely();
+        	}
+	        if (*value == 't') strcpy(featureAddress[featureAddressLines].isAddress, "t");
+    	    else strcpy(featureAddress[featureAddressLines].isAddress, "f");
+        	xmlFree(value);
 
-        featureAddress[featureAddressLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-        featureAddress[featureAddressLines].id = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
-        featureAddress[featureAddressLines].key = xmlTextReaderGetAttribute(reader, BAD_CAST "key");
-        featureAddress[featureAddressLines].value = xmlTextReaderGetAttribute(reader, BAD_CAST "value");
-        featureAddress[featureAddressLines].distance = xmlTextReaderGetAttribute(reader, BAD_CAST "distance");
-
-        featureAddressLines++;
-        if (featureAddressLines >= MAX_FEATUREADDRESS)
+	        featureAddress[featureAddressLines].type = xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    	    featureAddress[featureAddressLines].id = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
+        	featureAddress[featureAddressLines].key = xmlTextReaderGetAttribute(reader, BAD_CAST "key");
+	        featureAddress[featureAddressLines].value = xmlTextReaderGetAttribute(reader, BAD_CAST "value");
+    	    featureAddress[featureAddressLines].distance = xmlTextReaderGetAttribute(reader, BAD_CAST "distance");
+	
+    	    featureAddressLines++;
+		}
+		else
         {
-            fprintf( stderr, "Too many address elements\n");
-            exit_nicely();
+            fprintf( stderr, "Too many address elements (%s%s)\n", feature.type, feature.id);
+//            exit_nicely();
         }
 
         return;
@@ -311,7 +322,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
     {
         featureCount++;
         if (featureCount % 1000 == 0) printf("feature %i(k)\n", featureCount/1000);
-
+/*
         if (fileMode == FILEMODE_ADD)
         {
             resPlaceID = PQexecPrepared(conn, "get_new_place_id", 0, NULL, NULL, NULL, 0);
@@ -336,7 +347,8 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                 exit(EXIT_FAILURE);
             }
         }
-        place_id = PQgetvalue(resPlaceID, 0, 0);
+*/
+        place_id = feature.placeID;
 
         if (fileMode == FILEMODE_UPDATE || fileMode == FILEMODE_DELETE)
         {
@@ -517,6 +529,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
         }
 
+        xmlFree(feature.placeID);
         xmlFree(feature.type);
         xmlFree(feature.id);
         xmlFree(feature.key);
@@ -529,7 +542,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
         if (feature.houseNumber) xmlFree(feature.houseNumber);
         if (feature.geometry) xmlFree(feature.geometry);
 
-        PQclear(resPlaceID);
+//        PQclear(resPlaceID);
     }
 }
 

@@ -157,9 +157,9 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         paramValues[0] = (char *)&paramRank;
         paramLengths[0] = sizeof(paramRank);
         paramFormats[0] = 1;
-        if (rank < 16)
-            resSectors = PQexecPrepared(conn, "index_nosectors", 1, paramValues, paramLengths, paramFormats, 1);
-        else
+//        if (rank < 16)
+//            resSectors = PQexecPrepared(conn, "index_nosectors", 1, paramValues, paramLengths, paramFormats, 1);
+//        else
             resSectors = PQexecPrepared(conn, "index_sectors", 1, paramValues, paramLengths, paramFormats, 1);
         if (PQresultStatus(resSectors) != PGRES_TUPLES_OK)
         {
@@ -226,10 +226,14 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                 paramValues[1] = (char *)&paramSector;
                 paramLengths[1] = sizeof(paramSector);
                 paramFormats[1] = 1;
-                if (rank < 16)
-                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+                if (rankTotalTuples-rankCountTuples < num_threads*20)
+		{
+			iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+		}
                 else
+		{
                     iResult = PQsendQueryPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
+		}
                 if (!iResult)
                 {
                     fprintf(stderr, "index_sector_places: SELECT failed: %s", PQerrorMessage(conn));
@@ -288,6 +292,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 
                 PQclear(resPlaces);
             }
+            if (rankTotalTuples-rankCountTuples < num_threads*20) iSector = PQntuples(resSectors);
         }
         // Finished rank
         printf("\r  Done %i in %i @ %f per second - FINISHED                      \n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);
@@ -331,16 +336,30 @@ void *nominatim_indexThread(void * thread_data_in)
         if (verbose) printf("  Processing place_id %d\n", place_id);
 
         updateStartTime = time(0);
-        paramPlaceID = PGint32(place_id);
-        paramValues[0] = (char *)&paramPlaceID;
-        paramLengths[0] = sizeof(paramPlaceID);
-        paramFormats[0] = 1;
-        res = PQexecPrepared(thread_data->conn, "index_placex", 1, paramValues, paramLengths, paramFormats, 1);
-        if (PQresultStatus(res) != PGRES_COMMAND_OK)
-        {
-            fprintf(stderr, "index_placex: UPDATE failed: %s", PQerrorMessage(thread_data->conn));
-            PQclear(res);
-            exit(EXIT_FAILURE);
+	int done = 0;
+	while(!done)
+	{
+	        paramPlaceID = PGint32(place_id);
+        	paramValues[0] = (char *)&paramPlaceID;
+	        paramLengths[0] = sizeof(paramPlaceID);
+        	paramFormats[0] = 1;
+	        res = PQexecPrepared(thread_data->conn, "index_placex", 1, paramValues, paramLengths, paramFormats, 1);
+        	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+			done = 1;
+		else
+	        {
+			if (strncmp(PQerrorMessage(thread_data->conn), "ERROR:  deadlock detected", 25))
+			{
+		            fprintf(stderr, "index_placex: UPDATE failed - deadlock, retrying\n");
+			}
+			else
+			{
+		            fprintf(stderr, "index_placex: UPDATE failed: %s", PQerrorMessage(thread_data->conn));
+		            PQclear(res);
+				sleep(5);
+//		            exit(EXIT_FAILURE);
+			}
+		}
         }
         PQclear(res);
         if (difftime(time(0), updateStartTime) > 1) printf("  Slow place_id %d\n", place_id);

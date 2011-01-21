@@ -100,6 +100,12 @@ CREATE TABLE location_property (
   postcode TEXT
   );
 SELECT AddGeometryColumn('location_property', 'centroid', 4326, 'POINT', 2);
+
+CREATE TABLE location_property_aux () INHERITS (location_property);
+CREATE INDEX idx_location_property_aux_place_id ON location_property_aux USING BTREE (place_id);
+CREATE INDEX idx_location_property_aux_parent_place_id ON location_property_aux USING BTREE (parent_place_id);
+CREATE INDEX idx_location_property_aux_housenumber_parent_place_id ON location_property_aux USING BTREE (parent_place_id, housenumber);
+
 CREATE TABLE location_property_tiger () INHERITS (location_property);
 CREATE INDEX idx_location_property_tiger_place_id ON location_property_tiger USING BTREE (place_id);
 CREATE INDEX idx_location_property_tiger_parent_place_id ON location_property_tiger USING BTREE (parent_place_id);

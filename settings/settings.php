@@ -1,5 +1,4 @@
 <?php
-
 	if (file_exists(CONST_BasePath.'/settings/local.php')) require_once(CONST_BasePath.'/settings/local.php');
 	if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 

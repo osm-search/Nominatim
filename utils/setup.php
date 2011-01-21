@@ -318,7 +318,9 @@ var_dump($sPartitionName);
 		else passthru(CONST_BasePath.'/osmosis-0.38/bin/osmosis --read-replication-interval-init '.CONST_BasePath.'/settings');
 
 		$sDate = $aCMDResult['osmosis-init-date'];
-		$sStateFile = file_get_contents('http://toolserver.org/~mazder/replicate-sequences/?'.$sDate);
+		$sURL = 'http://toolserver.org/~mazder/replicate-sequences/?'.$sDate;
+		echo "Getting state file: $sURL\n";
+		$sStateFile = file_get_contents($sURL);
 		if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
 		file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
 	}
@@ -380,22 +382,15 @@ var_dump($sPartitionName);
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
-echo "write";
 		fwrite($ahPipes[0], $sScript);
-echo "close";
 		fclose($ahPipes[0]);
-echo "done";
 
 		// TODO: error checking
 		while(!feof($ahPipes[1]))
 		{
-echo "read";
 			echo fread($ahPipes[1], 4096);
 		}
-echo "done";
 		fclose($ahPipes[1]);
 
-echo "done1";
 		proc_close($hProcess);
-echo "done2";
 	}

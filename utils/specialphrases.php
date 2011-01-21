@@ -83,16 +83,22 @@
 
 		foreach($aPairs as $aPair)
 		{
+			if ($aPair[1] == 'highway') continue;
 
 			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
 			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
-			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
+			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."' limit 0;\n";
 
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_centroid ";
 			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING GIST (centroid);\n";
 
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_place_id ";
 			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id);\n";
+
+			echo "truncate place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1]).";\n";
+			echo "insert into place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." ";
+			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
+			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
 
 		}
 	}

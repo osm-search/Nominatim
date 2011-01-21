@@ -161,7 +161,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_address",
-                    "select osm_type,osm_id,class,type,distance,cached_rank_address,isaddress from place_addressline join placex on (address_place_id = placex.place_id) where place_addressline.place_id = $1 and address_place_id != place_addressline.place_id order by cached_rank_address asc",
+                    "select osm_type,osm_id,class,type,distance,cached_rank_address,isaddress from place_addressline join placex on (address_place_id = placex.place_id) where place_addressline.place_id = $1 and address_place_id != place_addressline.place_id order by cached_rank_address asc,osm_type,osm_id",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -172,7 +172,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_names",
-                    "select (each(name)).key,(each(name)).value from (select name from placex where place_id = $1) as x",
+                    "select (each(name)).key,(each(name)).value from (select name from placex where place_id = $1) as x order by (each(name)).key",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -183,7 +183,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_extratags",
-                    "select (each(extratags)).key,(each(extratags)).value from (select extratags from placex where place_id = $1) as x",
+                    "select (each(extratags)).key,(each(extratags)).value from (select extratags from placex where place_id = $1) as x order by (each(extratags)).key",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -402,6 +402,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
     PQclear(res);
     PQclear(resNames);
     PQclear(resAddress);
+    PQclear(resExtraTags);
 }
 
 const char * getRankLabel(int rank)

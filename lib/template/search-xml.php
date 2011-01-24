@@ -31,6 +31,7 @@
 			echo " osm_type='$sOSMType'";
 			echo " osm_id='".$aResult['osm_id']."'";
 		}
+		echo " place_rank='".$aResult['rank_search']."'";
 
 		if (isset($aResult['aBoundingBox']))
 		{

@@ -304,7 +304,7 @@
 				}
 			}
 			if ($bSuggestion) $sSuggestion = join(', ',$aSuggestion);
-
+/*
 			// Try and calculate GB postcodes we might be missing
 			foreach($aTokens as $sToken)
 			{
@@ -322,7 +322,7 @@
 					}
 				}
 			}
-
+*/
 			// Any words that have failed completely?
 			// TODO: suggestions
 

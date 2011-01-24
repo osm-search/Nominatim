@@ -44,6 +44,8 @@
 			return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
 		if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
 			return ($a['aPointPolygon']['area'] > $b['aPointPolygon']['area']?-1:1);
+		if ($a['levenshtein'] != $b['levenshtein'])
+			return ($a['levenshtein'] < $b['levenshtein']?-1:1);
 		if ($a['importance'] != $b['importance'])
 			return ($a['importance'] < $b['importance']?-1:1);
 		return ($a['foundorder'] < $b['foundorder']?-1:1);

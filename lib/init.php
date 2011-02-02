@@ -8,6 +8,6 @@
 
 	if (get_magic_quotes_gpc())
 	{
-		echo "Please disable magic quotes in your php.ini configuration";
+		echo "Please disable magic quotes in your php.ini configuration\n";
 		exit;
 	}

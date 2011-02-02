@@ -1,6 +1,8 @@
 <?php
+	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(CONST_BasePath.'/lib/log.php');
 
-        require_once('.htlib/init.php');
+	$oDB =& getDB();
 
         if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
         {
@@ -18,7 +20,7 @@
 
         // Format for output
 	$sOutputFormat = 'xml';
-        if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json'))
+        if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json' || $_GET['format'] == 'jsonv2'))
         {
                 $sOutputFormat = $_GET['format'];
         }
@@ -61,7 +63,7 @@
 			15 => 22,
 			16 => 26, // Street, TODO: major street?
 			17 => 26, 
-			18 => 28, // or >, Building
+			18 => 30, // or >, Building
 			19 => 30, // or >, Building
 			);
 		$iMaxRank = isset($aZoomRank[$_GET['zoom']])?$aZoomRank[$_GET['zoom']]:28;
@@ -83,68 +85,51 @@
 			if ($fSearchDiam > 0.6 && $iMaxRank > 12) $iMaxRank = 12;
 			if ($fSearchDiam > 0.2 && $iMaxRank > 17) $iMaxRank = 17;
 			if ($fSearchDiam > 0.1 && $iMaxRank > 18) $iMaxRank = 18;
-			if ($fSearchDiam > 0.01 && $iMaxRank > 22) $iMaxRank = 22;
+			if ($fSearchDiam > 0.008 && $iMaxRank > 22) $iMaxRank = 22;
+			if ($fSearchDiam > 0.001 && $iMaxRank > 26) $iMaxRank = 26;
 
-			if ($iMaxRank >= 26)
+			$sSQL = 'select place_id,parent_place_id from placex';
+			$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
+			$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
+			$sSQL .= ' and (name is not null or housenumber is not null)';
+			$sSQL .= ' and class not in (\'waterway\')';
+			$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
+			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', ST_Centroid(geometry), '.$fSearchDiam.'))';
+			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
+//var_dump($sSQL);
+			$aPlace = $oDB->getRow($sSQL);
+			$iPlaceID = $aPlace['place_id'];
+			if (PEAR::IsError($iPlaceID))
 			{
-				// Street level search is done using placex table
-				$sSQL = 'select place_id from placex';
-				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
-				$sSQL .= ' and rank_search >= 26 and rank_search <= '.$iMaxRank;
-				$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
-				$sSQL .= ' OR ST_DWithin('.$sPointSQL.', ST_Centroid(geometry), '.$fSearchDiam.'))';
-				$sSQL .= ' ORDER BY rank_search desc, ST_distance('.$sPointSQL.', geometry) ASC limit 1';
-				$iPlaceID = $oDB->getOne($sSQL);
-				if (PEAR::IsError($iPlaceID))
-				{
-					var_Dump($sSQL, $iPlaceID); 
-					exit;
-				}
-			}
-			else
-			{
-				// Other search uses the location_point and location_area tables
-
-				// If we've not yet done the area search do it now
-				if ($aArea === false)
-				{
-					$sSQL = 'select place_id,rank_address,ST_distance('.$sPointSQL.', centroid) as distance from location_area';
-					$sSQL .= ' WHERE ST_Contains(area,'.$sPointSQL.') and rank_search <= '.$iMaxRank;
-					$sSQL .= ' ORDER BY rank_address desc, ST_distance('.$sPointSQL.', centroid) ASC limit 1';
-					$aArea = $oDB->getRow($sSQL);
-					if ($aArea) $fMaxAreaDistance = $aArea['distance'];
-				}
-
-				// Different search depending if we found an area match
-				if ($aArea)
-				{
-					// Found best match area - is there a better point match?
-					$sSQL = 'select place_id from location_point_'.($iMaxRank+1);
-					$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.') ';
-					$sSQL .= ' and rank_search > '.($aArea['rank_address']+3);
-					$sSQL .= ' ORDER BY rank_address desc, ST_distance('.$sPointSQL.', centroid) ASC limit 1';
-					$iPlaceID = $oDB->getOne($sSQL);
-					if (PEAR::IsError($iPlaceID))
-					{
-						var_Dump($sSQL, $iPlaceID); 
-						exit;
-					}
-				}
-				else
-				{
-					$sSQL = 'select place_id from location_point_'.($iMaxRank+1);
-					$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.') ';
-					$sSQL .= ' ORDER BY rank_address desc, ST_distance('.$sPointSQL.', centroid) ASC limit 1';
-					$iPlaceID = $oDB->getOne($sSQL);
-					if (PEAR::IsError($iPlaceID))
-					{
-						var_Dump($sSQL, $iPlaceID); 
-						exit;
-					}
-				}
+				var_Dump($sSQL, $iPlaceID); 
+				exit;
 			}
 		}
-		if (!$iPlaceID && $aArea) $iPlaceID = $aArea['place_id'];
+
+		// The point we found might be too small - use the address to find what it is a child of
+		$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc";
+//var_dump($sSQL);
+		$iPlaceID = $oDB->getOne($sSQL);
+		if (PEAR::IsError($iPlaceID))
+		{
+			var_Dump($sSQL, $iPlaceID); 
+			exit;
+		}
+		if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
+		{
+			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
+//var_dump($sSQL);
+			$iPlaceID = $oDB->getOne($sSQL);
+			if (PEAR::IsError($iPlaceID))
+			{
+				var_Dump($sSQL, $iPlaceID); 
+				exit;
+			}
+		}
+		if (!$iPlaceID)
+		{
+			$iPlaceID = $aPlace['place_id'];
+		}
 	}
 
 	if ($iPlaceID)
@@ -157,5 +142,15 @@
 		$aPlace = $oDB->getRow($sSQL);
 
 		$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
+
+		$aClassType = getClassTypes();
+                $sAddressType = '';
+                if (isset($aClassType[$aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level']]))
+                        $sAddressType = $aClassType[$aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level']]['simplelabel'];
+                elseif (isset($aClassType[$aPlace['class'].':'.$aPlace['type']]))
+                        $sAddressType = $aClassType[$aPlace['class'].':'.$aPlace['type']]['simplelabel'];
+                else $sAddressType = $aPlace['class'];
+                $aPlace['addresstype'] = $sAddressType;
+
 	}
-	include('.htlib/output/address-'.$sOutputFormat.'.php');
+	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

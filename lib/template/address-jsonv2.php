@@ -21,7 +21,12 @@
                         $aFilteredPlaces['osm_type'] = $sOSMType;
                         $aFilteredPlaces['osm_id'] = $aPlace['osm_id'];
                 }
+                $aFilteredPlaces['category'] = $aPlace['class'];
+                $aFilteredPlaces['type'] = $aPlace['type'];
+                $aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);
+
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
+                $aFilteredPlaces['name'] = $aPlace['placename'];
 		$aFilteredPlaces['address'] = $aAddress;
 	}
 

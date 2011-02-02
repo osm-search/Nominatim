@@ -719,6 +719,7 @@
 			if ($aTypeLabel && ($aLine['localname'] || $aLine['housenumber']))
 			{
 				$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
+				$sTypeLabel = str_replace(' ','_',$sTypeLabel);
 				if (!isset($aAddress[$sTypeLabel]) && $aLine['localname']) $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
 			}
 		}
@@ -768,6 +769,7 @@
 				if ($aTypeLabel && ($aLine['localname'] || $aLine['housenumber']))
 				{
 					$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
+					$sTypeLabel = str_replace(' ','_',$sTypeLabel);
 					if (!isset($aAddress[$sTypeLabel]) && $aLine['localname']) $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
 				}
 				$iMinRank = $aLine['rank_address'];

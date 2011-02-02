@@ -70,7 +70,10 @@
 	$aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
 
 	// Get the bounding box and outline polygon
-	$sSQL = "select *,ST_AsText(outline) as outlinestring from get_place_boundingbox($iPlaceID)";
+	$sSQL = "select ST_AsText(geometry) as outlinestring,";
+	$sSQL .= "ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)) as maxlat,";
+	$sSQL .= "ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)) as maxlon";
+	$sSQL .= " from placex where place_id = $iPlaceID";
 	$aPointPolygon = $oDB->getRow($sSQL);
 	IF (PEAR::IsError($aPointPolygon))
 	{
@@ -84,7 +87,8 @@
 	elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['outlinestring'],$aMatch))
 	{
 		$fRadius = 0.01;
-		$iSteps = ($fRadius * 40000)^2;
+		if ($aPointDetails['rank_search'] > 20) $fRadius = 0.0001;
+		$iSteps = min(max(($fRadius * 40000)^2,16),100);
 		$fStepSize = (2*pi())/$iSteps;
 		$aPolyPoints = array();
 		for($f = 0; $f < 2*pi(); $f += $fStepSize)

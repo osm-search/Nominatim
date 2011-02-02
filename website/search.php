@@ -773,7 +773,7 @@
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
-										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.geometry) ASC";
+										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.centroid) ASC";
 										else $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
@@ -896,6 +896,11 @@
 			$sSQL .= "ST_Y(ST_PointN(ExteriorRing(ST_Box2D(outline)),4)) as minlat,ST_Y(ST_PointN(ExteriorRing(ST_Box2D(outline)),2)) as maxlat,";
 			$sSQL .= "ST_X(ST_PointN(ExteriorRing(ST_Box2D(outline)),1)) as minlon,ST_X(ST_PointN(ExteriorRing(ST_Box2D(outline)),3)) as maxlon,";
 			$sSQL .= "ST_AsText(outline) as outlinestring from get_place_boundingbox_quick(".$aResult['place_id'].")";
+
+			$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
+			$sSQL .= "ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)) as maxlat,";
+			$sSQL .= "ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)) as maxlon,";
+			$sSQL .= "ST_AsText(geometry) as outlinestring from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(ST_Box2D(geometry)) = \'ST_Polygon\'';
 			$aPointPolygon = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPointPolygon))
 			{

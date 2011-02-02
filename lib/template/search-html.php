@@ -10,7 +10,7 @@
 
 	<script src="js/OpenLayers.js"></script>
 	<script src="js/OpenStreetMap.js"></script>
-	<script src="prototype-1.6.0.3.js"></script>
+	<script src="js/prototype-1.6.0.3.js"></script>
 
 	<style>
 * {-moz-box-sizing: border-box;}

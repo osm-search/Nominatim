@@ -40,6 +40,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     int i;
     int iSector;
     int iResult;
+    int bSkip;
 
     const char *paramValues[2];
     int         paramLengths[2];
@@ -160,7 +161,8 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 //        if (rank < 16)
 //            resSectors = PQexecPrepared(conn, "index_nosectors", 1, paramValues, paramLengths, paramFormats, 1);
 //        else
-            resSectors = PQexecPrepared(conn, "index_sectors", 1, paramValues, paramLengths, paramFormats, 1);
+        resSectors = PQexecPrepared(conn, "index_sectors", 1, paramValues, paramLengths, paramFormats, 1);
+
         if (PQresultStatus(resSectors) != PGRES_TUPLES_OK)
         {
             fprintf(stderr, "index_sectors: SELECT failed: %s", PQerrorMessage(conn));
@@ -215,7 +217,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
             if (iSector < PQntuples(resSectors))
             {
                 sector = PGint32(*((uint32_t *)PQgetvalue(resSectors, iSector, 0)));
-                //printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
+//                printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
 
                 // Get all the place_id's for this sector
                 paramRank = PGint32(rank);
@@ -226,9 +228,9 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                 paramValues[1] = (char *)&paramSector;
                 paramLengths[1] = sizeof(paramSector);
                 paramFormats[1] = 1;
-                if (rankTotalTuples-rankCountTuples < num_threads*20)
+                if (rankTotalTuples-rankCountTuples < num_threads*1000)
 		{
-			iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
 		}
                 else
 		{
@@ -292,7 +294,10 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 
                 PQclear(resPlaces);
             }
-            if (rankTotalTuples-rankCountTuples < num_threads*20) iSector = PQntuples(resSectors);
+            if (rankTotalTuples-rankCountTuples < num_threads*20 && iSector < PQntuples(resSectors))
+            {
+                iSector = PQntuples(resSectors) - 1;
+            }
         }
         // Finished rank
         printf("\r  Done %i in %i @ %f per second - FINISHED                      \n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);
@@ -309,6 +314,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 void *nominatim_indexThread(void * thread_data_in)
 {
     struct index_thread_data * thread_data = (struct index_thread_data * )thread_data_in;
+    struct export_data	querySet;
 
     PGresult   *res;
 
@@ -339,6 +345,12 @@ void *nominatim_indexThread(void * thread_data_in)
 	int done = 0;
 	while(!done)
 	{
+             if (thread_data->writer)
+             {
+                 nominatim_exportPlaceQueries(place_id, thread_data->conn, &querySet);
+             }
+
+
 	        paramPlaceID = PGint32(place_id);
         	paramValues[0] = (char *)&paramPlaceID;
 	        paramLengths[0] = sizeof(paramPlaceID);
@@ -366,7 +378,8 @@ void *nominatim_indexThread(void * thread_data_in)
 
         if (thread_data->writer)
         {
-            nominatim_exportPlace(place_id, thread_data->conn, thread_data->writer, thread_data->writer_mutex);
+            nominatim_exportPlace(place_id, thread_data->conn, thread_data->writer, thread_data->writer_mutex, &querySet);
+            nominatim_exportFreeQueries(&querySet);
         }
     }
 

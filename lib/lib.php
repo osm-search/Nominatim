@@ -627,7 +627,7 @@
                 else
                 {
                         if (is_bool($xVal)) return $xVal?'true':'false';
-			if (is_numeric($xVal)) return $xVal;
+//			if (is_numeric($xVal)) return $xVal;
                         return '"'.str_replace('>','\\>',str_replace(array("\n","\r"),'\\n',str_replace(array("\n\r","\r\n"),'\\n',str_replace('"','\\"',$xVal)))).'"';
                 }
         }

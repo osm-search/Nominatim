@@ -274,3 +274,18 @@ CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_addre
 
 DROP SEQUENCE seq_postcodes;
 CREATE SEQUENCE seq_postcodes start 1;
+
+drop table import_polygon_error;
+CREATE TABLE import_polygon_error (
+  osm_type char(1),
+  osm_id INTEGER,
+  class TEXT NOT NULL,
+  type TEXT NOT NULL,
+  name HSTORE,
+  country_code varchar(2),
+  updated timestamp,
+  errormessage text
+  );
+SELECT AddGeometryColumn('import_polygon_error', 'prevgeometry', 4326, 'GEOMETRY', 2);
+SELECT AddGeometryColumn('import_polygon_error', 'newgeometry', 4326, 'GEOMETRY', 2);
+CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);

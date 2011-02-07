@@ -1102,7 +1102,7 @@ BEGIN
 --    RETURN NULL;
 --  END IF;
 
---  RETURN NEW;  -- The following is not needed until doing diff updates, and slows the main index process down
+  RETURN NEW;  -- The following is not needed until doing diff updates, and slows the main index process down
 
   IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
     -- Performance: We just can't handle re-indexing for country level changes
@@ -1218,6 +1218,12 @@ BEGIN
     result := deleteSearchName(NEW.partition, NEW.place_id);
     DELETE FROM place_addressline WHERE place_id = NEW.place_id;
     DELETE FROM place_boundingbox where place_id = NEW.place_id;
+    result := deleteRoad(NEW.partition, NEW.place_id);
+    result := deleteLocationArea(NEW.partition, NEW.place_id);
+  
+    NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+    NEW.partition := get_partition(NEW.geometry, NEW.country_code);
+    NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 
     -- Adding ourselves to the list simplifies address calculations later
     INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
@@ -1345,7 +1351,7 @@ BEGIN
         END LOOP;
       END IF;
       
---RAISE WARNING 'x3';
+--RAISE WARNING 'x3 %',NEW.parent_place_id;
 
       IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
       	address_street_word_id := get_name_id(make_standard_name(NEW.street));
@@ -1356,11 +1362,13 @@ BEGIN
         END IF;
       END IF;
 
---RAISE WARNING 'x4';
+--RAISE WARNING 'x4 %',NEW.parent_place_id;
       -- Still nothing, just use the nearest road
-      FOR location IN SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) LOOP
-        NEW.parent_place_id := location.place_id;
-      END LOOP;
+      IF NEW.parent_place_id IS NULL THEN
+        FOR location IN SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) LOOP
+          NEW.parent_place_id := location.place_id;
+        END LOOP;
+      END IF;
 
 --return NEW;
 --RAISE WARNING 'x6 %',NEW.parent_place_id;
@@ -1548,6 +1556,10 @@ BEGIN
 
     DELETE FROM place_addressline where address_place_id = OLD.place_id;
 
+    b := deleteRoad(OLD.partition, OLD.place_id);
+
+    update placex set indexed_status = 2 where parent_place_id = OLD.place_id and indexed_status = 0;
+
   END IF;
 
   IF OLD.rank_address < 26 THEN
@@ -1596,7 +1608,7 @@ DECLARE
   partition INTEGER;
 BEGIN
 
-  IF FALSE AND NEW.osm_type = 'R' THEN
+  IF FALSE and NEW.osm_type = 'R' THEN
     RAISE WARNING '-----------------------------------------------------------------------------------';
     RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
     select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
@@ -1612,6 +1624,8 @@ BEGIN
   END IF;
 
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
+    INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, 
+      now(), ST_IsValidReason(NEW.geometry), null, NEW.geometry);
 --    RAISE WARNING 'Invalid Geometry: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
     RETURN null;
   END IF;
@@ -1629,12 +1643,25 @@ BEGIN
 
   -- Handle a place changing type by removing the old data
   -- My generated 'place' types are causing havok because they overlap with real tags
-  -- TODO: move them to their own special purpose tag to avoid collisions
-  IF existing.osm_type IS NULL AND (NEW.type not in ('postcode','house','houses')) THEN
-    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
-  END IF;
+  -- TODO: move them to their own special purpose key/class to avoid collisions
+--  IF existing.osm_type IS NULL AND (NEW.type not in ('postcode','house','houses')) THEN
+--    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
+--  END IF;
 
 --  RAISE WARNING 'Existing: %',existing.place_id;
+
+  -- Log and discard 
+  IF existing.geometry is not null AND st_isvalid(existing.geometry) 
+    AND st_area(existing.geometry) > 0.02
+    AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
+    AND st_area(NEW.geometry) < st_area(existing.geometry)*0.5
+    THEN
+    INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
+      'Area reduced from '||st_area(existing.geometry)||' to '||st_area(NEW.geometry), existing.geometry, NEW.geometry);
+    RETURN null;
+  END IF;
+
+  DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
   -- To paraphrase, if there isn't an existing item, OR if the admin level has changed, OR if it is a major change in geometry
   IF existing.osm_type IS NULL 
@@ -1651,7 +1678,6 @@ BEGIN
 --  IF existingplacex.osm_type IS NULL THEN
 --    RAISE WARNING 'no existing placex %', existingplacex;
 --  END IF;
-
 
 --    RAISE WARNING 'delete and replace';
 
@@ -1719,7 +1745,7 @@ BEGIN
     select geometry from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type into existinggeometry;
 
     -- Performance limit
-    IF st_area(NEW.geometry) < 1 AND st_area(existinggeometry) < 1 THEN
+    IF st_area(NEW.geometry) < 0.000000001 AND st_area(existinggeometry) < 1 THEN
 
       -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
       update placex set indexed_status = 2 where indexed_status = 0 and 
@@ -1767,8 +1793,8 @@ BEGIN
 
       -- performance, can't take the load of re-indexing a whole country / huge area
       IF st_area(NEW.geometry) < 0.5 THEN
-        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
-          and placex.place_id = place_addressline.place_id and indexed_status = 0;
+--        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
+--          and placex.place_id = place_addressline.place_id and indexed_status = 0;
       END IF;
 
     END IF;
@@ -1809,7 +1835,7 @@ BEGIN
       geometry = NEW.geometry
       where place_id = existingplacex.place_id;
 
--- now done as part of indexing
+-- now done as part of insert
 --    partition := get_partition(NEW.geometry, existingplacex.country_code);
 --    result := update_location(partition, existingplacex.place_id, existingplacex.country_code, NEW.name, existingplacex.rank_search, existingplacex.rank_address, NEW.geometry);
 
@@ -1939,6 +1965,7 @@ create type addressline as (
   name HSTORE,
   class TEXT,
   type TEXT,
+  admin_level INTEGER,
   fromarea BOOLEAN,  
   isaddress BOOLEAN,  
   rank_address INTEGER,
@@ -1953,28 +1980,32 @@ DECLARE
   search TEXT[];
   found INTEGER;
   location RECORD;
+  countrylocation RECORD;
   searchcountrycode varchar(2);
   searchhousenumber TEXT;
   searchhousename HSTORE;
   searchrankaddress INTEGER;
   searchpostcode TEXT;
+  searchclass TEXT;
+  searchtype TEXT;
   countryname HSTORE;
+  hadcountry BOOLEAN;
 BEGIN
 
-  select parent_place_id,'us', housenumber, 30, postcode, null from location_property_tiger 
+  select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_tiger 
     WHERE place_id = in_place_id 
-    INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+    INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
 
   IF for_place_id IS NULL THEN
-    select parent_place_id,'us', housenumber, 30, postcode, null from location_property_aux
+    select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_aux
       WHERE place_id = in_place_id 
-      INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+      INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 
   IF for_place_id IS NULL THEN
-    select parent_place_id, country_code, housenumber, rank_address, postcode, name from placex 
+    select parent_place_id, country_code, housenumber, rank_address, postcode, name, class, type from placex 
       WHERE place_id = in_place_id and rank_address = 30 
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 
   IF for_place_id IS NULL THEN
@@ -1986,12 +2017,13 @@ BEGIN
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;
 
   found := 1000;
+  hadcountry := false;
   FOR location IN 
-    select placex.place_id, osm_type, osm_id, 
+    select placex.place_id, osm_type, osm_id,
       CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
-      class, type, fromarea, isaddress,
+      class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      distance
+      distance,country_code
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
       and ((cached_rank_address > 0 AND cached_rank_address < searchrankaddress) OR address_place_id = for_place_id)
@@ -1999,10 +2031,26 @@ BEGIN
       order by rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc
   LOOP
 --RAISE WARNING '%',location;
+    IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
+      searchcountrycode := location.country_code;
+    END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
     END IF;
-    RETURN NEXT location;
+    IF location.rank_address = 4 AND location.isaddress THEN
+      hadcountry := true;
+    END IF;
+    IF location.rank_address < 4 AND NOT hadcountry THEN
+      select name from country_name where country_code = searchcountrycode limit 1 INTO countryname;
+      IF countryname IS NOT NULL THEN
+        countrylocation := ROW(null, null, null, countryname, 'place', 'country', null, true, true, 4, 0)::addressline;
+        RETURN NEXT countrylocation;
+      END IF;
+    END IF;
+    countrylocation := ROW(location.place_id, location.osm_type, location.osm_id, location.name, location.class, 
+                           location.type, location.admin_level, location.fromarea, location.isaddress, location.rank_address, 
+                           location.distance)::addressline;
+    RETURN NEXT countrylocation;
     found := location.rank_address;
   END LOOP;
 
@@ -2010,28 +2058,29 @@ BEGIN
     select name from country_name where country_code = searchcountrycode limit 1 INTO countryname;
 --RAISE WARNING '% % %',found,searchcountrycode,countryname;
     IF countryname IS NOT NULL THEN
-      location := ROW(null, null, null, countryname, 'place', 'country', true, true, 4, 0)::addressline;
+      location := ROW(null, null, null, countryname, 'place', 'country', null, true, true, 4, 0)::addressline;
       RETURN NEXT location;
     END IF;
   END IF;
 
   IF searchcountrycode IS NOT NULL THEN
-    location := ROW(null, null, null, 'ref'=>searchcountrycode, 'place', 'country_code', true, false, 4, 0)::addressline;
+    location := ROW(null, null, null, 'ref'=>searchcountrycode, 'place', 'country_code', null, true, false, 4, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchhousename IS NOT NULL THEN
-    location := ROW(in_place_id, null, null, searchhousename, 'place', 'house_name', true, true, 29, 0)::addressline;
+    location := ROW(in_place_id, null, null, searchhousename, searchclass, searchtype, null, true, true, 29, 0)::addressline;
+--    location := ROW(in_place_id, null, null, searchhousename, 'place', 'house_name', null, true, true, 29, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchhousenumber IS NOT NULL THEN
-    location := ROW(in_place_id, null, null, 'ref'=>searchhousenumber, 'place', 'house_number', true, true, 28, 0)::addressline;
+    location := ROW(in_place_id, null, null, 'ref'=>searchhousenumber, 'place', 'house_number', null, true, true, 28, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchpostcode IS NOT NULL THEN
-    location := ROW(null, null, null, 'ref'=>searchpostcode, 'place', 'postcode', true, true, 5, 0)::addressline;
+    location := ROW(null, null, null, 'ref'=>searchpostcode, 'place', 'postcode', null, true, true, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

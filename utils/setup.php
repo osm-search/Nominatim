@@ -130,13 +130,9 @@
 	{
 		echo "Partitions\n";
 		$bDidSomething = true;
-echo "here";
 		$oDB =& getDB();
-echo "there";
 		$sSQL = 'select partition from country_name order by country_code';
-var_dump($sSQL);
 		$aPartitions = $oDB->getCol($sSQL);
-var_dump($aPartitions);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
@@ -147,11 +143,9 @@ var_dump($aPartitions);
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
 		foreach($aMatches as $aMatch)
 		{
-var_dump($aMatch);
 			$sResult = '';
 			foreach($aPartitions as $sPartitionName)
 			{
-var_dump($sPartitionName);
 				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
 			}
 			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
@@ -371,8 +365,8 @@ var_dump($sPartitionName);
 	{
 		// Convert database DSN to psql paramaters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
-		$sCMD = 'psql '.$aDSNInfo['database'];
-
+		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+		$sCMD = 'psql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => array('pipe', 'w'),

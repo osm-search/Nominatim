@@ -50,6 +50,9 @@ struct feature
     xmlChar *	rankAddress;
     xmlChar *	rankSearch;
     xmlChar *	countryCode;
+    xmlChar * 	parentPlaceID;
+    xmlChar *	parentType;
+    xmlChar *	parentID;
     xmlChar * 	adminLevel;
     xmlChar *	houseNumber;
     xmlChar * 	geometry;
@@ -67,6 +70,7 @@ int 					featureNameLines = 0;
 int 					featureExtraTagLines = 0;
 int 					featureCount = 0;
 xmlHashTablePtr 		partionTableTagsHash;
+xmlHashTablePtr 		partionTableTagsHashDelete;
 char					featureNameString[MAX_FEATURENAMESTRING];
 char					featureExtraTagString[MAX_FEATUREEXTRATAGSTRING];
 
@@ -135,13 +139,17 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
         feature.rankAddress = xmlTextReaderGetAttribute(reader, BAD_CAST "rank");
         feature.rankSearch = xmlTextReaderGetAttribute(reader, BAD_CAST "importance");
 
+        feature.parentPlaceID = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_place_id");
+        feature.parentType = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_type");
+        feature.parentID = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_id");
+
         feature.countryCode = NULL;
         feature.adminLevel = NULL;
         feature.houseNumber = NULL;
         feature.geometry = NULL;
         featureAddressLines = 0;
         featureNameLines = 0;
-		featureExtraTagLines = 0;
+        featureExtraTagLines = 0;
 
         return;
     }
@@ -312,7 +320,6 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
 void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 {
     PGresult * 		res;
-    PGresult * 		resPlaceID;
     const char *	paramValues[11];
     char *			place_id;
     char *			partionQueryName;
@@ -348,9 +355,9 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
         }
 */
-        place_id = feature.placeID;
+        place_id = (char *)feature.placeID;
 
-        if (fileMode == FILEMODE_UPDATE || fileMode == FILEMODE_DELETE)
+        if (fileMode == FILEMODE_UPDATE || fileMode == FILEMODE_DELETE || fileMode == FILEMODE_ADD)
         {
             paramValues[0] = (const char *)place_id;
             res = PQexecPrepared(conn, "placex_delete", 1, paramValues, NULL, NULL, 0);
@@ -379,6 +386,19 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                 exit(EXIT_FAILURE);
             }
             PQclear(res);
+
+            partionQueryName = xmlHashLookup2(partionTableTagsHashDelete, feature.key, feature.value);
+            if (partionQueryName)
+            {
+                res = PQexecPrepared(conn, partionQueryName, 1, paramValues, NULL, NULL, 0);
+                if (PQresultStatus(res) != PGRES_COMMAND_OK)
+                {
+                    fprintf(stderr, "%s: DELETE failed: %s", partionQueryName, PQerrorMessage(conn));
+                    PQclear(res);
+                    exit(EXIT_FAILURE);
+                }
+                PQclear(res);
+            }
         }
 
         if (fileMode == FILEMODE_UPDATE || fileMode == FILEMODE_ADD)
@@ -398,8 +418,8 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                 lineValueLen = 0;
                 for (i = 0; i < featureNameLines; i++)
                 {
-                    lineTypeLen = strlen(BAD_CAST featureName[i].type);
-                    lineValueLen = strlen(BAD_CAST featureName[i].value);
+                    lineTypeLen = (int)strlen((char *) featureName[i].type);
+                    lineValueLen = (int)strlen((char *) featureName[i].value);
                     if (namePos+lineTypeLen+lineValueLen+7 > MAX_FEATURENAMESTRING)
                     {
                         fprintf(stderr, "feature name too long: %s", (const char *)featureName[i].value);
@@ -407,11 +427,11 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     }
                     if (namePos) strcpy(featureNameString+(namePos++), ",");
                     strcpy(featureNameString+(namePos++), "\"");
-                    strcpy(featureNameString+namePos, BAD_CAST featureName[i].type);
+                    strcpy(featureNameString+namePos, (char*) featureName[i].type);
                     namePos += lineTypeLen;
                     strcpy(featureNameString+namePos, "\"=>\"");
                     namePos += 4;
-                    strcpy(featureNameString+namePos, BAD_CAST featureName[i].value);
+                    strcpy(featureNameString+namePos, (char *) featureName[i].value);
                     namePos += lineValueLen;
                     strcpy(featureNameString+(namePos++), "\"");
                 }
@@ -426,8 +446,8 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                 lineValueLen = 0;
                 for (i = 0; i < featureExtraTagLines; i++)
                 {
-                    lineTypeLen = strlen(BAD_CAST featureExtraTag[i].type);
-                    lineValueLen = strlen(BAD_CAST featureExtraTag[i].value);
+                    lineTypeLen = strlen((char *) featureExtraTag[i].type);
+                    lineValueLen = strlen((char *) featureExtraTag[i].value);
                     if (namePos+lineTypeLen+lineValueLen+7 > MAX_FEATUREEXTRATAGSTRING)
                     {
                         fprintf(stderr, "feature extra tag too long: %s", (const char *)featureExtraTag[i].value);
@@ -435,30 +455,36 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     }
                     if (namePos) strcpy(featureExtraTagString+(namePos++),",");
                     strcpy(featureExtraTagString+(namePos++), "\"");
-                    strcpy(featureExtraTagString+namePos, BAD_CAST featureExtraTag[i].type);
+                    strcpy(featureExtraTagString+namePos, (char *) featureExtraTag[i].type);
                     namePos += lineTypeLen;
                     strcpy(featureExtraTagString+namePos, "\"=>\"");
                     namePos += 4;
-                    strcpy(featureExtraTagString+namePos, BAD_CAST featureExtraTag[i].value);
+                    strcpy(featureExtraTagString+namePos, (char *) featureExtraTag[i].value);
                     namePos += lineValueLen;
                     strcpy(featureExtraTagString+(namePos++), "\"");
                 }
             }
             paramValues[6] = (const char *)featureExtraTagString;
 
-            paramValues[7] = (const char *)feature.adminLevel;
-            paramValues[8] = (const char *)feature.houseNumber;
-            paramValues[9] = (const char *)feature.rankAddress;
-            paramValues[10] = (const char *)feature.rankSearch;
-            paramValues[11] = (const char *)feature.geometry;
-            res = PQexecPrepared(conn, "placex_insert", 12, paramValues, NULL, NULL, 0);
-            if (PQresultStatus(res) != PGRES_COMMAND_OK)
+            paramValues[7] = (const char *)feature.parentPlaceID;
+
+            paramValues[8] = (const char *)feature.adminLevel;
+            paramValues[9] = (const char *)feature.houseNumber;
+            paramValues[10] = (const char *)feature.rankAddress;
+            paramValues[11] = (const char *)feature.rankSearch;
+            paramValues[12] = (const char *)feature.geometry;
+            if (strlen(paramValues[3]))
             {
-                fprintf(stderr, "index_placex: INSERT failed: %s", PQerrorMessage(conn));
-                PQclear(res);
-                exit(EXIT_FAILURE);
+                res = PQexecPrepared(conn, "placex_insert", 13, paramValues, NULL, NULL, 0);
+                if (PQresultStatus(res) != PGRES_COMMAND_OK)
+                {
+                    fprintf(stderr, "index_placex: INSERT failed: %s", PQerrorMessage(conn));
+                    fprintf(stderr, "index_placex: INSERT failed: %s %s %s", paramValues[0], paramValues[1], paramValues[2]);
+                    PQclear(res);
+                    exit(EXIT_FAILURE);
+               }
+               PQclear(res);
             }
-            PQclear(res);
 
             for (i = 0; i < featureAddressLines; i++)
             {
@@ -513,7 +539,6 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     exit(EXIT_FAILURE);
                 }
                 PQclear(res);
-
             }
 
         }
@@ -595,6 +620,7 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     }
 
     partionTableTagsHash = xmlHashCreate(200);
+    partionTableTagsHashDelete = xmlHashCreate(200);
 
     partionTagsFile = fopen(partionTagsFilename, "rt");
     if (!partionTagsFile)
@@ -636,6 +662,27 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
         }
 
         xmlHashAddEntry2(partionTableTagsHash, BAD_CAST osmkey, BAD_CAST osmvalue, BAD_CAST partionQueryName);
+
+        partionQueryName = malloc(strlen("partition_delete_")+strlen(osmkey)+strlen(osmvalue)+2);
+        strcpy(partionQueryName, "partition_delete_");
+        strcat(partionQueryName, osmkey);
+        strcat(partionQueryName, "_");
+        strcat(partionQueryName, osmvalue);
+
+        strcpy(partionQuerySQL, "delete from place_classtype_");
+        strcat(partionQuerySQL, osmkey);
+        strcat(partionQuerySQL, "_");
+        strcat(partionQuerySQL, osmvalue);
+        strcat(partionQuerySQL, " where place_id = $1::integer");
+
+        res = PQprepare(conn, partionQueryName, partionQuerySQL, 1, NULL);
+        if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        {
+            fprintf(stderr, "Failed to prepare %s: %s\n", partionQueryName, PQerrorMessage(conn));
+            exit(EXIT_FAILURE);
+        }
+
+        xmlHashAddEntry2(partionTableTagsHashDelete, BAD_CAST osmkey, BAD_CAST osmvalue, BAD_CAST partionQueryName);
     }
 
     res = PQprepare(conn, "get_new_place_id",
@@ -657,8 +704,8 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     }
 
     res = PQprepare(conn, "placex_insert",
-                    "insert into placex (place_id,osm_type,osm_id,class,type,name,extratags,admin_level,housenumber,rank_address,rank_search,geometry) "
-                    "values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, st_setsrid($12, 4326))",
+                    "insert into placex (place_id,osm_type,osm_id,class,type,name,extratags,parent_place_id,admin_level,housenumber,rank_address,rank_search,geometry) "
+                    "values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, st_setsrid($13, 4326))",
                     12, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -740,6 +787,7 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
 
     xmlFreeTextReader(reader);
     xmlHashFree(partionTableTagsHash, NULL);
+    xmlHashFree(partionTableTagsHashDelete, NULL);
 
     return 0;
 }

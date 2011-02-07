@@ -18,6 +18,8 @@
 
 extern int verbose;
 
+int mode = 0;
+
 void nominatim_export(int rank_min, int rank_max, const char *conninfo, const char *structuredoutputfile)
 {
     xmlTextWriterPtr writer;
@@ -129,7 +131,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
             tuples = PQntuples(resPlaces);
             for (i = 0; i < tuples; i++)
             {
-                nominatim_exportPlace(PGint32(*((uint32_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL);
+                nominatim_exportPlace(PGint32(*((uint32_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL, NULL);
                 rankTotalDone++;
                 if (rankTotalDone%1000 == 0) printf("Done %i (k)\n", rankTotalDone/1000);
             }
@@ -150,7 +152,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_details",
-                    "select osm_type, osm_id, class, type, name, housenumber, country_code, ST_AsText(geometry), admin_level, rank_address, rank_search from placex where place_id = $1",
+                    "select placex.osm_type, placex.osm_id, placex.class, placex.type, placex.name, placex.housenumber, placex.country_code, ST_AsText(placex.geometry), placex.admin_level, placex.rank_address, placex.rank_search, placex.parent_place_id, parent.osm_type, parent.osm_id, placex.indexed_status from placex left outer join placex as parent on (placex.parent_place_id = parent.place_id) where placex.place_id = $1",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -224,23 +226,16 @@ xmlTextWriterPtr nominatim_exportXMLStart(const char *structuredoutputfile)
         fprintf(stderr, "xmlTextWriterWriteAttribute failed\n");
         exit(EXIT_FAILURE);
     }
-    if (xmlTextWriterStartElement(writer, BAD_CAST "add") < 0)
-    {
-        fprintf(stderr, "xmlTextWriterStartElement failed\n");
-        exit(EXIT_FAILURE);
-    }
+
+    mode = 0;
 
     return writer;
 }
 
 void nominatim_exportXMLEnd(xmlTextWriterPtr writer)
 {
-    // End <add>
-    if (xmlTextWriterEndElement(writer) < 0)
-    {
-        fprintf(stderr, "xmlTextWriterEndElement failed\n");
-        exit(EXIT_FAILURE);
-    }
+    nominatim_exportEndMode(writer);
+
     // End <osmStructured>
     if (xmlTextWriterEndElement(writer) < 0)
     {
@@ -255,135 +250,237 @@ void nominatim_exportXMLEnd(xmlTextWriterPtr writer)
     xmlFreeTextWriter(writer);
 }
 
-/*
- * Requirements: the prepared queries must exist
- */
-void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr writer, pthread_mutex_t * writer_mutex)
+void nominatim_exportStartMode(xmlTextWriterPtr writer, int newMode)
 {
-    PGresult * 		res;
-    PGresult * 		resNames;
-    PGresult * 		resAddress;
-    PGresult * 		resExtraTags;
+    if (mode == newMode) return;
 
-    int 			i;
+    nominatim_exportEndMode(writer);
 
+    switch(newMode)
+    {
+    case 0:
+        break;
+
+    case 1:
+        if (xmlTextWriterStartElement(writer, BAD_CAST "add") < 0)
+        {
+            fprintf(stderr, "xmlTextWriterStartElement failed\n");
+            exit(EXIT_FAILURE);
+        }
+        break;
+
+    case 2:
+        if (xmlTextWriterStartElement(writer, BAD_CAST "update") < 0)
+        {
+            fprintf(stderr, "xmlTextWriterStartElement failed\n");
+            exit(EXIT_FAILURE);
+        }
+        break;
+
+    case 3:
+        if (xmlTextWriterStartElement(writer, BAD_CAST "delete") < 0)
+        {
+            fprintf(stderr, "xmlTextWriterStartElement failed\n");
+            exit(EXIT_FAILURE);
+        }
+        break;
+    }
+    mode = newMode;
+}
+
+void nominatim_exportEndMode(xmlTextWriterPtr writer)
+{
+    if (!mode) return;
+
+    if (xmlTextWriterEndElement(writer) < 0)
+    {
+        fprintf(stderr, "xmlTextWriterEndElement failed\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void nominatim_exportPlaceQueries(uint64_t place_id, PGconn * conn, struct export_data * querySet)
+{
     const char *	paramValues[1];
     int         	paramLengths[1];
     int         	paramFormats[1];
     uint64_t    	paramPlaceID;
-
 
     paramPlaceID = PGint64(place_id);
     paramValues[0] = (char *)&paramPlaceID;
     paramLengths[0] = sizeof(paramPlaceID);
     paramFormats[0] = 1;
 
-    res = PQexecPrepared(conn, "placex_details", 1, paramValues, paramLengths, paramFormats, 0);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    querySet->res = PQexecPrepared(conn, "placex_details", 1, paramValues, paramLengths, paramFormats, 0);
+    if (PQresultStatus(querySet->res) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "placex_details: SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(res);
+        PQclear(querySet->res);
         exit(EXIT_FAILURE);
     }
 
-    resNames = PQexecPrepared(conn, "placex_names", 1, paramValues, paramLengths, paramFormats, 0);
-    if (PQresultStatus(resNames) != PGRES_TUPLES_OK)
+    querySet->resNames = PQexecPrepared(conn, "placex_names", 1, paramValues, paramLengths, paramFormats, 0);
+    if (PQresultStatus(querySet->resNames) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "placex_names: SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(resNames);
+        PQclear(querySet->resNames);
         exit(EXIT_FAILURE);
     }
 
-    resAddress = PQexecPrepared(conn, "placex_address", 1, paramValues, paramLengths, paramFormats, 0);
-    if (PQresultStatus(resAddress) != PGRES_TUPLES_OK)
+    querySet->resAddress = PQexecPrepared(conn, "placex_address", 1, paramValues, paramLengths, paramFormats, 0);
+    if (PQresultStatus(querySet->resAddress) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "placex_address: SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(resAddress);
+        PQclear(querySet->resAddress);
         exit(EXIT_FAILURE);
     }
 
-    resExtraTags = PQexecPrepared(conn, "placex_extratags", 1, paramValues, paramLengths, paramFormats, 0);
-    if (PQresultStatus(resExtraTags) != PGRES_TUPLES_OK)
+    querySet->resExtraTags = PQexecPrepared(conn, "placex_extratags", 1, paramValues, paramLengths, paramFormats, 0);
+    if (PQresultStatus(querySet->resExtraTags) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "placex_extratags: SELECT failed: %s", PQerrorMessage(conn));
-        PQclear(resExtraTags);
+        PQclear(querySet->resExtraTags);
         exit(EXIT_FAILURE);
     }
+}
 
-    if (writer_mutex) pthread_mutex_lock( writer_mutex );
+void nominatim_exportFreeQueries(struct export_data * querySet)
+{
+    PQclear(querySet->res);
+    PQclear(querySet->resNames);
+    PQclear(querySet->resAddress);
+    PQclear(querySet->resExtraTags);
+}
+
+/*
+ * Requirements: the prepared queries must exist
+ */
+void nominatim_exportPlace(uint64_t place_id, PGconn * conn, 
+  xmlTextWriterPtr writer, pthread_mutex_t * writer_mutex, struct export_data * prevQuerySet)
+{
+    struct export_data		querySet;
+
+    int 			i;
+
+    nominatim_exportPlaceQueries(place_id, conn, &querySet);
+
+    // Add, modify or delete?
+    if (prevQuerySet)
+    {
+        if ((PQgetvalue(prevQuerySet->res, 0, 14) && strcmp(PQgetvalue(prevQuerySet->res, 0, 14), "100") == 0) || PQntuples(querySet.res))
+        {
+            // Delete
+            if (writer_mutex) pthread_mutex_lock( writer_mutex );
+            nominatim_exportStartMode(writer, 3);
+            xmlTextWriterStartElement(writer, BAD_CAST "feature");
+            xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "place_id", "%li", place_id);
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(prevQuerySet->res, 0, 0));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "id", BAD_CAST PQgetvalue(prevQuerySet->res, 0, 1));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(prevQuerySet->res, 0, 2));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(prevQuerySet->res, 0, 3));
+            xmlTextWriterEndElement(writer);
+            if (writer_mutex) pthread_mutex_unlock( writer_mutex );
+            nominatim_exportFreeQueries(&querySet);
+            return;
+        }
+        if (PQgetvalue(prevQuerySet->res, 0, 14) && strcmp(PQgetvalue(prevQuerySet->res, 0, 14), "1") == 0)
+        {
+            // Add
+            if (writer_mutex) pthread_mutex_lock( writer_mutex );
+            nominatim_exportStartMode(writer, 1);  
+        }
+        else
+        {
+            // Update, but only if something has changed
+
+            // TODO: detect changes
+
+            if (writer_mutex) pthread_mutex_lock( writer_mutex );
+            nominatim_exportStartMode(writer, 2);  
+        }
+    }
+    else
+    {
+       // Add
+       if (writer_mutex) pthread_mutex_lock( writer_mutex );
+       nominatim_exportStartMode(writer, 1);  
+    }
 
     xmlTextWriterStartElement(writer, BAD_CAST "feature");
     xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "place_id", "%li", place_id);
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(res, 0, 0));
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "id", BAD_CAST PQgetvalue(res, 0, 1));
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(res, 0, 2));
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(res, 0, 3));
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "rank", BAD_CAST PQgetvalue(res, 0, 9));
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "importance", BAD_CAST PQgetvalue(res, 0, 10));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(querySet.res, 0, 0));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "id", BAD_CAST PQgetvalue(querySet.res, 0, 1));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(querySet.res, 0, 2));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(querySet.res, 0, 3));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "rank", BAD_CAST PQgetvalue(querySet.res, 0, 9));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "importance", BAD_CAST PQgetvalue(querySet.res, 0, 10));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_place_id", BAD_CAST PQgetvalue(querySet.res, 0, 11));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_type", BAD_CAST PQgetvalue(querySet.res, 0, 12));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_id", BAD_CAST PQgetvalue(querySet.res, 0, 13));
 
-    if (PQntuples(resNames))
+    if (PQntuples(querySet.resNames))
     {
         xmlTextWriterStartElement(writer, BAD_CAST "names");
 
-        for (i = 0; i < PQntuples(resNames); i++)
+        for (i = 0; i < PQntuples(querySet.resNames); i++)
         {
             xmlTextWriterStartElement(writer, BAD_CAST "name");
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(resNames, i, 0));
-            xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(resNames, i, 1));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(querySet.resNames, i, 0));
+            xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.resNames, i, 1));
             xmlTextWriterEndElement(writer);
         }
 
         xmlTextWriterEndElement(writer);
     }
 
-    if (PQgetvalue(res, 0, 5) && strlen(PQgetvalue(res, 0, 5)))
+    if (PQgetvalue(querySet.res, 0, 5) && strlen(PQgetvalue(querySet.res, 0, 5)))
     {
         xmlTextWriterStartElement(writer, BAD_CAST "houseNumber");
-        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(res, 0, 5));
+        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.res, 0, 5));
         xmlTextWriterEndElement(writer);
     }
 
-    if (PQgetvalue(res, 0, 8) && strlen(PQgetvalue(res, 0, 8)))
+    if (PQgetvalue(querySet.res, 0, 8) && strlen(PQgetvalue(querySet.res, 0, 8)))
     {
         xmlTextWriterStartElement(writer, BAD_CAST "adminLevel");
-        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(res, 0, 8));
+        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.res, 0, 8));
         xmlTextWriterEndElement(writer);
     }
 
-    if (PQgetvalue(res, 0, 6) && strlen(PQgetvalue(res, 0, 6)))
+    if (PQgetvalue(querySet.res, 0, 6) && strlen(PQgetvalue(querySet.res, 0, 6)))
     {
         xmlTextWriterStartElement(writer, BAD_CAST "countryCode");
-        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(res, 0, 6));
+        xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.res, 0, 6));
         xmlTextWriterEndElement(writer);
     }
 
-    if (PQntuples(resAddress) > 0)
+    if (PQntuples(querySet.resAddress) > 0)
     {
         xmlTextWriterStartElement(writer, BAD_CAST "address");
-        for (i = 0; i < PQntuples(resAddress); i++)
+        for (i = 0; i < PQntuples(querySet.resAddress); i++)
         {
-            xmlTextWriterStartElement(writer, BAD_CAST getRankLabel(atoi(PQgetvalue(resAddress, i, 5))));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "rank", BAD_CAST PQgetvalue(resAddress, i, 5));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(resAddress, i, 0));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "id", BAD_CAST PQgetvalue(resAddress, i, 1));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(resAddress, i, 2));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(resAddress, i, 3));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "distance", BAD_CAST PQgetvalue(resAddress, i, 4));
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "isaddress", BAD_CAST PQgetvalue(resAddress, i, 6));
+            xmlTextWriterStartElement(writer, BAD_CAST getRankLabel(atoi(PQgetvalue(querySet.resAddress, i, 5))));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "rank", BAD_CAST PQgetvalue(querySet.resAddress, i, 5));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(querySet.resAddress, i, 0));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "id", BAD_CAST PQgetvalue(querySet.resAddress, i, 1));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "key", BAD_CAST PQgetvalue(querySet.resAddress, i, 2));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "value", BAD_CAST PQgetvalue(querySet.resAddress, i, 3));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "distance", BAD_CAST PQgetvalue(querySet.resAddress, i, 4));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "isaddress", BAD_CAST PQgetvalue(querySet.resAddress, i, 6));
             xmlTextWriterEndElement(writer);
         }
         xmlTextWriterEndElement(writer);
     }
 
-    if (PQntuples(resExtraTags))
+    if (PQntuples(querySet.resExtraTags))
     {
         xmlTextWriterStartElement(writer, BAD_CAST "tags");
 
-        for (i = 0; i < PQntuples(resExtraTags); i++)
+        for (i = 0; i < PQntuples(querySet.resExtraTags); i++)
         {
             xmlTextWriterStartElement(writer, BAD_CAST "tag");
-            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(resExtraTags, i, 0));
-            xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(resExtraTags, i, 1));
+            xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST PQgetvalue(querySet.resExtraTags, i, 0));
+            xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.resExtraTags, i, 1));
             xmlTextWriterEndElement(writer);
         }
 
@@ -392,17 +489,14 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn, xmlTextWriterPtr wr
 
 
     xmlTextWriterStartElement(writer, BAD_CAST "osmGeometry");
-    xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(res, 0, 7));
+    xmlTextWriterWriteString(writer, BAD_CAST PQgetvalue(querySet.res, 0, 7));
     xmlTextWriterEndElement(writer);
 
     xmlTextWriterEndElement(writer); // </feature>
 
     if (writer_mutex) pthread_mutex_unlock( writer_mutex );
 
-    PQclear(res);
-    PQclear(resNames);
-    PQclear(resAddress);
-    PQclear(resExtraTags);
+    nominatim_exportFreeQueries(&querySet);
 }
 
 const char * getRankLabel(int rank)

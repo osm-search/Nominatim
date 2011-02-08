@@ -343,13 +343,14 @@ void *nominatim_indexThread(void * thread_data_in)
 
         updateStartTime = time(0);
 	int done = 0;
+
+        if (thread_data->writer)
+        {
+             nominatim_exportPlaceQueries(place_id, thread_data->conn, &querySet);
+        }
+
 	while(!done)
 	{
-             if (thread_data->writer)
-             {
-                 nominatim_exportPlaceQueries(place_id, thread_data->conn, &querySet);
-             }
-
 
 	        paramPlaceID = PGint32(place_id);
         	paramValues[0] = (char *)&paramPlaceID;
@@ -363,12 +364,14 @@ void *nominatim_indexThread(void * thread_data_in)
 			if (strncmp(PQerrorMessage(thread_data->conn), "ERROR:  deadlock detected", 25))
 			{
 		            fprintf(stderr, "index_placex: UPDATE failed - deadlock, retrying\n");
+		            PQclear(res);
+                            sleep(rand() % 10);
 			}
 			else
 			{
 		            fprintf(stderr, "index_placex: UPDATE failed: %s", PQerrorMessage(thread_data->conn));
 		            PQclear(res);
-				sleep(5);
+                            sleep(rand() % 10);
 //		            exit(EXIT_FAILURE);
 			}
 		}

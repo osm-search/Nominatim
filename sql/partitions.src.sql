@@ -61,7 +61,13 @@ BEGIN
         UNION ALL
         SELECT * FROM location_area_country WHERE ST_Contains(geometry, point) and rank_search < maxrank
       ) as location_area
-      ORDER BY rank_address desc, isin_tokens && keywords desc, isguess asc, ST_Distance(point, centroid) * CASE WHEN rank_address = 16 AND rank_search = 16 THEN 0.25 WHEN rank_address = 16 AND rank_search = 17 THEN 0.5 ELSE 1 END ASC
+      ORDER BY rank_address desc, isin_tokens && keywords desc, isguess asc, 
+        ST_Distance(point, centroid) * 
+          CASE 
+               WHEN rank_address = 16 AND rank_search = 15 THEN 0.2 -- capital city
+               WHEN rank_address = 16 AND rank_search = 16 THEN 0.25 -- city
+               WHEN rank_address = 16 AND rank_search = 17 THEN 0.5 -- town
+               ELSE 1 END ASC -- everything else
     LOOP
       RETURN NEXT r;
     END LOOP;

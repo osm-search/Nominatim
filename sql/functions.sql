@@ -1477,9 +1477,12 @@ BEGIN
     -- try using the isin value to find parent places
     IF array_upper(isin_tokens, 1) IS NOT NULL THEN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
---RAISE WARNING '  ISIN: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
+--RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
 
         FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+
+--RAISE WARNING '  ISIN: %',location;
+
           nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
           INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
           address_havelevel[location.rank_address] := true;

@@ -367,7 +367,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn,
     // Add, modify or delete?
     if (prevQuerySet)
     {
-        if ((PQgetvalue(prevQuerySet->res, 0, 14) && strcmp(PQgetvalue(prevQuerySet->res, 0, 14), "100") == 0) || PQntuples(querySet.res))
+        if ((PQgetvalue(prevQuerySet->res, 0, 14) && strcmp(PQgetvalue(prevQuerySet->res, 0, 14), "100") == 0) || PQntuples(querySet.res) == 0)
         {
             // Delete
             if (writer_mutex) pthread_mutex_lock( writer_mutex );

@@ -586,14 +586,21 @@
 						// Must have a location term
 						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
 						{
-							if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
-							if (!$aSearch['sClass']) continue;
-							if (CONST_Debug) var_dump('<hr>',$aSearch);
-							if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
-
-							$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-							if ($oDB->getOne($sSQL))
+							if ($aSearch['sCountryCode'] && !$aSearch['sClass'])
 							{
+								$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4 order by st_area(geometry) desc limit 1";
+								$aPlaceIDs = $oDB->getCol($sSQL);
+							}
+							else
+							{
+								if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
+								if (!$aSearch['sClass']) continue;
+								if (CONST_Debug) var_dump('<hr>',$aSearch);
+								if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
+
+								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+								if ($oDB->getOne($sSQL))
+								{
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType'];								
 								$sSQL .= " where st_contains($sViewboxSmallSQL, centroid)";
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
@@ -619,6 +626,7 @@
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
+							}
 							}
 						}
 						else
@@ -832,20 +840,20 @@
 						$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
 					}
 					$sOrderSQL .= ' ELSE 10000000 END';
-					$sSQL = "select osm_type,osm_id,class,type,rank_search,rank_address,min(place_id) as place_id,country_code,";
+					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
 					$sSQL .= $sOrderSQL." as porder ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-					$sSQL .= "group by osm_type,osm_id,class,type,rank_search,rank_address,country_code";
+					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, ARRAY['ref']) ";
 					$sSQL .= " union ";
-					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "null as placename,";
 					$sSQL .= "null as ref,";
@@ -855,7 +863,7 @@
 					$sSQL .= "group by place_id";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= " union ";
-					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "null as placename,";
 					$sSQL .= "null as ref,";
@@ -998,7 +1006,14 @@
 //exit;
 		}
 
-		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance']) 
+//if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
+
+		if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance']) 
+			&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'])
+		{
+			$aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'];
+		}
+		elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance']) 
 			&& $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
 		{
 			$aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];

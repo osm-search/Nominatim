@@ -20,6 +20,8 @@
 	$iOffset = isset($_GET['offset'])?(int)$_GET['offset']:0;
 	$iMaxRank = 20;
 	if ($iLimit > 100) $iLimit = 100;
+	$iMinAddressRank = 0;
+	$iMaxAddressRank = 30;
 
 	// Format for output
 	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'xml' || $_GET['format'] == 'json' ||  $_GET['format'] == 'jsonv2'))
@@ -44,6 +46,24 @@
 		{
 			$iExcludedPlaceID = (int)$iExcludedPlaceID;
 			if ($iExcludedPlaceID) $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
+		}
+	}
+
+  // Only certain ranks of feature
+	if (isset($_GET['featuretype']))
+	{
+		switch($_GET['featuretype'])
+		{
+		case 'country':
+			$iMinAddressRank = $iMaxAddressRank = 4;
+			break;
+		case 'state':
+			$iMinAddressRank = $iMaxAddressRank = 8;
+			break;
+		case 'city':
+			$iMinAddressRank = 14;
+			$iMaxAddressRank = 18;
+			break;
 		}
 	}
 		
@@ -588,8 +608,11 @@
 						{
 							if ($aSearch['sCountryCode'] && !$aSearch['sClass'])
 							{
-								$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4 order by st_area(geometry) desc limit 1";
-								$aPlaceIDs = $oDB->getCol($sSQL);
+								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
+								{
+									$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4 order by st_area(geometry) desc limit 1";
+									$aPlaceIDs = $oDB->getCol($sSQL);
+								}
 							}
 							else
 							{
@@ -847,6 +870,7 @@
 					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
 					$sSQL .= $sOrderSQL." as porder ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
+					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
@@ -860,6 +884,7 @@
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 					$sSQL .= $sOrderSQL." as porder ";
 					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
+					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= " union ";
@@ -870,6 +895,7 @@
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 					$sSQL .= $sOrderSQL." as porder ";
 					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
+					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";

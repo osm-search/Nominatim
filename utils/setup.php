@@ -96,8 +96,10 @@
 		echo "Import\n";
 		$bDidSomething = true;
 
-		if (!file_exists(CONST_BasePath.'/osm2pgsql/osm2pgsql')) fail("please download and build osm2pgsql");
-		passthru(CONST_BasePath.'/osm2pgsql/osm2pgsql -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['osm-file']);
+        $osm2pgsql = CONST_BasePath.'/osm2pgsql/osm2pgsql';
+        if (!file_exists($osm2pgsql)) $osm2pgsql = trim(`which osm2pgsql`);
+        if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
+        passthru($osm2pgsql.' -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['osm-file']);
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
@@ -288,6 +290,7 @@
 
 	if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])
 	{
+		$bDidSomething = true;
 		$oDB =& getDB();
 		if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
 		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";

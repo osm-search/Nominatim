@@ -150,7 +150,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 
     for (rank = rank_min; rank <= rank_max; rank++)
     {
-        printf("Starting rank %d\n", rank);
+        fprintf(stderr, "Starting rank %d\n", rank);
         rankCountTuples = 0;
         rankPerSecond = 0;
 
@@ -217,7 +217,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
             if (iSector < PQntuples(resSectors))
             {
                 sector = PGint32(*((uint32_t *)PQgetvalue(resSectors, iSector, 0)));
-//                printf("\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
+//                fprintf(stderr, "\n Starting sector %d size %ld\n", sector, PGint64(*((uint64_t *)PQgetvalue(resSectors, iSector, 1))));
 
                 // Get all the place_id's for this sector
                 paramRank = PGint32(rank);
@@ -274,7 +274,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                         if (sleepcount++ > 500)
                         {
                             rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
-                            printf("  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
+                            fprintf(stderr, "  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
                             sleepcount = 0;
                         }
                     }
@@ -290,7 +290,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
 
                 // Finished sector
                 rankPerSecond = (float)rankCountTuples / MAX(difftime(time(0), rankStartTime),1);
-                printf("  Done %i in %i @ %f per second - ETA (seconds): %f\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond, ((float)(rankTotalTuples - rankCountTuples))/rankPerSecond);
+                fprintf(stderr, "  Done %i in %i @ %f per second - ETA (seconds): %f\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond, ((float)(rankTotalTuples - rankCountTuples))/rankPerSecond);
 
                 PQclear(resPlaces);
             }
@@ -300,7 +300,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
             }
         }
         // Finished rank
-        printf("\r  Done %i in %i @ %f per second - FINISHED                      \n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);
+        fprintf(stderr, "\r  Done %i in %i @ %f per second - FINISHED                      \n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);
 
         PQclear(resSectors);
     }
@@ -339,7 +339,7 @@ void *nominatim_indexThread(void * thread_data_in)
 
         pthread_mutex_unlock( thread_data->count_mutex );
 
-        if (verbose) printf("  Processing place_id %d\n", place_id);
+        if (verbose) fprintf(stderr, "  Processing place_id %d\n", place_id);
 
         updateStartTime = time(0);
 	int done = 0;
@@ -377,7 +377,7 @@ void *nominatim_indexThread(void * thread_data_in)
 		}
         }
         PQclear(res);
-        if (difftime(time(0), updateStartTime) > 1) printf("  Slow place_id %d\n", place_id);
+        if (difftime(time(0), updateStartTime) > 1) fprintf(stderr, "  Slow place_id %d\n", place_id);
 
         if (thread_data->writer)
         {

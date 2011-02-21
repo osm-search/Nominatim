@@ -372,22 +372,18 @@
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
-			1 => array('pipe', 'w'),
-			2 => array('file', '/dev/null', 'a')
+			1 => STDOUT, 
+			2 => STDERR
 		);
 		$ahPipes = null;
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
-		fwrite($ahPipes[0], $sScript);
-		fclose($ahPipes[0]);
-
-		// TODO: error checking
-		while(!feof($ahPipes[1]))
+		while(strlen($sScript))
 		{
-			echo fread($ahPipes[1], 4096);
+			$written = fwrite($ahPipes[0], $sScript);
+			$sScript = substr($sScript, $written);
 		}
-		fclose($ahPipes[1]);
-
+		fclose($ahPipes[0]);
 		proc_close($hProcess);
 	}

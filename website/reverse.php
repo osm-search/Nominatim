@@ -72,7 +72,7 @@
 		$fSearchDiam = 0.0001;
 		$iPlaceID = null;
 		$aArea = false;
-		$fMaxAreaDistance = 10;
+		$fMaxAreaDistance = 1;
 		while(!$iPlaceID && $fSearchDiam < $fMaxAreaDistance)
 		{
 			$fSearchDiam = $fSearchDiam * 2;
@@ -107,28 +107,30 @@
 		}
 
 		// The point we found might be too small - use the address to find what it is a child of
-		$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc";
-//var_dump($sSQL);
-		$iPlaceID = $oDB->getOne($sSQL);
-		if (PEAR::IsError($iPlaceID))
+		if ($iPlaceID)
 		{
-			var_Dump($sSQL, $iPlaceID); 
-			exit;
-		}
-		if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
-		{
-			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
-//var_dump($sSQL);
+			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc";
 			$iPlaceID = $oDB->getOne($sSQL);
 			if (PEAR::IsError($iPlaceID))
 			{
 				var_Dump($sSQL, $iPlaceID); 
 				exit;
 			}
-		}
-		if (!$iPlaceID)
-		{
-			$iPlaceID = $aPlace['place_id'];
+
+			if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
+			{
+				$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
+				$iPlaceID = $oDB->getOne($sSQL);
+				if (PEAR::IsError($iPlaceID))
+				{
+					var_Dump($sSQL, $iPlaceID); 
+					exit;
+				}
+			}
+			if (!$iPlaceID)
+			{
+				$iPlaceID = $aPlace['place_id'];
+			}
 		}
 	}
 

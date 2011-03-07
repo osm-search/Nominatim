@@ -84,7 +84,7 @@
 		$hLog = logStart($oDB, 'search', $sQuery, $aLangPrefOrder);
 
 		// Hack to make it handle "new york, ny" (and variants) correctly
-                $sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, new york', $sQuery);
+                $sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $sQuery);
 
 		// If we have a view box create the SQL
 		// Small is the actual view box, Large is double (on each axis) that 
@@ -452,7 +452,7 @@
 										{
 											if (sizeof($aSearch['aName']))
 											{
-												if (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4)
+												if (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false)
 												{
 													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												}
@@ -470,14 +470,14 @@
 										}
 									}
 								}
-								if (isset($aValidTokens[$sToken]) && strlen($sToken) >= 4)
+								if (isset($aValidTokens[$sToken]))
 								{
 									// Allow searching for a word - but at extra cost
 									foreach($aValidTokens[$sToken] as $aSearchTerm)
 									{
 //var_Dump('<hr>',$aSearch['aName']);
 
-										if (sizeof($aCurrentSearch['aName']))
+										if (sizeof($aCurrentSearch['aName'])  && strlen($sToken) >= 4)
 										{
   										$aSearch = $aCurrentSearch;
 											$aSearch['iSearchRank'] += 1;
@@ -488,7 +488,8 @@
 										if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)
 										{
   										$aSearch = $aCurrentSearch;
-											$aSearch['iSearchRank'] += 4;
+											$aSearch['iSearchRank'] += 2;
+											if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
 											$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 											$aSearch['iNamePhrase'] = $iPhrase;
   										if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
@@ -511,6 +512,21 @@
 
 						$aNewPhraseSearches = array_merge($aNewPhraseSearches, $aNewWordsetSearches);
 						usort($aNewPhraseSearches, 'bySearchRank');
+
+          $aSearchHash = array();
+          foreach($aNewPhraseSearches as $iSearch => $aSearch)
+          {
+            $sHash = serialize($aSearch);
+            if (isset($aSearchHash[$sHash]))
+            {
+              unset($aNewPhraseSearches[$iSearch]);
+            }
+            else
+            {
+              $aSearchHash[$sHash] = 1;
+            }
+          }
+
 						$aNewPhraseSearches = array_slice($aNewPhraseSearches, 0, 50);
 					}
 

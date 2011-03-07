@@ -54,7 +54,8 @@ transliteration( PG_FUNCTION_ARGS )
 	wchardatastart = wchardata = (unsigned int *)palloc((sourcedatalength+1)*sizeof(int));
 
 	// Based on pg_utf2wchar_with_len from wchar.c
-        while (sourcedatalength > 0 && *sourcedata)
+	// Postgresql strings are not zero terminalted
+        while (sourcedatalength > 0)
         {
                 if ((*sourcedata & 0x80) == 0)
                 {
@@ -68,7 +69,7 @@ transliteration( PG_FUNCTION_ARGS )
                         c1 = *sourcedata++ & 0x1f;
                         c2 = *sourcedata++ & 0x3f;
                         *wchardata = (c1 << 6) | c2;
-			wchardata++;
+			if (*wchardata < 65536) wchardata++;
                         sourcedatalength -= 2;
                 }
                 else if ((*sourcedata & 0xf0) == 0xe0)
@@ -78,7 +79,7 @@ transliteration( PG_FUNCTION_ARGS )
                         c2 = *sourcedata++ & 0x3f;
                         c3 = *sourcedata++ & 0x3f;
                         *wchardata = (c1 << 12) | (c2 << 6) | c3;
-			wchardata++;
+			if (*wchardata < 65536) wchardata++;
                         sourcedatalength -= 3;
                 }
                 else if ((*sourcedata & 0xf8) == 0xf0)
@@ -89,7 +90,7 @@ transliteration( PG_FUNCTION_ARGS )
                         c3 = *sourcedata++ & 0x3f;
                         c4 = *sourcedata++ & 0x3f;
                         *wchardata = (c1 << 18) | (c2 << 12) | (c3 << 6) | c4;
-			wchardata++;
+			if (*wchardata < 65536) wchardata++;
                         sourcedatalength -= 4;
                 }
                 else if ((*sourcedata & 0xfc) == 0xf8)
@@ -97,17 +98,20 @@ transliteration( PG_FUNCTION_ARGS )
 			// table does not extend beyond 4 char long, just skip
 			if (sourcedatalength < 5) break;
 			sourcedatalength -= 5;
+			sourcedata += 5;
 		}
                 else if ((*sourcedata & 0xfe) == 0xfc)
                 {
 			// table does not extend beyond 4 char long, just skip
 			if (sourcedatalength < 6) break;
 			sourcedatalength -= 6;
+			sourcedata += 6;
 		}
                 else
                 {
 			// assume lenngth 1, silently drop bogus characters
                         sourcedatalength--;
+			sourcedata += 1;
                 }
         }
         *wchardata = 0;

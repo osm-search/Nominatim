@@ -1377,13 +1377,13 @@ BEGIN
       IF NEW.parent_place_id IS NOT NULL THEN
 
         -- Add the street to the address as zero distance to force to front of list
-        INSERT INTO place_addressline VALUES (NEW.place_id, NEW.parent_place_id, true, true, 0, 26);
+--        INSERT INTO place_addressline VALUES (NEW.place_id, NEW.parent_place_id, true, true, 0, 26);
         address_havelevel[26] := true;
 
         -- Import address details from parent, reclculating distance in process
-        INSERT INTO place_addressline select NEW.place_id, x.address_place_id, x.fromarea, x.isaddress, ST_distance(NEW.geometry, placex.geometry), placex.rank_address
-          from place_addressline as x join placex on (address_place_id = placex.place_id)
-          where x.place_id = NEW.parent_place_id and x.address_place_id != NEW.parent_place_id;
+--        INSERT INTO place_addressline select NEW.place_id, x.address_place_id, x.fromarea, x.isaddress, ST_distance(NEW.geometry, placex.geometry), placex.rank_address
+--          from place_addressline as x join placex on (address_place_id = placex.place_id)
+--          where x.place_id = NEW.parent_place_id and x.address_place_id != NEW.parent_place_id;
 
         -- Get the details of the parent road
         select * from search_name where place_id = NEW.parent_place_id INTO location;
@@ -1405,7 +1405,7 @@ BEGIN
           result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
         END IF;
 
-        result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, place_centroid);
+        result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
 
         return NEW;
       END IF;
@@ -1533,7 +1533,7 @@ BEGIN
         result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.country_code, NEW.geometry);
       END IF;
 
-      result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, place_centroid);
+      result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
 
 --      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.country_code, name_vector, nameaddress_vector, place_centroid);
     END IF;
@@ -2024,12 +2024,46 @@ BEGIN
   FOR location IN 
     select placex.place_id, osm_type, osm_id,
       CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
+      class, type, admin_level, true as fromarea, true as isaddress,
+      CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
+      0 as distance, country_code
+      from placex
+      where place_id = for_place_id 
+  LOOP
+--RAISE WARNING '%',location;
+    IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
+      searchcountrycode := location.country_code;
+    END IF;
+    IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
+      location.isaddress := FALSE;
+    END IF;
+    IF location.rank_address = 4 AND location.isaddress THEN
+      hadcountry := true;
+    END IF;
+    IF location.rank_address < 4 AND NOT hadcountry THEN
+      select name from country_name where country_code = searchcountrycode limit 1 INTO countryname;
+      IF countryname IS NOT NULL THEN
+        countrylocation := ROW(null, null, null, countryname, 'place', 'country', null, true, true, 4, 0)::addressline;
+        RETURN NEXT countrylocation;
+      END IF;
+    END IF;
+    countrylocation := ROW(location.place_id, location.osm_type, location.osm_id, location.name, location.class, 
+                           location.type, location.admin_level, location.fromarea, location.isaddress, location.rank_address, 
+                           location.distance)::addressline;
+    RETURN NEXT countrylocation;
+    found := location.rank_address;
+  END LOOP;
+
+  FOR location IN 
+    select placex.place_id, osm_type, osm_id,
+      CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
       class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       distance,country_code
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
-      and ((cached_rank_address > 0 AND cached_rank_address < searchrankaddress) OR address_place_id = for_place_id)
+      and (cached_rank_address > 0 AND cached_rank_address < searchrankaddress)
+      and address_place_id != for_place_id
       and (placex.country_code IS NULL OR searchcountrycode IS NULL OR placex.country_code = searchcountrycode OR rank_address < 4)
       order by rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc
   LOOP

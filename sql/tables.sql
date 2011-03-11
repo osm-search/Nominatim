@@ -13,6 +13,16 @@ CREATE TABLE import_osmosis_log (
   event text
   );
 
+drop table import_npi_log;
+CREATE TABLE import_npi_log (
+  npiid integer,
+  batchend timestamp,
+  batchsize integer,
+  starttime timestamp,
+  endtime timestamp,
+  event text
+  );
+
 --drop table IF EXISTS query_log;
 CREATE TABLE query_log (
   starttime timestamp,

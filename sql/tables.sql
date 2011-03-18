@@ -299,3 +299,12 @@ CREATE TABLE import_polygon_error (
 SELECT AddGeometryColumn('import_polygon_error', 'prevgeometry', 4326, 'GEOMETRY', 2);
 SELECT AddGeometryColumn('import_polygon_error', 'newgeometry', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
+
+drop table import_polygon_delete;
+CREATE TABLE import_polygon_delete (
+  osm_type char(1),
+  osm_id INTEGER,
+  class TEXT NOT NULL,
+  type TEXT NOT NULL
+  );
+CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);

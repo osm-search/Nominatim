@@ -140,6 +140,13 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
         feature.rankSearch = xmlTextReaderGetAttribute(reader, BAD_CAST "importance");
 
         feature.parentPlaceID = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_place_id");
+/*
+	if (strlen(feature.parentPlaceID) == 0)
+	{
+		xmlFree(feature.parentPlaceID);
+		feature.parentPlaceID = NULL;
+	}
+*/
         feature.parentType = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_type");
         feature.parentID = xmlTextReaderGetAttribute(reader, BAD_CAST "parent_id");
 
@@ -320,7 +327,7 @@ void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
 void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 {
     PGresult * 		res;
-    const char *	paramValues[11];
+    const char *	paramValues[14];
     char *			place_id;
     char *			partionQueryName;
     int i, namePos, lineTypeLen, lineValueLen;
@@ -438,6 +445,8 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
             paramValues[5] = (const char *)featureNameString;
 
+            paramValues[6] = (const char *)feature.countryCode;
+
             featureExtraTagString[0] = 0;
             if (featureExtraTagLines)
             {
@@ -464,18 +473,21 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     strcpy(featureExtraTagString+(namePos++), "\"");
                 }
             }
-            paramValues[6] = (const char *)featureExtraTagString;
+            paramValues[7] = (const char *)featureExtraTagString;
 
-            paramValues[7] = (const char *)feature.parentPlaceID;
+            if (strlen(feature.parentPlaceID) == 0)
+                paramValues[8] = "0";
+            else
+                paramValues[8] = (const char *)feature.parentPlaceID;
 
-            paramValues[8] = (const char *)feature.adminLevel;
-            paramValues[9] = (const char *)feature.houseNumber;
-            paramValues[10] = (const char *)feature.rankAddress;
-            paramValues[11] = (const char *)feature.rankSearch;
-            paramValues[12] = (const char *)feature.geometry;
+            paramValues[9] = (const char *)feature.adminLevel;
+            paramValues[10] = (const char *)feature.houseNumber;
+            paramValues[11] = (const char *)feature.rankAddress;
+            paramValues[12] = (const char *)feature.rankSearch;
+            paramValues[13] = (const char *)feature.geometry;
             if (strlen(paramValues[3]))
             {
-                res = PQexecPrepared(conn, "placex_insert", 13, paramValues, NULL, NULL, 0);
+                res = PQexecPrepared(conn, "placex_insert", 14, paramValues, NULL, NULL, 0);
                 if (PQresultStatus(res) != PGRES_COMMAND_OK)
                 {
                     fprintf(stderr, "index_placex: INSERT failed: %s", PQerrorMessage(conn));
@@ -561,6 +573,9 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
         xmlFree(feature.value);
         xmlFree(feature.rankAddress);
         xmlFree(feature.rankSearch);
+	if (feature.parentPlaceID) xmlFree(feature.parentPlaceID);
+	if (feature.parentType) xmlFree(feature.parentType);
+	if (feature.parentID) xmlFree(feature.parentID);
 //		if (feature.name) xmlFree(feature.name);
         if (feature.countryCode) xmlFree(feature.countryCode);
         if (feature.adminLevel) xmlFree(feature.adminLevel);
@@ -704,8 +719,8 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     }
 
     res = PQprepare(conn, "placex_insert",
-                    "insert into placex (place_id,osm_type,osm_id,class,type,name,extratags,parent_place_id,admin_level,housenumber,rank_address,rank_search,geometry) "
-                    "values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, st_setsrid($13, 4326))",
+                    "insert into placex (place_id,osm_type,osm_id,class,type,name,country_code,extratags,parent_place_id,admin_level,housenumber,rank_address,rank_search,geometry) "
+                    "values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, st_setsrid($14, 4326))",
                     12, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {

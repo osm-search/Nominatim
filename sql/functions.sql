@@ -1220,7 +1220,9 @@ BEGIN
     DELETE FROM place_boundingbox where place_id = NEW.place_id;
     result := deleteRoad(NEW.partition, NEW.place_id);
     result := deleteLocationArea(NEW.partition, NEW.place_id);
-  
+
+    -- reclaculate country and partition (should probably have a country_code and calculated_country_code as seperate fields)
+    SELECT country_code from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO NEW.country_code;
     NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
     NEW.partition := get_partition(NEW.geometry, NEW.country_code);
     NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
@@ -1589,6 +1591,12 @@ BEGIN
 
 --  RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
 
+  -- deleting large polygons can have a massive effect ont he system - require manual intervention to let them through
+  IF st_area(OLD.geometry) > 2 THEN
+    insert into import_polygon_delete values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
+    RETURN NULL;
+  END IF;
+
   -- mark for delete
   UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
 
@@ -1665,6 +1673,7 @@ BEGIN
   END IF;
 
   DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
+  DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
   -- To paraphrase, if there isn't an existing item, OR if the admin level has changed, OR if it is a major change in geometry
   IF existing.osm_type IS NULL 

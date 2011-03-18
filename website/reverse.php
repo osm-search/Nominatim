@@ -25,6 +25,10 @@
                 $sOutputFormat = $_GET['format'];
         }
 
+	// Show address breakdown
+	$bShowAddressDetails = true;
+	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
+
         // Prefered language
         $aLangPrefOrder = getPrefferedLangauges();
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
@@ -143,7 +147,10 @@
 	        $sSQL .= " from placex where place_id = $iPlaceID ";
 		$aPlace = $oDB->getRow($sSQL);
 
-		$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
+		if ($bShowAddressDetails)
+		{
+			$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
+		}
 
 		$aClassType = getClassTypes();
                 $sAddressType = '';

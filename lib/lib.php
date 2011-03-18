@@ -40,6 +40,9 @@
 
 	function byImportance($a, $b)
 	{
+/*
+		if ($a['importance'] != $b['importance'])
+			return ($a['importance'] > $b['importance']?-1:1);
 		if ($a['aPointPolygon']['numfeatures'] != $b['aPointPolygon']['numfeatures'])
 			return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
 		if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
@@ -48,8 +51,7 @@
 //			return ($a['levenshtein'] < $b['levenshtein']?-1:1);
 		if ($a['rank_search'] != $b['rank_search'])
 			return ($a['rank_search'] < $b['rank_search']?-1:1);
-		if ($a['importance'] != $b['importance'])
-			return ($a['importance'] < $b['importance']?-1:1);
+*/
 		return ($a['foundorder'] < $b['foundorder']?-1:1);
 	}
 

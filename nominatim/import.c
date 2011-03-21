@@ -730,7 +730,7 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
 
     res = PQprepare(conn, "search_name_insert",
                     "insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) "
-                    "select place_id, rank_address, rank_search, country_code, make_keywords(name), "
+                    "select place_id, rank_search, rank_address, country_code, make_keywords(name), "
                     "(select uniq(sort(array_agg(name_vector))) from place_addressline join search_name on "
                     "(address_place_id = search_name.place_id) where place_addressline.place_id = $1 ), st_centroid(geometry) from placex "
                     "where place_id = $1",

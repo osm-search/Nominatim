@@ -9,7 +9,7 @@
 	<link href="nominatim.xml" rel="search" title="Nominatim Search" type="application/opensearchdescription+xml" />
 
 	<script src="js/OpenLayers.js"></script>
-	<script src="js/OpenStreetMap.js"></script>
+	<script src="js/tiles.js"></script>
 	<script src="js/prototype-1.6.0.3.js"></script>
 
 	<style>
@@ -293,7 +293,7 @@ form{
 									"moveend": mapEventMove,
 								}
             	} );
-			map.addLayer(new OpenLayers.Layer.OSM.Mapnik("Mapnik"));
+			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
 
 			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
 			layer_style.fillOpacity = 0.2;

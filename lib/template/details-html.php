@@ -32,7 +32,7 @@ body {
 }
     </style>
 	<script src="js/OpenLayers.js"></script>
-	<script src="js/OpenStreetMap.js"></script>
+	<script src="js/tiles.js"></script>
 	<script src="prototype-1.6.0.3.js"></script>
 	<script type="text/javascript">
         
@@ -54,7 +54,7 @@ body {
                 projection: new OpenLayers.Projection("EPSG:900913"),
                 displayProjection: new OpenLayers.Projection("EPSG:4326"),
             	} );
-			map.addLayer(new OpenLayers.Layer.OSM.Mapnik("Mapnik"));
+			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
 
                         var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
                         layer_style.fillOpacity = 0.2;
@@ -95,7 +95,7 @@ foreach($aPolyPoints as $aPolyPoint)
 	echo '<h1>';
 	if ($aPointDetails['icon'])
 	{
-		echo '<img style="float:right;margin-right:40px;" src="'.'http://katie.openstreetmap.org/~twain/images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'">';
+		echo '<img style="float:right;margin-right:40px;" src="'.CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'">';
 	}
 	echo $aPointDetails['localname'].'</h1>';
 	echo '<div class="locationdetails">';

@@ -13,6 +13,7 @@
 	$sOutputFormat = 'html';
 	$aSearchResults = array();
 	$aExcludePlaceIDs = array();
+	$sCountryCodesSQL = false;
 	$sSuggestion = $sSuggestionURL = false;
 	$bDeDupe = isset($_GET['dedupe'])?(bool)$_GET['dedupe']:true;
 	$bReverseInPlan = false;
@@ -40,8 +41,6 @@
 	if (isset($aLangPrefOrder['name:de'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ru'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ja'])) $bReverseInPlan = true;
-
-$bReverseInPlan = true;
 
 	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
@@ -74,6 +73,19 @@ $bReverseInPlan = true;
 			$iMaxAddressRank = 20;
 			break;
 		}
+	}
+
+	if (isset($_GET['countrycodes']))
+	{
+		$aCountryCodes = array();
+		foreach(explode(',',$_GET['countrycodes']) as $sCountryCode)
+		{
+			if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode))
+			{
+				$aCountryCodes[] = "'".strtolower($sCountryCode)."'";
+			}
+		}
+		$sCountryCodesSQL = join(',', $aCountryCodes);
 	}
 		
 	// Search query
@@ -658,7 +670,9 @@ $bReverseInPlan = true;
 								if ($oDB->getOne($sSQL))
 								{
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType'];								
+								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 								$sSQL .= " where st_contains($sViewboxSmallSQL, centroid)";
+								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
@@ -667,7 +681,9 @@ $bReverseInPlan = true;
 								if (!sizeof($aPlaceIDs))
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType'];								
+									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 									$sSQL .= " where st_contains($sViewboxLargeSQL, centroid)";
+									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 									$sSQL .= " limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
@@ -678,6 +694,7 @@ $bReverseInPlan = true;
 							{
 								$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
 								$sSQL .= " and st_contains($sViewboxSmallSQL, centroid)";
+								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
@@ -707,6 +724,11 @@ $bReverseInPlan = true;
 							{
 								$aTerms[] = "place_id not in (".join(',',$aExcludePlaceIDs).")";
 							}
+							if ($sCountryCodesSQL)
+							{
+								$aTerms[] = "country_code in ($sCountryCodesSQL)";
+							}
+
 							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
@@ -809,6 +831,7 @@ $bReverseInPlan = true;
 								{
 									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
 									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
+									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);
@@ -817,6 +840,7 @@ $bReverseInPlan = true;
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
 								{
 									$sSQL = "select rank_search from placex where place_id in ($sPlaceIDs) order by rank_search asc limit 1";
+
 									if (CONST_Debug) var_dump($sSQL);
 									$iMaxRank = ((int)$oDB->getOne($sSQL)) + 5;
 
@@ -835,12 +859,14 @@ $bReverseInPlan = true;
 										// More efficient - can make the range bigger
   									$fRange = 0.05;
 										$sSQL = "select l.place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
+										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
 										$sSQL .= ",placex as f where ";
 										$sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, st_centroid(f.geometry), $fRange) ";
 										if (sizeof($aExcludePlaceIDs))
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
+										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
 										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.centroid) ASC";
 										else $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
 										$sSQL .= " limit $iLimit";
@@ -857,6 +883,7 @@ $bReverseInPlan = true;
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
+										if ($sCountryCodesSQL) $sSQL .= " and l.country_code in ($sCountryCodesSQL)";								
 										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.geometry) ASC";
 										else $sSQL .= " order by ST_Distance(l.geometry, f.geometry) asc, l.rank_search ASC";
 										$sSQL .= " limit $iLimit";

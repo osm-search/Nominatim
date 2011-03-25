@@ -119,6 +119,18 @@
 	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
 	$aParentOfLines = $oDB->getAll($sSQL);
 
+	$aPlaceSearchNameKeywords = false;
+	$aPlaceSearchAddressKeywords = false;
+	if (isset($_GET['keywords']) && $_GET['keywords'])
+	{
+		$sSQL = "select * from search_name where place_id = $iPlaceID";
+		$aPlaceSearchName = $oDB->getRow($sSQL);
+		$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'],1,-1).")";
+		$aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
+		$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'],1,-1).")";
+		$aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
+	}
+
 	logEnd($oDB, $hLog, 1);
 
 	include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');

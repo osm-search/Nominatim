@@ -148,6 +148,24 @@ foreach($aPolyPoints as $aPolyPoint)
 	}
 	echo '</div>';
 
+	if ($aPlaceSearchNameKeywords)
+	{
+		echo '<h2>Name Keywords</h2>';
+		foreach($aPlaceSearchNameKeywords as $aRow)
+		{
+			echo '<div>'.$aRow['word_token'].'</div>';
+		}
+	}
+
+	if ($aPlaceSearchAddressKeywords)
+	{
+		echo '<h2>Address Keywords</h2>';
+		foreach($aPlaceSearchAddressKeywords as $aRow)
+		{
+			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'.'</div>';
+		}
+	}
+
 	if (sizeof($aParentOfLines))
 	{
 		echo '<h2>Parent Of (named features only):</h2>';

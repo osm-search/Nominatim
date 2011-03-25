@@ -933,7 +933,7 @@
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
-					$sSQL .= $sOrderSQL." as porder, ";
+//					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "coalesce(importance,0.9-(rank_search::float/30)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
@@ -948,7 +948,7 @@
 					$sSQL .= "null as placename,";
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-					$sSQL .= $sOrderSQL." as porder, ";
+//					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "-0.15 as importance ";
 					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
@@ -960,14 +960,14 @@
 					$sSQL .= "null as placename,";
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.15 as importance ";
+//					$sSQL .= $sOrderSQL." as porder, ";
+					$sSQL .= "-0.10 as importance ";
 					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
-					$sSQL .= "order by porder asc";
+					$sSQL .= "order by importance desc";
 //					$sSQL .= "order by rank_search,rank_address,porder asc";
 					if (CONST_Debug) var_dump('<hr>',$sSQL);
 					$aSearchResults = $oDB->getAll($sSQL);

@@ -816,7 +816,7 @@
 								}
 
 								// Fallback to the road
-								if (!sizeof($aPlaceIDs))
+								if (!sizeof($aPlaceIDs) && preg_match('/^[0-9]+$/', $aSearch['sHouseNumber']))
 								{
 									$aPlaceIDs = $aRoadPlaceIDs;
 								}

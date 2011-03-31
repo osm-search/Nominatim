@@ -299,7 +299,7 @@
  'boundary:administrative:9' => array('label'=>'City District','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'boundary:administrative:10' => array('label'=>'Suburb','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'boundary:administrative:11' => array('label'=>'Neighbourhood','frequency'=>0,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
- 'place:region' => array('label'=>'State','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>8, 'defdiameter' => 5.12,),
+ 'place:region' => array('label'=>'Region','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>8, 'defdiameter' => 5.12,),
  'place:island' => array('label'=>'Island','frequency'=>288,'icon'=>'','defzoom'=>11, 'defdiameter' => 0.64,),
  'boundary:administrative' => array('label'=>'Administrative','frequency'=>413,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'place:town' => array('label'=>'Town','frequency'=>1497,'icon'=>'poi_place_town','defzoom'=>14, 'defdiameter' => 0.08,),

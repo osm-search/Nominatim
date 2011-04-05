@@ -568,6 +568,7 @@
  'amenity:shopping' => array('label'=>'Shopping','frequency'=>21,'icon'=>'',),
  'natural:scrub' => array('label'=>'Scrub','frequency'=>20,'icon'=>'',),
  'natural:fen' => array('label'=>'Fen','frequency'=>20,'icon'=>'',),
+ 'building:yes' => array('label'=>'Building','frequency'=>200,'icon'=>'',),
 
  'amenity:parking' => array('label'=>'Parking','frequency'=>3157,'icon'=>'',),
  'highway:bus_stop' => array('label'=>'Bus Stop','frequency'=>35777,'icon'=>'transport_bus_stop2',),

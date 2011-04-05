@@ -372,7 +372,10 @@ target="_blank">FAQ</a></td>
 		echo ' <span class="name">'.$aResult['name'].'</span>';
 		echo ' <span class="latlon">'.round($aResult['lat'],3).','.round($aResult['lat'],3).'</span>';
 		echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
-		echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
+		if (isset($aResult['label']))
+			echo ' <span class="type">('.$aResult['label'].')</span>';
+		else
+			echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
 		echo ' <span class="details">(<a href="details.php?place_id='.$aResult['place_id'].'">details</a>)</span>';
 		echo '</div>';
 	}

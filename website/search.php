@@ -278,7 +278,7 @@
 				{
 					unset($aPhrases[$iPhrase]);
 				}
-			}			
+			}
 
 			// reindex phrases - we make assumptions later on
 			$aPhrases = array_values($aPhrases);
@@ -366,6 +366,16 @@
 				}
 			}
 */
+
+			foreach($aTokens as $sToken)
+			{
+				// Unknown single word token with a number - assume it is a house number
+				if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken))
+				{
+					$aValidTokens[' '.$sToken] = array('class'=>'place','type'=>'house');
+				}
+			}
+
 			// Any words that have failed completely?
 			// TODO: suggestions
 
@@ -1092,6 +1102,12 @@
 			&& $aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
 		{
 			$aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
+		}
+
+		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label']) 
+			&& $aClassType[$aResult['class'].':'.$aResult['type']]['label'])
+		{
+			$aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
 		}
 
 		if ($bShowAddressDetails)

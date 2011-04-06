@@ -485,7 +485,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             paramValues[11] = (const char *)feature.rankAddress;
             paramValues[12] = (const char *)feature.rankSearch;
             paramValues[13] = (const char *)feature.geometry;
-            if (strlen(paramValues[3]))
+            if (strlen(paramValues[3]) && strlen(paramValues[13]))
             {
                 res = PQexecPrepared(conn, "placex_insert", 14, paramValues, NULL, NULL, 0);
                 if (PQresultStatus(res) != PGRES_COMMAND_OK)

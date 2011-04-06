@@ -19,6 +19,7 @@
 		array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
 		array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
 		array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
+		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
@@ -29,6 +30,7 @@
 		array('osmosis-init-date', '', 0, 1, 1, 1, 'string', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
+		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -56,6 +58,8 @@
 			$aCMDResult['osmosis-init-date'] = date('Y-m-d', $iTime).'T22:00:00Z';
 		}
 	}
+	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
@@ -64,9 +68,9 @@
 		$oDB =& DB::connect(CONST_Database_DSN, false);
 		if (!PEAR::isError($oDB))
 		{
-			fail('database already exists');
+			fail('database already exists ('.CONST_Database_DSN.')');
 		}
-		passthru('createdb nominatim');
+		passthru('createdb '.$aDSNInfo['database']);
 	}
 
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
@@ -76,7 +80,7 @@
 		// TODO: path detection, detection memory, etc.
 
 		$oDB =& getDB();
-		passthru('createlang plpgsql nominatim');
+		passthru('createlang plpgsql '.$aDSNInfo['database']);
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/_int.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
@@ -96,10 +100,10 @@
 		echo "Import\n";
 		$bDidSomething = true;
 
-        $osm2pgsql = CONST_BasePath.'/osm2pgsql/osm2pgsql';
-        if (!file_exists($osm2pgsql)) $osm2pgsql = trim(`which osm2pgsql`);
-        if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
-        passthru($osm2pgsql.' -lsc -O gazetteer -C 10000 --hstore -d nominatim '.$aCMDResult['osm-file']);
+		$osm2pgsql = CONST_BasePath.'/osm2pgsql/osm2pgsql';
+		if (!file_exists($osm2pgsql)) $osm2pgsql = trim(`which osm2pgsql`);
+		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
+		passthru($osm2pgsql.' -lsc -O gazetteer -C 10000 --hstore -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file']);
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
@@ -114,6 +118,36 @@
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
 		$sTemplate = str_replace('{modulepath}',CONST_BasePath.'/module', $sTemplate);
 		pgsqlRunScript($sTemplate);
+	}
+
+	if ($aCMDResult['create-minimal-tables'])
+	{
+		echo "Minimal Tables\n";
+		$bDidSomething = true;
+		pgsqlRunScriptFile(CONST_BasePath.'/sql/tables-minimal.sql');
+
+		$sScript = '';
+
+		// Backstop the import process - easliest possible import id
+		$sScript .= "insert into import_npi_log values (18022);\n";
+
+		$hFile = @fopen(CONST_BasePath.'/settings/partitionedtags.def', "r");
+		if (!$hFile) fail('unable to open list of partitions: '.CONST_BasePath.'/settings/partitionedtags.def');
+
+		while (($sLine = fgets($hFile, 4096)) !== false && $sLine && substr($sLine,0,1) !='#')
+		{
+			list($sClass, $sType) = explode(' ', trim($sLine));
+			$sScript .= "create table place_classtype_".$sClass."_".$sType." as ";
+			$sScript .= "select place_id as place_id,geometry as centroid from placex limit 0;\n";
+
+			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_centroid ";
+			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING GIST (centroid);\n";
+
+			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_place_id ";
+			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING btree(place_id);\n";
+		}
+		fclose($hFile);
+		pgsqlRunScript($sScript);
 	}
 
 	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
@@ -327,7 +361,21 @@
 		$bDidSomething = true;
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
-		passthru(CONST_BasePath.'/nominatim/nominatim -i -d nominatim -t '.$iInstances.$sOutputFile);
+		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile);
+	}
+
+	if (isset($aCMDResult['create-website']))
+	{
+		$bDidSomething = true;
+		$sTargetDir = $aCMDResult['create-website'];
+		if (!is_dir($sTargetDir)) fail('please specify a directory to setup');
+		@symlink(CONST_BasePath.'/website/details.php', $sTargetDir.'/details.php');
+		@symlink(CONST_BasePath.'/website/reverse.php', $sTargetDir.'/reverse.php');
+		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/search.php');
+		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/index.php');
+		@symlink(CONST_BasePath.'/website/images', $sTargetDir.'/images');
+		@symlink(CONST_BasePath.'/website/js', $sTargetDir.'/js');
+		echo "Symlinks created\n";
 	}
 
 	if (!$bDidSomething)

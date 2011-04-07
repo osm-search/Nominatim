@@ -113,7 +113,8 @@
 		// The point we found might be too small - use the address to find what it is a child of
 		if ($iPlaceID)
 		{
-			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc";
+			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc limit 1";
+//var_dump($sSQL);
 			$iPlaceID = $oDB->getOne($sSQL);
 			if (PEAR::IsError($iPlaceID))
 			{
@@ -124,6 +125,7 @@
 			if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
 			{
 				$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
+//var_dump($sSQL);
 				$iPlaceID = $oDB->getOne($sSQL);
 				if (PEAR::IsError($iPlaceID))
 				{
@@ -143,15 +145,16 @@
 		$sSQL = "select placex.*,";
         	$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 	        $sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
-        	$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref";
+        	$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
+        	$sSQL .= " st_y(st_centroid(geometry)) as lat, st_x(st_centroid(geometry)) as lon";
 	        $sSQL .= " from placex where place_id = $iPlaceID ";
+//var_dump($sSQL);
 		$aPlace = $oDB->getRow($sSQL);
 
 		if ($bShowAddressDetails)
 		{
 			$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
 		}
-
 		$aClassType = getClassTypes();
                 $sAddressType = '';
                 if (isset($aClassType[$aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level']]))

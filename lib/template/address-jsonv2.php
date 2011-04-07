@@ -21,6 +21,8 @@
                         $aFilteredPlaces['osm_type'] = $sOSMType;
                         $aFilteredPlaces['osm_id'] = $aPlace['osm_id'];
                 }
+		if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
+		if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
                 $aFilteredPlaces['category'] = $aPlace['class'];
                 $aFilteredPlaces['type'] = $aPlace['type'];
                 $aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);

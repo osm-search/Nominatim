@@ -526,15 +526,31 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 
             if (featureNameLines)
             {
-                paramValues[0] = (const char *)place_id;
-                res = PQexecPrepared(conn, "search_name_insert", 1, paramValues, NULL, NULL, 0);
-                if (PQresultStatus(res) != PGRES_COMMAND_OK)
-                {
-                    fprintf(stderr, "search_name_insert: INSERT failed: %s", PQerrorMessage(conn));
+                if (strlen(feature.parentPlaceID) > 0 && featureAddressLines == 0)
+		{
+                    paramValues[0] = (const char *)place_id;
+                    paramValues[1] = feature.parentPlaceID;
+                    res = PQexecPrepared(conn, "search_name_from_parent_insert", 2, paramValues, NULL, NULL, 0);
+                    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+                    {
+                        fprintf(stderr, "search_name_from_parent_insert: INSERT failed: %s", PQerrorMessage(conn));
+                        PQclear(res);
+                        exit(EXIT_FAILURE);
+                    }
+                    PQclear(res);                    
+		}
+		else
+		{
+                    paramValues[0] = (const char *)place_id;
+                    res = PQexecPrepared(conn, "search_name_insert", 1, paramValues, NULL, NULL, 0);
+                    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+                    {
+                        fprintf(stderr, "search_name_insert: INSERT failed: %s", PQerrorMessage(conn));
+                        PQclear(res);
+                        exit(EXIT_FAILURE);
+                    }
                     PQclear(res);
-                    exit(EXIT_FAILURE);
                 }
-                PQclear(res);
             }
 
             partionQueryName = xmlHashLookup2(partionTableTagsHash, feature.key, feature.value);
@@ -731,10 +747,23 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     res = PQprepare(conn, "search_name_insert",
                     "insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) "
                     "select place_id, rank_search, rank_address, country_code, make_keywords(name), "
-                    "(select uniq(sort(array_agg(name_vector))) from place_addressline join search_name on "
-                    "(address_place_id = search_name.place_id) where place_addressline.place_id = $1 ), st_centroid(geometry) from placex "
+                    "(select uniq(sort(array_agg(parent_search_name.name_vector))) from place_addressline join search_name as parent_search_name on "
+                    "(address_place_id = parent_search_name.place_id) where place_addressline.place_id = $1 ), st_centroid(geometry) from placex "
                     "where place_id = $1",
                     1, NULL);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "Failed to prepare search_name_insert: %s\n", PQerrorMessage(conn));
+        exit(EXIT_FAILURE);
+    }
+
+    res = PQprepare(conn, "search_name_from_parent_insert",
+                    "insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) "
+                    "select place_id, rank_search, rank_address, country_code, make_keywords(name), "
+                    "(select uniq(sort(name_vector+nameaddress_vector)) from search_name as parent_search_name "
+                    "where parent_search_name.place_id = $2 ), st_centroid(geometry) from placex "
+                    "where place_id = $1",
+                    2, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "Failed to prepare search_name_insert: %s\n", PQerrorMessage(conn));

@@ -1,5 +1,6 @@
 #!/usr/bin/php -Cq
 <?php
+
         require_once(dirname(dirname(__FILE__)).'/lib/init-cmd.php');
         ini_set('memory_limit', '800M');
 
@@ -323,10 +324,12 @@
 					$fCMDStartTime = time();
 					echo $sCMDDownload."\n";
 					exec($sCMDDownload, $sJunk, $iErrorLevel);
-					if ($iErrorLevel)
+					while ($iErrorLevel == 1)
 					{
 						echo "Error: $iErrorLevel\n";
-						exit;
+						sleep(60);
+						echo 'Re-trying: '.$sCMDDownload."\n";
+						exec($sCMDDownload, $sJunk, $iErrorLevel);
 					}
 					$iFileSize = filesize($sImportFile);
 					$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
@@ -418,7 +421,6 @@
 				echo "Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
 				if (!$aResult['import-osmosis-all']) exit;
 //			}
-
 			echo "Sleeping ".max(0,60-$fDuration)." seconds\n";
 			sleep(max(0,60-$fDuration));
 		}
@@ -448,7 +450,7 @@
 			$sImportFile .= ".npi";
 			while(!file_exists($sImportFile) && !file_exists($sImportFile.'.bz2'))
 			{
-				echo "sleep\n";
+				echo "sleep (waiting for $sImportFile)\n";
 				sleep(10);
 			}
 			if (file_exists($sImportFile.'.bz2')) $sImportFile .= '.bz2';

@@ -754,7 +754,7 @@
 								$sSQL .= " from search_name";
 								$sSQL .= " where ".join(' and ',$aTerms);
 								$sSQL .= " order by ".join(', ',$aOrder);
-								if ($aSearch['sHouseNumber'])
+								if ($aSearch['sHouseNumber'] || $aSearch['sClass'])
 									$sSQL .= " limit 50";
 								elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass'])
 									$sSQL .= " limit 1";

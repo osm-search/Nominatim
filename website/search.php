@@ -1167,6 +1167,9 @@
 			$aClassTypeNameDone[$aResult['osm_type'].$aResult['osm_class'].$aResult['name']] = true;
 			$aSearchResults[] = $aResult;
 		}
+
+		// Absolute limit on number of results
+		if (sizeof($aSearchResults) >= $iLimit) break;
 	}
 
 	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '1 day'::interval,'YYYY/MM/DD') from import_status limit 1");

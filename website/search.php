@@ -1063,8 +1063,6 @@
 	$sSearchResult = '';
 	if (!sizeof($aSearchResults) && isset($_GET['q']) && $_GET['q'])
 	{
-echo "here";
-exit;
 		$sSearchResult = 'No Results Found';
 	}
 //var_Dump($aSearchResults);

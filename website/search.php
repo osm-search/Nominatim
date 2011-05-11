@@ -664,7 +664,9 @@
 							{
 								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
 								{
-									$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4 order by st_area(geometry) desc limit 1";
+									$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
+									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+									$sSQL .= " order by st_area(geometry) desc limit 1";
 									$aPlaceIDs = $oDB->getCol($sSQL);
 								}
 							}

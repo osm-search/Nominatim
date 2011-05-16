@@ -441,6 +441,9 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     strcpy(featureNameString+namePos, (char *) featureName[i].value);
                     namePos += lineValueLen;
                     strcpy(featureNameString+(namePos++), "\"");
+
+                    xmlFree(featureName[i].type);
+                    xmlFree(featureName[i].value);
                 }
             }
             paramValues[5] = (const char *)featureNameString;
@@ -471,6 +474,9 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                     strcpy(featureExtraTagString+namePos, (char *) featureExtraTag[i].value);
                     namePos += lineValueLen;
                     strcpy(featureExtraTagString+(namePos++), "\"");
+
+                    xmlFree(featureExtraTag[i].type);
+                    xmlFree(featureExtraTag[i].value);
                 }
             }
             paramValues[7] = (const char *)featureExtraTagString;
@@ -537,7 +543,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                         PQclear(res);
                         exit(EXIT_FAILURE);
                     }
-                    PQclear(res);                    
+                    PQclear(res);
 		}
 		else
 		{
@@ -589,11 +595,11 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
         xmlFree(feature.value);
         xmlFree(feature.rankAddress);
         xmlFree(feature.rankSearch);
+        if (feature.countryCode) xmlFree(feature.countryCode);
 	if (feature.parentPlaceID) xmlFree(feature.parentPlaceID);
 	if (feature.parentType) xmlFree(feature.parentType);
 	if (feature.parentID) xmlFree(feature.parentID);
 //		if (feature.name) xmlFree(feature.name);
-        if (feature.countryCode) xmlFree(feature.countryCode);
         if (feature.adminLevel) xmlFree(feature.adminLevel);
         if (feature.houseNumber) xmlFree(feature.houseNumber);
         if (feature.geometry) xmlFree(feature.geometry);

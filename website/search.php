@@ -106,6 +106,12 @@
 
 		// Hack to make it handle "new york, ny" (and variants) correctly
                 $sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $sQuery);
+		if (isset($aLangPrefOrder['name:en']))		
+		{
+			$sQuery = preg_replace('/\\bil\\b/','illinois', $sQuery);
+			$sQuery = preg_replace('/\\bal\\b/','alabama', $sQuery);
+			$sQuery = preg_replace('/\\bla\\b/','louisiana', $sQuery);
+		}
 
 		// If we have a view box create the SQL
 		// Small is the actual view box, Large is double (on each axis) that 

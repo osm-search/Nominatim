@@ -54,6 +54,8 @@
 	}
 
   // Only certain ranks of feature
+	if (isset($_GET['featureType']) && !isset($_GET['featuretype'])) $_GET['featuretype'] = $_GET['featureType'];
+
 	if (isset($_GET['featuretype']))
 	{
 		switch($_GET['featuretype'])
@@ -856,36 +858,65 @@
 								
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
 								{
-									$sSQL = "select rank_search from placex where place_id in ($sPlaceIDs) order by rank_search asc limit 1";
+									$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+									$bCacheTable = $oDB->getOne($sSQL);
+
+									$sSQL = "select min(rank_search) from placex where place_id in ($sPlaceIDs)";
 
 									if (CONST_Debug) var_dump($sSQL);
-									$iMaxRank = ((int)$oDB->getOne($sSQL)) + 5;
+									$iMaxRank = ((int)$oDB->getOne($sSQL));
 
+									// For state / country level searches the normal radius search doesn't work very well
+									$sPlaceGeom = false;
+									if ($iMaxRank < 9 && $bCacheTable)
+									{
+										// Try and get a polygon to search in instead
+	$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
+	if (CONST_Debug) var_dump($sSQL);
+	$sPlaceGeom = $oDB->getOne($sSQL);
+									}
+									
+									if ($sPlaceGeom)
+									{
+										$sPlaceIDs = false;
+									}
+									else
+									{
+										$iMaxRank += 5;
 									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);
 									$sPlaceIDs = join(',',$aPlaceIDs);
+									}
 
-									if ($sPlaceIDs)
+									if ($sPlaceIDs || $sPlaceGeom)
 									{
 
 									$fRange = 0.01;
-									$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-									if ($oDB->getOne($sSQL))
+									if ($bCacheTable)
 									{
 										// More efficient - can make the range bigger
-  									$fRange = 0.05;
+	  									$fRange = 0.05;
+										
 										$sSQL = "select l.place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
-										$sSQL .= ",placex as f where ";
-										$sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, st_centroid(f.geometry), $fRange) ";
+										if ($sPlaceIDs)
+										{
+											$sSQL .= ",placex as f where ";
+											$sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, st_centroid(f.geometry), $fRange) ";
+										}
+										if ($sPlaceGeom)
+										{
+											$sSQL .= " where ";
+											$sSQL .= "ST_Contains('".$sPlaceGeom."', l.centroid) ";
+										}
 										if (sizeof($aExcludePlaceIDs))
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
 										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
 										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.centroid) ASC";
-										else $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
+										else if ($sPlaceIDs) $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aPlaceIDs = $oDB->getCol($sSQL);

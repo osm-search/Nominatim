@@ -896,9 +896,14 @@
 									if ($bCacheTable)
 									{
 										// More efficient - can make the range bigger
-	  									$fRange = 0.05;
+	 									$fRange = 0.05;
+
+										$sOrderBySQL = '';
+										if ($sNearPointSQL) $sOrderBySQL .= "ST_Distance($sNearPointSQL, l.centroid)";
+										else if ($sPlaceIDs) $sOrderBySQL .= "ST_Distance(l.centroid, f.geometry)";
+										else if ($sPlaceGeom) $sOrderBysSQL .= "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
 										
-										$sSQL = "select l.place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
+										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
 										if ($sPlaceIDs)
 										{
@@ -915,10 +920,8 @@
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
 										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
-										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.centroid) ASC";
-										else if ($sPlaceIDs) $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
-										else if ($sPlaceGeom) $sSQL .= " order by ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid) asc";
-								
+										if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
+										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aPlaceIDs = $oDB->getCol($sSQL);
@@ -926,7 +929,12 @@
 									else
 									{
 										if (isset($aSearch['fRadius']) && $aSearch['fRadius']) $fRange = $aSearch['fRadius'];
-										$sSQL = "select l.place_id from placex as l,placex as f where ";
+
+										$sOrderBySQL = '';
+										if ($sNearPointSQL) $sOrderBySQL .= "ST_Distance($sNearPointSQL, l.geometry)";
+										else $sOrderBySQL .= "ST_Distance(l.geometry, f.geometry)";
+
+										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from placex as l,placex as f where ";
 										$sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, st_centroid(f.geometry), $fRange) ";
 										$sSQL .= "and l.class='".$aSearch['sClass']."' and l.type='".$aSearch['sType']."' ";
 										if (sizeof($aExcludePlaceIDs))
@@ -934,8 +942,8 @@
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
 										if ($sCountryCodesSQL) $sSQL .= " and l.country_code in ($sCountryCodesSQL)";								
-										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.geometry) ASC";
-										else $sSQL .= " order by ST_Distance(l.geometry, f.geometry) asc, l.rank_search ASC";
+										if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
+										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aPlaceIDs = $oDB->getCol($sSQL);

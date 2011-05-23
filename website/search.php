@@ -898,7 +898,7 @@
 										// More efficient - can make the range bigger
 	  									$fRange = 0.05;
 										
-										$sSQL = "select distinct l.place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
+										$sSQL = "select l.place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
 										if ($sPlaceIDs)
 										{
@@ -926,7 +926,7 @@
 									else
 									{
 										if (isset($aSearch['fRadius']) && $aSearch['fRadius']) $fRange = $aSearch['fRadius'];
-										$sSQL = "select distinct l.place_id from placex as l,placex as f where ";
+										$sSQL = "select l.place_id from placex as l,placex as f where ";
 										$sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, st_centroid(f.geometry), $fRange) ";
 										$sSQL .= "and l.class='".$aSearch['sClass']."' and l.type='".$aSearch['sType']."' ";
 										if (sizeof($aExcludePlaceIDs))

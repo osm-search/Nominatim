@@ -899,9 +899,9 @@
 	 									$fRange = 0.05;
 
 										$sOrderBySQL = '';
-										if ($sNearPointSQL) $sOrderBySQL .= "ST_Distance($sNearPointSQL, l.centroid)";
-										else if ($sPlaceIDs) $sOrderBySQL .= "ST_Distance(l.centroid, f.geometry)";
-										else if ($sPlaceGeom) $sOrderBysSQL .= "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
+										if ($sNearPointSQL) $sOrderBySQL = "ST_Distance($sNearPointSQL, l.centroid)";
+										else if ($sPlaceIDs) $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
+										else if ($sPlaceGeom) $sOrderBysSQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
 										
 										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
@@ -931,8 +931,8 @@
 										if (isset($aSearch['fRadius']) && $aSearch['fRadius']) $fRange = $aSearch['fRadius'];
 
 										$sOrderBySQL = '';
-										if ($sNearPointSQL) $sOrderBySQL .= "ST_Distance($sNearPointSQL, l.geometry)";
-										else $sOrderBySQL .= "ST_Distance(l.geometry, f.geometry)";
+										if ($sNearPointSQL) $sOrderBySQL = "ST_Distance($sNearPointSQL, l.geometry)";
+										else $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
 
 										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from placex as l,placex as f where ";
 										$sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, st_centroid(f.geometry), $fRange) ";

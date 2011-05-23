@@ -917,6 +917,8 @@
 										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
 										if ($sNearPointSQL) $sSQL .= " order by ST_Distance($sNearPointSQL, l.centroid) ASC";
 										else if ($sPlaceIDs) $sSQL .= " order by ST_Distance(l.centroid, f.geometry) asc";
+										else if ($sPlaceGeom) $sSQL .= " order by ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid) asc";
+								
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aPlaceIDs = $oDB->getCol($sSQL);

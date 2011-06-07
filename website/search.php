@@ -113,6 +113,7 @@
 			$sQuery = preg_replace('/\\bil\\b/','illinois', $sQuery);
 			$sQuery = preg_replace('/\\bal\\b/','alabama', $sQuery);
 			$sQuery = preg_replace('/\\bla\\b/','louisiana', $sQuery);
+			$sQuery = preg_replace('/\\bde louisiana\\b/','de la', $sQuery);
 		}
 
 		// If we have a view box create the SQL

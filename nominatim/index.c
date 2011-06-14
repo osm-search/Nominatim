@@ -40,7 +40,6 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     int i;
     int iSector;
     int iResult;
-    int bSkip;
 
     const char *paramValues[2];
     int         paramLengths[2];
@@ -117,7 +116,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
             exit(EXIT_FAILURE);
         }
 
-        pg_prepare_params[0] = PG_OID_INT4;
+        pg_prepare_params[0] = PG_OID_INT8;
         res = PQprepare(thread_data[i].conn, "index_placex",
                         "update placex set indexed_status = 0 where place_id = $1",
                         1, pg_prepare_params);
@@ -200,7 +199,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                     PQclear(resPlaces);
                     exit(EXIT_FAILURE);
                 }
-                if (PQftype(resPlaces, 0) != PG_OID_INT4)
+                if (PQftype(resPlaces, 0) != PG_OID_INT8)
                 {
                     fprintf(stderr, "Place_id value has unexpected type\n");
                     PQclear(resPlaces);
@@ -321,8 +320,8 @@ void *nominatim_indexThread(void * thread_data_in)
     const char *paramValues[1];
     int         paramLengths[1];
     int         paramFormats[1];
-    uint32_t    paramPlaceID;
-    uint32_t 	place_id;
+    uint64_t    paramPlaceID;
+    uint64_t 	place_id;
     time_t 		updateStartTime;
 
     while (1)
@@ -334,12 +333,12 @@ void *nominatim_indexThread(void * thread_data_in)
             break;
         }
 
-        place_id = PGint32(*((uint32_t *)PQgetvalue(thread_data->res, *thread_data->count, 0)));
+        place_id = PGint64(*((uint64_t *)PQgetvalue(thread_data->res, *thread_data->count, 0)));
         (*thread_data->count)++;
 
         pthread_mutex_unlock( thread_data->count_mutex );
 
-        if (verbose) fprintf(stderr, "  Processing place_id %d\n", place_id);
+        if (verbose) fprintf(stderr, "  Processing place_id %ld\n", place_id);
 
         updateStartTime = time(0);
 	int done = 0;
@@ -351,8 +350,7 @@ void *nominatim_indexThread(void * thread_data_in)
 
 	while(!done)
 	{
-
-	        paramPlaceID = PGint32(place_id);
+	        paramPlaceID = PGint64(place_id);
         	paramValues[0] = (char *)&paramPlaceID;
 	        paramLengths[0] = sizeof(paramPlaceID);
         	paramFormats[0] = 1;
@@ -363,7 +361,7 @@ void *nominatim_indexThread(void * thread_data_in)
 	        {
 			if (strncmp(PQerrorMessage(thread_data->conn), "ERROR:  deadlock detected", 25))
 			{
-		            fprintf(stderr, "index_placex: UPDATE failed - deadlock, retrying\n");
+		            fprintf(stderr, "index_placex: UPDATE failed - deadlock, retrying (%ld)\n", place_id);
 		            PQclear(res);
                             sleep(rand() % 10);
 			}
@@ -377,7 +375,7 @@ void *nominatim_indexThread(void * thread_data_in)
 		}
         }
         PQclear(res);
-        if (difftime(time(0), updateStartTime) > 1) fprintf(stderr, "  Slow place_id %d\n", place_id);
+        if (difftime(time(0), updateStartTime) > 1) fprintf(stderr, "  Slow place_id %ld\n", place_id);
 
         if (thread_data->writer)
         {

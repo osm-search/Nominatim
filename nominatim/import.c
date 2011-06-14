@@ -74,6 +74,8 @@ xmlHashTablePtr 		partionTableTagsHashDelete;
 char					featureNameString[MAX_FEATURENAMESTRING];
 char					featureExtraTagString[MAX_FEATUREEXTRATAGSTRING];
 
+extern int verbose;
+
 void StartElement(xmlTextReaderPtr reader, const xmlChar *name)
 {
     char * value;
@@ -367,6 +369,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
         if (fileMode == FILEMODE_UPDATE || fileMode == FILEMODE_DELETE || fileMode == FILEMODE_ADD)
         {
             paramValues[0] = (const char *)place_id;
+            if (verbose) fprintf(stderr, "placex_delete: %s\n", paramValues[0]);
             res = PQexecPrepared(conn, "placex_delete", 1, paramValues, NULL, NULL, 0);
             if (PQresultStatus(res) != PGRES_COMMAND_OK)
             {
@@ -376,6 +379,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
             PQclear(res);
 
+            if (verbose) fprintf(stderr, "search_name_delete: %s\n", paramValues[0]);
             res = PQexecPrepared(conn, "search_name_delete", 1, paramValues, NULL, NULL, 0);
             if (PQresultStatus(res) != PGRES_COMMAND_OK)
             {
@@ -385,6 +389,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
             PQclear(res);
 
+            if (verbose) fprintf(stderr, "place_addressline_delete: %s\n", paramValues[0]);
             res = PQexecPrepared(conn, "place_addressline_delete", 1, paramValues, NULL, NULL, 0);
             if (PQresultStatus(res) != PGRES_COMMAND_OK)
             {
@@ -493,6 +498,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             paramValues[13] = (const char *)feature.geometry;
             if (strlen(paramValues[3]) && strlen(paramValues[13]))
             {
+                if (verbose) fprintf(stderr, "placex_insert: %s\n", paramValues[0]);
                 res = PQexecPrepared(conn, "placex_insert", 14, paramValues, NULL, NULL, 0);
                 if (PQresultStatus(res) != PGRES_COMMAND_OK)
                 {
@@ -536,6 +542,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 		{
                     paramValues[0] = (const char *)place_id;
                     paramValues[1] = feature.parentPlaceID;
+                    if (verbose) fprintf(stderr, "search_name_from_parent_insert: INSERT %s %s\n", paramValues[0], paramValues[1]);
                     res = PQexecPrepared(conn, "search_name_from_parent_insert", 2, paramValues, NULL, NULL, 0);
                     if (PQresultStatus(res) != PGRES_COMMAND_OK)
                     {
@@ -548,6 +555,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 		else
 		{
                     paramValues[0] = (const char *)place_id;
+                    if (verbose) fprintf(stderr, "search_name_insert: INSERT %s\n", paramValues[0]);
                     res = PQexecPrepared(conn, "search_name_insert", 1, paramValues, NULL, NULL, 0);
                     if (PQresultStatus(res) != PGRES_COMMAND_OK)
                     {
@@ -753,10 +761,12 @@ int nominatim_import(const char *conninfo, const char *partionTagsFilename, cons
     res = PQprepare(conn, "search_name_insert",
                     "insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) "
                     "select place_id, rank_search, rank_address, country_code, make_keywords(name), "
-                    "(select uniq(sort(array_agg(parent_search_name.name_vector))) from place_addressline join search_name as parent_search_name on "
-                    "(address_place_id = parent_search_name.place_id) where place_addressline.place_id = $1 ), st_centroid(geometry) from placex "
+                    "(select uniq(sort(array_agg(parent_search_name.name_vector))) from search_name as parent_search_name where place_id in "
+                     "(select distinct address_place_id from place_addressline where place_addressline.place_id = $1 limit 1000)"
+                    "), st_centroid(geometry) from placex "
                     "where place_id = $1",
                     1, NULL);
+
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "Failed to prepare search_name_insert: %s\n", PQerrorMessage(conn));

@@ -29,9 +29,9 @@ CREATE SEQUENCE seq_word start 1;
 
 drop table IF EXISTS location_property CASCADE;
 CREATE TABLE location_property (
-  place_id INTEGER,
+  place_id BIGINT,
   partition integer,
-  parent_place_id INTEGER,
+  parent_place_id BIINT,
   housenumber TEXT,
   postcode TEXT
   );
@@ -49,7 +49,7 @@ CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id ON location
 
 drop table IF EXISTS search_name_blank CASCADE;
 CREATE TABLE search_name_blank (
-  place_id INTEGER,
+  place_id BIGINT,
   search_rank integer,
   address_rank integer,
   importance FLOAT,
@@ -68,8 +68,8 @@ CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
 drop table IF EXISTS place_addressline;
 CREATE TABLE place_addressline (
-  place_id INTEGER,
-  address_place_id INTEGER,
+  place_id BIGINT,
+  address_place_id BIGINT,
   fromarea boolean,
   isaddress boolean,
   distance float,
@@ -80,7 +80,7 @@ CREATE INDEX idx_place_addressline_address_place_id on place_addressline USING B
 
 drop table IF EXISTS place_boundingbox CASCADE;
 CREATE TABLE place_boundingbox (
-  place_id INTEGER,
+  place_id BIGINT,
   minlat float,
   maxlat float,
   minlon float,
@@ -108,7 +108,7 @@ CREATE INDEX idx_country_geometry ON country USING GIST (geometry);
 
 drop table placex;
 CREATE TABLE placex (
-  place_id INTEGER NOT NULL,
+  place_id BIGINT NOT NULL,
   partition integer,
   osm_type char(1),
   osm_id INTEGER,
@@ -122,8 +122,8 @@ CREATE TABLE placex (
   postcode TEXT,
   country_code varchar(2),
   extratags HSTORE,
-  parent_place_id INTEGER,
-  linked_place_id INTEGER,
+  parent_place_id BIGINT,
+  linked_place_id BIGINT,
   rank_address INTEGER,
   rank_search INTEGER,
   importance FLOAT,

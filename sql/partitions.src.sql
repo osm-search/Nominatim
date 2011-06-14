@@ -1,13 +1,16 @@
+drop type nearplace cascade;
 create type nearplace as (
-  place_id integer
+  place_id BIGINT
 );
 
+drop type nearfeature cascade;
 create type nearfeature as (
-  place_id integer,
+  place_id BIGINT,
   keywords int[],
   rank_address integer,
   rank_search integer,
-  distance float
+  distance float,
+  isguess boolean
 );
 
 CREATE TABLE location_area_country () INHERITS (location_area_large);
@@ -39,7 +42,7 @@ CREATE INDEX idx_location_property_-partition-_housenumber_parent_place_id ON lo
 
 CREATE TABLE location_road_-partition- (
   partition integer,
-  place_id INTEGER,
+  place_id BIGINT,
   country_code VARCHAR(2)
   );
 SELECT AddGeometryColumn('location_road_-partition-', 'geometry', 4326, 'GEOMETRY', 2);
@@ -56,7 +59,7 @@ BEGIN
 -- start
   IF in_partition = -partition- THEN
     FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(point, centroid)) as distance FROM (
+      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(point, centroid)) as distance, isguess FROM (
         SELECT * FROM location_area_large_-partition- WHERE ST_Contains(geometry, point) and rank_search < maxrank
         UNION ALL
         SELECT * FROM location_area_country WHERE ST_Contains(geometry, point) and rank_search < maxrank
@@ -81,7 +84,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function deleteLocationArea(in_partition INTEGER, in_place_id integer) RETURNS BOOLEAN AS $$
+create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
@@ -100,7 +103,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaLarge(
-  in_partition INTEGER, in_place_id integer, in_country_code VARCHAR(2), in_keywords INTEGER[], 
+  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_keywords INTEGER[], 
   in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
@@ -133,13 +136,13 @@ BEGIN
   IF in_partition = -partition- THEN
     FOR r IN 
       SELECT place_id, name_vector, address_rank, search_rank,
-          ST_Distance(centroid, point) as distance
+          ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_-partition-
           WHERE name_vector @> ARRAY[isin_token]
           AND search_rank < maxrank
       UNION ALL
       SELECT place_id, name_vector, address_rank, search_rank,
-          ST_Distance(centroid, point) as distance
+          ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_country
           WHERE name_vector @> ARRAY[isin_token]
           AND search_rank < maxrank
@@ -166,7 +169,7 @@ BEGIN
   IF in_partition = -partition- THEN
     FOR r IN 
       SELECT place_id, name_vector, address_rank, search_rank,
-          ST_Distance(centroid, point) as distance
+          ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_-partition-
           WHERE name_vector @> ARRAY[isin_token]
           AND ST_DWithin(centroid, point, 0.01) 
@@ -184,8 +187,31 @@ END
 $$
 LANGUAGE plpgsql;
 
+create or replace function getNearestPostcode(in_partition INTEGER, point GEOMETRY) 
+  RETURNS TEXT AS $$
+DECLARE
+  out_postcode TEXT;
+BEGIN
+
+-- start
+  IF in_partition = -partition- THEN
+    SELECT postcode
+        FROM location_area_large_-partition- join placex using (place_id)
+        WHERE st_contains(location_area_large_-partition-.geometry, point)
+        AND class = 'place' and type = 'postcode' 
+      ORDER BY st_distance(location_area_large_-partition-.centroid, point) ASC limit 1
+      INTO out_postcode;
+    RETURN out_postcode;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
+END
+$$
+LANGUAGE plpgsql;
+
 create or replace function insertSearchName(
-  in_partition INTEGER, in_place_id integer, in_country_code VARCHAR(2), 
+  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), 
   in_name_vector INTEGER[], in_nameaddress_vector INTEGER[],
   in_rank_search INTEGER, in_rank_address INTEGER, in_importance FLOAT,
   in_centroid GEOMETRY) RETURNS BOOLEAN AS $$
@@ -218,7 +244,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function deleteSearchName(in_partition INTEGER, in_place_id integer) RETURNS BOOLEAN AS $$
+create or replace function deleteSearchName(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
@@ -240,7 +266,7 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationRoad(
-  in_partition INTEGER, in_place_id integer, in_country_code VARCHAR(2), in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
+  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
@@ -258,7 +284,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function deleteRoad(in_partition INTEGER, in_place_id integer) RETURNS BOOLEAN AS $$
+create or replace function deleteRoad(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
@@ -288,7 +314,7 @@ BEGIN
     WHILE search_diameter < 0.1 LOOP
       FOR r IN 
         SELECT place_id, null, null, null,
-            ST_Distance(geometry, point) as distance
+            ST_Distance(geometry, point) as distance, null as isguess
             FROM location_road_-partition-
             WHERE ST_DWithin(geometry, point, search_diameter) 
         ORDER BY distance ASC limit 1
@@ -330,7 +356,7 @@ BEGIN
     WHILE search_diameter < 0.01 LOOP
       FOR r IN 
         SELECT place_id, null, null, null,
-            ST_Distance(geometry, line) as distance
+            ST_Distance(geometry, line) as distance, null as isguess
             FROM location_road_-partition-
             WHERE ST_DWithin(line, geometry, search_diameter)
             ORDER BY (ST_distance(geometry, p1)+

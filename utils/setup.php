@@ -424,7 +424,7 @@
 			2 => STDERR
 		);
 		$ahPipes = null;
-		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
+		$hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
 		while(strlen($sScript))

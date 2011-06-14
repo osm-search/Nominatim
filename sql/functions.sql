@@ -537,7 +537,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION delete_location(OLD_place_id INTEGER) RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT) RETURNS BOOLEAN
   AS $$
 DECLARE
 BEGIN
@@ -549,7 +549,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION add_location(
-    place_id INTEGER,
+    place_id BIGINT,
     country_code varchar(2),
     partition INTEGER,
     keywords INTEGER[],
@@ -654,7 +654,7 @@ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_location(
     partition INTEGER,
-    place_id INTEGER,
+    place_id BIGINT,
     place_country_code varchar(2),
     name hstore,
     rank_search INTEGER,
@@ -673,7 +673,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION search_name_add_words(parent_place_id INTEGER, to_add INTEGER[])
+CREATE OR REPLACE FUNCTION search_name_add_words(parent_place_id BIGINT, to_add INTEGER[])
   RETURNS BOOLEAN
   AS $$
 DECLARE
@@ -704,7 +704,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_location_nameonly(partition INTEGER, OLD_place_id INTEGER, name hstore) RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION update_location_nameonly(partition INTEGER, OLD_place_id BIGINT, name hstore) RETURNS BOOLEAN
   AS $$
 DECLARE
   newkeywords INTEGER[];
@@ -753,7 +753,7 @@ DECLARE
   originalnumberrange INTEGER;
   housenum INTEGER;
   linegeo GEOMETRY;
-  search_place_id INTEGER;
+  search_place_id BIGINT;
   defpostalcode TEXT;
 
   havefirstpoint BOOLEAN;
@@ -1176,7 +1176,7 @@ DECLARE
   search_maxrank INTEGER;
   address_maxrank INTEGER;
   address_street_word_id INTEGER;
-  parent_place_id_rank INTEGER;
+  parent_place_id_rank BIGINT;
   
   isin TEXT[];
   isin_tokens INT[];
@@ -1450,7 +1450,7 @@ BEGIN
     -- Process area matches
     location_rank_search := 100;
     location_distance := 0;
---RAISE WARNING '  getNearFeatures(%,%,%,%)',NEW.partition, place_centroid, search_maxrank, isin_tokens;
+--RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
     FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
@@ -1460,12 +1460,14 @@ BEGIN
         location_distance := location.distance * 1.5;
       END IF;
 
-      IF location.distance < location_distance THEN
+      IF location.distance < location_distance OR NOT location.isguess THEN
 
         -- Add it to the list of search terms
         nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
         INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, NOT address_havelevel[location.rank_address], location.distance, location.rank_address); 
         address_havelevel[location.rank_address] := true;
+
+--RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
 
         IF location.rank_address > parent_place_id_rank THEN
           NEW.parent_place_id = location.place_id;
@@ -1586,7 +1588,7 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION place_delete() RETURNS TRIGGER
   AS $$
 DECLARE
-  placeid INTEGER;
+  placeid BIGINT;
 BEGIN
 
 --  RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
@@ -1614,7 +1616,7 @@ DECLARE
   existing RECORD;
   existingplacex RECORD;
   existinggeometry GEOMETRY;
-  existingplace_id INTEGER;
+  existingplace_id BIGINT;
   result BOOLEAN;
   partition INTEGER;
 BEGIN
@@ -1653,11 +1655,11 @@ BEGIN
   select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
 
   -- Handle a place changing type by removing the old data
-  -- My generated 'place' types are causing havok because they overlap with real tags
+  -- My generated 'place' types are causing havok because they overlap with real keys
   -- TODO: move them to their own special purpose key/class to avoid collisions
---  IF existing.osm_type IS NULL AND (NEW.type not in ('postcode','house','houses')) THEN
---    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
---  END IF;
+  IF existing.osm_type IS NULL AND (NEW.type not in ('postcode','house','houses')) THEN
+    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
+  END IF;
 
 --  RAISE WARNING 'Existing: %',existing.place_id;
 
@@ -1905,7 +1907,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_address_postcode(for_place_id INTEGER) RETURNS TEXT
+CREATE OR REPLACE FUNCTION get_address_postcode(for_place_id BIGINT) RETURNS TEXT
   AS $$
 DECLARE
   result TEXT[];
@@ -1944,7 +1946,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id INTEGER, languagepref TEXT[]) RETURNS TEXT
+CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT, languagepref TEXT[]) RETURNS TEXT
   AS $$
 DECLARE
   result TEXT[];
@@ -1971,7 +1973,7 @@ LANGUAGE plpgsql;
 
 DROP TYPE addressline CASCADE;
 create type addressline as (
-  place_id INTEGER,
+  place_id BIGINT,
   osm_type CHAR(1),
   osm_id INTEGER,
   name HSTORE,
@@ -1984,10 +1986,10 @@ create type addressline as (
   distance FLOAT
 );
 
-CREATE OR REPLACE FUNCTION get_addressdata(in_place_id INTEGER) RETURNS setof addressline 
+CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT) RETURNS setof addressline 
   AS $$
 DECLARE
-  for_place_id INTEGER;
+  for_place_id BIGINT;
   result TEXT[];
   search TEXT[];
   found INTEGER;
@@ -2135,7 +2137,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_place_boundingbox(search_place_id INTEGER) RETURNS place_boundingbox
+CREATE OR REPLACE FUNCTION get_place_boundingbox(search_place_id BIGINT) RETURNS place_boundingbox
   AS $$
 DECLARE
   result place_boundingbox;
@@ -2172,7 +2174,7 @@ $$
 LANGUAGE plpgsql;
 
 -- don't do the operation if it would be slow
-CREATE OR REPLACE FUNCTION get_place_boundingbox_quick(search_place_id INTEGER) RETURNS place_boundingbox
+CREATE OR REPLACE FUNCTION get_place_boundingbox_quick(search_place_id BIGINT) RETURNS place_boundingbox
   AS $$
 DECLARE
   result place_boundingbox;
@@ -2211,7 +2213,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_place(search_place_id INTEGER) RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION update_place(search_place_id BIGINT) RETURNS BOOLEAN
   AS $$
 DECLARE
   result place_boundingbox;
@@ -2384,7 +2386,7 @@ DECLARE
   rangestartnumber INTEGER;
   place_centroid GEOMETRY;
   partition INTEGER;
-  parent_place_id INTEGER;
+  parent_place_id BIGINT;
   location RECORD;
   address_street_word_id INTEGER;  
 
@@ -2464,32 +2466,41 @@ DECLARE
   newpoints INTEGER;
   place_centroid GEOMETRY;
   partition INTEGER;
-  parent_place_id INTEGER;
+  out_parent_place_id BIGINT;
   location RECORD;
   address_street_word_id INTEGER;  
+  out_postcode TEXT;
 
 BEGIN
 
   place_centroid := ST_Centroid(pointgeo);
   partition := get_partition(place_centroid, in_countrycode);
-  parent_place_id := null;
+  out_parent_place_id := null;
 
   address_street_word_id := get_name_id(make_standard_name(in_street));
   IF address_street_word_id IS NOT NULL THEN
     FOR location IN SELECT * from getNearestNamedRoadFeature(partition, place_centroid, address_street_word_id) LOOP
-      parent_place_id := location.place_id;
+      out_parent_place_id := location.place_id;
     END LOOP;
   END IF;
 
-  IF parent_place_id IS NULL THEN
+  IF out_parent_place_id IS NULL THEN
     FOR location IN SELECT place_id FROM getNearestRoadFeature(partition, place_centroid) LOOP
-      parent_place_id := location.place_id;
+      out_parent_place_id := location.place_id;
     END LOOP;    
+  END IF;
+
+  out_postcode := in_postcode;
+  IF out_postcode IS NULL THEN
+    SELECT postcode from placex where place_id = out_parent_place_id INTO out_postcode;
+  END IF;
+  IF out_postcode IS NULL THEN
+    out_postcode := getNearestPostcode(partition, place_centroid);
   END IF;
 
   newpoints := 0;
   insert into location_property_aux (place_id, partition, parent_place_id, housenumber, postcode, centroid)
-    values (nextval('seq_place'), partition, parent_place_id, in_housenumber, in_postcode, place_centroid);
+    values (nextval('seq_place'), partition, out_parent_place_id, in_housenumber, out_postcode, place_centroid);
   newpoints := newpoints + 1;
 
   RETURN newpoints;

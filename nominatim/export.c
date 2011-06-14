@@ -121,7 +121,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
                 PQclear(resPlaces);
                 exit(EXIT_FAILURE);
             }
-            if (PQftype(resPlaces, 0) != PG_OID_INT4)
+            if (PQftype(resPlaces, 0) != PG_OID_INT8)
             {
                 fprintf(stderr, "Place_id value has unexpected type\n");
                 PQclear(resPlaces);
@@ -131,7 +131,7 @@ void nominatim_export(int rank_min, int rank_max, const char *conninfo, const ch
             tuples = PQntuples(resPlaces);
             for (i = 0; i < tuples; i++)
             {
-                nominatim_exportPlace(PGint32(*((uint32_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL, NULL);
+                nominatim_exportPlace(PGint64(*((uint64_t *)PQgetvalue(resPlaces, i, 0))), conn, writer, NULL, NULL);
                 rankTotalDone++;
                 if (rankTotalDone%1000 == 0) printf("Done %i (k)\n", rankTotalDone/1000);
             }

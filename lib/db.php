@@ -1,10 +1,10 @@
 <?php
 	require_once('DB.php');
 
-	function &getDB($bNew = false)
+	function &getDB($bNew = false, $bPersistent = false)
 	{
 		// Get the database object
-		$oDB =& DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), false);
+		$oDB =& DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), $bPersistent);
 		if (PEAR::IsError($oDB))
 		{
 			var_dump(CONST_Database_DSN);

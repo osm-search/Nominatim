@@ -101,7 +101,6 @@
 		$aPhrases = array_reverse($aPhrases); 
 		$sQuery = join(', ',$aPhrases);
 	}
-
 	if ($sQuery)
 	{
 		$hLog = logStart($oDB, 'search', $sQuery, $aLangPrefOrder);
@@ -192,7 +191,7 @@
 			$_GET['nearlon'] = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
 			$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
 		}
-		elseif (preg_match('/(\\[|\\b)(-?[0-9]+[0-9.]*)[, ]+(-?[0-9]+[0-9.]*)(\\]|\\b)/', $sQuery, $aData))
+		elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9.]*)[, ]+(-?[0-9]+[0-9.]*)(\\]|$|\\b)/', $sQuery, $aData))
 		{
 			$_GET['nearlat'] = $aData[2];
 			$_GET['nearlon'] = $aData[3];

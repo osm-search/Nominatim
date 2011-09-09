@@ -308,3 +308,6 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
+
+drop sequence file;
+CREATE SEQUENCE file start 1;

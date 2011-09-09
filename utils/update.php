@@ -365,7 +365,7 @@
 				$iFileID = $oDB->getOne('select nextval(\'file\')');
 				if (PEAR::isError($iFileID))
 				{
-					echo $oDB->getMessage()."\n";
+					echo $iFileID->getMessage()."\n";
 					exit;
 				} 
 				$sFileDir = CONST_BasePath.'/export/diff/';

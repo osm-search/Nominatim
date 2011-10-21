@@ -31,7 +31,7 @@ drop table IF EXISTS location_property CASCADE;
 CREATE TABLE location_property (
   place_id BIGINT,
   partition integer,
-  parent_place_id BIINT,
+  parent_place_id BIGINT,
   housenumber TEXT,
   postcode TEXT
   );

@@ -82,7 +82,7 @@
 		$oDB =& getDB();
 		passthru('createlang plpgsql '.$aDSNInfo['database']);
         $pgver = (float) CONST_Postgresql_Version;
-		if ($pgver < 9.0) {
+		if ($pgver < 9.1) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
 		} else {
 			pgsqlRunScript('CREATE EXTENSION hstore');

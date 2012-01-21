@@ -33,6 +33,7 @@ CREATE TABLE query_log (
   );
 CREATE INDEX idx_query_log ON query_log USING BTREE (starttime);
 GRANT INSERT ON query_log TO "www-data" ;
+GRANT UPDATE ON query_log TO "www-data" ;
 
 CREATE TABLE new_query_log (
   type text,
@@ -115,11 +116,13 @@ CREATE TABLE location_property_aux () INHERITS (location_property);
 CREATE INDEX idx_location_property_aux_place_id ON location_property_aux USING BTREE (place_id);
 CREATE INDEX idx_location_property_aux_parent_place_id ON location_property_aux USING BTREE (parent_place_id);
 CREATE INDEX idx_location_property_aux_housenumber_parent_place_id ON location_property_aux USING BTREE (parent_place_id, housenumber);
+GRANT SELECT ON location_property_aux TO "www-data";
 
 CREATE TABLE location_property_tiger () INHERITS (location_property);
 CREATE INDEX idx_location_property_tiger_place_id ON location_property_tiger USING BTREE (place_id);
 CREATE INDEX idx_location_property_tiger_parent_place_id ON location_property_tiger USING BTREE (parent_place_id);
 CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id ON location_property_tiger USING BTREE (parent_place_id, housenumber);
+GRANT SELECT ON location_property_tiger TO "www-data";
 
 drop table IF EXISTS search_name_blank CASCADE;
 CREATE TABLE search_name_blank (
@@ -135,8 +138,8 @@ SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
 
 drop table IF EXISTS search_name;
 CREATE TABLE search_name () INHERITS (search_name_blank);
-CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
-CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector) WITH (fastupdate = off);
+CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off);
 CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 

@@ -7,8 +7,11 @@
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
 
 	// Paths
-	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/9.0/contrib');
+	@define('CONST_Postgresql_Version', '9.1');
+	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-1.5');
+    @define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
+    @define('CONST_Osmosis_Binary', CONST_BasePath.'/osmosis-0.38/bin/osmosis');
 
 	// Website settings
 	@define('CONST_ClosedForIndexing', false);

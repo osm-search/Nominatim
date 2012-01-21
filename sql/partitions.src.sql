@@ -20,8 +20,8 @@ CREATE INDEX idx_location_area_country_geometry ON location_area_country USING G
 CREATE TABLE search_name_country () INHERITS (search_name_blank);
 CREATE INDEX idx_search_name_country_place_id ON search_name_country USING BTREE (place_id);
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid);
-CREATE INDEX idx_search_name_country_name_vector ON search_name_country USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
-CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_country_name_vector ON search_name_country USING GIN (name_vector) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector) WITH (fastupdate = off);
 
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large);
@@ -31,8 +31,8 @@ CREATE INDEX idx_location_area_large_-partition-_geometry ON location_area_large
 CREATE TABLE search_name_-partition- () INHERITS (search_name_blank);
 CREATE INDEX idx_search_name_-partition-_place_id ON search_name_-partition- USING BTREE (place_id);
 CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USING GIST (centroid);
-CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector gin__int_ops) WITH (fastupdate = off);
-CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector gin__int_ops) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector) WITH (fastupdate = off);
 
 CREATE TABLE location_property_-partition- () INHERITS (location_property);
 CREATE INDEX idx_location_property_-partition-_place_id ON location_property_-partition- USING BTREE (place_id);

@@ -81,8 +81,12 @@
 
 		$oDB =& getDB();
 		passthru('createlang plpgsql '.$aDSNInfo['database']);
-		pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/_int.sql');
-		pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
+        $pgver = (float) CONST_Postgresql_Version;
+		if ($pgver < 9.0) {
+			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
+		} else {
+			pgsqlRunScript('CREATE EXTENSION hstore');
+		}
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
@@ -100,10 +104,10 @@
 		echo "Import\n";
 		$bDidSomething = true;
 
-		$osm2pgsql = CONST_BasePath.'/osm2pgsql/osm2pgsql';
-		if (!file_exists($osm2pgsql)) $osm2pgsql = trim(`which osm2pgsql`);
+		$osm2pgsql = CONST_Osm2pgsql_Binary;
 		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
-		passthru($osm2pgsql.' -lsc -O gazetteer -C 10000 --hstore -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file']);
+		passthru($osm2pgsql.' -lsc -O gazetteer -C 12000 --hstore -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file']);
+        pgsqlRunScript('ANALYSE');
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
@@ -344,9 +348,9 @@
 	{
 		$bDidSomething = true;
 
-		if (!file_exists(CONST_BasePath.'/osmosis-0.38/bin/osmosis')) fail("please download osmosis");
+		if (!file_exists(CONST_Osmosis_Binary)) fail("please download osmosis");
 		if (file_exists(CONST_BasePath.'/settings/configuration.txt')) echo "settings/configuration.txt already exists\n";
-		else passthru(CONST_BasePath.'/osmosis-0.38/bin/osmosis --read-replication-interval-init '.CONST_BasePath.'/settings');
+		else passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
 
 		$sDate = $aCMDResult['osmosis-init-date'];
 		$sURL = 'http://toolserver.org/~mazder/replicate-sequences/?'.$sDate;

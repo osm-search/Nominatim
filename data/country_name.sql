@@ -21,6 +21,7 @@ CREATE TABLE country_name (
     country_default_language_code character varying(2),
     partition integer
 );
+GRANT SELECT ON country_name TO "www-data";
 
 
 COPY country_name (country_code, name, country_default_language_code, partition) FROM stdin;

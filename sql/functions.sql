@@ -302,7 +302,7 @@ BEGIN
   END IF;
   r := a;
   FOR i IN 1..array_upper(b, 1) LOOP  
-    IF NOT (ARRAY[b[i]] && r) THEN
+    IF NOT (ARRAY[b[i]] <@ r) THEN
       r := r || b[i];
     END IF;
   END LOOP;
@@ -328,15 +328,18 @@ BEGIN
     s := make_standard_name(item.value);
 
     w := getorcreate_name_id(s, item.value);
-    result := result | w;
+
+    IF not(ARRAY[w] <@ result) THEN
+      result := result || w;
+    END IF;
 
     words := string_to_array(s, ' ');
     IF array_upper(words, 1) IS NOT NULL THEN
       FOR j IN 1..array_upper(words, 1) LOOP
         IF (words[j] != '') THEN
           w = getorcreate_word_id(words[j]);
-          IF NOT (ARRAY[w] && result) THEN
-            result := result | w;
+          IF NOT (ARRAY[w] <@ result) THEN
+            result := result || w;
           END IF;
         END IF;
       END LOOP;
@@ -348,8 +351,8 @@ BEGIN
         s := make_standard_name(words[j]);
         IF s != '' THEN
           w := getorcreate_word_id(s);
-          IF NOT (ARRAY[w] && result) THEN
-            result := result | w;
+          IF NOT (ARRAY[w] <@ result) THEN
+            result := result || w;
           END IF;
         END IF;
       END LOOP;
@@ -360,8 +363,8 @@ BEGIN
       s := make_standard_name(s);
       IF s != '' THEN
         w := getorcreate_name_id(s, item.value);
-        IF NOT (ARRAY[w] && result) THEN
-          result := result | w;
+        IF NOT (ARRAY[w] <@ result) THEN
+          result := result || w;
         END IF;
       END IF;
     END IF;
@@ -388,7 +391,7 @@ BEGIN
   s := make_standard_name(src);
   w := getorcreate_name_id(s);
 
-  IF NOT (ARRAY[w] && result) THEN
+  IF NOT (ARRAY[w] <@ result) THEN
     result := result || w;
   END IF;
 
@@ -397,7 +400,7 @@ BEGIN
     FOR j IN 1..array_upper(words, 1) LOOP
       IF (words[j] != '') THEN
         w = getorcreate_word_id(words[j]);
-        IF NOT (ARRAY[w] && result) THEN
+        IF NOT (ARRAY[w] <@ result) THEN
           result := result || w;
         END IF;
       END IF;
@@ -690,9 +693,11 @@ BEGIN
       and search_name.place_id = place_addressline.place_id
   LOOP
     delete from search_name where place_id = childplace.place_id;
-    childplace.nameaddress_vector := uniq(sort_asc(childplace.nameaddress_vector + to_add));
-    IF childplace.place_id = parent_place_id THEN
-      childplace.name_vector := uniq(sort_asc(childplace.name_vector + to_add));
+    IF not (ARRAY[to_add] <@ childplace.nameaddress_vector) THEN
+      childplace.nameaddress_vector := childplace.nameaddress_vector || to_add;
+    END IF;
+    IF childplace.place_id = parent_place_id and not (ARRAY[to_add] <@ childplace.name_vector) THEN
+      childplace.name_vector := childplace.name_vector || to_add;
     END IF;
     insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) 
       values (childplace.place_id, childplace.search_rank, childplace.address_rank, childplace.country_code, 
@@ -1282,7 +1287,7 @@ BEGIN
 
 --RAISE WARNING 'x1';
         -- Is this node part of a way?
-        FOR way IN select id from planet_osm_ways where nodes && ARRAY[NEW.osm_id::integer] LOOP
+        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id::integer] LOOP
 --RAISE WARNING '%', way;
         FOR location IN select * from placex where osm_type = 'W' and osm_id = way.id
         LOOP
@@ -1294,19 +1299,21 @@ BEGIN
           END IF;
 
           -- Is the WAY part of a relation
-          FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id::integer] and members @> ARRAY['w'||location.osm_id]
-          LOOP
-            -- At the moment we only process one type of relation - associatedStreet
-            IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
-              FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-                IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
---RAISE WARNING 'node in way that is in a relation %',relation;
-                  SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::integer 
-                    and rank_search = 26 INTO NEW.parent_place_id;
+          IF NEW.parent_place_id IS NULL THEN
+              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id::integer] and members @> ARRAY['w'||location.osm_id]
+              LOOP
+                -- At the moment we only process one type of relation - associatedStreet
+                IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
+                  FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+                    IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
+    --RAISE WARNING 'node in way that is in a relation %',relation;
+                      SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::integer 
+                        and rank_search = 26 INTO NEW.parent_place_id;
+                    END IF;
+                  END LOOP;
                 END IF;
               END LOOP;
-            END IF;
-          END LOOP;
+          END IF;    
           
           -- If the way contains an explicit name of a street copy it
           IF NEW.street IS NULL AND location.street IS NOT NULL THEN
@@ -1426,24 +1433,22 @@ BEGIN
       IF array_upper(isin, 1) IS NOT NULL THEN
         FOR i IN 1..array_upper(isin, 1) LOOP
           address_street_word_id := get_name_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL THEN
-            isin_tokens := isin_tokens + address_street_word_id;
+          IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+            isin_tokens := isin_tokens || address_street_word_id;
           END IF;
         END LOOP;
       END IF;
-      isin_tokens := uniq(sort(isin_tokens));
     END IF;
     IF NEW.postcode IS NOT NULL THEN
       isin := regexp_split_to_array(NEW.postcode, E'[;,]');
       IF array_upper(isin, 1) IS NOT NULL THEN
         FOR i IN 1..array_upper(isin, 1) LOOP
           address_street_word_id := get_name_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL THEN
-            isin_tokens := isin_tokens + address_street_word_id;
+          IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+            isin_tokens := isin_tokens || address_street_word_id;
           END IF;
         END LOOP;
       END IF;
-      isin_tokens := uniq(sort(isin_tokens));
     END IF;
 --RAISE WARNING 'ISIN: %', isin_tokens;
 
@@ -1898,7 +1903,9 @@ BEGIN
     FOR location IN 
       select nodes from planet_osm_ways where id = way_ids[j] LIMIT 1
     LOOP
-      searchnodes := searchnodes | location.nodes;
+      IF not (ARRAY[location.nodes] <@ searchnodes) THEN
+        searchnodes := searchnodes || location.nodes;
+      END IF;
     END LOOP;
   END LOOP;
 
@@ -1932,7 +1939,7 @@ BEGIN
     IF array_upper(search, 1) IS NOT NULL AND array_upper(location.name, 1) IS NOT NULL THEN
       FOR j IN 1..array_upper(search, 1) LOOP
         FOR k IN 1..array_upper(location.name, 1) LOOP
-          IF (found > location.rank_address AND location.name[k].key = search[j] AND location.name[k].value != '') AND NOT result && ARRAY[trim(location.name[k].value)] AND (for_postcode IS NULL OR location.name[k].value ilike for_postcode||'%') THEN
+          IF (found > location.rank_address AND location.name[k].key = search[j] AND location.name[k].value != '') AND NOT result @> ARRAY[trim(location.name[k].value)] AND (for_postcode IS NULL OR location.name[k].value ilike for_postcode||'%') THEN
             result[(100 - location.rank_address)] := trim(location.name[k].value);
             found := location.rank_address;
           END IF;

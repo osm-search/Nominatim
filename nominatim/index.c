@@ -127,13 +127,13 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         }
         PQclear(res);
 
-        res = PQexec(thread_data[i].conn, "set enable_seqscan = false");
+        /*res = PQexec(thread_data[i].conn, "set enable_seqscan = false");
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
             fprintf(stderr, "Failed disabling sequential scan: %s\n", PQerrorMessage(conn));
             exit(EXIT_FAILURE);
         }
-        PQclear(res);
+        PQclear(res);*/
 
         nominatim_exportCreatePreparedQueries(thread_data[i].conn);
     }
@@ -270,7 +270,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                         usleep(1000);
 
                         // Aim for one update per second
-                        if (sleepcount++ > 500)
+                        if (sleepcount++ > 2000)
                         {
                             rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
                             fprintf(stderr, "  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);

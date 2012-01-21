@@ -35,6 +35,7 @@
 		array('index-estrate', '', 0, 1, 1, 1, 'int', 'Estimated indexed items per second (def:30)'),
 
 		array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
+		array('no-npi', '', 0, 1, 0, 0, 'bool', 'Do not write npi index files'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
@@ -106,7 +107,7 @@
 		if (($aResult['import-hourly'] || $aResult['import-daily']) && file_exists($sNextFile))
 		{
 			// Import the file
-			$sCMD = $sBasePath.'/osm2pgsql/osm2pgsql -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sNextFile;
+			$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sNextFile;
 			echo $sCMD."\n";
 			exec($sCMD, $sJunk, $iErrorLevel);
 
@@ -159,7 +160,7 @@
 			2 => array("pipe", "w") // stderr
 		);
 		$aPipes = array();
-		$sCMD = $sBasePath.'/osm2pgsql/osm2pgsql -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' -';
+		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' -';
 		echo $sCMD."\n";
 		$hProc = proc_open($sCMD, $aSpec, $aPipes);
 		if (!is_resource($hProc))
@@ -299,13 +300,15 @@
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
 	{
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
-		$sOsmosisCMD = CONST_BasePath.'/osmosis-0.38/bin/osmosis';
+		$sOsmosisCMD = CONST_Osmosis_Binary;
 		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';
 		$sDatabaseName = 'nominatim';
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
-		$sCMDImport = $sBasePath.'/osm2pgsql/osm2pgsql -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sImportFile;
-		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -t 15 -F ';
-//		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -t 15 ';
+		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sImportFile;
+		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -t '.$aResult['index-instances'];
+		if (!$aResult['no-npi']) {
+			$sCMDIndex .= '-F ';
+		}
 		while(true)
 		{
 			$fStartTime = time();
@@ -374,30 +377,19 @@
 
 				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
 				$sThisIndexCmd = $sCMDIndex;
-				$sThisIndexCmd .= $sFileDir;
-				$sThisIndexCmd .= '/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT);
-				$sThisIndexCmd .= ".npi.out";
-				echo "$sThisIndexCmd\n";
+				if (!$aResult['no-npi']) {
+					$sThisIndexCmd .= $sFileDir;
+					$sThisIndexCmd .= '/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT);
+					$sThisIndexCmd .= ".npi.out";
 
-				preg_match('#^([0-9]{4})-([0-9]{2})-([0-9]{2})#', $sBatchEnd, $aBatchMatch);
-				$sFileDir = CONST_BasePath.'/export/index/';
-				$sFileDir .= $aBatchMatch[1].'/'.$aBatchMatch[2];
+					preg_match('#^([0-9]{4})-([0-9]{2})-([0-9]{2})#', $sBatchEnd, $aBatchMatch);
+					$sFileDir = CONST_BasePath.'/export/index/';
+					$sFileDir .= $aBatchMatch[1].'/'.$aBatchMatch[2];
 
-				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
-				file_put_contents($sFileDir.'/'.$aBatchMatch[3].'.idx', "$sBatchEnd\t$iFileID\n", FILE_APPEND);
-
-				exec($sThisIndexCmd, $sJunk, $iErrorLevel);
-				if ($iErrorLevel)
-				{
-					echo "Error: $iErrorLevel\n";
-					exit;
+					if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
+					file_put_contents($sFileDir.'/'.$aBatchMatch[3].'.idx', "$sBatchEnd\t$iFileID\n", FILE_APPEND);
 				}
 
-				$sFileDir = CONST_BasePath.'/export/diff/';
-				$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
-				$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
-
-				$sThisIndexCmd = 'bzip2 -z9 '.$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out";
 				echo "$sThisIndexCmd\n";
 				exec($sThisIndexCmd, $sJunk, $iErrorLevel);
 				if ($iErrorLevel)
@@ -406,8 +398,23 @@
 					exit;
 				}
 
-				rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",
-					$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.bz2");
+				if (!$aResult['no-npi']) {
+					$sFileDir = CONST_BasePath.'/export/diff/';
+					$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
+					$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
+
+					$sThisIndexCmd = 'bzip2 -z9 '.$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out";
+					echo "$sThisIndexCmd\n";
+					exec($sThisIndexCmd, $sJunk, $iErrorLevel);
+					if ($iErrorLevel)
+					{
+						echo "Error: $iErrorLevel\n";
+						exit;
+					}
+
+					rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",
+						$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.bz2");
+				}
 
 				echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";

@@ -359,7 +359,7 @@ void *nominatim_indexThread(void * thread_data_in)
 			done = 1;
 		else
 	        {
-			if (strncmp(PQerrorMessage(thread_data->conn), "ERROR:  deadlock detected", 25))
+			if (!strncmp(PQerrorMessage(thread_data->conn), "ERROR:  deadlock detected", 25))
 			{
 		            fprintf(stderr, "index_placex: UPDATE failed - deadlock, retrying (%ld)\n", place_id);
 		            PQclear(res);

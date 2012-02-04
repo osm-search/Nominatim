@@ -33,7 +33,6 @@ body {
     </style>
 	<script src="js/OpenLayers.js"></script>
 	<script src="js/tiles.js"></script>
-	<script src="prototype-1.6.0.3.js"></script>
 	<script type="text/javascript">
         
 		var map;

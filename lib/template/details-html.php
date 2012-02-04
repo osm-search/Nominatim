@@ -52,7 +52,7 @@ body {
                 numZoomLevels: 19,
                 units: 'm',
                 projection: new OpenLayers.Projection("EPSG:900913"),
-                displayProjection: new OpenLayers.Projection("EPSG:4326"),
+                displayProjection: new OpenLayers.Projection("EPSG:4326")
             	} );
 			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
 
@@ -69,7 +69,7 @@ body {
 				fillColor: "#F0F7FF",
 				strokeWidth: 2,
 				strokeOpacity: 0.75,
-				fillOpacity: 0.75,
+				fillOpacity: 0.75
 			};
 			var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
 			var proj_map = map.getProjectionObject();

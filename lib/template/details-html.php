@@ -74,9 +74,11 @@ body {
 			var proj_map = map.getProjectionObject();
 			var latlon;
 <?php
+if (isset($aPolyPoints)) {
 foreach($aPolyPoints as $aPolyPoint)
 {
 	echo "                        pointList.push(new OpenLayers.Geometry.Point(".$aPolyPoint[1].",".$aPolyPoint[2]."));\n";
+}
 }
 ?>
 			var linearRing = new OpenLayers.Geometry.LinearRing(pointList).transform(proj_EPSG4326, proj_map);;

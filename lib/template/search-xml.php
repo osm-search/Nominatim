@@ -42,7 +42,7 @@
 			echo ','.$aResult['aBoundingBox'][3];
 			echo '"';
 
-			if ($bShowPolygons)
+			if ($bShowPolygons && isset($aResult['aPolyPoints']))
 			{
 				echo ' polygonpoints=\'';
 				echo javascript_renderData($aResult['aPolyPoints']);

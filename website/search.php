@@ -1161,7 +1161,7 @@
 				}
 
 				// Output data suitable for display (points and a bounding box)
-				if ($bShowPolygons)
+				if ($bShowPolygons && isset($aPolyPoints))
 				{
 					$aResult['aPolyPoints'] = array();
 					foreach($aPolyPoints as $aPoint)

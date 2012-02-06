@@ -29,15 +29,17 @@
 		if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
 		echo ">".htmlspecialchars($aPlace['langaddress'])."</result>";
 
-		echo "<addressparts>";
-		foreach($aAddress as $sKey => $sValue)
-		{
-			$sKey = str_replace(' ','_',$sKey);
-			echo "<$sKey>";
-			echo htmlspecialchars($sValue);
-			echo "</$sKey>";
-		}
-		echo "</addressparts>";
+        if ($bShowAddressDetails) {
+			echo "<addressparts>";
+			foreach($aAddress as $sKey => $sValue)
+			{
+				$sKey = str_replace(' ','_',$sKey);
+				echo "<$sKey>";
+				echo htmlspecialchars($sValue);
+				echo "</$sKey>";
+			}
+			echo "</addressparts>";
+        }
 	}
 	
 	echo "</reversegeocode>";

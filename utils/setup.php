@@ -30,6 +30,7 @@
 		array('osmosis-init-date', '', 0, 1, 1, 1, 'string', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
+		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
@@ -107,7 +108,6 @@
 		$osm2pgsql = CONST_Osm2pgsql_Binary;
 		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
 		passthru($osm2pgsql.' -lsc -O gazetteer -C 12000 --hstore -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file']);
-        pgsqlRunScript('ANALYSE');
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
@@ -241,6 +241,8 @@
 			echo '.';
 		}
 		echo "\n";
+		echo "Reanalysing database...\n";
+		pgsqlRunScript('ANALYSE');
 	}
 
 	if ($aCMDResult['create-roads'])
@@ -344,7 +346,7 @@
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 	}
 
-	if (($aCMDResult['osmosis-init'] || $aCMDResult['all']) && isset($aCMDResult['osmosis-init-date']))
+	if ($aCMDResult['osmosis-init'] && isset($aCMDResult['osmosis-init-date']))
 	{
 		$bDidSomething = true;
 
@@ -365,7 +367,40 @@
 		$bDidSomething = true;
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
-		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile);
+		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
+		passthru($sBaseCmd.' -R 4');
+		pgsqlRunScript('ANALYSE');
+		passthru($sBaseCmd.' -r 5 -R 25');
+		pgsqlRunScript('ANALYSE');
+		passthru($sBaseCmd.' -r 26');
+	}
+
+	if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])
+	{
+		echo "Search indices\n";
+		$bDidSomething = true;
+		$oDB =& getDB();
+		$sSQL = 'select partition from country_name order by country_code';
+		$aPartitions = $oDB->getCol($sSQL);
+		if (PEAR::isError($aPartitions))
+		{
+			fail($aPartitions->getMessage());
+		}
+		$aPartitions[] = 0;
+
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
+		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
+		foreach($aMatches as $aMatch)
+		{
+			$sResult = '';
+			foreach($aPartitions as $sPartitionName)
+			{
+				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
+			}
+			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
+		}
+
+		pgsqlRunScript($sTemplate);
 	}
 
 	if (isset($aCMDResult['create-website']))

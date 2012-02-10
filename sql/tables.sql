@@ -78,7 +78,6 @@ CREATE TABLE word (
   operator TEXT
   );
 SELECT AddGeometryColumn('word', 'location', 4326, 'GEOMETRY', 2);
-CREATE INDEX idx_word_word_id on word USING BTREE (word_id);
 CREATE INDEX idx_word_word_token on word USING BTREE (word_token);
 --CREATE INDEX idx_word_trigram ON word USING gin(word_trigram gin_trgm_ops) WITH (fastupdate = off);
 GRANT SELECT ON word TO "www-data" ;
@@ -138,9 +137,6 @@ SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
 
 drop table IF EXISTS search_name;
 CREATE TABLE search_name () INHERITS (search_name_blank);
-CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector) WITH (fastupdate = off);
-CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off);
-CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
 drop table IF EXISTS place_addressline;
@@ -153,7 +149,6 @@ CREATE TABLE place_addressline (
   cached_rank_address integer
   );
 CREATE INDEX idx_place_addressline_place_id on place_addressline USING BTREE (place_id);
-CREATE INDEX idx_place_addressline_address_place_id on place_addressline USING BTREE (address_place_id);
 
 drop table IF EXISTS place_boundingbox CASCADE;
 CREATE TABLE place_boundingbox (
@@ -165,9 +160,7 @@ CREATE TABLE place_boundingbox (
   numfeatures integer,
   area float
   );
-CREATE INDEX idx_place_boundingbox_place_id on place_boundingbox USING BTREE (place_id);
 SELECT AddGeometryColumn('place_boundingbox', 'outline', 4326, 'GEOMETRY', 2);
-CREATE INDEX idx_place_boundingbox_outline ON place_boundingbox USING GIST (outline);
 GRANT SELECT on place_boundingbox to "www-data" ;
 GRANT INSERT on place_boundingbox to "www-data" ;
 
@@ -221,22 +214,12 @@ CREATE TABLE placex (
 SELECT AddGeometryColumn('placex', 'geometry', 4326, 'GEOMETRY', 2);
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id);
 CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id);
-CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search);
-CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address);
+CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector);
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry);
 
 --CREATE INDEX idx_placex_indexed ON placex USING BTREE (indexed);
 
-CREATE INDEX idx_placex_pending ON placex USING BTREE (rank_search) where indexed_status > 0;
-CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) where indexed_status > 0;
-
 --CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(geometry_sector,indexed,name),rank_search)  where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
-
-CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) where parent_place_id IS NOT NULL;
-CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed_status > 0 and class='place' and type='houses';
-
-CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id);
-CLUSTER placex USING idx_placex_sector;
 
 DROP SEQUENCE seq_place;
 CREATE SEQUENCE seq_place start 1;

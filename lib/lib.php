@@ -179,6 +179,10 @@
 			return array(array('lat' => $aNearPostcodes[0]['lat'], 'lon' => $aNearPostcodes[0]['lon'], 'radius' => 0.005));
 		}
 
+		return false;
+
+		/* partial search disabled because it sequentially scans placex
+		
 		$sSQL = 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from placex where country_code::text = \'gb\'::text AND substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\' and class=\'place\' and type=\'postcode\' ';
 		$sSQL .= ' union ';
 		$sSQL .= 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\'';
@@ -217,7 +221,7 @@
 			return array(array('lat' => $fLat, 'lon' => $fLon, 'radius' => $fRadius));
 		}
 		return false;
-
+		*/
 		/*
 			$fTotalFac is a suprisingly good indicator of accuracy
 			$iZoom = 18 + round(log($fTotalFac,32));

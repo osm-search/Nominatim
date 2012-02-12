@@ -271,7 +271,8 @@
 				$aPhrase = $oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string");
 				if (PEAR::isError($aPhrase))
 				{
-					var_dump($aPhrase);
+					echo "Illegal query string (not an UTF-8 string): ".$sPhrase;
+					if (CONST_Debug) var_dump($aPhrase);
 					exit;
 				}
 				if (trim($aPhrase['string']))

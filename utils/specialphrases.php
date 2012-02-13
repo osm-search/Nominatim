@@ -3,6 +3,7 @@
 
         require_once(dirname(dirname(__FILE__)).'/lib/init-cmd.php');
         ini_set('memory_limit', '800M');
+        ini_set('display_errors', 'stderr');
 
         $aCMDOptions = array(
                 "Import and export special phrases",
@@ -63,6 +64,15 @@
 					$sLabel = $aMatch[1];
 					$sClass = $aMatch[2];
 					$sType = $aMatch[3];
+					# hack around a bug where building=yes was imported with
+					# quotes into the wiki
+					$sType = preg_replace('/&quot;/', '', $sType);
+					# sanity check, in case somebody added garbage in the wiki
+					if (preg_match('/^\\w+$/', $sClass) < 1 ||
+						preg_match('/^\\w+$/', $sType) < 1) {
+						trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
+						exit;
+					}	
 					$aPairs[$sClass.'|'.$sType] = array($sClass, $sType);
 
 					switch(trim($aMatch[4]))

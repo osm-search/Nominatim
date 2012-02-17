@@ -10,7 +10,8 @@
 		array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-		array('parse-tiger', '', 0, 1, 1, 1, 'realpath', 'Convert tigger edge files to nominatim sql import'),
+		array('parse-tiger', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import'),
+		array('parse-tiger-2011', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import (source: edges directory of tiger data)'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -18,6 +19,7 @@
 
 	if (isset($aCMDResult['parse-tiger']))
 	{
+        $bDidSomething = true;
 		foreach(glob($aCMDResult['parse-tiger'].'/??_*', GLOB_ONLYDIR) as $sStateFolder)
 		{
 			preg_match('#([0-9]{2})_(.*)#',basename($sStateFolder), $aMatch);
@@ -35,7 +37,7 @@
 				echo "'$sCountyID' : '$sCountyName' ,\n";
 			}
 		}
-exit;
+		exit;
 
 		if (!file_exists(CONST_BasePath.'/data/tiger2009')) mkdir(CONST_BasePath.'/data/tiger2009');
 
@@ -82,5 +84,52 @@ exit;
 					unlink($sTmpFile);
 				}
 			}
+		}
+	}
+
+
+	if (isset($aCMDResult['parse-tiger-2011']))
+	{
+		if (!file_exists(CONST_BasePath.'/data/tiger2011')) mkdir(CONST_BasePath.'/data/tiger2011');
+
+		$sTempDir = tempnam('/tmp', 'tiger');
+		unlink($sTempDir);
+		mkdir($sTempDir);
+
+
+        $bDidSomething = true;
+		foreach(glob($aCMDResult['parse-tiger-2011'].'/tl_2011_?????_edges.zip', 0) as $sImportFile)
+		{
+			set_time_limit(30);
+			preg_match('#([0-9]{5})_(.*)#',basename($sImportFile), $aMatch);
+			$sCountyID = $aMatch[1];
+			echo "Processing ".$sCountyID."...\n";
+			$sUnzipCmd = "unzip -d $sTempDir $sImportFile";
+			exec($sUnzipCmd);
+			$sShapeFile = $sTempDir.'/'.basename($sImportFile, '.zip').'.shp';
+			if (!file_exists($sShapeFile))
+			{
+				echo "Failed unzip ($sImportFile)\n";
+			}
+			else
+			{
+				$sParseCmd = CONST_BasePath.'/utils/tigerAddressImport.py '.$sShapeFile;
+				exec($sParseCmd);
+				$sOsmFile = $sTempDir.'/'.basename($sImportFile, '.zip').'.osm1.osm';
+				if (!file_exists($sOsmFile))
+				{
+					echo "Failed parse ($sImportFile)\n";
+				}
+				else
+				{
+					copy($sOsmFile, CONST_BasePath.'/data/tiger2011/'.$sCountyID.'.sql');
+				}
+			}
+			// Cleanup
+			foreach(glob($sTempDir.'/*') as $sTmpFile)
+			{
+				unlink($sTmpFile);
+			}
+
 		}
 	}

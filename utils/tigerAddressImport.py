@@ -385,6 +385,7 @@ county_fips = {
 '08011' : 'Bent, CO' ,
 '08013' : 'Boulder, CO' ,
 '08015' : 'Chaffee, CO' ,
+'08014' : 'Broomfield, CO',
 '08017' : 'Cheyenne, CO' ,
 '08019' : 'Clear Creek, CO' ,
 '08021' : 'Conejos, CO' ,
@@ -499,6 +500,7 @@ county_fips = {
 '12081' : 'Manatee, FL' ,
 '12083' : 'Marion, FL' ,
 '12085' : 'Martin, FL' ,
+'12086' : 'Miami-Dade, FL' ,
 '12087' : 'Monroe, FL' ,
 '12089' : 'Nassau, FL' ,
 '12091' : 'Okaloosa, FL' ,
@@ -3463,7 +3465,7 @@ def parse_shp_for_osm( filename ):
 
         divroad = poFeature.GetField("DIVROAD")
         if divroad != None:
-	    if divroad == "Y" and tags["highway"] == "residential":
+	    if divroad == "Y" and "highway" in tags and tags["highway"] == "residential":
                 tags["highway"] = "tertiary"
             tags["tiger:separated"] = divroad
 

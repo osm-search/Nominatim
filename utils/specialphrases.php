@@ -91,12 +91,13 @@
 			}
 		}
 
-        echo "create index idx_placex_classtype on placex (class, type);";
+        echo "create index idx_placex_classtype on placex (class, type);\n";
 
 		foreach($aPairs as $aPair)
 		{
 			if ($aPair[1] == 'highway') continue;
 
+			echo "drop table if exists place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1]).";\n";
 			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
 			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
 			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
@@ -107,9 +108,9 @@
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_place_id ";
 			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id);\n";
 
-            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";";
+            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";\n";
 
 		}
 
-        echo "drop index idx_placex_classtype;";
+        echo "drop index idx_placex_classtype;\n";
 	}

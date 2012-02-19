@@ -875,6 +875,7 @@ DECLARE
   country_code VARCHAR(2);
   default_language VARCHAR(10);
   diameter FLOAT;
+  classtable TEXT;
 BEGIN
 --  RAISE WARNING '%',NEW.osm_id;
 
@@ -1147,6 +1148,17 @@ BEGIN
     END IF;
 
   END IF;
+
+   -- add to tables for special search
+   -- Note: won't work on initial import because the classtype tables
+   -- do not yet exist. It won't hurt either.
+  classtable := 'place_classtype_' || NEW.class || '_' || NEW.type;
+  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable INTO result;
+  IF result THEN
+    EXECUTE 'INSERT INTO ' || classtable::regclass || ' (place_id, centroid) VALUES ($1,$2)' 
+    USING NEW.place_id, ST_Centroid(NEW.geometry);
+  END IF;
+
 
 --  IF NEW.rank_search < 26 THEN
 --    RAISE WARNING 'placex insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
@@ -1558,6 +1570,7 @@ CREATE OR REPLACE FUNCTION placex_delete() RETURNS TRIGGER
   AS $$
 DECLARE
   b BOOLEAN;
+  classtable TEXT;
 BEGIN
 
   IF OLD.rank_address < 30 THEN
@@ -1583,6 +1596,13 @@ BEGIN
   END IF;
 
   DELETE FROM place_addressline where place_id = OLD.place_id;
+
+  -- remove from tables for special search
+  classtable := 'place_classtype_' || OLD.class || '_' || OLD.type;
+  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable INTO b;
+  IF b THEN
+    EXECUTE 'DELETE FROM ' || classtable::regclass || ' WHERE place_id = $1' USING OLD.place_id;
+  END IF;
 
   RETURN OLD;
 

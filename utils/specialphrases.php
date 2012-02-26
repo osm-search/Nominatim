@@ -10,8 +10,8 @@
                 array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
                 array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
                 array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-
-                array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
+                array('countries', '', 0, 1, 0, 0, 'bool', 'Create import script for coutry codes and names'),
+                array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
         );
         getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -48,6 +48,18 @@
 			'uk',
 			'vi',
 		);
+
+    if ($aCMDResult['countries']) {
+        echo "select getorcreate_country(make_standard_name('uk'), 'gb');\n";
+        echo "select getorcreate_country(make_standard_name('united states'), 'us');\n";
+        echo "select count(*) from (select getorcreate_country(make_standard_name(country_code), country_code) from country_name where country_code is not null) as x;\n";
+
+        echo "select count(*) from (select getorcreate_country(make_standard_name(get_name_by_language(country_name.name,ARRAY['name'])), country_code) from country_name where get_name_by_language(country_name.name, ARRAY['name']) is not null) as x;\n";
+        foreach($aLanguageIn as $sLanguage)
+		{
+            echo "select count(*) from (select getorcreate_country(make_standard_name(get_name_by_language(country_name.name,ARRAY['name:".$sLanguage."'])), country_code) from country_name where get_name_by_language(country_name.name, ARRAY['name:".$sLanguage."']) is not null) as x;\n";
+        }
+    }
 
 	if ($aCMDResult['wiki-import'])
 	{
@@ -91,13 +103,12 @@
 			}
 		}
 
-        echo "create index idx_placex_classtype on placex (class, type);\n";
+        echo "create index idx_placex_classtype on placex (class, type);";
 
 		foreach($aPairs as $aPair)
 		{
 			if ($aPair[1] == 'highway') continue;
 
-			echo "drop table if exists place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1]).";\n";
 			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
 			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
 			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
@@ -108,9 +119,9 @@
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_place_id ";
 			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id);\n";
 
-            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";\n";
+            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";";
 
 		}
 
-        echo "drop index idx_placex_classtype;\n";
+        echo "drop index idx_placex_classtype;";
 	}

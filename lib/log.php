@@ -26,10 +26,11 @@
 			$oDB->query($sSQL);
 		}
 
+		if (CONST_Log_File && CONST_Log_File_ReverseLog != '') {
                 if ($sType == 'reverse')
                 {
                         $aStartTime = explode('.',$hLog[0]);
-                        file_put_contents('/data/mapquest/opentile_http/logs/nominatimreverse',
+                        file_put_contents(CONST_Log_File_ReverseLog,
                                 $aStartTime[0].','.$aStartTime[1].','.
                                 php_uname('n').','.
                                 '"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
@@ -41,7 +42,7 @@
                                 '"'.addslashes($_GET['format']).'"'."\n",
                         FILE_APPEND);
                 }
-
+		}
 
 		return $hLog;
 	}
@@ -67,8 +68,9 @@
 			$oDB->query($sSQL);
 		}
 
+		if (CONST_Log_File && CONST_Log_File_SearchLog != '') {
                 $aStartTime = explode('.',$hLog[0]);
-                file_put_contents('/data/mapquest/opentile_http/logs/nominatimsearch',
+                file_put_contents(CONST_Log_File_SearchLog,
                                 $aStartTime[0].','.$aStartTime[1].','.
                                 php_uname('n').','.
                                 '"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
@@ -78,5 +80,6 @@
                                 '"'.addslashes($_GET['format']).'",'.
                                 $iNumResults."\n",
                         FILE_APPEND);
+		}
 
 	}

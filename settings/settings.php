@@ -34,3 +34,5 @@
 	@define('CONST_Log_DB', true);
 	@define('CONST_Log_File', false);
 	@define('CONST_Log_File_Format', 'TODO'); // Currently hard coded
+	@define('CONST_Log_File_SearchLog', '');
+	@define('CONST_Log_File_ReverseLog', '');

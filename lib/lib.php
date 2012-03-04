@@ -3,7 +3,7 @@
 	function fail($sError, $sUserError = false)
 	{
 		if (!$sUserError) $sUserError = $sError;
-		log('ERROR:'.$sError);
+		error_log('ERROR: '.$sError);
 		echo $sUserError."\n";
 		exit;
 	}

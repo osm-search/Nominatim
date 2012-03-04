@@ -181,21 +181,36 @@
 		// Do we have anything that looks like a lat/lon pair?
 		if (preg_match('/\\b([NS])[ ]+([0-9]+[0-9.]*)[ ]+([0-9.]+)?[, ]+([EW])[ ]+([0-9]+)[ ]+([0-9]+[0-9.]*)?\\b/', $sQuery, $aData))
 		{
-			$_GET['nearlat'] = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60);
-			$_GET['nearlon'] = ($aData[4]=='E'?1:-1) * ($aData[5] + $aData[6]/60);
-			$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			$fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60);
+			$fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[5] + $aData[6]/60);
+			if ($fQueryLat <= 90.1 && $fQueryLat >= -90.1 && $fQueryLon <= 180.1 && $fQueryLon >= -180.1)
+			{
+				$_GET['nearlat'] = $fQueryLat;
+				$_GET['nearlon'] = $fQueryLon;
+				$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			}
 		}
 		elseif (preg_match('/\\b([0-9]+)[ ]+([0-9]+[0-9.]*)?[ ]+([NS])[, ]+([0-9]+)[ ]+([0-9]+[0-9.]*)?[ ]+([EW])\\b/', $sQuery, $aData))
 		{
-			$_GET['nearlat'] = ($aData[3]=='N'?1:-1) * ($aData[1] + $aData[2]/60);
-			$_GET['nearlon'] = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
-			$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			$fQueryLat = ($aData[3]=='N'?1:-1) * ($aData[1] + $aData[2]/60);
+			$fQueryLon = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
+			if ($fQueryLat <= 90.1 && $fQueryLat >= -90.1 && $fQueryLon <= 180.1 && $fQueryLon >= -180.1)
+			{
+				$_GET['nearlat'] = $fQueryLat;
+				$_GET['nearlon'] = $fQueryLon;
+				$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			}
 		}
 		elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9.]*)[, ]+(-?[0-9]+[0-9.]*)(\\]|$|\\b)/', $sQuery, $aData))
 		{
-			$_GET['nearlat'] = $aData[2];
-			$_GET['nearlon'] = $aData[3];
-			$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			$fQueryLat = $aData[2];
+			$fQueryLon = $aData[3];
+			if ($fQueryLat <= 90.1 && $fQueryLat >= -90.1 && $fQueryLon <= 180.1 && $fQueryLon >= -180.1)
+			{
+				$_GET['nearlat'] = $fQueryLat;
+				$_GET['nearlon'] = $fQueryLon;
+				$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
+			}
 		}
 
 		if ($sQuery)

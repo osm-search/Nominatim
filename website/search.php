@@ -379,7 +379,7 @@
 				// Unknown single word token with a number - assume it is a house number
 				if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken))
 				{
-					$aValidTokens[' '.$sToken] = array('class'=>'place','type'=>'house');
+					$aValidTokens[' '.$sToken] = array(array('class'=>'place','type'=>'house'));
 				}
 			}
 

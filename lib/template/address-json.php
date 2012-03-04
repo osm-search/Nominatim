@@ -24,7 +24,7 @@
                 if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
                 if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
-		$aFilteredPlaces['address'] = $aAddress;
+		if ($bShowAddressDetails) $aFilteredPlaces['address'] = $aAddress;
 	}
 
 	if (isset($_GET['json_callback']) && preg_match('/^[-A-Za-z0-9:_.]+$/',$_GET['json_callback']))

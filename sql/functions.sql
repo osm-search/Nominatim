@@ -793,7 +793,7 @@ BEGIN
           linestr := linestr||','||ST_X(nextnode.geometry)||' '||ST_Y(nextnode.geometry);
           endnumber := ('0'||substring(nextnode.housenumber,'[0-9]+'))::integer;
 
-          IF startnumber IS NOT NULL and startnumber > 0 AND endnumber IS NOT NULL and endnumber > 0 THEN
+          IF startnumber IS NOT NULL and startnumber > 0 AND endnumber IS NOT NULL and endnumber > 0 AND @(startnumber - endnumber) < 1000 THEN
 
 --RAISE WARNING 'interpolation end % % ',nextnode.place_id,endnumber;
 

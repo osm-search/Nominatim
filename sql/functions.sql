@@ -1232,11 +1232,13 @@ BEGIN
       RETURN NEW;
     END IF;
 
-    result := deleteSearchName(NEW.partition, NEW.place_id);
-    DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-    DELETE FROM place_boundingbox where place_id = NEW.place_id;
-    result := deleteRoad(NEW.partition, NEW.place_id);
-    result := deleteLocationArea(NEW.partition, NEW.place_id);
+    IF OLD.indexed_status > 1 THEN
+      result := deleteSearchName(NEW.partition, NEW.place_id);
+      DELETE FROM place_addressline WHERE place_id = NEW.place_id;
+      DELETE FROM place_boundingbox where place_id = NEW.place_id;
+      result := deleteRoad(NEW.partition, NEW.place_id);
+      result := deleteLocationArea(NEW.partition, NEW.place_id);
+    END IF;
 
     -- reclaculate country and partition (should probably have a country_code and calculated_country_code as seperate fields)
     SELECT country_code from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO NEW.country_code;

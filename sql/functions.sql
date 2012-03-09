@@ -1217,9 +1217,9 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- defered delete
+  -- deferred delete
   IF OLD.indexed_status = 100 THEN
-    delete from placex where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
+    delete from placex where place_id = OLD.place_id;
     RETURN NULL;
   END IF;
 

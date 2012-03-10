@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Plugin to monitor the types of requsts made to the API
+#
+# Parameters: 
+#
+#       config   (required)
+#       autoconf (optional - used by munin-config)
+#
+ 
+if [ "$1" = "config" ]; then
+ 
+        echo 'graph_title Requests by API call' 
+        echo 'graph_args --base 1000 -l 0'
+        echo 'graph_vlabel requests per minute'
+        echo 'graph_category nominatim'
+        echo 'z1.label reverse'
+        echo 'z1.draw AREA'
+        echo 'z1.type GAUGE'
+        echo 'z2.label search (successful)'
+        echo 'z2.draw STACK'
+        echo 'z2.type GAUGE'
+        echo 'z3.label search (no result)'
+        echo 'z3.draw STACK'
+        echo 'z3.type GAUGE'
+        echo 'z4.label details'
+        echo 'z4.draw STACK'
+        echo 'z4.type GAUGE'
+        exit 0
+fi
+ 
+
+query="select count(*)/5.0 from new_query_log where starttime > (now() - interval '5 min') and "
+
+reverse=`psql -d nominatim -c "copy ($query type='reverse') to stdout"`
+searchy=`psql -d nominatim -c "copy ($query type='search' and results>0) to stdout"`
+searchn=`psql -d nominatim -c "copy ($query type='search' and results=0) to stdout"`
+details=`psql -d nominatim -c "copy ($query type='details') to stdout"`
+ 
+echo "z1.value $reverse"
+echo "z2.value $searchy"
+echo "z3.value $searchn"
+echo "z4.value $details"

@@ -71,8 +71,8 @@
 
 	// Get the bounding box and outline polygon
 	$sSQL = "select ST_AsText(geometry) as outlinestring,";
-	$sSQL .= "ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)) as maxlat,";
-	$sSQL .= "ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)) as maxlon";
+	$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
+	$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
 	$sSQL .= " from placex where place_id = $iPlaceID";
 	$aPointPolygon = $oDB->getRow($sSQL);
 	IF (PEAR::IsError($aPointPolygon))

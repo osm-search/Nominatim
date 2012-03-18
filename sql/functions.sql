@@ -2393,13 +2393,6 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE AGGREGATE array_agg(INT[])
-(
-    sfunc = array_cat,
-    stype = INT[],
-    initcond = '{}'
-);
-
 CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_startnumber INTEGER, 
   in_endnumber INTEGER, interpolationtype TEXT, 
   in_street TEXT, in_isin TEXT, in_postcode TEXT) RETURNS INTEGER

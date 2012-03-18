@@ -1,5 +1,30 @@
 <?php
 
+	function failInternalError($sError, $sSQL = false, $vDumpVar = false) 
+	{
+		header('HTTP/1.0 500 Internal Server Error');
+		header('Content-type: text/html; charset=utf-8');
+		echo "<html><body><h1>Internal Server Error</h1>";
+		echo '<p>Nominatim has encountered an internal error while processing your request. This is most likely because of a bug in the software.</p>';
+		echo "<p><b>Details:</b> ".$sError,"</p>";
+		echo '<p>Feel free to report the bug in the <a href="http://trac.openstreetmap.org">OSM bug database</a>. Please include the error message above an the URL you used.</p>';
+		if (CONST_Debug)
+		{
+			echo "<hr><h2>Debugging Information</h2><br>";
+			if ($sSQL) {
+				echo "<h3>SQL query</h3><code>".$sSQL."</code>";
+			}
+			if ($vDumpVar) {
+				echo "<h3>Result</h3> <code>";
+				var_dump($vDumpVar);
+				echo "</code>";
+			}
+		}
+		echo "\n</body></html>\n";
+		exit;
+
+	}
+
 	function fail($sError, $sUserError = false)
 	{
 		if (!$sUserError) $sUserError = $sError;

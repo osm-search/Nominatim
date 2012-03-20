@@ -15,39 +15,6 @@
         );
         getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-	$aLanguageIn = array(
-			'af',
-			'ar',
-			'br',
-			'ca',
-			'cs',
-			'de',
-			'en',
-			'es',
-			'et',
-			'eu',
-			'fa',
-			'fi',
-			'fr',
-			'gl',
-			'hr',
-			'hu',
-			'ia',
-			'is',
-			'it',
-			'ja',
-			'mk',
-			'nl',
-			'no',
-			'pl',
-			'ps',
-			'pt',
-			'ru',
-			'sk',
-			'sv',
-			'uk',
-			'vi',
-		);
 
     if ($aCMDResult['countries']) {
         echo "select getorcreate_country(make_standard_name('uk'), 'gb');\n";
@@ -63,6 +30,7 @@
 
 	if ($aCMDResult['wiki-import'])
 	{
+		include(CONST_BasePath.'/settings/phrase_settings.php');
 		$aPairs = array();
 
 		foreach($aLanguageIn as $sLanguage)
@@ -84,7 +52,17 @@
 						preg_match('/^\\w+$/', $sType) < 1) {
 						trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
 						exit;
-					}	
+					}
+					# blacklisting: disallow certain class/type combinations
+					if (isset($aTagsBlacklist[$sClass]) && in_array($sType, $aTagsBlacklist[$sClass])) {
+						# fwrite(STDERR, "Blacklisted: ".$sClass."/".$sType."\n");
+						continue;
+					}
+					# whitelisting: if class is in whitelist, allow only tags in the list
+					if (isset($aTagsWhitelist[$sClass])	&& !in_array($sType, $aTagsWhitelist[$sClass])) {
+						# fwrite(STDERR, "Non-Whitelisted: ".$sClass."/".$sType."\n");
+						continue;
+					}
 					$aPairs[$sClass.'|'.$sType] = array($sClass, $sType);
 
 					switch(trim($aMatch[4]))

@@ -15,6 +15,8 @@
         );
         getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+		include(CONST_BasePath.'/settings/phrase_settings.php');
+
 
     if ($aCMDResult['countries']) {
         echo "select getorcreate_country(make_standard_name('uk'), 'gb');\n";
@@ -30,7 +32,6 @@
 
 	if ($aCMDResult['wiki-import'])
 	{
-		include(CONST_BasePath.'/settings/phrase_settings.php');
 		$aPairs = array();
 
 		foreach($aLanguageIn as $sLanguage)

@@ -247,6 +247,7 @@
 				$sToken = $oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string");
 				$sSQL = 'select * from (select word_id,word_token, word, class, type, location, country_code, operator';
 				$sSQL .= ' from word where word_token in (\' '.$sToken.'\')) as x where (class is not null and class not in (\'place\',\'highway\')) or country_code is not null';
+				if (CONST_Debug) var_Dump($sSQL);
 				$aSearchWords = $oDB->getAll($sSQL);
 				$aNewSearches = array();
 				foreach($aSearches as $aSearch)
@@ -374,7 +375,8 @@
 			// Try and calculate GB postcodes we might be missing
 			foreach($aTokens as $sToken)
 			{
-				if (!isset($aValidTokens[$sToken]) && !isset($aValidTokens[' '.$sToken]) && preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData))
+				// Source of gb postcodes is now definitive - always use
+				if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData))
 				{
 					if (substr($aData[1],-2,1) != ' ')
 					{
@@ -416,7 +418,6 @@
 				
 				Score how good the search is so they can be ordered
 			*/
-
 				foreach($aPhrases as $iPhrase => $sPhrase)
 				{
 					$aNewPhraseSearches = array();
@@ -503,7 +504,7 @@
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 										}
-										else
+										elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
 										{
 											if (sizeof($aSearch['aName']))
 											{
@@ -530,6 +531,8 @@
 									// Allow searching for a word - but at extra cost
 									foreach($aValidTokens[$sToken] as $aSearchTerm)
 									{
+										if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
+										{
 //var_Dump('<hr>',$aSearch['aName']);
 
 										if (sizeof($aCurrentSearch['aName'])  && strlen($sToken) >= 4)
@@ -548,6 +551,7 @@
 											$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 											$aSearch['iNamePhrase'] = $iPhrase;
   										if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+										}
 										}
 									}
 								}
@@ -745,6 +749,9 @@
 							// First we need a position, either aName or fLat or both
 							$aTerms = array();
 							$aOrder = array();
+
+							// TODO: filter out the pointless search terms (2 letter name tokens and less)
+							// they might be right - but they are just too darned expensive to run
 							if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
 							if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) $aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
 							if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
@@ -1132,6 +1139,11 @@
 //var_Dump($aSearchResults);
 //exit;
 	$aClassType = getClassTypesWithImportance();
+	$aRecheckWords = preg_split('/\b/',$sQuery);
+	foreach($aRecheckWords as $i => $sWord)
+	{
+		if (!$sWord) unset($aRecheckWords[$i]);
+	}
 	foreach($aSearchResults as $iResNum => $aResult)
 	{
 		if (CONST_Search_AreaPolygons || true)
@@ -1249,6 +1261,16 @@
 //exit;
 		}
 
+		// Adjust importance for the number of exact string matches in the result
+		$aResult['importance'] = max(0.001,$aResult['importance']);
+		$iCountWords = 0;
+		$sAddress = $aResult['langaddress'];
+		foreach($aRecheckWords as $i => $sWord)
+		{
+			if (stripos($sAddress, $sWord)!==false) $iCountWords++;
+		}
+		$aResult['importance'] = $aResult['importance'] + $iCountWords;
+
 //if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
 /*
 		if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance']) 
@@ -1270,7 +1292,6 @@
 		$aResult['foundorder'] = $iResNum;
 		$aSearchResults[$iResNum] = $aResult;
 	}
-	
 	uasort($aSearchResults, 'byImportance');
 
 //var_dump($aSearchResults);exit;

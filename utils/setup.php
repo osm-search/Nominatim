@@ -346,7 +346,7 @@
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 	}
 
-	if ($aCMDResult['osmosis-init'] && isset($aCMDResult['osmosis-init-date']))
+	if (($aCMDResult['osmosis-init'] || $aCMDResult['all']) && isset($aCMDResult['osmosis-init-date']))
 	{
 		$bDidSomething = true;
 

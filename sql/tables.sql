@@ -212,6 +212,7 @@ CREATE TABLE placex (
   geometry_sector INTEGER
   );
 SELECT AddGeometryColumn('placex', 'geometry', 4326, 'GEOMETRY', 2);
+SELECT AddGeometryColumn('placex', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id);
 CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id);
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector);

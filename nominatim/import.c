@@ -515,15 +515,18 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
                 // insert into place_address
                 paramValues[0] = (const char *)place_id;
                 paramValues[1] = (const char *)featureAddress[i].distance;
+                if (paramValues[1] == NULL || strlen(paramValues[1]) == 0) paramValues[1] = "0";
                 paramValues[2] = (const char *)featureAddress[i].type;
                 paramValues[3] = (const char *)featureAddress[i].id;
                 paramValues[4] = (const char *)featureAddress[i].key;
                 paramValues[5] = (const char *)featureAddress[i].value;
                 paramValues[6] = (const char *)featureAddress[i].isAddress;
+                if (verbose) fprintf(stderr, "placex_insert: %s %s\n", paramValues[2], paramValues[3]);
                 res = PQexecPrepared(conn, "place_addressline_insert", 7, paramValues, NULL, NULL, 0);
                 if (PQresultStatus(res) != PGRES_COMMAND_OK)
                 {
                     fprintf(stderr, "place_addressline_insert: INSERT failed: %s", PQerrorMessage(conn));
+                    fprintf(stderr, "(%s,%s,%s,%s,%s,%s,%s)",paramValues[0],paramValues[1],paramValues[2],paramValues[3],paramValues[4],paramValues[5],paramValues[6]);
                     PQclear(res);
                     exit(EXIT_FAILURE);
                 }

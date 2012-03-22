@@ -40,9 +40,9 @@
 
 	function byImportance($a, $b)
 	{
-/*
 		if ($a['importance'] != $b['importance'])
 			return ($a['importance'] > $b['importance']?-1:1);
+/*
 		if ($a['aPointPolygon']['numfeatures'] != $b['aPointPolygon']['numfeatures'])
 			return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
 		if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
@@ -173,60 +173,12 @@
 			exit;
 		}
 		
-
 		if (sizeof($aNearPostcodes))
 		{
 			return array(array('lat' => $aNearPostcodes[0]['lat'], 'lon' => $aNearPostcodes[0]['lon'], 'radius' => 0.005));
 		}
 
 		return false;
-
-		/* partial search disabled because it sequentially scans placex
-		
-		$sSQL = 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from placex where country_code::text = \'gb\'::text AND substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\' and class=\'place\' and type=\'postcode\' ';
-		$sSQL .= ' union ';
-		$sSQL .= 'select substring(upper(postcode) from \'^[A-Z][A-Z]?[0-9][0-9A-Z]? [0-9]([A-Z][A-Z])$\'),ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where substring(postcode from \'^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])[A-Z][A-Z]$\') = \''.$sPostcodeSector.'\'';
-		$aNearPostcodes = $oDB->getAll($sSQL);
-		if (PEAR::IsError($aNearPostcodes))
-		{
-			var_dump($sSQL, $aNearPostcodes);
-			exit;
-		}
-
-		if (!sizeof($aNearPostcodes))
-		{
-			return false;
-		}
-
-		$fTotalLat = 0;
-		$fTotalLon = 0;
-		$fTotalFac = 0;
-		foreach($aNearPostcodes as $aPostcode)
-		{
-			$iDiff = gbPostcodeAlphaDifference($sPostcodeEnd, $aPostcode['substring'])*2 + 1;
-			if ($iDiff == 0)
-				$fFac = 1;
-			else
-				$fFac = 1/($iDiff*$iDiff);
-			
-			$fTotalFac += $fFac;
-			$fTotalLat += $aPostcode['lat'] * $fFac;
-			$fTotalLon += $aPostcode['lon'] * $fFac;
-		}
-		if ($fTotalFac)
-		{
-			$fLat = $fTotalLat / $fTotalFac;
-			$fLon = $fTotalLon / $fTotalFac;
-			$fRadius = min(0.1 / $fTotalFac, 0.02);
-			return array(array('lat' => $fLat, 'lon' => $fLon, 'radius' => $fRadius));
-		}
-		return false;
-		*/
-		/*
-			$fTotalFac is a suprisingly good indicator of accuracy
-			$iZoom = 18 + round(log($fTotalFac,32));
-			$iZoom = max(13,min(18,$iZoom));
-		*/
 	}
 
 	function usPostcodeCalculate($sPostcode, &$oDB)

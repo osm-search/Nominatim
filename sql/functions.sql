@@ -940,7 +940,50 @@ BEGIN
     NEW.rank_address := NEW.rank_search;
 
     -- By doing in postgres we have the country available to us - currently only used for postcode
-    IF NEW.class = 'place' THEN
+    IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
+
+        NEW.name := 'ref'=>NEW.postcode;
+
+        IF NEW.country_code = 'gb' THEN
+
+          IF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
+            NEW.rank_search := 25;
+            NEW.rank_address := 5;
+          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
+            NEW.rank_search := 23;
+            NEW.rank_address := 5;
+          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
+            NEW.rank_search := 21;
+            NEW.rank_address := 5;
+          END IF;
+
+        ELSEIF NEW.country_code = 'de' THEN
+
+          IF NEW.postcode ~ '^([0-9]{5})$' THEN
+            NEW.rank_search := 21;
+            NEW.rank_address := 11;
+          END IF;
+
+        ELSE
+          -- Guess at the postcode format and coverage (!)
+          IF upper(NEW.postcode) ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
+            NEW.rank_search := 21;
+            NEW.rank_address := 11;
+          ELSE
+            -- Does it look splitable into and area and local code?
+            postcode := substring(upper(NEW.postcode) from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
+
+            IF postcode IS NOT NULL THEN
+              NEW.rank_search := 25;
+              NEW.rank_address := 11;
+            ELSEIF NEW.postcode ~ '^[- :A-Z0-9]{6,}$' THEN
+              NEW.rank_search := 21;
+              NEW.rank_address := 11;
+            END IF;
+          END IF;
+        END IF;
+
+    ELSEIF NEW.class = 'place' THEN
       IF NEW.type in ('continent') THEN
         NEW.rank_search := 2;
         NEW.rank_address := NEW.rank_search;
@@ -992,49 +1035,6 @@ BEGIN
       ELSEIF NEW.type in ('hall_of_residence','neighbourhood','housing_estate','nature_reserve') THEN
         NEW.rank_search := 22;
         NEW.rank_address := 22;
-      ELSEIF NEW.type in ('postcode') THEN
-
-        NEW.name := 'ref'=>NEW.postcode;
-
-        IF NEW.country_code = 'gb' THEN
-
-          IF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            NEW.rank_search := 25;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
-            NEW.rank_search := 23;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 5;
-          END IF;
-
-        ELSEIF NEW.country_code = 'de' THEN
-
-          IF NEW.postcode ~ '^([0-9]{5})$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          END IF;
-
-        ELSE
-          -- Guess at the postcode format and coverage (!)
-          IF upper(NEW.postcode) ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          ELSE
-            -- Does it look splitable into and area and local code?
-            postcode := substring(upper(NEW.postcode) from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
-
-            IF postcode IS NOT NULL THEN
-              NEW.rank_search := 25;
-              NEW.rank_address := 11;
-            ELSEIF NEW.postcode ~ '^[- :A-Z0-9]{6,}$' THEN
-              NEW.rank_search := 21;
-              NEW.rank_address := 11;
-            END IF;
-          END IF;
-        END IF;
-
       ELSEIF NEW.type in ('airport','street') THEN
         NEW.rank_search := 26;
         NEW.rank_address := NEW.rank_search;
@@ -1115,7 +1115,8 @@ BEGIN
     IF st_area(NEW.geometry) < 1 THEN
       -- mark items within the geometry for re-indexing
 --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
--- work around bug in postgis
+
+      -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
       update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
        AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point';
       update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
@@ -1203,6 +1204,7 @@ DECLARE
 
   tagpairid INTEGER;
 
+  default_language TEXT;
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
 
@@ -1255,6 +1257,19 @@ BEGIN
     -- Speed up searches - just use the centroid of the feature
     -- cheaper but less acurate
     place_centroid := ST_Centroid(NEW.geometry);
+
+    -- Thought this wasn't needed but when we add new languages to the country_name table
+    -- we need to update the existing names
+    IF NEW.name is not null AND array_upper(%#NEW.name,1) > 1 THEN
+      default_language := get_country_language_code(NEW.country_code);
+      IF default_language IS NOT NULL THEN
+        IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
+          NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
+        ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
+          NEW.name := NEW.name || ('name' => (NEW.name -> 'name:'||default_language));
+        END IF;
+      END IF;
+    END IF;
 
     -- Initialise the name vector using our name
     name_vector := make_keywords(NEW.name);

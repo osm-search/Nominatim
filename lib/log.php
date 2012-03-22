@@ -26,7 +26,8 @@
 			$oDB->query($sSQL);
 		}
 
-		if (CONST_Log_File && CONST_Log_File_ReverseLog != '') {
+		if (CONST_Log_File && CONST_Log_File_ReverseLog != '')
+		{
                 if ($sType == 'reverse')
                 {
                         $aStartTime = explode('.',$hLog[0]);
@@ -68,7 +69,8 @@
 			$oDB->query($sSQL);
 		}
 
-		if (CONST_Log_File && CONST_Log_File_SearchLog != '') {
+		if (CONST_Log_File && CONST_Log_File_SearchLog != '')
+		{
                 $aStartTime = explode('.',$hLog[0]);
                 file_put_contents(CONST_Log_File_SearchLog,
                                 $aStartTime[0].','.$aStartTime[1].','.

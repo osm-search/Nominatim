@@ -105,8 +105,7 @@
 			$iPlaceID = $aPlace['place_id'];
 			if (PEAR::IsError($iPlaceID))
 			{
-				var_Dump($sSQL, $iPlaceID); 
-				exit;
+				failInternalError("Could not determine closest place.", $sSQL, $iPlaceID); 
 			}
 		}
 
@@ -118,8 +117,7 @@
 			$iPlaceID = $oDB->getOne($sSQL);
 			if (PEAR::IsError($iPlaceID))
 			{
-				var_Dump($sSQL, $iPlaceID); 
-				exit;
+				failInternalError("Could not get parent for place.", $sSQL, $iPlaceID); 
 			}
 
 			if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
@@ -129,8 +127,7 @@
 				$iPlaceID = $oDB->getOne($sSQL);
 				if (PEAR::IsError($iPlaceID))
 				{
-					var_Dump($sSQL, $iPlaceID); 
-					exit;
+					failInternalError("Could not get larger parent for place.", $sSQL, $iPlaceID); 
 				}
 			}
 			if (!$iPlaceID)

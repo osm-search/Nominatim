@@ -1118,9 +1118,9 @@ BEGIN
 
       -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
       update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point';
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
       update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point';
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
     END IF;
   ELSE
     -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
@@ -1145,7 +1145,7 @@ BEGIN
     END IF;
     IF diameter > 0 THEN
 --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
-      update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+      update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
     END IF;
 
   END IF;
@@ -1807,12 +1807,12 @@ BEGIN
       update placex set indexed_status = 2 where indexed_status = 0 and 
           (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
           AND NOT (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
-          AND rank_search > existingplacex.rank_search;
+          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
       update placex set indexed_status = 2 where indexed_status = 0 and 
           (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
           AND NOT (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
-          AND rank_search > existingplacex.rank_search;
+          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
     END IF;
 
@@ -1832,7 +1832,8 @@ BEGIN
 
       IF st_area(NEW.geometry) < 0.5 THEN
         UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
-          and placex.place_id = place_addressline.place_id and indexed_status = 0;
+          and placex.place_id = place_addressline.place_id and indexed_status = 0
+          and (rank_search < 28 or name is not null);
       END IF;
 
     END IF;
@@ -2407,13 +2408,6 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
-
-CREATE AGGREGATE array_agg(INT[])
-(
-    sfunc = array_cat,
-    stype = INT[],
-    initcond = '{}'
-);
 
 CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_startnumber INTEGER, 
   in_endnumber INTEGER, interpolationtype TEXT, 

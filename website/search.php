@@ -163,8 +163,7 @@
 			$sViewboxSmallSQL = $oDB->getOne($sSQL);
 			if (PEAR::isError($sViewboxSmallSQL))
 			{
-				var_dump($sViewboxSmallSQL);
-				exit;
+				failInternalError("Could not get small viewbox.", $sSQL, $sViewboxSmallSQL);
 			}
 			$sViewboxSmallSQL = "'".$sViewboxSmallSQL."'::geometry";
 
@@ -172,8 +171,7 @@
 			$sViewboxLargeSQL = $oDB->getOne($sSQL);
 			if (PEAR::isError($sViewboxLargeSQL))
 			{
-				var_dump($sViewboxLargeSQL);
-				exit;
+				failInternalError("Could not get large viewbox.", $sSQL, $sViewboxLargeSQL);
 			}
 			$sViewboxLargeSQL = "'".$sViewboxLargeSQL."'::geometry";
 		}
@@ -325,8 +323,7 @@
 				$aDatabaseWords = array();
 			if (PEAR::IsError($aDatabaseWords))
 			{
-				var_dump($sSQL, $aDatabaseWords);
-				exit;
+				failInternalError("Could not get word tokens.", $sSQL, $aDatabaseWords);
 			}
 			$aPossibleMainWordIDs = array();
 			foreach($aDatabaseWords as $aToken)
@@ -796,8 +793,7 @@
 								$aViewBoxPlaceIDs = $oDB->getAll($sSQL);
 								if (PEAR::IsError($aViewBoxPlaceIDs))
 								{
-									var_dump($sSQL, $aViewBoxPlaceIDs);					
-									exit;
+									failInternalError("Could not get places for search terms.", $sSQL, $aViewBoxPlaceIDs);
 								}
 //var_dump($aViewBoxPlaceIDs);
 								// Did we have an viewbox matches?
@@ -978,8 +974,7 @@
 
 						if (PEAR::IsError($aPlaceIDs))
 						{
-							var_dump($sSQL, $aPlaceIDs);					
-							exit;
+							failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
 						}
 
 						if (CONST_Debug) var_Dump($aPlaceIDs);
@@ -1055,8 +1050,7 @@
 
 					if (PEAR::IsError($aSearchResults))
 					{
-						var_dump($sSQL, $aSearchResults);					
-						exit;
+						failInternalError("Could not get details for place.", $sSQL, $aSearchResults);
 					}
 				}
 			} // end if ($sQuery)
@@ -1124,8 +1118,7 @@
 
 					if (PEAR::IsError($aSearchResults))
 					{
-						var_dump($sSQL, $aSearchResults);					
-						exit;
+                        failInternalError("Could not get details for place (near).", $sSQL, $aSearchResults);
 					}
 				}
 			}
@@ -1161,8 +1154,7 @@
 			$aPointPolygon = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPointPolygon))
 			{
-				var_dump($sSQL, $aPointPolygon);
-				exit;
+				failInternalError("Could not get outline.", $sSQL, $aPointPolygon);
 			}
 			if ($aPointPolygon['place_id'])
 			{

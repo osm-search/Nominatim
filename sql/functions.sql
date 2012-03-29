@@ -2423,8 +2423,8 @@ DECLARE
   numberrange INTEGER;
   rangestartnumber INTEGER;
   place_centroid GEOMETRY;
-  partition INTEGER;
-  parent_place_id BIGINT;
+  out_partition INTEGER;
+  out_parent_place_id BIGINT;
   location RECORD;
   address_street_word_id INTEGER;  
 
@@ -2461,32 +2461,32 @@ BEGIN
   END IF;
 
   place_centroid := ST_Centroid(linegeo);
-  partition := get_partition(place_centroid, 'us');
-  parent_place_id := null;
+  out_partition := get_partition(place_centroid, 'us');
+  out_parent_place_id := null;
 
   address_street_word_id := get_name_id(make_standard_name(in_street));
   IF address_street_word_id IS NOT NULL THEN
-    FOR location IN SELECT * from getNearestNamedRoadFeature(partition, place_centroid, address_street_word_id) LOOP
-      parent_place_id := location.place_id;
+    FOR location IN SELECT * from getNearestNamedRoadFeature(out_partition, place_centroid, address_street_word_id) LOOP
+      out_parent_place_id := location.place_id;
     END LOOP;
   END IF;
 
-  IF parent_place_id IS NULL THEN
-    FOR location IN SELECT place_id FROM getNearestParellelRoadFeature(partition, linegeo) LOOP
-      parent_place_id := location.place_id;
+  IF out_parent_place_id IS NULL THEN
+    FOR location IN SELECT place_id FROM getNearestParellelRoadFeature(out_partition, linegeo) LOOP
+      out_parent_place_id := location.place_id;
     END LOOP;    
   END IF;
 
-  IF parent_place_id IS NULL THEN
-    FOR location IN SELECT place_id FROM getNearestRoadFeature(partition, place_centroid) LOOP
-      parent_place_id := location.place_id;
+  IF out_parent_place_id IS NULL THEN
+    FOR location IN SELECT place_id FROM getNearestRoadFeature(out_partition, place_centroid) LOOP
+      out_parent_place_id := location.place_id;
     END LOOP;    
   END IF;
 
   newpoints := 0;
   FOR housenum IN startnumber..endnumber BY stepsize LOOP
     insert into location_property_tiger (place_id, partition, parent_place_id, housenumber, postcode, centroid)
-    values (nextval('seq_place'), partition, parent_place_id, housenum, in_postcode,
+    values (nextval('seq_place'), out_partition, out_parent_place_id, housenum, in_postcode,
       ST_Line_Interpolate_Point(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
     newpoints := newpoints + 1;
   END LOOP;
@@ -2503,7 +2503,7 @@ DECLARE
 
   newpoints INTEGER;
   place_centroid GEOMETRY;
-  partition INTEGER;
+  out_partition INTEGER;
   out_parent_place_id BIGINT;
   location RECORD;
   address_street_word_id INTEGER;  
@@ -2512,18 +2512,18 @@ DECLARE
 BEGIN
 
   place_centroid := ST_Centroid(pointgeo);
-  partition := get_partition(place_centroid, in_countrycode);
+  out_partition := get_partition(place_centroid, in_countrycode);
   out_parent_place_id := null;
 
   address_street_word_id := get_name_id(make_standard_name(in_street));
   IF address_street_word_id IS NOT NULL THEN
-    FOR location IN SELECT * from getNearestNamedRoadFeature(partition, place_centroid, address_street_word_id) LOOP
+    FOR location IN SELECT * from getNearestNamedRoadFeature(out_partition, place_centroid, address_street_word_id) LOOP
       out_parent_place_id := location.place_id;
     END LOOP;
   END IF;
 
   IF out_parent_place_id IS NULL THEN
-    FOR location IN SELECT place_id FROM getNearestRoadFeature(partition, place_centroid) LOOP
+    FOR location IN SELECT place_id FROM getNearestRoadFeature(out_partition, place_centroid) LOOP
       out_parent_place_id := location.place_id;
     END LOOP;    
   END IF;
@@ -2533,12 +2533,12 @@ BEGIN
     SELECT postcode from placex where place_id = out_parent_place_id INTO out_postcode;
   END IF;
   IF out_postcode IS NULL THEN
-    out_postcode := getNearestPostcode(partition, place_centroid);
+    out_postcode := getNearestPostcode(out_partition, place_centroid);
   END IF;
 
   newpoints := 0;
   insert into location_property_aux (place_id, partition, parent_place_id, housenumber, postcode, centroid)
-    values (nextval('seq_place'), partition, out_parent_place_id, in_housenumber, out_postcode, place_centroid);
+    values (nextval('seq_place'), out_partition, out_parent_place_id, in_housenumber, out_postcode, place_centroid);
   newpoints := newpoints + 1;
 
   RETURN newpoints;

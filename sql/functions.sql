@@ -914,7 +914,7 @@ BEGIN
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 
   -- copy 'name' to or from the default language (if there is a default language)
-  IF NEW.name is not null AND array_upper(%#NEW.name,1) > 1 THEN
+  IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
     default_language := get_country_language_code(NEW.country_code);
     IF default_language IS NOT NULL THEN
       IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
@@ -1260,7 +1260,7 @@ BEGIN
 
     -- Thought this wasn't needed but when we add new languages to the country_name table
     -- we need to update the existing names
-    IF NEW.name is not null AND array_upper(%#NEW.name,1) > 1 THEN
+    IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
       default_language := get_country_language_code(NEW.country_code);
       IF default_language IS NOT NULL THEN
         IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN

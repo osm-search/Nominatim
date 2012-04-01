@@ -1012,6 +1012,7 @@
 					$sSQL .= "coalesce(importance,0.9-(rank_search::float/30)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					$sSQL .= "and linked_place_id is null ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";

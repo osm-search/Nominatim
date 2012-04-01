@@ -109,12 +109,19 @@
 	// Address
 	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], true);
 
+	// Linked places
+	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, st_distance(geometry, placegeometry) as distance, ";
+	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
+	$sSQL .= " from placex, (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
+	$sSQL .= " where linked_place_id = $iPlaceID";
+	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
+	$aLinkedLines = $oDB->getAll($sSQL);
+
 	// All places this is an imediate parent of
 	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, st_distance(geometry, placegeometry) as distance, ";
 	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
 	$sSQL .= " from placex, (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
 	$sSQL .= " where parent_place_id = $iPlaceID";
-//	$sSQL .= " and type != 'postcode'";
 	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
 	$aParentOfLines = $oDB->getAll($sSQL);
 

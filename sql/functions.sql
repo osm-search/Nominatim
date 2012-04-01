@@ -1481,7 +1481,6 @@ BEGIN
 
         -- mark the linked place (excludes from search results)
         UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-        DELETE from search_name where place_id = linkedPlacex.place_id;
 
       END LOOP;
 
@@ -1505,7 +1504,6 @@ BEGIN
 
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-          DELETE from search_name where place_id = linkedPlacex.place_id;
         END IF;
 
       END LOOP;
@@ -1534,12 +1532,12 @@ BEGIN
 
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-          DELETE from search_name where place_id = linkedPlacex.place_id;
+
         END LOOP;
       END IF;
 
       IF NEW.centroid IS NOT NULL THEN
-        place_centroid := NEW.centroid
+        place_centroid := NEW.centroid;
       END IF;
 
     END IF;

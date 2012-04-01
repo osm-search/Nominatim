@@ -1139,7 +1139,7 @@
 	}
 	foreach($aSearchResults as $iResNum => $aResult)
 	{
-		if (CONST_Search_AreaPolygons || true)
+		if (CONST_Search_AreaPolygons)
 		{
 			// Get the bounding box and outline polygon
 			$sSQL = "select place_id,numfeatures,area,outline,";
@@ -1148,6 +1148,7 @@
 			$sSQL .= "ST_AsText(outline) as outlinestring from get_place_boundingbox_quick(".$aResult['place_id'].")";
 
 			$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
+			$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
 			$sSQL .= "ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)) as maxlat,";
 			$sSQL .= "ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)) as maxlon,";
 			$sSQL .= "ST_AsText(geometry) as outlinestring from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(ST_Box2D(geometry)) = \'ST_Polygon\'';
@@ -1158,6 +1159,10 @@
 			}
 			if ($aPointPolygon['place_id'])
 			{
+				if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null ) {
+					$aResult['lat'] = $aPointPolygon['centrelat'];
+					$aResult['lon'] = $aPointPolygon['centrelon'];
+				}
 				// Translate geometary string to point array
 				if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
 				{

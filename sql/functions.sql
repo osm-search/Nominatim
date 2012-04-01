@@ -1189,6 +1189,9 @@ DECLARE
   location RECORD;
   way RECORD;
   relation RECORD;
+  relation_members TEXT[];
+  relMember RECORD;
+  linkedplacex RECORD;
   search_diameter FLOAT;
   search_prevdiameter FLOAT;
   search_maxrank INTEGER;
@@ -1240,6 +1243,7 @@ BEGIN
       DELETE FROM place_boundingbox where place_id = NEW.place_id;
       result := deleteRoad(NEW.partition, NEW.place_id);
       result := deleteLocationArea(NEW.partition, NEW.place_id);
+      UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 
     -- reclaculate country and partition (should probably have a country_code and calculated_country_code as seperate fields)
@@ -1257,6 +1261,7 @@ BEGIN
     -- Speed up searches - just use the centroid of the feature
     -- cheaper but less acurate
     place_centroid := ST_Centroid(NEW.geometry);
+    NEW.centroid := null;
 
     -- Thought this wasn't needed but when we add new languages to the country_name table
     -- we need to update the existing names
@@ -1452,6 +1457,93 @@ BEGIN
 
 -- RAISE WARNING '  INDEXING: %',NEW;
 
+    IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
+
+      -- see if we have any special relation members
+      select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
+
+      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
+
+        select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
+          and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+
+        -- If we don't already have one use this as the centre point of the geometry
+        IF NEW.centroid IS NULL THEN
+          NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+        END IF;
+
+        -- merge in the label name, re-init word vector
+        NEW.name := linkedPlacex.name || NEW.name;
+        name_vector := make_keywords(NEW.name);
+
+        -- merge in extra tags
+        NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+
+        -- mark the linked place (excludes from search results)
+        UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+        DELETE from search_name where place_id = linkedPlacex.place_id;
+
+      END LOOP;
+
+      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
+
+        select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
+          and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+
+        IF NEW.name->'name' = linkedPlacex.name->'name' THEN
+          -- If we don't already have one use this as the centre point of the geometry
+          IF NEW.centroid IS NULL THEN
+            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+          END IF;
+
+          -- merge in the name, re-init word vector
+          NEW.name := linkedPlacex.name || NEW.name;
+          name_vector := make_keywords(NEW.name);
+
+          -- merge in extra tags
+          NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+
+          -- mark the linked place (excludes from search results)
+          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+          DELETE from search_name where place_id = linkedPlacex.place_id;
+        END IF;
+
+      END LOOP;
+
+      -- not found one yet? how about doing a name search
+      IF NEW.centroid IS NULL THEN
+        FOR linkedPlacex IN select placex.* from search_name join placex using (place_id) WHERE
+          search_name.name_vector @> ARRAY[getorcreate_name_id(make_standard_name(NEW.name->'name'))] 
+          AND search_name.search_rank = NEW.rank_search
+          AND search_name.place_id != NEW.place_id
+          AND osm_type = 'N'
+          AND NEW.name->'name' = placex.name->'name'
+          AND st_contains(NEW.geometry, placex.geometry)
+        LOOP
+          -- If we don't already have one use this as the centre point of the geometry
+          IF NEW.centroid IS NULL THEN
+            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+          END IF;
+
+          -- merge in the name, re-init word vector
+          NEW.name := linkedPlacex.name || NEW.name;
+          name_vector := make_keywords(NEW.name);
+
+          -- merge in extra tags
+          NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+
+          -- mark the linked place (excludes from search results)
+          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+          DELETE from search_name where place_id = linkedPlacex.place_id;
+        END LOOP;
+      END IF;
+
+      IF NEW.centroid IS NOT NULL THEN
+        place_centroid := NEW.centroid
+      END IF;
+
+    END IF;
+
     NEW.parent_place_id = 0;
     parent_place_id_rank = 0;
 
@@ -1576,6 +1668,11 @@ BEGIN
 --      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.country_code, name_vector, nameaddress_vector, place_centroid);
     END IF;
 
+    -- If we've not managed to pick up a better one - default centroid
+    IF NEW.centroid IS NULL THEN
+      NEW.centroid := place_centroid;
+    END IF;
+
   END IF;
 
   RETURN NEW;
@@ -1589,6 +1686,9 @@ DECLARE
   b BOOLEAN;
   classtable TEXT;
 BEGIN
+
+  update placex set linked_place_id = null where linked_place_id = OLD.place_id;
+  update placex set indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
 
   IF OLD.rank_address < 30 THEN
 
@@ -2545,3 +2645,40 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], member TEXT) RETURNS TEXT[]
+  AS $$
+DECLARE
+  result TEXT[];
+  i INTEGER;
+BEGIN
+
+  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
+    IF members[i+1] = member THEN
+      result := result || members[i];
+    END IF;
+  END LOOP;
+
+  return result;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], memberLabels TEXT[]) RETURNS SETOF TEXT
+  AS $$
+DECLARE
+  i INTEGER;
+BEGIN
+
+  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
+    IF members[i+1] = ANY(memberLabels) THEN
+      RETURN NEXT members[i];
+    END IF;
+  END LOOP;
+
+  RETURN;
+END;
+$$
+LANGUAGE plpgsql;
+
+

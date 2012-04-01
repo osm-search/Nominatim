@@ -208,7 +208,7 @@ form{
 			map.panTo(lonLat, <?php echo $iZoom ?>);
 		}
 
-		function panToLatLonZoom(lat,lon, zoom) {
+		function panToLatLonZoom(lat, lon, zoom) {
 			var lonLat = new OpenLayers.LonLat(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject());
 			if (zoom != map.getZoom())
 				map.setCenter(lonLat, zoom);
@@ -220,6 +220,8 @@ form{
 		        var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
 		        var proj_map = map.getProjectionObject();
                         map.zoomToExtent(new OpenLayers.Bounds(minlon,minlat,maxlon,maxlat).transform(proj_EPSG4326, proj_map));
+			var lonLat = new OpenLayers.LonLat(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject());
+			map.panTo(lonLat, <?php echo $iZoom ?>);
 
                         var pointList = [];
                         var style = {

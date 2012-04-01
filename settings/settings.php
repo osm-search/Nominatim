@@ -27,6 +27,7 @@
 	@define('CONST_Default_Zoom', 2);
 
 	@define('CONST_Search_AreaPolygons_Enabled', true);
+	@define('CONST_Search_AreaPolygons', true);
 
 	@define('CONST_Suggestions_Enabled', false);
 

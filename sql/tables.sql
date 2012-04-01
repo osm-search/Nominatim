@@ -138,6 +138,7 @@ SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
 drop table IF EXISTS search_name;
 CREATE TABLE search_name () INHERITS (search_name_blank);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
+CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector) WITH (fastupdate = off);
 
 drop table IF EXISTS place_addressline;
 CREATE TABLE place_addressline (

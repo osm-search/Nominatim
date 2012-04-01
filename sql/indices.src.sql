@@ -1,6 +1,5 @@
 CREATE INDEX idx_word_word_id on word USING BTREE (word_id);
 
-CREATE INDEX search_name_name_vector_idx ON search_name USING GIN (name_vector) WITH (fastupdate = off);
 CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off);
 CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 

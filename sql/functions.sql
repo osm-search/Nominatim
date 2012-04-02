@@ -1484,29 +1484,33 @@ BEGIN
 
       END LOOP;
 
-      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
+      IF NEW.centroid IS NULL THEN
 
-        select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
-          and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
 
-        IF NEW.name->'name' = linkedPlacex.name->'name' THEN
-          -- If we don't already have one use this as the centre point of the geometry
-          IF NEW.centroid IS NULL THEN
-            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+          select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
+            and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+
+          IF NEW.name->'name' = linkedPlacex.name->'name' AND NEW.rank_search = linkedPlacex.rank_search THEN
+            -- If we don't already have one use this as the centre point of the geometry
+            IF NEW.centroid IS NULL THEN
+              NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+            END IF;
+
+            -- merge in the name, re-init word vector
+            NEW.name := linkedPlacex.name || NEW.name;
+            name_vector := make_keywords(NEW.name);
+
+            -- merge in extra tags
+            NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+
+            -- mark the linked place (excludes from search results)
+            UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
           END IF;
 
-          -- merge in the name, re-init word vector
-          NEW.name := linkedPlacex.name || NEW.name;
-          name_vector := make_keywords(NEW.name);
+        END LOOP;
 
-          -- merge in extra tags
-          NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-
-          -- mark the linked place (excludes from search results)
-          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-        END IF;
-
-      END LOOP;
+      END IF;
 
       -- not found one yet? how about doing a name search
       IF NEW.centroid IS NULL THEN

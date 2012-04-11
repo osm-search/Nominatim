@@ -18,6 +18,7 @@
 		array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
 		array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
 		array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
+		array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
 		array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
 		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
@@ -107,7 +108,17 @@
 
 		$osm2pgsql = CONST_Osm2pgsql_Binary;
 		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
-		passthru($osm2pgsql.' -lsc -O gazetteer -C 12000 --hstore -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file']);
+		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
+		if (isset($aCMDResult['osm2pgsql-cache']))
+		{
+			$osm2pgsql .= ' -C '.$aCMDResult['osm2pgsql-cache'];
+		}
+		else
+		{
+			$osm2pgsql .= ' -C 15000';
+		}
+		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
+		passthru($osm2pgsql);
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');

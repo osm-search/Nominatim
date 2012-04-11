@@ -71,7 +71,7 @@
 		{
 			fail('database already exists ('.CONST_Database_DSN.')');
 		}
-		passthru('createdb '.$aDSNInfo['database']);
+		passthru('createdb -E UTF-8 '.$aDSNInfo['database']);
 	}
 
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])

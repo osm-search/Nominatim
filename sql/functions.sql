@@ -1029,7 +1029,7 @@ BEGIN
       ELSEIF NEW.type in ('suburb','croft','subdivision') THEN
         NEW.rank_search := 20;
         NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('farm','locality','islet','isolated_dwelling') THEN
+      ELSEIF NEW.type in ('farm','locality','islet','isolated_dwelling','mountain_pass') THEN
         NEW.rank_search := 20;
         NEW.rank_address := 0;
       ELSEIF NEW.type in ('hall_of_residence','neighbourhood','housing_estate','nature_reserve') THEN

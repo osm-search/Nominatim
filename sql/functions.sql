@@ -920,7 +920,7 @@ BEGIN
       IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
         NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
       ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-        NEW.name := NEW.name || ('name' => (NEW.name -> 'name:'||default_language));
+        NEW.name := NEW.name || ('name' => (NEW.name -> ('name:'||default_language)));
       END IF;
     END IF;
   END IF;
@@ -1271,7 +1271,7 @@ BEGIN
         IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
           NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
         ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-          NEW.name := NEW.name || ('name' => (NEW.name -> 'name:'||default_language));
+          NEW.name := NEW.name || ('name' => (NEW.name -> ('name:'||default_language)));
         END IF;
       END IF;
     END IF;

@@ -942,6 +942,11 @@ BEGIN
     -- By doing in postgres we have the country available to us - currently only used for postcode
     IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
 
+        IF NEW.postcode IS NULL THEN
+            -- most likely just a part of a multipolygon postcode boundary, throw it away
+            RETURN NULL;
+        END IF;
+
         NEW.name := 'ref'=>NEW.postcode;
 
         IF NEW.country_code = 'gb' THEN

@@ -360,17 +360,27 @@
 	if (($aCMDResult['osmosis-init'] || $aCMDResult['all']) && isset($aCMDResult['osmosis-init-date']))
 	{
 		$bDidSomething = true;
+		$oDB =& getDB();
 
 		if (!file_exists(CONST_Osmosis_Binary)) fail("please download osmosis");
 		if (file_exists(CONST_BasePath.'/settings/configuration.txt')) echo "settings/configuration.txt already exists\n";
 		else passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
 
 		$sDate = $aCMDResult['osmosis-init-date'];
-		$sURL = 'http://toolserver.org/~mazder/replicate-sequences/?'.$sDate;
+		$aDate = date_parse_from_format("Y-m-d\TH-i", $sDate);
+		$sURL = 'http://toolserver.org/~mazder/replicate-sequences/?';
+		$sURL .= 'Y='.$aDate['year'].'&m='.$aDate['month'].'&d='.$aDate['day'];
+		$sURL .= '&H='.$aDate['hour'].'&i='.$aDate['minute'].'&s=0';
+		$sURL .= '&stream=minute';
 		echo "Getting state file: $sURL\n";
 		$sStateFile = file_get_contents($sURL);
 		if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
 		file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
+		echo "Updating DB status\n";
+		pg_query($oDB->connection, 'TRUNCATE import_status');
+		$sSQL = "INSERT INTO import_status VALUES('".$sDate."')";
+		pg_query($oDB->connection, $sSQL);
+
 	}
 
 	if ($aCMDResult['index'] || $aCMDResult['all'])

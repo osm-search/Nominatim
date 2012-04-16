@@ -191,18 +191,7 @@ drop table placex;
 CREATE TABLE placex (
   place_id BIGINT NOT NULL,
   partition integer,
-  osm_type char(1),
-  osm_id BIGINT,
-  class TEXT NOT NULL,
-  type TEXT NOT NULL,
-  name HSTORE,
-  admin_level INTEGER,
-  housenumber TEXT,
-  street TEXT,
-  isin TEXT,
-  postcode TEXT,
-  country_code varchar(2),
-  extratags HSTORE,
+  LIKE place INCLUDING CONSTRAINTS,
   parent_place_id BIGINT,
   linked_place_id BIGINT,
   rank_address INTEGER,
@@ -212,7 +201,6 @@ CREATE TABLE placex (
   indexed_date TIMESTAMP,
   geometry_sector INTEGER
   );
-SELECT AddGeometryColumn('placex', 'geometry', 4326, 'GEOMETRY', 2);
 SELECT AddGeometryColumn('placex', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id);
 CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id);

@@ -742,7 +742,7 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION create_interpolation(wayid INTEGER, interpolationtype TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT) RETURNS INTEGER
   AS $$
 DECLARE
   
@@ -1323,7 +1323,7 @@ BEGIN
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
         -- Is this node part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id::integer] and members @> ARRAY['n'||NEW.osm_id]
+        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['n'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1339,7 +1339,7 @@ BEGIN
 
 --RAISE WARNING 'x1';
         -- Is this node part of a way?
-        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id::integer] LOOP
+        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id] LOOP
 --RAISE WARNING '%', way;
         FOR location IN select * from placex where osm_type = 'W' and osm_id = way.id
         LOOP
@@ -1352,7 +1352,7 @@ BEGIN
 
           -- Is the WAY part of a relation
           IF NEW.parent_place_id IS NULL THEN
-              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id::integer] and members @> ARRAY['w'||location.osm_id]
+              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
               LOOP
                 -- At the moment we only process one type of relation - associatedStreet
                 IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1397,7 +1397,7 @@ BEGIN
 
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'W' THEN
         -- Is this way part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id::integer] and members @> ARRAY['w'||NEW.osm_id]
+        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['w'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN

@@ -192,7 +192,7 @@ CREATE TABLE placex (
   place_id BIGINT NOT NULL,
   partition integer,
   osm_type char(1),
-  osm_id INTEGER,
+  osm_id BIGINT,
   class TEXT NOT NULL,
   type TEXT NOT NULL,
   name HSTORE,

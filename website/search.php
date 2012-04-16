@@ -817,7 +817,7 @@
 								$sPlaceIDs = join(',',$aPlaceIDs);
 	
 								// Now they are indexed look for a house attached to a street we found
-								$sHouseNumberRegex = '\\\\m'.str_replace(' ','[-, ]',$aSearch['sHouseNumber']).'\\\\M';						
+								$sHouseNumberRegex = '\\\\m'.str_replace(' ','[-,/ ]',$aSearch['sHouseNumber']).'\\\\M';						
 								$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and housenumber ~* E'".$sHouseNumberRegex."'";
 								if (sizeof($aExcludePlaceIDs))
 								{

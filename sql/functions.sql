@@ -909,7 +909,12 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+  IF NEW.rank_search >= 4 THEN
+    NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+  ELSE
+    NEW.country_code := NULL;
+  END IF;
+
   NEW.partition := get_partition(NEW.geometry, NEW.country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 
@@ -1256,8 +1261,12 @@ BEGIN
     END IF;
 
     -- reclaculate country and partition (should probably have a country_code and calculated_country_code as seperate fields)
-    SELECT country_code from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO NEW.country_code;
-    NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+    IF NEW.rank_search >= 4 THEN
+      SELECT country_code from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO NEW.country_code;
+      NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+    ELSE
+      NEW.country_code := NULL;
+    END IF;
     NEW.partition := get_partition(NEW.geometry, NEW.country_code);
     NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 

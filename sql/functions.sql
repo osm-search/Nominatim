@@ -1037,6 +1037,10 @@ BEGIN
       ELSEIF NEW.type in ('farm','locality','islet','isolated_dwelling','mountain_pass') THEN
         NEW.rank_search := 20;
         NEW.rank_address := 0;
+        -- Irish townlands, tagged as place=locality and locality=townland
+        IF (NEW.extratags -> 'locality') = 'townland' THEN
+          NEW.rank_address := 20;
+        END IF;
       ELSEIF NEW.type in ('hall_of_residence','neighbourhood','housing_estate','nature_reserve') THEN
         NEW.rank_search := 22;
         NEW.rank_address := 22;

@@ -1532,14 +1532,14 @@ BEGIN
 
       -- not found one yet? how about doing a name search
       IF NEW.centroid IS NULL THEN
-        FOR linkedPlacex IN select placex.* from search_name join placex using (place_id) WHERE
-          search_name.name_vector @> ARRAY[getorcreate_name_id(make_standard_name(NEW.name->'name'))] 
-          AND search_name.search_rank = NEW.rank_search
-          AND search_name.place_id != NEW.place_id
+        FOR linkedPlacex IN select placex.* from placex WHERE
+          make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
+          AND placex.rank_search = NEW.rank_search
+          AND placex.place_id != NEW.place_id
           AND osm_type = 'N'
-          AND NEW.name->'name' = placex.name->'name'
           AND st_contains(NEW.geometry, placex.geometry)
         LOOP
+
           -- If we don't already have one use this as the centre point of the geometry
           IF NEW.centroid IS NULL THEN
             NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));

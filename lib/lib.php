@@ -334,7 +334,7 @@
 
  'place:airport' => array('label'=>'Airport','frequency'=>36,'icon'=>'transport_airport2', 'defdiameter' => 0.03,),
  'railway:station' => array('label'=>'Station','frequency'=>3431,'icon'=>'transport_train_station2', 'defdiameter' => 0.01,),
- 'amenity:place_of_worship' => array('label'=>'Place Of Worship','frequency'=>9049,'icon'=>'place_of_worship3',),
+ 'amenity:place_of_worship' => array('label'=>'Place Of Worship','frequency'=>9049,'icon'=>'place_of_worship_unknown3',),
  'amenity:pub' => array('label'=>'Pub','frequency'=>18969,'icon'=>'food_pub',),
  'amenity:bar' => array('label'=>'Bar','frequency'=>164,'icon'=>'food_bar',),
  'amenity:university' => array('label'=>'University','frequency'=>607,'icon'=>'education_university',),
@@ -364,7 +364,7 @@
  'tourism:motel' => array('label'=>'Motel','frequency'=>43,'icon'=>'',),
  'amenity:cinema' => array('label'=>'Cinema','frequency'=>277,'icon'=>'tourist_cinema',),
  'tourism:information' => array('label'=>'Information','frequency'=>224,'icon'=>'amenity_information',),
- 'tourism:artwork' => array('label'=>'Artwork','frequency'=>171,'icon'=>'art_gallery2',),
+ 'tourism:artwork' => array('label'=>'Artwork','frequency'=>171,'icon'=>'tourist_art_gallery2',),
  'historic:archaeological_site' => array('label'=>'Archaeological Site','frequency'=>407,'icon'=>'tourist_archaeological2',),
  'amenity:doctors' => array('label'=>'Doctors','frequency'=>581,'icon'=>'health_doctors',),
  'leisure:sports_centre' => array('label'=>'Sports Centre','frequency'=>767,'icon'=>'sport_leisure_centre',),

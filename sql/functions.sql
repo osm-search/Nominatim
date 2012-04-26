@@ -1007,8 +1007,8 @@ BEGIN
         NEW.rank_search := 8;
         NEW.rank_address := NEW.rank_search;
       ELSEIF NEW.type in ('region') THEN
-        NEW.rank_search := 10;
-        NEW.rank_address := NEW.rank_search;
+        NEW.rank_search := 18; -- dropped from previous value of 10
+        NEW.rank_address := 0; -- So badly miss-used that better to just drop it!
       ELSEIF NEW.type in ('county') THEN
         NEW.rank_search := 12;
         NEW.rank_address := NEW.rank_search;

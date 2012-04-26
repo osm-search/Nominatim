@@ -50,6 +50,15 @@
 		$iInstances = getProcessorCount();
 		echo "WARNING: resetting threads to $iInstances\n";
 	}
+
+	// Assume we can steal all the cache memory in the box (unless told otherwise)
+	$iCacheMemory = (isset($aCMDResult['osm2pgsql-cache'])?$aCMDResult['osm2pgsql-cache']:getCacheMemoryMB());
+	if ($iCacheMemory > getTotalMemoryMB())
+	{
+		$iCacheMemory = getCacheMemoryMB();
+		echo "WARNING: resetting cache memory to $iCacheMemory\n";
+	}
+
 	if (isset($aCMDResult['osm-file']) && !isset($aCMDResult['osmosis-init-date']))
 	{
 		$sBaseFile = basename($aCMDResult['osm-file']);
@@ -83,7 +92,7 @@
 
 		$oDB =& getDB();
 		passthru('createlang plpgsql '.$aDSNInfo['database']);
-        $pgver = (float) CONST_Postgresql_Version;
+		$pgver = (float) CONST_Postgresql_Version;
 		if ($pgver < 9.1) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
 		} else {
@@ -109,14 +118,7 @@
 		$osm2pgsql = CONST_Osm2pgsql_Binary;
 		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
-		if (isset($aCMDResult['osm2pgsql-cache']))
-		{
-			$osm2pgsql .= ' -C '.$aCMDResult['osm2pgsql-cache'];
-		}
-		else
-		{
-			$osm2pgsql .= ' -C 15000';
-		}
+		$osm2pgsql .= ' -C '.$iCacheMemory;
 		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
 		passthru($osm2pgsql);
 

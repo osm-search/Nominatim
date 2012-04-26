@@ -57,6 +57,20 @@
 		return sizeof($aMatches[0]);
 	}
 
+	function getTotalMemoryMB()
+	{
+		$sCPU = file_get_contents('/proc/meminfo');
+		preg_match('#MemTotal: +([0-9]+) kB#', $sCPU, $aMatches);
+		return (int)($aMatches[1]/1024);
+	}
+
+	function getCacheMemoryMB()
+	{
+		$sCPU = file_get_contents('/proc/meminfo');
+		preg_match('#Cached: +([0-9]+) kB#', $sCPU, $aMatches);
+		return (int)($aMatches[1]/1024);
+	}
+
 	function bySearchRank($a, $b)
 	{
 		if ($a['iSearchRank'] == $b['iSearchRank']) return 0;

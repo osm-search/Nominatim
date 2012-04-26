@@ -124,7 +124,10 @@
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
-		if (!$x || PEAR::isError($x)) fail('No Data');
+		if (PEAR::isError($x)) {
+			fail($x->getMessage());
+		}
+		if (!$x) fail('No Data');
 	}
 
 	if ($aCMDResult['create-functions'] || $aCMDResult['all'])

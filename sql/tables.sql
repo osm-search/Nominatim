@@ -219,6 +219,7 @@ CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id);
 CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id);
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector);
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry);
+CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name'),rank_search) WHERE osm_type='N' and rank_search < 26;
 
 --CREATE INDEX idx_placex_indexed ON placex USING BTREE (indexed);
 

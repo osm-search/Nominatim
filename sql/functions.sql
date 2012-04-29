@@ -1509,7 +1509,11 @@ BEGIN
           select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
             and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
 
-          IF NEW.name->'name' = linkedPlacex.name->'name' AND NEW.rank_search = linkedPlacex.rank_search THEN
+          -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
+          -- But that can be fixed by explicitly setting the label in the data
+          IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
+            AND NEW.rank_search = linkedPlacex.rank_search THEN
+
             -- If we don't already have one use this as the centre point of the geometry
             IF NEW.centroid IS NULL THEN
               NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
@@ -1531,7 +1535,8 @@ BEGIN
       END IF;
 
       -- not found one yet? how about doing a name search
-      IF NEW.centroid IS NULL THEN
+      IF NEW.centroid IS NULL AND NEW.name->'name' is not null and make_standard_name(NEW.name->'name') != '' THEN
+
         FOR linkedPlacex IN select placex.* from placex WHERE
           make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
           AND placex.rank_search = NEW.rank_search

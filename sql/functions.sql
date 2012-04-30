@@ -1225,6 +1225,10 @@ DECLARE
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
 
+  wiki_article TEXT;
+  wiki_article_title TEXT;
+  wiki_article_language TEXT;
+
   result BOOLEAN;
 BEGIN
 
@@ -1307,6 +1311,34 @@ BEGIN
     FOR i IN 1..28 LOOP
       address_havelevel[i] := false;
     END LOOP;
+
+    NEW.importance := null;
+    -- WARNING: see duplicate of code below (yuk!)
+    IF NEW.extratags?'wikipedia' THEN
+      wiki_article := replace(regexp_replace(NEW.extratags->'wikipedia',E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
+      wiki_article_title := split_part(wiki_article, ':', 2);
+      IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
+        wiki_article_title := wiki_article;
+        wiki_article_language := 'en';
+      ELSE
+        wiki_article_language := lower(split_part(wiki_article, ':', 1));
+      END IF;
+--RAISE WARNING '% %', wiki_article_language, wiki_article_title;
+
+      select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
+        from wikipedia_article 
+        where language = wiki_article_language and 
+        (title = wiki_article_title OR title = decode_url_part(wiki_article_title) OR title = replace(decode_url_part(wiki_article_title),E'\\',''))
+      UNION ALL
+      select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
+        from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
+        where wikipedia_redirect.language = wiki_article_language and 
+        (from_title = wiki_article_title OR from_title = decode_url_part(wiki_article_title) OR from_title = replace(decode_url_part(wiki_article_title),E'\\',''))
+      order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
+
+    ELSE
+      select importance,language||':'||title from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
+    END IF;
 
 --RAISE WARNING '% %', NEW.place_id, NEW.rank_search;
 
@@ -1535,7 +1567,7 @@ BEGIN
       END IF;
 
       -- not found one yet? how about doing a name search
-      IF NEW.centroid IS NULL AND NEW.name->'name' is not null and make_standard_name(NEW.name->'name') != '' THEN
+      IF NEW.centroid IS NULL AND (NEW.name->'name') is not null and make_standard_name(NEW.name->'name') != '' THEN
 
         FOR linkedPlacex IN select placex.* from placex WHERE
           make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
@@ -1565,6 +1597,31 @@ BEGIN
 
       IF NEW.centroid IS NOT NULL THEN
         place_centroid := NEW.centroid;
+      END IF;
+
+      -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
+      -- WARNING: duplicate of code above (yuk!)
+      IF NEW.importance is null AND NEW.extratags?'wikipedia' THEN
+        wiki_article := replace(regexp_replace(NEW.extratags->'wikipedia',E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
+        wiki_article_title := split_part(wiki_article, ':', 2);
+        IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
+          wiki_article_title := wiki_article;
+          wiki_article_language := 'en';
+        ELSE
+          wiki_article_language := lower(split_part(wiki_article, ':', 1));
+        END IF;
+
+        select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
+          from wikipedia_article 
+          where language = wiki_article_language and 
+          (title = wiki_article_title OR title = decode_url_part(wiki_article_title) OR title = replace(decode_url_part(wiki_article_title),E'\\',''))
+        UNION ALL
+        select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
+          from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
+          where wikipedia_redirect.language = wiki_article_language and 
+          (from_title = wiki_article_title OR from_title = decode_url_part(wiki_article_title) OR from_title = replace(decode_url_part(wiki_article_title),E'\\',''))
+        order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
+
       END IF;
 
     END IF;
@@ -2706,4 +2763,10 @@ END;
 $$
 LANGUAGE plpgsql;
 
-
+-- See: http://stackoverflow.com/questions/6410088/how-can-i-mimic-the-php-urldecode-function-in-postgresql
+CREATE OR REPLACE FUNCTION decode_url_part(p varchar) RETURNS varchar 
+  AS $$
+SELECT convert_from(CAST(E'\\x' || string_agg(CASE WHEN length(r.m[1]) = 1 THEN encode(convert_to(r.m[1], 'SQL_ASCII'), 'hex') ELSE substring(r.m[1] from 2 for 2) END, '') AS bytea), 'UTF8')
+FROM regexp_matches($1, '%[0-9a-f][0-9a-f]|.', 'gi') AS r(m);
+$$ 
+LANGUAGE SQL IMMUTABLE STRICT;

@@ -23,6 +23,7 @@
 		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
+		array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
 		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
 		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
@@ -207,6 +208,34 @@
 		pgsqlRunScript($sTemplate);
 	}
 
+	if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all'])
+	{
+		$bDidSomething = true;
+		$sWikiArticlesFile = CONST_BasePath.'/data/wikipedia_article.sql.bin';
+		$sWikiRedirectsFile = CONST_BasePath.'/data/wikipedia_redirect.sql.bin';
+		if (file_exists($sWikiArticlesFile))
+		{
+			echo "Importing wikipedia articles...";
+			pgsqlRunRestoreData($sWikiArticlesFile);
+			echo "...done\n";
+		}
+		else
+		{
+			echo "WARNING: wikipedia article dump file not found - places will have default importance\n";
+		}
+		if (file_exists($sWikiRedirectsFile))
+		{
+			echo "Importing wikipedia redirects...";
+			pgsqlRunRestoreData($sWikiRedirectsFile);
+			echo "...done\n";
+		}
+		else
+		{
+			echo "WARNING: wikipedia redirect dump file not found - some place importance values may be missing\n";
+		}
+	}
+
+
 	if ($aCMDResult['load-data'] || $aCMDResult['all'])
 	{
 		echo "Load Data\n";
@@ -326,7 +355,7 @@
 			}
 
 			fclose($hFile);
-	
+
 			$bAnyBusy = true;
 			while($bAnyBusy)
 			{
@@ -451,7 +480,8 @@
 
 		// Convert database DSN to psql paramaters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
-		$sCMD = 'psql -f '.$sFilename.' '.$aDSNInfo['database'];
+		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -479,7 +509,7 @@
 		// Convert database DSN to psql paramaters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-		$sCMD = 'psql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => STDOUT, 
@@ -495,5 +525,33 @@
 			$sScript = substr($sScript, $written);
 		}
 		fclose($ahPipes[0]);
+		proc_close($hProcess);
+	}
+
+	function pgsqlRunRestoreData($sDumpFile)
+	{
+		// Convert database DSN to psql paramaters
+		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
+
+		$aDescriptors = array(
+			0 => array('pipe', 'r'),
+			1 => array('pipe', 'w'),
+			2 => array('file', '/dev/null', 'a')
+		);
+		$ahPipes = null;
+		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
+		if (!is_resource($hProcess)) fail('unable to start pg_restore');
+
+		fclose($ahPipes[0]);
+
+		// TODO: error checking
+		while(!feof($ahPipes[1]))
+		{
+			echo fread($ahPipes[1], 4096);
+		}
+		fclose($ahPipes[1]);
+
 		proc_close($hProcess);
 	}

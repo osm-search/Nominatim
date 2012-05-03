@@ -29,7 +29,7 @@
 
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
                 $aFilteredPlaces['name'] = $aPlace['placename'];
-		if ($bShowAddressDetails) $aFilteredPlaces['address'] = $aAddress;
+		if ($bShowAddressDetails && $aAddress && sizeof($aAddress)) $aFilteredPlaces['address'] = $aAddress;
 	}
 
 	if (isset($_GET['json_callback']) && preg_match('/^[-A-Za-z0-9:_]+$/',$_GET['json_callback']))

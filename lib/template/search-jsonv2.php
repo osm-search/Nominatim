@@ -47,7 +47,7 @@
 			$aPlace['icon'] = $aPointDetails['icon'];
 		}
 
-		if (isset($aPointDetails['address']))
+		if (isset($aPointDetails['address']) && sizeof($aPointDetails['address'])>0)
 		{
 			$aPlace['address'] = $aPointDetails['address'];
                 }

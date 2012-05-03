@@ -1328,12 +1328,12 @@ BEGIN
       select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
         from wikipedia_article 
         where language = wiki_article_language and 
-        (title = wiki_article_title OR title = decode_url_part(wiki_article_title) OR title = replace(decode_url_part(wiki_article_title),E'\\',''))
+        (title = wiki_article_title OR title = catch_decode_url_part(wiki_article_title) OR title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
       UNION ALL
       select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
         from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
         where wikipedia_redirect.language = wiki_article_language and 
-        (from_title = wiki_article_title OR from_title = decode_url_part(wiki_article_title) OR from_title = replace(decode_url_part(wiki_article_title),E'\\',''))
+        (from_title = wiki_article_title OR from_title = catch_decode_url_part(wiki_article_title) OR from_title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
       order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
 
     ELSE
@@ -1614,12 +1614,12 @@ BEGIN
         select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
           from wikipedia_article 
           where language = wiki_article_language and 
-          (title = wiki_article_title OR title = decode_url_part(wiki_article_title) OR title = replace(decode_url_part(wiki_article_title),E'\\',''))
+          (title = wiki_article_title OR title = catch_decode_url_part(wiki_article_title) OR title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
         UNION ALL
         select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
           from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
           where wikipedia_redirect.language = wiki_article_language and 
-          (from_title = wiki_article_title OR from_title = decode_url_part(wiki_article_title) OR from_title = replace(decode_url_part(wiki_article_title),E'\\',''))
+          (from_title = wiki_article_title OR from_title = catch_decode_url_part(wiki_article_title) OR from_title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
         order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
 
       END IF;
@@ -2766,7 +2766,20 @@ LANGUAGE plpgsql;
 -- See: http://stackoverflow.com/questions/6410088/how-can-i-mimic-the-php-urldecode-function-in-postgresql
 CREATE OR REPLACE FUNCTION decode_url_part(p varchar) RETURNS varchar 
   AS $$
-SELECT convert_from(CAST(E'\\x' || string_agg(CASE WHEN length(r.m[1]) = 1 THEN encode(convert_to(r.m[1], 'SQL_ASCII'), 'hex') ELSE substring(r.m[1] from 2 for 2) END, '') AS bytea), 'UTF8')
-FROM regexp_matches($1, '%[0-9a-f][0-9a-f]|.', 'gi') AS r(m);
+SELECT convert_from(CAST(E'\\x' || array_to_string(ARRAY(
+    SELECT CASE WHEN length(r.m[1]) = 1 THEN encode(convert_to(r.m[1], 'SQL_ASCII'), 'hex') ELSE substring(r.m[1] from 2 for 2) END
+    FROM regexp_matches($1, '%[0-9a-f][0-9a-f]|.', 'gi') AS r(m)
+), '') AS bytea), 'UTF8');
 $$ 
 LANGUAGE SQL IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION catch_decode_url_part(p varchar) RETURNS varchar
+  AS $$
+DECLARE
+BEGIN
+  RETURN decode_url_part(p);
+EXCEPTION
+  WHEN others THEN return null;
+END;
+$$
+LANGUAGE plpgsql;

@@ -153,7 +153,7 @@
 	{
 		// derive change from normal osm file with osmosis
 		$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
-		if ($aResult['import-file'])
+		if (isset($aResult['import-file']) && $aResult['import-file'])
 		{
 			$sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
 			echo $sCMD."\n";
@@ -197,7 +197,6 @@
 		}
 
 		// import generated change file
-		$aPipes = array();
 		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sTemporaryFile;
 		echo $sCMD."\n";
 		exec($sCMD, $sJunk, $iErrorLevel);

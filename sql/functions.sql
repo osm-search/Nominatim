@@ -1573,7 +1573,7 @@ BEGIN
           make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
           AND placex.rank_search = NEW.rank_search
           AND placex.place_id != NEW.place_id
-          AND osm_type = 'N'
+          AND placex.osm_type = 'N' AND placex.rank_search < 26
           AND st_contains(NEW.geometry, placex.geometry)
         LOOP
 
@@ -2782,4 +2782,4 @@ EXCEPTION
   WHEN others THEN return null;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;

@@ -1225,9 +1225,7 @@ DECLARE
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
 
-  wiki_article TEXT;
-  wiki_article_title TEXT;
-  wiki_article_language TEXT;
+  linked_node_id BIGINT;
 
   result BOOLEAN;
 BEGIN
@@ -1313,31 +1311,9 @@ BEGIN
     END LOOP;
 
     NEW.importance := null;
-    -- WARNING: see duplicate of code below (yuk!)
-    IF NEW.extratags?'wikipedia' THEN
-      wiki_article := replace(regexp_replace(NEW.extratags->'wikipedia',E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
-      wiki_article_title := split_part(wiki_article, ':', 2);
-      IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
-        wiki_article_title := wiki_article;
-        wiki_article_language := 'en';
-      ELSE
-        wiki_article_language := lower(split_part(wiki_article, ':', 1));
-      END IF;
---RAISE WARNING '% %', wiki_article_language, wiki_article_title;
-
-      select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
-        from wikipedia_article 
-        where language = wiki_article_language and 
-        (title = wiki_article_title OR title = catch_decode_url_part(wiki_article_title) OR title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
-      UNION ALL
-      select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
-        from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
-        where wikipedia_redirect.language = wiki_article_language and 
-        (from_title = wiki_article_title OR from_title = catch_decode_url_part(wiki_article_title) OR from_title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
-      order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
-
-    ELSE
-      select importance,language||':'||title from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
+    select language||':'||title,importance from get_wikipedia_match(NEW.extratags) INTO NEW.wikipedia,NEW.importance;
+    IF NEW.importance IS NULL THEN
+      select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
     END IF;
 
 --RAISE WARNING '% %', NEW.place_id, NEW.rank_search;
@@ -1560,6 +1536,9 @@ BEGIN
 
             -- mark the linked place (excludes from search results)
             UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+            -- keep a note of the node id in case we need it for wikipedia in a bit
+            linked_node_id := linkedPlacex.osm_id;
           END IF;
 
         END LOOP;
@@ -1592,6 +1571,8 @@ BEGIN
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
+          -- keep a note of the node id in case we need it for wikipedia in a bit
+          linked_node_id := linkedPlacex.osm_id;
         END LOOP;
       END IF;
 
@@ -1600,28 +1581,12 @@ BEGIN
       END IF;
 
       -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
-      -- WARNING: duplicate of code above (yuk!)
-      IF NEW.importance is null AND NEW.extratags?'wikipedia' THEN
-        wiki_article := replace(regexp_replace(NEW.extratags->'wikipedia',E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
-        wiki_article_title := split_part(wiki_article, ':', 2);
-        IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
-          wiki_article_title := wiki_article;
-          wiki_article_language := 'en';
-        ELSE
-          wiki_article_language := lower(split_part(wiki_article, ':', 1));
-        END IF;
-
-        select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
-          from wikipedia_article 
-          where language = wiki_article_language and 
-          (title = wiki_article_title OR title = catch_decode_url_part(wiki_article_title) OR title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
-        UNION ALL
-        select wikipedia_article.importance,wikipedia_article.language||':'||wikipedia_article.title 
-          from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
-          where wikipedia_redirect.language = wiki_article_language and 
-          (from_title = wiki_article_title OR from_title = catch_decode_url_part(wiki_article_title) OR from_title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
-        order by importance asc limit 1 INTO NEW.importance,NEW.wikipedia;
-
+      IF NEW.importance is null THEN
+        select language||':'||title,importance from get_wikipedia_match(NEW.extratags) INTO NEW.wikipedia,NEW.importance;
+      END IF;
+      -- Still null? how about looking it up by the node id
+      IF NEW.importance IS NULL THEN
+        select language||':'||title,importance from wikipedia_article where osm_type = 'N' and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
       END IF;
 
     END IF;
@@ -2783,3 +2748,56 @@ EXCEPTION
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+DROP TYPE wikipedia_article_match CASCADE;
+create type wikipedia_article_match as (
+  language TEXT,
+  title TEXT,
+  importance FLOAT
+);
+
+CREATE OR REPLACE FUNCTION get_wikipedia_match(extratags HSTORE) RETURNS wikipedia_article_match
+  AS $$
+DECLARE
+  langs TEXT[];
+  i INT;
+  wiki_article TEXT;
+  wiki_article_title TEXT;
+  wiki_article_language TEXT;
+  result wikipedia_article_match;
+BEGIN
+  langs := ARRAY['','ar','bg','ca','cs','da','de','en','es','eo','eu','fa','fr','ko','hi','hr','id','it','he','lt','hu','ms','nl','ja','no','pl','pt','kk','ro','ru','sk','sl','sr','fi','sv','tr','uk','vi','vo','war','zh'];
+  i := 1;
+  WHILE langs[i] IS NOT NULL LOOP
+    wiki_article := extratags->(case when langs[i] = '' THEN 'wikipedia' ELSE 'wikipedia:'||langs[i] END);
+    IF wiki_article is not null THEN
+      wiki_article := replace(regexp_replace(wiki_article,E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
+      wiki_article_title := split_part(wiki_article, ':', 2);
+      IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
+        wiki_article_title := wiki_article;
+        wiki_article_language := CASE WHEN langs[i] = '' THEN 'en' ELSE langs[i] END;
+      ELSE
+        wiki_article_language := lower(split_part(wiki_article, ':', 1));
+      END IF;
+
+      select wikipedia_article.language,wikipedia_article.title,wikipedia_article.importance
+        from wikipedia_article 
+        where language = wiki_article_language and 
+        (title = wiki_article_title OR title = catch_decode_url_part(wiki_article_title) OR title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
+      UNION ALL
+      select wikipedia_article.language,wikipedia_article.title,wikipedia_article.importance
+        from wikipedia_redirect join wikipedia_article on (wikipedia_redirect.language = wikipedia_article.language and wikipedia_redirect.to_title = wikipedia_article.title)
+        where wikipedia_redirect.language = wiki_article_language and 
+        (from_title = wiki_article_title OR from_title = catch_decode_url_part(wiki_article_title) OR from_title = replace(catch_decode_url_part(wiki_article_title),E'\\',''))
+      order by importance desc limit 1 INTO result;
+
+      IF result.language is not null THEN
+        return result;
+      END IF;
+    END IF;
+    i := i + 1;
+  END LOOP;
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;

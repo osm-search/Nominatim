@@ -219,7 +219,7 @@
 		if (file_exists($sWikiArticlesFile))
 		{
 			echo "Importing wikipedia articles...";
-			pgsqlRunRestoreData($sWikiArticlesFile);
+			pgsqlRunDropAndRestore($sWikiArticlesFile);
 			echo "...done\n";
 		}
 		else
@@ -229,7 +229,7 @@
 		if (file_exists($sWikiRedirectsFile))
 		{
 			echo "Importing wikipedia redirects...";
-			pgsqlRunRestoreData($sWikiRedirectsFile);
+			pgsqlRunDropAndRestore($sWikiRedirectsFile);
 			echo "...done\n";
 		}
 		else
@@ -537,6 +537,34 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
+
+		$aDescriptors = array(
+			0 => array('pipe', 'r'),
+			1 => array('pipe', 'w'),
+			2 => array('file', '/dev/null', 'a')
+		);
+		$ahPipes = null;
+		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
+		if (!is_resource($hProcess)) fail('unable to start pg_restore');
+
+		fclose($ahPipes[0]);
+
+		// TODO: error checking
+		while(!feof($ahPipes[1]))
+		{
+			echo fread($ahPipes[1], 4096);
+		}
+		fclose($ahPipes[1]);
+
+		proc_close($hProcess);
+	}
+
+	function pgsqlRunDropAndRestore($sDumpFile)
+	{
+		// Convert database DSN to psql paramaters
+		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),

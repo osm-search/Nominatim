@@ -443,7 +443,7 @@ DECLARE
   place_centre GEOMETRY;
   nearcountry RECORD;
 BEGIN
-  place_centre := ST_Centroid(place);
+  place_centre := ST_PointOnSurface(place);
 
 --RAISE WARNING 'start: %', ST_AsText(place_centre);
 
@@ -909,11 +909,7 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  IF NEW.rank_search >= 4 THEN
-    NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
-  ELSE
-    NEW.country_code := NULL;
-  END IF;
+  NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
 
   NEW.partition := get_partition(NEW.geometry, NEW.country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
@@ -997,9 +993,11 @@ BEGIN
       IF NEW.type in ('continent') THEN
         NEW.rank_search := 2;
         NEW.rank_address := NEW.rank_search;
+        NEW.country_code := NULL;
       ELSEIF NEW.type in ('sea') THEN
         NEW.rank_search := 2;
         NEW.rank_address := 0;
+        NEW.country_code := NULL;
       ELSEIF NEW.type in ('country') THEN
         NEW.rank_search := 4;
         NEW.rank_address := NEW.rank_search;
@@ -1114,7 +1112,12 @@ BEGIN
   END IF;
 
   IF (NEW.extratags -> 'capital') = 'yes' THEN
-    NEW.rank_search := NEW.rank_search -1;
+    NEW.rank_search := NEW.rank_search - 1;
+  END IF;
+
+  -- a country code make no sense below rank 4 (country)
+  IF NEW.rank_address < 4 THEN
+    NEW.country_code := NULL;
   END IF;
 
 -- Block import below rank 22
@@ -1122,7 +1125,7 @@ BEGIN
 --    RETURN NULL;
 --  END IF;
 
-  RETURN NEW;  -- The following is not needed until doing diff updates, and slows the main index process down
+  RETURN NEW; -- @DIFFUPDATES@ The following is not needed until doing diff updates, and slows the main index process down
 
   IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
     -- Performance: We just can't handle re-indexing for country level changes
@@ -1311,12 +1314,12 @@ BEGIN
     END LOOP;
 
     NEW.importance := null;
-    select language||':'||title,importance from get_wikipedia_match(NEW.extratags) INTO NEW.wikipedia,NEW.importance;
+    select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.country_code) INTO NEW.wikipedia,NEW.importance;
     IF NEW.importance IS NULL THEN
       select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
     END IF;
 
---RAISE WARNING '% %', NEW.place_id, NEW.rank_search;
+--RAISE WARNING 'before low level% %', NEW.place_id, NEW.rank_search;
 
     -- For low level elements we inherit from our parent road
     IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
@@ -1488,10 +1491,11 @@ BEGIN
       -- see if we have any special relation members
       select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
 
+-- RAISE WARNING 'get_osm_rel_members, label';
       FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
 
-        select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
-          and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+        select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 into linkedPlacex;
 
         -- If we don't already have one use this as the centre point of the geometry
         IF NEW.centroid IS NULL THEN
@@ -1514,13 +1518,14 @@ BEGIN
 
         FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
 
-          select * from placex where osm_type = upper(substring(relMember.member,1,1)) 
-            and osm_id = substring(relMember.member,2,10000)::integer order by rank_search desc limit 1 into linkedPlacex;
+          select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 into linkedPlacex;
 
           -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
           -- But that can be fixed by explicitly setting the label in the data
           IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
             AND NEW.rank_search = linkedPlacex.rank_search THEN
+
 
             -- If we don't already have one use this as the centre point of the geometry
             IF NEW.centroid IS NULL THEN
@@ -1552,7 +1557,7 @@ BEGIN
           make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
           AND placex.rank_search = NEW.rank_search
           AND placex.place_id != NEW.place_id
-          AND placex.osm_type = 'N' AND placex.rank_search < 26
+          AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
           AND st_contains(NEW.geometry, placex.geometry)
         LOOP
 
@@ -1582,11 +1587,11 @@ BEGIN
 
       -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
       IF NEW.importance is null THEN
-        select language||':'||title,importance from get_wikipedia_match(NEW.extratags) INTO NEW.wikipedia,NEW.importance;
+        select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.country_code) INTO NEW.wikipedia,NEW.importance;
       END IF;
       -- Still null? how about looking it up by the node id
       IF NEW.importance IS NULL THEN
-        select language||':'||title,importance from wikipedia_article where osm_type = 'N' and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
+        select language||':'||title,importance from wikipedia_article where osm_type = 'N'::char(1) and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
       END IF;
 
     END IF;
@@ -2756,7 +2761,7 @@ create type wikipedia_article_match as (
   importance FLOAT
 );
 
-CREATE OR REPLACE FUNCTION get_wikipedia_match(extratags HSTORE) RETURNS wikipedia_article_match
+CREATE OR REPLACE FUNCTION get_wikipedia_match(extratags HSTORE, country_code varchar(2)) RETURNS wikipedia_article_match
   AS $$
 DECLARE
   langs TEXT[];
@@ -2766,18 +2771,22 @@ DECLARE
   wiki_article_language TEXT;
   result wikipedia_article_match;
 BEGIN
-  langs := ARRAY['','ar','bg','ca','cs','da','de','en','es','eo','eu','fa','fr','ko','hi','hr','id','it','he','lt','hu','ms','nl','ja','no','pl','pt','kk','ro','ru','sk','sl','sr','fi','sv','tr','uk','vi','vo','war','zh'];
+  langs := ARRAY['english','country','ar','bg','ca','cs','da','de','en','es','eo','eu','fa','fr','ko','hi','hr','id','it','he','lt','hu','ms','nl','ja','no','pl','pt','kk','ro','ru','sk','sl','sr','fi','sv','tr','uk','vi','vo','war','zh'];
   i := 1;
   WHILE langs[i] IS NOT NULL LOOP
-    wiki_article := extratags->(case when langs[i] = '' THEN 'wikipedia' ELSE 'wikipedia:'||langs[i] END);
+    wiki_article := extratags->(case when langs[i] in ('english','country') THEN 'wikipedia' ELSE 'wikipedia:'||langs[i] END);
     IF wiki_article is not null THEN
-      wiki_article := replace(regexp_replace(wiki_article,E'(.*?)([a-z]+).wikipedia.org/wiki/',E'\\2:'),' ','_');
-      wiki_article_title := split_part(wiki_article, ':', 2);
+      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/wiki/',E'\\2:');
+      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/w/index.php\\?title=',E'\\2:');
+      wiki_article := regexp_replace(wiki_article,E'^(.*?)/([a-z]{2,3})/wiki/',E'\\2:');
+      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3})[=:]',E'\\2:');
+      wiki_article := replace(wiki_article,' ','_');
+      wiki_article_title := trim(split_part(wiki_article, ':', 2));
       IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
-        wiki_article_title := wiki_article;
-        wiki_article_language := CASE WHEN langs[i] = '' THEN 'en' ELSE langs[i] END;
+        wiki_article_title := trim(wiki_article);
+        wiki_article_language := CASE WHEN langs[i] = 'english' THEN 'en' WHEN langs[i] = 'country' THEN get_country_language_code(country_code) ELSE langs[i] END;
       ELSE
-        wiki_article_language := lower(split_part(wiki_article, ':', 1));
+        wiki_article_language := lower(trim(split_part(wiki_article, ':', 1)));
       END IF;
 
       select wikipedia_article.language,wikipedia_article.title,wikipedia_article.importance

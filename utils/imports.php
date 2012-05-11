@@ -19,7 +19,7 @@
 
 	if (isset($aCMDResult['parse-tiger']))
 	{
-        $bDidSomething = true;
+		$bDidSomething = true;
 		foreach(glob($aCMDResult['parse-tiger'].'/??_*', GLOB_ONLYDIR) as $sStateFolder)
 		{
 			preg_match('#([0-9]{2})_(.*)#',basename($sStateFolder), $aMatch);
@@ -97,7 +97,7 @@
 		mkdir($sTempDir);
 
 
-        $bDidSomething = true;
+		$bDidSomething = true;
 		foreach(glob($aCMDResult['parse-tiger-2011'].'/tl_2011_?????_edges.zip', 0) as $sImportFile)
 		{
 			set_time_limit(30);

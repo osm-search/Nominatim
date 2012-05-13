@@ -431,11 +431,7 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
-		passthru($sBaseCmd.' -R 4');
-		pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 5 -R 25');
-		pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 26');
+		passthru($sBaseCmd);
 	}
 
 	if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])

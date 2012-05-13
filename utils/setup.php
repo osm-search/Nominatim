@@ -264,6 +264,14 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
+		// pre-create the word list
+		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'select count(getorcreate_housenumber_id(v)) from (select distinct housenumber as v from place where housenumber is not null) as w;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{

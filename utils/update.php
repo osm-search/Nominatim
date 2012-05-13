@@ -66,6 +66,8 @@
 
 	$oDB =& getDB();
 
+	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+
 	$bFirst = true;
 	$bContinue = $aResult['import-all'];
 	while ($bContinue || $bFirst)
@@ -94,7 +96,7 @@
 		{
 			// import diff directly (e.g. from osmosis --rri)
 			$sNextFile = $aResult['import-diff'];
-			if (!file_exists($nextFile))
+			if (!file_exists($sNextFile))
 			{
 				echo "Cannot open $nextFile\n";
 				exit;
@@ -104,10 +106,10 @@
 		}
 
 		// Missing file is not an error - it might not be created yet
-		if (($aResult['import-hourly'] || $aResult['import-daily']) && file_exists($sNextFile))
+		if (($aResult['import-hourly'] || $aResult['import-daily'] || isset($aResult['import-diff'])) && file_exists($sNextFile))
 		{
 			// Import the file
-			$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sNextFile;
+			$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sNextFile;
 			echo $sCMD."\n";
 			exec($sCMD, $sJunk, $iErrorLevel);
 
@@ -126,61 +128,81 @@
 		}
 	}
 
-	$sModifyXML = false;
+	$bModifyXML = false;
+	$sModifyXMLstr = '';
 	if (isset($aResult['import-file']) && $aResult['import-file'])
 	{
-		$sModifyXML = file_get_contents($aResult['import-file']);
+		$bModifyXML = true;
 	}
 	if (isset($aResult['import-node']) && $aResult['import-node'])
 	{
-		$sModifyXML = file_get_contents('http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node']);
+		$bModifyXML = true;
+		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node']);
 	}
 	if (isset($aResult['import-way']) && $aResult['import-way'])
 	{
-		$sModifyXML = file_get_contents('http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full');
+		$bModifyXML = true;
+		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full');
 	}
 	if (isset($aResult['import-relation']) && $aResult['import-relation'])
 	{
-		$sModifyXML = file_get_contents('http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full');
+		$bModifyXML = true;
+		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full');
 	}
-	if ($sModifyXML)
+	if ($bModifyXML)
 	{
-		// Hack into a modify request
-		$sModifyXML = str_replace('<osm version="0.6" generator="OpenStreetMap server">',
-			'<osmChange version="0.6" generator="OpenStreetMap server"><modify>', $sModifyXML);
-		$sModifyXML = str_replace('</osm>', '</modify></osmChange>', $sModifyXML);
-
-		// Outputing this is too verbose
-		if ($aResult['verbose'] && false) var_dump($sModifyXML);
-
-		$sDatabaseName = 'nominatim';
-		$aSpec = array(
-			0 => array("pipe", "r"),  // stdin
-			1 => array("pipe", "w"),  // stdout
-			2 => array("pipe", "w") // stderr
-		);
-		$aPipes = array();
-		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' -';
-		echo $sCMD."\n";
-		$hProc = proc_open($sCMD, $aSpec, $aPipes);
-		if (!is_resource($hProc))
+		// derive change from normal osm file with osmosis
+		$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
+		if (isset($aResult['import-file']) && $aResult['import-file'])
 		{
-			echo "$sBasePath/osm2pgsql failed\n";
-			exit;	
+			$sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
+			echo $sCMD."\n";
+			exec($sCMD, $sJunk, $iErrorLevel);
+			if ($iErrorLevel)
+			{
+				echo "Error converting osm to osc, osmosis returned: $iErrorLevel\n";
+				exit;
+			}
 		}
-		fwrite($aPipes[0], $sModifyXML);
-		fclose($aPipes[0]);
-		$sOut = stream_get_contents($aPipes[1]);
-		if ($aResult['verbose']) echo $sOut;
-		fclose($aPipes[1]);
-		$sErrors = stream_get_contents($aPipes[2]);
-		if ($aResult['verbose']) echo $sErrors;
-		fclose($aPipes[2]);
-		if ($iError = proc_close($hProc))
+		else
 		{
-			echo "osm2pgsql existed with error level $iError\n";
-			echo $sOut;
-			echo $sErrors;
+			$aSpec = array(
+				0 => array("pipe", "r"),  // stdin
+				1 => array("pipe", "w"),  // stdout
+				2 => array("pipe", "w") // stderr
+			);
+			$sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
+			echo $sCMD."\n";
+			$hProc = proc_open($sCMD, $aSpec, $aPipes);
+			if (!is_resource($hProc))
+			{
+				echo "Error converting osm to osc, osmosis failed\n";
+				exit;
+			}
+			fwrite($aPipes[0], $sModifyXMLstr);
+			fclose($aPipes[0]);
+			$sOut = stream_get_contents($aPipes[1]);
+			if ($aResult['verbose']) echo $sOut;
+			fclose($aPipes[1]);
+			$sErrors = stream_get_contents($aPipes[2]);
+			if ($aResult['verbose']) echo $sErrors;
+			fclose($aPipes[2]);
+			if ($iError = proc_close($hProc))
+			{
+				echo "Error converting osm to osc, osmosis returned: $iError\n";
+				echo $sOut;
+				echo $sErrors;
+				exit;
+			}
+		}
+
+		// import generated change file
+		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sTemporaryFile;
+		echo $sCMD."\n";
+		exec($sCMD, $sJunk, $iErrorLevel);
+		if ($iErrorLevel)
+		{
+			echo "osm2pgsql exited with error level $iErrorLevel\n";
 			exit;
 		}
 	}

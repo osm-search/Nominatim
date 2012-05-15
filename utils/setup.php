@@ -264,6 +264,14 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
+		// pre-create the word list
+		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+		if (!pg_query($oDB->connection, 'select count(getorcreate_housenumber_id(v)) from (select distinct housenumber as v from place where housenumber is not null) as w;')) fail(pg_last_error($oDB->connection));
+		echo '.';
+
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{
@@ -423,11 +431,7 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
-		passthru($sBaseCmd.' -R 4');
-		pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 5 -R 25');
-		pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 26');
+		passthru($sBaseCmd);
 	}
 
 	if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])

@@ -1,6 +1,10 @@
+-- Indices used only during search and update.
+-- These indices are created only after the indexing process is done.
+
 CREATE INDEX idx_word_word_id on word USING BTREE (word_id);
 
-CREATE INDEX searchnameplacesearch_search_nameaddress_vector_idx ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_nameaddress_vector ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off);
+CREATE INDEX idx_search_name_name_vector ON search_name USING GIN (name_vector) WITH (fastupdate = off);
 CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid);
 
 CREATE INDEX idx_place_addressline_address_place_id on place_addressline USING BTREE (address_place_id);
@@ -21,6 +25,5 @@ CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST 
 CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector) WITH (fastupdate = off);
 
 -- start
-CREATE INDEX idx_search_name_-partition-_nameaddress_vector ON search_name_-partition- USING GIN (nameaddress_vector) WITH (fastupdate = off);
 CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid);
 -- end

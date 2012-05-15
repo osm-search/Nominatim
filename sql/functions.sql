@@ -389,7 +389,7 @@ BEGIN
   result := '{}'::INTEGER[];
 
   s := make_standard_name(src);
-  w := getorcreate_name_id(s);
+  w := getorcreate_name_id(s, src);
 
   IF NOT (ARRAY[w] <@ result) THEN
     result := result || w;
@@ -405,6 +405,30 @@ BEGIN
         END IF;
       END IF;
     END LOOP;
+  END IF;
+
+  words := regexp_split_to_array(src, E'[,;()]');
+  IF array_upper(words, 1) != 1 THEN
+    FOR j IN 1..array_upper(words, 1) LOOP
+      s := make_standard_name(words[j]);
+      IF s != '' THEN
+        w := getorcreate_word_id(s);
+        IF NOT (ARRAY[w] <@ result) THEN
+          result := result || w;
+        END IF;
+      END IF;
+    END LOOP;
+  END IF;
+
+  s := regexp_replace(src, '市$', '');
+  IF s != src THEN
+    s := make_standard_name(s);
+    IF s != '' THEN
+      w := getorcreate_name_id(s, src);
+      IF NOT (ARRAY[w] <@ result) THEN
+        result := result || w;
+      END IF;
+    END IF;
   END IF;
 
   RETURN result;

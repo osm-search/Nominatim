@@ -52,35 +52,14 @@ DECLARE
   NEWgeometry geometry;
 BEGIN
 --  RAISE WARNING '%',place;
-  NEWgeometry := place;
-  IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    NEWgeometry := ST_buffer(NEWgeometry,0);
-    IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-      RETURN 0;
-    END IF;
-  END IF;
-  RETURN (partition*1000000) + (500-ST_X(ST_Centroid(NEWgeometry))::integer)*1000 + (500-ST_Y(ST_Centroid(NEWgeometry))::integer);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION debug_geometry_sector(osmid integer, place geometry) RETURNS INTEGER
-  AS $$
-DECLARE
-  NEWgeometry geometry;
-BEGIN
---  RAISE WARNING '%',osmid;
-  IF osmid = 61315 THEN
-    return null;
-  END IF;
-  NEWgeometry := place;
-  IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    NEWgeometry := ST_buffer(NEWgeometry,0);
-    IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-      RETURN NULL;
-    END IF;
-  END IF;
-  RETURN (500-ST_X(ST_Centroid(NEWgeometry))::integer)*1000 + (500-ST_Y(ST_Centroid(NEWgeometry))::integer);
+  NEWgeometry := ST_PointOnSurface(place);
+--  IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
+--    NEWgeometry := ST_buffer(NEWgeometry,0);
+--    IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
+--      RETURN 0;
+--    END IF;
+--  END IF;
+  RETURN (partition*1000000) + (500-ST_X(NEWgeometry)::integer)*1000 + (500-ST_Y(NEWgeometry)::integer);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -469,52 +448,61 @@ DECLARE
 BEGIN
   place_centre := ST_PointOnSurface(place);
 
---RAISE WARNING 'start: %', ST_AsText(place_centre);
+--DEBUG: RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
-  -- Try for a OSM polygon first
-  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_contains(geometry, place_centre) limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-
---RAISE WARNING 'osm fallback: %', ST_AsText(place_centre);
+--DEBUG: RAISE WARNING 'osm fallback: %', ST_AsText(place_centre);
 
   -- Try for OSM fallback data
-  FOR nearcountry IN select country_code from country_osm_grid where st_contains(geometry, place_centre) limit 1
+  -- The order is to deal with places like HongKong that are 'states' within another polygon
+  FOR nearcountry IN select country_code from country_osm_grid where st_covers(geometry, place_centre) order by area asc limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
 
---RAISE WARNING 'natural earth: %', ST_AsText(place_centre);
-
-  -- Natural earth data (first fallback)
-  FOR nearcountry IN select country_code from country_naturalearthdata where st_contains(geometry, place_centre) limit 1
+  -- Try for a OSM polygon
+  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_covers(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
 
-  -- Natural earth data (first fallback)
-  FOR nearcountry IN select country_code from country_naturalearthdata where st_distance(geometry, place_centre) < 0.5 limit 1
+--DEBUG: RAISE WARNING 'natural earth: %', ST_AsText(place_centre);
+
+  -- Natural earth data
+  FOR nearcountry IN select country_code from country_naturalearthdata where st_covers(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
 
---RAISE WARNING 'in country: %', ST_AsText(place_centre);
+--DEBUG: RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
+
+  -- 
+  FOR nearcountry IN select country_code from country_osm_grid where st_dwithin(geometry, place_centre, 0.5) order by st_distance(geometry, place_centre) asc, area asc limit 1
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
+
+--DEBUG: RAISE WARNING 'near natural earth: %', ST_AsText(place_centre);
+
+  -- Natural earth data 
+  FOR nearcountry IN select country_code from country_naturalearthdata where st_dwithin(geometry, place_centre, 0.5) limit 1
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
 
   -- WorldBoundaries data (second fallback - think there might be something broken in this data)
-  FOR nearcountry IN select country_code from country where st_contains(geometry, place_centre) limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
+--  FOR nearcountry IN select country_code from country where st_covers(geometry, place_centre) limit 1
+--  LOOP
+--    RETURN nearcountry.country_code;
+--  END LOOP;
 
 --RAISE WARNING 'near country: %', ST_AsText(place_centre);
 
   -- Still not in a country - try nearest within ~12 miles of a country
-  FOR nearcountry IN select country_code from country where st_distance(geometry, place_centre) < 0.5 
-    order by st_distance(geometry, place) limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
+--  FOR nearcountry IN select country_code from country where st_distance(geometry, place_centre) < 0.5 
+--    order by st_distance(geometry, place) limit 1
+--  LOOP
+--    RETURN nearcountry.country_code;
+--  END LOOP;
 
   RETURN NULL;
 END;
@@ -589,17 +577,11 @@ CREATE OR REPLACE FUNCTION add_location(
 DECLARE
   locationid INTEGER;
   isarea BOOLEAN;
-  xmin INTEGER;
-  ymin INTEGER;
-  xmax INTEGER;
-  ymax INTEGER;
-  lon INTEGER;
-  lat INTEGER;
   centroid GEOMETRY;
-  secgeo GEOMETRY;
-  secbox GEOMETRY;
   diameter FLOAT;
   x BOOLEAN;
+  splitGeom RECORD;
+  secgeo GEOMETRY;
 BEGIN
 
   IF rank_search > 25 THEN
@@ -616,27 +598,9 @@ BEGIN
     isArea := true;
     centroid := ST_Centroid(geometry);
 
-    xmin := floor(st_xmin(geometry));
-    xmax := ceil(st_xmax(geometry));
-    ymin := floor(st_ymin(geometry));
-    ymax := ceil(st_ymax(geometry));
-
-    IF xmin = xmax OR ymin = ymax OR (xmax-xmin < 2 AND ymax-ymin < 2) THEN
+    FOR geometry IN select split_geometry(geometry) as geometry LOOP
       x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, geometry);
-    ELSE
---      RAISE WARNING 'Spliting geometry: % to %, % to %', xmin, xmax, ymin, ymax;
-      FOR lon IN xmin..(xmax-1) LOOP
-        FOR lat IN ymin..(ymax-1) LOOP
-          secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(lon,lat),ST_Point(lon+1,lat+1)),4326);
-          IF st_intersects(geometry, secbox) THEN
-            secgeo := st_intersection(geometry, secbox);
-            IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
-              x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
-            END IF;
-          END IF;
-        END LOOP;
-      END LOOP;
-    END IF;
+    END LOOP;
 
   ELSEIF rank_search < 26 THEN
 
@@ -901,7 +865,7 @@ DECLARE
   diameter FLOAT;
   classtable TEXT;
 BEGIN
---  RAISE WARNING '%',NEW.osm_id;
+  --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
 
   -- just block these
   IF NEW.class = 'highway' and NEW.type in ('turning_circle','traffic_signals','mini_roundabout','noexit','crossing') THEN
@@ -915,7 +879,7 @@ BEGIN
 
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     -- block all invalid geometary - just not worth the risk.  seg faults are causing serious problems.
---    RAISE WARNING 'invalid geometry %',NEW.osm_id;
+    RAISE WARNING 'invalid geometry %',NEW.osm_id;
     RETURN NULL;
 
     -- Dead code
@@ -925,22 +889,24 @@ BEGIN
     END IF;
     NEW.geometry := ST_buffer(NEW.geometry,0);
     IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
---      RAISE WARNING 'Invalid geometary, rejecting: % %', NEW.osm_type, NEW.osm_id;
+      RAISE WARNING 'Invalid geometary, rejecting: % %', NEW.osm_type, NEW.osm_id;
       RETURN NULL;
     END IF;
   END IF;
 
+  --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
+
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+  NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
 
-  NEW.partition := get_partition(NEW.geometry, NEW.country_code);
+  NEW.partition := get_partition(NEW.geometry, NEW.calculated_country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 
   -- copy 'name' to or from the default language (if there is a default language)
   IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-    default_language := get_country_language_code(NEW.country_code);
+    default_language := get_country_language_code(NEW.calculated_country_code);
     IF default_language IS NOT NULL THEN
       IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
         NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
@@ -974,7 +940,7 @@ BEGIN
 
         NEW.name := 'ref'=>NEW.postcode;
 
-        IF NEW.country_code = 'gb' THEN
+        IF NEW.calculated_country_code = 'gb' THEN
 
           IF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
             NEW.rank_search := 25;
@@ -987,7 +953,7 @@ BEGIN
             NEW.rank_address := 5;
           END IF;
 
-        ELSEIF NEW.country_code = 'de' THEN
+        ELSEIF NEW.calculated_country_code = 'de' THEN
 
           IF NEW.postcode ~ '^([0-9]{5})$' THEN
             NEW.rank_search := 21;
@@ -1017,11 +983,11 @@ BEGIN
       IF NEW.type in ('continent') THEN
         NEW.rank_search := 2;
         NEW.rank_address := NEW.rank_search;
-        NEW.country_code := NULL;
+        NEW.calculated_country_code := NULL;
       ELSEIF NEW.type in ('sea') THEN
         NEW.rank_search := 2;
         NEW.rank_address := 0;
-        NEW.country_code := NULL;
+        NEW.calculated_country_code := NULL;
       ELSEIF NEW.type in ('country') THEN
         NEW.rank_search := 4;
         NEW.rank_address := NEW.rank_search;
@@ -1141,13 +1107,15 @@ BEGIN
 
   -- a country code make no sense below rank 4 (country)
   IF NEW.rank_address < 4 THEN
-    NEW.country_code := NULL;
+    NEW.calculated_country_code := NULL;
   END IF;
 
 -- Block import below rank 22
 --  IF NEW.rank_search > 22 THEN
 --    RETURN NULL;
 --  END IF;
+
+  --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
   RETURN NEW; -- @DIFFUPDATES@ The following is not needed until doing diff updates, and slows the main index process down
 
@@ -1158,9 +1126,9 @@ BEGIN
 --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
       -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
-      update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+      update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
        AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
-      update placex set indexed_status = 2 where (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+      update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
        AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
     END IF;
   ELSE
@@ -1257,6 +1225,12 @@ DECLARE
   result BOOLEAN;
 BEGIN
 
+  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+    RETURN NEW;
+  END IF;
+
+  --DEBUG: RAISE WARNING 'placex_update % %',NEW.osm_type,NEW.osm_id;
+
 --RAISE WARNING '%',NEW.place_id;
 --RAISE WARNING '%', NEW;
 
@@ -1267,11 +1241,13 @@ BEGIN
 
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
+    --DEBUG: RAISE WARNING 'placex_update_delete % %',NEW.osm_type,NEW.osm_id;
     delete from placex where place_id = OLD.place_id;
     RETURN NULL;
   END IF;
 
-  IF NEW.indexed_status = 0 and OLD.indexed_status != 0 THEN
+  IF OLD.indexed_status != 0 THEN
+    --DEBUG: RAISE WARNING 'placex_update_0 % %',NEW.osm_type,NEW.osm_id;
 
     NEW.indexed_date = now();
 
@@ -1289,15 +1265,20 @@ BEGIN
       UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 
-    -- reclaculate country and partition (should probably have a country_code and calculated_country_code as seperate fields)
+    -- Speed up searches - just use the centroid of the feature
+    -- cheaper but less acurate
+    place_centroid := ST_PointOnSurface(NEW.geometry);
+    NEW.centroid := null;
+
+    -- reclaculate country and partition
     IF NEW.rank_search >= 4 THEN
-      SELECT country_code from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO NEW.country_code;
-      NEW.country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+      --NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+      NEW.calculated_country_code := lower(get_country_code(place_centroid));
     ELSE
-      NEW.country_code := NULL;
+      NEW.calculated_country_code := NULL;
     END IF;
-    NEW.partition := get_partition(NEW.geometry, NEW.country_code);
-    NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
+    NEW.partition := get_partition(place_centroid, NEW.calculated_country_code);
+    NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
 
     -- Adding ourselves to the list simplifies address calculations later
     INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
@@ -1305,15 +1286,10 @@ BEGIN
     -- What level are we searching from
     search_maxrank := NEW.rank_search;
 
-    -- Speed up searches - just use the centroid of the feature
-    -- cheaper but less acurate
-    place_centroid := ST_Centroid(NEW.geometry);
-    NEW.centroid := null;
-
     -- Thought this wasn't needed but when we add new languages to the country_name table
     -- we need to update the existing names
     IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-      default_language := get_country_language_code(NEW.country_code);
+      default_language := get_country_language_code(NEW.calculated_country_code);
       IF default_language IS NOT NULL THEN
         IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
           NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
@@ -1338,7 +1314,7 @@ BEGIN
     END LOOP;
 
     NEW.importance := null;
-    select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.country_code) INTO NEW.wikipedia,NEW.importance;
+    select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
     IF NEW.importance IS NULL THEN
       select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
     END IF;
@@ -1483,7 +1459,7 @@ BEGIN
 
         -- Get the details of the parent road
         select * from search_name where place_id = NEW.parent_place_id INTO location;
-        NEW.country_code := location.country_code;
+        NEW.calculated_country_code := location.country_code;
 
 --RAISE WARNING '%', NEW.name;
         -- If there is no name it isn't searchable, don't bother to create a search record
@@ -1498,16 +1474,17 @@ BEGIN
         -- Just be happy with inheriting from parent road only
 
         IF NEW.rank_search <= 25 THEN
-          result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+          result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
         END IF;
 
-        result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
+        result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
 
         return NEW;
       END IF;
 
     END IF;
 
+-- RAISE WARNING '  INDEXING Started:';
 -- RAISE WARNING '  INDEXING: %',NEW;
 
     IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
@@ -1582,7 +1559,7 @@ BEGIN
           AND placex.rank_search = NEW.rank_search
           AND placex.place_id != NEW.place_id
           AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
-          AND st_contains(NEW.geometry, placex.geometry)
+          AND st_covers(NEW.geometry, placex.geometry)
         LOOP
 
           -- If we don't already have one use this as the centre point of the geometry
@@ -1611,7 +1588,7 @@ BEGIN
 
       -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
       IF NEW.importance is null THEN
-        select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.country_code) INTO NEW.wikipedia,NEW.importance;
+        select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
       END IF;
       -- Still null? how about looking it up by the node id
       IF NEW.importance IS NULL THEN
@@ -1647,12 +1624,12 @@ BEGIN
         END LOOP;
       END IF;
     END IF;
---RAISE WARNING 'ISIN: %', isin_tokens;
+-- RAISE WARNING 'ISIN: %', isin_tokens;
 
     -- Process area matches
     location_rank_search := 100;
     location_distance := 0;
---RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
+-- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
     FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
@@ -1732,16 +1709,16 @@ BEGIN
     IF NEW.name IS NOT NULL THEN
 
       IF NEW.rank_search <= 25 THEN
-        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+        result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
       END IF;
 
       IF NEW.rank_search between 26 and 27 and NEW.class = 'highway' THEN
-        result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.country_code, NEW.geometry);
+        result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.calculated_country_code, NEW.geometry);
       END IF;
 
-      result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
+      result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid);
 
---      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.country_code, name_vector, nameaddress_vector, place_centroid);
+--      INSERT INTO search_name values (NEW.place_id, NEW.rank_search, NEW.rank_search, 0, NEW.calculated_country_code, name_vector, nameaddress_vector, place_centroid);
     END IF;
 
     -- If we've not managed to pick up a better one - default centroid
@@ -1762,33 +1739,49 @@ DECLARE
   b BOOLEAN;
   classtable TEXT;
 BEGIN
+  RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
   update placex set linked_place_id = null where linked_place_id = OLD.place_id;
+  --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;
   update placex set indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
+  --DEBUG: RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.rank_address < 30 THEN
 
     -- mark everything linked to this place for re-indexing
+    --DEBUG: RAISE WARNING 'placex_delete:03 % %',OLD.osm_type,OLD.osm_id;
     UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
       and placex.place_id = place_addressline.place_id and indexed_status = 0;
 
+    --DEBUG: RAISE WARNING 'placex_delete:04 % %',OLD.osm_type,OLD.osm_id;
     DELETE FROM place_addressline where address_place_id = OLD.place_id;
 
+    --DEBUG: RAISE WARNING 'placex_delete:05 % %',OLD.osm_type,OLD.osm_id;
     b := deleteRoad(OLD.partition, OLD.place_id);
 
+    --DEBUG: RAISE WARNING 'placex_delete:06 % %',OLD.osm_type,OLD.osm_id;
     update placex set indexed_status = 2 where parent_place_id = OLD.place_id and indexed_status = 0;
+    --DEBUG: RAISE WARNING 'placex_delete:07 % %',OLD.osm_type,OLD.osm_id;
 
   END IF;
+
+  --DEBUG: RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.rank_address < 26 THEN
     b := deleteLocationArea(OLD.partition, OLD.place_id);
   END IF;
 
+  --DEBUG: RAISE WARNING 'placex_delete:09 % %',OLD.osm_type,OLD.osm_id;
+
   IF OLD.name is not null THEN
     b := deleteSearchName(OLD.partition, OLD.place_id);
   END IF;
 
+  --DEBUG: RAISE WARNING 'placex_delete:10 % %',OLD.osm_type,OLD.osm_id;
+
   DELETE FROM place_addressline where place_id = OLD.place_id;
+
+  --DEBUG: RAISE WARNING 'placex_delete:11 % %',OLD.osm_type,OLD.osm_id;
 
   -- remove from tables for special search
   classtable := 'place_classtype_' || OLD.class || '_' || OLD.type;
@@ -1796,6 +1789,8 @@ BEGIN
   IF b THEN
     EXECUTE 'DELETE FROM ' || classtable::regclass || ' WHERE place_id = $1' USING OLD.place_id;
   END IF;
+
+  --DEBUG: RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;
 
   RETURN OLD;
 
@@ -1809,7 +1804,7 @@ DECLARE
   placeid BIGINT;
 BEGIN
 
---  RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
+  --DEBUG: RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
 
   -- deleting large polygons can have a massive effect ont he system - require manual intervention to let them through
   IF st_area(OLD.geometry) > 2 THEN
@@ -1820,7 +1815,6 @@ BEGIN
   -- mark for delete
   UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
 
---  delete from placex where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
   RETURN OLD;
 
 END;
@@ -1839,11 +1833,12 @@ DECLARE
   partition INTEGER;
 BEGIN
 
+  --DEBUG: RAISE WARNING '-----------------------------------------------------------------------------------';
+  --DEBUG: RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
+
   IF FALSE and NEW.osm_type = 'R' THEN
-    RAISE WARNING '-----------------------------------------------------------------------------------';
-    RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
     select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
-    RAISE WARNING '%', existingplacex;
+    --DEBUG: RAISE WARNING '%', existingplacex;
   END IF;
 
   -- Just block these - lots and pointless
@@ -1863,7 +1858,7 @@ BEGIN
 
   -- Patch in additional country names
   IF NEW.admin_level = 2 AND NEW.type = 'administrative' AND NEW.country_code is not null THEN
-    select country_name.name || NEW.name from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
+    select coalesce(country_name.name || NEW.name,NEW.name) from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
   END IF;
     
   -- Have we already done this place?
@@ -1879,7 +1874,8 @@ BEGIN
     DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
   END IF;
 
---  RAISE WARNING 'Existing: %',existing.place_id;
+  --DEBUG: RAISE WARNING 'Existing: %',existing.osm_id;
+  --DEBUG: RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;
 
   -- Log and discard 
   IF existing.geometry is not null AND st_isvalid(existing.geometry) 
@@ -1896,29 +1892,11 @@ BEGIN
   DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
   -- To paraphrase, if there isn't an existing item, OR if the admin level has changed, OR if it is a major change in geometry
-  IF existing.osm_type IS NULL 
-     OR existingplacex.osm_type IS NULL
-     OR coalesce(existing.admin_level, 100) != coalesce(NEW.admin_level, 100) 
-     OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
-     OR (existing.geometry::text != NEW.geometry::text AND ST_Distance(ST_Centroid(existing.geometry),ST_Centroid(NEW.geometry)) > 0.01 AND NOT
-     (ST_GeometryType(existing.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')))
-     THEN
-
---  IF existing.osm_type IS NULL THEN
---    RAISE WARNING 'no existing place';
---  END IF;
---  IF existingplacex.osm_type IS NULL THEN
---    RAISE WARNING 'no existing placex %', existingplacex;
---  END IF;
-
---    RAISE WARNING 'delete and replace';
+  IF existingplacex.osm_type IS NULL THEN
 
     IF existing.osm_type IS NOT NULL THEN
---      RAISE WARNING 'insert delete % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,ST_Distance(ST_Centroid(existing.geometry),ST_Centroid(NEW.geometry)),existing;
-      DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-    END IF;   
-
---    RAISE WARNING 'delete and replace2';
+      DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+    END IF;
 
     -- No - process it as a new insertion (hopefully of low rank or it will be slow)
     insert into placex (osm_type, osm_id, class, type, name, admin_level, housenumber, 
@@ -1938,7 +1916,7 @@ BEGIN
         ,NEW.geometry
         );
 
---    RAISE WARNING 'insert done % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
+    --DEBUG: RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;
 
     RETURN NEW;
   END IF;
@@ -1981,13 +1959,13 @@ BEGIN
 
       -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
       update placex set indexed_status = 2 where indexed_status = 0 and 
-          (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
-          AND NOT (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
+          (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
+          AND NOT (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
           AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
       update placex set indexed_status = 2 where indexed_status = 0 and 
-          (ST_Contains(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
-          AND NOT (ST_Contains(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
+          (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
+          AND NOT (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
           AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
     END IF;
@@ -2041,6 +2019,7 @@ BEGIN
      OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
      OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
      OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
+     OR coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
      OR existing.geometry::text != NEW.geometry::text
      THEN
 
@@ -2067,10 +2046,6 @@ BEGIN
       indexed_status = 2,    
       geometry = NEW.geometry
       where place_id = existingplacex.place_id;
-
--- now done as part of insert
---    partition := get_partition(NEW.geometry, existingplacex.country_code);
---    result := update_location(partition, existingplacex.place_id, existingplacex.country_code, NEW.name, existingplacex.rank_search, existingplacex.rank_address, NEW.geometry);
 
   END IF;
 
@@ -2238,14 +2213,14 @@ BEGIN
   END IF;
 
   IF for_place_id IS NULL THEN
-    select parent_place_id, country_code, housenumber, rank_address, postcode, name, class, type from placex 
+    select parent_place_id, calculated_country_code, housenumber, rank_address, postcode, name, class, type from placex 
       WHERE place_id = in_place_id and rank_address = 30 
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 
   IF for_place_id IS NULL THEN
     for_place_id := in_place_id;
-    select country_code, housenumber, rank_address, postcode, null from placex where place_id = for_place_id 
+    select calculated_country_code, housenumber, rank_address, postcode, null from placex where place_id = for_place_id 
       INTO searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
   END IF;
 
@@ -2258,13 +2233,13 @@ BEGIN
       CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
       class, type, admin_level, true as fromarea, true as isaddress,
       CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      0 as distance, country_code
+      0 as distance, calculated_country_code
       from placex
       where place_id = for_place_id 
   LOOP
 --RAISE WARNING '%',location;
-    IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
-      searchcountrycode := location.country_code;
+    IF searchcountrycode IS NULL AND location.calculated_country_code IS NOT NULL THEN
+      searchcountrycode := location.calculated_country_code;
     END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
@@ -2291,17 +2266,17 @@ BEGIN
       CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
       class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      distance,country_code
+      distance,calculated_country_code
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
       and (cached_rank_address > 0 AND cached_rank_address < searchrankaddress)
       and address_place_id != for_place_id
-      and (placex.country_code IS NULL OR searchcountrycode IS NULL OR placex.country_code = searchcountrycode OR rank_address < 4)
+      and (placex.calculated_country_code IS NULL OR searchcountrycode IS NULL OR placex.calculated_country_code = searchcountrycode)
       order by rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc
   LOOP
 --RAISE WARNING '%',location;
-    IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
-      searchcountrycode := location.country_code;
+    IF searchcountrycode IS NULL AND location.calculated_country_code IS NOT NULL THEN
+      searchcountrycode := location.calculated_country_code;
     END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
@@ -2831,6 +2806,104 @@ BEGIN
     i := i + 1;
   END LOOP;
   RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION quad_split_geometry(geometry GEOMETRY, maxarea FLOAT, maxdepth INTEGER) 
+  RETURNS SETOF GEOMETRY
+  AS $$
+DECLARE
+  xmin FLOAT;
+  ymin FLOAT;
+  xmax FLOAT;
+  ymax FLOAT;
+  xmid FLOAT;
+  ymid FLOAT;
+  secgeo GEOMETRY;
+  secbox GEOMETRY;
+  seg INTEGER;
+  geo RECORD;
+  area FLOAT;
+  remainingdepth INTEGER;
+  added INTEGER;
+  
+BEGIN
+
+--  RAISE WARNING 'quad_split_geometry: maxarea=%, depth=%',maxarea,maxdepth;
+
+  IF (ST_GeometryType(geometry) not in ('ST_Polygon','ST_MultiPolygon') OR NOT ST_IsValid(geometry)) THEN
+    RETURN NEXT geometry;
+    RETURN;
+  END IF;
+
+  remainingdepth := maxdepth - 1;
+  area := ST_AREA(geometry);
+  IF remainingdepth < 1 OR area < maxarea THEN
+    RETURN NEXT geometry;
+    RETURN;
+  END IF;
+
+  xmin := st_xmin(geometry);
+  xmax := st_xmax(geometry);
+  ymin := st_ymin(geometry);
+  ymax := st_ymax(geometry);
+  secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(ymin,xmin),ST_Point(ymax,xmax)),4326);
+
+  -- if the geometry completely covers the box don't bother to slice any more
+  IF ST_AREA(secbox) = area THEN
+    RETURN NEXT geometry;
+    RETURN;
+  END IF;
+
+  xmid := (xmin+xmax)/2;
+  ymid := (ymin+ymax)/2;
+
+  added := 0;
+  FOR seg IN 1..4 LOOP
+
+    IF seg = 1 THEN
+      secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(xmin,ymin),ST_Point(xmid,ymid)),4326);
+    END IF;
+    IF seg = 2 THEN
+      secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(xmin,ymid),ST_Point(xmid,ymax)),4326);
+    END IF;
+    IF seg = 3 THEN
+      secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(xmid,ymin),ST_Point(xmax,ymid)),4326);
+    END IF;
+    IF seg = 4 THEN
+      secbox := ST_SetSRID(ST_MakeBox2D(ST_Point(xmid,ymid),ST_Point(xmax,ymax)),4326);
+    END IF;
+
+    IF st_intersects(geometry, secbox) THEN
+      secgeo := st_intersection(geometry, secbox);
+      IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
+        FOR geo IN select quad_split_geometry(secgeo, maxarea, remainingdepth) as geometry LOOP
+          IF NOT ST_IsEmpty(geo.geometry) AND ST_GeometryType(geo.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
+            added := added + 1;
+            RETURN NEXT geo.geometry;
+          END IF;
+        END LOOP;
+      END IF;
+    END IF;
+  END LOOP;
+
+  RETURN;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION split_geometry(geometry GEOMETRY) 
+  RETURNS SETOF GEOMETRY
+  AS $$
+DECLARE
+  geo RECORD;
+BEGIN
+  -- 10000000000 is ~~ 1x1 degree
+  FOR geo IN select quad_split_geometry(geometry, 0.25, 20) as geometry LOOP
+    RETURN NEXT geo.geometry;
+  END LOOP;
+  RETURN;
 END;
 $$
 LANGUAGE plpgsql;

@@ -199,7 +199,8 @@ CREATE TABLE placex (
   indexed_status INTEGER,
   indexed_date TIMESTAMP,
   wikipedia TEXT, -- calculated wikipedia article name (language:title)
-  geometry_sector INTEGER
+  geometry_sector INTEGER,
+  calaculated_country_code varchar(2)
   );
 SELECT AddGeometryColumn('placex', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id);

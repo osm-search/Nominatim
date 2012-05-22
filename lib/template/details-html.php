@@ -114,6 +114,11 @@ if (isset($aPolyPoints))
 	echo ' <div>Coverage: <span class="area">'.($aPointDetails['isarea']=='t'?'Polygon':'Point').'</span></div>';
 	$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 	if ($sOSMType) echo ' <div>OSM: <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
+	if ($aPointDetails['wikipedia'])
+	{
+		list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aPointDetails['wikipedia']);
+		echo ' <div>Wikipedia Calculated: <span class="wikipedia"><a href="http://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'">'.$aPointDetails['wikipedia'].'</a></span></div>';
+	}
 	echo ' <div>Extra Tags: ';
 	foreach($aPointDetails['aExtraTags'] as $sKey => $sValue)
 	{

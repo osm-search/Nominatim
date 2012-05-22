@@ -15,6 +15,8 @@
 
 		array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import using osmosis'),
 		array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import using osmosis forever'),
+		array('no-npi', '', 0, 1, 0, 0, 'bool', 'Do not write npi index files'),
+		array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
 		array('import-npi-all', '', 0, 1, 0, 0, 'bool', 'Import npi pre-indexed files'),
 
@@ -35,7 +37,6 @@
 		array('index-estrate', '', 0, 1, 1, 1, 'int', 'Estimated indexed items per second (def:30)'),
 
 		array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
-		array('no-npi', '', 0, 1, 0, 0, 'bool', 'Do not write npi index files'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
@@ -147,6 +148,8 @@
 	{
 		// Hack into a modify request
 		$sModifyXML = str_replace('<osm version="0.6" generator="OpenStreetMap server">',
+			'<osmChange version="0.6" generator="OpenStreetMap server"><modify>', $sModifyXML);
+		$sModifyXML = str_replace('<osm version=\'0.6\' upload=\'true\' generator=\'JOSM\'>',
 			'<osmChange version="0.6" generator="OpenStreetMap server"><modify>', $sModifyXML);
 		$sModifyXML = str_replace('</osm>', '</modify></osmChange>', $sModifyXML);
 
@@ -360,10 +363,15 @@
 
 				// Archive for debug?
 				unlink($sImportFile);
+//			}
 
-				$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
+			$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
 
-				// Index file
+			// Index file
+			$sThisIndexCmd = $sCMDIndex;
+
+			if (!$aResult['no-npi'])
+			{
 				$fCMDStartTime = time();
 				$iFileID = $oDB->getOne('select nextval(\'file\')');
 				if (PEAR::isError($iFileID))
@@ -376,20 +384,20 @@
 				$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
 
 				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
-				$sThisIndexCmd = $sCMDIndex;
-				if (!$aResult['no-npi']) {
-					$sThisIndexCmd .= $sFileDir;
-					$sThisIndexCmd .= '/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT);
-					$sThisIndexCmd .= ".npi.out";
+				$sThisIndexCmd .= $sFileDir;
+				$sThisIndexCmd .= '/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT);
+				$sThisIndexCmd .= ".npi.out";
 
-					preg_match('#^([0-9]{4})-([0-9]{2})-([0-9]{2})#', $sBatchEnd, $aBatchMatch);
-					$sFileDir = CONST_BasePath.'/export/index/';
-					$sFileDir .= $aBatchMatch[1].'/'.$aBatchMatch[2];
+				preg_match('#^([0-9]{4})-([0-9]{2})-([0-9]{2})#', $sBatchEnd, $aBatchMatch);
+				$sFileDir = CONST_BasePath.'/export/index/';
+				$sFileDir .= $aBatchMatch[1].'/'.$aBatchMatch[2];
 
-					if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
-					file_put_contents($sFileDir.'/'.$aBatchMatch[3].'.idx', "$sBatchEnd\t$iFileID\n", FILE_APPEND);
-				}
+				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
+				file_put_contents($sFileDir.'/'.$aBatchMatch[3].'.idx', "$sBatchEnd\t$iFileID\n", FILE_APPEND);
+			}
 
+			if (!$aResult['no-index'])
+			{
 				echo "$sThisIndexCmd\n";
 				exec($sThisIndexCmd, $sJunk, $iErrorLevel);
 				if ($iErrorLevel)
@@ -398,7 +406,8 @@
 					exit;
 				}
 
-				if (!$aResult['no-npi']) {
+				if (!$aResult['no-npi'])
+				{
 					$sFileDir = CONST_BasePath.'/export/diff/';
 					$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
 					$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
@@ -415,23 +424,23 @@
 					rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",
 						$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.bz2");
 				}
+			}
 
-				echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
-				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
-				$oDB->query($sSQL);
+			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+			$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+			$oDB->query($sSQL);
 
-				$sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
-				$oDB->query($sSQL);
+			$sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
+			$oDB->query($sSQL);
 
+			$fDuration = time() - $fStartTime;
+			echo "Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
+			if (!$aResult['import-osmosis-all']) exit;
 
-				$fDuration = time() - $fStartTime;
-				echo "Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
-				if (!$aResult['import-osmosis-all']) exit;
-//			}
 			echo "Sleeping ".max(0,60-$fDuration)." seconds\n";
 			sleep(max(0,60-$fDuration));
 		}
-		
+
 	}
 
 	if ($aResult['import-npi-all'])

@@ -20,17 +20,21 @@
 		array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
 		array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
 		array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
+		array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
+		array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
 		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
 		array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
+		array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
 		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
 		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
 		array('create-roads', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('osmosis-init-date', '', 0, 1, 1, 1, 'string', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
+		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse opertions during index (EXPERT)'),
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
@@ -137,7 +141,9 @@
 		$bDidSomething = true;
 		if (!file_exists(CONST_BasePath.'/module/nominatim.so')) fail("nominatim module not built");
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}',CONST_BasePath.'/module', $sTemplate);
+		$sTemplate = str_replace('{modulepath}', CONST_BasePath.'/module', $sTemplate);
+		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
+		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
 		pgsqlRunScript($sTemplate);
 	}
 
@@ -265,12 +271,15 @@
 		echo '.';
 
 		// pre-create the word list
-		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
-		echo '.';
-		if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
-		echo '.';
-		if (!pg_query($oDB->connection, 'select count(getorcreate_housenumber_id(v)) from (select distinct housenumber as v from place where housenumber is not null) as w;')) fail(pg_last_error($oDB->connection));
-		echo '.';
+		if (!$aCMDResult['disable-token-precalc'])
+		{
+			if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+			echo '.';
+			if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
+			echo '.';
+			if (!pg_query($oDB->connection, 'select count(getorcreate_housenumber_id(v)) from (select distinct housenumber as v from place where housenumber is not null) as w;')) fail(pg_last_error($oDB->connection));
+			echo '.';
+		}
 
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
@@ -431,7 +440,11 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
-		passthru($sBaseCmd);
+		passthru($sBaseCmd.' -R 4');
+		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
+		passthru($sBaseCmd.' -r 5 -R 25');
+		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
+		passthru($sBaseCmd.' -r 26');
 	}
 
 	if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])

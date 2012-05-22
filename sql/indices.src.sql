@@ -28,5 +28,4 @@ CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country U
 CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid);
 -- end
 
-CREATE UNIQUE INDEX idx_placex_osm_unique on placex using btree(osm_id,osm_type,class,type);
 CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type);

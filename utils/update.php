@@ -46,6 +46,7 @@
 	}
 
 	if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
+	if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
 /*
 	// Lock to prevent multiple copies running
 	if (exec('/bin/ps uww | grep '.basename(__FILE__).' | grep -v /dev/null | grep -v grep -c', $aOutput2, $iResult) > 1)
@@ -317,7 +318,7 @@
 
 	if ($aResult['index'])
 	{
-		index($aResult, $sDatabaseDSN);
+		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 	}
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
@@ -325,10 +326,9 @@
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
 		$sOsmosisCMD = CONST_Osmosis_Binary;
 		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';
-		$sDatabaseName = 'nominatim';
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
-		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$sDatabaseName.' '.$sImportFile;
-		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -t '.$aResult['index-instances'];
+		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sImportFile;
+		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}

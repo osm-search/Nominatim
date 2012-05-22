@@ -105,9 +105,9 @@
 		}
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
+		pgsqlRunDropAndRestore(CONST_BasePath.'/data/country_name.sql.bin');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
+		pgsqlRunDropAndRestore(CONST_BasePath.'/data/country_osm_grid.sql.bin');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
@@ -441,6 +441,7 @@
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
 		passthru($sBaseCmd.' -R 4');
+var_dump($sBaseCmd.' -r 15 -R 15');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthru($sBaseCmd.' -r 5 -R 25');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');

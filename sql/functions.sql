@@ -1225,7 +1225,7 @@ DECLARE
   result BOOLEAN;
 BEGIN
 
-  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 OR NEW.linked_place_id is not null THEN
     RETURN NEW;
   END IF;
 
@@ -1256,7 +1256,7 @@ BEGIN
       RETURN NEW;
     END IF;
 
-    IF OLD.indexed_status > 1 THEN
+    IF OLD.indexed_status > 0 THEN
       result := deleteSearchName(NEW.partition, NEW.place_id);
       DELETE FROM place_addressline WHERE place_id = NEW.place_id;
       DELETE FROM place_boundingbox where place_id = NEW.place_id;
@@ -1630,7 +1630,7 @@ BEGIN
     location_rank_search := 100;
     location_distance := 0;
 -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
-    FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
+    FOR location IN SELECT distinct * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
 
@@ -1662,7 +1662,7 @@ BEGIN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
 --RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
 
-        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+        FOR location IN SELECT distinct * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
 
 --RAISE WARNING '  ISIN: %',location;
 

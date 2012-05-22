@@ -441,7 +441,6 @@
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
 		passthru($sBaseCmd.' -R 4');
-var_dump($sBaseCmd.' -r 15 -R 15');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthru($sBaseCmd.' -r 5 -R 25');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');

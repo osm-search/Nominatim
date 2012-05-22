@@ -30,6 +30,7 @@
 		array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
 		array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
 		array('import-relation', '', 0, 1, 1, 1, 'int', 'Re-import relation'),
+		array('import-from-main-api', '', 0, 1, 0, 0, 'bool', 'Use OSM API instead of Overpass to download objects'),
 
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
 		array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
@@ -132,6 +133,7 @@
 
 	$bModifyXML = false;
 	$sModifyXMLstr = '';
+	$bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
 	if (isset($aResult['import-file']) && $aResult['import-file'])
 	{
 		$bModifyXML = true;
@@ -139,17 +141,39 @@
 	if (isset($aResult['import-node']) && $aResult['import-node'])
 	{
 		$bModifyXML = true;
-		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node']);
+		if ($bUseOSMApi)
+		{
+			$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node']);
+		}
+		else
+		{
+			$sModifyXMLstr = file_get_contents('http://overpass.osm.rambler.ru/cgi/interpreter?data=node('.$aResult['import-node'].');out%20meta;');
+		}
 	}
 	if (isset($aResult['import-way']) && $aResult['import-way'])
 	{
 		$bModifyXML = true;
-		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full');
+		if ($bUseOSMApi)
+		{
+			$sCmd = 'http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
+		}
+		else
+		{
+			$sCmd = 'http://overpass.osm.rambler.ru/cgi/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
+		}
+		$sModifyXMLstr = file_get_contents($sCmd);
 	}
 	if (isset($aResult['import-relation']) && $aResult['import-relation'])
 	{
 		$bModifyXML = true;
-		$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full');
+		if ($bUseOSMApi)
+		{
+			$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full');
+		}
+		else
+		{
+			$sModifyXMLstr = file_get_contents('http://overpass.osm.rambler.ru/cgi/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;');
+		}
 	}
 	if ($bModifyXML)
 	{

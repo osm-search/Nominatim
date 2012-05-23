@@ -270,6 +270,19 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
+		$sSQL = 'select partition from country_name order by country_code';
+		$aPartitions = $oDB->getCol($sSQL);
+		if (PEAR::isError($aPartitions))
+		{
+			fail($aPartitions->getMessage());
+		}
+		$aPartitions[] = 0;
+		foreach($aPartitions as $sPartition)
+		{
+			if (!pg_query($oDB->connection, 'TRUNCATE location_road_'.$sPartition)) fail(pg_last_error($oDB->connection));
+			echo '.';
+		}
+
 		// pre-create the word list
 		if (!$aCMDResult['disable-token-precalc'])
 		{

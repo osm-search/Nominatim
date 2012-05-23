@@ -121,7 +121,11 @@
 		$bDidSomething = true;
 
 		$osm2pgsql = CONST_Osm2pgsql_Binary;
-		if (!file_exists($osm2pgsql)) fail("please download and build osm2pgsql");
+		if (!file_exists($osm2pgsql))
+		{
+			echo "Please download and build osm2pgsql.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
+			fail("osm2pgsql not found in '$osm2pgsql'");
+		}
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
 		$osm2pgsql .= ' -C '.$iCacheMemory;
 		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
@@ -479,7 +483,12 @@
 	{
 		$bDidSomething = true;
 		$sTargetDir = $aCMDResult['create-website'];
-		if (!is_dir($sTargetDir)) fail('please specify a directory to setup');
+		if (!is_dir($sTargetDir))
+		{
+			echo "You must create the website directory before calling this function.\n";
+			fail("Target directory does not exist.");
+		}
+
 		@symlink(CONST_BasePath.'/website/details.php', $sTargetDir.'/details.php');
 		@symlink(CONST_BasePath.'/website/reverse.php', $sTargetDir.'/reverse.php');
 		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/search.php');

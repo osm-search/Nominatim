@@ -145,7 +145,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         writer = nominatim_exportXMLStart(structuredoutputfile);
     }
 
-    fprintf(stderr, "Starting indexing rank (%i to %i) using %i treads\n", rank_min, rank_max, num_threads);
+    fprintf(stderr, "Starting indexing rank (%i to %i) using %i threads\n", rank_min, rank_max, num_threads);
 
     for (rank = rank_min; rank <= rank_max; rank++)
     {

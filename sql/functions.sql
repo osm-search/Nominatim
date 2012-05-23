@@ -598,8 +598,8 @@ BEGIN
     isArea := true;
     centroid := ST_Centroid(geometry);
 
-    FOR geometry IN select split_geometry(geometry) as geometry LOOP
-      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, geometry);
+    FOR secgeo IN select split_geometry(geometry) AS geom LOOP
+      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
     END LOOP;
 
   ELSEIF rank_search < 26 THEN
@@ -2878,10 +2878,10 @@ BEGIN
     IF st_intersects(geometry, secbox) THEN
       secgeo := st_intersection(geometry, secbox);
       IF NOT ST_IsEmpty(secgeo) AND ST_GeometryType(secgeo) in ('ST_Polygon','ST_MultiPolygon') THEN
-        FOR geo IN select quad_split_geometry(secgeo, maxarea, remainingdepth) as geometry LOOP
-          IF NOT ST_IsEmpty(geo.geometry) AND ST_GeometryType(geo.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
+        FOR geo IN select quad_split_geometry(secgeo, maxarea, remainingdepth) as geom LOOP
+          IF NOT ST_IsEmpty(geo.geom) AND ST_GeometryType(geo.geom) in ('ST_Polygon','ST_MultiPolygon') THEN
             added := added + 1;
-            RETURN NEXT geo.geometry;
+            RETURN NEXT geo.geom;
           END IF;
         END LOOP;
       END IF;
@@ -2900,8 +2900,8 @@ DECLARE
   geo RECORD;
 BEGIN
   -- 10000000000 is ~~ 1x1 degree
-  FOR geo IN select quad_split_geometry(geometry, 0.25, 20) as geometry LOOP
-    RETURN NEXT geo.geometry;
+  FOR geo IN select quad_split_geometry(geometry, 0.25, 20) as geom LOOP
+    RETURN NEXT geo.geom;
   END LOOP;
   RETURN;
 END;

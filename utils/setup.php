@@ -105,9 +105,9 @@
 		}
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
-		pgsqlRunDropAndRestore(CONST_BasePath.'/data/country_name.sql.bin');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
-		pgsqlRunDropAndRestore(CONST_BasePath.'/data/country_osm_grid.sql.bin');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');

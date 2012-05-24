@@ -2,8 +2,6 @@
 	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 
-	$oDB =& getDB();
-
         if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
         {
                 $fLoadAvg = getLoadAverage();
@@ -16,10 +14,11 @@
                 }
         }
 
+        $oDB =& getDB();
         ini_set('memory_limit', '200M');
 
         // Format for output
-	$sOutputFormat = 'xml';
+        $sOutputFormat = 'xml';
         if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json' || $_GET['format'] == 'jsonv2'))
         {
                 $sOutputFormat = $_GET['format'];
@@ -56,17 +55,17 @@
 			4 => 4,
 			5 => 8, // State
 			6 => 10, // Region
-			7 => 10, 
+			7 => 10,
 			8 => 12, // County
-			9 => 12,  
+			9 => 12,
 			10 => 17, // City
-			11 => 17, 
+			11 => 17,
 			12 => 18, // Town / Village
-			13 => 18, 
+			13 => 18,
 			14 => 22, // Suburb
 			15 => 22,
 			16 => 26, // Street, TODO: major street?
-			17 => 26, 
+			17 => 26,
 			18 => 30, // or >, Building
 			19 => 30, // or >, Building
 			);
@@ -92,7 +91,7 @@
 			if ($fSearchDiam > 0.008 && $iMaxRank > 22) $iMaxRank = 22;
 			if ($fSearchDiam > 0.001 && $iMaxRank > 26) $iMaxRank = 26;
 
-			$sSQL = 'select place_id,parent_place_id from placex';
+			$sSQL = 'select place_id,parent_place_id,rank_search from placex';
 			$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
 			$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
 			$sSQL .= ' and (name is not null or housenumber is not null)';
@@ -103,6 +102,7 @@
 //var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
 			$iPlaceID = $aPlace['place_id'];
+			$iParentPlaceID = $aPlace['parent_place_id'];
 			if (PEAR::IsError($iPlaceID))
 			{
 				failInternalError("Could not determine closest place.", $sSQL, $iPlaceID); 
@@ -110,25 +110,16 @@
 		}
 
 		// The point we found might be too small - use the address to find what it is a child of
-		if ($iPlaceID)
+		if ($iPlaceID && $iMaxRank < 28)
 		{
-			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc limit 1";
-//var_dump($sSQL);
+			if ($aPlace['rank_search'] > 28 && $iParentPlaceID) {
+				$iPlaceID = $iParentPlaceID;
+			}
+			$sSQL = "select address_place_id from place_addressline where place_id = $iPlaceID order by abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc limit 1";
 			$iPlaceID = $oDB->getOne($sSQL);
 			if (PEAR::IsError($iPlaceID))
 			{
 				failInternalError("Could not get parent for place.", $sSQL, $iPlaceID); 
-			}
-
-			if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
-			{
-				$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
-//var_dump($sSQL);
-				$iPlaceID = $oDB->getOne($sSQL);
-				if (PEAR::IsError($iPlaceID))
-				{
-					failInternalError("Could not get larger parent for place.", $sSQL, $iPlaceID); 
-				}
 			}
 			if (!$iPlaceID)
 			{

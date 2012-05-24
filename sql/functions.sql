@@ -1630,7 +1630,7 @@ BEGIN
     location_rank_search := 100;
     location_distance := 0;
 -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
-    FOR location IN SELECT distinct * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
+    FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
 
@@ -1662,7 +1662,7 @@ BEGIN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
 --RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
 
-        FOR location IN SELECT distinct * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
 
 --RAISE WARNING '  ISIN: %',location;
 

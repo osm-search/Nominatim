@@ -69,7 +69,7 @@
 			18 => 30, // or >, Building
 			19 => 30, // or >, Building
 			);
-		$iMaxRank = isset($aZoomRank[$_GET['zoom']])?$aZoomRank[$_GET['zoom']]:28;
+		$iMaxRank = (isset($_GET['zoom']) && isset($aZoomRank[$_GET['zoom']]))?$aZoomRank[$_GET['zoom']]:28;
 
 		// Find the nearest point
 		$fSearchDiam = 0.0001;
@@ -144,13 +144,20 @@
 			$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
 		}
 		$aClassType = getClassTypes();
-                $sAddressType = '';
-                if (isset($aClassType[$aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level']]))
-                        $sAddressType = $aClassType[$aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level']]['simplelabel'];
-                elseif (isset($aClassType[$aPlace['class'].':'.$aPlace['type']]))
-                        $sAddressType = $aClassType[$aPlace['class'].':'.$aPlace['type']]['simplelabel'];
-                else $sAddressType = $aPlace['class'];
-                $aPlace['addresstype'] = $sAddressType;
+		$sAddressType = '';
+		$sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
+		if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel']))
+		{
+			$sAddressType = $aClassType[$aClassType]['simplelabel'];
+		}
+		else
+		{
+			$sClassType = $aPlace['class'].':'.$aPlace['type'];
+			if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel']))
+				$sAddressType = $aClassType[$sClassType]['simplelabel'];
+			else $sAddressType = $aPlace['class'];
+		}
+		$aPlace['addresstype'] = $sAddressType;
 
 	}
 	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

@@ -92,7 +92,7 @@
 		
 	// Search query
 	$sQuery = (isset($_GET['q'])?trim($_GET['q']):'');
-	if (!$sQuery && $_SERVER['PATH_INFO'] && $_SERVER['PATH_INFO'][0] == '/')
+	if (!$sQuery && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
 	{
 		$sQuery = substr($_SERVER['PATH_INFO'], 1);
 
@@ -452,7 +452,7 @@
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 										}
-										elseif ($aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null)
+										elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null)
 										{
 											if ($aSearch['fLat'] === '')
 											{
@@ -1312,10 +1312,10 @@
 			$bFirst = false;
 		}
 		if (!$bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
-			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['osm_class'].$aResult['name']])))
+			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['name']])))
 		{
 			$aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;
-			$aClassTypeNameDone[$aResult['osm_type'].$aResult['osm_class'].$aResult['name']] = true;
+			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['name']] = true;
 			$aSearchResults[] = $aResult;
 		}
 

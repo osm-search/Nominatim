@@ -17,6 +17,7 @@
 	@define('CONST_ClosedForIndexing', false);
 	@define('CONST_ClosedForIndexingExceptionIPs', '');
 	@define('CONST_BlockedIPs', '');
+	@define('CONST_BulkUserIPs', '');
 
 	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
 	@define('CONST_Tile_Default', 'Mapnik');

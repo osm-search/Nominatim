@@ -5,6 +5,9 @@
 		$aStartTime = explode('.',microtime(true));
 		if (!$aStartTime[1]) $aStartTime[1] = '0';
 
+		$sOutputFormat = '';
+		if (isset($_GET['format'])) $sOutputFormat = $_GET['format'];
+
 		$hLog = array(
 				date('Y-m-d H:i:s',$aStartTime[0]).'.'.$aStartTime[1],
 				$_SERVER["REMOTE_ADDR"],
@@ -14,15 +17,15 @@
 
 		if (CONST_Log_DB)
 		{
-	                // Log
+			// Log
 			if ($sType == 'search')
 			{
-		                $oDB->query('insert into query_log values ('.getDBQuoted($hLog[0]).','.getDBQuoted($hLog[3]).','.getDBQuoted($hLog[1]).')');
+				$oDB->query('insert into query_log values ('.getDBQuoted($hLog[0]).','.getDBQuoted($hLog[3]).','.getDBQuoted($hLog[1]).')');
 			}
 
 			$sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format)';
 			$sSQL .= ' values ('.getDBQuoted($sType).','.getDBQuoted($hLog[0]).','.getDBQuoted($hLog[2]);
-			$sSQL .= ','.getDBQuoted($hLog[1]).','.getDBQuoted($_SERVER['HTTP_USER_AGENT']).','.getDBQuoted(join(',',$aLanguageList)).','.getDBQuoted($_GET['format']).')';
+			$sSQL .= ','.getDBQuoted($hLog[1]).','.getDBQuoted($_SERVER['HTTP_USER_AGENT']).','.getDBQuoted(join(',',$aLanguageList)).','.getDBQuoted($sOutputFormat).')';
 			$oDB->query($sSQL);
 		}
 
@@ -40,7 +43,7 @@
                                 $_GET['lon'].','.
                                 $_GET['zoom'].','.
                                 '"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
-                                '"'.addslashes($_GET['format']).'"'."\n",
+                                '"'.addslashes($sOutputFormat).'"'."\n",
                         FILE_APPEND);
                 }
 		}
@@ -50,9 +53,9 @@
 
 	function logEnd(&$oDB, $hLog, $iNumResults)
 	{
-                $aEndTime = explode('.',microtime(true));
-                if (!$aEndTime[1]) $aEndTime[1] = '0';
-                $sEndTime = date('Y-m-d H:i:s',$aEndTime[0]).'.'.$aEndTime[1];
+		$aEndTime = explode('.',microtime(true));
+		if (!$aEndTime[1]) $aEndTime[1] = '0';
+		$sEndTime = date('Y-m-d H:i:s',$aEndTime[0]).'.'.$aEndTime[1];
 
 		if (CONST_Log_DB)
 		{
@@ -79,7 +82,7 @@
                                 '"'.addslashes($hLog[1]).'",'.
                                 '"'.addslashes($hLog[3]).'",'.
                                 '"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
-                                '"'.addslashes($_GET['format']).'",'.
+                                '"'.addslashes((isset($_GET['format']))?$_GET['format']:'').'",'.
                                 $iNumResults."\n",
                         FILE_APPEND);
 		}

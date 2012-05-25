@@ -332,7 +332,7 @@ form{
 <a href="http://wiki.openstreetmap.org/wiki/Nominatim" target="_blank">Documentation</a> | <a href="http://wiki.openstreetmap.org/wiki/Nominatim/FAQ" 
 target="_blank">FAQ</a></td>
 
-<?php } ?>					<td style="text-align:right;"><?php if ($sQuery) { if ($sReportDescription) {?><div style="text-align:center;"><b>Thank you for your problem report</b></div><?php } else { ?><input type="button" value="Report Problem With Results" onclick="$('report').style.visibility=($('report').style.visibility=='hidden'?'visible':'hidden')"><?php }} ?></td>
+<?php } ?>					<td style="text-align:right;"><?php if ($sQuery) { ?><input type="button" value="Report Problem With Results" onclick="$('report').style.visibility=($('report').style.visibility=='hidden'?'visible':'hidden')"><?php } ?></td>
 				</tr>
 			</table>
 		</form>
@@ -358,7 +358,7 @@ target="_blank">FAQ</a></td>
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			echo ', '.javascript_renderData($aResult['aPolyPoints']);
+			if (isset($aResult['aPolyPoints'])) echo ', '.javascript_renderData($aResult['aPolyPoints']);
 			echo ');\'>';
 		}
 		elseif (isset($aResult['zoom']))
@@ -370,7 +370,7 @@ target="_blank">FAQ</a></td>
 			echo '<div class="result" onClick="panToLatLon('.$aResult['lat'].', '.$aResult['lon'].');">';
 		}
 
-		echo ($aResult['icon']?'<img src="'.$aResult['icon'].'">':'');
+		echo (isset($aResult['icon'])?'<img src="'.$aResult['icon'].'">':'');
 		echo ' <span class="name">'.$aResult['name'].'</span>';
 		echo ' <span class="latlon">'.round($aResult['lat'],3).','.round($aResult['lat'],3).'</span>';
 		echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
@@ -450,7 +450,7 @@ init();
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			echo ', '.javascript_renderData($aResult['aPolyPoints']);
+			if (isset($aResult['aPolyPoints'])) echo ', '.javascript_renderData($aResult['aPolyPoints']);
 			echo ');'."\n";
 		}
 		else

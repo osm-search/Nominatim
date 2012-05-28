@@ -1334,7 +1334,7 @@ BEGIN
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
         -- Is this node part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['n'||NEW.osm_id]
+        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id::integer] and members @> ARRAY['n'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1350,7 +1350,7 @@ BEGIN
 
 --RAISE WARNING 'x1';
         -- Is this node part of a way?
-        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id] LOOP
+        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id::integer] LOOP
 --RAISE WARNING '%', way;
         FOR location IN select * from placex where osm_type = 'W' and osm_id = way.id
         LOOP
@@ -1363,7 +1363,7 @@ BEGIN
 
           -- Is the WAY part of a relation
           IF NEW.parent_place_id IS NULL THEN
-              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
+              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id::integer] and members @> ARRAY['w'||location.osm_id]
               LOOP
                 -- At the moment we only process one type of relation - associatedStreet
                 IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1408,7 +1408,7 @@ BEGIN
 
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'W' THEN
         -- Is this way part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['w'||NEW.osm_id]
+        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id::integer] and members @> ARRAY['w'||NEW.osm_id]
         LOOP
           -- At the moment we only process one type of relation - associatedStreet
           IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
@@ -1630,7 +1630,7 @@ BEGIN
     location_rank_search := 100;
     location_distance := 0;
 -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
-    FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
+    FOR location IN SELECT distinct * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
 
@@ -1662,7 +1662,7 @@ BEGIN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
 --RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
 
-        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+        FOR location IN SELECT distinct * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
 
 --RAISE WARNING '  ISIN: %',location;
 

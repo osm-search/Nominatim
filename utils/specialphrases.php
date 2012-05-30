@@ -42,9 +42,9 @@
 			{
 				foreach($aMatches as $aMatch)
 				{
-					$sLabel = $aMatch[1];
-					$sClass = $aMatch[2];
-					$sType = $aMatch[3];
+					$sLabel = trim($aMatch[1]);
+					$sClass = trim($aMatch[2]);
+					$sType = trim($aMatch[3]);
 					# hack around a bug where building=yes was imported with
 					# quotes into the wiki
 					$sType = preg_replace('/&quot;/', '', $sType);

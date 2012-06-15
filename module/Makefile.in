@@ -1,5 +1,5 @@
 MODULES = nominatim
-PGXS := /usr/lib/postgresql/9.1/lib/pgxs/src/makefiles/pgxs.mk
+PGXS := @POSTGRESQL_PGXS@
 include $(PGXS)
 
 all:

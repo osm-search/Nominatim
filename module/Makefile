@@ -1,9 +1,0 @@
-MODULES = nominatim
-PGXS := /usr/lib/postgresql/9.1/lib/pgxs/src/makefiles/pgxs.mk
-include $(PGXS)
-
-all:
-	chmod 755 nominatim.so
-
-install:
-	@echo Library does not need to be installed.

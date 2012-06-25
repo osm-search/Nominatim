@@ -109,10 +109,9 @@
                 $sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $sQuery);
 		if (isset($aLangPrefOrder['name:en']))		
 		{
-			$sQuery = preg_replace('/\\bil\\b/','illinois', $sQuery);
-			$sQuery = preg_replace('/\\bal\\b/','alabama', $sQuery);
-			$sQuery = preg_replace('/\\bla\\b/','louisiana', $sQuery);
-			$sQuery = preg_replace('/\\bde louisiana\\b/','de la', $sQuery);
+			$sQuery = preg_replace('/,\s*il\s*(,|$)/',', illinois\1', $sQuery);
+			$sQuery = preg_replace('/,\s*al\s*(,|$)/',', alabama\1', $sQuery);
+			$sQuery = preg_replace('/,\s*la\s*(,|$)/',', louisiana\1', $sQuery);
 		}
 
 		// If we have a view box create the SQL

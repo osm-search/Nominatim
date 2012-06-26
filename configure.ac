@@ -21,9 +21,6 @@ AC_PROG_CXX
 dnl pthread
 AX_PTHREAD([], [AC_MSG_ERROR([pthread library required])])
 
-dnl check for zlib library
-AX_CHECK_ZLIB
-
 dnl Check for Geos library
 AX_LIB_GEOS
 if test "x$GEOS_VERSION" = "x" 

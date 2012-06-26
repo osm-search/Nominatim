@@ -1,4 +1,7 @@
-AC_INIT(Nominatim,1.9.9)
+AC_INIT(Nominatim,1.9)
+if git rev-parse HEAD 2>/dev/null >/dev/null; then
+    AC_SUBST([PACKAGE_VERSION], [$PACKAGE_VERSION-git-`git rev-parse --short HEAD`])
+fi
 
 dnl Required autoconf version
 AC_PREREQ(2.61)

@@ -1739,7 +1739,7 @@ DECLARE
   b BOOLEAN;
   classtable TEXT;
 BEGIN
-  RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
+  -- RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
   update placex set linked_place_id = null where linked_place_id = OLD.place_id;
   --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;

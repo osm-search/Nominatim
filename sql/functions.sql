@@ -1806,8 +1806,8 @@ BEGIN
 
   --DEBUG: RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
 
-  -- deleting large polygons can have a massive effect ont he system - require manual intervention to let them through
-  IF st_area(OLD.geometry) > 2 THEN
+  -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
+  IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN
     insert into import_polygon_delete values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
     RETURN NULL;
   END IF;

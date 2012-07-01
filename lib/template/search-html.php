@@ -358,7 +358,7 @@ target="_blank">FAQ</a></td>
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			if (isset($aResult['aPolyPoints'])) echo ', '.javascript_renderData($aResult['aPolyPoints']);
+			if (isset($aResult['aPolyPoints'])) echo ', '.json_encode($aResult['aPolyPoints']);
 			echo ');\'>';
 		}
 		elseif (isset($aResult['zoom']))

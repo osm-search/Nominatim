@@ -597,7 +597,7 @@
     {
         header("Access-Control-Allow-Origin: *");
 
-        $jsonout = json_encode($xVal, JSON_UNESCAPED_UNICODE);
+        $jsonout = json_encode($xVal);
 
 		if( ! isset($_GET['json_callback'])) {
 			header("Content-Type: application/json; charset=UTF-8");

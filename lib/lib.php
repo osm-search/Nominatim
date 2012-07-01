@@ -592,45 +592,25 @@
 	}
 	
 	
-        function javascript_isarray($xVal)
-        {
-                if (!is_array($xVal)) return false;
-                for($i = 0; $i < sizeof($xVal); $i++)
-                {
-                        if (!array_key_exists($i, $xVal)) return false;
-                }
-                return true;
-        }
 
-        function javascript_renderData($xVal, $bForceHash = false)
-        {
-                if (is_array($xVal))
-                {
-                        $aVals = array();
-                        if (javascript_isarray($xVal) && !$bForceHash)
-                        {
-                                foreach($xVal as $sKey => $xData)
-                                {
-                                        $aVals[] = javascript_renderData($xData);
-                                }
-                                return '['.join(',',$aVals).']';
-                        }
-                        else
-                        {
-                                foreach($xVal as $sKey => $xData)
-                                {
-                                        $aVals[] = '"'.addslashes($sKey).'"'.':'.javascript_renderData($xData);
-                                }
-                                return '{'.join(',',$aVals).'}';
-                        }
-                }
-                else
-                {
-                        if (is_bool($xVal)) return $xVal?'true':'false';
-//			if (is_numeric($xVal)) return $xVal;
-                        return '"'.str_replace('>','\\>',str_replace(array("\n","\r"),'\\n',str_replace(array("\n\r","\r\n"),'\\n',str_replace('"','\\"',$xVal)))).'"';
-                }
-        }
+    function javascript_renderData($xVal)
+    {
+        header("Access-Control-Allow-Origin: *");
+
+        $jsonout = json_encode($xVal, JSON_UNESCAPED_UNICODE);
+
+		if( ! isset($_GET['json_callback'])) {
+			header("Content-Type: application/json; charset=UTF-8");
+			echo $jsonout;
+		} else {
+			if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u',$_GET['json_callback'])) {
+				header("Content-Type: application/javascript; charset=UTF-8");
+				echo $_GET['json_callback'].'('.$jsonout.')';
+			} else {
+				header('HTTP/1.0 400 Bad Request');
+			}
+		}
+    }
 
 	function _debugDumpGroupedSearches($aData, $aTokens)
 	{

@@ -1,7 +1,4 @@
 <?php
-	header ("Content-Type: application/json; charset=UTF-8");
-	header("Access-Control-Allow-Origin: *");
-
 	$aFilteredPlaces = array();
 
 	if (!sizeof($aPlace))
@@ -27,13 +24,5 @@
 		if ($bShowAddressDetails) $aFilteredPlaces['address'] = $aAddress;
 	}
 
-	if (isset($_GET['json_callback']) && preg_match('/^[-A-Za-z0-9:_.]+$/',$_GET['json_callback']))
-	{
-		echo $_GET['json_callback'].'('.javascript_renderData($aFilteredPlaces).')';
-	}
-	else
-	{
-		echo javascript_renderData($aFilteredPlaces);
-	}
-
+	javascript_renderData($aFilteredPlaces);
 

@@ -33,7 +33,7 @@
 	$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
 	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
-	$aLangPrefOrder = getPrefferedLangauges();
+	$aLangPrefOrder = getPreferredLanguages();
 	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
 	$hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);

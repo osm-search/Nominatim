@@ -37,7 +37,7 @@
 	$bShowAddressDetails = isset($_GET['addressdetails']) && $_GET['addressdetails'];
 
 	// Prefered language	
-	$aLangPrefOrder = getPrefferedLangauges();
+	$aLangPrefOrder = getPreferredLanguages();
 	if (isset($aLangPrefOrder['name:de'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ru'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ja'])) $bReverseInPlan = true;

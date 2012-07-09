@@ -29,7 +29,7 @@
 	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
 
         // Prefered language
-        $aLangPrefOrder = getPrefferedLangauges();
+        $aLangPrefOrder = getPreferredLanguages();
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);

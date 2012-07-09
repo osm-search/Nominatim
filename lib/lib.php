@@ -94,7 +94,7 @@
 		return ($a['foundorder'] < $b['foundorder']?-1:1);
 	}
 
-	function getPrefferedLangauges()
+	function getPreferredLanguages()
 	{
 		// If we have been provided the value in $_GET it overrides browser value
 		if (isset($_GET['accept-language']) && $_GET['accept-language'])

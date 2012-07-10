@@ -273,7 +273,7 @@
 		return false;
 
 		/*
-			$fTotalFac is a suprisingly good indicator of accuracy
+			$fTotalFac is a surprisingly good indicator of accuracy
 			$iZoom = 18 + round(log($fTotalFac,32));
 			$iZoom = max(13,min(18,$iZoom));
 		*/

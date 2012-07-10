@@ -36,7 +36,7 @@
 	// Show address breakdown
 	$bShowAddressDetails = isset($_GET['addressdetails']) && $_GET['addressdetails'];
 
-	// Prefered language	
+	// Preferred language	
 	$aLangPrefOrder = getPreferredLanguages();
 	if (isset($aLangPrefOrder['name:de'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ru'])) $bReverseInPlan = true;
@@ -96,7 +96,7 @@
 	{
 		$sQuery = substr($_SERVER['PATH_INFO'], 1);
 
-		// reverse order of '/' seperated string
+		// reverse order of '/' separated string
 		$aPhrases = explode('/', $sQuery);		
 		$aPhrases = array_reverse($aPhrases); 
 		$sQuery = join(', ',$aPhrases);

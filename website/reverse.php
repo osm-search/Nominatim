@@ -28,7 +28,7 @@
 	$bShowAddressDetails = true;
 	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
 
-        // Prefered language
+        // Preferred language
         $aLangPrefOrder = getPreferredLanguages();
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 

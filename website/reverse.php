@@ -28,8 +28,8 @@
 	$bShowAddressDetails = true;
 	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
 
-        // Prefered language
-        $aLangPrefOrder = getPrefferedLangauges();
+        // Preferred language
+        $aLangPrefOrder = getPreferredLanguages();
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
@@ -101,12 +101,12 @@
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 //var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
-			$iPlaceID = $aPlace['place_id'];
-			$iParentPlaceID = $aPlace['parent_place_id'];
-			if (PEAR::IsError($iPlaceID))
+			if (PEAR::IsError($aPlace))
 			{
 				failInternalError("Could not determine closest place.", $sSQL, $iPlaceID); 
 			}
+			$iPlaceID = $aPlace['place_id'];
+			$iParentPlaceID = $aPlace['parent_place_id'];
 		}
 
 		// The point we found might be too small - use the address to find what it is a child of

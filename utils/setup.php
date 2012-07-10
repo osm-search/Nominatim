@@ -34,7 +34,7 @@
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('osmosis-init-date', '', 0, 1, 1, 1, 'string', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
-		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse opertions during index (EXPERT)'),
+		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
@@ -43,7 +43,7 @@
 
 	$bDidSomething = false;
 
-	// This is a pretty hard core defult - the number of processors in the box - 1
+	// This is a pretty hard core default - the number of processors in the box - 1
 	$iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
 	if ($iInstances < 1)
 	{
@@ -520,7 +520,7 @@
 	{
 		if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
-		// Convert database DSN to psql paramaters
+		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
@@ -548,7 +548,7 @@
 
 	function pgsqlRunScript($sScript)
 	{
-		// Convert database DSN to psql paramaters
+		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
@@ -572,7 +572,7 @@
 
 	function pgsqlRunRestoreData($sDumpFile)
 	{
-		// Convert database DSN to psql paramaters
+		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
@@ -600,7 +600,7 @@
 
 	function pgsqlRunDropAndRestore($sDumpFile)
 	{
-		// Convert database DSN to psql paramaters
+		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;

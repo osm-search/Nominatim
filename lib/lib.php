@@ -94,7 +94,7 @@
 		return ($a['foundorder'] < $b['foundorder']?-1:1);
 	}
 
-	function getPrefferedLangauges()
+	function getPreferredLanguages()
 	{
 		// If we have been provided the value in $_GET it overrides browser value
 		if (isset($_GET['accept-language']) && $_GET['accept-language'])
@@ -273,7 +273,7 @@
 		return false;
 
 		/*
-			$fTotalFac is a suprisingly good indicator of accuracy
+			$fTotalFac is a surprisingly good indicator of accuracy
 			$iZoom = 18 + round(log($fTotalFac,32));
 			$iZoom = max(13,min(18,$iZoom));
 		*/

@@ -10,7 +10,7 @@
                 array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
                 array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
                 array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-                array('countries', '', 0, 1, 0, 0, 'bool', 'Create import script for coutry codes and names'),
+                array('countries', '', 0, 1, 0, 0, 'bool', 'Create import script for country codes and names'),
                 array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
         );
         getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);

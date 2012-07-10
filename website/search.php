@@ -53,7 +53,7 @@
 		}
 	}
 
-  // Only certain ranks of feature
+	// Only certain ranks of feature
 	if (isset($_GET['featureType']) && !isset($_GET['featuretype'])) $_GET['featuretype'] = $_GET['featureType'];
 
 	if (isset($_GET['featuretype']))
@@ -446,7 +446,7 @@
 											if ($aSearch['sCountryCode'] === false)
 											{
 												$aSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
-												// Country is almost always at the end of the string - increase score for finding it anywhere else (opimisation)
+												// Country is almost always at the end of the string - increase score for finding it anywhere else (optimisation)
 												if ($iWordset+1 != sizeof($aPhrases[$iPhrase]['wordsets']) || $iPhrase+1 != sizeof($aPhrases)) $aSearch['iSearchRank'] += 5;
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}

@@ -769,6 +769,13 @@ BEGIN
           -- null record of right type
           select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::INTEGER and type = 'house' limit 1 INTO nextnode;
           select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from planet_osm_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
+          IF nextnode.geometry IS NULL THEN
+            -- we don't have any information about this point, most likely
+            -- because an excerpt was updated and the node never imported
+            -- because the interpolation is outside the region of the excerpt.
+            -- Give up.
+            RETURN newpoints;
+          END IF;
         ELSE
           select * from placex where place_id = search_place_id INTO nextnode;
         END IF;

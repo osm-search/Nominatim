@@ -12,6 +12,7 @@
 
 		array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
 		array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+		array('country', '', 0, 1, 1, 1, 'string', 'Import static data only for this country code, default to all country (eg: "de" for Germany)'),
 
 		array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
@@ -108,10 +109,16 @@
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		if (!$aCMDResult['country'] || $aCMDResult['country'] == 'gb')
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
+		}
+		if (!$aCMDResult['country'] || $aCMDResult['country'] == 'us')
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		}
 		pgsqlRunScriptFile(CONST_BasePath.'/data/worldboundaries.sql');
 	}
 

@@ -1220,6 +1220,8 @@ DECLARE
 
   location_rank_search INTEGER;
   location_distance FLOAT;
+  location_parent GEOMETRY;
+  location_isaddress BOOLEAN;
 
   tagpairid INTEGER;
 
@@ -1634,24 +1636,37 @@ BEGIN
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
     -- Process area matches
-    location_rank_search := 100;
+    location_rank_search := 0;
     location_distance := 0;
--- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
+    location_parent := NULL;
+    -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
     FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
 
-      IF location.rank_search < location_rank_search THEN
-        location_rank_search := location.rank_search;
+      IF location.rank_address != location_rank_search THEN
+        location_rank_search := location.rank_address;
         location_distance := location.distance * 1.5;
       END IF;
 
       IF location.distance < location_distance OR NOT location.isguess THEN
 
+        location_isaddress := NOT address_havelevel[location.rank_address];
+        IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
+            location_isaddress := ST_Contains(location_parent,location.centroid);
+        END IF;
+
+        -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
         -- Add it to the list of search terms
         nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-        INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, NOT address_havelevel[location.rank_address], location.distance, location.rank_address); 
-        address_havelevel[location.rank_address] := true;
+        INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
+
+        IF location_isaddress THEN
+            address_havelevel[location.rank_address] := true;
+            IF NOT location.isguess THEN
+                SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
+            END IF;
+        END IF;
 
 --RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
 
@@ -1690,13 +1705,13 @@ BEGIN
     -- for long ways we should add search terms for the entire length
     IF st_length(NEW.geometry) > 0.05 THEN
 
-      location_rank_search := 100;
+      location_rank_search := 0;
       location_distance := 0;
 
       FOR location IN SELECT * from getNearFeatures(NEW.partition, NEW.geometry, search_maxrank, isin_tokens) LOOP
 
-        IF location.rank_search < location_rank_search THEN
-          location_rank_search := location.rank_search;
+        IF location.rank_address != location_rank_search THEN
+          location_rank_search := location.rank_address;
           location_distance := location.distance * 1.5;
         END IF;
 

@@ -1629,7 +1629,7 @@ BEGIN
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
     -- Process area matches
-    location_rank_search := 100;
+    location_rank_search := 0;
     location_distance := 0;
     location_parent := NULL;
     -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
@@ -1637,9 +1637,9 @@ BEGIN
 
 --RAISE WARNING '  AREA: %',location;
 
-      IF location.rank_search < location_rank_search THEN
-        location_rank_search := location.rank_search;
-        location_distance := location.distance * 0.5;
+      IF location.rank_address != location_rank_search THEN
+        location_rank_search := location.rank_address;
+        location_distance := location.distance * 1.5;
       END IF;
 
       IF location.distance < location_distance OR NOT location.isguess THEN
@@ -1698,14 +1698,14 @@ BEGIN
     -- for long ways we should add search terms for the entire length
     IF st_length(NEW.geometry) > 0.05 THEN
 
-      location_rank_search := 100;
+      location_rank_search := 0;
       location_distance := 0;
 
       FOR location IN SELECT * from getNearFeatures(NEW.partition, NEW.geometry, search_maxrank, isin_tokens) LOOP
 
-        IF location.rank_search < location_rank_search THEN
-          location_rank_search := location.rank_search;
-          location_distance := location.distance * 0.5;
+        IF location.rank_address != location_rank_search THEN
+          location_rank_search := location.rank_address;
+          location_distance := location.distance * 1.5;
         END IF;
 
         IF location.distance < location_distance THEN

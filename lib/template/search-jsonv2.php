@@ -36,6 +36,7 @@
 		$aPlace['lat'] = $aPointDetails['lat'];
 		$aPlace['lon'] = $aPointDetails['lon'];
 		$aPlace['display_name'] = $aPointDetails['name'];
+		$aPlace['place_rank'] = $aResult['rank_search'];
 
 		$aPlace['category'] = $aPointDetails['class'];
 		$aPlace['type'] = $aPointDetails['type'];

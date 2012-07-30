@@ -369,8 +369,7 @@ void *nominatim_indexThread(void * thread_data_in)
 			{
 		            fprintf(stderr, "index_placex: UPDATE failed: %s", PQerrorMessage(thread_data->conn));
 		            PQclear(res);
-                            sleep(rand() % 10);
-//		            exit(EXIT_FAILURE);
+		            exit(EXIT_FAILURE);
 			}
 		}
         }

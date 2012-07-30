@@ -129,7 +129,7 @@
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
 		$osm2pgsql .= ' -C '.$iCacheMemory;
 		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
-		passthru($osm2pgsql);
+		passthruCheckReturn($osm2pgsql);
 
 		$oDB =& getDB();
 		$x = $oDB->getRow('select * from place limit 1');
@@ -457,11 +457,11 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$iInstances.$sOutputFile;
-		passthru($sBaseCmd.' -R 4');
+		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 5 -R 25');
+		passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
-		passthru($sBaseCmd.' -r 26');
+		passthruCheckReturn($sBaseCmd.' -r 26');
 	}
 
 	if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])
@@ -624,4 +624,11 @@
 		fclose($ahPipes[1]);
 
 		proc_close($hProcess);
+	}
+
+	function passthruCheckReturn($cmd)
+	{
+		$result = -1;
+		passthru($cmd, $result);
+		if ($result != 0) fail('Error executing external command: '.$cmd);
 	}

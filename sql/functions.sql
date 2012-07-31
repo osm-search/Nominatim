@@ -2235,14 +2235,14 @@ BEGIN
   END IF;
 
   IF for_place_id IS NULL THEN
-    select parent_place_id, calculated_country_code, housenumber, rank_address, postcode, name, class, type from placex 
+    select parent_place_id, calculated_country_code, housenumber, rank_search, postcode, name, class, type from placex 
       WHERE place_id = in_place_id and rank_address = 30 
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 
   IF for_place_id IS NULL THEN
     for_place_id := in_place_id;
-    select calculated_country_code, housenumber, rank_address, postcode, null from placex where place_id = for_place_id 
+    select calculated_country_code, housenumber, rank_search, postcode, null from placex where place_id = for_place_id 
       INTO searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
   END IF;
 

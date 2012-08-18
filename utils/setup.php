@@ -357,6 +357,8 @@
 	{
 		$bDidSomething = true;
 
+		pgsqlRunScriptFile(CONST_BasePath.'/sql/tiger_import_start.sql');
+
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{
@@ -405,6 +407,9 @@
 			}
 			echo "\n";
 		}
+
+		echo "Creating indexes\n";
+		pgsqlRunScriptFile(CONST_BasePath.'/sql/tiger_import_finish.sql');
 	}
 
 	if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])

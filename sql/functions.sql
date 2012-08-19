@@ -2178,7 +2178,7 @@ BEGIN
 
   FOR location IN select * from get_addressdata(for_place_id) where isaddress order by rank_address desc LOOP
     currresult := trim(get_name_by_language(location.name, languagepref));
-    IF currresult != prevresult AND currresult IS NOT NULL THEN
+    IF currresult != prevresult AND currresult IS NOT NULL AND result[(100 - location.rank_address)] IS NULL THEN
       result[(100 - location.rank_address)] := trim(get_name_by_language(location.name, languagepref));
       prevresult := currresult;
     END IF;

@@ -1639,6 +1639,8 @@ BEGIN
     location_rank_search := 0;
     location_distance := 0;
     location_parent := NULL;
+    -- added ourself as address already
+    address_havelevel[NEW.rank_address] := true;
     -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
     FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 

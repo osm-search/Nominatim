@@ -133,6 +133,8 @@
 			$aCoOrdinates[1] += $fWidth;
 			$aCoOrdinates[3] -= $fWidth;
 			$sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aCoOrdinates[0].",".(float)$aCoOrdinates[1]."),ST_Point(".(float)$aCoOrdinates[2].",".(float)$aCoOrdinates[3].")),4326)";
+		} else {
+			$bBoundingBoxSearch = false;
 		}
 		if (isset($_GET['route']) && $_GET['route'] && isset($_GET['routewidth']) && $_GET['routewidth'])
 		{
@@ -703,22 +705,22 @@
 								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
 								if ($oDB->getOne($sSQL))
 								{
-								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType'];								
+								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-								$sSQL .= " where st_contains($sViewboxSmallSQL, centroid)";
+								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
-								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
+								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
 
 								if (!sizeof($aPlaceIDs))
 								{
-									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType'];								
+									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-									$sSQL .= " where st_contains($sViewboxLargeSQL, centroid)";
+									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
-									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
+									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);

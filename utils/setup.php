@@ -43,6 +43,27 @@
 
 	$bDidSomething = false;
 
+	// Check if osm-file is set and points to a valid file if --all or --import-data is given
+	if ($aCMDResult['import-data'] || $aCMDResult['all'])
+	{
+		echo $aCMDResult['osm-file'];
+		if (!isset($aCMDResult['osm-file']))
+		{
+			fail('missing --osm-file for data import');
+		}
+
+		if (!file_exists($aCMDResult['osm-file']))
+		{
+			fail('the path supplied to --osm-file does not exist');
+		}
+
+		if (!is_readable($aCMDResult['osm-file']))
+		{
+			fail('osm-file "'.$aCMDResult['osm-file'].'" not readable');
+		}
+	}
+
+
 	// This is a pretty hard core default - the number of processors in the box - 1
 	$iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
 	if ($iInstances < 1)

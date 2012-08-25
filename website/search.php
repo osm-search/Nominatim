@@ -1268,7 +1268,7 @@
 		{
 			if (stripos($sAddress, $sWord)!==false) $iCountWords++;
 		}
-		$aResult['importance'] = $aResult['importance'] + $iCountWords;
+		$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
 
 //if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
 /*

@@ -450,7 +450,11 @@ init();
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			if (isset($aResult['aPolyPoints'])) echo ', '.javascript_renderData($aResult['aPolyPoints']);
+			if (isset($aResult['aPolyPoints']))
+			{
+				echo ', ';
+				echo javascript_renderData($aResult['aPolyPoints']);
+			}
 			echo ');'."\n";
 		}
 		else

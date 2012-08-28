@@ -1,14 +1,3 @@
-$registry = Zend_Registry::getInstance();
-        if (!isset($registry[__CLASS__])) {
-            require_once 'ZendX/JQuery/View/Helper/JQuery/Container.php';
-            $container = new ZendX_JQuery_View_Helper_JQuery_Container();
-            $registry[__CLASS__] = $container;
-        }
-        $this->_container = $registry[__CLASS__];
-
-
-
-
 #!/usr/bin/php -Cq
 <?php
 

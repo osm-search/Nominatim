@@ -1271,6 +1271,7 @@ BEGIN
       DELETE FROM place_boundingbox where place_id = NEW.place_id;
       result := deleteRoad(NEW.partition, NEW.place_id);
       result := deleteLocationArea(NEW.partition, NEW.place_id);
+      UPDATE placex set linked_place_id = null, indexed_status = 2 where linked_place_id = NEW.place_id and indexed_status = 0;
       UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 
@@ -1765,9 +1766,9 @@ DECLARE
 BEGIN
   -- RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
-  update placex set linked_place_id = null where linked_place_id = OLD.place_id;
+  update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
   --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;
-  update placex set indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
+  update placex set linked_place_id = null where linked_place_id = OLD.place_id;
   --DEBUG: RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.rank_address < 30 THEN

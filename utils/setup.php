@@ -1,3 +1,14 @@
+$registry = Zend_Registry::getInstance();
+        if (!isset($registry[__CLASS__])) {
+            require_once 'ZendX/JQuery/View/Helper/JQuery/Container.php';
+            $container = new ZendX_JQuery_View_Helper_JQuery_Container();
+            $registry[__CLASS__] = $container;
+        }
+        $this->_container = $registry[__CLASS__];
+
+
+
+
 #!/usr/bin/php -Cq
 <?php
 
@@ -12,6 +23,7 @@
 
 		array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
 		array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+		array('serial-threads', '', 0, 1, 1, 1, 'int', 'Number of serial threads for data-import'),
 
 		array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
@@ -74,6 +86,12 @@
 	{
 		$iInstances = getProcessorCount();
 		echo "WARNING: resetting threads to $iInstances\n";
+	}
+	$iSerialInstances = isset($aCMDResult['serial-threads'])?$aCMDResult['serial-threads']:1;
+	if ($iSerialInstances < 1)
+	{
+		$iSerialInstances = 1;
+		echo "WARNING: resetting serial-threads to $iSerialInstances\n";
 	}
 
 	// Assume we can steal all the cache memory in the box (unless told otherwise)
@@ -318,26 +336,28 @@
 			echo '.';
 		}
 
-		$aDBInstances = array();
-		for($i = 0; $i < $iInstances; $i++)
-		{
-			$aDBInstances[$i] =& getDB(true);
-			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-			$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
-			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
-			if ($aCMDResult['verbose']) echo "$sSQL\n";
-			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
-		}
-		$bAnyBusy = true;
-		while($bAnyBusy)
-		{
-			$bAnyBusy = false;
+		for($j=0; $j < $iSerialInstances;$j++) {
+			$aDBInstances = array();
 			for($i = 0; $i < $iInstances; $i++)
 			{
-				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+				$aDBInstances[$i] =& getDB(true);
+				$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+				$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
+				$sSQL .= 'geometry) select * from place where osm_id % '.($iSerialInstances*$iInstances).' = '.($j*$iInstances+$i);
+				if ($aCMDResult['verbose']) echo "$sSQL\n";
+				if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 			}
-			sleep(1);
-			echo '.';
+			$bAnyBusy = true;
+			while($bAnyBusy)
+			{
+				$bAnyBusy = false;
+				for($i = 0; $i < $iInstances; $i++)
+				{
+					if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+				}
+				sleep(1);
+				echo '.';
+			}
 		}
 		echo "\n";
 		echo "Reanalysing database...\n";

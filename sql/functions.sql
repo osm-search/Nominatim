@@ -1271,8 +1271,6 @@ BEGIN
       DELETE FROM place_boundingbox where place_id = NEW.place_id;
       result := deleteRoad(NEW.partition, NEW.place_id);
       result := deleteLocationArea(NEW.partition, NEW.place_id);
-      UPDATE placex set indexed_status = 2 where parent_place_id = NEW.place_id and indexed_status = 0 and rank_search > 28;
-      UPDATE placex set linked_place_id = null, indexed_status = 2 where linked_place_id = NEW.place_id and indexed_status = 0;
       UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 

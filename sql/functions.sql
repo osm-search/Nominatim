@@ -1234,6 +1234,13 @@ DECLARE
   result BOOLEAN;
 BEGIN
 
+  -- deferred delete
+  IF OLD.indexed_status = 100 THEN
+    --DEBUG: RAISE WARNING 'placex_update_delete % %',NEW.osm_type,NEW.osm_id;
+    delete from placex where place_id = OLD.place_id;
+    RETURN NULL;
+  END IF;
+
   IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 OR NEW.linked_place_id is not null THEN
     RETURN NEW;
   END IF;
@@ -1246,13 +1253,6 @@ BEGIN
   IF NEW.class = 'place' AND NEW.type = 'postcodearea' THEN
     -- Silently do nothing
     RETURN NEW;
-  END IF;
-
-  -- deferred delete
-  IF OLD.indexed_status = 100 THEN
-    --DEBUG: RAISE WARNING 'placex_update_delete % %',NEW.osm_type,NEW.osm_id;
-    delete from placex where place_id = OLD.place_id;
-    RETURN NULL;
   END IF;
 
   IF OLD.indexed_status != 0 THEN

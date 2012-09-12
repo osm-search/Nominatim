@@ -8,7 +8,7 @@
 
 	echo "<searchresults";
 	echo " timestamp='".date(DATE_RFC822)."'";
-	echo " attribution='Data Copyright OpenStreetMap Contributors, Some Rights Reserved. CC-BY-SA 2.0.'";
+	echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 	echo " querystring='".htmlspecialchars($sQuery, ENT_QUOTES)."'";
 	if (isset($sViewBox)) echo " viewbox='".htmlspecialchars($sViewBox, ENT_QUOTES)."'";
 	echo " polygon='".($bShowPolygons?'true':'false')."'";

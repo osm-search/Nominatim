@@ -8,7 +8,7 @@
 
 	echo "<reversegeocode";
 	echo " timestamp='".date(DATE_RFC822)."'";
-	echo " attribution='Data Copyright OpenStreetMap Contributors, Some Rights Reserved. CC-BY-SA 2.0.'";
+	echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 	echo " querystring='".htmlspecialchars($_SERVER['QUERY_STRING'], ENT_QUOTES)."'";
 	echo ">\n";
 

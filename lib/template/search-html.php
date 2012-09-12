@@ -295,7 +295,8 @@ form{
 									"moveend": mapEventMove
 								}
             	} );
-			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
+			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default",
+                         { attribution : '© <a target="_parent" href="http://www.openstreetmap.org">OpenStreetMap</a> and contributors, under an <a target="_parent" href="http://www.openstreetmap.org/copyright">open license</a>'}));
 
 			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
 			layer_style.fillOpacity = 0.2;

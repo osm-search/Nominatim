@@ -7,7 +7,8 @@ foreach ($aParentOfLines as $aAddressLine) {
         'osm_id' => $aAddressLine['osm_id'],
         'display_name' => trim($aAddressLine['localname']) ? $aAddressLine['localname'] : 'No Name',
         'lat' => $aAddressLine['lat'],
-        'lon' => $aAddressLine['lon']
+        'lon' => $aAddressLine['lon'],
+        'short_name' => $aPointDetails['localname']
     );
     
     $aFilteredPlaces[] = $aPlace;

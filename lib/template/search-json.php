@@ -36,6 +36,9 @@
 		$aPlace['lat'] = $aPointDetails['lat'];
 		$aPlace['lon'] = $aPointDetails['lon'];
 		$aPlace['display_name'] = $aPointDetails['name'];
+		
+		//add shortname for further use
+		$aPlace['short_name'] = $aPointDetails['placename'];
 
 		$aPlace['class'] = $aPointDetails['class'];
 		$aPlace['type'] = $aPointDetails['type'];

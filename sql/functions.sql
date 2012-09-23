@@ -1504,23 +1504,29 @@ BEGIN
 -- RAISE WARNING 'get_osm_rel_members, label';
       FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
 
-        select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 into linkedPlacex;
+        FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
 
-        -- If we don't already have one use this as the centre point of the geometry
-        IF NEW.centroid IS NULL THEN
-          NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-        END IF;
+          -- If we don't already have one use this as the centre point of the geometry
+          IF NEW.centroid IS NULL THEN
+            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+          END IF;
 
-        -- merge in the label name, re-init word vector
-        NEW.name := linkedPlacex.name || NEW.name;
-        name_vector := make_keywords(NEW.name);
+          -- merge in the label name, re-init word vector
+          IF NOT linkedPlacex.name IS NULL THEN
+            NEW.name := linkedPlacex.name || NEW.name;
+            name_vector := make_keywords(NEW.name);
+          END IF;
 
-        -- merge in extra tags
-        NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+          -- merge in extra tags
+          IF NOT linkedPlacex.extratags IS NULL THEN
+            NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+          END IF;
 
-        -- mark the linked place (excludes from search results)
-        UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+          -- mark the linked place (excludes from search results)
+          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+        END LOOP;
 
       END LOOP;
 
@@ -1528,33 +1534,39 @@ BEGIN
 
         FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
 
-          select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 into linkedPlacex;
+          FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
 
-          -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
-          -- But that can be fixed by explicitly setting the label in the data
-          IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
-            AND NEW.rank_search = linkedPlacex.rank_search THEN
+            -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
+            -- But that can be fixed by explicitly setting the label in the data
+            IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
+              AND NEW.rank_search = linkedPlacex.rank_search THEN
 
 
-            -- If we don't already have one use this as the centre point of the geometry
-            IF NEW.centroid IS NULL THEN
-              NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+              -- If we don't already have one use this as the centre point of the geometry
+              IF NEW.centroid IS NULL THEN
+                NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+              END IF;
+
+              -- merge in the name, re-init word vector
+              IF NOT linkedPlacex.name IS NULL THEN
+                NEW.name := linkedPlacex.name || NEW.name;
+                name_vector := make_keywords(NEW.name);
+              END IF;
+
+              -- merge in extra tags
+              IF NOT linkedPlacex.extratags IS NULL THEN
+                NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+              END IF;
+
+              -- mark the linked place (excludes from search results)
+              UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+              -- keep a note of the node id in case we need it for wikipedia in a bit
+              linked_node_id := linkedPlacex.osm_id;
             END IF;
 
-            -- merge in the name, re-init word vector
-            NEW.name := linkedPlacex.name || NEW.name;
-            name_vector := make_keywords(NEW.name);
-
-            -- merge in extra tags
-            NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-
-            -- mark the linked place (excludes from search results)
-            UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-            -- keep a note of the node id in case we need it for wikipedia in a bit
-            linked_node_id := linkedPlacex.osm_id;
-          END IF;
+          END LOOP;
 
         END LOOP;
 

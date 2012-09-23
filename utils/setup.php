@@ -457,7 +457,12 @@
 
 		if (!file_exists(CONST_Osmosis_Binary)) fail("please download osmosis");
 		if (file_exists(CONST_BasePath.'/settings/configuration.txt')) echo "settings/configuration.txt already exists\n";
-		else passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
+		else
+		{
+			passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
+			// server layout changed afer license change, fix path to minutely diffs
+			passthru("sed -i 's:minute-replicate:replication/minute:' ".CONST_BasePath.'/settings/configuration.txt');
+		}
 
 		$sDate = $aCMDResult['osmosis-init-date'];
 		$aDate = date_parse_from_format("Y-m-d\TH-i", $sDate);

@@ -1540,7 +1540,7 @@ BEGIN
             -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
             -- But that can be fixed by explicitly setting the label in the data
             IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
-              AND NEW.rank_search = linkedPlacex.rank_search THEN
+              AND NEW.rank_address = linkedPlacex.rank_address THEN
 
 
               -- If we don't already have one use this as the centre point of the geometry
@@ -1577,7 +1577,7 @@ BEGIN
 
         FOR linkedPlacex IN select placex.* from placex WHERE
           make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
-          AND placex.rank_search = NEW.rank_search
+          AND placex.rank_address = NEW.rank_address
           AND placex.place_id != NEW.place_id
           AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
           AND st_covers(NEW.geometry, placex.geometry)

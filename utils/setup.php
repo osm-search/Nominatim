@@ -271,7 +271,7 @@
 
 	if ($aCMDResult['load-data'] || $aCMDResult['all'])
 	{
-		echo "Load Data\n";
+		echo "Drop old Data\n";
 		$bDidSomething = true;
 
 		$oDB =& getDB();
@@ -307,17 +307,18 @@
 			echo '.';
 		}
 
+		// used by getorcreate_word_id to ignore frequent partial words
+		if (!pg_query($oDB->connection, 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS $$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE')) fail(pg_last_error($oDB->connection));
+		echo ".\n";
+
 		// pre-create the word list
 		if (!$aCMDResult['disable-token-precalc'])
 		{
-			if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
-			echo '.';
-			if (!pg_query($oDB->connection, 'select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;')) fail(pg_last_error($oDB->connection));
-			echo '.';
-			if (!pg_query($oDB->connection, 'select count(getorcreate_housenumber_id(v)) from (select distinct housenumber as v from place where housenumber is not null) as w;')) fail(pg_last_error($oDB->connection));
-			echo '.';
+			echo "Loading word list\n";
+			pgsqlRunScriptFile(CONST_BasePath.'/data/words.sql');
 		}
 
+		echo "Load Data\n";
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
 		{

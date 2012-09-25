@@ -12,6 +12,7 @@
 
 		array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
 		array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+		array('country', '', 0, 1, 1, 1, 'string', 'Import static data only for this country code, default to all country (eg: "de" for Germany)'),
 
 		array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
@@ -125,13 +126,23 @@
 		}
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		if ($aCMDResult['country'])
+		{
+			$countryGrep = '^'.$aCMDResult['country'];
+		}
+		pgsqlRunScriptFileWithFilteredData(CONST_BasePath.'/data/country_name.sql', CONST_BasePath.'/data/country_name.data', $countryGrep);
+		pgsqlRunScriptFileWithFilteredData(CONST_BasePath.'/data/country_naturalearthdata.sql', CONST_BasePath.'/data/country_naturalearthdata.data', $countryGrep);
+		pgsqlRunScriptFileWithFilteredData(CONST_BasePath.'/data/country_osm_grid.sql', CONST_BasePath.'/data/country_osm_grid.data', $countryGrep);
+		if (!$aCMDResult['country'] || $aCMDResult['country'] == 'gb')
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
+		}
+		if (!$aCMDResult['country'] || $aCMDResult['country'] == 'us')
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		}
 		pgsqlRunScriptFile(CONST_BasePath.'/data/worldboundaries.sql');
 	}
 
@@ -444,10 +455,13 @@
 		$sSQL .= "from placex where postcode is not null group by country_code,postcode) as x";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
-		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
-		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
-		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
-		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+		if (!$aCMDResult['country'] || $aCMDResult['country'] == 'us')
+		{
+			$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
+			$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
+			$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
+			if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+		}
 	}
 
 	if (($aCMDResult['osmosis-init'] || $aCMDResult['all']) && isset($aCMDResult['osmosis-init-date']))
@@ -554,6 +568,37 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
+
+		$aDescriptors = array(
+			0 => array('pipe', 'r'),
+			1 => array('pipe', 'w'),
+			2 => array('file', '/dev/null', 'a')
+		);
+		$ahPipes = null;
+		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
+		if (!is_resource($hProcess)) fail('unable to start pgsql');
+
+		fclose($ahPipes[0]);
+
+		// TODO: error checking
+		while(!feof($ahPipes[1]))
+		{
+			echo fread($ahPipes[1], 4096);
+		}
+		fclose($ahPipes[1]);
+
+		proc_close($hProcess);
+	}
+
+	function pgsqlRunScriptFileWithFilteredData($sScriptFilename, $sDataFilename, $sGrep)
+	{
+		if (!file_exists($sScriptFilename)) fail('unable to find '.$sScriptFilename);
+		if (!file_exists($sDataFilename)) fail('unable to find '.$sDataFilename);
+
+		// Convert database DSN to psql parameters
+		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+		$sCMD = 'grep -P "'.$sGrep.'" '.$sDataFilename.' | psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sScriptFilename;
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),

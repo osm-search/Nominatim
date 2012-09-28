@@ -1502,74 +1502,76 @@ BEGIN
       select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
 
 -- RAISE WARNING 'get_osm_rel_members, label';
-      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
-
-        FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
-
-          -- If we don't already have one use this as the centre point of the geometry
-          IF NEW.centroid IS NULL THEN
-            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-          END IF;
-
-          -- merge in the label name, re-init word vector
-          IF NOT linkedPlacex.name IS NULL THEN
-            NEW.name := linkedPlacex.name || NEW.name;
-            name_vector := make_keywords(NEW.name);
-          END IF;
-
-          -- merge in extra tags
-          IF NOT linkedPlacex.extratags IS NULL THEN
-            NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-          END IF;
-
-          -- mark the linked place (excludes from search results)
-          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-        END LOOP;
-
-      END LOOP;
-
-      IF NEW.centroid IS NULL THEN
-
-        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
+      IF relation_members IS NOT NULL THEN
+        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
 
           FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
             and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
 
-            -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
-            -- But that can be fixed by explicitly setting the label in the data
-            IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
-              AND NEW.rank_address = linkedPlacex.rank_address THEN
-
-
-              -- If we don't already have one use this as the centre point of the geometry
-              IF NEW.centroid IS NULL THEN
-                NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-              END IF;
-
-              -- merge in the name, re-init word vector
-              IF NOT linkedPlacex.name IS NULL THEN
-                NEW.name := linkedPlacex.name || NEW.name;
-                name_vector := make_keywords(NEW.name);
-              END IF;
-
-              -- merge in extra tags
-              IF NOT linkedPlacex.extratags IS NULL THEN
-                NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-              END IF;
-
-              -- mark the linked place (excludes from search results)
-              UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-              -- keep a note of the node id in case we need it for wikipedia in a bit
-              linked_node_id := linkedPlacex.osm_id;
+            -- If we don't already have one use this as the centre point of the geometry
+            IF NEW.centroid IS NULL THEN
+              NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
             END IF;
+
+            -- merge in the label name, re-init word vector
+            IF NOT linkedPlacex.name IS NULL THEN
+              NEW.name := linkedPlacex.name || NEW.name;
+              name_vector := make_keywords(NEW.name);
+            END IF;
+
+            -- merge in extra tags
+            IF NOT linkedPlacex.extratags IS NULL THEN
+              NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+            END IF;
+
+            -- mark the linked place (excludes from search results)
+            UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
           END LOOP;
 
         END LOOP;
 
+        IF NEW.centroid IS NULL THEN
+
+          FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
+
+            FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+              and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
+
+              -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
+              -- But that can be fixed by explicitly setting the label in the data
+              IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
+                AND NEW.rank_address = linkedPlacex.rank_address THEN
+
+
+                -- If we don't already have one use this as the centre point of the geometry
+                IF NEW.centroid IS NULL THEN
+                  NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+                END IF;
+
+                -- merge in the name, re-init word vector
+                IF NOT linkedPlacex.name IS NULL THEN
+                  NEW.name := linkedPlacex.name || NEW.name;
+                  name_vector := make_keywords(NEW.name);
+                END IF;
+
+                -- merge in extra tags
+                IF NOT linkedPlacex.extratags IS NULL THEN
+                  NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+                END IF;
+
+                -- mark the linked place (excludes from search results)
+                UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+                -- keep a note of the node id in case we need it for wikipedia in a bit
+                linked_node_id := linkedPlacex.osm_id;
+              END IF;
+
+            END LOOP;
+
+          END LOOP;
+
+        END IF;
       END IF;
 
       -- not found one yet? how about doing a name search

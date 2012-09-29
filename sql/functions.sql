@@ -1068,6 +1068,9 @@ BEGIN
     ELSEIF NEW.class = 'landuse' AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
       NEW.rank_search := 22;
       NEW.rank_address := NEW.rank_search;
+    ELSEIF NEW.class = 'natural' and NEW.type in ('peak','volcano','mountain_range') THEN
+      NEW.rank_search := 18;
+      NEW.rank_address := 0;
     -- any feature more than 5 square miles is probably worth indexing
     ELSEIF ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_Area(NEW.geometry) > 0.1 THEN
       NEW.rank_search := 22;
@@ -1093,9 +1096,6 @@ BEGIN
       NEW.rank_address := NEW.rank_search;
     ELSEIF NEW.class = 'natural' and NEW.type in ('coastline') THEN
       RETURN NULL;
-    ELSEIF NEW.class = 'natural' and NEW.type in ('peak','volcano') THEN
-      NEW.rank_search := 18;
-      NEW.rank_address := 0;
     END IF;
 
   END IF;

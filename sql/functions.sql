@@ -1699,21 +1699,24 @@ BEGIN
     IF array_upper(isin_tokens, 1) IS NOT NULL THEN
       FOR i IN 1..array_upper(isin_tokens, 1) LOOP
 --RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
+        IF NOT ARRAY[isin_tokens[i]] <@ nameaddress_vector THEN
 
-        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+          FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
 
---RAISE WARNING '  ISIN: %',location;
+  --RAISE WARNING '  ISIN: %',location;
 
-          nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-          INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
-          address_havelevel[location.rank_address] := true;
+            nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+            INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+            address_havelevel[location.rank_address] := true;
 
-          IF location.rank_address > parent_place_id_rank THEN
-            NEW.parent_place_id = location.place_id;
-            parent_place_id_rank = location.rank_address;
-          END IF;
+            IF location.rank_address > parent_place_id_rank THEN
+              NEW.parent_place_id = location.place_id;
+              parent_place_id_rank = location.rank_address;
+            END IF;
 
-        END LOOP;
+          END LOOP;
+
+        END IF;
 
       END LOOP;
     END IF;

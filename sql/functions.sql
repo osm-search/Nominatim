@@ -83,18 +83,24 @@ END;
 $$
 LANGUAGE 'plpgsql' IMMUTABLE;
 
+-- returns NULL if the word is too common
 CREATE OR REPLACE FUNCTION getorcreate_word_id(lookup_word TEXT) 
   RETURNS INTEGER
   AS $$
 DECLARE
   lookup_token TEXT;
   return_word_id INTEGER;
+  count INTEGER;
 BEGIN
   lookup_token := trim(lookup_word);
-  SELECT min(word_id) FROM word WHERE word_token = lookup_token and class is null and type is null into return_word_id;
+  SELECT min(word_id), max(search_name_count) FROM word WHERE word_token = lookup_token and class is null and type is null into return_word_id, count;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
     INSERT INTO word VALUES (return_word_id, lookup_token, regexp_replace(lookup_token,E'([^0-9])\\1+',E'\\1','g'), null, null, null, null, 0, null);
+  ELSE
+    IF count > get_maxwordfreq() THEN
+      return_word_id := NULL;
+    END IF;
   END IF;
   RETURN return_word_id;
 END;
@@ -317,7 +323,7 @@ BEGIN
       FOR j IN 1..array_upper(words, 1) LOOP
         IF (words[j] != '') THEN
           w = getorcreate_word_id(words[j]);
-          IF NOT (ARRAY[w] <@ result) THEN
+          IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
             result := result || w;
           END IF;
         END IF;
@@ -330,7 +336,7 @@ BEGIN
         s := make_standard_name(words[j]);
         IF s != '' THEN
           w := getorcreate_word_id(s);
-          IF NOT (ARRAY[w] <@ result) THEN
+          IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
             result := result || w;
           END IF;
         END IF;
@@ -379,7 +385,7 @@ BEGIN
     FOR j IN 1..array_upper(words, 1) LOOP
       IF (words[j] != '') THEN
         w = getorcreate_word_id(words[j]);
-        IF NOT (ARRAY[w] <@ result) THEN
+        IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
           result := result || w;
         END IF;
       END IF;
@@ -392,7 +398,7 @@ BEGIN
       s := make_standard_name(words[j]);
       IF s != '' THEN
         w := getorcreate_word_id(s);
-        IF NOT (ARRAY[w] <@ result) THEN
+        IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
           result := result || w;
         END IF;
       END IF;

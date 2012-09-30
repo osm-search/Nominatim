@@ -5,6 +5,7 @@
 	// General settings
 	@define('CONST_Debug', false);
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
+	@define('CONST_Max_Word_Frequency', '50000');
 
 	// Paths
 	@define('CONST_Postgresql_Version', '9.1');

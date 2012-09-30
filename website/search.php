@@ -312,6 +312,7 @@
 			// Check which tokens we have, get the ID numbers			
 			$sSQL = 'select word_id,word_token, word, class, type, location, country_code, operator';
 			$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
+			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
 			$sSQL .= ' and (class is null or class not in (\'highway\'))';
 //			$sSQL .= ' group by word_token, word, class, type, location, country_code';
 

@@ -245,7 +245,7 @@
 				$sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
 				$sToken = $oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string");
 				$sSQL = 'select * from (select word_id,word_token, word, class, type, location, country_code, operator';
-				$sSQL .= ' from word where word_token in (\' '.$sToken.'\')) as x where (class is not null and class not in (\'place\',\'highway\')) or country_code is not null';
+				$sSQL .= ' from word where word_token in (\' '.$sToken.'\')) as x where (class is not null and class not in (\'place\')) or country_code is not null';
 				if (CONST_Debug) var_Dump($sSQL);
 				$aSearchWords = $oDB->getAll($sSQL);
 				$aNewSearches = array();
@@ -313,7 +313,6 @@
 			$sSQL = 'select word_id,word_token, word, class, type, location, country_code, operator';
 			$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
 			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
-			$sSQL .= ' and (class is null or class not in (\'highway\'))';
 //			$sSQL .= ' group by word_token, word, class, type, location, country_code';
 
 			if (CONST_Debug) var_Dump($sSQL);

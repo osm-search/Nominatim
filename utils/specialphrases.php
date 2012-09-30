@@ -86,11 +86,6 @@
 
 		foreach($aPairs as $aPair)
 		{
-			if ($aPair[0] == 'yes') continue;
-			if ($aPair[1] == 'yes') continue;
-			if ($aPair[0] == 'highway') continue;
-			if ($aPair[1] == 'highway') continue;
-
 			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
 			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
 			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";

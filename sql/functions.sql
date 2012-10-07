@@ -296,6 +296,34 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION create_country(src HSTORE, lookup_country_code varchar(2)) RETURNS VOID
+  AS $$
+DECLARE
+  s TEXT;
+  w INTEGER;
+  words TEXT[];
+  item RECORD;
+  j INTEGER;
+BEGIN
+  FOR item IN SELECT (each(src)).* LOOP
+
+    s := make_standard_name(item.value);
+    w := getorcreate_country(s, lookup_country_code);
+
+    words := regexp_split_to_array(item.value, E'[,;()]');
+    IF array_upper(words, 1) != 1 THEN
+      FOR j IN 1..array_upper(words, 1) LOOP
+        s := make_standard_name(words[j]);
+        IF s != '' THEN
+          w := getorcreate_country(s, lookup_country_code);
+        END IF;
+      END LOOP;
+    END IF;
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION make_keywords(src HSTORE) RETURNS INTEGER[]
   AS $$
 DECLARE
@@ -1626,6 +1654,11 @@ BEGIN
 
     END IF;
 
+    -- make sure all names are in the word table
+    IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL THEN
+      perform create_country(NEW.name, lower(NEW.country_code));
+    END IF;
+
     NEW.parent_place_id = 0;
     parent_place_id_rank = 0;
 
@@ -1680,7 +1713,9 @@ BEGIN
 
         -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
         -- Add it to the list of search terms
-        nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+        IF location.rank_search > 4 THEN
+            nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+        END IF;
         INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
         IF location_isaddress THEN
@@ -1711,15 +1746,16 @@ BEGIN
 
   --RAISE WARNING '  ISIN: %',location;
 
-            nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-            INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
-            address_havelevel[location.rank_address] := true;
+            IF location.rank_search > 4 THEN
+                nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+                INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+                address_havelevel[location.rank_address] := true;
 
-            IF location.rank_address > parent_place_id_rank THEN
-              NEW.parent_place_id = location.place_id;
-              parent_place_id_rank = location.rank_address;
+                IF location.rank_address > parent_place_id_rank THEN
+                  NEW.parent_place_id = location.place_id;
+                  parent_place_id_rank = location.rank_address;
+                END IF;
             END IF;
-
           END LOOP;
 
         END IF;
@@ -1740,7 +1776,7 @@ BEGIN
           location_distance := location.distance * 1.5;
         END IF;
 
-        IF location.distance < location_distance THEN
+        IF location.rank_search > 4 AND location.distance < location_distance THEN
 
           -- Add it to the list of search terms
           nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);

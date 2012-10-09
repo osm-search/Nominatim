@@ -355,7 +355,7 @@
 		{
 			$aDBInstances[$i] =& getDB(true);
 			if (!pg_query($aDBInstances[$i]->connection, 'set enable_bitmapscan = off')) fail(pg_last_error($oDB->connection));
-			$sSQL = 'select count(*) from (select insertLocationRoad(partition, place_id, country_code, geometry) from ';
+			$sSQL = 'select count(*) from (select insertLocationRoad(partition, place_id, calculated_country_code, geometry) from ';
 			$sSQL .= 'placex where osm_id % '.$iInstances.' = '.$i.' and rank_search between 26 and 27 and class = \'highway\') as x ';
 			if ($aCMDResult['verbose']) echo "$sSQL\n";
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
@@ -438,14 +438,14 @@
 		$bDidSomething = true;
 		$oDB =& getDB();
 		if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
-		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
-		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,country_code,";
-		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select country_code,postcode,";
+		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
+		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,calculated_country_code,";
+		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select calculated_country_code,postcode,";
 		$sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
-		$sSQL .= "from placex where postcode is not null group by country_code,postcode) as x";
+		$sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
-		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
+		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calcuclated_country_code,geometry) ";
 		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
 		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));

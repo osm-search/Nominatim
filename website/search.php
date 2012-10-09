@@ -729,7 +729,7 @@
 							else
 							{
 								$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-								$sSQL .= " and st_contains($sViewboxSmallSQL, centroid)";
+								$sSQL .= " and st_contains($sViewboxSmallSQL, geometry)";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 								$sSQL .= " limit $iLimit";

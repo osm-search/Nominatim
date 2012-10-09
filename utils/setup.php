@@ -445,7 +445,7 @@
 		$sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
-		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calcuclated_country_code,geometry) ";
+		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
 		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
 		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));

@@ -420,12 +420,12 @@
 				{
 					$aNewPhraseSearches = array();
 
-					foreach($aPhrases[$iPhrase]['wordsets'] as $iWordset => $aWordset)
+					foreach($aPhrases[$iPhrase]['wordsets'] as $aWordset)
 					{
 						$aWordsetSearches = $aSearches;
 
 						// Add all words from this wordset
-						foreach($aWordset as $sToken)
+						foreach($aWordset as $iToken => $sToken)
 						{
 //echo "<br><b>$sToken</b>";
 							$aNewWordsetSearches = array();
@@ -449,7 +449,7 @@
 											{
 												$aSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
 												// Country is almost always at the end of the string - increase score for finding it anywhere else (optimisation)
-												if ($iWordset+1 != sizeof($aPhrases[$iPhrase]['wordsets']) || $iPhrase+1 != sizeof($aPhrases)) $aSearch['iSearchRank'] += 5;
+												if ($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases)) $aSearch['iSearchRank'] += 5;
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 										}

@@ -32,7 +32,6 @@
 		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
 		array('create-roads', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
-		array('osmosis-init-date', '', 0, 1, 1, 1, 'string', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
@@ -84,16 +83,6 @@
 		echo "WARNING: resetting cache memory to $iCacheMemory\n";
 	}
 
-	if (isset($aCMDResult['osm-file']) && !isset($aCMDResult['osmosis-init-date']))
-	{
-		$sBaseFile = basename($aCMDResult['osm-file']);
-		if (preg_match('#^planet-([0-9]{2})([0-9]{2})([0-9]{2})[.]#', $sBaseFile, $aMatch))
-		{
-			$iTime = mktime(0, 0, 0, $aMatch[2], $aMatch[3], '20'.$aMatch[1]);
-			$iTime -= (60*60*24);
-			$aCMDResult['osmosis-init-date'] = date('Y-m-d', $iTime).'T22:00:00Z';
-		}
-	}
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
@@ -451,13 +440,16 @@
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 	}
 
-	if (($aCMDResult['osmosis-init'] || $aCMDResult['all']) && isset($aCMDResult['osmosis-init-date']))
+	if ($aCMDResult['osmosis-init'] || $aCMDResult['all'])
 	{
 		$bDidSomething = true;
 		$oDB =& getDB();
 
 		if (!file_exists(CONST_Osmosis_Binary)) fail("please download osmosis");
-		if (file_exists(CONST_BasePath.'/settings/configuration.txt')) echo "settings/configuration.txt already exists\n";
+		if (file_exists(CONST_BasePath.'/settings/configuration.txt'))
+		{
+			echo "settings/configuration.txt already exists\n";
+		}
 		else
 		{
 			passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
@@ -465,21 +457,60 @@
 			passthru("sed -i 's:minute-replicate:replication/minute:' ".CONST_BasePath.'/settings/configuration.txt');
 		}
 
-		$sDate = $aCMDResult['osmosis-init-date'];
-		$aDate = date_parse_from_format("Y-m-d\TH-i", $sDate);
-		$sURL = 'http://toolserver.org/~mazder/replicate-sequences/?';
-		$sURL .= 'Y='.$aDate['year'].'&m='.$aDate['month'].'&d='.$aDate['day'];
-		$sURL .= '&H='.$aDate['hour'].'&i='.$aDate['minute'].'&s=0';
-		$sURL .= '&stream=minute';
-		echo "Getting state file: $sURL\n";
-		$sStateFile = file_get_contents($sURL);
+		// Find the last node in the DB
+		$iLastOSMID = $oDB->getOne("select max(osm_id) as osm_id from place where osm_type = 'N'");
+
+		// Lookup the timestamp that node was created (less 3 hours for margin for changsets to be closed)
+		$sLastNodeURL = 'http://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID;
+		$sLastNodeXML = file_get_contents($sLastNodeURL);
+		preg_match('#timestamp="(([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z)"#', $sLastNodeXML, $aLastNodeDate);
+		$iLastNodeTimestamp = strtotime($aLastNodeDate[1]) - (3*60*60);
+
+
+		// Search for the correct state file - uses file timestamps
+		$sRepURL = 'http://planet.openstreetmap.org/replication/minute/';
+		$sRep = file_get_contents($sRepURL);
+		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		$aPrevRepMatch = false;
+		foreach($aRepMatches as $aRepMatch)
+		{
+			if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+			$aPrevRepMatch = $aRepMatch;
+		}
+		if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+
+		$sRepURL .= $aRepMatch[1];
+		$sRep = file_get_contents($sRepURL);
+		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		$aPrevRepMatch = false;
+		foreach($aRepMatches as $aRepMatch)
+		{
+			if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+			$aPrevRepMatch = $aRepMatch;
+		}
+		if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+
+		$sRepURL .= $aRepMatch[1];
+		$sRep = file_get_contents($sRepURL);
+		preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		$aPrevRepMatch = false;
+		foreach($aRepMatches as $aRepMatch)
+		{
+			if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+			$aPrevRepMatch = $aRepMatch;
+		}
+		if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+
+		$sRepURL .= $aRepMatch[1].'.state.txt';
+		echo "Getting state file: $sRepURL\n";
+		$sStateFile = file_get_contents($sRepURL);
 		if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
 		file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
 		echo "Updating DB status\n";
 		pg_query($oDB->connection, 'TRUNCATE import_status');
-		$sSQL = "INSERT INTO import_status VALUES('".$sDate."')";
+		$sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
 		pg_query($oDB->connection, $sSQL);
-
+		exit;
 	}
 
 	if ($aCMDResult['index'] || $aCMDResult['all'])

@@ -510,7 +510,6 @@
 		pg_query($oDB->connection, 'TRUNCATE import_status');
 		$sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
 		pg_query($oDB->connection, $sSQL);
-		exit;
 	}
 
 	if ($aCMDResult['index'] || $aCMDResult['all'])

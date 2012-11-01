@@ -109,6 +109,7 @@
 		$pgver = (float) CONST_Postgresql_Version;
 		if ($pgver < 9.1) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
+			pgsqlRunScriptFile(CONST_BasePath.'/sql/hstore_compatability_9_0.sql');
 		} else {
 			pgsqlRunScript('CREATE EXTENSION hstore');
 		}

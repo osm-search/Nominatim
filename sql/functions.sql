@@ -950,9 +950,9 @@ BEGIN
     default_language := get_country_language_code(NEW.calculated_country_code);
     IF default_language IS NOT NULL THEN
       IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-        NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
+        NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
       ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-        NEW.name := NEW.name || ('name' => (NEW.name -> ('name:'||default_language)));
+        NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
       END IF;
     END IF;
   END IF;
@@ -979,7 +979,7 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        NEW.name := 'ref'=>NEW.postcode;
+        NEW.name := hstore('ref', NEW.postcode);
 
         IF NEW.calculated_country_code = 'gb' THEN
 
@@ -1335,9 +1335,9 @@ BEGIN
       default_language := get_country_language_code(NEW.calculated_country_code);
       IF default_language IS NOT NULL THEN
         IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-          NEW.name := NEW.name || (('name:'||default_language) => (NEW.name -> 'name'));
+          NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
         ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-          NEW.name := NEW.name || ('name' => (NEW.name -> ('name:'||default_language)));
+          NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
         END IF;
       END IF;
     END IF;
@@ -2313,7 +2313,7 @@ BEGIN
   hadcountry := false;
   FOR location IN 
     select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
+      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
       class, type, admin_level, true as fromarea, true as isaddress,
       CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       0 as distance, calculated_country_code
@@ -2346,7 +2346,7 @@ BEGIN
 
   FOR location IN 
     select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN 'name' => postcode ELSE name END as name,
+      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
       class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       distance,calculated_country_code
@@ -2391,7 +2391,7 @@ BEGIN
   END IF;
 
   IF searchcountrycode IS NOT NULL THEN
-    location := ROW(null, null, null, 'ref'=>searchcountrycode, 'place', 'country_code', null, true, false, 4, 0)::addressline;
+    location := ROW(null, null, null, hstore('ref', searchcountrycode), 'place', 'country_code', null, true, false, 4, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
@@ -2402,12 +2402,12 @@ BEGIN
   END IF;
 
   IF searchhousenumber IS NOT NULL THEN
-    location := ROW(in_place_id, null, null, 'ref'=>searchhousenumber, 'place', 'house_number', null, true, true, 28, 0)::addressline;
+    location := ROW(in_place_id, null, null, hstore('ref', searchhousenumber), 'place', 'house_number', null, true, true, 28, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchpostcode IS NOT NULL THEN
-    location := ROW(null, null, null, 'ref'=>searchpostcode, 'place', 'postcode', null, true, true, 5, 0)::addressline;
+    location := ROW(null, null, null, hstore('ref', searchpostcode), 'place', 'postcode', null, true, true, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

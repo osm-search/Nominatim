@@ -61,7 +61,7 @@
 
 		echo " class='".htmlspecialchars($aResult['class'])."'";
 		echo " type='".htmlspecialchars($aResult['type'])."'";
-		if ($aResult['icon'])
+		if (isset($aResult['icon']) && $aResult['icon'])
 		{
 			echo " icon='".htmlspecialchars($aResult['icon'], ENT_QUOTES)."'";
 		}

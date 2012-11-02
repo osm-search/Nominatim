@@ -890,3 +890,17 @@
 
 		return $iPlaceID;
 	}
+
+        function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank)
+        {
+                if (!isset($_GET[$sKey])) return false;
+                $sValue = trim($_GET[$sKey]);
+                if (!$sValue) return false;
+                $aStructuredQuery[$sKey] = $sValue;
+                if ($iMinAddressRank == 0 && $iMaxAddressRank == 30) {
+                        $iMinAddressRank = $iNewMinAddressRank;
+                        $iMaxAddressRank = $iNewMaxAddressRank;
+                }
+                return true;
+        }
+

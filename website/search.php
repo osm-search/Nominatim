@@ -1,4 +1,5 @@
 <?php
+phpinfo();exit;
 	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 
@@ -756,7 +757,7 @@
 								{
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
+								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid) and linked_place_id is null";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 								$sSQL .= " limit $iLimit";
@@ -767,7 +768,7 @@
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
+									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid) and linked_place_id is null";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $iLimit";
@@ -778,7 +779,7 @@
 							else
 							{
 								$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-								$sSQL .= " and st_contains($sViewboxSmallSQL, geometry)";
+								$sSQL .= " and st_contains($sViewboxSmallSQL, geometry) and linked_place_id is null";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 								$sSQL .= " limit $iLimit";
@@ -918,6 +919,7 @@
 								{
 									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
 									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
+									$sSQL = " and linked_place_id is null";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);

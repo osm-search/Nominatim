@@ -18,6 +18,17 @@
 	if (isset($_GET['osmtype']) && isset($_GET['osmid']) && (int)$_GET['osmid'] && ($_GET['osmtype'] == 'N' || $_GET['osmtype'] == 'W' || $_GET['osmtype'] == 'R'))
 	{
 		$_GET['place_id'] = $oDB->getOne("select place_id from placex where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
+
+		// Be nice about our error messages for broken geometry
+		if (!$_GET['place_id'])
+		{
+			$sErrorMessage = $oDB->getOne("select ST_IsValidReason(geometry) from place where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
+			if (!PEAR::isError($sErrorMessage) && $sErrorMessage) {
+				echo "Problem with geometry: ";
+				echo $sErrorMessage;
+				exit;
+			}
+		}
 	}
 
 	if (!isset($_GET['place_id']))

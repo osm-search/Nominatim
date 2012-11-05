@@ -216,6 +216,7 @@ CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name
 
 DROP SEQUENCE seq_place;
 CREATE SEQUENCE seq_place start 1;
+GRANT SELECT on place to "www-data" ;
 GRANT SELECT on placex to "www-data" ;
 GRANT UPDATE ON placex to "www-data" ;
 GRANT SELECT ON search_name to "www-data" ;

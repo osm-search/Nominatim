@@ -43,9 +43,9 @@
 	   + ($bAsTEXT?1:0) 
 		) > CONST_PolygonOutput_MaximumTypes) {
 		if (CONST_PolygonOutput_MaximumTypes) {
-			echo "Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option";
+			userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
 		} else {
-			echo "Polygon output is disabled";
+			userError("Polygon output is disabled");
 		}
 		exit;
 	}
@@ -191,7 +191,7 @@
 			$aPoints = explode(',',$_GET['route']);
 			if (sizeof($aPoints) % 2 != 0)
 			{
-				echo "Uneven number of points";
+				userError("Uneven number of points");
 				exit;
 			}
 			$sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
@@ -351,7 +351,7 @@
 				$aPhrase = $oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string");
 				if (PEAR::isError($aPhrase))
 				{
-					echo "Illegal query string (not an UTF-8 string): ".$sPhrase;
+					userError("Illegal query string (not an UTF-8 string): ".$sPhrase);
 					if (CONST_Debug) var_dump($aPhrase);
 					exit;
 				}

@@ -25,6 +25,19 @@
 
 	}
 
+	function userError($sError) 
+	{
+		header('HTTP/1.0 400 Bad Request');
+		header('Content-type: text/html; charset=utf-8');
+		echo "<html><body><h1>Bad Request</h1>";
+		echo '<p>Nominatim has encountered an error with your request.</p>';
+		echo "<p><b>Details:</b> ".$sError,"</p>";
+		echo '<p>If you feel this error is incorrect feel free to report the bug in the <a href="http://trac.openstreetmap.org">OSM bug database</a>. Please include the error message above and the URL you used.</p>';
+		echo "\n</body></html>\n";
+		exit;
+
+	}
+
 	function fail($sError, $sUserError = false)
 	{
 		if (!$sUserError) $sUserError = $sError;

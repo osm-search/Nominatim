@@ -935,7 +935,7 @@
 								{
 									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
 									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-									$sSQL = " and linked_place_id is null";
+									$sSQL .= " and linked_place_id is null";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);

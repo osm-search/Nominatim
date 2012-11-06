@@ -41,8 +41,12 @@
 	   + ($bAsKML?1:0) 
 	   + ($bAsSVG?1:0) 
 	   + ($bAsTEXT?1:0) 
-		) > 1) {
-		echo "Select only one polgyon output option";
+		) > CONST_PolygonOutput_MaximumTypes) {
+		if (CONST_PolygonOutput_MaximumTypes) {
+			echo "Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option";
+		} else {
+			echo "Polygon output is disabled";
+		}
 		exit;
 	}
 

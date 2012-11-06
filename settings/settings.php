@@ -33,6 +33,9 @@
 
 	@define('CONST_Suggestions_Enabled', false);
 
+	// Set to zero to disable polygon output
+	@define('CONST_PolygonOutput_MaximumTypes', 1);
+
 	// Log settings
 	@define('CONST_Log_DB', true);
 	@define('CONST_Log_File', false);

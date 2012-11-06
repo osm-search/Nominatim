@@ -50,7 +50,27 @@
 			$aPlace['address'] = $aPointDetails['address'];
                 }
 
+                if (isset($aResult['asgeojson']))
+                {
+			$aPlace['geojson'] = json_decode($aResult['asgeojson']);
+                }
+
+                if (isset($aResult['assvg']))
+                {
+			$aPlace['svg'] = $aResult['assvg'];
+                }
+
+                if (isset($aResult['astext']))
+                {
+                        $aPlace['geotext'] = $aResult['astext'];
+                }
+
+                if (isset($aResult['askml']))
+                {
+                        $aPlace['geokml'] = $aResult['askml'];
+                }
+
 		$aFilteredPlaces[] = $aPlace;
 	}
 
-	javascript_renderData($aFilteredPlaces);
+	javascript_renderData($aFilteredPlaces, array('geojson'));

@@ -50,6 +50,27 @@
 			}
 		}
 
+		if (isset($aResult['asgeojson']))
+		{
+			echo ' geojson=\'';
+			echo $aResult['asgeojson'];
+			echo '\'';
+		}
+
+		if (isset($aResult['assvg']))
+		{
+			echo ' geosvg=\'';
+			echo $aResult['assvg'];
+			echo '\'';
+		}
+
+		if (isset($aResult['astext']))
+		{
+			echo ' geotext=\'';
+			echo $aResult['astext'];
+			echo '\'';
+		}
+
 		if (isset($aResult['zoom']))
 		{
 			echo " zoom='".$aResult['zoom']."'";
@@ -66,9 +87,20 @@
 			echo " icon='".htmlspecialchars($aResult['icon'], ENT_QUOTES)."'";
 		}
 
-		if (isset($aResult['address']))
+		if (isset($aResult['address']) || isset($aResult['askml']))
 		{
 			echo ">";
+		}
+
+		if (isset($aResult['askml']))
+		{
+			echo "\n";
+			echo $aResult['askml'];
+		}
+
+		if (isset($aResult['address']))
+		{
+			echo "\n";
 			foreach($aResult['address'] as $sKey => $sValue)
 			{
 				$sKey = str_replace(' ','_',$sKey);
@@ -76,7 +108,10 @@
 				echo htmlspecialchars($sValue);
 				echo "</$sKey>";
 			}
+		}
 
+		if (isset($aResult['address']) || isset($aResult['askml']))
+		{
 			echo "</place>";
 		}
 		else

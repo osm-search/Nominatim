@@ -31,7 +31,11 @@
 	}
 
 	// Show / use polygons
-	$bShowPolygons = isset($_GET['polygon']) && $_GET['polygon'];
+	$bShowPolygons = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
+	$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
+	$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
+	$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
+	$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
 
 	// Show address breakdown
 	$bShowAddressDetails = isset($_GET['addressdetails']) && $_GET['addressdetails'];
@@ -1202,8 +1206,13 @@
 			$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
 			$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
 			$sSQL .= "ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),2)) as maxlat,";
-			$sSQL .= "ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),3)) as maxlon,";
-			$sSQL .= "ST_AsText(geometry) as outlinestring from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(Box2D(geometry)) = \'ST_Polygon\'';
+			$sSQL .= "ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),3)) as maxlon";
+			if ($bAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
+			if ($bAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
+			if ($bAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
+			if ($bAsText) $sSQL .= ",ST_AsText(geometry) as astext";
+			if ($bShowPolygons) $sSQL .= ",ST_AsText(geometry) as outlinestring";
+			$sSQL .= " from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(Box2D(geometry)) = \'ST_Polygon\'';
 			$aPointPolygon = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPointPolygon))
 			{
@@ -1211,33 +1220,41 @@
 			}
 			if ($aPointPolygon['place_id'])
 			{
+				if ($bAsGeoJSON) $aResult['asgeojson'] = $aPointPolygon['asgeojson'];
+				if ($bAsKML) $aResult['askml'] = $aPointPolygon['askml'];
+				if ($bAsSVG) $aResult['assvg'] = $aPointPolygon['assvg'];
+				if ($bAsText) $aResult['astext'] = $aPointPolygon['astext'];
+
 				if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null ) {
 					$aResult['lat'] = $aPointPolygon['centrelat'];
 					$aResult['lon'] = $aPointPolygon['centrelon'];
 				}
-				// Translate geometary string to point array
-				if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
+				if ($bShowPolygons) 
 				{
-					preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-				}
-				elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
-				{
-					preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-				}
-				elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['outlinestring'],$aMatch))
-				{
-					$fRadius = 0.01;
-					$iSteps = ($fRadius * 40000)^2;
-					$fStepSize = (2*pi())/$iSteps;
-					$aPolyPoints = array();
-					for($f = 0; $f < 2*pi(); $f += $fStepSize)
+					// Translate geometary string to point array
+					if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
 					{
-						$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
+						preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
 					}
-					$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-					$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-					$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-					$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
+					elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
+					{
+						preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
+					}
+					elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['outlinestring'],$aMatch))
+					{
+						$fRadius = 0.01;
+						$iSteps = ($fRadius * 40000)^2;
+						$fStepSize = (2*pi())/$iSteps;
+						$aPolyPoints = array();
+						for($f = 0; $f < 2*pi(); $f += $fStepSize)
+						{
+							$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
+						}
+						$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
+						$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
+						$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
+						$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
+					}
 				}
 
 				// Output data suitable for display (points and a bounding box)

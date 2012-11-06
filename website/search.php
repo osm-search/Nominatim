@@ -36,6 +36,15 @@
 	$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
 	$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
 	$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
+	if ((($bShowPolygons?1:0)  
+	   + ($bAsGeoJSON?1:0) 
+	   + ($bAsKML?1:0) 
+	   + ($bAsSVG?1:0) 
+	   + ($bAsTEXT?1:0) 
+		) > 1) {
+		echo "Select only one polgyon output option";
+		exit;
+	}
 
 	// Show address breakdown
 	$bShowAddressDetails = isset($_GET['addressdetails']) && $_GET['addressdetails'];

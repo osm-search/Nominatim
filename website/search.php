@@ -40,7 +40,7 @@
 	   + ($bAsGeoJSON?1:0) 
 	   + ($bAsKML?1:0) 
 	   + ($bAsSVG?1:0) 
-	   + ($bAsTEXT?1:0) 
+	   + ($bAsText?1:0) 
 		) > CONST_PolygonOutput_MaximumTypes) {
 		if (CONST_PolygonOutput_MaximumTypes) {
 			userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
@@ -767,7 +767,6 @@
 								if (!$aSearch['sClass']) continue;
 								if (CONST_Debug) var_dump('<hr>',$aSearch);
 								if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
-
 								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
 								if ($oDB->getOne($sSQL))
 								{
@@ -931,6 +930,8 @@
 							{
 								$sPlaceIDs = join(',',$aPlaceIDs);
 
+								$aResultPlaceIDs = array();
+
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
 								{
 									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
@@ -939,7 +940,7 @@
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $oDB->getCol($sSQL);
+									$aResultPlaceIDs = $oDB->getCol($sSQL);
 								}
 								
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
@@ -969,10 +970,10 @@
 									else
 									{
 										$iMaxRank += 5;
-									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
-									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $oDB->getCol($sSQL);
-									$sPlaceIDs = join(',',$aPlaceIDs);
+										$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
+										if (CONST_Debug) var_dump($sSQL);
+										$aPlaceIDs = $oDB->getCol($sSQL);
+										$sPlaceIDs = join(',',$aPlaceIDs);
 									}
 
 									if ($sPlaceIDs || $sPlaceGeom)
@@ -989,7 +990,7 @@
 										else if ($sPlaceIDs) $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
 										else if ($sPlaceGeom) $sOrderBysSQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
 										
-										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
+										$sSQL = "select distinct l.place_id".($sOrderBySQL?','.$sOrderBySQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
 										if ($sPlaceIDs)
 										{
@@ -1006,11 +1007,11 @@
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
 										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
-										if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
+										if ($sOrderBySQL) $sSQL .= "order by ".$sOrderBySQL." asc";
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aPlaceIDs = $oDB->getCol($sSQL);
+										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
 									}
 									else
 									{
@@ -1032,10 +1033,13 @@
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aPlaceIDs = $oDB->getCol($sSQL);
+										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
 									}
 									}
 								}
+
+								$aPlaceIDs = $aResultPlaceIDs;
+
 							}
 						
 						}

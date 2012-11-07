@@ -142,7 +142,24 @@ body {
 ?>
 
     <p>This object has an invalid geometry.</p>
-    <p><b>Details:</b> <?php echo $aPointDetails['errormessage'];?></p>
+    <p><b>Details:</b> <?php
+
+$sVal = $aPointDetails['errormessage'];
+$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
+$sOSMID = $aPointDetails['osm_id'];
+
+if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/',$sVal,$aMatch))
+{
+	$sLat = $aMatch[2];
+	$sLon = $aMatch[1];
+	echo "<a href=\"http://www.openstreetmap.org/?lat=".$sLat."&lon=".$sLon."&zoom=18&layers=M&".$sOSMType."=".$sOSMID."\">".($sVal?$sVal:'&nbsp;')."</a>";
+}
+else
+{
+	echo ($sVal?$sVal:'&nbsp;');
+}
+
+?></p>
 
   </body>
 </html>

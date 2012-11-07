@@ -200,7 +200,7 @@ if (isset($aPolyPoints))
 
 	if (sizeof($aParentOfLines))
 	{
-		echo '<h2>Parent Of (named features only):</h2>';
+		echo '<h2>Parent Of:</h2>';
 
 		$aGroupedAddressLines = array();
 		foreach($aParentOfLines as $aAddressLine)

@@ -216,7 +216,6 @@ CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name
 
 DROP SEQUENCE seq_place;
 CREATE SEQUENCE seq_place start 1;
-GRANT SELECT on place to "www-data" ;
 GRANT SELECT on placex to "www-data" ;
 GRANT UPDATE ON placex to "www-data" ;
 GRANT SELECT ON search_name to "www-data" ;
@@ -279,6 +278,7 @@ CREATE TABLE import_polygon_error (
 SELECT AddGeometryColumn('import_polygon_error', 'prevgeometry', 4326, 'GEOMETRY', 2);
 SELECT AddGeometryColumn('import_polygon_error', 'newgeometry', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
+GRANT SELECT ON import_polygon_error TO "www-data";
 
 drop table import_polygon_delete;
 CREATE TABLE import_polygon_delete (

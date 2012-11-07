@@ -15,6 +15,9 @@
 
 	$oDB =& getDB();
 
+	$aLangPrefOrder = getPreferredLanguages();
+	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
+
 	if (isset($_GET['osmtype']) && isset($_GET['osmid']) && (int)$_GET['osmid'] && ($_GET['osmtype'] == 'N' || $_GET['osmtype'] == 'W' || $_GET['osmtype'] == 'R'))
 	{
 		$_GET['place_id'] = $oDB->getOne("select place_id from placex where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
@@ -22,10 +25,14 @@
 		// Be nice about our error messages for broken geometry
 		if (!$_GET['place_id'])
 		{
-			$sErrorMessage = $oDB->getOne("select ST_IsValidReason(geometry) from place where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
-			if (!PEAR::isError($sErrorMessage) && $sErrorMessage) {
-				echo "Problem with geometry: ";
-				echo $sErrorMessage;
+			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by updated desc limit 1");
+			if (!PEAR::isError($aPointDetails) && $aPointDetails) {
+				if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
+				{
+					$aPointDetails['error_x'] = $aMatches[1];
+					$aPointDetails['error_y'] = $aMatches[2];
+				}
+				include(CONST_BasePath.'/lib/template/details-error-'.$sOutputFormat.'.php');
 				exit;
 			}
 		}
@@ -43,9 +50,6 @@
 	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
 	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
-
-	$aLangPrefOrder = getPreferredLanguages();
-	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
 	$hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 

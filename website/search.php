@@ -225,6 +225,7 @@
 				failInternalError("Could not get large viewbox.", $sSQL, $sViewboxLargeSQL);
 			}
 			$sViewboxLargeSQL = "'".$sViewboxLargeSQL."'::geometry";
+			$bBoundingBoxSearch = true;
 		}
 
 		// Do we have anything that looks like a lat/lon pair?
@@ -772,7 +773,7 @@
 								{
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid) and linked_place_id is null";
+								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 								$sSQL .= " limit $iLimit";
@@ -783,7 +784,7 @@
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid) and linked_place_id is null";
+									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $iLimit";
@@ -1058,13 +1059,13 @@
 						if ($iQueryLoop > 20) break;
 					}
 					//exit;
-					if (sizeof($aResultPlaceIDs)) break;
+					if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
 					if ($iGroupLoop > 4) break;
 					if ($iQueryLoop > 30) break;
 				}
 //exit;
 				// Did we find anything?	
-				if (sizeof($aResultPlaceIDs))
+				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs))
 				{
 //var_Dump($aResultPlaceIDs);exit;
 					// Get the details for display (is this a redundant extra step?)

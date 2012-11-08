@@ -73,23 +73,27 @@ body {
 			};
 			var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
 			var proj_map = map.getProjectionObject();
-			var latlon;
-<?php
-if (isset($aPolyPoints))
-{
-	foreach($aPolyPoints as $aPolyPoint)
-	{
-		echo "                        pointList.push(new OpenLayers.Geometry.Point(".$aPolyPoint[1].",".$aPolyPoint[2]."));\n";
-	}
-}
-?>
-			var linearRing = new OpenLayers.Geometry.LinearRing(pointList).transform(proj_EPSG4326, proj_map);;
-			var polygonFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Polygon([linearRing]),null,style);
-			vectorLayer.addFeatures([polygonFeature]);
 
-			map.zoomToExtent(new OpenLayers.Bounds(<?php echo $aPointPolygon['minlon']?>, <?php echo $aPointPolygon['minlat']?>, <?php echo $aPointPolygon['maxlon']?>, <?php echo $aPointPolygon['maxlat']?>).transform(proj_EPSG4326, proj_map));
+			freader = new OpenLayers.Format.WKT({
+				'internalProjection': proj_map,
+				'externalProjection': proj_EPSG4326
+			});
+
+			var feature = freader.read('<?php echo $aPointDetails['outlinestring'];?>');
+			if (feature) {
+				map.zoomToExtent(feature.geometry.getBounds());
+
+				feature.style = {
+					strokeColor: "#75ADFF",
+					fillColor: "#F0F7FF",
+					strokeWidth: <?php echo ($aPointDetails['isarea']=='t'?'2':'5');?>,
+					strokeOpacity: 0.75,
+					fillOpacity: 0.75,
+					pointRadius: 100
+				};
+				vectorLayer.addFeatures([feature]);
+			}
 		}
-		
 	</script>
   </head>
   <body onload="init();">
@@ -147,7 +151,7 @@ if (isset($aPolyPoints))
 		echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
 		if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
 		echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-		echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
+		if (isset($aAddressLine['rank_search_label']) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
 //		echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
 		echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
 		echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
@@ -230,6 +234,9 @@ if (isset($aPolyPoints))
 			echo ')';
 			echo '</div>';
 		}
+		}
+		if (sizeof($aParentOfLines) >= 500) {
+			echo '<p>There are more child objects which are not shown.</p>';
 		}
 		echo '</div>';
 	}

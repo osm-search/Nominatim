@@ -60,7 +60,8 @@
 	// Get the details for this point
 	$sSQL = "select place_id, osm_type, osm_id, class, type, name, admin_level, housenumber, street, isin, postcode, country_code, importance, wikipedia,";
 	$sSQL .= " parent_place_id, rank_address, rank_search, get_searchrank_label(rank_search) as rank_search_label, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ";
-	$sSQL .= " ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,ST_GeometryType(geometry) as geotype, ST_Y(ST_Centroid(geometry)) as lat,ST_X(ST_Centroid(geometry)) as lon ";
+	$sSQL .= " ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ";
+	$sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 	$sSQL .= " from placex where place_id = $iPlaceID";
 	$aPointDetails = $oDB->getRow($sSQL);
 	if (PEAR::IsError($aPointDetails))
@@ -69,9 +70,6 @@
 	}
 
         $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
-	$fLon = $aPointDetails['lon'];
-	$fLat = $aPointDetails['lat'];
-	$iZoom = 14;
 
 	$aClassType = getClassTypesWithImportance();
 	$aPointDetails['icon'] = $aClassType[$aPointDetails['class'].':'.$aPointDetails['type']]['icon'];
@@ -83,43 +81,6 @@
 	// Extra tags
 	$sSQL = "select (each(extratags)).key,(each(extratags)).value from placex where place_id = $iPlaceID order by (each(extratags)).key";
 	$aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
-
-	// Get the bounding box and outline polygon
-	$sSQL = "select ST_AsText(geometry) as outlinestring,";
-	$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
-	$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
-	$sSQL .= " from placex where place_id = $iPlaceID";
-	$aPointPolygon = $oDB->getRow($sSQL);
-	IF (PEAR::IsError($aPointPolygon))
-	{
-		failInternalError("Could not get bounding box of place object.", $sSQL, $aPointPolygon);
-	}
-	if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
-	{
-		preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-	}
-	elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
-	{
-		// TODO: this just takes the first ring
-		preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-	}
-	elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['outlinestring'],$aMatch))
-	{
-		$fRadius = 0.01;
-		if ($aPointDetails['rank_search'] > 20) $fRadius = 0.0001;
-		$iSteps = min(max(($fRadius * 40000)^2,16),100);
-		$fStepSize = (2*pi())/$iSteps;
-		$aPolyPoints = array();
-		for($f = 0; $f < 2*pi(); $f += $fStepSize)
-		{
-
-			$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
-		}
-		$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-		$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-		$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-		$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
-	}
 
 	// Address
 	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], true);
@@ -133,11 +94,12 @@
 	$aLinkedLines = $oDB->getAll($sSQL);
 
 	// All places this is an imediate parent of
-	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, st_distance(geometry, placegeometry) as distance, ";
+	$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, st_distance(geometry, placegeometry) as distance, ";
 	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
-	$sSQL .= " from placex, (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
-	$sSQL .= " where parent_place_id = $iPlaceID";
-	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
+	$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
+	$sSQL .= " where parent_place_id = $iPlaceID order by rank_address asc,rank_search asc limit 500) as obj,";
+	$sSQL .= " (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
+	$sSQL .= " order by rank_address asc,rank_search asc,localname,housenumber";
 	$aParentOfLines = $oDB->getAll($sSQL);
 
 	$aPlaceSearchNameKeywords = false;

@@ -148,18 +148,35 @@ $sVal = $aPointDetails['errormessage'];
 $sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 $sOSMID = $aPointDetails['osm_id'];
 
+$bHaveLatLng = false;
 if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/',$sVal,$aMatch))
 {
 	$sLat = $aMatch[2];
 	$sLon = $aMatch[1];
+	$bHaveLatLng = true;
 	echo "<a href=\"http://www.openstreetmap.org/?lat=".$sLat."&lon=".$sLon."&zoom=18&layers=M&".$sOSMType."=".$sOSMID."\">".($sVal?$sVal:'&nbsp;')."</a>";
 }
 else
 {
 	echo ($sVal?$sVal:'&nbsp;');
 }
+?>
+    <p><b>Edit:</b> in <?php
+if ($bHaveLatLng)
+{
+	$fWidth = 0.0002;
+	echo " <a href=\"http://localhost:8111/load_and_zoom?left=".($sLon-$fWidth)."&right=".($sLon+$fWidth)."&top=".($sLat+$fWidth)."&bottom=".($sLat-$fWidth)."\" target=\"josm\">Remote Controll (JOSM / Merkaartor)</a>";
+	echo " | <a href=\"http://www.openstreetmap.org/edit?editor=potlatch2&bbox=".($sLon-$fWidth).",".($sLat-$fWidth).",".($sLon+$fWidth).",".($sLat+$fWidth)."\" target=\"potlatch2\">Potlatch 2</a>";
+}
+else
+{
+	echo " <a href=\"http://localhost:8111/import?url=http://www.openstreetmap.org/api/0.6/".$sOSMType.'/'.$sOSMID."/full\" target=\"josm\">Remote Controll (JOSM / Merkaartor)</a>";
+	// Should be better to load by object id - but this doesn't seem to zoom correctly
+	//echo " <a href=\"http://localhost:8111/load_object?new_layer=true&objects=".strtolower($aPointDetails['osm_type']).$sOSMID."\" target=\"josm\">Remote Controll (JOSM / Merkaartor)</a>";
+}
 
 ?></p>
 
   </body>
 </html>
+

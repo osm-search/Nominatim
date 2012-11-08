@@ -151,7 +151,7 @@ body {
 		echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
 		if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
 		echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-		if (isset($aAddressLine['rank_search_label']) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
+		if (isset($aAddressLine['rank_search_label'])) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
 //		echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
 		echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
 		echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';

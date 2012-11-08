@@ -148,7 +148,7 @@ $sVal = $aPointDetails['errormessage']?$aPointDetails['errormessage']:'&nbsp;';
 $sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 $sOSMID = $aPointDetails['osm_id'];
 
-if (isset($aPointDetails['error_x'])
+if (isset($aPointDetails['error_x']))
 {
 	$sLat = $aPointDetails['error_y'];
 	$sLon = $aPointDetails['error_x'];
@@ -160,7 +160,7 @@ else
 }
 ?>
     <p><b>Edit:</b> in <?php
-if (isset($aPointDetails['error_x'])
+if (isset($aPointDetails['error_x']))
 {
 	$fWidth = 0.0002;
 	echo " <a href=\"http://localhost:8111/load_and_zoom?left=".($sLon-$fWidth)."&right=".($sLon+$fWidth)."&top=".($sLat+$fWidth)."&bottom=".($sLat-$fWidth)."\" target=\"josm\">Remote Control (JOSM / Merkaartor)</a>";

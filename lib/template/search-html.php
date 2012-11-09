@@ -216,40 +216,34 @@ form{
 				map.panTo(lonLat, 10);
 		}
 
-		function panToLatLonBoundingBox(lat,lon,minlat,maxlat,minlon,maxlon,points) {
-		        var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
-		        var proj_map = map.getProjectionObject();
-                        map.zoomToExtent(new OpenLayers.Bounds(minlon,minlat,maxlon,maxlat).transform(proj_EPSG4326, proj_map));
-			var lonLat = new OpenLayers.LonLat(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject());
+		function panToLatLonBoundingBox(lat,lon,minlat,maxlat,minlon,maxlon,wkt) {
+			vectorLayer.destroyFeatures();
+			var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
+			var proj_map = map.getProjectionObject();
+			map.zoomToExtent(new OpenLayers.Bounds(minlon,minlat,maxlon,maxlat).transform(proj_EPSG4326, proj_map));
+			var lonLat = new OpenLayers.LonLat(lon, lat).transform(proj_EPSG4326, proj_map);
 			map.panTo(lonLat, <?php echo $iZoom ?>);
 
-                        var pointList = [];
-                        var style = {
-                                strokeColor: "#75ADFF",
-                                fillColor: "#F0F7FF",
-                                strokeWidth: 2,
-                                strokeOpacity: 0.75,
-                                fillOpacity: 0.75
-                        };
-                        var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
-                        var proj_map = map.getProjectionObject();
-			if (points)
+			if (wkt)
 			{
-				points.each(function(p){
-					pointList.push(new OpenLayers.Geometry.Point(p[0],p[1]));
-					});
-        	                var linearRing = new OpenLayers.Geometry.LinearRing(pointList).transform(proj_EPSG4326, proj_map);;
-                	        var polygonFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Polygon([linearRing]),null,style);
-				vectorLayer.destroyFeatures();
-                        	vectorLayer.addFeatures([polygonFeature]);
-			}
-			else
-			{
-				var lonLat = new OpenLayers.LonLat(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject());
-				var point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
-				var pointFeature = new OpenLayers.Feature.Vector(point,null,style);
-				vectorLayer.destroyFeatures();
-				vectorLayer.addFeatures([pointFeature]);
+				var freader = new OpenLayers.Format.WKT({
+						'internalProjection': proj_map,
+						'externalProjection': proj_EPSG4326
+						});
+
+				var feature = freader.read(wkt);
+				if (feature)
+				{
+					feature.style = {
+							strokeColor: "#75ADFF",
+							fillColor: "#F0F7FF",
+							strokeWidth: 2,
+							strokeOpacity: 0.75,
+							fillOpacity: 0.75,
+							pointRadius: 100
+                    };
+					vectorLayer.addFeatures([feature]);
+				}
 			}
 		}
 
@@ -327,7 +321,7 @@ form{
 					<td valign="center" style="width:400px;"><input id="q" name="q" value="<?php echo htmlspecialchars($sQuery); 
 ?>" style="width:270px;"><input type="text" id="viewbox" style="width:130px;" name="viewbox"></td>
 					<td style="width:80px;"><input type="submit" value="Search"></td>
-<?php if (CONST_Search_AreaPolygons) { ?>					<td style="width:100px;"><input type="checkbox" value="1" name="polygon" <?php if ($bShowPolygons) echo "checked"; ?>> Highlight</td>
+<?php if (CONST_Search_AreaPolygons) { ?>					<td style="width:100px;"><input type="checkbox" value="1" name="polygon" <?php if ($bAsText) echo "checked"; ?>> Highlight</td>
 <td style="text-align:right;">Data: <?php echo $sDataDate; ?></td>
 <td style="text-align:right;">
 <a href="http://wiki.openstreetmap.org/wiki/Nominatim" target="_blank">Documentation</a> | <a href="http://wiki.openstreetmap.org/wiki/Nominatim/FAQ" 
@@ -359,8 +353,8 @@ target="_blank">FAQ</a></td>
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			if (isset($aResult['aPolyPoints'])) echo ', '.json_encode($aResult['aPolyPoints']);
-			echo ');\'>';
+			if (isset($aResult['astext'])) echo ', "'.$aResult['astext'].'"';
+			echo ");'>\n";
 		}
 		elseif (isset($aResult['zoom']))
 		{
@@ -451,11 +445,7 @@ init();
 			echo ', '.$aResult['aBoundingBox'][1];
 			echo ', '.$aResult['aBoundingBox'][2];
 			echo ', '.$aResult['aBoundingBox'][3];
-			if (isset($aResult['aPolyPoints']))
-			{
-				echo ', ';
-				echo javascript_renderData($aResult['aPolyPoints']);
-			}
+			if (isset($aResult['astext'])) echo ", '".$aResult['astext']."'";
 			echo ');'."\n";
 		}
 		else

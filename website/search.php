@@ -32,22 +32,30 @@
 
 	// Show / use polygons
 	$bShowPolygons = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
-	$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
-	$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
-	$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
-	$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
-	if ((($bShowPolygons?1:0)  
-	   + ($bAsGeoJSON?1:0) 
-	   + ($bAsKML?1:0) 
-	   + ($bAsSVG?1:0) 
-	   + ($bAsText?1:0) 
-		) > CONST_PolygonOutput_MaximumTypes) {
-		if (CONST_PolygonOutput_MaximumTypes) {
-			userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-		} else {
-			userError("Polygon output is disabled");
+    if ($sOutputFormat == 'html') {
+		$bAsText = $bShowPolygons;
+		$bShowPolygons = false;
+		$bAsGeoJSON = false;
+		$bAsKML = false;
+		$bAsSVG = false;
+	} else {
+		$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
+		$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
+		$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
+		$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
+		if ((($bShowPolygons?1:0)
+		   + ($bAsGeoJSON?1:0)
+		   + ($bAsKML?1:0)
+		   + ($bAsSVG?1:0)
+		   + ($bAsText?1:0)
+			) > CONST_PolygonOutput_MaximumTypes) {
+			if (CONST_PolygonOutput_MaximumTypes) {
+				userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
+			} else {
+				userError("Polygon output is disabled");
+			}
+			exit;
 		}
-		exit;
 	}
 
 	// Show address breakdown
@@ -1228,8 +1236,7 @@
 			if ($bAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
 			if ($bAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
 			if ($bAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
-			if ($bAsText) $sSQL .= ",ST_AsText(geometry) as astext";
-			if ($bShowPolygons) $sSQL .= ",ST_AsText(geometry) as outlinestring";
+			if ($bAsText || $bShowPolygons) $sSQL .= ",ST_AsText(geometry) as astext";
 			$sSQL .= " from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(Box2D(geometry)) = \'ST_Polygon\'';
 			$aPointPolygon = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPointPolygon))
@@ -1250,15 +1257,15 @@
 				if ($bShowPolygons) 
 				{
 					// Translate geometary string to point array
-					if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
+					if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
 					{
 						preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
 					}
-					elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['outlinestring'],$aMatch))
+					elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
 					{
 						preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
 					}
-					elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['outlinestring'],$aMatch))
+					elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['astext'],$aMatch))
 					{
 						$fRadius = 0.01;
 						$iSteps = ($fRadius * 40000)^2;

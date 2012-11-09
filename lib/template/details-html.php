@@ -56,21 +56,13 @@ body {
 			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default",
                         { attribution : '© <a target="_parent" href="http://www.openstreetmap.org">OpenStreetMap</a> and contributors, under an <a target="_parent" href="http://www.openstreetmap.org/copyright">open license</a>'}));
 
-                        var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
-                        layer_style.fillOpacity = 0.2;
-                        layer_style.graphicOpacity = 0.2;
+			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
+			layer_style.fillOpacity = 0.2;
+			layer_style.graphicOpacity = 0.2;
 
 			vectorLayer = new OpenLayers.Layer.Vector("Points", {style: layer_style});
 			map.addLayer(vectorLayer);
 
-			var pointList = [];
-			var style = {
-				strokeColor: "#75ADFF",
-				fillColor: "#F0F7FF",
-				strokeWidth: 2,
-				strokeOpacity: 0.75,
-				fillOpacity: 0.75
-			};
 			var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
 			var proj_map = map.getProjectionObject();
 

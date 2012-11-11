@@ -94,8 +94,9 @@
 
 		if (isset($aResult['askml']))
 		{
-			echo "\n";
+			echo "\n<geokml>";
 			echo $aResult['askml'];
+			echo "</geokml>";
 		}
 
 		if (isset($aResult['address']))

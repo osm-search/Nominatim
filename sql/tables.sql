@@ -32,6 +32,7 @@ CREATE TABLE query_log (
   results integer
   );
 CREATE INDEX idx_query_log ON query_log USING BTREE (starttime);
+GRANT SELECT ON query_log TO "www-data" ;
 GRANT INSERT ON query_log TO "www-data" ;
 GRANT UPDATE ON query_log TO "www-data" ;
 

@@ -939,7 +939,7 @@
 							{
 								$sPlaceIDs = join(',',$aPlaceIDs);
 
-								$aResultPlaceIDs = array();
+								$aClassPlaceIDs = array();
 
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
 								{
@@ -949,7 +949,7 @@
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aResultPlaceIDs = $oDB->getCol($sSQL);
+									$aClassPlaceIDs = $oDB->getCol($sSQL);
 								}
 								
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
@@ -967,9 +967,9 @@
 									if ($iMaxRank < 9 && $bCacheTable)
 									{
 										// Try and get a polygon to search in instead
-	$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
-	if (CONST_Debug) var_dump($sSQL);
-	$sPlaceGeom = $oDB->getOne($sSQL);
+										$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
+										if (CONST_Debug) var_dump($sSQL);
+										$sPlaceGeom = $oDB->getOne($sSQL);
 									}
 									
 									if ($sPlaceGeom)
@@ -1020,7 +1020,7 @@
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
+										$aClassPlaceIDs = array_merge($aClassPlaceIDs, $oDB->getCol($sSQL));
 									}
 									else
 									{
@@ -1042,12 +1042,12 @@
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
+										$aClassPlaceIDs = array_merge($aClassPlaceIDs, $oDB->getCol($sSQL));
 									}
 									}
 								}
 
-								$aPlaceIDs = $aResultPlaceIDs;
+								$aPlaceIDs = $aClassPlaceIDs;
 
 							}
 						
@@ -1066,6 +1066,7 @@
 						}
 						if ($iQueryLoop > 20) break;
 					}
+
 					//exit;
 					if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
 					if ($iGroupLoop > 4) break;

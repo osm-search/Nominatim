@@ -1,38 +1,13 @@
 <?php
 	header("content-type: text/html; charset=UTF-8");
 ?>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>OpenStreetMap Nominatim: <?php echo $aPointDetails['localname'];?></title>
-    <style>
-body {
-	margin:0px;
-	padding:16px;
-  background:#ffffff;
-  height: 100%;
-  font: normal 12px/15px arial,sans-serif;
-}
-.line{
-  margin-left:20px;
-}
-.name{
-  font-weight: bold;
-}
-.notused{
-  color:#ddd;
-}
-.noname{
-  color:#800;
-}
-#map {
-  width:500px;
-  height:500px;
-  border: 2px solid #666;
-  float: right;
-}
-    </style>
-	<script src="js/OpenLayers.js"></script>
-	<script src="js/tiles.js"></script>
+    <link href="css/details.css" rel="stylesheet" type="text/css" />
+	<script src="js/OpenLayers.js" type="text/javascript"></script>
+	<script src="js/tiles.js" type="text/javascript"></script>
 	<script type="text/javascript">
         
 		var map;
@@ -53,8 +28,7 @@ body {
                 projection: new OpenLayers.Projection("EPSG:900913"),
                 displayProjection: new OpenLayers.Projection("EPSG:4326")
             	} );
-			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default",
-                        { attribution : '© <a target="_parent" href="http://www.openstreetmap.org">OpenStreetMap</a> and contributors, under an <a target="_parent" href="http://www.openstreetmap.org/copyright">open license</a>'}));
+			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
 
 			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
 			layer_style.fillOpacity = 0.2;
@@ -110,7 +84,7 @@ body {
 	if ($aPointDetails['importance']) echo ' <div>Importance: <span class="rankaddress">'.$aPointDetails['importance'].'</span></div>';
 	echo ' <div>Coverage: <span class="area">'.($aPointDetails['isarea']=='t'?'Polygon':'Point').'</span></div>';
 	$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
-	if ($sOSMType) echo ' <div>OSM: <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
+	if ($sOSMType) echo ' <div>OSM: <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
 	if ($aPointDetails['wikipedia'])
 	{
 		list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aPointDetails['wikipedia']);
@@ -125,7 +99,7 @@ body {
 	echo '</div>';
 
 	echo '<h2>Address</h2>';
-	echo '<div class=\"address\">';
+	echo '<div class="address">';
 	$iPrevRank = 1000000;
 	$sPrevLocalName = '';
 	foreach($aAddressLines as $aAddressLine)
@@ -141,8 +115,8 @@ body {
 		echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
 		echo ' (';
 		echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
-		if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-		echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
+		if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
+		if (isset($aAddressLine['admin_level'])) echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
 		if (isset($aAddressLine['rank_search_label'])) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
 //		echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
 		echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';

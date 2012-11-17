@@ -17,10 +17,11 @@
 	$sSuggestion = $sSuggestionURL = false;
 	$bDeDupe = isset($_GET['dedupe'])?(bool)$_GET['dedupe']:true;
 	$bReverseInPlan = false;
-	$iLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
+	$iFinalLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
 	$iOffset = isset($_GET['offset'])?(int)$_GET['offset']:0;
 	$iMaxRank = 20;
-	if ($iLimit > 100) $iLimit = 100;
+	if ($iFinalLimit > 50) $iFinalLimit = 50;
+    $iLimit = $iFinalLimit + min($iFinalLimit, 10);
 	$iMinAddressRank = 0;
 	$iMaxAddressRank = 30;
 
@@ -864,7 +865,7 @@
 								else
 									$sSQL .= " limit ".$iLimit;
 
-								if (CONST_Debug) var_dump($sSQL);
+								if (CONST_Debug) { var_dump($sSQL); }
 								$aViewBoxPlaceIDs = $oDB->getAll($sSQL);
 								if (PEAR::IsError($aViewBoxPlaceIDs))
 								{
@@ -1418,7 +1419,7 @@
 		}
 
 		// Absolute limit on number of results
-		if (sizeof($aSearchResults) >= $iLimit) break;
+		if (sizeof($aSearchResults) >= $iFinalLimit) break;
 	}
 
 	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '1 day'::interval,'YYYY/MM/DD') from import_status limit 1");

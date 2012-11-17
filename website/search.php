@@ -761,7 +761,7 @@
 						// Must have a location term
 						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
 						{
-							if ($aSearch['sCountryCode'] && !$aSearch['sClass'])
+							if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
 							{
 								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
 								{

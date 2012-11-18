@@ -79,6 +79,7 @@
 	}
 	echo ' </div>';
 	echo ' <div>Type: <span class="type">'.$aPointDetails['class'].':'.$aPointDetails['type'].'</span></div>';
+	echo ' <div>Last Updated: <span class="type">'.$aPointDetails['indexed_date'].'</span></div>';
 	echo ' <div>Admin Level: <span class="adminlevel">'.$aPointDetails['admin_level'].'</span></div>';
 	echo ' <div>Rank: <span class="rankaddress">'.$aPointDetails['rank_search_label'].'</span></div>';
 	if ($aPointDetails['importance']) echo ' <div>Importance: <span class="rankaddress">'.$aPointDetails['importance'].'</span></div>';

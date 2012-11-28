@@ -1,0 +1,166 @@
+* {-moz-box-sizing: border-box;}
+body {
+  margin:0px;
+  padding:0px;
+  overflow: hidden;
+  background:#ffffff;
+  height: 100%;
+  font: normal 12px/15px arial,sans-serif;
+}
+#seachheader {
+  position:absolute;
+  z-index:5;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:38px;
+  background:#F0F7FF;
+  border-bottom: 2px solid #75ADFF;
+}
+#q {
+  width:300px;
+}
+#seachheaderfade1, #seachheaderfade2, #seachheaderfade3, #seachheaderfade4{
+  position:absolute;
+  z-index:4;
+  top:0px;
+  left:0px;
+  width:100%;
+  opacity: 0.15;
+  filter: alpha(opacity = 15);
+  background:#000000;
+  border: 1px solid #000000;
+}
+#seachheaderfade1{
+  height:39px;
+}
+#seachheaderfade2{
+  height:40px;
+}
+#seachheaderfade3{
+  height:41px;
+}
+#seachheaderfade4{
+  height:42px;
+}
+#searchresultsfade1, #searchresultsfade2, #searchresultsfade3, #searchresultsfade4 {
+  position:absolute;
+  z-index:2;
+  top:0px;
+  left:200px;
+  height: 100%;
+  opacity: 0.2;
+  filter: alpha(opacity = 20);
+  background:#ffffff;
+  border: 1px solid #ffffff;
+}
+#searchresultsfade1{
+  width:1px;
+}
+#searchresultsfade2{
+  width:2px;
+}
+#searchresultsfade3{
+  width:3px;
+}
+#searchresultsfade4{
+  width:4px;
+}
+
+#searchresults{
+  position:absolute;
+  z-index:3;
+  top:41px;
+  width:200px;
+  height: 100%;
+  background:#ffffff;
+  border: 1px solid #ffffff;
+  overflow: auto;
+}
+#map{
+  position:absolute;
+  z-index:1;
+  top:38px;
+  left:200px;
+  width:100%;
+  height:100%;
+  background:#eee;
+}
+#report{
+  position:absolute;
+  z-index:2;
+  top:38px;
+  left:200px;
+  width:100%;
+  height:100%;
+  background:#eee;
+  font: normal 12px/15px arial,sans-serif;
+  padding:20px;
+}
+#report table {
+  margin-left:20px;
+}
+#report th {
+  vertical-align:top;
+  text-align:left;
+}
+#report td.button {
+  text-align:right;
+}
+.result {
+  margin:5px;
+  margin-bottom:0px;
+  padding:2px;
+  padding-left:4px;
+  padding-right:4px;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  background:#F0F7FF;
+  border: 2px solid #D7E7FF;
+  font: normal 12px/15px arial,sans-serif;
+  cursor:pointer;
+}
+.result img{
+  float:right;
+}
+.result .latlon{
+  display: none;
+}
+.result .place_id{
+  display: none;
+}
+.result .type{
+  color: #999;
+  text-align:center;
+  font: normal 9px/10px arial,sans-serif;
+  padding-top:4px;
+}
+.result .details, .result .details a{
+  color: #999;
+  text-align:center;
+  font: normal 9px/10px arial,sans-serif;
+  padding-top:4px;
+}
+.noresults{
+  color: #000;
+  text-align:center;
+  font: normal 12px arial,sans-serif;
+  padding-top:4px;
+}
+.more{
+  color: #ccc;
+  text-align:center;
+  padding-top:4px;
+}
+.disclaimer{
+  color: #ccc;
+  text-align:center;
+  font: normal 9px/10px arial,sans-serif;
+  padding-top:4px;
+}
+form{
+  margin:0px;
+  padding:0px;
+}
+

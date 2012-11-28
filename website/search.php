@@ -17,10 +17,11 @@
 	$sSuggestion = $sSuggestionURL = false;
 	$bDeDupe = isset($_GET['dedupe'])?(bool)$_GET['dedupe']:true;
 	$bReverseInPlan = false;
-	$iLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
+	$iFinalLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
 	$iOffset = isset($_GET['offset'])?(int)$_GET['offset']:0;
 	$iMaxRank = 20;
-	if ($iLimit > 100) $iLimit = 100;
+	if ($iFinalLimit > 50) $iFinalLimit = 50;
+    $iLimit = $iFinalLimit + min($iFinalLimit, 10);
 	$iMinAddressRank = 0;
 	$iMaxAddressRank = 30;
 
@@ -760,7 +761,7 @@
 						// Must have a location term
 						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
 						{
-							if ($aSearch['sCountryCode'] && !$aSearch['sClass'])
+							if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
 							{
 								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
 								{
@@ -864,7 +865,7 @@
 								else
 									$sSQL .= " limit ".$iLimit;
 
-								if (CONST_Debug) var_dump($sSQL);
+								if (CONST_Debug) { var_dump($sSQL); }
 								$aViewBoxPlaceIDs = $oDB->getAll($sSQL);
 								if (PEAR::IsError($aViewBoxPlaceIDs))
 								{
@@ -939,7 +940,7 @@
 							{
 								$sPlaceIDs = join(',',$aPlaceIDs);
 
-								$aResultPlaceIDs = array();
+								$aClassPlaceIDs = array();
 
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
 								{
@@ -949,7 +950,7 @@
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aResultPlaceIDs = $oDB->getCol($sSQL);
+									$aClassPlaceIDs = $oDB->getCol($sSQL);
 								}
 								
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
@@ -967,9 +968,9 @@
 									if ($iMaxRank < 9 && $bCacheTable)
 									{
 										// Try and get a polygon to search in instead
-	$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
-	if (CONST_Debug) var_dump($sSQL);
-	$sPlaceGeom = $oDB->getOne($sSQL);
+										$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
+										if (CONST_Debug) var_dump($sSQL);
+										$sPlaceGeom = $oDB->getOne($sSQL);
 									}
 									
 									if ($sPlaceGeom)
@@ -1020,7 +1021,7 @@
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
+										$aClassPlaceIDs = array_merge($aClassPlaceIDs, $oDB->getCol($sSQL));
 									}
 									else
 									{
@@ -1042,12 +1043,12 @@
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aResultPlaceIDs = array_merge($aResultPlaceIDs, $oDB->getCol($sSQL));
+										$aClassPlaceIDs = array_merge($aClassPlaceIDs, $oDB->getCol($sSQL));
 									}
 									}
 								}
 
-								$aPlaceIDs = $aResultPlaceIDs;
+								$aPlaceIDs = $aClassPlaceIDs;
 
 							}
 						
@@ -1066,6 +1067,7 @@
 						}
 						if ($iQueryLoop > 20) break;
 					}
+
 					//exit;
 					if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
 					if ($iGroupLoop > 4) break;
@@ -1417,7 +1419,7 @@
 		}
 
 		// Absolute limit on number of results
-		if (sizeof($aSearchResults) >= $iLimit) break;
+		if (sizeof($aSearchResults) >= $iFinalLimit) break;
 	}
 
 	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '1 day'::interval,'YYYY/MM/DD') from import_status limit 1");

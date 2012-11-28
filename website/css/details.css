@@ -1,0 +1,26 @@
+body {
+    margin:0px;
+    padding:16px;
+  background:#ffffff;
+  height: 100%;
+  font: normal 12px/15px arial,sans-serif;
+}
+.line{
+  margin-left:20px;
+}
+.name{
+  font-weight: bold;
+}
+.notused{
+  color:#ddd;
+}
+.noname{
+  color:#800;
+}
+#map {
+  width:500px;
+  height:500px;
+  border: 2px solid #666;
+  float: right;
+}
+

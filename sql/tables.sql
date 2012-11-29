@@ -289,6 +289,7 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
+GRANT SELECT ON import_polygon_delete TO "www-data";
 
 drop sequence file;
 CREATE SEQUENCE file start 1;

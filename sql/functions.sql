@@ -2903,3 +2903,70 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT) RETURNS BOOLEAN
+  AS $$
+DECLARE
+    osmid BIGINT;
+    osmtype character(1);
+    pclass text;
+    ptype text;
+BEGIN
+  SELECT osm_type, osm_id, class, type FROM placex WHERE place_id = placeid INTO osmtype, osmid, pclass, ptype;
+  DELETE FROM import_polygon_delete where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
+  DELETE FROM import_polygon_error where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
+  -- force delete from place/placex by making it a very small geometry
+  UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
+  DELETE FROM place where osm_type = osmtype and osm_id = osmid and class = pclass and type = ptype;
+
+  RETURN TRUE;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION place_force_update(placeid BIGINT) RETURNS BOOLEAN
+  AS $$
+DECLARE
+  placegeom GEOMETRY;
+  geom GEOMETRY;
+  diameter FLOAT;
+  rank INTEGER;
+BEGIN
+  SELECT geometry, rank_search FROM placex WHERE place_id = placeid INTO placegeom, rank;
+  IF placegeom IS NOT NULL AND ST_IsValid(placegeom) THEN
+    IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
+      FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
+        update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
+        update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
+      END LOOP;
+    ELSE
+        diameter := 0;
+        IF rank = 11 THEN
+          diameter := 0.05;
+        ELSEIF rank < 18 THEN
+          diameter := 0.1;
+        ELSEIF rank < 20 THEN
+          diameter := 0.05;
+        ELSEIF rank = 21 THEN
+          diameter := 0.001;
+        ELSEIF rank < 24 THEN
+          diameter := 0.02;
+        ELSEIF rank < 26 THEN
+          diameter := 0.002; -- 100 to 200 meters
+        ELSEIF rank < 28 THEN
+          diameter := 0.001; -- 50 to 100 meters
+        END IF;
+        IF diameter > 0 THEN
+          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);
+        END IF;
+    END IF;
+    RETURN TRUE;
+  END IF;
+
+  RETURN FALSE;
+END;
+$$
+LANGUAGE plpgsql;

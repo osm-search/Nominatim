@@ -249,17 +249,7 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
-alter table placex add column geometry_sector INTEGER;
-alter table placex add column indexed_status INTEGER;
-alter table placex add column indexed_date TIMESTAMP;
-
-update placex set geometry_sector = geometry_sector(geometry);
-drop index idx_placex_pendingbylatlon;
-drop index idx_placex_interpolation;
 drop index idx_placex_sector;
-CREATE INDEX idx_placex_pendingbylatlon ON placex USING BTREE (geometry_index(geometry_sector,indexed,name),rank_search) 
-  where geometry_index(geometry_sector,indexed,name) IS NOT NULL;
-CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed = false and class='place' and type='houses';
 CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id);
 
 DROP SEQUENCE seq_postcodes;
@@ -289,6 +279,7 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
+GRANT SELECT ON import_polygon_delete TO "www-data";
 
 drop sequence file;
 CREATE SEQUENCE file start 1;

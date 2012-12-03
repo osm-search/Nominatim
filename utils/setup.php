@@ -568,6 +568,8 @@
 		@symlink(CONST_BasePath.'/website/reverse.php', $sTargetDir.'/reverse.php');
 		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/search.php');
 		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/index.php');
+		@symlink(CONST_BasePath.'/website/deletable.php', $sTargetDir.'/deletable.php');
+		@symlink(CONST_BasePath.'/website/polygons.php', $sTargetDir.'/polygons.php');
 		@symlink(CONST_BasePath.'/website/images', $sTargetDir.'/images');
 		@symlink(CONST_BasePath.'/website/js', $sTargetDir.'/js');
 		@symlink(CONST_BasePath.'/website/css', $sTargetDir.'/css');

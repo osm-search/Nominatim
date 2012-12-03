@@ -30,6 +30,7 @@
 
 	@define('CONST_Search_AreaPolygons_Enabled', true);
 	@define('CONST_Search_AreaPolygons', true);
+	@define('CONST_Search_TryDroppedAddressTerms', false);
 
 	@define('CONST_Suggestions_Enabled', false);
 

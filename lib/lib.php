@@ -994,6 +994,15 @@
 		return $iMaxVal;
         }
 
+	function byLastBlockTime($a, $b)
+	{
+		if ($a['lastBlockTimestamp'] == $b['lastBlockTimestamp'])
+		{
+			return 0;
+		}
+		return ($a['lastBlockTimestamp'] > $b['lastBlockTimestamp']) ? -1 : 1;
+	}
+
 	function getBucketBlocks()
 	{
 	        $m = getBucketMemcache();
@@ -1014,6 +1023,7 @@
 				'currentlyBlocked' => $iCurrentBucketSize + (CONST_ConnectionBucket_Cost_Reverse) >= CONST_ConnectionBucket_BlockLimit,
 				);
 		}
+		uasort($aBlockedList, 'byLastBlockTime');
 		return $aBlockedList;
 	}
 

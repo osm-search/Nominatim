@@ -23,9 +23,10 @@
 	$iOffset = isset($_GET['offset'])?(int)$_GET['offset']:0;
 	$iMaxRank = 20;
 	if ($iFinalLimit > 50) $iFinalLimit = 50;
-    $iLimit = $iFinalLimit + min($iFinalLimit, 10);
+	$iLimit = $iFinalLimit + min($iFinalLimit, 10);
 	$iMinAddressRank = 0;
 	$iMaxAddressRank = 30;
+	$sAllowedTypesSQLList = false;
 
 	// Format for output
 	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'xml' || $_GET['format'] == 'json' ||  $_GET['format'] == 'jsonv2'))
@@ -154,12 +155,14 @@
 				array('postalcode', 16, 25),
 				);
 	$aStructuredQuery = array();
+	$sAllowedTypesSQLList = '';
 	foreach($aStructuredOptions as $aStructuredOption)
 	{
 		loadStructuredAddressElement($aStructuredQuery, $iMinAddressRank, $iMaxAddressRank, $_GET, $aStructuredOption[0], $aStructuredOption[1], $aStructuredOption[2]);
 	}
 	if (sizeof($aStructuredQuery) > 0) {
 		$sQuery = join(', ', $aStructuredQuery);
+		$sAllowedTypesSQLList = '(\'place\',\'boundary\')';
 	}
 
 	if ($sQuery)
@@ -1133,6 +1136,7 @@
 					$sSQL .= "coalesce(importance,0.9-(rank_search::float/30)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
 					$sSQL .= "and linked_place_id is null ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";

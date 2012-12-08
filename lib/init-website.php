@@ -19,8 +19,24 @@
 
 	if ($fBucketVal > CONST_ConnectionBucket_WaitLimit && $fBucketVal < CONST_ConnectionBucket_BlockLimit)
 	{
-		sleep(($fBucketVal - CONST_ConnectionBucket_WaitLimit)/CONST_ConnectionBucket_LeakRate);
-		$fBucketVal = doBucket($aBucketKeys, 0, 0, CONST_ConnectionBucket_BlockLimit);
+		$m = getBucketMemcache();
+		$iCurrentSleeping = $m->increment('sleepCounter');
+		if (false === $iCurrentSleeping)
+		{
+			$m->add('sleepCounter', 0);
+			$iCurrentSleeping = $m->increment('sleepCounter');
+		}
+		if ($iCurrentSleeping >= CONST_ConnectionBucket_MaxSleeping)
+		{
+			// Too many threads sleeping already.  This becomes a hard block.
+			$fBucketVal = doBucket($aBucketKeys, CONST_ConnectionBucket_BlockLimit, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_BlockLimit);
+		}
+		else
+		{
+			sleep(($fBucketVal - CONST_ConnectionBucket_WaitLimit)/CONST_ConnectionBucket_LeakRate);
+			$fBucketVal = doBucket($aBucketKeys, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_BlockLimit);
+		}
+		$m->decrement('sleepCounter');
 	}
 
 	if (strpos(CONST_BlockedIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false || $fBucketVal >= CONST_ConnectionBucket_BlockLimit)

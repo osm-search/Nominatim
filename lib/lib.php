@@ -919,9 +919,14 @@
 
 	function getBucketMemcache()
 	{
+		static $m;
+
 		if (!CONST_ConnectionBucket_MemcacheServerAddress) return null;
-	        $m = new Memcached();
-        	$m->addServer(CONST_ConnectionBucket_MemcacheServerAddress, CONST_ConnectionBucket_MemcacheServerPort);
+		if (!isset($m))
+		{
+		        $m = new Memcached();
+        		$m->addServer(CONST_ConnectionBucket_MemcacheServerAddress, CONST_ConnectionBucket_MemcacheServerPort);
+		}
 		return $m;
 	}
 

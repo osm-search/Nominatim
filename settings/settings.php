@@ -20,10 +20,13 @@
 	@define('CONST_ConnectionBucket_LeakRate', 1);
 	@define('CONST_ConnectionBucket_BlockLimit', 10);
 	@define('CONST_ConnectionBucket_WaitLimit', 6);
+	@define('CONST_ConnectionBucket_MaxSleeping', 10);
 	@define('CONST_ConnectionBucket_Cost_Reverse', 1);
 	@define('CONST_ConnectionBucket_Cost_Search', 2);
 	@define('CONST_ConnectionBucket_Cost_Details', 3);
 
+	// Override this function to add an adjustment factor to the cost
+	// based on server load. e.g. getBlockingProcesses
 	if (!function_exists('user_busy_cost'))
 	{
 		function user_busy_cost()

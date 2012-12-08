@@ -23,6 +23,9 @@
 
 	if ($aResult['list'])
 	{
+		$iCurrentSleeping = $m->get('sleepCounter');
+		echo "\n Sleeping blocks count: $iCurrentSleeping\n";
+
 		$aBlocks = getBucketBlocks();
 		echo "\n";
 		printf(" %-40s | %12s | %7s | %13s | %16s | %31s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Req Blocked", "Last Block Time");
@@ -36,5 +39,6 @@
 
 	if ($aResult['delete'])
 	{
+		$m->set('sleepCounter', 0);
 		clearBucketBlocks();
 	}

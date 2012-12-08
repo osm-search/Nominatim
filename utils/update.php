@@ -67,6 +67,8 @@
 	// Assume osm2pgsql is in the folder above
 	$sBasePath = dirname(dirname(__FILE__));
 
+	date_default_timezone_set('Etc/UTC');
+
 	$oDB =& getDB();
 
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);

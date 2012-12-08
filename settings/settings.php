@@ -14,6 +14,24 @@
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
 
+	// Connection buckets to rate limit people being nasty
+	@define('CONST_ConnectionBucket_MemcacheServerAddress', false);
+	@define('CONST_ConnectionBucket_MemcacheServerPort', 11211);
+	@define('CONST_ConnectionBucket_LeakRate', 1);
+	@define('CONST_ConnectionBucket_BlockLimit', 10);
+	@define('CONST_ConnectionBucket_WaitLimit', 6);
+	@define('CONST_ConnectionBucket_Cost_Reverse', 1);
+	@define('CONST_ConnectionBucket_Cost_Search', 2);
+	@define('CONST_ConnectionBucket_Cost_Details', 3);
+
+	if (!function_exists('user_busy_cost'))
+	{
+		function user_busy_cost()
+		{
+			return 0;
+		}
+	}
+
 	// Website settings
 	@define('CONST_ClosedForIndexing', false);
 	@define('CONST_ClosedForIndexingExceptionIPs', '');
@@ -30,9 +48,10 @@
 
 	@define('CONST_Search_AreaPolygons_Enabled', true);
 	@define('CONST_Search_AreaPolygons', true);
-	@define('CONST_Search_TryDroppedAddressTerms', false);
 
 	@define('CONST_Suggestions_Enabled', false);
+
+	@define('CONST_Search_TryDroppedAddressTerms', false);
 
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);

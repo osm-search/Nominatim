@@ -1,8 +1,4 @@
 <?php
-//echo "<a href=\"http://localhost/nominatim/search.php?format=xml&addressdetails=1&accept-language=en&street=&suburb=&city=Dammam&county=&state=&country=SA&postcode=&\">x</a>";
-//exit;
-//phpinfo();
-//exit;
 	require_once('init.php');
 
 	if (CONST_ClosedForIndexing && strpos(CONST_ClosedForIndexingExceptionIPs, ','.$_SERVER["REMOTE_ADDR"].',') === false)
@@ -12,6 +8,7 @@
 	}
 
 	$aBucketKeys = array();
+
 	if (isset($_SERVER["HTTP_REFERER"])) $aBucketKeys[] = str_replace('www.','',strtolower(parse_url($_SERVER["HTTP_REFERER"], PHP_URL_HOST)));
 	if (isset($_SERVER["REMOTE_ADDR"])) $aBucketKeys[] = $_SERVER["REMOTE_ADDR"];
 	if (isset($_GET["email"])) $aBucketKeys[] = $_GET["email"];
@@ -32,6 +29,5 @@
 	{
 		sleep(($fBucketVal - CONST_ConnectionBucket_WaitLimit)/CONST_ConnectionBucket_LeakRate);
 	}
-var_dump($fBucketVal);
-exit;
+
 	header('Content-type: text/html; charset=utf-8');

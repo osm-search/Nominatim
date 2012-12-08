@@ -29,7 +29,7 @@
 		$aBlocks = getBucketBlocks();
 		echo "\n";
 		printf(" %-40s | %12s | %7s | %13s | %16s | %31s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Req Blocked", "Last Block Time");
-		printf(" %'--40s | %'-12s | %'-7s | %'-13s | %'-16s | %'-31s\n", "", "", "", "", "", "");
+		printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-16s-|-%'-31s\n", "", "", "", "", "", "");
 		foreach($aBlocks as $sKey => $aDetails)
 		{
 			printf(" %-40s | %12s | %7s | %13s | %16s | %31s\n", $sKey, $aDetails['totalBlocks'], (int)$aDetails['currentBucketSize'], $aDetails['lastRequestBlocked']?'Y':'N', $aDetails['currentlyBlocked']?'Y':'N', date("r", $aDetails['lastBlockTimestamp']));

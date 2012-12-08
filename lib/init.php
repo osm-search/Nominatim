@@ -4,6 +4,7 @@
 
 	require_once(CONST_BasePath.'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/lib.php');
+	require_once(CONST_BasePath.'/lib/leakybucket.php');
 	require_once(CONST_BasePath.'/lib/db.php');
 
 	if (get_magic_quotes_gpc())

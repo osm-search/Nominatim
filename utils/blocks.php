@@ -11,6 +11,7 @@
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 		array('list', 'l', 0, 1, 0, 0, 'bool', 'List recent blocks'),
 		array('delete', 'd', 0, 1, 0, 0, 'bool', 'Clear recent blocks list'),
+		array('flush', '', 0, 1, 0, 0, 'bool', 'Flush all blocks / stats'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
@@ -28,11 +29,13 @@
 
 		$aBlocks = getBucketBlocks();
 		echo "\n";
-		printf(" %-40s | %12s | %7s | %13s | %16s | %31s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Req Blocked", "Last Block Time");
-		printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-16s-|-%'-31s\n", "", "", "", "", "", "");
+		printf(" %-40s | %12s | %7s | %13s | %31s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Block Time");
+		printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-31s\n", "", "", "", "", "");
 		foreach($aBlocks as $sKey => $aDetails)
 		{
-			printf(" %-40s | %12s | %7s | %13s | %16s | %31s\n", $sKey, $aDetails['totalBlocks'], (int)$aDetails['currentBucketSize'], $aDetails['lastRequestBlocked']?'Y':'N', $aDetails['currentlyBlocked']?'Y':'N', date("r", $aDetails['lastBlockTimestamp']));
+			printf(" %-40s | %12s | %7s | %13s | %31s\n", $sKey, $aDetails['totalBlocks'], 
+				(int)$aDetails['currentBucketSize'], $aDetails['currentlyBlocked']?'Y':'N', 
+				date("r", $aDetails['lastBlockTimestamp']));
 		}
 		echo "\n";
 	}
@@ -41,4 +44,9 @@
 	{
 		$m->set('sleepCounter', 0);
 		clearBucketBlocks();
+	}
+
+	if ($aResult['flush'])
+	{
+		$m->flush();
 	}

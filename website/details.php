@@ -1,4 +1,6 @@
 <?php
+	@define('CONST_ConnectionBucket_PageType', 'Details');
+
         require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
         require_once(CONST_BasePath.'/lib/log.php');
 

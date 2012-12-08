@@ -17,6 +17,7 @@
 	// Connection buckets to rate limit people being nasty
 	@define('CONST_ConnectionBucket_MemcacheServerAddress', false);
 	@define('CONST_ConnectionBucket_MemcacheServerPort', 11211);
+	@define('CONST_ConnectionBucket_MaxBlockList', 100);
 	@define('CONST_ConnectionBucket_LeakRate', 1);
 	@define('CONST_ConnectionBucket_BlockLimit', 10);
 	@define('CONST_ConnectionBucket_WaitLimit', 6);

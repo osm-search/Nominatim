@@ -26,7 +26,7 @@
 		        $aCurrentBlock = $m->get($sKey);
 	        	if (!$aCurrentBlock)
 			{
-		                $aCurrentBlock = array($iRequestCost, $t);
+		                $aCurrentBlock = array($iRequestCost, $t, false);
         		}
 			else
 			{
@@ -87,6 +87,36 @@
 		return $iMaxVal;
         }
 
+	function isBucketSleeping($asKey)
+	{
+	        $m = getBucketMemcache();
+		if (!$m) return false;
+
+		foreach($asKey as $sKey)
+		{
+		        $aCurrentBlock = $m->get($sKey);
+			if ($aCurrentBlock[2]) return true;
+		}
+		return false;
+	}
+
+	function setBucketSleeping($asKey, $bVal)
+	{
+	        $m = getBucketMemcache();
+		if (!$m) return false;
+
+		$iMaxVal = 0;
+	        $t = time();
+
+		foreach($asKey as $sKey)
+		{
+		        $aCurrentBlock = $m->get($sKey);
+			$aCurrentBlock[2] = $bVal;
+			$m->set($sKey, $aCurrentBlock, $t + 1 + $aCurrentBlock[0]/CONST_ConnectionBucket_LeakRate);
+		}
+		return true;
+	}
+
 	function byValue1($a, $b)
 	{
 		if ($a[1] == $b[1])
@@ -120,6 +150,7 @@
 			$aBlockedList[$sKey] = array(
 				'totalBlocks' => $aDetails[0],
 				'lastBlockTimestamp' => $aDetails[1],
+				'isSleeping' => (isset($aCurrentBlock[2])?$aCurrentBlock[2]:false),
 				'currentBucketSize' => $iCurrentBucketSize,
 				'currentlyBlocked' => $iCurrentBucketSize + (CONST_ConnectionBucket_Cost_Reverse) >= CONST_ConnectionBucket_BlockLimit,
 				);

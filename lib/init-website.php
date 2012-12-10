@@ -26,15 +26,17 @@
 			$m->add('sleepCounter', 0);
 			$iCurrentSleeping = $m->increment('sleepCounter');
 		}
-		if ($iCurrentSleeping >= CONST_ConnectionBucket_MaxSleeping)
+		if ($iCurrentSleeping >= CONST_ConnectionBucket_MaxSleeping || isBucketSleeping($aBucketKeys))
 		{
 			// Too many threads sleeping already.  This becomes a hard block.
 			$fBucketVal = doBucket($aBucketKeys, CONST_ConnectionBucket_BlockLimit, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_BlockLimit);
 		}
 		else
 		{
+			setBucketSleeping($aBucketKeys, true);
 			sleep(($fBucketVal - CONST_ConnectionBucket_WaitLimit)/CONST_ConnectionBucket_LeakRate);
 			$fBucketVal = doBucket($aBucketKeys, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_LeakRate, CONST_ConnectionBucket_BlockLimit);
+			setBucketSleeping($aBucketKeys, false);
 		}
 		$m->decrement('sleepCounter');
 	}
@@ -48,3 +50,4 @@
 	}
 
 	header('Content-type: text/html; charset=utf-8');
+

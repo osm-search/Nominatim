@@ -5,6 +5,7 @@
 	require_once(CONST_BasePath.'/lib/log.php');
 
 	ini_set('memory_limit', '200M');
+
 	$oDB =& getDB();
 
 	// Display defaults
@@ -887,7 +888,7 @@
 							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
-							$sImportanceSQL = 'case when importance = 0 OR importance IS NULL then 0.92-(search_rank::float/33) else importance end';
+							$sImportanceSQL = 'case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end';
 
 							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
 							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
@@ -1133,7 +1134,7 @@
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.9-(rank_search::float/30)) as importance ";
+					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
@@ -1203,7 +1204,7 @@
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.9-(rank_search::float/30)) as importance ";
+					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code,importance";
@@ -1433,8 +1434,6 @@
 	}
 	uasort($aSearchResults, 'byImportance');
 
-//var_dump($aSearchResults);exit;
-	
 	$aOSMIDDone = array();
 	$aClassTypeNameDone = array();
 	$aToFilter = $aSearchResults;

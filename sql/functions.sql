@@ -571,6 +571,20 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION get_country_language_codes(search_country_code VARCHAR(2)) RETURNS TEXT[]
+  AS $$
+DECLARE
+  nearcountry RECORD;
+BEGIN
+  FOR nearcountry IN select country_default_language_codes from country_name where country_code = search_country_code limit 1
+  LOOP
+    RETURN lower(nearcountry.country_default_language_codes);
+  END LOOP;
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION get_partition(place geometry, in_country_code VARCHAR(10)) RETURNS INTEGER
   AS $$
 DECLARE
@@ -2157,7 +2171,9 @@ BEGIN
     END IF;
   END LOOP;
 
-  RETURN null;
+  -- anything will do as a fallback - just take the first name type thing there is
+  search := avals(name);
+  RETURN search[1];
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

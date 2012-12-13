@@ -1526,6 +1526,7 @@ BEGIN
 
         -- Merge address from parent
         nameaddress_vector := array_merge(nameaddress_vector, location.nameaddress_vector);
+        nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
 --return NEW;
         -- Performance, it would be more acurate to do all the rest of the import process but it takes too long
         -- Just be happy with inheriting from parent road only

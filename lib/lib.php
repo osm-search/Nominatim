@@ -116,15 +116,17 @@
 		}
 
 		$aLanguages = array();
-		if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $aLanguagesParse, PREG_SET_ORDER))
-		{
-			foreach($aLanguagesParse as $iLang => $aLanguage)
+		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+			if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $aLanguagesParse, PREG_SET_ORDER))
 			{
-				$aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
-				if (!isset($aLanguages[$aLanguage[2]])) $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
+				foreach($aLanguagesParse as $iLang => $aLanguage)
+				{
+					$aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
+					if (!isset($aLanguages[$aLanguage[2]])) $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
+				}
+				arsort($aLanguages);
 			}
-			arsort($aLanguages);
-		}
+        }
 		if (!sizeof($aLanguages)) $aLanguages = array(CONST_Default_Language=>1);
 		foreach($aLanguages as $sLangauge => $fLangauagePref)
 		{

@@ -40,7 +40,7 @@
 
 		$aPlace['category'] = $aPointDetails['class'];
 		$aPlace['type'] = $aPointDetails['type'];
-		if ($aPointDetails['icon'])
+		if (isset($aPointDetails['icon']))
 		{
 			$aPlace['icon'] = $aPointDetails['icon'];
 		}

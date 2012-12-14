@@ -14,7 +14,7 @@
 
 	if (!sizeof($aPlace))
 	{
-		if ($sError)
+		if (isset($sError))
 			echo "<error>$sError</error>";
 		else
 			echo "<error>Unable to geocode</error>";

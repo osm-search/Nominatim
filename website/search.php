@@ -1475,7 +1475,7 @@
 		logEnd($oDB, $hLog, sizeof($aToFilter));
 	}
  	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
-	$sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
+	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 	if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 	if ($bShowAddressDetails) $sMoreURL .= '&addressdetails=1';
 	if (isset($_GET['viewbox']) && $_GET['viewbox']) $sMoreURL .= '&viewbox='.urlencode($_GET['viewbox']);

@@ -313,6 +313,7 @@
  'place:region' => array('label'=>'Region','frequency'=>0,'icon'=>'poi_boundary_administrative','defzoom'=>8, 'defdiameter' => 0.04,),
  'place:island' => array('label'=>'Island','frequency'=>288,'icon'=>'','defzoom'=>11, 'defdiameter' => 0.64,),
  'boundary:administrative' => array('label'=>'Administrative','frequency'=>413,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
+ 'boundary:postal_code' => array('label'=>'Postcode','frequency'=>413,'icon'=>'poi_boundary_administrative', 'defdiameter' => 0.32,),
  'place:town' => array('label'=>'Town','frequency'=>1497,'icon'=>'poi_place_town','defzoom'=>14, 'defdiameter' => 0.08,),
  'place:village' => array('label'=>'Village','frequency'=>11230,'icon'=>'poi_place_village','defzoom'=>15, 'defdiameter' => 0.04,),
  'place:hamlet' => array('label'=>'Hamlet','frequency'=>7075,'icon'=>'poi_place_village','defzoom'=>15, 'defdiameter' => 0.04,),
@@ -704,93 +705,35 @@
 //echo "<pre>";
 //var_dump($aAddressLines);
 		$aAddress = array();
+		$aFallback = array();
 		$aClassType = getClassTypes();
 		foreach($aAddressLines as $aLine)
 		{
+			$bFallback = false;
 			$aTypeLabel = false;
 			if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
 			elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
-			elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))])) $aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
-			else $aTypeLabel = array('simplelabel'=>$aLine['class']);
+			elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))]))
+			{
+				$aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
+				$bFallback = true;
+			}
+			else
+			{
+				$aTypeLabel = array('simplelabel'=>'address'.$aLine['rank_address']);
+				$bFallback = true;
+			}
 			if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber'])))
 			{
 				$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
 				$sTypeLabel = str_replace(' ','_',$sTypeLabel);
-				if (!isset($aAddress[$sTypeLabel]) && $aLine['localname']) $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
-			}
-		}
-
-		return $aAddress;
-
-		$aHouseNumber = $oDB->getRow('select housenumber, get_name_by_language(name,ARRAY[\'addr:housename\']) as housename,rank_search,postcode from placex where place_id = '.$iPlaceID);
-		$sHouseNumber = $aHouseNumber['housenumber'];
-		$sHouseName = $aHouseNumber['housename'];
-		$sPostcode = $aHouseNumber['postcode'];
-		$iRank = $aHouseNumber['rank_search'];
-
-	        // Address
-        	$sSQL = "select country_code, placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, ";
-	        $sSQL .= "get_searchrank_label(rank_search) as rank_search_label, fromarea, isaddress, distance, ";
-        	$sSQL .= " CASE WHEN type = 'postcode' THEN postcode ELSE get_name_by_language(name,$sLanguagePrefArraySQL) END as localname, ";
-		$sSQL .= " length(name::text) as namelength ";
-	        $sSQL .= " from place_addressline join placex on (address_place_id = placex.place_id)";
-        	$sSQL .= " where place_addressline.place_id = $iPlaceID and (rank_address > 0 OR address_place_id = $iPlaceID)";
-		if (!$bRaw) $sSQL .= " and isaddress";
-        	$sSQL .= " order by cached_rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc,namelength desc";
-//var_dump($sSQL);
-	        $aAddressLines = $oDB->getAll($sSQL);
-        	if (PEAR::IsError($aAddressLines))
-	        {
-        	        var_dump($aAddressLines);
-                	exit;
-	        }
-		if ($bRaw) return $aAddressLines;
-	
-		$aClassType = getClassTypes();
-
-		$iMinRank = 100;
-		$aAddress = array();
-		if ($iRank >= 28 && $sHouseNumber) $aAddress['house_number'] = $sHouseNumber;
-		if ($iRank >= 28 && $sHouseName) $aAddress['house_name'] = $sHouseName;
-		foreach($aAddressLines as $aLine)
-		{
-			if (!$sCountryCode) $sCountryCode = $aLine['country_code'];
-			if ($aLine['rank_address'] < $iMinRank)
-			{
-				$aTypeLabel = false;
-				if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
-				elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
-				else $aTypeLabel = array('simplelabel'=>$aLine['class']);
-				if ($aTypeLabel && ($aLine['localname'] || $aLine['housenumber']))
+				if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]))
 				{
-					$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-					$sTypeLabel = str_replace(' ','_',$sTypeLabel);
-					if (!isset($aAddress[$sTypeLabel]) && $aLine['localname']) $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
+					$aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
 				}
-				$iMinRank = $aLine['rank_address'];
+				$aFallback[$sTypeLabel] = $bFallback;
 			}
 		}
-
-		if ($sPostcode)
-		{
-			$aAddress['postcode'] = $sPostcode;
-		}
-
-		if ($iMinRank > 4 && $sCountryCode)
-		{
-			$sSQL = "select get_name_by_language(country_name.name,$sLanguagePrefArraySQL) as name";
-			$sSQL .= " from country_name where country_code = '$sCountryCode'";
-			$sCountryName = $oDB->getOne($sSQL);
-			if ($sCountryName)
-			{
-				$aAddress['country'] = $sCountryName;
-			}
-		}
-		if ($sCountryCode)
-		{
-			$aAddress['country_code'] = $sCountryCode;
-		}
-
 		return $aAddress;
 	}
 

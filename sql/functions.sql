@@ -1209,7 +1209,13 @@ BEGIN
     END IF;
     IF diameter > 0 THEN
 --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
-      update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
+      IF NEW.rank_search >= 26 THEN
+        -- roads may cause reparenting for >27 rank places
+        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+      ELSE
+        -- for all other places the search terms may change as well
+        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
+      END IF;
     END IF;
 
   END IF;

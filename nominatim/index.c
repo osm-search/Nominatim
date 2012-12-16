@@ -308,6 +308,13 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     {
         nominatim_exportXMLEnd(writer);
     }
+
+    // Close all connections
+    for (i = 0; i < num_threads; i++)
+    {
+        PQfinish(thread_data[i].conn);
+    }
+    PQfinish(conn);
 }
 
 void *nominatim_indexThread(void * thread_data_in)

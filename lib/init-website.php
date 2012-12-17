@@ -1,6 +1,14 @@
 <?php
 	require_once('init.php');
 
+	if (CONST_NoAccessControl)
+	{
+		header("Access-Control-Allow-Origin: *");
+		header("Access-Control-Allow-Methods: OPTIONS,GET");
+		header("Access-Control-Allow-Headers: ".$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
+	}
+	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
+
 	if (CONST_ClosedForIndexing && strpos(CONST_ClosedForIndexingExceptionIPs, ','.$_SERVER["REMOTE_ADDR"].',') === false)
  	{
 		echo "Closed for re-indexing...";

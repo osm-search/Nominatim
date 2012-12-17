@@ -138,8 +138,9 @@
         	$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
         	$sSQL .= " st_y(st_centroid(geometry)) as lat, st_x(st_centroid(geometry)) as lon";
 	        $sSQL .= " from placex where place_id = $iPlaceID ";
-//var_dump($sSQL);
+
 		$aPlace = $oDB->getRow($sSQL);
+//var_dump($sSQL, $aPlace); exit;
 
 		if ($bShowAddressDetails)
 		{

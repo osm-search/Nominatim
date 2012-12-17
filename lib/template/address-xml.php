@@ -1,6 +1,5 @@
 <?php
 	header("content-type: text/xml; charset=UTF-8");
-	header("Access-Control-Allow-Origin: *");
 
 	echo "<";
 	echo "?xml version=\"1.0\" encoding=\"UTF-8\" ?";
@@ -29,7 +28,7 @@
 		if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
 		echo ">".htmlspecialchars($aPlace['langaddress'])."</result>";
 
-        if ($bShowAddressDetails) {
+		if ($bShowAddressDetails) {
 			echo "<addressparts>";
 			foreach($aAddress as $sKey => $sValue)
 			{
@@ -39,7 +38,7 @@
 				echo "</$sKey>";
 			}
 			echo "</addressparts>";
-        }
+		}
 	}
-	
+
 	echo "</reversegeocode>";

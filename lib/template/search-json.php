@@ -1,4 +1,6 @@
 <?php
+	header("content-type: application/json; charset=UTF-8");
+
 	$aFilteredPlaces = array();
 	foreach($aSearchResults as $iResNum => $aPointDetails)
 	{

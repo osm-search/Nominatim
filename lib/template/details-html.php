@@ -46,18 +46,31 @@
 			});
 
 			var feature = freader.read('<?php echo $aPointDetails['outlinestring'];?>');
+			var featureCentre = freader.read('POINT(<?php echo $aPointDetails['lon'];?> <?php echo $aPointDetails['lat'];?>)');
 			if (feature) {
 				map.zoomToExtent(feature.geometry.getBounds());
-
 				feature.style = {
 					strokeColor: "#75ADFF",
 					fillColor: "#F0F7FF",
 					strokeWidth: <?php echo ($aPointDetails['isarea']=='t'?'2':'5');?>,
 					strokeOpacity: 0.75,
 					fillOpacity: 0.75,
-					pointRadius: 100
+					pointRadius: 50
 				};
+
+<?php if ($aPointDetails['isarea']=='t') {?>
+				featureCentre.style = {
+					strokeColor: "#008800",
+					fillColor: "#338833",
+					strokeWidth: <?php echo ($aPointDetails['isarea']=='t'?'2':'5');?>,
+					strokeOpacity: 0.75,
+					fillOpacity: 0.75,
+					pointRadius: 8
+				};
+				vectorLayer.addFeatures([feature,featureCentre]);
+<?php } else { ?>
 				vectorLayer.addFeatures([feature]);
+<?php } ?>
 			}
 		}
 	</script>
@@ -84,6 +97,7 @@
 	echo ' <div>Rank: <span class="rankaddress">'.$aPointDetails['rank_search_label'].'</span></div>';
 	if ($aPointDetails['calculated_importance']) echo ' <div>Importance: <span class="rankaddress">'.$aPointDetails['calculated_importance'].($aPointDetails['importance']?'':' (estimated)').'</span></div>';
 	echo ' <div>Coverage: <span class="area">'.($aPointDetails['isarea']=='t'?'Polygon':'Point').'</span></div>';
+	echo ' <div>Centre Point: <span class="area">'.$aPointDetails['lat'].','.$aPointDetails['lon'].'</span></div>';
 	$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 	if ($sOSMType) echo ' <div>OSM: <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
 	if ($aPointDetails['wikipedia'])

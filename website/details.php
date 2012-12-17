@@ -63,6 +63,8 @@
 	$sSQL = "select place_id, osm_type, osm_id, class, type, name, admin_level, housenumber, street, isin, postcode, country_code, importance, wikipedia,";
 	$sSQL .= " to_char(indexed_date, 'YYYY-MM-DD HH24:MI') as indexed_date, parent_place_id, rank_address, rank_search, get_searchrank_label(rank_search) as rank_search_label, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ";
 	$sSQL .= " ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ";
+//	$sSQL .= " ST_Area(geometry::geography) as area, ";
+	$sSQL .= " ST_y(centroid) as lat, ST_x(centroid) as lon,";
 	$sSQL .= " case when importance = 0 OR importance IS NULL then 0.75-(rank_search::float/40) else importance end as calculated_importance, ";
 	$sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 	$sSQL .= " from placex where place_id = $iPlaceID";

@@ -125,7 +125,7 @@
 
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 		$sVersionString = $oDB->getOne('select postgis_full_version()');
-		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+) r([0-9]+)"#', $sVersionString, $aMatches);
+		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
 		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])
 		{
 			echo "ERROR: PostGIS version is not correct.  Expected ".CONST_Postgis_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";

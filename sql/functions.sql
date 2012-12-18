@@ -5,7 +5,6 @@
 --  score integer
 --);
 
-
 CREATE OR REPLACE FUNCTION getclasstypekey(c text, t text) RETURNS TEXT
   AS $$
 DECLARE
@@ -1388,6 +1387,9 @@ BEGIN
     IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
 
 --RAISE WARNING 'finding street for %', NEW;
+
+      -- We won't get a better centroid, besides these places are too small to care
+      NEW.centroid := place_centroid;
 
       NEW.parent_place_id := null;
 

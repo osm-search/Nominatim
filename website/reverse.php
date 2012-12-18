@@ -99,7 +99,7 @@
 			$sSQL .= ' and (name is not null or housenumber is not null)';
 			$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\')';
 			$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
-			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', ST_Centroid(geometry), '.$fSearchDiam.'))';
+			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 //var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
@@ -136,7 +136,7 @@
         	$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 	        $sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
         	$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
-        	$sSQL .= " st_y(st_centroid(geometry)) as lat, st_x(st_centroid(geometry)) as lon";
+        	$sSQL .= " st_y(centroid) as lat, st_x(centroid) as lon";
 	        $sSQL .= " from placex where place_id = $iPlaceID ";
 
 		$aPlace = $oDB->getRow($sSQL);

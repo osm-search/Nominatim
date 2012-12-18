@@ -1041,13 +1041,13 @@
 										if ($sNearPointSQL) $sOrderBySQL = "ST_Distance($sNearPointSQL, l.centroid)";
 										else if ($sPlaceIDs) $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
 										else if ($sPlaceGeom) $sOrderBysSQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
-										
+
 										$sSQL = "select distinct l.place_id".($sOrderBySQL?','.$sOrderBySQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
 										if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
 										if ($sPlaceIDs)
 										{
 											$sSQL .= ",placex as f where ";
-											$sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, st_centroid(f.geometry), $fRange) ";
+											$sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, f.centroid, $fRange) ";
 										}
 										if ($sPlaceGeom)
 										{
@@ -1074,7 +1074,7 @@
 										else $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
 
 										$sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from placex as l,placex as f where ";
-										$sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, st_centroid(f.geometry), $fRange) ";
+										$sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, f.centroid, $fRange) ";
 										$sSQL .= "and l.class='".$aSearch['sClass']."' and l.type='".$aSearch['sType']."' ";
 										if (sizeof($aExcludePlaceIDs))
 										{
@@ -1132,7 +1132,7 @@
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
-					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
+					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
@@ -1202,7 +1202,7 @@
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
-					$sSQL .= "avg(ST_X(ST_Centroid(geometry))) as lon,avg(ST_Y(ST_Centroid(geometry))) as lat, ";
+					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";

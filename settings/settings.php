@@ -7,8 +7,11 @@
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim');
 	@define('CONST_Max_Word_Frequency', '50000');
 
+	// Software versions
+	@define('CONST_Postgresql_Version', '9.1'); // values: 8.3, 8.4, 9.0, 9.1, 9.2
+	@define('CONST_Postgis_Version', '1.5'); // values: 1.5, 2.0
+
 	// Paths
-	@define('CONST_Postgresql_Version', '9.1');
 	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-1.5');
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');

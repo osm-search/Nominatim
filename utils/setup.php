@@ -105,6 +105,15 @@
 		// TODO: path detection, detection memory, etc.
 
 		$oDB =& getDB();
+
+		$sVersionString = $oDB->getOne('select version()');
+		preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[.]([0-9]+) #', $sVersionString, $aMatches);
+		if (CONST_Postgresql_Version != $aMatches[1].'.'.$aMatches[2])
+		{
+			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
+			exit;
+		}
+
 		passthru('createlang plpgsql '.$aDSNInfo['database']);
 		$pgver = (float) CONST_Postgresql_Version;
 		if ($pgver < 9.1) {
@@ -113,7 +122,16 @@
 		} else {
 			pgsqlRunScript('CREATE EXTENSION hstore');
 		}
+
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
+		$sVersionString = $oDB->getOne('select postgis_full_version()');
+		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+) r([0-9]+)"#', $sVersionString, $aMatches);
+		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])
+		{
+			echo "ERROR: PostGIS version is not correct.  Expected ".CONST_Postgis_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
+			exit;
+		}
+
 		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');

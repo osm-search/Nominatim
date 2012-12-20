@@ -60,6 +60,7 @@
 	@define('CONST_Suggestions_Enabled', false);
 
 	@define('CONST_Search_TryDroppedAddressTerms', false);
+	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
 
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);

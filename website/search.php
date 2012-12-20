@@ -324,7 +324,7 @@
 				{
 					foreach($aSearchWords as $aSearchTerm)
 					{
-						$aNewSearch = $aSearch;			
+						$aNewSearch = $aSearch;
 						if ($aSearchTerm['country_code'])
 						{
 							$aNewSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
@@ -392,7 +392,7 @@
 			{
 
 			// Check which tokens we have, get the ID numbers			
-			$sSQL = 'select word_id,word_token, word, class, type, location, country_code, operator';
+			$sSQL = 'select word_id,word_token, word, class, type, location, country_code, operator, search_name_count';
 			$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
 			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
 //			$sSQL .= ' group by word_token, word, class, type, location, country_code';
@@ -419,7 +419,7 @@
 				{
 					$aValidTokens[$aToken['word_token']] = array($aToken);
 				}
-				if ($aToken['word_token'][0]==' ' && !$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
+				if ($aToken['word_token'][0]==' ' && !$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1 + $aToken['search_name_count'];
 			}
 			if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
@@ -527,7 +527,7 @@
 									{
 										$aSearch = $aCurrentSearch;
 										$aSearch['iSearchRank']++;
-										if (($sPhraseType == '' || $sPhraseType == 'country') && $aSearchTerm['country_code'] !== null && $aSearchTerm['country_code'] != '0')
+										if (($sPhraseType == '' || $sPhraseType == 'country') && !empty($aSearchTerm['country_code']) && $aSearchTerm['country_code'] != '0')
 										{
 											if ($aSearch['sCountryCode'] === false)
 											{
@@ -860,7 +860,7 @@
 							if (CONST_Debug) var_dump('<hr>',$aSearch);
 							if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
 							$aPlaceIDs = array();
-						
+
 							// First we need a position, either aName or fLat or both
 							$aTerms = array();
 							$aOrder = array();
@@ -868,7 +868,20 @@
 							// TODO: filter out the pointless search terms (2 letter name tokens and less)
 							// they might be right - but they are just too darned expensive to run
 							if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
-							if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) $aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
+							if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) 
+							{
+								// For infrequent name terms disable index usage for address
+								if (CONST_Search_NameOnlySearchFrequencyThreshold && 
+									sizeof($aSearch['aName']) == 1 && 
+									$aPossibleMainWordIDs[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
+								{
+									$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddress'],",")."]";
+								}
+								else
+								{
+									$aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
+								}
+							}
 							if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
 							if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank in (26,27)";
 							if ($aSearch['fLon'] && $aSearch['fLat'])

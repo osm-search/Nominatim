@@ -50,24 +50,24 @@
 			$aPlace['address'] = $aPointDetails['address'];
                 }
 
-                if (isset($aResult['asgeojson']))
+                if (isset($aPointDetails['asgeojson']))
                 {
-			$aPlace['geojson'] = json_decode($aResult['asgeojson']);
+			$aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
                 }
 
-                if (isset($aResult['assvg']))
+                if (isset($aPointDetails['assvg']))
                 {
-			$aPlace['svg'] = $aResult['assvg'];
+			$aPlace['svg'] = $aPointDetails['assvg'];
                 }
 
-                if (isset($aResult['astext']))
+                if (isset($aPointDetails['astext']))
                 {
-                        $aPlace['geotext'] = $aResult['astext'];
+                        $aPlace['geotext'] = $aPointDetails['astext'];
                 }
 
-                if (isset($aResult['askml']))
+                if (isset($aPointDetails['askml']))
                 {
-                        $aPlace['geokml'] = $aResult['askml'];
+                        $aPlace['geokml'] = $aPointDetails['askml'];
                 }
 
 		$aFilteredPlaces[] = $aPlace;

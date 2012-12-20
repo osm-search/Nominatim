@@ -1709,6 +1709,16 @@ BEGIN
         END LOOP;
       END IF;
     END IF;
+
+    -- for the USA we have an additional address table.  Merge in zip codes from there too
+    IF NEW.rank_search = 26 AND NEW.calculated_country_code = 'us' THEN
+      FOR location IN SELECT distinct postcode from location_property_tiger where parent_place_id = NEW.place_id LOOP
+        address_street_word_id := get_name_id(make_standard_name(location.postcode));
+        nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+        isin_tokens := isin_tokens || address_street_word_id;
+      END LOOP;
+    END IF;
+
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
     -- Process area matches

@@ -153,7 +153,7 @@
 				<tr>
 					<td valign="middle" style="width:30px;"><img alt="logo" src="images/logo.gif" /></td>
 					<td valign="middle" style="width:400px;"><input id="q" name="q" value="<?php echo htmlspecialchars($sQuery); 
-?>" style="width:270px;" /><input type="text" id="viewbox" style="width:128px;" name="viewbox" /></td>
+?>" style="width:270px;" /><input type="text" id="viewbox" style="width:120px;" name="viewbox" /></td>
 					<td style="width:80px;"><input type="submit" value="Search"/></td>
 <?php if (CONST_Search_AreaPolygons) { ?>					<td style="width:100px;"><input type="checkbox" value="1" name="polygon" <?php if ($bAsText) echo "checked='checked'"; ?>/> Highlight</td>
 <td style="text-align:right;">Data: <?php echo $sDataDate; ?></td>

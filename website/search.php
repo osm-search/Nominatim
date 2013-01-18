@@ -831,12 +831,19 @@
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
 								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+								if (sizeof($aExcludePlaceIDs))
+								{
+									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
+								}
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
 
-								if (!sizeof($aPlaceIDs))
+								// If excluded place IDs are given, it is fair to assume that
+								// there have been results in the small box, so no further
+								// expansion in that case.
+								if (!sizeof($aPlaceIDs) && !sizeof($aExcludePlaceIDs))
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";

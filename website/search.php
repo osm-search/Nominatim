@@ -533,7 +533,12 @@
 											{
 												$aSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
 												// Country is almost always at the end of the string - increase score for finding it anywhere else (optimisation)
-												if ($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases)) $aSearch['iSearchRank'] += 5;
+												// If reverse order is enabled, it may appear at the beginning as well.
+												if (($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases)) &&
+														(!$bReverseInPlan || $iToken > 0 || $iPhrase > 0))
+												{
+													$aSearch['iSearchRank'] += 5;
+												}
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 										}

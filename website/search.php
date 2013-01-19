@@ -163,7 +163,10 @@
 	}
 	if (sizeof($aStructuredQuery) > 0) {
 		$sQuery = join(', ', $aStructuredQuery);
-		$sAllowedTypesSQLList = '(\'place\',\'boundary\')';
+		if ($iMaxAddressRank < 30)
+		{
+			$sAllowedTypesSQLList = '(\'place\',\'boundary\')';
+		}
 	}
 
 	if ($sQuery)
@@ -1140,7 +1143,7 @@
 					if ($iGroupLoop > 4) break;
 					if ($iQueryLoop > 30) break;
 				}
-//exit;
+
 				// Did we find anything?	
 				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs))
 				{

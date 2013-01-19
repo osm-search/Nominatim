@@ -24,13 +24,14 @@
 		array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
 		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
-		array('create-partitions', '', 0, 1, 0, 0, 'bool', 'Create required partition tables and triggers'),
+		array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
+		array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
 		array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
 		array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
 		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
 		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
-		array('create-roads', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
+		array('create-roads', '', 0, 1, 0, 0, 'bool', ''),
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
@@ -222,9 +223,9 @@
 		pgsqlRunScript($sTemplate);
 	}
 
-	if ($aCMDResult['create-partitions'] || $aCMDResult['all'])
+	if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
 	{
-		echo "Partitions\n";
+		echo "Partition Tables\n";
 		$bDidSomething = true;
 		$oDB =& getDB();
 		$sSQL = 'select partition from country_name order by country_code';
@@ -235,7 +236,36 @@
 		}
 		$aPartitions[] = 0;
 
-		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partitions.src.sql');
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
+		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
+		foreach($aMatches as $aMatch)
+		{
+			$sResult = '';
+			foreach($aPartitions as $sPartitionName)
+			{
+				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
+			}
+			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
+		}
+
+		pgsqlRunScript($sTemplate);
+	}
+
+
+	if ($aCMDResult['create-partition-functions'] || $aCMDResult['all'])
+	{
+		echo "Partition Functions\n";
+		$bDidSomething = true;
+		$oDB =& getDB();
+		$sSQL = 'select partition from country_name order by country_code';
+		$aPartitions = $oDB->getCol($sSQL);
+		if (PEAR::isError($aPartitions))
+		{
+			fail($aPartitions->getMessage());
+		}
+		$aPartitions[] = 0;
+
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
 		foreach($aMatches as $aMatch)
 		{

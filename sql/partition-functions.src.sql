@@ -31,9 +31,14 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
+create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT, in_rank_search INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
+
+  IF in_rank_search <= 4 THEN
+    DELETE from location_area_country WHERE place_id = in_place_id;
+    RETURN TRUE;
+  END IF;
 
 -- start
   IF in_partition = -partition- THEN

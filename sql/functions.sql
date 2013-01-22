@@ -624,7 +624,7 @@ BEGIN
 
 --  RAISE WARNING 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
 
-  x := deleteLocationArea(partition, place_id);
+  x := deleteLocationArea(partition, place_id, rank_search);
 
   isarea := false;
   IF (ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(geometry)) THEN
@@ -691,7 +691,7 @@ CREATE OR REPLACE FUNCTION update_location(
 DECLARE
   b BOOLEAN;
 BEGIN
-  b := deleteLocationArea(partition, place_id);
+  b := deleteLocationArea(partition, place_id, rank_search);
 --  result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
   RETURN add_location(place_id, place_country_code, name, rank_search, rank_address, geometry);
 END;
@@ -1304,7 +1304,7 @@ BEGIN
       DELETE FROM place_addressline WHERE place_id = NEW.place_id;
       DELETE FROM place_boundingbox where place_id = NEW.place_id;
       result := deleteRoad(NEW.partition, NEW.place_id);
-      result := deleteLocationArea(NEW.partition, NEW.place_id);
+      result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
       UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 
@@ -1851,7 +1851,7 @@ BEGIN
   --DEBUG: RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.rank_address < 26 THEN
-    b := deleteLocationArea(OLD.partition, OLD.place_id);
+    b := deleteLocationArea(OLD.partition, OLD.place_id, OLD.rank_search);
   END IF;
 
   --DEBUG: RAISE WARNING 'placex_delete:09 % %',OLD.osm_type,OLD.osm_id;

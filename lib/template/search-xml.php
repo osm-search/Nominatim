@@ -81,6 +81,7 @@
 
 		echo " class='".htmlspecialchars($aResult['class'])."'";
 		echo " type='".htmlspecialchars($aResult['type'])."'";
+		echo " importance='".htmlspecialchars($aResult['importance'])."'";
 		if (isset($aResult['icon']) && $aResult['icon'])
 		{
 			echo " icon='".htmlspecialchars($aResult['icon'], ENT_QUOTES)."'";

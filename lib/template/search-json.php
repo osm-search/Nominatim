@@ -41,6 +41,9 @@
 
 		$aPlace['class'] = $aPointDetails['class'];
 		$aPlace['type'] = $aPointDetails['type'];
+
+		$aPlace['importance'] = $aPointDetails['importance'];
+
 		if (isset($aPointDetails['icon']) && $aPointDetails['icon'])
 		{
 			$aPlace['icon'] = $aPointDetails['icon'];

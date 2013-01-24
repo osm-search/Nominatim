@@ -1294,7 +1294,7 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 OR NEW.linked_place_id is not null THEN
+  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
     RETURN NEW;
   END IF;
 
@@ -1308,23 +1308,25 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- TODO: this test is now redundant?
   IF OLD.indexed_status != 0 THEN
-    --DEBUG: RAISE WARNING 'placex_update_0 % %',NEW.osm_type,NEW.osm_id;
 
     NEW.indexed_date = now();
+
+    result := deleteSearchName(NEW.partition, NEW.place_id);
+    DELETE FROM place_addressline WHERE place_id = NEW.place_id;
+    DELETE FROM place_boundingbox where place_id = NEW.place_id;
+    result := deleteRoad(NEW.partition, NEW.place_id);
+    result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+    UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
+
+    IF NEW.linked_place_id is not null THEN
+      RETURN NEW;
+    END IF;
 
     IF NEW.class = 'place' AND NEW.type = 'houses' THEN
       i := create_interpolation(NEW.osm_id, NEW.housenumber);
       RETURN NEW;
-    END IF;
-
-    IF OLD.indexed_status > 0 THEN
-      result := deleteSearchName(NEW.partition, NEW.place_id);
-      DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-      DELETE FROM place_boundingbox where place_id = NEW.place_id;
-      result := deleteRoad(NEW.partition, NEW.place_id);
-      result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
-      UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
     END IF;
 
     -- Speed up searches - just use the centroid of the feature

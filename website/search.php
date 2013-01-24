@@ -286,6 +286,7 @@
 			// Start with a blank search
 			$aSearches = array(
 				array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 
+					'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
 					'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
 			);
 
@@ -397,7 +398,7 @@
 			// Check which tokens we have, get the ID numbers			
 			$sSQL = 'select word_id,word_token, word, class, type, location, country_code, operator, search_name_count';
 			$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
-			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
+//			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
 //			$sSQL .= ' group by word_token, word, class, type, location, country_code';
 
 			if (CONST_Debug) var_Dump($sSQL);
@@ -412,6 +413,7 @@
 				failInternalError("Could not get word tokens.", $sSQL, $aDatabaseWords);
 			}
 			$aPossibleMainWordIDs = array();
+			$aWordFrequencyScores = array();
 			foreach($aDatabaseWords as $aToken)
 			{
 				if (isset($aValidTokens[$aToken['word_token']]))
@@ -422,7 +424,8 @@
 				{
 					$aValidTokens[$aToken['word_token']] = array($aToken);
 				}
-				if ($aToken['word_token'][0]==' ' && !$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1 + $aToken['search_name_count'];
+				if ($aToken['word_token'][0]==' ' && !$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
+				$aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
 			}
 			if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
@@ -598,7 +601,7 @@
 										{
 											if (sizeof($aSearch['aName']))
 											{
-												if (($sPhraseType != 'street' && $sPhraseType != 'country') && (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false))
+												if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false))
 												{
 													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												}
@@ -623,11 +626,14 @@
 									{
 										if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
 										{
-											if (($sPhraseType != 'street') && sizeof($aCurrentSearch['aName']) && strlen($sToken) >= 4)
+											if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strlen($sToken) >= 4)
 											{
 	  											$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 1;
-												$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+												if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
+													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+												else
+													$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 	  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 
@@ -636,7 +642,10 @@
 	  											$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 2;
 												if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
-												$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+												if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
+													$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+												else
+													$aSearch['aNameNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												$aSearch['iNamePhrase'] = $iPhrase;
   												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
@@ -889,7 +898,7 @@
 								// For infrequent name terms disable index usage for address
 								if (CONST_Search_NameOnlySearchFrequencyThreshold && 
 									sizeof($aSearch['aName']) == 1 && 
-									$aPossibleMainWordIDs[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
+									$aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
 								{
 									$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddress'],",")."]";
 								}

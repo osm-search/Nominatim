@@ -416,6 +416,13 @@
 			$aWordFrequencyScores = array();
 			foreach($aDatabaseWords as $aToken)
 			{
+				// Very special case - require 2 letter country param to match the country code found
+				if ($bStructuredPhrases && $aToken['country_code'] && !empty($aStructuredQuery['country']) 
+                                  && strlen($aStructuredQuery['country']) == 2 && strtolower($aStructuredQuery['country']) != $aToken['country_code'])
+				{
+					continue;
+				}
+
 				if (isset($aValidTokens[$aToken['word_token']]))
 				{
 					$aValidTokens[$aToken['word_token']][] = $aToken;

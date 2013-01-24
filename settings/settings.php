@@ -28,6 +28,7 @@
 	@define('CONST_ConnectionBucket_Cost_Reverse', 1);
 	@define('CONST_ConnectionBucket_Cost_Search', 2);
 	@define('CONST_ConnectionBucket_Cost_Details', 3);
+	@define('CONST_ConnectionBucket_Cost_Status', 1);
 
 	// Override this function to add an adjustment factor to the cost
 	// based on server load. e.g. getBlockingProcesses

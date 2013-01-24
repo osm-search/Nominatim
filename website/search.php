@@ -808,6 +808,10 @@
 					{
 						$iQueryLoop++;
 
+						if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
+						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
+
+
 						// Must have a location term
 						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
 						{
@@ -818,6 +822,7 @@
 									$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
 									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
 									$sSQL .= " order by st_area(geometry) desc limit 1";
+									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);
 								}
 							}
@@ -825,8 +830,6 @@
 							{
 								if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
 								if (!$aSearch['sClass']) continue;
-								if (CONST_Debug) var_dump('<hr>',$aSearch);
-								if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
 								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
 								if ($oDB->getOne($sSQL))
 								{
@@ -872,8 +875,6 @@
 						}
 						else
 						{
-							if (CONST_Debug) var_dump('<hr>',$aSearch);
-							if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
 							$aPlaceIDs = array();
 
 							// First we need a position, either aName or fLat or both
@@ -1129,7 +1130,7 @@
 							failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
 						}
 
-						if (CONST_Debug) var_Dump($aPlaceIDs);
+						if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }
 
 						foreach($aPlaceIDs as $iPlaceID)
 						{
@@ -1199,7 +1200,7 @@
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= "order by importance desc";
 //					$sSQL .= "order by rank_search,rank_address,porder asc";
-					if (CONST_Debug) var_dump('<hr>',$sSQL);
+					if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
 					$aSearchResults = $oDB->getAll($sSQL);
 //var_dump($sSQL,$aSearchResults);exit;
 
@@ -1267,7 +1268,7 @@
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= "order by importance desc";
 //					$sSQL .= "order by rank_search,rank_address,porder asc";
-					if (CONST_Debug) var_dump('<hr>',$sSQL);
+					if (CONST_Debug) { echo "<hr>", var_dump($sSQL); }
 					$aSearchResults = $oDB->getAll($sSQL);
 //var_dump($sSQL,$aSearchResults);exit;
 

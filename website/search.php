@@ -809,7 +809,7 @@
 						$iQueryLoop++;
 
 						if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
-						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);	
+						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
 
 						// Must have a location term
@@ -819,8 +819,8 @@
 							{
 								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
 								{
-									$sSQL = "select place_id from placex where country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
-									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+									$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
+									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									$sSQL .= " order by st_area(geometry) desc limit 1";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);
@@ -836,7 +836,7 @@
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
-								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+								if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 								if (sizeof($aExcludePlaceIDs))
 								{
 									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
@@ -854,7 +854,7 @@
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
-									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
@@ -865,7 +865,7 @@
 							{
 								$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
 								$sSQL .= " and st_contains($sViewboxSmallSQL, geometry) and linked_place_id is null";
-								if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+								if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
@@ -1018,7 +1018,7 @@
 									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
 									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
 									$sSQL .= " and linked_place_id is null";
-									if ($sCountryCodesSQL) $sSQL .= " and country_code in ($sCountryCodesSQL)";								
+									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									$sSQL .= " order by rank_search asc limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aClassPlaceIDs = $oDB->getCol($sSQL);
@@ -1087,7 +1087,7 @@
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
-										if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
+										if ($sCountryCodesSQL) $sSQL .= " and lp.calculated_country_code in ($sCountryCodesSQL)";
 										if ($sOrderBySQL) $sSQL .= "order by ".$sOrderBySQL." asc";
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
@@ -1109,7 +1109,7 @@
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
-										if ($sCountryCodesSQL) $sSQL .= " and l.country_code in ($sCountryCodesSQL)";								
+										if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";								
 										if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
@@ -1157,7 +1157,7 @@
 						$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
 					}
 					$sOrderSQL .= ' ELSE 10000000 END';
-					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,country_code,";
+					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
@@ -1168,7 +1168,7 @@
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
 					$sSQL .= "and linked_place_id is null ";
-					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code,importance";
+					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
@@ -1227,7 +1227,7 @@
 						$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
 					}
 					$sOrderSQL .= ' ELSE 10000000 END';
-					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,country_code,";
+					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
@@ -1236,7 +1236,7 @@
 					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
-					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,country_code,importance";
+					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";

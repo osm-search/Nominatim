@@ -144,7 +144,7 @@
 
 		if ($bShowAddressDetails)
 		{
-			$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['country_code']);
+			$aAddress = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPlace['calculated_country_code']);
 		}
 		$aClassType = getClassTypes();
 		$sAddressType = '';

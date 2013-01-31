@@ -1530,7 +1530,7 @@
 		if (sizeof($aSearchResults) >= $iFinalLimit) break;
 	}
 
-	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '1 day'::interval,'YYYY/MM/DD') from import_status limit 1");
+	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
 
 	if (isset($_GET['nearlat']) && isset($_GET['nearlon']))
 	{

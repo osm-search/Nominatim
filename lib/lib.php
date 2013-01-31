@@ -646,7 +646,7 @@
 			}
 		}
 		echo "<table border=\"1\">";
-		echo "<tr><th>rank</th><th>Name Tokens</th><th>Address Tokens</th><th>country</th><th>operator</th><th>class</th><th>type</th><th>house#</th><th>Lat</th><th>Lon</th><th>Radius</th></tr>";
+		echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th><th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th><th>class</th><th>type</th><th>house#</th><th>Lat</th><th>Lon</th><th>Radius</th></tr>";
 		foreach($aData as $iRank => $aRankedSet)
 		{
 			foreach($aRankedSet as $aRow)
@@ -665,7 +665,25 @@
 
 				echo "<td>";
 				$sSep = '';
+				foreach($aRow['aNameNonSearch'] as $iWordID)
+				{
+					echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
+					$sSep = ', ';
+				}
+				echo "</td>";
+
+				echo "<td>";
+				$sSep = '';
 				foreach($aRow['aAddress'] as $iWordID)
+				{
+					echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
+					$sSep = ', ';
+				}
+				echo "</td>";
+
+				echo "<td>";
+				$sSep = '';
+				foreach($aRow['aAddressNonSearch'] as $iWordID)
 				{
 					echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
 					$sSep = ', ';

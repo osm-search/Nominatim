@@ -638,10 +638,30 @@
 	  											$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 1;
 												if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
+												{
 													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+		  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+												}
+												elseif (isset($aValidTokens[' '.$sToken])) // revert to the token version?
+												{
+													foreach($aValidTokens[' '.$sToken] as $aSearchTermToken)
+													{
+														if (empty($aSearchTermToken['country_code']) 
+															&& empty($aSearchTermToken['lat'])
+															&& empty($aSearchTermToken['class']))
+														{
+	  														$aSearch = $aCurrentSearch;
+															$aSearch['iSearchRank'] += 1;
+															$aSearch['aAddress'][$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
+				  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+														}
+													}
+												}
 												else
+												{
 													$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-	  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+		  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+												}
 											}
 
 											if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)
@@ -900,6 +920,7 @@
 							// TODO: filter out the pointless search terms (2 letter name tokens and less)
 							// they might be right - but they are just too darned expensive to run
 							if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
+							if (sizeof($aSearch['aNameNonSearch'])) $aTerms[] = "array_cat(name_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aNameNonSearch'],",")."]";
 							if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) 
 							{
 								// For infrequent name terms disable index usage for address
@@ -907,11 +928,12 @@
 									sizeof($aSearch['aName']) == 1 && 
 									$aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
 								{
-									$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddress'],",")."]";
+									$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join(array_merge($aSearch['aAddress'],$aSearch['aAddressNonSearch']),",")."]";
 								}
 								else
 								{
 									$aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
+									if (sizeof($aSearch['aAddressNonSearch'])) $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddressNonSearch'],",")."]";
 								}
 							}
 							if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";

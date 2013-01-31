@@ -285,7 +285,7 @@
 		{
 			// Start with a blank search
 			$aSearches = array(
-				array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 
+				array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 'aFullNameAddress'=>array(),
 					'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
 					'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
 			);
@@ -614,6 +614,7 @@
 												}
 												else
 												{
+													$aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 													$aSearch['iSearchRank'] += 1000; // skip;
 												}
 											}
@@ -955,7 +956,9 @@
 							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
-							$sImportanceSQL = 'case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end';
+							$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
+							if (sizeof($aSearch['aFullNameAddress']))
+								$sImportanceSQL .= '*(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s)';
 
 							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
 							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
@@ -964,6 +967,10 @@
 							if (sizeof($aTerms))
 							{
 								$sSQL = "select place_id";
+								if (sizeof($aSearch['aFullNameAddress']))
+									$sSQL .= ', (select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) as fullwords'; 
+								else
+									$sSQL .= ', 0';
 								$sSQL .= " from search_name";
 								$sSQL .= " where ".join(' and ',$aTerms);
 								$sSQL .= " order by ".join(', ',$aOrder);
@@ -1201,16 +1208,17 @@
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
+					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
 					$sSQL .= "and linked_place_id is null ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
-					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
-					$sSQL .= ",get_name_by_language(name, ARRAY['ref']) ";
+					$sSQL .= ",langaddress ";
+					$sSQL .= ",placename ";
+					$sSQL .= ",ref ";
 					$sSQL .= " union ";
 					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
@@ -1218,7 +1226,8 @@
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.15 as importance ";
+					$sSQL .= "-0.15 as importance, ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
 					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1230,7 +1239,8 @@
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.10 as importance ";
+					$sSQL .= "-0.10 as importance, ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
 					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1476,6 +1486,7 @@
 		{
 			if (stripos($sAddress, $sWord)!==false) $iCountWords++;
 		}
+
 		$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
 
 //if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
@@ -1496,7 +1507,7 @@
 		}
 */
 		$aResult['name'] = $aResult['langaddress'];
-		$aResult['foundorder'] = $iResNum;
+		$aResult['foundorder'] = -$aResult['addressimportance'];
 		$aSearchResults[$iResNum] = $aResult;
 	}
 	uasort($aSearchResults, 'byImportance');

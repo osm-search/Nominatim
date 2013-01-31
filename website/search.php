@@ -957,20 +957,16 @@
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
 							$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
-							if (sizeof($aSearch['aFullNameAddress']))
-								$sImportanceSQL .= '*(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s)';
-
 							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
 							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
 							$aOrder[] = "$sImportanceSQL DESC";
+							if (sizeof($aSearch['aFullNameAddress']))
+								$aOrder[] = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) DESC';
+
 						
 							if (sizeof($aTerms))
 							{
 								$sSQL = "select place_id";
-								if (sizeof($aSearch['aFullNameAddress']))
-									$sSQL .= ', (select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) as fullwords'; 
-								else
-									$sSQL .= ', 0';
 								$sSQL .= " from search_name";
 								$sSQL .= " where ".join(' and ',$aTerms);
 								$sSQL .= " order by ".join(', ',$aOrder);

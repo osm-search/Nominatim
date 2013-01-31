@@ -1326,7 +1326,7 @@
 //var_Dump($aSearchResults);
 //exit;
 	$aClassType = getClassTypesWithImportance();
-	$aRecheckWords = preg_split('/\b/',$sQuery);
+	$aRecheckWords = preg_split('/\b/u',$sQuery);
 	foreach($aRecheckWords as $i => $sWord)
 	{
 		if (!$sWord) unset($aRecheckWords[$i]);

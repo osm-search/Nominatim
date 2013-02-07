@@ -1695,7 +1695,14 @@ BEGIN
         FOR i IN 1..array_upper(isin, 1) LOOP
           address_street_word_id := get_name_id(make_standard_name(isin[i]));
           IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
             isin_tokens := isin_tokens || address_street_word_id;
+          END IF;
+
+          -- merge word into address vector
+          address_street_word_id := get_word_id(make_standard_name(isin[i]));
+          IF address_street_word_id IS NOT NULL THEN
+            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
           END IF;
         END LOOP;
       END IF;
@@ -1706,7 +1713,14 @@ BEGIN
         FOR i IN 1..array_upper(isin, 1) LOOP
           address_street_word_id := get_name_id(make_standard_name(isin[i]));
           IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
             isin_tokens := isin_tokens || address_street_word_id;
+          END IF;
+
+          -- merge into address vector
+          address_street_word_id := get_word_id(make_standard_name(isin[i]));
+          IF address_street_word_id IS NOT NULL THEN
+            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
           END IF;
         END LOOP;
       END IF;
@@ -1718,6 +1732,10 @@ BEGIN
         address_street_word_id := get_name_id(make_standard_name(location.postcode));
         nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
         isin_tokens := isin_tokens || address_street_word_id;
+
+        -- also merge in the single word version
+        address_street_word_id := get_word_id(make_standard_name(location.postcode));
+        nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
       END LOOP;
     END IF;
 

@@ -38,7 +38,8 @@
 
         if (isset($_GET['osm_type']) && isset($_GET['osm_id']) && (int)$_GET['osm_id'] && ($_GET['osm_type'] == 'N' || $_GET['osm_type'] == 'W' || $_GET['osm_type'] == 'R'))
         {
-                $iPlaceID = $oDB->getOne("select place_id from placex where osm_type = '".$_GET['osm_type']."' and osm_id = ".(int)$_GET['osm_id']." order by type = 'postcode' asc");
+                $iPlaceID = $oDB->getOne($sSQL = ("select place_id from placex where osm_type = '".$_GET['osm_type']."' and osm_id = ".(int)$_GET['osm_id']." order by type = 'postcode' asc"));
+		if (CONST_Debug) var_dump($sSQL);
 		if (!$iPlaceID) $sError = 'OSM ID Not Found';
         }
 	else
@@ -101,7 +102,7 @@
 			$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
 			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
-//var_dump($sSQL);
+			if (CONST_Debug) var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPlace))
 			{
@@ -163,4 +164,7 @@
 		$aPlace['addresstype'] = $sAddressType;
 
 	}
+
+	if (CONST_Debug) exit;
+
 	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

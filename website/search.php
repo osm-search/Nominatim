@@ -1519,10 +1519,10 @@
 			$bFirst = false;
 		}
 		if (!$bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
-			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['name']])))
+			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name']])))
 		{
 			$aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;
-			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['name']] = true;
+			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name']] = true;
 			$aSearchResults[] = $aResult;
 		}
 

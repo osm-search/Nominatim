@@ -345,6 +345,12 @@ BEGIN
       result := result || w;
     END IF;
 
+    w := getorcreate_word_id(s);
+
+    IF NOT (ARRAY[w] <@ result) THEN
+      result := result || w;
+    END IF;
+
     words := string_to_array(s, ' ');
     IF array_upper(words, 1) IS NOT NULL THEN
       FOR j IN 1..array_upper(words, 1) LOOP
@@ -402,6 +408,12 @@ BEGIN
 
   s := make_standard_name(src);
   w := getorcreate_name_id(s, src);
+
+  IF NOT (ARRAY[w] <@ result) THEN
+    result := result || w;
+  END IF;
+
+  w := getorcreate_word_id(s);
 
   IF NOT (ARRAY[w] <@ result) THEN
     result := result || w;

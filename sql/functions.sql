@@ -794,8 +794,8 @@ CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype 
 DECLARE
   
   newpoints INTEGER;
-  waynodes integer[];
-  nodeid INTEGER;
+  waynodes BIGINT[];
+  nodeid BIGINT;
   prevnode RECORD;
   nextnode RECORD;
   startnumber INTEGER;
@@ -823,10 +823,10 @@ BEGIN
 
       FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
-        select min(place_id) from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::INTEGER and type = 'house' INTO search_place_id;
+        select min(place_id) from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' INTO search_place_id;
         IF search_place_id IS NULL THEN
           -- null record of right type
-          select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::INTEGER and type = 'house' limit 1 INTO nextnode;
+          select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' limit 1 INTO nextnode;
           select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from planet_osm_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
           IF nextnode.geometry IS NULL THEN
             -- we don't have any information about this point, most likely

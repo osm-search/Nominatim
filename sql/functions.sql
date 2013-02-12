@@ -2321,7 +2321,7 @@ DROP TYPE addressline CASCADE;
 create type addressline as (
   place_id BIGINT,
   osm_type CHAR(1),
-  osm_id INTEGER,
+  osm_id BIGINT,
   name HSTORE,
   class TEXT,
   type TEXT,

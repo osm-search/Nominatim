@@ -75,7 +75,7 @@
 		$iMaxRank = (isset($_GET['zoom']) && isset($aZoomRank[$_GET['zoom']]))?$aZoomRank[$_GET['zoom']]:28;
 
 		// Find the nearest point
-		$fSearchDiam = 0.0001;
+		$fSearchDiam = 0.0004;
 		$iPlaceID = null;
 		$aArea = false;
 		$fMaxAreaDistance = 1;

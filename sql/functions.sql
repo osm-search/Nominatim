@@ -1155,6 +1155,9 @@ BEGIN
       NEW.rank_address := NEW.rank_search;
     ELSEIF NEW.class = 'natural' and NEW.type in ('coastline') THEN
       RETURN NULL;
+    ELSEIF NEW.class = 'mountain_pass' THEN
+        NEW.rank_search := 20;
+        NEW.rank_address := 0;
     END IF;
 
   END IF;

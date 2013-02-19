@@ -24,6 +24,16 @@ create type nearfeaturecentr as (
   centroid GEOMETRY
 );
 
+drop table IF EXISTS search_name_blank CASCADE;
+CREATE TABLE search_name_blank (
+  place_id BIGINT,
+  search_rank integer,
+  address_rank integer,
+  name_vector integer[]
+  );
+SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
+
+
 CREATE TABLE location_area_country () INHERITS (location_area_large);
 CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);
 

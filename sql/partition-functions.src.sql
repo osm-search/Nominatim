@@ -166,7 +166,7 @@ create or replace function insertSearchName(
   in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), 
   in_name_vector INTEGER[], in_nameaddress_vector INTEGER[],
   in_rank_search INTEGER, in_rank_address INTEGER, in_importance FLOAT,
-  in_centroid GEOMETRY) RETURNS BOOLEAN AS $$
+  in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
 
@@ -176,16 +176,16 @@ BEGIN
 
   IF in_rank_search <= 4 THEN
     DELETE FROM search_name_country WHERE place_id = in_place_id;
-    INSERT INTO search_name_country values (in_place_id, in_rank_search, in_rank_address, in_importance, in_country_code, 
-      in_name_vector, in_nameaddress_vector, in_centroid);
+    INSERT INTO search_name_country values (in_place_id, in_rank_search, in_rank_address, 
+      in_name_vector, in_geometry);
     RETURN TRUE;
   END IF;
 
 -- start
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
-    INSERT INTO search_name_-partition- values (in_place_id, in_rank_search, in_rank_address, 0, in_country_code, 
-      in_name_vector, in_nameaddress_vector, in_centroid);
+    INSERT INTO search_name_-partition- values (in_place_id, in_rank_search, in_rank_address, 
+      in_name_vector, in_geometry);
     RETURN TRUE;
   END IF;
 -- end

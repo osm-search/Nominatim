@@ -124,8 +124,8 @@ CREATE INDEX idx_location_property_tiger_parent_place_id ON location_property_ti
 CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id ON location_property_tiger USING BTREE (parent_place_id, housenumber);
 GRANT SELECT ON location_property_tiger TO "www-data";
 
-drop table IF EXISTS search_name_blank CASCADE;
-CREATE TABLE search_name_blank (
+drop table IF EXISTS search_name;
+CREATE TABLE search_name (
   place_id BIGINT,
   search_rank integer,
   address_rank integer,
@@ -134,10 +134,7 @@ CREATE TABLE search_name_blank (
   name_vector integer[],
   nameaddress_vector integer[]
   );
-SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
-
-drop table IF EXISTS search_name;
-CREATE TABLE search_name () INHERITS (search_name_blank);
+SELECT AddGeometryColumn('search_name', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id);
 
 drop table IF EXISTS place_addressline;

@@ -431,7 +431,7 @@
 				{
 					$aValidTokens[$aToken['word_token']] = array($aToken);
 				}
-				if ($aToken['word_token'][0]==' ' && !$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
+				if (!$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
 				$aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
 			}
 			if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);

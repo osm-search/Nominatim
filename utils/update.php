@@ -149,7 +149,7 @@
 		}
 		else
 		{
-			$sModifyXMLstr = file_get_contents('http://overpass.osm.rambler.ru/cgi/interpreter?data=node('.$aResult['import-node'].');out%20meta;');
+			$sModifyXMLstr = file_get_contents('http://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;');
 		}
 	}
 	if (isset($aResult['import-way']) && $aResult['import-way'])
@@ -161,7 +161,7 @@
 		}
 		else
 		{
-			$sCmd = 'http://overpass.osm.rambler.ru/cgi/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
+			$sCmd = 'http://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
 		}
 		$sModifyXMLstr = file_get_contents($sCmd);
 	}
@@ -174,7 +174,7 @@
 		}
 		else
 		{
-			$sModifyXMLstr = file_get_contents('http://overpass.osm.rambler.ru/cgi/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;');
+			$sModifyXMLstr = file_get_contents('http://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;');
 		}
 	}
 	if ($bModifyXML)

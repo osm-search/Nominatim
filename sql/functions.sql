@@ -1681,6 +1681,19 @@ BEGIN
 
       IF NEW.centroid IS NOT NULL THEN
         place_centroid := NEW.centroid;
+        -- Place might have had only a name tag before but has now received translations
+        -- from the linked place. Make sure a name tag for the default language exists in
+        -- this case. 
+        IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
+          default_language := get_country_language_code(NEW.calculated_country_code);
+          IF default_language IS NOT NULL THEN
+            IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
+              NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
+            ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
+              NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
+            END IF;
+          END IF;
+        END IF;
       END IF;
 
       -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance

@@ -143,12 +143,12 @@ transliteration( PG_FUNCTION_ARGS )
 				resultdata++;
 			}
 		}
-		else
+		/*else
 		{
 			ereport( WARNING, ( errcode( ERRCODE_SUCCESSFUL_COMPLETION ),
 		              errmsg( "missing char: %i\n", *wchardata )));
 			
-		}
+		}*/
 		wchardata++;
 	}
 

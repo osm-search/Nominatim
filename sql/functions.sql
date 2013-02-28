@@ -1590,12 +1590,16 @@ BEGIN
             -- merge in the label name, re-init word vector
             IF NOT linkedPlacex.name IS NULL THEN
               NEW.name := linkedPlacex.name || NEW.name;
-              name_vector := make_keywords(NEW.name);
+              name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
             END IF;
 
             -- merge in extra tags
             IF NOT linkedPlacex.extratags IS NULL THEN
               NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+            END IF;
+
+            IF NOT NEW.extratags ? linkedPlacex.class THEN
+              NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
             END IF;
 
             -- mark the linked place (excludes from search results)
@@ -1617,7 +1621,6 @@ BEGIN
               IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
                 AND NEW.rank_address = linkedPlacex.rank_address THEN
 
-
                 -- If we don't already have one use this as the centre point of the geometry
                 IF NEW.centroid IS NULL THEN
                   NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
@@ -1632,6 +1635,10 @@ BEGIN
                 -- merge in extra tags
                 IF NOT linkedPlacex.extratags IS NULL THEN
                   NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+                END IF;
+
+                IF NOT NEW.extratags ? linkedPlacex.class THEN
+                  NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
                 END IF;
 
                 -- mark the linked place (excludes from search results)
@@ -1670,6 +1677,10 @@ BEGIN
 
           -- merge in extra tags
           NEW.extratags := linkedPlacex.extratags || NEW.extratags;
+
+          IF NOT NEW.extratags ? linkedPlacex.class THEN
+            NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
+          END IF;
 
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;

@@ -1205,9 +1205,12 @@
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+					$sSQL .= "(extratags->'place') as extra_place ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+					$sSQL .= ") ";
 					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
 					$sSQL .= "and linked_place_id is null ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
@@ -1215,6 +1218,7 @@
 					$sSQL .= ",langaddress ";
 					$sSQL .= ",placename ";
 					$sSQL .= ",ref ";
+					$sSQL .= ",extratags->'place' ";
 					$sSQL .= " union ";
 					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
@@ -1223,7 +1227,8 @@
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "-0.15 as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+					$sSQL .= "null as extra_place ";
 					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1236,7 +1241,8 @@
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
 					$sSQL .= "-0.10 as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
+					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+					$sSQL .= "null as extra_place ";
 					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1277,14 +1283,18 @@
 					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance ";
+					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
+					$sSQL .= "(extratags->'place') as extra_place ";
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+					$sSQL .= ") ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";
 					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
 					$sSQL .= ",get_name_by_language(name, ARRAY['ref']) ";
+					$sSQL .= ",extratags->'place' ";
 					$sSQL .= " union ";
 					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
@@ -1292,7 +1302,8 @@
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.15 as importance ";
+					$sSQL .= "-0.15 as importance, ";
+					$sSQL .= "null as extra_place ";
 					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1304,7 +1315,8 @@
 					$sSQL .= "null as ref,";
 					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 //					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.10 as importance ";
+					$sSQL .= "-0.10 as importance, ";
+					$sSQL .= "null as extra_place ";
 					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
 					$sSQL .= "group by place_id";
@@ -1413,6 +1425,13 @@
 			}
 		}
 
+		if ($aResult['extra_place'] == 'city')
+		{
+			$aResult['class'] = 'place';
+			$aResult['type'] = 'city';
+			$aResult['rank_search'] = 16;
+		}
+
 		if (!isset($aResult['aBoundingBox']))
 		{
 			// Default
@@ -1470,6 +1489,11 @@
 		if ($bShowAddressDetails)
 		{
 			$aResult['address'] = getAddressDetails($oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code']);
+			if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city']))
+			{
+				$aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
+			}
+
 //var_dump($aResult['address']);
 //exit;
 		}
@@ -1526,10 +1550,10 @@
 			$bFirst = false;
 		}
 		if (!$bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
-			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name']])))
+			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']])))
 		{
 			$aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;
-			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name']] = true;
+			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']] = true;
 			$aSearchResults[] = $aResult;
 		}
 

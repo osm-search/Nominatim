@@ -1384,7 +1384,7 @@ BEGIN
             FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
               IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
 --RAISE WARNING 'node in relation %',relation;
-                SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::integer 
+                SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
                   and rank_search = 26 INTO NEW.parent_place_id;
               END IF;
             END LOOP;
@@ -1413,7 +1413,7 @@ BEGIN
                   FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
                     IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
     --RAISE WARNING 'node in way that is in a relation %',relation;
-                      SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::integer 
+                      SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
                         and rank_search = 26 INTO NEW.parent_place_id;
                     END IF;
                   END LOOP;
@@ -1458,7 +1458,7 @@ BEGIN
             FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
               IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
 --RAISE WARNING 'way that is in a relation %',relation;
-                SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::integer
+                SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint
                   and rank_search = 26 INTO NEW.parent_place_id;
               END IF;
             END LOOP;

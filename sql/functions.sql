@@ -95,7 +95,7 @@ BEGIN
   SELECT min(word_id), max(search_name_count) FROM word WHERE word_token = lookup_token and class is null and type is null into return_word_id, count;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, regexp_replace(lookup_token,E'([^0-9])\\1+',E'\\1','g'), null, null, null, null, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, 0);
   ELSE
     IF count > get_maxwordfreq() THEN
       return_word_id := NULL;
@@ -117,7 +117,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token and class='place' and type='house' into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, 'place', 'house', null, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, 'place', 'house', null, 0);
   END IF;
   RETURN return_word_id;
 END;
@@ -135,7 +135,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token and country_code=lookup_country_code into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, lookup_country_code, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, lookup_country_code, 0);
   END IF;
   RETURN return_word_id;
 END;
@@ -153,7 +153,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token and class=lookup_class and type = lookup_type into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, lookup_class, lookup_type, null, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, lookup_class, lookup_type, null, 0);
   END IF;
   RETURN return_word_id;
 END;
@@ -171,7 +171,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, null, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, 0);
   END IF;
   RETURN return_word_id;
 END;
@@ -203,7 +203,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token and class=lookup_class and type = lookup_type and operator = op into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, lookup_class, lookup_type, null, 0, op, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, null, lookup_class, lookup_type, null, 0, op);
   END IF;
   RETURN return_word_id;
 END;
@@ -222,7 +222,7 @@ BEGIN
   SELECT min(word_id) FROM word WHERE word_token = lookup_token and class is null and type is null into return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, regexp_replace(lookup_token,E'([^0-9])\\1+',E'\\1','g'), src_word, null, null, null, 0, null);
+    INSERT INTO word VALUES (return_word_id, lookup_token, src_word, null, null, null, 0);
 --    nospace_lookup_token := replace(replace(lookup_token, '-',''), ' ','');
 --    IF ' '||nospace_lookup_token != lookup_token THEN
 --      INSERT INTO word VALUES (return_word_id, '-'||nospace_lookup_token, null, src_word, null, null, null, 0, null);

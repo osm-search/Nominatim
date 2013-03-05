@@ -70,7 +70,6 @@ drop table IF EXISTS word;
 CREATE TABLE word (
   word_id INTEGER,
   word_token text,
-  word_trigram text,
   word text,
   class text,
   type text,
@@ -78,9 +77,7 @@ CREATE TABLE word (
   search_name_count INTEGER,
   operator TEXT
   );
-SELECT AddGeometryColumn('word', 'location', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_word_word_token on word USING BTREE (word_token);
---CREATE INDEX idx_word_trigram ON word USING gin(word_trigram gin_trgm_ops) WITH (fastupdate = off);
 GRANT SELECT ON word TO "www-data" ;
 DROP SEQUENCE seq_word;
 CREATE SEQUENCE seq_word start 1;

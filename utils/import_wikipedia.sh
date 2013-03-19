@@ -39,6 +39,8 @@ do
   echo "insert into wikipedia_article select '${i}', title, count, othercount, count+othercount from ${i}pagelinkcount;" | $psqlcmd
 done
 
+echo "update wikipedia_article set importance = log(totalcount)/log((select max(totalcount) from wikipedia_article))" | $psqlcmd
+
 # precalculated lat,lon from dbpedia
 wget http://downloads.dbpedia.org/current/en/geo_coordinates_en.nq.bz2
 bzip2 -dc geo_coordinates_en.nq.bz2 | grep http://www.georss.org/georss/point | sed 's|<http://dbpedia.org/resource/[^>]*> *<http://www.georss.org/georss/point> "\(-\?[-0-9.E]\+\) \(-\?[-0-9.E]\+\)"@en <http://\([a-z][a-z]\).wikipedia.org/wiki/\([^#]\+\)#> .|update pagelinks set lat=\1, lon=\2 where language = '"'"'\3'"'"' and title = decode_url_part('"'"'\4'"'"');|g' | $psqlcmd

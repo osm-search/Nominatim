@@ -40,7 +40,8 @@ do
 done
 
 # precalculated lat,lon from dbpedia
-cat geo_coordinates_en.nq | grep http://www.georss.org/georss/point | sed 's|<http://dbpedia.org/resource/[^>]*> *<http://www.georss.org/georss/point> "\(-\?[-0-9.E]\+\) \(-\?[-0-9.E]\+\)"@en <http://\([a-z][a-z]\).wikipedia.org/wiki/\([^#]\+\)#> .|update pagelinks set lat=\1, lon=\2 where language = '"'"'\3'"'"' and title = decode_url_part('"'"'\4'"'"');|g' | $psqlcmd
+wget http://downloads.dbpedia.org/current/en/geo_coordinates_en.nq.bz2
+bzip2 -dc geo_coordinates_en.nq.bz2 | grep http://www.georss.org/georss/point | sed 's|<http://dbpedia.org/resource/[^>]*> *<http://www.georss.org/georss/point> "\(-\?[-0-9.E]\+\) \(-\?[-0-9.E]\+\)"@en <http://\([a-z][a-z]\).wikipedia.org/wiki/\([^#]\+\)#> .|update pagelinks set lat=\1, lon=\2 where language = '"'"'\3'"'"' and title = decode_url_part('"'"'\4'"'"');|g' | $psqlcmd
 
 # media wiki dumper
 wget https://github.com/bcollier/mwdumper/blob/master/build/mwdumper.jar

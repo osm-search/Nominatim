@@ -502,9 +502,11 @@
 		}
 		else
 		{
+			
 			passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
-			// server layout changed afer license change, fix path to minutely diffs
-			passthru("sed -i 's:minute-replicate:replication/minute:' ".CONST_BasePath.'/settings/configuration.txt');
+			// update osmosis configuration.txt with our settings
+			passthru("sed -i 's!baseUrl=.*!baseUrL=".CONST_Replication_Url."!' ".CONST_BasePath.'/settings/configuration.txt');
+			passthru("sed -i 's:maxInterval = .*:maxInterval = ".CONST_Replication_MaxInterval.":' ".CONST_BasePath.'/settings/configuration.txt');
 		}
 
 		// Find the last node in the DB
@@ -517,10 +519,12 @@
 		$iLastNodeTimestamp = strtotime($aLastNodeDate[1]) - (3*60*60);
 
 
-		// Search for the correct state file - uses file timestamps
-		$sRepURL = 'http://planet.openstreetmap.org/replication/minute/';
-		$sRep = file_get_contents($sRepURL);
-		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		// Search for the correct state file - uses file timestamps so need to sort by date descending
+		$sRepURL = CONST_Replication_Url."/";
+		$sRep = file_get_contents($sRepURL."?C=M;O=D");
+		// download.geofabrik.de:    <a href="000/">000/</a></td><td align="right">26-Feb-2013 11:53  </td>
+		// planet.openstreetmap.org: <a href="273/">273/</a>                    22-Mar-2013 07:41    -
+		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
 		$aPrevRepMatch = false;
 		foreach($aRepMatches as $aRepMatch)
 		{
@@ -530,8 +534,8 @@
 		if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
 
 		$sRepURL .= $aRepMatch[1];
-		$sRep = file_get_contents($sRepURL);
-		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		$sRep = file_get_contents($sRepURL."?C=M;O=D");
+		preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
 		$aPrevRepMatch = false;
 		foreach($aRepMatches as $aRepMatch)
 		{
@@ -541,8 +545,8 @@
 		if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
 
 		$sRepURL .= $aRepMatch[1];
-		$sRep = file_get_contents($sRepURL);
-		preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a> *(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
+		$sRep = file_get_contents($sRepURL."?C=M;O=D");
+		preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
 		$aPrevRepMatch = false;
 		foreach($aRepMatches as $aRepMatch)
 		{

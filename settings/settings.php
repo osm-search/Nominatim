@@ -16,10 +16,8 @@
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
-	//@define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');
-	//@define('CONST_Replication_MaxInterval', '3600');
-	@define('CONST_Replication_Url', 'http://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
-	@define('CONST_Replication_MaxInterval', '259200');
+	@define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');
+	@define('CONST_Replication_MaxInterval', '3600');
 
 	// Connection buckets to rate limit people being nasty
 	@define('CONST_ConnectionBucket_MemcacheServerAddress', false);

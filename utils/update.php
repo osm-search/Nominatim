@@ -353,6 +353,7 @@
 		$sOsmosisCMD = CONST_Osmosis_Binary;
 		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
+		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sImportFile;
 		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
@@ -372,7 +373,30 @@
 //			{
 				if (!file_exists($sImportFile))
 				{
-					// Use osmosis to download the file
+					// First check if there are new updates published (except for minutelies - there's always new diffs to process)
+					if ( CONST_Replication_Update_Interval > 60 )
+					{
+
+						unset($aReplicationLag);
+						exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
+						while ($iErrorLevel == 1 || $aReplicationLag[0] < 1)
+						{
+							if ($iErrorLevel)
+							{
+								echo "Error: $iErrorLevel. ";
+								echo "Re-trying: ".$sCMDCheckReplicationLag." in ".CONST_Replication_Recheck_Interval." secs\n";
+							}
+							else
+							{
+								echo ".";
+							}
+							sleep(CONST_Replication_Recheck_Interval);
+							unset($aReplicationLag);
+							exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
+						}
+						// There are new replication files - use osmosis to download the file
+						echo "\nReplication Delay is ".$aReplicationLag[0]."\n";
+					}
 					$fCMDStartTime = time();
 					echo $sCMDDownload."\n";
 					exec($sCMDDownload, $sJunk, $iErrorLevel);
@@ -483,8 +507,16 @@
 			echo "Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
 			if (!$aResult['import-osmosis-all']) exit;
 
-			echo "Sleeping ".max(0,60-$fDuration)." seconds\n";
-			sleep(max(0,60-$fDuration));
+			if ( CONST_Replication_Update_Interval > 60 )
+			{
+				$iSleep = round(CONST_Replication_Update_Interval*0.8);
+			}
+			else
+			{
+				$iSleep = max(0,CONST_Replication_Update_Interval-$fDuration);
+			}
+			echo "Sleeping $iSleep seconds\n";
+			sleep($iSleep);
 		}
 
 	}

@@ -16,8 +16,12 @@
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
+
+	// Replication settings
 	@define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');
 	@define('CONST_Replication_MaxInterval', '3600');
+	@define('CONST_Replication_Update_Interval', '60');  // How often upstream publishes diffs
+	@define('CONST_Replication_Recheck_Interval', '60'); // How long to sleep if no update found yet
 
 	// Connection buckets to rate limit people being nasty
 	@define('CONST_ConnectionBucket_MemcacheServerAddress', false);

@@ -505,7 +505,7 @@
 			
 			passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
 			// update osmosis configuration.txt with our settings
-			passthru("sed -i 's!baseUrl=.*!baseUrL=".CONST_Replication_Url."!' ".CONST_BasePath.'/settings/configuration.txt');
+			passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_BasePath.'/settings/configuration.txt');
 			passthru("sed -i 's:maxInterval = .*:maxInterval = ".CONST_Replication_MaxInterval.":' ".CONST_BasePath.'/settings/configuration.txt');
 		}
 

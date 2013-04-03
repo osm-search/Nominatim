@@ -495,14 +495,17 @@
 		$bDidSomething = true;
 		$oDB =& getDB();
 
-		if (!file_exists(CONST_Osmosis_Binary)) fail("please download osmosis");
+		if (!file_exists(CONST_Osmosis_Binary))
+		{
+			echo "Please download osmosis.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
+			fail("osmosis not found in '".CONST_Osmosis_Binary."'");
+		}
 		if (file_exists(CONST_BasePath.'/settings/configuration.txt'))
 		{
 			echo "settings/configuration.txt already exists\n";
 		}
 		else
 		{
-			
 			passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
 			// update osmosis configuration.txt with our settings
 			passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_BasePath.'/settings/configuration.txt');

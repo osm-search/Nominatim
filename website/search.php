@@ -153,7 +153,7 @@
 				array('county', 9, 13),
 				array('state', 8, 8),
 				array('country', 4, 4),
-				array('postalcode', 16, 25),
+				array('postalcode', 5, 11),
 				);
 	$aStructuredQuery = array();
 	$sAllowedTypesSQLList = '';

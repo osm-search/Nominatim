@@ -2343,7 +2343,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-DROP TYPE addressline CASCADE;
+DROP TYPE IF EXISTS addressline CASCADE;
 create type addressline as (
   place_id BIGINT,
   osm_type CHAR(1),

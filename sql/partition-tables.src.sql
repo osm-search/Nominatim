@@ -1,9 +1,9 @@
-drop type nearplace cascade;
+drop type if exists nearplace cascade;
 create type nearplace as (
   place_id BIGINT
 );
 
-drop type nearfeature cascade;
+drop type if exists nearfeature cascade;
 create type nearfeature as (
   place_id BIGINT,
   keywords int[],
@@ -13,7 +13,7 @@ create type nearfeature as (
   isguess boolean
 );
 
-drop type nearfeaturecentr cascade;
+drop type if exists nearfeaturecentr cascade;
 create type nearfeaturecentr as (
   place_id BIGINT,
   keywords int[],

@@ -308,7 +308,7 @@
 				$aSpecialTerms[strtolower($aSpecialTerm[1])] = $aSpecialTerm[2];
 			}
 
-			preg_match_all('/\\[([a-zA-Z]*)\\]/', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
+			preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
 			$aSpecialTerms = array();
 			if (isset($aStructuredQuery['amenity']) && $aStructuredQuery['amenity'])
 			{

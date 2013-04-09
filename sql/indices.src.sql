@@ -21,7 +21,6 @@ CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) wh
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id);
 
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid);
-CREATE INDEX idx_search_name_country_nameaddress_vector ON search_name_country USING GIN (nameaddress_vector) WITH (fastupdate = off);
 
 -- start
 CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid);

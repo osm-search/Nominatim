@@ -1,9 +1,9 @@
-drop type nearplace cascade;
+drop type if exists nearplace cascade;
 create type nearplace as (
   place_id BIGINT
 );
 
-drop type nearfeature cascade;
+drop type if exists nearfeature cascade;
 create type nearfeature as (
   place_id BIGINT,
   keywords int[],
@@ -13,7 +13,7 @@ create type nearfeature as (
   isguess boolean
 );
 
-drop type nearfeaturecentr cascade;
+drop type if exists nearfeaturecentr cascade;
 create type nearfeaturecentr as (
   place_id BIGINT,
   keywords int[],
@@ -23,6 +23,16 @@ create type nearfeaturecentr as (
   isguess boolean,
   centroid GEOMETRY
 );
+
+drop table IF EXISTS search_name_blank CASCADE;
+CREATE TABLE search_name_blank (
+  place_id BIGINT,
+  search_rank integer,
+  address_rank integer,
+  name_vector integer[]
+  );
+SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
+
 
 CREATE TABLE location_area_country () INHERITS (location_area_large);
 CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);

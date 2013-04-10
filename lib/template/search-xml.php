@@ -9,7 +9,7 @@
 	echo " timestamp='".date(DATE_RFC822)."'";
 	echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 	echo " querystring='".htmlspecialchars($sQuery, ENT_QUOTES)."'";
-	if (isset($sViewBox)) echo " viewbox='".htmlspecialchars($sViewBox, ENT_QUOTES)."'";
+	if (isset($_GET['viewbox']) && $_GET['viewbox']) echo " viewbox='".htmlspecialchars($_GET['viewbox'], ENT_QUOTES)."'";
 	echo " polygon='".($bShowPolygons?'true':'false')."'";
 	if (sizeof($aExcludePlaceIDs))
 	{

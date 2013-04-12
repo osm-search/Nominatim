@@ -138,7 +138,7 @@
 				arsort($aLanguages);
 			}
 		}
-		if (!sizeof($aLanguages)) $aLanguages = array(CONST_Default_Language=>1);
+		if (!sizeof($aLanguages) && CONST_Default_Language) $aLanguages = array(CONST_Default_Language=>1);
 		foreach($aLanguages as $sLangauge => $fLangauagePref)
 		{
 			$aLangPrefOrder['short_name:'.$sLangauge] = 'short_name:'.$sLangauge;

@@ -1,9 +1,9 @@
 <?php
-        @define('CONST_ConnectionBucket_PageType', 'Status');
+	@define('CONST_ConnectionBucket_PageType', 'Status');
 
-        require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 
-        $oDB =& getDB();
+	$oDB =& getDB();
 	if (!$oDB || PEAR::isError($oDB))
 	{
 		echo "ERROR: No database";

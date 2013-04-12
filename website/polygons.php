@@ -1,6 +1,6 @@
 <?php
-        require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
-        require_once(CONST_BasePath.'/lib/log.php');
+	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(CONST_BasePath.'/lib/log.php');
 
 	$sOutputFormat = 'html';
 	ini_set('memory_limit', '200M');

@@ -1,6 +1,6 @@
 <?php
 
-	function failInternalError($sError, $sSQL = false, $vDumpVar = false) 
+	function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 	{
 		header('HTTP/1.0 500 Internal Server Error');
 		header('Content-type: text/html; charset=utf-8');
@@ -11,10 +11,12 @@
 		if (CONST_Debug)
 		{
 			echo "<hr><h2>Debugging Information</h2><br>";
-			if ($sSQL) {
+			if ($sSQL)
+			{
 				echo "<h3>SQL query</h3><code>".$sSQL."</code>";
 			}
-			if ($vDumpVar) {
+			if ($vDumpVar)
+			{
 				echo "<h3>Result</h3> <code>";
 				var_dump($vDumpVar);
 				echo "</code>";
@@ -22,10 +24,10 @@
 		}
 		echo "\n</body></html>\n";
 		exit;
-
 	}
 
-	function userError($sError) 
+
+	function userError($sError)
 	{
 		header('HTTP/1.0 400 Bad Request');
 		header('Content-type: text/html; charset=utf-8');
@@ -35,8 +37,8 @@
 		echo '<p>If you feel this error is incorrect feel free to report the bug in the <a href="http://trac.openstreetmap.org">OSM bug database</a>. Please include the error message above and the URL you used.</p>';
 		echo "\n</body></html>\n";
 		exit;
-
 	}
+
 
 	function fail($sError, $sUserError = false)
 	{
@@ -46,22 +48,25 @@
 		exit;
 	}
 
+
 	function getBlockingProcesses()
 	{
-                $sStats = file_get_contents('/proc/stat');
-                if (preg_match('/procs_blocked ([0-9]+)/i', $sStats, $aMatches))
-                {
+		$sStats = file_get_contents('/proc/stat');
+		if (preg_match('/procs_blocked ([0-9]+)/i', $sStats, $aMatches))
+		{
 			return (int)$aMatches[1];
-                }
+		}
 		return 0;
 	}
+
 
 	function getLoadAverage()
 	{
 		$sLoadAverage = file_get_contents('/proc/loadavg');
-                $aLoadAverage = explode(' ',$sLoadAverage);
+		$aLoadAverage = explode(' ',$sLoadAverage);
 		return (float)$aLoadAverage[0];
 	}
+
 
 	function getProcessorCount()
 	{
@@ -70,12 +75,14 @@
 		return sizeof($aMatches[0]);
 	}
 
+
 	function getTotalMemoryMB()
 	{
 		$sCPU = file_get_contents('/proc/meminfo');
 		preg_match('#MemTotal: +([0-9]+) kB#', $sCPU, $aMatches);
 		return (int)($aMatches[1]/1024);
 	}
+
 
 	function getCacheMemoryMB()
 	{
@@ -84,28 +91,31 @@
 		return (int)($aMatches[1]/1024);
 	}
 
+
 	function bySearchRank($a, $b)
 	{
 		if ($a['iSearchRank'] == $b['iSearchRank']) return 0;
 		return ($a['iSearchRank'] < $b['iSearchRank']?-1:1);
 	}
 
+
 	function byImportance($a, $b)
 	{
 		if ($a['importance'] != $b['importance'])
 			return ($a['importance'] > $b['importance']?-1:1);
-/*
-		if ($a['aPointPolygon']['numfeatures'] != $b['aPointPolygon']['numfeatures'])
-			return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
-		if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
-			return ($a['aPointPolygon']['area'] > $b['aPointPolygon']['area']?-1:1);
-//		if ($a['levenshtein'] != $b['levenshtein'])
-//			return ($a['levenshtein'] < $b['levenshtein']?-1:1);
+		/*
+		   if ($a['aPointPolygon']['numfeatures'] != $b['aPointPolygon']['numfeatures'])
+		   return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
+		   if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
+		   return ($a['aPointPolygon']['area'] > $b['aPointPolygon']['area']?-1:1);
+		//		if ($a['levenshtein'] != $b['levenshtein'])
+		//			return ($a['levenshtein'] < $b['levenshtein']?-1:1);
 		if ($a['rank_search'] != $b['rank_search'])
-			return ($a['rank_search'] < $b['rank_search']?-1:1);
-*/
+		return ($a['rank_search'] < $b['rank_search']?-1:1);
+		 */
 		return ($a['foundorder'] < $b['foundorder']?-1:1);
 	}
+
 
 	function getPreferredLanguages()
 	{
@@ -116,7 +126,8 @@
 		}
 
 		$aLanguages = array();
-		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
+		{
 			if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $aLanguagesParse, PREG_SET_ORDER))
 			{
 				foreach($aLanguagesParse as $iLang => $aLanguage)
@@ -126,7 +137,7 @@
 				}
 				arsort($aLanguages);
 			}
-        }
+		}
 		if (!sizeof($aLanguages)) $aLanguages = array(CONST_Default_Language=>1);
 		foreach($aLanguages as $sLangauge => $fLangauagePref)
 		{
@@ -153,6 +164,7 @@
 		return $aLangPrefOrder;
 	}
 
+
 	function getWordSets($aWords)
 	{
 		$aResult = array(array(join(' ',$aWords)));
@@ -170,6 +182,7 @@
 		return $aResult;
 	}
 
+
 	function getTokensFromSets($aSets)
 	{
 		$aTokens = array();
@@ -185,37 +198,39 @@
 		return $aTokens;
 	}
 
+
 	/*
-		GB Postcode functions
-	*/
+	   GB Postcode functions
+	 */
 
 	function gbPostcodeAlphaDifference($s1, $s2)
 	{
 		$aValues = array(
-			'A'=>0,
-			'B'=>1,
-			'D'=>2,
-			'E'=>3,
-			'F'=>4,
-			'G'=>5,
-			'H'=>6,
-			'J'=>7,
-			'L'=>8,
-			'N'=>9,
-			'O'=>10,
-			'P'=>11,
-			'Q'=>12,
-			'R'=>13,
-			'S'=>14,
-			'T'=>15,
-			'U'=>16,
-			'W'=>17,
-			'X'=>18,
-			'Y'=>19,
-			'Z'=>20);
+				'A'=>0,
+				'B'=>1,
+				'D'=>2,
+				'E'=>3,
+				'F'=>4,
+				'G'=>5,
+				'H'=>6,
+				'J'=>7,
+				'L'=>8,
+				'N'=>9,
+				'O'=>10,
+				'P'=>11,
+				'Q'=>12,
+				'R'=>13,
+				'S'=>14,
+				'T'=>15,
+				'U'=>16,
+				'W'=>17,
+				'X'=>18,
+				'Y'=>19,
+				'Z'=>20);
 		return abs(($aValues[$s1[0]]*21+$aValues[$s1[1]]) - ($aValues[$s2[0]]*21+$aValues[$s2[1]]));
 	}
-	
+
+
 	function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
 	{
 		// Try an exact match on the gb_postcode table
@@ -226,7 +241,7 @@
 			var_dump($sSQL, $aNearPostcodes);
 			exit;
 		}
-		
+
 		if (sizeof($aNearPostcodes))
 		{
 			return array(array('lat' => $aNearPostcodes[0]['lat'], 'lon' => $aNearPostcodes[0]['lon'], 'radius' => 0.005));
@@ -234,6 +249,7 @@
 
 		return false;
 	}
+
 
 	function usPostcodeCalculate($sPostcode, &$oDB)
 	{
@@ -250,7 +266,7 @@
 
 		if (!sizeof($aNearPostcodes))
 		{
-   			$sSQL = 'select zipcode,ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from us_zipcode where zipcode between '.($iZipcode-100).' and '.($iZipcode+100).' order by abs(zipcode - '.$iZipcode.') asc limit 5';
+			$sSQL = 'select zipcode,ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from us_zipcode where zipcode between '.($iZipcode-100).' and '.($iZipcode+100).' order by abs(zipcode - '.$iZipcode.') asc limit 5';
 			$aNearPostcodes = $oDB->getAll($sSQL);
 			if (PEAR::IsError($aNearPostcodes))
 			{
@@ -274,7 +290,7 @@
 				$fFac = 1;
 			else
 				$fFac = 1/($iDiff*$iDiff);
-			
+
 			$fTotalFac += $fFac;
 			$fTotalLat += $aPostcode['lat'] * $fFac;
 			$fTotalLon += $aPostcode['lon'] * $fFac;
@@ -288,11 +304,12 @@
 		return false;
 
 		/*
-			$fTotalFac is a surprisingly good indicator of accuracy
-			$iZoom = 18 + round(log($fTotalFac,32));
-			$iZoom = max(13,min(18,$iZoom));
-		*/
+		   $fTotalFac is a surprisingly good indicator of accuracy
+		   $iZoom = 18 + round(log($fTotalFac,32));
+		   $iZoom = max(13,min(18,$iZoom));
+		 */
 	}
+
 
 	function getClassTypes()
 	{
@@ -462,7 +479,7 @@
  'place:house_number' => array('label'=>'House Number','frequency'=>2086,'icon'=>'','defzoom'=>18,),
  'place:country_code' => array('label'=>'Country Code','frequency'=>2086,'icon'=>'','defzoom'=>18,),
 
-//
+ //
 
  'leisure:pitch' => array('label'=>'Pitch','frequency'=>762,'icon'=>'',),
  'highway:unsurfaced' => array('label'=>'Unsurfaced','frequency'=>492,'icon'=>'',),
@@ -597,8 +614,9 @@
  'railway:disused_station' => array('label'=>'Disused Station','frequency'=>114,'icon'=>'',),
  'railway:abandoned' => array('label'=>'Abandoned','frequency'=>641,'icon'=>'',),
  'railway:disused' => array('label'=>'Disused','frequency'=>72,'icon'=>'',),
-			);
+				);
 	}
+
 
 	function getClassTypesWithImportance()
 	{
@@ -611,24 +629,30 @@
 		return $aOrders;
 	}
 
-    function javascript_renderData($xVal)
-    {
-        header("Access-Control-Allow-Origin: *");
 
-        $jsonout = json_encode($xVal);
+	function javascript_renderData($xVal)
+	{
+		header("Access-Control-Allow-Origin: *");
+		$jsonout = json_encode($xVal);
 
-		if( ! isset($_GET['json_callback'])) {
+		if( ! isset($_GET['json_callback']))
+		{
 			header("Content-Type: application/json; charset=UTF-8");
 			echo $jsonout;
-		} else {
-			if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u',$_GET['json_callback'])) {
+		} else
+		{
+			if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u',$_GET['json_callback']))
+			{
 				header("Content-Type: application/javascript; charset=UTF-8");
 				echo $_GET['json_callback'].'('.$jsonout.')';
-			} else {
+			}
+			else
+			{
 				header('HTTP/1.0 400 Bad Request');
 			}
 		}
-    }
+	}
+
 
 	function _debugDumpGroupedSearches($aData, $aTokens)
 	{
@@ -651,7 +675,7 @@
 		foreach($aData as $iRank => $aRankedSet)
 		{
 			foreach($aRankedSet as $aRow)
-			{		
+			{
 				echo "<tr>";
 				echo "<td>$iRank</td>";
 
@@ -702,7 +726,7 @@
 				echo "<td>".$aRow['fLat']."</td>";
 				echo "<td>".$aRow['fLon']."</td>";
 				echo "<td>".$aRow['fRadius']."</td>";
-	
+
 				echo "</tr>";
 			}
 		}
@@ -713,18 +737,18 @@
 	function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $bRaw = false)
 	{
 		$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID)";
-		IF (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
+		if (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
 		$sSQL .= " order by rank_address desc,isaddress desc";
 
-	        $aAddressLines = $oDB->getAll($sSQL);
-        	if (PEAR::IsError($aAddressLines))
-	        {
-        	        var_dump($aAddressLines);
-                	exit;
-	        }
+		$aAddressLines = $oDB->getAll($sSQL);
+		if (PEAR::IsError($aAddressLines))
+		{
+			var_dump($aAddressLines);
+			exit;
+		}
 		if ($bRaw) return $aAddressLines;
-//echo "<pre>";
-//var_dump($aAddressLines);
+		//echo "<pre>";
+		//var_dump($aAddressLines);
 		$aAddress = array();
 		$aFallback = array();
 		$aClassType = getClassTypes();
@@ -758,6 +782,7 @@
 		return $aAddress;
 	}
 
+
 	function getWordSuggestions(&$oDB, $sWord)
 	{
 		$sWordQuoted = getDBQuoted(trim($sWord));
@@ -771,6 +796,7 @@
 		return $aSimilar;
 	}
 
+
 	function geocodeReverse($fLat, $fLon, $iZoom=18)
 	{
 		$oDB =& getDB();
@@ -779,27 +805,27 @@
 
 		// Zoom to rank, this could probably be calculated but a lookup gives fine control
 		$aZoomRank = array(
-			0 => 2, // Continent / Sea
-			1 => 2,
-			2 => 2,
-			3 => 4, // Country
-			4 => 4,
-			5 => 8, // State
-			6 => 10, // Region
-			7 => 10, 
-			8 => 12, // County
-			9 => 12,  
-			10 => 17, // City
-			11 => 17, 
-			12 => 18, // Town / Village
-			13 => 18, 
-			14 => 22, // Suburb
-			15 => 22,
-			16 => 26, // Street, TODO: major street?
-			17 => 26, 
-			18 => 30, // or >, Building
-			19 => 30, // or >, Building
-			);
+				0 => 2, // Continent / Sea
+				1 => 2,
+				2 => 2,
+				3 => 4, // Country
+				4 => 4,
+				5 => 8, // State
+				6 => 10, // Region
+				7 => 10,
+				8 => 12, // County
+				9 => 12,
+				10 => 17, // City
+				11 => 17,
+				12 => 18, // Town / Village
+				13 => 18,
+				14 => 22, // Suburb
+				15 => 22,
+				16 => 26, // Street, TODO: major street?
+				17 => 26,
+				18 => 30, // or >, Building
+				19 => 30, // or >, Building
+				);
 		$iMaxRank = isset($aZoomRank[$iZoom])?$aZoomRank[$iZoom]:28;
 
 		// Find the nearest point
@@ -830,12 +856,12 @@
 			$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
 			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', ST_Centroid(geometry), '.$fSearchDiam.'))';
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
-//var_dump($sSQL);
+			//var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
 			$iPlaceID = $aPlace['place_id'];
 			if (PEAR::IsError($iPlaceID))
 			{
-				var_Dump($sSQL, $iPlaceID); 
+				var_Dump($sSQL, $iPlaceID);
 				exit;
 			}
 		}
@@ -847,7 +873,7 @@
 			$iPlaceID = $oDB->getOne($sSQL);
 			if (PEAR::IsError($iPlaceID))
 			{
-				var_Dump($sSQL, $iPlaceID); 
+				var_Dump($sSQL, $iPlaceID);
 				exit;
 			}
 
@@ -857,7 +883,7 @@
 				$iPlaceID = $oDB->getOne($sSQL);
 				if (PEAR::IsError($iPlaceID))
 				{
-					var_Dump($sSQL, $iPlaceID); 
+					var_Dump($sSQL, $iPlaceID);
 					exit;
 				}
 			}
@@ -870,15 +896,16 @@
 		return $iPlaceID;
 	}
 
-        function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank)
-        {
-                if (!isset($_GET[$sKey])) return false;
-                $sValue = trim($_GET[$sKey]);
-                if (!$sValue) return false;
-                $aStructuredQuery[$sKey] = $sValue;
-                if ($iMinAddressRank == 0 && $iMaxAddressRank == 30) {
-                        $iMinAddressRank = $iNewMinAddressRank;
-                        $iMaxAddressRank = $iNewMaxAddressRank;
-                }
-                return true;
-        }
+	function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank)
+	{
+		if (!isset($_GET[$sKey])) return false;
+		$sValue = trim($_GET[$sKey]);
+		if (!$sValue) return false;
+		$aStructuredQuery[$sKey] = $sValue;
+		if ($iMinAddressRank == 0 && $iMaxAddressRank == 30)
+		{
+			$iMinAddressRank = $iNewMinAddressRank;
+			$iMaxAddressRank = $iNewMaxAddressRank;
+		}
+		return true;
+	}

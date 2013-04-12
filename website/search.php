@@ -37,26 +37,33 @@
 
 	// Show / use polygons
 	$bShowPolygons = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
-    if ($sOutputFormat == 'html') {
+	if ($sOutputFormat == 'html')
+	{
 		$bAsText = $bShowPolygons;
 		$bShowPolygons = false;
 		$bAsGeoJSON = false;
 		$bAsKML = false;
 		$bAsSVG = false;
-	} else {
+	}
+	else
+	{
 		$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
 		$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
 		$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
 		$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
 		if ((($bShowPolygons?1:0)
-		   + ($bAsGeoJSON?1:0)
-		   + ($bAsKML?1:0)
-		   + ($bAsSVG?1:0)
-		   + ($bAsText?1:0)
-			) > CONST_PolygonOutput_MaximumTypes) {
-			if (CONST_PolygonOutput_MaximumTypes) {
+					+ ($bAsGeoJSON?1:0)
+					+ ($bAsKML?1:0)
+					+ ($bAsSVG?1:0)
+					+ ($bAsText?1:0)
+			) > CONST_PolygonOutput_MaximumTypes)
+		{
+			if (CONST_PolygonOutput_MaximumTypes)
+			{
 				userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-			} else {
+			}
+			else
+			{
 				userError("Polygon output is disabled");
 			}
 			exit;
@@ -66,7 +73,7 @@
 	// Show address breakdown
 	$bShowAddressDetails = isset($_GET['addressdetails']) && $_GET['addressdetails'];
 
-	// Preferred language	
+	// Preferred language
 	$aLangPrefOrder = getPreferredLanguages();
 	if (isset($aLangPrefOrder['name:de'])) $bReverseInPlan = true;
 	if (isset($aLangPrefOrder['name:ru'])) $bReverseInPlan = true;
@@ -119,7 +126,7 @@
 		}
 		$sCountryCodesSQL = join(',', $aCountryCodes);
 	}
-		
+
 	// Search query
 	$sQuery = (isset($_GET['q'])?trim($_GET['q']):'');
 	if (!$sQuery && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
@@ -127,8 +134,8 @@
 		$sQuery = substr($_SERVER['PATH_INFO'], 1);
 
 		// reverse order of '/' separated string
-		$aPhrases = explode('/', $sQuery);		
-		$aPhrases = array_reverse($aPhrases); 
+		$aPhrases = explode('/', $sQuery);
+		$aPhrases = array_reverse($aPhrases);
 		$sQuery = join(', ',$aPhrases);
 	}
 
@@ -138,7 +145,8 @@
 		$sValue = trim($_GET[$sKey]);
 		if (!$sValue) return false;
 		$aStructuredQuery[$sKey] = $sValue;
-		if ($iMinAddressRank == 0 && $iMaxAddressRank == 30) {
+		if ($iMinAddressRank == 0 && $iMaxAddressRank == 30)
+		{
 			$iMinAddressRank = $iNewMinAddressRank;
 			$iMaxAddressRank = $iNewMaxAddressRank;
 		}
@@ -161,7 +169,8 @@
 	{
 		loadStructuredAddressElement($aStructuredQuery, $iMinAddressRank, $iMaxAddressRank, $_GET, $aStructuredOption[0], $aStructuredOption[1], $aStructuredOption[2]);
 	}
-	if (sizeof($aStructuredQuery) > 0) {
+	if (sizeof($aStructuredQuery) > 0) 
+	{
 		$sQuery = join(', ', $aStructuredQuery);
 		if ($iMaxAddressRank < 30)
 		{
@@ -174,8 +183,8 @@
 		$hLog = logStart($oDB, 'search', $sQuery, $aLangPrefOrder);
 
 		// Hack to make it handle "new york, ny" (and variants) correctly
-                $sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $sQuery);
-		if (isset($aLangPrefOrder['name:en']))		
+		$sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $sQuery);
+		if (isset($aLangPrefOrder['name:en']))
 		{
 			$sQuery = preg_replace('/,\s*il\s*(,|$)/',', illinois\1', $sQuery);
 			$sQuery = preg_replace('/,\s*al\s*(,|$)/',', alabama\1', $sQuery);
@@ -183,7 +192,7 @@
 		}
 
 		// If we have a view box create the SQL
-		// Small is the actual view box, Large is double (on each axis) that 
+		// Small is the actual view box, Large is double (on each axis) that
 		$sViewboxCentreSQL = $sViewboxSmallSQL = $sViewboxLargeSQL = false;
 		if (isset($_GET['viewboxlbrt']) && $_GET['viewboxlbrt'])
 		{
@@ -201,7 +210,9 @@
 			$aCoOrdinates[1] += $fWidth;
 			$aCoOrdinates[3] -= $fWidth;
 			$sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aCoOrdinates[0].",".(float)$aCoOrdinates[1]."),ST_Point(".(float)$aCoOrdinates[2].",".(float)$aCoOrdinates[3].")),4326)";
-		} else {
+		}
+		else
+		{
 			$bBoundingBoxSearch = false;
 		}
 		if (isset($_GET['route']) && $_GET['route'] && isset($_GET['routewidth']) && $_GET['routewidth'])
@@ -286,8 +297,8 @@
 			// Start with a blank search
 			$aSearches = array(
 				array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 'aFullNameAddress'=>array(),
-					'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
-					'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
+				      'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
+				      'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
 			);
 
 			$sNearPointSQL = false;
@@ -364,7 +375,7 @@
 			// Convert each phrase to standard form
 			// Create a list of standard words
 			// Get all 'sets' of words
-			// Generate a complete list of all 
+			// Generate a complete list of all
 			$aTokens = array();
 			foreach($aPhrases as $iPhrase => $sPhrase)
 			{
@@ -395,122 +406,120 @@
 			if (sizeof($aTokens))
 			{
 
-			// Check which tokens we have, get the ID numbers			
-			$sSQL = 'select word_id,word_token, word, class, type, country_code, operator, search_name_count';
-			$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
-//			$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
-//			$sSQL .= ' group by word_token, word, class, type, country_code';
+				// Check which tokens we have, get the ID numbers
+				$sSQL = 'select word_id,word_token, word, class, type, country_code, operator, search_name_count';
+				$sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
+				//$sSQL .= ' and search_name_count < '.CONST_Max_Word_Frequency;
+				//$sSQL .= ' group by word_token, word, class, type, country_code';
 
-			if (CONST_Debug) var_Dump($sSQL);
+				if (CONST_Debug) var_Dump($sSQL);
 
-			$aValidTokens = array();
-			if (sizeof($aTokens))
-				$aDatabaseWords = $oDB->getAll($sSQL);
-			else
-				$aDatabaseWords = array();
-			if (PEAR::IsError($aDatabaseWords))
-			{
-				failInternalError("Could not get word tokens.", $sSQL, $aDatabaseWords);
-			}
-			$aPossibleMainWordIDs = array();
-			$aWordFrequencyScores = array();
-			foreach($aDatabaseWords as $aToken)
-			{
-				// Very special case - require 2 letter country param to match the country code found
-				if ($bStructuredPhrases && $aToken['country_code'] && !empty($aStructuredQuery['country']) 
-                                  && strlen($aStructuredQuery['country']) == 2 && strtolower($aStructuredQuery['country']) != $aToken['country_code'])
+				$aValidTokens = array();
+				if (sizeof($aTokens)) $aDatabaseWords = $oDB->getAll($sSQL);
+				else $aDatabaseWords = array();
+				if (PEAR::IsError($aDatabaseWords))
 				{
-					continue;
+					failInternalError("Could not get word tokens.", $sSQL, $aDatabaseWords);
 				}
-
-				if (isset($aValidTokens[$aToken['word_token']]))
+				$aPossibleMainWordIDs = array();
+				$aWordFrequencyScores = array();
+				foreach($aDatabaseWords as $aToken)
 				{
-					$aValidTokens[$aToken['word_token']][] = $aToken;
-				}
-				else
-				{
-					$aValidTokens[$aToken['word_token']] = array($aToken);
-				}
-				if (!$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
-				$aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
-			}
-			if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
-
-                        $aSuggestion = array();
-                        $bSuggestion = false;
-			if (CONST_Suggestions_Enabled)
-			{
-				foreach($aPhrases as $iPhrase => $aPhrase)
-				{
-                	                if (!isset($aValidTokens[' '.$aPhrase['wordsets'][0][0]]))
-                        	        {
-                                	        $sQuotedPhrase = getDBQuoted(' '.$aPhrase['wordsets'][0][0]);
-						$aSuggestionWords = getWordSuggestions($oDB, $aPhrase['wordsets'][0][0]);
-						$aRow = $aSuggestionWords[0];
-						if ($aRow && $aRow['word'])
-                	                        {
-                        	                        $aSuggestion[] = $aRow['word'];
-                                	                $bSuggestion = true;
-                                        	}
-	                                        else
-        	                                {
-                	                                $aSuggestion[] = $aPhrase['string'];
-                        	                }
-	                                }
-        	                        else
-                	                {
-                        	                $aSuggestion[] = $aPhrase['string'];
-                                	}
-				}
-			}
-			if ($bSuggestion) $sSuggestion = join(', ',$aSuggestion);
-
-			// Try and calculate GB postcodes we might be missing
-			foreach($aTokens as $sToken)
-			{
-				// Source of gb postcodes is now definitive - always use
-				if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData))
-				{
-					if (substr($aData[1],-2,1) != ' ')
+					// Very special case - require 2 letter country param to match the country code found
+					if ($bStructuredPhrases && $aToken['country_code'] && !empty($aStructuredQuery['country'])
+							&& strlen($aStructuredQuery['country']) == 2 && strtolower($aStructuredQuery['country']) != $aToken['country_code'])
 					{
-						$aData[0] = substr($aData[0],0,strlen($aData[1]-1)).' '.substr($aData[0],strlen($aData[1]-1));
-						$aData[1] = substr($aData[1],0,-1).' '.substr($aData[1],-1,1);
+						continue;
 					}
-					$aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $oDB);
-					if ($aGBPostcodeLocation)
+
+					if (isset($aValidTokens[$aToken['word_token']]))
 					{
-						$aValidTokens[$sToken] = $aGBPostcodeLocation;
+						$aValidTokens[$aToken['word_token']][] = $aToken;
+					}
+					else
+					{
+						$aValidTokens[$aToken['word_token']] = array($aToken);
+					}
+					if (!$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
+					$aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
+				}
+				if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
+
+				$aSuggestion = array();
+				$bSuggestion = false;
+				if (CONST_Suggestions_Enabled)
+				{
+					foreach($aPhrases as $iPhrase => $aPhrase)
+					{
+						if (!isset($aValidTokens[' '.$aPhrase['wordsets'][0][0]]))
+						{
+							$sQuotedPhrase = getDBQuoted(' '.$aPhrase['wordsets'][0][0]);
+							$aSuggestionWords = getWordSuggestions($oDB, $aPhrase['wordsets'][0][0]);
+							$aRow = $aSuggestionWords[0];
+							if ($aRow && $aRow['word'])
+							{
+								$aSuggestion[] = $aRow['word'];
+								$bSuggestion = true;
+							}
+							else
+							{
+								$aSuggestion[] = $aPhrase['string'];
+							}
+						}
+						else
+						{
+							$aSuggestion[] = $aPhrase['string'];
+						}
 					}
 				}
-			}
+				if ($bSuggestion) $sSuggestion = join(', ',$aSuggestion);
 
-			foreach($aTokens as $sToken)
-			{
-				// Unknown single word token with a number - assume it is a house number
-				if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken))
+				// Try and calculate GB postcodes we might be missing
+				foreach($aTokens as $sToken)
 				{
-					$aValidTokens[' '.$sToken] = array(array('class'=>'place','type'=>'house'));
+					// Source of gb postcodes is now definitive - always use
+					if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData))
+					{
+						if (substr($aData[1],-2,1) != ' ')
+						{
+							$aData[0] = substr($aData[0],0,strlen($aData[1]-1)).' '.substr($aData[0],strlen($aData[1]-1));
+							$aData[1] = substr($aData[1],0,-1).' '.substr($aData[1],-1,1);
+						}
+						$aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $oDB);
+						if ($aGBPostcodeLocation)
+						{
+							$aValidTokens[$sToken] = $aGBPostcodeLocation;
+						}
+					}
 				}
-			}
 
-			// Any words that have failed completely?
-			// TODO: suggestions
+				foreach($aTokens as $sToken)
+				{
+					// Unknown single word token with a number - assume it is a house number
+					if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken))
+					{
+						$aValidTokens[' '.$sToken] = array(array('class'=>'place','type'=>'house'));
+					}
+				}
 
-			// Start the search process
-			$aResultPlaceIDs = array();
+				// Any words that have failed completely?
+				// TODO: suggestions
 
-			/*
-				Calculate all searches using aValidTokens i.e.
+				// Start the search process
+				$aResultPlaceIDs = array();
 
-				'Wodsworth Road, Sheffield' =>
+				/*
+				   Calculate all searches using aValidTokens i.e.
 
-				Phrase Wordset
-				0      0       (wodsworth road)
-				0      1       (wodsworth)(road)
-				1      0       (sheffield)
+				   'Wodsworth Road, Sheffield' =>
 
-				Score how good the search is so they can be ordered
-			*/
+				   Phrase Wordset
+				   0      0       (wodsworth road)
+				   0      1       (wodsworth)(road)
+				   1      0       (sheffield)
+
+				   Score how good the search is so they can be ordered
+				 */
 				foreach($aPhrases as $iPhrase => $sPhrase)
 				{
 					$aNewPhraseSearches = array();
@@ -524,14 +533,14 @@
 						// Add all words from this wordset
 						foreach($aWordset as $iToken => $sToken)
 						{
-//echo "<br><b>$sToken</b>";
+							//echo "<br><b>$sToken</b>";
 							$aNewWordsetSearches = array();
 
 							foreach($aWordsetSearches as $aCurrentSearch)
 							{
-//echo "<i>";
-//var_dump($aCurrentSearch);
-//echo "</i>";
+								//echo "<i>";
+								//var_dump($aCurrentSearch);
+								//echo "</i>";
 
 								// If the token is valid
 								if (isset($aValidTokens[' '.$sToken]))
@@ -571,12 +580,12 @@
 											{
 												$aSearch['sHouseNumber'] = $sToken;
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
-/*
+												/*
 												// Fall back to not searching for this item (better than nothing)
 												$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 1;
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
-*/
+												 */
 											}
 										}
 										elseif ($sPhraseType == '' && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null)
@@ -621,7 +630,7 @@
 											else
 											{
 												$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-//												$aSearch['iNamePhrase'] = $iPhrase;
+												//$aSearch['iNamePhrase'] = $iPhrase;
 											}
 											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 										}
@@ -636,38 +645,38 @@
 										{
 											if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strlen($sToken) >= 4)
 											{
-	  											$aSearch = $aCurrentSearch;
+												$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 1;
 												if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
 												{
 													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-		  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+													if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 												}
 												elseif (isset($aValidTokens[' '.$sToken])) // revert to the token version?
 												{
 													foreach($aValidTokens[' '.$sToken] as $aSearchTermToken)
 													{
-														if (empty($aSearchTermToken['country_code']) 
-															&& empty($aSearchTermToken['lat'])
-															&& empty($aSearchTermToken['class']))
+														if (empty($aSearchTermToken['country_code'])
+																&& empty($aSearchTermToken['lat'])
+																&& empty($aSearchTermToken['class']))
 														{
-	  														$aSearch = $aCurrentSearch;
+															$aSearch = $aCurrentSearch;
 															$aSearch['iSearchRank'] += 1;
 															$aSearch['aAddress'][$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
-				  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+															if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 														}
 													}
 												}
 												else
 												{
 													$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-		  											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+													if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 												}
 											}
 
 											if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)
 											{
-	  											$aSearch = $aCurrentSearch;
+												$aSearch = $aCurrentSearch;
 												$aSearch['iSearchRank'] += 2;
 												if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
 												if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
@@ -675,7 +684,7 @@
 												else
 													$aSearch['aNameNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												$aSearch['iNamePhrase'] = $iPhrase;
-  												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
 										}
 									}
@@ -691,25 +700,19 @@
 							// Sort and cut
 							usort($aNewWordsetSearches, 'bySearchRank');
 							$aWordsetSearches = array_slice($aNewWordsetSearches, 0, 50);
-						}						
-//						var_Dump('<hr>',sizeof($aWordsetSearches)); exit;
+						}
+						//var_Dump('<hr>',sizeof($aWordsetSearches)); exit;
 
 						$aNewPhraseSearches = array_merge($aNewPhraseSearches, $aNewWordsetSearches);
 						usort($aNewPhraseSearches, 'bySearchRank');
 
-          $aSearchHash = array();
-          foreach($aNewPhraseSearches as $iSearch => $aSearch)
-          {
-            $sHash = serialize($aSearch);
-            if (isset($aSearchHash[$sHash]))
-            {
-              unset($aNewPhraseSearches[$iSearch]);
-            }
-            else
-            {
-              $aSearchHash[$sHash] = 1;
-            }
-          }
+						$aSearchHash = array();
+						foreach($aNewPhraseSearches as $iSearch => $aSearch)
+						{
+							$sHash = serialize($aSearch);
+							if (isset($aSearchHash[$sHash])) unset($aNewPhraseSearches[$iSearch]);
+							else $aSearchHash[$sHash] = 1;
+						}
 
 						$aNewPhraseSearches = array_slice($aNewPhraseSearches, 0, 50);
 					}
@@ -735,141 +738,141 @@
 						if ($iSearchCount > 50) break;
 					}
 
-//					if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
+					//if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
 
 				}
 			}
 			else
 			{
-					// Re-group the searches by their score, junk anything over 20 as just not worth trying
-					$aGroupedSearches = array();
-					foreach($aSearches as $aSearch)
+				// Re-group the searches by their score, junk anything over 20 as just not worth trying
+				$aGroupedSearches = array();
+				foreach($aSearches as $aSearch)
+				{
+					if ($aSearch['iSearchRank'] < $iMaxRank)
 					{
-						if ($aSearch['iSearchRank'] < $iMaxRank)
-						{
-							if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
-							$aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
-						}
+						if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
+						$aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
 					}
-					ksort($aGroupedSearches);
+				}
+				ksort($aGroupedSearches);
 			}
-				
-				if (CONST_Debug) var_Dump($aGroupedSearches);
 
-				if ($bReverseInPlan)
-				{
-					$aCopyGroupedSearches = $aGroupedSearches;
-					foreach($aCopyGroupedSearches as $iGroup => $aSearches)
-					{
-						foreach($aSearches as $iSearch => $aSearch)
-						{
-							if (sizeof($aSearch['aAddress']))
-							{
-								$iReverseItem = array_pop($aSearch['aAddress']);
-								if (isset($aPossibleMainWordIDs[$iReverseItem]))
-								{
-									$aSearch['aAddress'] = array_merge($aSearch['aAddress'], $aSearch['aName']);
-									$aSearch['aName'] = array($iReverseItem);
-									$aGroupedSearches[$iGroup][] = $aSearch;
-								}
-//								$aReverseSearch['aName'][$iReverseItem] = $iReverseItem;
-	//							$aGroupedSearches[$iGroup][] = $aReverseSearch;
-							}
-						}
-					}
-				}
+			if (CONST_Debug) var_Dump($aGroupedSearches);
 
-				if (CONST_Search_TryDroppedAddressTerms && sizeof($aStructuredQuery) > 0)
-				{
-					$aCopyGroupedSearches = $aGroupedSearches;
-					foreach($aCopyGroupedSearches as $iGroup => $aSearches)
-					{
-						foreach($aSearches as $iSearch => $aSearch)
-						{
-							$aReductionsList = array($aSearch['aAddress']);
-							$iSearchRank = $aSearch['iSearchRank'];
-							while(sizeof($aReductionsList) > 0)
-							{
-								$iSearchRank += 5;
-								if ($iSearchRank > iMaxRank) break 3;
-								$aNewReductionsList = array();
-								foreach($aReductionsList as $aReductionsWordList)
-								{
-									for ($iReductionWord = 0; $iReductionWord < sizeof($aReductionsWordList); $iReductionWord++)
-									{
-										$aReductionsWordListResult = array_merge(array_slice($aReductionsWordList, 0, $iReductionWord), array_slice($aReductionsWordList, $iReductionWord+1));
-										$aReverseSearch = $aSearch;
-										$aSearch['aAddress'] = $aReductionsWordListResult;
-										$aSearch['iSearchRank'] = $iSearchRank;
-										$aGroupedSearches[$iSearchRank][] = $aReverseSearch;
-										if (sizeof($aReductionsWordListResult) > 0)
-										{
-											$aNewReductionsList[] = $aReductionsWordListResult;
-										}
-									}
-								}
-								$aReductionsList = $aNewReductionsList;
-							}
-						}
-					}
-					ksort($aGroupedSearches);
-				}
-
-				// Filter out duplicate searches
-				$aSearchHash = array();
-				foreach($aGroupedSearches as $iGroup => $aSearches)
+			if ($bReverseInPlan)
+			{
+				$aCopyGroupedSearches = $aGroupedSearches;
+				foreach($aCopyGroupedSearches as $iGroup => $aSearches)
 				{
 					foreach($aSearches as $iSearch => $aSearch)
 					{
-						$sHash = serialize($aSearch);
-						if (isset($aSearchHash[$sHash]))
+						if (sizeof($aSearch['aAddress']))
 						{
-							unset($aGroupedSearches[$iGroup][$iSearch]);
-							if (sizeof($aGroupedSearches[$iGroup]) == 0) unset($aGroupedSearches[$iGroup]);
-						}
-						else
-						{
-							$aSearchHash[$sHash] = 1;
+							$iReverseItem = array_pop($aSearch['aAddress']);
+							if (isset($aPossibleMainWordIDs[$iReverseItem]))
+							{
+								$aSearch['aAddress'] = array_merge($aSearch['aAddress'], $aSearch['aName']);
+								$aSearch['aName'] = array($iReverseItem);
+								$aGroupedSearches[$iGroup][] = $aSearch;
+							}
+							//$aReverseSearch['aName'][$iReverseItem] = $iReverseItem;
+							//$aGroupedSearches[$iGroup][] = $aReverseSearch;
 						}
 					}
 				}
+			}
 
-				if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
-
-				$iGroupLoop = 0;
-				$iQueryLoop = 0;
-				foreach($aGroupedSearches as $iGroupedRank => $aSearches)
+			if (CONST_Search_TryDroppedAddressTerms && sizeof($aStructuredQuery) > 0)
+			{
+				$aCopyGroupedSearches = $aGroupedSearches;
+				foreach($aCopyGroupedSearches as $iGroup => $aSearches)
 				{
-					$iGroupLoop++;
-					foreach($aSearches as $aSearch)
+					foreach($aSearches as $iSearch => $aSearch)
 					{
-						$iQueryLoop++;
-
-						if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
-						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
-
-
-						// Must have a location term
-						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
+						$aReductionsList = array($aSearch['aAddress']);
+						$iSearchRank = $aSearch['iSearchRank'];
+						while(sizeof($aReductionsList) > 0)
 						{
-							if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
+							$iSearchRank += 5;
+							if ($iSearchRank > iMaxRank) break 3;
+							$aNewReductionsList = array();
+							foreach($aReductionsList as $aReductionsWordList)
 							{
-								if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
+								for ($iReductionWord = 0; $iReductionWord < sizeof($aReductionsWordList); $iReductionWord++)
 								{
-									$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
-									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-									$sSQL .= " order by st_area(geometry) desc limit 1";
-									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $oDB->getCol($sSQL);
+									$aReductionsWordListResult = array_merge(array_slice($aReductionsWordList, 0, $iReductionWord), array_slice($aReductionsWordList, $iReductionWord+1));
+									$aReverseSearch = $aSearch;
+									$aSearch['aAddress'] = $aReductionsWordListResult;
+									$aSearch['iSearchRank'] = $iSearchRank;
+									$aGroupedSearches[$iSearchRank][] = $aReverseSearch;
+									if (sizeof($aReductionsWordListResult) > 0)
+									{
+										$aNewReductionsList[] = $aReductionsWordListResult;
+									}
 								}
 							}
-							else
+							$aReductionsList = $aNewReductionsList;
+						}
+					}
+				}
+				ksort($aGroupedSearches);
+			}
+
+			// Filter out duplicate searches
+			$aSearchHash = array();
+			foreach($aGroupedSearches as $iGroup => $aSearches)
+			{
+				foreach($aSearches as $iSearch => $aSearch)
+				{
+					$sHash = serialize($aSearch);
+					if (isset($aSearchHash[$sHash]))
+					{
+						unset($aGroupedSearches[$iGroup][$iSearch]);
+						if (sizeof($aGroupedSearches[$iGroup]) == 0) unset($aGroupedSearches[$iGroup]);
+					}
+					else
+					{
+						$aSearchHash[$sHash] = 1;
+					}
+				}
+			}
+
+			if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
+
+			$iGroupLoop = 0;
+			$iQueryLoop = 0;
+			foreach($aGroupedSearches as $iGroupedRank => $aSearches)
+			{
+				$iGroupLoop++;
+				foreach($aSearches as $aSearch)
+				{
+					$iQueryLoop++;
+
+					if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
+					if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
+
+
+					// Must have a location term
+					if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
+					{
+						if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
+						{
+							if (4 >= $iMinAddressRank && 4 <= $iMaxAddressRank)
 							{
-								if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
-								if (!$aSearch['sClass']) continue;
-								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-								if ($oDB->getOne($sSQL))
-								{
+								$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
+								if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
+								$sSQL .= " order by st_area(geometry) desc limit 1";
+								if (CONST_Debug) var_dump($sSQL);
+								$aPlaceIDs = $oDB->getCol($sSQL);
+							}
+						}
+						else
+						{
+							if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
+							if (!$aSearch['sClass']) continue;
+							$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+							if ($oDB->getOne($sSQL))
+							{
 								$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 								if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 								$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
@@ -878,7 +881,7 @@
 								{
 									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
 								}
-								if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
+								if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 								$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
@@ -892,7 +895,7 @@
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 									$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
+									if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $oDB->getCol($sSQL);
@@ -908,204 +911,202 @@
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
 							}
+						}
+					}
+					else
+					{
+						$aPlaceIDs = array();
+
+						// First we need a position, either aName or fLat or both
+						$aTerms = array();
+						$aOrder = array();
+
+						// TODO: filter out the pointless search terms (2 letter name tokens and less)
+						// they might be right - but they are just too darned expensive to run
+						if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
+						if (sizeof($aSearch['aNameNonSearch'])) $aTerms[] = "array_cat(name_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aNameNonSearch'],",")."]";
+						if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress'])
+						{
+							// For infrequent name terms disable index usage for address
+							if (CONST_Search_NameOnlySearchFrequencyThreshold &&
+									sizeof($aSearch['aName']) == 1 &&
+									$aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
+							{
+								$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join(array_merge($aSearch['aAddress'],$aSearch['aAddressNonSearch']),",")."]";
+							}
+							else
+							{
+								$aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
+								if (sizeof($aSearch['aAddressNonSearch'])) $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddressNonSearch'],",")."]";
 							}
 						}
-						else
+						if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
+						if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank in (26,27)";
+						if ($aSearch['fLon'] && $aSearch['fLat'])
 						{
+							$aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";
+							$aOrder[] = "ST_Distance(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326)) ASC";
+						}
+						if (sizeof($aExcludePlaceIDs))
+						{
+							$aTerms[] = "place_id not in (".join(',',$aExcludePlaceIDs).")";
+						}
+						if ($sCountryCodesSQL)
+						{
+							$aTerms[] = "country_code in ($sCountryCodesSQL)";
+						}
+
+						if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
+						if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
+
+						$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
+						if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
+						if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
+						$aOrder[] = "$sImportanceSQL DESC";
+						if (sizeof($aSearch['aFullNameAddress']))
+							$aOrder[] = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) DESC';
+
+						if (sizeof($aTerms))
+						{
+							$sSQL = "select place_id";
+							$sSQL .= " from search_name";
+							$sSQL .= " where ".join(' and ',$aTerms);
+							$sSQL .= " order by ".join(', ',$aOrder);
+							if ($aSearch['sHouseNumber'] || $aSearch['sClass'])
+								$sSQL .= " limit 50";
+							elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass'])
+								$sSQL .= " limit 1";
+							else
+								$sSQL .= " limit ".$iLimit;
+
+							if (CONST_Debug) { var_dump($sSQL); }
+							$aViewBoxPlaceIDs = $oDB->getAll($sSQL);
+							if (PEAR::IsError($aViewBoxPlaceIDs))
+							{
+								failInternalError("Could not get places for search terms.", $sSQL, $aViewBoxPlaceIDs);
+							}
+							//var_dump($aViewBoxPlaceIDs);
+							// Did we have an viewbox matches?
 							$aPlaceIDs = array();
-
-							// First we need a position, either aName or fLat or both
-							$aTerms = array();
-							$aOrder = array();
-
-							// TODO: filter out the pointless search terms (2 letter name tokens and less)
-							// they might be right - but they are just too darned expensive to run
-							if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
-							if (sizeof($aSearch['aNameNonSearch'])) $aTerms[] = "array_cat(name_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aNameNonSearch'],",")."]";
-							if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) 
+							$bViewBoxMatch = false;
+							foreach($aViewBoxPlaceIDs as $aViewBoxRow)
 							{
-								// For infrequent name terms disable index usage for address
-								if (CONST_Search_NameOnlySearchFrequencyThreshold && 
-									sizeof($aSearch['aName']) == 1 && 
-									$aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
-								{
-									$aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join(array_merge($aSearch['aAddress'],$aSearch['aAddressNonSearch']),",")."]";
-								}
-								else
-								{
-									$aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
-									if (sizeof($aSearch['aAddressNonSearch'])) $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddressNonSearch'],",")."]";
-								}
+								//if ($bViewBoxMatch == 1 && $aViewBoxRow['in_small'] == 'f') break;
+								//if ($bViewBoxMatch == 2 && $aViewBoxRow['in_large'] == 'f') break;
+								//if ($aViewBoxRow['in_small'] == 't') $bViewBoxMatch = 1;
+								//else if ($aViewBoxRow['in_large'] == 't') $bViewBoxMatch = 2;
+								$aPlaceIDs[] = $aViewBoxRow['place_id'];
 							}
-							if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
-							if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank in (26,27)";
-							if ($aSearch['fLon'] && $aSearch['fLat'])
-							{
-								$aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";
-								$aOrder[] = "ST_Distance(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326)) ASC";
-							}
+						}
+						//var_Dump($aPlaceIDs);
+						//exit;
+
+						if ($aSearch['sHouseNumber'] && sizeof($aPlaceIDs))
+						{
+							$aRoadPlaceIDs = $aPlaceIDs;
+							$sPlaceIDs = join(',',$aPlaceIDs);
+
+							// Now they are indexed look for a house attached to a street we found
+							$sHouseNumberRegex = '\\\\m'.str_replace(' ','[-,/ ]',$aSearch['sHouseNumber']).'\\\\M';
+							$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and housenumber ~* E'".$sHouseNumberRegex."'";
 							if (sizeof($aExcludePlaceIDs))
 							{
-								$aTerms[] = "place_id not in (".join(',',$aExcludePlaceIDs).")";
+								$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
 							}
-							if ($sCountryCodesSQL)
+							$sSQL .= " limit $iLimit";
+							if (CONST_Debug) var_dump($sSQL);
+							$aPlaceIDs = $oDB->getCol($sSQL);
+
+							// If not try the aux fallback table
+							if (!sizeof($aPlaceIDs))
 							{
-								$aTerms[] = "country_code in ($sCountryCodesSQL)";
-							}
-
-							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
-							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
-
-							$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
-							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
-							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
-							$aOrder[] = "$sImportanceSQL DESC";
-							if (sizeof($aSearch['aFullNameAddress']))
-								$aOrder[] = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) DESC';
-
-						
-							if (sizeof($aTerms))
-							{
-								$sSQL = "select place_id";
-								$sSQL .= " from search_name";
-								$sSQL .= " where ".join(' and ',$aTerms);
-								$sSQL .= " order by ".join(', ',$aOrder);
-								if ($aSearch['sHouseNumber'] || $aSearch['sClass'])
-									$sSQL .= " limit 50";
-								elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass'])
-									$sSQL .= " limit 1";
-								else
-									$sSQL .= " limit ".$iLimit;
-
-								if (CONST_Debug) { var_dump($sSQL); }
-								$aViewBoxPlaceIDs = $oDB->getAll($sSQL);
-								if (PEAR::IsError($aViewBoxPlaceIDs))
-								{
-									failInternalError("Could not get places for search terms.", $sSQL, $aViewBoxPlaceIDs);
-								}
-//var_dump($aViewBoxPlaceIDs);
-								// Did we have an viewbox matches?
-								$aPlaceIDs = array();
-								$bViewBoxMatch = false;
-								foreach($aViewBoxPlaceIDs as $aViewBoxRow)
-								{
-//									if ($bViewBoxMatch == 1 && $aViewBoxRow['in_small'] == 'f') break;
-//									if ($bViewBoxMatch == 2 && $aViewBoxRow['in_large'] == 'f') break;
-//									if ($aViewBoxRow['in_small'] == 't') $bViewBoxMatch = 1;
-//									else if ($aViewBoxRow['in_large'] == 't') $bViewBoxMatch = 2;
-									$aPlaceIDs[] = $aViewBoxRow['place_id'];
-								}
-							}
-//var_Dump($aPlaceIDs);
-//exit;
-
-							if ($aSearch['sHouseNumber'] && sizeof($aPlaceIDs))
-							{
-								$aRoadPlaceIDs = $aPlaceIDs;
-								$sPlaceIDs = join(',',$aPlaceIDs);
-	
-								// Now they are indexed look for a house attached to a street we found
-								$sHouseNumberRegex = '\\\\m'.str_replace(' ','[-,/ ]',$aSearch['sHouseNumber']).'\\\\M';						
-								$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and housenumber ~* E'".$sHouseNumberRegex."'";
+								$sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
 								if (sizeof($aExcludePlaceIDs))
 								{
 									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
 								}
-								$sSQL .= " limit $iLimit";
+								//$sSQL .= " limit $iLimit";
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $oDB->getCol($sSQL);
-
-								// If not try the aux fallback table
-								if (!sizeof($aPlaceIDs))
-								{
-									$sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
-									if (sizeof($aExcludePlaceIDs))
-									{
-										$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
-									}
-//									$sSQL .= " limit $iLimit";
-									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $oDB->getCol($sSQL);
-								}
-
-								if (!sizeof($aPlaceIDs))
-								{
-									$sSQL = "select place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
-									if (sizeof($aExcludePlaceIDs))
-									{
-										$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
-									}
-//									$sSQL .= " limit $iLimit";
-									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $oDB->getCol($sSQL);
-								}
-
-								// Fallback to the road
-								if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
-								{
-									$aPlaceIDs = $aRoadPlaceIDs;
-								}
-								
 							}
-						
-							if ($aSearch['sClass'] && sizeof($aPlaceIDs))
+
+							if (!sizeof($aPlaceIDs))
 							{
-								$sPlaceIDs = join(',',$aPlaceIDs);
-
-								$aClassPlaceIDs = array();
-
-								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
+								$sSQL = "select place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
+								if (sizeof($aExcludePlaceIDs))
 								{
-									// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
-									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-									$sSQL .= " and linked_place_id is null";
-									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-									$sSQL .= " order by rank_search asc limit $iLimit";
-									if (CONST_Debug) var_dump($sSQL);
-									$aClassPlaceIDs = $oDB->getCol($sSQL);
+									$sSQL .= " and place_id not in (".join(',',$aExcludePlaceIDs).")";
 								}
-								
-								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
+								//$sSQL .= " limit $iLimit";
+								if (CONST_Debug) var_dump($sSQL);
+								$aPlaceIDs = $oDB->getCol($sSQL);
+							}
+
+							// Fallback to the road
+							if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
+							{
+								$aPlaceIDs = $aRoadPlaceIDs;
+							}
+
+						}
+
+						if ($aSearch['sClass'] && sizeof($aPlaceIDs))
+						{
+							$sPlaceIDs = join(',',$aPlaceIDs);
+							$aClassPlaceIDs = array();
+
+							if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
+							{
+								// If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
+								$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
+								$sSQL .= " and linked_place_id is null";
+								if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
+								$sSQL .= " order by rank_search asc limit $iLimit";
+								if (CONST_Debug) var_dump($sSQL);
+								$aClassPlaceIDs = $oDB->getCol($sSQL);
+							}
+
+							if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
+							{
+								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+								$bCacheTable = $oDB->getOne($sSQL);
+
+								$sSQL = "select min(rank_search) from placex where place_id in ($sPlaceIDs)";
+
+								if (CONST_Debug) var_dump($sSQL);
+								$iMaxRank = ((int)$oDB->getOne($sSQL));
+
+								// For state / country level searches the normal radius search doesn't work very well
+								$sPlaceGeom = false;
+								if ($iMaxRank < 9 && $bCacheTable)
 								{
-									$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-									$bCacheTable = $oDB->getOne($sSQL);
-
-									$sSQL = "select min(rank_search) from placex where place_id in ($sPlaceIDs)";
-
+									// Try and get a polygon to search in instead
+									$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
 									if (CONST_Debug) var_dump($sSQL);
-									$iMaxRank = ((int)$oDB->getOne($sSQL));
+									$sPlaceGeom = $oDB->getOne($sSQL);
+								}
 
-									// For state / country level searches the normal radius search doesn't work very well
-									$sPlaceGeom = false;
-									if ($iMaxRank < 9 && $bCacheTable)
-									{
-										// Try and get a polygon to search in instead
-										$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
-										if (CONST_Debug) var_dump($sSQL);
-										$sPlaceGeom = $oDB->getOne($sSQL);
-									}
-									
-									if ($sPlaceGeom)
-									{
-										$sPlaceIDs = false;
-									}
-									else
-									{
-										$iMaxRank += 5;
-										$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
-										if (CONST_Debug) var_dump($sSQL);
-										$aPlaceIDs = $oDB->getCol($sSQL);
-										$sPlaceIDs = join(',',$aPlaceIDs);
-									}
+								if ($sPlaceGeom)
+								{
+									$sPlaceIDs = false;
+								}
+								else
+								{
+									$iMaxRank += 5;
+									$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
+									if (CONST_Debug) var_dump($sSQL);
+									$aPlaceIDs = $oDB->getCol($sSQL);
+									$sPlaceIDs = join(',',$aPlaceIDs);
+								}
 
-									if ($sPlaceIDs || $sPlaceGeom)
-									{
+								if ($sPlaceIDs || $sPlaceGeom)
+								{
 
 									$fRange = 0.01;
 									if ($bCacheTable)
 									{
 										// More efficient - can make the range bigger
-	 									$fRange = 0.05;
+										$fRange = 0.05;
 
 										$sOrderBySQL = '';
 										if ($sNearPointSQL) $sOrderBySQL = "ST_Distance($sNearPointSQL, l.centroid)";
@@ -1150,199 +1151,199 @@
 										{
 											$sSQL .= " and l.place_id not in (".join(',',$aExcludePlaceIDs).")";
 										}
-										if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";								
+										if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";
 										if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
 										if ($iOffset) $sSQL .= " offset $iOffset";
 										$sSQL .= " limit $iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aClassPlaceIDs = array_merge($aClassPlaceIDs, $oDB->getCol($sSQL));
 									}
-									}
 								}
-
-								$aPlaceIDs = $aClassPlaceIDs;
-
 							}
-						
+
+							$aPlaceIDs = $aClassPlaceIDs;
+
 						}
 
-						if (PEAR::IsError($aPlaceIDs))
-						{
-							failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
-						}
-
-						if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }
-
-						foreach($aPlaceIDs as $iPlaceID)
-						{
-							$aResultPlaceIDs[$iPlaceID] = $iPlaceID;
-						}
-						if ($iQueryLoop > 20) break;
 					}
 
-					//exit;
-					if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
-					if ($iGroupLoop > 4) break;
-					if ($iQueryLoop > 30) break;
+					if (PEAR::IsError($aPlaceIDs))
+					{
+						failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
+					}
+
+					if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }
+
+					foreach($aPlaceIDs as $iPlaceID)
+					{
+						$aResultPlaceIDs[$iPlaceID] = $iPlaceID;
+					}
+					if ($iQueryLoop > 20) break;
 				}
 
-				// Did we find anything?	
-				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs))
-				{
-//var_Dump($aResultPlaceIDs);exit;
-					// Get the details for display (is this a redundant extra step?)
-					$sPlaceIDs = join(',',$aResultPlaceIDs);
-					$sOrderSQL = 'CASE ';
-					foreach(array_keys($aResultPlaceIDs) as $iOrder => $iPlaceID)
-					{
-						$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
-					}
-					$sOrderSQL .= ' ELSE 10000000 END';
-					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
-					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
-					$sSQL .= "(extratags->'place') as extra_place ";
-					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
-					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
-					$sSQL .= ") ";
-					if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
-					$sSQL .= "and linked_place_id is null ";
-					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= ",langaddress ";
-					$sSQL .= ",placename ";
-					$sSQL .= ",ref ";
-					$sSQL .= ",extratags->'place' ";
-					$sSQL .= " union ";
-					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "null as placename,";
-					$sSQL .= "null as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.15 as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
-					$sSQL .= "null as extra_place ";
-					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
-					$sSQL .= "group by place_id";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= " union ";
-					$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "null as placename,";
-					$sSQL .= "null as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.10 as importance, ";
-					$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
-					$sSQL .= "null as extra_place ";
-					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
-					$sSQL .= "group by place_id";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
-					$sSQL .= "order by importance desc";
-//					$sSQL .= "order by rank_search,rank_address,porder asc";
-					if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
-					$aSearchResults = $oDB->getAll($sSQL);
-//var_dump($sSQL,$aSearchResults);exit;
+				//exit;
+				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
+				if ($iGroupLoop > 4) break;
+				if ($iQueryLoop > 30) break;
+			}
 
-					if (PEAR::IsError($aSearchResults))
-					{
-						failInternalError("Could not get details for place.", $sSQL, $aSearchResults);
-					}
-				}
-			} // end if ($sQuery)
-			else
+			// Did we find anything?
+			if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs))
 			{
-				if (isset($_GET['nearlat']) && trim($_GET['nearlat'])!=='' && isset($_GET['nearlon']) && trim($_GET['nearlon']) !== '')
+				//var_Dump($aResultPlaceIDs);exit;
+				// Get the details for display (is this a redundant extra step?)
+				$sPlaceIDs = join(',',$aResultPlaceIDs);
+				$sOrderSQL = 'CASE ';
+				foreach(array_keys($aResultPlaceIDs) as $iOrder => $iPlaceID)
 				{
-					$iPlaceID = geocodeReverse($_GET['nearlat'], $_GET['nearlon']);
-					$aResultPlaceIDs = array($iPlaceID);
+					$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
+				}
+				$sOrderSQL .= ' ELSE 10000000 END';
+				$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
+				$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
+				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= "(extratags->'place') as extra_place ";
+				$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+				if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+				$sSQL .= ") ";
+				if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
+				$sSQL .= "and linked_place_id is null ";
+				$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= ",langaddress ";
+				$sSQL .= ",placename ";
+				$sSQL .= ",ref ";
+				$sSQL .= ",extratags->'place' ";
+				$sSQL .= " union ";
+				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "null as placename,";
+				$sSQL .= "null as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "-0.15 as importance, ";
+				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= "null as extra_place ";
+				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "group by place_id";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= " union ";
+				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "null as placename,";
+				$sSQL .= "null as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "-0.10 as importance, ";
+				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= "null as extra_place ";
+				$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "group by place_id";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
+				$sSQL .= "order by importance desc";
+				//$sSQL .= "order by rank_search,rank_address,porder asc";
+				if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
+				$aSearchResults = $oDB->getAll($sSQL);
+				//var_dump($sSQL,$aSearchResults);exit;
 
-					// TODO: this needs refactoring!
+				if (PEAR::IsError($aSearchResults))
+				{
+					failInternalError("Could not get details for place.", $sSQL, $aSearchResults);
+				}
+			}
+		} // end if ($sQuery)
+		else
+		{
+			if (isset($_GET['nearlat']) && trim($_GET['nearlat'])!=='' && isset($_GET['nearlon']) && trim($_GET['nearlon']) !== '')
+			{
+				$iPlaceID = geocodeReverse($_GET['nearlat'], $_GET['nearlon']);
+				$aResultPlaceIDs = array($iPlaceID);
 
-					// Get the details for display (is this a redundant extra step?)
-					$sPlaceIDs = join(',',$aResultPlaceIDs);
-					$sOrderSQL = 'CASE ';
-					foreach(array_keys($aResultPlaceIDs) as $iOrder => $iPlaceID)
-					{
-						$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
-					}
-					$sOrderSQL .= ' ELSE 10000000 END';
-					$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
-					$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
-					$sSQL .= "(extratags->'place') as extra_place ";
-					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
-					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
-					$sSQL .= ") ";
-					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
-					$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
-					$sSQL .= ",get_name_by_language(name, ARRAY['ref']) ";
-					$sSQL .= ",extratags->'place' ";
-					$sSQL .= " union ";
-					$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "null as placename,";
-					$sSQL .= "null as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.15 as importance, ";
-					$sSQL .= "null as extra_place ";
-					$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
-					$sSQL .= "group by place_id";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= " union ";
-					$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
-					$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-					$sSQL .= "null as placename,";
-					$sSQL .= "null as ref,";
-					$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-//					$sSQL .= $sOrderSQL." as porder, ";
-					$sSQL .= "-0.10 as importance, ";
-					$sSQL .= "null as extra_place ";
-					$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
-					$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
-					$sSQL .= "group by place_id";
-					if (!$bDeDupe) $sSQL .= ",place_id";
-					$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
-					$sSQL .= "order by importance desc";
-//					$sSQL .= "order by rank_search,rank_address,porder asc";
-					if (CONST_Debug) { echo "<hr>", var_dump($sSQL); }
-					$aSearchResults = $oDB->getAll($sSQL);
-//var_dump($sSQL,$aSearchResults);exit;
+				// TODO: this needs refactoring!
 
-					if (PEAR::IsError($aSearchResults))
-					{
-                        failInternalError("Could not get details for place (near).", $sSQL, $aSearchResults);
-					}
+				// Get the details for display (is this a redundant extra step?)
+				$sPlaceIDs = join(',',$aResultPlaceIDs);
+				$sOrderSQL = 'CASE ';
+				foreach(array_keys($aResultPlaceIDs) as $iOrder => $iPlaceID)
+				{
+					$sOrderSQL .= 'when min(place_id) = '.$iPlaceID.' then '.$iOrder.' ';
+				}
+				$sOrderSQL .= ' ELSE 10000000 END';
+				$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
+				$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
+				$sSQL .= "(extratags->'place') as extra_place ";
+				$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+				if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+				$sSQL .= ") ";
+				$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
+				$sSQL .= ",get_name_by_language(name, $sLanguagePrefArraySQL) ";
+				$sSQL .= ",get_name_by_language(name, ARRAY['ref']) ";
+				$sSQL .= ",extratags->'place' ";
+				$sSQL .= " union ";
+				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "null as placename,";
+				$sSQL .= "null as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "-0.15 as importance, ";
+				$sSQL .= "null as extra_place ";
+				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "group by place_id";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= " union ";
+				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= "null as placename,";
+				$sSQL .= "null as ref,";
+				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
+				//$sSQL .= $sOrderSQL." as porder, ";
+				$sSQL .= "-0.10 as importance, ";
+				$sSQL .= "null as extra_place ";
+				$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
+				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "group by place_id";
+				if (!$bDeDupe) $sSQL .= ",place_id";
+				$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
+				$sSQL .= "order by importance desc";
+				//$sSQL .= "order by rank_search,rank_address,porder asc";
+				if (CONST_Debug) { echo "<hr>", var_dump($sSQL); }
+				$aSearchResults = $oDB->getAll($sSQL);
+				//var_dump($sSQL,$aSearchResults);exit;
+
+				if (PEAR::IsError($aSearchResults))
+				{
+					failInternalError("Could not get details for place (near).", $sSQL, $aSearchResults);
 				}
 			}
 		}
-	
+	}
+
 	$sSearchResult = '';
 	if (!sizeof($aSearchResults) && isset($_GET['q']) && $_GET['q'])
 	{
 		$sSearchResult = 'No Results Found';
 	}
-//var_Dump($aSearchResults);
-//exit;
+	//var_Dump($aSearchResults);
+	//exit;
 	$aClassType = getClassTypesWithImportance();
 	$aRecheckWords = preg_split('/\b/u',$sQuery);
 	foreach($aRecheckWords as $i => $sWord)
@@ -1380,11 +1381,12 @@
 				if ($bAsSVG) $aResult['assvg'] = $aPointPolygon['assvg'];
 				if ($bAsText) $aResult['astext'] = $aPointPolygon['astext'];
 
-				if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null ) {
+				if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null )
+				{
 					$aResult['lat'] = $aPointPolygon['centrelat'];
 					$aResult['lon'] = $aPointPolygon['centrelon'];
 				}
-				if ($bShowPolygons) 
+				if ($bShowPolygons)
 				{
 					// Translate geometary string to point array
 					if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
@@ -1437,12 +1439,12 @@
 			// Default
 			$fDiameter = 0.0001;
 
-			if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter']) 
+			if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
 					&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
 			{
 				$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defzoom'];
 			}
-			elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter']) 
+			elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
 					&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
 			{
 				$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
@@ -1474,14 +1476,14 @@
 		}
 
 		// Is there an icon set for this type of result?
-		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['icon']) 
-			&& $aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
+		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
+				&& $aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
 		{
 			$aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
 		}
 
-		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label']) 
-			&& $aClassType[$aResult['class'].':'.$aResult['type']]['label'])
+		if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
+				&& $aClassType[$aResult['class'].':'.$aResult['type']]['label'])
 		{
 			$aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
 		}
@@ -1494,8 +1496,8 @@
 				$aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
 			}
 
-//var_dump($aResult['address']);
-//exit;
+			//var_dump($aResult['address']);
+			//exit;
 		}
 
 		// Adjust importance for the number of exact string matches in the result
@@ -1509,23 +1511,23 @@
 
 		$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
 
-//if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
-/*
-		if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance']) 
-			&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'])
-		{
-			$aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'];
-		}
-		elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance']) 
-			&& $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
-		{
-			$aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
-		}
-		else
-		{
-			$aResult['importance'] = 1000000000000000;
-		}
-*/
+		//if (CONST_Debug) var_dump($aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']);
+		/*
+		   if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'])
+		   && $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'])
+		   {
+		   $aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['importance'];
+		   }
+		   elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
+		   && $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
+		   {
+		   $aResult['importance'] = $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+		   }
+		   else
+		   {
+		   $aResult['importance'] = 1000000000000000;
+		   }
+		 */
 		$aResult['name'] = $aResult['langaddress'];
 		$aResult['foundorder'] = -$aResult['addressimportance'];
 		$aSearchResults[$iResNum] = $aResult;
@@ -1550,7 +1552,7 @@
 			$bFirst = false;
 		}
 		if (!$bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
-			&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']])))
+					&& !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']])))
 		{
 			$aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;
 			$aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']] = true;
@@ -1572,7 +1574,7 @@
 	{
 		logEnd($oDB, $hLog, sizeof($aToFilter));
 	}
- 	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
+	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
 	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 	if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 	if ($bShowAddressDetails) $sMoreURL .= '&addressdetails=1';

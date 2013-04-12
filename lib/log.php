@@ -13,7 +13,7 @@
 				$_SERVER["REMOTE_ADDR"],
 				$_SERVER['QUERY_STRING'],
 				$sQuery
-			);
+				);
 
 		if (CONST_Log_DB)
 		{
@@ -31,21 +31,21 @@
 
 		if (CONST_Log_File && CONST_Log_File_ReverseLog != '')
 		{
-                if ($sType == 'reverse')
-                {
-                        $aStartTime = explode('.',$hLog[0]);
-                        file_put_contents(CONST_Log_File_ReverseLog,
-                                $aStartTime[0].','.$aStartTime[1].','.
-                                php_uname('n').','.
-                                '"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
-                                '"'.addslashes($hLog[1]).'",'.
-                                $_GET['lat'].','.
-                                $_GET['lon'].','.
-                                $_GET['zoom'].','.
-                                '"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
-                                '"'.addslashes($sOutputFormat).'"'."\n",
-                        FILE_APPEND);
-                }
+			if ($sType == 'reverse')
+			{
+				$aStartTime = explode('.',$hLog[0]);
+				file_put_contents(CONST_Log_File_ReverseLog,
+								$aStartTime[0].','.$aStartTime[1].','.
+								php_uname('n').','.
+								'"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
+								'"'.addslashes($hLog[1]).'",'.
+								$_GET['lat'].','.
+								$_GET['lon'].','.
+								$_GET['zoom'].','.
+								'"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
+								'"'.addslashes($sOutputFormat).'"'."\n",
+								FILE_APPEND);
+			}
 		}
 
 		return $hLog;
@@ -63,7 +63,7 @@
 			$sSQL .= ' where starttime = '.getDBQuoted($hLog[0]);
 			$sSQL .= ' and ipaddress = '.getDBQuoted($hLog[1]);
 			$sSQL .= ' and query = '.getDBQuoted($hLog[3]);
-                	$oDB->query($sSQL);
+			$oDB->query($sSQL);
 
 			$sSQL = 'update new_query_log set endtime = '.getDBQuoted($sEndTime).', results = '.$iNumResults;
 			$sSQL .= ' where starttime = '.getDBQuoted($hLog[0]);
@@ -74,17 +74,17 @@
 
 		if (CONST_Log_File && CONST_Log_File_SearchLog != '')
 		{
-                $aStartTime = explode('.',$hLog[0]);
-                file_put_contents(CONST_Log_File_SearchLog,
-                                $aStartTime[0].','.$aStartTime[1].','.
-                                php_uname('n').','.
-                                '"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
-                                '"'.addslashes($hLog[1]).'",'.
-                                '"'.addslashes($hLog[3]).'",'.
-                                '"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
-                                '"'.addslashes((isset($_GET['format']))?$_GET['format']:'').'",'.
-                                $iNumResults."\n",
-                        FILE_APPEND);
+			$aStartTime = explode('.',$hLog[0]);
+			file_put_contents(CONST_Log_File_SearchLog,
+					$aStartTime[0].','.$aStartTime[1].','.
+					php_uname('n').','.
+					'"'.addslashes(isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'').'",'.
+					'"'.addslashes($hLog[1]).'",'.
+					'"'.addslashes($hLog[3]).'",'.
+					'"'.addslashes($_SERVER['HTTP_USER_AGENT']).'",'.
+					'"'.addslashes((isset($_GET['format']))?$_GET['format']:'').'",'.
+					$iNumResults."\n",
+					FILE_APPEND);
 		}
 
 	}

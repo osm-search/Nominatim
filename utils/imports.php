@@ -11,7 +11,7 @@
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
 		array('parse-tiger', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import'),
-		array('parse-tiger-2011', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import (source: edges directory of tiger data)'),
+		array('parse-tiger-2011', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import - datafiles from 2011 or later (source: edges directory of tiger data)'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -98,7 +98,7 @@
 
 
 		$bDidSomething = true;
-		foreach(glob($aCMDResult['parse-tiger-2011'].'/tl_2011_?????_edges.zip', 0) as $sImportFile)
+		foreach(glob($aCMDResult['parse-tiger-2011'].'/tl_20??_?????_edges.zip', 0) as $sImportFile)
 		{
 			set_time_limit(30);
 			preg_match('#([0-9]{5})_(.*)#',basename($sImportFile), $aMatch);

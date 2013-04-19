@@ -390,7 +390,7 @@
 				{
 					$aPhrases[$iPhrase] = $aPhrase;
 					$aPhrases[$iPhrase]['words'] = explode(' ',$aPhrases[$iPhrase]['string']);
-					$aPhrases[$iPhrase]['wordsets'] = getWordSets($aPhrases[$iPhrase]['words']);
+					$aPhrases[$iPhrase]['wordsets'] = getWordSets($aPhrases[$iPhrase]['words'], 0);
 					$aTokens = array_merge($aTokens, getTokensFromSets($aPhrases[$iPhrase]['wordsets']));
 				}
 				else

@@ -165,18 +165,20 @@
 	}
 
 
-	function getWordSets($aWords)
+	function getWordSets($aWords, $iDepth)
 	{
 		$aResult = array(array(join(' ',$aWords)));
 		$sFirstToken = '';
-		while(sizeof($aWords) > 1)
-		{
-			$sWord = array_shift($aWords);
-			$sFirstToken .= ($sFirstToken?' ':'').$sWord;
-			$aRest = getWordSets($aWords);
-			foreach($aRest as $aSet)
+		if ($iDepth < 8) {
+			while(sizeof($aWords) > 1)
 			{
-				$aResult[] = array_merge(array($sFirstToken),$aSet);
+				$sWord = array_shift($aWords);
+				$sFirstToken .= ($sFirstToken?' ':'').$sWord;
+				$aRest = getWordSets($aWords, $iDepth+1);
+				foreach($aRest as $aSet)
+				{
+					$aResult[] = array_merge(array($sFirstToken),$aSet);
+				}
 			}
 		}
 		return $aResult;

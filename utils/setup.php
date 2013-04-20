@@ -141,7 +141,6 @@
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/worldboundaries.sql');
 	}
 
 	if ($aCMDResult['import-data'] || $aCMDResult['all'])

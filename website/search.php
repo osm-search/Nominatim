@@ -941,7 +941,7 @@
 							}
 						}
 						if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
-						if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank in (26,27)";
+						if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank between 22 and 27";
 						if ($aSearch['fLon'] && $aSearch['fLat'])
 						{
 							$aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";

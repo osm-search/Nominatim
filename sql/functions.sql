@@ -888,9 +888,9 @@ BEGIN
               FOR housenum IN startnumber..endnumber BY stepsize LOOP
                 -- this should really copy postcodes but it puts a huge burdon on the system for no big benefit
                 -- ideally postcodes should move up to the way
-                insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode,
+                insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, addr_place, isin, postcode,
                   country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
-                  values ('N',prevnode.osm_id, prevnode.class, prevnode.type, prevnode.admin_level, housenum, prevnode.street, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
+                  values ('N',prevnode.osm_id, prevnode.class, prevnode.type, prevnode.admin_level, housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
                   prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
                 newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
@@ -1196,9 +1196,9 @@ BEGIN
 
       -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
       update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
       update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
     END IF;
   ELSE
     -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
@@ -1226,6 +1226,9 @@ BEGIN
       IF NEW.rank_search >= 26 THEN
         -- roads may cause reparenting for >27 rank places
         update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+      ELSEIF NEW.rank_search >= 16 THEN
+        -- up to rank 16, street-less addresses may need reparenting
+        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
       ELSE
         -- for all other places the search terms may change as well
         update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
@@ -1461,13 +1464,18 @@ BEGIN
           END IF;    
           
           -- If the way contains an explicit name of a street copy it
-          IF NEW.street IS NULL AND location.street IS NOT NULL THEN
+          IF NEW.street IS NULL AND NEW.addr_place IS NULL AND location.street IS NOT NULL THEN
 --RAISE WARNING 'node in way that has a streetname %',location;
             NEW.street := location.street;
           END IF;
 
+          -- IF the way contains an explicit name of a place copy it
+          IF NEW.addr_place IS NULL AND NEW.street IS NULL AND location.addr_place IS NOT NULL THEN
+            NEW.addr_place := location.addr_place;
+          END IF;
+
           -- If this way is a street interpolation line then it is probably as good as we are going to get
-          IF NEW.parent_place_id IS NULL AND NEW.street IS NULL AND location.class = 'place' and location.type='houses' THEN
+          IF NEW.parent_place_id IS NULL AND NEW.street IS NULL AND NEW.addr_place IS NULL AND location.class = 'place' and location.type='houses' THEN
             -- Try and find a way that is close roughly parellel to this line
             FOR relation IN SELECT place_id FROM placex
               WHERE ST_DWithin(location.geometry, placex.geometry, 0.001) and placex.rank_search = 26
@@ -1508,9 +1516,18 @@ BEGIN
 --RAISE WARNING 'x3 %',NEW.parent_place_id;
 
       IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
-      	address_street_word_id := get_name_id(make_standard_name(NEW.street));
+        address_street_word_id := get_name_id(make_standard_name(NEW.street));
         IF address_street_word_id IS NOT NULL THEN
           FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
+              NEW.parent_place_id := location.place_id;
+          END LOOP;
+        END IF;
+      END IF;
+
+      IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
+        address_street_word_id := get_name_id(make_standard_name(NEW.addr_place));
+        IF address_street_word_id IS NOT NULL THEN
+          FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
             NEW.parent_place_id := location.place_id;
           END LOOP;
         END IF;
@@ -2074,7 +2091,7 @@ BEGIN
 
     -- No - process it as a new insertion (hopefully of low rank or it will be slow)
     insert into placex (osm_type, osm_id, class, type, name, admin_level, housenumber, 
-      street, isin, postcode, country_code, extratags, geometry)
+      street, addr_place, isin, postcode, country_code, extratags, geometry)
       values (NEW.osm_type
         ,NEW.osm_id
         ,NEW.class
@@ -2083,6 +2100,7 @@ BEGIN
         ,NEW.admin_level
         ,NEW.housenumber
         ,NEW.street
+        ,NEW.addr_place
         ,NEW.isin
         ,NEW.postcode
         ,NEW.country_code
@@ -2107,6 +2125,9 @@ BEGIN
     END IF;
     IF coalesce(existing.street, '') != coalesce(NEW.street, '') THEN
       RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.street,NEW.street;
+    END IF;
+    IF coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '') THEN
+      RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.addr_place,NEW.addr_place;
     END IF;
     IF coalesce(existing.isin, '') != coalesce(NEW.isin, '') THEN
       RAISE WARNING 'update details, isin: % % % %',NEW.osm_type,NEW.osm_id,existing.isin,NEW.isin;
@@ -2150,6 +2171,7 @@ BEGIN
   IF FALSE AND existingplacex.rank_search < 26
      AND coalesce(existing.housenumber, '') = coalesce(NEW.housenumber, '')
      AND coalesce(existing.street, '') = coalesce(NEW.street, '')
+     AND coalesce(existing.addr_place, '') = coalesce(NEW.addr_place, '')
      AND coalesce(existing.isin, '') = coalesce(NEW.isin, '')
      AND coalesce(existing.postcode, '') = coalesce(NEW.postcode, '')
      AND coalesce(existing.country_code, '') = coalesce(NEW.country_code, '')
@@ -2172,6 +2194,7 @@ BEGIN
     IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
         OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
         OR coalesce(existing.street, '') != coalesce(NEW.street, '')
+        OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
         OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
         OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
         OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '') THEN
@@ -2190,6 +2213,7 @@ BEGIN
      OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
      OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
      OR coalesce(existing.street, '') != coalesce(NEW.street, '')
+     OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
      OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
      OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
      OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
@@ -2201,6 +2225,7 @@ BEGIN
       name = NEW.name,
       housenumber  = NEW.housenumber,
       street = NEW.street,
+      addr_place = NEW.addr_place,
       isin = NEW.isin,
       postcode = NEW.postcode,
       country_code = NEW.country_code,
@@ -2212,6 +2237,7 @@ BEGIN
       name = NEW.name,
       housenumber = NEW.housenumber,
       street = NEW.street,
+      addr_place = NEW.addr_place,
       isin = NEW.isin,
       postcode = NEW.postcode,
       country_code = NEW.country_code,
@@ -2595,6 +2621,7 @@ BEGIN
       name = place.name,
       housenumber = place.housenumber,
       street = place.street,
+      addr_place = place.addr_place,
       isin = place.isin,
       postcode = place.postcode,
       country_code = place.country_code,
@@ -3031,9 +3058,9 @@ BEGIN
     IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
       FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
       END LOOP;
     ELSE
         diameter := 0;
@@ -3053,7 +3080,16 @@ BEGIN
           diameter := 0.001; -- 50 to 100 meters
         END IF;
         IF diameter > 0 THEN
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);
+          IF NEW.rank_search >= 26 THEN
+            -- roads may cause reparenting for >27 rank places
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter);
+          ELSEIF NEW.rank_search >= 16 THEN
+            -- up to rank 16, street-less addresses may need reparenting
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
+          ELSE
+            -- for all other places the search terms may change as well
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);
+          END IF;
         END IF;
     END IF;
     RETURN TRUE;

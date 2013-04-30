@@ -362,7 +362,7 @@
 		{
 			$aDBInstances[$i] =& getDB(true);
 			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-			$sSQL .= 'housenumber, street, isin, postcode, country_code, extratags, ';
+			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
 			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
 			if ($aCMDResult['verbose']) echo "$sSQL\n";
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));

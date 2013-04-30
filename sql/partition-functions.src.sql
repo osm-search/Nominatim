@@ -125,7 +125,7 @@ BEGIN
           FROM search_name_-partition-
           WHERE name_vector @> ARRAY[isin_token]
           AND ST_DWithin(centroid, point, 0.01) 
-          AND search_rank between 22 and 27
+          AND search_rank between 26 and 27
       ORDER BY distance ASC limit 1
     LOOP
       RETURN NEXT r;
@@ -138,6 +138,35 @@ BEGIN
 END
 $$
 LANGUAGE plpgsql;
+
+create or replace function getNearestNamedPlaceFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER) 
+  RETURNS setof nearfeature AS $$
+DECLARE
+  r nearfeature%rowtype;
+BEGIN
+
+-- start
+  IF in_partition = -partition- THEN
+    FOR r IN 
+      SELECT place_id, name_vector, address_rank, search_rank,
+          ST_Distance(centroid, point) as distance, null as isguess
+          FROM search_name_-partition-
+          WHERE name_vector @> ARRAY[isin_token]
+          AND ST_DWithin(centroid, point, 0.03) 
+          AND search_rank between 16 and 22
+      ORDER BY distance ASC limit 1
+    LOOP
+      RETURN NEXT r;
+    END LOOP;
+    RETURN;
+  END IF;
+-- end
+
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
+END
+$$
+LANGUAGE plpgsql;
+
 
 create or replace function getNearestPostcode(in_partition INTEGER, point GEOMETRY) 
   RETURNS TEXT AS $$

@@ -1196,9 +1196,9 @@ BEGIN
 
       -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
       update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
       update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
+       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
     END IF;
   ELSE
     -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
@@ -1226,6 +1226,9 @@ BEGIN
       IF NEW.rank_search >= 26 THEN
         -- roads may cause reparenting for >27 rank places
         update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+      ELSEIF NEW.rank_search >= 16 THEN
+        -- up to rank 16, street-less addresses may need reparenting
+        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
       ELSE
         -- for all other places the search terms may change as well
         update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
@@ -2210,7 +2213,7 @@ BEGIN
      OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
      OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
      OR coalesce(existing.street, '') != coalesce(NEW.street, '')
-     OR coalesce(existing.addr_street, '') != coalesce(NEW.addr_street, '')
+     OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
      OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
      OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
      OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
@@ -3055,9 +3058,9 @@ BEGIN
     IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
       FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null);
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null);
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
       END LOOP;
     ELSE
         diameter := 0;
@@ -3077,7 +3080,16 @@ BEGIN
           diameter := 0.001; -- 50 to 100 meters
         END IF;
         IF diameter > 0 THEN
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);
+          IF NEW.rank_search >= 26 THEN
+            -- roads may cause reparenting for >27 rank places
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter);
+          ELSEIF NEW.rank_search >= 16 THEN
+            -- up to rank 16, street-less addresses may need reparenting
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
+          ELSE
+            -- for all other places the search terms may change as well
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);
+          END IF;
         END IF;
     END IF;
     RETURN TRUE;

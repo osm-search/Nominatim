@@ -304,7 +304,8 @@
 			$sNearPointSQL = false;
 			if (isset($_GET['nearlat']) && isset($_GET['nearlon']))
 			{
-				$sNearPointSQL = "ST_SetSRID(ST_Point(".(float)$_GET['nearlon'].",".$_GET['nearlat']."),4326)";
+				$sNearPointSQL = "ST_SetSRID(ST_Point(".(float)$_GET['nearlon'].",".(float)$_GET['nearlat']."),4326)";
+				echo '<br><b>--'.$sNearPointSQL.'--</b><br>';
 				$aSearches[0]['fLat'] = (float)$_GET['nearlat'];
 				$aSearches[0]['fLon'] = (float)$_GET['nearlon'];
 				$aSearches[0]['fRadius'] = 0.1;
@@ -1265,7 +1266,7 @@
 		{
 			if (isset($_GET['nearlat']) && trim($_GET['nearlat'])!=='' && isset($_GET['nearlon']) && trim($_GET['nearlon']) !== '')
 			{
-				$iPlaceID = geocodeReverse($_GET['nearlat'], $_GET['nearlon']);
+				$iPlaceID = geocodeReverse((float)$_GET['nearlat'], (float)$_GET['nearlon']);
 
 				if ($iPlaceID)
 				{

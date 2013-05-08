@@ -785,20 +785,6 @@
 	}
 
 
-	function getWordSuggestions(&$oDB, $sWord)
-	{
-		$sWordQuoted = getDBQuoted(trim($sWord));
-		$sSQL = "select *,levenshtein($sWordQuoted,word) from test_token ";
-		$sSQL .= "where (metaphone = dmetaphone($sWordQuoted) or metaphonealt = dmetaphone($sWordQuoted) or ";
-		$sSQL .= "metaphone = dmetaphone_alt($sWordQuoted) or metaphonealt = dmetaphone_alt($sWordQuoted)) ";
-		$sSQL .= "and len between length($sWordQuoted)-2 and length($sWordQuoted)+2 ";
-		$sSQL .= "and levenshtein($sWordQuoted,word) < 3 ";
-		$sSQL .= "order by levenshtein($sWordQuoted,word) asc, abs(len - length($sWordQuoted)) asc limit 20";
-		$aSimilar = $oDB->getAll($sSQL);
-		return $aSimilar;
-	}
-
-
 	function geocodeReverse($fLat, $fLon, $iZoom=18)
 	{
 		$oDB =& getDB();

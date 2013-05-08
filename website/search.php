@@ -17,7 +17,6 @@
 	$aSearchResults = array();
 	$aExcludePlaceIDs = array();
 	$sCountryCodesSQL = false;
-	$sSuggestion = $sSuggestionURL = false;
 	$bDeDupe = isset($_GET['dedupe'])?(bool)$_GET['dedupe']:true;
 	$bReverseInPlan = false;
 	$iFinalLimit = isset($_GET['limit'])?(int)$_GET['limit']:10;
@@ -444,35 +443,6 @@
 					$aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
 				}
 				if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
-
-				$aSuggestion = array();
-				$bSuggestion = false;
-				if (CONST_Suggestions_Enabled)
-				{
-					foreach($aPhrases as $iPhrase => $aPhrase)
-					{
-						if (!isset($aValidTokens[' '.$aPhrase['wordsets'][0][0]]))
-						{
-							$sQuotedPhrase = getDBQuoted(' '.$aPhrase['wordsets'][0][0]);
-							$aSuggestionWords = getWordSuggestions($oDB, $aPhrase['wordsets'][0][0]);
-							$aRow = $aSuggestionWords[0];
-							if ($aRow && $aRow['word'])
-							{
-								$aSuggestion[] = $aRow['word'];
-								$bSuggestion = true;
-							}
-							else
-							{
-								$aSuggestion[] = $aPhrase['string'];
-							}
-						}
-						else
-						{
-							$aSuggestion[] = $aPhrase['string'];
-						}
-					}
-				}
-				if ($bSuggestion) $sSuggestion = join(', ',$aSuggestion);
 
 				// Try and calculate GB postcodes we might be missing
 				foreach($aTokens as $sToken)
@@ -1587,10 +1557,6 @@
 	if ($bShowAddressDetails) $sMoreURL .= '&addressdetails=1';
 	if (isset($_GET['viewbox']) && $_GET['viewbox']) $sMoreURL .= '&viewbox='.urlencode($_GET['viewbox']);
 	if (isset($_GET['nearlat']) && isset($_GET['nearlon'])) $sMoreURL .= '&nearlat='.(float)$_GET['nearlat'].'&nearlon='.(float)$_GET['nearlon'];
-	if ($sSuggestion)
-	{
-		$sSuggestionURL = $sMoreURL.'&q='.urlencode($sSuggestion);
-	}
 	$sMoreURL .= '&q='.urlencode($sQuery);
 
 	if (CONST_Debug) exit;

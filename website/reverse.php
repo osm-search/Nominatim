@@ -100,6 +100,7 @@
 			$sSQL .= ' and (name is not null or housenumber is not null)';
 			$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\')';
 			$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
+			$sSQL .= ' and indexed_status = 0 ';
 			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 			if (CONST_Debug) var_dump($sSQL);

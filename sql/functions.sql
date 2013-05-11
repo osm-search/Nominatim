@@ -495,17 +495,17 @@ BEGIN
 
 --DEBUG: RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
+  -- Try for a OSM polygon
+  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_covers(geometry, place_centre) limit 1
+  LOOP
+    RETURN nearcountry.country_code;
+  END LOOP;
+
 --DEBUG: RAISE WARNING 'osm fallback: %', ST_AsText(place_centre);
 
   -- Try for OSM fallback data
   -- The order is to deal with places like HongKong that are 'states' within another polygon
   FOR nearcountry IN select country_code from country_osm_grid where st_covers(geometry, place_centre) order by area asc limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-
-  -- Try for a OSM polygon
-  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_covers(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;

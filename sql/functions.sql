@@ -2230,6 +2230,7 @@ BEGIN
       postcode = NEW.postcode,
       country_code = NEW.country_code,
       extratags = NEW.extratags,
+      admin_level = NEW.admin_level,
       geometry = NEW.geometry
       where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
 
@@ -2243,6 +2244,7 @@ BEGIN
       country_code = NEW.country_code,
       parent_place_id = null,
       extratags = NEW.extratags,
+      admin_level = NEW.admin_level,
       indexed_status = 2,    
       geometry = NEW.geometry
       where place_id = existingplacex.place_id;

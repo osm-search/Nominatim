@@ -3082,10 +3082,10 @@ BEGIN
           diameter := 0.001; -- 50 to 100 meters
         END IF;
         IF diameter > 0 THEN
-          IF NEW.rank_search >= 26 THEN
+          IF rank >= 26 THEN
             -- roads may cause reparenting for >27 rank places
             update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter);
-          ELSEIF NEW.rank_search >= 16 THEN
+          ELSEIF rank >= 16 THEN
             -- up to rank 16, street-less addresses may need reparenting
             update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
           ELSE

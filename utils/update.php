@@ -115,6 +115,10 @@
 		{
 			// Import the file
 			$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sNextFile;
+			if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+			{
+				$sCMD .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+			}
 			echo $sCMD."\n";
 			exec($sCMD, $sJunk, $iErrorLevel);
 
@@ -226,6 +230,10 @@
 
 		// import generated change file
 		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sTemporaryFile;
+		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+		{
+			$sCMD .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+		}
 		echo $sCMD."\n";
 		exec($sCMD, $sJunk, $iErrorLevel);
 		if ($iErrorLevel)
@@ -355,6 +363,10 @@
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sImportFile;
+		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+		{
+			$sCMDImport .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+		}
 		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';

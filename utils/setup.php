@@ -155,10 +155,10 @@
 			fail("osm2pgsql not found in '$osm2pgsql'");
 		}
 
-        if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-        {
-            $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
-        }
+		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+		{
+			$osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+		}
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
 		$osm2pgsql .= ' -C '.$iCacheMemory;
 		$osm2pgsql .= ' -P '.$aDSNInfo['port'];

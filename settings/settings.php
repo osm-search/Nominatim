@@ -17,7 +17,7 @@
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
 
-    // osm2pgsql settings
+	// osm2pgsql settings
 	@define('CONST_Osm2pgsql_Flatnode_File', null);
 
 	// Replication settings

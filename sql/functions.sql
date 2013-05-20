@@ -823,9 +823,13 @@ BEGIN
 
       FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
-        select min(place_id) from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' INTO search_place_id;
+        -- If there is a place of a type other than place/house, use that because
+        -- it is guaranteed to be the original node. For place/house types use the
+        -- one with the smallest id because the original node was created first.
+        -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
+        select place_id from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and indexed_status < 100 order by (type = 'house'),place_id limit 1 INTO search_place_id;
         IF search_place_id IS NULL THEN
-          -- null record of right type
+          -- if no such node exists, create a record of the right type
           select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' limit 1 INTO nextnode;
           select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from planet_osm_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
           IF nextnode.geometry IS NULL THEN
@@ -890,7 +894,7 @@ BEGIN
                 -- ideally postcodes should move up to the way
                 insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, addr_place, isin, postcode,
                   country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
-                  values ('N',prevnode.osm_id, prevnode.class, prevnode.type, prevnode.admin_level, housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
+                  values ('N',prevnode.osm_id, 'place', 'house', prevnode.admin_level, housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
                   prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
                 newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;

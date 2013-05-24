@@ -1094,10 +1094,10 @@ BEGIN
       ELSEIF NEW.type in ('national_park') THEN
         NEW.rank_search := 18;
         NEW.rank_address := 18;
-      ELSEIF NEW.type in ('suburb','croft','subdivision') THEN
+      ELSEIF NEW.type in ('suburb','croft','subdivision','isolated_dwelling') THEN
         NEW.rank_search := 20;
         NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('farm','locality','islet','isolated_dwelling','mountain_pass') THEN
+      ELSEIF NEW.type in ('farm','locality','islet','mountain_pass') THEN
         NEW.rank_search := 20;
         NEW.rank_address := 0;
         -- Irish townlands, tagged as place=locality and locality=townland

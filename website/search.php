@@ -138,20 +138,6 @@
 		$sQuery = join(', ',$aPhrases);
 	}
 
-	function structuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank)
-	{
-		if (!isset($_GET[$sKey])) return false;
-		$sValue = trim($_GET[$sKey]);
-		if (!$sValue) return false;
-		$aStructuredQuery[$sKey] = $sValue;
-		if ($iMinAddressRank == 0 && $iMaxAddressRank == 30)
-		{
-			$iMinAddressRank = $iNewMinAddressRank;
-			$iMaxAddressRank = $iNewMaxAddressRank;
-		}
-		return true;
-	}
-
 	// Structured query?
 	$aStructuredOptions = array(
 				array('amenity', 26, 30),

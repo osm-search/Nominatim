@@ -144,10 +144,10 @@
 				array('amenity', 26, 30, false),
 				array('street', 26, 30, false),
 				array('city', 14, 24, false),
-				array('postalcode', 5, 11, array(5, 11)),
 				array('county', 9, 13, false),
 				array('state', 8, 8, false),
 				array('country', 4, 4, false),
+				array('postalcode', 5, 11, array(5, 11)),
 				);
 	$aStructuredQuery = array();
 	$sAllowedTypesSQLList = '';
@@ -1157,7 +1157,10 @@
 					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
 					if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
-					$sSQL .= ") ";
+					$sSQL .= ") UNION select place_id from location_property_tiger where place_id in (".join(',',$aResultPlaceIDs).") ";
+					$sSQL .= "and (30 between $iMinAddressRank and $iMaxAddressRank ";
+					if ($aAddressRankList) $sSQL .= " OR 30 in (".join(',',$aAddressRankList).")";
+					$sSQL .= ")";
 					if (CONST_Debug) var_dump($sSQL);
 					$aResultPlaceIDs = $oDB->getCol($sSQL);
 				}

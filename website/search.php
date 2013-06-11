@@ -931,7 +931,9 @@
 						if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
 						$aOrder[] = "$sImportanceSQL DESC";
 						if (sizeof($aSearch['aFullNameAddress']))
+						{
 							$aOrder[] = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) DESC';
+						}
 
 						if (sizeof($aTerms))
 						{
@@ -1147,6 +1149,19 @@
 					}
 					if ($iQueryLoop > 20) break;
 				}
+
+				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs) && ($iMinAddressRank != 0 || $iMaxAddressRank != 30))
+				{
+					// Need to verify passes rank limits before dropping out of the loop (yuk!)
+					$sSQL = "select place_id from placex where place_id in (".join(',',$aResultPlaceIDs).") ";
+					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
+					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+					if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
+					$sSQL .= ") ";
+					if (CONST_Debug) var_dump($sSQL);
+					$aResultPlaceIDs = $oDB->getCol($sSQL);
+				}
+
 
 				//exit;
 				if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;

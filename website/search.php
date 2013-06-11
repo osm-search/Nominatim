@@ -26,6 +26,7 @@
 	$iLimit = $iFinalLimit + min($iFinalLimit, 10);
 	$iMinAddressRank = 0;
 	$iMaxAddressRank = 30;
+	$aAddressRankList = array();
 	$sAllowedTypesSQLList = false;
 
 	// Format for output
@@ -140,19 +141,19 @@
 
 	// Structured query?
 	$aStructuredOptions = array(
-				array('amenity', 26, 30),
-				array('street', 26, 30),
-				array('city', 14, 24),
-				array('county', 9, 13),
-				array('state', 8, 8),
-				array('country', 4, 4),
-				array('postalcode', 5, 11),
+				array('amenity', 26, 30, false),
+				array('street', 26, 30, false),
+				array('city', 14, 24, false),
+				array('postalcode', 5, 11, array(5, 11)),
+				array('county', 9, 13, false),
+				array('state', 8, 8, false),
+				array('country', 4, 4, false),
 				);
 	$aStructuredQuery = array();
 	$sAllowedTypesSQLList = '';
 	foreach($aStructuredOptions as $aStructuredOption)
 	{
-		loadStructuredAddressElement($aStructuredQuery, $iMinAddressRank, $iMaxAddressRank, $_GET, $aStructuredOption[0], $aStructuredOption[1], $aStructuredOption[2]);
+		loadStructuredAddressElement($aStructuredQuery, $iMinAddressRank, $iMaxAddressRank, $aAddressRankList, $_GET, $aStructuredOption[0], $aStructuredOption[1], $aStructuredOption[2], $aStructuredOption[3]);
 	}
 	if (sizeof($aStructuredQuery) > 0) 
 	{
@@ -356,7 +357,6 @@
 				$bStructuredPhrases = false;
 			}
 
-
 			// Convert each phrase to standard form
 			// Create a list of standard words
 			// Get all 'sets' of words
@@ -529,6 +529,17 @@
 												$aSearch['fRadius'] = $aSearchTerm['radius'];
 												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
+										}
+										elseif ($sPhraseType == 'postalcode')
+										{
+											// We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
+											if (sizeof($aSearch['aName']))
+											{
+												$aSearch['aAddress'] = array_merge($aSearch['aAddress'], $aSearch['aName']);
+												$aSearch['aName'] = array();
+												$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+											}
+											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 										}
 										elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house')
 										{
@@ -1167,6 +1178,7 @@
 				$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 				$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 				if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+				if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
 				$sSQL .= ") ";
 				if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
 				$sSQL .= "and linked_place_id is null ";
@@ -1247,6 +1259,7 @@
 					$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 					$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
 					if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+					if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
 					$sSQL .= ") ";
 					$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
 					if (!$bDeDupe) $sSQL .= ",place_id";

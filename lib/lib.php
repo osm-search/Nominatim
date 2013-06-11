@@ -884,7 +884,7 @@
 		return $iPlaceID;
 	}
 
-	function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank)
+	function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, &$aAddressRankList, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
 	{
 		if (!isset($_GET[$sKey])) return false;
 		$sValue = trim($_GET[$sKey]);
@@ -895,5 +895,6 @@
 			$iMinAddressRank = $iNewMinAddressRank;
 			$iMaxAddressRank = $iNewMaxAddressRank;
 		}
+		if ($aItemListValues) $aAddressRankList = array_merge($aAddressRankList, $aItemListValues);
 		return true;
 	}

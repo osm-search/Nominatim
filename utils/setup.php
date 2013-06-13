@@ -635,6 +635,13 @@
 		@symlink(CONST_BasePath.'/website/js', $sTargetDir.'/js');
 		@symlink(CONST_BasePath.'/website/css', $sTargetDir.'/css');
 		echo "Symlinks created\n";
+
+		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/tiles.js');
+		if (!$sTestFile)
+		{
+			echo "\nWARNING: Unable to access the website at ".CONST_Website_BaseURL."\n";
+			echo "You may want to update settings/local.php with @define('CONST_Website_BaseURL', 'http://[HOST]/[PATH]/');\n";
+		}
 	}
 
 	if (!$bDidSomething)

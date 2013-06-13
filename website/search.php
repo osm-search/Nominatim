@@ -466,7 +466,6 @@
 
 				/*
 				   Calculate all searches using aValidTokens i.e.
-
 				   'Wodsworth Road, Sheffield' =>
 
 				   Phrase Wordset
@@ -533,13 +532,38 @@
 										elseif ($sPhraseType == 'postalcode')
 										{
 											// We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-											if (sizeof($aSearch['aName']))
+											if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
 											{
-												$aSearch['aAddress'] = array_merge($aSearch['aAddress'], $aSearch['aName']);
-												$aSearch['aName'] = array();
-												$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+												// If we already have a name try putting the postcode first
+												if (sizeof($aSearch['aName']))
+												{
+													$aNewSearch = $aSearch;
+													$aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
+													$aNewSearch['aName'] = array();
+													$aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+													if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
+												}
+
+												if (sizeof($aSearch['aName']))
+												{
+													if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false))
+													{
+														$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+													}
+													else
+													{
+														$aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+														$aSearch['iSearchRank'] += 1000; // skip;
+													}
+												}
+												else
+												{
+													$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+													//$aSearch['iNamePhrase'] = $iPhrase;
+												}
+												if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
-											if ($aSearch['iSearchRank'] < $iMaxRank) $aNewWordsetSearches[] = $aSearch;
+
 										}
 										elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house')
 										{
@@ -708,6 +732,7 @@
 					//if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
 
 				}
+
 			}
 			else
 			{

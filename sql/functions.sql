@@ -1676,6 +1676,11 @@ BEGIN
         END IF;
       END IF;
 
+    END IF;
+
+    -- Name searches can be done for ways as well as relations
+    IF NEW.osm_type in ('W','R') AND NEW.rank_search < 26 THEN
+
       -- not found one yet? how about doing a name search
       IF NEW.centroid IS NULL AND (NEW.name->'name') is not null and make_standard_name(NEW.name->'name') != '' THEN
 

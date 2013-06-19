@@ -447,6 +447,28 @@
 							$aValidTokens[$sToken] = $aGBPostcodeLocation;
 						}
 					}
+					// US ZIP+4 codes - if there is no token,
+					// 	merge in the 5-digit ZIP code
+					else if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData))
+					{
+						if (isset($aValidTokens[$aData[1]]))
+						{
+							foreach($aValidTokens[$aData[1]] as $aToken)
+							{
+								if (!$aToken['class'])
+								{
+									if (isset($aValidTokens[$sToken]))
+									{
+										$aValidTokens[$sToken][] = $aToken;
+									}
+									else
+									{
+										$aValidTokens[$sToken] = array($aToken);
+									}
+								}
+							}
+						}
+					}
 				}
 
 				foreach($aTokens as $sToken)

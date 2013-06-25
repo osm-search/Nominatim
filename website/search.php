@@ -266,7 +266,7 @@
 				$sQuery = trim(str_replace($aData[0], ' ', $sQuery));
 			}
 		}
-		elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9.]*)[, ]+(-?[0-9]+[0-9.]*)(\\]|$|\\b)/', $sQuery, $aData))
+		elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData))
 		{
 			$fQueryLat = $aData[2];
 			$fQueryLon = $aData[3];

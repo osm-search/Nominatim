@@ -107,7 +107,7 @@
 			$aPlace = $oDB->getRow($sSQL);
 			if (PEAR::IsError($aPlace))
 			{
-				failInternalError("Could not determine closest place.", $sSQL, $iPlaceID);
+				failInternalError("Could not determine closest place.", $sSQL, $aPlace);
 			}
 			$iPlaceID = $aPlace['place_id'];
 			$iParentPlaceID = $aPlace['parent_place_id'];

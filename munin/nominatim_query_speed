@@ -1,0 +1,121 @@
+#!/usr/bin/perl -w
+# Plugin to monitor response time of search queries.
+#
+# Based on a plugin by Dalibo <cedric.villemain@dalibo.com> 2007
+# Based on a plugin (postgres_block_read_) from Björn Ruberg <bjorn@linpro.no>
+#
+# Licenced under GPL v2.
+#
+# Usage:
+#
+#       If required, give username, password and/or Postgresql server
+#       host through environment variables. See man page of psql for
+#       more info.
+#
+# Parameters:
+#
+#       config   (required)
+#
+# Magic markers
+#%# family=auto
+#%# capabilities=autoconf
+
+use strict;
+use DBI;
+use vars qw ( $debug $configure  );
+use constant _PGMINI => 70400;
+
+my $dbhost = $ENV{'PGHOST'} || '';
+my $dbname = $ENV{'PGDATABASE'} || 'nominatim';
+my $dbuser = $ENV{'PGUSER'} || 'postgres';
+my $dbport = $ENV{'PGPORT'} || '5432';
+
+my $dsn = "DBI:Pg:dbname=$dbname";
+$dsn   .=";host=$dbhost;port=$dbport" if $dbhost;
+my $pg_server_version;
+
+if (exists $ARGV[0]) {
+  if ($ARGV[0] eq 'autoconf') {
+    # Check for DBD::Pg
+    if (! eval "require DBD::Pg;") {
+      print "no (DBD::Pg not found)";
+      exit 1;
+    }
+    my $dbh = DBI->connect ($dsn,
+                            $dbuser,
+                            '',
+                            {RaiseError =>1});
+    if ($dbh) {
+      $pg_server_version = $dbh->{'pg_server_version'};
+      if ($pg_server_version < (_PGMINI)) {
+        $pg_server_version =~ /(\d)(\d){2,2}(\d){2,2}/;
+        print "PostgreSQL Server version " . (_PGMINI) . " or above is needed. Current is $1.$2.$3 \n";
+				exit 1;
+      }
+      print "yes\n";
+      exit 0;
+    } else {
+      print "no Unable to access Database $dbname on host $dbhost as user $dbuser.\nError returned was: ". $DBI::errstr;
+      exit 1;
+    }
+  } elsif ($ARGV[0] eq 'debug') {
+    # Set debug flag
+    $debug = 1;
+  } elsif ($ARGV[0] eq 'config') {
+    # Set config flag
+    $configure = 1;
+  }
+}
+
+print "# $dsn\n" if $debug;
+my $dbh = DBI->connect ($dsn,
+                        $dbuser,
+                        '',
+                        {RaiseError =>1});
+
+die ("no Unable to access Database $dbname on host $dbhost as user $dbuser.\nError returned was: ". $DBI::errstr."\n") unless($dbh);
+$pg_server_version = $dbh->{'pg_server_version'};
+
+if ($configure) {
+  print "graph_title Total Nominatim response time\n";
+  print "graph_vlabel Time to response\n";
+  print "graph_category Nominatim \n";
+  print "graph_period minute\n";
+  print "graph_args --base 1000\n";
+
+  print "avg.label Average time to response\n";
+  print "avg.draw LINE\n";
+  print "avg.type GAUGE\n";
+  print "avg.min 0\n";
+  print "avg.info Moving 5 minute average time to perform search\n";
+  print "avg.label Average time to response\n";
+
+  print "min.label Fastest time to response\n";
+  print "min.draw LINE\n";
+  print "min.type GAUGE\n";
+  print "min.min 0\n";
+  print "min.info Fastest query in last 5 minutes\n";
+
+  print "max.label Slowest time to response\n";
+  print "max.draw LINE\n";
+  print "max.type GAUGE\n";
+  print "max.min 0\n";
+  print "max.info Slowest query in last 5 minutes\n";
+
+} else {
+
+  my $sql = "select TO_CHAR(avg(endtime-starttime),'SS.MS'),TO_CHAR(min(endtime-starttime),'SS.MS'),TO_CHAR(max(endtime-starttime),'SS.MS') from new_query_log where starttime > 'now'::timestamp - '5 minutes'::interval";
+  print "# $sql\n" if $debug;
+  my $sth = $dbh->prepare($sql);
+  $sth->execute();
+  printf ("# Rows: %d\n",  $sth->rows) if $debug;
+  if ($sth->rows > 0) {
+    my ($avg, $min, $max) = $sth->fetchrow_array();
+    print "avg.value $avg\n";
+    print "min.value $min\n";
+    print "max.value $max\n";
+  }
+}
+
+exit 0;
+

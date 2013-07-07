@@ -2,6 +2,9 @@
 #
 # Plugin to monitor the age of the imported data in the rendering db
 #
+# Can be configured through libpq environment variables, for example
+# PGUSER, PGDATABASE, etc. See man page of psql for more information
+#
 # Parameters: 
 #
 #       config   (required)
@@ -21,7 +24,7 @@ if [ "$1" = "config" ]; then
 fi
  
 
-delay=`psql -d nominatim -c "copy (select extract(epoch from timezone('utc', now())-lastimportdate)::int from import_status) to stdout"`
+delay=`psql -c "copy (select extract(epoch from timezone('utc', now())-lastimportdate)::int from import_status) to stdout"`
  
  
 echo "age.value $delay"

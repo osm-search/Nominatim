@@ -2,6 +2,9 @@
 #
 # Plugin to monitor the types of requsts made to the API
 #
+# Can be configured through libpq environment variables, for example
+# PGUSER, PGDATABASE, etc. See man page of psql for more information.
+#
 # Parameters: 
 #
 #       config   (required)
@@ -32,10 +35,10 @@ fi
 
 query="select count(*)/5.0 from new_query_log where starttime > (now() - interval '5 min') and "
 
-reverse=`psql -d nominatim -c "copy ($query type='reverse') to stdout"`
-searchy=`psql -d nominatim -c "copy ($query type='search' and results>0) to stdout"`
-searchn=`psql -d nominatim -c "copy ($query type='search' and results=0) to stdout"`
-details=`psql -d nominatim -c "copy ($query type='details') to stdout"`
+reverse=`psql -c "copy ($query type='reverse') to stdout"`
+searchy=`psql -c "copy ($query type='search' and results>0) to stdout"`
+searchn=`psql -c "copy ($query type='search' and results=0) to stdout"`
+details=`psql -c "copy ($query type='details') to stdout"`
  
 echo "z1.value $reverse"
 echo "z2.value $searchy"

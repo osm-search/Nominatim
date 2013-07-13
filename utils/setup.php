@@ -26,6 +26,7 @@
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
 		array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
+		array('no-partitions', '', 0, 1, 0, 0, 'bool', "Do not partition search indices (speeds up import of single country extracts)"),
 		array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
 		array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
 		array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
@@ -141,6 +142,11 @@
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+
+		if ($aCMDResult['no-partitions'])
+		{
+			pgsqlRunScript('update country_name set partition = 0');
+		}
 	}
 
 	if ($aCMDResult['import-data'] || $aCMDResult['all'])
@@ -232,13 +238,13 @@
 		echo "Partition Tables\n";
 		$bDidSomething = true;
 		$oDB =& getDB();
-		$sSQL = 'select partition from country_name order by country_code';
+		$sSQL = 'select distinct partition from country_name';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
 		}
-		$aPartitions[] = 0;
+		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
@@ -261,13 +267,13 @@
 		echo "Partition Functions\n";
 		$bDidSomething = true;
 		$oDB =& getDB();
-		$sSQL = 'select partition from country_name order by country_code';
+		$sSQL = 'select distinct partition from country_name';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
 		}
-		$aPartitions[] = 0;
+		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
@@ -337,13 +343,13 @@
 		if (!pg_query($oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($oDB->connection));
 		echo '.';
 
-		$sSQL = 'select partition from country_name order by country_code';
+		$sSQL = 'select distinct partition from country_name';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
 		}
-		$aPartitions[] = 0;
+		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 		foreach($aPartitions as $sPartition)
 		{
 			if (!pg_query($oDB->connection, 'TRUNCATE location_road_'.$sPartition)) fail(pg_last_error($oDB->connection));
@@ -596,13 +602,13 @@
 		echo "Search indices\n";
 		$bDidSomething = true;
 		$oDB =& getDB();
-		$sSQL = 'select partition from country_name order by country_code';
+		$sSQL = 'select distinct partition from country_name';
 		$aPartitions = $oDB->getCol($sSQL);
 		if (PEAR::isError($aPartitions))
 		{
 			fail($aPartitions->getMessage());
 		}
-		$aPartitions[] = 0;
+		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);

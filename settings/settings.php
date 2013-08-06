@@ -69,6 +69,7 @@
 
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
+	@define('CONST_License', utf8_encode('Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'));
 
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);

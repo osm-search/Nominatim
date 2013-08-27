@@ -30,7 +30,7 @@
 
 		if ($bShowAddressDetails) {
 			echo "<addressparts>";
-			foreach($aAddress as $sKey => $sValue)
+			foreach($aPlace['aAddress'] as $sKey => $sValue)
 			{
 				$sKey = str_replace(' ','_',$sKey);
 				echo "<$sKey>";

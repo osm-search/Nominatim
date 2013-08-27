@@ -26,7 +26,7 @@
 
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
                 $aFilteredPlaces['name'] = $aPlace['placename'];
-		if ($bShowAddressDetails && $aAddress && sizeof($aAddress)) $aFilteredPlaces['address'] = $aAddress;
+		if ($bShowAddressDetails && $aPlace['aAddress'] && sizeof($aPlace['aAddress'])) $aFilteredPlaces['address'] = $aPlace['aAddress'];
 	}
 
 	javascript_renderData($aFilteredPlaces);

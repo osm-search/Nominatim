@@ -21,7 +21,7 @@
                 if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
                 if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
-		if ($bShowAddressDetails) $aFilteredPlaces['address'] = $aAddress;
+		if ($bShowAddressDetails) $aFilteredPlaces['address'] = $aPlace['aAddress'];
 	}
 
 	javascript_renderData($aFilteredPlaces);

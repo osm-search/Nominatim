@@ -15,14 +15,14 @@
 	<script src="js/prototype-1.6.0.3.js" type="text/javascript"></script>
 
 	<script type="text/javascript">
-        
+
 		var map;
 
 		function handleResize()
 		{
 			if ($('searchresults'))
 			{
-                var viewwidth = ((document.documentElement.clientWidth > 0?document.documentElement.clientWidth:document.documentElement.offsetWidth) - 200) + 'px';
+				var viewwidth = ((document.documentElement.clientWidth > 0?document.documentElement.clientWidth:document.documentElement.offsetWidth) - 200) + 'px';
 				$('map').style.width = viewwidth;
 				$('report').style.width = viewwidth;
 			}
@@ -31,7 +31,7 @@
 				$('map').style.width = ((document.documentElement.clientWidth > 0?document.documentElement.clientWidth:document.documentElement.offsetWidth) - 0) + 'px';
 				$('map').style.left = '0px';
 			}
-			
+
 			if ($('map')) $('map').style.height = ((document.documentElement.clientHeight > 0?document.documentElement.clientHeight:document.documentElement.offsetHeight) - 38) + 'px';
 			if ($('searchresults')) $('searchresults').style.height = ((document.documentElement.clientHeight > 0?document.documentElement.clientHeight:document.documentElement.offsetHeight) - 38) + 'px';
 			if ($('report')) $('report').style.height = ((document.documentElement.clientHeight > 0?document.documentElement.clientHeight:document.documentElement.offsetHeight) - 38) + 'px';
@@ -167,7 +167,7 @@ target="_blank">FAQ</a></td>
 	</div>
 
 <?php
-	if ($sQuery || sizeof($aSearchResults))
+	if ($sQuery)
 	{
 ?>
 	<div id="searchresultsfade1"></div><div id="searchresultsfade2"></div><div id="searchresultsfade3"></div><div id="searchresultsfade4"></div>
@@ -243,7 +243,7 @@ the component to 'nominatim'.  You can search for existing bug reports <a href="
 the problem relates to missing data, the osm id of the item that is missing.  Problems that contain enough detail are likely to get looked at before ones that 
 require significant research!</p>
 		</div>
-		
+
 <!--
  		<p>Please use this form to report problems with the search results.  Of particular interest are items missing, but please also use this form to 
 report any other problems.</p>

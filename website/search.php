@@ -37,7 +37,7 @@
 	// Show / use polygons
 	if ($sOutputFormat == 'html')
 	{
-		if (isset($_GET['polygon'])) $oGeocode->setIncludePolygonAsPoints((bool)$_GET['polygon']);
+		if (isset($_GET['polygon'])) $oGeocode->setIncludePolygonAsText((bool)$_GET['polygon']);
 	}
 	else
 	{
@@ -63,6 +63,7 @@
 			}
 			exit;
 		}
+		$oGeocode->setIncludePolygonAsText($bAsPoints);
 		$oGeocode->setIncludePolygonAsText($bAsText);
 		$oGeocode->setIncludePolygonAsGeoJSON($bAsGeoJSON);
 		$oGeocode->setIncludePolygonAsKML($bAsKML);
@@ -177,7 +178,7 @@
 
 	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$oGeocode->getExcludedPlaceIDs());
 	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
-	if ($oGeocode->getIncludePolygonAsPoints()) $sMoreURL .= '&polygon=1';
+	if (isset($_GET['polygon']) && isset($_GET['polygon'])) $sMoreURL .= '&polygon=1';
 	if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';
 	if (isset($_GET['viewbox']) && $_GET['viewbox']) $sMoreURL .= '&viewbox='.urlencode($_GET['viewbox']);
 	if (isset($_GET['nearlat']) && isset($_GET['nearlon'])) $sMoreURL .= '&nearlat='.(float)$_GET['nearlat'].'&nearlon='.(float)$_GET['nearlon'];

@@ -37,6 +37,8 @@
 
 		function lookup()
 		{
+			if (!$this->iPlaceID) return null;
+
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
 			$sSQL = "select placex.*,";
@@ -46,6 +48,8 @@
 			$sSQL .= " st_y(centroid) as lat, st_x(centroid) as lon";
 			$sSQL .= " from placex where place_id = ".(int)$this->iPlaceID;
 			$aPlace = $this->oDB->getRow($sSQL);
+
+			if (!$aPlace['place_id']) return null;
 
 			if ($this->bAddressDetails)
 			{

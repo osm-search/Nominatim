@@ -391,7 +391,7 @@
 
 						unset($aReplicationLag);
 						exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
-						while ($iErrorLevel == 1 || $aReplicationLag[0] < 1)
+						while ($iErrorLevel > 0 || $aReplicationLag[0] < 1)
 						{
 							if ($iErrorLevel)
 							{
@@ -412,7 +412,7 @@
 					$fCMDStartTime = time();
 					echo $sCMDDownload."\n";
 					exec($sCMDDownload, $sJunk, $iErrorLevel);
-					while ($iErrorLevel == 1)
+					while ($iErrorLevel > 0)
 					{
 						echo "Error: $iErrorLevel\n";
 						sleep(60);

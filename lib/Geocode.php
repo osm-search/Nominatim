@@ -133,6 +133,12 @@
 			$this->aViewBox = array($fLeft, $fBottom, $fRight, $fTop);
 		}
 
+		function getViewBoxString()
+		{
+			if (!$this->aViewBox) return null;
+			return $this->aViewBox[0].','.$this->aViewBox[3].','.$this->aViewBox[2].','.$this->aViewBox[1];
+		}
+
 		function setRoute($aRoutePoints)
 		{
 			$this->aRoutePoints = $aRoutePoints;

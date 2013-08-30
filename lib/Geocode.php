@@ -218,6 +218,8 @@
 
 		function getDetails($aPlaceIDs, $iMinAddressRank = 0, $iMaxAddressRank = 30, $aAddressRankList = false, $sAllowedTypesSQLList = false, $bDeDupe = false)
 		{
+			if (sizeof($aPlaceIDs) == 0)  return array();
+
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
 
 			// Get the details for display (is this a redundant extra step?)
@@ -391,7 +393,7 @@
 			}
 
 			$aSearchResults = array();
-			if ($sQuery || $aStructuredQuery)
+			if ($sQuery || $this->aStructuredQuery)
 			{
 				// Start with a blank search
 				$aSearches = array(
@@ -1341,7 +1343,10 @@
 			{
 				// Just interpret as a reverse geocode
 				$iPlaceID = geocodeReverse((float)$this->aNearPoint[0], (float)$this->aNearPoint[1]);
-				$aSearchResults = $this->getDetails(array($iPlaceID));
+				if ($iPlaceID)
+					$aSearchResults = $this->getDetails(array($iPlaceID));
+				else
+					$aSearchResults = array();
 			}
 
 			// No results? Done

@@ -898,3 +898,8 @@
 		if ($aItemListValues) $aAddressRankList = array_merge($aAddressRankList, $aItemListValues);
 		return true;
 	}
+
+	function addQuotes($s)
+	{
+		return "'".$s."'";
+	}

@@ -291,7 +291,7 @@
 			$sCountryCodesSQL = false;
 			if ($this->aCountryCodes && sizeof($this->aCountryCodes))
 			{
-				$sCountryCodesSQL = join(',', $this->aCountryCodes);
+				$sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));
 			}
 
 			// Hack to make it handle "new york, ny" (and variants) correctly
@@ -319,7 +319,7 @@
 
 				$sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$this->aViewBox[0].",".(float)$this->aViewBox[1]."),ST_Point(".(float)$this->aViewBox[2].",".(float)$this->aViewBox[3].")),4326)";
 				$sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aBigViewBox[0].",".(float)$aBigViewBox[1]."),ST_Point(".(float)$aBigViewBox[2].",".(float)$aBigViewBox[3].")),4326)";
-				$bBoundingBoxSearch = true;
+				$bBoundingBoxSearch = $this->bBoundedSearch;
 			}
 
 			// Route SQL
@@ -349,7 +349,7 @@
 					failInternalError("Could not get large viewbox.", $sSQL, $sViewboxLargeSQL);
 				}
 				$sViewboxLargeSQL = "'".$sViewboxLargeSQL."'::geometry";
-				$bBoundingBoxSearch = true;
+				$bBoundingBoxSearch = $this->bBoundedSearch;
 			}
 
 			// Do we have anything that looks like a lat/lon pair?
@@ -971,11 +971,12 @@
 						if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
 						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
-						// Must have a location term
+						// No location term?
 						if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
 						{
 							if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
 							{
+								// Just looking for a country by code - look it up
 								if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank)
 								{
 									$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";

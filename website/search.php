@@ -55,7 +55,7 @@
 					$aCountryCodes[] = strtolower($sCountryCode);
 				}
 			}
-			$oGeocode->setCountryCodeList($aCountryCodes);
+			$oGeocode->setCountryCodesList($aCountryCodes);
 		}
 
 		if (isset($aParams['viewboxlbrt']) && $aParams['viewboxlbrt'])

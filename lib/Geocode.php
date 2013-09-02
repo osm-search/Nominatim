@@ -465,7 +465,7 @@
 				// Commas are used to reduce the search space by indicating where phrases split
 				if ($this->aStructuredQuery)
 				{
-					$aPhrases = $aStructuredQuery;
+					$aPhrases = $this->aStructuredQuery;
 					$bStructuredPhrases = true;
 				}
 				else
@@ -1317,10 +1317,10 @@
 						$sSQL = "select place_id from placex where place_id in (".join(',',$aResultPlaceIDs).") ";
 						$sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
 						if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
-						if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
+						if ($this->aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$this->aAddressRankList).")";
 						$sSQL .= ") UNION select place_id from location_property_tiger where place_id in (".join(',',$aResultPlaceIDs).") ";
 						$sSQL .= "and (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
-						if ($aAddressRankList) $sSQL .= " OR 30 in (".join(',',$aAddressRankList).")";
+						if ($this->aAddressRankList) $sSQL .= " OR 30 in (".join(',',$this->aAddressRankList).")";
 						$sSQL .= ")";
 						if (CONST_Debug) var_dump($sSQL);
 						$aResultPlaceIDs = $this->oDB->getCol($sSQL);

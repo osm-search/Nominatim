@@ -187,7 +187,7 @@
 	$bAsText = $oGeocode->getIncludePolygonAsText();
 	$sQuery = $oGeocode->getQueryString();
 	$sViewBox = $oGeocode->getViewBoxString();
-	$bShowPolygons = (isset($_GET['polygon']) && isset($_GET['polygon']));
+	$bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 	$aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
 	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$oGeocode->getExcludedPlaceIDs());

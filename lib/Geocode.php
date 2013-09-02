@@ -1394,6 +1394,7 @@
 							$aResult['lat'] = $aPointPolygon['centrelat'];
 							$aResult['lon'] = $aPointPolygon['centrelon'];
 						}
+
 						if ($this->bIncludePolygonAsPoints)
 						{
 							// Translate geometary string to point array

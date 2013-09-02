@@ -151,7 +151,7 @@
 			}
 			exit;
 		}
-		$oGeocode->setIncludePolygonAsText($bAsPoints);
+		$oGeocode->setIncludePolygonAsPoints($bAsPoints);
 		$oGeocode->setIncludePolygonAsText($bAsText);
 		$oGeocode->setIncludePolygonAsGeoJSON($bAsGeoJSON);
 		$oGeocode->setIncludePolygonAsKML($bAsKML);

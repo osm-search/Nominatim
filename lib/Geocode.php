@@ -1491,7 +1491,12 @@
 					$aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
 				}
 
-				if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
+				if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
+						&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
+				{
+					$aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'];
+				}
+				elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
 						&& $aClassType[$aResult['class'].':'.$aResult['type']]['label'])
 				{
 					$aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];

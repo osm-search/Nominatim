@@ -6,14 +6,11 @@
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 
 	$sOutputFormat = 'html';
-	/*
-	   $fLoadAvg = getLoadAverage();
-	   if ($fLoadAvg > 3)
-	   {
-	   echo "Page temporarily blocked due to high server load\n";
-	   exit;
-	   }
-	 */
+	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'xml' || $_GET['format'] == 'json' ||  $_GET['format'] == 'jsonv2'))
+	{
+		$sOutputFormat = $_GET['format'];
+	}
+
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
@@ -67,14 +64,26 @@
 	$oPlaceLookup->setPlaceId($iPlaceID);
 
 	$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails());
+	$aBreadcrums = array();
 	foreach($aPlaceAddress as $i => $aPlace)
 	{
 		if (!$aPlace['place_id']) continue;
-		$sPlaceUrl = 'http://localhost/nominatim/details.php?place_id='.$aPlace['place_id'];
+		$aBreadcrums[] = array('placeId'=>$aPlace['place_id'], 'osmType'=>$aPlace['osm_type'], 'osmId'=>$aPlace['osm_id'], 'localName'=>$aPlace['localname']);
+		$sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
 		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':'')));
                 $sOSMUrl = 'http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPlace['osm_id'];
-		if ($i) echo " > ";
-		echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
+		if ($sOutputFormat == 'html') if ($i) echo " > ";
+		if ($sOutputFormat == 'html') echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
+	}
+
+	$aDetails = array();
+	$aDetails['breadcrumbs'] = $aBreadcrums;
+
+	if ($sOutputFormat == 'json')
+	{
+		header("content-type: application/json; charset=UTF-8");
+		javascript_renderData($aDetails);
+		exit;
 	}
 
 	$aRelatedPlaceIDs = $oDB->getCol($sSQL = "select place_id from placex where linked_place_id = $iPlaceID or place_id = $iPlaceID");
@@ -121,7 +130,7 @@
                         echo ' (';
                         echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
                         if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-                        echo ', <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
+                        echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
                         echo ', '.$aAddressLine['area'];
                         echo ')';
                         echo '</div>';

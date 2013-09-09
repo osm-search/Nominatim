@@ -103,7 +103,7 @@
 			$sNextFile = $aResult['import-diff'];
 			if (!file_exists($sNextFile))
 			{
-				echo "Cannot open $nextFile\n";
+				echo "Cannot open $sNextFile\n";
 				exit;
 			}
 			// Don't update the import status - we don't know what this file contains

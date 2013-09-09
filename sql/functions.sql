@@ -1837,18 +1837,20 @@ BEGIN
         INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
         IF location_isaddress THEN
-            address_havelevel[location.rank_address] := true;
-            IF NOT location.isguess THEN
-                SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
-            END IF;
+
+          address_havelevel[location.rank_address] := true;
+          IF NOT location.isguess THEN
+            SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
+          END IF;
+
+          IF location.rank_address > parent_place_id_rank THEN
+            NEW.parent_place_id = location.place_id;
+            parent_place_id_rank = location.rank_address;
+          END IF;
+
         END IF;
 
 --RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
-
-        IF location.rank_address > parent_place_id_rank THEN
-          NEW.parent_place_id = location.place_id;
-          parent_place_id_rank = location.rank_address;
-        END IF;
 
       END IF;
 

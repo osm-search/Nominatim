@@ -216,7 +216,7 @@
 
 		}
 
-		function getDetails($aPlaceIDs, $iMinAddressRank = 0, $iMaxAddressRank = 30, $aAddressRankList = false, $sAllowedTypesSQLList = false, $bDeDupe = false)
+		function getDetails($aPlaceIDs)
 		{
 			if (sizeof($aPlaceIDs) == 0)  return array();
 
@@ -234,20 +234,20 @@
 			$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 			$sSQL .= "(extratags->'place') as extra_place ";
 			$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-			$sSQL .= "and (placex.rank_address between $iMinAddressRank and $iMaxAddressRank ";
-			if (14 >= $iMinAddressRank && 14 <= $iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
+			$sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
+			if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
 			if ($aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$aAddressRankList).")";
 			$sSQL .= ") ";
-			if ($sAllowedTypesSQLList) $sSQL .= "and placex.class in $sAllowedTypesSQLList ";
+			if ($this->sAllowedTypesSQLList) $sSQL .= "and placex.class in $this->sAllowedTypesSQLList ";
 			$sSQL .= "and linked_place_id is null ";
 			$sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
-			if (!$bDeDupe) $sSQL .= ",place_id";
+			if (!$this->bDeDupe) $sSQL .= ",place_id";
 			$sSQL .= ",langaddress ";
 			$sSQL .= ",placename ";
 			$sSQL .= ",ref ";
 			$sSQL .= ",extratags->'place' ";
 
-			if (30 >= $iMinAddressRank && 30 <= $iMaxAddressRank)
+			if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
 			{
 				$sSQL .= " union ";
 				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
@@ -259,9 +259,9 @@
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
-				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
 				$sSQL .= "group by place_id";
-				if (!$bDeDupe) $sSQL .= ",place_id";
+				if (!$this->bDeDupe) $sSQL .= ",place_id";
 				$sSQL .= " union ";
 				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
@@ -272,9 +272,9 @@
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
-				$sSQL .= "and 30 between $iMinAddressRank and $iMaxAddressRank ";
+				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
 				$sSQL .= "group by place_id";
-				if (!$bDeDupe) $sSQL .= ",place_id";
+				if (!$this->bDeDupe) $sSQL .= ",place_id";
 				$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 			}
 

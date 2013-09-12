@@ -160,7 +160,7 @@
 
 	loadParamsToGeocode($oGeocode, $_GET, false);
 
-	if (isset($_GET['batch']))
+	if (CONST_Search_BatchMode && isset($_GET['batch']))
 	{
 		$aBatch = json_decode($_GET['batch'], true);
 		$aBatchResults = array();

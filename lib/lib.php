@@ -884,21 +884,6 @@
 		return $iPlaceID;
 	}
 
-	function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, &$aAddressRankList, $aParams, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
-	{
-		if (!isset($_GET[$sKey])) return false;
-		$sValue = trim($_GET[$sKey]);
-		if (!$sValue) return false;
-		$aStructuredQuery[$sKey] = $sValue;
-		if ($iMinAddressRank == 0 && $iMaxAddressRank == 30)
-		{
-			$iMinAddressRank = $iNewMinAddressRank;
-			$iMaxAddressRank = $iNewMaxAddressRank;
-		}
-		if ($aItemListValues) $aAddressRankList = array_merge($aAddressRankList, $aItemListValues);
-		return true;
-	}
-
 	function addQuotes($s)
 	{
 		return "'".$s."'";

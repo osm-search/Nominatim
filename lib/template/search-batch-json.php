@@ -6,6 +6,7 @@
 
 	foreach($aBatchResults as $aSearchResults)
 	{
+		if (!$aSearchResults) $aSearchResults = array();
 		$aFilteredPlaces = array();
 		foreach($aSearchResults as $iResNum => $aPointDetails)
 		{

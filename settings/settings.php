@@ -67,6 +67,8 @@
 	@define('CONST_Search_AreaPolygons_Enabled', true);
 	@define('CONST_Search_AreaPolygons', true);
 
+	@define('CONST_Search_BatchMode', false);
+
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
 

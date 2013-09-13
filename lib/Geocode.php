@@ -631,8 +631,11 @@
 						if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
 						else $sPhraseType = '';
 
-						foreach($aPhrases[$iPhrase]['wordsets'] as $aWordset)
+						foreach($aPhrases[$iPhrase]['wordsets'] as $iWordSet => $aWordset)
 						{
+							// Too many permutations - too expensive
+							if ($iWordSet > 120) break;
+
 							$aWordsetSearches = $aSearches;
 
 							// Add all words from this wordset

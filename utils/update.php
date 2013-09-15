@@ -26,6 +26,7 @@
 
 		array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
 		array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
+		array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
 
 		array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
 		array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
@@ -48,6 +49,7 @@
 
 	if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
 	if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
+
 /*
 	// Lock to prevent multiple copies running
 	if (exec('/bin/ps uww | grep '.basename(__FILE__).' | grep -v /dev/null | grep -v grep -c', $aOutput2, $iResult) > 1)
@@ -72,6 +74,20 @@
 	$oDB =& getDB();
 
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+
+	// cache memory to be used by osm2pgsql, should not be more than the available memory
+	$iCacheMemory = (isset($aResult['osm2pgsql-cache'])?$aResult['osm2pgsql-cache']:2000);
+	if ($iCacheMemory + 500 > getTotalMemoryMB())
+	{
+		$iCacheMemory = getCacheMemoryMB();
+		echo "WARNING: resetting cache memory to $iCacheMemory\n";
+	}
+	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'];
+	if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+	{
+		$sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+	}
+
 
 	$bFirst = true;
 	$bContinue = $aResult['import-all'];
@@ -114,11 +130,7 @@
 		if (($aResult['import-hourly'] || $aResult['import-daily'] || isset($aResult['import-diff'])) && file_exists($sNextFile))
 		{
 			// Import the file
-			$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sNextFile;
-			if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-			{
-				$sCMD .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
-			}
+			$sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
 			echo $sCMD."\n";
 			exec($sCMD, $sJunk, $iErrorLevel);
 
@@ -229,11 +241,7 @@
 		}
 
 		// import generated change file
-		$sCMD = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sTemporaryFile;
-		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-		{
-			$sCMD .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
-		}
+		$sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
 		echo $sCMD."\n";
 		exec($sCMD, $sJunk, $iErrorLevel);
 		if ($iErrorLevel)
@@ -362,11 +370,7 @@
 		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
-		$sCMDImport = CONST_Osm2pgsql_Binary.' -klas -C 2000 -O gazetteer -d '.$aDSNInfo['database'].' '.$sImportFile;
-		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-		{
-			$sCMDImport .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
-		}
+		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
 		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';

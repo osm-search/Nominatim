@@ -20,6 +20,11 @@
 	$aLangPrefOrder = getPreferredLanguages();
 	$oGeocode->setLanguagePreference($aLangPrefOrder);
 
+	if (isset($aLangPrefOrder['name:de'])) $oGeocode->setReverseInPlan(true);
+	if (isset($aLangPrefOrder['name:ru'])) $oGeocode->setReverseInPlan(true);
+	if (isset($aLangPrefOrder['name:ja'])) $oGeocode->setReverseInPlan(true);
+	if (isset($aLangPrefOrder['name:pl'])) $oGeocode->setReverseInPlan(true);
+
 	function loadParamsToGeocode($oGeocode, $aParams, $bBatch = false)
 	{
 		if (isset($aParams['addressdetails'])) $oGeocode->setIncludeAddressDetails((bool)$aParams['addressdetails']);
@@ -107,6 +112,7 @@
 		if (!$sQuery)
 		{
 			$oGeocode->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
+			$oGeocode->setReverseInPlan(false);
 		}
 		else
 		{

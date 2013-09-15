@@ -43,6 +43,11 @@
 			$this->oDB =& $oDB;
 		}
 
+		function setReverseInPlan($bReverse)
+		{
+			$this->bReverseInPlan = $bReverse;
+		}
+
 		function setLanguagePreference($aLangPref)
 		{
 			$this->aLangPrefOrder = $aLangPref;

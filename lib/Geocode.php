@@ -221,8 +221,8 @@
 			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCity, 'city', 14, 24, false);
 			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCounty, 'county', 9, 13, false);
 			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sState, 'state', 8, 8, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCountry, 'country', 4, 4, false);
 			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sPostalCode, 'postalcode' , 5, 11, array(5, 11));
+			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCountry, 'country', 4, 4, false);
 
 			if (sizeof($this->aStructuredQuery) > 0) 
 			{

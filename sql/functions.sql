@@ -2097,6 +2097,9 @@ BEGIN
   IF existingplacex.osm_type IS NULL THEN
 
     IF existing.osm_type IS NOT NULL THEN
+      -- pathological case caused by the triggerless copy into place during initial import
+      -- force delete even for large areas, it will be reinserted later
+      UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
       DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
     END IF;
 

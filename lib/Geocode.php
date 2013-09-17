@@ -195,17 +195,17 @@
 			return $this->sQuery;
 		}
 
-		function loadStructuredAddressElement(&$aStructuredQuery, &$iMinAddressRank, &$iMaxAddressRank, &$aAddressRankList, $sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
+		function loadStructuredAddressElement($sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
 		{
 			$sValue = trim($sValue);
 			if (!$sValue) return false;
-			$aStructuredQuery[$sKey] = $sValue;
-			if ($iMinAddressRank == 0 && $iMaxAddressRank == 30)
+			$this->aStructuredQuery[$sKey] = $sValue;
+			if ($this->iMinAddressRank == 0 && $this->iMaxAddressRank == 30)
 			{
-				$iMinAddressRank = $iNewMinAddressRank;
-				$iMaxAddressRank = $iNewMaxAddressRank;
+				$this->iMinAddressRank = $iNewMinAddressRank;
+				$this->iMaxAddressRank = $iNewMaxAddressRank;
 			}
-			if ($aItemListValues) $aAddressRankList = array_merge($aAddressRankList, $aItemListValues);
+			if ($aItemListValues) $this->aAddressRankList = array_merge($this->aAddressRankList, $aItemListValues);
 			return true;
 		}
 
@@ -216,13 +216,13 @@
 			$this->aStructuredQuery = array();
 			$this->sAllowedTypesSQLList = '';
 
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sAmentiy, 'amenity', 26, 30, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sStreet, 'street', 26, 30, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCity, 'city', 14, 24, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCounty, 'county', 9, 13, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sState, 'state', 8, 8, false);
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sPostalCode, 'postalcode' , 5, 11, array(5, 11));
-			$this->loadStructuredAddressElement($this->aStructuredQuery, $this->iMinAddressRank, $this->iMaxAddressRank, $this->aAddressRankList, $sCountry, 'country', 4, 4, false);
+			$this->loadStructuredAddressElement($sAmentiy, 'amenity', 26, 30, false);
+			$this->loadStructuredAddressElement($sStreet, 'street', 26, 30, false);
+			$this->loadStructuredAddressElement($sCity, 'city', 14, 24, false);
+			$this->loadStructuredAddressElement($sCounty, 'county', 9, 13, false);
+			$this->loadStructuredAddressElement($sState, 'state', 8, 8, false);
+			$this->loadStructuredAddressElement($sPostalCode, 'postalcode' , 5, 11, array(5, 11));
+			$this->loadStructuredAddressElement($sCountry, 'country', 4, 4, false);
 
 			if (sizeof($this->aStructuredQuery) > 0) 
 			{

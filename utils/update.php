@@ -365,6 +365,13 @@
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
 	{
+
+		if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
+			echo "Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n";
+			exit;
+		}
+exit;
+
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
 		$sOsmosisCMD = CONST_Osmosis_Binary;
 		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';

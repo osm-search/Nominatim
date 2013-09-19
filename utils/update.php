@@ -370,7 +370,6 @@
 			echo "Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n";
 			exit;
 		}
-exit;
 
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
 		$sOsmosisCMD = CONST_Osmosis_Binary;

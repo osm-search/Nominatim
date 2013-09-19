@@ -531,7 +531,7 @@
 
 			if ( CONST_Replication_Update_Interval > 60 )
 			{
-				$iSleep = round(CONST_Replication_Update_Interval*0.8);
+				$iSleep = max(0,(strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
 			}
 			else
 			{

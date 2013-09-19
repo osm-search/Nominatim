@@ -938,10 +938,6 @@ BEGIN
   --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
 
   -- just block these
-  IF NEW.class = 'highway' and NEW.type in ('turning_circle','traffic_signals','mini_roundabout','noexit','crossing') THEN
---    RAISE WARNING 'bad highway %',NEW.osm_id;
-    RETURN null;
-  END IF;
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
 --    RAISE WARNING 'empty landuse %',NEW.osm_id;
     RETURN null;
@@ -2044,9 +2040,6 @@ BEGIN
   END IF;
 
   -- Just block these - lots and pointless
-  IF NEW.class = 'highway' and NEW.type in ('turning_circle','traffic_signals','mini_roundabout','noexit','crossing') THEN
-    RETURN null;
-  END IF;
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
     RETURN null;
   END IF;

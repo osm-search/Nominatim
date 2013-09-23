@@ -1,0 +1,28 @@
+2.0.1
+
+ * delete outdated entries from location_area_country
+ * remove remaining uses of INTEGER, to allow node ids larger than 2^31
+
+2.1
+
+ * update to openlayers 2.12 (now custom built)
+ * update fallback OSM boundaries
+ * add support for postgresql 9.2/9.3 and postgis 2.x
+ * add structured queries
+ * add options for polygon output in various formats
+   (geojson, svg, kml, postgis text)
+ * maintenance functions for deleting objects and updating regions
+   (plcae_force_update/place_force_delete)
+ * web view for polygons that need deleting
+ * rate limiting using memcache
+ * improve layout of details page
+ * add support for boundary:postal_code
+ * full CORS support
+ * improve parenting of POIs
+ * support for extract daily diffs from Geofabrik
+ * support for addresses without a street
+   (addr:place and conscription number house numbers)
+ * improve layout of word and search_name_* tables
+ * support for US ZIP+4 codes
+ * refactoring of front-end PHP code
+ * lots of smaller bug fixes

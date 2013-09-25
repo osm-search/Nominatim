@@ -80,7 +80,7 @@
 	echo '<h1>';
 	if ($aPointDetails['icon'])
 	{
-		echo '<img style="float:right;margin-right:40px;" src="'.CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'">';
+		echo '<img style="float:right;margin-right:40px;" src="'.CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'" alt="'.$aPointDetails['icon'].'" />';
 	}
 	echo $aPointDetails['localname'].'</h1>';
 	echo '<div class="locationdetails">';

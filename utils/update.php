@@ -446,7 +446,7 @@
 				if ($iErrorLevel)
 				{
 					echo "Error: $iErrorLevel\n";
-					exit;
+					exit($iErrorLevel);
 				}
 				echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
@@ -469,7 +469,7 @@
 				if (PEAR::isError($iFileID))
 				{
 					echo $iFileID->getMessage()."\n";
-					exit;
+					exit(-1);
 				} 
 				$sFileDir = CONST_BasePath.'/export/diff/';
 				$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
@@ -495,7 +495,7 @@
 				if ($iErrorLevel)
 				{
 					echo "Error: $iErrorLevel\n";
-					exit;
+					exit($iErrorLevel);
 				}
 
 				if (!$aResult['no-npi'])
@@ -510,7 +510,7 @@
 					if ($iErrorLevel)
 					{
 						echo "Error: $iErrorLevel\n";
-						exit;
+						exit($iErrorLevel);
 					}
 
 					rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",

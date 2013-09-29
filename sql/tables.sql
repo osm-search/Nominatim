@@ -212,16 +212,9 @@ CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name
 DROP SEQUENCE seq_place;
 CREATE SEQUENCE seq_place start 1;
 GRANT SELECT on placex to "www-data" ;
-GRANT UPDATE ON placex to "www-data" ;
 GRANT SELECT ON search_name to "www-data" ;
-GRANT DELETE on search_name to "www-data" ;
-GRANT INSERT on search_name to "www-data" ;
 GRANT SELECT on place_addressline to "www-data" ;
-GRANT INSERT ON place_addressline to "www-data" ;
-GRANT DELETE on place_addressline to "www-data" ;
 GRANT SELECT ON seq_word to "www-data" ;
-GRANT UPDATE ON seq_word to "www-data" ;
-GRANT INSERT ON word to "www-data" ;
 GRANT SELECT ON planet_osm_ways to "www-data" ;
 GRANT SELECT ON planet_osm_rels to "www-data" ;
 GRANT SELECT on location_area to "www-data" ;

@@ -461,6 +461,7 @@
 
 			// Index file
 			$sThisIndexCmd = $sCMDIndex;
+                        $fCMDStartTime = time();
 
 			if (!$aResult['no-npi'])
 			{

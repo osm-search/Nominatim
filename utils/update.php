@@ -431,9 +431,10 @@
 					}
 					$iFileSize = filesize($sImportFile);
 					$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-					echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 					$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
+					var_Dump($sSQL);
 					$oDB->query($sSQL);
+					echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				}
 
 				$iFileSize = filesize($sImportFile);
@@ -452,6 +453,7 @@
 				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
 				var_Dump($sSQL);
 				$oDB->query($sSQL);
+				echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 				// Archive for debug?
 				unlink($sImportFile);
@@ -461,7 +463,7 @@
 
 			// Index file
 			$sThisIndexCmd = $sCMDIndex;
-                        $fCMDStartTime = time();
+			$fCMDStartTime = time();
 
 			if (!$aResult['no-npi'])
 			{
@@ -519,9 +521,10 @@
 				}
 			}
 
-			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 			$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+			var_Dump($sSQL);
 			$oDB->query($sSQL);
+			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 			$sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
 			$oDB->query($sSQL);

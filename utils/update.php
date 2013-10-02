@@ -419,6 +419,7 @@
 						// There are new replication files - use osmosis to download the file
 						echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
 					}
+					$fStartTime = time();
 					$fCMDStartTime = time();
 					echo $sCMDDownload."\n";
 					exec($sCMDDownload, $sJunk, $iErrorLevel);
@@ -434,7 +435,7 @@
 					$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
 					var_Dump($sSQL);
 					$oDB->query($sSQL);
-					echo date('Y-m-d H:i:s')." Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+					echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				}
 
 				$iFileSize = filesize($sImportFile);
@@ -449,11 +450,10 @@
 					echo "Error: $iErrorLevel\n";
 					exit($iErrorLevel);
 				}
-				echo date('Y-m-d H:i:s')." Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
 				var_Dump($sSQL);
 				$oDB->query($sSQL);
-				echo date('Y-m-d H:i:s')." Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+				echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 				// Archive for debug?
 				unlink($sImportFile);
@@ -523,13 +523,13 @@
 			$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
 			var_Dump($sSQL);
 			$oDB->query($sSQL);
-			echo date('Y-m-d H:i:s')." Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+			echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 			$sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
 			$oDB->query($sSQL);
 
 			$fDuration = time() - $fStartTime;
-			echo date('Y-m-d H:i:s')." Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
+			echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60,2)." minutes\n";
 			if (!$aResult['import-osmosis-all']) exit;
 
 			if ( CONST_Replication_Update_Interval > 60 )

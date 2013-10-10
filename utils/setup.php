@@ -125,7 +125,13 @@
 			pgsqlRunScript('CREATE EXTENSION hstore');
 		}
 
-		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
+		$fPostgisVersion = (float) CONST_Postgis_Version;
+		if ($fPostgisVersion < 2.0) {
+			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
+			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
+		} else {
+			pgsqlRunScript('CREATE EXTENSION postgis');
+		}
 		$sVersionString = $oDB->getOne('select postgis_full_version()');
 		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
 		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])
@@ -134,7 +140,6 @@
 			exit;
 		}
 
-		pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');

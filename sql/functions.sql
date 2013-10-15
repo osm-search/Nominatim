@@ -1123,7 +1123,11 @@ BEGIN
         return NULL;
       END IF;
       NEW.rank_search := NEW.admin_level * 2;
-      NEW.rank_address := NEW.rank_search;
+      IF NEW.type = 'administrative' THEN
+        NEW.rank_address := NEW.rank_search;
+      ELSE
+        NEW.rank_address := 0;
+      END IF;
     ELSEIF NEW.class = 'landuse' AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
       NEW.rank_search := 22;
       NEW.rank_address := NEW.rank_search;

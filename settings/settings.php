@@ -55,6 +55,7 @@
 	@define('CONST_ClosedForIndexingExceptionIPs', '');
 	@define('CONST_BlockedIPs', '');
 	@define('CONST_BulkUserIPs', '');
+	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs
 
 	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
 	@define('CONST_Tile_Default', 'Mapnik');

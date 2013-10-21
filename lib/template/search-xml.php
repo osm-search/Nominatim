@@ -80,7 +80,7 @@
 		echo " display_name='".htmlspecialchars($aResult['name'], ENT_QUOTES)."'";
 
 		echo " class='".htmlspecialchars($aResult['class'])."'";
-		echo " type='".htmlspecialchars($aResult['type'])."'";
+		echo " type='".htmlspecialchars($aResult['type'], ENT_QUOTES)."'";
 		echo " importance='".htmlspecialchars($aResult['importance'])."'";
 		if (isset($aResult['icon']) && $aResult['icon'])
 		{

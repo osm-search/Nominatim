@@ -254,7 +254,13 @@
 
 		if (sizeof($aNearPostcodes))
 		{
-			return array(array('lat' => $aNearPostcodes[0]['lat'], 'lon' => $aNearPostcodes[0]['lon'], 'radius' => 0.005));
+			$aPostcodes = array();
+			foreach($aNearPostcodes as $aPostcode)
+			{
+				$aPostcodes[] = array('lat' => $aPostcode['lat'], 'lon' => $aPostcode['lon'], 'radius' => 0.005);
+			}
+
+			return $aPostcodes;
 		}
 
 		return false;

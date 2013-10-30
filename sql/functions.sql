@@ -347,7 +347,7 @@ BEGIN
 
     w := getorcreate_word_id(s);
 
-    IF NOT (ARRAY[w] <@ result) THEN
+    IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
       result := result || w;
     END IF;
 
@@ -415,7 +415,7 @@ BEGIN
 
   w := getorcreate_word_id(s);
 
-  IF NOT (ARRAY[w] <@ result) THEN
+  IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
     result := result || w;
   END IF;
 

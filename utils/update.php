@@ -74,6 +74,7 @@
 	$oDB =& getDB();
 
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 	// cache memory to be used by osm2pgsql, should not be more than the available memory
 	$iCacheMemory = (isset($aResult['osm2pgsql-cache'])?$aResult['osm2pgsql-cache']:2000);
@@ -82,7 +83,7 @@
 		$iCacheMemory = getCacheMemoryMB();
 		echo "WARNING: resetting cache memory to $iCacheMemory\n";
 	}
-	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'];
+	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
 	if (!is_null(CONST_Osm2pgsql_Flatnode_File))
 	{
 		$sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
@@ -360,7 +361,7 @@
 
 	if ($aResult['index'])
 	{
-		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
+		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 	}
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
@@ -377,7 +378,7 @@
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
+		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}

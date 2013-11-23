@@ -309,36 +309,36 @@
 			return $aSearchResults;
 		}
 
-        /* Perform the actual query lookup.
+		/* Perform the actual query lookup.
 
-           Returns an ordered list of results, each with the following fields:
-              osm_type:   type of corresponding OSM object
-                            N - node
-                            W - way
-                            R - relation
-                            P - postcode (internally computed)
-              osm_id: id of corresponding OSM object
-              class: general object class (corresponds to tag key of primary OSM tag)
-              type: subclass of object (corresponds to tag value of primary OSM tag)
-              admin_level:  see http://wiki.openstreetmap.org/wiki/Admin_level
-              rank_search:  rank in search hierarchy
-                            (see also http://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
-              rank_address: rank in address hierarchy (determines orer in address)
-              place_id: internal key (may differ between different instances)
-              country_code: ISO country code
-              langaddress: localized full address
-              placename: localized name of object
-              ref: content of ref tag (if available)
-              lon: longitude
-              lat: latitude
-              importance: importance of place based on Wikipedia link count
-              addressimportance: cumulated importance of address elements
-              extra_place: type of place (for admin boundaries, if there is a place tag)
-              aBoundingBox: bounding Box
-              label: short description of the object class/type (English only) 
-              name: full name (currently the same as langaddress)
-              foundorder: further ordering value for places with same importance
-         */
+			Returns an ordered list of results, each with the following fields:
+			  osm_type: type of corresponding OSM object
+							N - node
+							W - way
+							R - relation
+							P - postcode (internally computed)
+			  osm_id: id of corresponding OSM object
+			  class: general object class (corresponds to tag key of primary OSM tag)
+			  type: subclass of object (corresponds to tag value of primary OSM tag)
+			  admin_level: see http://wiki.openstreetmap.org/wiki/Admin_level
+			  rank_search: rank in search hierarchy
+							(see also http://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
+			  rank_address: rank in address hierarchy (determines orer in address)
+			  place_id: internal key (may differ between different instances)
+			  country_code: ISO country code
+			  langaddress: localized full address
+			  placename: localized name of object
+			  ref: content of ref tag (if available)
+			  lon: longitude
+			  lat: latitude
+			  importance: importance of place based on Wikipedia link count
+			  addressimportance: cumulated importance of address elements
+			  extra_place: type of place (for admin boundaries, if there is a place tag)
+			  aBoundingBox: bounding Box
+			  label: short description of the object class/type (English only) 
+			  name: full name (currently the same as langaddress)
+			  foundorder: further ordering value for places with same importance
+		*/
 		function lookup()
 		{
 			if (!$this->sQuery && !$this->aStructuredQuery) return false;

@@ -2481,7 +2481,7 @@ BEGIN
       CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
       class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      distance,calculated_country_code
+      distance,calculated_country_code,postcode
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
       and (cached_rank_address > 0 AND cached_rank_address < searchrankaddress)
@@ -2495,6 +2495,9 @@ BEGIN
     END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
+    END IF;
+    IF searchpostcode IS NULL and location.isaddress and location.type != 'postcode' and location.postcode IS NOT NULL THEN
+      searchpostcode := location.postcode;
     END IF;
     IF location.rank_address = 4 AND location.isaddress THEN
       hadcountry := true;

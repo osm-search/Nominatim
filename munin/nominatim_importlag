@@ -5,26 +5,42 @@
 # Can be configured through libpq environment variables, for example
 # PGUSER, PGDATABASE, etc. See man page of psql for more information
 #
-# Parameters: 
+# To configure munin for a default installation, add these lines to
+# the file /etc/munin/plugin-conf.d/munin-node or in any file in the
+# directory /etc/munin/plugin-conf.d/
+#
+# [nominatim_*]
+# user www-data
+# env.PGUSER www-data
+# env.PGPORT 5432
+# env.PGDATABASE nominatim
+# env.age_warning 21600
+# env.age_critical 86400
+
+# Parameters:
 #
 #       config   (required)
 #       autoconf (optional - used by munin-config)
 #
- 
+
+. $MUNIN_LIBDIR/plugins/plugin.sh
+
 if [ "$1" = "config" ]; then
- 
-        echo 'graph_title Data import lag' 
-        echo 'graph_args --base 1000 -l 0' 
-        echo 'graph_vlabel minutes' 
-        echo 'graph_category nominatim' 
-        echo 'age.label DB import age' 
-        echo 'age.type GAUGE' 
+
+        echo 'graph_title Data import lag'
+        echo 'graph_args --base 1000 -l 0'
+        echo 'graph_vlabel minutes'
+        echo 'graph_category nominatim'
+        echo 'age.label DB import age'
+        echo 'age.type GAUGE'
         echo 'age.cdef age,60,/'
+	print_warning age
+        print_critical age
         exit 0
 fi
- 
+
 
 delay=`psql -c "copy (select extract(epoch from timezone('utc', now())-lastimportdate)::int from import_status) to stdout"`
- 
- 
+
+
 echo "age.value $delay"

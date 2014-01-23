@@ -20,6 +20,7 @@
 		protected $iLimit = 20;
 		protected $iFinalLimit = 10;
 		protected $iOffset = 0;
+		protected $bFallback = false;
 
 		protected $aCountryCodes = false;
 		protected $aNearPoint = false;
@@ -115,6 +116,11 @@
 		function setOffset($iOffset = 0)
 		{
 			$this->iOffset = $iOffset;
+		}
+
+		function setFallback($bFallback = true)
+		{
+			$this->bFallback = (bool)$bFallback;
 		}
 
 		function setExcludedPlaceIDs($a)
@@ -213,6 +219,11 @@
 		{
 			$this->sQuery = false;
 
+			// Reset
+			$this->iMinAddressRank = 0;
+			$this->iMaxAddressRank = 30;
+			$this->aAddressRankList = array();
+
 			$this->aStructuredQuery = array();
 			$this->sAllowedTypesSQLList = '';
 
@@ -232,7 +243,29 @@
 					$sAllowedTypesSQLList = '(\'place\',\'boundary\')';
 				}
 			}
+		}
 
+		function fallbackStructuredQuery()
+		{
+			if (!$this->aStructuredQuery) return false;
+
+			$aParams = $this->aStructuredQuery;
+
+			if (sizeof($aParams) == 1) return false;
+
+			$aOrderToFallback = array('postalcode', 'street', 'city', 'county', 'state');
+
+			foreach($aOrderToFallback as $sType)
+			{
+				if (isset($aParams[$sType]))
+				{
+					unset($aParams[$sType]);
+					$this->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		function getDetails($aPlaceIDs)
@@ -1374,6 +1407,14 @@
 			// No results? Done
 			if (!sizeof($aSearchResults))
 			{
+				if ($this->bFallback)
+				{
+					if ($this->fallbackStructuredQuery())
+					{
+						return $this->lookup();
+					}
+				}
+
 				return array();
 			}
 

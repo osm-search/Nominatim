@@ -34,6 +34,8 @@
 		if (isset($aParams['limit'])) $oGeocode->setLimit((int)$aParams['limit']);
 		if (isset($aParams['offset'])) $oGeocode->setOffset((int)$aParams['offset']);
 
+		if (isset($aParams['fallback'])) $oGeocode->setFallback((int)$aParams['fallback']);
+
 		// List of excluded Place IDs - used for more acurate pageing
 		if (isset($aParams['exclude_place_ids']) && $aParams['exclude_place_ids'])
 		{

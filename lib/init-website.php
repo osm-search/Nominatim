@@ -54,6 +54,7 @@
 
 	if (strpos(CONST_BlockedIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false || $fBucketVal >= CONST_ConnectionBucket_BlockLimit)
 	{
+		header("HTTP/1.0 429 Too Many Requests");
 		echo "Your IP has been blocked. \n";
 		echo CONST_BlockMessage;
 		exit;

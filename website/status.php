@@ -3,36 +3,39 @@
 
 	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 
+	function statusError($sMsg)
+	{
+		header("HTTP/1.0 500 Internal Server Error");
+		echo "ERROR: ".$sMsg;
+		exit;
+	}
+
 	$oDB =& getDB();
 	if (!$oDB || PEAR::isError($oDB))
 	{
-		echo "ERROR: No database";
-		exit;
+		statusError("No database");
 	}
 
 	$sStandardWord = $oDB->getOne("select make_standard_name('a')");
 	if (PEAR::isError($sStandardWord))
 	{
-		echo "ERROR: Module failed";
-		exit;
+		statusError("Module failed");
 	}
 	if ($sStandardWord != 'a')
 	{
-		echo "ERROR: Transliteration failed";
-		exit;
+		statusError("Module call failed");
 	}
 
 	$iWordID = $oDB->getOne("select word_id,word_token, word, class, type, country_code, operator, search_name_count from word where word_token in (' a')");
 	if (PEAR::isError($iWordID))
 	{
-		echo "ERROR: Query failed";
-		exit;
+		statusError("Query failed");
 	}
 	if (!$iWordID)
 	{
-		echo "ERROR: No value";
-		exit;
+		statusError("No value");
 	}
+
 	echo "OK";
 	exit;
 

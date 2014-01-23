@@ -33,6 +33,7 @@
 		protected $iMinAddressRank = 0;
 		protected $iMaxAddressRank = 30;
 		protected $aAddressRankList = array();
+		protected $exactMatchCache = array();
 
 		protected $sAllowedTypesSQLList = false;
 
@@ -277,13 +278,13 @@
 			// Get the details for display (is this a redundant extra step?)
 			$sPlaceIDs = join(',',$aPlaceIDs);
 
-			$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id,calculated_country_code as country_code,";
+			$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code,";
 			$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 			$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 			$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 			$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 			$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
-			$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(placex.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+			$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 			$sSQL .= "(extratags->'place') as extra_place ";
 			$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
 			$sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
@@ -302,26 +303,26 @@
 			if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
 			{
 				$sSQL .= " union ";
-				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code,";
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 				$sSQL .= "-0.15 as importance, ";
-				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
 				$sSQL .= "group by place_id";
 				if (!$this->bDeDupe) $sSQL .= ",place_id";
 				$sSQL .= " union ";
-				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id,'us' as country_code,";
+				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code,";
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 				$sSQL .= "-0.10 as importance, ";
-				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
 				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
@@ -342,6 +343,36 @@
 			return $aSearchResults;
 		}
 
+		/* Perform the actual query lookup.
+
+			Returns an ordered list of results, each with the following fields:
+			  osm_type: type of corresponding OSM object
+							N - node
+							W - way
+							R - relation
+							P - postcode (internally computed)
+			  osm_id: id of corresponding OSM object
+			  class: general object class (corresponds to tag key of primary OSM tag)
+			  type: subclass of object (corresponds to tag value of primary OSM tag)
+			  admin_level: see http://wiki.openstreetmap.org/wiki/Admin_level
+			  rank_search: rank in search hierarchy
+							(see also http://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
+			  rank_address: rank in address hierarchy (determines orer in address)
+			  place_id: internal key (may differ between different instances)
+			  country_code: ISO country code
+			  langaddress: localized full address
+			  placename: localized name of object
+			  ref: content of ref tag (if available)
+			  lon: longitude
+			  lat: latitude
+			  importance: importance of place based on Wikipedia link count
+			  addressimportance: cumulated importance of address elements
+			  extra_place: type of place (for admin boundaries, if there is a place tag)
+			  aBoundingBox: bounding Box
+			  label: short description of the object class/type (English only) 
+			  name: full name (currently the same as langaddress)
+			  foundorder: secondary ordering for places with same importance
+		*/
 		function lookup()
 		{
 			if (!$this->sQuery && !$this->aStructuredQuery) return false;
@@ -1148,12 +1179,16 @@
 							$aOrder[] = "$sImportanceSQL DESC";
 							if (sizeof($aSearch['aFullNameAddress']))
 							{
-								$aOrder[] = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) DESC';
+								$sExactMatchSQL = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) as exactmatch';
+								$aOrder[] = 'exactmatch DESC';
+							} else {
+								$sExactMatchSQL = '0::int as exactmatch';
 							}
 
 							if (sizeof($aTerms))
 							{
-								$sSQL = "select place_id";
+								$sSQL = "select place_id, ";
+								$sSQL .= $sExactMatchSQL;
 								$sSQL .= " from search_name";
 								$sSQL .= " where ".join(' and ',$aTerms);
 								$sSQL .= " order by ".join(', ',$aOrder);
@@ -1181,6 +1216,7 @@
 									//if ($aViewBoxRow['in_small'] == 't') $bViewBoxMatch = 1;
 									//else if ($aViewBoxRow['in_large'] == 't') $bViewBoxMatch = 2;
 									$aPlaceIDs[] = $aViewBoxRow['place_id'];
+									$this->exactMatchCache[$aViewBoxRow['place_id']] = $aViewBoxRow['exactmatch'];
 								}
 							}
 							//var_Dump($aPlaceIDs);
@@ -1586,7 +1622,24 @@
 				$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
 
 				$aResult['name'] = $aResult['langaddress'];
-				$aResult['foundorder'] = -$aResult['addressimportance'];
+				// secondary ordering (for results with same importance (the smaller the better):
+				//   - approximate importance of address parts
+				$aResult['foundorder'] = -$aResult['addressimportance']/10;
+				//   - number of exact matches from the query
+				if (isset($this->exactMatchCache[$aResult['place_id']]))
+					$aResult['foundorder'] -= $this->exactMatchCache[$aResult['place_id']];
+				else if (isset($this->exactMatchCache[$aResult['parent_place_id']]))
+					$aResult['foundorder'] -= $this->exactMatchCache[$aResult['parent_place_id']];
+				//  - importance of the class/type
+				if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
+					&& $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
+				{
+					$aResult['foundorder'] = $aResult['foundorder'] + 0.000001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+				}
+				else
+				{
+					$aResult['foundorder'] = $aResult['foundorder'] + 0.001;
+				}
 				$aSearchResults[$iResNum] = $aResult;
 			}
 			uasort($aSearchResults, 'byImportance');

@@ -74,6 +74,7 @@
 	$oDB =& getDB();
 
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 	// cache memory to be used by osm2pgsql, should not be more than the available memory
 	$iCacheMemory = (isset($aResult['osm2pgsql-cache'])?$aResult['osm2pgsql-cache']:2000);
@@ -82,7 +83,7 @@
 		$iCacheMemory = getCacheMemoryMB();
 		echo "WARNING: resetting cache memory to $iCacheMemory\n";
 	}
-	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'];
+	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
 	if (!is_null(CONST_Osm2pgsql_Flatnode_File))
 	{
 		$sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
@@ -360,7 +361,7 @@
 
 	if ($aResult['index'])
 	{
-		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
+		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 	}
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
@@ -377,7 +378,7 @@
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -t '.$aResult['index-instances'];
+		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}
@@ -417,8 +418,9 @@
 							exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
 						}
 						// There are new replication files - use osmosis to download the file
-						echo "\nReplication Delay is ".$aReplicationLag[0]."\n";
+						echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
 					}
+					$fStartTime = time();
 					$fCMDStartTime = time();
 					echo $sCMDDownload."\n";
 					exec($sCMDDownload, $sJunk, $iErrorLevel);
@@ -431,9 +433,10 @@
 					}
 					$iFileSize = filesize($sImportFile);
 					$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-					echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 					$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
+					var_Dump($sSQL);
 					$oDB->query($sSQL);
+					echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				}
 
 				$iFileSize = filesize($sImportFile);
@@ -446,12 +449,12 @@
 				if ($iErrorLevel)
 				{
 					echo "Error: $iErrorLevel\n";
-					exit;
+					exit($iErrorLevel);
 				}
-				echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
 				var_Dump($sSQL);
 				$oDB->query($sSQL);
+				echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 				// Archive for debug?
 				unlink($sImportFile);
@@ -461,15 +464,15 @@
 
 			// Index file
 			$sThisIndexCmd = $sCMDIndex;
+			$fCMDStartTime = time();
 
 			if (!$aResult['no-npi'])
 			{
-				$fCMDStartTime = time();
 				$iFileID = $oDB->getOne('select nextval(\'file\')');
 				if (PEAR::isError($iFileID))
 				{
 					echo $iFileID->getMessage()."\n";
-					exit;
+					exit(-1);
 				} 
 				$sFileDir = CONST_BasePath.'/export/diff/';
 				$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
@@ -495,7 +498,7 @@
 				if ($iErrorLevel)
 				{
 					echo "Error: $iErrorLevel\n";
-					exit;
+					exit($iErrorLevel);
 				}
 
 				if (!$aResult['no-npi'])
@@ -510,7 +513,7 @@
 					if ($iErrorLevel)
 					{
 						echo "Error: $iErrorLevel\n";
-						exit;
+						exit($iErrorLevel);
 					}
 
 					rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",
@@ -518,26 +521,27 @@
 				}
 			}
 
-			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 			$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+			var_Dump($sSQL);
 			$oDB->query($sSQL);
+			echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
 
 			$sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
 			$oDB->query($sSQL);
 
 			$fDuration = time() - $fStartTime;
-			echo "Completed for $sBatchEnd in ".round($fDuration/60,2)."\n";
+			echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60,2)." minutes\n";
 			if (!$aResult['import-osmosis-all']) exit;
 
 			if ( CONST_Replication_Update_Interval > 60 )
 			{
-				$iSleep = round(CONST_Replication_Update_Interval*0.8);
+				$iSleep = max(0,(strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
 			}
 			else
 			{
 				$iSleep = max(0,CONST_Replication_Update_Interval-$fDuration);
 			}
-			echo "Sleeping $iSleep seconds\n";
+			echo date('Y-m-d H:i:s')." Sleeping $iSleep seconds\n";
 			sleep($iSleep);
 		}
 

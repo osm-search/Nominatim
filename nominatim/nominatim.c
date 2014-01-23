@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 
     PGconn *conn;
 
-    fprintf(stderr, "nominatim SVN version %s\n\n", VERSION);
+    fprintf(stderr, "nominatim version %s\n\n", VERSION);
 
     while (1)
     {

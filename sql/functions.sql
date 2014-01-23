@@ -347,7 +347,7 @@ BEGIN
 
     w := getorcreate_word_id(s);
 
-    IF NOT (ARRAY[w] <@ result) THEN
+    IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
       result := result || w;
     END IF;
 
@@ -415,7 +415,7 @@ BEGIN
 
   w := getorcreate_word_id(s);
 
-  IF NOT (ARRAY[w] <@ result) THEN
+  IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
     result := result || w;
   END IF;
 
@@ -938,10 +938,6 @@ BEGIN
   --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
 
   -- just block these
-  IF NEW.class = 'highway' and NEW.type in ('turning_circle','traffic_signals','mini_roundabout','noexit','crossing') THEN
---    RAISE WARNING 'bad highway %',NEW.osm_id;
-    RETURN null;
-  END IF;
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
 --    RAISE WARNING 'empty landuse %',NEW.osm_id;
     RETURN null;
@@ -1127,7 +1123,11 @@ BEGIN
         return NULL;
       END IF;
       NEW.rank_search := NEW.admin_level * 2;
-      NEW.rank_address := NEW.rank_search;
+      IF NEW.type = 'administrative' THEN
+        NEW.rank_address := NEW.rank_search;
+      ELSE
+        NEW.rank_address := 0;
+      END IF;
     ELSEIF NEW.class = 'landuse' AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
       NEW.rank_search := 22;
       NEW.rank_address := NEW.rank_search;
@@ -1245,7 +1245,7 @@ BEGIN
    -- Note: won't work on initial import because the classtype tables
    -- do not yet exist. It won't hurt either.
   classtable := 'place_classtype_' || NEW.class || '_' || NEW.type;
-  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable INTO result;
+  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable and schemaname = current_schema() INTO result;
   IF result THEN
     EXECUTE 'INSERT INTO ' || classtable::regclass || ' (place_id, centroid) VALUES ($1,$2)' 
     USING NEW.place_id, ST_Centroid(NEW.geometry);
@@ -1987,7 +1987,7 @@ BEGIN
 
   -- remove from tables for special search
   classtable := 'place_classtype_' || OLD.class || '_' || OLD.type;
-  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable INTO b;
+  SELECT count(*)>0 FROM pg_tables WHERE tablename = classtable and schemaname = current_schema() INTO b;
   IF b THEN
     EXECUTE 'DELETE FROM ' || classtable::regclass || ' WHERE place_id = $1' USING OLD.place_id;
   END IF;
@@ -2044,9 +2044,6 @@ BEGIN
   END IF;
 
   -- Just block these - lots and pointless
-  IF NEW.class = 'highway' and NEW.type in ('turning_circle','traffic_signals','mini_roundabout','noexit','crossing') THEN
-    RETURN null;
-  END IF;
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
     RETURN null;
   END IF;
@@ -2097,6 +2094,9 @@ BEGIN
   IF existingplacex.osm_type IS NULL THEN
 
     IF existing.osm_type IS NOT NULL THEN
+      -- pathological case caused by the triggerless copy into place during initial import
+      -- force delete even for large areas, it will be reinserted later
+      UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
       DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
     END IF;
 
@@ -2255,7 +2255,7 @@ BEGIN
       country_code = NEW.country_code,
       parent_place_id = null,
       extratags = NEW.extratags,
-      admin_level = NEW.admin_level,
+      admin_level = CASE WHEN NEW.admin_level > 15 THEN 15 ELSE NEW.admin_level END,
       indexed_status = 2,    
       geometry = NEW.geometry
       where place_id = existingplacex.place_id;
@@ -2481,7 +2481,7 @@ BEGIN
       CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
       class, type, admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      distance,calculated_country_code
+      distance,calculated_country_code,postcode
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
       and (cached_rank_address > 0 AND cached_rank_address < searchrankaddress)
@@ -2495,6 +2495,9 @@ BEGIN
     END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
+    END IF;
+    IF searchpostcode IS NULL and location.isaddress and location.type != 'postcode' and location.postcode IS NOT NULL THEN
+      searchpostcode := location.postcode;
     END IF;
     IF location.rank_address = 4 AND location.isaddress THEN
       hadcountry := true;

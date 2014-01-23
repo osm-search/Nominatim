@@ -55,8 +55,7 @@
 	if (strpos(CONST_BlockedIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false || $fBucketVal >= CONST_ConnectionBucket_BlockLimit)
 	{
 		echo "Your IP has been blocked. \n";
-		echo "Please create a nominatim trac ticket (http://trac.openstreetmap.org/newticket?component=nominatim) to request this to be removed. \n";
-		echo "Information on the Nominatim usage policy can be found here: http://wiki.openstreetmap.org/wiki/Nominatim#Usage_Policy \n";
+		echo CONST_BlockMessage;
 		exit;
 	}
 

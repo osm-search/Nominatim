@@ -846,12 +846,12 @@
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 			//var_dump($sSQL);
 			$aPlace = $oDB->getRow($sSQL);
-			$iPlaceID = $aPlace['place_id'];
-			if (PEAR::IsError($iPlaceID))
+			if (PEAR::IsError($aPlace))
 			{
-				var_Dump($sSQL, $iPlaceID);
+				var_Dump($sSQL, $aPlace);
 				exit;
 			}
+			$iPlaceID = $aPlace['place_id'];
 		}
 
 		// The point we found might be too small - use the address to find what it is a child of

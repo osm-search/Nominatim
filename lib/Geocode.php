@@ -16,6 +16,7 @@
 		protected $aExcludePlaceIDs = array();
 		protected $bDeDupe = true;
 		protected $bReverseInPlan = false;
+		protected $bIgnoreNonSearchTerms = CONST_Search_IgnoreNonSearchTerms;
 
 		protected $iLimit = 20;
 		protected $iFinalLimit = 10;
@@ -103,6 +104,11 @@
 		function setDeDupe($bDeDupe = true)
 		{
 			$this->bDeDupe = (bool)$bDeDupe;
+		}
+		
+		function setIgnoreNonSearchTerms($b = true)
+		{
+			$this->bIgnoreNonSearchTerms = (bool)$b;
 		}
 
 		function setLimit($iLimit = 10)
@@ -882,7 +888,7 @@
 													}
 													else
 													{
-														$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+														if (!$this->bIgnoreNonSearchTerms) $aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 														if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 													}
 												}
@@ -894,7 +900,7 @@
 													if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
 													if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
 														$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-													else
+													elseif (!$this->bIgnoreNonSearchTerms)
 														$aSearch['aNameNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 													$aSearch['iNamePhrase'] = $iPhrase;
 													if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;

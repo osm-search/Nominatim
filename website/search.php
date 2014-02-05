@@ -30,6 +30,7 @@
 		if (isset($aParams['addressdetails'])) $oGeocode->setIncludeAddressDetails((bool)$aParams['addressdetails']);
 		if (isset($aParams['bounded'])) $oGeocode->setBounded((bool)$aParams['bounded']);
 		if (isset($aParams['dedupe'])) $oGeocode->setDedupe((bool)$aParams['dedupe']);
+		if (isset($aParams['ignoreNonSearchTerms'])) $oGeocode->setIgnoreNonSearchTerms((bool)$aParams['ignoreNonSearchTerms']);
 
 		if (isset($aParams['limit'])) $oGeocode->setLimit((int)$aParams['limit']);
 		if (isset($aParams['offset'])) $oGeocode->setOffset((int)$aParams['offset']);

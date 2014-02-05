@@ -72,6 +72,7 @@
 
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
+	@define('CONST_Search_IgnoreNonSearchTerms', false);                // default: false. if true, frequently indexed search terms are ignored rather than filtered out. This greatly help geocoding requests without a road type (ex: 'street' not specified in '500 rivard street') as well as Canadian geocoding requests.
 
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);

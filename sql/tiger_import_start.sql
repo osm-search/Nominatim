@@ -79,7 +79,7 @@ BEGIN
   FOR housenum IN startnumber..endnumber BY stepsize LOOP
     insert into location_property_tiger_import (place_id, partition, parent_place_id, housenumber, postcode, centroid)
     values (nextval('seq_place'), out_partition, out_parent_place_id, housenum, in_postcode,
-      ST_Line_Interpolate_Point(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
+      ST_LineInterpolatePoint(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
     newpoints := newpoints + 1;
   END LOOP;
 

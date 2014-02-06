@@ -895,7 +895,7 @@ BEGIN
                 insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, addr_place, isin, postcode,
                   country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
                   values ('N',prevnode.osm_id, 'place', 'house', prevnode.admin_level, housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
-                  prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search, 1, ST_Line_Interpolate_Point(linegeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
+                  prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search, 1, ST_LineInterpolatePoint(linegeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
                 newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
               END LOOP;
@@ -1484,9 +1484,9 @@ BEGIN
             FOR relation IN SELECT place_id FROM placex
               WHERE ST_DWithin(location.geometry, placex.geometry, 0.001) and placex.rank_search = 26
                 and st_geometrytype(location.geometry) in ('ST_LineString')
-              ORDER BY (ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,0))+
-                        ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,0.5))+
-                        ST_distance(placex.geometry, ST_Line_Interpolate_Point(location.geometry,1))) ASC limit 1
+              ORDER BY (ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,0))+
+                        ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,0.5))+
+                        ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,1))) ASC limit 1
             LOOP
 --RAISE WARNING 'using nearest street to address interpolation line,0.001 %',relation;
               NEW.parent_place_id := relation.place_id;

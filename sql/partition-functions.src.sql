@@ -327,9 +327,9 @@ BEGIN
     RETURN;
   END IF;
 
-  p1 := ST_Line_Interpolate_Point(line,0);
-  p2 := ST_Line_Interpolate_Point(line,0.5);
-  p3 := ST_Line_Interpolate_Point(line,1);
+  p1 := ST_LineInterpolatePoint(line,0);
+  p2 := ST_LineInterpolatePoint(line,0.5);
+  p3 := ST_LineInterpolatePoint(line,1);
 
 -- start
   IF in_partition = -partition- THEN

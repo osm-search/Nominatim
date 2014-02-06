@@ -132,6 +132,10 @@
 		} else {
 			pgsqlRunScript('CREATE EXTENSION postgis');
 		}
+		if ($fPostgisVersion < 2.1) {
+			// Function was renamed in 2.1 and throws an annoying deprecation warning
+			pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
+		}
 		$sVersionString = $oDB->getOne('select postgis_full_version()');
 		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
 		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])

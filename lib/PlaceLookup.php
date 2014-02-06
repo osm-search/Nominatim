@@ -41,8 +41,8 @@
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
-			$sSQL = "select placex.place_id, partition, osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, country_code, extratags, parent_place_id, linked_place_id, rank_address, rank_search";
-			$sSQL .= " importance, indexed_status, indexed_date, wikipedia, calculated_country_code, ";
+			$sSQL = "select placex.place_id, partition, osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, country_code, extratags, parent_place_id, linked_place_id, rank_address, rank_search, ";
+			$sSQL .= " coalesce(importance,0.75-(rank_search::float/40)) as importance, indexed_status, indexed_date, wikipedia, calculated_country_code, ";
 			$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 			$sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 			$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";

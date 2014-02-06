@@ -20,8 +20,14 @@
                 }
 		if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
 		if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
+
+		$aFilteredPlaces['place_rank'] = $aPlace['rank_search'];
+
                 $aFilteredPlaces['category'] = $aPlace['class'];
                 $aFilteredPlaces['type'] = $aPlace['type'];
+
+		$aFilteredPlaces['importance'] = $aPlace['importance'];
+
                 $aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);
 
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];

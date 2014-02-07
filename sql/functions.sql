@@ -1953,7 +1953,7 @@ BEGIN
     -- mark everything linked to this place for re-indexing
     --DEBUG: RAISE WARNING 'placex_delete:03 % %',OLD.osm_type,OLD.osm_id;
     UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
-      and placex.place_id = place_addressline.place_id and indexed_status = 0;
+      and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress;
 
     --DEBUG: RAISE WARNING 'placex_delete:04 % %',OLD.osm_type,OLD.osm_id;
     DELETE FROM place_addressline where address_place_id = OLD.place_id;
@@ -2090,8 +2090,19 @@ BEGIN
   DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
   DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
-  -- To paraphrase, if there isn't an existing item, OR if the admin level has changed, OR if it is a major change in geometry
-  IF existingplacex.osm_type IS NULL THEN
+  -- To paraphrase, if there isn't an existing item, OR if the admin level has changed
+  IF existingplacex.osm_type IS NULL OR
+     coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15)
+  THEN
+
+    IF existingplacex.osm_type IS NOT NULL THEN
+      -- sanity check: ignore admin_level changes on places with too many active children
+      -- or we end up reindexing entire countries because somebody accidentally deleted admin_level
+      --LIMIT INDEXING: SELECT count(*) FROM (SELECT 'a' FROM placex , place_addressline where address_place_id = existingplacex.place_id and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub INTO i;
+      --LIMIT INDEXING: IF i > 100000 THEN
+      --LIMIT INDEXING:  RETURN null;
+      --LIMIT INDEXING: END IF;
+    END IF;
 
     IF existing.osm_type IS NOT NULL THEN
       -- pathological case caused by the triggerless copy into place during initial import

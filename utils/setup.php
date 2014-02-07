@@ -197,6 +197,7 @@
 		$sTemplate = str_replace('{modulepath}', CONST_BasePath.'/module', $sTemplate);
 		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
 		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
+		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
 		pgsqlRunScript($sTemplate);
 	}
 

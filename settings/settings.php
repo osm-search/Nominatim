@@ -6,6 +6,7 @@
 	@define('CONST_Debug', false);
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim'); // <driver>://<username>:<password>@<host>:<port>/<database>
 	@define('CONST_Max_Word_Frequency', '50000');
+	@define('CONST_Limit_Reindexing', true);
 
 	// Software versions
 	@define('CONST_Postgresql_Version', '9.1'); // values: 8.3, 8.4, 9.0, 9.1, 9.2

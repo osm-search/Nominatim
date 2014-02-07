@@ -417,11 +417,12 @@
 			if ($this->aRoutePoints)
 			{
 				$sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
-				$bFirst = false;
-				foreach($this->aRouteaPoints as $aPoint)
+				$bFirst = true;
+				foreach($this->aRoutePoints as $aPoint)
 				{
 					if (!$bFirst) $sViewboxCentreSQL .= ",";
 					$sViewboxCentreSQL .= $aPoint[1].' '.$aPoint[0];
+					$bFirst = false;
 				}
 				$sViewboxCentreSQL .= ")'::geometry,4326)";
 

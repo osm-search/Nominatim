@@ -2092,7 +2092,7 @@ BEGIN
 
   -- To paraphrase, if there isn't an existing item, OR if the admin level has changed
   IF existingplacex.osm_type IS NULL OR
-     coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15)
+    (coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15) AND existingplacex.class = 'boundary' AND existingplacex.type = 'administrative')
   THEN
 
     IF existingplacex.osm_type IS NOT NULL THEN

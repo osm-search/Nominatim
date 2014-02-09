@@ -2045,6 +2045,8 @@ BEGIN
 
   -- Just block these - lots and pointless
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
+    -- if the name tag was removed, older versions might still be lurking in the place table
+    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
     RETURN null;
   END IF;
 

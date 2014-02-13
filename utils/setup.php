@@ -176,6 +176,8 @@
 		}
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
 		$osm2pgsql .= ' -C '.$iCacheMemory;
+		if (isset($aDSNInfo['hostspec'])) $osm2pgsql .= ' -H '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $osm2pgsql .= ' -U '.$aDSNInfo['username'];
 		$osm2pgsql .= ' -P '.$aDSNInfo['port'];
 		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
 		passthruCheckReturn($osm2pgsql);
@@ -600,6 +602,8 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+		if (isset($aDSNInfo['hostspec'])) $sBaseCmd .= ' -H '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sBaseCmd .= ' -U '.$aDSNInfo['username'];
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
@@ -678,6 +682,8 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -706,6 +712,8 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => STDOUT, 
@@ -730,6 +738,8 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -758,6 +768,8 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),

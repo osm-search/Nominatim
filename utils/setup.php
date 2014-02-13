@@ -676,6 +676,7 @@
 
 	function pgsqlRunScriptFile($sFilename)
 	{
+		global $aCMDResult;
 		if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
 		// Convert database DSN to psql parameters
@@ -691,6 +692,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
@@ -708,6 +710,7 @@
 
 	function pgsqlRunScript($sScript)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
@@ -720,6 +723,7 @@
 			2 => STDERR
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
@@ -734,6 +738,7 @@
 
 	function pgsqlRunRestoreData($sDumpFile)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
@@ -747,6 +752,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pg_restore');
 
@@ -764,6 +770,7 @@
 
 	function pgsqlRunDropAndRestore($sDumpFile)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
@@ -777,6 +784,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pg_restore');
 

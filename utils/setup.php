@@ -97,7 +97,10 @@
 		{
 			fail('database already exists ('.CONST_Database_DSN.')');
 		}
-		passthruCheckReturn('createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+		$sCMD = 'createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
+		passthruCheckReturn($sCMD);
 	}
 
 	if ($aCMDResult['setup-db'] || $aCMDResult['all'])
@@ -115,8 +118,10 @@
 			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
 			exit;
 		}
-
-		passthru('createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+		$sCMD = 'createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
+		passthru($sCMD);
 		$pgver = (float) CONST_Postgresql_Version;
 		if ($pgver < 9.1) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');

@@ -97,7 +97,10 @@
 		{
 			fail('database already exists ('.CONST_Database_DSN.')');
 		}
-		passthruCheckReturn('createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+		$sCMD = 'createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
+		passthruCheckReturn($sCMD);
 	}
 
 	if ($aCMDResult['setup-db'] || $aCMDResult['all'])
@@ -115,8 +118,10 @@
 			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
 			exit;
 		}
-
-		passthru('createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+		$sCMD = 'createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
+		passthru($sCMD);
 		$pgver = (float) CONST_Postgresql_Version;
 		if ($pgver < 9.1) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
@@ -176,6 +181,8 @@
 		}
 		$osm2pgsql .= ' -lsc -O gazetteer --hstore';
 		$osm2pgsql .= ' -C '.$iCacheMemory;
+		if (isset($aDSNInfo['hostspec'])) $osm2pgsql .= ' -H '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $osm2pgsql .= ' -U '.$aDSNInfo['username'];
 		$osm2pgsql .= ' -P '.$aDSNInfo['port'];
 		$osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
 		passthruCheckReturn($osm2pgsql);
@@ -600,6 +607,8 @@
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+		if (isset($aDSNInfo['hostspec'])) $sBaseCmd .= ' -H '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sBaseCmd .= ' -U '.$aDSNInfo['username'];
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
@@ -672,12 +681,15 @@
 
 	function pgsqlRunScriptFile($sFilename)
 	{
+		global $aCMDResult;
 		if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -685,6 +697,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
@@ -702,16 +715,20 @@
 
 	function pgsqlRunScript($sScript)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => STDOUT, 
 			2 => STDERR
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
@@ -726,10 +743,13 @@
 
 	function pgsqlRunRestoreData($sDumpFile)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -737,6 +757,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pg_restore');
 
@@ -754,10 +775,13 @@
 
 	function pgsqlRunDropAndRestore($sDumpFile)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
+		if (isset($aDSNInfo['hostspec'])) $sCMD .= ' -h '.$aDSNInfo['hostspec'];
+		if (isset($aDSNInfo['username'])) $sCMD .= ' -U '.$aDSNInfo['username'];
 
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
@@ -765,6 +789,7 @@
 			2 => array('file', '/dev/null', 'a')
 		);
 		$ahPipes = null;
+		if ($aCMDResult['verbose']) echo "Running $sCMD\n";
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pg_restore');
 

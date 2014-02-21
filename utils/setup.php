@@ -147,7 +147,15 @@
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode.sql');
+		pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
+		if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz'))
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
+		}
+		else
+		{
+			echo "WARNING: external UK postcode table not found.\n";
+		}
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
 		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
@@ -677,10 +685,29 @@
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -f '.$sFilename;
+		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+
+		$ahGzipPipes = null;
+		if (preg_match('/\\.gz$/', $sFilename))
+		{
+			$aDescriptors = array(
+				0 => array('pipe', 'r'),
+				1 => array('pipe', 'w'),
+				2 => array('file', '/dev/null', 'a')
+			);
+			$hGzipProcess = proc_open('zcat '.$sFilename, $aDescriptors, $ahGzipPipes);
+			if (!is_resource($hGzipProcess)) fail('unable to start zcat');
+			$aReadPipe = $ahGzipPipes[1];
+			fclose($ahGzipPipes[0]);
+		}
+		else
+		{
+			$sCMD .= ' -f '.$sFilename;
+			$aReadPipe = array('pipe', 'r');
+		}
 
 		$aDescriptors = array(
-			0 => array('pipe', 'r'),
+			0 => $aReadPipe,
 			1 => array('pipe', 'w'),
 			2 => array('file', '/dev/null', 'a')
 		);
@@ -688,7 +715,6 @@
 		$hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
 		if (!is_resource($hProcess)) fail('unable to start pgsql');
 
-		fclose($ahPipes[0]);
 
 		// TODO: error checking
 		while(!feof($ahPipes[1]))
@@ -698,6 +724,12 @@
 		fclose($ahPipes[1]);
 
 		proc_close($hProcess);
+		if ($ahGzipPipes)
+		{
+			fclose($ahGzipPipes[1]);
+			proc_close($hGzipProcess);
+		}
+
 	}
 
 	function pgsqlRunScript($sScript)

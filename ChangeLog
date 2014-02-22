@@ -26,3 +26,19 @@
  * support for US ZIP+4 codes
  * refactoring of front-end PHP code
  * lots of smaller bug fixes
+
+ 2.2
+
+ * correct database rights for www-data
+ * add timestamps for update output
+ * load postgis via extension for postgis >= 2.0
+ * remove non-admin boundaries from addresses
+ * further improve ordering of results with same importance
+ * merge addr:postcode tags into object addresses
+ * include rank and importance in reverse geocode output
+ * replace ST_Line_Interpolate_Point with ST_LineInterpolatePoint
+  (for postgis >= 2.1)
+ * update osm2pgsql to latest version
+ * properly detect changes of admin_level
+ * remove landuses when name is removed
+ * smaller fixes

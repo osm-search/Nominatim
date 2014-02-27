@@ -117,18 +117,26 @@
 	}
 
 
-	function getPreferredLanguages()
+	function getPreferredLanguages($sLangString=false)
 	{
-		// If we have been provided the value in $_GET it overrides browser value
-		if (isset($_GET['accept-language']) && $_GET['accept-language'])
+		if (!$sLangString)
 		{
-			$_SERVER["HTTP_ACCEPT_LANGUAGE"] = $_GET['accept-language'];
+			// If we have been provided the value in $_GET it overrides browser value
+			if (isset($_GET['accept-language']) && $_GET['accept-language'])
+			{
+				$_SERVER["HTTP_ACCEPT_LANGUAGE"] = $_GET['accept-language'];
+				$sLangString = $_GET['accept-language'];
+			}
+			else if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
+			{
+				$sLangString = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
+			}
 		}
 
 		$aLanguages = array();
-		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
+		if ($sLangString)
 		{
-			if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'], $aLanguagesParse, PREG_SET_ORDER))
+			if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER))
 			{
 				foreach($aLanguagesParse as $iLang => $aLanguage)
 				{

@@ -202,6 +202,98 @@
 			return $this->sQuery;
 		}
 
+
+		function loadParamArray($aParams)
+		{
+			if (isset($aParams['addressdetails'])) $this->bIncludeAddressDetails = (bool)$aParams['addressdetails'];
+			if (isset($aParams['bounded'])) $this->bBoundedSearch = (bool)$aParams['bounded'];
+			if (isset($aParams['dedupe'])) $this->bDeDupe = (bool)$aParams['dedupe'];
+
+			if (isset($aParams['limit'])) $this->setLimit((int)$aParams['limit']);
+			if (isset($aParams['offset'])) $this->iOffset = (int)$aParams['offset'];
+
+			if (isset($aParams['fallback'])) $this->bFallback = (bool)$aParams['fallback'];
+
+			// List of excluded Place IDs - used for more acurate pageing
+			if (isset($aParams['exclude_place_ids']) && $aParams['exclude_place_ids'])
+			{
+				foreach(explode(',',$aParams['exclude_place_ids']) as $iExcludedPlaceID)
+				{
+					$iExcludedPlaceID = (int)$iExcludedPlaceID;
+					if ($iExcludedPlaceID) $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
+				}
+				$this->aExcludePlaceIDs = $aExcludePlaceIDs;
+			}
+
+			// Only certain ranks of feature
+			if (isset($aParams['featureType'])) $this->setFeatureType($aParams['featureType']);
+			if (isset($aParams['featuretype'])) $this->setFeatureType($aParams['featuretype']);
+
+			// Country code list
+			if (isset($aParams['countrycodes']))
+			{
+				$aCountryCodes = array();
+				foreach(explode(',',$aParams['countrycodes']) as $sCountryCode)
+				{
+					if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode))
+					{
+						$aCountryCodes[] = strtolower($sCountryCode);
+					}
+				}
+				$this->aCountryCodes = $aCountryCodes;
+			}
+
+			if (isset($aParams['viewboxlbrt']) && $aParams['viewboxlbrt'])
+			{
+				$aCoOrdinatesLBRT = explode(',',$aParams['viewboxlbrt']);
+				$this->setViewBox($aCoOrdinatesLBRT[0], $aCoOrdinatesLBRT[1], $aCoOrdinatesLBRT[2], $aCoOrdinatesLBRT[3]);
+			}
+			else if (isset($aParams['viewbox']) && $aParams['viewbox'])
+			{
+				$aCoOrdinatesLTRB = explode(',',$aParams['viewbox']);
+				$this->setViewBox($aCoOrdinatesLTRB[0], $aCoOrdinatesLTRB[3], $aCoOrdinatesLTRB[2], $aCoOrdinatesLTRB[1]);
+			}
+
+			if (isset($aParams['route']) && $aParams['route'] && isset($aParams['routewidth']) && $aParams['routewidth'])
+			{
+				$aPoints = explode(',',$aParams['route']);
+				if (sizeof($aPoints) % 2 != 0)
+				{
+					userError("Uneven number of points");
+					exit;
+				}
+				$fPrevCoord = false;
+				$aRoute = array();
+				foreach($aPoints as $i => $fPoint)
+				{
+					if ($i%2)
+					{
+						$aRoute[] = array((float)$fPoint, $fPrevCoord);
+					}
+					else
+					{
+						$fPrevCoord = (float)$fPoint;
+					}
+				}
+				$this->aRoutePoints = $aRoute;
+			}
+		}
+
+		function setQueryFromParams($aParams)
+		{
+			// Search query
+			$sQuery = (isset($aParams['q'])?trim($aParams['q']):'');
+			if (!$sQuery)
+			{
+				$this->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
+				$this->setReverseInPlan(false);
+			}
+			else
+			{
+				$this->setQuery($sQuery);
+			}
+		}
+
 		function loadStructuredAddressElement($sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
 		{
 			$sValue = trim($sValue);

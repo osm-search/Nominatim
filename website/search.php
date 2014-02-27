@@ -3,7 +3,7 @@
 
 	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
-        require_once(CONST_BasePath.'/lib/Geocode.php');
+	require_once(CONST_BasePath.'/lib/Geocode.php');
 
 	ini_set('memory_limit', '200M');
 
@@ -24,104 +24,6 @@
 	if (isset($aLangPrefOrder['name:ru'])) $oGeocode->setReverseInPlan(true);
 	if (isset($aLangPrefOrder['name:ja'])) $oGeocode->setReverseInPlan(true);
 	if (isset($aLangPrefOrder['name:pl'])) $oGeocode->setReverseInPlan(true);
-
-	function loadParamsToGeocode($oGeocode, $aParams, $bBatch = false)
-	{
-		if (isset($aParams['addressdetails'])) $oGeocode->setIncludeAddressDetails((bool)$aParams['addressdetails']);
-		if (isset($aParams['bounded'])) $oGeocode->setBounded((bool)$aParams['bounded']);
-		if (isset($aParams['dedupe'])) $oGeocode->setDedupe((bool)$aParams['dedupe']);
-
-		if (isset($aParams['limit'])) $oGeocode->setLimit((int)$aParams['limit']);
-		if (isset($aParams['offset'])) $oGeocode->setOffset((int)$aParams['offset']);
-
-		if (isset($aParams['fallback'])) $oGeocode->setFallback((int)$aParams['fallback']);
-
-		// List of excluded Place IDs - used for more acurate pageing
-		if (isset($aParams['exclude_place_ids']) && $aParams['exclude_place_ids'])
-		{
-			foreach(explode(',',$aParams['exclude_place_ids']) as $iExcludedPlaceID)
-			{
-				$iExcludedPlaceID = (int)$iExcludedPlaceID;
-				if ($iExcludedPlaceID) $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
-			}
-			$oGeocode->setExcludedPlaceIds($aExcludePlaceIDs);
-		}
-
-		// Only certain ranks of feature
-		if (isset($aParams['featureType'])) $oGeocode->setFeatureType($aParams['featureType']);
-		if (isset($aParams['featuretype'])) $oGeocode->setFeatureType($aParams['featuretype']);
-
-		// Country code list
-		if (isset($aParams['countrycodes']))
-		{
-			$aCountryCodes = array();
-			foreach(explode(',',$aParams['countrycodes']) as $sCountryCode)
-			{
-				if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode))
-				{
-					$aCountryCodes[] = strtolower($sCountryCode);
-				}
-			}
-			$oGeocode->setCountryCodesList($aCountryCodes);
-		}
-
-		if (isset($aParams['viewboxlbrt']) && $aParams['viewboxlbrt'])
-		{
-			$aCoOrdinatesLBRT = explode(',',$aParams['viewboxlbrt']);
-			$oGeocode->setViewBox($aCoOrdinatesLBRT[0], $aCoOrdinatesLBRT[1], $aCoOrdinatesLBRT[2], $aCoOrdinatesLBRT[3]);
-		}
-		else if (isset($aParams['viewbox']) && $aParams['viewbox'])
-		{
-			$aCoOrdinatesLTRB = explode(',',$aParams['viewbox']);
-			$oGeocode->setViewBox($aCoOrdinatesLTRB[0], $aCoOrdinatesLTRB[3], $aCoOrdinatesLTRB[2], $aCoOrdinatesLTRB[1]);
-		}
-
-		if (isset($aParams['route']) && $aParams['route'] && isset($aParams['routewidth']) && $aParams['routewidth'])
-		{
-			$aPoints = explode(',',$aParams['route']);
-			if (sizeof($aPoints) % 2 != 0)
-			{
-				userError("Uneven number of points");
-				exit;
-			}
-			$fPrevCoord = false;
-			$aRoute = array();
-			foreach($aPoints as $i => $fPoint)
-			{
-				if ($i%2)
-				{
-					$aRoute[] = array((float)$fPoint, $fPrevCoord);
-				}
-				else
-				{
-					$fPrevCoord = (float)$fPoint;
-				}
-			}
-			$oGeocode->setRoute($aRoute);
-		}
-
-		// Search query
-		$sQuery = (isset($aParams['q'])?trim($aParams['q']):'');
-		if (!$sQuery && !$bBatch && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
-		{
-			$sQuery = substr($_SERVER['PATH_INFO'], 1);
-
-			// reverse order of '/' separated string
-			$aPhrases = explode('/', $sQuery);
-			$aPhrases = array_reverse($aPhrases);
-			$sQuery = join(', ',$aPhrases);
-		}
-		if (!$sQuery)
-		{
-			$oGeocode->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
-			$oGeocode->setReverseInPlan(false);
-		}
-		else
-		{
-			$oGeocode->setQuery($sQuery);
-		}
-
-	}
 
 	// Format for output
 	$sOutputFormat = 'html';
@@ -166,7 +68,7 @@
 		$oGeocode->setIncludePolygonAsSVG($bAsSVG);
 	}
 
-	loadParamsToGeocode($oGeocode, $_GET, false);
+	$oGeocode->loadParamArray($_GET);
 
 	if (CONST_Search_BatchMode && isset($_GET['batch']))
 	{
@@ -175,13 +77,30 @@
 		foreach($aBatch as $aBatchParams)
 		{
 			$oBatchGeocode = clone $oGeocode;
-			loadParamsToGeocode($oBatchGeocode, $aBatchParams, true);
+			$oBatchGeocode->loadParamArray($aBatchParams);
+			$oBatchGeocode->setQueryFromParams($aBatchParams);
 			$aSearchResults = $oBatchGeocode->lookup();
 			$aBatchResults[] = $aSearchResults;
 		}
 		include(CONST_BasePath.'/lib/template/search-batch-json.php');
 		exit;
-	}
+	} else {
+        if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+        {
+            $sQuery = substr($_SERVER['PATH_INFO'], 1);
+
+            // reverse order of '/' separated string
+            $aPhrases = explode('/', $sQuery);
+            $aPhrases = array_reverse($aPhrases);
+            $sQuery = join(', ',$aPhrases);
+            $oGeocode->setQuery($sQuery);
+        }
+        else
+        {
+            $oGeocode->setQueryFromParams($_GET);
+        }
+
+    }
 
 	$hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 

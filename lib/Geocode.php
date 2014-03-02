@@ -1581,7 +1581,7 @@
 							$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
 						}
 					}
-					$aResult['aBoundingBox'] = array($aPointPolygon['minlat'],$aPointPolygon['maxlat'],$aPointPolygon['minlon'],$aPointPolygon['maxlon']);
+					$aResult['aBoundingBox'] = array((string)$aPointPolygon['minlat'],(string)$aPointPolygon['maxlat'],(string)$aPointPolygon['minlon'],(string)$aPointPolygon['maxlon']);
 				}
 
 				// Is there an icon set for this type of result?

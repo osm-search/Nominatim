@@ -4,6 +4,7 @@ nominatim/*.d
 nominatim/*.o
 nominatim/nominatim
 module/nominatim.so
+module/nominatim.o
 settings/configuration.txt
 settings/download.lock
 settings/state.txt
@@ -19,3 +20,10 @@ stamp-h1
 missing
 INSTALL
 aclocal.m4
+depcomp
+install-sh
+compile
+
+data/wiki_import.sql
+data/wiki_specialphrases.sql
+data/osmosischange.osc

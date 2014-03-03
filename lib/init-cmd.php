@@ -1,7 +1,6 @@
 <?php
 	if (file_exists(getenv('NOMINATIM_SETTINGS')))
 	{
-		echo 'Using local config: '.getenv('NOMINATIM_SETTINGS');
 		require_once(getenv('NOMINATIM_SETTINGS'));
 	}
 

@@ -483,9 +483,9 @@
 			// Conflicts between US state abreviations and various words for 'the' in different languages
 			if (isset($this->aLangPrefOrder['name:en']))
 			{
-				$sQuery = preg_replace('/,\s*il\s*(,|$)/',', illinois\1', $sQuery);
-				$sQuery = preg_replace('/,\s*al\s*(,|$)/',', alabama\1', $sQuery);
-				$sQuery = preg_replace('/,\s*la\s*(,|$)/',', louisiana\1', $sQuery);
+				$sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/','\1illinois\2', $sQuery);
+				$sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/','\1alabama\2', $sQuery);
+				$sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/','\1louisiana\2', $sQuery);
 			}
 
 			// View Box SQL

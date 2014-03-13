@@ -1266,7 +1266,14 @@
 							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
-							$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
+							if ($aSearch['sHouseNumber'])
+							{
+								$sImportanceSQL = '- abs(26 - address_rank) + 3';
+							}
+							else
+							{
+								$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
+							}
 							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
 							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
 							$aOrder[] = "$sImportanceSQL DESC";

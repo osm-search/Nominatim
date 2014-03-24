@@ -2258,6 +2258,16 @@ BEGIN
       geometry = NEW.geometry
       where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
 
+    IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
+        IF NEW.postcode IS NULL THEN
+            -- postcode was deleted, no longer retain in placex
+            DELETE FROM placex where place_id = existingplacex.place_id;
+            RETURN NULL;
+        END IF;
+
+        NEW.name := hstore('ref', NEW.postcode);
+    END IF;
+
     update placex set 
       name = NEW.name,
       housenumber = NEW.housenumber,

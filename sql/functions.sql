@@ -554,20 +554,6 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_country_code(place geometry, in_country_code VARCHAR(2)) RETURNS TEXT
-  AS $$
-DECLARE
-  nearcountry RECORD;
-BEGIN
-  FOR nearcountry IN select country_code from country_name where country_code = lower(in_country_code)
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-  RETURN get_country_code(place);
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR(2)) RETURNS TEXT
   AS $$
 DECLARE
@@ -965,7 +951,7 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+  NEW.calculated_country_code := lower(get_country_code(NEW.geometry));
 
   NEW.partition := get_partition(NEW.geometry, NEW.calculated_country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
@@ -1358,7 +1344,6 @@ BEGIN
 
     -- reclaculate country and partition
     IF NEW.rank_search >= 4 THEN
-      --NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
       NEW.calculated_country_code := lower(get_country_code(place_centroid));
     ELSE
       NEW.calculated_country_code := NULL;

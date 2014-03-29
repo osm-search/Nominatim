@@ -1064,18 +1064,6 @@ BEGIN
       ELSEIF NEW.type in ('village','hamlet','municipality','district','unincorporated_area','borough') THEN
         NEW.rank_search := 19;
         NEW.rank_address := 16;
-      ELSEIF NEW.type in ('airport') AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
-        NEW.rank_search := 18;
-        NEW.rank_address := 17;
-      ELSEIF NEW.type in ('moor') AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
-        NEW.rank_search := 17;
-        NEW.rank_address := 18;
-      ELSEIF NEW.type in ('moor') THEN
-        NEW.rank_search := 17;
-        NEW.rank_address := 0;
-      ELSEIF NEW.type in ('national_park') THEN
-        NEW.rank_search := 18;
-        NEW.rank_address := 18;
       ELSEIF NEW.type in ('suburb','croft','subdivision','isolated_dwelling') THEN
         NEW.rank_search := 20;
         NEW.rank_address := NEW.rank_search;
@@ -1086,12 +1074,9 @@ BEGIN
         IF (NEW.extratags -> 'locality') = 'townland' THEN
           NEW.rank_address := 20;
         END IF;
-      ELSEIF NEW.type in ('hall_of_residence','neighbourhood','housing_estate','nature_reserve') THEN
+      ELSEIF NEW.type in ('neighbourhood') THEN
         NEW.rank_search := 22;
         NEW.rank_address := 22;
-      ELSEIF NEW.type in ('airport','street') THEN
-        NEW.rank_search := 26;
-        NEW.rank_address := NEW.rank_search;
       ELSEIF NEW.type in ('house','building') THEN
         NEW.rank_search := 30;
         NEW.rank_address := NEW.rank_search;

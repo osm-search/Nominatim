@@ -582,10 +582,9 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_partition(place geometry, in_country_code VARCHAR(10)) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10)) RETURNS INTEGER
   AS $$
 DECLARE
-  place_centre GEOMETRY;
   nearcountry RECORD;
 BEGIN
   FOR nearcountry IN select partition from country_name where country_code = in_country_code
@@ -953,7 +952,7 @@ BEGIN
 
   NEW.calculated_country_code := lower(get_country_code(NEW.geometry));
 
-  NEW.partition := get_partition(NEW.geometry, NEW.calculated_country_code);
+  NEW.partition := get_partition(NEW.calculated_country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
 
   -- copy 'name' to or from the default language (if there is a default language)
@@ -1328,12 +1327,26 @@ BEGIN
     NEW.centroid := null;
 
     -- reclaculate country and partition
-    IF NEW.rank_search >= 4 THEN
-      NEW.calculated_country_code := lower(get_country_code(place_centroid));
+    IF NEW.rank_search = 4 THEN
+      -- for countries, believe the mapped country code,
+      -- so that we remain in the right partition if the boundaries
+      -- suddenly expand.
+      NEW.partition := get_partition(lower(NEW.country_code));
+      IF NEW.partition = 0 THEN
+        NEW.calculated_country_code := lower(get_country_code(place_centroid));
+        NEW.partition := get_partition(NEW.calculated_country_code);
+      ELSE
+        NEW.calculated_country_code := lower(NEW.country_code);
+      END IF;
     ELSE
-      NEW.calculated_country_code := NULL;
+      IF NEW.rank_search > 4 THEN
+        --NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+        NEW.calculated_country_code := lower(get_country_code(place_centroid));
+      ELSE
+        NEW.calculated_country_code := NULL;
+      END IF;
+      NEW.partition := get_partition(NEW.calculated_country_code);
     END IF;
-    NEW.partition := get_partition(place_centroid, NEW.calculated_country_code);
     NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
 
     -- Adding ourselves to the list simplifies address calculations later
@@ -2788,7 +2801,7 @@ DECLARE
 BEGIN
 
   place_centroid := ST_Centroid(pointgeo);
-  out_partition := get_partition(place_centroid, in_countrycode);
+  out_partition := get_partition(in_countrycode);
   out_parent_place_id := null;
 
   address_street_word_id := get_name_id(make_standard_name(in_street));

@@ -1986,15 +1986,18 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION place_delete() RETURNS TRIGGER
   AS $$
 DECLARE
-  placeid BIGINT;
+  has_rank BOOLEAN;
 BEGIN
 
   --DEBUG: RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
 
   -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
   IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN
-    insert into import_polygon_delete values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
-    RETURN NULL;
+    SELECT bool_or(not (rank_address = 0 or rank_address > 26)) as ranked FROM placex WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type INTO has_rank;
+    IF has_rank THEN
+      insert into import_polygon_delete values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
+      RETURN NULL;
+    END IF;
   END IF;
 
   -- mark for delete

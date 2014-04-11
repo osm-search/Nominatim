@@ -1150,7 +1150,7 @@ BEGIN
   END IF;
 
   -- a country code make no sense below rank 4 (country)
-  IF NEW.rank_address < 4 THEN
+  IF NEW.rank_search < 4 THEN
     NEW.calculated_country_code := NULL;
   END IF;
 
@@ -1163,53 +1163,54 @@ BEGIN
 
   RETURN NEW; -- @DIFFUPDATES@ The following is not needed until doing diff updates, and slows the main index process down
 
-  IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
-    -- Performance: We just can't handle re-indexing for country level changes
-    IF st_area(NEW.geometry) < 1 THEN
-      -- mark items within the geometry for re-indexing
---    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
+  IF NEW.rank_address > 0 THEN
+    IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
+      -- Performance: We just can't handle re-indexing for country level changes
+      IF st_area(NEW.geometry) < 1 THEN
+        -- mark items within the geometry for re-indexing
+  --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
-      -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
-      update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
-      update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-       AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
-    END IF;
-  ELSE
-    -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-    diameter := 0;
-    -- 16 = city, anything higher than city is effectively ignored (polygon required!)
-    IF NEW.type='postcode' THEN
-      diameter := 0.05;
-    ELSEIF NEW.rank_search < 16 THEN
+        -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
+        update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
+        update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
+         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
+      END IF;
+    ELSE
+      -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
       diameter := 0;
-    ELSEIF NEW.rank_search < 18 THEN
-      diameter := 0.1;
-    ELSEIF NEW.rank_search < 20 THEN
-      diameter := 0.05;
-    ELSEIF NEW.rank_search = 21 THEN
-      diameter := 0.001;
-    ELSEIF NEW.rank_search < 24 THEN
-      diameter := 0.02;
-    ELSEIF NEW.rank_search < 26 THEN
-      diameter := 0.002; -- 100 to 200 meters
-    ELSEIF NEW.rank_search < 28 THEN
-      diameter := 0.001; -- 50 to 100 meters
-    END IF;
-    IF diameter > 0 THEN
---      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
-      IF NEW.rank_search >= 26 THEN
-        -- roads may cause reparenting for >27 rank places
-        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
-      ELSEIF NEW.rank_search >= 16 THEN
-        -- up to rank 16, street-less addresses may need reparenting
-        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
-      ELSE
-        -- for all other places the search terms may change as well
-        update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
+      -- 16 = city, anything higher than city is effectively ignored (polygon required!)
+      IF NEW.type='postcode' THEN
+        diameter := 0.05;
+      ELSEIF NEW.rank_search < 16 THEN
+        diameter := 0;
+      ELSEIF NEW.rank_search < 18 THEN
+        diameter := 0.1;
+      ELSEIF NEW.rank_search < 20 THEN
+        diameter := 0.05;
+      ELSEIF NEW.rank_search = 21 THEN
+        diameter := 0.001;
+      ELSEIF NEW.rank_search < 24 THEN
+        diameter := 0.02;
+      ELSEIF NEW.rank_search < 26 THEN
+        diameter := 0.002; -- 100 to 200 meters
+      ELSEIF NEW.rank_search < 28 THEN
+        diameter := 0.001; -- 50 to 100 meters
+      END IF;
+      IF diameter > 0 THEN
+  --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
+        IF NEW.rank_search >= 26 THEN
+          -- roads may cause reparenting for >27 rank places
+          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+        ELSEIF NEW.rank_search >= 16 THEN
+          -- up to rank 16, street-less addresses may need reparenting
+          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
+        ELSE
+          -- for all other places the search terms may change as well
+          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
+        END IF;
       END IF;
     END IF;
-
   END IF;
 
    -- add to tables for special search

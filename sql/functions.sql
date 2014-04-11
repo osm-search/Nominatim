@@ -1117,7 +1117,8 @@ BEGIN
     ELSEIF NEW.class = 'waterway' AND NEW.name is NULL THEN
       RETURN NULL;
     ELSEIF NEW.class = 'waterway' THEN
-      NEW.rank_address := 17;
+      NEW.rank_search := 17;
+      NEW.rank_address := 0;
     ELSEIF NEW.class = 'highway' AND NEW.osm_type != 'N' AND NEW.type in ('service','cycleway','path','footway','steps','bridleway','motorway_link','primary_link','trunk_link','secondary_link','tertiary_link') THEN
       NEW.rank_search := 27;
       NEW.rank_address := NEW.rank_search;

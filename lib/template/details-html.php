@@ -82,7 +82,7 @@
 	{
 		echo '<img style="float:right;margin-right:40px;" src="'.CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'" alt="'.$aPointDetails['icon'].'" />';
 	}
-	echo $aPointDetails['localname'].'</h1>';
+	echo $aPointDetails['localname']."</h1>\n";
 	echo '<div class="locationdetails">';
 	echo ' <div>Name: ';
 	foreach($aPointDetails['aNames'] as $sKey => $sValue)
@@ -110,9 +110,9 @@
 		echo ' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>';
 	}
 	echo ' </div>';
-	echo '</div>';
+	echo "</div>\n";
 
-	echo '<h2>Address</h2>';
+	echo "<h2>Address</h2>\n";
 	echo '<div class="address">';
 	$iPrevRank = 1000000;
 	$sPrevLocalName = '';
@@ -136,14 +136,14 @@
 		echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
 		echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
 		echo ')';
-		echo '</div>';
+		echo "</div>\n";
 	}
-	echo '</div>';
+	echo "</div>\n";
 
 	if ($aLinkedLines)
 	{
-		echo '<h2>Linked Places</h2>';
-		echo '<div class=\"linked\">';
+		echo "<h2>Linked Places</h2>\n";
+		echo '<div class="linked">';
 		foreach($aLinkedLines as $aAddressLine)
 		{	
 			$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
@@ -152,16 +152,16 @@
 			echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
 			echo ' (';
 			echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
-			if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
+			if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
 			echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-			echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
+			if (isset($aAddressLine['rank_search_label'])) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
 //			echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
 			echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
 			echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
 			echo ')';
-			echo '</div>';
+			echo "</div>\n";
 		}
-		echo '</div>';
+		echo "</div>\n";
 	}
 
 	if ($aPlaceSearchNameKeywords)
@@ -169,7 +169,7 @@
 		echo '<h2>Name Keywords</h2>';
 		foreach($aPlaceSearchNameKeywords as $aRow)
 		{
-			echo '<div>'.$aRow['word_token'].'</div>';
+			echo '<div>'.$aRow['word_token']."</div>\n";
 		}
 	}
 
@@ -178,13 +178,13 @@
 		echo '<h2>Address Keywords</h2>';
 		foreach($aPlaceSearchAddressKeywords as $aRow)
 		{
-			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'.'</div>';
+			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'."</div>\n";
 		}
 	}
 
 	if (sizeof($aParentOfLines))
 	{
-		echo '<h2>Parent Of:</h2>';
+		echo "<h2>Parent Of:</h2>\n<div>\n";
 
 		$aGroupedAddressLines = array();
 		foreach($aParentOfLines as $aAddressLine)
@@ -195,7 +195,7 @@
 		foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
 		{
 			$sGroupHeading = ucwords($sGroupHeading);
-			echo "<h3>$sGroupHeading</h3>";
+			echo "<h3>$sGroupHeading</h3>\n";
 		foreach($aParentOfLines as $aAddressLine)
 		{
 			$aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
@@ -204,15 +204,12 @@
 			echo '<div class="line">';
 			echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
 			echo ' (';
-//			echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
-//			echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-//			echo ', <span class="rankaddress">'.$aAddressLine['rank_address'].'</span>';
 			echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
 			echo ', <span class="distance">~'.(round($aAddressLine['distance']*69,1)).'&nbsp;miles</span>';
-			if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
+			if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
 			echo ', <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
 			echo ')';
-			echo '</div>';
+			echo "</div>\n";
 		}
 		}
 		if (sizeof($aParentOfLines) >= 500) {

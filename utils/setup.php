@@ -164,6 +164,13 @@
 		{
 			pgsqlRunScript('update country_name set partition = 0');
 		}
+
+		// the following will be needed by create_functions later but
+		// is only defined in the subsequently called create_tables.
+		// Create dummies here that will be overwritten by the proper
+		// versions in create-tables.
+		pgsqlRunScript('CREATE TABLE place_boundingbox ()');
+		pgsqlRunScript('create type wikipedia_article_match as ()');
 	}
 
 	if ($aCMDResult['import-data'] || $aCMDResult['all'])
@@ -723,7 +730,11 @@
 		}
 		fclose($ahPipes[1]);
 
-		proc_close($hProcess);
+		$iReturn = proc_close($hProcess);
+		if ($iReturn > 0)
+		{
+			fail("pgsql returned with error code ($iReturn)");
+		}
 		if ($ahGzipPipes)
 		{
 			fclose($ahGzipPipes[1]);
@@ -738,6 +749,7 @@
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+		$sCMD .= ' -v ON_ERROR_STOP=1';
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => STDOUT, 
@@ -753,7 +765,11 @@
 			$sScript = substr($sScript, $written);
 		}
 		fclose($ahPipes[0]);
-		proc_close($hProcess);
+		$iReturn = proc_close($hProcess);
+		if ($iReturn > 0)
+		{
+			fail("pgsql returned with error code ($iReturn)");
+		}
 	}
 
 	function pgsqlRunRestoreData($sDumpFile)
@@ -781,7 +797,11 @@
 		}
 		fclose($ahPipes[1]);
 
-		proc_close($hProcess);
+		$iReturn = proc_close($hProcess);
+		if ($iReturn > 0)
+		{
+			fail("pgsql returned with error code ($iReturn)");
+		}
 	}
 
 	function pgsqlRunDropAndRestore($sDumpFile)
@@ -809,7 +829,11 @@
 		}
 		fclose($ahPipes[1]);
 
-		proc_close($hProcess);
+		$iReturn = proc_close($hProcess);
+		if ($iReturn > 0)
+		{
+			fail("pgsql returned with error code ($iReturn)");
+		}
 	}
 
 	function passthruCheckReturn($cmd)

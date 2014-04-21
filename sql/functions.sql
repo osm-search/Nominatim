@@ -3080,6 +3080,7 @@ DECLARE
   diameter FLOAT;
   rank INTEGER;
 BEGIN
+  UPDATE placex SET indexed_status = 2 WHERE place_id = placeid;
   SELECT geometry, rank_search FROM placex WHERE place_id = placeid INTO placegeom, rank;
   IF placegeom IS NOT NULL AND ST_IsValid(placegeom) THEN
     IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN

@@ -3,7 +3,7 @@
 	function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 	{
 		$aStartTime = explode('.',microtime(true));
-		if (!$aStartTime[1]) $aStartTime[1] = '0';
+		if (!isset($aStartTime[1])) $aStartTime[1] = '0';
 
 		$sOutputFormat = '';
 		if (isset($_GET['format'])) $sOutputFormat = $_GET['format'];

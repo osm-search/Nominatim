@@ -1600,17 +1600,13 @@ BEGIN
             END IF;
 
             -- merge in extra tags
-            IF NOT linkedPlacex.extratags IS NULL THEN
-              NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-            END IF;
-
-            IF NOT NEW.extratags ? linkedPlacex.class THEN
-              NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
-            END IF;
+            NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
 
             -- mark the linked place (excludes from search results)
             UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
+            -- keep a note of the node id in case we need it for wikipedia in a bit
+            linked_node_id := linkedPlacex.osm_id;
           END LOOP;
 
         END LOOP;
@@ -1639,13 +1635,7 @@ BEGIN
                 END IF;
 
                 -- merge in extra tags
-                IF NOT linkedPlacex.extratags IS NULL THEN
-                  NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-                END IF;
-
-                IF NOT NEW.extratags ? linkedPlacex.class THEN
-                  NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
-                END IF;
+                NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
 
                 -- mark the linked place (excludes from search results)
                 UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
@@ -1687,11 +1677,7 @@ BEGIN
           name_vector := make_keywords(NEW.name);
 
           -- merge in extra tags
-          NEW.extratags := linkedPlacex.extratags || NEW.extratags;
-
-          IF NOT NEW.extratags ? linkedPlacex.class THEN
-            NEW.extratags := NEW.extratags || hstore(linkedPlacex.class, linkedPlacex.type);
-          END IF;
+          NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
 
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;

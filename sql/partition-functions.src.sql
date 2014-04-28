@@ -111,7 +111,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestNamedRoadFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER) 
+create or replace function getNearestNamedRoadFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER[]) 
   RETURNS setof nearfeature AS $$
 DECLARE
   r nearfeature%rowtype;
@@ -123,7 +123,7 @@ BEGIN
       SELECT place_id, name_vector, address_rank, search_rank,
           ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_-partition-
-          WHERE name_vector @> ARRAY[isin_token]
+          WHERE name_vector @> isin_token
           AND ST_DWithin(centroid, point, 0.01) 
           AND search_rank between 26 and 27
       ORDER BY distance ASC limit 1
@@ -139,7 +139,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestNamedPlaceFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER) 
+create or replace function getNearestNamedPlaceFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER[]) 
   RETURNS setof nearfeature AS $$
 DECLARE
   r nearfeature%rowtype;
@@ -151,7 +151,7 @@ BEGIN
       SELECT place_id, name_vector, address_rank, search_rank,
           ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_-partition-
-          WHERE name_vector @> ARRAY[isin_token]
+          WHERE name_vector @> isin_token
           AND ST_DWithin(centroid, point, 0.03) 
           AND search_rank between 16 and 22
       ORDER BY distance ASC limit 1

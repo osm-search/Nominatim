@@ -271,6 +271,20 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION get_name_ids(lookup_word TEXT)
+  RETURNS INTEGER[]
+  AS $$
+DECLARE
+  lookup_token TEXT;
+  return_word_ids INTEGER[];
+BEGIN
+  lookup_token := ' '||trim(lookup_word);
+  SELECT array_agg(word_id) FROM word WHERE word_token = lookup_token and class is null and type is null into return_word_ids;
+  RETURN return_word_ids;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION array_merge(a INTEGER[], b INTEGER[])
   RETURNS INTEGER[]
   AS $$
@@ -1260,6 +1274,7 @@ DECLARE
   search_maxrank INTEGER;
   address_maxrank INTEGER;
   address_street_word_id INTEGER;
+  address_street_word_ids INTEGER[];
   parent_place_id_rank BIGINT;
   
   isin TEXT[];
@@ -1505,18 +1520,18 @@ BEGIN
 --RAISE WARNING 'x3 %',NEW.parent_place_id;
 
       IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
-        address_street_word_id := get_name_id(make_standard_name(NEW.street));
-        IF address_street_word_id IS NOT NULL THEN
-          FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
+        address_street_word_ids := get_name_ids(make_standard_name(NEW.street));
+        IF address_street_word_ids IS NOT NULL THEN
+          FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
               NEW.parent_place_id := location.place_id;
           END LOOP;
         END IF;
       END IF;
 
       IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
-        address_street_word_id := get_name_id(make_standard_name(NEW.addr_place));
-        IF address_street_word_id IS NOT NULL THEN
-          FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_id) LOOP
+        address_street_word_ids := get_name_id(make_standard_name(NEW.addr_place));
+        IF address_street_word_ids IS NOT NULL THEN
+          FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
             NEW.parent_place_id := location.place_id;
           END LOOP;
         END IF;

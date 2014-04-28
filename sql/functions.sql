@@ -1529,7 +1529,7 @@ BEGIN
       END IF;
 
       IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
-        address_street_word_ids := get_name_id(make_standard_name(NEW.addr_place));
+        address_street_word_ids := get_name_ids(make_standard_name(NEW.addr_place));
         IF address_street_word_ids IS NOT NULL THEN
           FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
             NEW.parent_place_id := location.place_id;

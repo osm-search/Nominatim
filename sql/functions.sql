@@ -1422,6 +1422,16 @@ BEGIN
       -- Note that addr:street links can only be indexed once the street itself is indexed
       IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
+        -- if there is no address information, see if we can get it from a surrounding building
+        IF NEW.street IS NULL AND NEW.addr_place IS NULL AND NEW.housenumber IS NULL THEN
+          FOR location IN select * from placex where ST_Covers(geometry, place_centroid) and rank_search > 28 and (housenumber is not null or street is not null or addr_place is not null) AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+          LOOP
+            NEW.housenumber := location.housenumber;
+            NEW.street := location.street;
+            NEW.addr_place := location.addr_place;
+          END LOOP;
+        END IF;
+
         -- Is this node part of a relation?
         FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY['n'||NEW.osm_id]
         LOOP

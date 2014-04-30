@@ -483,8 +483,7 @@
 				$sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));
 			}
 
-			// Hack to make it handle "new york, ny" (and variants) correctly
-			$sQuery = str_ireplace(array('New York, ny','new york, new york', 'New York ny','new york new york'), 'new york city, ny', $this->sQuery);
+			$sQuery = $this->sQuery;
 
 			// Conflicts between US state abreviations and various words for 'the' in different languages
 			if (isset($this->aLangPrefOrder['name:en']))

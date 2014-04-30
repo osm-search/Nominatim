@@ -27,6 +27,8 @@
 
 		protected $bBoundedSearch = false;
 		protected $aViewBox = false;
+		protected $sViewboxSmallSQL = false;
+		protected $sViewboxLargeSQL = false;
 		protected $aRoutePoints = false;
 
 		protected $iMaxRank = 20;
@@ -370,12 +372,16 @@
 			// Get the details for display (is this a redundant extra step?)
 			$sPlaceIDs = join(',',$aPlaceIDs);
 
+			$sImportanceSQL = '';
+			if ($this->sViewboxSmallSQL) $sImportanceSQL .= " case when ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+			if ($this->sViewboxLargeSQL) $sImportanceSQL .= " case when ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+
 			$sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code,";
 			$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 			$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 			$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
 			$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-			$sSQL .= "coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
+			$sSQL .= $sImportanceSQL."coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
 			$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 			$sSQL .= "(extratags->'place') as extra_place ";
 			$sSQL .= "from placex where place_id in ($sPlaceIDs) ";
@@ -400,20 +406,20 @@
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-				$sSQL .= "-0.15 as importance, ";
+				$sSQL .= $sImportanceSQL."-1.15 as importance, ";
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
 				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
 				$sSQL .= "group by place_id";
-				if (!$this->bDeDupe) $sSQL .= ",place_id";
+				if (!$this->bDeDupe) $sSQL .= ",place_id ";
 				$sSQL .= " union ";
 				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code,";
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-				$sSQL .= "-0.10 as importance, ";
+				$sSQL .= $sImportanceSQL."-1.10 as importance, ";
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
 				$sSQL .= "null as extra_place ";
 				$sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
@@ -423,7 +429,7 @@
 				$sSQL .= ",get_address_by_language(place_id, $sLanguagePrefArraySQL) ";
 			}
 
-			$sSQL .= "order by importance desc";
+			$sSQL .= " order by importance desc";
 			if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
 			$aSearchResults = $this->oDB->getAll($sSQL);
 
@@ -489,7 +495,7 @@
 			}
 
 			// View Box SQL
-			$sViewboxCentreSQL = $sViewboxSmallSQL = $sViewboxLargeSQL = false;
+			$sViewboxCentreSQL = false;
 			$bBoundingBoxSearch = false;
 			if ($this->aViewBox)
 			{
@@ -500,8 +506,8 @@
 				$aBigViewBox[1] = $this->aViewBox[1] + $fWidth;
 				$aBigViewBox[3] = $this->aViewBox[3] - $fWidth;
 
-				$sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$this->aViewBox[0].",".(float)$this->aViewBox[1]."),ST_Point(".(float)$this->aViewBox[2].",".(float)$this->aViewBox[3].")),4326)";
-				$sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aBigViewBox[0].",".(float)$aBigViewBox[1]."),ST_Point(".(float)$aBigViewBox[2].",".(float)$aBigViewBox[3].")),4326)";
+				$this->sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$this->aViewBox[0].",".(float)$this->aViewBox[1]."),ST_Point(".(float)$this->aViewBox[2].",".(float)$this->aViewBox[3].")),4326)";
+				$this->sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aBigViewBox[0].",".(float)$aBigViewBox[1]."),ST_Point(".(float)$aBigViewBox[2].",".(float)$aBigViewBox[3].")),4326)";
 				$bBoundingBoxSearch = $this->bBoundedSearch;
 			}
 
@@ -519,20 +525,20 @@
 				$sViewboxCentreSQL .= ")'::geometry,4326)";
 
 				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/69).")";
-				$sViewboxSmallSQL = $this->oDB->getOne($sSQL);
-				if (PEAR::isError($sViewboxSmallSQL))
+				$this->sViewboxSmallSQL = $this->oDB->getOne($sSQL);
+				if (PEAR::isError($this->sViewboxSmallSQL))
 				{
-					failInternalError("Could not get small viewbox.", $sSQL, $sViewboxSmallSQL);
+					failInternalError("Could not get small viewbox.", $sSQL, $this->sViewboxSmallSQL);
 				}
-				$sViewboxSmallSQL = "'".$sViewboxSmallSQL."'::geometry";
+				$this->sViewboxSmallSQL = "'".$this->sViewboxSmallSQL."'::geometry";
 
 				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/30).")";
-				$sViewboxLargeSQL = $this->oDB->getOne($sSQL);
-				if (PEAR::isError($sViewboxLargeSQL))
+				$this->sViewboxLargeSQL = $this->oDB->getOne($sSQL);
+				if (PEAR::isError($this->sViewboxLargeSQL))
 				{
-					failInternalError("Could not get large viewbox.", $sSQL, $sViewboxLargeSQL);
+					failInternalError("Could not get large viewbox.", $sSQL, $this->sViewboxLargeSQL);
 				}
-				$sViewboxLargeSQL = "'".$sViewboxLargeSQL."'::geometry";
+				$this->sViewboxLargeSQL = "'".$this->sViewboxLargeSQL."'::geometry";
 				$bBoundingBoxSearch = $this->bBoundedSearch;
 			}
 
@@ -1182,7 +1188,7 @@
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-									$sSQL .= " where st_contains($sViewboxSmallSQL, ct.centroid)";
+									$sSQL .= " where st_contains($this->sViewboxSmallSQL, ct.centroid)";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									if (sizeof($this->aExcludePlaceIDs))
 									{
@@ -1200,7 +1206,7 @@
 									{
 										$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 										if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-										$sSQL .= " where st_contains($sViewboxLargeSQL, ct.centroid)";
+										$sSQL .= " where st_contains($this->sViewboxLargeSQL, ct.centroid)";
 										if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 										if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 										$sSQL .= " limit $this->iLimit";
@@ -1211,7 +1217,7 @@
 								else
 								{
 									$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-									$sSQL .= " and st_contains($sViewboxSmallSQL, geometry) and linked_place_id is null";
+									$sSQL .= " and st_contains($this->sViewboxSmallSQL, geometry) and linked_place_id is null";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 									$sSQL .= " limit $this->iLimit";
@@ -1263,7 +1269,7 @@
 								$aTerms[] = "country_code in ($sCountryCodesSQL)";
 							}
 
-							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $sViewboxSmallSQL";
+							if ($bBoundingBoxSearch) $aTerms[] = "centroid && $this->sViewboxSmallSQL";
 							if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
 							if ($aSearch['sHouseNumber'])
@@ -1274,8 +1280,9 @@
 							{
 								$sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
 							}
-							if ($sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
-							if ($sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
+							if ($this->sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
+							if ($this->sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
+
 							$aOrder[] = "$sImportanceSQL DESC";
 							if (sizeof($aSearch['aFullNameAddress']))
 							{

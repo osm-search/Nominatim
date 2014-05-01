@@ -890,9 +890,9 @@
 												if ($aSearch['sHouseNumber'] === '')
 												{
 													$aSearch['sHouseNumber'] = $sToken;
-                                                    // sanity check: if the housenumber is not mainly made
-                                                    // up of numbers, add a penalty
-                                                    if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
+													// sanity check: if the housenumber is not mainly made
+													// up of numbers, add a penalty
+													if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
 													if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 													/*
 													// Fall back to not searching for this item (better than nothing)
@@ -911,7 +911,7 @@
 													$aSearch['sType'] = $aSearchTerm['type'];
 													if (sizeof($aSearch['aName'])) $aSearch['sOperator'] = 'name';
 													else $aSearch['sOperator'] = 'near'; // near = in for the moment
-                                                    if (strlen($aSearchTerm['operator']) == 0) $aSearch['iSearchRank'] += 1;
+													if (strlen($aSearchTerm['operator']) == 0) $aSearch['iSearchRank'] += 1;
 
 													// Do we have a shortcut id?
 													if ($aSearch['sOperator'] == 'name')

@@ -1566,7 +1566,7 @@
 			}
 
 			$aClassType = getClassTypesWithImportance();
-			$aRecheckWords = preg_split('/\b/u',$sQuery);
+			$aRecheckWords = preg_split('/\b[\s,\\-]*/u',$sQuery);
 			foreach($aRecheckWords as $i => $sWord)
 			{
 				if (!$sWord) unset($aRecheckWords[$i]);
@@ -1727,7 +1727,11 @@
 				$sAddress = $aResult['langaddress'];
 				foreach($aRecheckWords as $i => $sWord)
 				{
-					if (stripos($sAddress, $sWord)!==false) $iCountWords++;
+					if (stripos($sAddress, $sWord)!==false)
+					{
+						$iCountWords++;
+						if (preg_match("/(^|,)\s*$sWord\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
+					}
 				}
 
 				$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right

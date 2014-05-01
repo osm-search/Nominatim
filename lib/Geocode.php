@@ -932,7 +932,7 @@
 										{
 											if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
 											{
-												if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strlen($sToken) >= 4)
+												if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strpos($sToken, ' ') === false)
 												{
 													$aSearch = $aCurrentSearch;
 													$aSearch['iSearchRank'] += 1;
@@ -941,8 +941,11 @@
 														$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 														if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 													}
-													elseif (isset($aValidTokens[' '.$sToken])) // revert to the token version?
+													elseif (isset($aValidTokens[' '.$sToken]) && strlen($sToken) >= 4) // revert to the token version?
 													{
+														$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+														$aSearch['iSearchRank'] += 1;
+														if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 														foreach($aValidTokens[' '.$sToken] as $aSearchTermToken)
 														{
 															if (empty($aSearchTermToken['country_code'])
@@ -959,6 +962,7 @@
 													else
 													{
 														$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+														if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
 														if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 													}
 												}
@@ -966,7 +970,8 @@
 												if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)
 												{
 													$aSearch = $aCurrentSearch;
-													$aSearch['iSearchRank'] += 2;
+													$aSearch['iSearchRank'] += 1;
+													if (!sizeof($aCurrentSearch['aName'])) $aSearch['iSearchRank'] += 1;
 													if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
 													if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
 														$aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];

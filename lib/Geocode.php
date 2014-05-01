@@ -1181,6 +1181,10 @@
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $this->oDB->getCol($sSQL);
 								}
+								else
+								{
+									$aPlaceIDs = array();
+								}
 							}
 							else
 							{
@@ -1463,7 +1467,7 @@
 											}
 											if ($sCountryCodesSQL) $sSQL .= " and lp.calculated_country_code in ($sCountryCodesSQL)";
 											if ($sOrderBySQL) $sSQL .= "order by ".$sOrderBySQL." asc";
-											if ($iOffset) $sSQL .= " offset $iOffset";
+											if ($this->iOffset) $sSQL .= " offset $this->iOffset";
 											$sSQL .= " limit $this->iLimit";
 											if (CONST_Debug) var_dump($sSQL);
 											$aClassPlaceIDs = array_merge($aClassPlaceIDs, $this->oDB->getCol($sSQL));
@@ -1485,7 +1489,7 @@
 											}
 											if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";
 											if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
-											if ($iOffset) $sSQL .= " offset $iOffset";
+											if ($this->iOffset) $sSQL .= " offset $this->iOffset";
 											$sSQL .= " limit $this->iLimit";
 											if (CONST_Debug) var_dump($sSQL);
 											$aClassPlaceIDs = array_merge($aClassPlaceIDs, $this->oDB->getCol($sSQL));

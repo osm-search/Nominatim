@@ -890,6 +890,9 @@
 												if ($aSearch['sHouseNumber'] === '')
 												{
 													$aSearch['sHouseNumber'] = $sToken;
+                                                    // sanity check: if the housenumber is not mainly made
+                                                    // up of numbers, add a penalty
+                                                    if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
 													if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 													/*
 													// Fall back to not searching for this item (better than nothing)

@@ -1791,17 +1791,3 @@
 
 	} // end class
 
-
-/*
-		if (isset($_GET['route']) && $_GET['route'] && isset($_GET['routewidth']) && $_GET['routewidth'])
-		{
-			$aPoints = explode(',',$_GET['route']);
-			if (sizeof($aPoints) % 2 != 0)
-			{
-				userError("Uneven number of points");
-				exit;
-			}
-			$sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
-			$fPrevCoord = false;
-		}
-*/

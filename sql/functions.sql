@@ -1136,7 +1136,11 @@ BEGIN
     ELSEIF NEW.class = 'waterway' AND NEW.name is NULL THEN
       RETURN NULL;
     ELSEIF NEW.class = 'waterway' THEN
-      NEW.rank_search := 17;
+      IF NEW.osm_type = 'R' THEN
+        NEW.rank_search := 16;
+      ELSE
+        NEW.rank_search := 17;
+      END IF;
       NEW.rank_address := 0;
     ELSEIF NEW.class = 'highway' AND NEW.osm_type != 'N' AND NEW.type in ('service','cycleway','path','footway','steps','bridleway','motorway_link','primary_link','trunk_link','secondary_link','tertiary_link') THEN
       NEW.rank_search := 27;
@@ -1366,6 +1370,22 @@ BEGIN
     END IF;
     NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
 
+    -- waterway ways are linked when they are part of a relation and have the same class/type
+    IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
+        FOR relation IN select * from planet_osm_rels r where r.id = NEW.osm_id
+        LOOP
+            FOR i IN relation.way_off+1..relation.rel_off LOOP
+                IF relation.members[2*i] in ('', 'main_stream') THEN
+                  --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.parts[i];
+                  FOR location IN SELECT * FROM placex WHERE osm_type = 'W' and osm_id = relation.parts[i] and class = NEW.class and type = NEW.type
+                  LOOP
+                    UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = location.place_id;
+                  END LOOP;
+                END IF;
+            END LOOP;
+        END LOOP;
+    END IF;
+
     -- Adding ourselves to the list simplifies address calculations later
     INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
 
@@ -1478,13 +1498,10 @@ BEGIN
           END IF;    
           
           -- If the way contains an explicit name of a street copy it
-          IF NEW.street IS NULL AND NEW.addr_place IS NULL AND location.street IS NOT NULL THEN
+          -- Slightly less strict then above because data is copied from any object.
+          IF NEW.street IS NULL AND NEW.addr_place IS NULL THEN
 --RAISE WARNING 'node in way that has a streetname %',location;
             NEW.street := location.street;
-          END IF;
-
-          -- IF the way contains an explicit name of a place copy it
-          IF NEW.addr_place IS NULL AND NEW.street IS NULL AND location.addr_place IS NOT NULL THEN
             NEW.addr_place := location.addr_place;
           END IF;
 

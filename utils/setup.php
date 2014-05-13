@@ -762,6 +762,7 @@
 		while(strlen($sScript))
 		{
 			$written = fwrite($ahPipes[0], $sScript);
+			if ($written <= 0) break;
 			$sScript = substr($sScript, $written);
 		}
 		fclose($ahPipes[0]);

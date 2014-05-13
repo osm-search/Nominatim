@@ -22,6 +22,7 @@
 		array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
 		array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
 		array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
+		array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
 		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
@@ -745,11 +746,13 @@
 
 	function pgsqlRunScript($sScript)
 	{
+		global $aCMDResult;
 		// Convert database DSN to psql parameters
 		$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 		if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 		$sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
-		$sCMD .= ' -v ON_ERROR_STOP=1';
+		if (!$aCMDResult['ignore-errors'])
+			$sCMD .= ' -v ON_ERROR_STOP=1';
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
 			1 => STDOUT, 

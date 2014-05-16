@@ -2518,7 +2518,9 @@ BEGIN
   FOR location IN 
     select placex.place_id, osm_type, osm_id,
       CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
-      class, type, admin_level, fromarea, isaddress,
+      CASE WHEN extratags ? 'place' THEN 'place' ELSE class END as class,
+      CASE WHEN extratags ? 'place' THEN extratags->'place' ELSE type END as type,
+      admin_level, fromarea, isaddress,
       CASE WHEN address_place_id = for_place_id AND rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       distance,calculated_country_code,postcode
       from place_addressline join placex on (address_place_id = placex.place_id) 

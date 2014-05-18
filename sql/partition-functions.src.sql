@@ -60,6 +60,9 @@ create or replace function insertLocationAreaLarge(
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
+  IF in_rank_address = 0 THEN
+    RETURN TRUE;
+  END IF;
 
   IF in_rank_search <= 4 THEN
     INSERT INTO location_area_country values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
@@ -205,16 +208,20 @@ BEGIN
 
   IF in_rank_search <= 4 THEN
     DELETE FROM search_name_country WHERE place_id = in_place_id;
-    INSERT INTO search_name_country values (in_place_id, in_rank_search, in_rank_address, 
-      in_name_vector, in_geometry);
+    IF in_rank_address > 0 THEN
+      INSERT INTO search_name_country values (in_place_id, in_rank_search, in_rank_address,
+        in_name_vector, in_geometry);
+    END IF;
     RETURN TRUE;
   END IF;
 
 -- start
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
-    INSERT INTO search_name_-partition- values (in_place_id, in_rank_search, in_rank_address, 
-      in_name_vector, in_geometry);
+    IF in_rank_address > 0 THEN
+      INSERT INTO search_name_-partition- values (in_place_id, in_rank_search, in_rank_address,
+        in_name_vector, in_geometry);
+    END IF;
     RETURN TRUE;
   END IF;
 -- end

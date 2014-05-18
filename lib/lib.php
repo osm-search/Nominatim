@@ -45,7 +45,7 @@
 		if (!$sUserError) $sUserError = $sError;
 		error_log('ERROR: '.$sError);
 		echo $sUserError."\n";
-		exit;
+		exit(-1);
 	}
 
 

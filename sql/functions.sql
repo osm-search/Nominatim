@@ -2487,7 +2487,7 @@ BEGIN
       CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
       class, type, admin_level, true as fromarea, true as isaddress,
       CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
-      0 as distance, calculated_country_code
+      0 as distance, calculated_country_code, postcode
       from placex
       where place_id = for_place_id 
   LOOP
@@ -2497,6 +2497,9 @@ BEGIN
     END IF;
     IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
       location.isaddress := FALSE;
+    END IF;
+    IF searchpostcode IS NULL and location.postcode IS NOT NULL THEN
+      searchpostcode := location.postcode;
     END IF;
     IF location.rank_address = 4 AND location.isaddress THEN
       hadcountry := true;

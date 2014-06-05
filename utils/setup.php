@@ -802,10 +802,6 @@
 		fclose($ahPipes[1]);
 
 		$iReturn = proc_close($hProcess);
-		if ($iReturn > 0)
-		{
-			fail("pgsql returned with error code ($iReturn)");
-		}
 	}
 
 	function pgsqlRunDropAndRestore($sDumpFile)
@@ -834,10 +830,6 @@
 		fclose($ahPipes[1]);
 
 		$iReturn = proc_close($hProcess);
-		if ($iReturn > 0)
-		{
-			fail("pgsql returned with error code ($iReturn)");
-		}
 	}
 
 	function passthruCheckReturn($cmd)

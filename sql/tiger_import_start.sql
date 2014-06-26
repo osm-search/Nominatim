@@ -53,12 +53,12 @@ BEGIN
   END IF;
 
   place_centroid := ST_Centroid(linegeo);
-  out_partition := get_partition(place_centroid, 'us');
+  out_partition := get_partition('us');
   out_parent_place_id := null;
 
   address_street_word_id := get_name_id(make_standard_name(in_street));
   IF address_street_word_id IS NOT NULL THEN
-    FOR location IN SELECT * from getNearestNamedRoadFeature(out_partition, place_centroid, address_street_word_id) LOOP
+    FOR location IN SELECT * from getNearestNamedRoadFeature(out_partition, place_centroid, ARRAY[address_street_word_id]) LOOP
       out_parent_place_id := location.place_id;
     END LOOP;
   END IF;

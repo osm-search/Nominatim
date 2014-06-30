@@ -254,6 +254,13 @@
 
 	if ($aResult['deduplicate'])
 	{
+
+		$pgver = (float) CONST_Postgresql_Version;
+                if ($pgver < 9.3) {
+			echo "ERROR: deduplicate is only currently supported in postgresql 9.3";
+			exit;
+		}
+
                 $oDB =& getDB();
                 $sSQL = 'select partition from country_name order by country_code';
                 $aPartitions = $oDB->getCol($sSQL);
@@ -276,15 +283,15 @@
 				var_dump($aTokenSet, $sSQL);
 				exit;
 			}
-			
+
 			$aKeep = array_shift($aTokenSet);
 			$iKeepID = $aKeep['word_id'];
 
 			foreach($aTokenSet as $aRemove)
 			{
 				$sSQL = "update search_name set";
-				$sSQL .= " name_vector = (name_vector - ".$aRemove['word_id'].")+".$iKeepID.",";
-				$sSQL .= " nameaddress_vector = (nameaddress_vector - ".$aRemove['word_id'].")+".$iKeepID;
+				$sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID."),";
+				$sSQL .= " nameaddress_vector = array_replace(nameaddress_vector,".$aRemove['word_id'].",".$iKeepID.")";
 				$sSQL .= " where name_vector @> ARRAY[".$aRemove['word_id']."]";
 				$x = $oDB->query($sSQL);
 				if (PEAR::isError($x))
@@ -294,7 +301,7 @@
 				}
 
 				$sSQL = "update search_name set";
-				$sSQL .= " nameaddress_vector = (nameaddress_vector - ".$aRemove['word_id'].")+".$iKeepID;
+				$sSQL .= " nameaddress_vector = array_replace(nameaddress_vector,".$aRemove['word_id'].",".$iKeepID.")";
 				$sSQL .= " where nameaddress_vector @> ARRAY[".$aRemove['word_id']."]";
 				$x = $oDB->query($sSQL);
 				if (PEAR::isError($x))
@@ -304,7 +311,7 @@
 				}
 
 				$sSQL = "update location_area_country set";
-				$sSQL .= " keywords = (keywords - ".$aRemove['word_id'].")+".$iKeepID;
+				$sSQL .= " keywords = array_replace(keywords,".$aRemove['word_id'].",".$iKeepID.")";
 				$sSQL .= " where keywords @> ARRAY[".$aRemove['word_id']."]";
 				$x = $oDB->query($sSQL);
 				if (PEAR::isError($x))
@@ -316,8 +323,7 @@
 				foreach ($aPartitions as $sPartition)
 				{
 					$sSQL = "update search_name_".$sPartition." set";
-					$sSQL .= " name_vector = (name_vector - ".$aRemove['word_id'].")+".$iKeepID.",";
-					$sSQL .= " nameaddress_vector = (nameaddress_vector - ".$aRemove['word_id'].")+".$iKeepID;
+					$sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID.")";
 					$sSQL .= " where name_vector @> ARRAY[".$aRemove['word_id']."]";
 					$x = $oDB->query($sSQL);
 					if (PEAR::isError($x))
@@ -326,18 +332,8 @@
 						exit;
 					}
 
-					$sSQL = "update search_name_".$sPartition." set";
-					$sSQL .= " nameaddress_vector = (nameaddress_vector - ".$aRemove['word_id'].")+".$iKeepID;
-					$sSQL .= " where nameaddress_vector @> ARRAY[".$aRemove['word_id']."]";
-					$x = $oDB->query($sSQL);
-					if (PEAR::isError($x))
-					{
-						var_dump($x);
-						exit;
-					}
-
 					$sSQL = "update location_area_country set";
-					$sSQL .= " keywords = (keywords - ".$aRemove['word_id'].")+".$iKeepID;
+					$sSQL .= " keywords = array_replace(keywords,".$aRemove['word_id'].",".$iKeepID.")";
 					$sSQL .= " where keywords @> ARRAY[".$aRemove['word_id']."]";
 					$x = $oDB->query($sSQL);
 					if (PEAR::isError($x))

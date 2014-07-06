@@ -1374,10 +1374,10 @@ BEGIN
     IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
         FOR relation IN select * from planet_osm_rels r where r.id = NEW.osm_id
         LOOP
-            FOR i IN relation.way_off+1..relation.rel_off LOOP
-                IF relation.members[2*i] in ('', 'main_stream') THEN
+            FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+                IF relation.members[i+1] in ('', 'main_stream') AND substring(relation.members[i],1,1) = 'w' THEN
                   --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.parts[i];
-                  FOR location IN SELECT * FROM placex WHERE osm_type = 'W' and osm_id = relation.parts[i] and class = NEW.class and type = NEW.type
+                  FOR location IN SELECT * FROM placex WHERE osm_type = 'W' and osm_id = substring(relation.members[i],2,200)::bigint and class = NEW.class and type = NEW.type
                   LOOP
                     UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = location.place_id;
                   END LOOP;

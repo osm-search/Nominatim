@@ -1372,7 +1372,7 @@ BEGIN
 
     -- waterway ways are linked when they are part of a relation and have the same class/type
     IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
-        FOR relation IN select * from planet_osm_rels r where r.id = NEW.osm_id
+        FOR relation IN select * from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
         LOOP
             FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
                 IF relation.members[i+1] in ('', 'main_stream') AND substring(relation.members[i],1,1) = 'w' THEN

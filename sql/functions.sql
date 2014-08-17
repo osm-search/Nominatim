@@ -2957,14 +2957,14 @@ BEGIN
       wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/wiki/',E'\\2:');
       wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3}).wikipedia.org/w/index.php\\?title=',E'\\2:');
       wiki_article := regexp_replace(wiki_article,E'^(.*?)/([a-z]{2,3})/wiki/',E'\\2:');
-      wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3})[=:]',E'\\2:');
+      --wiki_article := regexp_replace(wiki_article,E'^(.*?)([a-z]{2,3})[=:]',E'\\2:');
       wiki_article := replace(wiki_article,' ','_');
-      wiki_article_title := trim(split_part(wiki_article, ':', 2));
-      IF wiki_article_title IS NULL OR wiki_article_title = '' THEN
+      IF strpos(wiki_article, ':') IN (3,4) THEN
+        wiki_article_language := lower(trim(split_part(wiki_article, ':', 1)));
+        wiki_article_title := trim(substr(wiki_article, strpos(wiki_article, ':')+1));
+      ELSE
         wiki_article_title := trim(wiki_article);
         wiki_article_language := CASE WHEN langs[i] = 'english' THEN 'en' WHEN langs[i] = 'country' THEN get_country_language_code(country_code) ELSE langs[i] END;
-      ELSE
-        wiki_article_language := lower(trim(split_part(wiki_article, ':', 1)));
       END IF;
 
       select wikipedia_article.language,wikipedia_article.title,wikipedia_article.importance

@@ -385,6 +385,8 @@
  'landuse:commercial' => array('label'=>'Commercial','frequency'=>657,'icon'=>'',),
 
  'place:airport' => array('label'=>'Airport','frequency'=>36,'icon'=>'transport_airport2', 'defdiameter' => 0.03,),
+ 'aeroway:aerodrome' => array('label'=>'Aerodrome','frequency'=>36,'icon'=>'transport_airport2', 'defdiameter' => 0.03,),
+ 'aeroway' => array('label'=>'Aeroway','frequency'=>36,'icon'=>'transport_airport2', 'defdiameter' => 0.03,),
  'railway:station' => array('label'=>'Station','frequency'=>3431,'icon'=>'transport_train_station2', 'defdiameter' => 0.01,),
  'amenity:place_of_worship' => array('label'=>'Place Of Worship','frequency'=>9049,'icon'=>'place_of_worship_unknown3',),
  'amenity:pub' => array('label'=>'Pub','frequency'=>18969,'icon'=>'food_pub',),

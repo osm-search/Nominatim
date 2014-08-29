@@ -2336,29 +2336,29 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_connected_ways(way_ids INTEGER[]) RETURNS SETOF planet_osm_ways
-  AS $$
-DECLARE
-  searchnodes INTEGER[];
-  location RECORD;
-  j INTEGER;
-BEGIN
-
-  searchnodes := '{}';
-  FOR j IN 1..array_upper(way_ids, 1) LOOP
-    FOR location IN 
-      select nodes from planet_osm_ways where id = way_ids[j] LIMIT 1
-    LOOP
-      IF not (ARRAY[location.nodes] <@ searchnodes) THEN
-        searchnodes := searchnodes || location.nodes;
-      END IF;
-    END LOOP;
-  END LOOP;
-
-  RETURN QUERY select * from planet_osm_ways where nodes && searchnodes and NOT ARRAY[id] <@ way_ids;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
+--CREATE OR REPLACE FUNCTION get_connected_ways(way_ids INTEGER[]) RETURNS SETOF planet_osm_ways
+--  AS $$
+--DECLARE
+--  searchnodes INTEGER[];
+--  location RECORD;
+--  j INTEGER;
+--BEGIN
+--
+--  searchnodes := '{}';
+--  FOR j IN 1..array_upper(way_ids, 1) LOOP
+--    FOR location IN
+--      select nodes from planet_osm_ways where id = way_ids[j] LIMIT 1
+--    LOOP
+--      IF not (ARRAY[location.nodes] <@ searchnodes) THEN
+--        searchnodes := searchnodes || location.nodes;
+--      END IF;
+--    END LOOP;
+--  END LOOP;
+--
+--  RETURN QUERY select * from planet_osm_ways where nodes && searchnodes and NOT ARRAY[id] <@ way_ids;
+--END;
+--$$
+--LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION get_address_postcode(for_place_id BIGINT) RETURNS TEXT
   AS $$

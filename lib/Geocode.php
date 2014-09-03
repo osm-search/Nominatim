@@ -1262,7 +1262,21 @@
 								}
 							}
 							if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
-							if ($aSearch['sHouseNumber']) $aTerms[] = "address_rank between 16 and 27";
+							if ($aSearch['sHouseNumber'])
+							{
+								$aTerms[] = "address_rank between 16 and 27";
+							}
+							else
+							{
+								if ($this->iMinAddressRank > 0)
+								{
+									$aTerms[] = "address_rank >= ".$this->iMinAddressRank;
+								}
+								if ($this->iMaxAddressRank < 30)
+								{
+									$aTerms[] = "address_rank <= ".$this->iMaxAddressRank;
+								}
+							}
 							if ($aSearch['fLon'] && $aSearch['fLat'])
 							{
 								$aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";

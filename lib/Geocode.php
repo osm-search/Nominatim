@@ -518,7 +518,7 @@
 				foreach($this->aRoutePoints as $aPoint)
 				{
 					if (!$bFirst) $sViewboxCentreSQL .= ",";
-					$sViewboxCentreSQL .= $aPoint[1].' '.$aPoint[0];
+					$sViewboxCentreSQL .= $aPoint[0].' '.$aPoint[1];
 					$bFirst = false;
 				}
 				$sViewboxCentreSQL .= ")'::geometry,4326)";

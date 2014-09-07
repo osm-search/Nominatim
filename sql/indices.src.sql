@@ -18,6 +18,7 @@ CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address);
 CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) where indexed_status > 0;
 CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) where parent_place_id IS NOT NULL;
 CREATE INDEX idx_placex_interpolation ON placex USING BTREE (geometry_sector) where indexed_status > 0 and class='place' and type='houses';
+CREATE INDEX idx_placex_reverse_geometry ON placex USING gist (geometry) where rank_search != 28 and (name is not null or housenumber is not null) and class not in ('waterway','railway','tunnel','bridge');
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id);
 
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid);

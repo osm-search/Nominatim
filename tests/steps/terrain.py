@@ -23,7 +23,7 @@ class NominatimConfig:
             logging.basicConfig(level=loglevel)
         # Nominatim test setup
         self.base_url = os.environ.get('NOMINATIM_SERVER', 'http://localhost/nominatim')
-        self.source_dir = os.path.abspath(os.environ.get('NOMINATIM_DIR', '../Nominatim'))
+        self.source_dir = os.path.abspath(os.environ.get('NOMINATIM_DIR', '..'))
         self.template_db = os.environ.get('TEMPLATE_DB', 'test_template_nominatim')
         self.test_db = os.environ.get('TEST_DB', 'test_nominatim')
         self.local_settings_file = os.environ.get('NOMINATIM_SETTINGS', '/tmp/nominatim_settings.php')

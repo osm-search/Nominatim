@@ -10,18 +10,18 @@ install:
 	@echo Nominatim needs to be executed directly from this directory. No install necessary.
 
 test:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_DIR=.. lettuce -t -Fail -t -poldi-only
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only
 
 test-fast:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 NOMINATIM_DIR=.. lettuce -t -Fail -t -poldi-only
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 lettuce -t -Fail -t -poldi-only
 
 test-db:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_DIR=.. lettuce -t -Fail -t -poldi-only -t DB
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only -t DB
 
 test-db-fast:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 NOMINATIM_DIR=.. lettuce -t -Fail -t -poldi-only -t DB
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 lettuce -t -Fail -t -poldi-only -t DB
 
 test-api:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_DIR=.. lettuce -t -Fail -t -poldi-only features/api
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only features/api
 
 .PHONY: test test-fast test-db test-db-fast test-api

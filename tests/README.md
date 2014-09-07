@@ -40,6 +40,10 @@ The tests can be configured with a set of environment variables:
                                 the next run. This speeds up tests considerably
                                 but might lead to outdated errors for some
                                 changes in the database layout.
+ * `NOMINATIM_KEEP_SCENARIO_DB` - if defined, the test database will not be
+                                  dropped after a test is finished. Should
+                                  only be used if one single scenario is run,
+                                  otherwise the result is undefined.
  * `LOGLEVEL` - set to 'debug' to get more verbose output (only works properly
                 when output to a logfile is configured)
  * `LOGFILE` - sends debug output to the given file

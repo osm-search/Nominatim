@@ -53,3 +53,35 @@ Feature: Update of simple objects
         When marking for delete R1,W1
         Then table placex has no entry for W1
         Then table placex has no entry for R1
+
+
+    Scenario: type mutation
+        Given the place nodes
+          | osm_id | class | type | geometry
+          | 3      | shop  | toys | 1 -1
+        When importing
+        Then table placex contains
+          | object | class | type
+          | N3     | shop  | toys
+        When updating place nodes
+          | osm_id | class | type    | geometry
+          | 3      | shop  | grocery | 1 -1
+        Then table placex contains
+          | object | class | type
+          | N3     | shop  | grocery
+
+
+    Scenario: remove postcode place when house number is added
+        Given the place nodes
+          | osm_id | class | type     | postcode | geometry
+          | 3      | place | postcode | 12345    | 1 -1
+        When importing
+        Then table placex contains
+          | object | class | type
+          | N3     | place | postcode
+        When updating place nodes
+          | osm_id | class | type  | postcode | housenumber | geometry
+          | 3      | place | house | 12345    | 13          | 1 -1
+        Then table placex contains
+          | object | class | type
+          | N3     | place | house

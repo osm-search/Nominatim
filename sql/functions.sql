@@ -2090,8 +2090,8 @@ BEGIN
   -- Handle a place changing type by removing the old data
   -- My generated 'place' types are causing havok because they overlap with real keys
   -- TODO: move them to their own special purpose key/class to avoid collisions
-  IF existing.osm_type IS NULL AND (NEW.type not in ('postcode','house','houses')) THEN
-    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type not in ('postcode','house','houses');
+  IF existing.osm_type IS NULL THEN
+    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
   END IF;
 
   --DEBUG: RAISE WARNING 'Existing: %',existing.osm_id;

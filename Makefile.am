@@ -16,10 +16,10 @@ test-fast:
 	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 lettuce -t -Fail -t -poldi-only
 
 test-db:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only -t DB
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only features/db
 
 test-db-fast:
-	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 lettuce -t -Fail -t -poldi-only -t DB
+	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} NOMINATIM_REUSE_TEMPLATE=1 lettuce -t -Fail -t -poldi-only features/db
 
 test-api:
 	cd tests; NOMINATIM_SERVER=${NOMINATIM_SERVER} lettuce -t -Fail -t -poldi-only features/api

@@ -1018,6 +1018,13 @@ BEGIN
             NEW.rank_address := 5;
           END IF;
 
+        ELSEIF NEW.calculated_country_code = 'sg' THEN
+
+          IF NEW.postcode ~ '^([0-9]{6})$' THEN
+            NEW.rank_search := 25;
+            NEW.rank_address := 11;
+          END IF;
+
         ELSEIF NEW.calculated_country_code = 'de' THEN
 
           IF NEW.postcode ~ '^([0-9]{5})$' THEN

@@ -733,7 +733,7 @@
 						{
 							if (substr($aData[1],-2,1) != ' ')
 							{
-								$aData[0] = substr($aData[0],0,strlen($aData[1]-1)).' '.substr($aData[0],strlen($aData[1]-1));
+								$aData[0] = substr($aData[0],0,strlen($aData[1])-1).' '.substr($aData[0],strlen($aData[1]-1));
 								$aData[1] = substr($aData[1],0,-1).' '.substr($aData[1],-1,1);
 							}
 							$aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $this->oDB);

@@ -1,4 +1,5 @@
 *.log
+*.pyc
 
 nominatim/*.d
 nominatim/*.o
@@ -27,3 +28,4 @@ compile
 data/wiki_import.sql
 data/wiki_specialphrases.sql
 data/osmosischange.osc
+

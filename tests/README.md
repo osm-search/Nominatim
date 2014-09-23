@@ -21,7 +21,7 @@ Usage
 
  * get prerequisites
 
-     [sudo] pip install lettuce nose pytidylib haversine
+     [sudo] pip install lettuce nose pytidylib haversine psycopg2
 
  * run the tests
 

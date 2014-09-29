@@ -685,6 +685,10 @@
 	{
 		showUsage($aCMDOptions, true);
 	}
+	else
+	{
+		echo "Setup finished.\n";
+	}
 
 	function pgsqlRunScriptFile($sFilename)
 	{

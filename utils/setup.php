@@ -89,6 +89,8 @@
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
+	$fPostgisVersion = (float) CONST_Postgis_Version;
+
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
 		echo "Create DB\n";
@@ -126,7 +128,6 @@
 			pgsqlRunScript('CREATE EXTENSION hstore');
 		}
 
-		$fPostgisVersion = (float) CONST_Postgis_Version;
 		if ($fPostgisVersion < 2.0) {
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
@@ -214,6 +215,14 @@
 		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
 		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
 		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
+		pgsqlRunScript($sTemplate);
+		if ($fPostgisVersion < 2.0) {
+			echo "Helper functions for postgis < 2.0\n";
+			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_15_aux.sql');
+		} else {
+			echo "Helper functions for postgis >= 2.0\n";
+			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_20_aux.sql');
+		}
 		pgsqlRunScript($sTemplate);
 	}
 

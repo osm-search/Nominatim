@@ -110,6 +110,27 @@ def check_search_name_content(step):
                 else:
                     raise Exception("Cannot handle field %s in search_name table" % (k, ))
 
+@step(u'node (\d+) expands to housenumbers')
+def check_interpolated_housenumbers(step, nodeid):
+    """Check that the exact set of housenumbers has been entered in
+       placex for the given source node. Expected are tow columns:
+       housenumber and centroid
+    """
+    numbers = {}
+    for line in step.hashes:
+        assert line["housenumber"] not in numbers
+        numbers[line["housenumber"]] = line["centroid"]
+    cur = world.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("""SELECT DISTINCT housenumber,
+                          ST_X(centroid) as clat, ST_Y(centroid) as clon
+                   FROM placex WHERE osm_type = 'N' and osm_id = %s""",
+                   (int(nodeid),))
+    assert_equals(len(numbers), cur.rowcount)
+    for r in cur:
+        assert_in(r["housenumber"], numbers)
+        world.match_geometry((r['clat'], r['clon']), numbers[r["housenumber"]])
+        del numbers[r["housenumber"]]
+
 
 @step(u'table search_name has no entry for (.*)')
 def check_placex_missing(step, osmid):

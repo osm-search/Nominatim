@@ -791,7 +791,7 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT) RETURNS INTEGER
   AS $$
 DECLARE
-  
+
   newpoints INTEGER;
   waynodes BIGINT[];
   nodeid BIGINT;
@@ -804,117 +804,103 @@ DECLARE
   originalnumberrange INTEGER;
   housenum INTEGER;
   linegeo GEOMETRY;
+  splitline GEOMETRY;
+  sectiongeo GEOMETRY;
   search_place_id BIGINT;
   defpostalcode TEXT;
 
-  havefirstpoint BOOLEAN;
-  linestr TEXT;
 BEGIN
+  IF interpolationtype = 'odd' OR interpolationtype = 'even' THEN
+    stepsize := 2;
+  ELSEIF interpolationtype = 'all' THEN
+    stepsize := 1;
+  ELSEIF interpolationtype ~ '^\d+$' THEN
+    stepsize := interpolationtype::INTEGER;
+  ELSE
+    RETURN 0;
+  END IF;
+
+  select nodes from planet_osm_ways where id = wayid INTO waynodes;
+
+  IF array_upper(waynodes, 1) IS NULL THEN
+    RETURN 0;
+  END IF;
+
+  select postcode, geometry from placex where osm_type = 'W' and osm_id = wayid 
+    INTO defpostalcode, linegeo;
+
+  IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
+    RETURN 0;
+  END IF;
+
+  startnumber := NULL;
   newpoints := 0;
-  IF interpolationtype = 'odd' OR interpolationtype = 'even' OR interpolationtype = 'all' THEN
 
-    select postcode from placex where osm_type = 'W' and osm_id = wayid INTO defpostalcode;
-    select nodes from planet_osm_ways where id = wayid INTO waynodes;
---RAISE WARNING 'interpolation % % %',wayid,interpolationtype,waynodes;
-    IF array_upper(waynodes, 1) IS NOT NULL THEN
+  FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
-      havefirstpoint := false;
+    -- If there is a place of a type other than place/house, use that because
+    -- it is guaranteed to be the original node. For place/house types use the
+    -- one with the smallest id because the original node was created first.
+    -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
+    select place_id from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and indexed_status < 100 order by (type = 'house'),place_id limit 1 INTO search_place_id;
+    IF search_place_id IS NOT NULL THEN
+      select * from placex where place_id = search_place_id INTO nextnode;
 
-      FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
-
-        -- If there is a place of a type other than place/house, use that because
-        -- it is guaranteed to be the original node. For place/house types use the
-        -- one with the smallest id because the original node was created first.
-        -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
-        select place_id from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and indexed_status < 100 order by (type = 'house'),place_id limit 1 INTO search_place_id;
-        IF search_place_id IS NULL THEN
-          -- if no such node exists, create a record of the right type
-          select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and type = 'house' limit 1 INTO nextnode;
-          select ST_SetSRID(ST_Point(lon::float/10000000,lat::float/10000000),4326) from planet_osm_nodes where id = waynodes[nodeidpos] INTO nextnode.geometry;
-          IF nextnode.geometry IS NULL THEN
-            -- we don't have any information about this point, most likely
-            -- because an excerpt was updated and the node never imported
-            -- because the interpolation is outside the region of the excerpt.
-            -- Give up.
-            RETURN newpoints;
+        IF nodeidpos < array_upper(waynodes, 1) THEN
+          -- Make sure that the point is actually on the line. That might
+          -- be a bit paranoid but ensures that the algorithm still works
+          -- should osm2pgsql attempt to repair geometries.
+          splitline := split_line_on_node(linegeo, nextnode.geometry);
+          sectiongeo := ST_GeometryN(splitline, 1);
+          IF ST_GeometryType(ST_GeometryN(splitline, 2)) = 'ST_LineString' THEN
+            linegeo := ST_GeometryN(splitline, 2);
           END IF;
         ELSE
-          select * from placex where place_id = search_place_id INTO nextnode;
+          sectiongeo = linegeo;
         END IF;
+        endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
 
---RAISE WARNING 'interpolation node % % % ',nextnode.housenumber,ST_X(nextnode.geometry),ST_Y(nextnode.geometry);
-      
-        IF havefirstpoint THEN
+        IF startnumber IS NOT NULL AND endnumber IS NOT NULL
+           AND @(startnumber - endnumber) < 1000 AND startnumber != endnumber
+           AND ST_GeometryType(linegeo) = 'ST_LineString' THEN
 
-          -- add point to the line string
-          linestr := linestr||','||ST_X(nextnode.geometry)||' '||ST_Y(nextnode.geometry);
-          endnumber := ('0'||substring(nextnode.housenumber,'[0-9]+'))::integer;
+          IF (startnumber > endnumber) THEN
+            housenum := endnumber;
+            endnumber := startnumber;
+            startnumber := housenum;
+            sectiongeo := ST_Reverse(sectiongeo);
+          END IF;
+          orginalstartnumber := startnumber;
+          originalnumberrange := endnumber - startnumber;
 
-          IF startnumber IS NOT NULL and startnumber > 0 AND endnumber IS NOT NULL and endnumber > 0 AND @(startnumber - endnumber) < 1000 THEN
+          startnumber := startnumber + stepsize;
+          -- correct for odd/even
+          IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
+            startnumber := startnumber - 1;
+          END IF;
+          endnumber := endnumber - 1;
 
---RAISE WARNING 'interpolation end % % ',nextnode.place_id,endnumber;
-
-            IF startnumber != endnumber THEN
-
-              linestr := linestr || ')';
---RAISE WARNING 'linestr %',linestr;
-              linegeo := ST_GeomFromText(linestr,4326);
-              linestr := 'LINESTRING('||ST_X(nextnode.geometry)||' '||ST_Y(nextnode.geometry);
-              IF (startnumber > endnumber) THEN
-                housenum := endnumber;
-                endnumber := startnumber;
-                startnumber := housenum;
-                linegeo := ST_Reverse(linegeo);
-              END IF;
-              orginalstartnumber := startnumber;
-              originalnumberrange := endnumber - startnumber;
-
--- Too much broken data worldwide for this test to be worth using
---              IF originalnumberrange > 500 THEN
---                RAISE WARNING 'Number block of % while processing % %', originalnumberrange, prevnode, nextnode;
---              END IF;
-
-              IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
-                startnumber := startnumber + 1;
-                stepsize := 2;
-              ELSE
-                IF (interpolationtype = 'odd' OR interpolationtype = 'even') THEN
-                  startnumber := startnumber + 2;
-                  stepsize := 2;
-                ELSE -- everything else assumed to be 'all'
-                  startnumber := startnumber + 1;
-                  stepsize := 1;
-                END IF;
-              END IF;
-              endnumber := endnumber - 1;
-              delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id and type = 'house' and place_id != prevnode.place_id;
-              FOR housenum IN startnumber..endnumber BY stepsize LOOP
-                -- this should really copy postcodes but it puts a huge burdon on the system for no big benefit
-                -- ideally postcodes should move up to the way
-                insert into placex (osm_type, osm_id, class, type, admin_level, housenumber, street, addr_place, isin, postcode,
-                  country_code, parent_place_id, rank_address, rank_search, indexed_status, geometry)
-                  values ('N',prevnode.osm_id, 'place', 'house', prevnode.admin_level, housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
-                  prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search, 1, ST_LineInterpolatePoint(linegeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
-                newpoints := newpoints + 1;
+          delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id and type = 'house' and place_id != prevnode.place_id;
+          FOR housenum IN startnumber..endnumber BY stepsize LOOP
+            -- this should really copy postcodes but it puts a huge burden on
+            -- the system for no big benefit ideally postcodes should move up to the way
+            insert into placex (osm_type, osm_id, class, type, admin_level,
+              housenumber, street, addr_place, isin, postcode,
+              country_code, parent_place_id, rank_address, rank_search,
+              indexed_status, geometry)
+              values ('N', prevnode.osm_id, 'place', 'house', prevnode.admin_level,
+              housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
+              prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search,
+              1, ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
+            newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
-              END LOOP;
-            END IF;
-            havefirstpoint := false;
-          END IF;
+          END LOOP;
         END IF;
 
-        IF NOT havefirstpoint THEN
-          startnumber := ('0'||substring(nextnode.housenumber,'[0-9]+'))::integer;
-          IF startnumber IS NOT NULL AND startnumber > 0 THEN
-            havefirstpoint := true;
-            linestr := 'LINESTRING('||ST_X(nextnode.geometry)||' '||ST_Y(nextnode.geometry);
-            prevnode := nextnode;
-          END IF;
---RAISE WARNING 'interpolation start % % ',nextnode.place_id,startnumber;
-        END IF;
-      END LOOP;
+        startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
+        prevnode := nextnode;
     END IF;
-  END IF;
+  END LOOP;
 
 --RAISE WARNING 'interpolation points % ',newpoints;
 

@@ -27,7 +27,7 @@
  * refactoring of front-end PHP code
  * lots of smaller bug fixes
 
- 2.2
+2.2
 
  * correct database rights for www-data
  * add timestamps for update output
@@ -42,3 +42,18 @@
  * properly detect changes of admin_level
  * remove landuses when name is removed
  * smaller fixes
+
+2.3
+
+ * further improve ordering of results
+ * support for more lat/lon formats in search-as-reverse
+ * fix handling of GB postcodes
+ * new functional test suite
+ * support for waterway relations
+ * inherit postcodes from street to poi
+ * fix housenumber normalisation to find non-latin house numbers
+ * take viewbox into account for ordering of results
+ * pois may now inherit address tags from surrounding buildings
+ * improve what objects may participate in an address
+ * clean up handled class/type combinations to current OSM usage
+ * lots of bug fixes

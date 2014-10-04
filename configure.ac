@@ -40,7 +40,7 @@ fi
 
 
 dnl Check for PostgresSQL client library
-AX_LIB_POSTGRESQL(8.4)
+AX_LIB_POSTGRESQL(9.0)
 if test "x$POSTGRESQL_VERSION" = "x"
 then
     AC_MSG_ERROR([postgresql client library not found])

@@ -1107,7 +1107,11 @@ BEGIN
       END IF;
     ELSEIF NEW.class = 'landuse' AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
       NEW.rank_search := 22;
-      NEW.rank_address := NEW.rank_search;
+      IF NEW.type in ('residential', 'farm', 'farmyard', 'industrial', 'commercial', 'allotments', 'retail') THEN
+        NEW.rank_address := NEW.rank_search;
+      ELSE
+        NEW.rank_address := 0;
+      END IF;
     ELSEIF NEW.class = 'natural' and NEW.type in ('peak','volcano','mountain_range') THEN
       NEW.rank_search := 18;
       NEW.rank_address := 0;

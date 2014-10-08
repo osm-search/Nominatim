@@ -319,6 +319,7 @@ Feature: Import into placex
           | osm_type | osm_id | class   | type        | geometry
           | W        | 4      | landuse | residential | poly-area:0.1
           | R        | 2      | landuse | residential | poly-area:0.05
+          | R        | 3      | landuse | forrest     | poly-area:0.5
         When importing
         Then table placex has no entry for N1
         And table placex has no entry for W1
@@ -331,6 +332,7 @@ Feature: Import into placex
           | W2     | 30          | 30
           | W4     | 22          | 22
           | R2     | 22          | 22
+          | R3     | 22          | 0
 
     Scenario: rank and inclusion of naturals
        Given the place nodes

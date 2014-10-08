@@ -28,3 +28,6 @@ CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-pa
 -- end
 
 CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type);
+
+
+CREATE INDEX idx_gb_postcode_postcode ON gb_postcode USING BTREE (postcode);

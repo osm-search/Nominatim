@@ -1156,6 +1156,8 @@
 								{
 									$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
+                                    if ($bBoundingBoxSearch)
+                                        $sSQL .= " and st_overlaps($this->sViewboxSmallSQL, geometry)";
 									$sSQL .= " order by st_area(geometry) desc limit 1";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $this->oDB->getCol($sSQL);

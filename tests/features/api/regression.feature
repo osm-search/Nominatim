@@ -177,3 +177,10 @@ Feature: API regression tests
         Then results contain
          | ID | class   | latlon
          | 0  | highway | 51.8324206,1.2447352 +-100m
+
+     Scenario: trac #5238
+        Given the request parameters
+         | bounded | viewbox
+         | 1       | 0,0,-1,-1
+        When sending json search query "sy"
+        Then exactly 0 results are returned

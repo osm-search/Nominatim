@@ -1123,7 +1123,7 @@ BEGIN
     -- any feature more than 5 square miles is probably worth indexing
     ELSEIF ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_Area(NEW.geometry) > 0.1 THEN
       NEW.rank_search := 22;
-      NEW.rank_address := NEW.rank_search;
+      NEW.rank_address := 0;
     ELSEIF NEW.class = 'highway' AND NEW.name is NULL AND 
            NEW.type in ('service','cycleway','path','footway','steps','bridleway','track','byway','motorway_link','primary_link','trunk_link','secondary_link','tertiary_link') THEN
 --      RAISE WARNING 'unnamed minor feature %',NEW.osm_id;

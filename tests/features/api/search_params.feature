@@ -29,7 +29,7 @@ Feature: Search queries
         When sending xml search query "Inuvik" with address
         Then address of result 0 is
           | type         | value
-          | town         | Inuvik
+          | city         | Inuvik
           | state        | Northwest Territories
           | country      | Canada
           | country_code | ca
@@ -41,7 +41,7 @@ Feature: Search queries
           | 0  | leisure | hackerspace
         And result addresses contain
           | ID | address29
-          | 0  | foobar
+          | 0  | Chaospott
         And address of result 0 does not contain leisure,hackerspace
 
     Scenario: Disabling deduplication

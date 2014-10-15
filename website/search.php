@@ -87,7 +87,7 @@
 	} else {
         if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
         {
-            $sQuery = substr($_SERVER['PATH_INFO'], 1);
+            $sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
             // reverse order of '/' separated string
             $aPhrases = explode('/', $sQuery);

@@ -108,7 +108,7 @@ def _sort_xml_entries(x, y):
 
 def write_osm_obj(fd, obj):
     if obj['type'] == 'N':
-        fd.write('<node id="%(id)d" lat="%(lat).8f" lon="%(lon).8f" version="%(version)s" timestamp="%(timestamp)%" changeset="%(changeset)s" uid="%(uid)s" user="%(user)s"'% obj)
+        fd.write('<node id="%(id)d" lat="%(lat).8f" lon="%(lon).8f" version="%(version)s" timestamp="%(timestamp)s" changeset="%(changeset)s" uid="%(uid)s" user="%(user)s"'% obj)
         if obj['tags'] is None:
             fd.write('/>\n')
         else:

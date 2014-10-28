@@ -103,6 +103,16 @@ def api_setup_reverse(step, fmt, lat, lon):
         world.params['format'] = fmt.strip()
     api_call('reverse')
 
+@step(u'looking up place ([NRW]?\d+)')
+def api_setup_details(step, obj):
+    if obj[0] in ('N', 'R', 'W'):
+        # an osm id
+        world.params['osm_type']  = obj[0]
+        world.params['osm_id'] = obj[1:]
+    else:
+        world.params['place_id']  = obj
+    api_call('reverse')
+
 @step(u'looking up details for ([NRW]?\d+)')
 def api_setup_details(step, obj):
     if obj[0] in ('N', 'R', 'W'):

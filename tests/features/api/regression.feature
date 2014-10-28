@@ -184,3 +184,10 @@ Feature: API regression tests
          | 1       | 0,0,-1,-1
         When sending json search query "sy"
         Then exactly 0 results are returned
+
+    Scenario: github #190
+        When looking up place N257363453
+        Then the results contain
+         | osm_type   | osm_id     | latlon
+         | node       | 257363453  | 35.8404121,128.5586643 +-100m
+

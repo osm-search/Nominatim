@@ -46,7 +46,8 @@
 			$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 			$sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 			$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
-			$sSQL .= " st_y(centroid) as lat, st_x(centroid) as lon";
+			$sSQL .= " (case when centroid is null then st_y(st_centroid(geometry)) else st_y(centroid) end) as lat,";
+			$sSQL .= " (case when centroid is null then st_x(st_centroid(geometry)) else st_x(centroid) end) as lon";
 			$sSQL .= " from placex where place_id = ".(int)$this->iPlaceID;
 			$aPlace = $this->oDB->getRow($sSQL);
 

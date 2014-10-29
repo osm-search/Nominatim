@@ -112,7 +112,7 @@
 		$oDB =& getDB();
 
 		$sVersionString = $oDB->getOne('select version()');
-		preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[.]([0-9]+) #', $sVersionString, $aMatches);
+		preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[^0-9]#', $sVersionString, $aMatches);
 		if (CONST_Postgresql_Version != $aMatches[1].'.'.$aMatches[2])
 		{
 			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";

@@ -326,4 +326,50 @@ Feature: Import of address interpolations
           | housenumber | centroid
           | 8           | 1.001,1.001
 
+    Scenario: Interpolation on self-intersecting way
+        Given the place nodes
+          | osm_id | class | type  | housenumber | geometry
+          | 1      | place | house | 2           | 0 0
+          | 2      | place | house | 6           | 0 0.001
+          | 3      | place | house | 10          | 0 0.002
+        And the place ways
+          | osm_id | class | type   | housenumber | geometry
+          | 1      | place | houses | even        | 0 0, 0 0.001, 0 0.002, 0 0.001
+        And the ways
+          | id | nodes
+          | 1  | 1,2,3,2
+        When importing
+        Then node 1 expands to housenumbers
+          | housenumber | centroid
+          | 2           | 0,0
+          | 4           | 0,0.0005
+        Then node 2 expands to housenumbers
+          | housenumber | centroid
+          | 6           | 0,0.001
+          | 8           | 0,0.0015
+        Then node 3 expands to housenumbers
+          | housenumber | centroid
+          | 10          | 0,0.002
+          | 8           | 0,0.0015
+
+    Scenario: Interpolation on self-intersecting way II
+        Given the place nodes
+          | osm_id | class | type  | housenumber | geometry
+          | 1      | place | house | 2           | 0 0
+          | 2      | place | house | 6           | 0 0.001
+        And the place ways
+          | osm_id | class | type   | housenumber | geometry
+          | 1      | place | houses | even        | 0 0, 0 0.001, 0 0.002, 0 0.001
+        And the ways
+          | id | nodes
+          | 1  | 1,2,3,2
+        When importing
+        Then node 1 expands to housenumbers
+          | housenumber | centroid
+          | 2           | 0,0
+          | 4           | 0,0.0005
+        Then node 2 expands to housenumbers
+          | housenumber | centroid
+          | 6           | 0,0.001
+
 

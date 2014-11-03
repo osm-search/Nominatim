@@ -846,15 +846,13 @@ BEGIN
     IF search_place_id IS NOT NULL THEN
       select * from placex where place_id = search_place_id INTO nextnode;
 
-        IF nodeidpos < array_upper(waynodes, 1) THEN
+        IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
           -- Make sure that the point is actually on the line. That might
           -- be a bit paranoid but ensures that the algorithm still works
           -- should osm2pgsql attempt to repair geometries.
           splitline := split_line_on_node(linegeo, nextnode.geometry);
           sectiongeo := ST_GeometryN(splitline, 1);
-          IF ST_GeometryType(ST_GeometryN(splitline, 2)) = 'ST_LineString' THEN
-            linegeo := ST_GeometryN(splitline, 2);
-          END IF;
+          linegeo := ST_GeometryN(splitline, 2);
         ELSE
           sectiongeo = linegeo;
         END IF;
@@ -862,7 +860,7 @@ BEGIN
 
         IF startnumber IS NOT NULL AND endnumber IS NOT NULL
            AND @(startnumber - endnumber) < 1000 AND startnumber != endnumber
-           AND ST_GeometryType(linegeo) = 'ST_LineString' THEN
+           AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
 
           IF (startnumber > endnumber) THEN
             housenum := endnumber;
@@ -895,6 +893,12 @@ BEGIN
             newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
           END LOOP;
+        END IF;
+
+        -- early break if we are out of line string,
+        -- might happen when a line string loops back on itself
+        IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
+            RETURN newpoints;
         END IF;
 
         startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;

@@ -49,6 +49,7 @@ def check_placex_content(step, tablename):
         q = 'SELECT *'
         if tablename == 'placex':
             q = q + ", ST_X(centroid) as clat, ST_Y(centroid) as clon"
+        q = q + ", ST_GeometryType(geometry) as geometrytype"
         q = q + ' FROM %s where osm_type = %%s and osm_id = %%s' % (tablename,)
         if cls is None:
             params = (osmtype, osmid)

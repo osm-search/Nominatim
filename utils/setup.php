@@ -607,7 +607,7 @@
 			}
 			if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
 
-			$sRepURL .= $aRepMatch[1].'.state.txt';
+			$sRepURL .= $aRepMatch[1].'state.txt';
 			echo "Getting state file: $sRepURL\n";
 			$sStateFile = file_get_contents($sRepURL);
 			if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");

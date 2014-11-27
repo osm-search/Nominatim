@@ -573,49 +573,62 @@
 
 			// Search for the correct state file - uses file timestamps so need to sort by date descending
 			$sRepURL = CONST_Replication_Url."/";
-			$sRep = file_get_contents($sRepURL."?C=M;O=D");
+			$sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
 			// download.geofabrik.de:    <a href="000/">000/</a></td><td align="right">26-Feb-2013 11:53  </td>
-			// planet.openstreetmap.org: <a href="273/">273/</a>                    22-Mar-2013 07:41    -
-			preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
-			$aPrevRepMatch = false;
-			foreach($aRepMatches as $aRepMatch)
+			// planet.openstreetmap.org: <a href="273/">273/</a>                    2013-03-11 07:41    -
+			preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
+			var_dump($aRepMatches);
+			if ($aRepMatches)
 			{
-				if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-				$aPrevRepMatch = $aRepMatch;
-			}
-			if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+				$aPrevRepMatch = false;
+				foreach($aRepMatches as $aRepMatch)
+				{
+					if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+					$aPrevRepMatch = $aRepMatch;
+				}
+				if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
 
-			$sRepURL .= $aRepMatch[1];
-			$sRep = file_get_contents($sRepURL."?C=M;O=D");
-			preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
-			$aPrevRepMatch = false;
-			foreach($aRepMatches as $aRepMatch)
+				$sRepURL .= $aRepMatch[1];
+				$sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
+				preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
+				var_dump($aRepMatches);
+				$aPrevRepMatch = false;
+				foreach($aRepMatches as $aRepMatch)
+				{
+					if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+					$aPrevRepMatch = $aRepMatch;
+				}
+				if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+
+				$sRepURL .= $aRepMatch[1];
+				$sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
+				preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
+				var_dump($aRepMatches);
+				$aPrevRepMatch = false;
+				foreach($aRepMatches as $aRepMatch)
+				{
+					if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
+					$aPrevRepMatch = $aRepMatch;
+				}
+				if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
+
+				$sRepURL .= $aRepMatch[1].'.state.txt';
+				echo "Getting state file: $sRepURL\n";
+				$sStateFile = file_get_contents($sRepURL);
+				if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
+				file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
+				echo "Updating DB status\n";
+				pg_query($oDB->connection, 'TRUNCATE import_status');
+				$sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
+				pg_query($oDB->connection, $sSQL);
+			}
+			else
 			{
-				if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-				$aPrevRepMatch = $aRepMatch;
+				if (!$aCMDResult['all'])
+				{
+					fail("Cannot read state file directory.");
+				}
 			}
-			if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
-
-			$sRepURL .= $aRepMatch[1];
-			$sRep = file_get_contents($sRepURL."?C=M;O=D");
-			preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>.*(([0-9]{2})-([A-z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}))#', $sRep, $aRepMatches, PREG_SET_ORDER);
-			$aPrevRepMatch = false;
-			foreach($aRepMatches as $aRepMatch)
-			{
-				if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-				$aPrevRepMatch = $aRepMatch;
-			}
-			if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
-
-			$sRepURL .= $aRepMatch[1].'.state.txt';
-			echo "Getting state file: $sRepURL\n";
-			$sStateFile = file_get_contents($sRepURL);
-			if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
-			file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
-			echo "Updating DB status\n";
-			pg_query($oDB->connection, 'TRUNCATE import_status');
-			$sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
-			pg_query($oDB->connection, $sSQL);
 		}
 	}
 

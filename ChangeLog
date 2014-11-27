@@ -57,3 +57,7 @@
  * improve what objects may participate in an address
  * clean up handled class/type combinations to current OSM usage
  * lots of bug fixes
+
+2.3.1
+
+ * fix parse error in replication state directories (fatal during setup)

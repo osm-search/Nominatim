@@ -5,11 +5,12 @@
 	// General settings
 	@define('CONST_Debug', false);
 	@define('CONST_Database_DSN', 'pgsql://@/nominatim'); // <driver>://<username>:<password>@<host>:<port>/<database>
+	@define('CONST_Database_Web_User', 'www-data');
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
 
 	// Software versions
-	@define('CONST_Postgresql_Version', '9.1'); // values: 8.3, 8.4, 9.0, 9.1, 9.2
+	@define('CONST_Postgresql_Version', '9.1'); // values: 9.0, 9.1, 9.2
 	@define('CONST_Postgis_Version', '1.5'); // values: 1.5, 2.0
 
 	// Paths
@@ -20,6 +21,23 @@
 
 	// osm2pgsql settings
 	@define('CONST_Osm2pgsql_Flatnode_File', null);
+
+	// tablespace settings
+	// osm2pgsql caching tables (aka slim mode tables) - update only
+	@define('CONST_Tablespace_Osm2pgsql_Data', false);
+	@define('CONST_Tablespace_Osm2pgsql_Index', false);
+	// osm2pgsql output tables (aka main table) - update only
+	@define('CONST_Tablespace_Place_Data', false);
+	@define('CONST_Tablespace_Place_Index', false);
+	// address computation tables - update only
+	@define('CONST_Tablespace_Address_Data', false);
+	@define('CONST_Tablespace_Address_Index', false);
+	// search tables - needed for lookups
+	@define('CONST_Tablespace_Search_Data', false);
+	@define('CONST_Tablespace_Search_Index', false);
+	// additional data, e.g. TIGER data - needed for lookups
+	@define('CONST_Tablespace_Aux_Data', false);
+	@define('CONST_Tablespace_Aux_Index', false);
 
 	// Replication settings
 	@define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');

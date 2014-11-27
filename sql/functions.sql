@@ -548,21 +548,6 @@ BEGIN
     RETURN nearcountry.country_code;
   END LOOP;
 
-  -- WorldBoundaries data (second fallback - think there might be something broken in this data)
---  FOR nearcountry IN select country_code from country where st_covers(geometry, place_centre) limit 1
---  LOOP
---    RETURN nearcountry.country_code;
---  END LOOP;
-
---RAISE WARNING 'near country: %', ST_AsText(place_centre);
-
-  -- Still not in a country - try nearest within ~12 miles of a country
---  FOR nearcountry IN select country_code from country where st_distance(geometry, place_centre) < 0.5 
---    order by st_distance(geometry, place) limit 1
---  LOOP
---    RETURN nearcountry.country_code;
---  END LOOP;
-
   RETURN NULL;
 END;
 $$
@@ -1329,7 +1314,6 @@ BEGIN
 
     result := deleteSearchName(NEW.partition, NEW.place_id);
     DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-    DELETE FROM place_boundingbox where place_id = NEW.place_id;
     result := deleteRoad(NEW.partition, NEW.place_id);
     result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
     UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
@@ -1348,7 +1332,7 @@ BEGIN
     place_centroid := ST_PointOnSurface(NEW.geometry);
     NEW.centroid := null;
 
-    -- reclaculate country and partition
+    -- recalculate country and partition
     IF NEW.rank_search = 4 THEN
       -- for countries, believe the mapped country code,
       -- so that we remain in the right partition if the boundaries
@@ -2599,86 +2583,10 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_place_boundingbox(search_place_id BIGINT) RETURNS place_boundingbox
-  AS $$
-DECLARE
-  result place_boundingbox;
-  numfeatures integer;
-BEGIN
-  select * from place_boundingbox into result where place_id = search_place_id;
-  IF result.place_id IS NULL THEN
--- remove  isaddress = true because if there is a matching polygon it always wins
-    select count(*) from place_addressline where address_place_id = search_place_id into numfeatures;
-    insert into place_boundingbox select place_id,
-             ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)),ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)),
-             ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)),ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)),
-             numfeatures, ST_Area(geometry),
-             geometry as area from location_area where place_id = search_place_id;
-    select * from place_boundingbox into result where place_id = search_place_id;
-  END IF;
-  IF result.place_id IS NULL THEN
--- TODO 0.0001
-    insert into place_boundingbox select address_place_id,
-             min(ST_Y(ST_Centroid(geometry))) as minlon,max(ST_Y(ST_Centroid(geometry))) as maxlon,
-             min(ST_X(ST_Centroid(geometry))) as minlat,max(ST_X(ST_Centroid(geometry))) as maxlat,
-             count(*), ST_Area(ST_Buffer(ST_Convexhull(ST_Collect(geometry)),0.0001)) as area,
-             ST_Buffer(ST_Convexhull(ST_Collect(geometry)),0.0001) as boundary 
-             from (select * from place_addressline where address_place_id = search_place_id order by cached_rank_address limit 4000) as place_addressline join placex using (place_id) 
-             where address_place_id = search_place_id
---               and (isaddress = true OR place_id = search_place_id)
-               and (st_length(geometry) < 0.01 or place_id = search_place_id)
-             group by address_place_id limit 1;
-    select * from place_boundingbox into result where place_id = search_place_id;
-  END IF;
-  return result;
-END;
-$$
-LANGUAGE plpgsql;
-
--- don't do the operation if it would be slow
-CREATE OR REPLACE FUNCTION get_place_boundingbox_quick(search_place_id BIGINT) RETURNS place_boundingbox
-  AS $$
-DECLARE
-  result place_boundingbox;
-  numfeatures integer;
-  rank integer;
-BEGIN
-  select * from place_boundingbox into result where place_id = search_place_id;
-  IF result IS NULL AND rank > 14 THEN
-    select count(*) from place_addressline where address_place_id = search_place_id and isaddress = true into numfeatures;
-    insert into place_boundingbox select place_id,
-             ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),4)),ST_Y(ST_PointN(ExteriorRing(ST_Box2D(geometry)),2)),
-             ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),1)),ST_X(ST_PointN(ExteriorRing(ST_Box2D(geometry)),3)),
-             numfeatures, ST_Area(geometry),
-             geometry as area from location_area where place_id = search_place_id;
-    select * from place_boundingbox into result where place_id = search_place_id;
-  END IF;
-  IF result IS NULL THEN
-    select rank_search from placex where place_id = search_place_id into rank;
-    IF rank > 20 THEN
--- TODO 0.0001
-      insert into place_boundingbox select address_place_id,
-             min(ST_Y(ST_Centroid(geometry))) as minlon,max(ST_Y(ST_Centroid(geometry))) as maxlon,
-             min(ST_X(ST_Centroid(geometry))) as minlat,max(ST_X(ST_Centroid(geometry))) as maxlat,
-             count(*), ST_Area(ST_Buffer(ST_Convexhull(ST_Collect(geometry)),0.0001)) as area,
-             ST_Buffer(ST_Convexhull(ST_Collect(geometry)),0.0001) as boundary 
-             from place_addressline join placex using (place_id) 
-             where address_place_id = search_place_id 
-               and (isaddress = true OR place_id = search_place_id)
-               and (st_length(geometry) < 0.01 or place_id = search_place_id)
-             group by address_place_id limit 1;
-      select * from place_boundingbox into result where place_id = search_place_id;
-    END IF;
-  END IF;
-  return result;
-END;
-$$
-LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_place(search_place_id BIGINT) RETURNS BOOLEAN
   AS $$
 DECLARE
-  result place_boundingbox;
   numfeatures integer;
 BEGIN
   update placex set 

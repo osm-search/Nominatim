@@ -568,7 +568,6 @@
 			// download.geofabrik.de:    <a href="000/">000/</a></td><td align="right">26-Feb-2013 11:53  </td>
 			// planet.openstreetmap.org: <a href="273/">273/</a>                    2013-03-11 07:41    -
 			preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-			var_dump($aRepMatches);
 			if ($aRepMatches)
 			{
 				$aPrevRepMatch = false;
@@ -582,7 +581,6 @@
 				$sRepURL .= $aRepMatch[1];
 				$sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
 				preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-				var_dump($aRepMatches);
 				$aPrevRepMatch = false;
 				foreach($aRepMatches as $aRepMatch)
 				{
@@ -594,7 +592,6 @@
 				$sRepURL .= $aRepMatch[1];
 				$sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
 				preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-				var_dump($aRepMatches);
 				$aPrevRepMatch = false;
 				foreach($aRepMatches as $aRepMatch)
 				{

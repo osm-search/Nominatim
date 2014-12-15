@@ -92,6 +92,11 @@
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
 
+	// This disallows returning results that belongs to different city,
+	// even if such match were found
+	// NOTE: this only works with structured query, as that makes recognization of city much, much easier
+	@define('CONST_Search_RestrictResultsToCity', false);
+
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);
 

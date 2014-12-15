@@ -1379,6 +1379,36 @@
 									$aPlaceIDs = $aRoadPlaceIDs;
 								}
 
+								// ensure it’s from same city
+								if(CONST_Search_RestrictResultsToCity && !empty($aPlaceIDs))
+								{
+									$cityName = null;
+									$recurse = function($parentPlaceId) use (&$cityName, &$recurse) {
+										$sSQL = "select rank_search, parent_place_id, get_name_by_language(name, ARRAY['name']) as name from placex where place_id = " . $parentPlaceId;
+										$parentRows = $this->oDB->getAll($sSQL);
+										foreach($parentRows as $parentRow) {
+											if($parentRow["rank_search"] == 16) {
+												$cityName = $parentRow["name"];
+												break;
+											}
+											$recurse($parentRow["parent_place_id"]);
+										}
+									};
+
+									$sSQL = "select rank_search, parent_place_id, get_name_by_language(name, ARRAY['name']) as name from placex where place_id IN (" . implode(", ", $aPlaceIDs). ")";
+									$parentRows = $this->oDB->getAll($sSQL);
+									foreach($parentRows as $parentRow) {
+										if($parentRow["rank_search"] == 16) {
+											$cityName = $parentRow["name"];
+											break;
+										}
+										$recurse($parentRow["parent_place_id"]);
+									}
+
+									if($this->aStructuredQuery["city"] != $cityName) {
+										$aPlaceIDs = [];
+									}
+								}
 							}
 
 							if ($aSearch['sClass'] && sizeof($aPlaceIDs))

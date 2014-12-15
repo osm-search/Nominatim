@@ -85,22 +85,22 @@
 		include(CONST_BasePath.'/lib/template/search-batch-json.php');
 		exit;
 	} else {
-        if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
-        {
-            $sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
+		if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+		{
+			$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
-            // reverse order of '/' separated string
-            $aPhrases = explode('/', $sQuery);
-            $aPhrases = array_reverse($aPhrases);
-            $sQuery = join(', ',$aPhrases);
-            $oGeocode->setQuery($sQuery);
-        }
-        else
-        {
-            $oGeocode->setQueryFromParams($_GET);
-        }
+			// reverse order of '/' separated string
+			$aPhrases = explode('/', $sQuery);
+			$aPhrases = array_reverse($aPhrases);
+			$sQuery = join(', ',$aPhrases);
+			$oGeocode->setQuery($sQuery);
+		}
+		else
+		{
+			$oGeocode->setQueryFromParams($_GET);
+		}
 
-    }
+	}
 
 	$hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 

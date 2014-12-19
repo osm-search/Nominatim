@@ -540,7 +540,6 @@
  'natural:beach' => array('label'=>'Beach','frequency'=>121,'icon'=>'tourist_beach',),
  'place:moor' => array('label'=>'Moor','frequency'=>118,'icon'=>'',),
  'amenity:grave_yard' => array('label'=>'Grave Yard','frequency'=>110,'icon'=>'',),
- 'waterway:derelict_canal' => array('label'=>'Derelict Canal','frequency'=>109,'icon'=>'',),
  'waterway:drain' => array('label'=>'Drain','frequency'=>108,'icon'=>'',),
  'landuse:grass' => array('label'=>'Grass','frequency'=>106,'icon'=>'',),
  'landuse:village_green' => array('label'=>'Village Green','frequency'=>106,'icon'=>'',),

@@ -24,6 +24,9 @@ how to set up your own instance of Nominatim can be found in the wiki:
 
 http://wiki.openstreetmap.org/wiki/Nominatim/Installation
 
+Note that this repository contains a submodule called osm2pgsql. Make sure it
+is cloned as well by running `git submodule update --init`.
+
 Installation steps:
 
 0. If checking out from git run:
@@ -32,7 +35,7 @@ Installation steps:
 
 1. Compile Nominatim:
 
-     ./configure [--enable-64bit-ids]
+     ./configure
      make
 
 2. Get OSM data and import:

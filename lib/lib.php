@@ -627,7 +627,7 @@
 
  'place:houses' => array('label'=>'Houses','frequency'=>85,'icon'=>'',),
  'railway:preserved' => array('label'=>'Preserved','frequency'=>227,'icon'=>'',),
- 'waterway:derelict canal' => array('label'=>'Derelict Canal','frequency'=>21,'icon'=>'',),
+ 'waterway:derelict_canal' => array('label'=>'Derelict Canal','frequency'=>21,'icon'=>'',),
  'amenity:dead_pub' => array('label'=>'Dead Pub','frequency'=>20,'icon'=>'',),
  'railway:disused_station' => array('label'=>'Disused Station','frequency'=>114,'icon'=>'',),
  'railway:abandoned' => array('label'=>'Abandoned','frequency'=>641,'icon'=>'',),

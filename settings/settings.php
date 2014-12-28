@@ -35,7 +35,7 @@
 	// search tables - needed for lookups
 	@define('CONST_Tablespace_Search_Data', false);
 	@define('CONST_Tablespace_Search_Index', false);
-	// additional data, e.g. TIGER data - needed for lookups
+	// additional data, e.g. TIGER data, type searches - needed for lookups
 	@define('CONST_Tablespace_Aux_Data', false);
 	@define('CONST_Tablespace_Aux_Index', false);
 

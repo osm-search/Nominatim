@@ -86,17 +86,26 @@
 
 		foreach($aPairs as $aPair)
 		{
-			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." as ";
-			echo "select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
-			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."';\n";
+			echo "create table place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1]);
+			if (CONST_Tablespace_Aux_Data)
+				echo " tablespace ".CONST_Tablespace_Aux_Data;
+			echo " as select place_id as place_id,st_centroid(geometry) as centroid from placex where ";
+			echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."'";
+			echo ";\n";
 
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_centroid ";
-			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING GIST (centroid);\n";
+			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING GIST (centroid)";
+			if (CONST_Tablespace_Aux_Index)
+				echo " tablespace ".CONST_Tablespace_Aux_Index;
+			echo ";\n";
 
 			echo "CREATE INDEX idx_place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])."_place_id ";
-			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id);\n";
+			echo "ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." USING btree(place_id)";
+			if (CONST_Tablespace_Aux_Index)
+				echo " tablespace ".CONST_Tablespace_Aux_Index;
+			echo ";\n";
 
-            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";";
+            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";\n";
 
 		}
 

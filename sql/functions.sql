@@ -1357,17 +1357,17 @@ BEGIN
 
     -- waterway ways are linked when they are part of a relation and have the same class/type
     IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
-        FOR relation IN select * from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
+        FOR relation_members IN select members from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
         LOOP
-            FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-                IF relation.members[i+1] in ('', 'main_stream', 'side_stream') AND substring(relation.members[i],1,1) = 'w' THEN
-                  --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.parts[i];
-                  FOR location IN SELECT * FROM placex
-                    WHERE osm_type = 'W' and osm_id = substring(relation.members[i],2,200)::bigint
+            FOR i IN 1..array_upper(relation_members, 1) BY 2 LOOP
+                IF relation_members[i+1] in ('', 'main_stream', 'side_stream') AND substring(relation_members[i],1,1) = 'w' THEN
+                  --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.members[i];
+                  FOR linked_node_id IN SELECT place_id FROM placex
+                    WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
                     and class = NEW.class and type = NEW.type
-                    and ( relation.members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
+                    and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                   LOOP
-                    UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = location.place_id;
+                    UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
                   END LOOP;
                 END IF;
             END LOOP;

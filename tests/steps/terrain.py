@@ -27,7 +27,7 @@ class NominatimConfig:
         self.template_db = os.environ.get('TEMPLATE_DB', 'test_template_nominatim')
         self.test_db = os.environ.get('TEST_DB', 'test_nominatim')
         self.local_settings_file = os.environ.get('NOMINATIM_SETTINGS', '/tmp/nominatim_settings.php')
-        self.reuse_template = 'NOMINATIM_REUSE_TEMPLATE' in os.environ
+        self.reuse_template = 'NOMINATIM_REMOVE_TEMPLATE' not in os.environ
         self.keep_scenario_db = 'NOMINATIM_KEEP_SCENARIO_DB' in os.environ
         os.environ['NOMINATIM_SETTINGS'] = '/tmp/nominatim_settings.php'
 

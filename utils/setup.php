@@ -500,7 +500,13 @@
 	{
 		$bDidSomething = true;
 
-		pgsqlRunScriptFile(CONST_BasePath.'/sql/tiger_import_start.sql');
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
+		$sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
+		$sTemplate = replace_tablespace('{ts:aux-data}',
+		                                CONST_Tablespace_Aux_Data, $sTemplate);
+		$sTemplate = replace_tablespace('{ts:aux-index}',
+		                                CONST_Tablespace_Aux_Index, $sTemplate);
+		pgsqlRunScript($sTemplate, false);
 
 		$aDBInstances = array();
 		for($i = 0; $i < $iInstances; $i++)
@@ -552,7 +558,13 @@
 		}
 
 		echo "Creating indexes\n";
-		pgsqlRunScriptFile(CONST_BasePath.'/sql/tiger_import_finish.sql');
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_finish.sql');
+		$sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
+		$sTemplate = replace_tablespace('{ts:aux-data}',
+		                                CONST_Tablespace_Aux_Data, $sTemplate);
+		$sTemplate = replace_tablespace('{ts:aux-index}',
+		                                CONST_Tablespace_Aux_Index, $sTemplate);
+		pgsqlRunScript($sTemplate, false);
 	}
 
 	if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])

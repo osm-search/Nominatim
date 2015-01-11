@@ -1,9 +1,9 @@
-CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id_imp ON location_property_tiger_import (parent_place_id, housenumber);
-CREATE UNIQUE INDEX idx_location_property_tiger_place_id_imp ON location_property_tiger_import (place_id);
+CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id_imp ON location_property_tiger_import (parent_place_id, housenumber) {ts:aux-index};
+CREATE UNIQUE INDEX idx_location_property_tiger_place_id_imp ON location_property_tiger_import (place_id) {ts:aux-index};
 
-GRANT SELECT ON location_property_tiger_import TO "www-data";
+GRANT SELECT ON location_property_tiger_import TO "{www-user}";
 
-DROP TABLE location_property_tiger;
+DROP TABLE IF EXISTS location_property_tiger;
 ALTER TABLE location_property_tiger_import RENAME TO location_property_tiger;
 
 ALTER INDEX idx_location_property_tiger_housenumber_parent_place_id_imp RENAME TO idx_location_property_tiger_housenumber_parent_place_id;

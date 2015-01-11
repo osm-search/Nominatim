@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS location_property_tiger_import;
-CREATE TABLE location_property_tiger_import () INHERITS (location_property);
+CREATE TABLE location_property_tiger_import () INHERITS (location_property) {ts:aux-data};
 
 CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_startnumber INTEGER, 
   in_endnumber INTEGER, interpolationtype TEXT, 

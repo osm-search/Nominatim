@@ -2,6 +2,9 @@ Feature: Result order for Geocoding
     Testing that importance ordering returns sensible results
 
     Scenario Outline: city order in street search
+        Given the request parameters
+          | limit
+          | 100
         When sending json search query "<street>, <city>" with address
         Then address of result 0 contains
          | type   | value

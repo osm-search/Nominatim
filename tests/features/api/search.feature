@@ -16,12 +16,12 @@ Feature: Search queries
     Scenario: House number search for non-street address
         Given the request parameters
           | accept-language
-          | en        
-        When sending json search query "4 Pomocnia, Poland" with address
+          | en
+        When sending json search query "4 Pomocnia, Pokrzywnica, Poland" with address
         Then address of result 0 is
           | type         | value
           | house_number | 4
-          | suburb       | Pomocnia
+          | city         | Pomocnia
           | county       | gmina Pokrzywnica
           | state        | Masovian Voivodeship
           | postcode     | 06-121

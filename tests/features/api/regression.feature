@@ -6,7 +6,7 @@ Feature: API regression tests
         When sending json search query "<query>" with address
         Then result addresses contain
          | ID | road     | city
-         | 0  | Seegasse | Gemeinde Wieselburg-Land
+         | 0  | Seegasse | Wieselburg-Land
 
     Examples:
          | query

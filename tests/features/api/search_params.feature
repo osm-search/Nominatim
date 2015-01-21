@@ -31,6 +31,7 @@ Feature: Search queries
           | type         | value
           | city         | Inuvik
           | state        | Northwest Territories
+          | postcode     | X0E 0T0
           | country      | Canada
           | country_code | ca
 

@@ -193,6 +193,26 @@
 		return $aResult;
 	}
 
+	function getInverseWordSets($aWords, $iDepth)
+	{
+		$aResult = array(array(join(' ',$aWords)));
+		$sFirstToken = '';
+		if ($iDepth < 8)
+		{
+			while(sizeof($aWords) > 1)
+			{
+				$sWord = array_pop($aWords);
+				$sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
+				$aRest = getInverseWordSets($aWords, $iDepth+1);
+				foreach($aRest as $aSet)
+				{
+					$aResult[] = array_merge(array($sFirstToken),$aSet);
+				}
+			}
+		}
+		return $aResult;
+	}
+
 
 	function getTokensFromSets($aSets)
 	{

@@ -41,12 +41,25 @@ Feature: Tag evaluation
      | alt_name:dfe
      | alt_name_1
      | official_name
-     | common_name
-     | common_name:pot
      | short_name
      | short_name:CH
-     | operator
      | addr:housename
+     | brand
+
+    Scenario Outline: operator only for shops and amenities
+        Given the osm nodes:
+         | id | tags
+         | 1  | 'highway' : 'yes', 'operator' : 'Foo', 'name' : 'null'
+         | 2  | 'shop' : 'grocery', 'operator' : 'Foo'
+         | 3  | 'amenity' : 'hospital', 'operator' : 'Foo'
+         | 4  | 'tourism' : 'hotel', 'operator' : 'Foo'
+        When loading osm data
+        Then table place contains
+         | object | name
+         | N1     | 'name' : 'null'
+         | N2     | 'operator' : 'Foo'
+         | N3     | 'operator' : 'Foo'
+         | N4     | 'operator' : 'Foo'
 
     Scenario Outline: Ignored name tags
         Given the osm nodes:
@@ -100,17 +113,33 @@ Feature: Tag evaluation
      | aerialway | station
      | aeroway   | way
      | boundary  | administrative
-     | bridge    | yes
      | craft     | butcher
      | leisure   | playground
      | office    | bookmaker
      | railway   | rail
      | shop      | bookshop
-     | tunnel    | yes
      | waterway  | stream
      | landuse   | cemetry
+     | man_made  | tower
      | mountain_pass | yes
 
+    Scenario Outline: Bridges and Tunnels take special name tags
+        Given the osm nodes:
+          | id | tags
+          | 1  | 'highway' : 'road', '<key>' : 'yes', 'name' : 'Rd', '<key>:name' : 'My'
+          | 2  | 'highway' : 'road', '<key>' : 'yes', 'name' : 'Rd'
+        When loading osm data
+        Then table place contains
+          | object     | class   | type | name
+          | N1:highway | highway | road | 'name' : 'Rd'
+          | N1:<key>   | <key>   | yes  | 'name' : 'My'
+          | N2:highway | highway | road | 'name' : 'Rd'
+        And table place has no entry for N2:<key>
+
+    Examples:
+      | key
+      | bridge
+      | tunnel
 
     Scenario Outline: Excluded places
         Given the osm nodes:
@@ -134,23 +163,64 @@ Feature: Tag evaluation
      | natural   | no
      | highway   | no
      | highway   | turning_circle
-     | highway   | traffic_signals
      | highway   | mini_roundabout
      | highway   | noexit
      | highway   | crossing
      | aerialway | no
+     | aerialway | pylon
+     | man_made  | survey_point
+     | man_made  | cutline
      | aeroway   | no
      | amenity   | no
-     | boundary  | no
      | bridge    | no
      | craft     | no
      | leisure   | no
      | office    | no
      | railway   | no
+     | railway   | level_crossing
      | shop      | no
      | tunnel    | no
      | waterway  | riverbank
 
+    Scenario: Some tags only are included when named
+        Given the osm nodes:
+         | id | tags
+         | 1  | '<key>' : '<value>'
+         | 2  | '<key>' : '<value>', 'name' : 'To Hell'
+         | 3  | '<key>' : '<value>', 'ref' : '123'
+        When loading osm data
+        Then table place has no entry for N1
+        And table place has no entry for N3
+        And table place contains
+         | object | class | type
+         | N2     | <key> | <value>
+
+    Examples:
+      | key      | value
+      | landuse  | residential
+      | natural  | meadow
+      | highway  | traffic_signals
+      | highway  | service
+      | highway  | footway
+      | highway  | steps
+      | highway  | motorway_link
+      | highway  | tertiary_link
+      | railway  | rail
+      | boundary | administrative
+      | waterway | stream
+
+    Scenario: named junctions are included if there is no other tag
+        Given the osm nodes:
+         | id | tags
+         | 1  | 'junction' : 'yes'
+         | 2  | 'highway' : 'secondary', 'junction' : 'roundabout', 'name' : 'To Hell'
+         | 3  | 'junction' : 'yes', 'name' : 'Le Croix'
+        When loading osm data
+        Then table place has no entry for N1
+        And table place has no entry for N2:junction
+        And table place contains
+         | object | class    | type
+         | N3     | junction | yes
 
     Scenario: Boundary with place tag
         Given the osm nodes:
@@ -160,14 +230,17 @@ Feature: Tag evaluation
           | 202 | 1 1
           | 203 | 1 0
         And the osm ways:
-          | id | tags                                           | nodes
-          | 2  | 'boundary' : 'administrative', 'place' : 'city' | 200 201 202 203 200
-          | 20 | 'place' : 'city'                                | 200 201 202 203 200
-          | 40 | 'place' : 'city', 'boundary' : 'statistical'    | 200 201 202 203 200
+          | id | tags                                                              | nodes
+          | 2  | 'boundary' : 'administrative', 'place' : 'city', 'name' : 'Foo'   | 200 201 202 203 200
+          | 4  | 'boundary' : 'administrative', 'place' : 'island','name' : 'Foo'  | 200 201 202 203 200
+          | 20 | 'place' : 'city', 'name' : 'ngng'                                 | 200 201 202 203 200
+          | 40 | 'place' : 'city', 'boundary' : 'statistical', 'name' : 'BB'       | 200 201 202 203 200
         When loading osm data
         Then table place contains
           | object       | class    | type           | extratags
           | W2           | boundary | administrative | 'place' : 'city'
+          | W4:boundary  | boundary | administrative |
+          | W4:place     | place    | island         |
           | W20          | place    | city           |
           | W40:boundary | boundary | statistical    |
           | W40:place    | place    | city           |
@@ -223,7 +296,6 @@ Feature: Tag evaluation
     Examples:
       | key              | value
       | postal_code      | 45736
-      | post_code        | gf4 65g
       | postcode         | xxx
       | addr:postcode    | 564
       | tiger:zip_left   | 00011
@@ -252,14 +324,8 @@ Feature: Tag evaluation
 
     Examples:
         | key                            | value
-        | country_code_iso3166_1_alpha_2 | gb
-        | country_code_iso3166_1         | UK
-        | country_code_iso3166           | de
         | country_code                   | us
-        | iso3166-1:alpha2               | aU
-        | iso3166-1                      | 12
         | ISO3166-1                      | XX
-        | iso3166                        | Nl
         | is_in:country_code             | __
         | addr:country                   | ..
         | addr:country_code              | cv
@@ -291,10 +357,10 @@ Feature: Tag evaluation
         When loading osm data
         Then table place contains
           | object | class | type   | housenumber
-          | N10    | place | house  | 4b
-          | N11    | place | house  | 003
-          | N12    | place | house  | 2345
-          | N13    | place | house  | 3/111
+          | N10    | building | yes  | 4b
+          | N11    | building | yes  | 003
+          | N12    | building | yes  | 2345
+          | N13    | building | yes  | 3/111
 
     Scenario: Import of address interpolations
         Given the osm nodes:
@@ -314,11 +380,13 @@ Feature: Tag evaluation
           | id  | tags
           | 10  | 'place' : 'village', 'tiger:county' : 'Feebourgh, AL'
           | 11  | 'place' : 'village', 'addr:state' : 'Alabama', 'tiger:county' : 'Feebourgh, AL'
+          | 12  | 'place' : 'village', 'tiger:county' : 'Feebourgh'
         When loading osm data
         Then table place contains
           | object | class   | type    | isin
           | N10    | place   | village | Feebourgh county
           | N11    | place   | village | Alabama,Feebourgh county
+          | N12    | place   | village | Feebourgh county
 
     Scenario Outline: Import of address tags
         Given the osm nodes:
@@ -343,11 +411,15 @@ Feature: Tag evaluation
           | id  | tags
           | 10  | 'amenity' : 'hospital', 'admin_level' : '3'
           | 11  | 'amenity' : 'hospital', 'admin_level' : 'b'
+          | 12  | 'amenity' : 'hospital'
+          | 13  | 'amenity' : 'hospital', 'admin_level' : '3.0'
         When loading osm data
         Then table place contains
           | object | class   | type     | admin_level
           | N10    | amenity | hospital | 3
-          | N11    | amenity | hospital | 0
+          | N11    | amenity | hospital | 100
+          | N12    | amenity | hospital | 100
+          | N13    | amenity | hospital | 3
 
     Scenario: Import of extra tags
         Given the osm nodes:
@@ -377,10 +449,8 @@ Feature: Tag evaluation
        | est_width
        | incline
        | opening_hours
-       | food_hours
        | collection_times
        | service_times
-       | smoking_hours
        | disused
        | wheelchair
        | sac_scale
@@ -388,7 +458,6 @@ Feature: Tag evaluation
        | mtb:scale
        | mtb:description
        | wood
-       | drive_thru
        | drive_in
        | access
        | vehicle
@@ -423,7 +492,6 @@ Feature: Tag evaluation
        | url
        | website
        | phone
-       | tel
        | real_ale
        | smoking
        | food
@@ -445,8 +513,17 @@ Feature: Tag evaluation
         Then table place contains
           | object | class   | type
           | N10    | tourism | hotel
-          | N12    | place   | house
+          | N12    | building| yes
           | N13    | building| yes
           | N14    | building| yes
         And table place has no entry for N10:building
         And table place has no entry for N11
+
+   Scenario: complete node entry
+       Given the osm nodes:
+         | id        | tags
+         | 290393920 | 'addr:city':'Perpignan','addr:country':'FR','addr:housenumber':'43\\','addr:postcode':'66000','addr:street':'Rue Pierre Constant d`Ivry','source':'cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre ; mise à jour :2008'
+        When loading osm data
+        Then table place contains
+         | object     | class   | type | housenumber
+         | N290393920 | place   | house| 43\

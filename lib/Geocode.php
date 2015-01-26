@@ -441,7 +441,7 @@
 			return $aSearchResults;
 		}
 
-		function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
+		function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
 		{
 			/*
 			   Calculate all searches using aValidTokens i.e.
@@ -1039,7 +1039,7 @@
 					// Start the search process
 					$aResultPlaceIDs = array();
 
-					$aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases);
+					$aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases);
 
 					if ($this->bReverseInPlan)
 					{
@@ -1053,7 +1053,7 @@
 							$aFinalPhrase = end($aPhrases);
 							$aFinalPhrase['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
 						}
-						$aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, false);
+						$aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false);
 
 						foreach($aGroupedSearches as $aSearches)
 						{

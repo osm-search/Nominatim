@@ -189,8 +189,12 @@
 		$aGroupedAddressLines = array();
 		foreach($aParentOfLines as $aAddressLine)
 		{
-			if (!isset($aGroupedAddressLines[$aAddressLine['type']])) $aGroupedAddressLines[$aAddressLine['type']] = array();
-			$aGroupedAddressLines[$aAddressLine['type']][] = $aAddressLine;
+			if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];
+			else $sType = $aAddressLine['type'];
+
+			if (!isset($aGroupedAddressLines[$sType]))
+				$aGroupedAddressLines[$sType] = array();
+			$aGroupedAddressLines[$sType][] = $aAddressLine;
 		}
 		foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
 		{

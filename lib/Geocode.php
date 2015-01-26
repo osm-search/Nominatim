@@ -1781,7 +1781,6 @@
 			$bFirst = true;
 			foreach($aToFilter as $iResNum => $aResult)
 			{
-				if ($aResult['type'] == 'adminitrative') $aResult['type'] = 'administrative';
 				$this->aExcludePlaceIDs[$aResult['place_id']] = $aResult['place_id'];
 				if ($bFirst)
 				{

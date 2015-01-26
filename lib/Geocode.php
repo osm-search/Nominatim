@@ -611,7 +611,10 @@
 									}
 								}
 							}
-							if (isset($aValidTokens[$sToken]))
+							// Look for partial matches.
+							// Note that there is no point in adding country terms here
+							// because country are omitted in the address.
+							if (isset($aValidTokens[$sToken]) && $sPhraseType != 'country')
 							{
 								// Allow searching for a word - but at extra cost
 								foreach($aValidTokens[$sToken] as $aSearchTerm)

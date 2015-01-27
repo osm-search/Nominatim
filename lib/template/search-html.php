@@ -204,6 +204,8 @@ target="_blank">FAQ</a></td>
 		echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
 		if (isset($aResult['label']))
 			echo ' <span class="type">('.$aResult['label'].')</span>';
+		else if ($aResult['type'] == 'yes')
+			echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['class'])).')</span>';
 		else
 			echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
 		echo ' <span class="details">(<a href="details.php?place_id='.$aResult['place_id'].'">details</a>)</span>';

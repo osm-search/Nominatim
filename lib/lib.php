@@ -378,7 +378,7 @@
  'landuse:farm' => array('label'=>'Farm','frequency'=>1201,'icon'=>'', 'defdiameter' => 0.02,),
  'place:farm' => array('label'=>'Farm','frequency'=>1162,'icon'=>'', 'defdiameter' => 0.02,),
 
- 'highway:motorway_junction' => array('label'=>'Motorway Junction','frequency'=>1126,'icon'=>'','simplelabel'=>'Road',),
+ 'highway:motorway_junction' => array('label'=>'Motorway Junction','frequency'=>1126,'icon'=>'','simplelabel'=>'Junction',),
  'highway:motorway' => array('label'=>'Motorway','frequency'=>4627,'icon'=>'','simplelabel'=>'Road',),
  'highway:trunk' => array('label'=>'Trunk','frequency'=>23084,'icon'=>'','simplelabel'=>'Road',),
  'highway:primary' => array('label'=>'Primary','frequency'=>32138,'icon'=>'','simplelabel'=>'Road',),

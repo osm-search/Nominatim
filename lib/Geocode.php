@@ -553,6 +553,8 @@
 											// sanity check: if the housenumber is not mainly made
 											// up of numbers, add a penalty
 											if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
+											// also housenumbers should appear in the first or second phrase
+											if ($iPhrase > 1) $aSearch['iSearchRank'] += 1;
 											if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											/*
 											// Fall back to not searching for this item (better than nothing)
@@ -1238,6 +1240,12 @@
 							$aTerms = array();
 							$aOrder = array();
 
+							if ($aSearch['sHouseNumber'])
+							{
+								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
+								$aOrder[] = "exists(select place_id from placex where parent_place_id = search_name.place_id and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) desc";
+							}
+
 							// TODO: filter out the pointless search terms (2 letter name tokens and less)
 							// they might be right - but they are just too darned expensive to run
 							if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
@@ -1318,7 +1326,7 @@
 								$sSQL .= " where ".join(' and ',$aTerms);
 								$sSQL .= " order by ".join(', ',$aOrder);
 								if ($aSearch['sHouseNumber'] || $aSearch['sClass'])
-									$sSQL .= " limit 50";
+									$sSQL .= " limit 20";
 								elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass'])
 									$sSQL .= " limit 1";
 								else

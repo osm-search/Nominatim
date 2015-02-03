@@ -27,11 +27,10 @@ Feature: Search queries
 
     Scenario: XML search with addressdetails
         When sending xml search query "Inuvik" with address
-        Then address of result 0 is
+        Then address of result 0 contains
           | type         | value
           | city         | Inuvik
           | state        | Northwest Territories
-          | postcode     | X0E 0T0
           | country      | Canada
           | country_code | ca
 

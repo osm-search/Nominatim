@@ -18,15 +18,15 @@ Feature: Search queries
           | accept-language
           | en
         When sending json search query "4 Pomocnia, Pokrzywnica, Poland" with address
-        Then address of result 0 is
+        Then address of result 0 contains
           | type         | value
           | house_number | 4
-          | city         | Pomocnia
           | county       | gmina Pokrzywnica
           | state        | Masovian Voivodeship
           | postcode     | 06-121
           | country      | Poland
           | country_code | pl
+        Then address of result 0 does not contain road
 
     Scenario: House number interpolation even
         Given the request parameters
@@ -56,10 +56,12 @@ Feature: Search queries
           | country      | Canada
           | country_code | ca
 
+    @Tiger
     Scenario: TIGER house number
         When sending json search query "3 West Victory Way, Craig"
         Then result 0 has not attributes osm_id,osm_type
 
+    @Tiger
     Scenario: TIGER house number (road fallback)
         When sending json search query "3030 West Victory Way, Craig"
         Then result 0 has attributes osm_id,osm_type

@@ -199,7 +199,7 @@ target="_blank">FAQ</a></td>
 		}
 
 		echo (isset($aResult['icon'])?'<img alt="icon" src="'.$aResult['icon'].'"/>':'');
-		echo ' <span class="name">'.$aResult['name'].'</span>';
+		echo ' <span class="name">'.htmlspecialchars($aResult['name']).'</span>';
 		echo ' <span class="latlon">'.round($aResult['lat'],3).','.round($aResult['lon'],3).'</span>';
 		echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
 		if (isset($aResult['label']))

@@ -1,19 +1,6 @@
 Feature: API regression tests
     Tests error cases reported in tickets.
 
-    @poldi-only
-    Scenario Outline: github #36
-        When sending json search query "<query>" with address
-        Then result addresses contain
-         | ID | road     | city
-         | 0  | Seegasse | Wieselburg-Land
-
-    Examples:
-         | query
-         | Seegasse, Gemeinde Wieselburg-Land
-         | Seegasse, Wieselburg-Land
-         | Seegasse, Wieselburg
-
     Scenario: trac #2430
         When sending json search query "89 River Avenue, Hoddesdon, Hertfordshire, EN11 0JT"
         Then at least 1 result is returned
@@ -184,6 +171,25 @@ Feature: API regression tests
          | 1       | 0,0,-1,-1
         When sending json search query "sy"
         Then exactly 0 results are returned
+
+    Scenario: trac #5274
+        When sending json search query "Goedestraat 41-BS, Utrecht" with address
+        Then result addresses contain
+          | house_number | road        | city
+          | 41-BS        | Goedestraat | Utrecht
+
+    @poldi-only
+    Scenario Outline: github #36
+        When sending json search query "<query>" with address
+        Then result addresses contain
+         | ID | road     | city
+         | 0  | Seegasse | Wieselburg-Land
+
+    Examples:
+         | query
+         | Seegasse, Gemeinde Wieselburg-Land
+         | Seegasse, Wieselburg-Land
+         | Seegasse, Wieselburg
 
     Scenario: github #190
         When looking up place N257363453

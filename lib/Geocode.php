@@ -1054,7 +1054,7 @@
 						if (sizeof($aPhrases) > 1)
 						{
 							$aFinalPhrase = end($aPhrases);
-							$aFinalPhrase['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
+							$aPhrases[sizeof($aPhrases)-1]['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
 						}
 						$aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false);
 

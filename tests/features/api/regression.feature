@@ -165,6 +165,25 @@ Feature: API regression tests
          | ID | class   | latlon
          | 0  | highway | 51.8324206,1.2447352 +-100m
 
+     Scenario Outline: trac #5025
+        When sending json search query "Kriegsstr <house_nr>, Karlsruhe" with address
+        Then result addresses contain
+          | house_number | road
+          | <house_nr>   | Kriegsstraße
+
+     Examples:
+        | house_nr
+        | 5c
+        | 25
+        | 78
+        | 80
+        | 99
+        | 130
+        | 153
+        | 196
+        | 256
+        | 294
+
      Scenario: trac #5238
         Given the request parameters
          | bounded | viewbox

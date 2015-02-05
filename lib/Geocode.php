@@ -1240,7 +1240,7 @@
 							$aTerms = array();
 							$aOrder = array();
 
-							if ($aSearch['sHouseNumber'])
+							if ($aSearch['sHouseNumber'] && sizeof($aSearch['aAddress']))
 							{
 								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
 								$aOrder[] = "exists(select place_id from placex where parent_place_id = search_name.place_id and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) desc";

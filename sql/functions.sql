@@ -1247,6 +1247,7 @@ DECLARE
   location_distance FLOAT;
   location_parent GEOMETRY;
   location_isaddress BOOLEAN;
+  location_keywords INTEGER[];
 
   tagpairid INTEGER;
 
@@ -1794,9 +1795,12 @@ BEGIN
       IF location.rank_address != location_rank_search THEN
         location_rank_search := location.rank_address;
         location_distance := location.distance * 1.5;
+      ELSE
+        CONTINUE WHEN location.keywords <@ location_keywords;
       END IF;
 
       IF location.distance < location_distance OR NOT location.isguess THEN
+        location_keywords := location.keywords;
 
         location_isaddress := NOT address_havelevel[location.rank_address];
         IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN

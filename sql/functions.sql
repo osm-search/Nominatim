@@ -1794,7 +1794,20 @@ BEGIN
 
       IF location.rank_address != location_rank_search THEN
         location_rank_search := location.rank_address;
-        location_distance := location.distance * 1.5;
+        IF location.isguess THEN
+          location_distance := location.distance * 1.5;
+        ELSE
+          IF location.rank_address <= 12 THEN
+            -- for county and above, if we have an area consider that exact
+            -- (It would be nice to relax the constraint for places close to
+            --  the boundary but we'd need the exact geometry for that. Too
+            --  expensive.)
+            location_distance = 0;
+          ELSE
+            -- Below county level remain slightly fuzzy.
+            location_distance := location.distance * 0.5;
+          END IF;
+        END IF;
       ELSE
         CONTINUE WHEN location.keywords <@ location_keywords;
       END IF;

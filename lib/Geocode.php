@@ -526,7 +526,7 @@
 
 											if (sizeof($aSearch['aName']))
 											{
-												if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false))
+												if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false))
 												{
 													$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												}
@@ -594,7 +594,7 @@
 									{
 										if (sizeof($aSearch['aName']))
 										{
-											if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strlen($sToken) < 4 || strpos($sToken, ' ') !== false))
+											if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false))
 											{
 												$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 											}
@@ -632,7 +632,7 @@
 												$aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 											}
-											elseif (isset($aValidTokens[' '.$sToken]) && strlen($sToken) >= 4) // revert to the token version?
+											elseif (isset($aValidTokens[' '.$sToken])) // revert to the token version?
 											{
 												$aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
 												$aSearch['iSearchRank'] += 1;

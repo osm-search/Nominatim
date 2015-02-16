@@ -747,8 +747,73 @@ END;
 $$
 LANGUAGE plpgsql;
 
+-- find the parant road of an interpolation
+CREATE OR REPLACE FUNCTION get_interpolation_parent(wayid BIGINT, street TEXT, place TEXT,
+                                                    partition INTEGER, centroid GEOMETRY, geom GEOMETRY)
+RETURNS BIGINT AS $$
+DECLARE
+  addr_street TEXT;
+  addr_place TEXT;
+  parent_place_id BIGINT;
+  address_street_word_ids INTEGER[];
 
-CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT) RETURNS INTEGER
+  waynodes BIGINT[];
+
+  location RECORD;
+BEGIN
+  addr_street = street;
+  addr_place = place;
+
+  IF addr_street is null and addr_place is null THEN
+    select nodes from planet_osm_ways where id = wayid INTO waynodes;
+    FOR location IN SELECT street, addr_place from placex 
+                    where osm_type = 'N' and osm_id = ANY(nodes)
+                          and (street is not null or addr_place is not null)
+                          and indexed_status < 100
+                    limit 1 LOOP
+      addr_street = location.street;
+      addr_place = location.addr_place;
+    END LOOP;
+  END IF;
+
+  IF addr_street IS NOT NULL THEN
+    address_street_word_ids := get_name_ids(make_standard_name(addr_street));
+    IF address_street_word_ids IS NOT NULL THEN
+      FOR location IN SELECT place_id from getNearestNamedRoadFeature(partition, centroid, address_street_word_ids) LOOP
+        parent_place_id := location.place_id;
+      END LOOP;
+    END IF;
+  END IF;
+
+  IF parent_place_id IS NULL AND addr_place IS NOT NULL THEN
+    address_street_word_ids := get_name_ids(make_standard_name(addr_place));
+    IF address_street_word_ids IS NOT NULL THEN
+      FOR location IN SELECT place_id from getNearestNamedPlaceFeature(partition, centroid, address_street_word_ids) LOOP
+        parent_place_id := location.place_id;
+      END LOOP;
+    END IF;
+  END IF;
+
+  IF parent_place_id is null THEN
+    FOR location IN SELECT place_id FROM placex
+        WHERE ST_DWithin(geom, placex.geometry, 0.001) and placex.rank_search = 26
+        ORDER BY (ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0))+
+                  ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0.5))+
+                  ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,1))) ASC limit 1
+    LOOP
+      parent_place_id := location.place_id;
+    END LOOP;
+  END IF;
+
+  RETURN parent_place_id;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT,
+                                                parent_place_id BIGINT, partition INTEGER,
+                                                country_code TEXT,  geometry_sector INTEGER,
+                                                defpostalcode TEXT, geom GEOMETRY) RETURNS INTEGER
   AS $$
 DECLARE
 
@@ -766,8 +831,6 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
-  search_place_id BIGINT;
-  defpostalcode TEXT;
 
 BEGIN
   IF interpolationtype = 'odd' OR interpolationtype = 'even' THEN
@@ -786,13 +849,7 @@ BEGIN
     RETURN 0;
   END IF;
 
-  select postcode, geometry from placex where osm_type = 'W' and osm_id = wayid 
-    INTO defpostalcode, linegeo;
-
-  IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
-    RETURN 0;
-  END IF;
-
+  linegeo := geom;
   startnumber := NULL;
   newpoints := 0;
 
@@ -802,9 +859,10 @@ BEGIN
     -- it is guaranteed to be the original node. For place/house types use the
     -- one with the smallest id because the original node was created first.
     -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
-    select place_id from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT and indexed_status < 100 order by (type = 'house'),place_id limit 1 INTO search_place_id;
-    IF search_place_id IS NOT NULL THEN
-      select * from placex where place_id = search_place_id INTO nextnode;
+    select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
+                               and indexed_status < 100
+                         order by (type = 'house'),place_id limit 1 INTO nextnode;
+    IF nextnode.place_id IS NOT NULL THEN
 
         IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
           -- Make sure that the point is actually on the line. That might
@@ -842,14 +900,14 @@ BEGIN
           FOR housenum IN startnumber..endnumber BY stepsize LOOP
             -- this should really copy postcodes but it puts a huge burden on
             -- the system for no big benefit ideally postcodes should move up to the way
-            insert into placex (osm_type, osm_id, class, type, admin_level,
+            insert into placex (place_id, partition, osm_type, osm_id, class, type, admin_level,
               housenumber, street, addr_place, isin, postcode,
               country_code, parent_place_id, rank_address, rank_search,
               indexed_status, geometry)
-              values ('N', prevnode.osm_id, 'place', 'house', prevnode.admin_level,
+              values (nextval('seq_place'), partition, 'N', prevnode.osm_id, 'place', 'house', prevnode.admin_level,
               housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
               prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search,
-              1, ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
+              0, ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
             newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
           END LOOP;
@@ -885,6 +943,10 @@ DECLARE
   classtable TEXT;
 BEGIN
   --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
+
+  IF place_id is not null THEN
+    RETURN NEW; -- already indexed (happens for interpolated addresses
+  END IF;
 
   -- just block these
   IF NEW.class in ('landuse','natural') and NEW.name is null THEN
@@ -1052,8 +1114,6 @@ BEGIN
         NEW.rank_address := NEW.rank_search;
       ELSEIF NEW.type in ('houses') THEN
         -- can't guarantee all required nodes loaded yet due to caching in osm2pgsql
-        -- insert new point into place for each derived building
-        --i := create_interpolation(NEW.osm_id, NEW.housenumber);
         NEW.rank_search := 28;
         NEW.rank_address := 0;
       END IF;
@@ -1296,11 +1356,6 @@ BEGIN
       RETURN NEW;
     END IF;
 
-    IF NEW.class = 'place' AND NEW.type = 'houses' THEN
-      i := create_interpolation(NEW.osm_id, NEW.housenumber);
-      RETURN NEW;
-    END IF;
-
     -- Speed up searches - just use the centroid of the feature
     -- cheaper but less acurate
     place_centroid := ST_PointOnSurface(NEW.geometry);
@@ -1328,6 +1383,18 @@ BEGIN
       NEW.partition := get_partition(NEW.calculated_country_code);
     END IF;
     NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
+
+    -- interpolations XXXXX
+    IF NEW.class = 'place' AND NEW.type = 'houses'THEN
+      IF osm_type = 'W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
+        NEW.parent_place_id := get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
+                                                        NEW.partition, place_centroid, NEW.geometry);
+        IF NEW.parent_place_id is not null THEN
+          i := create_interpolation(NEW.osm_id, NEW.housenumber);
+        END IF;
+      END IF;
+      RETURN NEW;
+    END IF;
 
     -- waterway ways are linked when they are part of a relation and have the same class/type
     IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN

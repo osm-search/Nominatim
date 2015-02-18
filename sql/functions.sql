@@ -766,9 +766,9 @@ BEGIN
 
   IF addr_street is null and addr_place is null THEN
     select nodes from planet_osm_ways where id = wayid INTO waynodes;
-    FOR location IN SELECT street, addr_place from placex 
-                    where osm_type = 'N' and osm_id = ANY(nodes)
-                          and (street is not null or addr_place is not null)
+    FOR location IN SELECT placex.street, placex.addr_place from placex 
+                    where osm_type = 'N' and osm_id = ANY(waynodes)
+                          and (placex.street is not null or placex.addr_place is not null)
                           and indexed_status < 100
                     limit 1 LOOP
       addr_street = location.street;
@@ -803,6 +803,10 @@ BEGIN
     LOOP
       parent_place_id := location.place_id;
     END LOOP;
+  END IF;
+
+  IF parent_place_id is null THEN
+    RETURN 0;
   END IF;
 
   RETURN parent_place_id;
@@ -861,7 +865,7 @@ BEGIN
     -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
     select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
                                and indexed_status < 100
-                         order by (type = 'house'),place_id limit 1 INTO nextnode;
+                         order by (type = 'address'),place_id limit 1 INTO nextnode;
     IF nextnode.place_id IS NOT NULL THEN
 
         IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
@@ -1396,12 +1400,10 @@ BEGIN
 
     -- interpolations XXXXX
     IF NEW.class = 'place' AND NEW.type = 'houses'THEN
-      IF osm_type = 'W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
+      IF NEW.osm_type = 'W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
         NEW.parent_place_id := get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
                                                         NEW.partition, place_centroid, NEW.geometry);
-        IF NEW.parent_place_id is not null THEN
-          i := create_interpolation(NEW.osm_id, NEW.housenumber);
-        END IF;
+        i := create_interpolation(NEW.osm_id, NEW.housenumber);
       END IF;
       RETURN NEW;
     END IF;

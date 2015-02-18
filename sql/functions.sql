@@ -891,23 +891,27 @@ BEGIN
 
           startnumber := startnumber + stepsize;
           -- correct for odd/even
-          IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
+          IF (interpolationtype = 'odd' AND startnumber%2 = 0)
+             OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
             startnumber := startnumber - 1;
           END IF;
           endnumber := endnumber - 1;
 
-          delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id and type = 'house' and place_id != prevnode.place_id;
+          delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id
+                               and place_id != prevnode.place_id;
           FOR housenum IN startnumber..endnumber BY stepsize LOOP
-            -- this should really copy postcodes but it puts a huge burden on
-            -- the system for no big benefit ideally postcodes should move up to the way
-            insert into placex (place_id, partition, osm_type, osm_id, class, type, admin_level,
-              housenumber, street, addr_place, isin, postcode,
-              country_code, parent_place_id, rank_address, rank_search,
-              indexed_status, geometry)
-              values (nextval('seq_place'), partition, 'N', prevnode.osm_id, 'place', 'house', prevnode.admin_level,
-              housenum, prevnode.street, prevnode.addr_place, prevnode.isin, coalesce(prevnode.postcode, defpostalcode),
-              prevnode.country_code, prevnode.parent_place_id, prevnode.rank_address, prevnode.rank_search,
-              0, ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
+            insert into placex (place_id, partition, osm_type, osm_id,
+                                class, type, admin_level, housenumber,
+                                postcode,
+                                country_code, parent_place_id, rank_address, rank_search,
+                                indexed_status, indexed_date, geometry_sector,
+                                geometry)
+              values (nextval('seq_place'), partition, 'N', prevnode.osm_id,
+                      'place', 'address', prevnode.admin_level, housenum,
+                      coalesce(prevnode.postcode, defpostalcode),
+                      prevnode.country_code, parent_place_id, 30, 30,
+                      0, now(), geometry_sector, calculated_country_code,
+                      ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
             newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
           END LOOP;
@@ -944,8 +948,9 @@ DECLARE
 BEGIN
   --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
 
-  IF place_id is not null THEN
-    RETURN NEW; -- already indexed (happens for interpolated addresses
+  -- ignore interpolated addresses
+  IF NEW.class = 'place' and NEW.type = 'address' THEN
+    RETURN NEW;
   END IF;
 
   -- just block these
@@ -1328,6 +1333,11 @@ BEGIN
   END IF;
 
   IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+    RETURN NEW;
+  END IF;
+
+  -- ignore interpolated addresses
+  IF NEW.class = 'place' and NEW.type = 'address' THEN
     RETURN NEW;
   END IF;
 

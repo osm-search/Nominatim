@@ -51,6 +51,10 @@
 			$sSQL .= " from placex where place_id = ".(int)$this->iPlaceID;
 			$aPlace = $this->oDB->getRow($sSQL);
 
+			if (PEAR::IsError($aPlace))
+			{
+				failInternalError("Could not lookup place.", $sSQL, $aPlace);
+			}
 			if (!$aPlace['place_id']) return null;
 
 			if ($this->bAddressDetails)

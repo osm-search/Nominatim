@@ -16,6 +16,7 @@ autom4te.cache/
 config.*
 configure
 Makefile
+!tests/scenes/bin/Makefile
 Makefile.in
 stamp-h1
 missing

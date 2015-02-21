@@ -1,7 +1,7 @@
 CXXFLAGS += -O3
 #CXXFLAGS += -g
 CXXFLAGS += -std=c++11 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-CXXFLAGS += -I../../../libosmium/include
+CXXFLAGS += -I../../../../libosmium/include
 
 OS:=$(shell uname -s)
 ifeq ($(OS),Darwin)

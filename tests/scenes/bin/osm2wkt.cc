@@ -7,23 +7,23 @@
 #include <unordered_map>
 
 #include <osmium/area/assembler.hpp>
-#include <osmium/area/collector.hpp>
+#include <osmium/area/multipolygon_collector.hpp>
 #include <osmium/area/problem_reporter_exception.hpp>
 #include <osmium/geom/wkt.hpp>
 #include <osmium/handler.hpp>
 #include <osmium/handler/node_locations_for_ways.hpp>
 #include <osmium/io/any_input.hpp>
 #include <osmium/visitor.hpp>
-#include <osmium/index/map/stl_map.hpp>
+#include <osmium/index/map/sparse_mem_array.hpp>
 
-typedef osmium::index::map::StlMap<osmium::unsigned_object_id_type, osmium::Location> index_type;
+typedef osmium::index::map::SparseMemArray<osmium::unsigned_object_id_type, osmium::Location> index_type;
 
 typedef osmium::handler::NodeLocationsForWays<index_type, index_type> location_handler_type;
 
 
 class ExportToWKTHandler : public osmium::handler::Handler {
 
-    osmium::geom::WKTFactory m_factory;
+    osmium::geom::WKTFactory<> m_factory;
     std::unordered_map<std::string, std::ofstream>  m_files;
 
 public:
@@ -70,13 +70,12 @@ int main(int argc, char* argv[]) {
 
     std::string input_filename {argv[1]};
 
-    typedef osmium::area::Assembler area_assembler_type;
     osmium::area::ProblemReporterException problem_reporter;
-    area_assembler_type assembler(&problem_reporter);
-    osmium::area::Collector<area_assembler_type> collector(assembler);
+    osmium::area::Assembler::config_type assembler_config(&problem_reporter);
+    osmium::area::MultipolygonCollector<osmium::area::Assembler> collector(assembler_config);
 
     std::cerr << "Pass 1...\n";
-    osmium::io::Reader reader1(input_filename);
+    osmium::io::Reader reader1(input_filename, osmium::osm_entity_bits::relation);
     collector.read_relations(reader1);
     std::cerr << "Pass 1 done\n";
 
@@ -87,9 +86,10 @@ int main(int argc, char* argv[]) {
     std::cerr << "Pass 2...\n";
     ExportToWKTHandler export_handler;
     osmium::io::Reader reader2(input_filename);
-    osmium::apply(reader2, location_handler, export_handler, collector.handler());
+    osmium::apply(reader2, location_handler, export_handler, collector.handler([&export_handler](osmium::memory::Buffer&& buffer) {
+        osmium::apply(buffer, export_handler);
+    }));
     reader2.close();
-    osmium::apply(collector, export_handler);
     export_handler.close();
     std::cerr << "Pass 2 done\n";
 

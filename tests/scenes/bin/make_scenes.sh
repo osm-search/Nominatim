@@ -5,7 +5,7 @@
 
 datadir="$( cd "$( dirname "$0" )" && cd ../data && pwd )"
 
-if [! -d "$datadir" ]; then
+if [ ! -d "$datadir" ]; then
  echo "Cannot find data dir."; 
  exit -1;
 fi

@@ -6,6 +6,7 @@
 		protected $aLangPrefOrder = array();
 
 		protected $bIncludeAddressDetails = false;
+		protected $bIncludeMatchingDetails = false;
 
 		protected $bIncludePolygonAsPoints = false;
 		protected $bIncludePolygonAsText = false;
@@ -208,6 +209,7 @@
 		function loadParamArray($aParams)
 		{
 			if (isset($aParams['addressdetails'])) $this->bIncludeAddressDetails = (bool)$aParams['addressdetails'];
+			if (isset($aParams['matchingdetails'])) $this->bIncludeMatchingDetails = (bool)$aParams['matchingdetails'];
 			if (isset($aParams['bounded'])) $this->bBoundedSearch = (bool)$aParams['bounded'];
 			if (isset($aParams['dedupe'])) $this->bDeDupe = (bool)$aParams['dedupe'];
 
@@ -923,6 +925,7 @@
 				// Get all 'sets' of words
 				// Generate a complete list of all
 				$aTokens = array();
+				$aQueryWords = array();
 				foreach($aPhrases as $iPhrase => $sPhrase)
 				{
 					$aPhrase = $this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string");
@@ -938,6 +941,7 @@
 						$aPhrases[$iPhrase]['words'] = explode(' ',$aPhrases[$iPhrase]['string']);
 						$aPhrases[$iPhrase]['wordsets'] = getWordSets($aPhrases[$iPhrase]['words'], 0);
 						$aTokens = array_merge($aTokens, getTokensFromSets($aPhrases[$iPhrase]['wordsets']));
+						$aQueryWords = array_merge($aQueryWords, explode(" ", strtolower($sPhrase)));
 					}
 					else
 					{
@@ -1740,6 +1744,15 @@
 					if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city']))
 					{
 						$aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
+					}
+				}
+
+				if ($this->bIncludeMatchingDetails)
+				{
+					$aResult['matching'] = getMatchingDetails($this->oDB, $aQueryWords, $aResult['place_id']);
+					if ($aResult['extra_place'] == 'city' && !isset($aResult['matching']['city']))
+					{
+						$aResult['matching'] = array_merge(array('city' => array_shift(array_values($aResult['matching']))), $aResult['matching']);
 					}
 				}
 

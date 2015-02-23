@@ -815,7 +815,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT,
-                                                parent_place_id BIGINT, partition INTEGER,
+                                                parent_id BIGINT, partition INTEGER,
                                                 country_code TEXT,  geometry_sector INTEGER,
                                                 defpostalcode TEXT, geom GEOMETRY) RETURNS INTEGER
   AS $$
@@ -835,8 +835,12 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
+  pointgeo GEOMETRY;
 
 BEGIN
+  delete from placex where osm_type = 'W' and osm_id = wayid
+                                          and class = 'place' and type = 'address';
+
   IF interpolationtype = 'odd' OR interpolationtype = 'even' THEN
     stepsize := 2;
   ELSEIF interpolationtype = 'all' THEN
@@ -901,21 +905,24 @@ BEGIN
           END IF;
           endnumber := endnumber - 1;
 
+          -- keep for compatibility with previous versions
           delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id
-                               and place_id != prevnode.place_id;
+                               and place_id != prevnode.place_id and class = 'place'
+                               and type = 'house';
           FOR housenum IN startnumber..endnumber BY stepsize LOOP
+            pointgeo := ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float);
             insert into placex (place_id, partition, osm_type, osm_id,
                                 class, type, admin_level, housenumber,
                                 postcode,
                                 country_code, parent_place_id, rank_address, rank_search,
                                 indexed_status, indexed_date, geometry_sector,
-                                geometry)
-              values (nextval('seq_place'), partition, 'N', prevnode.osm_id,
+                                calculated_country_code, centroid, geometry)
+              values (nextval('seq_place'), partition, 'W', wayid,
                       'place', 'address', prevnode.admin_level, housenum,
                       coalesce(prevnode.postcode, defpostalcode),
-                      prevnode.country_code, parent_place_id, 30, 30,
-                      0, now(), geometry_sector, calculated_country_code,
-                      ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float));
+                      prevnode.country_code, parent_id, 30, 30,
+                      0, now(), geometry_sector, country_code,
+                      pointgeo, pointgeo);
             newpoints := newpoints + 1;
 --RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
           END LOOP;
@@ -1261,6 +1268,7 @@ BEGIN
     END IF;
   END IF;
 
+
    -- add to tables for special search
    -- Note: won't work on initial import because the classtype tables
    -- do not yet exist. It won't hurt either.
@@ -1398,12 +1406,14 @@ BEGIN
     END IF;
     NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
 
-    -- interpolations XXXXX
+    -- interpolations
     IF NEW.class = 'place' AND NEW.type = 'houses'THEN
       IF NEW.osm_type = 'W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
         NEW.parent_place_id := get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
                                                         NEW.partition, place_centroid, NEW.geometry);
-        i := create_interpolation(NEW.osm_id, NEW.housenumber);
+        i := create_interpolation(NEW.osm_id, NEW.housenumber, NEW.parent_place_id,
+                                  NEW.partition, NEW.calculated_country_code,
+                                  NEW.geometry_sector, NEW.postcode, NEW.geometry);
       END IF;
       RETURN NEW;
     END IF;
@@ -1548,17 +1558,7 @@ BEGIN
 
           -- If this way is a street interpolation line then it is probably as good as we are going to get
           IF NEW.parent_place_id IS NULL AND NEW.street IS NULL AND NEW.addr_place IS NULL AND location.class = 'place' and location.type='houses' THEN
-            -- Try and find a way that is close roughly parellel to this line
-            FOR relation IN SELECT place_id FROM placex
-              WHERE ST_DWithin(location.geometry, placex.geometry, 0.001) and placex.rank_search = 26
-                and st_geometrytype(location.geometry) in ('ST_LineString')
-              ORDER BY (ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,0))+
-                        ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,0.5))+
-                        ST_distance(placex.geometry, ST_LineInterpolatePoint(location.geometry,1))) ASC limit 1
-            LOOP
---RAISE WARNING 'using nearest street to address interpolation line,0.001 %',relation;
-              NEW.parent_place_id := relation.place_id;
-            END LOOP;
+            NEW.parent_place_id := location.parent_place_id;
           END IF;
 
         END LOOP;
@@ -2090,6 +2090,11 @@ BEGIN
   -- mark for delete
   UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
 
+  -- interpolations are special
+  IF OLD.class = 'place' and OLD.type = 'houses' THEN
+    UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = 'place' and type = 'address';
+  END IF;
+
   RETURN OLD;
 
 END;
@@ -2356,6 +2361,11 @@ BEGIN
       geometry = NEW.geometry
       where place_id = existingplacex.place_id;
 
+  END IF;
+
+  -- for interpolations invalidate all nodes on the line
+  IF NEW.class = 'place' and NEW.type = 'houses' and NEW.osm_type = 'W' THEN
+    update placex p set indexed_status = 2 from planet_osm_ways w where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
   END IF;
 
   -- Abort the add (we modified the existing place instead)

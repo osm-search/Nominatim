@@ -119,10 +119,10 @@ def check_search_name_content(step):
                 else:
                     raise Exception("Cannot handle field %s in search_name table" % (k, ))
 
-@step(u'node (\d+) expands to housenumbers')
+@step(u'way (\d+) expands to housenumbers')
 def check_interpolated_housenumbers(step, nodeid):
     """Check that the exact set of housenumbers has been entered in
-       placex for the given source node. Expected are tow columns:
+       placex for the given source node. Expected are two columns:
        housenumber and centroid
     """
     numbers = {}
@@ -132,7 +132,8 @@ def check_interpolated_housenumbers(step, nodeid):
     cur = world.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("""SELECT DISTINCT housenumber,
                           ST_X(centroid) as clat, ST_Y(centroid) as clon
-                   FROM placex WHERE osm_type = 'N' and osm_id = %s""",
+                   FROM placex WHERE osm_type = 'W' and osm_id = %s
+                                 and class = 'place' and type = 'address'""",
                    (int(nodeid),))
     assert_equals(len(numbers), cur.rowcount)
     for r in cur:
@@ -140,6 +141,32 @@ def check_interpolated_housenumbers(step, nodeid):
         world.match_geometry((r['clat'], r['clon']), numbers[r["housenumber"]])
         del numbers[r["housenumber"]]
 
+@step(u'way (\d+) expands exactly to housenumbers ([0-9,]*)')
+def check_interpolated_housenumber_list(step, nodeid, numberlist):
+    """ Checks that the interpolated house numbers corresponds
+        to the given list.
+    """
+    expected = numberlist.split(',');
+    cur = world.conn.cursor()
+    cur.execute("""SELECT housenumber FROM placex
+                   WHERE osm_type = 'W' and osm_id = %s
+                     and class = 'place' and type = 'address'""", (int(nodeid),))
+    for r in cur:
+        assert_in(r[0], expected, "Unexpected house number %s for node %s." % (r[0], nodeid))
+        expected.remove(r[0])
+    assert_equals(0, len(expected), "Missing house numbers for way %s: %s" % (nodeid, expected))
+
+@step(u'way (\d+) expands to no housenumbers')
+def check_no_interpolated_housenumber_list(step, nodeid):
+    """ Checks that the interpolated house numbers corresponds
+        to the given list.
+    """
+    cur = world.conn.cursor()
+    cur.execute("""SELECT housenumber FROM placex
+                   WHERE osm_type = 'W' and osm_id = %s
+                     and class = 'place' and type = 'address'""", (int(nodeid),))
+    res = [r[0] for r in cur]
+    assert_equals(0, len(res), "Unexpected house numbers for way %s: %s" % (nodeid, res))
 
 @step(u'table search_name has no entry for (.*)')
 def check_placex_missing(step, osmid):

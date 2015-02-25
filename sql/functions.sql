@@ -1546,9 +1546,9 @@ BEGIN
 
 --RAISE WARNING 'x1';
         -- Is this node part of a way?
-        FOR way IN select id from planet_osm_ways where nodes @> ARRAY[NEW.osm_id] LOOP
---RAISE WARNING '%', way;
-        FOR location IN select * from placex where osm_type = 'W' and osm_id = way.id
+        FOR location IN select p.* from placex p, planet_osm_ways w
+           where p.osm_type = 'W' and p.rank_search >= 26
+             and p.geometry && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes)
         LOOP
 --RAISE WARNING '%', location;
           -- Way IS a road then we are on it - that must be our road
@@ -1598,7 +1598,6 @@ BEGIN
             END IF;
           END IF;
 
-        END LOOP;
         END LOOP;
 
       END IF;

@@ -90,7 +90,7 @@
 	@define('CONST_Search_BatchMode', false);
 
 	@define('CONST_Search_TryDroppedAddressTerms', false);
-	@define('CONST_Search_NameOnlySearchFrequencyThreshold', false);
+	@define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
 
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);

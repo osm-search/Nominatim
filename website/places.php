@@ -46,7 +46,7 @@
 		
 		if ( count($osm_ids) > CONST_Places_Max_ID_count ) 
 		{
-			echo 'Bulk User: Only ' .  CONST_ReverseSearch_Max_IDs . " ids are allowed in one request.\n";
+			userError('Bulk User: Only ' .  CONST_Places_Max_ID_count . " ids are allowed in one request.");
 			exit;
 		}
 		
@@ -55,6 +55,9 @@
 		$aPlaces = array();
 		foreach ($osm_ids AS $item) 
 		{
+			// Skip empty items
+			if (empty($item)) continue;
+			
 			$type = $item[0];
 			$id = (int) substr($item, 1);
 			if ( $id > 0 && ($type == 'N' || $type == 'W' || $type == 'R') )

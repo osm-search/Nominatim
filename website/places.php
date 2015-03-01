@@ -22,7 +22,7 @@
 
 	// Format for output
 	$sOutputFormat = 'xml';
-	if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json' || $_GET['format'] == 'jsonv2'))
+	if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json')
 	{
 		$sOutputFormat = $_GET['format'];
 	}

@@ -1,15 +1,6 @@
 <?php
 	$aFilteredPlaces = array();
 
-	if (!sizeof($aPlaces))
-	{
-		if (isset($sError))
-			$aFilteredPlaces['error'] = $sError;
-		else
-			$aFilteredPlaces['error'] = 'Unable to geocode';
-	}
-	else
-	{
 		$aFilteredPlaces['licence'] = "Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright";
 		
 		foreach ( $aPlaces AS $aPlace )
@@ -39,7 +30,6 @@
 			
 			$aFilteredPlaces['results'][] = $row;
 		}
-	}
 
 	javascript_renderData($aFilteredPlaces);
 

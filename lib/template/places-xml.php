@@ -10,15 +10,6 @@
 	echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 	echo ">\n";
 
-	if (!sizeof($aPlaces))
-	{
-		if (isset($sError))
-			echo "<error>$sError</error>";
-		else
-			echo "<error>Unable to geocode</error>";
-	}
-	else
-	{
 		foreach ( $aPlaces AS $aPlace )
 		{
 			echo "<place";
@@ -43,6 +34,5 @@
 			}
 			echo "</place>";
 		}
-	}
 
 	echo "</places>";

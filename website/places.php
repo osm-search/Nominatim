@@ -12,7 +12,7 @@
 		if ($fLoadAvg > 4) sleep(120);
 		if ($fLoadAvg > 6)
 		{
-			echo "Bulk User: Temporary block due to high server load\n";
+			userError("Bulk User: Temporary block due to high server load");
 			exit;
 		}
 	}

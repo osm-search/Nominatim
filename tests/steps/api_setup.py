@@ -113,11 +113,6 @@ def api_setup_details_reverse(step, obj):
         world.params['place_id']  = obj
     api_call('reverse')
 
-@step(u'looking up places (([NRW]\d,?)+)')
-def api_setup_details_places(step, obj):
-    world.params['osm_ids'] = obj
-    api_call('places')
-
 @step(u'looking up details for ([NRW]?\d+)')
 def api_setup_details(step, obj):
     if obj[0] in ('N', 'R', 'W'):
@@ -127,3 +122,10 @@ def api_setup_details(step, obj):
     else:
         world.params['place_id']  = obj
     api_call('details')
+
+@step(u'looking up (\w+) places ((?:[a-z]\d+,*)+)')
+def api_setup_places(step, fmt, ids):
+    world.params['osm_ids'] = ids
+    if fmt and fmt.strip():
+        world.params['format'] = fmt.strip()
+    api_call('places')

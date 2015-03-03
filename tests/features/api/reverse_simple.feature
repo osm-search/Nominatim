@@ -51,8 +51,3 @@ Feature: Simple Reverse Tests
         When looking up jsonv2 coordinates 36.791966,127.171726
         Then the result is valid json
 
-    Scenario: address lookup for existing node, way, relation
-        When looking up xml looking up places N158845944,W72493656,R62422
-        Then the result is valid xml
-        When looking up json looking up places N158845944,W72493656,R62422
-        Then the result is valid json

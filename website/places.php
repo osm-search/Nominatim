@@ -12,7 +12,7 @@
 		if ($fLoadAvg > 4) sleep(120);
 		if ($fLoadAvg > 6)
 		{
-			echo "Bulk User: Temporary block due to high server load\n";
+			userError("Bulk User: Temporary block due to high server load");
 			exit;
 		}
 	}
@@ -22,7 +22,7 @@
 
 	// Format for output
 	$sOutputFormat = 'xml';
-	if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json')
+	if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json'))
 	{
 		$sOutputFormat = $_GET['format'];
 	}
@@ -63,11 +63,29 @@
 			if ( $id > 0 && ($type == 'N' || $type == 'W' || $type == 'R') )
 			{
 				$oPlaceLookup->setOSMID($type, $id);
-				$aPlaces[] = $oPlaceLookup->lookup();
+				$oPlace = $oPlaceLookup->lookup();
+				if ($oPlace){
+					$aPlaces[] = $oPlace;
+				}
 			}
 		}
 	}
 
+
+	// we want to use the search-* output templates, so we need to convert
+	// $aPlaces (the format of reverse search) => $aSearchResults (the format of search)
+	$aSearchResults = array();
+	foreach ($aPlaces as $oPlace){
+		$oResult = $oPlace;
+		unset($oResult['aAddress']);
+		$oResult['address'] = $oPlace['aAddress'];
+		unset($oResult['langaddress']);
+		$oResult['name'] = $oPlace['langaddress'];
+		// importance score only adds confusiion: the results are ordered exactly as inputted
+		// unset($oResult['importance']);
+		$aSearchResults[] = $oResult;
+	}
+
 	if (CONST_Debug) exit;
 
-	include(CONST_BasePath.'/lib/template/places-'.$sOutputFormat.'.php');
+	include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');

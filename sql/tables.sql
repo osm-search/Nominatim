@@ -53,6 +53,9 @@ GRANT INSERT ON new_query_log TO "{www-user}" ;
 GRANT UPDATE ON new_query_log TO "{www-user}" ;
 GRANT SELECT ON new_query_log TO "{www-user}" ;
 
+GRANT SELECT ON TABLE country_name TO "{www-user}";
+GRANT SELECT ON TABLE gb_postcode TO "{www-user}";
+
 create view vw_search_query_log as SELECT substr(query, 1, 50) AS query, starttime, endtime - starttime AS duration, substr(useragent, 1, 20) as 
 useragent, language, results, ipaddress FROM new_query_log WHERE type = 'search' ORDER BY starttime DESC;
 

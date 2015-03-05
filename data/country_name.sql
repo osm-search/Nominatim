@@ -295,7 +295,6 @@ CREATE INDEX idx_country_name_country_code ON country_name USING btree (country_
 --
 
 REVOKE ALL ON TABLE country_name FROM PUBLIC;
-GRANT SELECT ON TABLE country_name TO "www-data";
 
 
 --

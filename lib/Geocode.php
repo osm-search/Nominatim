@@ -1601,13 +1601,13 @@
 					// Get the bounding box and outline polygon
 					$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
 					$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
-					$sSQL .= "ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),2)) as maxlat,";
-					$sSQL .= "ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),3)) as maxlon";
+					$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
+					$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
 					if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
 					if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
 					if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
 					if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
-					$sSQL .= " from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(Box2D(geometry)) = \'ST_Polygon\'';
+					$sSQL .= " from placex where place_id = ".$aResult['place_id'];
 					$aPointPolygon = $this->oDB->getRow($sSQL);
 					if (PEAR::IsError($aPointPolygon))
 					{
@@ -1629,7 +1629,7 @@
 
 						if ($this->bIncludePolygonAsPoints)
 						{
-							// Translate geometary string to point array
+							// Translate geometry string to point array
 							if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
 							{
 								preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);

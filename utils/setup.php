@@ -613,7 +613,7 @@
 			}
 
 			// Find the last node in the DB
-			$iLastOSMID = $oDB->getOne("select max(id) from planet_osm_nodes");
+			$iLastOSMID = $oDB->getOne("select max(osm_id) from place where osm_type = 'N'");
 
 			// Lookup the timestamp that node was created (less 3 hours for margin for changsets to be closed)
 			$sLastNodeURL = 'http://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID."/1";

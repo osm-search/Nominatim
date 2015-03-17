@@ -122,3 +122,7 @@ def api_setup_details(step, obj):
     else:
         world.params['place_id']  = obj
     api_call('details')
+
+@step(u'sending an API call (\w+)')
+def api_general_call(step, call):
+    api_call(call)

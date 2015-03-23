@@ -1,168 +1,221 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<osm version='0.6'>
-    <node id="100" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="101" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="102" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.001" />
-    <node id="103" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.001" />
-    <way id="100" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="100" />
-      <nd ref="101" />
-      <nd ref="102" />
-      <nd ref="103" />
-      <nd ref="100" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.0001"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="200" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="201" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="202" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.005" />
-    <node id="203" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.005" />
-    <way id="200" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="200" />
-      <nd ref="201" />
-      <nd ref="202" />
-      <nd ref="203" />
-      <nd ref="200" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.0005"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="300" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="301" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="302" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.01" />
-    <node id="303" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.01" />
-    <way id="300" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="300" />
-      <nd ref="301" />
-      <nd ref="302" />
-      <nd ref="303" />
-      <nd ref="300" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.001"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="400" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="401" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="402" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.05" />
-    <node id="403" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.05" />
-    <way id="400" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="400" />
-      <nd ref="401" />
-      <nd ref="402" />
-      <nd ref="403" />
-      <nd ref="400" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.005"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="500" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="501" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="502" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.1" />
-    <node id="503" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.1" />
-    <way id="500" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="500" />
-      <nd ref="501" />
-      <nd ref="502" />
-      <nd ref="503" />
-      <nd ref="500" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.01"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="600" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="601" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.0" />
-    <node id="602" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.1" lon="0.5" />
-    <node id="603" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.5" />
-    <way id="600" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="600" />
-      <nd ref="601" />
-      <nd ref="602" />
-      <nd ref="603" />
-      <nd ref="600" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.05"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="700" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="701" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.0" />
-    <node id="702" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.1" />
-    <node id="703" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.1" />
-    <way id="700" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="700" />
-      <nd ref="701" />
-      <nd ref="702" />
-      <nd ref="703" />
-      <nd ref="700" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.1"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="800" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="801" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.0" />
-    <node id="802" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.5" />
-    <node id="803" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.5" />
-    <way id="800" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="800" />
-      <nd ref="801" />
-      <nd ref="802" />
-      <nd ref="803" />
-      <nd ref="800" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="0.5"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="900" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="901" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.0" />
-    <node id="902" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="1.0" />
-    <node id="903" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="1.0" />
-    <way id="900" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="900" />
-      <nd ref="901" />
-      <nd ref="902" />
-      <nd ref="903" />
-      <nd ref="900" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="1.0"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="1000" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="1001" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.0" />
-    <node id="1002" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="2.0" />
-    <node id="1003" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="2.0" />
-    <way id="1000" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="1000" />
-      <nd ref="1001" />
-      <nd ref="1002" />
-      <nd ref="1003" />
-      <nd ref="1000" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="2.0"/>
-      <tag k="area" v="yes"/>
-    </way>
-
-    <node id="1100" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="0.0" />
-    <node id="1101" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="0.0" />
-    <node id="1102" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="1.0" lon="5.0" />
-    <node id="1103" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1" lat="0.0" lon="5.0" />
-    <way id="1100" version="1" timestamp="2014-01-01T00:00:00Z" uid="1" user="test" changeset="1">
-      <nd ref="1100" />
-      <nd ref="1101" />
-      <nd ref="1102" />
-      <nd ref="1103" />
-      <nd ref="1100" />
-      <tag k="test:section" v="poly-area"/>
-      <tag k="test:id" v="5.0"/>
-      <tag k="area" v="yes"/>
-    </way>
-
+<osm version='0.6' upload='true' generator='JOSM'>
+  <node id='-238' action='modify' visible='true' lat='-0.00661880152' lon='0.00356249245'>
+    <tag k='test:id' v='inner-C' />
+    <tag k='test:section' v='way-area-with-center' />
+  </node>
+  <node id='-231' action='modify' visible='true' lat='-0.00600066098' lon='0.0041244384'>
+    <tag k='test:id' v='outer-C' />
+    <tag k='test:section' v='way-area-with-center' />
+  </node>
+  <node id='-225' action='modify' visible='true' lat='-0.00236518426' lon='0.00188464186'>
+    <tag k='test:id' v='inner-N' />
+    <tag k='test:section' v='way-area-with-center' />
+  </node>
+  <node id='-166' action='modify' visible='true' lat='-0.00951758843' lon='0.00485156509'>
+    <tag k='test:id' v='inner-S' />
+    <tag k='test:section' v='way-area-with-center' />
+  </node>
+  <node id='-137' action='modify' visible='true' lat='-0.00215326117' lon='0.00501050741' />
+  <node id='-135' action='modify' visible='true' lat='-0.00257710735' lon='0.00644098825' />
+  <node id='-133' action='modify' visible='true' lat='-0.00400758819' lon='0.00750060369' />
+  <node id='-131' action='modify' visible='true' lat='-0.00591489597' lon='0.00336810348' />
+  <node id='-129' action='modify' visible='true' lat='-0.00766326144' lon='0.00516944972' />
+  <node id='-127' action='modify' visible='true' lat='-0.00649768446' lon='0.00612310362' />
+  <node id='-125' action='modify' visible='true' lat='-0.00496124208' lon='0.00686483443' />
+  <node id='-123' action='modify' visible='true' lat='-0.00665662678' lon='0.00771252678' />
+  <node id='-121' action='modify' visible='true' lat='-0.0099414346' lon='0.0065469498' />
+  <node id='-119' action='modify' visible='true' lat='-0.01094806925' lon='0.0038979112' />
+  <node id='-117' action='modify' visible='true' lat='-0.01057720386' lon='0.00267935344' />
+  <node id='-115' action='modify' visible='true' lat='-0.00999441537' lon='0.00220252649' />
+  <node id='-113' action='modify' visible='true' lat='-0.00919970381' lon='0.00262637267' />
+  <node id='-111' action='modify' visible='true' lat='-0.00803412684' lon='0.00262637267' />
+  <node id='-109' action='modify' visible='true' lat='-0.00655066523' lon='0.00193762263' />
+  <node id='-107' action='modify' visible='true' lat='-0.00729239604' lon='0.00103694951' />
+  <node id='-105' action='modify' visible='true' lat='-0.00607383829' lon='0.00050714179' />
+  <node id='-103' action='modify' visible='true' lat='-0.00564999211' lon='0.00177868032' />
+  <node id='-101' action='modify' visible='true' lat='-0.00421951128' lon='0.00050714179' />
+  <node id='-99' action='modify' visible='true' lat='-0.00257710735' lon='0.00056012256' />
+  <node id='-98' action='modify' visible='true' lat='-0.00151749191' lon='0.00130185337' />
+  <node id='100' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='101' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='102' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.001' />
+  <node id='103' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.001' />
+  <node id='200' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='201' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='202' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.005' />
+  <node id='203' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.005' />
+  <node id='300' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='301' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='302' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.01' />
+  <node id='303' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.01' />
+  <node id='400' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='401' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='402' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.05' />
+  <node id='403' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.05' />
+  <node id='500' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='501' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='502' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.1' />
+  <node id='503' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.1' />
+  <node id='600' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='601' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.0' />
+  <node id='602' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.1' lon='0.5' />
+  <node id='603' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.5' />
+  <node id='700' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='701' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.0' />
+  <node id='702' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.1' />
+  <node id='703' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.1' />
+  <node id='800' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='801' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.0' />
+  <node id='802' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.5' />
+  <node id='803' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.5' />
+  <node id='900' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='901' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.0' />
+  <node id='902' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='1.0' />
+  <node id='903' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='1.0' />
+  <node id='1000' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='1001' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.0' />
+  <node id='1002' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='2.0' />
+  <node id='1003' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='2.0' />
+  <node id='1100' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='0.0' />
+  <node id='1101' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='0.0' />
+  <node id='1102' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='1.0' lon='5.0' />
+  <node id='1103' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1' lat='0.0' lon='5.0' />
+  <way id='-100' action='modify' visible='true'>
+    <nd ref='-98' />
+    <nd ref='-99' />
+    <nd ref='-101' />
+    <nd ref='-103' />
+    <nd ref='-105' />
+    <nd ref='-107' />
+    <nd ref='-109' />
+    <nd ref='-111' />
+    <nd ref='-113' />
+    <nd ref='-115' />
+    <nd ref='-117' />
+    <nd ref='-119' />
+    <nd ref='-121' />
+    <nd ref='-123' />
+    <nd ref='-125' />
+    <nd ref='-127' />
+    <nd ref='-129' />
+    <nd ref='-131' />
+    <nd ref='-133' />
+    <nd ref='-135' />
+    <nd ref='-137' />
+    <nd ref='-98' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='area' />
+    <tag k='test:section' v='way-area-with-center' />
+  </way>
+  <way id='100' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='100' />
+    <nd ref='101' />
+    <nd ref='102' />
+    <nd ref='103' />
+    <nd ref='100' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.0001' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='200' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='200' />
+    <nd ref='201' />
+    <nd ref='202' />
+    <nd ref='203' />
+    <nd ref='200' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.0005' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='300' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='300' />
+    <nd ref='301' />
+    <nd ref='302' />
+    <nd ref='303' />
+    <nd ref='300' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.001' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='400' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='400' />
+    <nd ref='401' />
+    <nd ref='402' />
+    <nd ref='403' />
+    <nd ref='400' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.005' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='500' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='500' />
+    <nd ref='501' />
+    <nd ref='502' />
+    <nd ref='503' />
+    <nd ref='500' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.01' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='600' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='600' />
+    <nd ref='601' />
+    <nd ref='602' />
+    <nd ref='603' />
+    <nd ref='600' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.05' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='700' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='700' />
+    <nd ref='701' />
+    <nd ref='702' />
+    <nd ref='703' />
+    <nd ref='700' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.1' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='800' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='800' />
+    <nd ref='801' />
+    <nd ref='802' />
+    <nd ref='803' />
+    <nd ref='800' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='0.5' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='900' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='900' />
+    <nd ref='901' />
+    <nd ref='902' />
+    <nd ref='903' />
+    <nd ref='900' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='1.0' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='1000' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='1000' />
+    <nd ref='1001' />
+    <nd ref='1002' />
+    <nd ref='1003' />
+    <nd ref='1000' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='2.0' />
+    <tag k='test:section' v='poly-area' />
+  </way>
+  <way id='1100' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' visible='true' version='1' changeset='1'>
+    <nd ref='1100' />
+    <nd ref='1101' />
+    <nd ref='1102' />
+    <nd ref='1103' />
+    <nd ref='1100' />
+    <tag k='area' v='yes' />
+    <tag k='test:id' v='5.0' />
+    <tag k='test:section' v='poly-area' />
+  </way>
 </osm>

@@ -2,6 +2,20 @@
 Feature: Linking of places
     Tests for correctly determining linked places
 
+    Scenario: Only address-describing places can be linked
+        Given the scene way-area-with-center
+        And the place areas
+         | osm_type | osm_id | class   | type   | name  | geometry
+         | R        | 13     | landuse | forest | Garbo | :area
+        And the place nodes
+         | osm_id | class   | type | name  | geometry
+         | 256    | natural | peak | Garbo | :inner-C
+        When importing
+        Then table placex contains
+         | object  | linked_place_id
+         | R13     | None
+         | N256    | None
+
     Scenario: Waterways are linked when in waterway relations
         Given the scene split-road
         And the place ways

@@ -1642,7 +1642,7 @@ BEGIN
         -- Performance, it would be more acurate to do all the rest of the import process but it takes too long
         -- Just be happy with inheriting from parent road only
 
-        IF NEW.rank_search <= 25 THEN
+        IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
           result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
         END IF;
 
@@ -1978,7 +1978,7 @@ BEGIN
     -- if we have a name add this to the name search table
     IF NEW.name IS NOT NULL THEN
 
-      IF NEW.rank_search <= 25 THEN
+      IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
         result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
       END IF;
 

@@ -671,7 +671,10 @@
 	function javascript_renderData($xVal)
 	{
 		header("Access-Control-Allow-Origin: *");
-		$jsonout = json_encode($xVal);
+		$iOptions = 0;
+		if (defined('PHP_VERSION_ID') && PHP_VERSION_ID > 50400)
+			$iOptions = JSON_UNESCAPED_UNICODE;
+		$jsonout = json_encode($xVal, $iOptions);
 
 		if( ! isset($_GET['json_callback']))
 		{

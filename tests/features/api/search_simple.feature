@@ -166,6 +166,13 @@ Feature: Simple Tests
           | attr              | value
           | exclude_place_ids | 123,76,342565
 
+    Scenario: Empty XML search with bad exluded place ids
+        Given the request parameters
+          | exclude_place_ids
+          | ,
+        When sending xml search query "jghrleoxsbwjer"
+        Then result header has no attribute exclude_place_ids
+
     Scenario Outline: Wrapping of legal jsonp search requests
         Given the request parameters
           | json_callback

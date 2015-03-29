@@ -222,9 +222,12 @@
 				foreach(explode(',',$aParams['exclude_place_ids']) as $iExcludedPlaceID)
 				{
 					$iExcludedPlaceID = (int)$iExcludedPlaceID;
-					if ($iExcludedPlaceID) $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
+					if ($iExcludedPlaceID)
+						$aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
 				}
-				$this->aExcludePlaceIDs = $aExcludePlaceIDs;
+
+				if (isset($aExcludePlaceIDs))
+					$this->aExcludePlaceIDs = $aExcludePlaceIDs;
 			}
 
 			// Only certain ranks of feature

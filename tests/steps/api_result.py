@@ -143,6 +143,11 @@ def api_result_header_contains(step):
         assert_in(line['attr'], world.result_header)
         m = re.match("%s$" % (line['value'],), world.result_header[line['attr']])
 
+@step(u'result header has no attribute (.*)')
+def api_result_header_contains_not(step, attr):
+    step.given('the result is valid')
+    assert_not_in(attr, world.result_header)
+
 @step(u'results contain$')
 def api_result_contains(step):
     step.given('at least 1 result is returned')

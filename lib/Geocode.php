@@ -1591,8 +1591,10 @@
 			$aRecheckWords = preg_split('/\b[\s,\\-]*/u',$sQuery);
 			foreach($aRecheckWords as $i => $sWord)
 			{
-				if (!$sWord) unset($aRecheckWords[$i]);
+				if (!preg_match('/\pL/', $sWord)) unset($aRecheckWords[$i]);
 			}
+
+            if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
 
 			foreach($aSearchResults as $iResNum => $aResult)
 			{
@@ -1752,7 +1754,7 @@
 					if (stripos($sAddress, $sWord)!==false)
 					{
 						$iCountWords++;
-						if (preg_match("/(^|,)\s*$sWord\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
+						if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
 					}
 				}
 

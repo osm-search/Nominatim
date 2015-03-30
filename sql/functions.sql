@@ -1,50 +1,3 @@
---DROP TRIGGER IF EXISTS place_before_insert on placex;
---DROP TRIGGER IF EXISTS place_before_update on placex;
---CREATE TYPE addresscalculationtype AS (
---  word text,
---  score integer
---);
-
-CREATE OR REPLACE FUNCTION getclasstypekey(c text, t text) RETURNS TEXT
-  AS $$
-DECLARE
-BEGIN
-  RETURN c||'|'||t;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION isbrokengeometry(place geometry) RETURNS BOOLEAN
-  AS $$
-DECLARE
-  NEWgeometry geometry;
-BEGIN
-  NEWgeometry := place;
-  IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    RETURN true;
-  END IF;
-  RETURN false;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION clean_geometry(place geometry) RETURNS geometry
-  AS $$
-DECLARE
-  NEWgeometry geometry;
-BEGIN
-  NEWgeometry := place;
-  IF ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    NEWgeometry := ST_buffer(NEWgeometry,0);
-    IF ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
-      RETURN ST_SetSRID(ST_Point(0,0),4326);
-    END IF;
-  END IF;
-  RETURN NEWgeometry;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry) RETURNS INTEGER
   AS $$
 DECLARE
@@ -52,12 +5,6 @@ DECLARE
 BEGIN
 --  RAISE WARNING '%',place;
   NEWgeometry := ST_PointOnSurface(place);
---  IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
---    NEWgeometry := ST_buffer(NEWgeometry,0);
---    IF ST_IsEmpty(NEWgeometry) OR NOT ST_IsValid(NEWgeometry) OR ST_X(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEWgeometry))::text in ('NaN','Infinity','-Infinity') THEN  
---      RETURN 0;
---    END IF;
---  END IF;
   RETURN (partition*1000000) + (500-ST_X(NEWgeometry)::integer)*1000 + (500-ST_Y(NEWgeometry)::integer);
 END;
 $$
@@ -155,38 +102,6 @@ BEGIN
     return_word_id := nextval('seq_word');
     INSERT INTO word VALUES (return_word_id, lookup_token, null, lookup_class, lookup_type, null, 0);
   END IF;
-  RETURN return_word_id;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION getorcreate_tagpair(lookup_class text, lookup_type text)
-  RETURNS INTEGER
-  AS $$
-DECLARE
-  lookup_token TEXT;
-  return_word_id INTEGER;
-BEGIN
-  lookup_token := lookup_class||'='||lookup_type;
-  SELECT min(word_id) FROM word WHERE word_token = lookup_token into return_word_id;
-  IF return_word_id IS NULL THEN
-    return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, 0);
-  END IF;
-  RETURN return_word_id;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION get_tagpair(lookup_class text, lookup_type text)
-  RETURNS INTEGER
-  AS $$
-DECLARE
-  lookup_token TEXT;
-  return_word_id INTEGER;
-BEGIN
-  lookup_token := lookup_class||'='||lookup_type;
-  SELECT min(word_id) FROM word WHERE word_token = lookup_token into return_word_id;
   RETURN return_word_id;
 END;
 $$
@@ -620,7 +535,7 @@ BEGIN
       x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
     END LOOP;
 
-  ELSEIF rank_search < 26 THEN
+  ELSE
 
     diameter := 0.02;
     IF rank_address = 0 THEN
@@ -644,16 +559,6 @@ BEGIN
     secgeo := ST_Buffer(geometry, diameter);
     x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, ST_Centroid(geometry), secgeo);
 
-  ELSE
-
-    -- ~ 20meters
-    secgeo := ST_Buffer(geometry, 0.0002);
-    x := insertLocationAreaRoadNear(partition, place_id, country_code, keywords, rank_search, rank_address, true, ST_Centroid(geometry), secgeo);
-
-    -- ~ 100meters
-    secgeo := ST_Buffer(geometry, 0.001);
-    x := insertLocationAreaRoadFar(partition, place_id, country_code, keywords, rank_search, rank_address, true, ST_Centroid(geometry), secgeo);
-
   END IF;
 
   RETURN true;
@@ -661,91 +566,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_location(
-    partition INTEGER,
-    place_id BIGINT,
-    place_country_code varchar(2),
-    name hstore,
-    rank_search INTEGER,
-    rank_address INTEGER,
-    geometry GEOMETRY
-  ) 
-  RETURNS BOOLEAN
-  AS $$
-DECLARE
-  b BOOLEAN;
-BEGIN
-  b := deleteLocationArea(partition, place_id, rank_search);
---  result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
-  RETURN add_location(place_id, place_country_code, name, rank_search, rank_address, geometry);
-END;
-$$
-LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION search_name_add_words(parent_place_id BIGINT, to_add INTEGER[])
-  RETURNS BOOLEAN
-  AS $$
-DECLARE
-  childplace RECORD;
-BEGIN
-
-  IF #to_add = 0 THEN
-    RETURN true;
-  END IF;
-
-  -- this should just be an update, but it seems to do insane things to the index size (delete and insert doesn't)
-  FOR childplace IN select * from search_name,place_addressline 
-    where  address_place_id = parent_place_id
-      and search_name.place_id = place_addressline.place_id
-  LOOP
-    delete from search_name where place_id = childplace.place_id;
-    IF not (ARRAY[to_add] <@ childplace.nameaddress_vector) THEN
-      childplace.nameaddress_vector := childplace.nameaddress_vector || to_add;
-    END IF;
-    IF childplace.place_id = parent_place_id and not (ARRAY[to_add] <@ childplace.name_vector) THEN
-      childplace.name_vector := childplace.name_vector || to_add;
-    END IF;
-    insert into search_name (place_id, search_rank, address_rank, country_code, name_vector, nameaddress_vector, centroid) 
-      values (childplace.place_id, childplace.search_rank, childplace.address_rank, childplace.country_code, 
-        childplace.name_vector, childplace.nameaddress_vector, childplace.centroid);
-  END LOOP;
-
-  RETURN true;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION update_location_nameonly(partition INTEGER, OLD_place_id BIGINT, name hstore) RETURNS BOOLEAN
-  AS $$
-DECLARE
-  newkeywords INTEGER[];
-  addedkeywords INTEGER[];
-  removedkeywords INTEGER[];
-BEGIN
-
-  -- what has changed?
-  newkeywords := make_keywords(name);
-  select coalesce(newkeywords,'{}'::INTEGER[]) - coalesce(location_point.keywords,'{}'::INTEGER[]), 
-    coalesce(location_point.keywords,'{}'::INTEGER[]) - coalesce(newkeywords,'{}'::INTEGER[]) from location_point 
-    where place_id = OLD_place_id into addedkeywords, removedkeywords;
-
---  RAISE WARNING 'update_location_nameonly for %: new:% added:% removed:%', OLD_place_id, newkeywords, addedkeywords, removedkeywords;
-
-  IF #removedkeywords > 0 THEN
-    -- abort due to tokens removed
-    RETURN false;
-  END IF;
-  
-  IF #addedkeywords > 0 THEN
-    -- short circuit - no changes
-    RETURN true;
-  END IF;
-
-  UPDATE location_area set keywords = newkeywords where place_id = OLD_place_id;
-  RETURN search_name_add_words(OLD_place_id, addedkeywords);
-END;
-$$
-LANGUAGE plpgsql;
 
 -- find the parant road of an interpolation
 CREATE OR REPLACE FUNCTION get_interpolation_parent(wayid BIGINT, street TEXT, place TEXT,
@@ -964,27 +785,10 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- just block these
-  IF NEW.class in ('landuse','natural') and NEW.name is null THEN
---    RAISE WARNING 'empty landuse %',NEW.osm_id;
-    RETURN null;
-  END IF;
-
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     -- block all invalid geometary - just not worth the risk.  seg faults are causing serious problems.
     RAISE WARNING 'invalid geometry %',NEW.osm_id;
     RETURN NULL;
-
-    -- Dead code
-    IF NEW.osm_type = 'R' THEN
-      -- invalid multipolygons can crash postgis, don't even bother to try!
-      RETURN NULL;
-    END IF;
-    NEW.geometry := ST_buffer(NEW.geometry,0);
-    IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
-      RAISE WARNING 'Invalid geometary, rejecting: % %', NEW.osm_type, NEW.osm_id;
-      RETURN NULL;
-    END IF;
   END IF;
 
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
@@ -1158,19 +962,11 @@ BEGIN
     ELSEIF NEW.class = 'natural' and NEW.type = 'sea' THEN
       NEW.rank_search := 4;
       NEW.rank_address := NEW.rank_search;
-    ELSEIF NEW.class = 'natural' and NEW.type in ('coastline') THEN
-      RETURN NULL;
     -- any feature more than 5 square miles is probably worth indexing
     ELSEIF ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_Area(NEW.geometry) > 0.1 THEN
       NEW.rank_search := 22;
       NEW.rank_address := 0;
-    ELSEIF NEW.class = 'highway' AND NEW.name is NULL AND 
-           NEW.type in ('service','cycleway','path','footway','steps','bridleway','track','byway','motorway_link','primary_link','trunk_link','secondary_link','tertiary_link') THEN
---      RAISE WARNING 'unnamed minor feature %',NEW.osm_id;
-      RETURN NULL;
     ELSEIF NEW.class = 'railway' AND NEW.type in ('rail') THEN
-      RETURN NULL;
-    ELSEIF NEW.class = 'waterway' AND NEW.name is NULL THEN
       RETURN NULL;
     ELSEIF NEW.class = 'waterway' THEN
       IF NEW.osm_type = 'R' THEN
@@ -1279,11 +1075,6 @@ BEGIN
     USING NEW.place_id, ST_Centroid(NEW.geometry);
   END IF;
 
-
---  IF NEW.rank_search < 26 THEN
---    RAISE WARNING 'placex insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
---  END IF;
-
   RETURN NEW;
 
 END;
@@ -1325,8 +1116,6 @@ DECLARE
   location_parent GEOMETRY;
   location_isaddress BOOLEAN;
   location_keywords INTEGER[];
-
-  tagpairid INTEGER;
 
   default_language TEXT;
   name_vector INTEGER[];
@@ -1459,12 +1248,6 @@ BEGIN
     -- Initialise the name vector using our name
     name_vector := make_keywords(NEW.name);
     nameaddress_vector := '{}'::int[];
-
-    -- some tag combinations add a special id for search
-    tagpairid := get_tagpair(NEW.class,NEW.type);
-    IF tagpairid IS NOT NULL THEN
-      name_vector := name_vector + tagpairid;
-    END IF;
 
     FOR i IN 1..28 LOOP
       address_havelevel[i] := false;
@@ -1616,15 +1399,6 @@ BEGIN
       -- If we didn't find any road fallback to standard method
       IF NEW.parent_place_id IS NOT NULL THEN
 
-        -- Add the street to the address as zero distance to force to front of list
---        INSERT INTO place_addressline VALUES (NEW.place_id, NEW.parent_place_id, true, true, 0, 26);
-        address_havelevel[26] := true;
-
-        -- Import address details from parent, reclculating distance in process
---        INSERT INTO place_addressline select NEW.place_id, x.address_place_id, x.fromarea, x.isaddress, ST_distance(NEW.geometry, placex.geometry), placex.rank_address
---          from place_addressline as x join placex on (address_place_id = placex.place_id)
---          where x.place_id = NEW.parent_place_id and x.address_place_id != NEW.parent_place_id;
-
         -- Get the details of the parent road
         select * from search_name where place_id = NEW.parent_place_id INTO location;
         NEW.calculated_country_code := location.country_code;
@@ -1638,8 +1412,9 @@ BEGIN
         -- Merge address from parent
         nameaddress_vector := array_merge(nameaddress_vector, location.nameaddress_vector);
         nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
---return NEW;
-        -- Performance, it would be more acurate to do all the rest of the import process but it takes too long
+
+        -- Performance, it would be more acurate to do all the rest of the import
+        -- process but it takes too long
         -- Just be happy with inheriting from parent road only
 
         IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
@@ -2118,13 +1893,6 @@ BEGIN
     --DEBUG: RAISE WARNING '%', existingplacex;
   END IF;
 
-  -- Just block these - lots and pointless
-  IF NEW.class in ('landuse','natural') and NEW.name is null THEN
-    -- if the name tag was removed, older versions might still be lurking in the place table
-    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-    RETURN null;
-  END IF;
-
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, 
       now(), ST_IsValidReason(NEW.geometry), null, NEW.geometry);
@@ -2266,47 +2034,6 @@ BEGIN
 
   END IF;
 
-  -- Special case - if we are just adding extra words we hack them into the search_name table rather than reindexing
-  IF FALSE AND existingplacex.rank_search < 26
-     AND coalesce(existing.housenumber, '') = coalesce(NEW.housenumber, '')
-     AND coalesce(existing.street, '') = coalesce(NEW.street, '')
-     AND coalesce(existing.addr_place, '') = coalesce(NEW.addr_place, '')
-     AND coalesce(existing.isin, '') = coalesce(NEW.isin, '')
-     AND coalesce(existing.postcode, '') = coalesce(NEW.postcode, '')
-     AND coalesce(existing.country_code, '') = coalesce(NEW.country_code, '')
-     AND coalesce(existing.name::text, '') != coalesce(NEW.name::text, '') 
-     THEN
-
-    IF NOT update_location_nameonly(existingplacex.place_id, NEW.name) THEN
-
-      IF st_area(NEW.geometry) < 0.5 THEN
-        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
-          and placex.place_id = place_addressline.place_id and indexed_status = 0
-          and (rank_search < 28 or name is not null);
-      END IF;
-
-    END IF;
-  
-  ELSE
-
-    -- Anything else has changed - reindex the lot
-    IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
-        OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
-        OR coalesce(existing.street, '') != coalesce(NEW.street, '')
-        OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
-        OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
-        OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
-        OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '') THEN
-
-      -- performance, can't take the load of re-indexing a whole country / huge area
-      IF st_area(NEW.geometry) < 0.5 THEN
---        UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = existingplacex.place_id 
---          and placex.place_id = place_addressline.place_id and indexed_status = 0;
-      END IF;
-
-    END IF;
-
-  END IF;
 
   IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
      OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
@@ -2748,42 +2475,6 @@ BEGIN
     RETURN 'Other: '||rank;
   END IF;
   
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION get_word_suggestion(srcword TEXT) RETURNS TEXT
-  AS $$
-DECLARE
-  trigramtoken TEXT;
-  result TEXT;
-BEGIN
-
-  trigramtoken := regexp_replace(make_standard_name(srcword),E'([^0-9])\\1+',E'\\1','g');
-  SELECT word FROM word WHERE word_trigram like ' %' and word_trigram % trigramtoken ORDER BY similarity(word_trigram, trigramtoken) DESC, word limit 1 into result;
-
-  return result;
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION get_word_suggestions(srcword TEXT) RETURNS TEXT[]
-  AS $$
-DECLARE
-  trigramtoken TEXT;
-  result TEXT[];
-  r RECORD;
-BEGIN
-
-  trigramtoken := regexp_replace(make_standard_name(srcword),E'([^0-9])\\1+',E'\\1','g');
-
-  FOR r IN SELECT word,similarity(word_trigram, trigramtoken) as score FROM word 
-    WHERE word_trigram like ' %' and word_trigram % trigramtoken ORDER BY similarity(word_trigram, trigramtoken) DESC, word limit 4
-  LOOP
-    result[coalesce(array_upper(result,1)+1,1)] := r.word;
-  END LOOP;
-
-  return result;
 END;
 $$
 LANGUAGE plpgsql;

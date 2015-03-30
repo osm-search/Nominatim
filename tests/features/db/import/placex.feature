@@ -242,37 +242,6 @@ Feature: Import into placex
           | R22    | 12          | 0
           | R23    | 20          | 0
 
-    Scenario Outline: minor highways droped without name, included with
-        Given the scene roads-with-pois
-        And a wiped database
-        And the place ways
-          | osm_id | class    | type   | geometry
-          | 1      | highway  | <type> | :w-south
-        And the named place ways
-          | osm_id | class    | type   | geometry
-          | 2      | highway  | <type> | :w-north
-        When importing
-        Then table placex has no entry for W1
-        And table placex contains
-          | object | rank_search | rank_address
-          | W2     | <rank>      | <rank>
-          
-    Examples:
-          | type          | rank
-          | service       | 27
-          | cycleway      | 27
-          | path          | 27
-          | footway       | 27
-          | steps         | 27
-          | bridleway     | 27
-          | track         | 26
-          | byway         | 26
-          | motorway_link | 27
-          | primary_link  | 27
-          | trunk_link    | 27
-          | secondary_link| 27
-          | tertiary_link | 27
-
     Scenario: search and address ranks for highways correctly assigned
         Given the scene roads-with-pois
         And the place nodes
@@ -298,34 +267,18 @@ Feature: Import into placex
           | W6     | 26          | 26
 
     Scenario: rank and inclusion of landuses
-        Given the place nodes
-          | osm_id | class   | type       
-          | 1      | landuse | residential
         And the named place nodes
-          | osm_id | class   | type       
+          | osm_id | class   | type
           | 2      | landuse | residential
-        And the place ways
-          | osm_id | class   | type        | geometry
-          | 1      | landuse | residential | 0 0, 0 1
         And the named place ways
           | osm_id | class   | type        | geometry
           | 2      | landuse | residential | 1 1, 1 1.1
-        And the place areas
-          | osm_type | osm_id | class   | type        | geometry
-          | W        | 3      | landuse | residential | poly-area:0.1
-          | R        | 1      | landuse | residential | poly-area:0.01
-          | R        | 10     | landuse | residential | poly-area:0.5
         And the named place areas
           | osm_type | osm_id | class   | type        | geometry
           | W        | 4      | landuse | residential | poly-area:0.1
           | R        | 2      | landuse | residential | poly-area:0.05
           | R        | 3      | landuse | forrest     | poly-area:0.5
         When importing
-        Then table placex has no entry for N1
-        And table placex has no entry for W1
-        And table placex has no entry for W3
-        And table placex has no entry for R1
-        And table placex has no entry for R10
         And table placex contains
           | object | rank_search | rank_address
           | N2     | 30          | 30
@@ -335,42 +288,22 @@ Feature: Import into placex
           | R3     | 22          | 0
 
     Scenario: rank and inclusion of naturals
-       Given the place nodes
-          | osm_id | class   | type
-          | 1      | natural | peak
-          | 3      | natural | volcano
        And the named place nodes
           | osm_id | class   | type
           | 2      | natural | peak
           | 4      | natural | volcano
           | 5      | natural | foobar
-       And the place ways
-          | osm_id | class   | type           | geometry
-          | 1      | natural | mountain_range | 10 10,11 11
        And the named place ways
           | osm_id | class   | type           | geometry
           | 2      | natural | mountain_range | 12 12,11 11
           | 3      | natural | foobar         | 13 13,13.1 13
-          | 4      | natural | coastline      | 14 14,14.1 14
-       And the place areas
-          | osm_type | osm_id | class   | type           | geometry
-          | R        | 1      | natural | volcano        | poly-area:0.1
-          | R        | 2      | natural | volcano        | poly-area:1.0
        And the named place areas
           | osm_type | osm_id | class   | type           | geometry
           | R        | 3      | natural | volcano        | poly-area:0.1
           | R        | 4      | natural | foobar         | poly-area:0.5
           | R        | 5      | natural | sea            | poly-area:5.0
           | R        | 6      | natural | sea            | poly-area:0.01
-          | R        | 7      | natural | coastline      | poly-area:1.0
        When importing
-       Then table placex has no entry for N1
-       And table placex has no entry for N3
-       And table placex has no entry for W1
-       And table placex has no entry for R1
-       And table placex has no entry for R2
-       And table placex has no entry for R7
-       And table placex has no entry for W4
        And table placex contains
           | object | rank_search | rank_address
           | N2     | 18          | 0

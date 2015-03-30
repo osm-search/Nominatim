@@ -167,15 +167,6 @@ Feature: Import and search of names
           | name:fi | finnish
           | name:de | local
 
-    Scenario: Landuse without name are ignored
-        Given the place areas
-          | osm_type | osm_id | class    | type        | geometry
-          | R        | 1      | natural  | meadow      | (0 0, 1 0, 1 1, 0 1, 0 0)
-          | R        | 2      | landuse  | industrial  | (0 0, -1 0, -1 -1, 0 -1, 0 0)
-        When importing
-        Then table placex has no entry for R1
-        And table placex has no entry for R2
-
     Scenario: Landuse with name are found
         Given the place areas
           | osm_type | osm_id | class    | type        | name                | geometry

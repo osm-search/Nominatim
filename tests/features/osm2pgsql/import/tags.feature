@@ -201,9 +201,17 @@ Feature: Tag evaluation
       | natural  | meadow
       | highway  | traffic_signals
       | highway  | service
+      | highway  | cycleway
+      | highway  | path
       | highway  | footway
       | highway  | steps
+      | highway  | bridleway
+      | highway  | track
+      | highway  | byway
       | highway  | motorway_link
+      | highway  | primary_link
+      | highway  | trunk_link
+      | highway  | secondary_link
       | highway  | tertiary_link
       | railway  | rail
       | boundary | administrative

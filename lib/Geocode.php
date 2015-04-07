@@ -871,10 +871,10 @@
 
 				preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
 				$aSpecialTerms = array();
-				if (isset($aStructuredQuery['amenity']) && $aStructuredQuery['amenity'])
+				if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity'])
 				{
-					$aSpecialTermsRaw[] = array('['.$aStructuredQuery['amenity'].']', $aStructuredQuery['amenity']);
-					unset($aStructuredQuery['amenity']);
+					$aSpecialTermsRaw[] = array('['.$this->aStructuredQuery['amenity'].']', $this->aStructuredQuery['amenity']);
+					unset($this->aStructuredQuery['amenity']);
 				}
 				foreach($aSpecialTermsRaw as $aSpecialTerm)
 				{
@@ -972,8 +972,8 @@
 					foreach($aDatabaseWords as $aToken)
 					{
 						// Very special case - require 2 letter country param to match the country code found
-						if ($bStructuredPhrases && $aToken['country_code'] && !empty($aStructuredQuery['country'])
-								&& strlen($aStructuredQuery['country']) == 2 && strtolower($aStructuredQuery['country']) != $aToken['country_code'])
+						if ($bStructuredPhrases && $aToken['country_code'] && !empty($this->aStructuredQuery['country'])
+								&& strlen($this->aStructuredQuery['country']) == 2 && strtolower($this->aStructuredQuery['country']) != $aToken['country_code'])
 						{
 							continue;
 						}
@@ -1097,7 +1097,7 @@
 
 				if (CONST_Debug) var_Dump($aGroupedSearches);
 
-				if (CONST_Search_TryDroppedAddressTerms && sizeof($aStructuredQuery) > 0)
+				if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0)
 				{
 					$aCopyGroupedSearches = $aGroupedSearches;
 					foreach($aCopyGroupedSearches as $iGroup => $aSearches)

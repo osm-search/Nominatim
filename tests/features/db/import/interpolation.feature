@@ -422,3 +422,20 @@ Feature: Import of address interpolations
           | 4            | 144.963016723312,-37.7629464422819+-0.000005
           | 8            | 144.9631440856,-37.762223694978+-0.000005
 
+    Scenario: Place with missing address information
+        Given the place nodes
+          | osm_id | class   | type   | housenumber | geometry
+          | 1      | place   | house  | 23          | 0.0001 0.0001
+          | 2      | amenity | school |             | 0.0001 0.0002
+          | 3      | place   | house  | 29          | 0.0001 0.0004
+        And the place ways
+          | osm_id | class | type   | housenumber | geometry
+          | 1      | place | houses | odd         | 0.0001 0.0001,0.0001 0.0002,0.0001 0.0004
+        And the ways
+          | id | nodes
+          | 1  | 1,2,3
+        When importing
+        Then way 1 expands to housenumbers
+          | housenumber | centroid
+          | 25          | 0.0001,0.0002
+          | 27          | 0.0001,0.0003

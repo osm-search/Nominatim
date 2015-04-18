@@ -95,6 +95,9 @@ def _format_placex_cols(cols, geomtype, force_name):
         else:
             coords = "'%s'::geometry" % coords.wkt
         cols['geometry'] = coords
+    for k in cols:
+        if not cols[k]:
+            cols[k] = None
 
 
 def _insert_place_table_nodes(places, force_name):

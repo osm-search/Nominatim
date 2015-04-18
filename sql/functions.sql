@@ -689,7 +689,7 @@ BEGIN
     -- one with the smallest id because the original node was created first.
     -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
     select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
-                               and indexed_status < 100
+                               and indexed_status < 100 and housenumber is not NULL
                          order by (type = 'address'),place_id limit 1 INTO nextnode;
     IF nextnode.place_id IS NOT NULL THEN
 

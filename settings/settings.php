@@ -10,8 +10,8 @@
 	@define('CONST_Limit_Reindexing', true);
 
 	// Software versions
-	@define('CONST_Postgresql_Version', '9.1'); // values: 9.0, 9.1, 9.2
-	@define('CONST_Postgis_Version', '1.5'); // values: 1.5, 2.0
+	@define('CONST_Postgresql_Version', '9.3'); // values: 9.0, ... , 9.4
+	@define('CONST_Postgis_Version', '2.1'); // values: 1.5, 2.0, 2.1
 
 	// Paths
 	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');

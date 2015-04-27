@@ -44,6 +44,8 @@
 		$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
 		$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
 		$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
+		$fThreshold = 0.0;
+		if (isset($_GET['polygon_threshold'])) $fThreshold = (float)$_GET['polygon_threshold'];
 		if ( ( ($bAsGeoJSON?1:0)
 		     + ($bAsKML?1:0)
 		     + ($bAsSVG?1:0)
@@ -66,6 +68,7 @@
 		$oGeocode->setIncludePolygonAsGeoJSON($bAsGeoJSON);
 		$oGeocode->setIncludePolygonAsKML($bAsKML);
 		$oGeocode->setIncludePolygonAsSVG($bAsSVG);
+		$oGeocode->setPolygonSimplificationThreshold($fThreshold);
 	}
 
 	$oGeocode->loadParamArray($_GET);

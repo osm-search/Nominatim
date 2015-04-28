@@ -62,7 +62,7 @@
 			{
 				$sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " 'us' as country_code, null as extratags, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
-				$sSQL .= " coalesce(0,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, 'us' as calculated_country_code, ";
+				$sSQL .= " coalesce(null,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, 'us' as calculated_country_code, ";
 				$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= " null as placename,";
 				$sSQL .= " null as ref,";

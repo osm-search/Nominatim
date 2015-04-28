@@ -74,3 +74,9 @@ Feature: Search queries
         Then results contain
           | ID | display_name
           | 0  | Illinois.*
+
+    Scenario: Search with class-type feature
+        When sending jsonv2 search query "Hotel California"
+        Then results contain
+          | place_rank
+          | 30

@@ -578,18 +578,6 @@
 											else $aSearch['sOperator'] = 'near'; // near = in for the moment
 											if (strlen($aSearchTerm['operator']) == 0) $aSearch['iSearchRank'] += 1;
 
-											// Do we have a shortcut id?
-											if ($aSearch['sOperator'] == 'name')
-											{
-												$sSQL = "select get_tagpair('".$aSearch['sClass']."', '".$aSearch['sType']."')";
-												if ($iAmenityID = $this->oDB->getOne($sSQL))
-												{
-													$aValidTokens[$aSearch['sClass'].':'.$aSearch['sType']] = array('word_id' => $iAmenityID);
-													$aSearch['aName'][$iAmenityID] = $iAmenityID;
-													$aSearch['sClass'] = '';
-													$aSearch['sType'] = '';
-												}
-											}
 											if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 										}
 									}
@@ -768,7 +756,6 @@
 			if (!$this->sQuery && !$this->aStructuredQuery) return false;
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
-
 			$sCountryCodesSQL = false;
 			if ($this->aCountryCodes && sizeof($this->aCountryCodes))
 			{

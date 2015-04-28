@@ -75,6 +75,8 @@
 			$iPlaceID = null;
 			$aArea = false;
 			$fMaxAreaDistance = 1;
+			$bIsInUnitedStates = false;
+			$bPlaceIsTiger = false;
 			while(!$iPlaceID && $fSearchDiam < $fMaxAreaDistance)
 			{
 				$fSearchDiam = $fSearchDiam * 2;
@@ -90,7 +92,7 @@
 				if ($fSearchDiam > 0.008 && $iMaxRank > 22) $iMaxRank = 22;
 				if ($fSearchDiam > 0.001 && $iMaxRank > 26) $iMaxRank = 26;
 
-				$sSQL = 'select place_id,parent_place_id,rank_search from placex';
+				$sSQL = 'select place_id,parent_place_id,rank_search,calculated_country_code from placex';
 				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
 				$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
 				$sSQL .= ' and (name is not null or housenumber is not null)';
@@ -107,12 +109,53 @@
 				}
 				$iPlaceID = $aPlace['place_id'];
 				$iParentPlaceID = $aPlace['parent_place_id'];
+				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
+			}
+
+
+			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
+			if ($bIsInUnitedStates && $iPlaceID && $aPlace['rank_search'] == 26) 
+			{
+				$fSearchDiam = 0.001;
+				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search ';
+				if (CONST_Debug) { $sSQL .= ', housenumber, ST_distance('.$sPointSQL.', centroid) as distance, st_y(centroid) as lat, st_x(centroid) as lon'; }
+				$sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$iPlaceID;
+				$sSQL .= ' AND ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.')';
+				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', centroid) ASC limit 1';
+
+
+				// print all house numbers in the parent (street)
+				if (CONST_Debug)
+				{
+					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
+					var_dump($sSQL);
+
+					$aAllHouses = $this->oDB->getAll($sSQL);
+					foreach($aAllHouses as $i)
+					{
+						echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
+					}
+				}
+
+				$aPlaceTiger = $this->oDB->getRow($sSQL);
+				if (PEAR::IsError($aPlace))
+				{
+					failInternalError("Could not determine closest Tiger place.", $sSQL, $aPlaceTiger);
+				}
+				if ($aPlaceTiger)
+				{
+					if (CONST_Debug) var_dump('found Tiger place', $aPlaceTiger);
+					$bPlaceIsTiger = true;
+					$aPlace = $aPlaceTiger;
+					$iPlaceID = $aPlaceTiger['place_id'];
+					$iParentPlaceID = $aPlaceTiger['parent_place_id']; // the street
+				}
 			}
 
 			// The point we found might be too small - use the address to find what it is a child of
 			if ($iPlaceID && $iMaxRank < 28)
 			{
-				if ($aPlace['rank_search'] > 28 && $iParentPlaceID)
+				if ($aPlace['rank_search'] > 28 && $iParentPlaceID && !$bPlaceIsTiger)
 				{
 					$iPlaceID = $iParentPlaceID;
 				}
@@ -132,6 +175,7 @@
 			$oPlaceLookup->setLanguagePreference($this->aLangPrefOrder);
 			$oPlaceLookup->setIncludeAddressDetails($this->bAddressDetails);
 			$oPlaceLookup->setPlaceId($iPlaceID);
+			$oPlaceLookup->setIsTiger($bPlaceIsTiger);
 
 			return $oPlaceLookup->lookup();
 		}

@@ -11,3 +11,23 @@ Feature: Reverse geocoding
          | ID | country
          | 0  | Deutschland
 
+    @Tiger
+    Scenario: TIGER house number
+        Given the request parameters
+          | addressdetails
+          | 1
+        When looking up jsonv2 coordinates 40.6863624710666,-112.060005720023
+        # Then exactly 1 result is returned
+        # Then result addresses contain
+        # | ID | house_number | road               | postcode | country_code
+        # | 0  | 7094         | Kings Estate Drive | 84128    | us
+        Then results contain
+          | type | house
+        And results contain
+          | addresstype | place
+        And results contain
+          | road | Kings Estate Drive
+        And results contain
+          | house_number | 7094
+        And results contain
+          | postcode | 84128

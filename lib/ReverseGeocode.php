@@ -69,6 +69,7 @@
 		{
 			$sPointSQL = 'ST_SetSRID(ST_Point('.$this->fLon.','.$this->fLat.'),4326)';
 			$iMaxRank = $this->iMaxRank;
+			$iMaxRank_orig = $this->iMaxRank;
 
 			// Find the nearest point
 			$fSearchDiam = 0.0004;
@@ -112,9 +113,8 @@
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
 			}
 
-
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if ($bIsInUnitedStates && $iPlaceID && $aPlace['rank_search'] == 26) 
+			if ($bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 )) 
 			{
 				$fSearchDiam = 0.001;
 				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search ';

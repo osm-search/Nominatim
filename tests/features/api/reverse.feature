@@ -11,3 +11,15 @@ Feature: Reverse geocoding
          | ID | country
          | 0  | Deutschland
 
+    @Tiger
+    Scenario: TIGER house number
+        Given the request parameters
+          | addressdetails
+          | 1
+        When looking up coordinates 40.6863624710666,-112.060005720023
+        And exactly 1 result is returned
+        And result addresses contain
+          | ID | house_number | road               | postcode | country_code
+          | 0  | 7094         | Kings Estate Drive | 84128    | us
+        And result 0 has not attributes osm_id,osm_type
+

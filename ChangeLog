@@ -1,3 +1,6 @@
+ * reverse geocoding looking includes looking up Tiger data
+
+
 2.4
 
  * drop support for postgres 8.4

@@ -170,3 +170,35 @@ Feature: Search queries
         Then results contain
           | ID | display_name
           | 0  | Everest.*
+
+    Scenario Outline: Search with polygon threshold (json)
+        Given the request parameters
+          | polygon_geojson | polygon_threshold
+          | 1               | <th>
+        When sending json search query "switzerland"
+        Then at least 1 result is returned
+        And result 0 has attributes geojson
+
+     Examples:
+        | th
+        | -1
+        | 0.0
+        | 0.5
+        | 999
+        | nan
+
+    Scenario Outline: Search with polygon threshold (xml)
+        Given the request parameters
+          | polygon_geojson | polygon_threshold
+          | 1               | <th>
+        When sending xml search query "switzerland"
+        Then at least 1 result is returned
+        And result 0 has attributes geojson
+
+     Examples:
+        | th
+        | -1
+        | 0.0
+        | 0.5
+        | 999
+        | nan

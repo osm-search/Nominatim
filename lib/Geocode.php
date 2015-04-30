@@ -12,6 +12,7 @@
 		protected $bIncludePolygonAsGeoJSON = false;
 		protected $bIncludePolygonAsKML = false;
 		protected $bIncludePolygonAsSVG = false;
+		protected $fPolygonSimplificationThreshold = 0.0;
 
 		protected $aExcludePlaceIDs = array();
 		protected $bDeDupe = true;
@@ -100,6 +101,11 @@
 		function setIncludePolygonAsSVG($b = true)
 		{
 			$this->bIncludePolygonAsSVG = $b;
+		}
+
+		function setPolygonSimplificationThreshold($f)
+		{
+			$this->fPolygonSimplificationThreshold = $f;
 		}
 
 		function setDeDupe($bDeDupe = true)
@@ -1599,7 +1605,16 @@
 					if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
 					if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
 					if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
-					$sSQL .= " from placex where place_id = ".$aResult['place_id'];
+					$sFrom = " from placex where place_id = ".$aResult['place_id'];
+					if ($this->fPolygonSimplificationThreshold > 0)
+					{
+						$sSQL .= " from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,".$this->fPolygonSimplificationThreshold.") as geometry".$sFrom.") as plx";
+					}
+					else
+					{
+						$sSQL .= $sFrom;
+					}
+
 					$aPointPolygon = $this->oDB->getRow($sSQL);
 					if (PEAR::IsError($aPointPolygon))
 					{

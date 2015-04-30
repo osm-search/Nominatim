@@ -68,6 +68,11 @@
 		$oGeocode->setIncludePolygonAsSVG($bAsSVG);
 	}
 
+	// Polygon simplification threshold (optional)
+	$fThreshold = 0.0;
+	if (isset($_GET['polygon_threshold'])) $fThreshold = (float)$_GET['polygon_threshold'];
+	$oGeocode->setPolygonSimplificationThreshold($fThreshold);
+
 	$oGeocode->loadParamArray($_GET);
 
 	if (CONST_Search_BatchMode && isset($_GET['batch']))

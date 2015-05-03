@@ -484,7 +484,7 @@
 			$aDBInstances[$i] =& getDB(true);
 		}
 
-		foreach(glob(CONST_BasePath.'/data/tiger2011/*.sql') as $sFile)
+		foreach(glob(CONST_BasePath.'/data/tiger2014/*.sql') as $sFile)
 		{
 			echo $sFile.': ';
 			$hFile = fopen($sFile, "r");

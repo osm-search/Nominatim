@@ -2241,9 +2241,11 @@ BEGIN
   END IF;
 
   IF for_place_id IS NULL THEN
-    for_place_id := in_place_id;
-    select calculated_country_code, housenumber, rank_search, postcode, null from placex where place_id = for_place_id 
-      INTO searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+    select coalesce(linked_place_id, place_id),  calculated_country_code,
+           housenumber, rank_search, postcode, null
+      from placex where place_id = in_place_id
+      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+      RAISE WARNING '% fffff %', in_place_id, for_place_id;
   END IF;
 
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;

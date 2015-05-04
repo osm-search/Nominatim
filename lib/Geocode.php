@@ -1778,11 +1778,11 @@
 				if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
 					&& $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
 				{
-					$aResult['foundorder'] = $aResult['foundorder'] + 0.000001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+					$aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
 				}
 				else
 				{
-					$aResult['foundorder'] = $aResult['foundorder'] + 0.001;
+					$aResult['foundorder'] += 0.01;
 				}
 				$aSearchResults[$iResNum] = $aResult;
 			}

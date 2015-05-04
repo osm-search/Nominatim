@@ -438,7 +438,6 @@
  'tourism:hotel' => array('label'=>'Hotel','frequency'=>2150,'icon'=>'accommodation_hotel2',),
  'tourism:motel' => array('label'=>'Motel','frequency'=>43,'icon'=>'',),
  'amenity:cinema' => array('label'=>'Cinema','frequency'=>277,'icon'=>'tourist_cinema',),
- 'tourism:information' => array('label'=>'Information','frequency'=>224,'icon'=>'amenity_information',),
  'tourism:artwork' => array('label'=>'Artwork','frequency'=>171,'icon'=>'tourist_art_gallery2',),
  'historic:archaeological_site' => array('label'=>'Archaeological Site','frequency'=>407,'icon'=>'tourist_archaeological2',),
  'amenity:doctors' => array('label'=>'Doctors','frequency'=>581,'icon'=>'health_doctors',),
@@ -512,6 +511,7 @@
  'shop:travel_agency' => array('label'=>'Travel Agency','frequency'=>21,'icon'=>'',),
  'shop:hifi' => array('label'=>'Hifi','frequency'=>21,'icon'=>'',),
  'amenity:shop' => array('label'=>'Shop','frequency'=>61,'icon'=>'',),
+ 'tourism:information' => array('label'=>'Information','frequency'=>224,'icon'=>'amenity_information',),
 
  'place:house' => array('label'=>'House','frequency'=>2086,'icon'=>'','defzoom'=>18,),
  'place:house_name' => array('label'=>'House','frequency'=>2086,'icon'=>'','defzoom'=>18,),

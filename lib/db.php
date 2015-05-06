@@ -14,6 +14,8 @@
 		$oDB->setFetchMode(DB_FETCHMODE_ASSOC);
 		$oDB->query("SET DateStyle TO 'sql,european'");
 		$oDB->query("SET client_encoding TO 'utf-8'");
+		$iMaxExecution = ini_get('max_execution_time') * 1000;
+		if ($iMaxExecution > 0) $oDB->query("SET statement_timeout TO $iMaxExecution");
 		return $oDB;
 	}
 

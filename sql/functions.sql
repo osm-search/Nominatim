@@ -2245,7 +2245,6 @@ BEGIN
            housenumber, rank_search, postcode, null
       from placex where place_id = in_place_id
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
-      RAISE WARNING '% fffff %', in_place_id, for_place_id;
   END IF;
 
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;

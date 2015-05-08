@@ -1403,6 +1403,26 @@ BEGIN
         select * from search_name where place_id = NEW.parent_place_id INTO location;
         NEW.calculated_country_code := location.country_code;
 
+        -- Merge the postcode into the parent's address if necessary XXXX
+        IF NEW.postcode IS NOT NULL THEN
+          isin_tokens := '{}'::int[];
+          address_street_word_id := getorcreate_word_id(make_standard_name(NEW.postcode));
+          IF address_street_word_id is not null
+             and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
+             isin_tokens := isin_tokens || address_street_word_id;
+          END IF;
+          address_street_word_id := getorcreate_name_id(make_standard_name(NEW.postcode));
+          IF address_street_word_id is not null
+             and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
+             isin_tokens := isin_tokens || address_street_word_id;
+          END IF;
+          IF isin_tokens != '{}'::int[] THEN
+             UPDATE search_name
+                SET nameaddress_vector = search_name.nameaddress_vector || isin_tokens
+              WHERE place_id = NEW.parent_place_id;
+          END IF;
+        END IF;
+
 --RAISE WARNING '%', NEW.name;
         -- If there is no name it isn't searchable, don't bother to create a search record
         IF NEW.name is NULL THEN

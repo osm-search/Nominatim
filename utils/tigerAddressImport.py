@@ -3433,7 +3433,7 @@ def fipsstate(fips,countyfp):
         return tags
 
     if fips not in fipscodes:
-        raise KeyError, 'missing FIPS code', fips
+        raise KeyError('missing FIPS code', fips)
 
     state, statecode, isocode = fipscodes[fips]
     county_fips_code = fips + "" + countyfp
@@ -3478,69 +3478,69 @@ def parse_shp_for_osm( filename ):
         # WAY ID
         tags[iSource + ":way_id"] = int( poFeature.GetField("TLID") )
         
-	# FEATURE IDENTIFICATION
+        # FEATURE IDENTIFICATION
         mtfcc = poFeature.GetField("MTFCC");
         if mtfcc != None:
 
-	    if mtfcc == "L4010":	#Pipeline
-		tags["man_made"] = "pipeline"
-	    if mtfcc == "L4020":	#Powerline
-		tags["power"] = "line"
-	    if mtfcc == "L4031":	#Aerial Tramway/Ski Lift
-		tags["aerialway"] = "cable_car"
-	    if mtfcc == "L4110":	#Fence Line
-		tags["barrier"] = "fence"
-	    if mtfcc == "L4125":	#Cliff/Escarpment
-		tags["natural"] = "cliff"
-	    if mtfcc == "L4165":	#Ferry Crossing
-		tags["route"] = "ferry"
-	    if mtfcc == "R1011":	#Railroad Feature (Main, Spur, or Yard)
-		tags["railway"] = "rail"
-		ttyp = poFeature.GetField("TTYP")
-		if ttyp != None:
-		    if ttyp == "S":
-		        tags["service"] = "spur"
-		    if ttyp == "Y":
-		        tags["service"] = "yard"
-	            tags["tiger:ttyp"] = ttyp
-	    if mtfcc == "R1051":	#Carline, Streetcar Track, Monorail, Other Mass Transit Rail)
-		tags["railway"] = "light_rail"
-	    if mtfcc == "R1052":	#Cog Rail Line, Incline Rail Line, Tram
-		tags["railway"] = "incline"
-	    if mtfcc == "S1100":
-		tags["highway"] = "primary"
-	    if mtfcc == "S1200":
-		tags["highway"] = "secondary"
-	    if mtfcc == "S1400":
-		tags["highway"] = "residential"
-	    if mtfcc == "S1500":
-		tags["highway"] = "track"
-	    if mtfcc == "S1630":	#Ramp
-		tags["highway"] = "motorway_link"
-	    if mtfcc == "S1640":	#Service Drive usually along a limited access highway
-		tags["highway"] = "service"
-	    if mtfcc == "S1710":	#Walkway/Pedestrian Trail
-		tags["highway"] = "path"
-	    if mtfcc == "S1720":
-		tags["highway"] = "steps"
-	    if mtfcc == "S1730":	#Alley
-		tags["highway"] = "service"
-		tags["service"] = "alley"
-	    if mtfcc == "S1740":	#Private Road for service vehicles (logging, oil, fields, ranches, etc.)
-		tags["highway"] = "service"
-		tags["access"] = "private"
-	    if mtfcc == "S1750":	#Private Driveway
-		tags["highway"] = "service"
-		tags["access"] = "private"
-		tags["service"] = "driveway"
-	    if mtfcc == "S1780":	#Parking Lot Road
-		tags["highway"] = "service"
-		tags["service"] = "parking_aisle"
-	    if mtfcc == "S1820":	#Bike Path or Trail
-		tags["highway"] = "cycleway"
-	    if mtfcc == "S1830":	#Bridle Path
-		tags["highway"] = "bridleway"
-	    tags["tiger:mtfcc"] = mtfcc
+            if mtfcc == "L4010":        #Pipeline
+                tags["man_made"] = "pipeline"
+            if mtfcc == "L4020":        #Powerline
+                tags["power"] = "line"
+            if mtfcc == "L4031":        #Aerial Tramway/Ski Lift
+                tags["aerialway"] = "cable_car"
+            if mtfcc == "L4110":        #Fence Line
+                tags["barrier"] = "fence"
+            if mtfcc == "L4125":        #Cliff/Escarpment
+                tags["natural"] = "cliff"
+            if mtfcc == "L4165":        #Ferry Crossing
+                tags["route"] = "ferry"
+            if mtfcc == "R1011":        #Railroad Feature (Main, Spur, or Yard)
+                tags["railway"] = "rail"
+                ttyp = poFeature.GetField("TTYP")
+                if ttyp != None:
+                    if ttyp == "S":
+                        tags["service"] = "spur"
+                    if ttyp == "Y":
+                        tags["service"] = "yard"
+                    tags["tiger:ttyp"] = ttyp
+            if mtfcc == "R1051":        #Carline, Streetcar Track, Monorail, Other Mass Transit Rail)
+                tags["railway"] = "light_rail"
+            if mtfcc == "R1052":        #Cog Rail Line, Incline Rail Line, Tram
+                tags["railway"] = "incline"
+            if mtfcc == "S1100":
+                tags["highway"] = "primary"
+            if mtfcc == "S1200":
+                tags["highway"] = "secondary"
+            if mtfcc == "S1400":
+                tags["highway"] = "residential"
+            if mtfcc == "S1500":
+                tags["highway"] = "track"
+            if mtfcc == "S1630":        #Ramp
+                tags["highway"] = "motorway_link"
+            if mtfcc == "S1640":        #Service Drive usually along a limited access highway
+                tags["highway"] = "service"
+            if mtfcc == "S1710":        #Walkway/Pedestrian Trail
+                tags["highway"] = "path"
+            if mtfcc == "S1720":
+                tags["highway"] = "steps"
+            if mtfcc == "S1730":        #Alley
+                tags["highway"] = "service"
+                tags["service"] = "alley"
+            if mtfcc == "S1740":        #Private Road for service vehicles (logging, oil, fields, ranches, etc.)
+                tags["highway"] = "service"
+                tags["access"] = "private"
+            if mtfcc == "S1750":        #Private Driveway
+                tags["highway"] = "service"
+                tags["access"] = "private"
+                tags["service"] = "driveway"
+            if mtfcc == "S1780":        #Parking Lot Road
+                tags["highway"] = "service"
+                tags["service"] = "parking_aisle"
+            if mtfcc == "S1820":        #Bike Path or Trail
+                tags["highway"] = "cycleway"
+            if mtfcc == "S1830":        #Bridle Path
+                tags["highway"] = "bridleway"
+            tags["tiger:mtfcc"] = mtfcc
 
         # FEATURE NAME
         if poFeature.GetField("FULLNAME"):
@@ -3548,20 +3548,20 @@ def parse_shp_for_osm( filename ):
             name = poFeature.GetField( "FULLNAME" )
             tags["name"] = name
 
-	    #Attempt to guess highway grade
-	    if name[0:2] == "I-":
-		tags["highway"] = "motorway"
-	    if name[0:3] == "US ":
-		tags["highway"] = "primary"
-	    if name[0:3] == "US-":
-		tags["highway"] = "primary"
-	    if name[0:3] == "Hwy":
-		if tags["highway"] != "primary":
-		    tags["highway"] = "secondary"
+            #Attempt to guess highway grade
+            if name[0:2] == "I-":
+                tags["highway"] = "motorway"
+            if name[0:3] == "US ":
+                tags["highway"] = "primary"
+            if name[0:3] == "US-":
+                tags["highway"] = "primary"
+            if name[0:3] == "Hwy":
+                if tags["highway"] != "primary":
+                    tags["highway"] = "secondary"
 
         divroad = poFeature.GetField("DIVROAD")
         if divroad != None:
-	    if divroad == "Y" and "highway" in tags and tags["highway"] == "residential":
+            if divroad == "Y" and "highway" in tags and tags["highway"] == "residential":
                 tags["highway"] = "tertiary"
             tags["tiger:separated"] = divroad
 
@@ -3618,10 +3618,10 @@ def parse_shp_for_osm( filename ):
 # ====================================
 projcs_wkt = \
 """GEOGCS["GCS_North_American_1983",
-	DATUM["D_North_American_1983",
-	SPHEROID["GRS_1980",6378137,298.257222101]],
-	PRIMEM["Greenwich",0],
-	UNIT["Degree",0.017453292519943295]]"""
+        DATUM["D_North_American_1983",
+        SPHEROID["GRS_1980",6378137,298.257222101]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]]"""
 
 from_proj = osr.SpatialReference()
 from_proj.ImportFromWkt( projcs_wkt )
@@ -3642,12 +3642,12 @@ def length(segment, nodelist):
         pointid, (lat, lon) = nodelist[ round_point( point ) ]
         if first:
             first = False
-	else:
-	    #The approximate number of feet in one degree of longitute
+        else:
+            #The approximate number of feet in one degree of longitute
             lrad = math.radians(lat)
             lon_feet = 365527.822 * math.cos(lrad) - 306.75853 * math.cos(3 * lrad) + 0.3937 * math.cos(5 * lrad)
-	    distance += math.sqrt(((lat - previous[0])*lat_feet)**2 + ((lon - previous[1])*lon_feet)**2)
-	previous = (lat, lon)
+            distance += math.sqrt(((lat - previous[0])*lat_feet)**2 + ((lon - previous[1])*lon_feet)**2)
+        previous = (lat, lon)
     return distance
 
 def addressways(waylist, nodelist, first_id):
@@ -3657,7 +3657,7 @@ def addressways(waylist, nodelist, first_id):
     distance = float(address_distance)
     ret = []
 
-    for waykey, segments in waylist.iteritems():
+    for waykey, segments in waylist.items():
         waykey = dict(waykey)
         rsegments = []
         lsegments = []
@@ -3666,11 +3666,11 @@ def addressways(waylist, nodelist, first_id):
             rsegment = []
             lastpoint = None
 
-	    #Don't pull back the ends of very short ways too much
-	    seglength = length(segment, nodelist)
-	    if seglength < float(address_pullback) * 3.0:
-		pullback = seglength / 3.0
-	    else:
+            #Don't pull back the ends of very short ways too much
+            seglength = length(segment, nodelist)
+            if seglength < float(address_pullback) * 3.0:
+                pullback = seglength / 3.0
+            else:
                 pullback = float(address_pullback)
             if "tiger:lfromadd" in waykey:
                 lfromadd = waykey["tiger:lfromadd"]
@@ -3687,88 +3687,88 @@ def addressways(waylist, nodelist, first_id):
             if "tiger:rtoadd" in waykey:
                 rtoadd = waykey["tiger:rtoadd"]
             else:
-		rtoadd = None
+                rtoadd = None
             if rfromadd != None and rtoadd != None:
                 right = True
-	    else:
-		right = False
+            else:
+                right = False
             if lfromadd != None and ltoadd != None:
                 left = True
-	    else:
-		left = False
+            else:
+                left = False
             if left or right:
-		first = True
+                first = True
                 firstpointid, firstpoint = nodelist[ round_point( segment[0] ) ]
 
                 finalpointid, finalpoint = nodelist[ round_point( segment[len(segment) - 1] ) ]
                 for point in segment:
                     pointid, (lat, lon) = nodelist[ round_point( point ) ]
 
-		    #The approximate number of feet in one degree of longitute
+                    #The approximate number of feet in one degree of longitute
                     lrad = math.radians(lat)
                     lon_feet = 365527.822 * math.cos(lrad) - 306.75853 * math.cos(3 * lrad) + 0.3937 * math.cos(5 * lrad)
 
 #Calculate the points of the offset ways
                     if lastpoint != None:
-		        #Skip points too close to start
-			if math.sqrt((lat * lat_feet - firstpoint[0] * lat_feet)**2 + (lon * lon_feet - firstpoint[1] * lon_feet)**2) < pullback:
-			    #Preserve very short ways (but will be rendered backwards)
-			    if pointid != finalpointid:
-			        continue
-		        #Skip points too close to end
-			if math.sqrt((lat * lat_feet - finalpoint[0] * lat_feet)**2 + (lon * lon_feet - finalpoint[1] * lon_feet)**2) < pullback:
-			    #Preserve very short ways (but will be rendered backwards)
-			    if (pointid != firstpointid) and (pointid != finalpointid):
-			        continue
+                        #Skip points too close to start
+                        if math.sqrt((lat * lat_feet - firstpoint[0] * lat_feet)**2 + (lon * lon_feet - firstpoint[1] * lon_feet)**2) < pullback:
+                            #Preserve very short ways (but will be rendered backwards)
+                            if pointid != finalpointid:
+                                continue
+                        #Skip points too close to end
+                        if math.sqrt((lat * lat_feet - finalpoint[0] * lat_feet)**2 + (lon * lon_feet - finalpoint[1] * lon_feet)**2) < pullback:
+                            #Preserve very short ways (but will be rendered backwards)
+                            if (pointid != firstpointid) and (pointid != finalpointid):
+                                continue
 
                         X = (lon - lastpoint[1]) * lon_feet
-		        Y = (lat - lastpoint[0]) * lat_feet
+                        Y = (lat - lastpoint[0]) * lat_feet
                         if Y != 0:
-		            theta = math.pi/2 - math.atan( X / Y)
-		            Xp = math.sin(theta) * distance
-		            Yp = math.cos(theta) * distance
+                            theta = math.pi/2 - math.atan( X / Y)
+                            Xp = math.sin(theta) * distance
+                            Yp = math.cos(theta) * distance
                         else:
                             Xp = 0
-			    if X > 0:
+                            if X > 0:
                                 Yp = -distance
-			    else:
+                            else:
                                 Yp = distance
 
-			if Y > 0:
-			    Xp = -Xp
-			else:
-			    Yp = -Yp
-				
-			if first:
-			    first = False
-			    dX =  - (Yp * (pullback / distance)) / lon_feet #Pull back the first point
-			    dY = (Xp * (pullback / distance)) / lat_feet
-			    if left:
+                        if Y > 0:
+                            Xp = -Xp
+                        else:
+                            Yp = -Yp
+                                
+                        if first:
+                            first = False
+                            dX =  - (Yp * (pullback / distance)) / lon_feet #Pull back the first point
+                            dY = (Xp * (pullback / distance)) / lat_feet
+                            if left:
                                 lpoint = (lastpoint[0] + (Yp / lat_feet) - dY, lastpoint[1] + (Xp / lon_feet) - dX)
                                 lsegment.append( (id, lpoint) )
-			        id += 1
-			    if right:
+                                id += 1
+                            if right:
                                 rpoint = (lastpoint[0] - (Yp / lat_feet) - dY, lastpoint[1] - (Xp / lon_feet) - dX)
                                 rsegment.append( (id, rpoint) )
-			        id += 1
+                                id += 1
 
-			else:
-			    #round the curves
-			    if delta[1] != 0:
-			        theta = abs(math.atan(delta[0] / delta[1]))
-			    else:
-				theta = math.pi / 2
-			    if Xp != 0:
-				theta = theta - abs(math.atan(Yp / Xp))
-			    else: theta = theta - math.pi / 2
-			    r = 1 + abs(math.tan(theta/2))
-			    if left:
-				lpoint = (lastpoint[0] + (Yp + delta[0]) * r / (lat_feet * 2), lastpoint[1] + (Xp + delta[1]) * r / (lon_feet * 2))
+                        else:
+                            #round the curves
+                            if delta[1] != 0:
+                                theta = abs(math.atan(delta[0] / delta[1]))
+                            else:
+                                theta = math.pi / 2
+                            if Xp != 0:
+                                theta = theta - abs(math.atan(Yp / Xp))
+                            else: theta = theta - math.pi / 2
+                            r = 1 + abs(math.tan(theta/2))
+                            if left:
+                                lpoint = (lastpoint[0] + (Yp + delta[0]) * r / (lat_feet * 2), lastpoint[1] + (Xp + delta[1]) * r / (lon_feet * 2))
                                 lsegment.append( (id, lpoint) )
                                 id += 1
-			    if right:
+                            if right:
                                 rpoint = (lastpoint[0] - (Yp + delta[0]) * r / (lat_feet * 2), lastpoint[1] - (Xp + delta[1]) * r / (lon_feet * 2))
-				
+                                
                                 rsegment.append( (id, rpoint) )
                                 id += 1
 
@@ -3778,116 +3778,116 @@ def addressways(waylist, nodelist, first_id):
 
 
 #Add in the last node
-	        dX =  - (Yp * (pullback / distance)) / lon_feet
-	        dY = (Xp * (pullback / distance)) / lat_feet
-		if left:
+                dX =  - (Yp * (pullback / distance)) / lon_feet
+                dY = (Xp * (pullback / distance)) / lat_feet
+                if left:
                     lpoint = (lastpoint[0] + (Yp + delta[0]) / (lat_feet * 2) + dY, lastpoint[1] + (Xp + delta[1]) / (lon_feet * 2) + dX )
                     lsegment.append( (id, lpoint) )
                     id += 1
-		if right:
+                if right:
                     rpoint = (lastpoint[0] - Yp / lat_feet + dY, lastpoint[1] - Xp / lon_feet + dX)
                     rsegment.append( (id, rpoint) )
                     id += 1
 
 #Generate the tags for ways and nodes
-		rtags = []
-		ltags = []
-		tags = []
+                rtags = []
+                ltags = []
+                tags = []
                 zipr = ''
                 zipl = ''
                 name = ''
                 county = ''
-    		if "tiger:zip_right" in waykey:
-		    zipr = waykey["tiger:zip_right"]
+                if "tiger:zip_right" in waykey:
+                    zipr = waykey["tiger:zip_right"]
                     rtags.append( "<tag k=\"addr:postcode\" v=\"%s\" />" % zipr )
-		if "tiger:zip_left" in waykey:
-		    zipl = waykey["tiger:zip_left"]
+                if "tiger:zip_left" in waykey:
+                    zipl = waykey["tiger:zip_left"]
                     ltags.append( "<tag k=\"addr:postcode\" v=\"%s\" />" % zipl )
                 if "name" in waykey:
                     name = waykey["name"]
                     tags.append( "<tag k=\"addr:street\" v=\"%s\" />" % name )
-		if "is_in:state" in waykey:
-		    state = waykey["is_in:state"]
+                if "is_in:state" in waykey:
+                    state = waykey["is_in:state"]
                     tags.append( "<tag k=\"addr:state\" v=\"%s\" />" % state )
-		if "tiger:county" in waykey:
-		    county = waykey["tiger:county"]
+                if "tiger:county" in waykey:
+                    county = waykey["tiger:county"]
                     tags.append( "<tag k=\"addr:county\" v=\"%s\" />" % county )
-		if "is_in:country_code" in waykey:
-		    country = waykey["is_in:country_code"]
+                if "is_in:country_code" in waykey:
+                    country = waykey["is_in:country_code"]
                     tags.append( "<tag k=\"addr:country\" v=\"%s\" />" % country )
-		if "tiger:separated" in waykey:
-		    separated = waykey["tiger:separated"]
-		else:
-		    separated = "N"
-		ltags.extend(tags)
-		rtags.extend(tags)
+                if "tiger:separated" in waykey:
+                    separated = waykey["tiger:separated"]
+                else:
+                    separated = "N"
+                ltags.extend(tags)
+                rtags.extend(tags)
 
 #Write the nodes of the offset ways
-		if right:
+                if right:
                     rlinestring = [];
                     for i, point in rsegment:
                         rlinestring.append( "%f %f" % (point[1], point[0]) )
-		if left:
+                if left:
                     llinestring = [];
                     for i, point in lsegment:
                         llinestring.append( "%f %f" % (point[1], point[0]) )
-		if right:
+                if right:
                     rsegments.append( rsegment )
-		if left:
+                if left:
                     lsegments.append( lsegment )
-		rtofromint = right	#Do the addresses convert to integers?
-		ltofromint = left	#Do the addresses convert to integers?
-		if right:
-		    try: rfromint = int(rfromadd)
-		    except:
-		        print("Non integer address: %s" % rfromadd)
-		        rtofromint = False
-		    try: rtoint = int(rtoadd)
-		    except:
-		        print("Non integer address: %s" % rtoadd)
-		        rtofromint = False
-		if left:
-		    try: lfromint = int(lfromadd)
-		    except:
-		        print("Non integer address: %s" % lfromadd)
-		        ltofromint = False
-		    try: ltoint = int(ltoadd)
-		    except:
-		        print("Non integer address: %s" % ltoadd)
-		        ltofromint = False
-    	        import_guid = time.strftime( '%Y%m%d%H%M%S' )
-	        if right:
-		    id += 1
+                rtofromint = right        #Do the addresses convert to integers?
+                ltofromint = left        #Do the addresses convert to integers?
+                if right:
+                    try: rfromint = int(rfromadd)
+                    except:
+                        print("Non integer address: %s" % rfromadd)
+                        rtofromint = False
+                    try: rtoint = int(rtoadd)
+                    except:
+                        print("Non integer address: %s" % rtoadd)
+                        rtofromint = False
+                if left:
+                    try: lfromint = int(lfromadd)
+                    except:
+                        print("Non integer address: %s" % lfromadd)
+                        ltofromint = False
+                    try: ltoint = int(ltoadd)
+                    except:
+                        print("Non integer address: %s" % ltoadd)
+                        ltofromint = False
+                    import_guid = time.strftime( '%Y%m%d%H%M%S' )
+                if right:
+                    id += 1
 
                     interpolationtype = "";
-		    if rtofromint:
+                    if rtofromint:
                         if (rfromint % 2) == 0 and (rtoint % 2) == 0:
-			    if separated == "Y":	#Doesn't matter if there is another side
+                            if separated == "Y":        #Doesn't matter if there is another side
         #                        ret.append( "<tag k=\"addr:interpolation\" v=\"even\" />" )
                                 interpolationtype = "even";
-			    elif ltofromint and (lfromint % 2) == 1 and (ltoint % 2) == 1:
+                            elif ltofromint and (lfromint % 2) == 1 and (ltoint % 2) == 1:
                                 interpolationtype = "even";
        #                         ret.append( "<tag k=\"addr:interpolation\" v=\"even\" />" )
-			    else:
+                            else:
                                 interpolationtype = "all";
       #                          ret.append( "<tag k=\"addr:interpolation\" v=\"all\" />" )
                         elif (rfromint % 2) == 1 and (rtoint % 2) == 1:
-			    if separated == "Y":	#Doesn't matter if there is another side
+                            if separated == "Y":        #Doesn't matter if there is another side
                                 interpolationtype = "odd";
      #                           ret.append( "<tag k=\"addr:interpolation\" v=\"odd\" />" )
-			    elif ltofromint and (lfromint % 2) == 0 and (ltoint % 2) == 0:
+                            elif ltofromint and (lfromint % 2) == 0 and (ltoint % 2) == 0:
                                 interpolationtype = "odd";
     #                            ret.append( "<tag k=\"addr:interpolation\" v=\"odd\" />" )
-			    else:
+                            else:
                                 interpolationtype = "all";
    #                             ret.append( "<tag k=\"addr:interpolation\" v=\"all\" />" )
-			else:
+                        else:
                             interpolationtype = "all";
   #                          ret.append( "<tag k=\"addr:interpolation\" v=\"all\" />" )
-		    else:
+                    else:
                         interpolationtype = "all";
  #                       ret.append( "<tag k=\"addr:interpolation\" v=\"all\" />" )
-#		    ret.extend(rtags)
+#                    ret.extend(rtags)
   #                  ret.append( "<tag k=\"source\" v=\"%s_import_v%s_%s\" />" % (iSource, VERSION, import_guid) )
  #                   ret.append( "<tag k=\"attribution\" v=\"%s\" />" % (iAttrib) )
 #                    ret.append( "</way>" )
@@ -3895,27 +3895,27 @@ def addressways(waylist, nodelist, first_id):
                     ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
                                 ( ",".join(rlinestring), rfromadd.replace("'", "''"), rtoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipr.replace("'", "''") ) )
 
-		if left:
-		    id += 1
-		    if ltofromint:
+                if left:
+                    id += 1
+                    if ltofromint:
                         if (lfromint % 2) == 0 and (ltoint % 2) == 0:
-			    if separated == "Y":
+                            if separated == "Y":
                                 interpolationtype = "even";
-			    elif rtofromint and (rfromint % 2) == 1 and (rtoint % 2) == 1:
+                            elif rtofromint and (rfromint % 2) == 1 and (rtoint % 2) == 1:
                                 interpolationtype = "even";
-			    else:
+                            else:
                                 interpolationtype = "all";
 
                         elif (lfromint % 2) == 1 and (ltoint % 2) == 1:
-			    if separated == "Y":
+                            if separated == "Y":
                                 interpolationtype = "odd";
-			    elif rtofromint and (rfromint %2 ) == 0 and (rtoint % 2) == 0:
+                            elif rtofromint and (rfromint %2 ) == 0 and (rtoint % 2) == 0:
                                 interpolationtype = "odd";
-			    else:
+                            else:
                                 interpolationtype = "all";
-			else:
+                        else:
                             interpolationtype = "all";
-		    else:
+                    else:
                         interpolationtype = "all";
                     ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
                                 ( ",".join(llinestring), lfromadd.replace("'", "''"), ltoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipl.replace("'", "''") ) )
@@ -4023,7 +4023,7 @@ def compile_waylist( parsed_gisdata, blank_way_id ):
     #Group by iSource:way_id
     for geom, tags in parsed_gisdata:
         way_key = tags.copy()
-        way_key = ( way_key[iSource + ':way_id'], tuple( [(k,v) for k,v in way_key.iteritems()] ) )
+        way_key = ( way_key[iSource + ':way_id'], tuple( [(k,v) for k,v in way_key.items()] ) )
         
         if way_key not in waylist:
             waylist[way_key] = []
@@ -4031,7 +4031,7 @@ def compile_waylist( parsed_gisdata, blank_way_id ):
         waylist[way_key].append( geom )
     
     ret = {}
-    for (way_id, way_key), segments in waylist.iteritems():
+    for (way_id, way_key), segments in waylist.items():
         
         if way_id != blank_way_id:
             ret[way_key] = glom_all( segments )
@@ -4047,42 +4047,42 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
     
     import_guid = time.strftime( '%Y%m%d%H%M%S' )
 
-    print "parsing shpfile"
+    print("parsing shpfile")
     parsed_features = parse_shp_for_osm( shp_filename )
     
-    print "compiling nodelist"
+    print("compiling nodelist")
     i, nodelist = compile_nodelist( parsed_features )
     
-    print "compiling waylist"
+    print("compiling waylist")
     waylist = compile_waylist( parsed_features, blank_way_id )
 
     filenumber = 1
     objectcount = 0
     seen = {}
 
-    print "preparing address ways"
+    print("preparing address ways")
     ret = addressways(waylist, nodelist, i)
     osm_filename = "%s%d.osm" % (base_filename, filenumber)
-    print "writing %s" %osm_filename
+    print("writing %s" %osm_filename)
     fp = open( osm_filename, "w" )
     fp.write( "\n".join( ret ) )
     fp.close()
     filenumber += 1
 
     
-    print "constructing osm xml file"
+    print("constructing osm xml file")
     ret = []
     ret.append( "<?xml version='1.0' encoding='UTF-8'?>" )
     ret.append( "<osm version='0.6' generator='shape_to_osm.py'>" )
     
-    for waykey, segments in waylist.iteritems():
+    for waykey, segments in waylist.items():
         for segment in segments:
-	    #write the nodes
+            #write the nodes
             for point in segment:
                 id, (lat, lon) = nodelist[ round_point( point ) ]
                 if id not in seen:
                     seen[id] = True
-		    #write node
+                    #write node
                     ret.append( "  <node id='-%d' action='create' visible='true' lat='%f' lon='%f' >" % (id, lat, lon) )
                     ret.append( "  </node>" )
                     objectcount += 1
@@ -4090,7 +4090,7 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
                     pass
                     #print "Skipping node %d" %id
 
-	    #write the way
+            #write the way
             ret.append( "  <way id='-%d' action='create' visible='true'>" % i )
             
             ids = [ nodelist[ round_point( point ) ][0] for point in segment ]
@@ -4099,7 +4099,7 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
             for id in ids:
                 count += 1
                 ret.append( "    <nd ref='-%d' />" % id )
-                if (count % Max_Waylength == 0) and (count != len(ids)):	#Split the way
+                if (count % Max_Waylength == 0) and (count != len(ids)):        #Split the way
                     for k, v in waykey:
                         ret.append( "    <tag k=\"%s\" v=\"%s\" />" % (k, escape(str(v))) )
                     ret.append( "    <tag k=\"source\" v=\"%s_import_v%s_%s\" />" % (iSource, VERSION, import_guid) )
@@ -4107,7 +4107,7 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
                 
                     ret.append( "  </way>" )
                     objectcount += 1
-		    i += 1
+                    i += 1
                     ret.append( "  <way id='-%d' action='create' visible='true'>" % i )
                     ret.append( "    <nd ref='-%d' />" % id )
                 
@@ -4121,10 +4121,10 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
             
             i += 1
 
-            if objectcount > maxNodes:	#Write a file
+            if objectcount > maxNodes:        #Write a file
                 ret.append( "</osm>" )
                 osm_filename = "%s%d.osm" % (base_filename, filenumber)
-                print "writing %s" %osm_filename
+                print("writing %s" %osm_filename)
                 fp = open( osm_filename, "w" )
                 fp.write( "\n".join( ret ) )
                 fp.close()
@@ -4139,7 +4139,7 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
     ret.append( "</osm>" )
     
     osm_filename = "%s%d.osm" % (base_filename, filenumber)
-    print "writing %s" %osm_filename
+    print("writing %s" %osm_filename)
     fp = open( osm_filename, "w" )
     fp.write( "\n".join( ret ) )
     fp.close()
@@ -4147,7 +4147,7 @@ def shape_to_osm( shp_filename, base_filename, blank_way_id ):
 if __name__ == '__main__':
     import sys, os.path
     if len(sys.argv) < 2:
-        print "%s filename.shp [filename.osm]" % sys.argv[0]
+        print("%s filename.shp [filename.osm]" % sys.argv[0])
         sys.exit()
     shape = sys.argv[1]
     if len(sys.argv) > 2:
@@ -4155,6 +4155,6 @@ if __name__ == '__main__':
     else:
         osm = shape[0:-4] + ".osm" 
     id = "1.shp"
-	# Left over from massGIS unknown usage, but works fine hardcoded to "1.shp" which was the valu on a test of the actual mass data,
-	#id = os.path.basename(shape).split("_")[-1]
+        # Left over from massGIS unknown usage, but works fine hardcoded to "1.shp" which was the valu on a test of the actual mass data,
+        #id = os.path.basename(shape).split("_")[-1]
     shape_to_osm( shape, osm, id )

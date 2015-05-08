@@ -3,7 +3,6 @@
 
 	require_once(dirname(dirname(__FILE__)).'/lib/init-cmd.php');
 	ini_set('memory_limit', '800M');
-	$sDefaultDataPath = CONST_BasePath.'/data/tiger2014';
 
 	$aCMDOptions = array(
 		"Create and setup nominatim search system",
@@ -18,7 +17,7 @@
 
 	if (isset($aCMDResult['parse-tiger']))
 	{
-		if (!file_exists($sDefaultDataPath)) mkdir($sDefaultDataPath);
+		if (!file_exists(CONST_Tiger_Data_Path)) mkdir(CONST_Tiger_Data_Path);
 
 		$sTempDir = tempnam('/tmp', 'tiger');
 		unlink($sTempDir);
@@ -48,7 +47,7 @@
 				}
 				else
 				{
-					copy($sOsmFile, $sDefaultDataPath.'/'.$sCountyID.'.sql');
+					copy($sOsmFile, CONST_Tiger_Data_Path.'/'.$sCountyID.'.sql');
 				}
 			}
 			// Cleanup

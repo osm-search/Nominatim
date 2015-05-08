@@ -18,6 +18,7 @@
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
+	@define('CONST_Tiger_Data_Path', CONST_BasePath.'/data/tiger');
 
 	// osm2pgsql settings
 	@define('CONST_Osm2pgsql_Flatnode_File', null);

@@ -9,6 +9,13 @@
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
 
+	// Proxy settings
+	@define('CONST_HTTP_Proxy', false);
+	@define('CONST_HTTP_Proxy_Host', 'proxy.mydomain.com');
+	@define('CONST_HTTP_Proxy_Port', '3128');
+	@define('CONST_HTTP_Proxy_Login', '');
+	@define('CONST_HTTP_Proxy_Password', '');
+
 	// Software versions
 	@define('CONST_Postgresql_Version', '9.3'); // values: 9.0, ... , 9.4
 	@define('CONST_Postgis_Version', '2.1'); // values: 1.5, 2.0, 2.1

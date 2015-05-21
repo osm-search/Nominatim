@@ -1594,6 +1594,21 @@
 
 			foreach($aSearchResults as $iResNum => $aResult)
 			{
+				// Default
+				$fDiameter = 0.0001;
+
+				if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+						&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+				{
+					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defzoom'];
+				}
+				elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+						&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+				{
+					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
+				}
+				$fRadius = $fDiameter / 2;
+
 				if (CONST_Search_AreaPolygons)
 				{
 					// Get the bounding box and outline polygon
@@ -1647,7 +1662,6 @@
 							}
 							elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['astext'],$aMatch))
 							{
-								$fRadius = 0.01;
 								$iSteps = ($fRadius * 40000)^2;
 								$fStepSize = (2*pi())/$iSteps;
 								$aPolyPoints = array();
@@ -1655,10 +1669,6 @@
 								{
 									$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
 								}
-								$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-								$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-								$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-								$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
 							}
 						}
 
@@ -1670,6 +1680,17 @@
 							{
 								$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
 							}
+						}
+
+						if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001)
+						{
+							$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
+							$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
+						}
+						if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001)
+						{
+							$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
+							$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
 						}
 						$aResult['aBoundingBox'] = array($aPointPolygon['minlat'],$aPointPolygon['maxlat'],$aPointPolygon['minlon'],$aPointPolygon['maxlon']);
 					}
@@ -1684,28 +1705,8 @@
 
 				if (!isset($aResult['aBoundingBox']))
 				{
-					// Default
-					$fDiameter = 0.0001;
-
-					if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-							&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-					{
-						$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defzoom'];
-					}
-					elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-							&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-					{
-						$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
-					}
-					$fRadius = $fDiameter / 2;
-
 					$iSteps = max(8,min(100,$fRadius * 3.14 * 100000));
 					$fStepSize = (2*pi())/$iSteps;
-					$aPolyPoints = array();
-					for($f = 0; $f < 2*pi(); $f += $fStepSize)
-					{
-						$aPolyPoints[] = array('',$aResult['lon']+($fRadius*sin($f)),$aResult['lat']+($fRadius*cos($f)));
-					}
 					$aPointPolygon['minlat'] = $aResult['lat'] - $fRadius;
 					$aPointPolygon['maxlat'] = $aResult['lat'] + $fRadius;
 					$aPointPolygon['minlon'] = $aResult['lon'] - $fRadius;
@@ -1714,6 +1715,11 @@
 					// Output data suitable for display (points and a bounding box)
 					if ($this->bIncludePolygonAsPoints)
 					{
+						$aPolyPoints = array();
+						for($f = 0; $f < 2*pi(); $f += $fStepSize)
+						{
+							$aPolyPoints[] = array('',$aResult['lon']+($fRadius*sin($f)),$aResult['lat']+($fRadius*cos($f)));
+						}
 						$aResult['aPolyPoints'] = array();
 						foreach($aPolyPoints as $aPoint)
 						{

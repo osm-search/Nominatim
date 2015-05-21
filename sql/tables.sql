@@ -186,9 +186,6 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
-drop index idx_placex_sector;
-CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id) {ts:address-index};
-
 DROP SEQUENCE seq_postcodes;
 CREATE SEQUENCE seq_postcodes start 1;
 

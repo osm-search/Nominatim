@@ -83,7 +83,7 @@ Feature: Search queries
     Scenario: bounded search remains within viewbox, even with no results
         Given the request parameters
          | bounded | viewbox
-         | 1       | -5.662003,43.54285,-5.6563282,43.5403125
+         | 1       | 43.54285,-5.662003,43.5403125,-5.6563282
          When sending json search query "restaurant"
         Then less than 1 result is returned
 

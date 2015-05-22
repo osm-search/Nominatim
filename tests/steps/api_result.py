@@ -199,7 +199,10 @@ def api_result_address_exact(step, resid):
     addr = world.results[resid]['address']
     for line in step.hashes:
         assert_in(line['type'], addr)
-        assert_equals(line['value'], addr[line['type']])
+        m = re.match("%s$" % line['value'], addr[line['type']])
+        assert_is_not_none(m, msg="field %s does not match: %s$ != %s." % (
+                                  line['type'], line['value'], addr[line['type']]))
+        #assert_equals(line['value'], addr[line['type']])
 
 @step(u'address of result (\d+) does not contain (.*)')
 def api_result_address_details_missing(step, resid, types):

@@ -1600,7 +1600,7 @@
 				if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
 						&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
 				{
-					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defzoom'];
+					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
 				}
 				elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
 						&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
@@ -1662,7 +1662,7 @@
 							}
 							elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['astext'],$aMatch))
 							{
-								$iSteps = ($fRadius * 40000)^2;
+								$iSteps = max(8, min(100, ($fRadius * 40000)^2));
 								$fStepSize = (2*pi())/$iSteps;
 								$aPolyPoints = array();
 								for($f = 0; $f < 2*pi(); $f += $fStepSize)

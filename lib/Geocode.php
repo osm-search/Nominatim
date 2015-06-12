@@ -1692,7 +1692,7 @@
 							$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
 							$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
 						}
-						$aResult['aBoundingBox'] = array($aPointPolygon['minlat'],$aPointPolygon['maxlat'],$aPointPolygon['minlon'],$aPointPolygon['maxlon']);
+						$aResult['aBoundingBox'] = array((string)$aPointPolygon['minlat'],(string)$aPointPolygon['maxlat'],(string)$aPointPolygon['minlon'],(string)$aPointPolygon['maxlon']);
 					}
 				}
 

@@ -27,7 +27,7 @@ def _parse_xml():
     world.results = []
 
     # results
-    if page.nodeName == 'searchresults':
+    if page.nodeName == 'searchresults' or page.nodeName == 'lookupresults':
         for node in page.childNodes:
             if node.nodeName != "#text":
                 assert_equals(node.nodeName, 'place', msg="Unexpected element '%s'" % node.nodeName)

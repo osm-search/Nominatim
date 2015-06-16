@@ -95,6 +95,9 @@ def _format_placex_cols(cols, geomtype, force_name):
         else:
             coords = "'%s'::geometry" % coords.wkt
         cols['geometry'] = coords
+    for k in cols:
+        if not cols[k]:
+            cols[k] = None
 
 
 def _insert_place_table_nodes(places, force_name):
@@ -213,8 +216,8 @@ def import_database(step):
     world.run_nominatim_script('setup', 'create-functions', 'create-partition-functions')
     cur = world.conn.cursor()
     cur.execute("""insert into placex (osm_type, osm_id, class, type, name, admin_level,
-			       housenumber, street, addr_place, isin, postcode, country_code, extratags,
-			       geometry) select * from place""")
+                   housenumber, street, addr_place, isin, postcode, country_code, extratags,
+                   geometry) select * from place""")
     world.conn.commit()
     world.run_nominatim_script('setup', 'index', 'index-noanalyse')
     #world.db_dump_table('placex')

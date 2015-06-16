@@ -15,13 +15,17 @@ Prerequisites
  * nose (https://nose.readthedocs.org)
  * pytidylib (http://countergram.com/open-source/pytidylib)
  * haversine (https://github.com/mapado/haversine)
+ * shapely (https://github.com/Toblerity/Shapely)
 
 Usage
 =====
 
  * get prerequisites
+ 
+     # on a fresh Ubuntu LTS 14.04 you'll also need these system-wide packages
+     [sudo] apt-get install python-dev python-pip python-Levenshtein tidy
 
-     [sudo] pip install lettuce nose pytidylib haversine psycopg2
+     [sudo] pip install lettuce nose pytidylib haversine psycopg2 shapely
 
  * run the tests
 

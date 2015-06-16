@@ -9,15 +9,23 @@
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
 
+	// Proxy settings
+	@define('CONST_HTTP_Proxy', false);
+	@define('CONST_HTTP_Proxy_Host', 'proxy.mydomain.com');
+	@define('CONST_HTTP_Proxy_Port', '3128');
+	@define('CONST_HTTP_Proxy_Login', '');
+	@define('CONST_HTTP_Proxy_Password', '');
+
 	// Software versions
-	@define('CONST_Postgresql_Version', '9.1'); // values: 9.0, 9.1, 9.2
-	@define('CONST_Postgis_Version', '1.5'); // values: 1.5, 2.0
+	@define('CONST_Postgresql_Version', '9.3'); // values: 9.0, ... , 9.4
+	@define('CONST_Postgis_Version', '2.1'); // values: 1.5, 2.0, 2.1
 
 	// Paths
 	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_BasePath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
+	@define('CONST_Tiger_Data_Path', CONST_BasePath.'/data/tiger');
 
 	// osm2pgsql settings
 	@define('CONST_Osm2pgsql_Flatnode_File', null);

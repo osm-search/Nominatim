@@ -24,4 +24,3 @@ CREATE TABLE gb_postcode (
     CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
 );
 
-GRANT SELECT ON TABLE gb_postcode TO "www-data";

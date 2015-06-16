@@ -53,6 +53,9 @@ GRANT INSERT ON new_query_log TO "{www-user}" ;
 GRANT UPDATE ON new_query_log TO "{www-user}" ;
 GRANT SELECT ON new_query_log TO "{www-user}" ;
 
+GRANT SELECT ON TABLE country_name TO "{www-user}";
+GRANT SELECT ON TABLE gb_postcode TO "{www-user}";
+
 create view vw_search_query_log as SELECT substr(query, 1, 50) AS query, starttime, endtime - starttime AS duration, substr(useragent, 1, 20) as 
 useragent, language, results, ipaddress FROM new_query_log WHERE type = 'search' ORDER BY starttime DESC;
 
@@ -182,9 +185,6 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
     FOR EACH ROW EXECUTE PROCEDURE place_delete();
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
-
-drop index idx_placex_sector;
-CREATE INDEX idx_placex_sector ON placex USING BTREE (geometry_sector,rank_address,osm_type,osm_id) {ts:address-index};
 
 DROP SEQUENCE seq_postcodes;
 CREATE SEQUENCE seq_postcodes start 1;

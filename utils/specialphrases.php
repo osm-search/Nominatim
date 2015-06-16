@@ -105,7 +105,7 @@
 				echo " tablespace ".CONST_Tablespace_Aux_Index;
 			echo ";\n";
 
-            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1])." TO \"www-data\";\n";
+            echo "GRANT SELECT ON place_classtype_".pg_escape_string($aPair[0])."_".pg_escape_string($aPair[1]).' TO "'.CONST_Database_Web_User."\";\n";
 
 		}
 

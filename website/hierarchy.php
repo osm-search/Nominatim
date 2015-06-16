@@ -64,6 +64,13 @@
 	$oPlaceLookup->setPlaceId($iPlaceID);
 
 	$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails());
+
+	if (!sizeof($aPlaceAddress))
+	{
+		echo "Unknown place id.";
+		exit;
+	}
+
 	$aBreadcrums = array();
 	foreach($aPlaceAddress as $i => $aPlace)
 	{

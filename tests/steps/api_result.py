@@ -143,6 +143,11 @@ def api_result_header_contains(step):
         assert_in(line['attr'], world.result_header)
         m = re.match("%s$" % (line['value'],), world.result_header[line['attr']])
 
+@step(u'result header has no attribute (.*)')
+def api_result_header_contains_not(step, attr):
+    step.given('the result is valid')
+    assert_not_in(attr, world.result_header)
+
 @step(u'results contain$')
 def api_result_contains(step):
     step.given('at least 1 result is returned')
@@ -194,7 +199,10 @@ def api_result_address_exact(step, resid):
     addr = world.results[resid]['address']
     for line in step.hashes:
         assert_in(line['type'], addr)
-        assert_equals(line['value'], addr[line['type']])
+        m = re.match("%s$" % line['value'], addr[line['type']])
+        assert_is_not_none(m, msg="field %s does not match: %s$ != %s." % (
+                                  line['type'], line['value'], addr[line['type']]))
+        #assert_equals(line['value'], addr[line['type']])
 
 @step(u'address of result (\d+) does not contain (.*)')
 def api_result_address_details_missing(step, resid, types):

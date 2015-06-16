@@ -94,7 +94,7 @@ def get_placeid(oid):
         q = 'SELECT place_id FROM placex where osm_type = %s and osm_id = %s and class = %s'
         params = (osmtype, osmid, cls)
     cur.execute(q, params)
-    assert_equals (cur.rowcount, 1)
+    assert_equals(cur.rowcount, 1, "%d rows found for place %s" % (cur.rowcount, oid))
     return cur.fetchone()[0]
 
 

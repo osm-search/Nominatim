@@ -12,6 +12,7 @@
 		protected $bIncludePolygonAsGeoJSON = false;
 		protected $bIncludePolygonAsKML = false;
 		protected $bIncludePolygonAsSVG = false;
+		protected $fPolygonSimplificationThreshold = 0.0;
 
 		protected $aExcludePlaceIDs = array();
 		protected $bDeDupe = true;
@@ -100,6 +101,11 @@
 		function setIncludePolygonAsSVG($b = true)
 		{
 			$this->bIncludePolygonAsSVG = $b;
+		}
+
+		function setPolygonSimplificationThreshold($f)
+		{
+			$this->fPolygonSimplificationThreshold = $f;
 		}
 
 		function setDeDupe($bDeDupe = true)
@@ -222,9 +228,12 @@
 				foreach(explode(',',$aParams['exclude_place_ids']) as $iExcludedPlaceID)
 				{
 					$iExcludedPlaceID = (int)$iExcludedPlaceID;
-					if ($iExcludedPlaceID) $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
+					if ($iExcludedPlaceID)
+						$aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
 				}
-				$this->aExcludePlaceIDs = $aExcludePlaceIDs;
+
+				if (isset($aExcludePlaceIDs))
+					$this->aExcludePlaceIDs = $aExcludePlaceIDs;
 			}
 
 			// Only certain ranks of feature
@@ -575,18 +584,6 @@
 											else $aSearch['sOperator'] = 'near'; // near = in for the moment
 											if (strlen($aSearchTerm['operator']) == 0) $aSearch['iSearchRank'] += 1;
 
-											// Do we have a shortcut id?
-											if ($aSearch['sOperator'] == 'name')
-											{
-												$sSQL = "select get_tagpair('".$aSearch['sClass']."', '".$aSearch['sType']."')";
-												if ($iAmenityID = $this->oDB->getOne($sSQL))
-												{
-													$aValidTokens[$aSearch['sClass'].':'.$aSearch['sType']] = array('word_id' => $iAmenityID);
-													$aSearch['aName'][$iAmenityID] = $iAmenityID;
-													$aSearch['sClass'] = '';
-													$aSearch['sType'] = '';
-												}
-											}
 											if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
 										}
 									}
@@ -765,7 +762,6 @@
 			if (!$this->sQuery && !$this->aStructuredQuery) return false;
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
-
 			$sCountryCodesSQL = false;
 			if ($this->aCountryCodes && sizeof($this->aCountryCodes))
 			{
@@ -868,10 +864,10 @@
 
 				preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
 				$aSpecialTerms = array();
-				if (isset($aStructuredQuery['amenity']) && $aStructuredQuery['amenity'])
+				if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity'])
 				{
-					$aSpecialTermsRaw[] = array('['.$aStructuredQuery['amenity'].']', $aStructuredQuery['amenity']);
-					unset($aStructuredQuery['amenity']);
+					$aSpecialTermsRaw[] = array('['.$this->aStructuredQuery['amenity'].']', $this->aStructuredQuery['amenity']);
+					unset($this->aStructuredQuery['amenity']);
 				}
 				foreach($aSpecialTermsRaw as $aSpecialTerm)
 				{
@@ -969,8 +965,8 @@
 					foreach($aDatabaseWords as $aToken)
 					{
 						// Very special case - require 2 letter country param to match the country code found
-						if ($bStructuredPhrases && $aToken['country_code'] && !empty($aStructuredQuery['country'])
-								&& strlen($aStructuredQuery['country']) == 2 && strtolower($aStructuredQuery['country']) != $aToken['country_code'])
+						if ($bStructuredPhrases && $aToken['country_code'] && !empty($this->aStructuredQuery['country'])
+								&& strlen($this->aStructuredQuery['country']) == 2 && strtolower($this->aStructuredQuery['country']) != $aToken['country_code'])
 						{
 							continue;
 						}
@@ -1094,7 +1090,7 @@
 
 				if (CONST_Debug) var_Dump($aGroupedSearches);
 
-				if (CONST_Search_TryDroppedAddressTerms && sizeof($aStructuredQuery) > 0)
+				if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0)
 				{
 					$aCopyGroupedSearches = $aGroupedSearches;
 					foreach($aCopyGroupedSearches as $iGroup => $aSearches)
@@ -1591,23 +1587,49 @@
 			$aRecheckWords = preg_split('/\b[\s,\\-]*/u',$sQuery);
 			foreach($aRecheckWords as $i => $sWord)
 			{
-				if (!$sWord) unset($aRecheckWords[$i]);
+				if (!preg_match('/\pL/', $sWord)) unset($aRecheckWords[$i]);
 			}
+
+            if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
 
 			foreach($aSearchResults as $iResNum => $aResult)
 			{
+				// Default
+				$fDiameter = 0.0001;
+
+				if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+						&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+				{
+					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
+				}
+				elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+						&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+				{
+					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
+				}
+				$fRadius = $fDiameter / 2;
+
 				if (CONST_Search_AreaPolygons)
 				{
 					// Get the bounding box and outline polygon
 					$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
 					$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
-					$sSQL .= "ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),4)) as minlat,ST_Y(ST_PointN(ST_ExteriorRing(Box2D(geometry)),2)) as maxlat,";
-					$sSQL .= "ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),1)) as minlon,ST_X(ST_PointN(ST_ExteriorRing(Box2D(geometry)),3)) as maxlon";
+					$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
+					$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
 					if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
 					if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
 					if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
 					if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
-					$sSQL .= " from placex where place_id = ".$aResult['place_id'].' and st_geometrytype(Box2D(geometry)) = \'ST_Polygon\'';
+					$sFrom = " from placex where place_id = ".$aResult['place_id'];
+					if ($this->fPolygonSimplificationThreshold > 0)
+					{
+						$sSQL .= " from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,".$this->fPolygonSimplificationThreshold.") as geometry".$sFrom.") as plx";
+					}
+					else
+					{
+						$sSQL .= $sFrom;
+					}
+
 					$aPointPolygon = $this->oDB->getRow($sSQL);
 					if (PEAR::IsError($aPointPolygon))
 					{
@@ -1629,7 +1651,7 @@
 
 						if ($this->bIncludePolygonAsPoints)
 						{
-							// Translate geometary string to point array
+							// Translate geometry string to point array
 							if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
 							{
 								preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
@@ -1640,18 +1662,13 @@
 							}
 							elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['astext'],$aMatch))
 							{
-								$fRadius = 0.01;
-								$iSteps = ($fRadius * 40000)^2;
+								$iSteps = max(8, min(100, ($fRadius * 40000)^2));
 								$fStepSize = (2*pi())/$iSteps;
 								$aPolyPoints = array();
 								for($f = 0; $f < 2*pi(); $f += $fStepSize)
 								{
 									$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
 								}
-								$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-								$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-								$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-								$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
 							}
 						}
 
@@ -1664,7 +1681,18 @@
 								$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
 							}
 						}
-						$aResult['aBoundingBox'] = array($aPointPolygon['minlat'],$aPointPolygon['maxlat'],$aPointPolygon['minlon'],$aPointPolygon['maxlon']);
+
+						if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001)
+						{
+							$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
+							$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
+						}
+						if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001)
+						{
+							$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
+							$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
+						}
+						$aResult['aBoundingBox'] = array((string)$aPointPolygon['minlat'],(string)$aPointPolygon['maxlat'],(string)$aPointPolygon['minlon'],(string)$aPointPolygon['maxlon']);
 					}
 				}
 
@@ -1677,28 +1705,8 @@
 
 				if (!isset($aResult['aBoundingBox']))
 				{
-					// Default
-					$fDiameter = 0.0001;
-
-					if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-							&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-					{
-						$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defzoom'];
-					}
-					elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-							&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-					{
-						$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
-					}
-					$fRadius = $fDiameter / 2;
-
 					$iSteps = max(8,min(100,$fRadius * 3.14 * 100000));
 					$fStepSize = (2*pi())/$iSteps;
-					$aPolyPoints = array();
-					for($f = 0; $f < 2*pi(); $f += $fStepSize)
-					{
-						$aPolyPoints[] = array('',$aResult['lon']+($fRadius*sin($f)),$aResult['lat']+($fRadius*cos($f)));
-					}
 					$aPointPolygon['minlat'] = $aResult['lat'] - $fRadius;
 					$aPointPolygon['maxlat'] = $aResult['lat'] + $fRadius;
 					$aPointPolygon['minlon'] = $aResult['lon'] - $fRadius;
@@ -1707,6 +1715,11 @@
 					// Output data suitable for display (points and a bounding box)
 					if ($this->bIncludePolygonAsPoints)
 					{
+						$aPolyPoints = array();
+						for($f = 0; $f < 2*pi(); $f += $fStepSize)
+						{
+							$aPolyPoints[] = array('',$aResult['lon']+($fRadius*sin($f)),$aResult['lat']+($fRadius*cos($f)));
+						}
 						$aResult['aPolyPoints'] = array();
 						foreach($aPolyPoints as $aPoint)
 						{
@@ -1752,7 +1765,7 @@
 					if (stripos($sAddress, $sWord)!==false)
 					{
 						$iCountWords++;
-						if (preg_match("/(^|,)\s*$sWord\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
+						if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
 					}
 				}
 
@@ -1771,11 +1784,11 @@
 				if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
 					&& $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
 				{
-					$aResult['foundorder'] = $aResult['foundorder'] + 0.000001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+					$aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
 				}
 				else
 				{
-					$aResult['foundorder'] = $aResult['foundorder'] + 0.001;
+					$aResult['foundorder'] += 0.01;
 				}
 				$aSearchResults[$iResNum] = $aResult;
 			}

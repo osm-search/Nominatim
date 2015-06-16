@@ -36,7 +36,7 @@ Feature: Search queries
         Then address of result 0 contains
           | type         | value
           | house_number | 140
-          | road         | rue Don Bosco
+          | road         | [Rr]ue Don Bosco
           | city         | Saguenay
           | state        | Quebec
           | country      | Canada
@@ -50,7 +50,7 @@ Feature: Search queries
         Then address of result 0 contains
           | type         | value
           | house_number | 141
-          | road         | rue Don Bosco
+          | road         | [rR]ue Don Bosco
           | city         | Saguenay
           | state        | Quebec
           | country      | Canada
@@ -74,3 +74,9 @@ Feature: Search queries
         Then results contain
           | ID | display_name
           | 0  | Illinois.*
+
+    Scenario: Search with class-type feature
+        When sending jsonv2 search query "Hotel California"
+        Then results contain
+          | place_rank
+          | 30

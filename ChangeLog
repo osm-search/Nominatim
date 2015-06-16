@@ -1,7 +1,48 @@
-2.0.1
+ * reverse geocoding looking includes looking up Tiger data
 
- * delete outdated entries from location_area_country
- * remove remaining uses of INTEGER, to allow node ids larger than 2^31
+
+2.4
+
+ * drop support for postgres 8.4
+ * rewrite address interpolation
+ * switch to C++ version of osm2pgsql and rewrite tag filtering
+ * support for bridge:name and tunnel:name, man_made, junction
+ * drop way-node index (reduces database size by about 15%)
+ * add support for configuring tablespaces and webserver user
+ * better evaluation of search queries in right-to-left notation
+ * improve house number search for streets with many duplicate entries
+ * code cleanup (remove unused functions and tables)
+
+2.3
+
+ * further improve ordering of results
+ * support for more lat/lon formats in search-as-reverse
+ * fix handling of GB postcodes
+ * new functional test suite
+ * support for waterway relations
+ * inherit postcodes from street to poi
+ * fix housenumber normalisation to find non-latin house numbers
+ * take viewbox into account for ordering of results
+ * pois may now inherit address tags from surrounding buildings
+ * improve what objects may participate in an address
+ * clean up handled class/type combinations to current OSM usage
+ * lots of bug fixes
+
+2.2
+
+ * correct database rights for www-data
+ * add timestamps for update output
+ * load postgis via extension for postgis >= 2.0
+ * remove non-admin boundaries from addresses
+ * further improve ordering of results with same importance
+ * merge addr:postcode tags into object addresses
+ * include rank and importance in reverse geocode output
+ * replace ST_Line_Interpolate_Point with ST_LineInterpolatePoint
+  (for postgis >= 2.1)
+ * update osm2pgsql to latest version
+ * properly detect changes of admin_level
+ * remove landuses when name is removed
+ * smaller fixes
 
 2.1
 
@@ -27,33 +68,7 @@
  * refactoring of front-end PHP code
  * lots of smaller bug fixes
 
-2.2
+2.0.1
 
- * correct database rights for www-data
- * add timestamps for update output
- * load postgis via extension for postgis >= 2.0
- * remove non-admin boundaries from addresses
- * further improve ordering of results with same importance
- * merge addr:postcode tags into object addresses
- * include rank and importance in reverse geocode output
- * replace ST_Line_Interpolate_Point with ST_LineInterpolatePoint
-  (for postgis >= 2.1)
- * update osm2pgsql to latest version
- * properly detect changes of admin_level
- * remove landuses when name is removed
- * smaller fixes
-
-2.3
-
- * further improve ordering of results
- * support for more lat/lon formats in search-as-reverse
- * fix handling of GB postcodes
- * new functional test suite
- * support for waterway relations
- * inherit postcodes from street to poi
- * fix housenumber normalisation to find non-latin house numbers
- * take viewbox into account for ordering of results
- * pois may now inherit address tags from surrounding buildings
- * improve what objects may participate in an address
- * clean up handled class/type combinations to current OSM usage
- * lots of bug fixes
+ * delete outdated entries from location_area_country
+ * remove remaining uses of INTEGER, to allow node ids larger than 2^31

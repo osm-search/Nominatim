@@ -36,7 +36,7 @@ def api_call(requesttype):
         world.response_format = fmt
     elif fmt in ('json', 'jsonv2'):
         if 'json_callback' in world.params:
-            world.json_callback = world.params['json_callback']
+            world.json_callback = world.params['json_callback'].encode('utf8')
             assert world.page.startswith(world.json_callback + '(')
             assert world.page.endswith(')')
             world.page = world.page[(len(world.json_callback)+1):-1]
@@ -129,3 +129,7 @@ def api_setup_places(step, fmt, ids):
     if fmt and fmt.strip():
         world.params['format'] = fmt.strip()
     api_call('places')
+
+@step(u'sending an API call (\w+)')
+def api_general_call(step, call):
+    api_call(call)

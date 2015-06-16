@@ -389,7 +389,7 @@ Feature: Parenting of objects
          | N3     | W2              | None   | nowhere    | None
 
     ### Scenario 20
-    Scenario: POIs parent a road if and only if they are attached to it
+    Scenario: POIs parent a road if they are attached to it
         Given the scene points-on-roads
         And the named place nodes
          | osm_id | class   | type     | street   | geometry
@@ -408,8 +408,8 @@ Feature: Parenting of objects
         When importing
         Then table placex contains
          | object | parent_place_id
-         | N1     | W2
-         | N2     | W1
+         | N1     | W1
+         | N2     | W2
          | N3     | W1
          | N4     | W2
 

@@ -45,10 +45,8 @@
 		$oPlaceLookup->setOSMID($_GET['osm_type'], $_GET['osm_id']);
 
 		$aPlace = $oPlaceLookup->lookup();
-
-		//if (!$iPlaceID) $sError = 'OSM ID Not Found';
 	}
-	else
+	else if (isset($_GET['lat']) && isset($_GET['lon']) && preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET['lat']) && preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET['lon']))
 	{
 		$oReverseGeocode = new ReverseGeocode($oDB);
 		$oReverseGeocode->setLanguagePreference($aLangPrefOrder);
@@ -58,6 +56,10 @@
 		$oReverseGeocode->setZoom(@$_GET['zoom']);
 
 		$aPlace = $oReverseGeocode->lookup();
+	}
+	else
+	{
+		$aPlace = null;
 	}
 
 	if (CONST_Debug) exit;

@@ -33,7 +33,6 @@
 		array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
 		array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
 		array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
-		array('create-roads', '', 0, 1, 0, 0, 'bool', ''),
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
@@ -467,35 +466,6 @@
 		pgsqlRunScript('ANALYSE');
 	}
 
-	if ($aCMDResult['create-roads'])
-	{
-		$bDidSomething = true;
-
-		$oDB =& getDB();
-		$aDBInstances = array();
-		for($i = 0; $i < $iInstances; $i++)
-		{
-			$aDBInstances[$i] =& getDB(true);
-			if (!pg_query($aDBInstances[$i]->connection, 'set enable_bitmapscan = off')) fail(pg_last_error($oDB->connection));
-			$sSQL = 'select count(*) from (select insertLocationRoad(partition, place_id, calculated_country_code, geometry) from ';
-			$sSQL .= 'placex where osm_id % '.$iInstances.' = '.$i.' and rank_search between 26 and 27 and class = \'highway\') as x ';
-			if ($aCMDResult['verbose']) echo "$sSQL\n";
-			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
-		}
-		$bAnyBusy = true;
-		while($bAnyBusy)
-		{
-			$bAnyBusy = false;
-			for($i = 0; $i < $iInstances; $i++)
-			{
-				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
-			}
-			sleep(1);
-			echo '.';
-		}
-		echo "\n";
-	}
-
 	if ($aCMDResult['import-tiger-data'])
 	{
 		$bDidSomething = true;
@@ -514,7 +484,7 @@
 			$aDBInstances[$i] =& getDB(true);
 		}
 
-		foreach(glob(CONST_BasePath.'/data/tiger2011/*.sql') as $sFile)
+		foreach(glob(CONST_Tiger_Data_Path.'/*.sql') as $sFile)
 		{
 			echo $sFile.': ';
 			$hFile = fopen($sFile, "r");
@@ -613,7 +583,7 @@
 			}
 
 			// Find the last node in the DB
-			$iLastOSMID = $oDB->getOne("select max(id) from planet_osm_nodes");
+			$iLastOSMID = $oDB->getOne("select max(osm_id) from place where osm_type = 'N'");
 
 			// Lookup the timestamp that node was created (less 3 hours for margin for changsets to be closed)
 			$sLastNodeURL = 'http://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID."/1";

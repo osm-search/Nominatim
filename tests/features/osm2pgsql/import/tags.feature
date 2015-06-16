@@ -201,9 +201,17 @@ Feature: Tag evaluation
       | natural  | meadow
       | highway  | traffic_signals
       | highway  | service
+      | highway  | cycleway
+      | highway  | path
       | highway  | footway
       | highway  | steps
+      | highway  | bridleway
+      | highway  | track
+      | highway  | byway
       | highway  | motorway_link
+      | highway  | primary_link
+      | highway  | trunk_link
+      | highway  | secondary_link
       | highway  | tertiary_link
       | railway  | rail
       | boundary | administrative
@@ -237,13 +245,13 @@ Feature: Tag evaluation
           | 40 | 'place' : 'city', 'boundary' : 'statistical', 'name' : 'BB'       | 200 201 202 203 200
         When loading osm data
         Then table place contains
-          | object       | class    | type           | extratags
-          | W2           | boundary | administrative | 'place' : 'city'
-          | W4:boundary  | boundary | administrative |
-          | W4:place     | place    | island         |
-          | W20          | place    | city           |
-          | W40:boundary | boundary | statistical    |
-          | W40:place    | place    | city           |
+          | object       | class    | extratags        | type
+          | W2           | boundary | 'place' : 'city' | administrative
+          | W4:boundary  | boundary | None             | administrative
+          | W4:place     | place    | None             | island
+          | W20          | place    | None             | city
+          | W40:boundary | boundary | None             | statistical
+          | W40:place    | place    | None             | city
         And table place has no entry for W2:place
 
     Scenario Outline: Tags that describe a house

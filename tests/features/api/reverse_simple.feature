@@ -51,3 +51,47 @@ Feature: Simple Reverse Tests
         When looking up jsonv2 coordinates 36.791966,127.171726
         Then the result is valid json
 
+    Scenario: Missing lon parameter
+        Given the request parameters
+          | lat
+          | 51.51
+        When sending an API call reverse
+        Then exactly 0 results are returned
+
+    Scenario: Missing lat parameter
+        Given the request parameters
+          | lon
+          | -79.39114
+        When sending an API call reverse
+        Then exactly 0 results are returned
+
+    Scenario: Missing osm_id parameter
+        Given the request parameters
+          | osm_type
+          | N
+        When sending an API call reverse
+        Then exactly 0 results are returned
+
+    Scenario: Missing osm_type parameter
+        Given the request parameters
+          | osm_id
+          | 3498564
+        When sending an API call reverse
+        Then exactly 0 results are returned
+
+    Scenario Outline: Bad format for lat or lon
+        Given the request parameters
+          | lat   | lon   |
+          | <lat> | <lon> |
+        When sending an API call reverse
+        Then exactly 0 results are returned
+
+    Examples:
+     | lat      | lon
+     | 48.9660  | 8,4482
+     | 48,9660  | 8.4482
+     | 48,9660  | 8,4482
+     | 48.966.0 | 8.4482
+     | 48.966   | 8.448.2
+     | Nan      | 8.448
+     | 48.966   | Nan

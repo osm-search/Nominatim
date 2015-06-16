@@ -100,6 +100,8 @@
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
 
+	@define('CONST_Places_Max_ID_count', 50);
+
 	// Set to zero to disable polygon output
 	@define('CONST_PolygonOutput_MaximumTypes', 1);
 

@@ -36,6 +36,7 @@
 
 	$hLog = logStart($oDB, 'place', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
+	$aSearchResults = array();
 	if (isset($_GET['osm_ids']))
 	{
 		$oPlaceLookup = new PlaceLookup($oDB);
@@ -46,13 +47,12 @@
 		
 		if ( count($osm_ids) > CONST_Places_Max_ID_count ) 
 		{
-			userError('Bulk User: Only ' .  CONST_Places_Max_ID_count . " ids are allowed in one request.");
+			userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
 			exit;
 		}
 		
 		$type = ''; 
 		$id = 0;
-		$aPlaces = array();
 		foreach ($osm_ids AS $item) 
 		{
 			// Skip empty items
@@ -65,27 +65,29 @@
 				$oPlaceLookup->setOSMID($type, $id);
 				$oPlace = $oPlaceLookup->lookup();
 				if ($oPlace){
-					$aPlaces[] = $oPlace;
+					// we want to use the search-* output templates, so we need to fill
+					// $aSearchResults and slightly change the (reverse search) oPlace
+					// key names
+					$oResult = $oPlace;
+					unset($oResult['aAddress']);
+					$oResult['address'] = $oPlace['aAddress'];
+					unset($oResult['langaddress']);
+					$oResult['name'] = $oPlace['langaddress'];
+					$aSearchResults[] = $oResult;
 				}
 			}
 		}
 	}
 
 
-	// we want to use the search-* output templates, so we need to convert
-	// $aPlaces (the format of reverse search) => $aSearchResults (the format of search)
-	$aSearchResults = array();
-	foreach ($aPlaces as $oPlace){
-		$oResult = $oPlace;
-		unset($oResult['aAddress']);
-		$oResult['address'] = $oPlace['aAddress'];
-		unset($oResult['langaddress']);
-		$oResult['name'] = $oPlace['langaddress'];
-		// importance score only adds confusiion: the results are ordered exactly as inputted
-		// unset($oResult['importance']);
-		$aSearchResults[] = $oResult;
-	}
-
 	if (CONST_Debug) exit;
+
+	$sXmlRootTag = 'lookupresults';
+	// we initialize these to avoid warnings in our logfile
+	$sQuery = '';
+	$sViewBox = '';
+	$bShowPolygons = '';
+	$aExcludePlaceIDs = [];
+	$sMoreURL = '';
 
 	include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');

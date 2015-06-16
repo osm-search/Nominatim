@@ -5,7 +5,8 @@
 	echo "?xml version=\"1.0\" encoding=\"UTF-8\" ?";
 	echo ">\n";
 
-	echo "<searchresults";
+	echo "<";
+	echo (isset($sXmlRootTag)?$sXmlRootTag:'searchresults');
 	echo " timestamp='".date(DATE_RFC822)."'";
 	echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 	echo " querystring='".htmlspecialchars($sQuery, ENT_QUOTES)."'";
@@ -121,4 +122,4 @@
 		}
 	}
 	
-	echo "</searchresults>";
+	echo "</" . (isset($sXmlRootTag)?$sXmlRootTag:'searchresults') . ">";

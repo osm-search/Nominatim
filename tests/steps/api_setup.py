@@ -124,11 +124,11 @@ def api_setup_details(step, obj):
     api_call('details')
 
 @step(u'looking up (\w+) places ((?:[a-z]\d+,*)+)')
-def api_setup_places(step, fmt, ids):
+def api_setup_lookup(step, fmt, ids):
     world.params['osm_ids'] = ids
     if fmt and fmt.strip():
         world.params['format'] = fmt.strip()
-    api_call('places')
+    api_call('lookup')
 
 @step(u'sending an API call (\w+)')
 def api_general_call(step, call):

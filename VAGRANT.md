@@ -104,8 +104,6 @@ and then
 
 
 
-http://localhost:8089/nominatim/
-
 
 
 

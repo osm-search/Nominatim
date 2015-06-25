@@ -53,7 +53,7 @@ is.
 
   To repeat an import you'd need to delete the database first
 
-        psql postgres -c "DROP DATABASE IF EXISTS nominatim"
+        dropdb --username postgres -if-exists nominatim
 
 
 
@@ -65,18 +65,21 @@ see Nominatim in action on [locahost:8089](http://localhost:8089/nominatim/).
 You edit code on your host machine in any editor you like. There is no need to
 restart any software: just refresh your browser window.
 
-In `settings/local.php` you can add `@define('CONST_Debug', false);` which will
-print all the `echo` and `var_dump()` calls you see in the PHP code.
-
 PHP errors are written to `/var/log/apache2/error.log`.
+
+With `echo` and `var_dump()` you write into the output (HTML/XML/JSON) when
+you either add `&debug=1` to the URL (preferred) or set
+`@define('CONST_Debug', true);` in `settings/local.php`.
+
 
 
 
 ## Running functional tests
 
-The full test suite requires planet-wide data. Sadly even if you have your own
+Tests in `/features/db` and `/features/osm2pgsql` have to pass 100%. Other
+tests might require full planet-wide data. Sadly even if you have your own
 planet-wide data there will be enough differences to the openstreetmap.org
-installation to cause false positives (see FAQ).
+installation to cause false positives in the other tests (see FAQ). 
 
 To run the full test suite
 

@@ -90,7 +90,7 @@ To run a single file
 
     NOMINATIM_SERVER=http://localhost:8089/nominatim lettuce features/api/reverse.feature
     
-To run specific tests you can add tags just before the 'Scenario line`, e.g.
+To run specific tests you can add tags just before the `Scenario line`, e.g.
 
     @bug-34
     Scenario: address lookup for non-existing or invalid node, way, relation

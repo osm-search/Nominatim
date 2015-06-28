@@ -34,16 +34,16 @@ Vagrant.configure("2") do |config|
   end
 
 
-  config.vm.provider :digital_ocean do |provider, override|
-    override.ssh.private_key_path = '~/.ssh/id_rsa'
-    override.vm.box = 'digital_ocean'
-    override.vm.box_url = "https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box"
+  # config.vm.provider :digital_ocean do |provider, override|
+  #   override.ssh.private_key_path = '~/.ssh/id_rsa'
+  #   override.vm.box = 'digital_ocean'
+  #   override.vm.box_url = "https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box"
 
-    provider.token = 'e74c5c15501bd2782e689b0805ad577f954bfd39ea1fde3f17ff62835f2fc6c1'
-    # provider.token = 'YOUR TOKEN'
-    provider.image = 'ubuntu-14-04-x64'
-    provider.region = 'nyc2'
-    provider.size = '512mb'
-  end
+  #   provider.token = ''
+  #   # provider.token = 'YOUR TOKEN'
+  #   provider.image = 'ubuntu-14-04-x64'
+  #   provider.region = 'nyc2'
+  #   provider.size = '512mb'
+  # end
 
 end

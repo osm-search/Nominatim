@@ -84,8 +84,6 @@ sudo apt-get install -y libprotobuf-c0-dev protobuf-c-compiler \
 
 # now ideally login as $USERNAME and continue
 su $USERNAME -l
-pwd
-ls -la /home/vagrant
 cd /home/vagrant/Nominatim
 
 # cd ~/Nominatim
@@ -95,6 +93,12 @@ make
 chmod +x ./
 chmod +x ./module
 
+
+LOCALSETTINGS_FILE='settings/local.php'
+if [[ -e "$LOCALSETTINGS_FILE" ]]; then
+  echo "$LOCALSETTINGS_FILE already exist, writing to settings/local-vagrant.php instead."
+  LOCALSETTINGS_FILE='settings/local-vagrant.php'
+fi
 
 # IP=`curl -s http://bot.whatismyipaddress.com`
 IP=localhost
@@ -106,7 +110,7 @@ echo "<?php
    @define('CONST_Postgis_Version', '2.1');
    // Website settings
    @define('CONST_Website_BaseURL', 'http://$IP:8089/nominatim/');
-" > settings/local.php
+" > $LOCALSETTINGS_FILE
 
 
 
@@ -118,7 +122,7 @@ echo "<?php
 ### Setup Apache/website
 ###
 
-createuser -SDR www-data
+sudo -u postgres createuser -SDR www-data
 
 echo '
 Listen 8089

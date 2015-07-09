@@ -38,7 +38,8 @@ is.
 
 3. Import a small country (Monaco)
 
-    You need to give the virtual machine more memory (2GB) for an import, see `Vagrantfile`.
+    You need to give the virtual machine more memory (2GB) for an import,
+    see `Vagrantfile`. Otherwise 1GB is enough.
     
     See the FAQ how to skip this step and point Nominatim to an existing database.
 
@@ -46,7 +47,7 @@ is.
   # inside the virtual machine:
   cd Nominatim
     wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
-    utils/setup.php --osm-file data/monaco.osm.pbf --osm2pgsql-cache 1000 --all | tee monaco.$$.log
+    ./utils/setup.php --osm-file data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
     ./utils/specialphrases.php --countries > data/specialphrases_countries.sql
     psql -d nominatim -f data/specialphrases_countries.sql
     ```

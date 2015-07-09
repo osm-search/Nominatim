@@ -6,6 +6,7 @@ https://phpunit.de/manual/4.2/en/
 installed.
 
 To execute the test suite run
+$ cd tests-php
 $ phpunit
 
 It will read phpunit.xml which points to the library, test path, bootstrap

@@ -1,7 +1,7 @@
 <?php
 
 namespace Nominatim;
-require 'lib/lib.php';
+require '../lib/lib.php';
 
 
 class NominatimTest extends \PHPUnit_Framework_TestCase

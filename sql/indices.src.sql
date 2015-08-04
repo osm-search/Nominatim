@@ -14,7 +14,7 @@ CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search) {ts:sear
 CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address) {ts:search-index};
 CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) {ts:address-index} where indexed_status > 0;
 CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) {ts:search-index} where parent_place_id IS NOT NULL;
-CREATE INDEX idx_placex_reverse_geometry ON placex USING gist (geometry) {ts:search-index} where rank_search != 28 and (name is not null or housenumber is not null) and class not in ('waterway','railway','tunnel','bridge');
+CREATE INDEX idx_placex_reverse_geometry ON placex USING gist (geometry) {ts:search-index} where rank_search != 28 and (name is not null or housenumber is not null) and class not in ('waterway','railway','tunnel','bridge','man_made');
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid) {ts:address-index};

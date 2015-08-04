@@ -97,7 +97,7 @@
 				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
 				$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
 				$sSQL .= ' and (name is not null or housenumber is not null)';
-				$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\')';
+				$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
 				$sSQL .= ' and indexed_status = 0 ';
 				$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
 				$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';

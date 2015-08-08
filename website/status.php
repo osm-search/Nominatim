@@ -10,7 +10,7 @@
 		exit;
 	}
 
-	$oDB =& getDB();
+	$oDB =& DB::connect(CONST_Database_DSN, false);
 	if (!$oDB || PEAR::isError($oDB))
 	{
 		statusError("No database");

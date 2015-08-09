@@ -824,6 +824,75 @@
 	}
 
 
+	function getMatchingDetails(&$oDB, $aTokens, $iPlaceID, $bRaw = false)
+	{
+		$aMatching = array();
+		if ($aTokens)
+		{
+			$sMatchArray = "";
+			foreach($aTokens as $sToken)
+			{
+				if ($sMatchArray) $sMatchArray .= ",";
+				$sMatchArray .= getDBQuoted($sToken);
+				$sMatchArray .= ",".getDBQuoted($sToken." %");
+				$sMatchArray .= ",".getDBQuoted("% ".$sToken." %");
+				$sMatchArray .= ",".getDBQuoted("% ".$sToken);
+			}
+
+			$sSQL = "select * from (select place_id,osm_id,osm_type,class,type,admin_level,rank_address,isaddress,(each(name)).* from get_addressdata($iPlaceID)) as matchingnames";
+			if (!$bRaw) {
+				$sSQL .= " WHERE (isaddress OR type = 'country_code') AND";
+			} else {
+				$sSQL .= " WHERE";
+			}
+			$sSQL .= " lower(value) like ANY(ARRAY[".$sMatchArray."])";
+			$sSQL .= " order by rank_address desc,isaddress desc";
+
+			$aMatchingLines = $oDB->getAll($sSQL);
+			if (PEAR::IsError($aMatchingLines))
+			{
+				var_dump($aMatchingLines);
+				exit;
+			}
+			if ($bRaw) return $aMatchingLines;
+
+			$aMatching = array();
+			$aFallback = array();
+			$aClassType = getClassTypes();
+			foreach($aMatchingLines as $aLine)
+			{
+				$bFallback = false;
+				$aTypeLabel = false;
+
+				if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
+				elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
+				elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))]))
+				{
+					$aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
+					$bFallback = true;
+				}
+				else
+				{
+					$aTypeLabel = array('simplelabel'=>'address'.$aLine['rank_address']);
+					$bFallback = true;
+				}
+				if ($aTypeLabel && (isset($aLine['key']) && $aLine['key'] && isset($aLine['value']) && $aLine['value']))
+				{
+					$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
+					$sTypeLabel = str_replace(' ','_',$sTypeLabel);
+					if (!isset($aMatching[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place')
+					{
+						$aMatching[$sTypeLabel.':'.$aLine['key']] = $aLine['value'];
+					}
+					$aFallback[$sTypeLabel] = $bFallback;
+				}
+			}
+		}
+
+		return $aMatching;
+	}
+
+
 	function geocodeReverse($fLat, $fLon, $iZoom=18)
 	{
 		$oDB =& getDB();

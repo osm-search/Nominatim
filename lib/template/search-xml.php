@@ -88,7 +88,7 @@
 			echo " icon='".htmlspecialchars($aResult['icon'], ENT_QUOTES)."'";
 		}
 
-		if (isset($aResult['address']) || isset($aResult['askml']))
+		if (isset($aResult['address'])  || isset($aResult['matching']) || isset($aResult['askml']))
 		{
 			echo ">";
 		}
@@ -112,7 +112,21 @@
 			}
 		}
 
-		if (isset($aResult['address']) || isset($aResult['askml']))
+		if (isset($aResult['matching']))
+		{
+			echo "\n<matching>";
+			foreach($aResult['matching'] as $sKey => $sValue)
+			{
+				$sKey = str_replace(' ','_',$sKey);
+				$sKey = str_replace(':','-',$sKey);
+				echo "<$sKey>";
+				echo htmlspecialchars($sValue);
+				echo "</$sKey>";
+			}
+			echo "</matching>";
+		}
+
+		if (isset($aResult['address']) || isset($aResult['matching']) || isset($aResult['askml']))
 		{
 			echo "</place>";
 		}

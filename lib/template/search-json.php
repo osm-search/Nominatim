@@ -16,8 +16,8 @@
 			$aPlace['osm_id'] = $aPointDetails['osm_id'];
 		}
 
-                if (isset($aPointDetails['aBoundingBox']))
-                {
+		if (isset($aPointDetails['aBoundingBox']))
+		{
 			$aPlace['boundingbox'] = array(
 				$aPointDetails['aBoundingBox'][0],
 				$aPointDetails['aBoundingBox'][1],
@@ -28,7 +28,7 @@
 			{
 				$aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
 			}
-                }
+		}
 
 		if (isset($aPointDetails['zoom']))
 		{
@@ -52,22 +52,28 @@
 		if (isset($aPointDetails['address']))
 		{
 			$aPlace['address'] = $aPointDetails['address'];
-                }
+		}
 
-                if (isset($aPointDetails['asgeojson']))
-                {
-                        $aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
-                }
+		if (isset($aPointDetails['matching']))
+		{
+			$aPlace['matching'] = $aPointDetails['matching'];
+		}
 
-                if (isset($aPointDetails['assvg']))
-                {
-                        $aPlace['svg'] = $aPointDetails['assvg'];
-                }
 
-                if (isset($aPointDetails['astext']))
-                {
-                        $aPlace['geotext'] = $aPointDetails['astext'];
-                }
+		if (isset($aPointDetails['asgeojson']))
+		{
+			$aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
+		}
+
+		if (isset($aPointDetails['assvg']))
+		{
+			$aPlace['svg'] = $aPointDetails['assvg'];
+		}
+
+		if (isset($aPointDetails['astext']))
+		{
+			$aPlace['geotext'] = $aPointDetails['astext'];
+		}
 
 		if (isset($aPointDetails['askml']))
 		{

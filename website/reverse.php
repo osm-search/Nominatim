@@ -28,40 +28,52 @@
 		$sOutputFormat = $_GET['format'];
 	}
 
-	// Show address breakdown
-	$bShowAddressDetails = true;
-	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
-
 	// Preferred language
 	$aLangPrefOrder = getPreferredLanguages();
 
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
+
 	if (isset($_GET['osm_type']) && isset($_GET['osm_id']) && (int)$_GET['osm_id'] && ($_GET['osm_type'] == 'N' || $_GET['osm_type'] == 'W' || $_GET['osm_type'] == 'R'))
 	{
-		$oPlaceLookup = new PlaceLookup($oDB);
-		$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-		$oPlaceLookup->setIncludeAddressDetails($bShowAddressDetails);
-		$oPlaceLookup->setOSMID($_GET['osm_type'], $_GET['osm_id']);
-
-		$aPlace = $oPlaceLookup->lookup();
+		$aLookup = array('osm_type' => $_GET['osm_type'], 'osm_id' => $_GET['osm_id']);
 	}
 	else if (isset($_GET['lat']) && isset($_GET['lon']) && preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET['lat']) && preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET['lon']))
 	{
 		$oReverseGeocode = new ReverseGeocode($oDB);
 		$oReverseGeocode->setLanguagePreference($aLangPrefOrder);
-		$oReverseGeocode->setIncludeAddressDetails($bShowAddressDetails);
 
 		$oReverseGeocode->setLatLon($_GET['lat'], $_GET['lon']);
 		$oReverseGeocode->setZoom(@$_GET['zoom']);
 
-		$aPlace = $oReverseGeocode->lookup();
+		$aLookup = $oReverseGeocode->lookup();
+		if (CONST_Debug) var_dump($aLookup);
+	}
+	else
+	{
+		$aLookup = null;
+	}
+
+	if ($aLookup)
+	{
+		$oPlaceLookup = new PlaceLookup($oDB);
+		$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
+		$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
+		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
+		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+
+		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
 	}
 	else
 	{
 		$aPlace = null;
 	}
 
-	if (CONST_Debug) exit;
+
+	if (CONST_Debug)
+	{
+		var_dump($aPlace);
+		exit;
+	}
 
 	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

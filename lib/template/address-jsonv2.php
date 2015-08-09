@@ -23,16 +23,19 @@
 
 		$aFilteredPlaces['place_rank'] = $aPlace['rank_search'];
 
-                $aFilteredPlaces['category'] = $aPlace['class'];
-                $aFilteredPlaces['type'] = $aPlace['type'];
+		$aFilteredPlaces['category'] = $aPlace['class'];
+		$aFilteredPlaces['type'] = $aPlace['type'];
 
 		$aFilteredPlaces['importance'] = $aPlace['importance'];
 
-                $aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);
+		$aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);
 
 		$aFilteredPlaces['display_name'] = $aPlace['langaddress'];
-                $aFilteredPlaces['name'] = $aPlace['placename'];
-		if ($bShowAddressDetails && $aPlace['aAddress'] && sizeof($aPlace['aAddress'])) $aFilteredPlaces['address'] = $aPlace['aAddress'];
+		$aFilteredPlaces['name'] = $aPlace['placename'];
+
+		if (isset($aPlace['aAddress'])) $aFilteredPlaces['address'] = $aPlace['aAddress'];
+		if (isset($aPlace['sExtraTags'])) $aFilteredPlaces['extratags'] = $aPlace['sExtraTags'];
+		if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['namedetails'] = $aPlace['sNameDetails'];
 	}
 
-	javascript_renderData($aFilteredPlaces);
+	javascript_renderData($aFilteredPlaces, JSON_FORCE_OBJECT);

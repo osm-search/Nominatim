@@ -39,6 +39,12 @@
 		exit;
 	}
 
+	function getParamBool($name, $default=false)
+	{
+		if (!isset($_GET[$name])) return $default;
+
+		return (bool) $_GET[$name];
+	}
 
 	function fail($sError, $sUserError = false)
 	{
@@ -668,12 +674,11 @@
 	}
 
 
-	function javascript_renderData($xVal)
+	function javascript_renderData($xVal, $iOptions = 0)
 	{
 		header("Access-Control-Allow-Origin: *");
-		$iOptions = 0;
 		if (defined('PHP_VERSION_ID') && PHP_VERSION_ID > 50400)
-			$iOptions = JSON_UNESCAPED_UNICODE;
+			$iOptions |= JSON_UNESCAPED_UNICODE;
 		$jsonout = json_encode($xVal, $iOptions);
 
 		if( ! isset($_GET['json_callback']))

@@ -29,7 +29,8 @@
 		if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
 		echo ">".htmlspecialchars($aPlace['langaddress'])."</result>";
 
-		if ($bShowAddressDetails) {
+		if (isset($aPlace['aAddress']))
+		{
 			echo "<addressparts>";
 			foreach($aPlace['aAddress'] as $sKey => $sValue)
 			{
@@ -39,6 +40,30 @@
 				echo "</$sKey>";
 			}
 			echo "</addressparts>";
+		}
+
+		if (isset($aPlace['sExtraTags']))
+		{
+			echo "<extratags>";
+			foreach ($aPlace['sExtraTags'] as $sKey => $sValue)
+			{
+				echo '<tag key="'.htmlspecialchars($sKey).'">';
+				echo htmlspecialchars($sValue);
+				echo "</tag>";
+			}
+			echo "</extratags>";
+		}
+
+		if (isset($aPlace['sNameDetails']))
+		{
+			echo "<namedetails>";
+			foreach ($aPlace['sNameDetails'] as $sKey => $sValue)
+			{
+				echo '<name key="'.htmlspecialchars($sKey).'">';
+				echo htmlspecialchars($sValue);
+				echo "</name>";
+			}
+			echo "</namedetails>";
 		}
 	}
 

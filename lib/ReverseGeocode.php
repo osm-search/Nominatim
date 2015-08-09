@@ -9,8 +9,6 @@
 
 		protected $aLangPrefOrder = array();
 
-		protected $bShowAddressDetails = true;
-
 		function ReverseGeocode(&$oDB)
 		{
 			$this->oDB =& $oDB;
@@ -19,11 +17,6 @@
 		function setLanguagePreference($aLangPref)
 		{
 			$this->aLangPrefOrder = $aLangPref;
-		}
-
-		function setIncludeAddressDetails($bAddressDetails = true)
-		{
-			$this->bAddressDetails = $bAddressDetails;
 		}
 
 		function setLatLon($fLat, $fLon)
@@ -171,13 +164,8 @@
 				}
 			}
 
-			$oPlaceLookup = new PlaceLookup($this->oDB);
-			$oPlaceLookup->setLanguagePreference($this->aLangPrefOrder);
-			$oPlaceLookup->setIncludeAddressDetails($this->bAddressDetails);
-			$oPlaceLookup->setPlaceId($iPlaceID);
-			$oPlaceLookup->setIsTiger($bPlaceIsTiger);
-
-			return $oPlaceLookup->lookup();
+			return array('place_id' => $iPlaceID,
+					     'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
 		}
 	}
 ?>

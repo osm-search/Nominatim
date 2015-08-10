@@ -126,6 +126,8 @@
 	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 	if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 	if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';
+	if ($oGeocode->getIncludeExtraTags()) $sMoreURL .= '&extratags=1';
+	if ($oGeocode->getIncludeNameDetails()) $sMoreURL .= '&namedetails=1';
 	if ($sViewBox) $sMoreURL .= '&viewbox='.urlencode($sViewBox);
 	if (isset($_GET['nearlat']) && isset($_GET['nearlon'])) $sMoreURL .= '&nearlat='.(float)$_GET['nearlat'].'&nearlon='.(float)$_GET['nearlon'];
 	$sMoreURL .= '&q='.urlencode($sQuery);

@@ -47,9 +47,7 @@
 			echo "<extratags>";
 			foreach ($aPlace['sExtraTags'] as $sKey => $sValue)
 			{
-				echo '<tag key="'.htmlspecialchars($sKey).'">';
-				echo htmlspecialchars($sValue);
-				echo "</tag>";
+				echo '<tag key="'.htmlspecialchars($sKey).'" value="'.htmlspecialchars($sValue).'"/>';
 			}
 			echo "</extratags>";
 		}
@@ -59,7 +57,7 @@
 			echo "<namedetails>";
 			foreach ($aPlace['sNameDetails'] as $sKey => $sValue)
 			{
-				echo '<name key="'.htmlspecialchars($sKey).'">';
+				echo '<name desc="'.htmlspecialchars($sKey).'">';
 				echo htmlspecialchars($sValue);
 				echo "</name>";
 			}

@@ -6,6 +6,8 @@
 		protected $aLangPrefOrder = array();
 
 		protected $bIncludeAddressDetails = false;
+		protected $bIncludeExtraTags = false;
+		protected $bIncludeNameDetails = false;
 
 		protected $bIncludePolygonAsPoints = false;
 		protected $bIncludePolygonAsText = false;
@@ -66,6 +68,16 @@
 		function getIncludeAddressDetails()
 		{
 			return $this->bIncludeAddressDetails;
+		}
+
+		function getIncludeExtraTags()
+		{
+			return $this->bIncludeExtraTags;
+		}
+
+		function getIncludeNameDetails()
+		{
+			return $this->bIncludeNameDetails;
 		}
 
 		function setIncludePolygonAsPoints($b = true)
@@ -214,6 +226,8 @@
 		function loadParamArray($aParams)
 		{
 			if (isset($aParams['addressdetails'])) $this->bIncludeAddressDetails = (bool)$aParams['addressdetails'];
+			if (isset($aParams['extratags'])) $this->bIncludeExtraTags = (bool)$aParams['extratags'];
+			if (isset($aParams['namedetails'])) $this->bIncludeNameDetails = (bool)$aParams['namedetails'];
 			if (isset($aParams['bounded'])) $this->bBoundedSearch = (bool)$aParams['bounded'];
 			if (isset($aParams['dedupe'])) $this->bDeDupe = (bool)$aParams['dedupe'];
 
@@ -389,6 +403,8 @@
 			$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 			$sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 			$sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
+			if ($this->bIncludeExtraTags) $sSQL .= "hstore_to_json(extratags)::text as extra,";
+			if ($this->bIncludeNameDetails) $sSQL .= "hstore_to_json(name)::text as names,";
 			$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 			$sSQL .= $sImportanceSQL."coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
 			$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
@@ -405,6 +421,8 @@
 			$sSQL .= ",langaddress ";
 			$sSQL .= ",placename ";
 			$sSQL .= ",ref ";
+			if ($this->bIncludeExtraTags) $sSQL .= ",extratags";
+			if ($this->bIncludeNameDetails) $sSQL .= ",name";
 			$sSQL .= ",extratags->'place' ";
 
 			if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
@@ -414,6 +432,8 @@
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
+				if ($this->bIncludeExtraTags) $sSQL .= "null as extra,";
+				if ($this->bIncludeNameDetails) $sSQL .= "null as names,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 				$sSQL .= $sImportanceSQL."-1.15 as importance, ";
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
@@ -427,6 +447,8 @@
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= "null as placename,";
 				$sSQL .= "null as ref,";
+				if ($this->bIncludeExtraTags) $sSQL .= "null as extra,";
+				if ($this->bIncludeNameDetails) $sSQL .= "null as names,";
 				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
 				$sSQL .= $sImportanceSQL."-1.10 as importance, ";
 				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_aux.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
@@ -1756,6 +1778,30 @@
 					}
 				}
 
+				if ($this->bIncludeExtraTags)
+				{
+					if ($aResult['extra'])
+					{
+						$aResult['sExtraTags'] = json_decode($aResult['extra']);
+					}
+					else
+					{
+						$aResult['sExtraTags'] = array();
+					}
+				}
+
+				if ($this->bIncludeNameDetails)
+				{
+					if ($aResult['names'])
+					{
+						$aResult['sNameDetails'] = json_decode($aResult['names']);
+					}
+					else
+					{
+						$aResult['sNameDetails'] = array();
+					}
+				}
+
 				// Adjust importance for the number of exact string matches in the result
 				$aResult['importance'] = max(0.001,$aResult['importance']);
 				$iCountWords = 0;
@@ -1790,6 +1836,7 @@
 				{
 					$aResult['foundorder'] += 0.01;
 				}
+				if (CONST_Debug) { var_dump($aResult); }
 				$aSearchResults[$iResNum] = $aResult;
 			}
 			uasort($aSearchResults, 'byImportance');

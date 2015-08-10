@@ -10,6 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def api_call(requesttype):
+    world.request_type = requesttype
     world.json_callback = None
     data = urllib.urlencode(world.params)
     url = "%s/%s?%s" % (world.config.base_url, requesttype, data)

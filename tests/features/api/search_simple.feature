@@ -51,6 +51,10 @@ Feature: Simple Tests
      | limit            | 1000
      | dedupe           | 1
      | dedupe           | 0
+     | extratags        | 1
+     | extratags        | 0
+     | namedetails      | 1
+     | namedetails      | 0
 
     Scenario: Search with invalid output format
         Given the request parameters

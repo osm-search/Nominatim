@@ -70,7 +70,7 @@ Feature: Search queries
         Then result addresses contain
           | ID | city
           | 0  | Chicago
-    
+
     Scenario: No POI search with unbounded viewbox
         Given the request parameters
           | viewbox
@@ -202,3 +202,31 @@ Feature: Search queries
         | 0.5
         | 999
         | nan
+
+    Scenario Outline: Search with extratags
+        Given the request parameters
+          | extratags
+          | 1
+        When sending <format> search query "Hauptstr"
+        Then result 0 has attributes extratags
+        And result 1 has attributes extratags
+
+    Examples:
+        | format
+        | xml
+        | json
+        | jsonv2
+
+    Scenario Outline: Search with namedetails
+        Given the request parameters
+          | namedetails
+          | 1
+        When sending <format> search query "Hauptstr"
+        Then result 0 has attributes namedetails
+        And result 1 has attributes namedetails
+
+    Examples:
+        | format
+        | xml
+        | json
+        | jsonv2

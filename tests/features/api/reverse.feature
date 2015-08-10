@@ -36,3 +36,28 @@ Feature: Reverse geocoding
           | 0  | Kings Estate Drive | 84128    | us
         And result 0 has attributes osm_id,osm_type
 
+   Scenario Outline: Reverse Geocoding with extratags
+        Given the request parameters
+          | extratags
+          | 1
+        When looking up <format> coordinates 48.86093,2.2978
+        Then result 0 has attributes extratags
+
+   Examples:
+        | format
+        | xml
+        | json
+        | jsonv2
+
+   Scenario Outline: Reverse Geocoding with namedetails
+        Given the request parameters
+          | namedetails
+          | 1
+        When looking up <format> coordinates 48.86093,2.2978
+        Then result 0 has attributes namedetails
+
+   Examples:
+        | format
+        | xml
+        | json
+        | jsonv2

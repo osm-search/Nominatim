@@ -226,8 +226,11 @@
 		function loadParamArray($aParams)
 		{
 			if (isset($aParams['addressdetails'])) $this->bIncludeAddressDetails = (bool)$aParams['addressdetails'];
-			if (isset($aParams['extratags'])) $this->bIncludeExtraTags = (bool)$aParams['extratags'];
-			if (isset($aParams['namedetails'])) $this->bIncludeNameDetails = (bool)$aParams['namedetails'];
+			if ((float) CONST_Postgresql_Version > 9.2)
+			{
+				if (isset($aParams['extratags'])) $this->bIncludeExtraTags = (bool)$aParams['extratags'];
+				if (isset($aParams['namedetails'])) $this->bIncludeNameDetails = (bool)$aParams['namedetails'];
+			}
 			if (isset($aParams['bounded'])) $this->bBoundedSearch = (bool)$aParams['bounded'];
 			if (isset($aParams['dedupe'])) $this->bDeDupe = (bool)$aParams['dedupe'];
 

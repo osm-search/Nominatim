@@ -126,7 +126,7 @@
 	$bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 	$aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-	$sMoreURL = CONST_Website_BaseURL.'search?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$oGeocode->getExcludedPlaceIDs());
+	$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$oGeocode->getExcludedPlaceIDs());
 	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 	if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 	if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';

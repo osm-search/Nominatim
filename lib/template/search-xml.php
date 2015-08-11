@@ -88,20 +88,59 @@
 			echo " icon='".htmlspecialchars($aResult['icon'], ENT_QUOTES)."'";
 		}
 
-		if (isset($aResult['address']) || isset($aResult['askml']))
-		{
-			echo ">";
-		}
+		$bHasDelim = false;
 
 		if (isset($aResult['askml']))
 		{
+			if (!$bHasDelim)
+			{
+				$bHasDelim = true;
+				echo ">";
+			}
 			echo "\n<geokml>";
 			echo $aResult['askml'];
 			echo "</geokml>";
 		}
 
+		if (isset($aResult['sExtraTags']))
+		{
+			if (!$bHasDelim)
+			{
+				$bHasDelim = true;
+				echo ">";
+			}
+			echo "\n<extratags>";
+			foreach ($aResult['sExtraTags'] as $sKey => $sValue)
+			{
+				echo '<tag key="'.htmlspecialchars($sKey).'" value="'.htmlspecialchars($sValue).'"/>';
+			}
+			echo "</extratags>";
+		}
+
+		if (isset($aResult['sNameDetails']))
+		{
+			if (!$bHasDelim)
+			{
+				$bHasDelim = true;
+				echo ">";
+			}
+			echo "\n<namedetails>";
+			foreach ($aResult['sNameDetails'] as $sKey => $sValue)
+			{
+				echo '<name desc="'.htmlspecialchars($sKey).'">';
+				echo htmlspecialchars($sValue);
+				echo "</name>";
+			}
+			echo "</namedetails>";
+		}
+
 		if (isset($aResult['address']))
 		{
+			if (!$bHasDelim)
+			{
+				$bHasDelim = true;
+				echo ">";
+			}
 			echo "\n";
 			foreach($aResult['address'] as $sKey => $sValue)
 			{
@@ -112,7 +151,7 @@
 			}
 		}
 
-		if (isset($aResult['address']) || isset($aResult['askml']))
+		if ($bHasDelim)
 		{
 			echo "</place>";
 		}

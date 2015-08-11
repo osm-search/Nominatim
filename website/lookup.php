@@ -27,10 +27,6 @@
 		$sOutputFormat = $_GET['format'];
 	}
 
-	// Show address breakdown
-	$bShowAddressDetails = true;
-	if (isset($_GET['addressdetails'])) $bShowAddressDetails = (bool)$_GET['addressdetails'];
-
 	// Preferred language
 	$aLangPrefOrder = getPreferredLanguages();
 
@@ -42,7 +38,9 @@
 	{
 		$oPlaceLookup = new PlaceLookup($oDB);
 		$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-		$oPlaceLookup->setIncludeAddressDetails($bShowAddressDetails);
+		$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
+		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
+		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
 		
 		$aOsmIds = explode(',', $_GET['osm_ids']);
 		

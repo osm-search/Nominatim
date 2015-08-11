@@ -74,6 +74,9 @@
 			$aPlace['geokml'] = $aPointDetails['askml'];
 		}
 
+		if (isset($aPointDetails['sExtraTags'])) $aPlace['extratags'] = $aPointDetails['sExtraTags'];
+		if (isset($aPointDetails['sNameDetails'])) $aPlace['namedetails'] = $aPointDetails['sNameDetails'];
+
 		$aFilteredPlaces[] = $aPlace;
 	}
 

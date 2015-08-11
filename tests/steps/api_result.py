@@ -34,10 +34,28 @@ def _parse_xml():
                 newresult = OrderedDict(node.attributes.items())
                 assert_not_in('address', newresult)
                 assert_not_in('geokml', newresult)
+                assert_not_in('extratags', newresult)
+                assert_not_in('namedetails', newresult)
                 address = OrderedDict()
                 for sub in node.childNodes:
                     if sub.nodeName == 'geokml':
                         newresult['geokml'] = sub.childNodes[0].toxml()
+                    elif sub.nodeName == 'extratags':
+                        newresult['extratags'] = {}
+                        for tag in sub.childNodes:
+                            assert_equals(tag.nodeName, 'tag')
+                            attrs = dict(tag.attributes.items())
+                            assert_in('key', attrs)
+                            assert_in('value', attrs)
+                            newresult['extratags'][attrs['key']] = attrs['value']
+                    elif sub.nodeName == 'namedetails':
+                        newresult['namedetails'] = {}
+                        for tag in sub.childNodes:
+                            assert_equals(tag.nodeName, 'name')
+                            attrs = dict(tag.attributes.items())
+                            assert_in('desc', attrs)
+                            newresult['namedetails'][attrs['desc']] = tag.firstChild.nodeValue.strip()
+
                     elif sub.nodeName == '#text':
                         pass
                     else:
@@ -65,6 +83,21 @@ def _parse_xml():
                 for sub in node.childNodes:
                     address[sub.nodeName] = sub.firstChild.nodeValue.strip()
                 world.results[0]['address'] = address
+            elif node.nodeName == 'extratags':
+                world.results[0]['extratags'] = {}
+                for tag in node.childNodes:
+                    assert_equals(tag.nodeName, 'tag')
+                    attrs = dict(tag.attributes.items())
+                    assert_in('key', attrs)
+                    assert_in('value', attrs)
+                    world.results[0]['extratags'][attrs['key']] = attrs['value']
+            elif node.nodeName == 'namedetails':
+                world.results[0]['namedetails'] = {}
+                for tag in node.childNodes:
+                    assert_equals(tag.nodeName, 'name')
+                    attrs = dict(tag.attributes.items())
+                    assert_in('desc', attrs)
+                    world.results[0]['namedetails'][attrs['desc']] = tag.firstChild.nodeValue.strip()
             elif node.nodeName == "#text":
                 pass
             else:
@@ -92,6 +125,8 @@ def api_result_is_valid(step, fmt):
         _parse_xml()
     elif world.response_format == 'json':
         world.results = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(world.page)
+        if world.request_type == 'reverse':
+            world.results = (world.results,)
     else:
         assert False, "Unknown page format: %s" % (world.response_format)
 

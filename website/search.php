@@ -20,10 +20,14 @@
 	$aLangPrefOrder = getPreferredLanguages();
 	$oGeocode->setLanguagePreference($aLangPrefOrder);
 
-	if (isset($aLangPrefOrder['name:de'])) $oGeocode->setReverseInPlan(true);
-	if (isset($aLangPrefOrder['name:ru'])) $oGeocode->setReverseInPlan(true);
-	if (isset($aLangPrefOrder['name:ja'])) $oGeocode->setReverseInPlan(true);
-	if (isset($aLangPrefOrder['name:pl'])) $oGeocode->setReverseInPlan(true);
+	if (CONST_Search_ReversePlanForAll
+		|| isset($aLangPrefOrder['name:de'])
+		|| isset($aLangPrefOrder['name:ru'])
+		|| isset($aLangPrefOrder['name:ja'])
+		|| isset($aLangPrefOrder['name:pl']))
+	{
+		$oGeocode->setReverseInPlan(true);
+	}
 
 	// Format for output
 	$sOutputFormat = 'html';

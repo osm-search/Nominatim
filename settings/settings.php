@@ -99,6 +99,9 @@
 
 	@define('CONST_Search_TryDroppedAddressTerms', false);
 	@define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
+	// If set to true, then reverse order of queries will be tried by default.
+	// When set to false only selected languages alloow reverse search.
+	@define('CONST_Search_ReversePlanForAll', true);
 
 	@define('CONST_Places_Max_ID_count', 50); 
 

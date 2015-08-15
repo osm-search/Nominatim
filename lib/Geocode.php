@@ -1789,7 +1789,7 @@
 					}
 					else
 					{
-						$aResult['sExtraTags'] = array();
+						$aResult['sExtraTags'] = (object) array();
 					}
 				}
 
@@ -1801,7 +1801,7 @@
 					}
 					else
 					{
-						$aResult['sNameDetails'] = array();
+						$aResult['sNameDetails'] = (object) array();
 					}
 				}
 

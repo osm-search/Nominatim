@@ -26,5 +26,5 @@
 		if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['namedetails'] = $aPlace['sNameDetails'];
 	}
 
-	javascript_renderData($aFilteredPlaces, JSON_FORCE_OBJECT);
+	javascript_renderData($aFilteredPlaces);
 

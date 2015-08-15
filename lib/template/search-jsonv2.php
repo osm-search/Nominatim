@@ -79,4 +79,4 @@
 		$aFilteredPlaces[] = $aPlace;
 	}
 
-	javascript_renderData($aFilteredPlaces, array('geojson'));
+	javascript_renderData($aFilteredPlaces);

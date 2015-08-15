@@ -127,7 +127,7 @@
 				}
 				else
 				{
-					$aPlace['sExtraTags'] = array();
+					$aPlace['sExtraTags'] = (object) array();
 				}
 			}
 
@@ -139,7 +139,7 @@
 				}
 				else
 				{
-					$aPlace['sNameDetails'] = array();
+					$aPlace['sNameDetails'] = (object) array();
 				}
 			}
 

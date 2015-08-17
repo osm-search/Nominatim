@@ -83,15 +83,15 @@ Feature: Tag evaluation
     Scenario: Special character in name tag
         Given the osm nodes:
          | id | tags
-         | 1  | 'highway' : 'yes', 'name: de' : 'Foo', 'name' : 'real'
-         | 2  | 'highway' : 'yes', 'name:\nde' : 'Foo', 'name' : 'real'
-         | 3  | 'highway' : 'yes', 'name:\tde' : 'Foo', 'name:\\' : 'real'
+         | 1  | 'highway' : 'yes', 'name: de' : 'Foo', 'name' : 'real1'
+         | 2  | 'highway' : 'yes', 'name:&#xa;de' : 'Foo', 'name' : 'real2'
+         | 3  | 'highway' : 'yes', 'name:&#x9;de' : 'Foo', 'name:\\' : 'real3'
         When loading osm data
         Then table place contains
          | object | name
-         | N1     | 'name:_de' : 'Foo', 'name' : 'real'
-         | N2     | 'name:_de' : 'Foo', 'name' : 'real'
-         | N3     | 'name:_de' : 'Foo', 'name:\\\\' : 'real'
+         | N1     | 'name: de' : 'Foo', 'name' : 'real1'
+         | N2     | 'name: de' : 'Foo', 'name' : 'real2'
+         | N3     | 'name: de' : 'Foo', 'name:\\\\' : 'real3'
 
     Scenario Outline: Included places
         Given the osm nodes:
@@ -216,6 +216,14 @@ Feature: Tag evaluation
       | railway  | rail
       | boundary | administrative
       | waterway | stream
+
+    Scenario: Footways are not included if they are sidewalks
+        Given the osm nodes:
+         | id | tags
+         | 2  | 'highway' : 'footway', 'name' : 'To Hell', 'footway' : 'sidewalk'
+         | 23 | 'highway' : 'footway', 'name' : 'x'
+        When loading osm data
+        Then table place has no entry for N2
 
     Scenario: named junctions are included if there is no other tag
         Given the osm nodes:
@@ -393,7 +401,7 @@ Feature: Tag evaluation
         Then table place contains
           | object | class   | type    | isin
           | N10    | place   | village | Feebourgh county
-          | N11    | place   | village | Alabama,Feebourgh county
+          | N11    | place   | village | Feebourgh county,Alabama
           | N12    | place   | village | Feebourgh county
 
     Scenario Outline: Import of address tags

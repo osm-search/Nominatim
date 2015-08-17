@@ -140,7 +140,7 @@ def osm2pgsql_load_place(step):
     world.osm2pgsql.sort(cmp=_sort_xml_entries)
 
     # create a OSM file in /tmp
-    with tempfile.NamedTemporaryFile(dir='/tmp', delete=False) as fd:
+    with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.osm', delete=False) as fd:
         fname = fd.name
         fd.write("<?xml version='1.0' encoding='UTF-8'?>\n")
         fd.write('<osm version="0.6" generator="test-nominatim" timestamp="2014-08-26T20:22:02Z">\n')

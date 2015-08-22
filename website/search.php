@@ -13,7 +13,6 @@
 	$fLat = CONST_Default_Lat;
 	$fLon = CONST_Default_Lon;
 	$iZoom = CONST_Default_Zoom;
-	$sSuggestionURL = false;
 
 	$oGeocode =& new Geocode($oDB);
 

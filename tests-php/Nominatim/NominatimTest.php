@@ -74,4 +74,76 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 
 	}
 
+
+
+	public function test_getWordSets()
+	{
+
+		// given an array of arrays like
+		// array( array('a','b'), array('c','d') )
+		// returns a summary as string: '(a|b),(c|d)'
+		function serialize_sets($aSets)
+		{	
+			$aParts = array();
+			foreach($aSets as $aSet){
+				$aParts[] = '(' . join('|', $aSet) . ')';
+			}
+			return join(',', $aParts);
+		}
+
+		$this->assertEquals(
+			array(array('')),
+			getWordSets(array(),0)
+		);
+
+		$this->assertEquals(
+			'(a)',
+			serialize_sets( getWordSets(array("a"),0) )
+		);
+
+		$this->assertEquals(
+			'(a b),(a|b)',
+			serialize_sets( getWordSets(array('a','b'),0) )
+		);
+
+		$this->assertEquals(
+			'(a b c),(a|b c),(a|b|c),(a b|c)',
+			serialize_sets( getWordSets(array('a','b','c'),0) )
+		);
+
+		$this->assertEquals(
+			'(a b c d),(a|b c d),(a|b|c d),(a|b|c|d),(a|b c|d),(a b|c d),(a b|c|d),(a b c|d)',
+			serialize_sets( getWordSets(array('a','b','c','d'),0) )
+		);
+
+
+		// Inverse
+		$this->assertEquals(
+			'(a b c),(c|a b),(c|b|a),(b c|a)',
+			serialize_sets( getInverseWordSets(array('a','b','c'),0) )
+		);
+
+
+		// make sure we don't create too many sets
+		// 4 words => 8 sets
+		// 10 words => 511 sets
+		// 15 words => 12911 sets
+		// 20 words => 169766 sets
+		// 28 words => 397594 sets
+		$this->assertEquals(
+			8,
+			count( getWordSets(array_fill( 0, 4, 'a'),0) )
+		);
+
+
+		$this->assertEquals(
+			8,
+			count( getWordSets(array_fill( 0, 28, 'a'),0) )
+		);
+
+
+
+	}
+
+
 }

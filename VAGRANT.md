@@ -158,6 +158,8 @@ you edit `settings/local.php` with
 
     pgsql://postgres@localhost:9999/nominatim_it
 
+To access postgres directly remember to specify the hostname, e.g. `psql --host localhost --port 9999 nominatim_it`
+
 
 ##### My computer is slow and the import takes too long. Can I start the virtual machine "in the cloud"?
 

@@ -1,172 +1,196 @@
 <?php
 	header("content-type: text/html; charset=UTF-8");
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title>OpenStreetMap Nominatim: <?php echo $aPointDetails['localname'];?></title>
-    <link href="css/details.css" rel="stylesheet" type="text/css" />
-	<script src="js/OpenLayers.js" type="text/javascript"></script>
-	<script src="js/tiles.js" type="text/javascript"></script>
-	<script type="text/javascript">
+<?php include(CONST_BasePath.'/lib/template/includes/html-header.php'); ?>
+	<link href="css/details.css" rel="stylesheet" type="text/css" />
+</head>
 
-		var map;
 
-    function init() {
-			map = new OpenLayers.Map ("map", {
-                controls:[
-										new OpenLayers.Control.Permalink(),
-										new OpenLayers.Control.Navigation(),
-										new OpenLayers.Control.PanZoomBar(),
-										new OpenLayers.Control.MousePosition(),
-										new OpenLayers.Control.Attribution()],
-                maxExtent: new OpenLayers.Bounds(-20037508.34,-20037508.34,20037508.34,20037508.34),
-                maxResolution: 156543.0399,
-                numZoomLevels: 19,
-                units: 'm',
-                projection: new OpenLayers.Projection("EPSG:900913"),
-                displayProjection: new OpenLayers.Projection("EPSG:4326")
-            	} );
-			map.addLayer(new OpenLayers.Layer.OSM.<?php echo CONST_Tile_Default;?>("Default"));
 
-			var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
-			layer_style.fillOpacity = 0.2;
-			layer_style.graphicOpacity = 0.2;
-
-			vectorLayer = new OpenLayers.Layer.Vector("Points", {style: layer_style});
-			map.addLayer(vectorLayer);
-
-			var proj_EPSG4326 = new OpenLayers.Projection("EPSG:4326");
-			var proj_map = map.getProjectionObject();
-
-			freader = new OpenLayers.Format.WKT({
-				'internalProjection': proj_map,
-				'externalProjection': proj_EPSG4326
-			});
-
-			var feature = freader.read('<?php echo $aPointDetails['outlinestring'];?>');
-			var featureCentre = freader.read('POINT(<?php echo $aPointDetails['lon'];?> <?php echo $aPointDetails['lat'];?>)');
-			if (feature) {
-				map.zoomToExtent(feature.geometry.getBounds());
-				feature.style = {
-					strokeColor: "#75ADFF",
-					fillColor: "#F0F7FF",
-					strokeWidth: <?php echo ($aPointDetails['isarea']=='t'?'2':'5');?>,
-					strokeOpacity: 0.75,
-					fillOpacity: 0.75,
-					pointRadius: 50
-				};
-
-<?php if ($aPointDetails['isarea']=='t') {?>
-				featureCentre.style = {
-					strokeColor: "#008800",
-					fillColor: "#338833",
-					strokeWidth: <?php echo ($aPointDetails['isarea']=='t'?'2':'5');?>,
-					strokeOpacity: 0.75,
-					fillOpacity: 0.75,
-					pointRadius: 8
-				};
-				vectorLayer.addFeatures([feature,featureCentre]);
-<?php } else { ?>
-				vectorLayer.addFeatures([feature]);
-<?php } ?>
-			}
-		}
-	</script>
-  </head>
-  <body onload="init();">
-    <div id="map"></div>
 <?php
-	echo '<h1>';
-	if ($aPointDetails['icon'])
-	{
-		echo '<img style="float:right;margin-right:40px;" src="'.CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png'.'" alt="'.$aPointDetails['icon'].'" />';
-	}
-	echo $aPointDetails['localname']."</h1>\n";
-	echo '<div class="locationdetails">';
-	echo ' <div>Name: ';
-	foreach($aPointDetails['aNames'] as $sKey => $sValue)
-	{
-		echo ' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>';
-	}
-	echo ' </div>';
-	echo ' <div>Type: <span class="type">'.$aPointDetails['class'].':'.$aPointDetails['type'].'</span></div>';
-	echo ' <div>Last Updated: <span class="type">'.$aPointDetails['indexed_date'].'</span></div>';
-	echo ' <div>Admin Level: <span class="adminlevel">'.$aPointDetails['admin_level'].'</span></div>';
-	echo ' <div>Rank: <span class="rankaddress">'.$aPointDetails['rank_search_label'].'</span></div>';
-	if ($aPointDetails['calculated_importance']) echo ' <div>Importance: <span class="rankaddress">'.$aPointDetails['calculated_importance'].($aPointDetails['importance']?'':' (estimated)').'</span></div>';
-	echo ' <div>Coverage: <span class="area">'.($aPointDetails['isarea']=='t'?'Polygon':'Point').'</span></div>';
-	echo ' <div>Centre Point: <span class="area">'.$aPointDetails['lat'].','.$aPointDetails['lon'].'</span></div>';
-	$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
-	if ($sOSMType) echo ' <div>OSM: <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPointDetails['osm_id'].'">'.$aPointDetails['osm_id'].'</a></span></div>';
-	if ($aPointDetails['wikipedia'])
-	{
-		list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aPointDetails['wikipedia']);
-		echo ' <div>Wikipedia Calculated: <span class="wikipedia"><a href="http://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'">'.$aPointDetails['wikipedia'].'</a></span></div>';
-	}
-	echo ' <div>Extra Tags: ';
-	foreach($aPointDetails['aExtraTags'] as $sKey => $sValue)
-	{
-		echo ' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>';
-	}
-	echo ' </div>';
-	echo "</div>\n";
 
-	echo "<h2>Address</h2>\n";
-	echo '<div class="address">';
-	$iPrevRank = 1000000;
-	$sPrevLocalName = '';
-	foreach($aAddressLines as $aAddressLine)
-	{	
-		$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
+	function headline($sTitle)
+	{
+		echo "<h2>".$sTitle."</h2>\n";
+	}
 
-		echo '<div class="line'.($aAddressLine['isaddress']=='f'?' notused':'').'">';
-		if (!($iPrevRank<=$aAddressLine['rank_address'] || $sPrevLocalName == $aAddressLine['localname']))
-		{
-			$iPrevRank = $aAddressLine['rank_address'];
-			$sPrevLocalName = $aAddressLine['localname'];
+	function osm_link($aFeature)
+	{
+		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
+		if ($sOSMType) {
+			return '<a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
 		}
-		echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
-		echo ' (';
-		echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
-		if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-		if (isset($aAddressLine['admin_level'])) echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-		if (isset($aAddressLine['rank_search_label'])) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
-//		echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
-		echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
-		echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
-		echo ')';
-		echo "</div>\n";
+		return '';
 	}
-	echo "</div>\n";
+
+	function wikipedia_link($aFeature)
+	{
+		if ($aFeature['wikipedia'])
+		{
+			list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aFeature['wikipedia']);
+			return '<a href="http://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'">'.$aFeature['wikipedia'].'</a>';
+		}
+		return '';
+	}
+
+	function nominatim_link($aFeature, $sTitle)
+	{
+		return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.$sTitle.'</a>';
+	}
+
+	function format_distance($fDistance)
+	{
+		return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance,1)).' km</abbr>';
+	}
+
+	function kv($sKey,$sValue)
+	{
+		echo ' <tr><td>' . $sKey . '</td><td>'.$sValue.'</td></tr>'. "\n";
+	}
+
+
+	function hash_to_subtable($aAssociatedList)
+	{
+		$sHTML = '';
+		foreach($aAssociatedList as $sKey => $sValue)
+		{
+			$sHTML = $sHTML.' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>'."\n";
+		}
+		return $sHTML;
+	}
+
+	// function hash_to_subtable($aAssociatedList)
+	// {
+	// 	$sHTML = '<table class="table">';
+	// 	foreach($aAssociatedList as $sKey => $sValue)
+	// 	{
+	// 		$sHTML = $sHTML . '<tr><td>'.$sKey.'</td><td class="name">'.$sValue.'</td></tr>'."\n";
+	// 	}
+	// 	$sHTML = $sHTML . '</table>';
+	// 	return $sHTML;
+	// }
+
+
+	function map_icon($sIcon)
+	{
+		if ($sIcon){
+			echo '<img id="mapicon" src="'.CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.n.32.png'.'" alt="'.$sIcon.'" />';
+		}
+	}
+
+
+	function _one_row($aAddressLine){
+		$bNotUsed = (isset($aAddressLine['isaddress']) && $aAddressLine['isaddress'] == 'f');
+
+		echo '<tr class="' . ($bNotUsed?'notused':'') . '">';
+		echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</td>';
+		echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . '</td>';
+		echo '  <td>' . osm_link($aAddressLine) . '</td>';
+		echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . '</td>';
+		// echo '<td>' . (isset($aAddressLine['rank_search_label']) ? $aAddressLine['rank_search_label'] : '') .'</td>';
+		// echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
+		echo '  <td>' . format_distance($aAddressLine['distance']).'</td>';;
+		echo '  <td>' . nominatim_link($aAddressLine,'details &gt;') . '</td>';;
+		echo "</tr>\n";
+	}
+
+?>
+
+
+
+<body id="details-page">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-10">
+				<h1><?php echo $aPointDetails['localname'] ?></h1>
+			</div>
+			<div class="col-sm-2 text-right">
+				<?php map_icon($aPointDetails['icon']) ?>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6">
+				<table id="locationdetails" class="table table-striped">
+
+				<?php
+
+					kv('Name'            , hash_to_subtable($aPointDetails['aNames']) );
+					kv('Type'            , $aPointDetails['class'].':'.$aPointDetails['type'] );
+					kv('Last Updated'    , $aPointDetails['indexed_date'] );
+					kv('Admin Level'     , $aPointDetails['admin_level'] );
+					kv('Rank'            , $aPointDetails['rank_search_label'] );
+					if ($aPointDetails['calculated_importance']) {
+						kv('Importance'    , $aPointDetails['calculated_importance'].($aPointDetails['importance']?'':' (estimated)') );
+					}
+					kv('Coverage'        , ($aPointDetails['isarea']=='t'?'Polygon':'Point') );
+					kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
+					kv('OSM'             , osm_link($aPointDetails) );
+					if ($aPointDetails['wikipedia'])
+					{
+						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails) );
+					}
+
+					kv('Extra Tags'      , hash_to_subtable($aPointDetails['aExtraTags']) );
+
+				?>
+
+				</table>
+			</div>
+
+			<div class="col-md-6">
+				<div id="map"></div>
+			</div>
+
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+
+			<h2>Address</h2>
+
+			<table id="address" class="table table-striped table-responsive">
+				<thead>
+					<tr>
+					  <td>Local name</td>
+					  <td>Type</td>
+					  <td>OSM</td>
+					  <td>Admin level</td>
+					  <!-- <td>Search rank</td> -->
+					  <td>Distance</td>
+					  <td></td>
+					</tr>
+				</thead>
+				<tbody>
+
+				<?php
+
+					foreach($aAddressLines as $aAddressLine)
+					{	
+						_one_row($aAddressLine);
+					}
+				?>
+	
+				</tbody>
+			</table>
+
+
+<?php
 
 	if ($aLinkedLines)
 	{
-		echo "<h2>Linked Places</h2>\n";
-		echo '<div class="linked">';
+		headline('Linked Places');
+		echo '<table id="linked" class="table table-striped table-responsive">';
 		foreach($aLinkedLines as $aAddressLine)
 		{	
-			$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
-
-			echo '<div class="line">';
-			echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
-			echo ' (';
-			echo '<span class="type"><span class="label">Type: </span>'.$aAddressLine['class'].':'.$aAddressLine['type'].'</span>';
-			if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-			echo ', <span class="adminlevel">'.$aAddressLine['admin_level'].'</span>';
-			if (isset($aAddressLine['rank_search_label'])) echo ', <span class="rankaddress">'.$aAddressLine['rank_search_label'].'</span>';
-//			echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
-			echo ', <span class="distance">'.$aAddressLine['distance'].'</span>';
-			echo ' <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
-			echo ')';
-			echo "</div>\n";
+			_one_row($aAddressLine);
 		}
-		echo "</div>\n";
+		echo '</table>';
 	}
+
+
 
 	if ($aPlaceSearchNameKeywords)
 	{
-		echo '<h2>Name Keywords</h2>';
+		headline('Name Keywords');
 		foreach($aPlaceSearchNameKeywords as $aRow)
 		{
 			echo '<div>'.$aRow['word_token']."</div>\n";
@@ -175,7 +199,7 @@
 
 	if ($aPlaceSearchAddressKeywords)
 	{
-		echo '<h2>Address Keywords</h2>';
+		headline('Address Keywords');
 		foreach($aPlaceSearchAddressKeywords as $aRow)
 		{
 			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'."</div>\n";
@@ -184,7 +208,7 @@
 
 	if (sizeof($aParentOfLines))
 	{
-		echo "<h2>Parent Of:</h2>\n<div>\n";
+		headline('Parent Of');
 
 		$aGroupedAddressLines = array();
 		foreach($aParentOfLines as $aAddressLine)
@@ -200,31 +224,46 @@
 		{
 			$sGroupHeading = ucwords($sGroupHeading);
 			echo "<h3>$sGroupHeading</h3>\n";
-		foreach($aParentOfLines as $aAddressLine)
-		{
-			$aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
-			$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
-	
-			echo '<div class="line">';
-			echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
-			echo ' (';
-			echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
-			echo ', <span class="distance">~'.(round($aAddressLine['distance']*69,1)).'&nbsp;miles</span>';
-			if ($sOSMType) echo ', <span class="osm">'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-			echo ', <a href="details.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
-			echo ')';
-			echo "</div>\n";
-		}
+
+			echo '<table id="linked" class="table table-striped table-responsive">';
+			foreach($aParentOfLines as $aAddressLine)
+			{
+				_one_row($aAddressLine);
+			}
+			echo '</table>';
 		}
 		if (sizeof($aParentOfLines) >= 500) {
 			echo '<p>There are more child objects which are not shown.</p>';
 		}
-		echo '</div>';
 	}
 
-//	echo '<h2>Other Parts:</h2>';
-//	echo '<h2>Linked To:</h2>';
+	// headline('Other Parts');
+	// headline('Linked To');
 ?>
 
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		<p class="copyright">
+			&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors
+		</p>
+	</footer>
+
+
+	<script type="text/javascript">
+
+		var nominatim_result = {
+			outlinestring: '<?php echo $aPointDetails['outlinestring'];?>',
+			lon: <?php echo $aPointDetails['lon'];?>,
+			lat: <?php echo $aPointDetails['lat'];?>,
+		};
+
+	</script>
+
+
+
+	<?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>
   </body>
 </html>

@@ -2,6 +2,9 @@ var map;
 var last_click_latlng;
 
 jQuery(document).on('ready', function(){
+
+	if ( !$('#search-page').length ){ return; }
+	
 	$('#q').focus();
 
 	map = new L.map('map', {
@@ -13,7 +16,8 @@ jQuery(document).on('ready', function(){
 			});
 
 	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-//		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		// moved to footer
+		// attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	}).addTo(map);
 
 
@@ -77,7 +81,7 @@ jQuery(document).on('ready', function(){
 		return L.marker([result.lat,result.lon], {riseOnHover:true,title:result.name });
 	}
 	function circle_for_result(result){
-		return L.circleMarker([result.lat,result.lon], { radius: 50, weight: 1, fillColor: '#F0F7FF', color: 'red', opacity: 0.75});
+		return L.circleMarker([result.lat,result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75});
 	}
 
 	var layerGroup = new L.layerGroup().addTo(map);
@@ -91,54 +95,44 @@ jQuery(document).on('ready', function(){
 
 		layerGroup.clearLayers();
 
+		if (result.lat){
+			var circle = circle_for_result(result);
+			circle.on('click', function(){
+				highlight_result(position);
+			});
+			layerGroup.addLayer(circle);			
+		}
 		if (result.aBoundingBox){
 
-			console.log('bounding box, maybe polygon', result);
 			var bounds = [[result.aBoundingBox[0]*1,result.aBoundingBox[2]*1], [result.aBoundingBox[1]*1,result.aBoundingBox[3]*1]];
 			map.fitBounds(bounds);
 			if (result.astext && result.astext.match(/POLY/) ){
 				var layer = omnivore.wkt.parse(result.astext);
 				layerGroup.addLayer(layer);
-				// layer.addTo(map);
-				// addedLayers.push(layer);
 			}
 			else {
-				var layer = L.rectangle(bounds, {color: "#ff7800", weight: 1} );
-				layerGroup.addLayer(layer);
+				// var layer = L.rectangle(bounds, {color: "#ff7800", weight: 1} );
+				// layerGroup.addLayer(layer);
 			}
 		}
 		else {
-			// console.log('lat,lon,zoom');
 			map.panTo([result.lat,result.lon], result.zoom || nominatim_map_init.zoom);
-			var circle = circle_for_result(result);
-			circle.on('click', function(){
-				highlight_result(i);
-			});
-			layerGroup.addLayer(layer);
-
-			// circle.addTo(map);
 		}
 
-		var crosshairIcon = L.icon({
-			iconUrl:     'images/crosshair.png',
-			iconSize:    [12, 12],
-			iconAnchor:  [6, 6],
-		});
-		var crossMarker = new L.Marker([result.lat,result.lon], { icon: crosshairIcon, clickable: false});
-		layerGroup.addLayer(crossMarker);
+		// var crosshairIcon = L.icon({
+		// 	iconUrl:     'images/crosshair.png',
+		// 	iconSize:    [12, 12],
+		// 	iconAnchor:  [6, 6],
+		// });
+		// var crossMarker = new L.Marker([result.lat,result.lon], { icon: crosshairIcon, clickable: false});
+		// layerGroup.addLayer(crossMarker);
 
-		// crossMarker.addTo(map);
-		// addedLayers.push(crossMarker);
 
 
 		if (bool_focus){
 			$('#map').focus();
 		}
 	}
-
-	$.each(nominatim_results, function(i, result){
-
-	});
 
 
 	$('.result').on('click', function(e){
@@ -149,3 +143,36 @@ jQuery(document).on('ready', function(){
 
 
 });
+
+
+jQuery(document).on('ready', function(){
+
+	if ( !$('#details-page').length ){ return; }
+
+
+		map = new L.map('map', {
+					// center: [nominatim_map_init.lat, nominatim_map_init.lon],
+					// zoom:   nominatim_map_init.zoom,
+					attributionControl: false,
+					scrollWheelZoom:    false,
+					touchZoom:          false,
+				});
+
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			// moved to footer
+			// attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		}).addTo(map);
+
+		var layerGroup = new L.layerGroup().addTo(map);
+
+
+		var outline = omnivore.wkt.parse(nominatim_result.outlinestring);
+		map.addLayer(outline);
+
+		var circle = L.circleMarker([nominatim_result.lat,nominatim_result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75});
+		map.addLayer(circle);
+
+		map.fitBounds(outline.getBounds());
+
+});
+

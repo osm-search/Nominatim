@@ -1,5 +1,4 @@
 header {
-  /*position: fixed;*/
   width: 100%;
   padding: 15px;
   z-index: 5;
@@ -66,6 +65,7 @@ form label {
 
 #map {
   height: 100%;
+  min-height: 700px;
   background:#eee;
 }
 
@@ -147,6 +147,9 @@ footer p {
   #map-position {
     top: 20px;
     right: 20px;
+  }
+  #map {
+    height: 300px;
   }
   .sidebar {
     width: 100%;

@@ -9,5 +9,3 @@
 	<link href="css/leaflet.css" rel="stylesheet" />
 	<link href="css/bootstrap-theme.min.css" rel="stylesheet" />
 	<link href="css/bootstrap.min.css" rel="stylesheet" />
-	<link href="css/search.css" rel="stylesheet" type="text/css" />
-</head>

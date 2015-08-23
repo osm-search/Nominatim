@@ -1,9 +1,12 @@
 <?php
 	header("content-type: text/html; charset=UTF-8");
 ?>
+<?php include(CONST_BasePath.'/lib/template/includes/html-header.php'); ?>
+	<link href="css/search.css" rel="stylesheet" type="text/css" />
+</head>
+
 <body id="search-page">
 
-<?php include(CONST_BasePath.'/lib/template/includes/html-header.php'); ?>
 
 	<header class="container-fluid">
 		<div class="row">
@@ -58,62 +61,57 @@
 
 
 	<div id="content">
-<?php
-	if ($sQuery)
-	{
-?>
-	<div id="searchresults" class="sidebar">
-<?php
-	$i = 0;
-	foreach($aSearchResults as $iResNum => $aResult)
-	{
 
-		echo '<div class="result" data-position=' . $i . '>';
+<?php if ($sQuery) { ?>
 
-		echo (isset($aResult['icon'])?'<img alt="icon" src="'.$aResult['icon'].'"/>':'');
-		echo ' <span class="name">'.htmlspecialchars($aResult['name']).'</span>';
-		// echo ' <span class="latlon">'.round($aResult['lat'],3).','.round($aResult['lon'],3).'</span>';
-		// echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
-		if (isset($aResult['label']))
-			echo ' <span class="type">('.$aResult['label'].')</span>';
-		else if ($aResult['type'] == 'yes')
-			echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['class'])).')</span>';
-		else
-			echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
-		echo ' <a class="btn btn-default btn-xs details" href="details.php?place_id='.$aResult['place_id'].'">details</a>';
-		echo '</div>';
-		$i = $i+1;
-	}
-	if (sizeof($aSearchResults) && $sMoreURL)
-	{
-		echo '<div class="more"><a class="btn btn-primary" href="'.htmlentities($sMoreURL).'">Search for more results</a></div>';
-	}
-	else
-	{
-		echo '<div class="noresults">No search results found</div>';
-	}
+		<div id="searchresults" class="sidebar">
+		<?php
+			$i = 0;
+			foreach($aSearchResults as $iResNum => $aResult)
+			{
 
-?>
-	</div>
-<?php
-	}
-	else
-	{
-?>
-	<div id="intro" class="sidebar">
-	</div>
+				echo '<div class="result" data-position=' . $i . '>';
 
-<?php
+				echo (isset($aResult['icon'])?'<img alt="icon" src="'.$aResult['icon'].'"/>':'');
+				echo ' <span class="name">'.htmlspecialchars($aResult['name']).'</span>';
+				// echo ' <span class="latlon">'.round($aResult['lat'],3).','.round($aResult['lon'],3).'</span>';
+				// echo ' <span class="place_id">'.$aResult['place_id'].'</span>';
+				if (isset($aResult['label']))
+					echo ' <span class="type">('.$aResult['label'].')</span>';
+				else if ($aResult['type'] == 'yes')
+					echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['class'])).')</span>';
+				else
+					echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
+				echo ' <a class="btn btn-default btn-xs details" href="details.php?place_id='.$aResult['place_id'].'">details</a>';
+				echo '</div>';
+				$i = $i+1;
+			}
+			if (sizeof($aSearchResults) && $sMoreURL)
+			{
+				echo '<div class="more"><a class="btn btn-primary" href="'.htmlentities($sMoreURL).'">Search for more results</a></div>';
+			}
+			else
+			{
+				echo '<div class="noresults">No search results found</div>';
+			}
 
-	}
-?>
-			<div id="map-wrapper">
-				<div id="map-position"></div>
-				<div id="map"></div>
-			</div>
+		?>
 		</div>
 
-	</div>
+<?php } else { ?>
+
+		<div id="intro" class="sidebar">
+			<?php include(CONST_BasePath.'/lib/template/includes/introduction.php'); ?>
+		</div>
+
+<?php } ?>
+
+		<div id="map-wrapper">
+			<div id="map-position"></div>
+			<div id="map"></div>
+		</div>
+
+	</div> <!-- /content -->
 
 	<footer>
 		<p class="disclaimer">

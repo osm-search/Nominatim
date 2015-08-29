@@ -83,7 +83,7 @@
 		$iCacheMemory = getCacheMemoryMB();
 		echo "WARNING: resetting cache memory to $iCacheMemory\n";
 	}
-	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
+	$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
 	if (!is_null(CONST_Osm2pgsql_Flatnode_File))
 	{
 		$sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;

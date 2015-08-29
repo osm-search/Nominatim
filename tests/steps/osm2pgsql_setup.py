@@ -188,7 +188,7 @@ def osm2pgsql_update_place(step):
     world.run_nominatim_script('setup', 'index', 'index-noanalyse')
     world.run_nominatim_script('setup', 'create-functions', 'create-partition-functions', 'enable-diff-updates')
 
-    with tempfile.NamedTemporaryFile(dir='/tmp', delete=False) as fd:
+    with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.osc', delete=False) as fd:
         fname = fd.name
         fd.write("<?xml version='1.0' encoding='UTF-8'?>\n")
         fd.write('<osmChange version="0.6" generator="Osmosis 0.43.1">\n')

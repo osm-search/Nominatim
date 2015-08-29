@@ -9,6 +9,7 @@ AC_PREREQ(2.61)
 AM_INIT_AUTOMAKE([1.9.6 dist-bzip2 std-options check-news])
 
 dnl Additional macro definitions are in here
+m4_include([m4/ax_lib_postgresql_svr.m4])
 AC_CONFIG_MACRO_DIR([osm2pgsql/m4])
 
 dnl Generate configuration header file
@@ -45,6 +46,7 @@ if test "x$POSTGRESQL_VERSION" = "x"
 then
     AC_MSG_ERROR([postgresql client library not found])
 fi
+AX_LIB_POSTGRESQL_SVR(9.0)
 if test ! -f "$POSTGRESQL_PGXS"
 then
     AC_MSG_ERROR([postgresql server development library not found])

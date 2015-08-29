@@ -79,6 +79,7 @@ Feature: Tag evaluation
      | my:ref
      | br:name
      | name:prefix
+     | name:source
 
     Scenario: Special character in name tag
         Given the osm nodes:
@@ -516,6 +517,10 @@ Feature: Tag evaluation
        | locality
        | wikipedia
        | wikipedia:de
+       | wikidata
+       | name:prefix
+       | name:botanical
+       | name:etymology:wikidata
 
     Scenario: buildings
         Given the osm nodes:

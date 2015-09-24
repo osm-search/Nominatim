@@ -2118,28 +2118,27 @@ BEGIN
 END; 
 $$ LANGUAGE plpgsql;
 
+
 CREATE OR REPLACE FUNCTION get_name_by_language(name hstore, languagepref TEXT[]) RETURNS TEXT
   AS $$
 DECLARE
-  search TEXT[];
-  found BOOLEAN;
+  result TEXT;
 BEGIN
-
   IF name is null THEN
     RETURN null;
   END IF;
 
-  search := languagepref;
-
-  FOR j IN 1..array_upper(search, 1) LOOP
-    IF name ? search[j] AND trim(name->search[j]) != '' THEN
-      return trim(name->search[j]);
+  FOR j IN 1..array_upper(languagepref,1) LOOP
+    IF name ? languagepref[j] THEN
+      result := trim(name->languagepref[j]);
+      IF result != '' THEN
+        return result;
+      END IF;
     END IF;
   END LOOP;
 
   -- anything will do as a fallback - just take the first name type thing there is
-  search := avals(name);
-  RETURN search[1];
+  RETURN trim((avals(name))[1]);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

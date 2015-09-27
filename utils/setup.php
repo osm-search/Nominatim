@@ -730,7 +730,7 @@
 		}
 	}
 
-	if (isset($aCMDResult['drop']))
+	if ($aCMDResult['drop'])
 	{
 		// The implementation is potentially a bit dangerous because it uses
 		// a positive selection of tables to keep, and deletes everything else.

@@ -39,6 +39,7 @@
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
+		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -557,7 +558,7 @@
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 	}
 
-	if ($aCMDResult['osmosis-init'] || $aCMDResult['all'])
+	if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop'])) // no use doing osmosis-init when dropping update tables
 	{
 		$bDidSomething = true;
 		$oDB =& getDB();
@@ -726,6 +727,63 @@
 		{
 			echo "\nWARNING: Unable to access the website at ".CONST_Website_BaseURL."\n";
 			echo "You may want to update settings/local.php with @define('CONST_Website_BaseURL', 'http://[HOST]/[PATH]/');\n";
+		}
+	}
+
+	if (isset($aCMDResult['drop']))
+	{
+		$bDidSomething = true;
+
+		// tables we want to keep. everything else goes.
+		$aKeepTables = array(
+		   "*columns",
+		   "import_polygon_*",
+		   "import_status",
+		   "place_addressline",
+		   "location_property*",
+		   "placex",
+		   "search_name",
+		   "seq_*",
+		   "word",
+		   "query_log",
+		   "new_query_log",
+		   "gb_postcode",
+		   "spatial_ref_sys"
+		);
+
+		$oDB =& getDB();
+		$aDropTables = array();
+		$aHaveTables = $oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
+		if (PEAR::isError($aHaveTables))
+		{
+			fail($aPartitions->getMessage());
+		}
+		foreach($aHaveTables as $sTable)
+		{
+			$bFound = false;
+			foreach ($aKeepTables as $sKeep)
+			{
+				if (fnmatch($sKeep, $sTable))
+				{
+					$bFound = true;
+					break;
+				}
+			}
+			if (!$bFound) array_push($aDropTables, $sTable);
+		}
+
+		foreach ($aDropTables as $sDrop)
+		{
+			if ($aCMDResult['verbose']) echo "dropping table $sDrop\n";
+			@pg_query($oDB->connection, "DROP TABLE $sDrop CASCADE");
+			// ignore warnings/errors as they might be caused by a table having
+			// been deleted already by CASCADE
+		}
+
+		if (!is_null(CONST_Osm2pgsql_Flatnode_File))
+		{
+			if ($aCMDResult['verbose']) echo "deleting ".CONST_Osm2pgsql_Flatnode_File."\n";
+			unlink(CONST_Osm2pgsql_Flatnode_File);
 		}
 	}
 

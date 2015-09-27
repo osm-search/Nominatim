@@ -39,7 +39,7 @@
 		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
-		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly'),
+		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -732,6 +732,10 @@
 
 	if (isset($aCMDResult['drop']))
 	{
+		// The implementation is potentially a bit dangerous because it uses
+		// a positive selection of tables to keep, and deletes everything else.
+		// Including any tables that the unsuspecting user might have manually
+		// created. USE AT YOUR OWN PERIL.
 		$bDidSomething = true;
 
 		// tables we want to keep. everything else goes.
@@ -748,7 +752,9 @@
 		   "query_log",
 		   "new_query_log",
 		   "gb_postcode",
-		   "spatial_ref_sys"
+		   "spatial_ref_sys",
+		   "country_name",
+		   "place_classtype_*"
 		);
 
 		$oDB =& getDB();

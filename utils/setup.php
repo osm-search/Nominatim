@@ -134,7 +134,7 @@
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
 			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
 		} else {
-			pgsqlRunScript('CREATE EXTENSION postgis');
+			pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
 		}
 		if ($fPostgisVersion < 2.1) {
 			// Function was renamed in 2.1 and throws an annoying deprecation warning

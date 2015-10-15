@@ -128,8 +128,10 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 		// 4 words => 8 sets
 		// 10 words => 511 sets
 		// 15 words => 12911 sets
+		// 18 words => 65536 sets
 		// 20 words => 169766 sets
-		// 28 words => 397594 sets
+		// 22 words => 401930 sets
+		// 28 words => 3505699 sets (needs more than 4GB via 'phpunit -d memory_limit=' to run)
 		$this->assertEquals(
 			8,
 			count( getWordSets(array_fill( 0, 4, 'a'),0) )
@@ -137,8 +139,8 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 
 
 		$this->assertEquals(
-			8,
-			count( getWordSets(array_fill( 0, 28, 'a'),0) )
+			65536,
+			count( getWordSets(array_fill( 0, 18, 'a'),0) )
 		);
 
 

@@ -7,7 +7,7 @@ installed.
 
 To execute the test suite run
 $ cd tests-php
-$ phpunit
+$ phpunit ./
 
 It will read phpunit.xml which points to the library, test path, bootstrap
 strip and set other parameters.

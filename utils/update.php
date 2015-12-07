@@ -55,14 +55,14 @@
 	if (exec('/bin/ps uww | grep '.basename(__FILE__).' | grep -v /dev/null | grep -v grep -c', $aOutput2, $iResult) > 1)
 	{
 		echo "Copy already running\n";
-		exit;
+		exit(1);
 	}
 	if (!isset($aResult['max-load'])) $aResult['max-load'] = 1.9;
 	if (!isset($aResult['max-blocking'])) $aResult['max-blocking'] = 3;
 	if (getBlockingProcesses() > $aResult['max-blocking'])
 	{
 		echo "Too many blocking processes for import\n";
-		exit;
+		exit(1);
 	}
 */
 
@@ -121,7 +121,7 @@
 			if (!file_exists($sNextFile))
 			{
 				echo "Cannot open $sNextFile\n";
-				exit;
+				exit(1);
 			}
 			// Don't update the import status - we don't know what this file contains
 			$sUpdateSQL = 'update import_status set lastimportdate = now() where false';
@@ -138,7 +138,7 @@
 			if ($iErrorLevel)
 			{
 				echo "Error from osm2pgsql, $iErrorLevel\n";
-				exit;
+				exit(1);
 			}
 	
 			// Move the date onwards
@@ -206,7 +206,7 @@
 			if ($iErrorLevel)
 			{
 				echo "Error converting osm to osc, osmosis returned: $iErrorLevel\n";
-				exit;
+				exit(1);
 			}
 		}
 		else
@@ -222,7 +222,7 @@
 			if (!is_resource($hProc))
 			{
 				echo "Error converting osm to osc, osmosis failed\n";
-				exit;
+				exit(1);
 			}
 			fwrite($aPipes[0], $sModifyXMLstr);
 			fclose($aPipes[0]);
@@ -237,7 +237,7 @@
 				echo "Error converting osm to osc, osmosis returned: $iError\n";
 				echo $sOut;
 				echo $sErrors;
-				exit;
+				exit(1);
 			}
 		}
 
@@ -248,7 +248,7 @@
 		if ($iErrorLevel)
 		{
 			echo "osm2pgsql exited with error level $iErrorLevel\n";
-			exit;
+			exit(1);
 		}
 	}
 
@@ -258,7 +258,7 @@
 		$pgver = (float) CONST_Postgresql_Version;
                 if ($pgver < 9.3) {
 			echo "ERROR: deduplicate is only currently supported in postgresql 9.3";
-			exit;
+			exit(1);
 		}
 
                 $oDB =& getDB();
@@ -281,7 +281,7 @@
 			if (PEAR::isError($aTokenSet))
 			{
 				var_dump($aTokenSet, $sSQL);
-				exit;
+				exit(1);
 			}
 
 			$aKeep = array_shift($aTokenSet);
@@ -297,7 +297,7 @@
 				if (PEAR::isError($x))
 				{
 					var_dump($x);
-					exit;
+					exit(1);
 				}
 
 				$sSQL = "update search_name set";
@@ -307,7 +307,7 @@
 				if (PEAR::isError($x))
 				{
 					var_dump($x);
-					exit;
+					exit(1);
 				}
 
 				$sSQL = "update location_area_country set";
@@ -317,7 +317,7 @@
 				if (PEAR::isError($x))
 				{
 					var_dump($x);
-					exit;
+					exit(1);
 				}
 
 				foreach ($aPartitions as $sPartition)
@@ -329,7 +329,7 @@
 					if (PEAR::isError($x))
 					{
 						var_dump($x);
-						exit;
+						exit(1);
 					}
 
 					$sSQL = "update location_area_country set";
@@ -339,7 +339,7 @@
 					if (PEAR::isError($x))
 					{
 						var_dump($x);
-						exit;
+						exit(1);
 					}
 				}
 
@@ -348,7 +348,7 @@
 				if (PEAR::isError($x))
 				{
 					var_dump($x);
-					exit;
+					exit(1);
 				}
 			}
 
@@ -365,7 +365,7 @@
 
 		if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
 			echo "Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n";
-			exit;
+			exit(1);
 		}
 
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
@@ -527,7 +527,7 @@
 
 			$fDuration = time() - $fStartTime;
 			echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60,2)." minutes\n";
-			if (!$aResult['import-osmosis-all']) exit;
+			if (!$aResult['import-osmosis-all']) exit(0);
 
 			if ( CONST_Replication_Update_Interval > 60 )
 			{
@@ -549,7 +549,7 @@
 		if (PEAR::isError($iNPIID))
 		{
 			var_dump($iNPIID);
-			exit;
+			exit(1);
 		}
 		$sConfigDirectory = CONST_BasePath.'/settings';
 		$sCMDImportTemplate = $sBasePath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.$sBasePath.'/nominatim/partitionedtags.def -F ';
@@ -581,7 +581,7 @@
 			if ($iErrorLevel)
 			{
 				echo "Error: $iErrorLevel\n";
-				exit;
+				exit(1);
 			}
 			$sBatchEnd = $iNPIID;
 			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";

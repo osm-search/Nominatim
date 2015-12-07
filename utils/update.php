@@ -54,15 +54,13 @@
 	// Lock to prevent multiple copies running
 	if (exec('/bin/ps uww | grep '.basename(__FILE__).' | grep -v /dev/null | grep -v grep -c', $aOutput2, $iResult) > 1)
 	{
-		echo "Copy already running\n";
-		exit(1);
+		fail("Copy already running\n");
 	}
 	if (!isset($aResult['max-load'])) $aResult['max-load'] = 1.9;
 	if (!isset($aResult['max-blocking'])) $aResult['max-blocking'] = 3;
 	if (getBlockingProcesses() > $aResult['max-blocking'])
 	{
-		echo "Too many blocking processes for import\n";
-		exit(1);
+		fail("Too many blocking processes for import\n");
 	}
 */
 
@@ -120,8 +118,7 @@
 			$sNextFile = $aResult['import-diff'];
 			if (!file_exists($sNextFile))
 			{
-				echo "Cannot open $sNextFile\n";
-				exit(1);
+				fail("Cannot open $sNextFile\n");
 			}
 			// Don't update the import status - we don't know what this file contains
 			$sUpdateSQL = 'update import_status set lastimportdate = now() where false';
@@ -137,8 +134,7 @@
 
 			if ($iErrorLevel)
 			{
-				echo "Error from osm2pgsql, $iErrorLevel\n";
-				exit(1);
+				fail("Error from osm2pgsql, $iErrorLevel\n");
 			}
 	
 			// Move the date onwards
@@ -205,8 +201,7 @@
 			exec($sCMD, $sJunk, $iErrorLevel);
 			if ($iErrorLevel)
 			{
-				echo "Error converting osm to osc, osmosis returned: $iErrorLevel\n";
-				exit(1);
+				fail("Error converting osm to osc, osmosis returned: $iErrorLevel\n");
 			}
 		}
 		else
@@ -221,8 +216,7 @@
 			$hProc = proc_open($sCMD, $aSpec, $aPipes);
 			if (!is_resource($hProc))
 			{
-				echo "Error converting osm to osc, osmosis failed\n";
-				exit(1);
+				fail("Error converting osm to osc, osmosis failed\n");
 			}
 			fwrite($aPipes[0], $sModifyXMLstr);
 			fclose($aPipes[0]);
@@ -237,7 +231,7 @@
 				echo "Error converting osm to osc, osmosis returned: $iError\n";
 				echo $sOut;
 				echo $sErrors;
-				exit(1);
+				exit(-1);
 			}
 		}
 
@@ -247,8 +241,7 @@
 		exec($sCMD, $sJunk, $iErrorLevel);
 		if ($iErrorLevel)
 		{
-			echo "osm2pgsql exited with error level $iErrorLevel\n";
-			exit(1);
+			fail("osm2pgsql exited with error level $iErrorLevel\n");
 		}
 	}
 
@@ -257,8 +250,7 @@
 
 		$pgver = (float) CONST_Postgresql_Version;
                 if ($pgver < 9.3) {
-			echo "ERROR: deduplicate is only currently supported in postgresql 9.3";
-			exit(1);
+			fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
 		}
 
                 $oDB =& getDB();
@@ -364,8 +356,7 @@
 	{
 
 		if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
-			echo "Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n";
-			exit(1);
+			fail("Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n");
 		}
 
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
@@ -580,8 +571,7 @@
 			exec($sCMDImport, $sJunk, $iErrorLevel);
 			if ($iErrorLevel)
 			{
-				echo "Error: $iErrorLevel\n";
-				exit(1);
+				fail("Error: $iErrorLevel\n");
 			}
 			$sBatchEnd = $iNPIID;
 			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";

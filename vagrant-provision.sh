@@ -29,10 +29,9 @@ USERNAME=vagrant
 
 sudo apt-get update -qq
 sudo apt-get upgrade -y
-# sudo apt-get install -y git-core screen
 sudo apt-get install -y build-essential libxml2-dev libgeos-dev libpq-dev libbz2-dev \
                         libtool automake libproj-dev libboost-dev  libboost-system-dev \
-                        libboost-filesystem-dev libboost-thread-dev
+                        libboost-filesystem-dev libboost-thread-dev libexpat-dev
 sudo apt-get autoremove -y
 
 # get arrow-keys working in terminal (e.g. editing in vi)
@@ -62,8 +61,7 @@ sudo -u postgres createuser -s $USERNAME
 ###
 ### PHP for frontend
 ###
-sudo apt-get install -y php5 php5-pgsql php-pear 
-sudo pear install DB
+sudo apt-get install -y php5 php5-pgsql php-pear php-db
 
 
 # get rid of some warning
@@ -156,15 +154,12 @@ sudo chown $USERNAME /var/www/nominatim
 ## Test suite (Python)
 ## https://github.com/twain47/Nominatim/tree/master/tests
 ##
-sudo apt-get install -y python-dev python-pip python-Levenshtein tidy
-sudo pip install lettuce nose pytidylib haversine psycopg2 shapely
+sudo apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
+                        python-psycopg2 tidy python-nose python-tidylib
+sudo pip install lettuce haversine
 
-##
 ## Test suite (PHP)
 ## https://github.com/twain47/Nominatim/tree/master/tests-php
-##
-wget --no-clobber -q https://phar.phpunit.de/phpunit.phar
-chmod +x phpunit.phar
-sudo mv phpunit.phar /usr/local/bin/phpunit
+sudo apt-get install -y phpunit
 
 

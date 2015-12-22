@@ -156,7 +156,7 @@ sudo chown $USERNAME /var/www/nominatim
 ##
 sudo apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib
-sudo pip install lettuce haversine
+sudo pip install lettuce==0.2.18 six==1.7 haversine
 
 ## Test suite (PHP)
 ## https://github.com/twain47/Nominatim/tree/master/tests-php

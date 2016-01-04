@@ -1964,7 +1964,7 @@ county_fips = {
 '35007' : 'Colfax, NM' ,
 '35009' : 'Curry, NM' ,
 '35011' : 'De Baca, NM' ,
-'35013' : 'Doña Ana, NM' ,
+'35013' : 'Dona Ana, NM' ,
 '35015' : 'Eddy, NM' ,
 '35017' : 'Grant, NM' ,
 '35019' : 'Guadalupe, NM' ,

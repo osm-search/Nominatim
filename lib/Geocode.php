@@ -356,7 +356,7 @@
 			$this->loadStructuredAddressElement($sPostalCode, 'postalcode' , 5, 11, array(5, 11));
 			$this->loadStructuredAddressElement($sCountry, 'country', 4, 4, false);
 
-			if (sizeof($this->aStructuredQuery) > 0) 
+			if (sizeof($this->aStructuredQuery) > 0)
 			{
 				$this->sQuery = join(', ', $this->aStructuredQuery);
 				if ($this->iMaxAddressRank < 30)
@@ -778,7 +778,7 @@
 			  addressimportance: cumulated importance of address elements
 			  extra_place: type of place (for admin boundaries, if there is a place tag)
 			  aBoundingBox: bounding Box
-			  label: short description of the object class/type (English only) 
+			  label: short description of the object class/type (English only)
 			  name: full name (currently the same as langaddress)
 			  foundorder: secondary ordering for places with same importance
 		*/
@@ -854,7 +854,7 @@
 			// Do we have anything that looks like a lat/lon pair?
 			if ( $aLooksLike = looksLikeLatLonPair($sQuery) ){
 				$this->setNearPoint(array($aLooksLike['lat'], $aLooksLike['lon']));
-				$sQuery = $aLooksLike['query'];			
+				$sQuery = $aLooksLike['query'];
 			}
 
 			$aSearchResults = array();
@@ -1423,6 +1423,36 @@
 									$aPlaceIDs = $aRoadPlaceIDs;
 								}
 
+								// ensure it’s from same city
+								if(CONST_Search_RestrictResultsToCity && !empty($aPlaceIDs))
+								{
+									$cityName = null;
+									$recurse = function($parentPlaceId) use (&$cityName, &$recurse) {
+										$sSQL = "select rank_search, parent_place_id, get_name_by_language(name, ARRAY['name']) as name from placex where place_id = " . $parentPlaceId;
+										$parentRows = $this->oDB->getAll($sSQL);
+										foreach($parentRows as $parentRow) {
+											if($parentRow["rank_search"] == 16) {
+												$cityName = $parentRow["name"];
+												break;
+											}
+											$recurse($parentRow["parent_place_id"]);
+										}
+									};
+
+									$sSQL = "select rank_search, parent_place_id, get_name_by_language(name, ARRAY['name']) as name from placex where place_id IN (" . implode(", ", $aPlaceIDs). ")";
+									$parentRows = $this->oDB->getAll($sSQL);
+									foreach($parentRows as $parentRow) {
+										if($parentRow["rank_search"] == 16) {
+											$cityName = $parentRow["name"];
+											break;
+										}
+										$recurse($parentRow["parent_place_id"]);
+									}
+
+									if($this->aStructuredQuery["city"] != $cityName) {
+										$aPlaceIDs = [];
+									}
+								}
 							}
 
 							if ($aSearch['sClass'] && sizeof($aPlaceIDs))

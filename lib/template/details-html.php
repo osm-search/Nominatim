@@ -2,9 +2,11 @@
 	header("content-type: text/html; charset=UTF-8");
 ?>
 <?php include(CONST_BasePath.'/lib/template/includes/html-header.php'); ?>
+	<link href="css/common.css" rel="stylesheet" type="text/css" />
 	<link href="css/details.css" rel="stylesheet" type="text/css" />
 </head>
 
+<?php include(CONST_BasePath.'/lib/template/includes/html-top-navigation.php'); ?>
 
 
 <?php
@@ -17,7 +19,8 @@
 	function osm_link($aFeature)
 	{
 		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
-		if ($sOSMType) {
+		if ($sOSMType)
+		{
 			return '<a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
 		}
 		return '';
@@ -28,7 +31,7 @@
 		if ($aFeature['wikipedia'])
 		{
 			list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aFeature['wikipedia']);
-			return '<a href="http://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'">'.$aFeature['wikipedia'].'</a>';
+			return '<a href="https://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'" target="_blank">'.$aFeature['wikipedia'].'</a>';
 		}
 		return '';
 	}
@@ -40,7 +43,19 @@
 
 	function format_distance($fDistance)
 	{
-		return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance,1)).' km</abbr>';
+		// $fDistance is in meters
+		if ($fDistance < 1)
+		{
+			return '0';
+		}
+		elseif ($fDistance < 1000)
+		{
+			return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance,0)).' m</abbr>';
+		}
+		else
+		{
+			return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance/1000,1)).' km</abbr>';
+		}
 	}
 
 	function kv($sKey,$sValue)
@@ -245,13 +260,6 @@
 		</div>
 	</div>
 
-	<footer>
-		<p class="copyright">
-			&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors
-		</p>
-	</footer>
-
-
 	<script type="text/javascript">
 
 		var nominatim_result = {
@@ -265,5 +273,5 @@
 
 
 	<?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>
-  </body>
+</body>
 </html>

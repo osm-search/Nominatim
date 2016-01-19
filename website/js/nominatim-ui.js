@@ -165,14 +165,18 @@ jQuery(document).on('ready', function(){
 
 		var layerGroup = new L.layerGroup().addTo(map);
 
-
-		var outline = omnivore.wkt.parse(nominatim_result.outlinestring);
-		map.addLayer(outline);
-
 		var circle = L.circleMarker([nominatim_result.lat,nominatim_result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75});
 		map.addLayer(circle);
 
-		map.fitBounds(outline.getBounds());
+		if ( nominatim_result.outlinestring ){
+			var outline = omnivore.wkt.parse(nominatim_result.outlinestring);
+			map.addLayer(outline);
+			map.fitBounds(outline.getBounds());
+		} else {
+			map.setView([nominatim_result.lat,nominatim_result.lon],10);
+		}
+
+
 
 });
 

@@ -129,7 +129,7 @@ No. Long running Nominatim installations will differ once new import features (o
 bug fixes) get added since those usually only get applied to new/changed data.
 
 Also this document skips the optional Wikipedia data import which affects ranking
-of search results. See [Nominatim instllation](http://wiki.openstreetmap.org/wiki/Nominatim/Installation) for details.
+of search results. See [Nominatim installation](http://wiki.openstreetmap.org/wiki/Nominatim/Installation) for details.
 
 ##### Why Ubuntu, can I test CentOS/CoreOS/FreeBSD?
 

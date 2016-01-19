@@ -1,5 +1,3 @@
-/* http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css */
-
 /* required styles */
 
 .leaflet-map-pane,
@@ -23,6 +21,7 @@
 .leaflet-container {
 	overflow: hidden;
 	-ms-touch-action: none;
+	touch-action: none;
 	}
 .leaflet-tile,
 .leaflet-marker-icon,

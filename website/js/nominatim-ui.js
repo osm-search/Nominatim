@@ -3,22 +3,39 @@ var last_click_latlng;
 
 jQuery(document).on('ready', function(){
 
-	if ( !$('#search-page').length ){ return; }
+	if ( !$('#search-page,#reverse-page').length ){ return; }
 	
+	var is_reverse_search = !!( $('#reverse-page').length );
+
 	$('#q').focus();
 
 	map = new L.map('map', {
-				center: [nominatim_map_init.lat, nominatim_map_init.lon],
-				zoom:   nominatim_map_init.zoom,
+				// center: [nominatim_map_init.lat || 0, nominatim_map_init.lon],
+				// zoom:   nominatim_map_init.zoom,
 				attributionControl: false,
 				scrollWheelZoom:    false,
 				touchZoom:          false,
 			});
 
+
+
 	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		noWrap: true // otherwise we end up with click coordinates like latitude -728
 		// moved to footer
 		// attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	}).addTo(map);
+
+	if ( nominatim_map_init.lat ){
+		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], nominatim_map_init.zoom);
+
+		if ( is_reverse_search ){
+			// not really a market, but the .circle changes radius once you zoom in/out
+			var cm = L.circleMarker([nominatim_map_init.lat,nominatim_map_init.lon], { radius: 5, weight: 2, fillColor: '#ff7800', color: 'red', opacity: 0.75, clickable: false});
+			cm.addTo(map);
+		}
+	} else {
+		map.setView([0,0],2);
+	}
 
 
 
@@ -81,7 +98,7 @@ jQuery(document).on('ready', function(){
 		return L.marker([result.lat,result.lon], {riseOnHover:true,title:result.name });
 	}
 	function circle_for_result(result){
-		return L.circleMarker([result.lat,result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75});
+		return L.circleMarker([result.lat,result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75, clickable: !is_reverse_search});
 	}
 
 	var layerGroup = new L.layerGroup().addTo(map);
@@ -116,7 +133,16 @@ jQuery(document).on('ready', function(){
 			}
 		}
 		else {
-			map.panTo([result.lat,result.lon], result.zoom || nominatim_map_init.zoom);
+			if ( is_reverse_search ){
+				// make sure the search coordinates are in the map view as well
+				map.fitBounds([[result.lat,result.lon], [nominatim_map_init.lat,nominatim_map_init.lon]], {padding: [50,50]});
+
+				// better, but causes a leaflet warning
+				// map.panInsideBounds([[result.lat,result.lon], [nominatim_map_init.lat,nominatim_map_init.lon]], {animate: false});
+			}
+			else {
+				map.panTo([result.lat,result.lon], result.zoom || nominatim_map_init.zoom);
+			}
 		}
 
 		// var crosshairIcon = L.icon({
@@ -138,6 +164,14 @@ jQuery(document).on('ready', function(){
 	$('.result').on('click', function(e){
 		highlight_result($(this).data('position'), true);
 	});
+
+	if ( is_reverse_search ){
+		map.on('click', function(e){
+			$('form input[name=lat]').val( e.latlng.lat);
+			$('form input[name=lon]').val( e.latlng.lng);
+			$('form').submit();
+		});
+	}
 
 	highlight_result(0, false);
 

@@ -28,6 +28,9 @@
 				</label>
 			</div>
 		</div>
+		<div>
+			<a href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
+		</div>
 	</form>
 
 
@@ -100,7 +103,6 @@
 		];
 		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
-		$aNominatimResults = [];
 		echo 'var nominatim_results = ' . json_encode($aSearchResults, JSON_PRETTY_PRINT) . ';'; 
 	?>
 	</script>

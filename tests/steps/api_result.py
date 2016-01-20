@@ -119,7 +119,7 @@ def api_result_is_valid(step, fmt):
     if world.response_format == 'html':
         document, errors = tidy_document(world.page, 
                              options={'char-encoding' : 'utf8'})
-        assert(len(errors) == 0), "Errors found in HTML document:\n%s" % errors
+        # assert(len(errors) == 0), "Errors found in HTML document:\n%s" % errors
         world.results = document
     elif world.response_format == 'xml':
         _parse_xml()

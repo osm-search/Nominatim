@@ -3,7 +3,7 @@
       <div class="col-xs-4">
         <div class="brand">
           <a href="<?php echo CONST_Website_BaseURL;?>">
-          <img alt="logo" src="images/osm_logo.120px.png" width="40" height="40"/>
+          <img alt="logo" src="images/osm_logo.120px.png" width="30" height="30"/>
           <h1>Nominatim</h1>
           </a>
         </div>
@@ -17,7 +17,7 @@
       </div>
       <div class="col-xs-4 text-right">
         <div class="btn-group">
-          <button class="dropdown-toggle btn btn-default" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+          <button class="dropdown-toggle btn btn-sm btn-default" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             About &amp; Help <span class="caret"></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-right">

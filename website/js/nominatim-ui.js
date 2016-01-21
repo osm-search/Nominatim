@@ -24,13 +24,14 @@ jQuery(document).on('ready', function(){
 	}).addTo(map);
 
 	if ( nominatim_map_init.lat ){
-		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], nominatim_map_init.zoom);
+		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], (nominatim_map_init.prevmapzoom || nominatim_map_init.zoom) );
 
 		if ( is_reverse_search ){
 			// not really a market, but the .circle changes radius once you zoom in/out
 			var cm = L.circleMarker([nominatim_map_init.lat,nominatim_map_init.lon], { radius: 5, weight: 2, fillColor: '#ff7800', color: 'red', opacity: 0.75, clickable: false});
 			cm.addTo(map);
 		}
+
 	} else {
 		map.setView([0,0],2);
 	}
@@ -49,7 +50,9 @@ jQuery(document).on('ready', function(){
 
 		html_viewbox = "viewbox: " + map_viewbox_as_string();
 
-		$('#map-position').html([html_center,html_viewbox,html_click,html_mouse].join('<br/>'));
+		html_zoom = "zoom: " + map.getZoom();
+
+		$('#map-position').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 		$('input#use_viewbox').trigger('change');
 	}
 
@@ -133,7 +136,7 @@ jQuery(document).on('ready', function(){
 		else {
 			if ( is_reverse_search ){
 				// make sure the search coordinates are in the map view as well
-				map.fitBounds([[result.lat,result.lon], [nominatim_map_init.lat,nominatim_map_init.lon]], {padding: [50,50]});
+				map.fitBounds([[result.lat,result.lon], [nominatim_map_init.lat,nominatim_map_init.lon]], {padding: [50,50], maxZoom: map.getZoom()});
 
 				// better, but causes a leaflet warning
 				// map.panInsideBounds([[result.lat,result.lon], [nominatim_map_init.lat,nominatim_map_init.lon]], {animate: false});
@@ -167,6 +170,7 @@ jQuery(document).on('ready', function(){
 		map.on('click', function(e){
 			$('form input[name=lat]').val( e.latlng.lat);
 			$('form input[name=lon]').val( e.latlng.lng);
+			if ( map.getZoom() > 2 ){ $('form input[name=prevmapzoom]').val( map.getZoom() ); }
 			$('form').submit();
 		});
 	}

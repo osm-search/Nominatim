@@ -13,6 +13,7 @@
   <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
     <div class="form-group">
       <input name="format" type="hidden" value="html">
+      <input name="prevmapzoom" type="hidden" value="">
       <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars($_GET['lat']); ?>" >
       <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars($_GET['lon']); ?>" >
     </div>
@@ -74,9 +75,10 @@
   <?php
 
     $aNominatimMapInit = [
-      'zoom' => (isset($_GET['lat'])||$_GET['lat'])?16:NULL,
-      'lat' => isset($_GET['lat'])?htmlspecialchars($_GET['lat']):NULL,
-      'lon' => isset($_GET['lon'])?htmlspecialchars($_GET['lon']):NULL
+      'prevmapzoom' => isset($_GET['prevmapzoom'])?htmlspecialchars($_GET['prevmapzoom']):NULL,
+      'zoom' => isset($_GET['zoom'])?htmlspecialchars($_GET['zoom']):NULL,
+      'lat'  => isset($_GET['lat'] )?htmlspecialchars($_GET['lat']):NULL,
+      'lon'  => isset($_GET['lon'] )?htmlspecialchars($_GET['lon']):NULL
     ];
     echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 

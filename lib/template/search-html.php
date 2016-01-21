@@ -14,7 +14,7 @@
 		<div class="form-group">
 			<input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo htmlspecialchars($sQuery); ?>" >
 		</div>
-		<div class="form-group">
+		<div class="form-group search-button-group">
 			<button type="submit" class="btn btn-primary btn-sm">Search</button>
 			<?php if (CONST_Search_AreaPolygons) { ?>
 				<!-- <input type="checkbox" value="1" name="polygon" <?php if ($bAsText) echo "checked='checked'"; ?>/> Highlight -->
@@ -28,7 +28,7 @@
 				</label>
 			</div>
 		</div>
-		<div>
+		<div class="search-type-link">
 			<a href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
 		</div>
 	</form>

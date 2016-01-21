@@ -16,10 +16,10 @@
       <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars($_GET['lat']); ?>" >
       <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars($_GET['lon']); ?>" >
     </div>
-    <div class="form-group">
+    <div class="form-group search-button-group">
       <button type="submit" class="btn btn-primary btn-sm">Search</button>
     </div>
-    <div>
+    <div class="search-type-link">
       <a href="<?php echo CONST_Website_BaseURL; ?>search.php">forward search</a>
     </div>
   </form>

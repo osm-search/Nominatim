@@ -7,11 +7,23 @@ form {
 form #q {
   min-width: 500px;
 }
+@media (max-width: 850px) {
+form #q {
+  min-width: 400px;
+}
+}
 form .checkbox-inline {
   margin-left: 10px;  
 }
 form label {
   font-weight: normal;
+}
+
+.search-type-link {
+  display: inline;
+  margin-right: 2em;
+  position: absolute;
+  right: 0
 }
 
 .sidebar {
@@ -122,5 +134,8 @@ footer p {
   }
   .sidebar {
     width: 100%;
+  }
+  .search-button-group {
+    display: inline
   }
 }

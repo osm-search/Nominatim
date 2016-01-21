@@ -10,11 +10,9 @@ jQuery(document).on('ready', function(){
 	$('#q').focus();
 
 	map = new L.map('map', {
-				// center: [nominatim_map_init.lat || 0, nominatim_map_init.lon],
-				// zoom:   nominatim_map_init.zoom,
-				attributionControl: false,
-				scrollWheelZoom:    false,
-				touchZoom:          false,
+				attributionControl: false, // moved to page footer
+				scrollWheelZoom:    !L.Browser.touch,
+				touchZoom:          false
 			});
 
 

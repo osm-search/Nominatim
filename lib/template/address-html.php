@@ -48,7 +48,7 @@
 
           foreach($aZoomLevels as $iZoomLevel => $sLabel)
           {
-            $bSel = isset($_GET['zoom']) && ($_GET['zoom'] == $iZoomLevel);
+            $bSel = isset($_GET['zoom']) && ($_GET['zoom'] == (string)$iZoomLevel);
             echo '<option value="'.$iZoomLevel.'"'.($bSel?'selected':'').'>'.$iZoomLevel.' '.$sLabel.'</option>'."\n";
           }
         ?>

@@ -1,12 +1,23 @@
-body {
-    margin:0px;
-    padding:16px;
-  background:#ffffff;
-  height: 100%;
-  font: normal 12px/15px arial,sans-serif;
+h1 {
+  margin: 10px 0;
+  padding-left: 8px;
 }
-.line{
-  margin-left:20px;
+h2 {
+  font-size: 2em;
+  padding-left: 8px;
+}
+h3 {
+  font-size: 1.5em;
+  padding-left: 8px;
+}
+.table {
+  width: 100%;
+}
+.table td {
+  font-size: 0.9em;
+}
+.table>thead>tr>td, .table>tbody>tr>td {
+  padding: 2px 8px;
 }
 .name{
   font-weight: bold;
@@ -18,9 +29,22 @@ body {
   color:#800;
 }
 #map {
-  width:500px;
-  height:500px;
-  border: 2px solid #666;
-  float: right;
+  width:100%;
+  height:300px;
+  border: 1px solid #666;
+}
+#mapicon {
+  margin: 10px 0;
 }
 
+footer {
+  text-align: center;  
+  padding: 2em 0;
+  font-size: 0.8em;
+  clear: both;
+  color: #333;
+}
+
+footer p {
+  margin: 1em;
+}

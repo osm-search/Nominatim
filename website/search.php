@@ -13,7 +13,6 @@
 	$fLat = CONST_Default_Lat;
 	$fLon = CONST_Default_Lon;
 	$iZoom = CONST_Default_Zoom;
-	$sSuggestionURL = false;
 
 	$oGeocode =& new Geocode($oDB);
 
@@ -49,11 +48,11 @@
 		$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
 		$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
 		if ( ( ($bAsGeoJSON?1:0)
-		     + ($bAsKML?1:0)
-		     + ($bAsSVG?1:0)
-		     + ($bAsText?1:0)
-		     + ($bAsPoints?1:0)
-		     ) > CONST_PolygonOutput_MaximumTypes)
+				 + ($bAsKML?1:0)
+				 + ($bAsSVG?1:0)
+				 + ($bAsText?1:0)
+				 + ($bAsPoints?1:0)
+				 ) > CONST_PolygonOutput_MaximumTypes)
 		{
 			if (CONST_PolygonOutput_MaximumTypes)
 			{
@@ -93,23 +92,24 @@
 		}
 		include(CONST_BasePath.'/lib/template/search-batch-json.php');
 		exit;
-	} else {
-        if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
-        {
-            $sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
+	}
+	else
+	{
+		if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+		{
+				$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
-            // reverse order of '/' separated string
-            $aPhrases = explode('/', $sQuery);
-            $aPhrases = array_reverse($aPhrases);
-            $sQuery = join(', ',$aPhrases);
-            $oGeocode->setQuery($sQuery);
-        }
-        else
-        {
-            $oGeocode->setQueryFromParams($_GET);
-        }
-
-    }
+				// reverse order of '/' separated string
+				$aPhrases = explode('/', $sQuery);
+				$aPhrases = array_reverse($aPhrases);
+				$sQuery = join(', ',$aPhrases);
+				$oGeocode->setQuery($sQuery);
+		}
+		else
+		{
+				$oGeocode->setQueryFromParams($_GET);
+		}
+	}
 
 	$hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 

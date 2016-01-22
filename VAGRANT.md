@@ -129,7 +129,7 @@ No. Long running Nominatim installations will differ once new import features (o
 bug fixes) get added since those usually only get applied to new/changed data.
 
 Also this document skips the optional Wikipedia data import which affects ranking
-of search results. See [Nominatim instllation](http://wiki.openstreetmap.org/wiki/Nominatim/Installation) for details.
+of search results. See [Nominatim installation](http://wiki.openstreetmap.org/wiki/Nominatim/Installation) for details.
 
 ##### Why Ubuntu, can I test CentOS/CoreOS/FreeBSD?
 
@@ -157,6 +157,8 @@ inside the virtual machine. It will map the port to `localhost:9999` and then
 you edit `settings/local.php` with
 
     pgsql://postgres@localhost:9999/nominatim_it
+
+To access postgres directly remember to specify the hostname, e.g. `psql --host localhost --port 9999 nominatim_it`
 
 
 ##### My computer is slow and the import takes too long. Can I start the virtual machine "in the cloud"?

@@ -24,7 +24,7 @@ jQuery(document).on('ready', function(){
 	}).addTo(map);
 
 	if ( nominatim_map_init.lat ){
-		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], (nominatim_map_init.prevmapzoom || nominatim_map_init.zoom) );
+		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], nominatim_map_init.zoom);
 
 		if ( is_reverse_search ){
 			// not really a market, but the .circle changes radius once you zoom in/out
@@ -48,9 +48,9 @@ jQuery(document).on('ready', function(){
 			map.getCenter().lat.toFixed(5) + ',' + map.getCenter().lng.toFixed(5) +
 			" <a target='_blank' href='" + map_link_to_osm() + "'>view on osm.org</a>";
 
-		html_viewbox = "viewbox: " + map_viewbox_as_string();
+		html_zoom = "map zoom: " + map.getZoom();
 
-		html_zoom = "zoom: " + map.getZoom();
+		html_viewbox = "viewbox: " + map_viewbox_as_string();
 
 		$('#map-position').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 		$('input#use_viewbox').trigger('change');
@@ -170,7 +170,6 @@ jQuery(document).on('ready', function(){
 		map.on('click', function(e){
 			$('form input[name=lat]').val( e.latlng.lat);
 			$('form input[name=lon]').val( e.latlng.lng);
-			if ( map.getZoom() > 2 ){ $('form input[name=prevmapzoom]').val( map.getZoom() ); }
 			$('form').submit();
 		});
 	}

@@ -13,9 +13,46 @@
   <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
     <div class="form-group">
       <input name="format" type="hidden" value="html">
-      <input name="prevmapzoom" type="hidden" value="">
       <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars($_GET['lat']); ?>" >
       <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars($_GET['lon']); ?>" >
+      max zoom
+
+      <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars($_GET['zoom']); ?>">
+        <option value="" <?php echo $_GET['zoom']==''?'selected':'' ?> >--</option>
+        <?php
+
+          $aZoomLevels = array(
+             0 => "Continent / Sea",
+             1 => "",
+             2 => "",
+             3 => "Country",
+             4 => "",
+             5 => "State",
+             6 => "Region",
+             7 => "",
+             8 => "County",
+             9 => "",
+            10 => "City",
+            11 => "",
+            12 => "Town / Village",
+            13 => "",
+            14 => "Suburb",
+            15 => "",
+            16 => "Street",
+            17 => "",
+            18 => "Building",
+            19 => "",
+            20 => "",
+            21 => "",
+          );
+
+          foreach($aZoomLevels as $iZoomLevel => $sLabel)
+          {
+            $bSel = isset($_GET['zoom']) && ($_GET['zoom'] == $iZoomLevel);
+            echo '<option value="'.$iZoomLevel.'"'.($bSel?'selected':'').'>'.$iZoomLevel.' '.$sLabel.'</option>'."\n";
+          }
+        ?>
+      </select>
     </div>
     <div class="form-group search-button-group">
       <button type="submit" class="btn btn-primary btn-sm">Search</button>
@@ -75,7 +112,6 @@
   <?php
 
     $aNominatimMapInit = [
-      'prevmapzoom' => isset($_GET['prevmapzoom'])?htmlspecialchars($_GET['prevmapzoom']):NULL,
       'zoom' => isset($_GET['zoom'])?htmlspecialchars($_GET['zoom']):NULL,
       'lat'  => isset($_GET['lat'] )?htmlspecialchars($_GET['lat']):NULL,
       'lon'  => isset($_GET['lon'] )?htmlspecialchars($_GET['lon']):NULL

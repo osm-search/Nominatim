@@ -76,4 +76,6 @@
 		exit;
 	}
 
+	$sTileURL = CONST_Map_Tile_URL;
+	$sTileAttribution = CONST_Map_Tile_Attribution;
 	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

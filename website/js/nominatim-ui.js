@@ -10,30 +10,23 @@ jQuery(document).on('ready', function(){
 	$('#q').focus();
 
 	map = new L.map('map', {
-				attributionControl: false, // moved to page footer
+				attributionControl: (nominatim_map_init.tile_attribution && nominatim_map_init.tile_attribution.length),
 				scrollWheelZoom:    !L.Browser.touch,
 				touchZoom:          false
 			});
 
-
-
-	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-		noWrap: true // otherwise we end up with click coordinates like latitude -728
+	L.tileLayer(nominatim_map_init.tile_url, {
+		noWrap: true, // otherwise we end up with click coordinates like latitude -728
 		// moved to footer
-		// attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		attribution: (nominatim_map_init.tile_attribution || null ) //'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	}).addTo(map);
 
-	if ( nominatim_map_init.lat ){
-		map.setView([nominatim_map_init.lat || 0, nominatim_map_init.lon], nominatim_map_init.zoom);
+	map.setView([nominatim_map_init.lat, nominatim_map_init.lon], nominatim_map_init.zoom);
 
-		if ( is_reverse_search ){
-			// not really a market, but the .circle changes radius once you zoom in/out
-			var cm = L.circleMarker([nominatim_map_init.lat,nominatim_map_init.lon], { radius: 5, weight: 2, fillColor: '#ff7800', color: 'red', opacity: 0.75, clickable: false});
-			cm.addTo(map);
-		}
-
-	} else {
-		map.setView([0,0],2);
+	if ( is_reverse_search ){
+		// We don't need a marker, but an L.circle instance changes radius once you zoom in/out
+		var cm = L.circleMarker([nominatim_map_init.lat,nominatim_map_init.lon], { radius: 5, weight: 2, fillColor: '#ff7800', color: 'red', opacity: 0.75, clickable: false});
+		cm.addTo(map);
 	}
 
 
@@ -188,15 +181,17 @@ jQuery(document).on('ready', function(){
 		map = new L.map('map', {
 					// center: [nominatim_map_init.lat, nominatim_map_init.lon],
 					// zoom:   nominatim_map_init.zoom,
-					attributionControl: false,
+					attributionControl: (nominatim_map_init.tile_attribution && nominatim_map_init.tile_attribution.length),
 					scrollWheelZoom:    false,
 					touchZoom:          false,
 				});
 
-		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+
+		L.tileLayer(nominatim_map_init.tile_url, {
 			// moved to footer
-			// attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+			attribution: (nominatim_map_init.tile_attribution || null ) //'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(map);
+
 
 		var layerGroup = new L.layerGroup().addTo(map);
 

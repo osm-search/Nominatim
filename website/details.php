@@ -127,4 +127,7 @@
 
 	logEnd($oDB, $hLog, 1);
 
+	$sTileURL = CONST_Map_Tile_URL;
+	$sTileAttribution = CONST_Map_Tile_Attribution;
+	
 	include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');

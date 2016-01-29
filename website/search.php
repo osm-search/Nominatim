@@ -13,6 +13,8 @@
 	$fLat = CONST_Default_Lat;
 	$fLon = CONST_Default_Lon;
 	$iZoom = CONST_Default_Zoom;
+	$sTileURL = CONST_Map_Tile_URL;
+	$sTileAttribution = CONST_Map_Tile_Attribution;
 
 	$oGeocode =& new Geocode($oDB);
 

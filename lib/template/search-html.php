@@ -99,7 +99,9 @@
 		$aNominatimMapInit = [
 			'zoom' => $iZoom,
 			'lat' => $fLat,
-			'lon' => $fLon
+			'lon' => $fLon,
+			'tile_url' => $sTileURL,
+			'tile_attribution' => $sTileAttribution
 		];
 		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 

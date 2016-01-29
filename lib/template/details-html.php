@@ -6,7 +6,6 @@
 	<link href="css/details.css" rel="stylesheet" type="text/css" />
 </head>
 
-<?php include(CONST_BasePath.'/lib/template/includes/html-top-navigation.php'); ?>
 
 
 <?php
@@ -114,6 +113,7 @@
 
 
 <body id="details-page">
+	<?php include(CONST_BasePath.'/lib/template/includes/html-top-navigation.php'); ?>
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-10">
@@ -261,13 +261,23 @@
 	</div>
 
 	<script type="text/javascript">
+	<?php
 
-		var nominatim_result = {
-			outlinestring: '<?php echo $aPointDetails['outlinestring'];?>',
-			lon: <?php echo $aPointDetails['lon'];?>,
-			lat: <?php echo $aPointDetails['lat'];?>,
-		};
+    $aNominatimMapInit = [
+      'tile_url' => $sTileURL,
+      'tile_attribution' => $sTileAttribution
+    ];
+    echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
+    $aPlace = [
+			'outlinestring' => $aPointDetails['outlinestring'],
+			'lon' => $aPointDetails['lon'],
+			'lat' => $aPointDetails['lat'],
+    ];
+	  echo 'var nominatim_result = ' . json_encode($aPlace, JSON_PRETTY_PRINT) . ';'; 
+
+
+  ?>
 	</script>
 
 

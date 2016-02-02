@@ -277,6 +277,9 @@ gettokenstring( PG_FUNCTION_ARGS )
 	str_replace(buffer, &len, &changes, "ie", 2, "i", 1, 0);
 	str_replace(buffer, &len, &changes, "yi", 2, "i", 1, 0);
 
+	// spanish & catalan
+	str_replace(buffer, &len, &changes, " de ", 4, " ", 1, 0);
+
 	// allocate & create the result
 	len--;// Drop the terminating zero
 	result = (text *)palloc(len + VARHDRSZ);

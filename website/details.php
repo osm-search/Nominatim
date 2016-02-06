@@ -88,10 +88,18 @@
 	// Get all alternative names (languages, etc)
 	$sSQL = "select (each(name)).key,(each(name)).value from placex where place_id = $iPlaceID order by (each(name)).key";
 	$aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
+	if (PEAR::isError($aPointDetails['aNames'])) // possible timeout
+	{
+		$aPointDetails['aNames'] = [];
+	}
 
 	// Extra tags
 	$sSQL = "select (each(extratags)).key,(each(extratags)).value from placex where place_id = $iPlaceID order by (each(extratags)).key";
 	$aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
+	if (PEAR::isError($aPointDetails['aExtraTags'])) // possible timeout
+	{
+		$aPointDetails['aExtraTags'] = [];
+	}
 
 	// Address
 	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], true);
@@ -99,19 +107,27 @@
 	// Linked places
 	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
 	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
-	$sSQL .= " from placex, (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
+	$sSQL .= " from placex, (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
 	$sSQL .= " where linked_place_id = $iPlaceID";
 	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
 	$aLinkedLines = $oDB->getAll($sSQL);
+	if (PEAR::isError($aLinkedLines)) // possible timeout
+	{
+		$aLinkedLines = [];
+	}
 
 	// All places this is an imediate parent of
 	$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
 	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
 	$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
 	$sSQL .= " where parent_place_id = $iPlaceID order by rank_address asc,rank_search asc limit 500) as obj,";
-	$sSQL .= " (select geometry as placegeometry from placex where place_id = $iPlaceID) as x";
+	$sSQL .= " (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
 	$sSQL .= " order by rank_address asc,rank_search asc,localname,housenumber";
 	$aParentOfLines = $oDB->getAll($sSQL);
+	if (PEAR::isError($aParentOfLines)) // possible timeout
+	{
+		$aParentOfLines = [];
+	}
 
 	$aPlaceSearchNameKeywords = false;
 	$aPlaceSearchAddressKeywords = false;
@@ -119,10 +135,26 @@
 	{
 		$sSQL = "select * from search_name where place_id = $iPlaceID";
 		$aPlaceSearchName = $oDB->getRow($sSQL);
+		if (PEAR::isError($aPlaceSearchName)) // possible timeout
+		{
+			$aPlaceSearchName = [];
+		}
+
 		$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'],1,-1).")";
 		$aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
+		if (PEAR::isError($aPlaceSearchNameKeywords)) // possible timeout
+		{
+			$aPlaceSearchNameKeywords = [];
+		}
+
+
 		$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'],1,-1).")";
 		$aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
+		if (PEAR::isError($aPlaceSearchAddressKeywords)) // possible timeout
+		{
+			$aPlaceSearchAddressKeywords = [];
+		}
+
 	}
 
 	logEnd($oDB, $hLog, 1);

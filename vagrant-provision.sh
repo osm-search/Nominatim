@@ -29,7 +29,7 @@ USERNAME=vagrant
 
 sudo apt-get update -qq
 sudo apt-get upgrade -y
-sudo apt-get install -y build-essential libxml2-dev libgeos-dev libpq-dev libbz2-dev \
+sudo apt-get install -y build-essential libgeos-dev libpq-dev libbz2-dev \
                         libtool automake libproj-dev libboost-dev  libboost-system-dev \
                         libboost-filesystem-dev libboost-thread-dev libexpat-dev
 sudo apt-get autoremove -y
@@ -73,18 +73,19 @@ echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php5/cli/conf.d/99-timezone.ini
 ###
 ### Nominatim
 ###
-sudo apt-get install -y libprotobuf-c0-dev protobuf-c-compiler \
-                        libgeos-c1 libgeos++-dev \
-                        lua5.2 liblua5.2-dev
-
-# git clone --recursive https://github.com/twain47/Nominatim.git
-
+sudo apt-get install -y libgeos-c1 libgeos++-dev libxml2-dev
 
 # now ideally login as $USERNAME and continue
 su $USERNAME -l
-cd /home/vagrant/Nominatim
+cd /home/vagrant
 
-# cd ~/Nominatim
+if [ ! -d "Nominatim" ]; then
+  sudo apt-get install -y git
+  git clone --recursive https://github.com/twain47/Nominatim.git
+fi
+
+cd Nominatim
+
 ./autogen.sh
 ./configure
 make

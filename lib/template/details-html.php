@@ -13,13 +13,11 @@
 
 	function headline($sTitle)
 	{
-		// echo "<h2>".$sTitle."</h2>\n";
 		echo "<tr class='all-columns'><td colspan='6'><h2>".$sTitle."</h2></td></tr>\n";
 	}
 
 	function headline3($sTitle)
 	{
-		// echo "<h2>".$sTitle."</h2>\n";
 		echo "<tr class='all-columns'><td colspan='6'><h3>".$sTitle."</h3></td></tr>\n";
 	}
 

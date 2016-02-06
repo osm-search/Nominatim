@@ -13,7 +13,14 @@
 
 	function headline($sTitle)
 	{
-		echo "<h2>".$sTitle."</h2>\n";
+		// echo "<h2>".$sTitle."</h2>\n";
+		echo "<tr class='all-columns'><td colspan='6'><h2>".$sTitle."</h2></td></tr>\n";
+	}
+
+	function headline3($sTitle)
+	{
+		// echo "<h2>".$sTitle."</h2>\n";
+		echo "<tr class='all-columns'><td colspan='6'><h3>".$sTitle."</h3></td></tr>\n";
 	}
 
 	function osm_link($aFeature)
@@ -97,15 +104,15 @@
 	function _one_row($aAddressLine){
 		$bNotUsed = (isset($aAddressLine['isaddress']) && $aAddressLine['isaddress'] == 'f');
 
-		echo '<tr class="' . ($bNotUsed?'notused':'') . '">';
-		echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</td>';
-		echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . '</td>';
-		echo '  <td>' . osm_link($aAddressLine) . '</td>';
-		echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . '</td>';
-		// echo '<td>' . (isset($aAddressLine['rank_search_label']) ? $aAddressLine['rank_search_label'] : '') .'</td>';
+		echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
+		echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
+		echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
+		echo '  <td>' . osm_link($aAddressLine) . "</td>\n";
+		echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . "</td>\n";
+		// echo '<td>' . (isset($aAddressLine['rank_search_label']) ? $aAddressLine['rank_search_label'] : '') ."</td>\n";
 		// echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
-		echo '  <td>' . format_distance($aAddressLine['distance']).'</td>';;
-		echo '  <td>' . nominatim_link($aAddressLine,'details &gt;') . '</td>';;
+		echo '  <td>' . format_distance($aAddressLine['distance'])."</td>\n";
+		echo '  <td>' . nominatim_link($aAddressLine,'details &gt;') . "</td>\n";
 		echo "</tr>\n";
 	}
 
@@ -184,8 +191,6 @@
 					}
 				?>
 	
-				</tbody>
-			</table>
 
 
 <?php
@@ -193,12 +198,10 @@
 	if ($aLinkedLines)
 	{
 		headline('Linked Places');
-		echo '<table id="linked" class="table table-striped table-responsive">';
 		foreach($aLinkedLines as $aAddressLine)
 		{	
 			_one_row($aAddressLine);
 		}
-		echo '</table>';
 	}
 
 
@@ -220,7 +223,7 @@
 			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'."</div>\n";
 		}
 	}
-
+	
 	if (sizeof($aParentOfLines))
 	{
 		headline('Parent Of');
@@ -238,14 +241,12 @@
 		foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
 		{
 			$sGroupHeading = ucwords($sGroupHeading);
-			echo "<h3>$sGroupHeading</h3>\n";
+			headline3($sGroupHeading);
 
-			echo '<table id="linked" class="table table-striped table-responsive">';
 			foreach($aParentOfLines as $aAddressLine)
 			{
 				_one_row($aAddressLine);
 			}
-			echo '</table>';
 		}
 		if (sizeof($aParentOfLines) >= 500) {
 			echo '<p>There are more child objects which are not shown.</p>';
@@ -254,6 +255,8 @@
 
 	// headline('Other Parts');
 	// headline('Linked To');
+
+	echo "</table>\n";
 ?>
 
 			</div>

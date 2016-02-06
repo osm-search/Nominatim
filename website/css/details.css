@@ -5,11 +5,22 @@ h1 {
 h2 {
   font-size: 2em;
   padding-left: 8px;
+  background-color: white;
 }
 h3 {
   font-size: 1.5em;
   padding-left: 8px;
 }
+
+tr.all-columns {
+  background-color: white !important; 
+  border: none;
+}
+tr.all-columns td {
+  border-top: none !important;
+  padding-left: 0 !important;
+}
+
 .table {
   width: 100%;
 }

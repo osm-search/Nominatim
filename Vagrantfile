@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
   # If true, then any SSH connections made will enable agent forwarding.
   config.ssh.forward_agent = true
 
-  #config.vm.synced_folder ".", "/home/vagrant/Nominatim"
+  config.vm.synced_folder ".", "/home/vagrant/Nominatim"
 
   config.vm.define "ubuntu" do |sub|
       sub.vm.box = "ubuntu/trusty64"

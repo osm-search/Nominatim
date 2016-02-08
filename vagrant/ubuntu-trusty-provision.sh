@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This script sets up a Nominatim installation on a Ubuntu box.
+#
+# For more detailed installation instructions see also
+# http://wiki.openstreetmap.org/wiki/Nominatim/Installation
+
+## Part 1: System preparation
 
 ## During 'vagrant provision' this script runs as root and the current
 ## directory is '/root'
@@ -75,20 +81,22 @@ echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php5/cli/conf.d/99-timezone.ini
 ###
 sudo apt-get install -y libgeos-c1 libgeos++-dev libxml2-dev
 
-# now ideally login as $USERNAME and continue
-su $USERNAME -l
-cd /home/vagrant
+## Part 2: Nominatim installaion
 
+# now ideally login as $USERNAME and continue
+cd /home/$USERNAME
+
+# If the Nominatim source is not being shared with the host, check out source.
 if [ ! -d "Nominatim" ]; then
   sudo apt-get install -y git
-  git clone --recursive https://github.com/twain47/Nominatim.git
+  sudo -u $USERNAME git clone --recursive https://github.com/twain47/Nominatim.git
 fi
 
 cd Nominatim
 
-./autogen.sh
-./configure
-make
+sudo -u $USERNAME ./autogen.sh
+sudo -u $USERNAME ./configure
+sudo -u $USERNAME make
 chmod +x ./
 chmod +x ./module
 
@@ -139,12 +147,12 @@ Listen 8089
 ' | sudo tee /etc/apache2/sites-enabled/nominatim.conf > /dev/null
 
 
-sudo apache2ctl graceful
+apache2ctl graceful
 
 
-sudo mkdir -m 755 /var/www/nominatim
-sudo chown $USERNAME /var/www/nominatim
-./utils/setup.php --threads 1 --create-website /var/www/nominatim
+mkdir -m 755 /var/www/nominatim
+chown $USERNAME /var/www/nominatim
+sudo -u $USERNAME ./utils/setup.php --create-website /var/www/nominatim
 
 
 # if you get 'permission denied for relation word', then try
@@ -155,12 +163,12 @@ sudo chown $USERNAME /var/www/nominatim
 ## Test suite (Python)
 ## https://github.com/twain47/Nominatim/tree/master/tests
 ##
-sudo apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
+apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib
-sudo pip install lettuce==0.2.18 six==1.7 haversine
+pip install lettuce==0.2.18 six==1.7 haversine
 
 ## Test suite (PHP)
 ## https://github.com/twain47/Nominatim/tree/master/tests-php
-sudo apt-get install -y phpunit
+apt-get install -y phpunit
 
 

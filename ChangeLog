@@ -1,5 +1,12 @@
- * reverse geocoding looking includes looking up Tiger data
+2.5
 
+ * reverse geocoding includes looking up housenumbers from Tiger data
+ * added parameter to return simplified geometries
+ * new lookup call for getting address information for OSM objects
+ * new namedetails and extratags parameters that expose the name and extratags
+   fields of the placex table
+ * mobile website
+ * reverse web view
 
 2.4
 

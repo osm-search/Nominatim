@@ -117,7 +117,7 @@ jQuery(document).on('ready', function(){
 
 			var bounds = [[result.aBoundingBox[0]*1,result.aBoundingBox[2]*1], [result.aBoundingBox[1]*1,result.aBoundingBox[3]*1]];
 			map.fitBounds(bounds);
-			if (result.astext && result.astext.match(/POLY/) ){
+			if (result.astext && result.astext.match(/(POLY)|(LINE)/) ){
 				var layer = omnivore.wkt.parse(result.astext);
 				layerGroup.addLayer(layer);
 			}

@@ -2,30 +2,28 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-
-  # Ubuntu LTS 14.04
-  config.vm.box = "ubuntu/trusty64" 
-
   # Apache webserver
   config.vm.network "forwarded_port", guest: 8089, host: 8089
-
 
   # If true, then any SSH connections made will enable agent forwarding.
   config.ssh.forward_agent = true
 
-  config.vm.synced_folder ".", "/home/vagrant/Nominatim"
+  #config.vm.synced_folder ".", "/home/vagrant/Nominatim"
 
-
-
-  # provision using a simple shell script
-  config.vm.provision :shell, :path => "vagrant-provision.sh"
-
+  config.vm.define "ubuntu" do |sub|
+      sub.vm.box = "ubuntu/trusty64"
+      sub.vm.provision :shell, :path => "vagrant/ubuntu-trusty-provision.sh"
+  end
+  config.vm.define "centos" do |sub|
+      sub.vm.box = "bento/centos-7.2"
+      sub.vm.provision :shell, :path => "vagrant/centos-7-provision.sh"
+  end
 
   # configure shared package cache if possible
-  if Vagrant.has_plugin?("vagrant-cachier")
-    config.cache.enable :apt
-    config.cache.scope = :box
-  end
+  #if Vagrant.has_plugin?("vagrant-cachier")
+  #  config.cache.enable :apt
+  #  config.cache.scope = :box
+  #end
 
 
   config.vm.provider "virtualbox" do |vb|

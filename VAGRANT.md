@@ -30,11 +30,11 @@ is.
 
 1. Start the virtual machine
 
-        vagrant up
+        vagrant up ubuntu
 
 2. Log into the virtual machine
 
-        vagrant ssh
+        vagrant ssh ubuntu
 
 3. Import a small country (Monaco)
 
@@ -54,7 +54,7 @@ is.
 
   To repeat an import you'd need to delete the database first
 
-        dropdb --username postgres -if-exists nominatim
+        dropdb -if-exists nominatim
 
 
 
@@ -131,9 +131,11 @@ bug fixes) get added since those usually only get applied to new/changed data.
 Also this document skips the optional Wikipedia data import which affects ranking
 of search results. See [Nominatim installation](http://wiki.openstreetmap.org/wiki/Nominatim/Installation) for details.
 
-##### Why Ubuntu, can I test CentOS/CoreOS/FreeBSD?
+##### Why Ubuntu and CentOS, can I test CentOS/CoreOS/FreeBSD?
 
-In general Nominatim will run in all these environment. The installation steps
+There is a Vagrant script for CentOS available. Simply start your box
+with `vagrant up centos` and then log in with `vagrant ssh centos`.
+In general Nominatim will also run in the other environments. The installation steps
 are slightly different, e.g. the name of the package manager, Apache2 package
 name, location of files. We chose Ubuntu because that is closest to the
 nominatim.openstreetmap.org production environment.

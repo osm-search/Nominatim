@@ -78,7 +78,7 @@
 		$aBreadcrums[] = array('placeId'=>$aPlace['place_id'], 'osmType'=>$aPlace['osm_type'], 'osmId'=>$aPlace['osm_id'], 'localName'=>$aPlace['localname']);
 		$sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
 		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':'')));
-                $sOSMUrl = 'http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPlace['osm_id'];
+				$sOSMUrl = 'http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPlace['osm_id'];
 		if ($sOutputFormat == 'html') if ($i) echo " > ";
 		if ($sOutputFormat == 'html') echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
 	}
@@ -102,52 +102,52 @@
 	$sSQL .= " order by rank_address asc,rank_search asc,localname,class, type,housenumber";
 	$aParentOfLines = $oDB->getAll($sSQL);
 
-        if (sizeof($aParentOfLines))
-        {
-                echo '<h2>Parent Of:</h2>';
+	if (sizeof($aParentOfLines))
+	{
+		echo '<h2>Parent Of:</h2>';
 		$aClassType = getClassTypesWithImportance();
-                $aGroupedAddressLines = array();
-                foreach($aParentOfLines as $aAddressLine)
-                {
+		$aGroupedAddressLines = array();
+		foreach($aParentOfLines as $aAddressLine)
+		{
 			if (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-                                              && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-                                {
-                                        $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
-                                }
+			      && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
+			{
+				$aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
+			}
 			elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-                                              && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-                                {
-                                        $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
-                                }
+			        && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
+			{
+				$aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
+			}
 			else $aAddressLine['label'] = ucwords($aAddressLine['type']);
 
-                        if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
-                        $aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;
-                }
-                foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
-                {
-                        echo "<h3>$sGroupHeading</h3>";
-                foreach($aParentOfLines as $aAddressLine)
-                {
-                        $aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
-                        $sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
+			if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
+				$aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;
+			}
+			foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
+			{
+				echo "<h3>$sGroupHeading</h3>";
+				foreach($aParentOfLines as $aAddressLine)
+				{
+					$aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
+					$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
 
-                        echo '<div class="line">';
-                        echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
-                        echo ' (';
-                        echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
-                        if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-                        echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
-                        echo ', '.$aAddressLine['area'];
-                        echo ')';
-                        echo '</div>';
-                }
-                }
-                if (sizeof($aParentOfLines) >= 500) {
-                        echo '<p>There are more child objects which are not shown.</p>';
-                }
-                echo '</div>';
-        }
+					echo '<div class="line">';
+					echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
+					echo ' (';
+					echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
+					if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
+					echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
+					echo ', '.$aAddressLine['area'];
+					echo ')';
+					echo '</div>';
+				}
+			}
+			if (sizeof($aParentOfLines) >= 500) {
+				echo '<p>There are more child objects which are not shown.</p>';
+			}
+			echo '</div>';
+		}
 exit;
 
 

@@ -13,7 +13,7 @@
 	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
 
 	if (CONST_ClosedForIndexing && strpos(CONST_ClosedForIndexingExceptionIPs, ','.$_SERVER["REMOTE_ADDR"].',') === false)
- 	{
+	{
 		echo "Closed for re-indexing...";
 		exit;
 	}

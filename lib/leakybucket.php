@@ -7,39 +7,39 @@
 		if (!CONST_ConnectionBucket_MemcacheServerAddress) return null;
 		if (!isset($m))
 		{
-		        $m = new Memcached();
-        		$m->addServer(CONST_ConnectionBucket_MemcacheServerAddress, CONST_ConnectionBucket_MemcacheServerPort);
+			$m = new Memcached();
+			$m->addServer(CONST_ConnectionBucket_MemcacheServerAddress, CONST_ConnectionBucket_MemcacheServerPort);
 		}
 		return $m;
 	}
 
 	function doBucket($asKey, $iRequestCost, $iLeakPerSecond, $iThreshold)
 	{
-	        $m = getBucketMemcache();
+		$m = getBucketMemcache();
 		if (!$m) return 0;
 
 		$iMaxVal = 0;
-	        $t = time();
+		$t = time();
 
 		foreach($asKey as $sKey)
 		{
-		        $aCurrentBlock = $m->get($sKey);
-	        	if (!$aCurrentBlock)
+			$aCurrentBlock = $m->get($sKey);
+			if (!$aCurrentBlock)
 			{
-		                $aCurrentBlock = array($iRequestCost, $t, false);
-        		}
+				$aCurrentBlock = array($iRequestCost, $t, false);
+			}
 			else
 			{
 				// add RequestCost
 				// remove leak * the time since the last request 
-	        		$aCurrentBlock[0] += $iRequestCost - ($t - $aCurrentBlock[1])*$iLeakPerSecond;
-		        	$aCurrentBlock[1] = $t;
+				$aCurrentBlock[0] += $iRequestCost - ($t - $aCurrentBlock[1])*$iLeakPerSecond;
+				$aCurrentBlock[1] = $t;
 			}
 
-	        	if ($aCurrentBlock[0] <= 0)
+			if ($aCurrentBlock[0] <= 0)
 			{
-                		$m->delete($sKey);
-		        }
+				$m->delete($sKey);
+			}
 			else
 			{
 				// If we have hit the threshold stop and record this to the block list
@@ -77,7 +77,7 @@
 					}
 				}
 				// Only keep in memcache until the time it would have expired (to avoid clutering memcache)
-	                	$m->set($sKey, $aCurrentBlock, $t + 1 + $aCurrentBlock[0]/$iLeakPerSecond);
+						$m->set($sKey, $aCurrentBlock, $t + 1 + $aCurrentBlock[0]/$iLeakPerSecond);
 			}
 
 			// Bucket result in the largest bucket we find
@@ -85,16 +85,16 @@
 		}
 
 		return $iMaxVal;
-        }
+	}
 
 	function isBucketSleeping($asKey)
 	{
-	        $m = getBucketMemcache();
+		$m = getBucketMemcache();
 		if (!$m) return false;
 
 		foreach($asKey as $sKey)
 		{
-		        $aCurrentBlock = $m->get($sKey);
+			$aCurrentBlock = $m->get($sKey);
 			if ($aCurrentBlock[2]) return true;
 		}
 		return false;
@@ -102,15 +102,15 @@
 
 	function setBucketSleeping($asKey, $bVal)
 	{
-	        $m = getBucketMemcache();
+		$m = getBucketMemcache();
 		if (!$m) return false;
 
 		$iMaxVal = 0;
-	        $t = time();
+		$t = time();
 
 		foreach($asKey as $sKey)
 		{
-		        $aCurrentBlock = $m->get($sKey);
+			$aCurrentBlock = $m->get($sKey);
 			$aCurrentBlock[2] = $bVal;
 			$m->set($sKey, $aCurrentBlock, $t + 1 + $aCurrentBlock[0]/CONST_ConnectionBucket_LeakRate);
 		}
@@ -137,9 +137,9 @@
 
 	function getBucketBlocks()
 	{
-	        $m = getBucketMemcache();
+		$m = getBucketMemcache();
 		if (!$m) return null;
-	        $t = time();
+		$t = time();
 		$aBlockedList = $m->get('blockedList', null, $hCasToken);
 		if (!$aBlockedList) $aBlockedList = array();
 		foreach($aBlockedList as $sKey => $aDetails)
@@ -161,7 +161,7 @@
 
 	function clearBucketBlocks()
 	{
-	        $m = getBucketMemcache();
+		$m = getBucketMemcache();
 		if (!$m) return false;
 		$m->delete('blockedList');
 		return true;

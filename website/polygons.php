@@ -39,12 +39,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-    
-    <title>Nominatim Broken Polygon Data</title>
-    
-    <meta name="description" content="List of broken OSM polygon data by date" lang="en-US" />
+	<meta charset="utf-8"/>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+	
+	<title>Nominatim Broken Polygon Data</title>
+	
+	<meta name="description" content="List of broken OSM polygon data by date" lang="en-US" />
 
 </head>
 

@@ -1,6 +1,6 @@
 <?php
-        require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
-        require_once(CONST_BasePath.'/lib/log.php');
+	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(CONST_BasePath.'/lib/log.php');
 
 	$sOutputFormat = 'html';
 	ini_set('memory_limit', '200M');
@@ -19,12 +19,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-    
-    <title>Nominatim Deleted Data</title>
-    
-    <meta name="description" content="List of OSM data that has been deleted" lang="en-US" />
+	<meta charset="utf-8"/>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+	
+	<title>Nominatim Deleted Data</title>
+	
+	<meta name="description" content="List of OSM data that has been deleted" lang="en-US" />
 
 </head>
 
@@ -79,16 +79,16 @@ table td {
 		{
 			switch($sCol)
 			{
-            case 'osm_id':
-                $sOSMType = ($aRow['osm_type'] == 'N'?'node':($aRow['osm_type'] == 'W'?'way':($aRow['osm_type'] == 'R'?'relation':'')));
-                echo '<td><a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
-                                break;
-			case 'place_id':
-				echo '<td><a href="'.CONST_Website_BaseURL.'details?place_id='.$sVal.'">'.$sVal.'</a></td>';
-				break;
-			default:
-				echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
-				break;
+				case 'osm_id':
+					$sOSMType = ($aRow['osm_type'] == 'N'?'node':($aRow['osm_type'] == 'W'?'way':($aRow['osm_type'] == 'R'?'relation':'')));
+					echo '<td><a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
+					break;
+				case 'place_id':
+					echo '<td><a href="'.CONST_Website_BaseURL.'details?place_id='.$sVal.'">'.$sVal.'</a></td>';
+					break;
+				default:
+					echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
+					break;
 			}
 		}
 		echo "</tr>";

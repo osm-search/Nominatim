@@ -478,15 +478,15 @@
 		function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
 		{
 			/*
-			   Calculate all searches using aValidTokens i.e.
-			   'Wodsworth Road, Sheffield' =>
+				 Calculate all searches using aValidTokens i.e.
+				 'Wodsworth Road, Sheffield' =>
 
-			   Phrase Wordset
-			   0      0       (wodsworth road)
-			   0      1       (wodsworth)(road)
-			   1      0       (sheffield)
+				 Phrase Wordset
+				 0      0       (wodsworth road)
+				 0      1       (wodsworth)(road)
+				 1      0       (sheffield)
 
-			   Score how good the search is so they can be ordered
+				 Score how good the search is so they can be ordered
 			 */
 			foreach($aPhrases as $iPhrase => $sPhrase)
 			{
@@ -755,32 +755,32 @@
 		/* Perform the actual query lookup.
 
 			Returns an ordered list of results, each with the following fields:
-			  osm_type: type of corresponding OSM object
+				osm_type: type of corresponding OSM object
 							N - node
 							W - way
 							R - relation
 							P - postcode (internally computed)
-			  osm_id: id of corresponding OSM object
-			  class: general object class (corresponds to tag key of primary OSM tag)
-			  type: subclass of object (corresponds to tag value of primary OSM tag)
-			  admin_level: see http://wiki.openstreetmap.org/wiki/Admin_level
-			  rank_search: rank in search hierarchy
+				osm_id: id of corresponding OSM object
+				class: general object class (corresponds to tag key of primary OSM tag)
+				type: subclass of object (corresponds to tag value of primary OSM tag)
+				admin_level: see http://wiki.openstreetmap.org/wiki/Admin_level
+				rank_search: rank in search hierarchy
 							(see also http://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
-			  rank_address: rank in address hierarchy (determines orer in address)
-			  place_id: internal key (may differ between different instances)
-			  country_code: ISO country code
-			  langaddress: localized full address
-			  placename: localized name of object
-			  ref: content of ref tag (if available)
-			  lon: longitude
-			  lat: latitude
-			  importance: importance of place based on Wikipedia link count
-			  addressimportance: cumulated importance of address elements
-			  extra_place: type of place (for admin boundaries, if there is a place tag)
-			  aBoundingBox: bounding Box
-			  label: short description of the object class/type (English only) 
-			  name: full name (currently the same as langaddress)
-			  foundorder: secondary ordering for places with same importance
+				rank_address: rank in address hierarchy (determines orer in address)
+				place_id: internal key (may differ between different instances)
+				country_code: ISO country code
+				langaddress: localized full address
+				placename: localized name of object
+				ref: content of ref tag (if available)
+				lon: longitude
+				lat: latitude
+				importance: importance of place based on Wikipedia link count
+				addressimportance: cumulated importance of address elements
+				extra_place: type of place (for admin boundaries, if there is a place tag)
+				aBoundingBox: bounding Box
+				label: short description of the object class/type (English only) 
+				name: full name (currently the same as langaddress)
+				foundorder: secondary ordering for places with same importance
 		*/
 		function lookup()
 		{
@@ -863,8 +863,8 @@
 				// Start with a blank search
 				$aSearches = array(
 					array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 'aFullNameAddress'=>array(),
-					      'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
-					      'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
+								'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
+								'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
 				);
 
 				// Do we have a radius search?
@@ -1194,8 +1194,8 @@
 								{
 									$sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-                                    if ($bBoundingBoxSearch)
-                                        $sSQL .= " and _st_intersects($this->sViewboxSmallSQL, geometry)";
+									if ($bBoundingBoxSearch)
+										$sSQL .= " and _st_intersects($this->sViewboxSmallSQL, geometry)";
 									$sSQL .= " order by st_area(geometry) desc limit 1";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $this->oDB->getCol($sSQL);
@@ -1615,7 +1615,7 @@
 				if (!preg_match('/\pL/', $sWord)) unset($aRecheckWords[$i]);
 			}
 
-            if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
+			if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
 
 			foreach($aSearchResults as $iResNum => $aResult)
 			{

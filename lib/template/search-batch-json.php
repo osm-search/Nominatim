@@ -11,8 +11,8 @@
 		foreach($aSearchResults as $iResNum => $aPointDetails)
 		{
 			$aPlace = array(
-					'place_id'=>$aPointDetails['place_id'],
-				  );
+						'place_id'=>$aPointDetails['place_id'],
+					);
 
 			$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
 			if ($sOSMType)
@@ -21,8 +21,8 @@
 				$aPlace['osm_id'] = $aPointDetails['osm_id'];
 			}
 
-        	        if (isset($aPointDetails['aBoundingBox']))
-                	{
+			if (isset($aPointDetails['aBoundingBox']))
+			{
 				$aPlace['boundingbox'] = array(
 					$aPointDetails['aBoundingBox'][0],
 					$aPointDetails['aBoundingBox'][1],
@@ -33,7 +33,7 @@
 				{
 					$aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
 				}
-	                }
+			}
 
 			if (isset($aPointDetails['zoom']))
 			{
@@ -58,27 +58,27 @@
 			if (isset($aPointDetails['address']) && sizeof($aPointDetails['address'])>0)
 			{
 				$aPlace['address'] = $aPointDetails['address'];
-        	        }
+			}
 
-	                if (isset($aPointDetails['asgeojson']))
-        	        {
+			if (isset($aPointDetails['asgeojson']))
+			{
 				$aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
-        	        }
+			}
 
-	                if (isset($aPointDetails['assvg']))
-        	        {
+			if (isset($aPointDetails['assvg']))
+			{
 				$aPlace['svg'] = $aPointDetails['assvg'];
-	                }
+			}
 
-	                if (isset($aPointDetails['astext']))
-        	        {
-                	        $aPlace['geotext'] = $aPointDetails['astext'];
-	                }
+			if (isset($aPointDetails['astext']))
+			{
+				$aPlace['geotext'] = $aPointDetails['astext'];
+			}
 
-        	        if (isset($aPointDetails['askml']))
-                	{
-                        	$aPlace['geokml'] = $aPointDetails['askml'];
-	                }
+			if (isset($aPointDetails['askml']))
+			{
+				$aPlace['geokml'] = $aPointDetails['askml'];
+			}
 
 			$aFilteredPlaces[] = $aPlace;
 		}

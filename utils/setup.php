@@ -711,6 +711,7 @@
 
 		@symlink(CONST_BasePath.'/website/details.php', $sTargetDir.'/details.php');
 		@symlink(CONST_BasePath.'/website/reverse.php', $sTargetDir.'/reverse.php');
+		@symlink(CONST_BasePath.'/website/nearpois.php', $sTargetDir.'/poisnear.php');
 		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/search.php');
 		@symlink(CONST_BasePath.'/website/search.php', $sTargetDir.'/index.php');
 		@symlink(CONST_BasePath.'/website/lookup.php', $sTargetDir.'/lookup.php');
@@ -871,7 +872,7 @@
 			$sCMD .= ' -v ON_ERROR_STOP=1';
 		$aDescriptors = array(
 			0 => array('pipe', 'r'),
-			1 => STDOUT, 
+			1 => STDOUT,
 			2 => STDERR
 		);
 		$ahPipes = null;

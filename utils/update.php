@@ -64,9 +64,6 @@
 	}
 */
 
-	// Assume osm2pgsql is in the folder above
-	$sBasePath = dirname(dirname(__FILE__));
-
 	date_default_timezone_set('Etc/UTC');
 
 	$oDB =& getDB();
@@ -349,7 +346,7 @@
 
 	if ($aResult['index'])
 	{
-		passthru(CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
+		passthru(CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 	}
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
@@ -361,11 +358,11 @@
 
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
 		$sOsmosisCMD = CONST_Osmosis_Binary;
-		$sOsmosisConfigDirectory = CONST_BasePath.'/settings';
+		$sOsmosisConfigDirectory = CONST_InstallPath.'/settings';
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-		$sCMDIndex = $sBasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
+		$sCMDIndex = $sInstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}
@@ -542,8 +539,8 @@
 			var_dump($iNPIID);
 			exit(1);
 		}
-		$sConfigDirectory = CONST_BasePath.'/settings';
-		$sCMDImportTemplate = $sBasePath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.$sBasePath.'/nominatim/partitionedtags.def -F ';
+		$sConfigDirectory = CONST_InstallPath.'/settings';
+		$sCMDImportTemplate = $sBasePath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.CONST_BasePath.'/nominatim/partitionedtags.def -F ';
 		while(true)
 		{
 			$fStartTime = time();

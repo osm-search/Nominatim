@@ -2,7 +2,7 @@
 
 	@define('CONST_BasePath', dirname(dirname(__FILE__)));
 
-	require_once(CONST_BasePath.'/settings/settings.php');
+	require_once('settings/settings.php');
 	require_once(CONST_BasePath.'/lib/lib.php');
 	require_once(CONST_BasePath.'/lib/leakybucket.php');
 	require_once(CONST_BasePath.'/lib/db.php');

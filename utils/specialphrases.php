@@ -15,7 +15,7 @@
         );
         getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-		include(CONST_BasePath.'/settings/phrase_settings.php');
+		include(CONST_InstallPath.'/settings/phrase_settings.php');
 
 
     if ($aCMDResult['countries']) {

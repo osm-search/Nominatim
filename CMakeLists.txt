@@ -54,6 +54,26 @@ find_package(LibXml2 REQUIRED)
 include_directories(${LIBXML2_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
+#
+# Setup settings and paths
+#
+#-----------------------------------------------------------------------------
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/settings/settings.php
+    ${PROJECT_BINARY_DIR}/settings/settings.php
+)
+
+configure_file(
+    ${PROJECT_SOURCE_DIR}/settings/phrase_settings.php
+    ${PROJECT_BINARY_DIR}/settings/phrase_settings.php
+)
+
+execute_process(
+    COMMAND ln -s -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/utils
+)
+
+#-----------------------------------------------------------------------------
 
 add_subdirectory(module)
 add_subdirectory(nominatim)

@@ -219,9 +219,9 @@
 	{
 		echo "Functions\n";
 		$bDidSomething = true;
-		if (!file_exists(CONST_BasePath.'/module/nominatim.so')) fail("nominatim module not built");
+		if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}', CONST_BasePath.'/module', $sTemplate);
+		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
 		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
 		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
 		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
@@ -292,7 +292,7 @@
 		echo "Functions\n";
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
 		$sTemplate = str_replace('{modulepath}',
-			                     CONST_BasePath.'/module', $sTemplate);
+			                     CONST_InstallPath.'/module', $sTemplate);
 		pgsqlRunScript($sTemplate);
 	}
 
@@ -573,16 +573,16 @@
 		}
 		else
 		{
-			if (file_exists(CONST_BasePath.'/settings/configuration.txt'))
+			if (file_exists(CONST_InstallPath.'/settings/configuration.txt'))
 			{
 				echo "settings/configuration.txt already exists\n";
 			}
 			else
 			{
-				passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_BasePath.'/settings');
+				passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_InstallPath.'/settings');
 				// update osmosis configuration.txt with our settings
-				passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_BasePath.'/settings/configuration.txt');
-				passthru("sed -i 's:maxInterval = .*:maxInterval = ".CONST_Replication_MaxInterval.":' ".CONST_BasePath.'/settings/configuration.txt');
+				passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_InstallPath.'/settings/configuration.txt');
+				passthru("sed -i 's:maxInterval = .*:maxInterval = ".CONST_Replication_MaxInterval.":' ".CONST_InstallPath.'/settings/configuration.txt');
 			}
 
 			// Find the last node in the DB
@@ -636,7 +636,7 @@
 				echo "Getting state file: $sRepURL\n";
 				$sStateFile = file_get_contents($sRepURL);
 				if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
-				file_put_contents(CONST_BasePath.'/settings/state.txt', $sStateFile);
+				file_put_contents(CONST_InstallPath.'/settings/state.txt', $sStateFile);
 				echo "Updating DB status\n";
 				pg_query($oDB->connection, 'TRUNCATE import_status');
 				$sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
@@ -657,7 +657,7 @@
 		$bDidSomething = true;
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
-		$sBaseCmd = CONST_BasePath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+		$sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthruCheckReturn($sBaseCmd.' -r 5 -R 25');

@@ -862,9 +862,23 @@
 			{
 				// Start with a blank search
 				$aSearches = array(
-					array('iSearchRank' => 0, 'iNamePhrase' => -1, 'sCountryCode' => false, 'aName'=>array(), 'aAddress'=>array(), 'aFullNameAddress'=>array(),
-								'aNameNonSearch'=>array(), 'aAddressNonSearch'=>array(),
-								'sOperator'=>'', 'aFeatureName' => array(), 'sClass'=>'', 'sType'=>'', 'sHouseNumber'=>'', 'fLat'=>'', 'fLon'=>'', 'fRadius'=>'')
+					array('iSearchRank' => 0, 
+								'iNamePhrase' => -1, 
+								'sCountryCode' => false, 
+								'aName' => array(), 
+								'aAddress' => array(), 
+								'aFullNameAddress' => array(),
+								'aNameNonSearch' => array(), 
+								'aAddressNonSearch' => array(),
+								'sOperator' => '', 
+								'aFeatureName' => array(), 
+								'sClass' => '', 
+								'sType' => '', 
+								'sHouseNumber' => '', 
+								'fLat' => '', 
+								'fLon' => '', 
+								'fRadius' => ''
+							)
 				);
 
 				// Do we have a radius search?
@@ -1676,34 +1690,16 @@
 
 						if ($this->bIncludePolygonAsPoints)
 						{
-							// Translate geometry string to point array
-							if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
-							{
-								preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-							}
-							elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$aPointPolygon['astext'],$aMatch))
-							{
-								preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
-							}
-							elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$aPointPolygon['astext'],$aMatch))
-							{
-								$iSteps = max(8, min(100, ($fRadius * 40000)^2));
-								$fStepSize = (2*pi())/$iSteps;
-								$aPolyPoints = array();
-								for($f = 0; $f < 2*pi(); $f += $fStepSize)
-								{
-									$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
-								}
-							}
-						}
+							$aPolyPoints[] = geometryText2Points($aPointPolygon['astext'],$fRadius);
 
-						// Output data suitable for display (points and a bounding box)
-						if ($this->bIncludePolygonAsPoints && isset($aPolyPoints))
-						{
-							$aResult['aPolyPoints'] = array();
-							foreach($aPolyPoints as $aPoint)
+							// Output data suitable for display (points and a bounding box)
+							if (isset($aPolyPoints))
 							{
-								$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
+								$aResult['aPolyPoints'] = array();
+								foreach($aPolyPoints as $aPoint)
+								{
+									$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
+								}
 							}
 						}
 

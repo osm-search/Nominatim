@@ -113,6 +113,19 @@
 		echo "</tr>\n";
 	}
 
+	function _one_keyword_row($keyword_token,$word_id){
+		echo "<tr>\n";
+		echo '<td>';
+		// mark partial tokens (those starting with a space) with a star for readability
+		echo ($keyword_token[0]==' '?'*':'');
+		echo $keyword_token;
+		if (isset($word_id))
+		{
+			echo '</td><td>('.$word_id.')';
+		}
+		echo "</td></tr>\n";
+	}
+
 ?>
 
 
@@ -209,7 +222,7 @@
 		headline('Name Keywords');
 		foreach($aPlaceSearchNameKeywords as $aRow)
 		{
-			echo '<div>'.$aRow['word_token']."</div>\n";
+			_one_keyword_row($aRow['word_token']);
 		}
 	}
 
@@ -218,7 +231,7 @@
 		headline('Address Keywords');
 		foreach($aPlaceSearchAddressKeywords as $aRow)
 		{
-			echo '<div>'.($aRow['word_token'][0]==' '?'*':'').$aRow['word_token'].'('.$aRow['word_id'].')'."</div>\n";
+			_one_keyword_row($aRow['word_token'], $aRow['word_id']);
 		}
 	}
 	

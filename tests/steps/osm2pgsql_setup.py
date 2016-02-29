@@ -155,7 +155,8 @@ def osm2pgsql_load_place(step):
 
     cmd = [os.path.join(world.config.source_dir, 'utils', 'setup.php')]
     cmd.extend(['--osm-file', fname, '--import-data','--osm2pgsql-cache', '300'])
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, cwd=world.config.source_dir,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (outp, outerr) = proc.communicate()
     assert (proc.returncode == 0), "OSM data import failed:\n%s\n%s\n" % (outp, outerr)
 
@@ -204,7 +205,8 @@ def osm2pgsql_update_place(step):
 
     cmd = [os.path.join(world.config.source_dir, 'utils', 'update.php')]
     cmd.extend(['--import-diff', fname])
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, cwd=world.config.source_dir,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (outp, outerr) = proc.communicate()
     assert (proc.returncode == 0), "OSM data update failed:\n%s\n%s\n" % (outp, outerr)
 

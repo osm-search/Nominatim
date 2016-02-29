@@ -23,7 +23,7 @@ class NominatimConfig:
             logging.basicConfig(level=loglevel)
         # Nominatim test setup
         self.base_url = os.environ.get('NOMINATIM_SERVER', 'http://localhost/nominatim')
-        self.source_dir = os.path.abspath(os.environ.get('NOMINATIM_DIR', '..'))
+        self.source_dir = os.path.abspath(os.environ.get('NOMINATIM_DIR', '../build'))
         self.template_db = os.environ.get('TEMPLATE_DB', 'test_template_nominatim')
         self.test_db = os.environ.get('TEST_DB', 'test_nominatim')
         self.local_settings_file = os.environ.get('NOMINATIM_SETTINGS', '/tmp/nominatim_settings.php')
@@ -52,7 +52,8 @@ def write_nominatim_config(dbname):
 def run_nominatim_script(script, *args):
     cmd = [os.path.join(world.config.source_dir, 'utils', '%s.php' % script)]
     cmd.extend(['--%s' % x for x in args])
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, cwd=world.config.source_dir,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (outp, outerr) = proc.communicate()
     assert (proc.returncode == 0), "Script '%s' failed:\n%s\n%s\n" % (script, outp, outerr)
 
@@ -176,8 +177,9 @@ def db_template_setup():
     conn.close()
     # execute osm2pgsql on an empty file to get the right tables
     osm2pgsql = os.path.join(world.config.source_dir, 'osm2pgsql', 'osm2pgsql')
-    proc = subprocess.Popen([osm2pgsql, '-lsc', '-O', 'gazetteer', '-d', world.config.template_db, '-'],
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen([osm2pgsql, '-lsc', '-r', 'xml', '-O', 'gazetteer', '-d', world.config.template_db, '-'],
+                            cwd=world.config.source_dir, stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     [outstr, errstr] = proc.communicate(input='<osm version="0.6"></osm>')
     world.run_nominatim_script('setup', 'create-functions', 'create-tables', 'create-partition-tables', 'create-partition-functions', 'load-data', 'create-search-indices')
 

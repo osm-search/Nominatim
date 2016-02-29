@@ -36,10 +36,7 @@
 		if (isset($aResult['aBoundingBox']))
 		{
 			echo ' boundingbox="';
-			echo $aResult['aBoundingBox'][0];
-			echo ','.$aResult['aBoundingBox'][1];
-			echo ','.$aResult['aBoundingBox'][2];
-			echo ','.$aResult['aBoundingBox'][3];
+			echo join(',',$aResult['aBoundingBox']);
 			echo '"';
 
 			if ($bShowPolygons && isset($aResult['aPolyPoints']))

@@ -9,6 +9,14 @@
 
 		protected $aLangPrefOrder = array();
 
+		protected $bIncludePolygonAsPoints = false;
+		protected $bIncludePolygonAsText = false;
+		protected $bIncludePolygonAsGeoJSON = false;
+		protected $bIncludePolygonAsKML = false;
+		protected $bIncludePolygonAsSVG = false;
+		protected $fPolygonSimplificationThreshold = 0.0;
+
+
 		function ReverseGeocode(&$oDB)
 		{
 			$this->oDB =& $oDB;
@@ -58,6 +66,48 @@
 			$this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
 		}
 
+				function setIncludePolygonAsPoints($b = true)
+		{
+			$this->bIncludePolygonAsPoints = $b;
+		}
+
+		function getIncludePolygonAsPoints()
+		{
+			return $this->bIncludePolygonAsPoints;
+		}
+
+		function setIncludePolygonAsText($b = true)
+		{
+			$this->bIncludePolygonAsText = $b;
+		}
+
+		function getIncludePolygonAsText()
+		{
+			return $this->bIncludePolygonAsText;
+		}
+
+		function setIncludePolygonAsGeoJSON($b = true)
+		{
+			$this->bIncludePolygonAsGeoJSON = $b;
+		}
+
+		function setIncludePolygonAsKML($b = true)
+		{
+			$this->bIncludePolygonAsKML = $b;
+		}
+
+		function setIncludePolygonAsSVG($b = true)
+		{
+			$this->bIncludePolygonAsSVG = $b;
+		}
+
+		function setPolygonSimplificationThreshold($f)
+		{
+			$this->fPolygonSimplificationThreshold = $f;
+		}
+
+		// returns { place_id =>, type => '(osm|tiger)' }
+		// fails if no place was found
 		function lookup()
 		{
 			$sPointSQL = 'ST_SetSRID(ST_Point('.$this->fLon.','.$this->fLat.'),4326)';
@@ -86,7 +136,8 @@
 				if ($fSearchDiam > 0.008 && $iMaxRank > 22) $iMaxRank = 22;
 				if ($fSearchDiam > 0.001 && $iMaxRank > 26) $iMaxRank = 26;
 
-				$sSQL = 'select place_id,parent_place_id,rank_search,calculated_country_code from placex';
+				$sSQL = 'select place_id,parent_place_id,rank_search,calculated_country_code';
+				$sSQL .= ' FROM placex';
 				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
 				$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
 				$sSQL .= ' and (name is not null or housenumber is not null)';
@@ -152,7 +203,11 @@
 				{
 					$iPlaceID = $iParentPlaceID;
 				}
-				$sSQL = "select address_place_id from place_addressline where place_id = $iPlaceID order by abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc limit 1";
+				$sSQL  = 'select address_place_id';
+				$sSQL .= ' FROM place_addressline';
+				$sSQL .= " WHERE place_id = $iPlaceID";
+				$sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
+				$sSQL .= ' LIMIT 1';
 				$iPlaceID = $this->oDB->getOne($sSQL);
 				if (PEAR::IsError($iPlaceID))
 				{
@@ -165,7 +220,13 @@
 			}
 
 			return array('place_id' => $iPlaceID,
-					     'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
+			             'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
 		}
+
+
+
+
+
+
 	}
 ?>

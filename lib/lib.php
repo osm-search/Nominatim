@@ -1022,3 +1022,29 @@
 
 		return array('lat' => $fQueryLat, 'lon' => $fQueryLon, 'query' => $sQuery);
 	}
+
+
+
+	function geometryText2Points($geometry_as_text,$fRadius)
+	{
+		$aPolyPoints = NULL;
+		if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$geometry_as_text,$aMatch))
+		{
+			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
+		}
+		elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$geometry_as_text,$aMatch))
+		{
+			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
+		}
+		elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$geometry_as_text,$aMatch))
+		{
+			$iSteps = max(8, min(100, ($fRadius * 40000)^2));
+			$fStepSize = (2*pi())/$iSteps;
+			$aPolyPoints = array();
+			for($f = 0; $f < 2*pi(); $f += $fStepSize)
+			{
+				$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
+			}
+		}
+		return $aPolyPoints;
+	}

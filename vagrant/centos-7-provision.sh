@@ -15,7 +15,7 @@ yum update -y
 yum install -y epel-release
 
 yum install -y postgresql-server postgresql-contrib postgresql-devel postgis postgis-utils \
-               make automake gcc gcc-c++ libtool policycoreutils-python \
+               make cmake gcc gcc-c++ libtool policycoreutils-python \
                php-pgsql php php-pear php-pear-DB libpqxx-devel proj-epsg \
                bzip2-devel proj-devel geos-devel libxml2-devel boost-devel \
                expat-devel zlib-devel
@@ -70,13 +70,14 @@ cd /home/$USERNAME
 # If the Nominatim source is not being shared with the host, check out source.
 if [ ! -d "Nominatim" ]; then
   yum install -y git
-  sudo -u $USERNAME git clone --recursive https://github.com/twain47/Nominatim.git
+  sudo -H -u $USERNAME git clone --recursive https://github.com/twain47/Nominatim.git
 fi
 
 # Configure and compile the source.
 cd Nominatim
-sudo -u $USERNAME ./autogen.sh
-sudo -u $USERNAME ./configure
+sudu -u $USERNAME mkdir build-vagrant
+cd build-vagrant
+sudo -u $USERNAME cmake ..
 sudo -u $USERNAME make
 
 # Make sure that postgres has access to the nominatim library.

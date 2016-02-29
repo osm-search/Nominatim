@@ -32,6 +32,7 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 #
 #-----------------------------------------------------------------------------
 
+set(BUILD_TESTS on)
 add_subdirectory(osm2pgsql)
 
 find_package(Threads REQUIRED)
@@ -72,6 +73,28 @@ configure_file(
 execute_process(
     COMMAND ln -s -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/utils
 )
+
+#-----------------------------------------------------------------------------
+#
+# Tests
+#
+#-----------------------------------------------------------------------------
+
+include(CTest)
+
+set(TEST_BDD db osm2pgsql api)
+
+foreach (test ${TEST_BDD})
+    add_test(NAME bdd_${test}
+             COMMAND lettuce features/${test}
+             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
+    set_tests_properties(bdd_${test}
+        PROPERTIES ENVIRONMENT "NOMINATIM_DIR=${PROJECT_BINARY_DIR}")
+endforeach()
+
+add_test(NAME php
+         COMMAND phpunit ./
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests-php)
 
 #-----------------------------------------------------------------------------
 

@@ -266,7 +266,8 @@ def query_cmd(step, query, with_dups):
            '--search', query]
     if with_dups is not None:
         cmd.append('--nodedupe')
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(cmd, cwd=world.config.source_dir,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (outp, err) = proc.communicate()
     assert (proc.returncode == 0), "query.php failed with message: %s" % err
     world.page = outp

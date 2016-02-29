@@ -15,6 +15,7 @@
 
 		protected $bNameDetails = false;
 
+
 		function PlaceLookup(&$oDB)
 		{
 			$this->oDB =& $oDB;
@@ -45,6 +46,9 @@
 				$this->bNameDetails = $bNameDetails;
 			}
 		}
+
+
+
 
 		function setPlaceID($iPlaceID)
 		{
@@ -143,6 +147,12 @@
 				}
 			}
 
+			if (CONST_Search_AreaPolygons)
+			{
+				$aAddress = $this->getOutline();
+				$aPlace['aAddress'] = $aAddress;
+			}
+
 			$aClassType = getClassTypes();
 			$sAddressType = '';
 			$sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
@@ -218,6 +228,8 @@
 			}
 			return $aAddress;
 		}
+
+
 
 	}
 ?>

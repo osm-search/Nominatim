@@ -63,6 +63,53 @@
 			}
 			echo "</namedetails>";
 		}
+
+
+		if (isset($aResult['aBoundingBox']))
+		{
+			echo '<boundingbox>';
+			echo $aResult['aBoundingBox'][0];
+			echo ','.$aResult['aBoundingBox'][1];
+			echo ','.$aResult['aBoundingBox'][2];
+			echo ','.$aResult['aBoundingBox'][3];
+			echo '</boundingbox>';
+
+			if ($bShowPolygons && isset($aResult['aPolyPoints']))
+			{
+				echo '<polygonpoints>';
+				echo json_encode($aResult['aPolyPoints']);
+				echo '</polygonpoints>';
+			}
+		}
+
+		if (isset($aResult['asgeojson']))
+		{
+			echo '<geojson>';
+			echo $aResult['asgeojson'];
+			echo '</geojson>';
+		}
+
+		if (isset($aResult['assvg']))
+		{
+			echo '<geosvg>';
+			echo $aResult['assvg'];
+			echo '</geosvg>';
+		}
+
+		if (isset($aResult['astext']))
+		{
+			echo '<geotext>';
+			echo $aResult['astext'];
+			echo '</geotext>';
+		}
+
+		if (isset($aResult['askml']))
+		{
+			echo "<geokml>";
+			echo $aResult['askml'];
+			echo "</geokml>";
+		}
+
 	}
 
 	echo "</reversegeocode>";

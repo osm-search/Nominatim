@@ -18,6 +18,36 @@
 		}
 	}
 
+
+	$bAsPoints = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
+	$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
+	$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
+	$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
+	$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
+	if ( ( ($bAsGeoJSON?1:0)
+			 + ($bAsKML?1:0)
+			 + ($bAsSVG?1:0)
+			 + ($bAsText?1:0)
+			 + ($bAsPoints?1:0)
+			 ) > CONST_PolygonOutput_MaximumTypes)
+	{
+		if (CONST_PolygonOutput_MaximumTypes)
+		{
+			userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
+		}
+		else
+		{
+			userError("Polygon output is disabled");
+		}
+		exit;
+	}
+
+
+	// Polygon simplification threshold (optional)
+	$fThreshold = 0.0;
+	if (isset($_GET['polygon_threshold'])) $fThreshold = (float)$_GET['polygon_threshold'];
+
+
 	$oDB =& getDB();
 	ini_set('memory_limit', '200M');
 
@@ -61,6 +91,13 @@
 		$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
 		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
 		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+
+		$oPlaceLookup->setIncludePolygonAsPoints($bAsPoints);
+		$oPlaceLookup->setIncludePolygonAsText($bAsText);
+		$oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
+		$oPlaceLookup->setIncludePolygonAsKML($bAsKML);
+		$oPlaceLookup->setIncludePolygonAsSVG($bAsSVG);
+		$oPlaceLookup->setPolygonSimplificationThreshold($fThreshold);
 
 		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
 	}

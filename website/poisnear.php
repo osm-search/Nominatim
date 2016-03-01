@@ -3,7 +3,7 @@
 	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-    require_once(CONST_BasePath.'/lib/PoisNear.php');
+	require_once(CONST_BasePath.'/lib/PoisNear.php');
 
 	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
 	{
@@ -32,19 +32,18 @@
 	$hLog = logStart($oDB, 'poisnear', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 
-    //define('CONST_Debug', true);
-    $lat =(float)$_GET['lat'];
-    $lon =(float)$_GET['lon'];
+	$lat =(float)$_GET['lat'];
+	$lon =(float)$_GET['lon'];
 
-    if ((bool)$lat === true && (bool)$lon === true
-         && (isset($_GET['class']) && isset($_GET['type'])) )
+	if ((bool)$lat === true && (bool)$lon === true
+		&& (isset($_GET['class']) && isset($_GET['type'])) )
 	{
 		$oPoisNear = new PoisNear($oDB);
 		$oPoisNear->setLanguagePreference($aLangPrefOrder);
 		$oPoisNear->setLatLon($_GET['lat'], $_GET['lon']);
-        $oPoisNear->setClassAndType($_GET['class'], $_GET['type']);
+		$oPoisNear->setClassAndType($_GET['class'], $_GET['type']);
 		$aPlaces = $oPoisNear->lookup();
-    } else {
+	} else {
 		$aPlaces = null;
 	}
 

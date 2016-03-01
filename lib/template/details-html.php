@@ -121,7 +121,7 @@
 		echo $keyword_token;
 		if (isset($word_id))
 		{
-			echo '</td><td>('.$word_id.')';
+			echo '</td><td>word id: '.$word_id;
 		}
 		echo "</td></tr>\n";
 	}
@@ -222,7 +222,7 @@
 		headline('Name Keywords');
 		foreach($aPlaceSearchNameKeywords as $aRow)
 		{
-			_one_keyword_row($aRow['word_token']);
+			_one_keyword_row($aRow['word_token'], $aRow['word_id']);
 		}
 	}
 

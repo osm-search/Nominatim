@@ -27,6 +27,43 @@
 		if ($aPlace['ref']) echo ' ref="'.htmlspecialchars($aPlace['ref']).'"';
 		if (isset($aPlace['lat'])) echo ' lat="'.htmlspecialchars($aPlace['lat']).'"';
 		if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
+		if (isset($aPlace['aBoundingBox']))
+		{
+			echo ' boundingbox="';
+			echo $aPlace['aBoundingBox'][0];
+			echo ','.$aPlace['aBoundingBox'][1];
+			echo ','.$aPlace['aBoundingBox'][2];
+			echo ','.$aPlace['aBoundingBox'][3];
+			echo '"';
+
+			if ($bAsPoints && isset($aPlace['aPolyPoints']))
+			{
+				echo ' polygonpoints=\'';
+				echo json_encode($aPlace['aPolyPoints']);
+				echo '\'';
+			}
+		}
+
+		if (isset($aPlace['asgeojson']))
+		{
+			echo ' geojson=\'';
+			echo $aPlace['asgeojson'];
+			echo '\'';
+		}
+
+		if (isset($aPlace['assvg']))
+		{
+			echo ' geosvg=\'';
+			echo $aPlace['assvg'];
+			echo '\'';
+		}
+
+		if (isset($aPlace['astext']))
+		{
+			echo ' geotext=\'';
+			echo $aPlace['astext'];
+			echo '\'';
+		}
 		echo ">".htmlspecialchars($aPlace['langaddress'])."</result>";
 
 		if (isset($aPlace['aAddress']))
@@ -64,49 +101,10 @@
 			echo "</namedetails>";
 		}
 
-
-		if (isset($aResult['aBoundingBox']))
+		if (isset($aPlace['askml']))
 		{
-			echo '<boundingbox>';
-			echo $aResult['aBoundingBox'][0];
-			echo ','.$aResult['aBoundingBox'][1];
-			echo ','.$aResult['aBoundingBox'][2];
-			echo ','.$aResult['aBoundingBox'][3];
-			echo '</boundingbox>';
-
-			if ($bShowPolygons && isset($aResult['aPolyPoints']))
-			{
-				echo '<polygonpoints>';
-				echo json_encode($aResult['aPolyPoints']);
-				echo '</polygonpoints>';
-			}
-		}
-
-		if (isset($aResult['asgeojson']))
-		{
-			echo '<geojson>';
-			echo $aResult['asgeojson'];
-			echo '</geojson>';
-		}
-
-		if (isset($aResult['assvg']))
-		{
-			echo '<geosvg>';
-			echo $aResult['assvg'];
-			echo '</geosvg>';
-		}
-
-		if (isset($aResult['astext']))
-		{
-			echo '<geotext>';
-			echo $aResult['astext'];
-			echo '</geotext>';
-		}
-
-		if (isset($aResult['askml']))
-		{
-			echo "<geokml>";
-			echo $aResult['askml'];
+			echo "\n<geokml>";
+			echo $aPlace['askml'];
 			echo "</geokml>";
 		}
 

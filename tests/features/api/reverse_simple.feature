@@ -17,6 +17,49 @@ Feature: Simple Reverse Tests
      | -79.34   | 23.5
      | 0.23     | -178.555
 
+    Scenario Outline: Testing different parameters
+        Given the request parameters
+          | <parameter>
+          | <value>
+        When sending search query "Manchester"
+        Then the result is valid html
+        Given the request parameters
+          | <parameter>
+          | <value>
+        When sending html search query "Manchester"
+        Then the result is valid html
+        Given the request parameters
+          | <parameter>
+          | <value>
+        When sending xml search query "Manchester"
+        Then the result is valid xml
+        Given the request parameters
+          | <parameter>
+          | <value>
+        When sending json search query "Manchester"
+        Then the result is valid json
+        Given the request parameters
+          | <parameter>
+          | <value>
+        When sending jsonv2 search query "Manchester"
+        Then the result is valid json
+
+    Examples:
+     | parameter        | value
+     | polygon          | 1
+     | polygon          | 0
+     | polygon_text     | 1
+     | polygon_text     | 0
+     | polygon_kml      | 1
+     | polygon_kml      | 0
+     | polygon_geojson  | 1
+     | polygon_geojson  | 0
+     | polygon_svg      | 1
+     | polygon_svg      | 0
+
+
+
+
     Scenario Outline: Wrapping of legal jsonp requests
         Given the request parameters
         | json_callback

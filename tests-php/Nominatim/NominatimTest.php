@@ -12,6 +12,51 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 	}
 
 
+	public function test_getClassTypesWithImportance()
+	{
+		$aClasses = getClassTypesWithImportance();
+
+		$this->assertGreaterThan(
+			200,
+			count($aClasses)
+		);
+
+		$this->assertEquals(
+			array(
+				'label' => "Country",
+				'frequency' => 0,
+				'icon' => "poi_boundary_administrative",
+				'defzoom' => 6,
+				'defdiameter' => 15,
+				'importance' => 3
+			),
+			$aClasses['place:country']
+		);
+	}
+
+
+	public function test_getResultDiameter()
+	{
+		$aResult = array();
+		$this->assertEquals(
+			0.0001,
+			getResultDiameter($aResult)
+		);
+
+		$aResult = array('class' => 'place', 'type' => 'country');
+		$this->assertEquals(
+			15,
+			getResultDiameter($aResult)
+		);
+
+		$aResult = array('class' => 'boundary', 'type' => 'administrative', 'admin_level' => 6);
+		$this->assertEquals(
+			0.32,
+			getResultDiameter($aResult)
+		);
+	}
+
+
 	public function test_addQuotes()
 	{
 		// FIXME: not quoting existing quote signs is probably a bug
@@ -142,22 +187,36 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 			65536,
 			count( getWordSets(array_fill( 0, 18, 'a'),0) )
 		);
-
 	}
 
 
+	// you might say we're creating a circle
+	public function test_createPointsAroundCenter()
+	{
+		$aPoints = createPointsAroundCenter(0,0,2);
 
+		$this->assertEquals(
+			101,
+			count($aPoints)
+		);
+		$this->assertEquals(
+			array(
+				['', 0, 2],
+				['', 0.12558103905863, 1.9960534568565],
+				['', 0.25066646712861, 1.984229402629]
+			),
+			array_splice($aPoints, 0,3)
+		);
+	}
 
 	public function test_geometryText2Points()
 	{
 		$fRadius = 1;
-
 		// invalid value
 		$this->assertEquals(
 			NULL,
 			geometryText2Points('', $fRadius)
 		);
-
 
 		// POINT
 		$aPoints = geometryText2Points('POINT(10 20)', $fRadius);
@@ -165,13 +224,11 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 			101,
 			count($aPoints)
 		);
-
 		$this->assertEquals(
-
-  		array(
-  			['', 10, 21],
-  			['', 10.062790519529, 20.998026728428],
-				['', 10.125333233564, 20.992114701314]
+			array(
+				[10, 21],
+				[10.062790519529, 20.998026728428],
+				[10.125333233564, 20.992114701314]
 			),
 			array_splice($aPoints, 0,3)
 		);
@@ -179,35 +236,25 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 		// POLYGON
 		$this->assertEquals(
 			array(
-				['30 10', '30', '10'],
-				['40 40', '40', '40'],
-				['20 40', '20', '40'],
-				['10 20', '10', '20'],
-				['30 10', '30', '10']
+				['30', '10'],
+				['40', '40'],
+				['20', '40'],
+				['10', '20'],
+				['30', '10']
 			),
 			geometryText2Points('POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))', $fRadius)
 		);
 
 		// MULTIPOLYGON
-		// only the first polygon is used
 		$this->assertEquals(
 			array(
-				['30 20', '30', '20'],
-				['45 40', '45', '40'],
-				['10 40', '10', '40'],
-				['30 20', '30', '20'],
-
-				// ['15 5' , '15', '5' ],
-				// ['45 10', '45', '10'],
-				// ['10 20', '10', '20'],
-				// ['5 10' , '5' , '10'],
-				// ['15 5' , '15', '5' ]
+				['30', '20'], // first polygon only
+				['45', '40'],
+				['10', '40'],
+				['30', '20'],
 			),
 			geometryText2Points('MULTIPOLYGON(((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', $fRadius)
 		);
-
-
 	}
-
 
 }

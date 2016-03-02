@@ -33,7 +33,7 @@
 				$aPlace['aBoundingBox'][2],
 				$aPlace['aBoundingBox'][3]);
 
-			if (isset($aPlace['aPolyPoints']) && $bShowPolygons)
+			if (isset($aPlace['aPolyPoints']) && $bAsPoints)
 			{
 				$aFilteredPlaces['polygonpoints'] = $aPlace['aPolyPoints'];
 			}

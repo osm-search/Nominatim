@@ -13,8 +13,6 @@
 	$fLat = CONST_Default_Lat;
 	$fLon = CONST_Default_Lon;
 	$iZoom = CONST_Default_Zoom;
-	$sTileURL = CONST_Map_Tile_URL;
-	$sTileAttribution = CONST_Map_Tile_Attribution;
 
 	$oGeocode =& new Geocode($oDB);
 
@@ -99,17 +97,17 @@
 	{
 		if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
 		{
-				$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
+			$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
-				// reverse order of '/' separated string
-				$aPhrases = explode('/', $sQuery);
-				$aPhrases = array_reverse($aPhrases);
-				$sQuery = join(', ',$aPhrases);
-				$oGeocode->setQuery($sQuery);
+			// reverse order of '/' separated string
+			$aPhrases = explode('/', $sQuery);
+			$aPhrases = array_reverse($aPhrases);
+			$sQuery = join(', ',$aPhrases);
+			$oGeocode->setQuery($sQuery);
 		}
 		else
 		{
-				$oGeocode->setQueryFromParams($_GET);
+			$oGeocode->setQueryFromParams($_GET);
 		}
 	}
 
@@ -118,8 +116,12 @@
 	$aSearchResults = $oGeocode->lookup();
 	if ($aSearchResults === false) $aSearchResults = array();
 
-	$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
-
+	if ($sOutputFormat=='html')
+	{
+		$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
+		$sTileURL = CONST_Map_Tile_URL;
+		$sTileAttribution = CONST_Map_Tile_Attribution;
+	}
 	logEnd($oDB, $hLog, sizeof($aSearchResults));
 
 	$bAsText = $oGeocode->getIncludePolygonAsText();

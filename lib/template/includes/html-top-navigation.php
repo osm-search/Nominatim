@@ -9,7 +9,7 @@
 				</div>
 			</div>
 			<div id="last-updated" class="col-xs-4 text-center">
-				<?php if ($sDataDate){ ?>
+				<?php if (isset($sDataDate)){ ?>
 					Data last updated:
 					<br>
 					<?php echo $sDataDate; ?>

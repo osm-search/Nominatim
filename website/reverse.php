@@ -92,6 +92,8 @@
 		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
 		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
 
+		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
+
 		$oPlaceLookup->setIncludePolygonAsPoints($bAsPoints);
 		$oPlaceLookup->setIncludePolygonAsText($bAsText);
 		$oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
@@ -99,7 +101,14 @@
 		$oPlaceLookup->setIncludePolygonAsSVG($bAsSVG);
 		$oPlaceLookup->setPolygonSimplificationThreshold($fThreshold);
 
-		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
+		$fRadius = $fDiameter = getResultDiameter($aPlace);
+		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'],$aPlace['lon'],$aPlace['lat'],$fRadius);
+
+		foreach($aOutlineResult as $k => $v)
+		{
+			$aPlace[$k] = $v;
+		}
+
 	}
 	else
 	{
@@ -113,6 +122,10 @@
 		exit;
 	}
 
-	$sTileURL = CONST_Map_Tile_URL;
-	$sTileAttribution = CONST_Map_Tile_Attribution;
+	if ($sOutputFormat=='html')
+	{
+		$sTileURL = CONST_Map_Tile_URL;
+		$sTileAttribution = CONST_Map_Tile_Attribution;
+		$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
+	}
 	include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');

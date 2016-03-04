@@ -222,5 +222,11 @@
 			return array('place_id' => $iPlaceID,
 			             'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
 		}
+
+
+
+
+
+
 	}
 ?>

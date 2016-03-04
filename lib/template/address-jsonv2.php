@@ -39,11 +39,7 @@
 
 		if (isset($aPlace['aBoundingBox']))
 		{
-			$aFilteredPlaces['boundingbox'] = array(
-				$aPlace['aBoundingBox'][0],
-				$aPlace['aBoundingBox'][1],
-				$aPlace['aBoundingBox'][2],
-				$aPlace['aBoundingBox'][3]);
+			$aFilteredPlaces['boundingbox'] = $aPlace['aBoundingBox'];
 
 			if (isset($aPlace['aPolyPoints']) && $bAsPoints)
 			{

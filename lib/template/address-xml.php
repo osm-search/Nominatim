@@ -30,10 +30,7 @@
 		if (isset($aPlace['aBoundingBox']))
 		{
 			echo ' boundingbox="';
-			echo $aPlace['aBoundingBox'][0];
-			echo ','.$aPlace['aBoundingBox'][1];
-			echo ','.$aPlace['aBoundingBox'][2];
-			echo ','.$aPlace['aBoundingBox'][3];
+			echo join(',', $aPlace['aBoundingBox']);
 			echo '"';
 
 			if ($bAsPoints && isset($aPlace['aPolyPoints']))

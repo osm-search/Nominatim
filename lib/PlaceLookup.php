@@ -280,7 +280,7 @@
 		//   astext
 		//   lat
 		//   lon
-		function getOutlines($iPlaceID,$fLon=null,$fLat=null,$fRadius=null)
+		function getOutlines($iPlaceID, $fLon=null, $fLat=null, $fRadius=null)
 		{
 
 			$aOutlineResult = array();
@@ -326,7 +326,7 @@
 					if ($this->bIncludePolygonAsKML) $aOutlineResult['askml'] = $aPointPolygon['askml'];
 					if ($this->bIncludePolygonAsSVG) $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
 					if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
-					if ($this->bIncludePolygonAsPoints) $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'],$fRadius);
+					if ($this->bIncludePolygonAsPoints) $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
 
 
 					if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001)
@@ -350,13 +350,13 @@
 			} // CONST_Search_AreaPolygons
 
 			// as a fallback we generate a bounding box without knowing the size of the geometry
-			if ((!isset($aOutlineResult['aBoundingBox']))&&(isset($fLon)))
+			if ( (!isset($aOutlineResult['aBoundingBox'])) && isset($fLon) )
 			{
 
 				if ($this->bIncludePolygonAsPoints)
 				{
-					$sGeometryText = 'POINT('+$fLon+','+$fLat+')';
-					$aOutlineResult['aPolyPoints'] = geometryText2Points($sGeometryText,$fRadius);
+					$sGeometryText = 'POINT('.$fLon.','.$fLat.')';
+					$aOutlineResult['aPolyPoints'] = geometryText2Points($sGeometryText, $fRadius);
 				}
 
 				$aBounds = array();

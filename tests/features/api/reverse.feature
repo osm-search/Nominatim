@@ -81,7 +81,7 @@ Feature: Reverse geocoding
           | polygon
           | 1
         When looking up <format> coordinates 48.86093,2.2978
-        Then result 0 has attributes <response_attribute>
+        Then result 0 has not attributes <response_attribute>
 
    Examples:
         | format   | response_attribute

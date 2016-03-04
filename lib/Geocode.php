@@ -1646,7 +1646,7 @@
 				$oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
 				$oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
 
-				$aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'],$aResult['lon'],$aResult['lat'],$fDiameter/2);
+				$aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
 				foreach($aOutlineResult as $k => $v)
 				{
 					$aResult[$k] = $v;

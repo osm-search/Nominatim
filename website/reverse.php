@@ -19,7 +19,7 @@
 	}
 
 
-	$bAsPoints = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
+	$bAsPoints = false;
 	$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
 	$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
 	$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];

@@ -15,6 +15,14 @@
 
 		protected $bNameDetails = false;
 
+		protected $bIncludePolygonAsPoints = false;
+		protected $bIncludePolygonAsText = false;
+		protected $bIncludePolygonAsGeoJSON = false;
+		protected $bIncludePolygonAsKML = false;
+		protected $bIncludePolygonAsSVG = false;
+		protected $fPolygonSimplificationThreshold = 0.0;
+
+
 		function PlaceLookup(&$oDB)
 		{
 			$this->oDB =& $oDB;
@@ -45,6 +53,48 @@
 				$this->bNameDetails = $bNameDetails;
 			}
 		}
+
+
+		function setIncludePolygonAsPoints($b = true)
+		{
+			$this->bIncludePolygonAsPoints = $b;
+		}
+
+		function getIncludePolygonAsPoints()
+		{
+			return $this->bIncludePolygonAsPoints;
+		}
+
+		function setIncludePolygonAsText($b = true)
+		{
+			$this->bIncludePolygonAsText = $b;
+		}
+
+		function getIncludePolygonAsText()
+		{
+			return $this->bIncludePolygonAsText;
+		}
+
+		function setIncludePolygonAsGeoJSON($b = true)
+		{
+			$this->bIncludePolygonAsGeoJSON = $b;
+		}
+
+		function setIncludePolygonAsKML($b = true)
+		{
+			$this->bIncludePolygonAsKML = $b;
+		}
+
+		function setIncludePolygonAsSVG($b = true)
+		{
+			$this->bIncludePolygonAsSVG = $b;
+		}
+
+		function setPolygonSimplificationThreshold($f)
+		{
+			$this->fPolygonSimplificationThreshold = $f;
+		}
+
 
 		function setPlaceID($iPlaceID)
 		{
@@ -218,6 +268,115 @@
 			}
 			return $aAddress;
 		}
+
+
+
+		// returns an array which will contain the keys
+		//   aBoundingBox
+		// and may also contain one or more of the keys
+		//   asgeojson
+		//   askml
+		//   assvg
+		//   astext
+		//   lat
+		//   lon
+		function getOutlines($iPlaceID, $fLon=null, $fLat=null, $fRadius=null)
+		{
+
+			$aOutlineResult = array();
+			if (!$iPlaceID) return $aOutlineResult;
+
+			if (CONST_Search_AreaPolygons)
+			{
+				// Get the bounding box and outline polygon
+				$sSQL  = "select place_id,0 as numfeatures,st_area(geometry) as area,";
+				$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
+				$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
+				$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
+				if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
+				if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
+				if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
+				if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
+				$sFrom = " from placex where place_id = ".$iPlaceID;
+				if ($this->fPolygonSimplificationThreshold > 0)
+				{
+					$sSQL .= " from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,".$this->fPolygonSimplificationThreshold.") as geometry".$sFrom.") as plx";
+				}
+				else
+				{
+					$sSQL .= $sFrom;
+				}
+
+				$aPointPolygon = $this->oDB->getRow($sSQL);
+				if (PEAR::IsError($aPointPolygon))
+				{
+					echo var_dump($aPointPolygon);
+					failInternalError("Could not get outline.", $sSQL, $aPointPolygon);
+				}
+
+				if ($aPointPolygon['place_id'])
+				{
+					if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null )
+					{
+						$aOutlineResult['lat'] = $aPointPolygon['centrelat'];
+						$aOutlineResult['lon'] = $aPointPolygon['centrelon'];
+					}
+
+					if ($this->bIncludePolygonAsGeoJSON) $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
+					if ($this->bIncludePolygonAsKML) $aOutlineResult['askml'] = $aPointPolygon['askml'];
+					if ($this->bIncludePolygonAsSVG) $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
+					if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
+					if ($this->bIncludePolygonAsPoints) $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
+
+
+					if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001)
+					{
+						$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
+						$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
+					}
+					if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001)
+					{
+						$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
+						$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
+					}
+
+					$aOutlineResult['aBoundingBox'] = array(
+					                                  (string)$aPointPolygon['minlat'],
+					                                  (string)$aPointPolygon['maxlat'],
+					                                  (string)$aPointPolygon['minlon'],
+					                                  (string)$aPointPolygon['maxlon']
+					                                 );
+				}
+			} // CONST_Search_AreaPolygons
+
+			// as a fallback we generate a bounding box without knowing the size of the geometry
+			if ( (!isset($aOutlineResult['aBoundingBox'])) && isset($fLon) )
+			{
+
+				if ($this->bIncludePolygonAsPoints)
+				{
+					$sGeometryText = 'POINT('.$fLon.','.$fLat.')';
+					$aOutlineResult['aPolyPoints'] = geometryText2Points($sGeometryText, $fRadius);
+				}
+
+				$aBounds = array();
+				$aBounds['minlat'] = $fLat - $fRadius;
+				$aBounds['maxlat'] = $fLat + $fRadius;
+				$aBounds['minlon'] = $fLon - $fRadius;
+				$aBounds['maxlon'] = $fLon + $fRadius;
+
+				$aOutlineResult['aBoundingBox'] = array(
+				                                  (string)$aBounds['minlat'],
+				                                  (string)$aBounds['maxlat'],
+				                                  (string)$aBounds['minlon'],
+				                                  (string)$aBounds['maxlon']
+				                                 );
+			}
+			return $aOutlineResult;
+		}
+
+
+
 
 	}
 ?>

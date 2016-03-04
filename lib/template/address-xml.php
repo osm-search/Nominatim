@@ -27,6 +27,40 @@
 		if ($aPlace['ref']) echo ' ref="'.htmlspecialchars($aPlace['ref']).'"';
 		if (isset($aPlace['lat'])) echo ' lat="'.htmlspecialchars($aPlace['lat']).'"';
 		if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
+		if (isset($aPlace['aBoundingBox']))
+		{
+			echo ' boundingbox="';
+			echo join(',', $aPlace['aBoundingBox']);
+			echo '"';
+
+			if ($bAsPoints && isset($aPlace['aPolyPoints']))
+			{
+				echo ' polygonpoints=\'';
+				echo json_encode($aPlace['aPolyPoints']);
+				echo '\'';
+			}
+		}
+
+		if (isset($aPlace['asgeojson']))
+		{
+			echo ' geojson=\'';
+			echo $aPlace['asgeojson'];
+			echo '\'';
+		}
+
+		if (isset($aPlace['assvg']))
+		{
+			echo ' geosvg=\'';
+			echo $aPlace['assvg'];
+			echo '\'';
+		}
+
+		if (isset($aPlace['astext']))
+		{
+			echo ' geotext=\'';
+			echo $aPlace['astext'];
+			echo '\'';
+		}
 		echo ">".htmlspecialchars($aPlace['langaddress'])."</result>";
 
 		if (isset($aPlace['aAddress']))
@@ -63,6 +97,14 @@
 			}
 			echo "</namedetails>";
 		}
+
+		if (isset($aPlace['askml']))
+		{
+			echo "\n<geokml>";
+			echo $aPlace['askml'];
+			echo "</geokml>";
+		}
+
 	}
 
 	echo "</reversegeocode>";

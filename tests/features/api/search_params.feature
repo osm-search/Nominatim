@@ -230,3 +230,73 @@ Feature: Search queries
         | xml
         | json
         | jsonv2
+
+
+   Scenario Outline: Search result with contains TEXT geometry
+        Given the request parameters
+          | polygon_text
+          | 1
+        When sending <format> search query "switzerland"
+        Then result 0 has attributes <response_attribute>
+
+   Examples:
+        | format   | response_attribute
+        | xml      | geotext
+        | json     | geotext
+        | jsonv2   | geotext
+
+   Scenario Outline: Search result contains polygon-as-points geometry
+        Given the request parameters
+          | polygon
+          | 1
+        When sending <format> search query "switzerland"
+        Then result 0 has attributes <response_attribute>
+
+   Examples:
+        | format   | response_attribute
+        | xml      | polygonpoints
+        | json     | polygonpoints
+        | jsonv2   | polygonpoints
+
+
+
+   Scenario Outline: Search result contains SVG geometry
+        Given the request parameters
+          | polygon_svg
+          | 1
+        When sending <format> search query "switzerland"
+        Then result 0 has attributes <response_attribute>
+
+   Examples:
+        | format   | response_attribute
+        | xml      | geosvg
+        | json     | svg
+        | jsonv2   | svg
+
+
+   Scenario Outline: Search result contains KML geometry
+        Given the request parameters
+          | polygon_kml
+          | 1
+        When sending <format> search query "switzerland"
+        Then result 0 has attributes <response_attribute>
+
+   Examples:
+        | format   | response_attribute
+        | xml      | geokml
+        | json     | geokml
+        | jsonv2   | geokml
+
+
+   Scenario Outline: Search result contains GEOJSON geometry
+        Given the request parameters
+          | polygon_geojson
+          | 1
+        When sending <format> search query "switzerland"
+        Then result 0 has attributes <response_attribute>
+
+   Examples:
+        | format   | response_attribute
+        | xml      | geojson
+        | json     | geojson
+        | jsonv2   | geojson

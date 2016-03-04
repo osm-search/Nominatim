@@ -193,7 +193,7 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 	// you might say we're creating a circle
 	public function test_createPointsAroundCenter()
 	{
-		$aPoints = createPointsAroundCenter(0,0,2);
+		$aPoints = createPointsAroundCenter(0, 0, 2);
 
 		$this->assertEquals(
 			101,
@@ -205,7 +205,7 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 				['', 0.12558103905863, 1.9960534568565],
 				['', 0.25066646712861, 1.984229402629]
 			),
-			array_splice($aPoints, 0,3)
+			array_splice($aPoints, 0, 3)
 		);
 	}
 

@@ -98,6 +98,8 @@ def _parse_xml():
                     attrs = dict(tag.attributes.items())
                     assert_in('desc', attrs)
                     world.results[0]['namedetails'][attrs['desc']] = tag.firstChild.nodeValue.strip()
+            elif node.nodeName == "geokml":
+                world.results[0]['geokml'] = node
             elif node.nodeName == "#text":
                 pass
             else:

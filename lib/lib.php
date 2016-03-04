@@ -673,6 +673,31 @@
 		return $aOrders;
 	}
 
+	function getResultDiameter($aResult)
+	{
+		$aClassType = getClassTypes();
+
+		$fDiameter = 0.0001;
+
+		if (isset($aResult['class'])
+			  && isset($aResult['type'])
+			  && isset($aResult['admin_level'])
+			  && isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+				&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
+		{
+			$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
+		}
+		elseif (isset($aResult['class'])
+			  && isset($aResult['type'])
+			  && isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+				&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+		{
+			$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
+		}
+
+		return $fDiameter;
+	}
+
 
 	function javascript_renderData($xVal, $iOptions = 0)
 	{
@@ -1024,27 +1049,47 @@
 	}
 
 
-
-	function geometryText2Points($geometry_as_text,$fRadius)
+	function geometryText2Points($geometry_as_text, $fRadius)
 	{
 		$aPolyPoints = NULL;
-		if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#',$geometry_as_text,$aMatch))
+		if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
 		{
-			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
+			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
 		}
-		elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#',$geometry_as_text,$aMatch))
+		elseif (preg_match('#LINESTRING\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
 		{
-			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/',$aMatch[1],$aPolyPoints,PREG_SET_ORDER);
+			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
 		}
-		elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#',$geometry_as_text,$aMatch))
+		elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
 		{
+			preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
+		}
+		elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#', $geometry_as_text, $aMatch))
+		{
+			$aPolyPoints = createPointsAroundCenter($aMatch[1], $aMatch[2], $fRadius);
+		}
+
+		if (isset($aPolyPoints))
+		{
+			$aResultPoints = array();
+			foreach($aPolyPoints as $aPoint)
+			{
+				$aResultPoints[] = array($aPoint[1], $aPoint[2]);
+			}
+			return $aResultPoints;
+		}
+
+		return;
+	}
+
+	function createPointsAroundCenter($fLon, $fLat, $fRadius)
+	{
 			$iSteps = max(8, min(100, ($fRadius * 40000)^2));
 			$fStepSize = (2*pi())/$iSteps;
 			$aPolyPoints = array();
 			for($f = 0; $f < 2*pi(); $f += $fStepSize)
 			{
-				$aPolyPoints[] = array('',$aMatch[1]+($fRadius*sin($f)),$aMatch[2]+($fRadius*cos($f)));
+				$aPolyPoints[] = array('', $fLon+($fRadius*sin($f)), $fLat+($fRadius*cos($f)) );
 			}
-		}
-		return $aPolyPoints;
+			return $aPolyPoints;
 	}

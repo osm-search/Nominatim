@@ -159,7 +159,12 @@
 
 	logEnd($oDB, $hLog, 1);
 
-	$sTileURL = CONST_Map_Tile_URL;
-	$sTileAttribution = CONST_Map_Tile_Attribution;
+	if ($sOutputFormat=='html')
+	{
+		$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
+		$sTileURL = CONST_Map_Tile_URL;
+		$sTileAttribution = CONST_Map_Tile_Attribution;
+	}
+
 	
 	include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');

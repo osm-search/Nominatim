@@ -3893,8 +3893,8 @@ def addressways(waylist, nodelist, first_id):
   #                  ret.append( "<tag k=\"source\" v=\"%s_import_v%s_%s\" />" % (iSource, VERSION, import_guid) )
  #                   ret.append( "<tag k=\"attribution\" v=\"%s\" />" % (iAttrib) )
 #                    ret.append( "</way>" )
-
-                    ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
+                    # call new tiger_line_import function to save the lines in the DB.
+                    ret.append( "select tiger_line_import(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
                                 ( ",".join(rlinestring), rfromadd.replace("'", "''"), rtoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipr.replace("'", "''") ) )
 
                 if left:
@@ -3919,7 +3919,7 @@ def addressways(waylist, nodelist, first_id):
                             interpolationtype = "all";
                     else:
                         interpolationtype = "all";
-                    ret.append( "select tigger_create_interpolation(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
+                    ret.append( "select tiger_line_import(ST_GeomFromText('LINESTRING(%s)',4326), '%s', '%s', '%s', '%s', '%s', '%s');" %
                                 ( ",".join(llinestring), lfromadd.replace("'", "''"), ltoadd.replace("'", "''"), interpolationtype.replace("'", "''"), name.replace("'", "''"), county.replace("'", "''"), zipl.replace("'", "''") ) )
 
     return ret

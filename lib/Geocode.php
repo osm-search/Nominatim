@@ -44,6 +44,10 @@
 
 		protected $sQuery = false;
 		protected $aStructuredQuery = false;
+        
+        //for Tiger housenumber interpolation
+        protected $searchedHousenumber=-1;
+        protected $housenumberFound=false;
 
 		function Geocode(&$oDB)
 		{
@@ -430,21 +434,29 @@
 
 			if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
 			{
-				$sSQL .= " union ";
-				$sSQL .= "select 'T' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code,";
-				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
-				$sSQL .= "null as placename,";
-				$sSQL .= "null as ref,";
-				if ($this->bIncludeExtraTags) $sSQL .= "null as extra,";
-				if ($this->bIncludeNameDetails) $sSQL .= "null as names,";
-				$sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-				$sSQL .= $sImportanceSQL."-1.15 as importance, ";
-				$sSQL .= "(select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(location_property_tiger.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
-				$sSQL .= "null as extra_place ";
-				$sSQL .= "from location_property_tiger where place_id in ($sPlaceIDs) ";
-				$sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
-				$sSQL .= "group by place_id";
-				if (!$this->bDeDupe) $sSQL .= ",place_id ";
+				//query also location_property_tiger_line and location_property_aux
+                //Tiger search only if it was searched for a housenumber (searchedHousenumber >=0) and if it was found (housenumberFound = true)
+                //only Tiger housenumbers need to be interpolated, because they are saved as lines with start- and endnumber, the common osm housenumbers are usually saved as points
+                if($this->searchedHousenumber>=0 && $this->housenumberFound){
+                    $sSQL .= "union ";
+                    $sSQL .= "select 'T' as osm_type, place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code";
+                    $sSQL .= ", get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress ";
+                    $sSQL .= ", null as placename";
+                    $sSQL .= ", null as ref";
+                    if ($this->bIncludeExtraTags) $sSQL .= ", null as extra";
+                    if ($this->bIncludeNameDetails) $sSQL .= ", null as names";
+                    $sSQL .= ", avg(st_x(point)) as lon, avg(st_y(point)) as lat";
+                    $sSQL .= $sImportanceSQL.", -1.15 as importance ";
+                    $sSQL .= ", 1.0 as addressimportance "; //not sure how the addressimportance is/should be calculated for Tiger data
+                    $sSQL .= ", null as extra_place ";
+                    $sSQL .= " from (select place_id";
+                    //interpolate the Tiger housenumbers here
+                    $sSQL .= ",ST_LineInterpolatePoint(linegeo, ($this->searchedHousenumber::float-startnumber::float)/(endnumber-startnumber)::float) as point, parent_place_id ";
+                    $sSQL .= "from location_property_tiger_line where place_id in ($sPlaceIDs) ";
+                    $sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank) as blub"; //postgres wants an alias here
+                    $sSQL .= " group by place_id"; //why group by place_id, isnt place_id unique?
+                    if (!$this->bDeDupe) $sSQL .= ",place_id ";
+                }
 				$sSQL .= " union ";
 				$sSQL .= "select 'L' as osm_type,place_id as osm_id,'place' as class,'house' as type,null as admin_level,30 as rank_search,30 as rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id,'us' as country_code,";
 				$sSQL .= "get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
@@ -1390,6 +1402,7 @@
 							//var_Dump($aPlaceIDs);
 							//exit;
 
+							//now search for housenumber, if housenumber provided
 							if ($aSearch['sHouseNumber'] && sizeof($aPlaceIDs))
 							{
 								$aRoadPlaceIDs = $aPlaceIDs;
@@ -1406,7 +1419,7 @@
 								if (CONST_Debug) var_dump($sSQL);
 								$aPlaceIDs = $this->oDB->getCol($sSQL);
 
-								// If not try the aux fallback table
+								// If nothing found try the aux fallback table
 								if (!sizeof($aPlaceIDs))
 								{
 									$sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
@@ -1418,26 +1431,42 @@
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = $this->oDB->getCol($sSQL);
 								}
-
+                                //if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger_line)
 								if (!sizeof($aPlaceIDs))
 								{
-									$sSQL = "select place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
-									if (sizeof($this->aExcludePlaceIDs))
+									//$sSQL = "select place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
+									//new query for lines, not housenumbers anymore
+                                    $this->searchedHousenumber = intval($aSearch['sHouseNumber']);
+                                    if($this->searchedHousenumber%2==0){
+                                        //if housenumber is even, look for housenumber in streets with interpolationtype even or all
+                                        $sSQL = "select distinct place_id from location_property_tiger_line where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$this->searchedHousenumber.">=startnumber and ".$this->searchedHousenumber."<=endnumber";
+                                    }else{
+                                        //look for housenumber in streets with interpolationtype odd or all
+                                        $sSQL = "select distinct place_id from location_property_tiger_line where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='odd' or interpolationtype='all') and ".$this->searchedHousenumber.">=startnumber and ".$this->searchedHousenumber."<=endnumber";
+                                    }
+                    
+                                    if (sizeof($this->aExcludePlaceIDs))
 									{
 										$sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
 									}
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+                                    //get place IDs
+									$aPlaceIDs = $this->oDB->getCol($sSQL,0);
 								}
 
-								// Fallback to the road
+								// Fallback to the road (if no housenumber was found)
 								if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
 								{
 									$aPlaceIDs = $aRoadPlaceIDs;
-								}
-
+                                    //set to false, if no housenumbers were found
+                                    $this->housenumberFound=false;
+								}else{
+                                    //housenumber was found
+                                    $this->housenumberFound=true;
+                                }
 							}
+
 
 							if ($aSearch['sClass'] && sizeof($aPlaceIDs))
 							{
@@ -1767,16 +1796,17 @@
 				{
 					$aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
 				}
-
+                /* Implement this function later. if tag '&addressdetails=1' is set in query
 				if ($this->bIncludeAddressDetails)
 				{
+                *   getAddressDetails() is defined in lib.php and uses the SQL function get_addressdata in functions.sql
 					$aResult['address'] = getAddressDetails($this->oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code']);
 					if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city']))
 					{
 						$aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
 					}
 				}
-
+                */
 				if ($this->bIncludeExtraTags)
 				{
 					if ($aResult['extra'])

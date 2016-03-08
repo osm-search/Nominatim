@@ -1,7 +1,8 @@
 <?php
 	@define('CONST_ConnectionBucket_PageType', 'Status');
 
-	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
+	require_once(CONST_BasePath.'/lib/init-website.php');
 
 	function statusError($sMsg)
 	{

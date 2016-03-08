@@ -1,7 +1,8 @@
 <?php
 	@define('CONST_ConnectionBucket_PageType', 'Search');
 
-	require_once(dirname(dirname(__FILE__)).'/lib/init-website.php');
+	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
+	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/Geocode.php');
 

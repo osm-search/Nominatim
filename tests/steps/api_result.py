@@ -211,6 +211,15 @@ def api_result_contains(step):
                         m = re.match("%s$" % (v,), curres[k])
                         assert_is_not_none(m, msg="field %s does not match: %s$ != %s." % (k, v, curres[k]))
 
+@step(u'results contain valid boundingboxes$')
+def api_result_address_contains(step):
+    step.given('the result is valid')
+    for curres in world.results:
+        bb = curres['boundingbox']
+        if world.response_format == 'json':
+            bb = ','.join(bb)
+        m = re.match('^(-?\d+\.\d+),(-?\d+\.\d+),(-?\d+\.\d+),(-?\d+\.\d+)$', bb)
+        assert_is_not_none(m, msg="invalid boundingbox: %s." % (curres['boundingbox']))
 
 @step(u'result addresses contain$')
 def api_result_address_contains(step):

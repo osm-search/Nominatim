@@ -8,6 +8,7 @@ Feature: Search queries
         And result 0 has attributes lat,lon,display_name
         And result 0 has attributes class,type,importance,icon
         And result 0 has not attributes address
+        And results contain valid boundingboxes
 
     Scenario: Simple JSON search
         When sending json search query "Vaduz"
@@ -15,6 +16,7 @@ Feature: Search queries
         And result 0 has attributes osm_type,osm_id,boundingbox
         And result 0 has attributes lat,lon,display_name,importance
         And result 0 has not attributes address
+        And results contain valid boundingboxes
 
     Scenario: JSON search with addressdetails
         When sending json search query "Montevideo" with address

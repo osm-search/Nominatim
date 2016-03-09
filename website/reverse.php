@@ -104,11 +104,7 @@
 		$fRadius = $fDiameter = getResultDiameter($aPlace);
 		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'],$aPlace['lon'],$aPlace['lat'],$fRadius);
 
-		foreach($aOutlineResult as $k => $v)
-		{
-			$aPlace[$k] = $v;
-		}
-
+		$aPlace = array_merge($aPlace, $aOutlineResult);
 	}
 	else
 	{

@@ -1647,10 +1647,7 @@
 				$oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
 
 				$aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
-				foreach($aOutlineResult as $k => $v)
-				{
-					$aResult[$k] = $v;
-				}
+				$aResult = array_merge($aResult, $aOutlineResult);
 
 				if ($aResult['extra_place'] == 'city')
 				{

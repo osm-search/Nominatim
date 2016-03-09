@@ -11,6 +11,15 @@ Feature: Reverse geocoding
          | ID | country
          | 0  | Deutschland
 
+
+    Scenario: Boundingbox is returned
+        Given the request parameters
+          | format | zoom
+          | xml    | 4
+        When looking up coordinates 53.9788769,13.0830313
+        And results contain valid boundingboxes
+
+
     @Tiger
     Scenario: TIGER house number
         Given the request parameters

@@ -16,11 +16,7 @@
 
 		if (isset($aPointDetails['aBoundingBox']))
 		{
-			$aPlace['boundingbox'] = array(
-				$aPointDetails['aBoundingBox'][0],
-				$aPointDetails['aBoundingBox'][1],
-				$aPointDetails['aBoundingBox'][2],
-				$aPointDetails['aBoundingBox'][3]);
+			$aPlace['boundingbox'] = $aPointDetails['aBoundingBox'];
 
 			if (isset($aPointDetails['aPolyPoints']) && $bShowPolygons)
 			{

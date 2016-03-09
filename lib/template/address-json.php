@@ -24,6 +24,38 @@
 		if (isset($aPlace['aAddress'])) $aFilteredPlaces['address'] = $aPlace['aAddress'];
 		if (isset($aPlace['sExtraTags'])) $aFilteredPlaces['extratags'] = $aPlace['sExtraTags'];
 		if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['namedetails'] = $aPlace['sNameDetails'];
+
+		if (isset($aPlace['aBoundingBox']))
+		{
+			$aFilteredPlaces['boundingbox'] = $aPlace['aBoundingBox'];
+
+			if (isset($aPlace['aPolyPoints']) && $bAsPoints)
+			{
+				$aFilteredPlaces['polygonpoints'] = $aPlace['aPolyPoints'];
+			}
+		}
+
+		if (isset($aPlace['asgeojson']))
+		{
+			$aFilteredPlaces['geojson'] = json_decode($aPlace['asgeojson']);
+		}
+
+		if (isset($aPlace['assvg']))
+		{
+			$aFilteredPlaces['svg'] = $aPlace['assvg'];
+		}
+
+		if (isset($aPlace['astext']))
+		{
+			$aFilteredPlaces['geotext'] = $aPlace['astext'];
+		}
+
+		if (isset($aPlace['askml']))
+		{
+			$aFilteredPlaces['geokml'] = $aPlace['askml'];
+		}
+
+
 	}
 
 	javascript_renderData($aFilteredPlaces);

@@ -1,4 +1,6 @@
 <?php
+	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+
 	class Geocode
 	{
 		protected $oDB;
@@ -1634,120 +1636,24 @@
 			foreach($aSearchResults as $iResNum => $aResult)
 			{
 				// Default
-				$fDiameter = 0.0001;
+				$fDiameter = getResultDiameter($aResult);
 
-				if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-						&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-				{
-					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
-				}
-				elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-						&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-				{
-					$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
-				}
-				$fRadius = $fDiameter / 2;
+				$oPlaceLookup = new PlaceLookup($this->oDB);
+				$oPlaceLookup->setIncludePolygonAsPoints($this->bIncludePolygonAsPoints);
+				$oPlaceLookup->setIncludePolygonAsText($this->bIncludePolygonAsText);
+				$oPlaceLookup->setIncludePolygonAsGeoJSON($this->bIncludePolygonAsGeoJSON);
+				$oPlaceLookup->setIncludePolygonAsKML($this->bIncludePolygonAsKML);
+				$oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
+				$oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
 
-				if (CONST_Search_AreaPolygons)
-				{
-					// Get the bounding box and outline polygon
-					$sSQL = "select place_id,0 as numfeatures,st_area(geometry) as area,";
-					$sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
-					$sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
-					$sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
-					if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
-					if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
-					if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
-					if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
-					$sFrom = " from placex where place_id = ".$aResult['place_id'];
-					if ($this->fPolygonSimplificationThreshold > 0)
-					{
-						$sSQL .= " from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,".$this->fPolygonSimplificationThreshold.") as geometry".$sFrom.") as plx";
-					}
-					else
-					{
-						$sSQL .= $sFrom;
-					}
-
-					$aPointPolygon = $this->oDB->getRow($sSQL);
-					if (PEAR::IsError($aPointPolygon))
-					{
-						failInternalError("Could not get outline.", $sSQL, $aPointPolygon);
-					}
-
-					if ($aPointPolygon['place_id'])
-					{
-						if ($this->bIncludePolygonAsGeoJSON) $aResult['asgeojson'] = $aPointPolygon['asgeojson'];
-						if ($this->bIncludePolygonAsKML) $aResult['askml'] = $aPointPolygon['askml'];
-						if ($this->bIncludePolygonAsSVG) $aResult['assvg'] = $aPointPolygon['assvg'];
-						if ($this->bIncludePolygonAsText) $aResult['astext'] = $aPointPolygon['astext'];
-
-						if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null )
-						{
-							$aResult['lat'] = $aPointPolygon['centrelat'];
-							$aResult['lon'] = $aPointPolygon['centrelon'];
-						}
-
-						if ($this->bIncludePolygonAsPoints)
-						{
-							$aPolyPoints[] = geometryText2Points($aPointPolygon['astext'],$fRadius);
-
-							// Output data suitable for display (points and a bounding box)
-							if (isset($aPolyPoints))
-							{
-								$aResult['aPolyPoints'] = array();
-								foreach($aPolyPoints as $aPoint)
-								{
-									$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
-								}
-							}
-						}
-
-						if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001)
-						{
-							$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-							$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-						}
-						if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001)
-						{
-							$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-							$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
-						}
-						$aResult['aBoundingBox'] = array((string)$aPointPolygon['minlat'],(string)$aPointPolygon['maxlat'],(string)$aPointPolygon['minlon'],(string)$aPointPolygon['maxlon']);
-					}
-				}
+				$aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
+				$aResult = array_merge($aResult, $aOutlineResult);
 
 				if ($aResult['extra_place'] == 'city')
 				{
 					$aResult['class'] = 'place';
 					$aResult['type'] = 'city';
 					$aResult['rank_search'] = 16;
-				}
-
-				if (!isset($aResult['aBoundingBox']))
-				{
-					$iSteps = max(8,min(100,$fRadius * 3.14 * 100000));
-					$fStepSize = (2*pi())/$iSteps;
-					$aPointPolygon['minlat'] = $aResult['lat'] - $fRadius;
-					$aPointPolygon['maxlat'] = $aResult['lat'] + $fRadius;
-					$aPointPolygon['minlon'] = $aResult['lon'] - $fRadius;
-					$aPointPolygon['maxlon'] = $aResult['lon'] + $fRadius;
-
-					// Output data suitable for display (points and a bounding box)
-					if ($this->bIncludePolygonAsPoints)
-					{
-						$aPolyPoints = array();
-						for($f = 0; $f < 2*pi(); $f += $fStepSize)
-						{
-							$aPolyPoints[] = array('',$aResult['lon']+($fRadius*sin($f)),$aResult['lat']+($fRadius*cos($f)));
-						}
-						$aResult['aPolyPoints'] = array();
-						foreach($aPolyPoints as $aPoint)
-						{
-							$aResult['aPolyPoints'][] = array($aPoint[1], $aPoint[2]);
-						}
-					}
-					$aResult['aBoundingBox'] = array((string)$aPointPolygon['minlat'],(string)$aPointPolygon['maxlat'],(string)$aPointPolygon['minlon'],(string)$aPointPolygon['maxlon']);
 				}
 
 				// Is there an icon set for this type of result?

@@ -2183,7 +2183,8 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT, languagepref TEXT[]) RETURNS TEXT
+--housenumber only needed for tiger data
+CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT, housenumber INTEGER, languagepref TEXT[]) RETURNS TEXT
   AS $$
 DECLARE
   result TEXT[];
@@ -2195,7 +2196,7 @@ BEGIN
   result := '{}';
   prevresult := '';
 
-  FOR location IN select * from get_addressdata(for_place_id) where isaddress order by rank_address desc LOOP
+  FOR location IN select * from get_addressdata(for_place_id,housenumber) where isaddress order by rank_address desc LOOP
     currresult := trim(get_name_by_language(location.name, languagepref));
     IF currresult != prevresult AND currresult IS NOT NULL AND result[(100 - location.rank_address)] IS NULL THEN
       result[(100 - location.rank_address)] := trim(get_name_by_language(location.name, languagepref));
@@ -2223,10 +2224,10 @@ create type addressline as (
   distance FLOAT
 );
 
-CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT) RETURNS setof addressline 
+CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT, in_housenumber INTEGER) RETURNS setof addressline 
   AS $$
 DECLARE
-  for_place_id BIGINT;
+  for_place_id BIGINT;--parent_place_id
   result TEXT[];
   search TEXT[];
   found INTEGER;
@@ -2242,11 +2243,14 @@ DECLARE
   countryname HSTORE;
   hadcountry BOOLEAN;
 BEGIN
-
-  select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_tiger 
-    WHERE place_id = in_place_id 
-    INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
-
+    --first query tiger data
+  select parent_place_id,'us', 30, postcode, null, 'place', 'house' from location_property_tiger 
+    WHERE place_id = in_place_id AND in_housenumber>=startnumber AND in_housenumber <= endnumber
+    INTO for_place_id,searchcountrycode, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
+  IF for_place_id IS NOT NULL THEN
+    searchhousenumber = in_housenumber::text;
+  END IF;
+  
   IF for_place_id IS NULL THEN
     select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_aux
       WHERE place_id = in_place_id 

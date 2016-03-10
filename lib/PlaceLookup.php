@@ -6,6 +6,8 @@
 		protected $iPlaceID;
 
 		protected $sType = false;
+        
+        protected $fTigerFraction =-1;
 
 		protected $aLangPrefOrder = array();
 
@@ -115,6 +117,7 @@
 			{
 				$this->setOSMID($details['osm_type'], $details['osm_id']);
 			}
+            if (isset($details['fraction'])) $this->fTigerFraction = $details['fraction'];
 
 			return $this->lookup();
 		}
@@ -130,20 +133,24 @@
 				$sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
 				$sSQL .= " coalesce(null,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, 'us' as calculated_country_code, ";
-				$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= " get_address_by_language(place_id, housenumber,$sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= " null as placename,";
 				$sSQL .= " null as ref,";
 				if ($this->bExtraTags) $sSQL .= " null as extra,";
 				if ($this->bNameDetails) $sSQL .= " null as names,";
-				$sSQL .= " st_y(centroid) as lat,";
-				$sSQL .= " st_x(centroid) as lon";
-				$sSQL .= " from location_property_tiger where place_id = ".(int)$this->iPlaceID;
+				$sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
+				$sSQL .= " (select *, ";
+                $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
+                $sSQL .= " WHEN interpolationtype='even' THEN ((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber+1)/2)::int*2";
+                $sSQL .= " WHEN interpolationtype='all' THEN (".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)::int";
+                $sSQL .= " END as housenumber";
+                $sSQL .= " from location_property_tiger where place_id = ".(int)$this->iPlaceID.") as blub1) as blub2";
 			}
 			else
 			{
 				$sSQL = "select placex.place_id, partition, osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, country_code, parent_place_id, linked_place_id, rank_address, rank_search, ";
 				$sSQL .= " coalesce(importance,0.75-(rank_search::float/40)) as importance, indexed_status, indexed_date, wikipedia, calculated_country_code, ";
-				$sSQL .= " get_address_by_language(place_id, $sLanguagePrefArraySQL) as langaddress,";
+				$sSQL .= " get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
 				$sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
 				if ($this->bExtraTags) $sSQL .= " hstore_to_json(extratags) as extra,";
@@ -165,7 +172,10 @@
 
 			if ($this->bAddressDetails)
 			{
-				$aAddress = $this->getAddressNames();
+                if($this->sType == 'tiger') // to get addressdetails for tiger data, the housenumber is needed
+                    $aAddress = $this->getAddressNames($aPlace['housenumber']);
+                else
+                    $aAddress = $this->getAddressNames();
 				$aPlace['aAddress'] = $aAddress;
 			}
 
@@ -213,13 +223,13 @@
 			return $aPlace;
 		}
 
-		function getAddressDetails($bAll = false)
+		function getAddressDetails($bAll = false, $housenumber = -1)
 		{
 			if (!$this->iPlaceID) return null;
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
-			$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$this->iPlaceID.")";
+			$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$this->iPlaceID.",".$housenumber.")";
 			if (!$bAll) $sSQL .= " WHERE isaddress OR type = 'country_code'";
 			$sSQL .= " order by rank_address desc,isaddress desc";
 
@@ -232,9 +242,9 @@
 			return $aAddressLines;
 		}
 
-		function getAddressNames()
+		function getAddressNames($housenumber = -1)
 		{
-			$aAddressLines = $this->getAddressDetails(false);
+			$aAddressLines = $this->getAddressDetails(false, $housenumber);
 
 			$aAddress = array();
 			$aFallback = array();

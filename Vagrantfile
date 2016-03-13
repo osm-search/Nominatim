@@ -14,6 +14,10 @@ Vagrant.configure("2") do |config|
       sub.vm.box = "ubuntu/trusty64"
       sub.vm.provision :shell, :path => "vagrant/ubuntu-trusty-provision.sh"
   end
+  config.vm.define "ubuntu-php7" do |sub|
+      sub.vm.box = "ubuntu/trusty64"
+      sub.vm.provision :shell, :path => "vagrant/ubuntu-trusty-php7-provision.sh"
+  end
   config.vm.define "centos" do |sub|
       sub.vm.box = "bento/centos-7.2"
       sub.vm.provision :shell, :path => "vagrant/centos-7-provision.sh"

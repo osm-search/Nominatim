@@ -29,13 +29,11 @@ is cloned as well by running `git submodule update --init`.
 
 Installation steps:
 
-0. If checking out from git run:
-
-     ./autogen.sh
-
 1. Compile Nominatim:
 
-     ./configure
+     mkdir build
+     cd build
+     cmake ..
      make
 
 2. Get OSM data and import:

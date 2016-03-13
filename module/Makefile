@@ -1,6 +1,4 @@
 MODULES = nominatim
-PGXS := @POSTGRESQL_PGXS@
-PG_CONFIG := @PG_CONFIG@
 include $(PGXS)
 
 all:

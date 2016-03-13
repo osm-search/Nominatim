@@ -36,7 +36,7 @@ USERNAME=vagrant
 sudo apt-get update -qq
 sudo apt-get upgrade -y
 sudo apt-get install -y build-essential libgeos-dev libpq-dev libbz2-dev \
-                        libtool automake libproj-dev libboost-dev  libboost-system-dev \
+                        libtool cmake libproj-dev libboost-dev  libboost-system-dev \
                         libboost-filesystem-dev libboost-thread-dev libexpat-dev
 sudo apt-get autoremove -y
 
@@ -89,13 +89,13 @@ cd /home/$USERNAME
 # If the Nominatim source is not being shared with the host, check out source.
 if [ ! -d "Nominatim" ]; then
   sudo apt-get install -y git
-  sudo -u $USERNAME git clone --recursive https://github.com/twain47/Nominatim.git
+  sudo -H -u $USERNAME git clone --recursive https://github.com/twain47/Nominatim.git
 fi
 
 cd Nominatim
-
-sudo -u $USERNAME ./autogen.sh
-sudo -u $USERNAME ./configure
+sudo -u $USERNAME mkdir build-vagrant
+cd build-vagrant
+sudo -u $USERNAME cmake ..
 sudo -u $USERNAME make
 chmod +x ./
 chmod +x ./module

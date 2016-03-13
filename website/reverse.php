@@ -102,9 +102,12 @@
 		$oPlaceLookup->setPolygonSimplificationThreshold($fThreshold);
 
 		$fRadius = $fDiameter = getResultDiameter($aPlace);
-		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'],$aPlace['lon'],$aPlace['lat'],$fRadius);
+		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'], $aPlace['lon'], $aPlace['lat'], $fRadius);
 
-		$aPlace = array_merge($aPlace, $aOutlineResult);
+		if ($aOutlineResult)
+		{
+			$aPlace = array_merge($aPlace, $aOutlineResult);
+		}
 	}
 	else
 	{

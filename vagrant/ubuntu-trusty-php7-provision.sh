@@ -67,12 +67,15 @@ sudo -u postgres createuser -s $USERNAME
 ###
 ### PHP for frontend
 ###
-sudo apt-get install -y php5 php5-pgsql php-pear php-db
+sudo LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
+sudo apt-get update -qq
+sudo apt-get install -y apache2
+sudo apt-get install -y php7.0 php7.0-pgsql php7.0-fpm libapache2-mod-php7.0 php-pear php-db
 
 
 # get rid of some warning
 # where is the ini file? 'php --ini'
-echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php5/cli/conf.d/99-timezone.ini > /dev/null
+echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php/7.0/cli/conf.d/99-timezone.ini > /dev/null
 
 
 
@@ -165,10 +168,13 @@ sudo -u $USERNAME ./utils/setup.php --create-website /var/www/nominatim
 ##
 apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib
+pip install certifi # deals with "SNI extension to TLS is not available" warning
 pip install lettuce==0.2.18 six==1.7 haversine
+pip install --upgrade pip setuptools
 
 ## Test suite (PHP)
 ## https://github.com/twain47/Nominatim/tree/master/tests-php
-apt-get install -y phpunit
-
+wget --quiet https://phar.phpunit.de/phpunit.phar
+chmod +x phpunit.phar
+mv phpunit.phar /usr/local/bin/phpunit
 

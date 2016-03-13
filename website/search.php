@@ -14,7 +14,7 @@
 	$fLon = CONST_Default_Lon;
 	$iZoom = CONST_Default_Zoom;
 
-	$oGeocode =& new Geocode($oDB);
+	$oGeocode = new Geocode($oDB);
 
 	$aLangPrefOrder = getPreferredLanguages();
 	$oGeocode->setLanguagePreference($aLangPrefOrder);

@@ -33,6 +33,7 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 #-----------------------------------------------------------------------------
 
 set(BUILD_TESTS on)
+set(WITH_LUA off)
 add_subdirectory(osm2pgsql)
 
 find_package(Threads REQUIRED)
@@ -60,19 +61,41 @@ include_directories(${LIBXML2_INCLUDE_DIR})
 #
 #-----------------------------------------------------------------------------
 
-configure_file(
-    ${PROJECT_SOURCE_DIR}/settings/settings.php
-    ${PROJECT_BINARY_DIR}/settings/settings.php
-)
+set(CUSTOMFILES
+    settings/settings.php
+    settings/phrase_settings.php
+    website/deletable.php
+    website/details.php
+    website/hierarchy.php
+    website/lookup.php
+    website/polygons.php
+    website/reverse.php
+    website/search.php
+    website/status.php
+    utils/blocks.php
+    utils/country_languages.php
+    utils/imports.php
+    utils/importWikipedia.php
+    utils/query.php
+    utils/server_compare.php
+    utils/setup.php
+    utils/specialphrases.php
+    utils/update.php
+    utils/warm.php
+   )
 
-configure_file(
-    ${PROJECT_SOURCE_DIR}/settings/phrase_settings.php
-    ${PROJECT_BINARY_DIR}/settings/phrase_settings.php
-)
+foreach (cfile ${CUSTOMFILES})
+    configure_file(${PROJECT_SOURCE_DIR}/${cfile} ${PROJECT_BINARY_DIR}/${cfile})
+endforeach()
 
-execute_process(
-    COMMAND ln -s -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/utils
-)
+set(WEBPATHS css images js)
+
+foreach (wp ${WEBPATHS})
+    execute_process(
+        COMMAND ln -sf ${PROJECT_SOURCE_DIR}/website/${wp} ${PROJECT_BINARY_DIR}/website/
+    )
+endforeach()
+
 
 #-----------------------------------------------------------------------------
 #

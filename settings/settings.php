@@ -1,5 +1,6 @@
 <?php
-	@define('CONST_InstallPath', dirname(dirname(__FILE__)));
+	@define('CONST_BasePath', '@CMAKE_SOURCE_DIR@');
+	@define('CONST_InstallPath', '@CMAKE_BINARY_DIR@');
 	if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_InstallPath.'/settings/local.php');
 	if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 

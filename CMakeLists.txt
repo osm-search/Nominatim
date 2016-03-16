@@ -70,6 +70,11 @@ configure_file(
     ${PROJECT_BINARY_DIR}/settings/phrase_settings.php
 )
 
+configure_file(
+    ${PROJECT_SOURCE_DIR}/settings/partitionedtags.def
+    ${PROJECT_BINARY_DIR}/settings/partitionedtags.def
+)
+
 execute_process(
     COMMAND ln -s -t ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/utils
 )

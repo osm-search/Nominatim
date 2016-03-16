@@ -248,8 +248,8 @@
 		// Backstop the import process - easliest possible import id
 		$sScript .= "insert into import_npi_log values (18022);\n";
 
-		$hFile = @fopen(CONST_BasePath.'/settings/partitionedtags.def', "r");
-		if (!$hFile) fail('unable to open list of partitions: '.CONST_BasePath.'/settings/partitionedtags.def');
+		$hFile = @fopen(CONST_InstallPath.'/settings/partitionedtags.def', "r");
+		if (!$hFile) fail('unable to open list of partitions: '.CONST_InstallPath.'/settings/partitionedtags.def');
 
 		while (($sLine = fgets($hFile, 4096)) !== false && $sLine && substr($sLine,0,1) !='#')
 		{
@@ -657,7 +657,7 @@
 		$bDidSomething = true;
 		$sOutputFile = '';
 		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
-		$sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+		$sBaseCmd = CONST_Nominatim_Binary.' -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
 		passthruCheckReturn($sBaseCmd.' -r 5 -R 25');

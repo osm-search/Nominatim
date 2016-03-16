@@ -25,6 +25,7 @@
 	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');
 	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
+	@define('CONST_Nominatim_Binary', CONST_InstallPath.'/nominatim/nominatim');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
 	@define('CONST_Tiger_Data_Path', CONST_BasePath.'/data/tiger');
 

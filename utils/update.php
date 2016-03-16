@@ -346,7 +346,7 @@
 
 	if ($aResult['index'])
 	{
-		passthru(CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
+		passthru(CONST_Nominatim_Binary.' -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 	}
 
 	if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
@@ -362,7 +362,7 @@
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-		$sCMDIndex = $sInstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
+		$sCMDIndex = CONST_Nominatim_Binary.' -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}
@@ -540,7 +540,7 @@
 			exit(1);
 		}
 		$sConfigDirectory = CONST_InstallPath.'/settings';
-		$sCMDImportTemplate = $sBasePath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.CONST_BasePath.'/nominatim/partitionedtags.def -F ';
+		$sCMDImportTemplate = CONST_Nominatim_Binary.' -d gazetteer -P 5433 -I -T '.CONST_InstallPath.'/settings/partitionedtags.def -F ';
 		while(true)
 		{
 			$fStartTime = time();

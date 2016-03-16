@@ -363,7 +363,7 @@
 		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
 		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-		$sCMDIndex = $sInstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
+		$sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 		if (!$aResult['no-npi']) {
 			$sCMDIndex .= '-F ';
 		}
@@ -541,7 +541,7 @@
 			exit(1);
 		}
 		$sConfigDirectory = CONST_InstallPath.'/settings';
-		$sCMDImportTemplate = $sBasePath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.CONST_BasePath.'/nominatim/partitionedtags.def -F ';
+		$sCMDImportTemplate = CONST_InstallPath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.CONST_BasePath.'/settings/partitionedtags.def -F ';
 		while(true)
 		{
 			$fStartTime = time();

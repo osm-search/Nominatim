@@ -1611,7 +1611,7 @@
 					if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30))
 					{
 						// Need to verify passes rank limits before dropping out of the loop (yuk!)
-                        // reduces the number of place id, like a filter
+                        // reduces the number of place ids, like a filter
 						$sSQL = "select place_id from placex where place_id in (".join(',',array_keys($aResultPlaceIDs)).") ";
 						$sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
 						if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";

@@ -9,7 +9,7 @@
 	   $fLoadAvg = getLoadAverage();
 	   if ($fLoadAvg > 3)
 	   {
-	   echo "Page temporarily blocked due to high server load\n";
+	   echo "Page temporarily blocked due to high server load\n";F
 	   exit;
 	   }
 	 */
@@ -102,7 +102,7 @@
 	}
 
 	// Address
-	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], true);
+	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], -1, true);
 
 	// Linked places
 	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";

@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS location_property_tiger_import;
-CREATE TABLE location_property_tiger_import (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, street TEXT, isin TEXT, postcode TEXT);
+CREATE TABLE location_property_tiger_import (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 
 CREATE OR REPLACE FUNCTION tiger_line_import(linegeo GEOMETRY, in_startnumber INTEGER, 
   in_endnumber INTEGER, interpolationtype TEXT, 
@@ -73,8 +73,8 @@ BEGIN
   END IF;
 
 --insert street(line) into import table
-insert into location_property_tiger_import (linegeo, place_id, partition, parent_place_id, startnumber, endnumber, interpolationtype, street, isin, postcode)
-values (linegeo, nextval('seq_place'), out_partition, out_parent_place_id, startnumber, endnumber, interpolationtype, in_street, in_isin, in_postcode);
+insert into location_property_tiger_import (linegeo, place_id, partition, parent_place_id, startnumber, endnumber, interpolationtype, postcode)
+values (linegeo, nextval('seq_place'), out_partition, out_parent_place_id, startnumber, endnumber, interpolationtype, in_postcode);
 
   RETURN 1;
 END;

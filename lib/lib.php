@@ -780,7 +780,7 @@
 	}
 
 
-	function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $housenumber, $bRaw = false)
+	function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $housenumber =-1, $bRaw = false)
 	{
 		$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID, $housenumber)";
 		if (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";

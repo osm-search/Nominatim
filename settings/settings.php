@@ -6,7 +6,7 @@
 
 	// General settings
 	@define('CONST_Debug', false);
-	@define('CONST_Database_DSN', 'pgsql://@/nominatim_lines'); // <driver>://<username>:<password>@<host>:<port>/<database>
+    @define('CONST_Database_DSN', 'pgsql://@/nominatim'); // <driver>://<username>:<password>@<host>:<port>/<database>
 	@define('CONST_Database_Web_User', 'www-data');
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
@@ -86,7 +86,7 @@
 	@define('CONST_BulkUserIPs', '');
 	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs
 
-	@define('CONST_Website_BaseURL', 'http://localhost/nominatim/');
+	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
 	@define('CONST_Tile_Default', 'Mapnik');
 
 	@define('CONST_Default_Language', false);

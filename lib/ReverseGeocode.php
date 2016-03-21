@@ -107,7 +107,7 @@
 			}
 
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if ($bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 )) 
+			if ($bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
 				$fSearchDiam = 0.001;
 				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
@@ -142,7 +142,7 @@
 					$aPlace = $aPlaceTiger;
 					$iPlaceID = $aPlaceTiger['place_id'];
 					$iParentPlaceID = $aPlaceTiger['parent_place_id']; // the street
-                    $iFraction = $aPlaceTiger['fraction'];
+					$iFraction = $aPlaceTiger['fraction'];
 				}
 			}
 
@@ -166,8 +166,8 @@
 			}
 
 			return array('place_id' => $iPlaceID,
-					     'type' => $bPlaceIsTiger ? 'tiger' : 'osm',
-                         'fraction' => $bPlaceIsTiger ? $iFraction : -1 );
+						 'type' => $bPlaceIsTiger ? 'tiger' : 'osm',
+						 'fraction' => $bPlaceIsTiger ? $iFraction : -1 );
 		}
 	}
 ?>

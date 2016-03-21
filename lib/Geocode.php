@@ -1479,7 +1479,7 @@
 
 							if ($aSearch['sClass'] && sizeof($aPlaceIDs))
 							{
-								$sPlaceIDs = join(',', aPlaceIDs);
+								$sPlaceIDs = join(',', $aPlaceIDs);
 								$aClassPlaceIDs = array();
 
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')

@@ -167,9 +167,7 @@
 				$sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';  //no centroid anymore in Tiger data, now we have lines
 				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
 
-
-				// print all house numbers in the parent (street)
-				/*if (CONST_Debug)
+				if (CONST_Debug)
 				{
 					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
 					var_dump($sSQL);
@@ -179,7 +177,7 @@
 					{
 						echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
 					}
-				}*/
+				}
 
 				$aPlaceTiger = $this->oDB->getRow($sSQL);
 				if (PEAR::IsError($aPlace))
@@ -221,7 +219,8 @@
 			}
 
 			return array('place_id' => $iPlaceID,
-			             'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
+						'type' => $bPlaceIsTiger ? 'tiger' : 'osm',
+						'fraction' => $bPlaceIsTiger ? $iFraction : -1);
 		}
 		
 	}

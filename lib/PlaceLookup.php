@@ -6,8 +6,8 @@
 		protected $iPlaceID;
 
 		protected $sType = false;
-        
-        protected $fTigerFraction =-1;
+
+		protected $fTigerFraction =-1;
 
 		protected $aLangPrefOrder = array();
 
@@ -117,7 +117,7 @@
 			{
 				$this->setOSMID($details['osm_type'], $details['osm_id']);
 			}
-            if (isset($details['fraction'])) $this->fTigerFraction = $details['fraction'];
+			if (isset($details['fraction'])) $this->fTigerFraction = $details['fraction'];
 
 			return $this->lookup();
 		}
@@ -140,11 +140,11 @@
 				if ($this->bNameDetails) $sSQL .= " null as names,";
 				$sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
 				$sSQL .= " (select *, ";
-                $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-                $sSQL .= " WHEN interpolationtype='even' THEN ((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber+1)/2)::int*2";
-                $sSQL .= " WHEN interpolationtype='all' THEN (".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)::int";
-                $sSQL .= " END as housenumber";
-                $sSQL .= " from location_property_tiger where place_id = ".(int)$this->iPlaceID.") as blub1) as blub2";
+				$sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
+				$sSQL .= " WHEN interpolationtype='even' THEN ((".$this->fTigerFraction."*(endnumber-startnumber)+startnumber+1)/2)::int*2";
+				$sSQL .= " WHEN interpolationtype='all' THEN (".$this->fTigerFraction."*(endnumber-startnumber)+startnumber)::int";
+				$sSQL .= " END as housenumber";
+				$sSQL .= " from location_property_tiger where place_id = ".(int)$this->iPlaceID.") as blub1) as blub2";
 			}
 			else
 			{
@@ -172,10 +172,10 @@
 
 			if ($this->bAddressDetails)
 			{
-                if($this->sType == 'tiger') // to get addressdetails for tiger data, the housenumber is needed
-                    $aAddress = $this->getAddressNames($aPlace['housenumber']);
-                else
-                    $aAddress = $this->getAddressNames();
+				if($this->sType == 'tiger') // to get addressdetails for tiger data, the housenumber is needed
+					$aAddress = $this->getAddressNames($aPlace['housenumber']);
+				else
+					$aAddress = $this->getAddressNames();
 				$aPlace['aAddress'] = $aAddress;
 			}
 

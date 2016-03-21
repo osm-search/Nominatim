@@ -77,7 +77,7 @@
 	function getProcessorCount()
 	{
 		$sCPU = file_get_contents('/proc/cpuinfo');
-		preg_match_all('#processor	: [0-9]+#', $sCPU, $aMatches);
+		preg_match_all('#processor  : [0-9]+#', $sCPU, $aMatches);
 		return sizeof($aMatches[0]);
 	}
 
@@ -115,8 +115,8 @@
 		   return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
 		   if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
 		   return ($a['aPointPolygon']['area'] > $b['aPointPolygon']['area']?-1:1);
-		//		if ($a['levenshtein'] != $b['levenshtein'])
-		//			return ($a['levenshtein'] < $b['levenshtein']?-1:1);
+		//      if ($a['levenshtein'] != $b['levenshtein'])
+		//          return ($a['levenshtein'] < $b['levenshtein']?-1:1);
 		if ($a['rank_search'] != $b['rank_search'])
 		return ($a['rank_search'] < $b['rank_search']?-1:1);
 		 */

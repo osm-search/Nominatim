@@ -10,7 +10,6 @@ DECLARE
   endnumber INTEGER;
   stepsize INTEGER;
   numberrange INTEGER;
-  rangestartnumber INTEGER;
   place_centroid GEOMETRY;
   out_partition INTEGER;
   out_parent_place_id BIGINT;
@@ -28,8 +27,7 @@ BEGIN
   END IF;
 
   numberrange := endnumber - startnumber;
-  rangestartnumber := startnumber;
-  
+
   IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
     startnumber := startnumber + 1;
     stepsize := 2;

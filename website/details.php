@@ -10,7 +10,7 @@
 	   $fLoadAvg = getLoadAverage();
 	   if ($fLoadAvg > 3)
 	   {
-	   echo "Page temporarily blocked due to high server load\n";F
+	   echo "Page temporarily blocked due to high server load\n";
 	   exit;
 	   }
 	 */

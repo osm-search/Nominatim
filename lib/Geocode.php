@@ -399,7 +399,7 @@
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
 
 			// Get the details for display (is this a redundant extra step?)
-			$sPlaceIDs = join(',',array_keys($aPlaceIDs));
+			$sPlaceIDs = join(',', array_keys($aPlaceIDs));
 
 			$sImportanceSQL = '';
 			if ($this->sViewboxSmallSQL) $sImportanceSQL .= " case when ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
@@ -437,9 +437,10 @@
 				//Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
 				//only Tiger housenumbers need to be interpolated, because they are saved as lines with start- and endnumber, the common osm housenumbers are usually saved as points
 				$sHousenumbers = "";
-				$i=0;
-				$length=count($aPlaceIDs);
-				foreach($aPlaceIDs as $placeID => $housenumber){
+				$i = 0;
+				$length = count($aPlaceIDs);
+				foreach($aPlaceIDs as $placeID => $housenumber)
+                {
 					$i++;
 					$sHousenumbers .= "(".$placeID.", ".$housenumber.")";
 					if($i<$length)
@@ -873,7 +874,8 @@
 			}
 
 			// Do we have anything that looks like a lat/lon pair?
-			if ( $aLooksLike = looksLikeLatLonPair($sQuery) ){
+			if ( $aLooksLike = looksLikeLatLonPair($sQuery) )
+            {
 				$this->setNearPoint(array($aLooksLike['lat'], $aLooksLike['lon']));
 				$sQuery = $aLooksLike['query'];
 			}
@@ -1216,7 +1218,7 @@
 					foreach($aSearches as $aSearch)
 					{
 						$iQueryLoop++;
-						$searchedHousenumber=-1;
+						$searchedHousenumber = -1;
 
 						if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
 						if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
@@ -1447,7 +1449,7 @@
 								if (!sizeof($aPlaceIDs))
 								{
 									//new query for lines, not housenumbers anymore
-									if($searchedHousenumber%2==0){
+									if($searchedHousenumber%2 == 0){
 										//if housenumber is even, look for housenumber in streets with interpolationtype even or all
 										$sSQL = "select distinct place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
 									}else{
@@ -1470,10 +1472,9 @@
 								{
 									$aPlaceIDs = $aRoadPlaceIDs;
 									//set to -1, if no housenumbers were found
-									$searchedHousenumber=-1;
-								}else{
-									//housenumber was found, remains saved in searchedHousenumber
+									$searchedHousenumber = -1;
 								}
+                                //else: housenumber was found, remains saved in searchedHousenumber
 							}
 
 
@@ -1624,10 +1625,11 @@
 						if (CONST_Debug) var_dump($sSQL);
 						$aFilteredPlaceIDs = $this->oDB->getCol($sSQL);
 						$tempIDs = array();
-						foreach($aFilteredPlaceIDs as $placeID){
-							$tempIDs[$placeID]= $aResultPlaceIDs[$placeID];  //assign housenumber to placeID
+						foreach($aFilteredPlaceIDs as $placeID)
+                        {
+							$tempIDs[$placeID] = $aResultPlaceIDs[$placeID];  //assign housenumber to placeID
 						}
-						$aResultPlaceIDs=$tempIDs;
+						$aResultPlaceIDs = $tempIDs;
 					}
 
 					//exit;

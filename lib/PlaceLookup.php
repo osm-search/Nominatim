@@ -7,7 +7,7 @@
 
 		protected $sType = false;
 
-		protected $fTigerFraction =-1;
+		protected $fTigerFraction = -1;
 
 		protected $aLangPrefOrder = array();
 

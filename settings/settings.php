@@ -1,6 +1,7 @@
 <?php
 	@define('CONST_BasePath', '@CMAKE_SOURCE_DIR@');
 	@define('CONST_InstallPath', '@CMAKE_BINARY_DIR@');
+	if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 	if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_InstallPath.'/settings/local.php');
 	if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 

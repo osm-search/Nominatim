@@ -184,9 +184,9 @@ def import_fill_planet_osm_rels(step):
         if not members:
             members = None
 
-        cur.execute("""INSERT INTO planet_osm_rels 
-                      (id, way_off, rel_off, parts, members, tags, pending)
-                      VALUES (%s, %s, %s, %s, %s, %s, false)""",
+        cur.execute("""INSERT INTO planet_osm_rels
+                      (id, way_off, rel_off, parts, members, tags)
+                      VALUES (%s, %s, %s, %s, %s, %s)""",
                    (line['id'], len(parts['n']), len(parts['n']) + len(parts['w']),
                    parts['n'] + parts['w'] + parts['r'], members, tags))
     world.conn.commit()
@@ -202,9 +202,8 @@ def import_fill_planet_osm_ways(step):
             tags = None
         nodes = [int(x.strip()) for x in line['nodes'].split(',')]
 
-        cur.execute("""INSERT INTO planet_osm_ways
-                       (id, nodes, tags, pending)
-                       VALUES (%s, %s, %s, false)""",
+        cur.execute("""INSERT INTO planet_osm_ways (id, nodes, tags)
+                       VALUES (%s, %s, %s)""",
                     (line['id'], nodes, tags))
     world.conn.commit()
 
@@ -271,6 +270,7 @@ def query_cmd(step, query, with_dups):
     (outp, err) = proc.communicate()
     assert (proc.returncode == 0), "query.php failed with message: %s" % err
     world.page = outp
-    world.response_format = 'json'   
+    world.response_format = 'json'
+    world.request_type = 'search'
     world.returncode = 200
 

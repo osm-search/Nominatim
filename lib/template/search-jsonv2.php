@@ -7,7 +7,7 @@
 				'licence'=>"Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright",
 			);
 
-		$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
+		$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':($aPointDetails['osm_type'] == 'T'?'tiger':''))));
 		if ($sOSMType)
 		{
 			$aPlace['osm_type'] = $sOSMType;

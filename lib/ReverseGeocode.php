@@ -158,17 +158,15 @@
 			}
 
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if ($bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 )) 
+			if ($bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
 				$fSearchDiam = 0.001;
-				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search ';
-				if (CONST_Debug) { $sSQL .= ', housenumber, ST_distance('.$sPointSQL.', centroid) as distance, st_y(centroid) as lat, st_x(centroid) as lon'; }
+				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
+				//if (CONST_Debug) { $sSQL .= ', housenumber, ST_distance('.$sPointSQL.', centroid) as distance, st_y(centroid) as lat, st_x(centroid) as lon'; }
 				$sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$iPlaceID;
-				$sSQL .= ' AND ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.')';
-				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', centroid) ASC limit 1';
+				$sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';  //no centroid anymore in Tiger data, now we have lines
+				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
 
-
-				// print all house numbers in the parent (street)
 				if (CONST_Debug)
 				{
 					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
@@ -193,6 +191,7 @@
 					$aPlace = $aPlaceTiger;
 					$iPlaceID = $aPlaceTiger['place_id'];
 					$iParentPlaceID = $aPlaceTiger['parent_place_id']; // the street
+					$iFraction = $aPlaceTiger['fraction'];
 				}
 			}
 
@@ -220,7 +219,8 @@
 			}
 
 			return array('place_id' => $iPlaceID,
-			             'type' => $bPlaceIsTiger ? 'tiger' : 'osm');
+						'type' => $bPlaceIsTiger ? 'tiger' : 'osm',
+						'fraction' => $bPlaceIsTiger ? $iFraction : -1);
 		}
 		
 	}

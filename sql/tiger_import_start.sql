@@ -1,19 +1,15 @@
 DROP TABLE IF EXISTS location_property_tiger_import;
-CREATE TABLE location_property_tiger_import () INHERITS (location_property) {ts:aux-data};
+CREATE TABLE location_property_tiger_import (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 
-CREATE OR REPLACE FUNCTION tigger_create_interpolation(linegeo GEOMETRY, in_startnumber INTEGER, 
+CREATE OR REPLACE FUNCTION tiger_line_import(linegeo GEOMETRY, in_startnumber INTEGER, 
   in_endnumber INTEGER, interpolationtype TEXT, 
   in_street TEXT, in_isin TEXT, in_postcode TEXT) RETURNS INTEGER
   AS $$
 DECLARE
-  
   startnumber INTEGER;
   endnumber INTEGER;
   stepsize INTEGER;
-  housenum INTEGER;
-  newpoints INTEGER;
   numberrange INTEGER;
-  rangestartnumber INTEGER;
   place_centroid GEOMETRY;
   out_partition INTEGER;
   out_parent_place_id BIGINT;
@@ -31,7 +27,6 @@ BEGIN
   END IF;
 
   numberrange := endnumber - startnumber;
-  rangestartnumber := startnumber;
 
   IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
     startnumber := startnumber + 1;
@@ -75,15 +70,11 @@ BEGIN
     END LOOP;    
   END IF;
 
-  newpoints := 0;
-  FOR housenum IN startnumber..endnumber BY stepsize LOOP
-    insert into location_property_tiger_import (place_id, partition, parent_place_id, housenumber, postcode, centroid)
-    values (nextval('seq_place'), out_partition, out_parent_place_id, housenum, in_postcode,
-      ST_LineInterpolatePoint(linegeo, (housenum::float-rangestartnumber::float)/numberrange::float));
-    newpoints := newpoints + 1;
-  END LOOP;
+--insert street(line) into import table
+insert into location_property_tiger_import (linegeo, place_id, partition, parent_place_id, startnumber, endnumber, interpolationtype, postcode)
+values (linegeo, nextval('seq_place'), out_partition, out_parent_place_id, startnumber, endnumber, interpolationtype, in_postcode);
 
-  RETURN newpoints;
+  RETURN 1;
 END;
 $$
 LANGUAGE plpgsql;

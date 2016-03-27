@@ -11,4 +11,3 @@ Feature: Object details
      | N158845944
      | W72493656
      | R62422
-

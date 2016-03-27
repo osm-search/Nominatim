@@ -106,10 +106,7 @@ CREATE INDEX idx_location_property_aux_parent_place_id ON location_property_aux 
 CREATE INDEX idx_location_property_aux_housenumber_parent_place_id ON location_property_aux USING BTREE (parent_place_id, housenumber);
 GRANT SELECT ON location_property_aux TO "{www-user}";
 
-CREATE TABLE location_property_tiger () INHERITS (location_property) {ts:aux-data};
-CREATE INDEX idx_location_property_tiger_place_id ON location_property_tiger USING BTREE (place_id) {ts:aux-index};
-CREATE INDEX idx_location_property_tiger_parent_place_id ON location_property_tiger USING BTREE (parent_place_id) {ts:aux-index};
-CREATE INDEX idx_location_property_tiger_housenumber_parent_place_id ON location_property_tiger USING BTREE (parent_place_id, housenumber) {ts:aux-index};
+CREATE TABLE location_property_tiger (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{www-user}";
 
 drop table IF EXISTS search_name;

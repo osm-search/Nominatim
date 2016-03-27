@@ -454,13 +454,13 @@
 				$sSQL .= ", null as ref";
 				if ($this->bIncludeExtraTags) $sSQL .= ", null as extra";
 				if ($this->bIncludeNameDetails) $sSQL .= ", null as names";
-				$sSQL .= ", avg(st_x(point)) as lon, avg(st_y(point)) as lat";
-				$sSQL .= $sImportanceSQL.", -1.15 as importance ";
+				$sSQL .= ", avg(st_x(centroid)) as lon, avg(st_y(centroid)) as lat,";
+				$sSQL .= $sImportanceSQL."-1.15 as importance ";
 				$sSQL .= ", (select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
 				$sSQL .= ", null as extra_place ";
 				$sSQL .= " from (select place_id";
 				//interpolate the Tiger housenumbers here
-				$sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as point, parent_place_id, housenumber_for_place ";
+				$sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as centroid, parent_place_id, housenumber_for_place ";
 				$sSQL .= "from (location_property_tiger ";
 				$sSQL .= " join (values ".$sHousenumbers.") as housenumbers(place_id, housenumber_for_place) using(place_id)) ";
 				$sSQL .= " where housenumber_for_place>=0 and 30 between $this->iMinAddressRank and $this->iMaxAddressRank) as blub"; //postgres wants an alias here

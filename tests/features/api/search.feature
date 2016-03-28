@@ -59,12 +59,16 @@ Feature: Search queries
     @Tiger
     Scenario: TIGER house number
         When sending json search query "3 West Victory Way, Craig"
-        Then result 0 has not attributes osm_id,osm_type
+        Then results contain
+         | osm_type
+         | tiger
 
     @Tiger
     Scenario: TIGER house number (road fallback)
         When sending json search query "3030 West Victory Way, Craig"
-        Then result 0 has attributes osm_id,osm_type
+        Then results contain
+         | osm_type
+         | way
 
     Scenario: Expansion of Illinois
         Given the request parameters

@@ -29,7 +29,7 @@ Feature: Reverse geocoding
         And exactly 1 result is returned
         And result addresses contain
           | ID | house_number | road               | postcode | country_code
-          | 0  | 7094         | Kings Estate Drive | 84128    | us
+          | 0  | 7096         | Kings Estate Drive | 84128    | us
         And result 0 has not attributes osm_id,osm_type
 
 

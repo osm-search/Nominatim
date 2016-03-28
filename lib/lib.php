@@ -55,17 +55,6 @@
 	}
 
 
-	function getBlockingProcesses()
-	{
-		$sStats = file_get_contents('/proc/stat');
-		if (preg_match('/procs_blocked ([0-9]+)/i', $sStats, $aMatches))
-		{
-			return (int)$aMatches[1];
-		}
-		return 0;
-	}
-
-
 	function getLoadAverage()
 	{
 		$sLoadAverage = file_get_contents('/proc/loadavg');
@@ -110,16 +99,7 @@
 	{
 		if ($a['importance'] != $b['importance'])
 			return ($a['importance'] > $b['importance']?-1:1);
-		/*
-		   if ($a['aPointPolygon']['numfeatures'] != $b['aPointPolygon']['numfeatures'])
-		   return ($a['aPointPolygon']['numfeatures'] > $b['aPointPolygon']['numfeatures']?-1:1);
-		   if ($a['aPointPolygon']['area'] != $b['aPointPolygon']['area'])
-		   return ($a['aPointPolygon']['area'] > $b['aPointPolygon']['area']?-1:1);
-		//      if ($a['levenshtein'] != $b['levenshtein'])
-		//          return ($a['levenshtein'] < $b['levenshtein']?-1:1);
-		if ($a['rank_search'] != $b['rank_search'])
-		return ($a['rank_search'] < $b['rank_search']?-1:1);
-		 */
+
 		return ($a['foundorder'] < $b['foundorder']?-1:1);
 	}
 
@@ -229,7 +209,6 @@
 			{
 				$aTokens[' '.$sWord] = ' '.$sWord;
 				$aTokens[$sWord] = $sWord;
-				//if (!strpos($sWord,' ')) $aTokens[$sWord] = $sWord;
 			}
 		}
 		return $aTokens;
@@ -239,34 +218,6 @@
 	/*
 	   GB Postcode functions
 	 */
-
-	function gbPostcodeAlphaDifference($s1, $s2)
-	{
-		$aValues = array(
-				'A'=>0,
-				'B'=>1,
-				'D'=>2,
-				'E'=>3,
-				'F'=>4,
-				'G'=>5,
-				'H'=>6,
-				'J'=>7,
-				'L'=>8,
-				'N'=>9,
-				'O'=>10,
-				'P'=>11,
-				'Q'=>12,
-				'R'=>13,
-				'S'=>14,
-				'T'=>15,
-				'U'=>16,
-				'W'=>17,
-				'X'=>18,
-				'Y'=>19,
-				'Z'=>20);
-		return abs(($aValues[$s1[0]]*21+$aValues[$s1[1]]) - ($aValues[$s2[0]]*21+$aValues[$s2[1]]));
-	}
-
 
 	function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
 	{
@@ -291,66 +242,6 @@
 		}
 
 		return false;
-	}
-
-
-	function usPostcodeCalculate($sPostcode, &$oDB)
-	{
-		$iZipcode = (int)$sPostcode;
-
-		// Try an exact match on the us_zippostcode table
-		$sSQL = 'select zipcode, ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from us_zipcode where zipcode = '.$iZipcode;
-		$aNearPostcodes = $oDB->getAll($sSQL);
-		if (PEAR::IsError($aNearPostcodes))
-		{
-			var_dump($sSQL, $aNearPostcodes);
-			exit;
-		}
-
-		if (!sizeof($aNearPostcodes))
-		{
-			$sSQL = 'select zipcode,ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from us_zipcode where zipcode between '.($iZipcode-100).' and '.($iZipcode+100).' order by abs(zipcode - '.$iZipcode.') asc limit 5';
-			$aNearPostcodes = $oDB->getAll($sSQL);
-			if (PEAR::IsError($aNearPostcodes))
-			{
-				var_dump($sSQL, $aNearPostcodes);
-				exit;
-			}
-		}
-
-		if (!sizeof($aNearPostcodes))
-		{
-			return false;
-		}
-
-		$fTotalLat = 0;
-		$fTotalLon = 0;
-		$fTotalFac = 0;
-		foreach($aNearPostcodes as $aPostcode)
-		{
-			$iDiff = abs($aPostcode['zipcode'] - $iZipcode) + 1;
-			if ($iDiff == 0)
-				$fFac = 1;
-			else
-				$fFac = 1/($iDiff*$iDiff);
-
-			$fTotalFac += $fFac;
-			$fTotalLat += $aPostcode['lat'] * $fFac;
-			$fTotalLon += $aPostcode['lon'] * $fFac;
-		}
-		if ($fTotalFac)
-		{
-			$fLat = $fTotalLat / $fTotalFac;
-			$fLon = $fTotalLon / $fTotalFac;
-			return array(array('lat' => $fLat, 'lon' => $fLon, 'radius' => 0.2));
-		}
-		return false;
-
-		/*
-		   $fTotalFac is a surprisingly good indicator of accuracy
-		   $iZoom = 18 + round(log($fTotalFac,32));
-		   $iZoom = max(13,min(18,$iZoom));
-		 */
 	}
 
 

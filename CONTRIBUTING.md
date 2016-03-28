@@ -38,7 +38,7 @@ Before submitting a pull request make sure that the following tests pass:
 
 ```
   cd tests
-  NOMINATIM_DIR=<builddir> lettuce -t -Fail features/db features/osm2pgsql
+  NOMINATIM_DIR=<builddir> lettuce -t -Fail -t -Tiger features/db features/osm2pgsql
 ```
 
 ```

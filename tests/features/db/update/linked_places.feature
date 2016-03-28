@@ -21,6 +21,8 @@ Feature: Updates of linked places
         Then table placex contains
          | object | linked_place_id
          | N1     | None
+        When updating place areas
+         | osm_type | osm_id | class    | type           | name   | admin_level | geometry
         When sending query "foo" with dups
         Then results contain
          | osm_type
@@ -42,6 +44,8 @@ Feature: Updates of linked places
         Then table placex contains
          | object | linked_place_id
          | N1     | None
+        When updating place areas
+         | osm_type | osm_id | class    | type           | name   | admin_level | geometry
         And sending query "foo" with dups
         Then results contain
          | osm_type

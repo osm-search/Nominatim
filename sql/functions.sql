@@ -1161,7 +1161,8 @@ BEGIN
     DELETE FROM place_addressline WHERE place_id = NEW.place_id;
     result := deleteRoad(NEW.partition, NEW.place_id);
     result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
-    UPDATE placex set linked_place_id = null where linked_place_id = NEW.place_id;
+    UPDATE placex set linked_place_id = null, indexed_status = 2
+           where linked_place_id = NEW.place_id;
 
     IF NEW.linked_place_id is not null THEN
       RETURN NEW;

@@ -55,6 +55,7 @@ def run_nominatim_script(script, *args):
     proc = subprocess.Popen(cmd, cwd=world.config.source_dir,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (outp, outerr) = proc.communicate()
+    logger.debug("run_nominatim_script: %s\n%s\n%s" % (cmd, outp, outerr))
     assert (proc.returncode == 0), "Script '%s' failed:\n%s\n%s\n" % (script, outp, outerr)
 
 @world.absorb
@@ -181,6 +182,7 @@ def db_template_setup():
                             cwd=world.config.source_dir, stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     [outstr, errstr] = proc.communicate(input='<osm version="0.6"></osm>')
+    logger.debug("running osm2pgsql for template: %s\n%s\n%s" % (osm2pgsql, outstr, errstr))
     world.run_nominatim_script('setup', 'create-functions', 'create-tables', 'create-partition-tables', 'create-partition-functions', 'load-data', 'create-search-indices')
 
 

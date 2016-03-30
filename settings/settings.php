@@ -11,6 +11,8 @@
 	@define('CONST_Database_Web_User', 'www-data');
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
+	// Set to false to avoid importing extra postcodes for the US.
+	@define('CONST_Use_Extra_US_Postcodes', true);
 
 	// Proxy settings
 	@define('CONST_HTTP_Proxy', false);

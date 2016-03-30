@@ -80,16 +80,17 @@
 	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs
 
 	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
-	@define('CONST_Tile_Default', 'Mapnik');
-
+	// Language to assume when none is supplied with the query.
+	// When set to false, the local language (i.e. the name tag without suffix)
+	// will be used.
 	@define('CONST_Default_Language', false);
+	// Appearance of the map in the debug interface.
 	@define('CONST_Default_Lat', 20.0);
 	@define('CONST_Default_Lon', 0.0);
 	@define('CONST_Default_Zoom', 2);
 	@define('CONST_Map_Tile_URL', 'http://{s}.tile.osm.org/{z}/{x}/{y}.png');
 	@define('CONST_Map_Tile_Attribution', ''); // Set if tile source isn't osm.org
 
-	@define('CONST_Search_AreaPolygons_Enabled', true);
 	@define('CONST_Search_AreaPolygons', true);
 
 	@define('CONST_Search_BatchMode', false);
@@ -100,9 +101,12 @@
 	// When set to false only selected languages alloow reverse search.
 	@define('CONST_Search_ReversePlanForAll', true);
 
+	// Maximum number of OSM ids that may be queried at once
+	// for the places endpoint.
 	@define('CONST_Places_Max_ID_count', 50); 
 
-	// Set to zero to disable polygon output
+	// Number of different geometry formats that may be queried in parallel.
+	// Set to zero to disable polygon output.
 	@define('CONST_PolygonOutput_MaximumTypes', 1);
 
 	// Log settings

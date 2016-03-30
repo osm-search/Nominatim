@@ -90,8 +90,6 @@
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
-	$fPostgisVersion = (float) CONST_Postgis_Version;
-
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
 		echo "Create DB\n";
@@ -112,39 +110,38 @@
 
 		$oDB =& getDB();
 
-		$sVersionString = $oDB->getOne('select version()');
-		preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[^0-9]#', $sVersionString, $aMatches);
-		if (CONST_Postgresql_Version != $aMatches[1].'.'.$aMatches[2])
+		$fPostgresVersion = getPostgresVersion($oDB);
+		echo 'Postgres version found: '.$fPostgresVersion."\n";
+
+		if ($fPostgresVersion < 9.1)
 		{
-			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
-			exit;
+			fail("Minimum supported version of Postgresql is 9.1.");
 		}
 
-		passthru('createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
-		$pgver = (float) CONST_Postgresql_Version;
-		if ($pgver < 9.1) {
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
-			pgsqlRunScriptFile(CONST_BasePath.'/sql/hstore_compatability_9_0.sql');
-		} else {
-			pgsqlRunScript('CREATE EXTENSION hstore');
+		pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS hstore');
+		pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
+
+		// For extratags and namedetails the hstore_to_json converter is
+		// needed which is only available from Postgresql 9.3+. For older
+		// versions add a dummy function that returns nothing.
+		$iNumFunc = $oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'");
+		if (PEAR::isError($iNumFunc))
+		{
+			fail("Cannot query stored procedures.", $iNumFunc);
+		}
+		if ($iNumFunc == 0)
+		{
+			pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
+			echo "WARNING: Postgresql is too old. extratags and namedetails API not available.";
 		}
 
-		if ($fPostgisVersion < 2.0) {
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
-		} else {
-			pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
-		}
-		if ($fPostgisVersion < 2.1) {
+		$fPostgisVersion = getPostgisVersion($oDB);
+		echo 'Postgis version found: '.$fPostgisVersion."\n";
+
+		if ($fPostgisVersion < 2.1)
+		{
 			// Function was renamed in 2.1 and throws an annoying deprecation warning
 			pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
-		}
-		$sVersionString = $oDB->getOne('select postgis_full_version()');
-		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
-		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])
-		{
-			echo "ERROR: PostGIS version is not correct.  Expected ".CONST_Postgis_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
-			exit;
 		}
 
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
@@ -224,15 +221,6 @@
 		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
 		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
 		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
-		pgsqlRunScript($sTemplate);
-
-		if ($fPostgisVersion < 2.0) {
-			echo "Helper functions for postgis < 2.0\n";
-			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_15_aux.sql');
-		} else {
-			echo "Helper functions for postgis >= 2.0\n";
-			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_20_aux.sql');
-		}
 		pgsqlRunScript($sTemplate);
 	}
 

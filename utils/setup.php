@@ -24,7 +24,6 @@
 		array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
 		array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
 		array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
-		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
 		array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
@@ -37,7 +36,6 @@
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
-		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
 		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
@@ -236,36 +234,6 @@
 			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_20_aux.sql');
 		}
 		pgsqlRunScript($sTemplate);
-	}
-
-	if ($aCMDResult['create-minimal-tables'])
-	{
-		echo "Minimal Tables\n";
-		$bDidSomething = true;
-		pgsqlRunScriptFile(CONST_BasePath.'/sql/tables-minimal.sql');
-
-		$sScript = '';
-
-		// Backstop the import process - easliest possible import id
-		$sScript .= "insert into import_npi_log values (18022);\n";
-
-		$hFile = @fopen(CONST_BasePath.'/settings/partitionedtags.def', "r");
-		if (!$hFile) fail('unable to open list of partitions: '.CONST_BasePath.'/settings/partitionedtags.def');
-
-		while (($sLine = fgets($hFile, 4096)) !== false && $sLine && substr($sLine,0,1) !='#')
-		{
-			list($sClass, $sType) = explode(' ', trim($sLine));
-			$sScript .= "create table place_classtype_".$sClass."_".$sType." as ";
-			$sScript .= "select place_id as place_id,geometry as centroid from placex limit 0;\n";
-
-			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_centroid ";
-			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING GIST (centroid);\n";
-
-			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_place_id ";
-			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING btree(place_id);\n";
-		}
-		fclose($hFile);
-		pgsqlRunScript($sScript);
 	}
 
 	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
@@ -657,7 +625,6 @@
 	{
 		$bDidSomething = true;
 		$sOutputFile = '';
-		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');

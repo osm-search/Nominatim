@@ -75,8 +75,6 @@
 
 	// Website settings
 	@define('CONST_NoAccessControl', true);
-	@define('CONST_ClosedForIndexing', false);
-	@define('CONST_ClosedForIndexingExceptionIPs', '');
 	@define('CONST_BlockedIPs', '');
 	@define('CONST_BulkUserIPs', '');
 	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs

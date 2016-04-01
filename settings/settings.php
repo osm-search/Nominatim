@@ -11,6 +11,8 @@
 	@define('CONST_Database_Web_User', 'www-data');
 	@define('CONST_Max_Word_Frequency', '50000');
 	@define('CONST_Limit_Reindexing', true);
+	// Set to false to avoid importing extra postcodes for the US.
+	@define('CONST_Use_Extra_US_Postcodes', true);
 
 	// Proxy settings
 	@define('CONST_HTTP_Proxy', false);
@@ -19,13 +21,7 @@
 	@define('CONST_HTTP_Proxy_Login', '');
 	@define('CONST_HTTP_Proxy_Password', '');
 
-	// Software versions
-	@define('CONST_Postgresql_Version', '9.3'); // values: 9.0, ... , 9.4
-	@define('CONST_Postgis_Version', '2.1'); // values: 1.5, 2.0, 2.1
-
 	// Paths
-	@define('CONST_Path_Postgresql_Contrib', '/usr/share/postgresql/'.CONST_Postgresql_Version.'/contrib');
-	@define('CONST_Path_Postgresql_Postgis', CONST_Path_Postgresql_Contrib.'/postgis-'.CONST_Postgis_Version);
 	@define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
 	@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
 	@define('CONST_Tiger_Data_Path', CONST_BasePath.'/data/tiger');
@@ -81,23 +77,22 @@
 
 	// Website settings
 	@define('CONST_NoAccessControl', true);
-	@define('CONST_ClosedForIndexing', false);
-	@define('CONST_ClosedForIndexingExceptionIPs', '');
 	@define('CONST_BlockedIPs', '');
 	@define('CONST_BulkUserIPs', '');
 	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs
 
 	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
-	@define('CONST_Tile_Default', 'Mapnik');
-
+	// Language to assume when none is supplied with the query.
+	// When set to false, the local language (i.e. the name tag without suffix)
+	// will be used.
 	@define('CONST_Default_Language', false);
+	// Appearance of the map in the debug interface.
 	@define('CONST_Default_Lat', 20.0);
 	@define('CONST_Default_Lon', 0.0);
 	@define('CONST_Default_Zoom', 2);
 	@define('CONST_Map_Tile_URL', 'http://{s}.tile.osm.org/{z}/{x}/{y}.png');
 	@define('CONST_Map_Tile_Attribution', ''); // Set if tile source isn't osm.org
 
-	@define('CONST_Search_AreaPolygons_Enabled', true);
 	@define('CONST_Search_AreaPolygons', true);
 
 	@define('CONST_Search_BatchMode', false);
@@ -108,9 +103,12 @@
 	// When set to false only selected languages alloow reverse search.
 	@define('CONST_Search_ReversePlanForAll', true);
 
+	// Maximum number of OSM ids that may be queried at once
+	// for the places endpoint.
 	@define('CONST_Places_Max_ID_count', 50); 
 
-	// Set to zero to disable polygon output
+	// Number of different geometry formats that may be queried in parallel.
+	// Set to zero to disable polygon output.
 	@define('CONST_PolygonOutput_MaximumTypes', 1);
 
 	// Log settings

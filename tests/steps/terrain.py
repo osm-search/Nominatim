@@ -172,7 +172,7 @@ def db_template_setup():
     conn = psycopg2.connect(database=world.config.template_db)
     psycopg2.extras.register_hstore(conn, globally=False, unicode=True)
     cur = conn.cursor()
-    for table in ('gb_postcode', 'us_postcode', 'us_state', 'us_statecounty'):
+    for table in ('gb_postcode', 'us_postcode'):
         cur.execute('TRUNCATE TABLE %s' % (table,))
     conn.commit()
     conn.close()

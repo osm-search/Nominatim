@@ -178,8 +178,8 @@
 	if ($aResult['deduplicate'])
 	{
 
-		$pgver = (float) CONST_Postgresql_Version;
-		if ($pgver < 9.3) {
+		if (getPostgresVersion() < 9.3)
+		{
 			fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
 		}
 

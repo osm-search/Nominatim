@@ -42,18 +42,12 @@
 
 		function setIncludeExtraTags($bExtraTags = false)
 		{
-			if ((float) CONST_Postgresql_Version > 9.2)
-			{
-				$this->bExtraTags = $bExtraTags;
-			}
+			$this->bExtraTags = $bExtraTags;
 		}
 
 		function setIncludeNameDetails($bNameDetails = false)
 		{
-			if ((float) CONST_Postgresql_Version > 9.2)
-			{
-				$this->bNameDetails = $bNameDetails;
-			}
+			$this->bNameDetails = $bNameDetails;
 		}
 
 

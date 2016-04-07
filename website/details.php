@@ -56,10 +56,17 @@
 
 	$iPlaceID = (int)$_GET['place_id'];
 
-	$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
-	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
-	$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
-	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+	if (CONST_Use_US_Tiger_Data)
+	{
+		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
+		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+	}
+
+	if (CONST_Use_Aux_Location_data)
+	{
+		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
+		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+	}
 
 	$hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 

@@ -219,9 +219,26 @@
 		if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
 		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
-		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
-		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
-		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
+		if ($aCMDResult['enable-diff-updates'])
+		{
+			$sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
+		}
+		if ($aCMDResult['enable-debug-statements'])
+		{
+			$sTemplate = str_replace('--DEBUG:', '', $sTemplate);
+		}
+		if (CONST_Limit_Reindexing)
+		{
+			$sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
+		}
+		if (!CONST_Use_US_Tiger_Data)
+		{
+			$sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
+		}
+		if (!CONST_Use_Aux_Location_data)
+		{
+			$sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
+		}
 		pgsqlRunScript($sTemplate);
 	}
 

@@ -112,10 +112,10 @@
 	@define('CONST_PolygonOutput_MaximumTypes', 1);
 
 	// Log settings
-	@define('CONST_Log_DB', true);
+	// Set to true to log into new_query_log table.
+	// You should set up a cron job that regularly clears out this table.
+	@define('CONST_Log_DB', false);
+	// Set to a file name to enable logging to a file.
 	@define('CONST_Log_File', false);
-	@define('CONST_Log_File_Format', 'TODO'); // Currently hard coded
-	@define('CONST_Log_File_SearchLog', '');
-	@define('CONST_Log_File_ReverseLog', '');
 
 

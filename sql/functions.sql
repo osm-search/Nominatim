@@ -1024,7 +1024,7 @@ BEGIN
 
   --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
-  RETURN NEW; -- @DIFFUPDATES@ The following is not needed until doing diff updates, and slows the main index process down
+  RETURN NEW; -- %DIFFUPDATES% The following is not needed until doing diff updates, and slows the main index process down
 
   IF NEW.rank_address > 0 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
@@ -1650,6 +1650,7 @@ BEGIN
       END IF;
     END IF;
 
+    -- %NOTIGERDATA% IF 0 THEN
     -- for the USA we have an additional address table.  Merge in zip codes from there too
     IF NEW.rank_search = 26 AND NEW.calculated_country_code = 'us' THEN
       FOR location IN SELECT distinct postcode from location_property_tiger where parent_place_id = NEW.place_id LOOP
@@ -1662,6 +1663,7 @@ BEGIN
         nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
       END LOOP;
     END IF;
+    -- %NOTIGERDATA% END IF;
 
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
@@ -2257,18 +2259,22 @@ DECLARE
   hadcountry BOOLEAN;
 BEGIN
     --first query tiger data
+  -- %NOTIGERDATA% IF 0 THEN
   select parent_place_id,'us', 30, postcode, null, 'place', 'house' from location_property_tiger 
     WHERE place_id = in_place_id AND in_housenumber>=startnumber AND in_housenumber <= endnumber
     INTO for_place_id,searchcountrycode, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   IF for_place_id IS NOT NULL THEN
     searchhousenumber = in_housenumber::text;
   END IF;
-  
+  -- %NOTIGERDATA% END IF;
+
+  -- %NOAUXDATA% IF 0 THEN
   IF for_place_id IS NULL THEN
     select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_aux
       WHERE place_id = in_place_id 
       INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
+  -- %NOAUXDATA% END IF;
 
   IF for_place_id IS NULL THEN
     select parent_place_id, calculated_country_code, housenumber, rank_search, postcode, name, class, type from placex 

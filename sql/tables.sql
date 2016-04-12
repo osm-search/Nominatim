@@ -75,15 +75,6 @@ CREATE TABLE location_property (
   );
 SELECT AddGeometryColumn('location_property', 'centroid', 4326, 'POINT', 2);
 
-CREATE TABLE location_property_aux () INHERITS (location_property);
-CREATE INDEX idx_location_property_aux_place_id ON location_property_aux USING BTREE (place_id);
-CREATE INDEX idx_location_property_aux_parent_place_id ON location_property_aux USING BTREE (parent_place_id);
-CREATE INDEX idx_location_property_aux_housenumber_parent_place_id ON location_property_aux USING BTREE (parent_place_id, housenumber);
-GRANT SELECT ON location_property_aux TO "{www-user}";
-
-CREATE TABLE location_property_tiger (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
-GRANT SELECT ON location_property_tiger TO "{www-user}";
-
 drop table IF EXISTS search_name;
 CREATE TABLE search_name (
   place_id BIGINT,

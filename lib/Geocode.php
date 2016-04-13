@@ -1427,38 +1427,38 @@
 
 								// Now they are indexed look for a house attached to a street we found
 								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
-								$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
+								$sSQL = "select place_id, parent_place_id from placex where parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
 								if (sizeof($this->aExcludePlaceIDs))
 								{
 									$sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
 								}
 								$sSQL .= " limit $this->iLimit";
 								if (CONST_Debug) var_dump($sSQL);
-								$aPlaceIDs = $this->oDB->getCol($sSQL);
+								$aNumberAndStreetIDs = $this->oDB->getAll($sSQL);
 
 								// If nothing found try the aux fallback table
-								if (CONST_Use_Aux_Location_data && !sizeof($aPlaceIDs))
+								if (CONST_Use_Aux_Location_data && !sizeof(aNumberAndStreetIDs))
 								{
-									$sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
+									$sSQL = "select place_id, parent_place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
 									if (sizeof($this->aExcludePlaceIDs))
 									{
 										$sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
 									}
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+									$aNumberAndStreetIDs = $this->oDB->getAll($sSQL);
 								}
 								//if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger)
 								$searchedHousenumber = intval($aSearch['sHouseNumber']);
-								if (CONST_Use_US_Tiger_Data && !sizeof($aPlaceIDs))
+								if (CONST_Use_US_Tiger_Data && !sizeof($aNumberAndStreetIDs))
 								{
 									//new query for lines, not housenumbers anymore
 									if($searchedHousenumber%2 == 0){
 										//if housenumber is even, look for housenumber in streets with interpolationtype even or all
-										$sSQL = "select distinct place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
+										$sSQL = "select distinct place_id, parent_place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
 									}else{
 										//look for housenumber in streets with interpolationtype odd or all
-										$sSQL = "select distinct place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='odd' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
+										$sSQL = "select distinct place_id, plarent_place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='odd' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
 									}
 
 									if (sizeof($this->aExcludePlaceIDs))
@@ -1468,17 +1468,26 @@
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									//get place IDs
-									$aPlaceIDs = $this->oDB->getCol($sSQL, 0);
+									$aNumberAndStreetIDs = $this->oDB->getAll($sSQL);
 								}
 
-								// Fallback to the road (if no housenumber was found)
-								if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
+								if (!sizeof($aNumberAndStreetIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
 								{
-									$aPlaceIDs = $aRoadPlaceIDs;
 									//set to -1, if no housenumbers were found
 									$searchedHousenumber = -1;
 								}
                                 //else: housenumber was found, remains saved in searchedHousenumber
+
+								//Add street number hits and streets without number hits to the result
+								$aPlaceIDs = array();
+								$aStreetsWithNumber = array();
+								foreach($aNumberAndStreetIDs as $aNumberAndStreetRow) {
+									$aPlaceIDs[] = $aNumberAndStreetRow['place_id'];
+									$aStreetsWithNumber[] = $aNumberAndStreetRow['parent_place_id'];
+								}
+
+								$aRoadPlaceIDs = array_diff($aRoadPlaceIDs, $aStreetsWithNumber);
+								$aPlaceIDs = array_merge($aPlaceIDs, $aRoadPlaceIDs);
 							}
 
 

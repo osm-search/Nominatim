@@ -1786,6 +1786,8 @@
 
 				$aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
 
+				if ($searchedHousenumber != -1 && preg_match("/(^|,)\s*".preg_quote($searchedHousenumber, '/')."\s*(,|$)/", $sAddress)) $aResult['importance'] += 0.11;
+
 				$aResult['name'] = $aResult['langaddress'];
 				// secondary ordering (for results with same importance (the smaller the better):
 				//   - approximate importance of address parts

@@ -217,7 +217,7 @@
 		echo "Functions\n";
 		$bDidSomething = true;
 		if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
-		create_sql_functions();
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
@@ -243,7 +243,7 @@
 
 		// re-run the functions
 		echo "Functions\n";
-		create_sql_functions();
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
@@ -918,7 +918,7 @@
 		return $sSql;
 	}
 
-	function create_sql_functions()
+	function create_sql_functions($aCMDResult)
 	{
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
 		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);

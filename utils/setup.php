@@ -621,14 +621,6 @@
 	{
 		echo "Search indices\n";
 		$bDidSomething = true;
-		$oDB =& getDB();
-		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
 		$sTemplate = replace_tablespace('{ts:address-index}',
@@ -637,16 +629,6 @@
 		                                CONST_Tablespace_Search_Index, $sTemplate);
 		$sTemplate = replace_tablespace('{ts:aux-index}',
 		                                CONST_Tablespace_Aux_Index, $sTemplate);
-		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-		foreach($aMatches as $aMatch)
-		{
-			$sResult = '';
-			foreach($aPartitions as $sPartitionName)
-			{
-				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-			}
-			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-		}
 
 		pgsqlRunScript($sTemplate);
 	}

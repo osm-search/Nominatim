@@ -51,11 +51,6 @@ CREATE INDEX idx_search_name_-partition-_place_id ON search_name_-partition- USI
 CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USING GIST (centroid) {ts:address-index};
 CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector) WITH (fastupdate = off) {ts:address-index};
 
-CREATE TABLE location_property_-partition- () INHERITS (location_property) {ts:aux-data};
-CREATE INDEX idx_location_property_-partition-_place_id ON location_property_-partition- USING BTREE (place_id) {ts:aux-index};
-CREATE INDEX idx_location_property_-partition-_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id) {ts:aux-index};
-CREATE INDEX idx_location_property_-partition-_housenumber_parent_place_id ON location_property_-partition- USING BTREE (parent_place_id, housenumber) {ts:aux-index};
-
 CREATE TABLE location_road_-partition- (
   partition integer,
   place_id BIGINT,

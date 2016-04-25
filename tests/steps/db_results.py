@@ -35,6 +35,7 @@ def check_placex_names(step, osmtyp, osmid):
 
 
 
+
 @step(u'table ([a-z_]+) contains$')
 def check_placex_content(step, tablename):
     """ check that the given lines are in the given table
@@ -49,13 +50,21 @@ def check_placex_content(step, tablename):
             q = 'SELECT *'
             if tablename == 'placex':
                 q = q + ", ST_X(centroid) as clat, ST_Y(centroid) as clon"
-            q = q + ", ST_GeometryType(geometry) as geometrytype"
-            q = q + ' FROM %s where osm_type = %%s and osm_id = %%s' % (tablename,)
+            if tablename == 'location_property_osmline':
+                q = q + ' FROM %s where osm_id = %%s' % (tablename,)
+            else:
+                q = q + ' FROM %s where osm_type = %%s and osm_id = %%s' % (tablename,)
             if cls is None:
-                params = (osmtype, osmid)
+                if tablename == 'location_property_osmline':
+                    params = (osmid,)
+                else:
+                    params = (osmtype, osmid)
             else:
                 q = q + ' and class = %s'
-                params = (osmtype, osmid, cls)
+                if tablename == 'location_property_osmline':
+                    params = (osmid, cls)
+                else:
+                    params = (osmtype, osmid, cls)
             cur.execute(q, params)
             assert(cur.rowcount > 0)
             for res in cur:
@@ -86,6 +95,18 @@ def check_placex_missing(step, tablename, osmtyp, osmid, placeclass):
             q = q + ' and class = %s'
             args.append(placeclass[1:])
         cur.execute(q, args)
+        numres = cur.fetchone()[0]
+        assert_equals (numres, 0)
+    finally:
+        cur.close()
+        world.conn.commit()
+
+@step(u'table location_property_osmline has no entry for W(\d+)?')
+def check_osmline_missing(step, osmid):
+    cur = world.conn.cursor()
+    try:
+        q = 'SELECT count(*) FROM location_property_osmline where osm_id = %s' % (osmid, )
+        cur.execute(q)
         numres = cur.fetchone()[0]
         assert_equals (numres, 0)
     finally:
@@ -134,11 +155,34 @@ def check_interpolated_housenumbers(step, nodeid):
                    FROM placex WHERE osm_type = 'W' and osm_id = %s
                                  and class = 'place' and type = 'address'""",
                    (int(nodeid),))
+                   
     assert_equals(len(numbers), cur.rowcount)
     for r in cur:
         assert_in(r["housenumber"], numbers)
         world.match_geometry((r['clat'], r['clon']), numbers[r["housenumber"]])
         del numbers[r["housenumber"]]
+
+@step(u'way (\d+) expands to lines')
+def check_interpolation_lines(step, wayid):
+    """Check that the correct interpolation line has been entered in
+       location_property_osmline for the given source line/nodes. Expected are three columns:
+       startnumber, endnumber and linegeo
+    """
+    lines = {}
+    for line in step.hashes:
+        assert line["startnumber"] not in lines
+        lines[line["startnumber"]] = {'endnumber': line["endnumber"], 'geometry': line["geometry"]}
+    cur = world.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("""SELECT startnumber::text, endnumber::text, st_astext(linegeo) as geometry
+                   FROM location_property_osmline WHERE osm_id = %s""",
+                   (int(wayid),))
+    assert_equals(len(lines), cur.rowcount)
+    for r in cur:
+        assert_in(r["startnumber"], lines)
+        assert_equals(r["endnumber"], lines[r["startnumber"]]["endnumber"])
+        linegeo = str(str(r["geometry"].split('(')[1]).split(')')[0]).replace(',', ', ')
+        assert_equals(linegeo, lines[r["startnumber"]]["geometry"])
+        del lines[r["startnumber"]]
 
 @step(u'way (\d+) expands exactly to housenumbers ([0-9,]*)')
 def check_interpolated_housenumber_list(step, nodeid, numberlist):
@@ -149,7 +193,7 @@ def check_interpolated_housenumber_list(step, nodeid, numberlist):
     cur = world.conn.cursor()
     cur.execute("""SELECT housenumber FROM placex
                    WHERE osm_type = 'W' and osm_id = %s
-                     and class = 'place' and type = 'address'""", (int(nodeid),))
+                   and class = 'place' and type = 'address'""", (int(nodeid),))
     for r in cur:
         assert_in(r[0], expected, "Unexpected house number %s for node %s." % (r[0], nodeid))
         expected.remove(r[0])

@@ -23,6 +23,7 @@ import os
 import subprocess
 import random
 import base64
+import sys
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -143,8 +144,8 @@ def import_set_scene(step, scene):
 
 @step(u'the (named )?place (node|way|area)s')
 def import_place_table_nodes(step, named, osmtype):
-    """Insert a list of nodes into the placex table.
-       Expects a table where columns are named in the same way as placex.
+    """Insert a list of nodes into the place table.
+       Expects a table where columns are named in the same way as place.
     """
     cur = world.conn.cursor()
     cur.execute('ALTER TABLE place DISABLE TRIGGER place_before_insert')
@@ -214,18 +215,19 @@ def import_database(step):
     """ Runs the actual indexing. """
     world.run_nominatim_script('setup', 'create-functions', 'create-partition-functions')
     cur = world.conn.cursor()
+    #world.db_dump_table('place')
     cur.execute("""insert into placex (osm_type, osm_id, class, type, name, admin_level,
                    housenumber, street, addr_place, isin, postcode, country_code, extratags,
-                   geometry) select * from place""")
+                   geometry) select * from place where not (class='place' and type='houses' and osm_type='W')""")
+    cur.execute("""select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, geometry) from place where class='place' and type='houses' and osm_type='W'""")
     world.conn.commit()
     world.run_nominatim_script('setup', 'index', 'index-noanalyse')
     #world.db_dump_table('placex')
-
+    #world.db_dump_table('location_property_osmline')
 
 @step(u'updating place (node|way|area)s')
 def update_place_table_nodes(step, osmtype):
-    """ Replace a geometry in place by reinsertion and reindex database.
-    """
+    """ Replace a geometry in place by reinsertion and reindex database."""
     world.run_nominatim_script('setup', 'create-functions', 'create-partition-functions', 'enable-diff-updates')
     if osmtype == 'node':
         _insert_place_table_nodes(step.hashes, False)

@@ -404,6 +404,8 @@
 		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE placex')) fail(pg_last_error($oDB->connection));
 		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE location_property_osmline')) fail(pg_last_error($oDB->connection));
+		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE place_addressline')) fail(pg_last_error($oDB->connection));
 		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE place_boundingbox')) fail(pg_last_error($oDB->connection));
@@ -445,27 +447,70 @@
 
 		echo "Load Data\n";
 		$aDBInstances = array();
+        
+        $aQueriesPlacex = array();
+        $aQueriesOsmline = array();
+        // the query is divided into parcels, so that the work between the processes, i.e. the DBInstances, will be evenly distributed
+        $iNumberOfParcels = 100;
+        for($i = 0; $i < $iNumberOfParcels; $i++)
+        {
+			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
+			$sSQL .= 'geometry) select * from place where osm_id % '.$iNumberOfParcels.' = '.$i.' and not ';
+			$sSQL .= '(class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\');';
+			array_push($aQueriesPlacex, $sSQL);
+			$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
+			$sSQL .= 'geometry) from place where osm_id % '.$iNumberOfParcels.' = '.$i.' and ';
+			$sSQL .= 'class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\'';
+			array_push($aQueriesOsmline, $sSQL);
+		}
+        
 		for($i = 0; $i < $iInstances; $i++)
 		{
 			$aDBInstances[$i] =& getDB(true);
-			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
-			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
-			if ($aCMDResult['verbose']) echo "$sSQL\n";
-			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}
-		$bAnyBusy = true;
-		while($bAnyBusy)
+		// now execute the query blocks, in the first round for placex, then for osmline, 
+		// because insert_osmline depends on the placex table
+		echo 'Inserting from place to placex.';
+		$aQueries = $aQueriesPlacex;
+		for($j = 0; $j < 2; $j++)
 		{
-			$bAnyBusy = false;
-			for($i = 0; $i < $iInstances; $i++)
+			$bAnyBusy = true;
+			while($bAnyBusy)
 			{
-				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+				$bAnyBusy = false;
+
+				for($i = 0; $i < $iInstances; $i++)
+				{
+					if (pg_connection_busy($aDBInstances[$i]->connection)) 
+					{
+						$bAnyBusy = true;
+					}
+					else if (count($aQueries) > 0)
+					{
+						$query = array_pop($aQueries);
+						if (!pg_send_query($aDBInstances[$i]->connection, $query))
+						{
+							fail(pg_last_error($oDB->connection));
+						}
+						else
+						{
+							pg_get_result($aDBInstances[$i]->connection);
+							$bAnyBusy = true;
+						}
+					}
+				}
+				sleep(1);
+				echo '.';
 			}
-			sleep(1);
-			echo '.';
+			echo "\n";
+			if ($j == 0)  //for the second round with osmline
+			{
+				echo 'Inserting from place to osmline.';
+				$aQueries = $aQueriesOsmline;
+			}
 		}
-		echo "\n";
+		
 		echo "Reanalysing database...\n";
 		pgsqlRunScript('ANALYSE');
 	}
@@ -552,7 +597,6 @@
 		$sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
 		$sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
-
 		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
 		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
 		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";

@@ -109,6 +109,27 @@ GRANT SELECT ON location_property_aux TO "{www-user}";
 CREATE TABLE location_property_tiger (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{www-user}";
 
+CREATE TABLE location_property_osmline (
+    linegeo GEOMETRY,
+    place_id BIGINT NOT NULL,
+    partition INTEGER,
+    osm_id BIGINT,
+    parent_place_id BIGINT,
+    startnumber INTEGER,
+    endnumber INTEGER,
+    interpolationtype TEXT,
+    admin_level INTEGER,
+    street TEXT,
+    postcode TEXT,
+    calculated_country_code VARCHAR(2),
+    geometry_sector INTEGER,
+    indexed_status INTEGER,
+    indexed_date TIMESTAMP);
+CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline (place_id) {ts:search-index};
+CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline (parent_place_id) {ts:search-index};
+GRANT SELECT ON location_property_osmline TO "{www-user}";
+
+
 drop table IF EXISTS search_name;
 CREATE TABLE search_name (
   place_id BIGINT,
@@ -167,13 +188,15 @@ GRANT SELECT ON planet_osm_ways to "{www-user}" ;
 GRANT SELECT ON planet_osm_rels to "{www-user}" ;
 GRANT SELECT on location_area to "{www-user}" ;
 
--- insert creates the location tagbles, creates location indexes if indexed == true
+-- insert creates the location tables, creates location indexes if indexed == true
 CREATE TRIGGER placex_before_insert BEFORE INSERT ON placex
     FOR EACH ROW EXECUTE PROCEDURE placex_insert();
 
 -- update insert creates the location tables
 CREATE TRIGGER placex_before_update BEFORE UPDATE ON placex
     FOR EACH ROW EXECUTE PROCEDURE placex_update();
+CREATE TRIGGER osmline_before_update BEFORE UPDATE ON location_property_osmline
+    FOR EACH ROW EXECUTE PROCEDURE osmline_update();
 
 -- diff update triggers
 CREATE TRIGGER placex_before_delete AFTER DELETE ON placex

@@ -123,16 +123,19 @@ def match_geometry(coord, matchstring):
     logger.debug("Distances expected: %f, got: %f" % (expdist, dist))
     assert dist <= expdist, "Geometry too far away, expected: %f, got: %f" % (expdist, dist)
 
+@world.absorb
+def print_statement(element):
+    print '\n\n\n'+str(element)+'\n\n\n'
 
 
 @world.absorb
 def db_dump_table(table):
     cur = world.conn.cursor()
     cur.execute('SELECT * FROM %s' % table)
-    print '<<<<<<< BEGIN OF TABLE DUMP %s' % table
+    print '\n\n\n<<<<<<< BEGIN OF TABLE DUMP %s' % table
     for res in cur:
             print res
-    print '<<<<<<< END OF TABLE DUMP %s' % table
+    print '<<<<<<< END OF TABLE DUMP %s\n\n\n' % table
 
 @world.absorb
 def db_drop_database(name):

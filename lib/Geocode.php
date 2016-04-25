@@ -1502,7 +1502,6 @@
 								}
 
 								//if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger)
-								$searchedHousenumber = intval($aSearch['sHouseNumber']);
 								if (CONST_Use_US_Tiger_Data && !sizeof($aPlaceIDs))
 								{
 									//new query for lines, not housenumbers anymore
@@ -1682,7 +1681,8 @@
 							$sSQL .= "and (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
 							if ($this->aAddressRankList) $sSQL .= " OR 30 in (".join(',',$this->aAddressRankList).")";
 						}
-						$sSQL .= ")";
+						$sSQL .= ") UNION select place_id from location_property_osmline where place_id in (".join(',',array_keys($aResultPlaceIDs)).")";
+						$sSQL .= " and (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
 						if (CONST_Debug) var_dump($sSQL);
 						$aFilteredPlaceIDs = $this->oDB->getCol($sSQL);
 						$tempIDs = array();

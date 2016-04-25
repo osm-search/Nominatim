@@ -163,7 +163,7 @@
 				$fSearchDiam = 0.001;
 				if ($aPlace['rank_search'] == 30)
 				{
-					// if a house was found, the closest road needs to be searched, to use its place id as parent_place_id of the interpolation line
+					// if a house was found, the closest road needs to be searched, to use its place id as parent_place_id for the interpolation line search
 					// because a road can be closer to the point than the house from above
 					$iRoadID = null;
 					while(!$iRoadID && $fSearchDiam < $fMaxAreaDistance)

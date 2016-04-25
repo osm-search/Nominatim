@@ -431,24 +431,23 @@
 
 			if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
 			{
+				//only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines 
+				// with start- and endnumber, the common osm housenumbers are usually saved as points
+				$sHousenumbers = "";
+				$i = 0;
+				$length = count($aPlaceIDs);
+				foreach($aPlaceIDs as $placeID => $housenumber)
+				{
+					$i++;
+					$sHousenumbers .= "(".$placeID.", ".$housenumber.")";
+					if($i<$length)
+						$sHousenumbers .= ", ";
+				}
 				if (CONST_Use_US_Tiger_Data)
 				{
-					//query also location_property_tiger and location_property_aux
 					//Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
-					//only Tiger housenumbers need to be interpolated, because they are saved as lines with start- and endnumber, the common osm housenumbers are usually saved as points
-					$sHousenumbers = "";
-					$i = 0;
-					$length = count($aPlaceIDs);
-					foreach($aPlaceIDs as $placeID => $housenumber)
-					{
-						$i++;
-						$sHousenumbers .= "(".$placeID.", ".$housenumber.")";
-						if($i<$length)
-							$sHousenumbers .= ", ";
-					}
-
-					$sSQL .= "union ";
-					$sSQL .= "select 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, 'us' as country_code";
+					$sSQL .= " union";
+					$sSQL .= " select 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, 'us' as country_code";
 					$sSQL .= ", get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress ";
 					$sSQL .= ", null as placename";
 					$sSQL .= ", null as ref";
@@ -460,14 +459,15 @@
 					$sSQL .= ", null as extra_place ";
 					$sSQL .= " from (select place_id";
 					//interpolate the Tiger housenumbers here
-					$sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as centroid, parent_place_id, housenumber_for_place ";
-					$sSQL .= "from (location_property_tiger ";
+					$sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as centroid, parent_place_id, housenumber_for_place";
+					$sSQL .= " from (location_property_tiger ";
 					$sSQL .= " join (values ".$sHousenumbers.") as housenumbers(place_id, housenumber_for_place) using(place_id)) ";
 					$sSQL .= " where housenumber_for_place>=0 and 30 between $this->iMinAddressRank and $this->iMaxAddressRank) as blub"; //postgres wants an alias here
 					$sSQL .= " group by place_id, housenumber_for_place"; //is this group by really needed?, place_id + housenumber (in combination) are unique
 					if (!$this->bDeDupe) $sSQL .= ", place_id ";
 				}
 				// osmline, osm_type is 'I' for Interpolation Line
+				// interpolation line search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
 				$sSQL .= " union ";
 				$sSQL .= "select 'I' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code, ";
 				$sSQL .= "get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress, ";
@@ -1330,9 +1330,11 @@
 							{
 								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
                                 $aOrder[] = "";
-								$aOrder[0] = "exists(select place_id from placex where parent_place_id = search_name.place_id and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) ";
+								$aOrder[0] = " exists(select place_id from placex where parent_place_id = search_name.place_id";
+                                $aOrder[0] .= " and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) ";
 								// also housenumbers from interpolation lines table are needed
-								$aOrder[0] .= " or exists(select place_id from location_property_osmline where parent_place_id = search_name.place_id and ".$aSearch['sHouseNumber'].">=startnumber and ".$aSearch['sHouseNumber']."<=endnumber limit 1)";
+								$aOrder[0] .= " or exists(select place_id from location_property_osmline where parent_place_id = search_name.place_id";
+                                $aOrder[0] .= " and ".$aSearch['sHouseNumber'].">=startnumber and ".$aSearch['sHouseNumber']."<=endnumber limit 1)";
 								$aOrder[0] .= " desc";
 							}
 
@@ -1529,7 +1531,7 @@
 									//set to -1, if no housenumbers were found
 									$searchedHousenumber = -1;
 								}
-                                //else: housenumber was found, remains saved in searchedHousenumber
+								//else: housenumber was found, remains saved in searchedHousenumber
 							}
 
 
@@ -1685,7 +1687,7 @@
 						$aFilteredPlaceIDs = $this->oDB->getCol($sSQL);
 						$tempIDs = array();
 						foreach($aFilteredPlaceIDs as $placeID)
-                        {
+						{
 							$tempIDs[$placeID] = $aResultPlaceIDs[$placeID];  //assign housenumber to placeID
 						}
 						$aResultPlaceIDs = $tempIDs;

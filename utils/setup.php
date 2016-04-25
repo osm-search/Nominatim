@@ -396,13 +396,12 @@
 
 		echo "Load Data\n";
 		$aDBInstances = array();
-        
-        $aQueriesPlacex = array();
-        $aQueriesOsmline = array();
-        // the query is divided into parcels, so that the work between the processes, i.e. the DBInstances, will be evenly distributed
-        $iNumberOfParcels = 100;
-        for($i = 0; $i < $iNumberOfParcels; $i++)
-        {
+		$aQueriesPlacex = array();
+		$aQueriesOsmline = array();
+		// the query is divided into parcels, so that the work between the processes, i.e. the DBInstances, will be evenly distributed
+		$iNumberOfParcels = 100;
+		for($i = 0; $i < $iNumberOfParcels; $i++)
+		{
 			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
 			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
 			$sSQL .= 'geometry) select * from place where osm_id % '.$iNumberOfParcels.' = '.$i.' and not ';

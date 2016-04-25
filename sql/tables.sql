@@ -13,29 +13,6 @@ CREATE TABLE import_osmosis_log (
   event text
   );
 
-drop table if exists import_npi_log;
-CREATE TABLE import_npi_log (
-  npiid integer,
-  batchend timestamp,
-  batchsize integer,
-  starttime timestamp,
-  endtime timestamp,
-  event text
-  );
-
---drop table IF EXISTS query_log;
-CREATE TABLE query_log (
-  starttime timestamp,
-  query text,
-  ipaddress text,
-  endtime timestamp,
-  results integer
-  );
-CREATE INDEX idx_query_log ON query_log USING BTREE (starttime);
-GRANT SELECT ON query_log TO "{www-user}" ;
-GRANT INSERT ON query_log TO "{www-user}" ;
-GRANT UPDATE ON query_log TO "{www-user}" ;
-
 CREATE TABLE new_query_log (
   type text,
   starttime timestamp,
@@ -43,6 +20,7 @@ CREATE TABLE new_query_log (
   useragent text,
   language text,
   query text,
+  searchterm text,
   endtime timestamp,
   results integer,
   format text,
@@ -55,9 +33,6 @@ GRANT SELECT ON new_query_log TO "{www-user}" ;
 
 GRANT SELECT ON TABLE country_name TO "{www-user}";
 GRANT SELECT ON TABLE gb_postcode TO "{www-user}";
-
-create view vw_search_query_log as SELECT substr(query, 1, 50) AS query, starttime, endtime - starttime AS duration, substr(useragent, 1, 20) as 
-useragent, language, results, ipaddress FROM new_query_log WHERE type = 'search' ORDER BY starttime DESC;
 
 drop table IF EXISTS word;
 CREATE TABLE word (
@@ -128,7 +103,6 @@ CREATE TABLE location_property_osmline (
 CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline (place_id) {ts:search-index};
 CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline (parent_place_id) {ts:search-index};
 GRANT SELECT ON location_property_osmline TO "{www-user}";
-
 
 drop table IF EXISTS search_name;
 CREATE TABLE search_name (

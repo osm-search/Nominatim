@@ -12,12 +12,6 @@
 	}
 	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
 
-	if (CONST_ClosedForIndexing && strpos(CONST_ClosedForIndexingExceptionIPs, ','.$_SERVER["REMOTE_ADDR"].',') === false)
-	{
-		echo "Closed for re-indexing...";
-		exit;
-	}
-
 	$aBucketKeys = array();
 
 	if (isset($_SERVER["HTTP_REFERER"])) $aBucketKeys[] = str_replace('www.','',strtolower(parse_url($_SERVER["HTTP_REFERER"], PHP_URL_HOST)));

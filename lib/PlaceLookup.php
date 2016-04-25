@@ -42,18 +42,12 @@
 
 		function setIncludeExtraTags($bExtraTags = false)
 		{
-			if ((float) CONST_Postgresql_Version > 9.2)
-			{
-				$this->bExtraTags = $bExtraTags;
-			}
+			$this->bExtraTags = $bExtraTags;
 		}
 
 		function setIncludeNameDetails($bNameDetails = false)
 		{
-			if ((float) CONST_Postgresql_Version > 9.2)
-			{
-				$this->bNameDetails = $bNameDetails;
-			}
+			$this->bNameDetails = $bNameDetails;
 		}
 
 
@@ -128,7 +122,7 @@
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
-			if ($this->sType == 'tiger')
+			if (CONST_Use_US_Tiger_Data && $this->sType == 'tiger')
 			{
 				$sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
@@ -193,7 +187,7 @@
 
 			if ($this->bAddressDetails)
 			{
-				if ($this->sType == 'tiger' || $this->sType == 'interpolation') // to get addressdetails for interpolation lines and tiger data, the housenumber is needed
+				if(CONST_Use_US_Tiger_Data && $this->sType == 'tiger') // to get addressdetails for tiger data, the housenumber is needed
 					$aAddress = $this->getAddressNames($aPlace['housenumber']);
 				else
 					$aAddress = $this->getAddressNames();

@@ -24,7 +24,6 @@
 		array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
 		array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
 		array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
-		array('create-minimal-tables', '', 0, 1, 0, 0, 'bool', 'Create minimal main tables'),
 		array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
 		array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
 		array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
@@ -37,7 +36,6 @@
 		array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
-		array('index-output', '', 0, 1, 1, 1, 'string', 'File to dump index information to'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
 		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
 		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
@@ -92,8 +90,6 @@
 	$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 	if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
-	$fPostgisVersion = (float) CONST_Postgis_Version;
-
 	if ($aCMDResult['create-db'] || $aCMDResult['all'])
 	{
 		echo "Create DB\n";
@@ -114,39 +110,38 @@
 
 		$oDB =& getDB();
 
-		$sVersionString = $oDB->getOne('select version()');
-		preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[^0-9]#', $sVersionString, $aMatches);
-		if (CONST_Postgresql_Version != $aMatches[1].'.'.$aMatches[2])
+		$fPostgresVersion = getPostgresVersion($oDB);
+		echo 'Postgres version found: '.$fPostgresVersion."\n";
+
+		if ($fPostgresVersion < 9.1)
 		{
-			echo "ERROR: PostgreSQL version is not correct.  Expected ".CONST_Postgresql_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
-			exit;
+			fail("Minimum supported version of Postgresql is 9.1.");
 		}
 
-		passthru('createlang plpgsql -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
-		$pgver = (float) CONST_Postgresql_Version;
-		if ($pgver < 9.1) {
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Contrib.'/hstore.sql');
-			pgsqlRunScriptFile(CONST_BasePath.'/sql/hstore_compatability_9_0.sql');
-		} else {
-			pgsqlRunScript('CREATE EXTENSION hstore');
+		pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS hstore');
+		pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
+
+		// For extratags and namedetails the hstore_to_json converter is
+		// needed which is only available from Postgresql 9.3+. For older
+		// versions add a dummy function that returns nothing.
+		$iNumFunc = $oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'");
+		if (PEAR::isError($iNumFunc))
+		{
+			fail("Cannot query stored procedures.", $iNumFunc);
+		}
+		if ($iNumFunc == 0)
+		{
+			pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
+			echo "WARNING: Postgresql is too old. extratags and namedetails API not available.";
 		}
 
-		if ($fPostgisVersion < 2.0) {
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/postgis.sql');
-			pgsqlRunScriptFile(CONST_Path_Postgresql_Postgis.'/spatial_ref_sys.sql');
-		} else {
-			pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
-		}
-		if ($fPostgisVersion < 2.1) {
+		$fPostgisVersion = getPostgisVersion($oDB);
+		echo 'Postgis version found: '.$fPostgisVersion."\n";
+
+		if ($fPostgisVersion < 2.1)
+		{
 			// Function was renamed in 2.1 and throws an annoying deprecation warning
 			pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
-		}
-		$sVersionString = $oDB->getOne('select postgis_full_version()');
-		preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
-		if (CONST_Postgis_Version != $aMatches[1].'.'.$aMatches[2])
-		{
-			echo "ERROR: PostGIS version is not correct.  Expected ".CONST_Postgis_Version." found ".$aMatches[1].'.'.$aMatches[2]."\n";
-			exit;
 		}
 
 		pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
@@ -161,9 +156,10 @@
 		{
 			echo "WARNING: external UK postcode table not found.\n";
 		}
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_statecounty.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_state.sql');
-		pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		if (CONST_Use_Extra_US_Postcodes)
+		{
+			pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+		}
 
 		if ($aCMDResult['no-partitions'])
 		{
@@ -221,51 +217,7 @@
 		echo "Functions\n";
 		$bDidSomething = true;
 		if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
-		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
-		if ($aCMDResult['enable-diff-updates']) $sTemplate = str_replace('RETURN NEW; -- @DIFFUPDATES@', '--', $sTemplate);
-		if ($aCMDResult['enable-debug-statements']) $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
-		if (CONST_Limit_Reindexing) $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
-		pgsqlRunScript($sTemplate);
-
-		if ($fPostgisVersion < 2.0) {
-			echo "Helper functions for postgis < 2.0\n";
-			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_15_aux.sql');
-		} else {
-			echo "Helper functions for postgis >= 2.0\n";
-			$sTemplate = file_get_contents(CONST_BasePath.'/sql/postgis_20_aux.sql');
-		}
-		pgsqlRunScript($sTemplate);
-	}
-
-	if ($aCMDResult['create-minimal-tables'])
-	{
-		echo "Minimal Tables\n";
-		$bDidSomething = true;
-		pgsqlRunScriptFile(CONST_BasePath.'/sql/tables-minimal.sql');
-
-		$sScript = '';
-
-		// Backstop the import process - easliest possible import id
-		$sScript .= "insert into import_npi_log values (18022);\n";
-
-		$hFile = @fopen(CONST_BasePath.'/settings/partitionedtags.def', "r");
-		if (!$hFile) fail('unable to open list of partitions: '.CONST_BasePath.'/settings/partitionedtags.def');
-
-		while (($sLine = fgets($hFile, 4096)) !== false && $sLine && substr($sLine,0,1) !='#')
-		{
-			list($sClass, $sType) = explode(' ', trim($sLine));
-			$sScript .= "create table place_classtype_".$sClass."_".$sType." as ";
-			$sScript .= "select place_id as place_id,geometry as centroid from placex limit 0;\n";
-
-			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_centroid ";
-			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING GIST (centroid);\n";
-
-			$sScript .= "CREATE INDEX idx_place_classtype_".$sClass."_".$sType."_place_id ";
-			$sScript .= "ON place_classtype_".$sClass."_".$sType." USING btree(place_id);\n";
-		}
-		fclose($hFile);
-		pgsqlRunScript($sScript);
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
@@ -291,10 +243,7 @@
 
 		// re-run the functions
 		echo "Functions\n";
-		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}',
-			                     CONST_InstallPath.'/module', $sTemplate);
-		pgsqlRunScript($sTemplate);
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
@@ -597,10 +546,14 @@
 		$sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
 		$sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
 		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
-		$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
-		$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
-		$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
-		if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+
+		if (CONST_Use_Extra_US_Postcodes)
+		{
+			$sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
+			$sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
+			$sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
+			if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+		}
 	}
 
 	if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop'])) // no use doing osmosis-init when dropping update tables
@@ -701,7 +654,6 @@
 	{
 		$bDidSomething = true;
 		$sOutputFile = '';
-		if (isset($aCMDResult['index-output'])) $sOutputFile = ' -F '.$aCMDResult['index-output'];
 		$sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
 		passthruCheckReturn($sBaseCmd.' -R 4');
 		if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
@@ -714,14 +666,6 @@
 	{
 		echo "Search indices\n";
 		$bDidSomething = true;
-		$oDB =& getDB();
-		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
 		$sTemplate = replace_tablespace('{ts:address-index}',
@@ -730,16 +674,6 @@
 		                                CONST_Tablespace_Search_Index, $sTemplate);
 		$sTemplate = replace_tablespace('{ts:aux-index}',
 		                                CONST_Tablespace_Aux_Index, $sTemplate);
-		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-		foreach($aMatches as $aMatch)
-		{
-			$sResult = '';
-			foreach($aPartitions as $sPartitionName)
-			{
-				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-			}
-			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-		}
 
 		pgsqlRunScript($sTemplate);
 	}
@@ -1009,5 +943,33 @@
 			$sSql = str_replace($sTemplate, '', $sSql);
 
 		return $sSql;
+	}
+
+	function create_sql_functions($aCMDResult)
+	{
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
+		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
+		if ($aCMDResult['enable-diff-updates'])
+		{
+			$sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
+		}
+		if ($aCMDResult['enable-debug-statements'])
+		{
+			$sTemplate = str_replace('--DEBUG:', '', $sTemplate);
+		}
+		if (CONST_Limit_Reindexing)
+		{
+			$sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
+		}
+		if (!CONST_Use_US_Tiger_Data)
+		{
+			$sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
+		}
+		if (!CONST_Use_Aux_Location_data)
+		{
+			$sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
+		}
+		pgsqlRunScript($sTemplate);
+
 	}
 

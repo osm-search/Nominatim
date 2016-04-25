@@ -47,13 +47,13 @@
 
 	$iPlaceID = (int)$_GET['place_id'];
 
-	$sAuxHouseNumber = false;
-	$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
-	if ($iParentPlaceID)
+	if (CONST_Use_US_Tiger_Data)
 	{
-		$iPlaceID = $iParentPlaceID;
+		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
+		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	}
-	else
+
+	if (CONST_Use_Aux_Location_data)
 	{
 		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
 		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;

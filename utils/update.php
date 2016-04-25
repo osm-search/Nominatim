@@ -11,18 +11,11 @@
 		array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
 		array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-		array('max-load', '', 0, 1, 1, 1, 'float', 'Maximum load average - indexing is paused if this is exceeded'),
-		array('max-blocking', '', 0, 1, 1, 1, 'int', 'Maximum blocking processes - indexing is aborted / paused if this is exceeded'),
-
 		array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import using osmosis'),
 		array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import using osmosis forever'),
-		array('no-npi', '', 0, 1, 0, 0, 'bool', 'Do not write npi index files'),
+		array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolate)'),
 		array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
-		array('import-npi-all', '', 0, 1, 0, 0, 'bool', 'Import npi pre-indexed files'),
-
-		array('import-hourly', '', 0, 1, 0, 0, 'bool', 'Import hourly diffs'),
-		array('import-daily', '', 0, 1, 0, 0, 'bool', 'Import daily diffs'),
 		array('import-all', '', 0, 1, 0, 0, 'bool', 'Import all available files'),
 
 		array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
@@ -37,33 +30,13 @@
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
 		array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
 		array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
-		array('index-estrate', '', 0, 1, 1, 1, 'int', 'Estimated indexed items per second (def:30)'),
 
 		array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
-	if ($aResult['import-hourly'] + $aResult['import-daily'] + isset($aResult['import-diff']) > 1)
-	{
-		showUsage($aCMDOptions, true, 'Select either import of hourly or daily');
-	}
-
 	if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
 	if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
-
-/*
-	// Lock to prevent multiple copies running
-	if (exec('/bin/ps uww | grep '.basename(__FILE__).' | grep -v /dev/null | grep -v grep -c', $aOutput2, $iResult) > 1)
-	{
-		fail("Copy already running\n");
-	}
-	if (!isset($aResult['max-load'])) $aResult['max-load'] = 1.9;
-	if (!isset($aResult['max-blocking'])) $aResult['max-blocking'] = 3;
-	if (getBlockingProcesses() > $aResult['max-blocking'])
-	{
-		fail("Too many blocking processes for import\n");
-	}
-*/
 
 	date_default_timezone_set('Etc/UTC');
 
@@ -86,153 +59,112 @@
 	}
 
 
-	$bFirst = true;
-	$bContinue = $aResult['import-all'];
-	while ($bContinue || $bFirst)
+	if (isset($aResult['import-diff']))
 	{
-		$bFirst = false;
-
-		if ($aResult['import-hourly'])
+		// import diff directly (e.g. from osmosis --rri)
+		$sNextFile = $aResult['import-diff'];
+		if (!file_exists($sNextFile))
 		{
-			// Mirror the hourly diffs
-			exec('wget --quiet --mirror -l 1 -P '.$sMirrorDir.' http://planet.openstreetmap.org/hourly');
-			$sNextFile = $oDB->getOne('select TO_CHAR(lastimportdate,\'YYYYMMDDHH24\')||\'-\'||TO_CHAR(lastimportdate+\'1 hour\'::interval,\'YYYYMMDDHH24\')||\'.osc.gz\' from import_status');
-			$sNextFile = $sMirrorDir.'planet.openstreetmap.org/hourly/'.$sNextFile;
-			$sUpdateSQL = 'update import_status set lastimportdate = lastimportdate+\'1 hour\'::interval';
+			fail("Cannot open $sNextFile\n");
 		}
 
-		if ($aResult['import-daily'])
+		// Import the file
+		$sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
+		echo $sCMD."\n";
+		exec($sCMD, $sJunk, $iErrorLevel);
+
+		if ($iErrorLevel)
 		{
-			// Mirror the daily diffs
-			exec('wget --quiet --mirror -l 1 -P '.$sMirrorDir.' http://planet.openstreetmap.org/daily');
-			$sNextFile = $oDB->getOne('select TO_CHAR(lastimportdate,\'YYYYMMDD\')||\'-\'||TO_CHAR(lastimportdate+\'1 day\'::interval,\'YYYYMMDD\')||\'.osc.gz\' from import_status');
-			$sNextFile = $sMirrorDir.'planet.openstreetmap.org/daily/'.$sNextFile;
-			$sUpdateSQL = 'update import_status set lastimportdate = lastimportdate::date + 1';
-		}
-		
-		if (isset($aResult['import-diff']))
-		{
-			// import diff directly (e.g. from osmosis --rri)
-			$sNextFile = $aResult['import-diff'];
-			if (!file_exists($sNextFile))
-			{
-				fail("Cannot open $sNextFile\n");
-			}
-			// Don't update the import status - we don't know what this file contains
-			$sUpdateSQL = 'update import_status set lastimportdate = now() where false';
+			fail("Error from osm2pgsql, $iErrorLevel\n");
 		}
 
-		// Missing file is not an error - it might not be created yet
-		if (($aResult['import-hourly'] || $aResult['import-daily'] || isset($aResult['import-diff'])) && file_exists($sNextFile))
-		{
-			// Import the file
-			$sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
-			echo $sCMD."\n";
-			exec($sCMD, $sJunk, $iErrorLevel);
-
-			if ($iErrorLevel)
-			{
-				fail("Error from osm2pgsql, $iErrorLevel\n");
-			}
-	
-			// Move the date onwards
-			$oDB->query($sUpdateSQL);
-		}
-		else
-		{
-			$bContinue = false;
-		}
+		// Don't update the import status - we don't know what this file contains
 	}
 
-	$bModifyXML = false;
-	$sModifyXMLstr = '';
-	$bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
+	$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
+	$bHaveDiff = false;
 	if (isset($aResult['import-file']) && $aResult['import-file'])
 	{
-		$bModifyXML = true;
+		$bHaveDiff = true;
+		$sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
+		echo $sCMD."\n";
+		exec($sCMD, $sJunk, $iErrorLevel);
+		if ($iErrorLevel)
+		{
+			fail("Error converting osm to osc, osmosis returned: $iErrorLevel\n");
+		}
 	}
+
+	$bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
+	$sContentURL = '';
 	if (isset($aResult['import-node']) && $aResult['import-node'])
 	{
-		$bModifyXML = true;
 		if ($bUseOSMApi)
 		{
-			$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node']);
+			$sContentURL = 'http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node'];
 		}
 		else
 		{
-			$sModifyXMLstr = file_get_contents('http://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;');
+			$sContentURL = 'http://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;';
 		}
 	}
 	if (isset($aResult['import-way']) && $aResult['import-way'])
 	{
-		$bModifyXML = true;
 		if ($bUseOSMApi)
 		{
-			$sCmd = 'http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
+			$sContentURL = 'http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
 		}
 		else
 		{
-			$sCmd = 'http://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
+			$sContentURL = 'http://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
 		}
-		$sModifyXMLstr = file_get_contents($sCmd);
 	}
 	if (isset($aResult['import-relation']) && $aResult['import-relation'])
 	{
-		$bModifyXML = true;
 		if ($bUseOSMApi)
 		{
-			$sModifyXMLstr = file_get_contents('http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full');
+			$sContentURLsModifyXMLstr = 'http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
 		}
 		else
 		{
-			$sModifyXMLstr = file_get_contents('http://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;');
+			$sContentURL = 'http://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;';
 		}
 	}
-	if ($bModifyXML)
+	if ($sContentURL)
 	{
-		// derive change from normal osm file with osmosis
-		$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
-		if (isset($aResult['import-file']) && $aResult['import-file'])
-		{
-			$sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
-			echo $sCMD."\n";
-			exec($sCMD, $sJunk, $iErrorLevel);
-			if ($iErrorLevel)
-			{
-				fail("Error converting osm to osc, osmosis returned: $iErrorLevel\n");
-			}
-		}
-		else
-		{
-			$aSpec = array(
-				0 => array("pipe", "r"),  // stdin
-				1 => array("pipe", "w"),  // stdout
-				2 => array("pipe", "w") // stderr
-			);
-			$sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
-			echo $sCMD."\n";
-			$hProc = proc_open($sCMD, $aSpec, $aPipes);
-			if (!is_resource($hProc))
-			{
-				fail("Error converting osm to osc, osmosis failed\n");
-			}
-			fwrite($aPipes[0], $sModifyXMLstr);
-			fclose($aPipes[0]);
-			$sOut = stream_get_contents($aPipes[1]);
-			if ($aResult['verbose']) echo $sOut;
-			fclose($aPipes[1]);
-			$sErrors = stream_get_contents($aPipes[2]);
-			if ($aResult['verbose']) echo $sErrors;
-			fclose($aPipes[2]);
-			if ($iError = proc_close($hProc))
-			{
-				echo "Error converting osm to osc, osmosis returned: $iError\n";
-				echo $sOut;
-				echo $sErrors;
-				exit(-1);
-			}
-		}
+		$sModifyXMLstr = file_get_contents($sContentURL);
+		$bHaveDiff = true;
 
+		$aSpec = array(
+			0 => array("pipe", "r"),  // stdin
+			1 => array("pipe", "w"),  // stdout
+			2 => array("pipe", "w") // stderr
+		);
+		$sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
+		echo $sCMD."\n";
+		$hProc = proc_open($sCMD, $aSpec, $aPipes);
+		if (!is_resource($hProc))
+		{
+			fail("Error converting osm to osc, osmosis failed\n");
+		}
+		fwrite($aPipes[0], $sModifyXMLstr);
+		fclose($aPipes[0]);
+		$sOut = stream_get_contents($aPipes[1]);
+		if ($aResult['verbose']) echo $sOut;
+		fclose($aPipes[1]);
+		$sErrors = stream_get_contents($aPipes[2]);
+		if ($aResult['verbose']) echo $sErrors;
+		fclose($aPipes[2]);
+		if ($iError = proc_close($hProc))
+		{
+			echo $sOut;
+			echo $sErrors;
+			fail("Error converting osm to osc, osmosis returned: $iError\n");
+		}
+	}
+
+	if ($bHaveDiff)
+	{
 		// import generated change file
 		$sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
 		echo $sCMD."\n";
@@ -246,19 +178,19 @@
 	if ($aResult['deduplicate'])
 	{
 
-		$pgver = (float) CONST_Postgresql_Version;
-                if ($pgver < 9.3) {
+		if (getPostgresVersion() < 9.3)
+		{
 			fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
 		}
 
-                $oDB =& getDB();
-                $sSQL = 'select partition from country_name order by country_code';
-                $aPartitions = $oDB->getCol($sSQL);
-                if (PEAR::isError($aPartitions))
-                {
-                        fail($aPartitions->getMessage());
-                }
-                $aPartitions[] = 0;
+		$oDB =& getDB();
+		$sSQL = 'select partition from country_name order by country_code';
+		$aPartitions = $oDB->getCol($sSQL);
+		if (PEAR::isError($aPartitions))
+		{
+			fail($aPartitions->getMessage());
+		}
+		$aPartitions[] = 0;
 
 		$sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' ' and class is null and type is null and country_code is null group by word_token having count(*) > 1 order by word_token";
 		$aDuplicateTokens = $oDB->getAll($sSQL);
@@ -341,7 +273,6 @@
 					exit(1);
 				}
 			}
-
 		}
 	}
 
@@ -358,123 +289,87 @@
 		}
 
 		$sImportFile = CONST_BasePath.'/data/osmosischange.osc';
-		$sOsmosisCMD = CONST_Osmosis_Binary;
 		$sOsmosisConfigDirectory = CONST_InstallPath.'/settings';
-		$sCMDDownload = $sOsmosisCMD.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
-		$sCMDCheckReplicationLag = $sOsmosisCMD.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
+		$sCMDDownload = CONST_Osmosis_Binary.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
+		$sCMDCheckReplicationLag = CONST_Osmosis_Binary.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
 		$sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
 		$sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
-		if (!$aResult['no-npi']) {
-			$sCMDIndex .= '-F ';
-		}
+
 		while(true)
 		{
 			$fStartTime = time();
 			$iFileSize = 1001;
 
-			// Logic behind this is that osm2pgsql locks the database quite a bit
-			// So it is better to import lots of small files
-			// But indexing works most efficiently on large amounts of data
-			// So do lots of small imports and a BIG index
-
-//			while($aResult['import-osmosis-all'] && $iFileSize > 1000)
-//			{
-				if (!file_exists($sImportFile))
+			if (!file_exists($sImportFile))
+			{
+				// First check if there are new updates published (except for minutelies - there's always new diffs to process)
+				if ( CONST_Replication_Update_Interval > 60 )
 				{
-					// First check if there are new updates published (except for minutelies - there's always new diffs to process)
-					if ( CONST_Replication_Update_Interval > 60 )
-					{
 
+					unset($aReplicationLag);
+					exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
+					while ($iErrorLevel > 0 || $aReplicationLag[0] < 1)
+					{
+						if ($iErrorLevel)
+						{
+							echo "Error: $iErrorLevel. ";
+							echo "Re-trying: ".$sCMDCheckReplicationLag." in ".CONST_Replication_Recheck_Interval." secs\n";
+						}
+						else
+						{
+							echo ".";
+						}
+						sleep(CONST_Replication_Recheck_Interval);
 						unset($aReplicationLag);
 						exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
-						while ($iErrorLevel > 0 || $aReplicationLag[0] < 1)
-						{
-							if ($iErrorLevel)
-							{
-								echo "Error: $iErrorLevel. ";
-								echo "Re-trying: ".$sCMDCheckReplicationLag." in ".CONST_Replication_Recheck_Interval." secs\n";
-							}
-							else
-							{
-								echo ".";
-							}
-							sleep(CONST_Replication_Recheck_Interval);
-							unset($aReplicationLag);
-							exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
-						}
-						// There are new replication files - use osmosis to download the file
-						echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
 					}
-					$fStartTime = time();
-					$fCMDStartTime = time();
-					echo $sCMDDownload."\n";
-					exec($sCMDDownload, $sJunk, $iErrorLevel);
-					while ($iErrorLevel > 0)
-					{
-						echo "Error: $iErrorLevel\n";
-						sleep(60);
-						echo 'Re-trying: '.$sCMDDownload."\n";
-						exec($sCMDDownload, $sJunk, $iErrorLevel);
-					}
-					$iFileSize = filesize($sImportFile);
-					$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-					$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
-					var_Dump($sSQL);
-					$oDB->query($sSQL);
-					echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+					// There are new replication files - use osmosis to download the file
+					echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
 				}
-
-				$iFileSize = filesize($sImportFile);
-				$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-		
-				// Import the file
+				$fStartTime = time();
 				$fCMDStartTime = time();
-				echo $sCMDImport."\n";
-				exec($sCMDImport, $sJunk, $iErrorLevel);
-				if ($iErrorLevel)
+				echo $sCMDDownload."\n";
+				exec($sCMDDownload, $sJunk, $iErrorLevel);
+				while ($iErrorLevel > 0)
 				{
 					echo "Error: $iErrorLevel\n";
-					exit($iErrorLevel);
+					sleep(60);
+					echo 'Re-trying: '.$sCMDDownload."\n";
+					exec($sCMDDownload, $sJunk, $iErrorLevel);
 				}
-				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
+				$iFileSize = filesize($sImportFile);
+				$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
+				$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
 				var_Dump($sSQL);
 				$oDB->query($sSQL);
-				echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+				echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+			}
 
-				// Archive for debug?
-				unlink($sImportFile);
-//			}
+			$iFileSize = filesize($sImportFile);
+			$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
+	
+			// Import the file
+			$fCMDStartTime = time();
+			echo $sCMDImport."\n";
+			exec($sCMDImport, $sJunk, $iErrorLevel);
+			if ($iErrorLevel)
+			{
+				echo "Error: $iErrorLevel\n";
+				exit($iErrorLevel);
+			}
+			$sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
+			var_Dump($sSQL);
+			$oDB->query($sSQL);
+			echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+
+			// Archive for debug?
+			unlink($sImportFile);
 
 			$sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
 
 			// Index file
 			$sThisIndexCmd = $sCMDIndex;
 			$fCMDStartTime = time();
-
-			if (!$aResult['no-npi'])
-			{
-				$iFileID = $oDB->getOne('select nextval(\'file\')');
-				if (PEAR::isError($iFileID))
-				{
-					echo $iFileID->getMessage()."\n";
-					exit(-1);
-				} 
-				$sFileDir = CONST_BasePath.'/export/diff/';
-				$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
-				$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
-
-				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
-				$sThisIndexCmd .= $sFileDir;
-				$sThisIndexCmd .= '/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT);
-				$sThisIndexCmd .= ".npi.out";
-
-				preg_match('#^([0-9]{4})-([0-9]{2})-([0-9]{2})#', $sBatchEnd, $aBatchMatch);
-				$sFileDir = CONST_BasePath.'/export/index/';
-				$sFileDir .= $aBatchMatch[1].'/'.$aBatchMatch[2];
-
-				if (!is_dir($sFileDir)) mkdir($sFileDir, 0777, true);
-				file_put_contents($sFileDir.'/'.$aBatchMatch[3].'.idx', "$sBatchEnd\t$iFileID\n", FILE_APPEND);
-			}
 
 			if (!$aResult['no-index'])
 			{
@@ -484,25 +379,6 @@
 				{
 					echo "Error: $iErrorLevel\n";
 					exit($iErrorLevel);
-				}
-
-				if (!$aResult['no-npi'])
-				{
-					$sFileDir = CONST_BasePath.'/export/diff/';
-					$sFileDir .= str_pad(floor($iFileID/1000000), 3, '0', STR_PAD_LEFT);
-					$sFileDir .= '/'.str_pad(floor($iFileID/1000) % 1000, 3, '0', STR_PAD_LEFT);
-
-					$sThisIndexCmd = 'bzip2 -z9 '.$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out";
-					echo "$sThisIndexCmd\n";
-					exec($sThisIndexCmd, $sJunk, $iErrorLevel);
-					if ($iErrorLevel)
-					{
-						echo "Error: $iErrorLevel\n";
-						exit($iErrorLevel);
-					}
-
-					rename($sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.out.bz2",
-						$sFileDir.'/'.str_pad($iFileID % 1000, 3, '0', STR_PAD_LEFT).".npi.bz2");
 				}
 			}
 
@@ -529,55 +405,6 @@
 			echo date('Y-m-d H:i:s')." Sleeping $iSleep seconds\n";
 			sleep($iSleep);
 		}
-
-	}
-
-	if ($aResult['import-npi-all'])
-	{
-		$iNPIID = $oDB->getOne('select max(npiid) from import_npi_log');
-		if (PEAR::isError($iNPIID))
-		{
-			var_dump($iNPIID);
-			exit(1);
-		}
-		$sConfigDirectory = CONST_InstallPath.'/settings';
-		$sCMDImportTemplate = CONST_InstallPath.'/nominatim/nominatim -d gazetteer -P 5433 -I -T '.CONST_BasePath.'/settings/partitionedtags.def -F ';
-		while(true)
-		{
-			$fStartTime = time();
-
-			$iNPIID++;
-
-			$sImportFile = CONST_BasePath.'/export/diff/';
-			$sImportFile .= str_pad(floor($iNPIID/1000000), 3, '0', STR_PAD_LEFT);
-			$sImportFile .= '/'.str_pad(floor($iNPIID/1000) % 1000, 3, '0', STR_PAD_LEFT);
-			$sImportFile .= '/'.str_pad($iNPIID % 1000, 3, '0', STR_PAD_LEFT);
-			$sImportFile .= ".npi";
-			while(!file_exists($sImportFile) && !file_exists($sImportFile.'.bz2'))
-			{
-				echo "sleep (waiting for $sImportFile)\n";
-				sleep(10);
-			}
-			if (file_exists($sImportFile.'.bz2')) $sImportFile .= '.bz2';
-
-			$iFileSize = filesize($sImportFile);
-		
-			// Import the file
-			$fCMDStartTime = time();
-			$sCMDImport = $sCMDImportTemplate . $sImportFile;
-			echo $sCMDImport."\n";
-			exec($sCMDImport, $sJunk, $iErrorLevel);
-			if ($iErrorLevel)
-			{
-				fail("Error: $iErrorLevel\n");
-			}
-			$sBatchEnd = $iNPIID;
-			echo "Completed for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
-			$sSQL = "INSERT INTO import_npi_log values ($iNPIID, null, $iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','import')";
-			var_Dump($sSQL);
-			$oDB->query($sSQL);
-		}
-		
 	}
 
 	function getosmosistimestamp($sOsmosisConfigDirectory)

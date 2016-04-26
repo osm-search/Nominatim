@@ -6,6 +6,14 @@
 	require_once(CONST_BasePath.'/lib/log.php');
 
 	$sOutputFormat = 'html';
+
+	$bIncludeAddressDetails = false;
+	$bIncludeLinkedPlaces = false;
+	$bIncludeChildPlaces = false;
+	if (isset($_GET['addressdetails'])) $bIncludeAddressDetails = (bool)$_GET['addressdetails'];
+	if (isset($_GET['linkedplaces'])) $bIncludeLinkedPlaces = (bool)$_GET['linkedplaces'];
+	if (isset($_GET['childplaces'])) $bIncludeChildPlaces = (bool)$_GET['childplaces'];
+
 	/*
 	   $fLoadAvg = getLoadAverage();
 	   if ($fLoadAvg > 3)
@@ -110,31 +118,37 @@
 	}
 
 	// Address
-	$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], -1, true);
+	if ($bIncludeAddressDetails) {
+		$aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], -1, true);
+	}
 
 	// Linked places
-	$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
-	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
-	$sSQL .= " from placex, (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
-	$sSQL .= " where linked_place_id = $iPlaceID";
-	$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
-	$aLinkedLines = $oDB->getAll($sSQL);
-	if (PEAR::isError($aLinkedLines)) // possible timeout
-	{
-		$aLinkedLines = [];
+	if ($bIncludeLinkedPlaces) {
+		$sSQL = "select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
+		$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
+		$sSQL .= " from placex, (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
+		$sSQL .= " where linked_place_id = $iPlaceID";
+		$sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
+		$aLinkedLines = $oDB->getAll($sSQL);
+		if (PEAR::isError($aLinkedLines)) // possible timeout
+		{
+			$aLinkedLines = [];
+		}
 	}
 
 	// All places this is an imediate parent of
-	$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
-	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
-	$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
-	$sSQL .= " where parent_place_id = $iPlaceID order by rank_address asc,rank_search asc limit 500) as obj,";
-	$sSQL .= " (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
-	$sSQL .= " order by rank_address asc,rank_search asc,localname,housenumber";
-	$aParentOfLines = $oDB->getAll($sSQL);
-	if (PEAR::isError($aParentOfLines)) // possible timeout
-	{
-		$aParentOfLines = [];
+	if ($bIncludeChildPlaces) {
+		$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea, ST_Distance_Spheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') as distance, ";
+		$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
+		$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
+		$sSQL .= " where parent_place_id = $iPlaceID order by rank_address asc,rank_search asc limit 500) as obj,";
+		$sSQL .= " (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
+		$sSQL .= " order by rank_address asc,rank_search asc,localname,housenumber";
+		$aParentOfLines = $oDB->getAll($sSQL);
+		if (PEAR::isError($aParentOfLines)) // possible timeout
+		{
+			$aParentOfLines = [];
+		}
 	}
 
 	$aPlaceSearchNameKeywords = false;

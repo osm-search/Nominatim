@@ -56,7 +56,7 @@
 					echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['class'])).')</span>';
 				else
 					echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
-				echo ' <a class="btn btn-default btn-xs details" href="details.php?place_id='.$aResult['place_id'].'">details</a>';
+				echo ' <a class="btn btn-default btn-xs details" href="details.php?place_id='.$aResult['place_id'].'&addressdetails=1&linkedplaces=1&childplaces=1">details</a>';
 				echo '</div>';
 				$i = $i+1;
 			}

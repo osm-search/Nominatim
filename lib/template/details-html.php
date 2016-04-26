@@ -42,7 +42,7 @@
 
 	function nominatim_link($aFeature, $sTitle)
 	{
-		return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.$sTitle.'</a>';
+		return '<a href="details.php?place_id='.$aFeature['place_id'].'&addressdetails=1&linkedplaces=1&childplaces=1">'.$sTitle.'</a>';
 	}
 
 	function format_distance($fDistance)

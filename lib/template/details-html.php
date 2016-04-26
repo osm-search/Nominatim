@@ -161,6 +161,8 @@
 					if ($aPointDetails['wikipedia'])
 					{
 						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails) );
+					} else if ($aPointDetails['aExtraTags']['wikipedia']) {
+						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails['aExtraTags']) );
 					}
 
 					kv('Extra Tags'      , hash_to_subtable($aPointDetails['aExtraTags']) );

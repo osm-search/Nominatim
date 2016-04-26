@@ -6,6 +6,10 @@
 	require_once(CONST_BasePath.'/lib/log.php');
 
 	$sOutputFormat = 'html';
+	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'json'))
+	{
+		$sOutputFormat = $_GET['format'];
+	}
 
 	$bIncludeAddressDetails = false;
 	$bIncludeLinkedPlaces = false;

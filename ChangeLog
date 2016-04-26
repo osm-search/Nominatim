@@ -1,3 +1,8 @@
+2.5.1
+
+ * fix layout error in details page when keywords are displayed
+ * fix website check during setup
+
 2.5
 
  * reverse geocoding includes looking up housenumbers from Tiger data

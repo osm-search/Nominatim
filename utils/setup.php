@@ -656,7 +656,7 @@
 		@symlink(CONST_BasePath.'/website/css', $sTargetDir.'/css');
 		echo "Symlinks created\n";
 
-		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/tiles.js');
+		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/nominatim-ui.js');
 		if (!$sTestFile)
 		{
 			echo "\nWARNING: Unable to access the website at ".CONST_Website_BaseURL."\n";

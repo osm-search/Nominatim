@@ -466,10 +466,10 @@
 					$sSQL .= " group by place_id, housenumber_for_place"; //is this group by really needed?, place_id + housenumber (in combination) are unique
 					if (!$this->bDeDupe) $sSQL .= ", place_id ";
 				}
-				// osmline, osm_type is 'I' for Interpolation Line
+				// osmline
 				// interpolation line search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
 				$sSQL .= " union ";
-				$sSQL .= "select 'I' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code, ";
+				$sSQL .= "select 'W' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code, ";
 				$sSQL .= "get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress, ";
 				$sSQL .= "null as placename, ";
 				$sSQL .= "null as ref, ";
@@ -477,7 +477,8 @@
 				if ($this->bIncludeNameDetails) $sSQL .= "null as names, ";
 				$sSQL .= " avg(st_x(centroid)) as lon, avg(st_y(centroid)) as lat,";
 				$sSQL .= $sImportanceSQL."-0.1 as importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
-				$sSQL .= " (select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
+				$sSQL .= " (select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p";
+				$sSQL .= " where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance,";
 				$sSQL .= " null as extra_place ";
 				$sSQL .= " from (select place_id, calculated_country_code ";
 				//interpolate the housenumbers here
@@ -1454,7 +1455,7 @@
 								$aRoadPlaceIDs = $aPlaceIDs;
 								$sPlaceIDs = join(',',$aPlaceIDs);
 
-								// Now they are indexed look for a house attached to a street we found
+								// Now they are indexed, look for a house attached to a street we found
 								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
 								$sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
 								if (sizeof($this->aExcludePlaceIDs))

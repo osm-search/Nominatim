@@ -1090,13 +1090,12 @@ BEGIN
   END IF;
   
   IF OLD.indexed_status = 2 and NEW.indexed_status=0 THEN
-    -- do the reparenting: (finally here, so that ALL places in placex, that are needed for reparenting, are up to date)
+    -- do the reparenting: (finally here, because ALL places in placex, that are needed for reparenting, need to be up to date)
     -- (the osm interpolationline in location_property_osmline was marked for reparenting in placex_insert/placex_delete with index_status = 2 
     -- => index.c: sets index_status back to 0
     -- => triggers this function)
     place_centroid := ST_PointOnSurface(NEW.linegeo);
-    -- mark descendants for reparenting
-    UPDATE placex SET indexed_status = 2 WHERE parent_place_id = OLD.place_id;
+    -- marking descendants for reparenting is not needed, because there are actually no descendants for interpolation lines
     NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, null, NEW.partition, place_centroid, NEW.linegeo); -- addr_place (3rd param) is not necessarily needed
     return NEW;
   END IF;
@@ -1156,14 +1155,6 @@ BEGIN
   END IF;
 
   IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
-  
-    -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
-    -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
-    -- needed for test case features/db/import: Scenario: addr:street added to housenumbers
-    IF NEW.osm_type='N' and NEW.class='place' and NEW.type='house' THEN
-        -- Is this node part of an interpolation line? search for it in location_property_osmline and mark the interpolation line for reparenting
-        update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);
-    END IF;
     RETURN NEW;
   END IF;
 
@@ -1906,7 +1897,7 @@ BEGIN
   UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
 
   -- interpolations are special
-  IF OLD.class = 'place' and OLD.type = 'houses' THEN
+  IF OLD.osm_type='W' and OLD.class = 'place' and OLD.type = 'houses' THEN
     UPDATE location_property_osmline set indexed_status = 100 where osm_id = OLD.osm_id; -- osm_id = wayid (=old.osm_id)
   END IF;
 
@@ -1931,7 +1922,6 @@ BEGIN
 
   --DEBUG: RAISE WARNING '-----------------------------------------------------------------------------------';
   --DEBUG: RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
-  RAISE WARNING 'X3366 - place_isnert';
   -- filter wrong tupels
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, 
@@ -1960,12 +1950,6 @@ BEGIN
     
     -- To paraphrase, if there isn't an existing item
     IF existingline.osm_id IS NULL THEN
-      IF existing.osm_type IS NOT NULL THEN
-        -- pathological case caused by the triggerless copy into place during initial import
-        -- force delete even for large areas, it will be reinserted later
-        UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-        DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-      END IF;
       -- insert new line into location_property_osmline, use function insert_osmline
       i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
       RETURN NEW;
@@ -2002,7 +1986,6 @@ BEGIN
     
     -- for interpolations invalidate all nodes on the line
     update placex p set indexed_status = 2 from planet_osm_ways w where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
-    RAISE WARNING 'X3399 - updated nodes of interpolation line';
     RETURN NULL;
   
   ELSE -- insert to placex
@@ -2170,6 +2153,7 @@ BEGIN
         admin_level = NEW.admin_level,
         geometry = NEW.geometry
         where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+        
 
       IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
           IF NEW.postcode IS NULL THEN
@@ -2195,6 +2179,14 @@ BEGIN
         indexed_status = 2,    
         geometry = NEW.geometry
         where place_id = existingplacex.place_id;
+        
+      -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
+      -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
+      -- needed for test case features/db/import: Scenario: addr:street added to housenumbers
+      IF NEW.osm_type='N' and NEW.class='place' and NEW.type='house' THEN
+          -- Is this node part of an interpolation line? search for it in location_property_osmline and mark the interpolation line for reparenting
+          update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);
+      END IF;
 
     END IF;
 
@@ -2202,7 +2194,7 @@ BEGIN
     RETURN NULL;
   END IF;
 
-END; 
+END;
 $$ LANGUAGE plpgsql;
 
 

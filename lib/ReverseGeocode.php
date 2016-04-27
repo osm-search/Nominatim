@@ -158,43 +158,15 @@
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
 			}
 			// if a street or house was found, look in interpolation lines table
-			if ($iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 || $aPlace['rank_search'] == 30))
+			if ($iMaxRank_orig >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
 			{
-				$fSearchDiam = 0.001;
-				if ($aPlace['rank_search'] == 30)
-				{
-					// if a house was found, the closest road needs to be searched, to use its place id as parent_place_id for the interpolation line search
-					// because a road can be closer to the point than the house from above
-					$iRoadID = null;
-					while(!$iRoadID && $fSearchDiam < $fMaxAreaDistance)
-					{
-						$fSearchDiam = $fSearchDiam * 2;
-						$sSQL = 'select place_id ';
-						$sSQL .= ' FROM placex';
-						$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
-						$sSQL .= ' and (rank_search = 26 or rank_search = 27)';
-						$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
-						$sSQL .= ' and indexed_status = 0 ';
-						$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
-						$aPlaceRoad = $this->oDB->getRow($sSQL);
-						if (PEAR::IsError($aPlace))
-						{
-							failInternalError("Could not determine closest place.", $sSQL, $aPlace);
-						}
-						$iRoadID = $aPlaceRoad['place_id'];
-						$iTempPlaceID = $iRoadID;
-					}
-				}
-				else
-				{
-					// if a street was found, we can take its place_id as parent_place_id
-					$iTempPlaceID = $iPlaceID;
-				}
+				// if a house was found, search the interpolation line that is at least as close as the house
 				$sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
-				//if (CONST_Debug) { $sSQL .= ', housenumber, ST_distance('.$sPointSQL.', centroid) as distance, st_y(centroid) as lat, st_x(centroid) as lon'; }
-				$sSQL .= ' FROM location_property_osmline WHERE parent_place_id = '.$iTempPlaceID;
-				$sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.') AND indexed_status = 0';
+				$sSQL .= ' FROM location_property_osmline';
+				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
+				$sSQL .= ' and indexed_status = 0 ';
 				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
+				
 				if (CONST_Debug)
 				{
 					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
@@ -211,7 +183,6 @@
 				{
 					failInternalError("Could not determine closest housenumber on an osm interpolation line.", $sSQL, $aPlaceLine);
 				}
-				$iInterpolationLinePlaceID = $aPlaceLine['place_id'];
 				if ($aPlaceLine)
 				{
 					if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
@@ -229,7 +200,7 @@
 						$fDistancePlacex = $aDistancePlacex['distance'];
 						// distance between point and interpolated house (fraction on interpolation line)
 						$sSQL = 'SELECT ST_distance('.$sPointSQL.', ST_LineInterpolatePoint(linegeo, '.$aPlaceLine['fraction'].')) as distance';
-						$sSQL .= ' FROM location_property_osmline WHERE place_id = '.$iInterpolationLinePlaceID;
+						$sSQL .= ' FROM location_property_osmline WHERE place_id = '.$aPlaceLine['place_id'];
 						$aDistanceInterpolation = $this->oDB->getRow($sSQL);
 						if (PEAR::IsError($aDistanceInterpolation))
 						{
@@ -241,7 +212,7 @@
 							// interpolation is closer to point than placex house
 							$bPlaceIsLine = true;
 							$aPlace = $aPlaceLine;
-							$iPlaceID = $iInterpolationLinePlaceID;
+							$iPlaceID = $aPlaceLine['place_id'];
 							$iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
 							$fFraction = $aPlaceLine['fraction'];
 						}

@@ -84,6 +84,7 @@ GRANT SELECT ON location_property_aux TO "{www-user}";
 CREATE TABLE location_property_tiger (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{www-user}";
 
+drop table if exists location_property_osmline;
 CREATE TABLE location_property_osmline (
     linegeo GEOMETRY,
     place_id BIGINT NOT NULL,
@@ -99,9 +100,11 @@ CREATE TABLE location_property_osmline (
     calculated_country_code VARCHAR(2),
     geometry_sector INTEGER,
     indexed_status INTEGER,
-    indexed_date TIMESTAMP);
-CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline (place_id) {ts:search-index};
-CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline (parent_place_id) {ts:search-index};
+    indexed_date TIMESTAMP){ts:search-data};
+CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {ts:search-index};
+CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline USING BTREE (parent_place_id) {ts:search-index};
+CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {ts:address-index};
+CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {ts:search-index};
 GRANT SELECT ON location_property_osmline TO "{www-user}";
 
 drop table IF EXISTS search_name;

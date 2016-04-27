@@ -142,9 +142,9 @@
 			}
 			else if ($this->sType == 'interpolation')
 			{
-				$sSQL = "select place_id, partition, 'I' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, null as isin, postcode,";
+				$sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " calculated_country_code as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
-				$sSQL .= " coalesce(null,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, calculated_country_code, ";
+				$sSQL .= " (0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, calculated_country_code, ";
 				$sSQL .= " get_address_by_language(place_id, housenumber, $sLanguagePrefArraySQL) as langaddress,";
 				$sSQL .= " null as placename,";
 				$sSQL .= " null as ref,";
@@ -187,7 +187,7 @@
 
 			if ($this->bAddressDetails)
 			{
-				if(CONST_Use_US_Tiger_Data && $this->sType == 'tiger') // to get addressdetails for tiger data, the housenumber is needed
+				if(CONST_Use_US_Tiger_Data && $this->sType == 'tiger' || $this->sType == 'interpolation') // to get addressdetails for tiger data, the housenumber is needed
 					$aAddress = $this->getAddressNames($aPlace['housenumber']);
 				else
 					$aAddress = $this->getAddressNames();

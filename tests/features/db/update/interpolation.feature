@@ -37,7 +37,6 @@ Feature: Update of address interpolations
           | object | parent_place_id | startnumber | endnumber
           | W10    | W3              | 2           | 6
 
-    @Fail
     Scenario: addr:street added to housenumbers
       Given the scene parallel-road
       And the place nodes

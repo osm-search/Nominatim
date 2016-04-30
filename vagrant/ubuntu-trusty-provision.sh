@@ -37,7 +37,9 @@ sudo apt-get update -qq
 sudo apt-get upgrade -y
 sudo apt-get install -y build-essential libgeos-dev libpq-dev libbz2-dev \
                         libtool cmake libproj-dev libboost-dev  libboost-system-dev \
-                        libboost-filesystem-dev libboost-thread-dev libexpat-dev
+                        libboost-filesystem-dev libboost-thread-dev libexpat-dev \
+                        liblua5.1
+sudo apt-get install -y apache2 libapache2-mod-php
 sudo apt-get autoremove -y
 
 # get arrow-keys working in terminal (e.g. editing in vi)
@@ -47,16 +49,16 @@ source ~/.bash_profile
 
 
 ###
-### PostgreSQL 9.3 + PostGIS 2.1
+### PostgreSQL 9.5 + PostGIS 2.2
 ###
 
-sudo apt-get install -y postgresql-9.3-postgis-2.1 postgresql-contrib-9.3 postgresql-server-dev-9.3 
+sudo apt-get install -y postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 postgresql-server-dev-9.5
 # already included: proj-bin libgeos-dev
 
 # make sure OS-authenticated users (e.g. $USERNAME) can access
-sudo sed -i "s/ident/trust/" /etc/postgresql/9.3/main/pg_hba.conf
-sudo sed -i "s/md5/trust/"   /etc/postgresql/9.3/main/pg_hba.conf
-sudo sed -i "s/peer/trust/"  /etc/postgresql/9.3/main/pg_hba.conf
+sudo sed -i "s/ident/trust/" /etc/postgresql/9.5/main/pg_hba.conf
+sudo sed -i "s/md5/trust/"   /etc/postgresql/9.5/main/pg_hba.conf
+sudo sed -i "s/peer/trust/"  /etc/postgresql/9.5/main/pg_hba.conf
 sudo /etc/init.d/postgresql restart
 
 # creates the role
@@ -67,19 +69,19 @@ sudo -u postgres createuser -s $USERNAME
 ###
 ### PHP for frontend
 ###
-sudo apt-get install -y php5 php5-pgsql php-pear php-db
+sudo apt-get install -y php php-pgsql php-pear php-db
 
 
 # get rid of some warning
 # where is the ini file? 'php --ini'
-echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php5/cli/conf.d/99-timezone.ini > /dev/null
+echo "date.timezone = 'Etc/UTC'" | sudo tee /etc/php/7.0/cli/conf.d/99-timezone.ini > /dev/null
 
 
 
 ###
 ### Nominatim
 ###
-sudo apt-get install -y libgeos-c1 libgeos++-dev libxml2-dev
+sudo apt-get install -y libgeos-c1v5 libgeos++-dev libxml2-dev
 
 ## Part 2: Nominatim installaion
 
@@ -100,7 +102,6 @@ sudo -u $USERNAME make
 chmod +x ./
 chmod +x ./module
 
-
 LOCALSETTINGS_FILE='settings/local.php'
 if [[ -e "$LOCALSETTINGS_FILE" ]]; then
   echo "$LOCALSETTINGS_FILE already exist, writing to settings/local-vagrant.php instead."
@@ -113,8 +114,8 @@ echo "<?php
    // General settings
    @define('CONST_Database_DSN', 'pgsql://@/nominatim');
    // Paths
-   @define('CONST_Postgresql_Version', '9.3');
-   @define('CONST_Postgis_Version', '2.1');
+   @define('CONST_Postgresql_Version', '9.5');
+   @define('CONST_Postgis_Version', '2.2');
    // Website settings
    @define('CONST_Website_BaseURL', 'http://$IP:8089/nominatim/');
 " > $LOCALSETTINGS_FILE
@@ -163,7 +164,7 @@ sudo -u $USERNAME ./utils/setup.php --create-website /var/www/nominatim
 ## Test suite (Python)
 ## https://github.com/twain47/Nominatim/tree/master/tests
 ##
-apt-get install -y python-dev python-pip python-Levenshtein python-shapely \
+apt-get install -y python-dev python-pip python-levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib
 pip install lettuce==0.2.18 six==1.7 haversine
 

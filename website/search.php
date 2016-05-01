@@ -10,11 +10,6 @@
 
 	$oDB =& getDB();
 
-	// Display defaults
-	$fLat = CONST_Default_Lat;
-	$fLon = CONST_Default_Lon;
-	$iZoom = CONST_Default_Zoom;
-
 	$oGeocode = new Geocode($oDB);
 
 	$aLangPrefOrder = getPreferredLanguages();
@@ -120,8 +115,6 @@
 	if ($sOutputFormat=='html')
 	{
 		$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
-		$sTileURL = CONST_Map_Tile_URL;
-		$sTileAttribution = CONST_Map_Tile_Attribution;
 	}
 	logEnd($oDB, $hLog, sizeof($aSearchResults));
 

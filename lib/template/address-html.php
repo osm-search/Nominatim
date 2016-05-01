@@ -111,13 +111,13 @@
 	<script type="text/javascript">
 	<?php
 
-		$aNominatimMapInit = [
+		$aNominatimMapInit = array(
 			'zoom' => isset($_GET['zoom']) ? htmlspecialchars($_GET['zoom']) : CONST_Default_Zoom,
-			'lat'  => isset($_GET['lat'] ) ? htmlspecialchars($_GET['lat'] ) : CONST_Default_Lat,
-			'lon'  => isset($_GET['lon'] ) ? htmlspecialchars($_GET['lon'] ) : CONST_Default_Lon,
+			'lat'  => isset($_GET['lat']) ? htmlspecialchars($_GET['lat']) : CONST_Default_Lat,
+			'lon'  => isset($_GET['lon']) ? htmlspecialchars($_GET['lon']) : CONST_Default_Lon,
 			'tile_url' => $sTileURL,
 			'tile_attribution' => $sTileAttribution
-		];
+		);
 		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
 		echo 'var nominatim_results = ' . json_encode([$aPlace], JSON_PRETTY_PRINT) . ';'; 

@@ -118,8 +118,12 @@ jQuery(document).on('ready', function(){
 			var bounds = [[result.aBoundingBox[0]*1,result.aBoundingBox[2]*1], [result.aBoundingBox[1]*1,result.aBoundingBox[3]*1]];
 			map.fitBounds(bounds);
 			if (result.astext && result.astext.match(/(POLY)|(LINE)/) ){
-				var layer = omnivore.wkt.parse(result.astext);
-				layerGroup.addLayer(layer);
+				var geojson_layer = L.geoJson(null, {
+					// http://leafletjs.com/reference.html#geojson-style
+					style: function(feature) { return { clickable: false, color: 'blue' }; }
+				});
+				omnivore.wkt.parse(result.astext,null,geojson_layer);
+				layerGroup.addLayer(geojson_layer);
 			}
 			else {
 				// var layer = L.rectangle(bounds, {color: "#ff7800", weight: 1} );
@@ -199,9 +203,14 @@ jQuery(document).on('ready', function(){
 		map.addLayer(circle);
 
 		if ( nominatim_result.outlinestring ){
-			var outline = omnivore.wkt.parse(nominatim_result.outlinestring);
-			map.addLayer(outline);
-			map.fitBounds(outline.getBounds());
+
+			var geojson_layer = L.geoJson(null, {
+				// http://leafletjs.com/reference.html#geojson-style
+				style: function(feature) { return { clickable: false, color: 'blue' }; }
+			});
+			omnivore.wkt.parse(nominatim_result.outlinestring,null,geojson_layer);
+			layerGroup.addLayer(geojson_layer);
+			map.fitBounds(geojson_layer.getBounds());
 		} else {
 			map.setView([nominatim_result.lat,nominatim_result.lon],10);
 		}

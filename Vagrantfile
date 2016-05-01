@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
   # If true, then any SSH connections made will enable agent forwarding.
   config.ssh.forward_agent = true
 
-  config.vm.synced_folder ".", "/home/vagrant/Nominatim"
+  #config.vm.synced_folder ".", "/home/vagrant/Nominatim"
 
   config.vm.define "ubuntu" do |sub|
       sub.vm.box = "ubuntu/trusty64"
@@ -20,7 +20,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.define "centos" do |sub|
       sub.vm.box = "bento/centos-7.2"
-      sub.vm.provision :shell, :path => "vagrant/centos-7-provision.sh"
+      sub.vm.provision :shell, :path => "vagrant/install-on-centos-7.sh"
   end
 
   # configure shared package cache if possible

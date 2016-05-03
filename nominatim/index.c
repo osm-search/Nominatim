@@ -163,11 +163,12 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
             {
                 if (interpolation)
                 {
-                    iResult = PQsendQueryPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
+					iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 1, paramValues, paramLengths, paramFormats, 1);
+
                 }
                 else
                 {
-                    iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 1, paramValues, paramLengths, paramFormats, 1);
+                    iResult = PQsendQueryPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
                 }
             }
             if (!iResult)
@@ -244,8 +245,6 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
     fprintf(stderr, "\r  Done %i in %i @ %f per second - FINISHED\n\n", rankCountTuples, (int)(difftime(time(0), rankStartTime)), rankPerSecond);
 
     PQclear(resSectors);
-    
-    
 }
 
 void nominatim_index(int rank_min, int rank_max, int num_threads, const char *conninfo, const char *structuredoutputfile)
@@ -404,17 +403,12 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         }
         run_indexing(rank, 0, conn, num_threads, thread_data, structuredoutputfile);
     }
-            
-
-    if (rank == 30)
-    {
-        // Close all connections
-        for (i = 0; i < num_threads; i++)
-        {
-            PQfinish(thread_data[i].conn);
-        }
-        PQfinish(conn);
-    }
+	// Close all connections
+	for (i = 0; i < num_threads; i++)
+	{
+		PQfinish(thread_data[i].conn);
+	}
+	PQfinish(conn);
 }
 
 void *nominatim_indexThread(void * thread_data_in)

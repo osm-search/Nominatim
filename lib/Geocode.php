@@ -1331,11 +1331,11 @@
 							{
 								$sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
                                 $aOrder[] = "";
-								$aOrder[0] = " exists(select place_id from placex where parent_place_id = search_name.place_id";
+								$aOrder[0] = " (exists(select place_id from placex where parent_place_id = search_name.place_id";
                                 $aOrder[0] .= " and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) ";
 								// also housenumbers from interpolation lines table are needed
 								$aOrder[0] .= " or exists(select place_id from location_property_osmline where parent_place_id = search_name.place_id";
-                                $aOrder[0] .= " and ".intval($aSearch['sHouseNumber']).">=startnumber and ".intval($aSearch['sHouseNumber'])."<=endnumber limit 1)";
+                                $aOrder[0] .= " and ".intval($aSearch['sHouseNumber']).">=startnumber and ".intval($aSearch['sHouseNumber'])."<=endnumber limit 1))";
 								$aOrder[0] .= " desc";
 							}
 

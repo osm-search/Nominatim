@@ -17,6 +17,11 @@ CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) 
 CREATE INDEX idx_placex_reverse_geometry ON placex USING gist (geometry) {ts:search-index} where rank_search != 28 and (name is not null or housenumber is not null) and class not in ('waterway','railway','tunnel','bridge','man_made');
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 
+CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {ts:search-index};
+CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline USING BTREE (parent_place_id) {ts:search-index};
+CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {ts:address-index};
+CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {ts:search-index};
+
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid) {ts:address-index};
 
 DROP INDEX IF EXISTS place_id_idx;

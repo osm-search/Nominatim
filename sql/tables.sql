@@ -94,7 +94,6 @@ CREATE TABLE location_property_osmline (
     startnumber INTEGER,
     endnumber INTEGER,
     interpolationtype TEXT,
-    admin_level INTEGER,
     street TEXT,
     postcode TEXT,
     calculated_country_code VARCHAR(2),

@@ -156,14 +156,14 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
                 }
                 else
                 {
-                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
+                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 2, paramValues, paramLengths, paramFormats, 1);
                 }
             }
             else
             {
                 if (interpolation)
                 {
-					iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 1, paramValues, paramLengths, paramFormats, 1);
+					iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 2, paramValues, paramLengths, paramFormats, 1);
 
                 }
                 else
@@ -216,7 +216,15 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
                     if (sleepcount++ > 500)
                     {
                         rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
-                        fprintf(stderr, "  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
+                        if(interpolation)
+                        {
+                            fprintf(stderr, "  Done %i in %i @ %f per second - Interpolation lines ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
+                        }
+                        else
+                        {
+                            fprintf(stderr, "  Done %i in %i @ %f per second - Rank %i ETA (seconds): %f\n", (rankCountTuples + count), (int)(difftime(time(0), rankStartTime)), rankPerSecond, rank, ((float)(rankTotalTuples - (rankCountTuples + count)))/rankPerSecond);
+                        }
+                        
                         sleepcount = 0;
                     }
                 }
@@ -327,7 +335,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     
     pg_prepare_params[0] = PG_OID_INT4;
     res = PQprepare(conn, "index_sector_places_osmline",
-                    "select place_id from location_property_osmline where geometry_sector = $1 and indexed_status > 0",
+                    "select place_id from location_property_osmline where geometry_sector = $2 and indexed_status > 0",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {

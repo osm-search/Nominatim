@@ -734,9 +734,9 @@ BEGIN
                              and place_id != prevnode.place_id and class = 'place'
                              and type = 'house';
         insert into location_property_osmline
-          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL, startnumber, endnumber, interpolationtype, prevnode.admin_level,
-           street, coalesce(prevnode.postcode, defpostalcode),
-           calculated_country_code, geometry_sector, 2, now());
+          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL, startnumber, endnumber, 
+          interpolationtype, street, coalesce(prevnode.postcode, defpostalcode),
+          calculated_country_code, geometry_sector, 2, now());
       END IF;
 
       -- early break if we are out of line string,

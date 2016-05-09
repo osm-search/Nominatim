@@ -140,13 +140,7 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
 
             // Get all the place_id's for this sector
             paramRank = PGint32(rank);
-            paramValues[0] = (char *)&paramRank;
-            paramLengths[0] = sizeof(paramRank);
-            paramFormats[0] = 1;
             paramSector = PGint32(sector);
-            paramValues[1] = (char *)&paramSector;
-            paramLengths[1] = sizeof(paramSector);
-            paramFormats[1] = 1;
             if (rankTotalTuples-rankCountTuples < num_threads*1000)
             {
                 // no sectors
@@ -156,18 +150,29 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
                 }
                 else
                 {
-                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 2, paramValues, paramLengths, paramFormats, 1);
+                    paramValues[0] = (char *)&paramRank;
+                    paramLengths[0] = sizeof(paramRank);
+                    paramFormats[0] = 1;
+                    iResult = PQsendQueryPrepared(conn, "index_nosector_places", 1, paramValues, paramLengths, paramFormats, 1);
                 }
             }
             else
             {
                 if (interpolation)
                 {
-					iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 2, paramValues, paramLengths, paramFormats, 1);
-
+                    iResult = PQsendQueryPrepared(conn, "index_sector_places_osmline", 1, paramValues, paramLengths, paramFormats, 1);
+                    paramValues[0] = (char *)&paramSector;
+                    paramLengths[0] = sizeof(paramSector);
+                    paramFormats[0] = 1;
                 }
                 else
                 {
+                    paramValues[0] = (char *)&paramRank;
+                    paramLengths[0] = sizeof(paramRank);
+                    paramFormats[0] = 1;
+                    paramValues[1] = (char *)&paramSector;
+                    paramLengths[1] = sizeof(paramSector);
+                    paramFormats[1] = 1;
                     iResult = PQsendQueryPrepared(conn, "index_sector_places", 2, paramValues, paramLengths, paramFormats, 1);
                 }
             }
@@ -335,7 +340,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     
     pg_prepare_params[0] = PG_OID_INT4;
     res = PQprepare(conn, "index_sector_places_osmline",
-                    "select place_id from location_property_osmline where geometry_sector = $2 and indexed_status > 0",
+                    "select place_id from location_property_osmline where geometry_sector = $1 and indexed_status > 0",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {

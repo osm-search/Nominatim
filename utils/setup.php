@@ -396,69 +396,37 @@
 
 		echo "Load Data\n";
 		$aDBInstances = array();
-		$aQueriesPlacex = array();
-		$aQueriesOsmline = array();
-		// the query is divided into parcels, so that the work between the processes, i.e. the DBInstances, will be evenly distributed
-		$iNumberOfParcels = 100;
-		for($i = 0; $i < $iNumberOfParcels; $i++)
-		{
-			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
-			$sSQL .= 'geometry) select * from place where osm_id % '.$iNumberOfParcels.' = '.$i.' and not ';
-			$sSQL .= '(class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\');';
-			array_push($aQueriesPlacex, $sSQL);
-			$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
-			$sSQL .= 'geometry) from place where osm_id % '.$iNumberOfParcels.' = '.$i.' and ';
-			$sSQL .= 'class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\'';
-			array_push($aQueriesOsmline, $sSQL);
-		}
-        
 		for($i = 0; $i < $iInstances; $i++)
 		{
 			$aDBInstances[$i] =& getDB(true);
+			if( $i < $iInstances-1 )
+			{
+				$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+				$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
+				$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances-1.' = '.$i;
+			}
+			else
+			{
+				// last thread for interpolation lines
+				$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
+				$sSQL .= 'geometry) from place where ';
+				$sSQL .= 'class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\'';
+			}
+			if ($aCMDResult['verbose']) echo "$sSQL\n";
+			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}
-		// now execute the query blocks, in the first round for placex, then for osmline, 
-		// because insert_osmline depends on the placex table
-		echo 'Inserting from place to placex.';
-		$aQueries = $aQueriesPlacex;
-		for($j = 0; $j < 2; $j++)
+		$bAnyBusy = true;
+		while($bAnyBusy)
 		{
-			$bAnyBusy = true;
-			while($bAnyBusy)
+			$bAnyBusy = false;
+			for($i = 0; $i < $iInstances; $i++)
 			{
-				$bAnyBusy = false;
-
-				for($i = 0; $i < $iInstances; $i++)
-				{
-					if (pg_connection_busy($aDBInstances[$i]->connection)) 
-					{
-						$bAnyBusy = true;
-					}
-					else if (count($aQueries) > 0)
-					{
-						$query = array_pop($aQueries);
-						if (!pg_send_query($aDBInstances[$i]->connection, $query))
-						{
-							fail(pg_last_error($oDB->connection));
-						}
-						else
-						{
-							pg_get_result($aDBInstances[$i]->connection);
-							$bAnyBusy = true;
-						}
-					}
-				}
-				sleep(1);
-				echo '.';
+				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
 			}
-			echo "\n";
-			if ($j == 0)  //for the second round with osmline
-			{
-				echo 'Inserting from place to osmline.';
-				$aQueries = $aQueriesOsmline;
-			}
+			sleep(1);
+			echo '.';
 		}
-		
+		echo "\n";
 		echo "Reanalysing database...\n";
 		pgsqlRunScript('ANALYSE');
 	}

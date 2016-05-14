@@ -25,7 +25,8 @@
 	foreach($aSearchResults as $iResNum => $aResult)
 	{
 		echo "<place place_id='".$aResult['place_id']."'";
-		$sOSMType = ($aResult['osm_type'] == 'N'?'node':($aResult['osm_type'] == 'W'?'way':($aResult['osm_type'] == 'R'?'relation':($aResult['osm_type'] == 'T'?'tiger':''))));
+		$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':
+		($aPointDetails['osm_type'] == 'T'?'tiger':($aPointDetails['osm_type'] == 'I'?'interpolation':'')))));
 		if ($sOSMType)
 		{
 			echo " osm_type='$sOSMType'";

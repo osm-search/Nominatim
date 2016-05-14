@@ -353,6 +353,8 @@
 		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE placex')) fail(pg_last_error($oDB->connection));
 		echo '.';
+		if (!pg_query($oDB->connection, 'TRUNCATE location_property_osmline')) fail(pg_last_error($oDB->connection));
+		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE place_addressline')) fail(pg_last_error($oDB->connection));
 		echo '.';
 		if (!pg_query($oDB->connection, 'TRUNCATE place_boundingbox')) fail(pg_last_error($oDB->connection));
@@ -397,9 +399,19 @@
 		for($i = 0; $i < $iInstances; $i++)
 		{
 			$aDBInstances[$i] =& getDB(true);
-			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
-			$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances.' = '.$i;
+			if( $i < $iInstances-1 )
+			{
+				$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+				$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
+				$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances-1.' = '.$i;
+			}
+			else
+			{
+				// last thread for interpolation lines
+				$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
+				$sSQL .= 'geometry) from place where ';
+				$sSQL .= 'class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\'';
+			}
 			if ($aCMDResult['verbose']) echo "$sSQL\n";
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}

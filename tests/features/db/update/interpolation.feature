@@ -23,19 +23,20 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | N1     | W2
           | N2     | W2
-          | W10    | W2
-      And way 10 expands exactly to housenumbers 4
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W2              | 2           | 6
       When updating place ways
           | osm_id | class   | type    | housenumber | street       | geometry
           | 10     | place   | houses  | even        | Cloud Street | :w-middle
-      Then way 10 expands exactly to housenumbers 4
-      And table placex contains
+      Then table placex contains
           | object | parent_place_id
           | N1     | W3
           | N2     | W3
-          | W10    | W3
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W3              | 2           | 6
 
-    @Fail
     Scenario: addr:street added to housenumbers
       Given the scene parallel-road
       And the place nodes
@@ -57,18 +58,20 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | N1     | W2
           | N2     | W2
-          | W10    | W2
-      And way 10 expands exactly to housenumbers 4
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W2              | 2           | 6
       When updating place nodes
           | osm_id | class | type  | street      | housenumber | geometry
           | 1      | place | house | Cloud Street| 2           | :n-middle-w
           | 2      | place | house | Cloud Street| 6           | :n-middle-e
-      Then way 10 expands exactly to housenumbers 4
-      And table placex contains
+      Then table placex contains
           | object | parent_place_id
           | N1     | W3
           | N2     | W3
-          | W10    | W3
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W3              | 2           | 6
 
 
     Scenario: interpolation tag removed
@@ -92,10 +95,11 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | N1     | W2
           | N2     | W2
-          | W10    | W2
-      And way 10 expands exactly to housenumbers 4
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W2              | 2           | 6
       When marking for delete W10
-      Then way 10 expands to no housenumbers
+      Then table location_property_osmline has no entry for W10
       And table placex contains
           | object | parent_place_id
           | N1     | W2
@@ -122,17 +126,19 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | N1     | W2
           | N2     | W2
-          | W10    | W2
-      And way 10 expands exactly to housenumbers 4
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W2              | 2           | 6
       When updating place ways
           | osm_id | class   | type         | name                    | geometry
           | 3      | highway | unclassified | 'name' : 'Cloud Street' | :w-south
-      Then way 10 expands exactly to housenumbers 4
-      And table placex contains
+      Then table placex contains
           | object | parent_place_id
           | N1     | W3
           | N2     | W3
-          | W10    | W3
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W3              | 2           | 6
 
 
     Scenario: referenced road deleted
@@ -156,12 +162,14 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | N1     | W3
           | N2     | W3
-          | W10    | W3
-      And way 10 expands exactly to housenumbers 4
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W3              | 2           | 6
       When marking for delete W3
-      Then way 10 expands exactly to housenumbers 4
-      And table placex contains
+      Then table placex contains
           | object | parent_place_id
           | N1     | W2
           | N2     | W2
-          | W10    | W2
+      And table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W10    | W2              | 2           | 6

@@ -24,3 +24,4 @@ osm2wkt: osm2wkt.cc
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_WARNINGS) -o $@ $< $(LDFLAGS) $(LIB_IO)
 
 scenarios: osm2wkt
+	./make_scenes.sh

@@ -693,15 +693,10 @@ BEGIN
 
   FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
-    -- If there is a place of a type other than place/house, use that because
-    -- it is guaranteed to be the original node. For place/house types use the
-    -- one with the smallest id because the original node was created first.
-    -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
-    select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
-                               and indexed_status < 100 and housenumber is not NULL
-                         order by (type = 'address'),place_id limit 1 INTO nextnode;
+    select * from place where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
+                               and housenumber is not NULL limit 1 INTO nextnode;
     --RAISE NOTICE 'Nextnode.place_id: %s', nextnode.place_id;
-    IF nextnode.place_id IS NOT NULL THEN
+    IF nextnode.osm_id IS NOT NULL THEN
       --RAISE NOTICE 'place_id is not null';
       IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
         -- Make sure that the point is actually on the line. That might
@@ -725,14 +720,7 @@ BEGIN
           startnumber := housenum;
           sectiongeo := ST_Reverse(sectiongeo);
         END IF;
-        
-        -- a correction for odd/even is NOT necessary anymore (e.g. if interpolationtype=even, but start/endnumber != even)
-        -- see PlaceLookup.php
 
-        -- keep for compatibility with previous versions
-        delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id
-                             and place_id != prevnode.place_id and class = 'place'
-                             and type = 'house';
         insert into location_property_osmline
           values (sectiongeo, nextval('seq_place'), partition, wayid, NULL, startnumber, endnumber, 
           interpolationtype, street, coalesce(prevnode.postcode, defpostalcode),

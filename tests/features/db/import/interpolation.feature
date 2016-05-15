@@ -189,6 +189,7 @@ Feature: Import of address interpolations
           | startnumber | endnumber | geometry
           | 2           | 6         | 0 0, 0 0.001
           | 6           | 10        | 0 0.001, 0 0.002
+          | 6           | 10        | 0 0.001, 0 0.002
 
     Scenario: Interpolation line with self-intersecting way II
         Given the place nodes

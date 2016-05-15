@@ -139,50 +139,26 @@ def check_search_name_content(step):
                 else:
                     raise Exception("Cannot handle field %s in search_name table" % (k, ))
 
-@step(u'way (\d+) expands to housenumbers')
-def check_interpolated_housenumbers(step, nodeid):
-    """Check that the exact set of housenumbers has been entered in
-       placex for the given source node. Expected are two columns:
-       housenumber and centroid
-    """
-    numbers = {}
-    for line in step.hashes:
-        assert line["housenumber"] not in numbers
-        numbers[line["housenumber"]] = line["centroid"]
-    cur = world.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute("""SELECT DISTINCT housenumber,
-                          ST_X(centroid) as clat, ST_Y(centroid) as clon
-                   FROM placex WHERE osm_type = 'W' and osm_id = %s
-                                 and class = 'place' and type = 'address'""",
-                   (int(nodeid),))
-                   
-    assert_equals(len(numbers), cur.rowcount)
-    for r in cur:
-        assert_in(r["housenumber"], numbers)
-        world.match_geometry((r['clat'], r['clon']), numbers[r["housenumber"]])
-        del numbers[r["housenumber"]]
-
 @step(u'way (\d+) expands to lines')
 def check_interpolation_lines(step, wayid):
     """Check that the correct interpolation line has been entered in
-       location_property_osmline for the given source line/nodes. Expected are three columns:
+       location_property_osmline for the given source line/nodes.
+       Expected are three columns:
        startnumber, endnumber and linegeo
     """
-    lines = {}
+    lines = []
     for line in step.hashes:
-        assert line["startnumber"] not in lines
-        lines[line["startnumber"]] = {'endnumber': line["endnumber"], 'geometry': line["geometry"]}
+        lines.append((line["startnumber"], line["endnumber"], line["geometry"]))
     cur = world.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("""SELECT startnumber::text, endnumber::text, st_astext(linegeo) as geometry
                    FROM location_property_osmline WHERE osm_id = %s""",
                    (int(wayid),))
     assert_equals(len(lines), cur.rowcount)
     for r in cur:
-        assert_in(r["startnumber"], lines)
-        assert_equals(r["endnumber"], lines[r["startnumber"]]["endnumber"])
         linegeo = str(str(r["geometry"].split('(')[1]).split(')')[0]).replace(',', ', ')
-        assert_equals(linegeo, lines[r["startnumber"]]["geometry"])
-        del lines[r["startnumber"]]
+        exp = (r["startnumber"], r["endnumber"], linegeo)
+        assert_in(exp, lines)
+        lines.remove(exp)
 
 @step(u'way (\d+) expands exactly to housenumbers ([0-9,]*)')
 def check_interpolated_housenumber_list(step, nodeid, numberlist):

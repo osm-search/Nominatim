@@ -711,7 +711,7 @@ BEGIN
       endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
 
       IF startnumber IS NOT NULL AND endnumber IS NOT NULL
-         AND @(startnumber - endnumber) < 1000 AND startnumber != endnumber
+         AND startnumber != endnumber
          AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
 
         IF (startnumber > endnumber) THEN
@@ -722,9 +722,12 @@ BEGIN
         END IF;
 
         insert into location_property_osmline
-          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL, startnumber, endnumber, 
-          interpolationtype, street, coalesce(prevnode.postcode, defpostalcode),
-          calculated_country_code, geometry_sector, 2, now());
+          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL,
+                  startnumber, endnumber, interpolationtype,
+                  coalesce(street, prevnode.street, nextnode.street),
+                  coalesce(addr_place, prevnode.addr_place, nextnode.addr_place),
+                  coalesce(defpostalcode, prevnode.postcode, nextnode.postcode),
+                  calculated_country_code, geometry_sector, 2, now());
       END IF;
 
       -- early break if we are out of line string,
@@ -1072,21 +1075,20 @@ BEGIN
     delete from location_property_osmline where place_id = OLD.place_id;
     RETURN NULL;
   END IF;
-  
+
   IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
     RETURN NEW;
   END IF;
-  
-  IF OLD.indexed_status = 2 and NEW.indexed_status=0 THEN
-    -- do the reparenting: (finally here, because ALL places in placex, that are needed for reparenting, need to be up to date)
-    -- (the osm interpolationline in location_property_osmline was marked for reparenting in placex_insert/placex_delete with index_status = 2 
-    -- => index.c: sets index_status back to 0
-    -- => triggers this function)
-    place_centroid := ST_PointOnSurface(NEW.linegeo);
-    -- marking descendants for reparenting is not needed, because there are actually no descendants for interpolation lines
-    NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, null, NEW.partition, place_centroid, NEW.linegeo); -- addr_place (3rd param) is not necessarily needed
-    return NEW;
-  END IF;
+
+  -- do the reparenting: (finally here, because ALL places in placex, that are needed for reparenting, need to be up to date)
+  -- (the osm interpolationline in location_property_osmline was marked for reparenting in placex_insert/placex_delete with index_status = 1 or 2 (1 inset, 2 delete)
+  -- => index.c: sets index_status back to 0
+  -- => triggers this function)
+  place_centroid := ST_PointOnSurface(NEW.linegeo);
+  -- marking descendants for reparenting is not needed, because there are actually no descendants for interpolation lines
+  NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
+                                                 NEW.partition, place_centroid, NEW.linegeo);
+  return NEW;
 END;
 $$
 LANGUAGE plpgsql;

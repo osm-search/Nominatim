@@ -1917,31 +1917,30 @@ BEGIN
 --    RAISE WARNING 'Invalid Geometry: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
     RETURN null;
   END IF;
-  
-  -- decide, whether its an osm interpolation line => insert_osmline, or else just insert into placex
-  IF NEW.class='place' and NEW.type='houses' and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN    
+
+  -- decide, whether it is an osm interpolation line => insert_osmline, or else just insert into placex
+  IF NEW.class='place' and NEW.type='houses' and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
     -- Have we already done this place?
     select * from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existing;
-    
+
     -- Get the existing place_id
     select * from location_property_osmline where osm_id = NEW.osm_id INTO existingline;
-    
+
     -- Handle a place changing type by removing the old data (this trigger is executed BEFORE INSERT of the NEW tupel)
-    -- My generated 'place' types are causing havok because they overlap with real keys
-    -- TODO: move them to their own special purpose key/class to avoid collisions
     IF existing.osm_type IS NULL THEN
       DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
     END IF;
-    
+
     DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
     DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
-    
-    -- To paraphrase, if there isn't an existing item
+
+    -- If there isn't an existing item in location_property_osmline, just add it
     IF existingline.osm_id IS NULL THEN
       -- insert new line into location_property_osmline, use function insert_osmline
       i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
       RETURN NEW;
     END IF;
+
     IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
        OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
        OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
@@ -1969,19 +1968,19 @@ BEGIN
 
       -- update method for interpolation lines: delete all old interpolation lines with same osm_id (update on place) and insert the new one(s) (they can be split up, if they have > 2 nodes)
       delete from location_property_osmline where osm_id = NEW.osm_id;
-      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
+      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place,
+                         NEW.postcode, NEW.country_code, NEW.geometry);
+
+      -- for interpolations invalidate all nodes on the line
+      update placex p set indexed_status = 2
+        from planet_osm_ways w
+        where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
     END IF;
-    
-    -- for interpolations invalidate all nodes on the line
-    update placex p set indexed_status = 2 from planet_osm_ways w where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
+
     RETURN NULL;
-  
+
   ELSE -- insert to placex
-  
-    IF FALSE and NEW.osm_type = 'R' THEN
-      select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
-      --DEBUG: RAISE WARNING '%', existingplacex;
-    END IF;
+
     -- Patch in additional country names
     IF NEW.admin_level = 2 AND NEW.type = 'administrative' AND NEW.country_code is not null THEN
       select coalesce(country_name.name || NEW.name,NEW.name) from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
@@ -2170,7 +2169,6 @@ BEGIN
         
       -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
       -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
-      -- needed for test case features/db/import: Scenario: addr:street added to housenumbers
       IF NEW.osm_type='N' and NEW.class='place' and NEW.type='house' THEN
           -- Is this node part of an interpolation line? search for it in location_property_osmline and mark the interpolation line for reparenting
           update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);

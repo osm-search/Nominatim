@@ -396,30 +396,30 @@
 
 		echo "Load Data\n";
 		$aDBInstances = array();
-		for($i = 0; $i < $iInstances; $i++)
+		$iLoadThreads = max(1, $iInstances - 1);
+		for($i = 0; $i < $iLoadThreads; $i++)
 		{
 			$aDBInstances[$i] =& getDB(true);
-			if( $i < $iInstances-1 )
-			{
-				$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-				$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
-				$sSQL .= 'geometry) select * from place where osm_id % '.$iInstances-1.' = '.$i;
-			}
-			else
-			{
-				// last thread for interpolation lines
-				$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
-				$sSQL .= 'geometry) from place where ';
-				$sSQL .= 'class=\'place\' and type=\'houses\' and osm_type=\'W\' and ST_GeometryType(geometry) = \'ST_LineString\'';
-			}
+			$sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
+			$sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
+			$sSQL .= 'geometry) select * from place where osm_id % '.$iLoadThreads.' = '.$i;
+			$sSQL .= " and not (class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString')";
 			if ($aCMDResult['verbose']) echo "$sSQL\n";
 			if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 		}
+		// last thread for interpolation lines
+		$aDBInstances[$iLoadThreads] =& getDB(true);
+		$sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
+		$sSQL .= 'geometry) from place where ';
+		$sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
+		if ($aCMDResult['verbose']) echo "$sSQL\n";
+		if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+
 		$bAnyBusy = true;
 		while($bAnyBusy)
 		{
 			$bAnyBusy = false;
-			for($i = 0; $i < $iInstances; $i++)
+			for($i = 0; $i <= $iLoadThreads; $i++)
 			{
 				if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
 			}

@@ -1483,7 +1483,7 @@
 									{
 										$sSQL .= " and parent_place_id not in (".join(',', $this->aExcludePlaceIDs).")";
 									}
-									//$sSQL .= " limit $this->iLimit";
+									$sSQL .= " limit 1";
 									if (CONST_Debug) var_dump($sSQL);
 									//get place IDs
 									$aPlaceIDs = $this->oDB->getCol($sSQL, 0);

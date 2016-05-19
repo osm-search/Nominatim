@@ -1481,7 +1481,7 @@
 
 									if (sizeof($this->aExcludePlaceIDs))
 									{
-										$sSQL .= " and parent_place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+										$sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
 									}
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);

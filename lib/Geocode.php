@@ -501,6 +501,33 @@
 			return $aSearchResults;
 		}
 
+		/**
+		 * Recursively get place_ids for places in the vicinity with the same name, for example segments of a road
+		 */
+		function getRelated($aPlaceIDs) {
+			$sPlaceIDs = join(',',$aPlaceIDs);
+			$sSQL = "WITH candidates AS (";
+			$sSQL .=  "SELECT sn.place_id, sn.name_vector, px.geometry, sn.place_id in ($sPlaceIDs) AS related";
+			$sSQL .=  " FROM search_name sn, (SELECT centroid, name_vector FROM search_name WHERE place_id in ($sPlaceIDs)) tn, placex px";
+			$sSQL .=  " WHERE sn.name_vector = tn.name_vector AND sn.place_id = px.place_id";
+			$sSQL .=  " AND st_distance(tn.centroid, sn.centroid) < 1.0";
+			$sSQL .=  "),";
+			$sSQL .=  " related AS (";
+			$sSQL .=  " WITH RECURSIVE find_related(place_id) AS (";
+			$sSQL .=  " SELECT place_id";
+			$sSQL .=  " FROM candidates";
+			$sSQL .=  " WHERE related";
+			$sSQL .=  " UNION";
+			$sSQL .=  " SELECT c.place_id";
+			$sSQL .=  " FROM find_related fr INNER JOIN candidates rc ON fr.place_id = rc.place_id, candidates c";
+			$sSQL .=  " WHERE NOT c.related AND rc.name_vector = c.name_vector AND st_distance(rc.geometry, c.geometry) < 0.001";
+			$sSQL .=  ") SELECT * FROM find_related";
+			$sSQL .=  ") SELECT place_id FROM related;";
+			if (CONST_Debug){ echo "<hr><b>Find related</b><br />"; var_dump($sSQL);}
+			$aRelatedPlaceIDs = $this->oDB->getCol($sSQL);
+			return $aRelatedPlaceIDs;
+		}
+
 		function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
 		{
 			/*
@@ -1486,6 +1513,8 @@
 									$aStreetsWithNumber[] = $aNumberAndStreetRow['parent_place_id'];
 								}
 
+								//Filter out related ways from $aRoadPlaceIDs and add the remaining to the result
+								$aStreetsWithNumber = $this->getRelated($aStreetsWithNumber);
 								$aRoadPlaceIDs = array_diff($aRoadPlaceIDs, $aStreetsWithNumber);
 								$aPlaceIDs = array_merge($aPlaceIDs, $aRoadPlaceIDs);
 							}

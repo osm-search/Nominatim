@@ -217,29 +217,7 @@
 		echo "Functions\n";
 		$bDidSomething = true;
 		if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
-		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
-		if ($aCMDResult['enable-diff-updates'])
-		{
-			$sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
-		}
-		if ($aCMDResult['enable-debug-statements'])
-		{
-			$sTemplate = str_replace('--DEBUG:', '', $sTemplate);
-		}
-		if (CONST_Limit_Reindexing)
-		{
-			$sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
-		}
-		if (!CONST_Use_US_Tiger_Data)
-		{
-			$sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
-		}
-		if (!CONST_Use_Aux_Location_data)
-		{
-			$sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
-		}
-		pgsqlRunScript($sTemplate);
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-tables'] || $aCMDResult['all'])
@@ -265,10 +243,7 @@
 
 		// re-run the functions
 		echo "Functions\n";
-		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-		$sTemplate = str_replace('{modulepath}',
-			                     CONST_InstallPath.'/module', $sTemplate);
-		pgsqlRunScript($sTemplate);
+		create_sql_functions($aCMDResult);
 	}
 
 	if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
@@ -646,14 +621,6 @@
 	{
 		echo "Search indices\n";
 		$bDidSomething = true;
-		$oDB =& getDB();
-		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
 		$sTemplate = replace_tablespace('{ts:address-index}',
@@ -662,16 +629,6 @@
 		                                CONST_Tablespace_Search_Index, $sTemplate);
 		$sTemplate = replace_tablespace('{ts:aux-index}',
 		                                CONST_Tablespace_Aux_Index, $sTemplate);
-		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-		foreach($aMatches as $aMatch)
-		{
-			$sResult = '';
-			foreach($aPartitions as $sPartitionName)
-			{
-				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-			}
-			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-		}
 
 		pgsqlRunScript($sTemplate);
 	}
@@ -699,7 +656,7 @@
 		@symlink(CONST_BasePath.'/website/css', $sTargetDir.'/css');
 		echo "Symlinks created\n";
 
-		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/tiles.js');
+		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/nominatim-ui.js');
 		if (!$sTestFile)
 		{
 			echo "\nWARNING: Unable to access the website at ".CONST_Website_BaseURL."\n";
@@ -941,5 +898,33 @@
 			$sSql = str_replace($sTemplate, '', $sSql);
 
 		return $sSql;
+	}
+
+	function create_sql_functions($aCMDResult)
+	{
+		$sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
+		$sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
+		if ($aCMDResult['enable-diff-updates'])
+		{
+			$sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
+		}
+		if ($aCMDResult['enable-debug-statements'])
+		{
+			$sTemplate = str_replace('--DEBUG:', '', $sTemplate);
+		}
+		if (CONST_Limit_Reindexing)
+		{
+			$sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
+		}
+		if (!CONST_Use_US_Tiger_Data)
+		{
+			$sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
+		}
+		if (!CONST_Use_Aux_Location_data)
+		{
+			$sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
+		}
+		pgsqlRunScript($sTemplate);
+
 	}
 

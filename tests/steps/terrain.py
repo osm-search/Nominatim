@@ -173,7 +173,9 @@ def db_template_setup():
     psycopg2.extras.register_hstore(conn, globally=False, unicode=True)
     cur = conn.cursor()
     for table in ('gb_postcode', 'us_postcode'):
-        cur.execute('TRUNCATE TABLE %s' % (table,))
+        cur.execute("select * from pg_tables where tablename = '%s'" % (table, ))
+        if cur.rowcount > 0:
+            cur.execute('TRUNCATE TABLE %s' % (table,))
     conn.commit()
     conn.close()
     # execute osm2pgsql on an empty file to get the right tables

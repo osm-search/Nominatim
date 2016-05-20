@@ -78,18 +78,6 @@
 		return $sHTML;
 	}
 
-	// function hash_to_subtable($aAssociatedList)
-	// {
-	// 	$sHTML = '<table class="table">';
-	// 	foreach($aAssociatedList as $sKey => $sValue)
-	// 	{
-	// 		$sHTML = $sHTML . '<tr><td>'.$sKey.'</td><td class="name">'.$sValue.'</td></tr>'."\n";
-	// 	}
-	// 	$sHTML = $sHTML . '</table>';
-	// 	return $sHTML;
-	// }
-
-
 	function map_icon($sIcon)
 	{
 		if ($sIcon){
@@ -106,8 +94,6 @@
 		echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
 		echo '  <td>' . osm_link($aAddressLine) . "</td>\n";
 		echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . "</td>\n";
-		// echo '<td>' . (isset($aAddressLine['rank_search_label']) ? $aAddressLine['rank_search_label'] : '') ."</td>\n";
-		// echo ', <span class="area">'.($aAddressLine['fromarea']=='t'?'Polygon':'Point').'</span>';
 		echo '  <td>' . format_distance($aAddressLine['distance'])."</td>\n";
 		echo '  <td>' . nominatim_link($aAddressLine,'details &gt;') . "</td>\n";
 		echo "</tr>\n";
@@ -187,7 +173,6 @@
 					  <td>Type</td>
 					  <td>OSM</td>
 					  <td>Admin level</td>
-					  <!-- <td>Search rank</td> -->
 					  <td>Distance</td>
 					  <td></td>
 					</tr>
@@ -264,9 +249,6 @@
 		}
 	}
 
-	// headline('Other Parts');
-	// headline('Linked To');
-
 	echo "</table>\n";
 ?>
 
@@ -277,17 +259,17 @@
 	<script type="text/javascript">
 	<?php
 
-		$aNominatimMapInit = [
+		$aNominatimMapInit = array(
 		  'tile_url' => $sTileURL,
 		  'tile_attribution' => $sTileAttribution
-		];
+		);
 		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
-		$aPlace = [
+		$aPlace = array(
 				'outlinestring' => $aPointDetails['outlinestring'],
 				'lon' => $aPointDetails['lon'],
 				'lat' => $aPointDetails['lat'],
-		];
+		);
 		echo 'var nominatim_result = ' . json_encode($aPlace, JSON_PRETTY_PRINT) . ';'; 
 
 

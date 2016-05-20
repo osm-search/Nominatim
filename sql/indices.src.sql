@@ -19,10 +19,6 @@ CREATE INDEX idx_location_area_country_place_id ON location_area_country USING B
 
 CREATE INDEX idx_search_name_country_centroid ON search_name_country USING GIST (centroid) {ts:address-index};
 
--- start
-CREATE INDEX idx_location_property_-partition-_centroid ON location_property_-partition- USING GIST (centroid) {ts:address-index};
--- end
-
 DROP INDEX IF EXISTS place_id_idx;
 CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type) {ts:address-index};
 

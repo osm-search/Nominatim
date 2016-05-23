@@ -32,8 +32,8 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 #
 #-----------------------------------------------------------------------------
 
-set(BUILD_TESTS on)
-set(WITH_LUA off)
+set(BUILD_TESTS on CACHE BOOL "Build test suite" FORCE)
+set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
 add_subdirectory(osm2pgsql)
 
 find_package(Threads REQUIRED)
@@ -47,6 +47,10 @@ find_program(PG_CONFIG pg_config)
 execute_process(COMMAND ${PG_CONFIG} --pgxs
                 OUTPUT_VARIABLE PGXS
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if (NOT EXISTS "${PGXS}")
+    message(FATAL_ERROR "Postgresql server package not found.")
+endif()
 
 find_package(ZLIB REQUIRED)
 

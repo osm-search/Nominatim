@@ -1,6 +1,6 @@
 # just use the pgxs makefile
 ADD_CUSTOM_COMMAND( OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/dummy
-        COMMAND PGXS=${PGXS} PG_CONFIG=${PG_CONFIG} make -f ${CMAKE_CURRENT_SOURCE_DIR}/Makefile
+        COMMAND PGXS=${PGXS} PG_CONFIG=${PG_CONFIG} MODSRCDIR=${CMAKE_CURRENT_SOURCE_DIR} make -f ${CMAKE_CURRENT_SOURCE_DIR}/Makefile
         COMMENT "Running external makefile ${PGXS}"
         )
 

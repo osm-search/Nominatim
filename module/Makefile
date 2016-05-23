@@ -1,4 +1,5 @@
 MODULES = nominatim
+VPATH = $(MODSRCDIR)
 include $(PGXS)
 
 all:

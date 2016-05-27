@@ -53,6 +53,7 @@ def check_placex_content(step, tablename):
             if tablename == 'location_property_osmline':
                 q = q + ' FROM %s where osm_id = %%s' % (tablename,)
             else:
+                q = q + ", ST_GeometryType(geometry) as geometrytype"
                 q = q + ' FROM %s where osm_type = %%s and osm_id = %%s' % (tablename,)
             if cls is None:
                 if tablename == 'location_property_osmline':

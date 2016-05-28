@@ -230,4 +230,29 @@ Feature: Update of address interpolations
           | object | parent_place_id
           | W1     | W2
 
+    Scenario: housenumbers added to interpolation
+      Given the scene building-with-parallel-streets
+      And the place ways
+          | osm_id | class   | type         | name                    | geometry
+          | 2      | highway | unclassified | 'name' : 'Cloud Street' | :w-south
+      And the ways
+          | id  | nodes
+          | 1   | 1,100,101,102,2
+      And the place ways
+          | osm_id | class   | type    | housenumber | geometry
+          | 1      | place   | houses  | even        | :w-north
+      When importing
+      Then table location_property_osmline has no entry for W1
+      When updating place nodes
+          | osm_id | class | type  | housenumber | geometry
+          | 1      | place | house | 2           | :n-north-w
+          | 2      | place | house | 6           | :n-north-e
+      And updating place ways
+          | osm_id | class   | type    | housenumber | street      | geometry
+          | 1      | place   | houses  | even        | Cloud Street| :w-north
+      Then table location_property_osmline contains
+          | object | parent_place_id | startnumber | endnumber
+          | W1     | W2              | 2           | 6
+
+
 

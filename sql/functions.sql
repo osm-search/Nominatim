@@ -1258,6 +1258,7 @@ BEGIN
 
 --RAISE WARNING 'before low level% %', NEW.place_id, NEW.rank_search;
 
+  -- ---------------------------------------------------------------------------
   -- For low level elements we inherit from our parent road
   IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
 
@@ -1322,45 +1323,28 @@ BEGIN
       END IF;
     END IF;
 
+    -- Is this node part of an interpolation?
+    IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
+      FOR location IN
+        SELECT q.parent_place_id FROM location_property_osmline q, planet_osm_ways x
+         WHERE q.linegeo && NEW.geometry and x.id = q.osm_id and NEW.osm_id = any(x.nodes)
+         LIMIT 1
+      LOOP
+         NEW.parent_place_id := location.parent_place_id;
+      END LOOP;
+    END IF;
+
+    -- Is this node part of a way?
     IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
---RAISE WARNING 'x1';
-      -- Is this node part of a way? search for the way in placex AND location_property_osmline (for interpolation lines)
-      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.class, p.type, p.rank_search, p.street, p.addr_place from placex p, planet_osm_ways w
+      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.rank_search, p.street, p.addr_place from placex p, planet_osm_ways w
          where p.osm_type = 'W' and p.rank_search >= 26 and p.geometry && NEW.geometry and w.id = p.osm_id and NEW.osm_id = any(w.nodes) 
-         UNION 
-         select q.place_id, q.osm_id, q.parent_place_id, 'place' as class, 'houses' as type, 30 as rank_search, null as street, 
-         null as addr_place from location_property_osmline q, planet_osm_ways x
-         where q.linegeo && NEW.geometry and x.id = q.osm_id and NEW.osm_id = any(x.nodes)
       LOOP
-        
---RAISE WARNING '%', location;
+
         -- Way IS a road then we are on it - that must be our road
-        IF location.rank_search = 26 AND NEW.parent_place_id IS NULL THEN
+        IF location.rank_search < 28 AND NEW.parent_place_id IS NULL THEN
 --RAISE WARNING 'node in way that is a street %',location;
           NEW.parent_place_id := location.place_id;
-        END IF;
-
-        -- If this way is a street interpolation line then it is probably as good as we are going to get
-        IF NEW.parent_place_id IS NULL AND location.class = 'place' and location.type='houses' THEN
-          NEW.parent_place_id := location.parent_place_id;
-        END IF;
-
-        -- Is the WAY part of a relation
-        IF NEW.parent_place_id IS NULL THEN
-            FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
-            LOOP
-              -- At the moment we only process one type of relation - associatedStreet
-              IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
-                FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-                  IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
-  --RAISE WARNING 'node in way that is in a relation %',relation;
-                    SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
-                      and rank_search = 26 and name is not null INTO NEW.parent_place_id;
-                  END IF;
-                END LOOP;
-              END IF;
-            END LOOP;
         END IF;
 
         -- If the way mentions a street or place address, try that for parenting.
@@ -1380,6 +1364,23 @@ BEGIN
               NEW.parent_place_id := linkedplacex.place_id;
             END LOOP;
           END IF;
+        END IF;
+
+        -- Is the WAY part of a relation
+        IF NEW.parent_place_id IS NULL THEN
+            FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
+            LOOP
+              -- At the moment we only process one type of relation - associatedStreet
+              IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
+                FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+                  IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
+  --RAISE WARNING 'node in way that is in a relation %',relation;
+                    SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
+                      and rank_search = 26 and name is not null INTO NEW.parent_place_id;
+                  END IF;
+                END LOOP;
+              END IF;
+            END LOOP;
         END IF;
 
       END LOOP;
@@ -1451,6 +1452,9 @@ BEGIN
 
 -- RAISE WARNING '  INDEXING Started:';
 -- RAISE WARNING '  INDEXING: %',NEW;
+
+  -- ---------------------------------------------------------------------------
+  -- Full indexing
 
   IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
 
@@ -1936,22 +1940,29 @@ BEGIN
     DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
     DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
-    -- If there isn't an existing item in location_property_osmline, just add it
-    IF existingline.osm_id IS NULL THEN
-      -- insert new line into location_property_osmline, use function insert_osmline
-      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
-      RETURN NEW;
+    -- update method for interpolation lines: delete all old interpolation lines with same osm_id (update on place) and insert the new one(s) (they can be split up, if they have > 2 nodes)
+    IF existingline.osm_id IS NOT NULL THEN
+      delete from location_property_osmline where osm_id = NEW.osm_id;
     END IF;
 
-    IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
-       OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
-       OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
+    -- for interpolations invalidate all nodes on the line
+    update placex p set indexed_status = 2
+      from planet_osm_ways w
+      where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
+    -- insert new line into location_property_osmline, use function insert_osmline
+
+
+    IF existing.osm_type IS NULL THEN
+      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
+      return NEW;
+    END IF;
+
+    IF coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
        OR coalesce(existing.street, '') != coalesce(NEW.street, '')
        OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
        OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
        OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
        OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
-       OR coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
        OR existing.geometry::text != NEW.geometry::text
        THEN
 
@@ -1968,15 +1979,7 @@ BEGIN
         geometry = NEW.geometry
         where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
 
-      -- update method for interpolation lines: delete all old interpolation lines with same osm_id (update on place) and insert the new one(s) (they can be split up, if they have > 2 nodes)
-      delete from location_property_osmline where osm_id = NEW.osm_id;
-      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place,
-                         NEW.postcode, NEW.country_code, NEW.geometry);
-
-      -- for interpolations invalidate all nodes on the line
-      update placex p set indexed_status = 2
-        from planet_osm_ways w
-        where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
+      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
     END IF;
 
     RETURN NULL;

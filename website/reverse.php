@@ -76,6 +76,8 @@
 
 		$oReverseGeocode->setLatLon($_GET['lat'], $_GET['lon']);
 		$oReverseGeocode->setZoom(@$_GET['zoom']);
+        
+        $oReverseGeocode->setOsmTagList(@$_GET['osm_tag']);
 
 		$aLookup = $oReverseGeocode->lookup();
 		if (CONST_Debug) var_dump($aLookup);

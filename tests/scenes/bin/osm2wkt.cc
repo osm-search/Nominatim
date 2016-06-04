@@ -92,10 +92,6 @@ int main(int argc, char* argv[]) {
     reader2.close();
     export_handler.close();
     std::cerr << "Pass 2 done\n";
-
-
-    google::protobuf::ShutdownProtobufLibrary();
-
 }
 
 

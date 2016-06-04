@@ -579,8 +579,7 @@ $$
 LANGUAGE plpgsql;
 
 
-
--- find the parant road of an interpolation
+-- find the parent road of the cut road parts
 CREATE OR REPLACE FUNCTION get_interpolation_parent(wayid BIGINT, street TEXT, place TEXT,
                                                     partition INTEGER, centroid GEOMETRY, geom GEOMETRY)
 RETURNS BIGINT AS $$
@@ -647,11 +646,12 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION create_interpolation(wayid BIGINT, interpolationtype TEXT,
-                                                parent_id BIGINT, partition INTEGER,
-                                                country_code TEXT,  geometry_sector INTEGER,
-                                                defpostalcode TEXT, geom GEOMETRY) RETURNS INTEGER
-  AS $$
+
+CREATE OR REPLACE FUNCTION insert_osmline(wayid BIGINT, interpolationtype TEXT,
+                                                street TEXT, addr_place TEXT, 
+                                                defpostalcode TEXT, country_code TEXT,
+                                                geom GEOMETRY)
+RETURNS INTEGER AS $$
 DECLARE
 
   newpoints INTEGER;
@@ -661,26 +661,24 @@ DECLARE
   nextnode RECORD;
   startnumber INTEGER;
   endnumber INTEGER;
-  stepsize INTEGER;
-  orginalstartnumber INTEGER;
-  originalnumberrange INTEGER;
   housenum INTEGER;
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
   pointgeo GEOMETRY;
+  place_centroid GEOMETRY;
+  calculated_country_code VARCHAR(2);
+  partition INTEGER;
+  geometry_sector INTEGER;
 
 BEGIN
-  delete from placex where osm_type = 'W' and osm_id = wayid
-                                          and class = 'place' and type = 'address';
+  place_centroid := ST_PointOnSurface(geom);
+  calculated_country_code := lower(get_country_code(place_centroid));
+  partition := get_partition(calculated_country_code);
+  geometry_sector := geometry_sector(partition, place_centroid);
 
-  IF interpolationtype = 'odd' OR interpolationtype = 'even' THEN
-    stepsize := 2;
-  ELSEIF interpolationtype = 'all' THEN
-    stepsize := 1;
-  ELSEIF interpolationtype ~ '^\d+$' THEN
-    stepsize := interpolationtype::INTEGER;
-  ELSE
+  IF interpolationtype != 'odd' AND interpolationtype != 'even' AND interpolationtype!='all' THEN
+    -- other interpolation types than odd/even/all (e.g. numeric ones) are not supported
     RETURN 0;
   END IF;
 
@@ -692,92 +690,62 @@ BEGIN
 
   linegeo := geom;
   startnumber := NULL;
-  newpoints := 0;
 
   FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
-    -- If there is a place of a type other than place/house, use that because
-    -- it is guaranteed to be the original node. For place/house types use the
-    -- one with the smallest id because the original node was created first.
-    -- Ignore all nodes marked for deletion. (Might happen when the type changes.)
-    select * from placex where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
-                               and indexed_status < 100 and housenumber is not NULL
-                         order by (type = 'address'),place_id limit 1 INTO nextnode;
-    IF nextnode.place_id IS NOT NULL THEN
+    select * from place where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
+                               and housenumber is not NULL limit 1 INTO nextnode;
+    --RAISE NOTICE 'Nextnode.place_id: %s', nextnode.place_id;
+    IF nextnode.osm_id IS NOT NULL THEN
+      --RAISE NOTICE 'place_id is not null';
+      IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
+        -- Make sure that the point is actually on the line. That might
+        -- be a bit paranoid but ensures that the algorithm still works
+        -- should osm2pgsql attempt to repair geometries.
+        splitline := split_line_on_node(linegeo, nextnode.geometry);
+        sectiongeo := ST_GeometryN(splitline, 1);
+        linegeo := ST_GeometryN(splitline, 2);
+      ELSE
+        sectiongeo = linegeo;
+      END IF;
+      endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
 
-        IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
-          -- Make sure that the point is actually on the line. That might
-          -- be a bit paranoid but ensures that the algorithm still works
-          -- should osm2pgsql attempt to repair geometries.
-          splitline := split_line_on_node(linegeo, nextnode.geometry);
-          sectiongeo := ST_GeometryN(splitline, 1);
-          linegeo := ST_GeometryN(splitline, 2);
-        ELSE
-          sectiongeo = linegeo;
-        END IF;
-        endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
+      IF startnumber IS NOT NULL AND endnumber IS NOT NULL
+         AND startnumber != endnumber
+         AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
 
-        IF startnumber IS NOT NULL AND endnumber IS NOT NULL
-           AND @(startnumber - endnumber) < 1000 AND startnumber != endnumber
-           AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
-
-          IF (startnumber > endnumber) THEN
-            housenum := endnumber;
-            endnumber := startnumber;
-            startnumber := housenum;
-            sectiongeo := ST_Reverse(sectiongeo);
-          END IF;
-          orginalstartnumber := startnumber;
-          originalnumberrange := endnumber - startnumber;
-
-          startnumber := startnumber + stepsize;
-          -- correct for odd/even
-          IF (interpolationtype = 'odd' AND startnumber%2 = 0)
-             OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
-            startnumber := startnumber - 1;
-          END IF;
-          endnumber := endnumber - 1;
-
-          -- keep for compatibility with previous versions
-          delete from placex where osm_type = 'N' and osm_id = prevnode.osm_id
-                               and place_id != prevnode.place_id and class = 'place'
-                               and type = 'house';
-          FOR housenum IN startnumber..endnumber BY stepsize LOOP
-            pointgeo := ST_LineInterpolatePoint(sectiongeo, (housenum::float-orginalstartnumber::float)/originalnumberrange::float);
-            insert into placex (place_id, partition, osm_type, osm_id,
-                                class, type, admin_level, housenumber,
-                                postcode,
-                                country_code, parent_place_id, rank_address, rank_search,
-                                indexed_status, indexed_date, geometry_sector,
-                                calculated_country_code, centroid, geometry)
-              values (nextval('seq_place'), partition, 'W', wayid,
-                      'place', 'address', prevnode.admin_level, housenum,
-                      coalesce(prevnode.postcode, defpostalcode),
-                      prevnode.country_code, parent_id, 30, 30,
-                      0, now(), geometry_sector, country_code,
-                      pointgeo, pointgeo);
-            newpoints := newpoints + 1;
---RAISE WARNING 'interpolation number % % ',prevnode.place_id,housenum;
-          END LOOP;
+        IF (startnumber > endnumber) THEN
+          housenum := endnumber;
+          endnumber := startnumber;
+          startnumber := housenum;
+          sectiongeo := ST_Reverse(sectiongeo);
         END IF;
 
-        -- early break if we are out of line string,
-        -- might happen when a line string loops back on itself
-        IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
-            RETURN newpoints;
-        END IF;
+        insert into location_property_osmline
+          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL,
+                  startnumber, endnumber, interpolationtype,
+                  coalesce(street, prevnode.street, nextnode.street),
+                  coalesce(addr_place, prevnode.addr_place, nextnode.addr_place),
+                  coalesce(defpostalcode, prevnode.postcode, nextnode.postcode),
+                  calculated_country_code, geometry_sector, 2, now());
+      END IF;
 
-        startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
-        prevnode := nextnode;
+      -- early break if we are out of line string,
+      -- might happen when a line string loops back on itself
+      IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
+          RETURN 0;
+      END IF;
+
+      startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
+      prevnode := nextnode;
     END IF;
   END LOOP;
 
---RAISE WARNING 'interpolation points % ',newpoints;
-
-  RETURN newpoints;
+  RETURN 1;
 END;
 $$
 LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION placex_insert() RETURNS TRIGGER
   AS $$
@@ -789,10 +757,11 @@ DECLARE
   default_language VARCHAR(10);
   diameter FLOAT;
   classtable TEXT;
+  line RECORD;
 BEGIN
   --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
 
-  -- ignore interpolated addresses
+  -- ignore interpolated addresses, not necessary anymore, cause interpolated addresses are now in location_property_osmline
   IF NEW.class = 'place' and NEW.type = 'address' THEN
     RETURN NEW;
   END IF;
@@ -1065,6 +1034,8 @@ BEGIN
         IF NEW.rank_search >= 26 THEN
           -- roads may cause reparenting for >27 rank places
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
+          -- reparenting also for OSM Interpolation Lines (and for Tiger?)
+          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
         ELSEIF NEW.rank_search >= 16 THEN
           -- up to rank 16, street-less addresses may need reparenting
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
@@ -1093,7 +1064,36 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION placex_update() RETURNS 
+CREATE OR REPLACE FUNCTION osmline_update() RETURNS 
+TRIGGER
+  AS $$
+DECLARE
+  place_centroid GEOMETRY;
+BEGIN
+  -- deferred delete
+  IF OLD.indexed_status = 100 THEN
+    delete from location_property_osmline where place_id = OLD.place_id;
+    RETURN NULL;
+  END IF;
+
+  IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+    RETURN NEW;
+  END IF;
+
+  -- do the reparenting: (finally here, because ALL places in placex, that are needed for reparenting, need to be up to date)
+  -- (the osm interpolationline in location_property_osmline was marked for reparenting in placex_insert/placex_delete with index_status = 1 or 2 (1 inset, 2 delete)
+  -- => index.c: sets index_status back to 0
+  -- => triggers this function)
+  place_centroid := ST_PointOnSurface(NEW.linegeo);
+  -- marking descendants for reparenting is not needed, because there are actually no descendants for interpolation lines
+  NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
+                                                 NEW.partition, place_centroid, NEW.linegeo);
+  return NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION placex_update() RETURNS
 TRIGGER
   AS $$
 DECLARE
@@ -1137,7 +1137,6 @@ DECLARE
 
   result BOOLEAN;
 BEGIN
-
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
     --DEBUG: RAISE WARNING 'placex_update_delete % %',NEW.osm_type,NEW.osm_id;
@@ -1164,405 +1163,321 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- TODO: this test is now redundant?
-  IF OLD.indexed_status != 0 THEN
+  NEW.indexed_date = now();
 
-    NEW.indexed_date = now();
+  result := deleteSearchName(NEW.partition, NEW.place_id);
+  DELETE FROM place_addressline WHERE place_id = NEW.place_id;
+  result := deleteRoad(NEW.partition, NEW.place_id);
+  result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
+  UPDATE placex set linked_place_id = null, indexed_status = 2
+         where linked_place_id = NEW.place_id;
+  -- update not necessary for osmline, cause linked_place_id does not exist
 
-    result := deleteSearchName(NEW.partition, NEW.place_id);
-    DELETE FROM place_addressline WHERE place_id = NEW.place_id;
-    result := deleteRoad(NEW.partition, NEW.place_id);
-    result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
-    UPDATE placex set linked_place_id = null, indexed_status = 2
-           where linked_place_id = NEW.place_id;
+  IF NEW.linked_place_id is not null THEN
+    RETURN NEW;
+  END IF;
 
-    IF NEW.linked_place_id is not null THEN
-      RETURN NEW;
-    END IF;
+  -- Speed up searches - just use the centroid of the feature
+  -- cheaper but less acurate
+  place_centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.centroid := null;
 
-    -- Speed up searches - just use the centroid of the feature
-    -- cheaper but less acurate
-    place_centroid := ST_PointOnSurface(NEW.geometry);
-    NEW.centroid := null;
-
-    -- recalculate country and partition
-    IF NEW.rank_search = 4 THEN
-      -- for countries, believe the mapped country code,
-      -- so that we remain in the right partition if the boundaries
-      -- suddenly expand.
-      NEW.partition := get_partition(lower(NEW.country_code));
-      IF NEW.partition = 0 THEN
-        NEW.calculated_country_code := lower(get_country_code(place_centroid));
-        NEW.partition := get_partition(NEW.calculated_country_code);
-      ELSE
-        NEW.calculated_country_code := lower(NEW.country_code);
-      END IF;
-    ELSE
-      IF NEW.rank_search > 4 THEN
-        --NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
-        NEW.calculated_country_code := lower(get_country_code(place_centroid));
-      ELSE
-        NEW.calculated_country_code := NULL;
-      END IF;
+  -- recalculate country and partition
+  IF NEW.rank_search = 4 THEN
+    -- for countries, believe the mapped country code,
+    -- so that we remain in the right partition if the boundaries
+    -- suddenly expand.
+    NEW.partition := get_partition(lower(NEW.country_code));
+    IF NEW.partition = 0 THEN
+      NEW.calculated_country_code := lower(get_country_code(place_centroid));
       NEW.partition := get_partition(NEW.calculated_country_code);
+    ELSE
+      NEW.calculated_country_code := lower(NEW.country_code);
     END IF;
-    NEW.geometry_sector := geometry_sector(NEW.partition, place_centroid);
-
-    -- interpolations
-    IF NEW.class = 'place' AND NEW.type = 'houses'THEN
-      IF NEW.osm_type = 'W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
-        NEW.parent_place_id := get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
-                                                        NEW.partition, place_centroid, NEW.geometry);
-        i := create_interpolation(NEW.osm_id, NEW.housenumber, NEW.parent_place_id,
-                                  NEW.partition, NEW.calculated_country_code,
-                                  NEW.geometry_sector, NEW.postcode, NEW.geometry);
-      END IF;
-      RETURN NEW;
+  ELSE
+    IF NEW.rank_search > 4 THEN
+      --NEW.calculated_country_code := lower(get_country_code(NEW.geometry, NEW.country_code));
+      NEW.calculated_country_code := lower(get_country_code(place_centroid));
+    ELSE
+      NEW.calculated_country_code := NULL;
     END IF;
+    NEW.partition := get_partition(NEW.calculated_country_code);
+  END IF;
 
-    -- waterway ways are linked when they are part of a relation and have the same class/type
-    IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
-        FOR relation_members IN select members from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
-        LOOP
-            FOR i IN 1..array_upper(relation_members, 1) BY 2 LOOP
-                IF relation_members[i+1] in ('', 'main_stream', 'side_stream') AND substring(relation_members[i],1,1) = 'w' THEN
-                  --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.members[i];
-                  FOR linked_node_id IN SELECT place_id FROM placex
-                    WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
-                    and class = NEW.class and type = NEW.type
-                    and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
-                  LOOP
-                    UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
-                  END LOOP;
-                END IF;
-            END LOOP;
-        END LOOP;
-    END IF;
+  -- waterway ways are linked when they are part of a relation and have the same class/type
+  IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
+      FOR relation_members IN select members from planet_osm_rels r where r.id = NEW.osm_id and r.parts != array[]::bigint[]
+      LOOP
+          FOR i IN 1..array_upper(relation_members, 1) BY 2 LOOP
+              IF relation_members[i+1] in ('', 'main_stream', 'side_stream') AND substring(relation_members[i],1,1) = 'w' THEN
+                --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation.members[i];
+                FOR linked_node_id IN SELECT place_id FROM placex
+                  WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
+                  and class = NEW.class and type = NEW.type
+                  and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
+                LOOP
+                  UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
+                END LOOP;
+              END IF;
+          END LOOP;
+      END LOOP;
+  END IF;
 
-    -- Adding ourselves to the list simplifies address calculations later
-    INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
+  -- Adding ourselves to the list simplifies address calculations later
+  INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
 
-    -- What level are we searching from
-    search_maxrank := NEW.rank_search;
+  -- What level are we searching from
+  search_maxrank := NEW.rank_search;
 
-    -- Thought this wasn't needed but when we add new languages to the country_name table
-    -- we need to update the existing names
-    IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-      default_language := get_country_language_code(NEW.calculated_country_code);
-      IF default_language IS NOT NULL THEN
-        IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-          NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
-        ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-          NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
-        END IF;
+  -- Thought this wasn't needed but when we add new languages to the country_name table
+  -- we need to update the existing names
+  IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
+    default_language := get_country_language_code(NEW.calculated_country_code);
+    IF default_language IS NOT NULL THEN
+      IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
+        NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
+      ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
+        NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
       END IF;
     END IF;
+  END IF;
 
-    -- Initialise the name vector using our name
-    name_vector := make_keywords(NEW.name);
-    nameaddress_vector := '{}'::int[];
+  -- Initialise the name vector using our name
+  name_vector := make_keywords(NEW.name);
+  nameaddress_vector := '{}'::int[];
 
-    FOR i IN 1..28 LOOP
-      address_havelevel[i] := false;
-    END LOOP;
+  FOR i IN 1..28 LOOP
+    address_havelevel[i] := false;
+  END LOOP;
 
-    NEW.importance := null;
-    select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
-    IF NEW.importance IS NULL THEN
-      select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
-    END IF;
+  NEW.importance := null;
+  select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
+  IF NEW.importance IS NULL THEN
+    select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
+  END IF;
 
 --RAISE WARNING 'before low level% %', NEW.place_id, NEW.rank_search;
 
-    -- For low level elements we inherit from our parent road
-    IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
+  -- ---------------------------------------------------------------------------
+  -- For low level elements we inherit from our parent road
+  IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
 
 --RAISE WARNING 'finding street for %', NEW;
 
-      -- We won't get a better centroid, besides these places are too small to care
-      NEW.centroid := place_centroid;
+    -- We won't get a better centroid, besides these places are too small to care
+    NEW.centroid := place_centroid;
 
-      NEW.parent_place_id := null;
+    NEW.parent_place_id := null;
 
-      -- if we have a POI and there is no address information,
-      -- see if we can get it from a surrounding building
-      IF NEW.osm_type = 'N' AND NEW.street IS NULL AND NEW.addr_place IS NULL
-         AND NEW.housenumber IS NULL THEN
-        FOR location IN select * from placex where ST_Covers(geometry, place_centroid)
-              and (housenumber is not null or street is not null or addr_place is not null)
-              and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-              limit 1
-        LOOP
-          NEW.housenumber := location.housenumber;
-          NEW.street := location.street;
-          NEW.addr_place := location.addr_place;
-        END LOOP;
-      END IF;
+    -- if we have a POI and there is no address information,
+    -- see if we can get it from a surrounding building
+    IF NEW.osm_type = 'N' AND NEW.street IS NULL AND NEW.addr_place IS NULL
+       AND NEW.housenumber IS NULL THEN
+      FOR location IN select * from placex where ST_Covers(geometry, place_centroid)
+            and (housenumber is not null or street is not null or addr_place is not null)
+            and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+            limit 1
+      LOOP
+        NEW.housenumber := location.housenumber;
+        NEW.street := location.street;
+        NEW.addr_place := location.addr_place;
+      END LOOP;
+    END IF;
 
-      -- We have to find our parent road.
-      -- Copy data from linked items (points on ways, addr:street links, relations)
+    -- We have to find our parent road.
+    -- Copy data from linked items (points on ways, addr:street links, relations)
 
-      -- Is this object part of a relation?
-        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY[lower(NEW.osm_type)||NEW.osm_id]
-        LOOP
-          -- At the moment we only process one type of relation - associatedStreet
-          IF relation.tags @> ARRAY['associatedStreet'] THEN
-            FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-              IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
+    -- Is this object part of a relation?
+    FOR relation IN select * from planet_osm_rels where parts @> ARRAY[NEW.osm_id] and members @> ARRAY[lower(NEW.osm_type)||NEW.osm_id]
+    LOOP
+      -- At the moment we only process one type of relation - associatedStreet
+      IF relation.tags @> ARRAY['associatedStreet'] THEN
+        FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+          IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
 --RAISE WARNING 'node in relation %',relation;
-                SELECT place_id from placex where osm_type = 'W'
-                  and osm_id = substring(relation.members[i],2,200)::bigint
-                  and rank_search = 26 and name is not null INTO NEW.parent_place_id;
-              END IF;
-            END LOOP;
+            SELECT place_id from placex where osm_type = 'W'
+              and osm_id = substring(relation.members[i],2,200)::bigint
+              and rank_search = 26 and name is not null INTO NEW.parent_place_id;
           END IF;
         END LOOP;
-
-
-      -- Note that addr:street links can only be indexed once the street itself is indexed
-       IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
-        address_street_word_ids := get_name_ids(make_standard_name(NEW.street));
-        IF address_street_word_ids IS NOT NULL THEN
-          FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-              NEW.parent_place_id := location.place_id;
-          END LOOP;
-        END IF;
       END IF;
+    END LOOP;
 
-      IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
-        address_street_word_ids := get_name_ids(make_standard_name(NEW.addr_place));
-        IF address_street_word_ids IS NOT NULL THEN
-          FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
+
+    -- Note that addr:street links can only be indexed once the street itself is indexed
+    IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
+      address_street_word_ids := get_name_ids(make_standard_name(NEW.street));
+      IF address_street_word_ids IS NOT NULL THEN
+        FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
             NEW.parent_place_id := location.place_id;
-          END LOOP;
-        END IF;
-      END IF;
-
-      IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
-
---RAISE WARNING 'x1';
-        -- Is this node part of a way?
-        FOR location IN select p.* from placex p, planet_osm_ways w
-           where p.osm_type = 'W' and p.rank_search >= 26
-             and p.geometry && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes)
-        LOOP
---RAISE WARNING '%', location;
-          -- Way IS a road then we are on it - that must be our road
-          IF location.rank_search = 26 AND NEW.parent_place_id IS NULL THEN
---RAISE WARNING 'node in way that is a street %',location;
-            NEW.parent_place_id := location.place_id;
-          END IF;
-
-          -- If this way is a street interpolation line then it is probably as good as we are going to get
-          IF NEW.parent_place_id IS NULL AND location.class = 'place' and location.type='houses' THEN
-            NEW.parent_place_id := location.parent_place_id;
-          END IF;
-
-          -- Is the WAY part of a relation
-          IF NEW.parent_place_id IS NULL THEN
-              FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
-              LOOP
-                -- At the moment we only process one type of relation - associatedStreet
-                IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
-                  FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-                    IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
-    --RAISE WARNING 'node in way that is in a relation %',relation;
-                      SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
-                        and rank_search = 26 and name is not null INTO NEW.parent_place_id;
-                    END IF;
-                  END LOOP;
-                END IF;
-              END LOOP;
-          END IF;
-
-          -- If the way mentions a street or place address, try that for parenting.
-          IF NEW.parent_place_id IS NULL AND location.street IS NOT NULL THEN
-            address_street_word_ids := get_name_ids(make_standard_name(location.street));
-            IF address_street_word_ids IS NOT NULL THEN
-              FOR linkedplacex IN SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-                  NEW.parent_place_id := linkedplacex.place_id;
-              END LOOP;
-            END IF;
-          END IF;
-
-          IF NEW.parent_place_id IS NULL AND location.addr_place IS NOT NULL THEN
-            address_street_word_ids := get_name_ids(make_standard_name(location.addr_place));
-            IF address_street_word_ids IS NOT NULL THEN
-              FOR linkedplacex IN SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-                NEW.parent_place_id := linkedplacex.place_id;
-              END LOOP;
-            END IF;
-          END IF;
-
         END LOOP;
-
       END IF;
+    END IF;
 
---RAISE WARNING 'x4 %',NEW.parent_place_id;
-      -- Still nothing, just use the nearest road
-      IF NEW.parent_place_id IS NULL THEN
-        FOR location IN SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) LOOP
+    IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
+      address_street_word_ids := get_name_ids(make_standard_name(NEW.addr_place));
+      IF address_street_word_ids IS NOT NULL THEN
+        FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
           NEW.parent_place_id := location.place_id;
         END LOOP;
       END IF;
+    END IF;
+
+    -- Is this node part of an interpolation?
+    IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
+      FOR location IN
+        SELECT q.parent_place_id FROM location_property_osmline q, planet_osm_ways x
+         WHERE q.linegeo && NEW.geometry and x.id = q.osm_id and NEW.osm_id = any(x.nodes)
+         LIMIT 1
+      LOOP
+         NEW.parent_place_id := location.parent_place_id;
+      END LOOP;
+    END IF;
+
+    -- Is this node part of a way?
+    IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
+
+      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.rank_search, p.street, p.addr_place from placex p, planet_osm_ways w
+         where p.osm_type = 'W' and p.rank_search >= 26 and p.geometry && NEW.geometry and w.id = p.osm_id and NEW.osm_id = any(w.nodes) 
+      LOOP
+
+        -- Way IS a road then we are on it - that must be our road
+        IF location.rank_search < 28 AND NEW.parent_place_id IS NULL THEN
+--RAISE WARNING 'node in way that is a street %',location;
+          NEW.parent_place_id := location.place_id;
+        END IF;
+
+        -- If the way mentions a street or place address, try that for parenting.
+        IF NEW.parent_place_id IS NULL AND location.street IS NOT NULL THEN
+          address_street_word_ids := get_name_ids(make_standard_name(location.street));
+          IF address_street_word_ids IS NOT NULL THEN
+            FOR linkedplacex IN SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
+                NEW.parent_place_id := linkedplacex.place_id;
+            END LOOP;
+          END IF;
+        END IF;
+
+        IF NEW.parent_place_id IS NULL AND location.addr_place IS NOT NULL THEN
+          address_street_word_ids := get_name_ids(make_standard_name(location.addr_place));
+          IF address_street_word_ids IS NOT NULL THEN
+            FOR linkedplacex IN SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
+              NEW.parent_place_id := linkedplacex.place_id;
+            END LOOP;
+          END IF;
+        END IF;
+
+        -- Is the WAY part of a relation
+        IF NEW.parent_place_id IS NULL THEN
+            FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
+            LOOP
+              -- At the moment we only process one type of relation - associatedStreet
+              IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
+                FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+                  IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
+  --RAISE WARNING 'node in way that is in a relation %',relation;
+                    SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
+                      and rank_search = 26 and name is not null INTO NEW.parent_place_id;
+                  END IF;
+                END LOOP;
+              END IF;
+            END LOOP;
+        END IF;
+
+      END LOOP;
+
+    END IF;
+
+--RAISE WARNING 'x4 %',NEW.parent_place_id;
+    -- Still nothing, just use the nearest road
+    IF NEW.parent_place_id IS NULL THEN
+      FOR location IN SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) LOOP
+        NEW.parent_place_id := location.place_id;
+      END LOOP;
+    END IF;
 
 --return NEW;
 --RAISE WARNING 'x6 %',NEW.parent_place_id;
 
-      -- If we didn't find any road fallback to standard method
-      IF NEW.parent_place_id IS NOT NULL THEN
+    -- If we didn't find any road fallback to standard method
+    IF NEW.parent_place_id IS NOT NULL THEN
 
-        -- Get the details of the parent road
-        select * from search_name where place_id = NEW.parent_place_id INTO location;
-        NEW.calculated_country_code := location.country_code;
+      -- Get the details of the parent road
+      select * from search_name where place_id = NEW.parent_place_id INTO location;
+      NEW.calculated_country_code := location.country_code;
 
-        -- Merge the postcode into the parent's address if necessary XXXX
-        IF NEW.postcode IS NOT NULL THEN
-          isin_tokens := '{}'::int[];
-          address_street_word_id := getorcreate_word_id(make_standard_name(NEW.postcode));
-          IF address_street_word_id is not null
-             and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-             isin_tokens := isin_tokens || address_street_word_id;
-          END IF;
-          address_street_word_id := getorcreate_name_id(make_standard_name(NEW.postcode));
-          IF address_street_word_id is not null
-             and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-             isin_tokens := isin_tokens || address_street_word_id;
-          END IF;
-          IF isin_tokens != '{}'::int[] THEN
-             UPDATE search_name
-                SET nameaddress_vector = search_name.nameaddress_vector || isin_tokens
-              WHERE place_id = NEW.parent_place_id;
-          END IF;
+      -- Merge the postcode into the parent's address if necessary XXXX
+      IF NEW.postcode IS NOT NULL THEN
+        isin_tokens := '{}'::int[];
+        address_street_word_id := getorcreate_word_id(make_standard_name(NEW.postcode));
+        IF address_street_word_id is not null
+           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
+           isin_tokens := isin_tokens || address_street_word_id;
         END IF;
+        address_street_word_id := getorcreate_name_id(make_standard_name(NEW.postcode));
+        IF address_street_word_id is not null
+           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
+           isin_tokens := isin_tokens || address_street_word_id;
+        END IF;
+        IF isin_tokens != '{}'::int[] THEN
+           UPDATE search_name
+              SET nameaddress_vector = search_name.nameaddress_vector || isin_tokens
+            WHERE place_id = NEW.parent_place_id;
+        END IF;
+      END IF;
 
 --RAISE WARNING '%', NEW.name;
-        -- If there is no name it isn't searchable, don't bother to create a search record
-        IF NEW.name is NULL THEN
-          return NEW;
-        END IF;
-
-        -- Merge address from parent
-        nameaddress_vector := array_merge(nameaddress_vector, location.nameaddress_vector);
-        nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
-
-        -- Performance, it would be more acurate to do all the rest of the import
-        -- process but it takes too long
-        -- Just be happy with inheriting from parent road only
-
-        IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-          result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
-        END IF;
-
-        result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
-
+      -- If there is no name it isn't searchable, don't bother to create a search record
+      IF NEW.name is NULL THEN
         return NEW;
       END IF;
 
+      -- Merge address from parent
+      nameaddress_vector := array_merge(nameaddress_vector, location.nameaddress_vector);
+      nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
+
+      -- Performance, it would be more acurate to do all the rest of the import
+      -- process but it takes too long
+      -- Just be happy with inheriting from parent road only
+
+      IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
+        result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+      END IF;
+
+      result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
+
+      return NEW;
     END IF;
+
+  END IF;
 
 -- RAISE WARNING '  INDEXING Started:';
 -- RAISE WARNING '  INDEXING: %',NEW;
 
-    IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
+  -- ---------------------------------------------------------------------------
+  -- Full indexing
 
-      -- see if we have any special relation members
-      select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
+  IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
+
+    -- see if we have any special relation members
+    select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
 
 -- RAISE WARNING 'get_osm_rel_members, label';
-      IF relation_members IS NOT NULL THEN
-        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
+    IF relation_members IS NOT NULL THEN
+      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
 
-          FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
-
-            -- If we don't already have one use this as the centre point of the geometry
-            IF NEW.centroid IS NULL THEN
-              NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-            END IF;
-
-            -- merge in the label name, re-init word vector
-            IF NOT linkedPlacex.name IS NULL THEN
-              NEW.name := linkedPlacex.name || NEW.name;
-              name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
-            END IF;
-
-            -- merge in extra tags
-            NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
-
-            -- mark the linked place (excludes from search results)
-            UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-            -- keep a note of the node id in case we need it for wikipedia in a bit
-            linked_node_id := linkedPlacex.osm_id;
-          END LOOP;
-
-        END LOOP;
-
-        IF NEW.centroid IS NULL THEN
-
-          FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
-
-            FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-              and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
-
-              -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
-              -- But that can be fixed by explicitly setting the label in the data
-              IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
-                AND NEW.rank_address = linkedPlacex.rank_address THEN
-
-                -- If we don't already have one use this as the centre point of the geometry
-                IF NEW.centroid IS NULL THEN
-                  NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-                END IF;
-
-                -- merge in the name, re-init word vector
-                IF NOT linkedPlacex.name IS NULL THEN
-                  NEW.name := linkedPlacex.name || NEW.name;
-                  name_vector := make_keywords(NEW.name);
-                END IF;
-
-                -- merge in extra tags
-                NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
-
-                -- mark the linked place (excludes from search results)
-                UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-                -- keep a note of the node id in case we need it for wikipedia in a bit
-                linked_node_id := linkedPlacex.osm_id;
-              END IF;
-
-            END LOOP;
-
-          END LOOP;
-
-        END IF;
-      END IF;
-
-    END IF;
-
-    -- Name searches can be done for ways as well as relations
-    IF NEW.osm_type in ('W','R') AND NEW.rank_search < 26 AND NEW.rank_address > 0 THEN
-
-      -- not found one yet? how about doing a name search
-      IF NEW.centroid IS NULL AND (NEW.name->'name') is not null and make_standard_name(NEW.name->'name') != '' THEN
-
-        FOR linkedPlacex IN select placex.* from placex WHERE
-          make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
-          AND placex.rank_address = NEW.rank_address
-          AND placex.place_id != NEW.place_id
-          AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
-          AND st_covers(NEW.geometry, placex.geometry)
-        LOOP
+        FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
 
           -- If we don't already have one use this as the centre point of the geometry
           IF NEW.centroid IS NULL THEN
             NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
           END IF;
 
-          -- merge in the name, re-init word vector
-          NEW.name := linkedPlacex.name || NEW.name;
-          name_vector := make_keywords(NEW.name);
+          -- merge in the label name, re-init word vector
+          IF NOT linkedPlacex.name IS NULL THEN
+            NEW.name := linkedPlacex.name || NEW.name;
+            name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
+          END IF;
 
           -- merge in extra tags
           NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
@@ -1573,240 +1488,316 @@ BEGIN
           -- keep a note of the node id in case we need it for wikipedia in a bit
           linked_node_id := linkedPlacex.osm_id;
         END LOOP;
-      END IF;
 
-      IF NEW.centroid IS NOT NULL THEN
-        place_centroid := NEW.centroid;
-        -- Place might have had only a name tag before but has now received translations
-        -- from the linked place. Make sure a name tag for the default language exists in
-        -- this case. 
-        IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-          default_language := get_country_language_code(NEW.calculated_country_code);
-          IF default_language IS NOT NULL THEN
-            IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-              NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
-            ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-              NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
+      END LOOP;
+
+      IF NEW.centroid IS NULL THEN
+
+        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
+
+          FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
+            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
+
+            -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
+            -- But that can be fixed by explicitly setting the label in the data
+            IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
+              AND NEW.rank_address = linkedPlacex.rank_address THEN
+
+              -- If we don't already have one use this as the centre point of the geometry
+              IF NEW.centroid IS NULL THEN
+                NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+              END IF;
+
+              -- merge in the name, re-init word vector
+              IF NOT linkedPlacex.name IS NULL THEN
+                NEW.name := linkedPlacex.name || NEW.name;
+                name_vector := make_keywords(NEW.name);
+              END IF;
+
+              -- merge in extra tags
+              NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
+
+              -- mark the linked place (excludes from search results)
+              UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+              -- keep a note of the node id in case we need it for wikipedia in a bit
+              linked_node_id := linkedPlacex.osm_id;
             END IF;
+
+          END LOOP;
+
+        END LOOP;
+
+      END IF;
+    END IF;
+
+  END IF;
+
+  -- Name searches can be done for ways as well as relations
+  IF NEW.osm_type in ('W','R') AND NEW.rank_search < 26 AND NEW.rank_address > 0 THEN
+
+    -- not found one yet? how about doing a name search
+    IF NEW.centroid IS NULL AND (NEW.name->'name') is not null and make_standard_name(NEW.name->'name') != '' THEN
+
+      FOR linkedPlacex IN select placex.* from placex WHERE
+        make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
+        AND placex.rank_address = NEW.rank_address
+        AND placex.place_id != NEW.place_id
+        AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
+        AND st_covers(NEW.geometry, placex.geometry)
+      LOOP
+
+        -- If we don't already have one use this as the centre point of the geometry
+        IF NEW.centroid IS NULL THEN
+          NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
+        END IF;
+
+        -- merge in the name, re-init word vector
+        NEW.name := linkedPlacex.name || NEW.name;
+        name_vector := make_keywords(NEW.name);
+
+        -- merge in extra tags
+        NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
+
+        -- mark the linked place (excludes from search results)
+        UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
+
+        -- keep a note of the node id in case we need it for wikipedia in a bit
+        linked_node_id := linkedPlacex.osm_id;
+      END LOOP;
+    END IF;
+
+    IF NEW.centroid IS NOT NULL THEN
+      place_centroid := NEW.centroid;
+      -- Place might have had only a name tag before but has now received translations
+      -- from the linked place. Make sure a name tag for the default language exists in
+      -- this case. 
+      IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
+        default_language := get_country_language_code(NEW.calculated_country_code);
+        IF default_language IS NOT NULL THEN
+          IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
+            NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
+          ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
+            NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
           END IF;
         END IF;
       END IF;
-
-      -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
-      IF NEW.importance is null THEN
-        select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
-      END IF;
-      -- Still null? how about looking it up by the node id
-      IF NEW.importance IS NULL THEN
-        select language||':'||title,importance from wikipedia_article where osm_type = 'N'::char(1) and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
-      END IF;
-
     END IF;
 
-    -- make sure all names are in the word table
-    IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL THEN
-      perform create_country(NEW.name, lower(NEW.country_code));
+    -- Did we gain a wikipedia tag in the process? then we need to recalculate our importance
+    IF NEW.importance is null THEN
+      select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.calculated_country_code) INTO NEW.wikipedia,NEW.importance;
+    END IF;
+    -- Still null? how about looking it up by the node id
+    IF NEW.importance IS NULL THEN
+      select language||':'||title,importance from wikipedia_article where osm_type = 'N'::char(1) and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
     END IF;
 
-    NEW.parent_place_id = 0;
-    parent_place_id_rank = 0;
+  END IF;
 
-    -- convert isin to array of tokenids
-    isin_tokens := '{}'::int[];
-    IF NEW.isin IS NOT NULL THEN
-      isin := regexp_split_to_array(NEW.isin, E'[;,]');
-      IF array_upper(isin, 1) IS NOT NULL THEN
-        FOR i IN 1..array_upper(isin, 1) LOOP
-          address_street_word_id := get_name_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-            isin_tokens := isin_tokens || address_street_word_id;
-          END IF;
+  -- make sure all names are in the word table
+  IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL THEN
+    perform create_country(NEW.name, lower(NEW.country_code));
+  END IF;
 
-          -- merge word into address vector
-          address_street_word_id := get_word_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL THEN
-            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-          END IF;
-        END LOOP;
-      END IF;
-    END IF;
-    IF NEW.postcode IS NOT NULL THEN
-      isin := regexp_split_to_array(NEW.postcode, E'[;,]');
-      IF array_upper(isin, 1) IS NOT NULL THEN
-        FOR i IN 1..array_upper(isin, 1) LOOP
-          address_street_word_id := get_name_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-            isin_tokens := isin_tokens || address_street_word_id;
-          END IF;
+  NEW.parent_place_id = 0;
+  parent_place_id_rank = 0;
 
-          -- merge into address vector
-          address_street_word_id := get_word_id(make_standard_name(isin[i]));
-          IF address_street_word_id IS NOT NULL THEN
-            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-          END IF;
-        END LOOP;
-      END IF;
-    END IF;
 
-    -- %NOTIGERDATA% IF 0 THEN
-    -- for the USA we have an additional address table.  Merge in zip codes from there too
-    IF NEW.rank_search = 26 AND NEW.calculated_country_code = 'us' THEN
-      FOR location IN SELECT distinct postcode from location_property_tiger where parent_place_id = NEW.place_id LOOP
-        address_street_word_id := get_name_id(make_standard_name(location.postcode));
-        nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-        isin_tokens := isin_tokens || address_street_word_id;
+  -- convert isin to array of tokenids
+  isin_tokens := '{}'::int[];
+  IF NEW.isin IS NOT NULL THEN
+    isin := regexp_split_to_array(NEW.isin, E'[;,]');
+    IF array_upper(isin, 1) IS NOT NULL THEN
+      FOR i IN 1..array_upper(isin, 1) LOOP
+        address_street_word_id := get_name_id(make_standard_name(isin[i]));
+        IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+          isin_tokens := isin_tokens || address_street_word_id;
+        END IF;
 
-        -- also merge in the single word version
-        address_street_word_id := get_word_id(make_standard_name(location.postcode));
-        nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+        -- merge word into address vector
+        address_street_word_id := get_word_id(make_standard_name(isin[i]));
+        IF address_street_word_id IS NOT NULL THEN
+          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+        END IF;
       END LOOP;
     END IF;
-    -- %NOTIGERDATA% END IF;
+  END IF;
+  IF NEW.postcode IS NOT NULL THEN
+    isin := regexp_split_to_array(NEW.postcode, E'[;,]');
+    IF array_upper(isin, 1) IS NOT NULL THEN
+      FOR i IN 1..array_upper(isin, 1) LOOP
+        address_street_word_id := get_name_id(make_standard_name(isin[i]));
+        IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+          isin_tokens := isin_tokens || address_street_word_id;
+        END IF;
+
+        -- merge into address vector
+        address_street_word_id := get_word_id(make_standard_name(isin[i]));
+        IF address_street_word_id IS NOT NULL THEN
+          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+        END IF;
+      END LOOP;
+    END IF;
+  END IF;
+
+  -- %NOTIGERDATA% IF 0 THEN
+  -- for the USA we have an additional address table.  Merge in zip codes from there too
+  IF NEW.rank_search = 26 AND NEW.calculated_country_code = 'us' THEN
+    FOR location IN SELECT distinct postcode from location_property_tiger where parent_place_id = NEW.place_id LOOP
+      address_street_word_id := get_name_id(make_standard_name(location.postcode));
+      nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+      isin_tokens := isin_tokens || address_street_word_id;
+
+      -- also merge in the single word version
+      address_street_word_id := get_word_id(make_standard_name(location.postcode));
+      nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+    END LOOP;
+  END IF;
+  -- %NOTIGERDATA% END IF;
 
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
-    -- Process area matches
-    location_rank_search := 0;
-    location_distance := 0;
-    location_parent := NULL;
-    -- added ourself as address already
-    address_havelevel[NEW.rank_address] := true;
-    -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
-    FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
+  -- Process area matches
+  location_rank_search := 0;
+  location_distance := 0;
+  location_parent := NULL;
+  -- added ourself as address already
+  address_havelevel[NEW.rank_address] := true;
+  -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
+  FOR location IN SELECT * from getNearFeatures(NEW.partition, place_centroid, search_maxrank, isin_tokens) LOOP
 
 --RAISE WARNING '  AREA: %',location;
 
-      IF location.rank_address != location_rank_search THEN
-        location_rank_search := location.rank_address;
-        IF location.isguess THEN
-          location_distance := location.distance * 1.5;
-        ELSE
-          IF location.rank_address <= 12 THEN
-            -- for county and above, if we have an area consider that exact
-            -- (It would be nice to relax the constraint for places close to
-            --  the boundary but we'd need the exact geometry for that. Too
-            --  expensive.)
-            location_distance = 0;
-          ELSE
-            -- Below county level remain slightly fuzzy.
-            location_distance := location.distance * 0.5;
-          END IF;
-        END IF;
+    IF location.rank_address != location_rank_search THEN
+      location_rank_search := location.rank_address;
+      IF location.isguess THEN
+        location_distance := location.distance * 1.5;
       ELSE
-        CONTINUE WHEN location.keywords <@ location_keywords;
+        IF location.rank_address <= 12 THEN
+          -- for county and above, if we have an area consider that exact
+          -- (It would be nice to relax the constraint for places close to
+          --  the boundary but we'd need the exact geometry for that. Too
+          --  expensive.)
+          location_distance = 0;
+        ELSE
+          -- Below county level remain slightly fuzzy.
+          location_distance := location.distance * 0.5;
+        END IF;
+      END IF;
+    ELSE
+      CONTINUE WHEN location.keywords <@ location_keywords;
+    END IF;
+
+    IF location.distance < location_distance OR NOT location.isguess THEN
+      location_keywords := location.keywords;
+
+      location_isaddress := NOT address_havelevel[location.rank_address];
+      IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
+          location_isaddress := ST_Contains(location_parent,location.centroid);
       END IF;
 
-      IF location.distance < location_distance OR NOT location.isguess THEN
-        location_keywords := location.keywords;
+      -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
+      -- Add it to the list of search terms
+      IF location.rank_search > 4 THEN
+          nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+      END IF;
+      INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
-        location_isaddress := NOT address_havelevel[location.rank_address];
-        IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
-            location_isaddress := ST_Contains(location_parent,location.centroid);
+      IF location_isaddress THEN
+
+        address_havelevel[location.rank_address] := true;
+        IF NOT location.isguess THEN
+          SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
         END IF;
 
-        -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
-        -- Add it to the list of search terms
-        IF location.rank_search > 4 THEN
-            nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+        IF location.rank_address > parent_place_id_rank THEN
+          NEW.parent_place_id = location.place_id;
+          parent_place_id_rank = location.rank_address;
         END IF;
-        INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
-        IF location_isaddress THEN
-
-          address_havelevel[location.rank_address] := true;
-          IF NOT location.isguess THEN
-            SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
-          END IF;
-
-          IF location.rank_address > parent_place_id_rank THEN
-            NEW.parent_place_id = location.place_id;
-            parent_place_id_rank = location.rank_address;
-          END IF;
-
-        END IF;
+      END IF;
 
 --RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
+
+    END IF;
+
+  END LOOP;
+
+  -- try using the isin value to find parent places
+  IF array_upper(isin_tokens, 1) IS NOT NULL THEN
+    FOR i IN 1..array_upper(isin_tokens, 1) LOOP
+--RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
+      IF NOT ARRAY[isin_tokens[i]] <@ nameaddress_vector THEN
+
+        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+
+--RAISE WARNING '  ISIN: %',location;
+
+          IF location.rank_search > 4 THEN
+              nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+              INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+              address_havelevel[location.rank_address] := true;
+
+              IF location.rank_address > parent_place_id_rank THEN
+                NEW.parent_place_id = location.place_id;
+                parent_place_id_rank = location.rank_address;
+              END IF;
+          END IF;
+        END LOOP;
+
+      END IF;
+
+    END LOOP;
+  END IF;
+
+  -- for long ways we should add search terms for the entire length
+  IF st_length(NEW.geometry) > 0.05 THEN
+
+    location_rank_search := 0;
+    location_distance := 0;
+
+    FOR location IN SELECT * from getNearFeatures(NEW.partition, NEW.geometry, search_maxrank, isin_tokens) LOOP
+
+      IF location.rank_address != location_rank_search THEN
+        location_rank_search := location.rank_address;
+        location_distance := location.distance * 1.5;
+      END IF;
+
+      IF location.rank_search > 4 AND location.distance < location_distance THEN
+
+        -- Add it to the list of search terms
+        nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
+        INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, false, location.distance, location.rank_address); 
 
       END IF;
 
     END LOOP;
 
-    -- try using the isin value to find parent places
-    IF array_upper(isin_tokens, 1) IS NOT NULL THEN
-      FOR i IN 1..array_upper(isin_tokens, 1) LOOP
---RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
-        IF NOT ARRAY[isin_tokens[i]] <@ nameaddress_vector THEN
+  END IF;
 
-          FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
+  -- if we have a name add this to the name search table
+  IF NEW.name IS NOT NULL THEN
 
-  --RAISE WARNING '  ISIN: %',location;
-
-            IF location.rank_search > 4 THEN
-                nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-                INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
-                address_havelevel[location.rank_address] := true;
-
-                IF location.rank_address > parent_place_id_rank THEN
-                  NEW.parent_place_id = location.place_id;
-                  parent_place_id_rank = location.rank_address;
-                END IF;
-            END IF;
-          END LOOP;
-
-        END IF;
-
-      END LOOP;
+    IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
+      result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
     END IF;
 
-    -- for long ways we should add search terms for the entire length
-    IF st_length(NEW.geometry) > 0.05 THEN
-
-      location_rank_search := 0;
-      location_distance := 0;
-
-      FOR location IN SELECT * from getNearFeatures(NEW.partition, NEW.geometry, search_maxrank, isin_tokens) LOOP
-
-        IF location.rank_address != location_rank_search THEN
-          location_rank_search := location.rank_address;
-          location_distance := location.distance * 1.5;
-        END IF;
-
-        IF location.rank_search > 4 AND location.distance < location_distance THEN
-
-          -- Add it to the list of search terms
-          nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-          INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, false, location.distance, location.rank_address); 
-
-        END IF;
-
-      END LOOP;
-
+    IF NEW.rank_search between 26 and 27 and NEW.class = 'highway' THEN
+      result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.calculated_country_code, NEW.geometry);
     END IF;
 
-    -- if we have a name add this to the name search table
-    IF NEW.name IS NOT NULL THEN
-
-      IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-        result := add_location(NEW.place_id, NEW.calculated_country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
-      END IF;
-
-      IF NEW.rank_search between 26 and 27 and NEW.class = 'highway' THEN
-        result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.calculated_country_code, NEW.geometry);
-      END IF;
-
-      result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
-
-    END IF;
-
-    -- If we've not managed to pick up a better one - default centroid
-    IF NEW.centroid IS NULL THEN
-      NEW.centroid := place_centroid;
-    END IF;
+    result := insertSearchName(NEW.partition, NEW.place_id, NEW.calculated_country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
 
   END IF;
 
+  -- If we've not managed to pick up a better one - default centroid
+  IF NEW.centroid IS NULL THEN
+    NEW.centroid := place_centroid;
+  END IF;
+  
   RETURN NEW;
 END;
 $$
@@ -1841,6 +1832,8 @@ BEGIN
     --DEBUG: RAISE WARNING 'placex_delete:06 % %',OLD.osm_type,OLD.osm_id;
     update placex set indexed_status = 2 where parent_place_id = OLD.place_id and indexed_status = 0;
     --DEBUG: RAISE WARNING 'placex_delete:07 % %',OLD.osm_type,OLD.osm_id;
+    -- reparenting also for OSM Interpolation Lines (and for Tiger?)
+    update location_property_osmline set indexed_status = 2 where indexed_status = 0 and parent_place_id = OLD.place_id;
 
   END IF;
 
@@ -1898,8 +1891,8 @@ BEGIN
   UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type;
 
   -- interpolations are special
-  IF OLD.class = 'place' and OLD.type = 'houses' THEN
-    UPDATE placex set indexed_status = 100 where osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = 'place' and type = 'address';
+  IF OLD.osm_type='W' and OLD.class = 'place' and OLD.type = 'houses' THEN
+    UPDATE location_property_osmline set indexed_status = 100 where osm_id = OLD.osm_id; -- osm_id = wayid (=old.osm_id)
   END IF;
 
   RETURN OLD;
@@ -1914,6 +1907,7 @@ DECLARE
   i INTEGER;
   existing RECORD;
   existingplacex RECORD;
+  existingline RECORD;
   existinggeometry GEOMETRY;
   existingplace_id BIGINT;
   result BOOLEAN;
@@ -1922,12 +1916,7 @@ BEGIN
 
   --DEBUG: RAISE WARNING '-----------------------------------------------------------------------------------';
   --DEBUG: RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
-
-  IF FALSE and NEW.osm_type = 'R' THEN
-    select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
-    --DEBUG: RAISE WARNING '%', existingplacex;
-  END IF;
-
+  -- filter wrong tupels
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, 
       now(), ST_IsValidReason(NEW.geometry), null, NEW.geometry);
@@ -1935,202 +1924,268 @@ BEGIN
     RETURN null;
   END IF;
 
-  -- Patch in additional country names
-  IF NEW.admin_level = 2 AND NEW.type = 'administrative' AND NEW.country_code is not null THEN
-    select coalesce(country_name.name || NEW.name,NEW.name) from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
-  END IF;
-    
-  -- Have we already done this place?
-  select * from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existing;
+  -- decide, whether it is an osm interpolation line => insert_osmline, or else just insert into placex
+  IF NEW.class='place' and NEW.type='houses' and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
+    -- Have we already done this place?
+    select * from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existing;
 
-  -- Get the existing place_id
-  select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
+    -- Get the existing place_id
+    select * from location_property_osmline where osm_id = NEW.osm_id INTO existingline;
 
-  -- Handle a place changing type by removing the old data
-  -- My generated 'place' types are causing havok because they overlap with real keys
-  -- TODO: move them to their own special purpose key/class to avoid collisions
-  IF existing.osm_type IS NULL THEN
-    DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
-  END IF;
+    -- Handle a place changing type by removing the old data (this trigger is executed BEFORE INSERT of the NEW tupel)
+    IF existing.osm_type IS NULL THEN
+      DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
+    END IF;
 
-  --DEBUG: RAISE WARNING 'Existing: %',existing.osm_id;
-  --DEBUG: RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;
+    DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
+    DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
 
-  -- Log and discard 
-  IF existing.geometry is not null AND st_isvalid(existing.geometry) 
-    AND st_area(existing.geometry) > 0.02
-    AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
-    AND st_area(NEW.geometry) < st_area(existing.geometry)*0.5
+    -- update method for interpolation lines: delete all old interpolation lines with same osm_id (update on place) and insert the new one(s) (they can be split up, if they have > 2 nodes)
+    IF existingline.osm_id IS NOT NULL THEN
+      delete from location_property_osmline where osm_id = NEW.osm_id;
+    END IF;
+
+    -- for interpolations invalidate all nodes on the line
+    update placex p set indexed_status = 2
+      from planet_osm_ways w
+      where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
+    -- insert new line into location_property_osmline, use function insert_osmline
+
+
+    IF existing.osm_type IS NULL THEN
+      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
+      return NEW;
+    END IF;
+
+    IF coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
+       OR coalesce(existing.street, '') != coalesce(NEW.street, '')
+       OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
+       OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
+       OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
+       OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
+       OR existing.geometry::text != NEW.geometry::text
+       THEN
+
+      update place set 
+        name = NEW.name,
+        housenumber  = NEW.housenumber,
+        street = NEW.street,
+        addr_place = NEW.addr_place,
+        isin = NEW.isin,
+        postcode = NEW.postcode,
+        country_code = NEW.country_code,
+        extratags = NEW.extratags,
+        admin_level = NEW.admin_level,
+        geometry = NEW.geometry
+        where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+
+      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
+    END IF;
+
+    RETURN NULL;
+
+  ELSE -- insert to placex
+
+    -- Patch in additional country names
+    IF NEW.admin_level = 2 AND NEW.type = 'administrative' AND NEW.country_code is not null THEN
+      select coalesce(country_name.name || NEW.name,NEW.name) from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
+    END IF;
+      
+    -- Have we already done this place?
+    select * from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existing;
+
+    -- Get the existing place_id
+    select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
+
+    -- Handle a place changing type by removing the old data
+    -- My generated 'place' types are causing havok because they overlap with real keys
+    -- TODO: move them to their own special purpose key/class to avoid collisions
+    IF existing.osm_type IS NULL THEN
+      DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
+    END IF;
+
+    --DEBUG: RAISE WARNING 'Existing: %',existing.osm_id;
+    --DEBUG: RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;
+
+    -- Log and discard 
+    IF existing.geometry is not null AND st_isvalid(existing.geometry) 
+      AND st_area(existing.geometry) > 0.02
+      AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
+      AND st_area(NEW.geometry) < st_area(existing.geometry)*0.5
+      THEN
+      INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
+        'Area reduced from '||st_area(existing.geometry)||' to '||st_area(NEW.geometry), existing.geometry, NEW.geometry);
+      RETURN null;
+    END IF;
+
+    DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
+    DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
+
+    -- To paraphrase, if there isn't an existing item, OR if the admin level has changed
+    IF existingplacex.osm_type IS NULL OR
+      (coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15) AND existingplacex.class = 'boundary' AND existingplacex.type = 'administrative')
     THEN
-    INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
-      'Area reduced from '||st_area(existing.geometry)||' to '||st_area(NEW.geometry), existing.geometry, NEW.geometry);
-    RETURN null;
+
+      IF existingplacex.osm_type IS NOT NULL THEN
+        -- sanity check: ignore admin_level changes on places with too many active children
+        -- or we end up reindexing entire countries because somebody accidentally deleted admin_level
+        --LIMIT INDEXING: SELECT count(*) FROM (SELECT 'a' FROM placex , place_addressline where address_place_id = existingplacex.place_id and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub INTO i;
+        --LIMIT INDEXING: IF i > 100000 THEN
+        --LIMIT INDEXING:  RETURN null;
+        --LIMIT INDEXING: END IF;
+      END IF;
+
+      IF existing.osm_type IS NOT NULL THEN
+        -- pathological case caused by the triggerless copy into place during initial import
+        -- force delete even for large areas, it will be reinserted later
+        UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+        DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+      END IF;
+
+      -- No - process it as a new insertion (hopefully of low rank or it will be slow)
+      insert into placex (osm_type, osm_id, class, type, name, admin_level, housenumber, 
+        street, addr_place, isin, postcode, country_code, extratags, geometry)
+        values (NEW.osm_type
+          ,NEW.osm_id
+          ,NEW.class
+          ,NEW.type
+          ,NEW.name
+          ,NEW.admin_level
+          ,NEW.housenumber
+          ,NEW.street
+          ,NEW.addr_place
+          ,NEW.isin
+          ,NEW.postcode
+          ,NEW.country_code
+          ,NEW.extratags
+          ,NEW.geometry
+          );
+
+      --DEBUG: RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;
+
+      RETURN NEW;
+    END IF;
+
+    -- Various ways to do the update
+
+    -- Debug, what's changed?
+    IF FALSE THEN
+      IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '') THEN
+        RAISE WARNING 'update details, name: % % % %',NEW.osm_type,NEW.osm_id,existing.name::text,NEW.name::text;
+      END IF;
+      IF coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '') THEN
+        RAISE WARNING 'update details, housenumber: % % % %',NEW.osm_type,NEW.osm_id,existing.housenumber,NEW.housenumber;
+      END IF;
+      IF coalesce(existing.street, '') != coalesce(NEW.street, '') THEN
+        RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.street,NEW.street;
+      END IF;
+      IF coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '') THEN
+        RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.addr_place,NEW.addr_place;
+      END IF;
+      IF coalesce(existing.isin, '') != coalesce(NEW.isin, '') THEN
+        RAISE WARNING 'update details, isin: % % % %',NEW.osm_type,NEW.osm_id,existing.isin,NEW.isin;
+      END IF;
+      IF coalesce(existing.postcode, '') != coalesce(NEW.postcode, '') THEN
+        RAISE WARNING 'update details, postcode: % % % %',NEW.osm_type,NEW.osm_id,existing.postcode,NEW.postcode;
+      END IF;
+      IF coalesce(existing.country_code, '') != coalesce(NEW.country_code, '') THEN
+        RAISE WARNING 'update details, country_code: % % % %',NEW.osm_type,NEW.osm_id,existing.country_code,NEW.country_code;
+      END IF;
+    END IF;
+
+    -- Special case for polygon shape changes because they tend to be large and we can be a bit clever about how we handle them
+    IF existing.geometry::text != NEW.geometry::text 
+       AND ST_GeometryType(existing.geometry) in ('ST_Polygon','ST_MultiPolygon')
+       AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') 
+       THEN 
+
+      -- Get the version of the geometry actually used (in placex table)
+      select geometry from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type into existinggeometry;
+
+      -- Performance limit
+      IF st_area(NEW.geometry) < 0.000000001 AND st_area(existinggeometry) < 1 THEN
+
+        -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
+        update placex set indexed_status = 2 where indexed_status = 0 and 
+            (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
+            AND NOT (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
+            AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
+
+        update placex set indexed_status = 2 where indexed_status = 0 and 
+            (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
+            AND NOT (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
+            AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
+
+      END IF;
+
+    END IF;
+
+
+    IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
+       OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
+       OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
+       OR coalesce(existing.street, '') != coalesce(NEW.street, '')
+       OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
+       OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
+       OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
+       OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
+       OR coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
+       OR existing.geometry::text != NEW.geometry::text
+       THEN
+
+      update place set 
+        name = NEW.name,
+        housenumber  = NEW.housenumber,
+        street = NEW.street,
+        addr_place = NEW.addr_place,
+        isin = NEW.isin,
+        postcode = NEW.postcode,
+        country_code = NEW.country_code,
+        extratags = NEW.extratags,
+        admin_level = NEW.admin_level,
+        geometry = NEW.geometry
+        where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+        
+
+      IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
+          IF NEW.postcode IS NULL THEN
+              -- postcode was deleted, no longer retain in placex
+              DELETE FROM placex where place_id = existingplacex.place_id;
+              RETURN NULL;
+          END IF;
+
+          NEW.name := hstore('ref', NEW.postcode);
+      END IF;
+      
+      update placex set 
+        name = NEW.name,
+        housenumber = NEW.housenumber,
+        street = NEW.street,
+        addr_place = NEW.addr_place,
+        isin = NEW.isin,
+        postcode = NEW.postcode,
+        country_code = NEW.country_code,
+        parent_place_id = null,
+        extratags = NEW.extratags,
+        admin_level = CASE WHEN NEW.admin_level > 15 THEN 15 ELSE NEW.admin_level END,
+        indexed_status = 2,    
+        geometry = NEW.geometry
+        where place_id = existingplacex.place_id;
+        
+      -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
+      -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
+      IF NEW.osm_type='N' and NEW.class='place' and NEW.type='house' THEN
+          -- Is this node part of an interpolation line? search for it in location_property_osmline and mark the interpolation line for reparenting
+          update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);
+      END IF;
+
+    END IF;
+
+    -- Abort the add (we modified the existing place instead)
+    RETURN NULL;
   END IF;
 
-  DELETE from import_polygon_error where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
-  DELETE from import_polygon_delete where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
-
-  -- To paraphrase, if there isn't an existing item, OR if the admin level has changed
-  IF existingplacex.osm_type IS NULL OR
-    (coalesce(existingplacex.admin_level, 15) != coalesce(NEW.admin_level, 15) AND existingplacex.class = 'boundary' AND existingplacex.type = 'administrative')
-  THEN
-
-    IF existingplacex.osm_type IS NOT NULL THEN
-      -- sanity check: ignore admin_level changes on places with too many active children
-      -- or we end up reindexing entire countries because somebody accidentally deleted admin_level
-      --LIMIT INDEXING: SELECT count(*) FROM (SELECT 'a' FROM placex , place_addressline where address_place_id = existingplacex.place_id and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub INTO i;
-      --LIMIT INDEXING: IF i > 100000 THEN
-      --LIMIT INDEXING:  RETURN null;
-      --LIMIT INDEXING: END IF;
-    END IF;
-
-    IF existing.osm_type IS NOT NULL THEN
-      -- pathological case caused by the triggerless copy into place during initial import
-      -- force delete even for large areas, it will be reinserted later
-      UPDATE place set geometry = ST_SetSRID(ST_Point(0,0), 4326) where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-      DELETE from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-    END IF;
-
-    -- No - process it as a new insertion (hopefully of low rank or it will be slow)
-    insert into placex (osm_type, osm_id, class, type, name, admin_level, housenumber, 
-      street, addr_place, isin, postcode, country_code, extratags, geometry)
-      values (NEW.osm_type
-        ,NEW.osm_id
-        ,NEW.class
-        ,NEW.type
-        ,NEW.name
-        ,NEW.admin_level
-        ,NEW.housenumber
-        ,NEW.street
-        ,NEW.addr_place
-        ,NEW.isin
-        ,NEW.postcode
-        ,NEW.country_code
-        ,NEW.extratags
-        ,NEW.geometry
-        );
-
-    --DEBUG: RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;
-
-    RETURN NEW;
-  END IF;
-
-  -- Various ways to do the update
-
-  -- Debug, what's changed?
-  IF FALSE THEN
-    IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '') THEN
-      RAISE WARNING 'update details, name: % % % %',NEW.osm_type,NEW.osm_id,existing.name::text,NEW.name::text;
-    END IF;
-    IF coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '') THEN
-      RAISE WARNING 'update details, housenumber: % % % %',NEW.osm_type,NEW.osm_id,existing.housenumber,NEW.housenumber;
-    END IF;
-    IF coalesce(existing.street, '') != coalesce(NEW.street, '') THEN
-      RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.street,NEW.street;
-    END IF;
-    IF coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '') THEN
-      RAISE WARNING 'update details, street: % % % %',NEW.osm_type,NEW.osm_id,existing.addr_place,NEW.addr_place;
-    END IF;
-    IF coalesce(existing.isin, '') != coalesce(NEW.isin, '') THEN
-      RAISE WARNING 'update details, isin: % % % %',NEW.osm_type,NEW.osm_id,existing.isin,NEW.isin;
-    END IF;
-    IF coalesce(existing.postcode, '') != coalesce(NEW.postcode, '') THEN
-      RAISE WARNING 'update details, postcode: % % % %',NEW.osm_type,NEW.osm_id,existing.postcode,NEW.postcode;
-    END IF;
-    IF coalesce(existing.country_code, '') != coalesce(NEW.country_code, '') THEN
-      RAISE WARNING 'update details, country_code: % % % %',NEW.osm_type,NEW.osm_id,existing.country_code,NEW.country_code;
-    END IF;
-  END IF;
-
-  -- Special case for polygon shape changes because they tend to be large and we can be a bit clever about how we handle them
-  IF existing.geometry::text != NEW.geometry::text 
-     AND ST_GeometryType(existing.geometry) in ('ST_Polygon','ST_MultiPolygon')
-     AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') 
-     THEN 
-
-    -- Get the version of the geometry actually used (in placex table)
-    select geometry from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type into existinggeometry;
-
-    -- Performance limit
-    IF st_area(NEW.geometry) < 0.000000001 AND st_area(existinggeometry) < 1 THEN
-
-      -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
-      update placex set indexed_status = 2 where indexed_status = 0 and 
-          (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
-          AND NOT (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
-          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
-
-      update placex set indexed_status = 2 where indexed_status = 0 and 
-          (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
-          AND NOT (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
-          AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
-
-    END IF;
-
-  END IF;
-
-
-  IF coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
-     OR coalesce(existing.extratags::text, '') != coalesce(NEW.extratags::text, '')
-     OR coalesce(existing.housenumber, '') != coalesce(NEW.housenumber, '')
-     OR coalesce(existing.street, '') != coalesce(NEW.street, '')
-     OR coalesce(existing.addr_place, '') != coalesce(NEW.addr_place, '')
-     OR coalesce(existing.isin, '') != coalesce(NEW.isin, '')
-     OR coalesce(existing.postcode, '') != coalesce(NEW.postcode, '')
-     OR coalesce(existing.country_code, '') != coalesce(NEW.country_code, '')
-     OR coalesce(existing.admin_level, 15) != coalesce(NEW.admin_level, 15)
-     OR existing.geometry::text != NEW.geometry::text
-     THEN
-
-    update place set 
-      name = NEW.name,
-      housenumber  = NEW.housenumber,
-      street = NEW.street,
-      addr_place = NEW.addr_place,
-      isin = NEW.isin,
-      postcode = NEW.postcode,
-      country_code = NEW.country_code,
-      extratags = NEW.extratags,
-      admin_level = NEW.admin_level,
-      geometry = NEW.geometry
-      where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-
-    IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
-        IF NEW.postcode IS NULL THEN
-            -- postcode was deleted, no longer retain in placex
-            DELETE FROM placex where place_id = existingplacex.place_id;
-            RETURN NULL;
-        END IF;
-
-        NEW.name := hstore('ref', NEW.postcode);
-    END IF;
-
-    update placex set 
-      name = NEW.name,
-      housenumber = NEW.housenumber,
-      street = NEW.street,
-      addr_place = NEW.addr_place,
-      isin = NEW.isin,
-      postcode = NEW.postcode,
-      country_code = NEW.country_code,
-      parent_place_id = null,
-      extratags = NEW.extratags,
-      admin_level = CASE WHEN NEW.admin_level > 15 THEN 15 ELSE NEW.admin_level END,
-      indexed_status = 2,    
-      geometry = NEW.geometry
-      where place_id = existingplacex.place_id;
-
-  END IF;
-
-  -- for interpolations invalidate all nodes on the line
-  IF NEW.class = 'place' and NEW.type = 'houses' and NEW.osm_type = 'W' THEN
-    update placex p set indexed_status = 2 from planet_osm_ways w where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
-  END IF;
-
-  -- Abort the add (we modified the existing place instead)
-  RETURN NULL;
-
-END; 
+END;
 $$ LANGUAGE plpgsql;
 
 
@@ -2242,7 +2297,7 @@ create type addressline as (
 CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT, in_housenumber INTEGER) RETURNS setof addressline 
   AS $$
 DECLARE
-  for_place_id BIGINT;--parent_place_id
+  for_place_id BIGINT;
   result TEXT[];
   search TEXT[];
   found INTEGER;
@@ -2258,13 +2313,23 @@ DECLARE
   countryname HSTORE;
   hadcountry BOOLEAN;
 BEGIN
-    --first query tiger data
-  -- %NOTIGERDATA% IF 0 THEN
-  select parent_place_id,'us', 30, postcode, null, 'place', 'house' from location_property_tiger 
+  -- first query osmline (interpolation lines)
+  select parent_place_id, calculated_country_code, 30, postcode, null, 'place', 'house' from location_property_osmline 
     WHERE place_id = in_place_id AND in_housenumber>=startnumber AND in_housenumber <= endnumber
     INTO for_place_id,searchcountrycode, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   IF for_place_id IS NOT NULL THEN
     searchhousenumber = in_housenumber::text;
+  END IF;
+
+  --then query tiger data
+  -- %NOTIGERDATA% IF 0 THEN
+  IF for_place_id IS NULL THEN
+    select parent_place_id,'us', 30, postcode, null, 'place', 'house' from location_property_tiger 
+      WHERE place_id = in_place_id AND in_housenumber>=startnumber AND in_housenumber <= endnumber
+      INTO for_place_id,searchcountrycode, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
+    IF for_place_id IS NOT NULL THEN
+      searchhousenumber = in_housenumber::text;
+    END IF;
   END IF;
   -- %NOTIGERDATA% END IF;
 

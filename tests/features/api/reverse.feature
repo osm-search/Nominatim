@@ -18,7 +18,10 @@ Feature: Reverse geocoding
           | xml    | 4
         When looking up coordinates 53.9788769,13.0830313
         And results contain valid boundingboxes
-
+    
+    Scenario: Reverse geocoding for odd interpolated housenumber
+    
+    Scenario: Reverse geocoding for even interpolated housenumber
 
     @Tiger
     Scenario: TIGER house number

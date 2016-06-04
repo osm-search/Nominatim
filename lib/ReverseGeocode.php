@@ -121,6 +121,7 @@
 			$fMaxAreaDistance = 1;
 			$bIsInUnitedStates = false;
 			$bPlaceIsTiger = false;
+			$bPlaceIsLine = false;
 			while(!$iPlaceID && $fSearchDiam < $fMaxAreaDistance)
 			{
 				$fSearchDiam = $fSearchDiam * 2;
@@ -156,7 +157,78 @@
 				$iParentPlaceID = $aPlace['parent_place_id'];
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
 			}
+			// if a street or house was found, look in interpolation lines table
+			if ($iMaxRank_orig >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
+			{
+				// if a house was found, search the interpolation line that is at least as close as the house
+				$sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
+				$sSQL .= ' FROM location_property_osmline';
+				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
+				$sSQL .= ' and indexed_status = 0 ';
+				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
+				
+				if (CONST_Debug)
+				{
+					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
+					var_dump($sSQL);
 
+					$aAllHouses = $this->oDB->getAll($sSQL);
+					foreach($aAllHouses as $i)
+					{
+						echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
+					}
+				}
+				$aPlaceLine = $this->oDB->getRow($sSQL);
+				if (PEAR::IsError($aPlaceLine))
+				{
+					failInternalError("Could not determine closest housenumber on an osm interpolation line.", $sSQL, $aPlaceLine);
+				}
+				if ($aPlaceLine)
+				{
+					if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
+					if ($aPlace['rank_search'] == 30)
+					{
+						// if a house was already found in placex, we have to find out, 
+						// if the placex house or the interpolated house are closer to the searched point
+						// distance between point and placex house
+						$sSQL = 'SELECT ST_distance('.$sPointSQL.', house.geometry) as distance FROM placex as house WHERE house.place_id='.$iPlaceID;
+						$aDistancePlacex = $this->oDB->getRow($sSQL);
+						if (PEAR::IsError($aDistancePlacex))
+						{
+							failInternalError("Could not determine distance between searched point and placex house.", $sSQL, $aDistancePlacex);
+						}
+						$fDistancePlacex = $aDistancePlacex['distance'];
+						// distance between point and interpolated house (fraction on interpolation line)
+						$sSQL = 'SELECT ST_distance('.$sPointSQL.', ST_LineInterpolatePoint(linegeo, '.$aPlaceLine['fraction'].')) as distance';
+						$sSQL .= ' FROM location_property_osmline WHERE place_id = '.$aPlaceLine['place_id'];
+						$aDistanceInterpolation = $this->oDB->getRow($sSQL);
+						if (PEAR::IsError($aDistanceInterpolation))
+						{
+							failInternalError("Could not determine distance between searched point and interpolated house.", $sSQL, $aDistanceInterpolation);
+						}
+						$fDistanceInterpolation = $aDistanceInterpolation['distance'];
+						if ($fDistanceInterpolation < $fDistancePlacex)
+						{
+							// interpolation is closer to point than placex house
+							$bPlaceIsLine = true;
+							$aPlace = $aPlaceLine;
+							$iPlaceID = $aPlaceLine['place_id'];
+							$iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
+							$fFraction = $aPlaceLine['fraction'];
+						}
+						// else: nothing to do, take placex house from above
+					}
+					else
+					{
+						$bPlaceIsLine = true;
+						$aPlace = $aPlaceLine;
+						$iPlaceID = $aPlaceLine['place_id'];
+						$iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
+						$fFraction = $aPlaceLine['fraction'];
+					}
+				}
+			}
+			
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
 			if (CONST_Use_US_Tiger_Data && $bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
@@ -180,25 +252,25 @@
 				}
 
 				$aPlaceTiger = $this->oDB->getRow($sSQL);
-				if (PEAR::IsError($aPlace))
+				if (PEAR::IsError($aPlaceTiger))
 				{
 					failInternalError("Could not determine closest Tiger place.", $sSQL, $aPlaceTiger);
 				}
 				if ($aPlaceTiger)
 				{
-					if (CONST_Debug) var_dump('found Tiger place', $aPlaceTiger);
+					if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
 					$bPlaceIsTiger = true;
 					$aPlace = $aPlaceTiger;
 					$iPlaceID = $aPlaceTiger['place_id'];
 					$iParentPlaceID = $aPlaceTiger['parent_place_id']; // the street
-					$iFraction = $aPlaceTiger['fraction'];
+					$fFraction = $aPlaceTiger['fraction'];
 				}
 			}
 
 			// The point we found might be too small - use the address to find what it is a child of
 			if ($iPlaceID && $iMaxRank < 28)
 			{
-				if ($aPlace['rank_search'] > 28 && $iParentPlaceID && !$bPlaceIsTiger)
+				if (($aPlace['rank_search'] > 28 || $bPlaceIsTiger || $bPlaceIsLine) && $iParentPlaceID)
 				{
 					$iPlaceID = $iParentPlaceID;
 				}
@@ -217,10 +289,9 @@
 					$iPlaceID = $aPlace['place_id'];
 				}
 			}
-
 			return array('place_id' => $iPlaceID,
-						'type' => $bPlaceIsTiger ? 'tiger' : 'osm',
-						'fraction' => $bPlaceIsTiger ? $iFraction : -1);
+						'type' => $bPlaceIsTiger ? 'tiger' : $bPlaceIsLine ? 'interpolation' : 'osm',
+						'fraction' => ($bPlaceIsTiger || $bPlaceIsLine) ? $fFraction : -1);
 		}
 		
 	}

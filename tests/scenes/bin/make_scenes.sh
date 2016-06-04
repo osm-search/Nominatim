@@ -1,4 +1,4 @@
-#/bin/bash -e
+#!/bin/bash -e
 #
 # Regenerates wkts for scenarios.
 #
@@ -11,10 +11,10 @@ if [ ! -d "$datadir" ]; then
 fi
 
 echo "Using datadir $datadir"
-pushd $datadir
+cd $datadir
 
 # remove old wkts
-rm $datadir/*.wkt
+rm -f $datadir/*.wkt
 
 # create wkts from SQL scripts
 for fl in *.sql; do
@@ -27,5 +27,3 @@ for fl in *.osm; do
     echo "Processing $fl.."
     ../bin/osm2wkt $fl
 done
-
-popd

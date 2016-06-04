@@ -827,6 +827,7 @@
 				$sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/','\1illinois\2', $sQuery);
 				$sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/','\1alabama\2', $sQuery);
 				$sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/','\1louisiana\2', $sQuery);
+				$sQuery = preg_replace('/(^|,)\s*mi\s*(,|$)/','\1michigan\2', $sQuery);
 			}
 
 			// View Box SQL

@@ -1,6 +1,8 @@
 MODULES = nominatim
-VPATH = $(MODSRCDIR)
+PG_CPPFLAGS = -I$(MODSRCDIR)
 include $(PGXS)
+
+VPATH = $(MODSRCDIR)
 
 all:
 	chmod 755 nominatim.so

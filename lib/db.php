@@ -4,7 +4,7 @@
 	function &getDB($bNew = false, $bPersistent = false)
 	{
 		// Get the database object
-		$oDB =& DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), $bPersistent);
+		$oDB = DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), $bPersistent);
 		if (PEAR::IsError($oDB))
 		{
 			var_dump(CONST_Database_DSN);

@@ -97,7 +97,7 @@
 	{
 		echo "Create DB\n";
 		$bDidSomething = true;
-		$oDB =& DB::connect(CONST_Database_DSN, false);
+		$oDB = DB::connect(CONST_Database_DSN, false);
 		if (!PEAR::isError($oDB))
 		{
 			fail('database already exists ('.CONST_Database_DSN.')');

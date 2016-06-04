@@ -31,7 +31,7 @@
         if (isset($aCMDResult['bounded'])) $aCMDResult['bounded'] = 'true';
         if (isset($aCMDResult['nodedupe'])) $aCMDResult['dedupe'] = 'false';
 
-        $oGeocode =& new Geocode($oDB);
+        $oGeocode = new Geocode($oDB);
         if (isset($aCMDResult['accept-language']) && $aCMDResult['accept-language'])
             $oGeocode->setLanguagePreference(getPreferredLanguages($aCMDResult['accept-language']));
         else

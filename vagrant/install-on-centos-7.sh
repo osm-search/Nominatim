@@ -52,6 +52,10 @@
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
+# Make sure that system servers can read from the home directory:
+
+    chmod a+x $USERHOME
+
 # Setting up PostgreSQL
 # ---------------------
 #
@@ -90,6 +94,7 @@ sudo cat > /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
+  Require all granted
 </Directory>
 
 Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/Nominatim/build/website

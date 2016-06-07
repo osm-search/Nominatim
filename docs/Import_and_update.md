@@ -4,7 +4,7 @@ Importing a new database
 The following instructions explain how to create a Nominatim database
 from an OSM planet file and how to keep the database up to date. It
 is assumed that you have already sucessfully installed the Nominatim
-software itself, if not return to the [prerequisites page](Prerequisites.md).
+software itself, if not return to the [installation page](Installation.md).
 
 Configuration setup in settings/local.php
 -----------------------------------------
@@ -57,12 +57,8 @@ Download the data to import and load the data with the following command:
 The --osm2pgsql-cache parameter is optional but strongly recommended for
 planet imports. It sets the node cache size for the osm2pgsql import part
 (see -C parameter in osm2pgsql help). 28GB are recommended for a full planet
-imports, for excerpts you can use less.
-Adapt to your available RAM to avoid swapping.
-
-The import will take as little as an hour for a small country extract
-and as much as 10 days for a full-scale planet import on less powerful
-hardware.
+imports, for excerpts you can use less. Adapt to your available RAM to
+avoid swapping, never give more than 2/3 of RAM to osm2pgsql.
 
 
 Loading Additional Datasets
@@ -74,4 +70,106 @@ The following commands will create additional entries for countries and POI sear
     psql -d nominatim -f data/specialphrases_countries.sql
     ./utils/specialphrases.php --wiki-import > data/specialphrases.sql
     psql -d nominatim -f data/specialphrases.sql
+
+
+Installing Tiger housenumber data for the US
+============================================
+
+Nominatim is able to use the official TIGER address set to complement the
+OSM housenumber data in the US. You can add TIGER data to your own Nominatim
+instance by following these steps:
+
+  1. Install the GDAL library and python bindings
+
+       Ubuntu: apt-get install python-gdal
+       CentOS: yum install gdal-python
+
+  2. Get the TIGER 2015 data. You will need the EDGES files
+     (3,234 zip files, 11GB total).
+
+       wget -r ftp://mirror1.shellbot.com/census/geo/tiger/TIGER2015/EDGES/
+       (1gb/s preferred mirror) MIRROR HOSTED BY SHELLBOT, LTD.
+
+       OR:
+
+       wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2015/EDGES/
+       (500kb/s original source) HOSTED BY THE US CENSUS BUREAU
+
+  3. Convert the data into SQL statements (stored in data/tiger): 
+
+       ./utils/imports.php --parse-tiger <tiger edge data directory>
+
+  4. Import the data into your Nominatim database: 
+
+       ./utils/setup.php --import-tiger-data
+
+Be warned that the import can take a very long time, especially if you
+import all of the US.
+
+
+Updates
+=======
+
+There are many different possibilities to update your Nominatim database.
+The following section describes how to keep it up-to-date with osmosis.
+For a list of other methods see the output of ./utils/update.php --help.
+
+Installing the newest version of osmosis
+----------------------------------------
+
+The version of osmosis that comes with your distribution should be sufficient
+in most cases.
+
+If you want to install it by hand, get the latest version from the
+[Osmosis website](http://wiki.openstreetmap.org/wiki/Osmosis). Then
+tell Nominatim to use this version by adding the following line to
+your `settings/local.php`:
+
+    @define('CONST_Osmosis_Binary', '/usr/local/bin/osmosis');
+
+Setting up the update process
+-----------------------------
+
+Next the update needs to be initialised. By default Nominatim is configured
+to update using the global minutely diffs.
+
+If you want a different update source you will need to add some settings
+to `settings/local.php`. For example, to use the daily country extracts
+diffs for Ireland from geofabrik add the following:
+
+    // base URL of the replication service
+    @define('CONST_Replication_Url', 'http://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
+    // Process each update separately, osmosis cannot merge multiple updates
+    @define('CONST_Replication_MaxInterval', '40000');
+    // How often upstream publishes diffs
+    @define('CONST_Replication_Update_Interval', '86400');
+    // How long to sleep if no update found yet
+    @define('CONST_Replication_Recheck_Interval', '900');
+
+
+Delete existing 'settings/configuration.txt' then run the following command
+to create the osmosis configuration files:
+
+    ./utils/setup.php --osmosis-init
+
+Enabling hierarchical updates
+-----------------------------
+
+When a place is updated in the database, all places that contain this place
+in their address need to be updated as well. These hierarchical updates are
+disabled by default because they slow down the initial import.
+Enable them with the following command:
+
+    ./utils/setup.php --create-functions --enable-diff-updates
+
+Updating Nominatim
+------------------
+
+The following command will keep your database constantly up to date:
+
+    ./utils/update.php --import-osmosis-all --no-npi
+
+If you have imported multiple country extracts and want to keep them
+up-to-date, have a look at the script in
+(issue #60)[https://github.com/twain47/Nominatim/issues/60].
 

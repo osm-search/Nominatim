@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # *Note:* these installation instructions are also available in executable
-#         form for use with vagrant in the vagrant/ directory.
+#         form for use with vagrant under vagrant/install-on-centos-7.sh.
 #
 # Installing the Required Software
 # ================================
@@ -67,8 +67,8 @@
 
 #
 # Next tune the postgresql configuration, which is located in 
-# `/var/lib/pgsql/data/postgresql.conf`. See
-# [the wiki](http://wiki.openstreetmap.org/wiki/Nominatim/Installation#PostgreSQL_Tuning_and_Configuration) for the parameters to change.
+# `/var/lib/pgsql/data/postgresql.conf`. See section *Postgres Tuning* in
+# [the installation page](Installation.md) for the parameters to change.
 #
 # Now start the postgresql service after updating this config file.
 

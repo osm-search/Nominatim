@@ -18,6 +18,7 @@ ADD_CUSTOM_TARGET( md_install_${df} ALL
 endforeach()
 
 set (GENERALDOCFILES
+     Installation.md
      Import_and_update.md
     )
 

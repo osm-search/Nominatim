@@ -2,6 +2,7 @@
 
 set (INSTALLDOCFILES
      install-on-centos-7
+     install-on-ubuntu-16
     )
 
 foreach (df ${INSTALLDOCFILES})

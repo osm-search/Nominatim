@@ -37,7 +37,6 @@
 		array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
 		array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
 		array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
-		array('create-website', '', 0, 1, 1, 1, 'realpath', 'Create symlinks to setup web directory'),
 		array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
 	);
 	getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
@@ -643,37 +642,6 @@
 		                                CONST_Tablespace_Aux_Index, $sTemplate);
 
 		pgsqlRunScript($sTemplate);
-	}
-
-	if (isset($aCMDResult['create-website']))
-	{
-		$bDidSomething = true;
-		$sTargetDir = $aCMDResult['create-website'];
-		if (!is_dir($sTargetDir))
-		{
-			echo "You must create the website directory before calling this function.\n";
-			fail("Target directory does not exist.");
-		}
-
-		@symlink(CONST_InstallPath.'/website/details.php', $sTargetDir.'/details.php');
-		@symlink(CONST_InstallPath.'/website/reverse.php', $sTargetDir.'/reverse.php');
-		@symlink(CONST_InstallPath.'/website/search.php', $sTargetDir.'/search.php');
-		@symlink(CONST_InstallPath.'/website/search.php', $sTargetDir.'/index.php');
-		@symlink(CONST_InstallPath.'/website/lookup.php', $sTargetDir.'/lookup.php');
-		@symlink(CONST_InstallPath.'/website/deletable.php', $sTargetDir.'/deletable.php');
-		@symlink(CONST_InstallPath.'/website/polygons.php', $sTargetDir.'/polygons.php');
-		@symlink(CONST_InstallPath.'/website/status.php', $sTargetDir.'/status.php');
-		@symlink(CONST_BasePath.'/website/images', $sTargetDir.'/images');
-		@symlink(CONST_BasePath.'/website/js', $sTargetDir.'/js');
-		@symlink(CONST_BasePath.'/website/css', $sTargetDir.'/css');
-		echo "Symlinks created\n";
-
-		$sTestFile = @file_get_contents(CONST_Website_BaseURL.'js/nominatim-ui.js');
-		if (!$sTestFile)
-		{
-			echo "\nWARNING: Unable to access the website at ".CONST_Website_BaseURL."\n";
-			echo "You may want to update settings/local.php with @define('CONST_Website_BaseURL', 'http://[HOST]/[PATH]/');\n";
-		}
 	}
 
 	if ($aCMDResult['drop'])

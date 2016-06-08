@@ -189,68 +189,7 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 		);
 	}
 
-	}
 
-
-
-
-	public function test_geometryText2Points()
-	{
-		$fRadius = 1;
-
-		// invalid value
-		$this->assertEquals(
-			NULL,
-			geometryText2Points('', $fRadius)
-		);
-
-
-		// POINT
-		$aPoints = geometryText2Points('POINT(10 20)', $fRadius);
-		$this->assertEquals(
-			101,
-			count($aPoints)
-		);
-
-		$this->assertEquals(
-
-  		array(
-  			['', 10, 21],
-  			['', 10.062790519529, 20.998026728428],
-				['', 10.125333233564, 20.992114701314]
-			),
-			array_splice($aPoints, 0,3)
-		);
-
-		// POLYGON
-		$this->assertEquals(
-			array(
-				['30 10', '30', '10'],
-				['40 40', '40', '40'],
-				['20 40', '20', '40'],
-				['10 20', '10', '20'],
-				['30 10', '30', '10']
-			),
-			geometryText2Points('POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))', $fRadius)
-		);
-
-		// MULTIPOLYGON
-		// only the first polygon is used
-		$this->assertEquals(
-			array(
-				['30 20', '30', '20'],
-				['45 40', '45', '40'],
-				['10 40', '10', '40'],
-				['30 20', '30', '20'],
-
-				// ['15 5' , '15', '5' ],
-				// ['45 10', '45', '10'],
-				// ['10 20', '10', '20'],
-				// ['5 10' , '5' , '10'],
-				// ['15 5' , '15', '5' ]
-			),
-			geometryText2Points('MULTIPOLYGON(((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', $fRadius)
-		);
 
 	// you might say we're creating a circle
 	public function test_createPointsAroundCenter()

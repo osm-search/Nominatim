@@ -45,10 +45,11 @@ Nominatim can use postcodes from an external source to improve searches that inv
     wget http://www.nominatim.org/data/gb_postcode_data.sql.gz
 
 
-Initial Import of the Data
+Initial import of the data
 --------------------------
 
-**Important:** first try the import with a small excerpt, for example from Geofabrik.
+**Important:** first try the import with a small excerpt, for example from
+[Geofabrik](http://download.geofabrik.de).
 
 Download the data to import and load the data with the following command:
 
@@ -57,19 +58,19 @@ Download the data to import and load the data with the following command:
 The --osm2pgsql-cache parameter is optional but strongly recommended for
 planet imports. It sets the node cache size for the osm2pgsql import part
 (see -C parameter in osm2pgsql help). 28GB are recommended for a full planet
-imports, for excerpts you can use less. Adapt to your available RAM to
+import, for excerpts you can use less. Adapt to your available RAM to
 avoid swapping, never give more than 2/3 of RAM to osm2pgsql.
 
 
-Loading Additional Datasets
+Loading additional datasets
 ---------------------------
 
 The following commands will create additional entries for countries and POI searches:
 
-    ./utils/specialphrases.php --countries > data/specialphrases_countries.sql
-    psql -d nominatim -f data/specialphrases_countries.sql
-    ./utils/specialphrases.php --wiki-import > data/specialphrases.sql
-    psql -d nominatim -f data/specialphrases.sql
+    ./utils/specialphrases.php --countries > specialphrases_countries.sql
+    psql -d nominatim -f specialphrases_countries.sql
+    ./utils/specialphrases.php --wiki-import > specialphrases.sql
+    psql -d nominatim -f specialphrases.sql
 
 
 Installing Tiger housenumber data for the US
@@ -81,27 +82,25 @@ instance by following these steps:
 
   1. Install the GDAL library and python bindings
 
-       Ubuntu: apt-get install python-gdal
-       CentOS: yum install gdal-python
+       * Ubuntu: `sudo apt-get install python-gdal`
+       * CentOS: `sudo yum install gdal-python`
 
   2. Get the TIGER 2015 data. You will need the EDGES files
-     (3,234 zip files, 11GB total).
+     (3,234 zip files, 11GB total). Choose one of the two sources:
 
-       wget -r ftp://mirror1.shellbot.com/census/geo/tiger/TIGER2015/EDGES/
-       (1gb/s preferred mirror) MIRROR HOSTED BY SHELLBOT, LTD.
+         wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2015/EDGES/
+         wget -r ftp://mirror1.shellbot.com/census/geo/tiger/TIGER2015/EDGES/
 
-       OR:
-
-       wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2015/EDGES/
-       (500kb/s original source) HOSTED BY THE US CENSUS BUREAU
+     The first one is the original source, the second a considerably faster
+     mirror.
 
   3. Convert the data into SQL statements (stored in data/tiger): 
 
-       ./utils/imports.php --parse-tiger <tiger edge data directory>
+         ./utils/imports.php --parse-tiger <tiger edge data directory>
 
   4. Import the data into your Nominatim database: 
 
-       ./utils/setup.php --import-tiger-data
+         ./utils/setup.php --import-tiger-data
 
 Be warned that the import can take a very long time, especially if you
 import all of the US.
@@ -112,7 +111,7 @@ Updates
 
 There are many different possibilities to update your Nominatim database.
 The following section describes how to keep it up-to-date with osmosis.
-For a list of other methods see the output of ./utils/update.php --help.
+For a list of other methods see the output of `./utils/update.php --help`.
 
 Installing the newest version of osmosis
 ----------------------------------------
@@ -147,7 +146,7 @@ diffs for Ireland from geofabrik add the following:
     @define('CONST_Replication_Recheck_Interval', '900');
 
 
-Delete existing 'settings/configuration.txt' then run the following command
+Delete any existing `settings/configuration.txt`, then run the following command
 to create the osmosis configuration files:
 
     ./utils/setup.php --osmosis-init

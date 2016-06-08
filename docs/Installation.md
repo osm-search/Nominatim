@@ -1,4 +1,4 @@
-Nominatim Installation
+Nominatim installation
 ======================
 
 This page contains generic installation instructions for Nominatim and its
@@ -60,10 +60,10 @@ On a 6-core machine with 32GB RAM and SSDs the import of a full planet takes
 a bit more than 2 days. Without SSDs 7-8 days are more realistic.
 
 
-Setup of the Server
+Setup of the server
 -------------------
 
-### PostgreSQL Tuning
+### PostgreSQL tuning
 
 You might want to tune your PostgreSQL installation so that the later steps
 make best use of your hardware. You should tune the following parameters in

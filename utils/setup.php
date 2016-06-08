@@ -123,11 +123,8 @@
 		// For extratags and namedetails the hstore_to_json converter is
 		// needed which is only available from Postgresql 9.3+. For older
 		// versions add a dummy function that returns nothing.
-		$iNumFunc = $oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'");
-		if (PEAR::isError($iNumFunc))
-		{
-			fail("Cannot query stored procedures.", $iNumFunc);
-		}
+		$iNumFunc = chksql($oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'"));
+
 		if ($iNumFunc == 0)
 		{
 			pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
@@ -204,11 +201,10 @@
 		passthruCheckReturn($osm2pgsql);
 
 		$oDB =& getDB();
-		$x = $oDB->getRow('select * from place limit 1');
-		if (PEAR::isError($x)) {
-			fail($x->getMessage());
+		if (!chksql($oDB->getRow('select * from place limit 1')))
+		{
+			fail('No Data');
 		}
-		if (!$x) fail('No Data');
 	}
 
 	if ($aCMDResult['create-functions'] || $aCMDResult['all'])
@@ -249,14 +245,6 @@
 	{
 		echo "Partition Tables\n";
 		$bDidSomething = true;
-		$oDB =& getDB();
-		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
 		$sTemplate = replace_tablespace('{ts:address-data}',
@@ -271,18 +259,8 @@
 		                                CONST_Tablespace_Aux_Data, $sTemplate);
 		$sTemplate = replace_tablespace('{ts:aux-index}',
 		                                CONST_Tablespace_Aux_Index, $sTemplate);
-		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-		foreach($aMatches as $aMatch)
-		{
-			$sResult = '';
-			foreach($aPartitions as $sPartitionName)
-			{
-				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-			}
-			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-		}
 
-		pgsqlRunScript($sTemplate);
+		pgsqlRunPartitionScript($sTemplate);
 	}
 
 
@@ -290,28 +268,10 @@
 	{
 		echo "Partition Functions\n";
 		$bDidSomething = true;
-		$oDB =& getDB();
-		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
 		$sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
-		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-		foreach($aMatches as $aMatch)
-		{
-			$sResult = '';
-			foreach($aPartitions as $sPartitionName)
-			{
-				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-			}
-			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-		}
 
-		pgsqlRunScript($sTemplate);
+		pgsqlRunPartitionScript($sTemplate);
 	}
 
 	if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all'])
@@ -370,11 +330,7 @@
 		echo '.';
 
 		$sSQL = 'select distinct partition from country_name';
-		$aPartitions = $oDB->getCol($sSQL);
-		if (PEAR::isError($aPartitions))
-		{
-			fail($aPartitions->getMessage());
-		}
+		$aPartitions = chksql($oDB->getCol($sSQL));
 		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 		foreach($aPartitions as $sPartition)
 		{
@@ -673,11 +629,8 @@
 
 		$oDB =& getDB();
 		$aDropTables = array();
-		$aHaveTables = $oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
-		if (PEAR::isError($aHaveTables))
-		{
-			fail($aPartitions->getMessage());
-		}
+		$aHaveTables = chksql($oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'"));
+
 		foreach($aHaveTables as $sTable)
 		{
 			$bFound = false;
@@ -804,6 +757,28 @@
 		{
 			fail("pgsql returned with error code ($iReturn)");
 		}
+	}
+
+	function pgsqlRunPartitionScript($sTemplate)
+	{
+		$oDB =& getDB();
+
+		$sSQL = 'select distinct partition from country_name';
+		$aPartitions = chksql($oDB->getCol($sSQL));
+		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
+
+		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
+		foreach($aMatches as $aMatch)
+		{
+			$sResult = '';
+			foreach($aPartitions as $sPartitionName)
+			{
+				$sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
+			}
+			$sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
+		}
+
+		pgsqlRunScript($sTemplate);
 	}
 
 	function pgsqlRunRestoreData($sDumpFile)

@@ -143,3 +143,13 @@
 		echo "\n";
 		exit;
 	}
+
+	function chksql($oSql, $sMsg = false)
+	{
+		if (PEAR::isError($oSql))
+		{
+			fail($sMsg || $oSql->getMessage(), $oSql->userinfo);
+		}
+
+		return $oSql;
+	}

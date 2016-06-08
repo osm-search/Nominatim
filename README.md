@@ -12,22 +12,15 @@ Documentation
 =============
 
 More information about Nominatim, including usage and installation instructions,
-can be found in the OSM wiki at:
+can be found in the docs/ subdirectory and in the OSM wiki at:
 
 http://wiki.openstreetmap.org/wiki/Nominatim
 
 Installation
 ============
 
-The following instructions is a quick guide to installation. A more detailed guide
-how to set up your own instance of Nominatim can be found in the wiki:
-
-http://wiki.openstreetmap.org/wiki/Nominatim/Installation
-
-Note that this repository contains a submodule called osm2pgsql. Make sure it
-is cloned as well by running `git submodule update --init`.
-
-Installation steps:
+There are detailed installation instructions in the /docs directory.
+Here is a quick summary of the necessary steps.
 
 1. Compile Nominatim:
 
@@ -36,11 +29,20 @@ Installation steps:
      cmake ..
      make
 
+   For more detailed installation instructions see [docs/installation.md]().
+   There are also step-by-step instructions for
+     [Ubuntu 16.04](docs/install-on-ubuntu-16.md) and
+     [CentOS 7.2](docs/install-on-centos-7.md).
+
 2. Get OSM data and import:
 
-     ./utils/setup.php --osm-file <your planet file> --all
+     ./build/utils/setup.php --osm-file <your planet file> --all
 
-3. Point your webserver to the ./website directory.
+   Details can be found in [docs/Import_and_update.md]()
+
+3. Point your webserver to the ./build/website directory.
+
+
 
 License
 =======

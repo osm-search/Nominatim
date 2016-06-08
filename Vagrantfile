@@ -3,24 +3,33 @@
 
 Vagrant.configure("2") do |config|
   # Apache webserver
-  config.vm.network "forwarded_port", guest: 8089, host: 8089
+  config.vm.network "forwarded_port", guest: 80, host: 8089
 
   # If true, then any SSH connections made will enable agent forwarding.
   config.ssh.forward_agent = true
 
-  config.vm.synced_folder ".", "/home/vagrant/Nominatim"
+  checkout = "yes"
+  if ENV['CHECKOUT'] != 'y' then
+      config.vm.synced_folder ".", "/home/vagrant/Nominatim"
+      checkout = "no"
+  end
 
   config.vm.define "ubuntu" do |sub|
-      sub.vm.box = "ubuntu/trusty64"
-      sub.vm.provision :shell, :path => "vagrant/ubuntu-trusty-provision.sh"
+      sub.vm.box = "bento/ubuntu-16.04"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/install-on-ubuntu-16.sh"
+        s.privileged = false
+        s.args = [checkout]
+      end
   end
-  config.vm.define "ubuntu-php7" do |sub|
-      sub.vm.box = "ubuntu/trusty64"
-      sub.vm.provision :shell, :path => "vagrant/ubuntu-trusty-php7-provision.sh"
-  end
+
   config.vm.define "centos" do |sub|
       sub.vm.box = "bento/centos-7.2"
-      sub.vm.provision :shell, :path => "vagrant/centos-7-provision.sh"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/install-on-centos-7.sh"
+        s.privileged = false
+        s.args = [checkout]
+      end
   end
 
   # configure shared package cache if possible

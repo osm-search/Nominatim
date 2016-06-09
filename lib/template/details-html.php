@@ -42,7 +42,7 @@
 
 	function nominatim_link($aFeature, $sTitle)
 	{
-		return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.$sTitle.'</a>';
+		return '<a href="details.php?place_id='.$aFeature['place_id'].'&addressdetails=1&linkedplaces=1&childplaces=1">'.$sTitle.'</a>';
 	}
 
 	function format_distance($fDistance)
@@ -147,6 +147,8 @@
 					if ($aPointDetails['wikipedia'])
 					{
 						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails) );
+					} else if ($aPointDetails['aExtraTags']['wikipedia']) {
+						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails['aExtraTags']) );
 					}
 
 					kv('Extra Tags'      , hash_to_subtable($aPointDetails['aExtraTags']) );

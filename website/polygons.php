@@ -13,8 +13,10 @@
 	$sClass = false;
 	if (isset($_GET['class'])) $sClass = $_GET['class'];
 
+	$iTotalBroken = (int) $oDB->getOne('select count(*) from import_polygon_error');
+
 	$aPolygons = array();
-	while(!sizeof($aPolygons))
+	while($iTotalBroken && !sizeof($aPolygons))
 	{
 		$sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
 		$sSQL .= 'country_code as "country",errormessage as "error message",updated';
@@ -84,6 +86,7 @@ table td {
 
 <?php
 
+	echo "<p>Total number of broken polygons: $iTotalBroken</p>";
 	echo "<table>";
 	echo "<tr>";
 //var_dump($aPolygons[0]);

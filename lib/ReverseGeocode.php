@@ -6,6 +6,7 @@
 		protected $fLat;
 		protected $fLon;
 		protected $iMaxRank = 28;
+        protected $osmTags = array();
 
 		protected $aLangPrefOrder = array();
 
@@ -32,6 +33,18 @@
 			$this->fLat = (float)$fLat;
 			$this->fLon = (float)$fLon;
 		}
+        
+        function setOsmTagList($sTag)
+        {
+            $this->osmTags = array();
+            if (isset($sTag))
+            {
+                $tags = explode(",", $sTag);
+                foreach($tags as $tag){
+                    $this->osmTags[] = $tag;
+                }
+            }
+        }
 
 		function setRank($iRank)
 		{
@@ -106,6 +119,46 @@
 			$this->fPolygonSimplificationThreshold = $f;
 		}
 
+        function insertClassTypeFilter(&$sSQL)
+        {
+            if (!($this->osmTags == null))
+            {
+                $sSQL .= "and (";
+                $queryAdded = false;
+                foreach($this->osmTags as $tag)
+                {
+                    $items = explode(":",$tag);
+                    if (count($items)> 0 )
+                    {
+                        // Has at least class and type
+                        if ($queryAdded){
+                            // Not the first one, prepend 'or' operator
+                            $sSQL .= " or ";
+                        }else{
+                            $queryAdded = true;
+                        }
+                        
+                        $items[0] = $this->oDB->escapeSimple($items[0]); // Prevent SQL injection
+                        $sSQL .= "( class like '" . $items[0] . "' ";
+                        if (count($items) > 1){
+                            $items[1] = $this->oDB->escapeSimple($items[1]); // Prevent SQL injection
+                            $sSQL .= "and type like '" . $items[1] ."'";
+                        }
+                        if (count($items)> 2)
+                        {
+                            $items[2] = $this->oDB->escapeSimple($items[2]); // Prevent SQL injection
+                            // Has an admin level
+                            $sSQL .= " and admin_level = " . $items[2];
+                        }
+                        $sSQL .= ")";
+                    }
+                }
+                $sSQL .= ")";
+                return $queryAdded;
+            }
+            return false;
+        }
+        
 		// returns { place_id =>, type => '(osm|tiger)' }
 		// fails if no place was found
 		function lookup()
@@ -122,6 +175,8 @@
 			$bIsInUnitedStates = false;
 			$bPlaceIsTiger = false;
 			$bPlaceIsLine = false;
+
+            $bFilteredByOsmTag = false;
 			while(!$iPlaceID && $fSearchDiam < $fMaxAreaDistance)
 			{
 				$fSearchDiam = $fSearchDiam * 2;
@@ -142,7 +197,14 @@
 				$sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
 				$sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
 				$sSQL .= ' and (name is not null or housenumber is not null)';
-				$sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+				// Append any desired tags and type and admin_level filter for the required labels.
+                if(!$this->insertClassTypeFilter($sSQL))
+                {
+                    // No class-type filter added, use the default class filter set.
+                    $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                }else{
+                    $bFilteredByOsmTag = true;
+                }
 				$sSQL .= ' and indexed_status = 0 ';
 				$sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
 				$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
@@ -230,7 +292,7 @@
 			}
 			
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if (CONST_Use_US_Tiger_Data && $bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
+			if (CONST_Use_US_Tiger_Data && !$bFilteredByOsmTag && $bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
 				$fSearchDiam = 0.001;
 				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
@@ -268,7 +330,8 @@
 			}
 
 			// The point we found might be too small - use the address to find what it is a child of
-			if ($iPlaceID && $iMaxRank < 28)
+            // Unless it's filtered by osm tag, in which case we probably want the exact match.
+			if ($iPlaceID && !$bFilteredByOsmTag && $iMaxRank < 28)
 			{
 				if (($aPlace['rank_search'] > 28 || $bPlaceIsTiger || $bPlaceIsLine) && $iParentPlaceID)
 				{
@@ -279,6 +342,7 @@
 				$sSQL .= " WHERE place_id = $iPlaceID";
 				$sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
 				$sSQL .= ' LIMIT 1';
+                if (CONST_Debug) var_dump($sSQL);
 				$iPlaceID = $this->oDB->getOne($sSQL);
 				if (PEAR::IsError($iPlaceID))
 				{

@@ -2,16 +2,14 @@
 	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
-
-	$sOutputFormat = 'html';
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
-	if (!isset($_GET['days'])) $_GET['days'] = 1;
-	$bReduced = false;
-	if (isset($_GET['reduced'])) $bReduced = true;
-	$sClass = false;
-	if (isset($_GET['class'])) $sClass = $_GET['class'];
+
+	$sOutputFormat = 'html';
+	$iDays = getParamInt('days', 1);
+	$bReduced = getParamBool('reduced', false);
+	$sClass = getParamString('class', false);
 
 	$iTotalBroken = (int) $oDB->getOne('select count(*) from import_polygon_error');
 
@@ -21,19 +19,11 @@
 		$sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
 		$sSQL .= 'country_code as "country",errormessage as "error message",updated';
 		$sSQL .= " from import_polygon_error";
-		if ($_GET['days'])
-		{
-			$sSQL .= " where updated > 'now'::timestamp - '".(int)$_GET['days']." day'::interval";
-			$_GET['days']++;
-		}
-		if ($bReduced)
-		{
-			$sSQL .= " and errormessage like 'Area reduced%'";
-		}
-		if ($sClass)
-		{
-			$sSQL .= " and class = '".pg_escape_string($sClass)."'";
-		}
+		$sSQL .= " where updated > 'now'::timestamp - '".$iDays." day'::interval";
+		$iDays++;
+
+		if ($bReduced) $sSQL .= " and errormessage like 'Area reduced%'";
+		if ($sClass) $sSQL .= " and class = '".pg_escape_string($sClass)."'";
 		$sSQL .= " order by updated desc limit 1000";
 		$aPolygons = $oDB->getAll($sSQL);
 	}

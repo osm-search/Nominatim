@@ -5,28 +5,26 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-
-	$sOutputFormat = 'html';
-	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'xml' || $_GET['format'] == 'json' ||  $_GET['format'] == 'jsonv2'))
-	{
-		$sOutputFormat = $_GET['format'];
-	}
-
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
 
+	$sOutputFormat = getParamSet('format', array('html', 'json'), 'html');
+
 	$aLangPrefOrder = getPreferredLanguages();
 	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
-	if (isset($_GET['osmtype']) && isset($_GET['osmid']) && (int)$_GET['osmid'] && ($_GET['osmtype'] == 'N' || $_GET['osmtype'] == 'W' || $_GET['osmtype'] == 'R'))
+	$sPlaceId = getParamString('place_id');
+	$sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
+	$iOsmId = getParamInt('osmid', -1);
+	if ($sOsmType && $iOsmId > 0)
 	{
-		$_GET['place_id'] = $oDB->getOne("select place_id from placex where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
+		$sPlaceId = $oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc");
 
 		// Be nice about our error messages for broken geometry
-		if (!$_GET['place_id'])
+		if (!$sPlaceId)
 		{
-			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by updated desc limit 1");
+			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1");
 			if (!PEAR::isError($aPointDetails) && $aPointDetails) {
 				if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
 				{
@@ -39,13 +37,9 @@
 		}
 	}
 
-	if (!isset($_GET['place_id']))
-	{
-		echo "Please select a place id";
-		exit;
-	}
+	if (!$sPlaceId) userError("Please select a place id");
 
-	$iPlaceID = (int)$_GET['place_id'];
+	$iPlaceID = (int)$sPlaceId;
 
 	if (CONST_Use_US_Tiger_Data)
 	{
@@ -66,11 +60,7 @@
 
 	$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails());
 
-	if (!sizeof($aPlaceAddress))
-	{
-		echo "Unknown place id.";
-		exit;
-	}
+	if (!sizeof($aPlaceAddress)) userError("Unknown place id.");
 
 	$aBreadcrums = array();
 	foreach($aPlaceAddress as $i => $aPlace)
@@ -84,12 +74,12 @@
 		if ($sOutputFormat == 'html') echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
 	}
 
-	$aDetails = array();
-	$aDetails['breadcrumbs'] = $aBreadcrums;
 
 	if ($sOutputFormat == 'json')
 	{
 		header("content-type: application/json; charset=UTF-8");
+		$aDetails = array();
+		$aDetails['breadcrumbs'] = $aBreadcrums;
 		javascript_renderData($aDetails);
 		exit;
 	}

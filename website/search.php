@@ -25,24 +25,20 @@
 	}
 
 	// Format for output
-	$sOutputFormat = 'html';
-	if (isset($_GET['format']) && ($_GET['format'] == 'html' || $_GET['format'] == 'xml' || $_GET['format'] == 'json' ||  $_GET['format'] == 'jsonv2'))
-	{
-		$sOutputFormat = $_GET['format'];
-	}
+	$sOutputFormat = getParamSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
 
 	// Show / use polygons
 	if ($sOutputFormat == 'html')
 	{
-		if (isset($_GET['polygon'])) $oGeocode->setIncludePolygonAsText((bool)$_GET['polygon']);
+		$oGeocode->setIncludePolygonAsText(getParamBool('polygon'));
 	}
 	else
 	{
-		$bAsPoints = (boolean)isset($_GET['polygon']) && $_GET['polygon'];
-		$bAsGeoJSON = (boolean)isset($_GET['polygon_geojson']) && $_GET['polygon_geojson'];
-		$bAsKML = (boolean)isset($_GET['polygon_kml']) && $_GET['polygon_kml'];
-		$bAsSVG = (boolean)isset($_GET['polygon_svg']) && $_GET['polygon_svg'];
-		$bAsText = (boolean)isset($_GET['polygon_text']) && $_GET['polygon_text'];
+		$bAsPoints = getParamBool('polygon');
+		$bAsGeoJSON = getParamBool('polygon_geojson');
+		$bAsKML = getParamBool('polygon_kml');
+		$bAsSVG = getParamBool('polygon_svg');
+		$bAsText = getParamBool('polygon_text');
 		if ( ( ($bAsGeoJSON?1:0)
 				 + ($bAsKML?1:0)
 				 + ($bAsSVG?1:0)
@@ -68,9 +64,7 @@
 	}
 
 	// Polygon simplification threshold (optional)
-	$fThreshold = 0.0;
-	if (isset($_GET['polygon_threshold'])) $fThreshold = (float)$_GET['polygon_threshold'];
-	$oGeocode->setPolygonSimplificationThreshold($fThreshold);
+	$oGeocode->setPolygonSimplificationThreshold(getParamFloat('polygon_threshold', 0.0));
 
 	$oGeocode->loadParamArray($_GET);
 
@@ -91,7 +85,7 @@
 	}
 	else
 	{
-		if (!(isset($_GET['q']) && $_GET['q']) && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+		if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
 		{
 			$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 

@@ -39,13 +39,6 @@
 		exit;
 	}
 
-	function getParamBool($name, $default=false)
-	{
-		if (!isset($_GET[$name])) return $default;
-
-		return (bool) $_GET[$name];
-	}
-
 	function fail($sError, $sUserError = false)
 	{
 		if (!$sUserError) $sUserError = $sError;

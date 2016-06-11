@@ -21,15 +21,18 @@
 	$aLangPrefOrder = getPreferredLanguages();
 	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
-	if (isset($_GET['osmtype']) && isset($_GET['osmid']) && (int)$_GET['osmid'] && ($_GET['osmtype'] == 'N' || $_GET['osmtype'] == 'W' || $_GET['osmtype'] == 'R'))
+	$sPlaceId = getParamString('place_id');
+	$sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
+	$iOsmId = getParamInt('osmid', -1);
+	if ($sOsmType && $iOsmId > 0)
 	{
-		$_GET['place_id'] = $oDB->getOne("select place_id from placex where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by type = 'postcode' asc");
+		$sPlaceId = $oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc");
 
 		// Be nice about our error messages for broken geometry
 
-		if (!$_GET['place_id'])
+		if (!$sPlaceId)
 		{
-			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$_GET['osmtype']."' and osm_id = ".(int)$_GET['osmid']." order by updated desc limit 1");
+			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1");
 			if (!PEAR::isError($aPointDetails) && $aPointDetails) {
 				if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
 				{
@@ -48,13 +51,9 @@
 	}
 
 
-	if (!isset($_GET['place_id']))
-	{
-		echo "Please select a place id";
-		exit;
-	}
+	if (!$sPlaceId) userError("Please select a place id");
 
-	$iPlaceID = (int)$_GET['place_id'];
+	$iPlaceID = (int)$sPlaceId;
 
 	if (CONST_Use_US_Tiger_Data)
 	{
@@ -139,7 +138,7 @@
 
 	$aPlaceSearchNameKeywords = false;
 	$aPlaceSearchAddressKeywords = false;
-	if (isset($_GET['keywords']) && $_GET['keywords'])
+	if (getParamBool('keywords'))
 	{
 		$sSQL = "select * from search_name where place_id = $iPlaceID";
 		$aPlaceSearchName = $oDB->getRow($sSQL);

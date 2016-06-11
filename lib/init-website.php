@@ -1,5 +1,6 @@
 <?php
 	require_once('init.php');
+	require_once('website.php');
 
 	if (CONST_NoAccessControl)
 	{

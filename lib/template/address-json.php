@@ -29,11 +29,6 @@
 		if (isset($aPlace['aBoundingBox']))
 		{
 			$aFilteredPlaces['boundingbox'] = $aPlace['aBoundingBox'];
-
-			if (isset($aPlace['aPolyPoints']) && $bAsPoints)
-			{
-				$aFilteredPlaces['polygonpoints'] = $aPlace['aPolyPoints'];
-			}
 		}
 
 		if (isset($aPlace['asgeojson']))

@@ -20,13 +20,12 @@
 	}
 
 
-	$bAsPoints = false;
 	$bAsGeoJSON = getParamBool('polygon_geojson');
 	$bAsKML = getParamBool('polygon_kml');
 	$bAsSVG = getParamBool('polygon_svg');
 	$bAsText = getParamBool('polygon_text');
 	if ((($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0)
-		+ ($bAsText?1:0) + ($bAsPoints?1:0)) > CONST_PolygonOutput_MaximumTypes)
+		+ ($bAsText?1:0)) > CONST_PolygonOutput_MaximumTypes)
 	{
 		if (CONST_PolygonOutput_MaximumTypes)
 		{
@@ -70,12 +69,12 @@
 		$oReverseGeocode->setLanguagePreference($aLangPrefOrder);
 
 		$oReverseGeocode->setLatLon($fLat, $fLon);
-		$oReverseGeocode->setZoom(getParamInt('zoom'));
+		$oReverseGeocode->setZoom(getParamInt('zoom', 18));
 
 		$aLookup = $oReverseGeocode->lookup();
 		if (CONST_Debug) var_dump($aLookup);
 	}
-	else
+	else if ($sOutputFormat != 'html')
 	{
 		userError("Need coordinates or OSM object to lookup.");
 	}
@@ -90,7 +89,7 @@
 
 		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
 
-		$oPlaceLookup->setIncludePolygonAsPoints($bAsPoints);
+		$oPlaceLookup->setIncludePolygonAsPoints(false);
 		$oPlaceLookup->setIncludePolygonAsText($bAsText);
 		$oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
 		$oPlaceLookup->setIncludePolygonAsKML($bAsKML);

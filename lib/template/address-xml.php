@@ -33,13 +33,6 @@
 			echo ' boundingbox="';
 			echo join(',', $aPlace['aBoundingBox']);
 			echo '"';
-
-			if ($bAsPoints && isset($aPlace['aPolyPoints']))
-			{
-				echo ' polygonpoints=\'';
-				echo json_encode($aPlace['aPolyPoints']);
-				echo '\'';
-			}
 		}
 
 		if (isset($aPlace['asgeojson']))

@@ -12,7 +12,7 @@
 	$bReduced = getParamBool('reduced', false);
 	$sClass = getParamString('class', false);
 
-	$iTotalBroken = (int) $oDB->getOne('select count(*) from import_polygon_error');
+	$iTotalBroken = (int) chksql($oDB->getOne('select count(*) from import_polygon_error'));
 
 	$aPolygons = array();
 	while($iTotalBroken && !sizeof($aPolygons))
@@ -26,9 +26,14 @@
 		if ($bReduced) $sSQL .= " and errormessage like 'Area reduced%'";
 		if ($sClass) $sSQL .= " and class = '".pg_escape_string($sClass)."'";
 		$sSQL .= " order by updated desc limit 1000";
-		$aPolygons = $oDB->getAll($sSQL);
+		$aPolygons = chksql($oDB->getAll($sSQL));
 	}
-//var_dump($aPolygons);
+
+	if (CONST_Debug)
+	{
+		var_dump($aPolygons);
+		exit;
+	}
 ?>
 <!DOCTYPE html>
 <html>

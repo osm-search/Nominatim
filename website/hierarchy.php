@@ -20,13 +20,13 @@
 	$iOsmId = getParamInt('osmid', -1);
 	if ($sOsmType && $iOsmId > 0)
 	{
-		$sPlaceId = $oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc");
+		$sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));
 
 		// Be nice about our error messages for broken geometry
 		if (!$sPlaceId)
 		{
-			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1");
-			if (!PEAR::isError($aPointDetails) && $aPointDetails) {
+			$aPointDetails = chksql($oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1"));
+			if ($aPointDetails) {
 				if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
 				{
 					$aPointDetails['error_x'] = $aMatches[1];
@@ -44,13 +44,13 @@
 
 	if (CONST_Use_US_Tiger_Data)
 	{
-		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
+		$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID));
 		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	}
 
 	if (CONST_Use_Aux_Location_data)
 	{
-		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
+		$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID));
 		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	}
 
@@ -90,14 +90,14 @@
 		exit;
 	}
 
-	$aRelatedPlaceIDs = $oDB->getCol($sSQL = "select place_id from placex where linked_place_id = $iPlaceID or place_id = $iPlaceID");
+	$aRelatedPlaceIDs = chksql($oDB->getCol($sSQL = "select place_id from placex where linked_place_id = $iPlaceID or place_id = $iPlaceID"));
 
 	$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,  st_area(geometry) as area, ";
 	$sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
 	$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
 	$sSQL .= " where parent_place_id in (".join(',',$aRelatedPlaceIDs).") and name is not null order by rank_address asc,rank_search asc limit 500) as obj";
 	$sSQL .= " order by rank_address asc,rank_search asc,localname,class, type,housenumber";
-	$aParentOfLines = $oDB->getAll($sSQL);
+	$aParentOfLines = chksql($oDB->getAll($sSQL));
 
 	if (sizeof($aParentOfLines))
 	{

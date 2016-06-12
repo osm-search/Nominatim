@@ -27,13 +27,13 @@
 	$iOsmId = getParamInt('osmid', -1);
 	if ($sOsmType && $iOsmId > 0)
 	{
-		$sPlaceId = $oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc");
+		$sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));
 
 		// Be nice about our error messages for broken geometry
 
 		if (!$sPlaceId)
 		{
-			$aPointDetails = $oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1");
+			$aPointDetails = chksql($oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1"));
 			if (!PEAR::isError($aPointDetails) && $aPointDetails) {
 				if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
 				{
@@ -58,21 +58,17 @@
 
 	if (CONST_Use_US_Tiger_Data)
 	{
-		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID);
+		$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID));
 		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	}
 
 	if (CONST_Use_Aux_Location_data)
 	{
-		$iParentPlaceID = $oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID);
+		$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID));
 		if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 	}
 
 	$hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
-
-	// Make sure the point we are reporting on is fully indexed
-	//$sSQL = "UPDATE placex set indexed = true where indexed = false and place_id = $iPlaceID";
-	//$oDB->query($sSQL);
 
 	// Get the details for this point
 	$sSQL = "select place_id, osm_type, osm_id, class, type, name, admin_level, housenumber, street, isin, postcode, calculated_country_code as country_code, importance, wikipedia,";
@@ -83,11 +79,8 @@
 	$sSQL .= " case when importance = 0 OR importance IS NULL then 0.75-(rank_search::float/40) else importance end as calculated_importance, ";
 	$sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 	$sSQL .= " from placex where place_id = $iPlaceID";
-	$aPointDetails = $oDB->getRow($sSQL);
-	if (PEAR::IsError($aPointDetails))
-	{
-		failInternalError("Could not get details of place object.", $sSQL, $aPointDetails);
-	}
+	$aPointDetails = chksql($oDB->getRow($sSQL),
+	                        "Could not get details of place object.");
 	$aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
 
 	$aClassType = getClassTypesWithImportance();
@@ -169,7 +162,7 @@
 
 	if ($sOutputFormat=='html')
 	{
-		$sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
+		$sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
 		$sTileURL = CONST_Map_Tile_URL;
 		$sTileAttribution = CONST_Map_Tile_Attribution;
 	}

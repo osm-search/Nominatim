@@ -5,6 +5,7 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/Geocode.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	ini_set('memory_limit', '200M');
 

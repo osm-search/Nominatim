@@ -2,6 +2,7 @@
 	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	$sOutputFormat = 'html';
 	ini_set('memory_limit', '200M');
@@ -66,6 +67,7 @@ table td {
 
 <table>
 <?php
+	if (!$aPolygons) exit;
 	echo "<tr>";
 //var_dump($aPolygons[0]);
 	foreach($aPolygons[0] as $sCol => $sVal)
@@ -81,11 +83,10 @@ table td {
 			switch($sCol)
 			{
 				case 'osm_id':
-					$sOSMType = ($aRow['osm_type'] == 'N'?'node':($aRow['osm_type'] == 'W'?'way':($aRow['osm_type'] == 'R'?'relation':'')));
-					echo '<td><a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
+					echo '<td>'.osmLink($aRow).'</td>';
 					break;
 				case 'place_id':
-					echo '<td><a href="'.CONST_Website_BaseURL.'details?place_id='.$sVal.'">'.$sVal.'</a></td>';
+					echo '<td>'.detailsLink($aRow).'</td>';
 					break;
 				default:
 					echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";

@@ -5,6 +5,7 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
@@ -66,12 +67,17 @@
 	foreach($aPlaceAddress as $i => $aPlace)
 	{
 		if (!$aPlace['place_id']) continue;
-		$aBreadcrums[] = array('placeId'=>$aPlace['place_id'], 'osmType'=>$aPlace['osm_type'], 'osmId'=>$aPlace['osm_id'], 'localName'=>$aPlace['localname']);
-		$sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
-		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':'')));
-				$sOSMUrl = 'http://www.openstreetmap.org/'.$sOSMType.'/'.$aPlace['osm_id'];
-		if ($sOutputFormat == 'html') if ($i) echo " > ";
-		if ($sOutputFormat == 'html') echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
+		$aBreadcrums[] = array('placeId'   => $aPlace['place_id'],
+		                       'osmType'   => $aPlace['osm_type'],
+		                       'osmId'     => $aPlace['osm_id'],
+		                       'localName' => $aPlace['localname']);
+
+		if ($sOutputFormat == 'html')
+		{
+			$sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
+			if ($i) echo " &gt; ";
+			echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> ('.osmLink($aPlace).')';
+		}
 	}
 
 
@@ -114,28 +120,29 @@
 
 			if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
 				$aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;
-			}
-			foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
-			{
-				echo "<h3>$sGroupHeading</h3>";
-				foreach($aParentOfLines as $aAddressLine)
-				{
-					$aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
-					$sOSMType = ($aAddressLine['osm_type'] == 'N'?'node':($aAddressLine['osm_type'] == 'W'?'way':($aAddressLine['osm_type'] == 'R'?'relation':'')));
-
-					echo '<div class="line">';
-					echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
-					echo ' (';
-					echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
-					if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
-					echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
-					echo ', '.$aAddressLine['area'];
-					echo ')';
-					echo '</div>';
-				}
-			}
-			if (sizeof($aParentOfLines) >= 500) {
-				echo '<p>There are more child objects which are not shown.</p>';
-			}
-			echo '</div>';
 		}
+
+		foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
+		{
+			echo "<h3>$sGroupHeading</h3>";
+			foreach($aParentOfLines as $aAddressLine)
+			{
+				$aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
+				$sOSMType = formatOSMType($aAddressLine['osm_type'], false);
+
+				echo '<div class="line">';
+				echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
+				echo ' (';
+				echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
+				if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' '.osmLink($aAddressLine).'</span>';
+				echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
+				echo ', '.$aAddressLine['area'];
+				echo ')';
+				echo '</div>';
+			}
+		}
+		if (sizeof($aParentOfLines) >= 500) {
+			echo '<p>There are more child objects which are not shown.</p>';
+		}
+		echo '</div>';
+	}

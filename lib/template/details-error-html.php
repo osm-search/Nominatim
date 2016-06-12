@@ -9,26 +9,21 @@
 
 <?php
 
-	function osm_link($aFeature)
-	{
-		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
-		if ($sOSMType) {
-			return '<a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
-		}
-		return '';
-	}
-
-	function osm_map_url($aFeature)
+	function osmMapUrl($aFeature)
 	{
 		$sLon = $aFeature['error_x'];
 		$sLat = $aFeature['error_y'];
 
-		if (isset($sLat))
+		if (isset($sFeature['error_x']) && isset($sFeature['error_y']))
 		{
-			$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
+			$sBaseUrl = '//www.openstreetmap.org/';
+			$sOSMType = formatOSMType($aFeature['osm_type'], false);
 			if ($sOSMType)
 			{
-				return "http://www.openstreetmap.org/?lat=".$sLat."&lon=".$sLon."&zoom=18&layers=M&".$sOSMType."=".$aFeature['osm_id'];
+				$sBaseUrl += $sOSMType.'/'.$aFeature['osm_id'];
+			}
+
+				return '<a href="'.$sBaseUrl.'?mlat='.$sLat.'&mlon='.$sLon.'">view on osm.org</a>';
 			}
 		}
 		return '';
@@ -45,7 +40,7 @@
 			return "http://localhost:8111/load_and_zoom?left=".($sLon-$fWidth)."&right=".($sLon+$fWidth)."&top=".($sLat+$fWidth)."&bottom=".($sLat-$fWidth);
 		}
 
-		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
+		$sOSMType = formatOSMType($aFeature['osm_type'], false);
 		if ($sOSMType)
 		{
 			return 'http://localhost:8111/import?url=http://www.openstreetmap.org/api/0.6/'.$sOSMType.'/'.$aFeature['osm_id'].'/full';
@@ -63,7 +58,7 @@
 
 		if (isset($sLat))
 		{
-			return "http://www.openstreetmap.org/edit?editor=potlatch2&bbox=".($sLon-$fWidth).",".($sLat-$fWidth).",".($sLon+$fWidth).",".($sLat+$fWidth);
+			return "//www.openstreetmap.org/edit?editor=potlatch2&bbox=".($sLon-$fWidth).",".($sLat-$fWidth).",".($sLon+$fWidth).",".($sLat+$fWidth);
 		}
 		return '';
 	}
@@ -87,7 +82,7 @@
 					</div>
 
 					<div>
-						OSM: <span class="label"><?php echo osm_link($aPointDetails); ?><span>
+						OSM: <span class="label"><?php echo osmLink($aPointDetails); ?><span>
 					</div>
 
 
@@ -95,9 +90,7 @@
 					<p>
 						<?php echo $aPointDetails['errormessage']?$aPointDetails['errormessage']:'unknown'; ?>
 					</p>
-					<?php if (osm_map_url($aPointDetails)) { ?>
-						<a href="<?php echo osm_map_url($aPointDetails); ?>">view on osm.org</a>
-					<?php } ?>
+					<?php echo osmMapUrl($aPointDetails); ?>
 
 					<h4>Edit</h4>
 					<ul>

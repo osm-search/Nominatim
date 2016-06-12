@@ -22,8 +22,7 @@
 	{
 		echo "<result";
 		if ($aPlace['place_id']) echo ' place_id="'.$aPlace['place_id'].'"';
-		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':
-		($aPlace['osm_type'] == 'T'?'tiger':($aPlace['osm_type'] == 'I'?'interpolation':'')))));
+		$sOSMType = formatOSMType($aPlace['osm_type']);
 		if ($sOSMType) echo ' osm_type="'.$sOSMType.'"'.' osm_id="'.$aPlace['osm_id'].'"';
 		if ($aPlace['ref']) echo ' ref="'.htmlspecialchars($aPlace['ref']).'"';
 		if (isset($aPlace['lat'])) echo ' lat="'.htmlspecialchars($aPlace['lat']).'"';

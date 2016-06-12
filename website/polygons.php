@@ -2,6 +2,7 @@
 	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
@@ -77,6 +78,7 @@ table td {
 <?php
 
 	echo "<p>Total number of broken polygons: $iTotalBroken</p>";
+	if (!$aPolygons) exit;
 	echo "<table>";
 	echo "<tr>";
 //var_dump($aPolygons[0]);
@@ -110,8 +112,7 @@ table td {
 				}
 				break;
 			case 'id':
-				$sOSMType = ($aRow['type'] == 'N'?'node':($aRow['type'] == 'W'?'way':($aRow['type'] == 'R'?'relation':'')));
-				echo '<td><a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aRow['id'].'" target="_new">'.$aRow['id'].'</a></td>';
+				echo '<td>'.osmLink($aRow).'</td>';
 				break;
 			default:
 				echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
@@ -130,10 +131,6 @@ table td {
 		echo "</tr>";
 	}
 	echo "</table>";
-
-
-
-//	include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');
 ?>
 </body>
 </html>

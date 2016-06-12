@@ -4,6 +4,7 @@
 	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	$sOutputFormat = 'html';
 	/*
@@ -173,5 +174,4 @@
 		$sTileAttribution = CONST_Map_Tile_Attribution;
 	}
 
-	
 	include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');

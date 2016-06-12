@@ -7,7 +7,7 @@
 				'licence'=>"Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright",
 			);
 
-		$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':($aPointDetails['osm_type'] == 'T'?'tiger':($aPointDetails['osm_type'] == 'I'?'interpolation':'')))));
+		$sOSMType = formatOSMType($aPointDetails['osm_type']);
 		if ($sOSMType)
 		{
 			$aPlace['osm_type'] = $sOSMType;

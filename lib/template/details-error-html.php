@@ -11,9 +11,6 @@
 
 	function osmMapUrl($aFeature)
 	{
-		$sLon = $aFeature['error_x'];
-		$sLat = $aFeature['error_y'];
-
 		if (isset($sFeature['error_x']) && isset($sFeature['error_y']))
 		{
 			$sBaseUrl = '//www.openstreetmap.org/';
@@ -23,8 +20,7 @@
 				$sBaseUrl += $sOSMType.'/'.$aFeature['osm_id'];
 			}
 
-				return '<a href="'.$sBaseUrl.'?mlat='.$sLat.'&mlon='.$sLon.'">view on osm.org</a>';
-			}
+			return '<a href="'.$sBaseUrl.'?mlat='.$aFeature['error_y'].'&mlon='.$aFeature['error_x'].'">view on osm.org</a>';
 		}
 		return '';
 	}

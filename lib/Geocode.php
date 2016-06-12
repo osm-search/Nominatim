@@ -514,7 +514,7 @@
 
 			$sSQL .= " order by importance desc";
 			if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
-			$aSearchResults = chksql($this->oDB->getAll($sSQL);
+			$aSearchResults = chksql($this->oDB->getAll($sSQL),
 			                         "Could not get details for place.");
 
 			return $aSearchResults;
@@ -879,7 +879,7 @@
 				$sViewboxCentreSQL .= ")'::geometry,4326)";
 
 				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/69).")";
-				$this->sViewboxSmallSQL = chksql($this->oDB->getOne($sSQL);
+				$this->sViewboxSmallSQL = chksql($this->oDB->getOne($sSQL),
 				                                 "Could not get small viewbox.");
 				$this->sViewboxSmallSQL = "'".$this->sViewboxSmallSQL."'::geometry";
 
@@ -1414,9 +1414,8 @@
 									$sSQL .= " limit ".$this->iLimit;
 
 								if (CONST_Debug) { var_dump($sSQL); }
-								$aViewBoxPlaceIDs = chksql($this->oDB->getAll($sSQL));
+								$aViewBoxPlaceIDs = chksql($this->oDB->getAll($sSQL),
 								                           "Could not get places for search terms.");
-								}
 								//var_dump($aViewBoxPlaceIDs);
 								// Did we have an viewbox matches?
 								$aPlaceIDs = array();
@@ -1636,11 +1635,6 @@
 
 							}
 
-						}
-
-						if (PEAR::IsError($aPlaceIDs))
-						{
-							failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
 						}
 
 						if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }

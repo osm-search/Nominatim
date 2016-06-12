@@ -5,6 +5,7 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
 	{
@@ -38,7 +39,7 @@
 	$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
 	$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
 
-	$aOsmIds = explode(',', $getParamString('osm_ids', ''));
+	$aOsmIds = explode(',', getParamString('osm_ids', ''));
 
 	if (count($aOsmIds) > CONST_Places_Max_ID_count)
 	{

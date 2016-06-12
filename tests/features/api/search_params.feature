@@ -187,7 +187,6 @@ Feature: Search queries
         | 0.0
         | 0.5
         | 999
-        | nan
 
     Scenario Outline: Search with polygon threshold (xml)
         Given the request parameters
@@ -203,7 +202,14 @@ Feature: Search queries
         | 0.0
         | 0.5
         | 999
-        | nan
+
+    Scenario Outline: Search with invalid polygon threshold (xml)
+        Given the request parameters
+          | polygon_geojson | polygon_threshold
+          | 1               | <th>
+        When sending xml search query "switzerland"
+        Then a HTTP 400 is returned
+
 
     Scenario Outline: Search with extratags
         Given the request parameters

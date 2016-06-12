@@ -100,7 +100,7 @@ INTERNALFAIL;
 	{
 		if (!isset($_GET[$sName])) return $bDefault;
 
-		if (!preg_match('/^[+-][0-9]+$/', $_GET[$sName]))
+		if (!preg_match('/^[+-]?[0-9]+$/', $_GET[$sName]))
 		{
 			userError("Integer number expected for parameter '$sName'");
 		}

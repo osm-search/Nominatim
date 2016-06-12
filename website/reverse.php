@@ -56,8 +56,8 @@
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 
-	$sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
-	$iOsmId = getParamInt('osmid', -1);
+	$sOsmType = getParamSet('osm_type', array('N', 'W', 'R'));
+	$iOsmId = getParamInt('osm_id', -1);
 	$fLat = getParamFloat('lat');
 	$fLon = getParamFloat('lon');
 	if ($sOsmType && $iOsmId > 0)

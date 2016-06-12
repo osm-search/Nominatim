@@ -100,7 +100,7 @@
 		function setOSMID($sType, $iID)
 		{
 			$sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int)$iID." order by type = 'postcode' asc";
-			$this->iPlaceID = $this->oDB->getOne($sSQL);
+			$this->iPlaceID = chksql($this->oDB->getOne($sSQL));
 		}
 
 		function lookupPlace($details)
@@ -175,13 +175,7 @@
 				$sSQL .= " from placex where place_id = ".(int)$this->iPlaceID;
 			}
 
-			$aPlace = $this->oDB->getRow($sSQL);
-
-
-			if (PEAR::IsError($aPlace))
-			{
-				failInternalError("Could not lookup place.", $sSQL, $aPlace);
-			}
+			$aPlace = chksql($this->oDB->getRow($sSQL), "Could not lookup place");
 
 			if (!$aPlace['place_id']) return null;
 
@@ -248,13 +242,7 @@
 			if (!$bAll) $sSQL .= " WHERE isaddress OR type = 'country_code'";
 			$sSQL .= " order by rank_address desc,isaddress desc";
 
-			$aAddressLines = $this->oDB->getAll($sSQL);
-			if (PEAR::IsError($aAddressLines))
-			{
-				var_dump($aAddressLines);
-				exit;
-			}
-			return $aAddressLines;
+			return chksql($this->oDB->getAll($sSQL));
 		}
 
 		function getAddressNames($housenumber = -1)
@@ -332,12 +320,8 @@
 					$sSQL .= $sFrom;
 				}
 
-				$aPointPolygon = $this->oDB->getRow($sSQL);
-				if (PEAR::IsError($aPointPolygon))
-				{
-					echo var_dump($aPointPolygon);
-					failInternalError("Could not get outline.", $sSQL, $aPointPolygon);
-				}
+				$aPointPolygon = chksql($this->oDB->getRow($sSQL),
+				                        "Could not get outline");
 
 				if ($aPointPolygon['place_id'])
 				{

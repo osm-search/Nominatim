@@ -177,12 +177,7 @@
 	{
 		// Try an exact match on the gb_postcode table
 		$sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where postcode = \''.$sPostcode.'\'';
-		$aNearPostcodes = $oDB->getAll($sSQL);
-		if (PEAR::IsError($aNearPostcodes))
-		{
-			var_dump($sSQL, $aNearPostcodes);
-			exit;
-		}
+		$aNearPostcodes = chksql($oDB->getAll($sSQL));
 
 		if (sizeof($aNearPostcodes))
 		{
@@ -655,12 +650,7 @@
 		if (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
 		$sSQL .= " order by rank_address desc,isaddress desc";
 
-		$aAddressLines = $oDB->getAll($sSQL);
-		if (PEAR::IsError($aAddressLines))
-		{
-			var_dump($aAddressLines);
-			exit;
-		}
+		$aAddressLines = chksql($oDB->getAll($sSQL));
 		if ($bRaw) return $aAddressLines;
 		//echo "<pre>";
 		//var_dump($aAddressLines);
@@ -758,12 +748,7 @@
 			$sSQL .= ' OR ST_DWithin('.$sPointSQL.', ST_Centroid(geometry), '.$fSearchDiam.'))';
 			$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 			//var_dump($sSQL);
-			$aPlace = $oDB->getRow($sSQL);
-			if (PEAR::IsError($aPlace))
-			{
-				var_Dump($sSQL, $aPlace);
-				exit;
-			}
+			$aPlace = chksql($oDB->getRow($sSQL));
 			$iPlaceID = $aPlace['place_id'];
 		}
 
@@ -771,22 +756,12 @@
 		if ($iPlaceID)
 		{
 			$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = $iPlaceID order by cached_rank_address desc,isaddress desc,distance desc limit 1";
-			$iPlaceID = $oDB->getOne($sSQL);
-			if (PEAR::IsError($iPlaceID))
-			{
-				var_Dump($sSQL, $iPlaceID);
-				exit;
-			}
+			$iPlaceID = chksql($oDB->getOne($sSQL));
 
 			if ($iPlaceID && $aPlace['place_id'] && $iMaxRank < 28)
 			{
 				$sSQL = "select address_place_id from place_addressline where cached_rank_address <= $iMaxRank and place_id = ".$aPlace['place_id']." order by cached_rank_address desc,isaddress desc,distance desc";
-				$iPlaceID = $oDB->getOne($sSQL);
-				if (PEAR::IsError($iPlaceID))
-				{
-					var_Dump($sSQL, $iPlaceID);
-					exit;
-				}
+				$iPlaceID = chksql($oDB->getOne($sSQL));
 			}
 			if (!$iPlaceID)
 			{

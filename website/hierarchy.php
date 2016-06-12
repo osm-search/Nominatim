@@ -69,7 +69,7 @@
 		$aBreadcrums[] = array('placeId'=>$aPlace['place_id'], 'osmType'=>$aPlace['osm_type'], 'osmId'=>$aPlace['osm_id'], 'localName'=>$aPlace['localname']);
 		$sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
 		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':'')));
-				$sOSMUrl = 'http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aPlace['osm_id'];
+				$sOSMUrl = 'http://www.openstreetmap.org/'.$sOSMType.'/'.$aPlace['osm_id'];
 		if ($sOutputFormat == 'html') if ($i) echo " > ";
 		if ($sOutputFormat == 'html') echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> (<a href="'.$sOSMUrl.'">osm</a>)';
 	}
@@ -127,7 +127,7 @@
 					echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
 					echo ' (';
 					echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
-					if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
+					if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' <a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aAddressLine['osm_id'].'">'.$aAddressLine['osm_id'].'</a></span>';
 					echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
 					echo ', '.$aAddressLine['area'];
 					echo ')';

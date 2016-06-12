@@ -13,7 +13,7 @@
 	{
 		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
 		if ($sOSMType) {
-			return '<a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
+			return '<a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
 		}
 		return '';
 	}

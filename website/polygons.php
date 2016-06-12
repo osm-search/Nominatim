@@ -111,7 +111,7 @@ table td {
 				break;
 			case 'id':
 				$sOSMType = ($aRow['type'] == 'N'?'node':($aRow['type'] == 'W'?'way':($aRow['type'] == 'R'?'relation':'')));
-				echo '<td><a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aRow['id'].'" target="_new">'.$aRow['id'].'</a></td>';
+				echo '<td><a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$aRow['id'].'" target="_new">'.$aRow['id'].'</a></td>';
 				break;
 			default:
 				echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";

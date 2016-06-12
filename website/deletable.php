@@ -82,7 +82,7 @@ table td {
 			{
 				case 'osm_id':
 					$sOSMType = ($aRow['osm_type'] == 'N'?'node':($aRow['osm_type'] == 'W'?'way':($aRow['osm_type'] == 'R'?'relation':'')));
-					echo '<td><a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
+					echo '<td><a href="http://www.openstreetmap.org/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
 					break;
 				case 'place_id':
 					echo '<td><a href="'.CONST_Website_BaseURL.'details?place_id='.$sVal.'">'.$sVal.'</a></td>';

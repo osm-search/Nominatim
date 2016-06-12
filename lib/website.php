@@ -91,14 +91,14 @@ INTERNALFAIL;
 
 	function getParamBool($sName, $bDefault=false)
 	{
-		if (!isset($_GET[$sName])) return $bDefault;
+		if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 		return (bool) $_GET[$sName];
 	}
 
 	function getParamInt($sName, $bDefault=false)
 	{
-		if (!isset($_GET[$sName])) return $bDefault;
+		if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 		if (!preg_match('/^[+-]?[0-9]+$/', $_GET[$sName]))
 		{
@@ -110,7 +110,7 @@ INTERNALFAIL;
 
 	function getParamFloat($sName, $bDefault=false)
 	{
-		if (!isset($_GET[$sName])) return $bDefault;
+		if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 		if (!preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET[$sName]))
 		{
@@ -122,14 +122,14 @@ INTERNALFAIL;
 
 	function getParamString($sName, $bDefault=false)
 	{
-		if (!isset($_GET[$sName])) return $bDefault;
+		if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 		return $_GET[$sName];
 	}
 
 	function getParamSet($sName, $aValues, $sDefault=false)
 	{
-		if (!isset($_GET[$sName])) return $sDefault;
+		if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $sDefault;
 
 		if (!in_array($_GET[$sName], $aValues))
 		{

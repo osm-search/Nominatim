@@ -102,6 +102,10 @@ instance by following these steps:
 
          ./utils/setup.php --import-tiger-data
 
+  5. Enable use of the Tiger data in your `settings/local.php` by adding:
+
+         @define('CONST_Use_US_Tiger_Data', true);
+
 Be warned that the import can take a very long time, especially if you
 import all of the US.
 

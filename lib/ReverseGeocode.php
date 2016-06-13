@@ -148,11 +148,8 @@
 				$sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
 				$sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', geometry) ASC limit 1';
 				if (CONST_Debug) var_dump($sSQL);
-				$aPlace = $this->oDB->getRow($sSQL);
-				if (PEAR::IsError($aPlace))
-				{
-					failInternalError("Could not determine closest place.", $sSQL, $aPlace);
-				}
+				$aPlace = chksql($this->oDB->getRow($sSQL),
+				                 "Could not determine closest place.");
 				$iPlaceID = $aPlace['place_id'];
 				$iParentPlaceID = $aPlace['parent_place_id'];
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
@@ -172,17 +169,14 @@
 					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
 					var_dump($sSQL);
 
-					$aAllHouses = $this->oDB->getAll($sSQL);
+					$aAllHouses = chksql($this->oDB->getAll($sSQL));
 					foreach($aAllHouses as $i)
 					{
 						echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
 					}
 				}
-				$aPlaceLine = $this->oDB->getRow($sSQL);
-				if (PEAR::IsError($aPlaceLine))
-				{
-					failInternalError("Could not determine closest housenumber on an osm interpolation line.", $sSQL, $aPlaceLine);
-				}
+				$aPlaceLine = chksql($this->oDB->getRow($sSQL),
+				                     "Could not determine closest housenumber on an osm interpolation line.");
 				if ($aPlaceLine)
 				{
 					if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
@@ -192,20 +186,14 @@
 						// if the placex house or the interpolated house are closer to the searched point
 						// distance between point and placex house
 						$sSQL = 'SELECT ST_distance('.$sPointSQL.', house.geometry) as distance FROM placex as house WHERE house.place_id='.$iPlaceID;
-						$aDistancePlacex = $this->oDB->getRow($sSQL);
-						if (PEAR::IsError($aDistancePlacex))
-						{
-							failInternalError("Could not determine distance between searched point and placex house.", $sSQL, $aDistancePlacex);
-						}
+						$aDistancePlacex = chksql($this->oDB->getRow($sSQL),
+						                          "Could not determine distance between searched point and placex house.");
 						$fDistancePlacex = $aDistancePlacex['distance'];
 						// distance between point and interpolated house (fraction on interpolation line)
 						$sSQL = 'SELECT ST_distance('.$sPointSQL.', ST_LineInterpolatePoint(linegeo, '.$aPlaceLine['fraction'].')) as distance';
 						$sSQL .= ' FROM location_property_osmline WHERE place_id = '.$aPlaceLine['place_id'];
-						$aDistanceInterpolation = $this->oDB->getRow($sSQL);
-						if (PEAR::IsError($aDistanceInterpolation))
-						{
-							failInternalError("Could not determine distance between searched point and interpolated house.", $sSQL, $aDistanceInterpolation);
-						}
+						$aDistanceInterpolation = chksql($this->oDB->getRow($sSQL),
+						                                 "Could not determine distance between searched point and interpolated house.");
 						$fDistanceInterpolation = $aDistanceInterpolation['distance'];
 						if ($fDistanceInterpolation < $fDistancePlacex)
 						{
@@ -244,18 +232,15 @@
 					$sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
 					var_dump($sSQL);
 
-					$aAllHouses = $this->oDB->getAll($sSQL);
+					$aAllHouses = chksql($this->oDB->getAll($sSQL));
 					foreach($aAllHouses as $i)
 					{
 						echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
 					}
 				}
 
-				$aPlaceTiger = $this->oDB->getRow($sSQL);
-				if (PEAR::IsError($aPlaceTiger))
-				{
-					failInternalError("Could not determine closest Tiger place.", $sSQL, $aPlaceTiger);
-				}
+				$aPlaceTiger = chksql($this->oDB->getRow($sSQL),
+				                      "Could not determine closest Tiger place.");
 				if ($aPlaceTiger)
 				{
 					if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
@@ -279,11 +264,8 @@
 				$sSQL .= " WHERE place_id = $iPlaceID";
 				$sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
 				$sSQL .= ' LIMIT 1';
-				$iPlaceID = $this->oDB->getOne($sSQL);
-				if (PEAR::IsError($iPlaceID))
-				{
-					failInternalError("Could not get parent for place.", $sSQL, $iPlaceID);
-				}
+				$iPlaceID = chksql($this->oDB->getOne($sSQL),
+				                   "Could not get parent for place.");
 				if (!$iPlaceID)
 				{
 					$iPlaceID = $aPlace['place_id'];

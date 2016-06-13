@@ -2,6 +2,7 @@
 	require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	$sOutputFormat = 'html';
 	ini_set('memory_limit', '200M');
@@ -9,13 +10,14 @@
 	$oDB =& getDB();
 
 	$sSQL = "select placex.place_id, calculated_country_code as country_code, name->'name' as name, i.* from placex, import_polygon_delete i where placex.osm_id = i.osm_id and placex.osm_type = i.osm_type and placex.class = i.class and placex.type = i.type";
-	$aPolygons = $oDB->getAll($sSQL);
-	if (PEAR::isError($aPolygons))
-	{
-		failInternalError("Could not get list of deleted OSM elements.", $sSQL, $aPolygons);
-	}
+	$aPolygons = chksql($oDB->getAll($sSQL),
+	                    "Could not get list of deleted OSM elements.");
 
-//var_dump($aPolygons);
+	if (CONST_DEBUG)
+	{
+		var_dump($aPolygons);
+		exit;
+	}
 ?>
 <!DOCTYPE html>
 <html>
@@ -66,6 +68,7 @@ table td {
 
 <table>
 <?php
+	if (!$aPolygons) exit;
 	echo "<tr>";
 //var_dump($aPolygons[0]);
 	foreach($aPolygons[0] as $sCol => $sVal)
@@ -81,11 +84,10 @@ table td {
 			switch($sCol)
 			{
 				case 'osm_id':
-					$sOSMType = ($aRow['osm_type'] == 'N'?'node':($aRow['osm_type'] == 'W'?'way':($aRow['osm_type'] == 'R'?'relation':'')));
-					echo '<td><a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$sVal.'" target="_new">'.$sVal.'</a></td>';
+					echo '<td>'.osmLink($aRow).'</td>';
 					break;
 				case 'place_id':
-					echo '<td><a href="'.CONST_Website_BaseURL.'details?place_id='.$sVal.'">'.$sVal.'</a></td>';
+					echo '<td>'.detailsLink($aRow).'</td>';
 					break;
 				default:
 					echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";

@@ -5,6 +5,7 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+	require_once(CONST_BasePath.'/lib/output.php');
 
 	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
 	{
@@ -22,11 +23,7 @@
 	ini_set('memory_limit', '200M');
 
 	// Format for output
-	$sOutputFormat = 'xml';
-	if (isset($_GET['format']) && ($_GET['format'] == 'xml' || $_GET['format'] == 'json'))
-	{
-		$sOutputFormat = $_GET['format'];
-	}
+	$sOutputFormat = getParamSet('format', array('xml', 'json'), 'xml');
 
 	// Preferred language
 	$aLangPrefOrder = getPreferredLanguages();
@@ -35,45 +32,42 @@
 
 	$aSearchResults = array();
 	$aCleanedQueryParts = array();
-	if (isset($_GET['osm_ids']))
+
+	$oPlaceLookup = new PlaceLookup($oDB);
+	$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
+	$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
+	$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
+	$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+
+	$aOsmIds = explode(',', getParamString('osm_ids', ''));
+
+	if (count($aOsmIds) > CONST_Places_Max_ID_count)
 	{
-		$oPlaceLookup = new PlaceLookup($oDB);
-		$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-		$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
-		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
-		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+		userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
+	}
+
+	foreach ($aOsmIds AS $sItem)
+	{
+		// Skip empty sItem
+		if (empty($sItem)) continue;
 		
-		$aOsmIds = explode(',', $_GET['osm_ids']);
-		
-		if ( count($aOsmIds) > CONST_Places_Max_ID_count ) 
+		$sType = $sItem[0];
+		$iId = (int) substr($sItem, 1);
+		if ( $iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R') )
 		{
-			userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
-			exit;
-		}
-		
-		foreach ($aOsmIds AS $sItem) 
-		{
-			// Skip empty sItem
-			if (empty($sItem)) continue;
-			
-			$sType = $sItem[0];
-			$iId = (int) substr($sItem, 1);
-			if ( $iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R') )
-			{
-				$aCleanedQueryParts[] = $sType . $iId;
-				$oPlaceLookup->setOSMID($sType, $iId);
-				$oPlace = $oPlaceLookup->lookup();
-				if ($oPlace){
-					// we want to use the search-* output templates, so we need to fill
-					// $aSearchResults and slightly change the (reverse search) oPlace
-					// key names
-					$oResult = $oPlace;
-					unset($oResult['aAddress']);
-					if (isset($oPlace['aAddress'])) $oResult['address'] = $oPlace['aAddress'];
-					unset($oResult['langaddress']);
-					$oResult['name'] = $oPlace['langaddress'];
-					$aSearchResults[] = $oResult;
-				}
+			$aCleanedQueryParts[] = $sType . $iId;
+			$oPlaceLookup->setOSMID($sType, $iId);
+			$oPlace = $oPlaceLookup->lookup();
+			if ($oPlace){
+				// we want to use the search-* output templates, so we need to fill
+				// $aSearchResults and slightly change the (reverse search) oPlace
+				// key names
+				$oResult = $oPlace;
+				unset($oResult['aAddress']);
+				if (isset($oPlace['aAddress'])) $oResult['address'] = $oPlace['aAddress'];
+				unset($oResult['langaddress']);
+				$oResult['name'] = $oPlace['langaddress'];
+				$aSearchResults[] = $oResult;
 			}
 		}
 	}

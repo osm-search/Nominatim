@@ -61,7 +61,7 @@ Feature: Simple Tests
           | format
           | fd$#
         When sending search query "Berlin"
-        Then the result is valid html
+        Then a HTTP 400 is returned
 
     Scenario Outline: Simple Searches
         When sending search query "<query>"

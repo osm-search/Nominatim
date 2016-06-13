@@ -12,8 +12,7 @@
 	{
 		if (isset($aPlace['place_id'])) $aFilteredPlaces['place_id'] = $aPlace['place_id'];
 		$aFilteredPlaces['licence'] = "Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright";
-		$sOSMType = ($aPlace['osm_type'] == 'N'?'node':($aPlace['osm_type'] == 'W'?'way':($aPlace['osm_type'] == 'R'?'relation':
-		($aPlace['osm_type'] == 'T'?'tiger':($aPlace['osm_type'] == 'I'?'interpolation':'')))));
+		$sOSMType = formatOSMType($aPlace['osm_type']);
 		if ($sOSMType)
 		{
 			$aFilteredPlaces['osm_type'] = $sOSMType;
@@ -29,11 +28,6 @@
 		if (isset($aPlace['aBoundingBox']))
 		{
 			$aFilteredPlaces['boundingbox'] = $aPlace['aBoundingBox'];
-
-			if (isset($aPlace['aPolyPoints']) && $bAsPoints)
-			{
-				$aFilteredPlaces['polygonpoints'] = $aPlace['aPolyPoints'];
-			}
 		}
 
 		if (isset($aPlace['asgeojson']))
@@ -55,8 +49,6 @@
 		{
 			$aFilteredPlaces['geokml'] = $aPlace['askml'];
 		}
-
-
 	}
 
 	javascript_renderData($aFilteredPlaces);

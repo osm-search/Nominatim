@@ -7,7 +7,6 @@
 </head>
 
 
-
 <?php
 
 	function headline($sTitle)
@@ -20,30 +19,6 @@
 		echo "<tr class='all-columns'><td colspan='6'><h3>".$sTitle."</h3></td></tr>\n";
 	}
 
-	function osm_link($aFeature)
-	{
-		$sOSMType = ($aFeature['osm_type'] == 'N'?'node':($aFeature['osm_type'] == 'W'?'way':($aFeature['osm_type'] == 'R'?'relation':'')));
-		if ($sOSMType)
-		{
-			return '<a href="http://www.openstreetmap.org/browse/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.$aFeature['osm_id'].'</a>';
-		}
-		return '';
-	}
-
-	function wikipedia_link($aFeature)
-	{
-		if ($aFeature['wikipedia'])
-		{
-			list($sWikipediaLanguage,$sWikipediaArticle) = explode(':',$aFeature['wikipedia']);
-			return '<a href="https://'.$sWikipediaLanguage.'.wikipedia.org/wiki/'.urlencode($sWikipediaArticle).'" target="_blank">'.$aFeature['wikipedia'].'</a>';
-		}
-		return '';
-	}
-
-	function nominatim_link($aFeature, $sTitle)
-	{
-		return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.$sTitle.'</a>';
-	}
 
 	function format_distance($fDistance)
 	{
@@ -92,10 +67,10 @@
 		echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
 		echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
 		echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
-		echo '  <td>' . osm_link($aAddressLine) . "</td>\n";
+		echo '  <td>' . osmLink($aAddressLine) . "</td>\n";
 		echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . "</td>\n";
 		echo '  <td>' . format_distance($aAddressLine['distance'])."</td>\n";
-		echo '  <td>' . nominatim_link($aAddressLine,'details &gt;') . "</td>\n";
+		echo '  <td>' . detailsLink($aAddressLine,'details &gt;') . "</td>\n";
 		echo "</tr>\n";
 	}
 
@@ -143,10 +118,10 @@
 					}
 					kv('Coverage'        , ($aPointDetails['isarea']=='t'?'Polygon':'Point') );
 					kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
-					kv('OSM'             , osm_link($aPointDetails) );
+					kv('OSM'             , osmLink($aPointDetails) );
 					if ($aPointDetails['wikipedia'])
 					{
-						kv('Wikipedia Calculated' , wikipedia_link($aPointDetails) );
+						kv('Wikipedia Calculated' , wikipediaLink($aPointDetails) );
 					}
 
 					kv('Extra Tags'      , hash_to_subtable($aPointDetails['aExtraTags']) );

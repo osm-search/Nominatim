@@ -99,35 +99,35 @@ Feature: Simple Reverse Tests
           | lat
           | 51.51
         When sending an API call reverse
-        Then exactly 0 results are returned
+        Then a HTTP 400 is returned
 
     Scenario: Missing lat parameter
         Given the request parameters
           | lon
           | -79.39114
         When sending an API call reverse
-        Then exactly 0 results are returned
+        Then a HTTP 400 is returned
 
     Scenario: Missing osm_id parameter
         Given the request parameters
           | osm_type
           | N
         When sending an API call reverse
-        Then exactly 0 results are returned
+        Then a HTTP 400 is returned
 
     Scenario: Missing osm_type parameter
         Given the request parameters
           | osm_id
           | 3498564
         When sending an API call reverse
-        Then exactly 0 results are returned
+        Then a HTTP 400 is returned
 
     Scenario Outline: Bad format for lat or lon
         Given the request parameters
           | lat   | lon   |
           | <lat> | <lon> |
         When sending an API call reverse
-        Then exactly 0 results are returned
+        Then a HTTP 400 is returned
 
     Examples:
      | lat      | lon

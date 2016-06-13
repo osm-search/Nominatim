@@ -514,12 +514,8 @@
 
 			$sSQL .= " order by importance desc";
 			if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
-			$aSearchResults = $this->oDB->getAll($sSQL);
-
-			if (PEAR::IsError($aSearchResults))
-			{
-				failInternalError("Could not get details for place.", $sSQL, $aSearchResults);
-			}
+			$aSearchResults = chksql($this->oDB->getAll($sSQL),
+			                         "Could not get details for place.");
 
 			return $aSearchResults;
 		}
@@ -883,19 +879,13 @@
 				$sViewboxCentreSQL .= ")'::geometry,4326)";
 
 				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/69).")";
-				$this->sViewboxSmallSQL = $this->oDB->getOne($sSQL);
-				if (PEAR::isError($this->sViewboxSmallSQL))
-				{
-					failInternalError("Could not get small viewbox.", $sSQL, $this->sViewboxSmallSQL);
-				}
+				$this->sViewboxSmallSQL = chksql($this->oDB->getOne($sSQL),
+				                                 "Could not get small viewbox.");
 				$this->sViewboxSmallSQL = "'".$this->sViewboxSmallSQL."'::geometry";
 
 				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/30).")";
-				$this->sViewboxLargeSQL = $this->oDB->getOne($sSQL);
-				if (PEAR::isError($this->sViewboxLargeSQL))
-				{
-					failInternalError("Could not get large viewbox.", $sSQL, $this->sViewboxLargeSQL);
-				}
+				$this->sViewboxLargeSQL = chksql($this->oDB->getOne($sSQL),
+				                                 "Could not get large viewbox.");
 				$this->sViewboxLargeSQL = "'".$this->sViewboxLargeSQL."'::geometry";
 				$bBoundingBoxSearch = $this->bBoundedSearch;
 			}
@@ -961,11 +951,11 @@
 				foreach($aSpecialTermsRaw as $aSpecialTerm)
 				{
 					$sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
-					$sToken = $this->oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string");
+					$sToken = chksql($this->oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string"));
 					$sSQL = 'select * from (select word_id,word_token, word, class, type, country_code, operator';
 					$sSQL .= ' from word where word_token in (\' '.$sToken.'\')) as x where (class is not null and class not in (\'place\')) or country_code is not null';
 					if (CONST_Debug) var_Dump($sSQL);
-					$aSearchWords = $this->oDB->getAll($sSQL);
+					$aSearchWords = chksql($this->oDB->getAll($sSQL));
 					$aNewSearches = array();
 					foreach($aSearches as $aSearch)
 					{
@@ -1010,13 +1000,8 @@
 				$aTokens = array();
 				foreach($aPhrases as $iPhrase => $sPhrase)
 				{
-					$aPhrase = $this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string");
-					if (PEAR::isError($aPhrase))
-					{
-						userError("Illegal query string (not an UTF-8 string): ".$sPhrase);
-						if (CONST_Debug) var_dump($aPhrase);
-						exit;
-					}
+					$aPhrase = chksql($this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string"),
+					                  "Cannot nomralize query string (is it an UTF-8 string?)");
 					if (trim($aPhrase['string']))
 					{
 						$aPhrases[$iPhrase] = $aPhrase;
@@ -1043,11 +1028,14 @@
 					if (CONST_Debug) var_Dump($sSQL);
 
 					$aValidTokens = array();
-					if (sizeof($aTokens)) $aDatabaseWords = $this->oDB->getAll($sSQL);
-					else $aDatabaseWords = array();
-					if (PEAR::IsError($aDatabaseWords))
+					if (sizeof($aTokens))
 					{
-						failInternalError("Could not get word tokens.", $sSQL, $aDatabaseWords);
+						$aDatabaseWords = chksql($this->oDB->getAll($sSQL),
+						                         "Could not get word tokens.");
+					}
+					else
+					{
+						$aDatabaseWords = array();
 					}
 					$aPossibleMainWordIDs = array();
 					$aWordFrequencyScores = array();
@@ -1264,7 +1252,7 @@
 										$sSQL .= " and _st_intersects($this->sViewboxSmallSQL, geometry)";
 									$sSQL .= " order by st_area(geometry) desc limit 1";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 								}
 								else
 								{
@@ -1276,7 +1264,7 @@
 								if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
 								if (!$aSearch['sClass']) continue;
 								$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-								if ($this->oDB->getOne($sSQL))
+								if (chksql($this->oDB->getOne($sSQL)))
 								{
 									$sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
 									if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
@@ -1289,7 +1277,7 @@
 									if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 
 									// If excluded place IDs are given, it is fair to assume that
 									// there have been results in the small box, so no further
@@ -1304,7 +1292,7 @@
 										if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
 										$sSQL .= " limit $this->iLimit";
 										if (CONST_Debug) var_dump($sSQL);
-										$aPlaceIDs = $this->oDB->getCol($sSQL);
+										$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 									}
 								}
 								else
@@ -1315,7 +1303,7 @@
 									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
 									$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 								}
 							}
 						}
@@ -1426,11 +1414,8 @@
 									$sSQL .= " limit ".$this->iLimit;
 
 								if (CONST_Debug) { var_dump($sSQL); }
-								$aViewBoxPlaceIDs = $this->oDB->getAll($sSQL);
-								if (PEAR::IsError($aViewBoxPlaceIDs))
-								{
-									failInternalError("Could not get places for search terms.", $sSQL, $aViewBoxPlaceIDs);
-								}
+								$aViewBoxPlaceIDs = chksql($this->oDB->getAll($sSQL),
+								                           "Could not get places for search terms.");
 								//var_dump($aViewBoxPlaceIDs);
 								// Did we have an viewbox matches?
 								$aPlaceIDs = array();
@@ -1464,7 +1449,7 @@
 								}
 								$sSQL .= " limit $this->iLimit";
 								if (CONST_Debug) var_dump($sSQL);
-								$aPlaceIDs = $this->oDB->getCol($sSQL);
+								$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 								
 								// if nothing found, search in the interpolation line table
 								if(!sizeof($aPlaceIDs))
@@ -1486,7 +1471,7 @@
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									//get place IDs
-									$aPlaceIDs = $this->oDB->getCol($sSQL, 0);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL, 0));
 								}
 									
 								// If nothing found try the aux fallback table
@@ -1499,7 +1484,7 @@
 									}
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aPlaceIDs = $this->oDB->getCol($sSQL);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 								}
 
 								//if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger)
@@ -1521,7 +1506,7 @@
 									//$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									//get place IDs
-									$aPlaceIDs = $this->oDB->getCol($sSQL, 0);
+									$aPlaceIDs = chksql($this->oDB->getCol($sSQL, 0));
 								}
 
 								// Fallback to the road (if no housenumber was found)
@@ -1548,18 +1533,18 @@
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
 									$sSQL .= " order by rank_search asc limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
-									$aClassPlaceIDs = $this->oDB->getCol($sSQL);
+									$aClassPlaceIDs = chksql($this->oDB->getCol($sSQL));
 								}
 
 								if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
 								{
 									$sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-									$bCacheTable = $this->oDB->getOne($sSQL);
+									$bCacheTable = chksql($this->oDB->getOne($sSQL));
 
 									$sSQL = "select min(rank_search) from placex where place_id in ($sPlaceIDs)";
 
 									if (CONST_Debug) var_dump($sSQL);
-									$this->iMaxRank = ((int)$this->oDB->getOne($sSQL));
+									$this->iMaxRank = ((int)chksql($this->oDB->getOne($sSQL)));
 
 									// For state / country level searches the normal radius search doesn't work very well
 									$sPlaceGeom = false;
@@ -1568,7 +1553,7 @@
 										// Try and get a polygon to search in instead
 										$sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
 										if (CONST_Debug) var_dump($sSQL);
-										$sPlaceGeom = $this->oDB->getOne($sSQL);
+										$sPlaceGeom = chksql($this->oDB->getOne($sSQL));
 									}
 
 									if ($sPlaceGeom)
@@ -1580,7 +1565,7 @@
 										$this->iMaxRank += 5;
 										$sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank";
 										if (CONST_Debug) var_dump($sSQL);
-										$aPlaceIDs = $this->oDB->getCol($sSQL);
+										$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 										$sPlaceIDs = join(',',$aPlaceIDs);
 									}
 
@@ -1619,7 +1604,7 @@
 											if ($this->iOffset) $sSQL .= " offset $this->iOffset";
 											$sSQL .= " limit $this->iLimit";
 											if (CONST_Debug) var_dump($sSQL);
-											$aClassPlaceIDs = array_merge($aClassPlaceIDs, $this->oDB->getCol($sSQL));
+											$aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
 										}
 										else
 										{
@@ -1641,7 +1626,7 @@
 											if ($this->iOffset) $sSQL .= " offset $this->iOffset";
 											$sSQL .= " limit $this->iLimit";
 											if (CONST_Debug) var_dump($sSQL);
-											$aClassPlaceIDs = array_merge($aClassPlaceIDs, $this->oDB->getCol($sSQL));
+											$aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
 										}
 									}
 								}
@@ -1650,11 +1635,6 @@
 
 							}
 
-						}
-
-						if (PEAR::IsError($aPlaceIDs))
-						{
-							failInternalError("Could not get place IDs from tokens." ,$sSQL, $aPlaceIDs);
 						}
 
 						if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }
@@ -1685,7 +1665,7 @@
 						$sSQL .= ") UNION select place_id from location_property_osmline where place_id in (".join(',',array_keys($aResultPlaceIDs)).")";
 						$sSQL .= " and (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
 						if (CONST_Debug) var_dump($sSQL);
-						$aFilteredPlaceIDs = $this->oDB->getCol($sSQL);
+						$aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
 						$tempIDs = array();
 						foreach($aFilteredPlaceIDs as $placeID)
 						{

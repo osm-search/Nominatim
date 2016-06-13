@@ -14,7 +14,7 @@
 						'place_id'=>$aPointDetails['place_id'],
 					);
 
-			$sOSMType = ($aPointDetails['osm_type'] == 'N'?'node':($aPointDetails['osm_type'] == 'W'?'way':($aPointDetails['osm_type'] == 'R'?'relation':'')));
+			$sOSMType = formatOSMType($aPointDetails['osm_type']);
 			if ($sOSMType)
 			{
 				$aPlace['osm_type'] = $sOSMType;

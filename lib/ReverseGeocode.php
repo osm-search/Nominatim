@@ -203,6 +203,7 @@
 							$iPlaceID = $aPlaceLine['place_id'];
 							$iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
 							$fFraction = $aPlaceLine['fraction'];
+							$iMaxRank = 30;
 						}
 						// else: nothing to do, take placex house from above
 					}
@@ -213,6 +214,7 @@
 						$iPlaceID = $aPlaceLine['place_id'];
 						$iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
 						$fFraction = $aPlaceLine['fraction'];
+						$iMaxRank = 30;
 					}
 				}
 			}
@@ -249,6 +251,7 @@
 					$iPlaceID = $aPlaceTiger['place_id'];
 					$iParentPlaceID = $aPlaceTiger['parent_place_id']; // the street
 					$fFraction = $aPlaceTiger['fraction'];
+					$iMaxRank = 30;
 				}
 			}
 
@@ -272,7 +275,7 @@
 				}
 			}
 			return array('place_id' => $iPlaceID,
-						'type' => $bPlaceIsTiger ? 'tiger' : $bPlaceIsLine ? 'interpolation' : 'osm',
+						'type' => $bPlaceIsTiger ? 'tiger' : ($bPlaceIsLine ? 'interpolation' : 'osm'),
 						'fraction' => ($bPlaceIsTiger || $bPlaceIsLine) ? $fFraction : -1);
 		}
 		

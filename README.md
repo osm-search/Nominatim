@@ -29,7 +29,7 @@ Here is a quick summary of the necessary steps.
      cmake ..
      make
 
-   For more detailed installation instructions see [docs/installation.md]().
+   For more detailed installation instructions see [docs/Installation.md](docs/Installation.md).
    There are also step-by-step instructions for
      [Ubuntu 16.04](docs/install-on-ubuntu-16.md) and
      [CentOS 7.2](docs/install-on-centos-7.md).
@@ -38,7 +38,7 @@ Here is a quick summary of the necessary steps.
 
      ./build/utils/setup.php --osm-file <your planet file> --all
 
-   Details can be found in [docs/Import_and_update.md]()
+   Details can be found in [docs/Import_and_update.md](docs/Import_and_update.md)
 
 3. Point your webserver to the ./build/website directory.
 

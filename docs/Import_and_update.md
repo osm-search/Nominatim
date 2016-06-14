@@ -106,8 +106,12 @@ instance by following these steps:
 
          @define('CONST_Use_US_Tiger_Data', true);
 
+  6. Apply the new settings:
+
+        ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
+
 Be warned that the import can take a very long time, especially if you
-import all of the US.
+import all of the US. The entire US adds about 10GB to your database.
 
 
 Updates

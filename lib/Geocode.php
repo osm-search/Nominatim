@@ -1307,6 +1307,12 @@
 								}
 							}
 						}
+						// If a coordinate is given, the search must either
+						// be for a name or a special search. Ignore everythin else.
+						else if ($aSearch['fLon'] && !sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['sClass'])
+						{
+							$aPlaceIDs = array();
+						}
 						else
 						{
 							$aPlaceIDs = array();

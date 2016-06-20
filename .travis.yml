@@ -13,7 +13,7 @@ sudo: required
 #   postgresql: "9.1"
 before_install:
   - git submodule update --init --recursive
-  - sudo apt-get update -qq
+  - # sudo apt-get update -qq
   - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y 
   - # sudo mkdir -p /etc/apache2/conf-available/
 install:

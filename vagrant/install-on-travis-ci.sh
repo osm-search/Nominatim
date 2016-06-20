@@ -5,7 +5,7 @@ sudo apt-get update -qq
 sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
 sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
-                        libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
+                        libboost-filesystem-dev libboost-thread-dev libexpat1-dev zlib1g-dev libxml2-dev\
                         libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
                         postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \
                         apache2 php5 php5-pgsql php-pear php-db \
@@ -25,13 +25,13 @@ sudo service postgresql restart
 # createuser -S www-data
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$TRAVIS_BUILD_DIR/build/website">
-  Options FollowSymLinks MultiViews
-  AddType text/html   .php
-  Require all granted
-</Directory>
+    <Directory "$TRAVIS_BUILD_DIR/build/website">
+      Options FollowSymLinks MultiViews
+      AddType text/html   .php
+      Require all granted
+    </Directory>
 
-Alias /nominatim $TRAVIS_BUILD_DIR/build/website
+    Alias /nominatim $TRAVIS_BUILD_DIR/build/website
 EOFAPACHECONF
 
 sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf

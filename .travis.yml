@@ -17,7 +17,7 @@ before_install:
   - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y 
 install:
   - cd $TRAVIS_BUILD_DIR
-  - cat vagrant/install-on-ubuntu-16.sh | perl -pe's!USERNAME=(\w+)!USERNAME=$ENV{USER}!' | perl -pe's!USERHOME=(\S+)!USERHOME=$ENV{TRAVIS_BUILD_DIR}/../!' | perl -pe's!systemctl (\w+) (\w+)!service $2 $1!' | grep -v 'createuser -s' | grep -v 'apt-get upgrade'  > install-on-travis.sh
+  - cat vagrant/install-on-ubuntu-16.sh | perl -pe's!USERNAME=(\w+)!USERNAME=$ENV{USER}!' | perl -pe's!USERHOME=(\S+)!USERHOME=$ENV{TRAVIS_BUILD_DIR}/../!' | perl -pe's!systemctl (\w+) (\w+)!service $2 $1!' | grep -v 'createuser' | grep -v 'apt-get upgrade'  > install-on-travis.sh
   - chmod a+x install-on-travis.sh
   - ./install-on-travis.sh
 before_script:

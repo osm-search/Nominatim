@@ -12,7 +12,11 @@ services:
 #   postgresql: "9.1"
 install:
   - cd $TRAVIS_BUILD_DIR
-  - vagrant/install-on-ubuntu-16.sh
+  - echo $USER
+  - echo $TRAVIS_BUILD_DIR
+  - cat vagrant/install-on-ubuntu-16.sh | perl -pe's!USERNAME=(\w+)!USERNAME=$ENV{USER}' | perl -pe's!USERHOME=(\S+)!USERHOME=$ENV{TRAVIS_BUILD_DIR}!' > install-on-travis.sh
+  - chmod a+x install-on-travis.sh
+  - ./install-on-travis.sh
 before_script:
   - cd $TRAVIS_BUILD_DIR
   - wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf

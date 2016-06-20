@@ -6,9 +6,9 @@ sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
 sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
-                        libbz2-dev libpq-dev libgeos-dev libgeos++-dev libproj-dev \
+                        libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
                         postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \
-                        apache2 php php-pgsql libapache2-mod-php php-pear php-db \
+                        apache2 php5 php5-pgsql php-pear php-db \
                         git
 
 

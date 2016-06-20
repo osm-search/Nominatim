@@ -22,7 +22,7 @@ sudo service postgresql restart
 
 # sudo -u postgres createuser -s travis
 # sudo -u postgres 
-createuser -S www-data
+# createuser -S www-data
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$TRAVIS_BUILD_DIR/build/website">

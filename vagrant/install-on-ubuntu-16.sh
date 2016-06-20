@@ -94,6 +94,8 @@ sudo update-locale LANG=en_US.UTF-8 #DOCS:
 # You need to create an alias to the website directory in your apache
 # configuration. Add a separate nominatim configuration to your webserver:
 
+find /etc/apache2/
+
 #DOCS:```
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">

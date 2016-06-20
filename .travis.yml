@@ -11,16 +11,16 @@ services:
 # addons:
 #   postgresql: "9.1"
 install:
-  - cd $TRAVIS_BUILD_DIR/Nominatim
+  - cd $TRAVIS_BUILD_DIR
   - vagrant/install-on-ubuntu-16.sh
 before_script:
-  - cd $TRAVIS_BUILD_DIR/Nominatim
+  - cd $TRAVIS_BUILD_DIR
   - wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
   - ./utils/setup.php --osm-file data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
   - ./utils/specialphrases.php --countries > data/specialphrases_countries.sql
   - psql -d nominatim -f data/specialphrases_countries.sql
 script:
-  - cd $TRAVIS_BUILD_DIR/Nominatim/tests
+  - cd $TRAVIS_BUILD_DIR/tests
   - NOMINATIM_SERVER=http://localhost:8089/nominatim lettuce features
-  - cd $TRAVIS_BUILD_DIR/Nominatim/tests-php
+  - cd $TRAVIS_BUILD_DIR/tests-php
   - phpunit ./

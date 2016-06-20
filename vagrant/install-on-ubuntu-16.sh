@@ -85,7 +85,7 @@ sudo update-locale LANG=en_US.UTF-8 #DOCS:
 #
 
     sudo -u postgres createuser -s $USERNAME
-    sudo -u postgres createuser www-data
+    sudo -u postgres createuser -S www-data
 
 #
 # Setting up the Apache Webserver

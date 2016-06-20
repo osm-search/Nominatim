@@ -2,10 +2,10 @@
 language:
   # - 'php'
   - 'python'
-php:
-  - "5.6"
-python:
-  - "2.7"
+# php:
+#   - "5.6"
+# python:
+#   - "2.7"
 sudo: required
 # services:
 #   - postgresql
@@ -16,7 +16,7 @@ before_install:
   - # sudo apt-get update -qq
   - # sudo mkdir -p /etc/apache2/conf-available/
 install:
-  - cd $TRAVIS_BUILD_DIR
+  - # cd $TRAVIS_BUILD_DIR
   - vagrant/install-on-travis-ci.sh
 
 before_script:

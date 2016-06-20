@@ -12,7 +12,7 @@ sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-syst
                         git
 
 
-sudo apt-get install -y --quiet python-dev python-pip python-levenshtein python-shapely \
+sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
 
@@ -22,7 +22,7 @@ sudo service postgresql restart
 
 # sudo -u postgres createuser -s travis
 # sudo -u postgres 
-createuser www-data
+createuser -S www-data
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$TRAVIS_BUILD_DIR/build/website">

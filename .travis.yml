@@ -1,0 +1,26 @@
+---
+language:
+  - 'php'
+  - 'python'
+php:
+  - "5.6"
+python:
+  - "2.7"
+services:
+  - postgresql
+# addons:
+#   postgresql: "9.1"
+install:
+  - cd ~/Nominatim
+  - vagrant/install-on-ubuntu-16.sh
+before_script:
+  - cd ~/Nominatim
+  - wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+  - ./utils/setup.php --osm-file data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
+  - ./utils/specialphrases.php --countries > data/specialphrases_countries.sql
+  - psql -d nominatim -f data/specialphrases_countries.sql
+script:
+  - cd ~/Nominatim/tests
+  - NOMINATIM_SERVER=http://localhost:8089/nominatim lettuce features
+  - cd ~/Nominatim/tests-php
+  - phpunit ./

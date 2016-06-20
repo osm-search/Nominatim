@@ -14,7 +14,7 @@ install:
   - cd $TRAVIS_BUILD_DIR
   - echo $USER
   - echo $TRAVIS_BUILD_DIR
-  - cat vagrant/install-on-ubuntu-16.sh | perl -pe's!USERNAME=(\w+)!USERNAME=$ENV{USER}' | perl -pe's!USERHOME=(\S+)!USERHOME=$ENV{TRAVIS_BUILD_DIR}!' > install-on-travis.sh
+  - cat vagrant/install-on-ubuntu-16.sh | perl -pe's!USERNAME=(\w+)!USERNAME=$ENV{USER}!' | perl -pe's!USERHOME=(\S+)!USERHOME=$ENV{TRAVIS_BUILD_DIR}!' > install-on-travis.sh
   - chmod a+x install-on-travis.sh
   - ./install-on-travis.sh
 before_script:

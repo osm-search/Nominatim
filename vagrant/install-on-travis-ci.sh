@@ -16,12 +16,13 @@ sudo apt-get install -y --quiet python-dev python-pip python-levenshtein python-
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
 
-pip install --quiet --user lettuce==0.2.18 six==1.7 haversine
+pip install --quiet lettuce==0.2.18 six==1.7 haversine
 
 sudo service postgresql restart
 
 # sudo -u postgres createuser -s travis
-sudo -u postgres createuser www-data
+# sudo -u postgres 
+createuser www-data
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$TRAVIS_BUILD_DIR/build/website">

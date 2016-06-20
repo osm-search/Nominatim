@@ -1,6 +1,6 @@
 ---
 language:
-  - 'php'
+  # - 'php'
   - 'python'
 php:
   - "5.6"
@@ -14,7 +14,6 @@ sudo: required
 before_install:
   - git submodule update --init --recursive
   - # sudo apt-get update -qq
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y 
   - # sudo mkdir -p /etc/apache2/conf-available/
 install:
   - cd $TRAVIS_BUILD_DIR

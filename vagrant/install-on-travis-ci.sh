@@ -1,9 +1,10 @@
 #!/bin/bash
 
 sudo apt-get update -qq
-sudo apt-get upgrade -y --quiet
 
-sudo apt-get install -y --quiet build-essential cmake g++ libboost-dev libboost-system-dev \
+sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
+
+sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
                         libbz2-dev libpq-dev libgeos-dev libgeos++-dev libproj-dev \
                         postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \

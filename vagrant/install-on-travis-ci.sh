@@ -56,6 +56,9 @@ sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf
 sudo a2enconf nominatim
 sudo service apache2 restart
 
+ls -la /usr/sbin/a*
+g++ --version
+
 cd $TRAVIS_BUILD_DIR
 mkdir build
 cd build

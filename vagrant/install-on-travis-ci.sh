@@ -21,7 +21,7 @@ mv download boost_1_54_0.tar.gz
 tar -xzf boost_1_54_0.tar.gz
 cd boost_1_54_0/
 ./bootstrap.sh --with-libraries=atomic,date_time,exception,filesystem,iostreams,locale,program_options,regex,signals,system,test,thread,timer,log
-sudo ./b2 install
+sudo ./b2 install -d0
 
 
 

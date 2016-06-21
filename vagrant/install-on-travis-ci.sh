@@ -13,6 +13,7 @@ sudo apt-get install -y -qq build-essential cmake gcc g++ libboost-dev libboost-
                         apache2 php5 php5-pgsql php-pear php-db \
                         git
 
+sudo apt-get install -y gcc-4.8 g++-4.8
 
 cd /tmp
 wget http://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz/download

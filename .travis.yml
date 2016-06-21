@@ -15,7 +15,7 @@ before_script:
   - ./utils/specialphrases.php --countries > ../data/specialphrases_countries.sql
   - psql -d nominatim -f ../data/specialphrases_countries.sql
 script:
-  - cd $TRAVIS_BUILD_DIR/tests
+  - cd $TRAVIS_BUILD_DIR/build/tests
   - NOMINATIM_SERVER=http://localhost:8089/nominatim lettuce features
-  - cd $TRAVIS_BUILD_DIR/tests-php
+  - cd $TRAVIS_BUILD_DIR/build/tests-php
   - phpunit ./

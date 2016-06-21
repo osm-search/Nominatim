@@ -2,10 +2,10 @@
 
 
 # https://docs.travis-ci.com/user/trusty-ci-environment/
+# postgres 9.1 running
+# python 2.7
 
 sudo apt-get update -qq
-
-# sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
 sudo service postgresql stop # 9.1 is running
 
@@ -25,6 +25,10 @@ sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shap
 pip install --quiet lettuce==0.2.18 six==1.7 haversine
 
 sudo service postgresql restart
+
+
+# Make sure that system servers can read from the home directory:
+chmod a+x $USER
 
 # sudo -u postgres createuser -s travis
 # sudo -u postgres 

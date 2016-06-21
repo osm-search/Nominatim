@@ -13,12 +13,8 @@ sudo: required
 #   postgresql: "9.1"
 before_install:
   - git submodule update --init --recursive
-  - # sudo apt-get update -qq
-  - # sudo mkdir -p /etc/apache2/conf-available/
 install:
-  - # cd $TRAVIS_BUILD_DIR
   - vagrant/install-on-travis-ci.sh
-
 before_script:
   - cd $TRAVIS_BUILD_DIR
   - wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf

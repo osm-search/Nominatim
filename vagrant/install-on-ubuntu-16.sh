@@ -85,7 +85,7 @@ sudo update-locale LANG=en_US.UTF-8 #DOCS:
 #
 
     sudo -u postgres createuser -s $USERNAME
-    sudo -u postgres createuser -S www-data
+    sudo -u postgres createuser www-data
 
 #
 # Setting up the Apache Webserver
@@ -93,8 +93,6 @@ sudo update-locale LANG=en_US.UTF-8 #DOCS:
 #
 # You need to create an alias to the website directory in your apache
 # configuration. Add a separate nominatim configuration to your webserver:
-
-find /etc/apache2/
 
 #DOCS:```
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF

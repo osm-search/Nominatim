@@ -6,7 +6,7 @@ sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
 sudo service postgresql stop
 
-sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
+sudo apt-get install -y -qq build-essential cmake gcc g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libboost-thread-dev libexpat1-dev zlib1g-dev libxml2-dev\
                         libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
                         postgresql-server-dev-9.3 postgresql-9.3-postgis-2.1 postgresql-contrib-9.3 \
@@ -58,6 +58,9 @@ sudo service apache2 restart
 
 ls -la /usr/sbin/a*
 g++ --version
+gcc --version
+which cc1plus
+cc1plus --version
 
 cd $TRAVIS_BUILD_DIR
 mkdir build

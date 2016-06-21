@@ -14,6 +14,16 @@ sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-syst
                         git
 
 
+cd /tmp
+wget http://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz/download
+tar -xvzf boost_1_54_0.tar.gz
+cd boost_1_54_0/
+./bootstrap.sh --with-libraries=atomic,date_time,exception,filesystem,iostreams,locale,program_options,regex,signals,system,test,thread,timer,log
+sudo ./b2 install
+
+
+
+
 sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
@@ -27,6 +37,7 @@ sudo service postgresql restart
 # sudo -u postgres createuser -s travis
 # sudo -u postgres 
 # createuser -S www-data
+sudo mkdir -p /etc/apache2/conf-available/
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
     <Directory "$TRAVIS_BUILD_DIR/build/website">

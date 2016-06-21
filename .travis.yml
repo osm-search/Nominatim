@@ -1,23 +1,14 @@
 ---
 language:
-  # - 'php'
   - 'python'
-# php:
-#   - "5.6"
-# python:
-#   - "2.7"
 sudo: required
 dist: trusty
-# services:
-#   - postgresql
-# addons:
-#   postgresql: "9.1"
 before_install:
   - git submodule update --init --recursive
 install:
   - vagrant/install-on-travis-ci.sh
 before_script:
-  - cd $TRAVIS_BUILD_DIR
+  - cd $TRAVIS_BUILD_DIR/build/
   - wget --no-verbose --output-document=data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
   - ./utils/setup.php --osm-file data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
   - ./utils/specialphrases.php --countries > data/specialphrases_countries.sql

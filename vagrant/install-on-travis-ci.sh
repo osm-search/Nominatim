@@ -28,6 +28,7 @@ sudo service postgresql restart
 
 
 # Make sure that system servers can read from the home directory:
+chmod a+x $HOME
 chmod a+x $TRAVIS_BUILD_DIR
 chmod a+x $TRAVIS_BUILD_DIR/..
 

@@ -2,7 +2,7 @@
 
 sudo apt-get update -qq
 
-sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
+# sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
 sudo service postgresql stop
 
@@ -12,8 +12,6 @@ sudo apt-get install -y -qq build-essential cmake gcc g++ libboost-dev libboost-
                         postgresql-server-dev-9.3 postgresql-9.3-postgis-2.1 postgresql-contrib-9.3 \
                         apache2 php5 php5-pgsql php-pear php-db \
                         git
-
-# sudo apt-get install -y gcc-4.8 g++-4.8
 
 # cd /tmp
 # wget http://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz/download
@@ -31,7 +29,7 @@ sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shap
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
 
-sudo apt-get autoremove
+# sudo apt-get autoremove -y
 
 pip install --quiet lettuce==0.2.18 six==1.7 haversine
 

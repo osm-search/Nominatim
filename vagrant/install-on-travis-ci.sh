@@ -16,6 +16,8 @@ sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shap
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
 
+sudo apt-get autoremove
+
 pip install --quiet lettuce==0.2.18 six==1.7 haversine
 
 sudo service postgresql restart

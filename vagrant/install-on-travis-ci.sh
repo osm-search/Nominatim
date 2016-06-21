@@ -18,7 +18,7 @@ sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-syst
 
 
 
-sudo apt-get install -y -qq python-dev python-pip python-levenshtein python-shapely \
+sudo apt-get install -y -qq python-dev python-pip python-Levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib \
                         phpunit
 

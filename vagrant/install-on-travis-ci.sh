@@ -1,10 +1,13 @@
 #!/bin/bash
 
+
+# https://docs.travis-ci.com/user/trusty-ci-environment/
+
 sudo apt-get update -qq
 
 # sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
-# sudo service postgresql stop
+sudo service postgresql stop
 
 sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\

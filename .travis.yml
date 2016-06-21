@@ -7,6 +7,7 @@ language:
 # python:
 #   - "2.7"
 sudo: required
+dist: trusty
 # services:
 #   - postgresql
 # addons:

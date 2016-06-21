@@ -7,7 +7,7 @@ sudo apt-get update -qq
 
 # sudo apt-get -o Dpkg::Options::="--force-confnew" upgrade -y -qq
 
-sudo service postgresql stop
+sudo service postgresql stop # 9.1 is running
 
 sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
@@ -30,7 +30,7 @@ sudo service postgresql restart
 # sudo -u postgres 
 # createuser -S www-data
 
-sudo mkdir -p /etc/apache2/conf-available/
+# sudo mkdir -p /etc/apache2/conf-available/
 
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
     <Directory "$TRAVIS_BUILD_DIR/build/website">

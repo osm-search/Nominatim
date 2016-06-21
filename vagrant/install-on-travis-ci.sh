@@ -16,7 +16,7 @@ sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-syst
 
 cd /tmp
 wget http://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz/download
-ls -la
+ls -la 
 mv download boost_1_54_0.tar.gz
 tar -xzf boost_1_54_0.tar.gz
 cd boost_1_54_0/

@@ -761,6 +761,7 @@
 
 	function pgsqlRunPartitionScript($sTemplate)
 	{
+		global $aCMDResult;
 		$oDB =& getDB();
 
 		$sSQL = 'select distinct partition from country_name';

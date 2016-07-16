@@ -766,7 +766,7 @@
 
 		$sSQL = 'select distinct partition from country_name';
 		$aPartitions = chksql($oDB->getCol($sSQL));
-		if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
+		if (!$aPartitions) $aPartitions[] = 0;
 
 		preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
 		foreach($aMatches as $aMatch)

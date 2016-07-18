@@ -9,14 +9,6 @@
 	}
 
 
-	function getLoadAverage()
-	{
-		$sLoadAverage = file_get_contents('/proc/loadavg');
-		$aLoadAverage = explode(' ',$sLoadAverage);
-		return (float)$aLoadAverage[0];
-	}
-
-
 	function getProcessorCount()
 	{
 		$sCPU = file_get_contents('/proc/cpuinfo');

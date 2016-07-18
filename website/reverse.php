@@ -8,19 +8,6 @@
 	require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 	require_once(CONST_BasePath.'/lib/output.php');
 
-	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
-	{
-		$fLoadAvg = getLoadAverage();
-		if ($fLoadAvg > 2) sleep(60);
-		if ($fLoadAvg > 4) sleep(120);
-		if ($fLoadAvg > 6)
-		{
-			echo "Bulk User: Temporary block due to high server load\n";
-			exit;
-		}
-	}
-
-
 	$bAsGeoJSON = getParamBool('polygon_geojson');
 	$bAsKML = getParamBool('polygon_kml');
 	$bAsSVG = getParamBool('polygon_svg');

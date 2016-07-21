@@ -96,13 +96,13 @@
 	<script type="text/javascript">
 	<?php
 
-		$aNominatimMapInit = [
+		$aNominatimMapInit = array(
 			'zoom' => $iZoom,
 			'lat' => $fLat,
 			'lon' => $fLon,
 			'tile_url' => $sTileURL,
 			'tile_attribution' => $sTileAttribution
-		];
+		);
 		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
 		echo 'var nominatim_results = ' . json_encode($aSearchResults, JSON_PRETTY_PRINT) . ';'; 

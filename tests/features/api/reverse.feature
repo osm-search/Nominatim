@@ -18,9 +18,9 @@ Feature: Reverse geocoding
           | xml    | 4
         When looking up coordinates 53.9788769,13.0830313
         And results contain valid boundingboxes
-    
+
     Scenario: Reverse geocoding for odd interpolated housenumber
-    
+
     Scenario: Reverse geocoding for even interpolated housenumber
 
     @Tiger
@@ -32,9 +32,10 @@ Feature: Reverse geocoding
         And exactly 1 result is returned
         And result addresses contain
           | ID | house_number | road               | postcode | country_code
-          | 0  | 7096         | Kings Estate Drive | 84128    | us
-        And result 0 has not attributes osm_id,osm_type
-
+          | 0  | 709.         | Kings Estate Drive | 84128    | us
+        And results contain
+          | osm_type
+          | tiger
 
     @Tiger
     Scenario: No TIGER house number for zoom < 18

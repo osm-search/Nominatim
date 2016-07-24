@@ -1,5 +1,6 @@
 <?php
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+	require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 
 	class Geocode
 	{
@@ -1696,9 +1697,16 @@
 			else
 			{
 				// Just interpret as a reverse geocode
-				$iPlaceID = geocodeReverse((float)$this->aNearPoint[0], (float)$this->aNearPoint[1]);
-				if ($iPlaceID)
-					$aSearchResults = $this->getDetails(array($iPlaceID));
+				$oReverse = new ReverseGeocode($this->oDB);
+				$oReverse->setLatLon((float)$this->aNearPoint[0], (float)$this->aNearPoint[1]);
+				$oReverse->setZoom(18);
+
+				$aLookup = $oReverse->lookup(false);
+
+				if (CONST_Debug) var_dump("Reverse search", $aLookup);
+
+				if ($aLookup['place_id'])
+					$aSearchResults = $this->getDetails(array($aLookup['place_id'] => -1));
 				else
 					$aSearchResults = array();
 			}

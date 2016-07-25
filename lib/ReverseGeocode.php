@@ -2,40 +2,12 @@
 	class ReverseGeocode
 	{
 		protected $oDB;
-
-		protected $fLat;
-		protected $fLon;
 		protected $iMaxRank = 28;
-
-		protected $aLangPrefOrder = array();
-
-		protected $bIncludePolygonAsPoints = false;
-		protected $bIncludePolygonAsText = false;
-		protected $bIncludePolygonAsGeoJSON = false;
-		protected $bIncludePolygonAsKML = false;
-		protected $bIncludePolygonAsSVG = false;
-		protected $fPolygonSimplificationThreshold = 0.0;
 
 
 		function ReverseGeocode(&$oDB)
 		{
 			$this->oDB =& $oDB;
-		}
-
-		function setLanguagePreference($aLangPref)
-		{
-			$this->aLangPrefOrder = $aLangPref;
-		}
-
-		function setLatLon($fLat, $fLon)
-		{
-			$this->fLat = (float)$fLat;
-			$this->fLon = (float)$fLon;
-		}
-
-		function setRank($iRank)
-		{
-			$this->iMaxRank = $iRank;
 		}
 
 		function setZoom($iZoom)
@@ -66,51 +38,11 @@
 			$this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
 		}
 
-				function setIncludePolygonAsPoints($b = true)
-		{
-			$this->bIncludePolygonAsPoints = $b;
-		}
-
-		function getIncludePolygonAsPoints()
-		{
-			return $this->bIncludePolygonAsPoints;
-		}
-
-		function setIncludePolygonAsText($b = true)
-		{
-			$this->bIncludePolygonAsText = $b;
-		}
-
-		function getIncludePolygonAsText()
-		{
-			return $this->bIncludePolygonAsText;
-		}
-
-		function setIncludePolygonAsGeoJSON($b = true)
-		{
-			$this->bIncludePolygonAsGeoJSON = $b;
-		}
-
-		function setIncludePolygonAsKML($b = true)
-		{
-			$this->bIncludePolygonAsKML = $b;
-		}
-
-		function setIncludePolygonAsSVG($b = true)
-		{
-			$this->bIncludePolygonAsSVG = $b;
-		}
-
-		function setPolygonSimplificationThreshold($f)
-		{
-			$this->fPolygonSimplificationThreshold = $f;
-		}
-
 		// returns { place_id =>, type => '(osm|tiger)' }
 		// fails if no place was found
-		function lookup($bDoInterpolation = true)
+		function lookup($fLat, $fLon, $bDoInterpolation = true)
 		{
-			$sPointSQL = 'ST_SetSRID(ST_Point('.$this->fLon.','.$this->fLat.'),4326)';
+			$sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
 			$iMaxRank = $this->iMaxRank;
 			$iMaxRank_orig = $this->iMaxRank;
 

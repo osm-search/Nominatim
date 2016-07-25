@@ -1698,10 +1698,11 @@
 			{
 				// Just interpret as a reverse geocode
 				$oReverse = new ReverseGeocode($this->oDB);
-				$oReverse->setLatLon((float)$this->aNearPoint[0], (float)$this->aNearPoint[1]);
 				$oReverse->setZoom(18);
 
-				$aLookup = $oReverse->lookup(false);
+				$aLookup = $oReverse->lookup((float)$this->aNearPoint[0],
+				                             (float)$this->aNearPoint[1],
+				                             false);
 
 				if (CONST_Debug) var_dump("Reverse search", $aLookup);
 

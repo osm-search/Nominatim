@@ -54,12 +54,9 @@
 	else if ($fLat !== false && $fLon !==false)
 	{
 		$oReverseGeocode = new ReverseGeocode($oDB);
-		$oReverseGeocode->setLanguagePreference($aLangPrefOrder);
-
-		$oReverseGeocode->setLatLon($fLat, $fLon);
 		$oReverseGeocode->setZoom(getParamInt('zoom', 18));
 
-		$aLookup = $oReverseGeocode->lookup();
+		$aLookup = $oReverseGeocode->lookup($fLat, $fLon);
 		if (CONST_Debug) var_dump($aLookup);
 	}
 	else if ($sOutputFormat != 'html')

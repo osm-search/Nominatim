@@ -4,7 +4,6 @@
 		protected $oDB;
 		protected $iMaxRank = 28;
 
-
 		function ReverseGeocode(&$oDB)
 		{
 			$this->oDB =& $oDB;
@@ -44,7 +43,6 @@
 		{
 			$sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
 			$iMaxRank = $this->iMaxRank;
-			$iMaxRank_orig = $this->iMaxRank;
 
 			// Find the nearest point
 			$fSearchDiam = 0.0004;
@@ -87,7 +85,7 @@
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
 			}
 			// if a street or house was found, look in interpolation lines table
-			if ($bDoInterpolation && $iMaxRank_orig >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
+			if ($bDoInterpolation && $this->iMaxRank >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
 			{
 				// if a house was found, search the interpolation line that is at least as close as the house
 				$sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
@@ -152,7 +150,7 @@
 			}
 			
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
+			if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $this->iMaxRank >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
 				$fSearchDiam = 0.001;
 				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';

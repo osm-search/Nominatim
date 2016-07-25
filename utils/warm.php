@@ -41,7 +41,8 @@
 			$aLookup = $oReverseGeocode->lookup($fLat, $fLon);
 			if ($aLookup && $aLookup['place_id'])
 			{
-				$aDetails = $oPlaceLookup->lookupPlace($aLookup);
+				$aDetails = $oPlaceLookup->lookup((int)$aLookup['place_id'],
+				                                  $aLookup['type'], $aLookup['fraction']);
 				if ($bVerbose) echo $aDetails['langaddress']."\n";
 			}
 			else echo ".";

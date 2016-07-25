@@ -1735,18 +1735,18 @@
 
 			if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
 
+			$oPlaceLookup = new PlaceLookup($this->oDB);
+			$oPlaceLookup->setIncludePolygonAsPoints($this->bIncludePolygonAsPoints);
+			$oPlaceLookup->setIncludePolygonAsText($this->bIncludePolygonAsText);
+			$oPlaceLookup->setIncludePolygonAsGeoJSON($this->bIncludePolygonAsGeoJSON);
+			$oPlaceLookup->setIncludePolygonAsKML($this->bIncludePolygonAsKML);
+			$oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
+			$oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
+
 			foreach($aSearchResults as $iResNum => $aResult)
 			{
 				// Default
 				$fDiameter = getResultDiameter($aResult);
-
-				$oPlaceLookup = new PlaceLookup($this->oDB);
-				$oPlaceLookup->setIncludePolygonAsPoints($this->bIncludePolygonAsPoints);
-				$oPlaceLookup->setIncludePolygonAsText($this->bIncludePolygonAsText);
-				$oPlaceLookup->setIncludePolygonAsGeoJSON($this->bIncludePolygonAsGeoJSON);
-				$oPlaceLookup->setIncludePolygonAsKML($this->bIncludePolygonAsKML);
-				$oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
-				$oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
 
 				$aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
 				if ($aOutlineResult)

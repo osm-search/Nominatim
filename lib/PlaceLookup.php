@@ -3,18 +3,10 @@
 	{
 		protected $oDB;
 
-		protected $iPlaceID;
-
-		protected $sType = false;
-
-		protected $fTigerFraction = -1;
-
 		protected $aLangPrefOrder = array();
 
 		protected $bAddressDetails = false;
-
 		protected $bExtraTags = false;
-
 		protected $bNameDetails = false;
 
 		protected $bIncludePolygonAsPoints = false;
@@ -91,38 +83,23 @@
 			$this->fPolygonSimplificationThreshold = $f;
 		}
 
-
-		function setPlaceID($iPlaceID)
-		{
-			$this->iPlaceID = $iPlaceID;
-		}
-
-		function setOSMID($sType, $iID)
+		function lookupOSMID($sType, $iID)
 		{
 			$sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int)$iID." order by type = 'postcode' asc";
-			$this->iPlaceID = chksql($this->oDB->getOne($sSQL));
+			$iPlaceID = chksql($this->oDB->getOne($sSQL));
+
+			return $this->lookup((int)$iPlaceID);
 		}
 
-		function lookupPlace($details)
+		function lookup($iPlaceID, $sType = '', $fInterpolFraction = 0.0)
 		{
-			if (isset($details['place_id'])) $this->iPlaceID = $details['place_id'];
-			if (isset($details['type'])) $this->sType = $details['type'];
-			if (isset($details['osm_type']) && isset($details['osm_id']))
-			{
-				$this->setOSMID($details['osm_type'], $details['osm_id']);
-			}
-			if (isset($details['fraction'])) $this->fInterpolFraction = $details['fraction'];
-
-			return $this->lookup();
-		}
-
-		function lookup()
-		{
-			if (!$this->iPlaceID) return null;
+			if (!$iPlaceID) return null;
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
+			$bIsTiger = CONST_Use_US_Tiger_Data && $sType == 'tiger';
+			$bIsInterpolation = $sType == 'interpolation';
 
-			if (CONST_Use_US_Tiger_Data && $this->sType == 'tiger')
+			if ($bIsTiger)
 			{
 				$sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
@@ -134,13 +111,13 @@
 				if ($this->bNameDetails) $sSQL .= " null as names,";
 				$sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
 				$sSQL .= " (select *, ";
-				$sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-				$sSQL .= " WHEN interpolationtype='even' THEN ((".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-				$sSQL .= " WHEN interpolationtype='all' THEN (".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
+				$sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
+				$sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
+				$sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
 				$sSQL .= " END as housenumber";
-				$sSQL .= " from location_property_tiger where place_id = ".(int)$this->iPlaceID.") as blub1) as blub2";
+				$sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
 			}
-			else if ($this->sType == 'interpolation')
+			else if ($bIsInterpolation)
 			{
 				$sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, null as isin, postcode,";
 				$sSQL .= " calculated_country_code as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
@@ -152,11 +129,11 @@
 				if ($this->bNameDetails) $sSQL .= " null as names,";
 				$sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
 				$sSQL .= " (select *, ";
-				$sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-				$sSQL .= " WHEN interpolationtype='even' THEN ((".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-				$sSQL .= " WHEN interpolationtype='all' THEN (".$this->fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
+				$sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
+				$sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
+				$sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
 				$sSQL .= " END as housenumber";
-				$sSQL .= " from location_property_osmline where place_id = ".(int)$this->iPlaceID.") as blub1) as blub2";
+				$sSQL .= " from location_property_osmline where place_id = ".$iPlaceID.") as blub1) as blub2";
 				// testcase: interpolationtype=odd, startnumber=1000, endnumber=1006, fInterpolFraction=1 => housenumber=1007 => error in st_lineinterpolatepoint
 				// but this will never happen, because if the searched point is that close to the endnumber, the endnumber house will be directly taken from placex (in ReverseGeocode.php line 220)
 				// and not interpolated
@@ -172,7 +149,7 @@
 				if ($this->bNameDetails) $sSQL .= " hstore_to_json(name) as names,";
 				$sSQL .= " (case when centroid is null then st_y(st_centroid(geometry)) else st_y(centroid) end) as lat,";
 				$sSQL .= " (case when centroid is null then st_x(st_centroid(geometry)) else st_x(centroid) end) as lon";
-				$sSQL .= " from placex where place_id = ".(int)$this->iPlaceID;
+				$sSQL .= " from placex where place_id = ".$iPlaceID;
 			}
 
 			$aPlace = chksql($this->oDB->getRow($sSQL), "Could not lookup place");
@@ -181,11 +158,10 @@
 
 			if ($this->bAddressDetails)
 			{
-				if(CONST_Use_US_Tiger_Data && $this->sType == 'tiger' || $this->sType == 'interpolation') // to get addressdetails for tiger data, the housenumber is needed
-					$aAddress = $this->getAddressNames($aPlace['housenumber']);
-				else
-					$aAddress = $this->getAddressNames();
-				$aPlace['aAddress'] = $aAddress;
+				// to get addressdetails for tiger data, the housenumber is needed
+				$iHousenumber = ($bIsTiger || $bIsInterpolation) ? $aPlace['housenumber'] : -1;
+				$aPlace['aAddress'] = $this->getAddressNames($aPlace['place_id'],
+				                                             $iHousenumber);
 			}
 
 			if ($this->bExtraTags)
@@ -232,22 +208,20 @@
 			return $aPlace;
 		}
 
-		function getAddressDetails($bAll = false, $housenumber = -1)
+		function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
 		{
-			if (!$this->iPlaceID) return null;
-
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
-			$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$this->iPlaceID.",".$housenumber.")";
+			$sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$iPlaceID.",".$housenumber.")";
 			if (!$bAll) $sSQL .= " WHERE isaddress OR type = 'country_code'";
 			$sSQL .= " order by rank_address desc,isaddress desc";
 
 			return chksql($this->oDB->getAll($sSQL));
 		}
 
-		function getAddressNames($housenumber = -1)
+		function getAddressNames($iPlaceID, $housenumber = -1)
 		{
-			$aAddressLines = $this->getAddressDetails(false, $housenumber);
+			$aAddressLines = $this->getAddressDetails($iPlaceID, false, $housenumber);
 
 			$aAddress = array();
 			$aFallback = array();

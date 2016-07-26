@@ -25,7 +25,7 @@
                         bzip2-devel proj-devel geos-devel libxml2-devel boost-devel expat-devel zlib-devel
 
 # If you want to run the test suite, you need to install the following
-# aditional packages:
+# additional packages:
 
     sudo yum install -y python-pip python-Levenshtein python-psycopg2 \
                         php-phpunit-PHPUnit
@@ -84,7 +84,8 @@
 
 #
 # Finally, we need to add two postgres users: one for the user that does
-# the import and another for the webserver ro access the database:
+# the import and another for the webserver which should access the database
+# only for reading:
 #
 
     sudo -u postgres createuser -s $USERNAME
@@ -148,7 +149,7 @@ else                               #DOCS:
     cd $USERHOME                   #DOCS:
 fi                                 #DOCS:
 
-# The code is built in a special directory. Create this directory,
+# The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
     mkdir build

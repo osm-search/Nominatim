@@ -63,11 +63,6 @@
 			$this->aLangPrefOrder = $aLangPref;
 		}
 
-		function setIncludeAddressDetails($bAddressDetails = true)
-		{
-			$this->bIncludeAddressDetails = (bool)$bAddressDetails;
-		}
-
 		function getIncludeAddressDetails()
 		{
 			return $this->bIncludeAddressDetails;
@@ -88,19 +83,9 @@
 			$this->bIncludePolygonAsPoints = $b;
 		}
 
-		function getIncludePolygonAsPoints()
-		{
-			return $this->bIncludePolygonAsPoints;
-		}
-
 		function setIncludePolygonAsText($b = true)
 		{
 			$this->bIncludePolygonAsText = $b;
-		}
-
-		function getIncludePolygonAsText()
-		{
-			return $this->bIncludePolygonAsText;
 		}
 
 		function setIncludePolygonAsGeoJSON($b = true)
@@ -123,11 +108,6 @@
 			$this->fPolygonSimplificationThreshold = $f;
 		}
 
-		function setDeDupe($bDeDupe = true)
-		{
-			$this->bDeDupe = (bool)$bDeDupe;
-		}
-
 		function setLimit($iLimit = 10)
 		{
 			if ($iLimit > 50) $iLimit = 50;
@@ -137,30 +117,9 @@
 			$this->iLimit = $this->iFinalLimit + min($this->iFinalLimit, 10);
 		}
 
-		function setOffset($iOffset = 0)
-		{
-			$this->iOffset = $iOffset;
-		}
-
-		function setFallback($bFallback = true)
-		{
-			$this->bFallback = (bool)$bFallback;
-		}
-
-		function setExcludedPlaceIDs($a)
-		{
-			// TODO: force to int
-			$this->aExcludePlaceIDs = $a;
-		}
-
 		function getExcludedPlaceIDs()
 		{
 			return $this->aExcludePlaceIDs;
-		}
-
-		function setBounded($bBoundedSearch = true)
-		{
-			$this->bBoundedSearch = (bool)$bBoundedSearch;
 		}
 
 		function setViewBox($fLeft, $fBottom, $fRight, $fTop)
@@ -172,11 +131,6 @@
 		{
 			if (!$this->aViewBox) return null;
 			return $this->aViewBox[0].','.$this->aViewBox[3].','.$this->aViewBox[2].','.$this->aViewBox[1];
-		}
-
-		function setRoute($aRoutePoints)
-		{
-			$this->aRoutePoints = $aRoutePoints;
 		}
 
 		function setFeatureType($sFeatureType)
@@ -200,18 +154,13 @@
 
 		function setRankRange($iMin, $iMax)
 		{
-			$this->iMinAddressRank = (int)$iMin;
-			$this->iMaxAddressRank = (int)$iMax;
+			$this->iMinAddressRank = $iMin;
+			$this->iMaxAddressRank = $iMax;
 		}
 
 		function setNearPoint($aNearPoint, $fRadiusDeg = 0.1)
 		{
 			$this->aNearPoint = array((float)$aNearPoint[0], (float)$aNearPoint[1], (float)$fRadiusDeg);
-		}
-
-		function setCountryCodesList($aCountryCodes)
-		{
-			$this->aCountryCodes = $aCountryCodes;
 		}
 
 		function setQuery($sQueryString)

@@ -2,40 +2,11 @@
 	class ReverseGeocode
 	{
 		protected $oDB;
-
-		protected $fLat;
-		protected $fLon;
 		protected $iMaxRank = 28;
-
-		protected $aLangPrefOrder = array();
-
-		protected $bIncludePolygonAsPoints = false;
-		protected $bIncludePolygonAsText = false;
-		protected $bIncludePolygonAsGeoJSON = false;
-		protected $bIncludePolygonAsKML = false;
-		protected $bIncludePolygonAsSVG = false;
-		protected $fPolygonSimplificationThreshold = 0.0;
-
 
 		function ReverseGeocode(&$oDB)
 		{
 			$this->oDB =& $oDB;
-		}
-
-		function setLanguagePreference($aLangPref)
-		{
-			$this->aLangPrefOrder = $aLangPref;
-		}
-
-		function setLatLon($fLat, $fLon)
-		{
-			$this->fLat = (float)$fLat;
-			$this->fLon = (float)$fLon;
-		}
-
-		function setRank($iRank)
-		{
-			$this->iMaxRank = $iRank;
 		}
 
 		function setZoom($iZoom)
@@ -66,53 +37,12 @@
 			$this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
 		}
 
-				function setIncludePolygonAsPoints($b = true)
-		{
-			$this->bIncludePolygonAsPoints = $b;
-		}
-
-		function getIncludePolygonAsPoints()
-		{
-			return $this->bIncludePolygonAsPoints;
-		}
-
-		function setIncludePolygonAsText($b = true)
-		{
-			$this->bIncludePolygonAsText = $b;
-		}
-
-		function getIncludePolygonAsText()
-		{
-			return $this->bIncludePolygonAsText;
-		}
-
-		function setIncludePolygonAsGeoJSON($b = true)
-		{
-			$this->bIncludePolygonAsGeoJSON = $b;
-		}
-
-		function setIncludePolygonAsKML($b = true)
-		{
-			$this->bIncludePolygonAsKML = $b;
-		}
-
-		function setIncludePolygonAsSVG($b = true)
-		{
-			$this->bIncludePolygonAsSVG = $b;
-		}
-
-		function setPolygonSimplificationThreshold($f)
-		{
-			$this->fPolygonSimplificationThreshold = $f;
-		}
-
 		// returns { place_id =>, type => '(osm|tiger)' }
 		// fails if no place was found
-		function lookup($bDoInterpolation = true)
+		function lookup($fLat, $fLon, $bDoInterpolation = true)
 		{
-			$sPointSQL = 'ST_SetSRID(ST_Point('.$this->fLon.','.$this->fLat.'),4326)';
+			$sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
 			$iMaxRank = $this->iMaxRank;
-			$iMaxRank_orig = $this->iMaxRank;
 
 			// Find the nearest point
 			$fSearchDiam = 0.0004;
@@ -155,7 +85,7 @@
 				$bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
 			}
 			// if a street or house was found, look in interpolation lines table
-			if ($bDoInterpolation && $iMaxRank_orig >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
+			if ($bDoInterpolation && $this->iMaxRank >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
 			{
 				// if a house was found, search the interpolation line that is at least as close as the house
 				$sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
@@ -220,7 +150,7 @@
 			}
 			
 			// Only street found? If it's in the US we can check TIGER data for nearest housenumber
-			if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $iMaxRank_orig >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
+			if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $this->iMaxRank >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
 			{
 				$fSearchDiam = 0.001;
 				$sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';

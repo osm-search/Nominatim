@@ -57,9 +57,8 @@
 	$oPlaceLookup = new PlaceLookup($oDB);
 	$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
 	$oPlaceLookup->setIncludeAddressDetails(true);
-	$oPlaceLookup->setPlaceId($iPlaceID);
 
-	$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails());
+	$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
 
 	if (!sizeof($aPlaceAddress)) userError("Unknown place id.");
 

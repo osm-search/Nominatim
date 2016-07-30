@@ -8,19 +8,6 @@
 	require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 	require_once(CONST_BasePath.'/lib/output.php');
 
-	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
-	{
-		$fLoadAvg = getLoadAverage();
-		if ($fLoadAvg > 2) sleep(60);
-		if ($fLoadAvg > 4) sleep(120);
-		if ($fLoadAvg > 6)
-		{
-			echo "Bulk User: Temporary block due to high server load\n";
-			exit;
-		}
-	}
-
-
 	$bAsGeoJSON = getParamBool('polygon_geojson');
 	$bAsKML = getParamBool('polygon_kml');
 	$bAsSVG = getParamBool('polygon_svg');
@@ -56,40 +43,38 @@
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 
+	$oPlaceLookup = new PlaceLookup($oDB);
+	$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
+	$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
+	$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
+	$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+
 	$sOsmType = getParamSet('osm_type', array('N', 'W', 'R'));
 	$iOsmId = getParamInt('osm_id', -1);
 	$fLat = getParamFloat('lat');
 	$fLon = getParamFloat('lon');
 	if ($sOsmType && $iOsmId > 0)
 	{
-		$aLookup = array('osm_type' => $sOsmType, 'osm_id' => $iOsmId);
+		$aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
 	}
-	else if ($fLat !== false && $fLon !==false)
+	else if ($fLat !== false && $fLon !== false)
 	{
 		$oReverseGeocode = new ReverseGeocode($oDB);
-		$oReverseGeocode->setLanguagePreference($aLangPrefOrder);
-
-		$oReverseGeocode->setLatLon($fLat, $fLon);
 		$oReverseGeocode->setZoom(getParamInt('zoom', 18));
 
-		$aLookup = $oReverseGeocode->lookup();
+		$aLookup = $oReverseGeocode->lookup($fLat, $fLon);
 		if (CONST_Debug) var_dump($aLookup);
+
+		$aPlace = $oPlaceLookup->lookup((int)$aLookup['place_id'],
+		                                $aLookup['type'], $aLookup['fraction']);
 	}
 	else if ($sOutputFormat != 'html')
 	{
 		userError("Need coordinates or OSM object to lookup.");
 	}
 
-	if ($aLookup)
+	if ($aPlace)
 	{
-		$oPlaceLookup = new PlaceLookup($oDB);
-		$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-		$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
-		$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
-		$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
-
-		$aPlace = $oPlaceLookup->lookupPlace($aLookup);
-
 		$oPlaceLookup->setIncludePolygonAsPoints(false);
 		$oPlaceLookup->setIncludePolygonAsText($bAsText);
 		$oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
@@ -98,16 +83,14 @@
 		$oPlaceLookup->setPolygonSimplificationThreshold($fThreshold);
 
 		$fRadius = $fDiameter = getResultDiameter($aPlace);
-		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'], $aPlace['lon'], $aPlace['lat'], $fRadius);
+		$aOutlineResult = $oPlaceLookup->getOutlines($aPlace['place_id'],
+		                                             $aPlace['lon'], $aPlace['lat'],
+		                                             $fRadius);
 
 		if ($aOutlineResult)
 		{
 			$aPlace = array_merge($aPlace, $aOutlineResult);
 		}
-	}
-	else
-	{
-		$aPlace = null;
 	}
 
 

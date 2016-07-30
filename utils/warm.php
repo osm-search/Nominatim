@@ -27,7 +27,10 @@
 	if (!$aResult['search-only']) {
 
 		$oReverseGeocode = new ReverseGeocode($oDB);
-		$oReverseGeocode->setIncludeAddressDetails(true);
+		$oReverseGeocode->setZoom(20);
+		$oPlaceLookup = new PlaceLookup($oDB);
+		$oPlaceLookup->setIncludeAddressDetails(true);
+		$oPlaceLookup->setLanguagePreference(array('en'));
 
 		echo "Warm reverse: ";
 		if ($bVerbose) echo "\n";
@@ -35,11 +38,13 @@
 			$fLat = rand(-9000, 9000) / 100;
 			$fLon = rand(-18000, 18000) / 100;
 			if ($bVerbose) echo "$fLat, $fLon = ";
-			$oReverseGeocode->setLanguagePreference(array('en'));
-			$oReverseGeocode->setLatLon($fLat, $fLon);
-			$oReverseGeocode->setZoom(20);
-			$aDetails = $oReverseGeocode->lookup();
-			if ($bVerbose) echo $aDetails['langaddress']."\n";
+			$aLookup = $oReverseGeocode->lookup($fLat, $fLon);
+			if ($aLookup && $aLookup['place_id'])
+			{
+				$aDetails = $oPlaceLookup->lookup((int)$aLookup['place_id'],
+				                                  $aLookup['type'], $aLookup['fraction']);
+				if ($bVerbose) echo $aDetails['langaddress']."\n";
+			}
 			else echo ".";
 		}
 		echo "\n";

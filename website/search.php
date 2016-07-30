@@ -32,6 +32,7 @@
 	if ($sOutputFormat == 'html')
 	{
 		$oGeocode->setIncludePolygonAsText(getParamBool('polygon'));
+		$bAsText = false;
 	}
 	else
 	{
@@ -84,22 +85,20 @@
 		include(CONST_BasePath.'/lib/template/search-batch-json.php');
 		exit;
 	}
+
+	if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+	{
+		$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
+
+		// reverse order of '/' separated string
+		$aPhrases = explode('/', $sQuery);
+		$aPhrases = array_reverse($aPhrases);
+		$sQuery = join(', ',$aPhrases);
+		$oGeocode->setQuery($sQuery);
+	}
 	else
 	{
-		if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
-		{
-			$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
-
-			// reverse order of '/' separated string
-			$aPhrases = explode('/', $sQuery);
-			$aPhrases = array_reverse($aPhrases);
-			$sQuery = join(', ',$aPhrases);
-			$oGeocode->setQuery($sQuery);
-		}
-		else
-		{
-			$oGeocode->setQueryFromParams($_GET);
-		}
+		$oGeocode->setQueryFromParams($_GET);
 	}
 
 	$hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
@@ -113,13 +112,12 @@
 	}
 	logEnd($oDB, $hLog, sizeof($aSearchResults));
 
-	$bAsText = $oGeocode->getIncludePolygonAsText();
 	$sQuery = $oGeocode->getQueryString();
 	$sViewBox = $oGeocode->getViewBoxString();
 	$bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 	$aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-	$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$oGeocode->getExcludedPlaceIDs());
+	$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
 	if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 	if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 	if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';

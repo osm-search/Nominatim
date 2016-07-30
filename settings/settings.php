@@ -62,34 +62,8 @@
 	@define('CONST_Replication_Update_Interval', '60');  // How often upstream publishes diffs
 	@define('CONST_Replication_Recheck_Interval', '60'); // How long to sleep if no update found yet
 
-	// Connection buckets to rate limit people being nasty
-	@define('CONST_ConnectionBucket_MemcacheServerAddress', false);
-	@define('CONST_ConnectionBucket_MemcacheServerPort', 11211);
-	@define('CONST_ConnectionBucket_MaxBlockList', 100);
-	@define('CONST_ConnectionBucket_LeakRate', 1);
-	@define('CONST_ConnectionBucket_BlockLimit', 10);
-	@define('CONST_ConnectionBucket_WaitLimit', 6);
-	@define('CONST_ConnectionBucket_MaxSleeping', 10);
-	@define('CONST_ConnectionBucket_Cost_Reverse', 1);
-	@define('CONST_ConnectionBucket_Cost_Search', 2);
-	@define('CONST_ConnectionBucket_Cost_Details', 3);
-	@define('CONST_ConnectionBucket_Cost_Status', 1);
-
-	// Override this function to add an adjustment factor to the cost
-	// based on server load. e.g. getBlockingProcesses
-	if (!function_exists('user_busy_cost'))
-	{
-		function user_busy_cost()
-		{
-			return 0;
-		}
-	}
-
 	// Website settings
 	@define('CONST_NoAccessControl', true);
-	@define('CONST_BlockedIPs', '');
-	@define('CONST_BulkUserIPs', '');
-	@define('CONST_BlockMessage', ''); // additional info to show for blocked IPs
 
 	@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
 	// Language to assume when none is supplied with the query.

@@ -7,14 +7,7 @@
 	require_once(CONST_BasePath.'/lib/output.php');
 
 	$sOutputFormat = 'html';
-	/*
-	   $fLoadAvg = getLoadAverage();
-	   if ($fLoadAvg > 3)
-	   {
-	   echo "Page temporarily blocked due to high server load\n";
-	   exit;
-	   }
-	 */
+
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();

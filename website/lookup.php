@@ -7,18 +7,6 @@
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 	require_once(CONST_BasePath.'/lib/output.php');
 
-	if (strpos(CONST_BulkUserIPs, ','.$_SERVER["REMOTE_ADDR"].',') !== false)
-	{
-		$fLoadAvg = getLoadAverage();
-		if ($fLoadAvg > 2) sleep(60);
-		if ($fLoadAvg > 4) sleep(120);
-		if ($fLoadAvg > 6)
-		{
-			userError("Bulk User: Temporary block due to high server load");
-			exit;
-		}
-	}
-
 	$oDB =& getDB();
 	ini_set('memory_limit', '200M');
 
@@ -56,8 +44,7 @@
 		if ( $iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R') )
 		{
 			$aCleanedQueryParts[] = $sType . $iId;
-			$oPlaceLookup->setOSMID($sType, $iId);
-			$oPlace = $oPlaceLookup->lookup();
+			$oPlace = $oPlaceLookup->lookupOSMID($sType, $iId);
 			if ($oPlace){
 				// we want to use the search-* output templates, so we need to fill
 				// $aSearchResults and slightly change the (reverse search) oPlace

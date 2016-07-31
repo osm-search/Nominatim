@@ -50,29 +50,22 @@ function byImportance($a, $b)
 }
 
 
-function getPreferredLanguages($sLangString=false)
+function getPreferredLanguages($sLangString = false)
 {
-	if (!$sLangString)
-	{
+	if (!$sLangString) {
 		// If we have been provided the value in $_GET it overrides browser value
-		if (isset($_GET['accept-language']) && $_GET['accept-language'])
-		{
+		if (isset($_GET['accept-language']) && $_GET['accept-language']) {
 			$_SERVER["HTTP_ACCEPT_LANGUAGE"] = $_GET['accept-language'];
 			$sLangString = $_GET['accept-language'];
-		}
-		else if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
-		{
+		} elseif (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
 			$sLangString = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
 		}
 	}
 
 	$aLanguages = array();
-	if ($sLangString)
-	{
-		if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER))
-		{
-			foreach($aLanguagesParse as $iLang => $aLanguage)
-			{
+	if ($sLangString) {
+		if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER)) {
+			foreach ($aLanguagesParse as $iLang => $aLanguage) {
 				$aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
 				if (!isset($aLanguages[$aLanguage[2]])) $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
 			}
@@ -80,20 +73,20 @@ function getPreferredLanguages($sLangString=false)
 		}
 	}
 	if (!sizeof($aLanguages) && CONST_Default_Language) $aLanguages = array(CONST_Default_Language=>1);
-	foreach($aLanguages as $sLangauge => $fLangauagePref)
-	{
+
+	foreach ($aLanguages as $sLangauge => $fLangauagePref) {
 		$aLangPrefOrder['short_name:'.$sLangauge] = 'short_name:'.$sLangauge;
 	}
-	foreach($aLanguages as $sLangauge => $fLangauagePref)
-	{
+
+	foreach ($aLanguages as $sLangauge => $fLangauagePref) {
 		$aLangPrefOrder['name:'.$sLangauge] = 'name:'.$sLangauge;
 	}
-	foreach($aLanguages as $sLangauge => $fLangauagePref)
-	{
+
+	foreach ($aLanguages as $sLangauge => $fLangauagePref) {
 		$aLangPrefOrder['place_name:'.$sLangauge] = 'place_name:'.$sLangauge;
 	}
-	foreach($aLanguages as $sLangauge => $fLangauagePref)
-	{
+
+	foreach ($aLanguages as $sLangauge => $fLangauagePref) {
 		$aLangPrefOrder['official_name:'.$sLangauge] = 'official_name:'.$sLangauge;
 	}
 	$aLangPrefOrder['short_name'] = 'short_name';
@@ -108,17 +101,15 @@ function getPreferredLanguages($sLangString=false)
 
 function getWordSets($aWords, $iDepth)
 {
-	$aResult = array(array(join(' ',$aWords)));
+	$aResult = array(array(join(' ', $aWords)));
 	$sFirstToken = '';
 	if ($iDepth < 8) {
-		while(sizeof($aWords) > 1)
-		{
+		while (sizeof($aWords) > 1) {
 			$sWord = array_shift($aWords);
 			$sFirstToken .= ($sFirstToken?' ':'').$sWord;
 			$aRest = getWordSets($aWords, $iDepth+1);
-			foreach($aRest as $aSet)
-			{
-				$aResult[] = array_merge(array($sFirstToken),$aSet);
+			foreach ($aRest as $aSet) {
+				$aResult[] = array_merge(array($sFirstToken), $aSet);
 			}
 		}
 	}
@@ -127,18 +118,15 @@ function getWordSets($aWords, $iDepth)
 
 function getInverseWordSets($aWords, $iDepth)
 {
-	$aResult = array(array(join(' ',$aWords)));
+	$aResult = array(array(join(' ', $aWords)));
 	$sFirstToken = '';
-	if ($iDepth < 8)
-	{
-		while(sizeof($aWords) > 1)
-		{
+	if ($iDepth < 8) {
+		while (sizeof($aWords) > 1) {
 			$sWord = array_pop($aWords);
 			$sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
 			$aRest = getInverseWordSets($aWords, $iDepth+1);
-			foreach($aRest as $aSet)
-			{
-				$aResult[] = array_merge(array($sFirstToken),$aSet);
+			foreach ($aRest as $aSet) {
+				$aResult[] = array_merge(array($sFirstToken), $aSet);
 			}
 		}
 	}
@@ -149,10 +137,8 @@ function getInverseWordSets($aWords, $iDepth)
 function getTokensFromSets($aSets)
 {
 	$aTokens = array();
-	foreach($aSets as $aSet)
-	{
-		foreach($aSet as $sWord)
-		{
+	foreach ($aSets as $aSet) {
+		foreach ($aSet as $sWord) {
 			$aTokens[' '.$sWord] = ' '.$sWord;
 			$aTokens[$sWord] = $sWord;
 		}
@@ -171,11 +157,9 @@ function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
 	$sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where postcode = \''.$sPostcode.'\'';
 	$aNearPostcodes = chksql($oDB->getAll($sSQL));
 
-	if (sizeof($aNearPostcodes))
-	{
+	if (sizeof($aNearPostcodes)) {
 		$aPostcodes = array();
-		foreach($aNearPostcodes as $aPostcode)
-		{
+		foreach ($aNearPostcodes as $aPostcode) {
 			$aPostcodes[] = array('lat' => $aPostcode['lat'], 'lon' => $aPostcode['lon'], 'radius' => 0.005);
 		}
 
@@ -498,8 +482,7 @@ function getClassTypesWithImportance()
 {
 	$aOrders = getClassTypes();
 	$i = 1;
-	foreach($aOrders as $sID => $a)
-	{
+	foreach ($aOrders as $sID => $a) {
 		$aOrders[$sID]['importance'] = $i++;
 	}
 	return $aOrders;
@@ -515,15 +498,12 @@ function getResultDiameter($aResult)
 		  && isset($aResult['type'])
 		  && isset($aResult['admin_level'])
 		  && isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-			&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'])
-	{
+			&& $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter']) {
 		$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
-	}
-	elseif (isset($aResult['class'])
+	} elseif (isset($aResult['class'])
 		  && isset($aResult['type'])
 		  && isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-			&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-	{
+			&& $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter']) {
 		$fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
 	}
 
@@ -537,19 +517,14 @@ function javascript_renderData($xVal, $iOptions = 0)
 		$iOptions |= JSON_UNESCAPED_UNICODE;
 	$jsonout = json_encode($xVal, $iOptions);
 
-	if( ! isset($_GET['json_callback']))
-	{
+	if (! isset($_GET['json_callback'])) {
 		header("Content-Type: application/json; charset=UTF-8");
 		echo $jsonout;
-	} else
-	{
-		if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u',$_GET['json_callback']))
-		{
+	} else {
+		if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u', $_GET['json_callback'])) {
 			header("Content-Type: application/javascript; charset=UTF-8");
 			echo $_GET['json_callback'].'('.$jsonout.')';
-		}
-		else
-		{
+		} else {
 			header('HTTP/1.0 400 Bad Request');
 		}
 	}
@@ -559,14 +534,10 @@ function javascript_renderData($xVal, $iOptions = 0)
 function _debugDumpGroupedSearches($aData, $aTokens)
 {
 	$aWordsIDs = array();
-	if ($aTokens)
-	{
-		foreach($aTokens as $sToken => $aWords)
-		{
-			if ($aWords)
-			{
-				foreach($aWords as $aToken)
-				{
+	if ($aTokens) {
+		foreach ($aTokens as $sToken => $aWords) {
+			if ($aWords) {
+				foreach ($aWords as $aToken) {
 					$aWordsIDs[$aToken['word_id']] = $sToken.'('.$aToken['word_id'].')';
 				}
 			}
@@ -574,17 +545,14 @@ function _debugDumpGroupedSearches($aData, $aTokens)
 	}
 	echo "<table border=\"1\">";
 	echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th><th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th><th>class</th><th>type</th><th>house#</th><th>Lat</th><th>Lon</th><th>Radius</th></tr>";
-	foreach($aData as $iRank => $aRankedSet)
-	{
-		foreach($aRankedSet as $aRow)
-		{
+	foreach ($aData as $iRank => $aRankedSet) {
+		foreach ($aRankedSet as $aRow) {
 			echo "<tr>";
 			echo "<td>$iRank</td>";
 
 			echo "<td>";
 			$sSep = '';
-			foreach($aRow['aName'] as $iWordID)
-			{
+			foreach ($aRow['aName'] as $iWordID) {
 				echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
 				$sSep = ', ';
 			}
@@ -592,8 +560,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
 
 			echo "<td>";
 			$sSep = '';
-			foreach($aRow['aNameNonSearch'] as $iWordID)
-			{
+			foreach ($aRow['aNameNonSearch'] as $iWordID) {
 				echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
 				$sSep = ', ';
 			}
@@ -601,8 +568,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
 
 			echo "<td>";
 			$sSep = '';
-			foreach($aRow['aAddress'] as $iWordID)
-			{
+			foreach ($aRow['aAddress'] as $iWordID) {
 				echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
 				$sSep = ', ';
 			}
@@ -610,8 +576,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
 
 			echo "<td>";
 			$sSep = '';
-			foreach($aRow['aAddressNonSearch'] as $iWordID)
-			{
+			foreach ($aRow['aAddressNonSearch'] as $iWordID) {
 				echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
 				$sSep = ', ';
 			}
@@ -649,28 +614,25 @@ function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCo
 	$aAddress = array();
 	$aFallback = array();
 	$aClassType = getClassTypes();
-	foreach($aAddressLines as $aLine)
-	{
+	foreach ($aAddressLines as $aLine) {
 		$bFallback = false;
 		$aTypeLabel = false;
-		if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
-		elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
-		elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))]))
-		{
+		if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) {
+			$aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
+		} elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) {
+			$aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
+		} elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))])) {
 			$aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
 			$bFallback = true;
-		}
-		else
-		{
+		} else {
 			$aTypeLabel = array('simplelabel'=>'address'.$aLine['rank_address']);
 			$bFallback = true;
 		}
-		if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber'])))
-		{
+
+		if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
 			$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-			$sTypeLabel = str_replace(' ','_',$sTypeLabel);
-			if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place')
-			{
+			$sTypeLabel = str_replace(' ', '_', $sTypeLabel);
+			if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
 				$aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
 			}
 			$aFallback[$sTypeLabel] = $bFallback;
@@ -686,7 +648,7 @@ function addQuotes($s)
 }
 
 // returns boolean
-function validLatLon($fLat,$fLon)
+function validLatLon($fLat,$ fLon)
 {
 	return ($fLat <= 90.1 && $fLat >= -90.1 && $fLon <= 180.1 && $fLon >= -180.1);
 }
@@ -700,70 +662,57 @@ function looksLikeLatLonPair($sQuery)
 	$fQueryLat = null;
 	$fQueryLon = null;
 
-	// degrees decimal minutes
-	// N 40 26.767, W 79 58.933
-	// N 40°26.767′, W 79°58.933′
-	//                  1         2                   3                  4         5            6
-	if (preg_match('/\\b([NS])[ ]+([0-9]+[0-9.]*)[° ]+([0-9.]+)?[′\']*[, ]+([EW])[ ]+([0-9]+)[° ]+([0-9]+[0-9.]*)[′\']*?\\b/', $sQuery, $aData))
-	{
+	if (preg_match('/\\b([NS])[ ]+([0-9]+[0-9.]*)[° ]+([0-9.]+)?[′\']*[, ]+([EW])[ ]+([0-9]+)[° ]+([0-9]+[0-9.]*)[′\']*?\\b/', $sQuery, $aData)) {
+		//                1         2                   3                  4         5            6
+		// degrees decimal minutes
+		// N 40 26.767, W 79 58.933
+		// N 40°26.767′, W 79°58.933′
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60);
 		$fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[5] + $aData[6]/60);
-	}
-	// degrees decimal minutes
-	// 40 26.767 N, 79 58.933 W
-	// 40° 26.767′ N 79° 58.933′ W
-	//                      1             2                      3          4            5                    6
-	elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\']*[ ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\' ]+([EW])\\b/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\']*[ ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\' ]+([EW])\\b/', $sQuery, $aData)) {
+		//                      1             2                      3          4            5                    6
+		// degrees decimal minutes
+		// 40 26.767 N, 79 58.933 W
+		// 40° 26.767′ N 79° 58.933′ W
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[3]=='N'?1:-1) * ($aData[1] + $aData[2]/60);
 		$fQueryLon = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
-	}
-	// degrees decimal seconds
-	// N 40 26 46 W 79 58 56
-	// N 40° 26′ 46″, W 79° 58′ 56″
-	//                      1        2            3            4                5        6            7            8
-	elseif (preg_match('/\\b([NS])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*[, ]+([EW])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*\\b/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/\\b([NS])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*[, ]+([EW])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*\\b/', $sQuery, $aData)) {
+		//                      1        2            3            4                5        6            7            8
+		// degrees decimal seconds
+		// N 40 26 46 W 79 58 56
+		// N 40° 26′ 46″, W 79° 58′ 56″
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60 + $aData[4]/3600);
 		$fQueryLon = ($aData[5]=='E'?1:-1) * ($aData[6] + $aData[7]/60 + $aData[8]/3600);
-	}
-	// degrees decimal seconds
-	// 40 26 46 N 79 58 56 W
-	// 40° 26′ 46″ N, 79° 58′ 56″ W
-	//                      1            2            3            4          5            6            7            8
-	elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([EW])\\b/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([EW])\\b/', $sQuery, $aData)) {
+		//                      1            2            3            4          5            6            7            8
+		// degrees decimal seconds
+		// 40 26 46 N 79 58 56 W
+		// 40° 26′ 46″ N, 79° 58′ 56″ W
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[4]=='N'?1:-1) * ($aData[1] + $aData[2]/60 + $aData[3]/3600);
 		$fQueryLon = ($aData[8]=='E'?1:-1) * ($aData[5] + $aData[6]/60 + $aData[7]/3600);
-	}
-	// degrees decimal
-	// N 40.446° W 79.982°
-	//                      1        2                               3        4
-	elseif (preg_match('/\\b([NS])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*[, ]+([EW])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*\\b/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/\\b([NS])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*[, ]+([EW])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*\\b/', $sQuery, $aData)) {
+		//                      1        2                               3        4
+		// degrees decimal
+		// N 40.446° W 79.982°
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2]);
 		$fQueryLon = ($aData[3]=='E'?1:-1) * ($aData[4]);
-	}
-	// degrees decimal
-	// 40.446° N 79.982° W
-	//                      1                           2          3                           4
-	elseif (preg_match('/\\b([0-9]+[0-9]*\\.[0-9]+)[° ]+([NS])[, ]+([0-9]+[0-9]*\\.[0-9]+)[° ]+([EW])\\b/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/\\b([0-9]+[0-9]*\\.[0-9]+)[° ]+([NS])[, ]+([0-9]+[0-9]*\\.[0-9]+)[° ]+([EW])\\b/', $sQuery, $aData)) {
+		//                      1                           2          3                           4
+		// degrees decimal
+		// 40.446° N 79.982° W
 		$sFound    = $aData[0];
 		$fQueryLat = ($aData[2]=='N'?1:-1) * ($aData[1]);
 		$fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[3]);
-	}
-	// degrees decimal
-	// 12.34, 56.78
-	// [12.456,-78.90]
-	//                   1          2                             3                        4
-	elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData))
-	{
+	} elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData)) {
+		//                   1          2                             3                        4
+		// degrees decimal
+		// 12.34, 56.78
+		// [12.456,-78.90]
 		$sFound    = $aData[0];
 		$fQueryLat = $aData[2];
 		$fQueryLon = $aData[3];
@@ -778,29 +727,20 @@ function looksLikeLatLonPair($sQuery)
 
 function geometryText2Points($geometry_as_text, $fRadius)
 {
-	$aPolyPoints = NULL;
-	if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
-	{
+	$aPolyPoints = null;
+	if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
 		preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-	}
-	elseif (preg_match('#LINESTRING\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
-	{
+	} elseif (preg_match('#LINESTRING\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
 		preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-	}
-	elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch))
-	{
+	} elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
 		preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-	}
-	elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#', $geometry_as_text, $aMatch))
-	{
+	} elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#', $geometry_as_text, $aMatch)) {
 		$aPolyPoints = createPointsAroundCenter($aMatch[1], $aMatch[2], $fRadius);
 	}
 
-	if (isset($aPolyPoints))
-	{
+	if (isset($aPolyPoints)) {
 		$aResultPoints = array();
-		foreach($aPolyPoints as $aPoint)
-		{
+		foreach ($aPolyPoints as $aPoint) {
 			$aResultPoints[] = array($aPoint[1], $aPoint[2]);
 		}
 		return $aResultPoints;
@@ -811,12 +751,11 @@ function geometryText2Points($geometry_as_text, $fRadius)
 
 function createPointsAroundCenter($fLon, $fLat, $fRadius)
 {
-		$iSteps = max(8, min(100, ($fRadius * 40000)^2));
-		$fStepSize = (2*pi())/$iSteps;
-		$aPolyPoints = array();
-		for($f = 0; $f < 2*pi(); $f += $fStepSize)
-		{
-			$aPolyPoints[] = array('', $fLon+($fRadius*sin($f)), $fLat+($fRadius*cos($f)) );
-		}
-		return $aPolyPoints;
+	$iSteps = max(8, min(100, ($fRadius * 40000)^2));
+	$fStepSize = (2*pi())/$iSteps;
+	$aPolyPoints = array();
+	for ($f = 0; $f < 2*pi(); $f += $fStepSize) {
+		$aPolyPoints[] = array('', $fLon+($fRadius*sin($f)), $fLat+($fRadius*cos($f)) );
+	}
+	return $aPolyPoints;
 }

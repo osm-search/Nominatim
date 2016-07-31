@@ -21,8 +21,7 @@ if (CONST_Search_ReversePlanForAll
 	|| isset($aLangPrefOrder['name:de'])
 	|| isset($aLangPrefOrder['name:ru'])
 	|| isset($aLangPrefOrder['name:ja'])
-	|| isset($aLangPrefOrder['name:pl']))
-{
+	|| isset($aLangPrefOrder['name:pl'])) {
 	$oGeocode->setReverseInPlan(true);
 }
 
@@ -30,31 +29,24 @@ if (CONST_Search_ReversePlanForAll
 $sOutputFormat = getParamSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
 
 // Show / use polygons
-if ($sOutputFormat == 'html')
-{
+if ($sOutputFormat == 'html') {
 	$oGeocode->setIncludePolygonAsText(getParamBool('polygon'));
 	$bAsText = false;
-}
-else
-{
+} else {
 	$bAsPoints = getParamBool('polygon');
 	$bAsGeoJSON = getParamBool('polygon_geojson');
 	$bAsKML = getParamBool('polygon_kml');
 	$bAsSVG = getParamBool('polygon_svg');
 	$bAsText = getParamBool('polygon_text');
-	if ( ( ($bAsGeoJSON?1:0)
+	if (( ($bAsGeoJSON?1:0)
 			 + ($bAsKML?1:0)
 			 + ($bAsSVG?1:0)
 			 + ($bAsText?1:0)
 			 + ($bAsPoints?1:0)
-			 ) > CONST_PolygonOutput_MaximumTypes)
-	{
-		if (CONST_PolygonOutput_MaximumTypes)
-		{
+			 ) > CONST_PolygonOutput_MaximumTypes) {
+		if (CONST_PolygonOutput_MaximumTypes) {
 			userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-		}
-		else
-		{
+		} else {
 			userError("Polygon output is disabled");
 		}
 		exit;
@@ -71,12 +63,10 @@ $oGeocode->setPolygonSimplificationThreshold(getParamFloat('polygon_threshold', 
 
 $oGeocode->loadParamArray($_GET);
 
-if (CONST_Search_BatchMode && isset($_GET['batch']))
-{
+if (CONST_Search_BatchMode && isset($_GET['batch'])) {
 	$aBatch = json_decode($_GET['batch'], true);
 	$aBatchResults = array();
-	foreach($aBatch as $aBatchParams)
-	{
+	foreach ($aBatch as $aBatchParams) {
 		$oBatchGeocode = clone $oGeocode;
 		$oBatchGeocode->loadParamArray($aBatchParams);
 		$oBatchGeocode->setQueryFromParams($aBatchParams);
@@ -87,18 +77,15 @@ if (CONST_Search_BatchMode && isset($_GET['batch']))
 	exit;
 }
 
-if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
-{
+if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/') {
 	$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
 	// reverse order of '/' separated string
 	$aPhrases = explode('/', $sQuery);
 	$aPhrases = array_reverse($aPhrases);
-	$sQuery = join(', ',$aPhrases);
+	$sQuery = join(', ', $aPhrases);
 	$oGeocode->setQuery($sQuery);
-}
-else
-{
+} else {
 	$oGeocode->setQueryFromParams($_GET);
 }
 
@@ -107,8 +94,7 @@ $hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 $aSearchResults = $oGeocode->lookup();
 if ($aSearchResults === false) $aSearchResults = array();
 
-if ($sOutputFormat=='html')
-{
+if ($sOutputFormat=='html') {
 	$sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
 }
 logEnd($oDB, $hLog, sizeof($aSearchResults));
@@ -118,7 +104,7 @@ $sViewBox = $oGeocode->getViewBoxString();
 $bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 $aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
+$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',', $aExcludePlaceIDs);
 if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';

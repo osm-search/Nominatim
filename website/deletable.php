@@ -11,11 +11,9 @@ ini_set('memory_limit', '200M');
 $oDB =& getDB();
 
 $sSQL = "select placex.place_id, calculated_country_code as country_code, name->'name' as name, i.* from placex, import_polygon_delete i where placex.osm_id = i.osm_id and placex.osm_type = i.osm_type and placex.class = i.class and placex.type = i.type";
-$aPolygons = chksql($oDB->getAll($sSQL),
-                    "Could not get list of deleted OSM elements.");
+$aPolygons = chksql($oDB->getAll($sSQL), "Could not get list of deleted OSM elements.");
 
-if (CONST_DEBUG)
-{
+if (CONST_DEBUG) {
 	var_dump($aPolygons);
 	exit;
 }
@@ -74,18 +72,14 @@ table td {
 if (!$aPolygons) exit;
 echo "<tr>";
 //var_dump($aPolygons[0]);
-foreach($aPolygons[0] as $sCol => $sVal)
-{
+foreach ($aPolygons[0] as $sCol => $sVal) {
 	echo "<th>".$sCol."</th>";
 }
 echo "</tr>";
-foreach($aPolygons as $aRow)
-{
+foreach ($aPolygons as $aRow) {
 	echo "<tr>";
-	foreach($aRow as $sCol => $sVal)
-	{
-		switch($sCol)
-		{
+	foreach ($aRow as $sCol => $sVal) {
+		switch ($sCol) {
 			case 'osm_id':
 				echo '<td>'.osmLink($aRow).'</td>';
 				break;

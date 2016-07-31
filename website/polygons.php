@@ -16,8 +16,7 @@ $sClass = getParamString('class', false);
 $iTotalBroken = (int) chksql($oDB->getOne('select count(*) from import_polygon_error'));
 
 $aPolygons = array();
-while($iTotalBroken && !sizeof($aPolygons))
-{
+while ($iTotalBroken && !sizeof($aPolygons)) {
 	$sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
 	$sSQL .= 'country_code as "country",errormessage as "error message",updated';
 	$sSQL .= " from import_polygon_error";
@@ -30,8 +29,7 @@ while($iTotalBroken && !sizeof($aPolygons))
 	$aPolygons = chksql($oDB->getAll($sSQL));
 }
 
-if (CONST_Debug)
-{
+if (CONST_Debug) {
 	var_dump($aPolygons);
 	exit;
 }
@@ -89,51 +87,42 @@ if (!$aPolygons) exit;
 echo "<table>";
 echo "<tr>";
 //var_dump($aPolygons[0]);
-foreach($aPolygons[0] as $sCol => $sVal)
-{
+foreach ($aPolygons[0] as $sCol => $sVal) {
 	echo "<th>".$sCol."</th>";
 }
 echo "<th>&nbsp;</th>";
 echo "<th>&nbsp;</th>";
 echo "</tr>";
 $aSeen = array();
-foreach($aPolygons as $aRow)
-{
+foreach ($aPolygons as $aRow) {
 	if (isset($aSeen[$aRow['type'].$aRow['id']])) continue;
 	$aSeen[$aRow['type'].$aRow['id']] = 1;
 	echo "<tr>";
-	foreach($aRow as $sCol => $sVal)
-	{
-		switch($sCol)
-		{
-		case 'error message':
-			if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/',$sVal,$aMatch))
-			{
-				$aRow['lat'] = $aMatch[2];
-				$aRow['lon'] = $aMatch[1];
-				echo "<td><a href=\"http://www.openstreetmap.org/?lat=".$aMatch[2]."&lon=".$aMatch[1]."&zoom=18&layers=M&".$sOSMType."=".$aRow['id']."\">".($sVal?$sVal:'&nbsp;')."</a></td>";
-			}
-			else
-			{
+	foreach ($aRow as $sCol => $sVal) {
+		switch ($sCol) {
+			case 'error message':
+				if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/', $sVal, $aMatch)) {
+					$aRow['lat'] = $aMatch[2];
+					$aRow['lon'] = $aMatch[1];
+					echo "<td><a href=\"http://www.openstreetmap.org/?lat=".$aMatch[2]."&lon=".$aMatch[1]."&zoom=18&layers=M&".$sOSMType."=".$aRow['id']."\">".($sVal?$sVal:'&nbsp;')."</a></td>";
+				} else {
+					echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
+				}
+				break;
+			case 'id':
+				echo '<td>'.osmLink($aRow).'</td>';
+				break;
+			default:
 				echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
-			}
-			break;
-		case 'id':
-			echo '<td>'.osmLink($aRow).'</td>';
-			break;
-		default:
-			echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
-			break;
+				break;
 		}
 	}
 	echo "<td><a href=\"http://localhost:8111/import?url=http://www.openstreetmap.org/api/0.6/".$sOSMType.'/'.$aRow['id']."/full\" target=\"josm\">josm</a></td>";
-	if (isset($aRow['lat']))
-	{
+	
+	if (isset($aRow['lat'])) {
 		echo "<td><a href=\"http://open.mapquestapi.com/dataedit/index_flash.html?lat=".$aRow['lat']."&lon=".$aRow['lon']."&zoom=18\" target=\"potlatch2\">P2</a></td>";
-	}
-	else
-	{
-		echo "<td>&nbsp;</td>";	
+	} else {
+		echo "<td>&nbsp;</td>";
 	}
 	echo "</tr>";
 }

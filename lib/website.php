@@ -30,12 +30,9 @@ function chksql($oSql, $sMsg = "Database request failed")
 	<p><b>Details:</b> <pre>
 INTERNALFAIL;
 
-	if (CONST_Debug)
-	{
+	if (CONST_Debug) {
 		var_dump($oSql);
-	}
-	else
-	{
+	} else {
 		echo "<pre>\n".$oSql->getUserInfo()."</pre>";
 	}
 
@@ -51,15 +48,12 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 	echo '<p>Nominatim has encountered an internal error while processing your request. This is most likely because of a bug in the software.</p>';
 	echo "<p><b>Details:</b> ".$sError,"</p>";
 	echo '<p>Feel free to file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. Please include the error message above and the URL you used.</p>';
-	if (CONST_Debug)
-	{
+	if (CONST_Debug) {
 		echo "<hr><h2>Debugging Information</h2><br>";
-		if ($sSQL)
-		{
+		if ($sSQL) {
 			echo "<h3>SQL query</h3><code>".$sSQL."</code>";
 		}
-		if ($vDumpVar)
-		{
+		if ($vDumpVar) {
 			echo "<h3>Result</h3> <code>";
 			var_dump($vDumpVar);
 			echo "</code>";
@@ -89,50 +83,47 @@ function userError($sError)
  *
  */
 
-function getParamBool($sName, $bDefault=false)
+function getParamBool($sName, $bDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 	return (bool) $_GET[$sName];
 }
 
-function getParamInt($sName, $bDefault=false)
+function getParamInt($sName, $bDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
-	if (!preg_match('/^[+-]?[0-9]+$/', $_GET[$sName]))
-	{
+	if (!preg_match('/^[+-]?[0-9]+$/', $_GET[$sName])) {
 		userError("Integer number expected for parameter '$sName'");
 	}
 
 	return (int) $_GET[$sName];
 }
 
-function getParamFloat($sName, $bDefault=false)
+function getParamFloat($sName, $bDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
-	if (!preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET[$sName]))
-	{
+	if (!preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $_GET[$sName])) {
 		userError("Floating-point number expected for parameter '$sName'");
 	}
 
 	return (float) $_GET[$sName];
 }
 
-function getParamString($sName, $bDefault=false)
+function getParamString($sName, $bDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 	return $_GET[$sName];
 }
 
-function getParamSet($sName, $aValues, $sDefault=false)
+function getParamSet($sName, $aValues, $sDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $sDefault;
 
-	if (!in_array($_GET[$sName], $aValues))
-	{
+	if (!in_array($_GET[$sName], $aValues)) {
 		userError("Parameter '$sName' must be one of: ".join(', ', $aValues));
 	}
 

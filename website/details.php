@@ -14,28 +14,23 @@ ini_set('memory_limit', '200M');
 $oDB =& getDB();
 
 $aLangPrefOrder = getPreferredLanguages();
-$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
+$sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $aLangPrefOrder))."]";
 
 $sPlaceId = getParamString('place_id');
 $sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = getParamInt('osmid', -1);
-if ($sOsmType && $iOsmId > 0)
-{
+if ($sOsmType && $iOsmId > 0) {
 	$sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));
 
 	// Be nice about our error messages for broken geometry
 
-	if (!$sPlaceId)
-	{
+	if (!$sPlaceId) {
 		$aPointDetails = chksql($oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1"));
 		if (!PEAR::isError($aPointDetails) && $aPointDetails) {
-			if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
-			{
+			if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
 				$aPointDetails['error_x'] = $aMatches[1];
 				$aPointDetails['error_y'] = $aMatches[2];
-			}
-			else
-			{
+			} else {
 				$aPointDetails['error_x'] = 0;
 				$aPointDetails['error_y'] = 0;
 			}
@@ -50,14 +45,12 @@ if (!$sPlaceId) userError("Please select a place id");
 
 $iPlaceID = (int)$sPlaceId;
 
-if (CONST_Use_US_Tiger_Data)
-{
+if (CONST_Use_US_Tiger_Data) {
 	$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID));
 	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
-if (CONST_Use_Aux_Location_data)
-{
+if (CONST_Use_Aux_Location_data) {
 	$iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID));
 	if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
@@ -73,8 +66,7 @@ $sSQL .= " ST_y(centroid) as lat, ST_x(centroid) as lon,";
 $sSQL .= " case when importance = 0 OR importance IS NULL then 0.75-(rank_search::float/40) else importance end as calculated_importance, ";
 $sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 $sSQL .= " from placex where place_id = $iPlaceID";
-$aPointDetails = chksql($oDB->getRow($sSQL),
-                        "Could not get details of place object.");
+$aPointDetails = chksql($oDB->getRow($sSQL), "Could not get details of place object.");
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
 
 $aClassType = getClassTypesWithImportance();
@@ -83,16 +75,14 @@ $aPointDetails['icon'] = $aClassType[$aPointDetails['class'].':'.$aPointDetails[
 // Get all alternative names (languages, etc)
 $sSQL = "select (each(name)).key,(each(name)).value from placex where place_id = $iPlaceID order by (each(name)).key";
 $aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
-if (PEAR::isError($aPointDetails['aNames'])) // possible timeout
-{
+if (PEAR::isError($aPointDetails['aNames'])) { // possible timeout
 	$aPointDetails['aNames'] = [];
 }
 
 // Extra tags
 $sSQL = "select (each(extratags)).key,(each(extratags)).value from placex where place_id = $iPlaceID order by (each(extratags)).key";
 $aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
-if (PEAR::isError($aPointDetails['aExtraTags'])) // possible timeout
-{
+if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
 	$aPointDetails['aExtraTags'] = [];
 }
 
@@ -106,8 +96,7 @@ $sSQL .= " from placex, (select centroid as placegeometry from placex where plac
 $sSQL .= " where linked_place_id = $iPlaceID";
 $sSQL .= " order by rank_address asc,rank_search asc,get_name_by_language(name,$sLanguagePrefArraySQL),housenumber";
 $aLinkedLines = $oDB->getAll($sSQL);
-if (PEAR::isError($aLinkedLines)) // possible timeout
-{
+if (PEAR::isError($aLinkedLines)) { // possible timeout
 	$aLinkedLines = [];
 }
 
@@ -119,43 +108,36 @@ $sSQL .= " where parent_place_id = $iPlaceID order by rank_address asc,rank_sear
 $sSQL .= " (select centroid as placegeometry from placex where place_id = $iPlaceID) as x";
 $sSQL .= " order by rank_address asc,rank_search asc,localname,housenumber";
 $aParentOfLines = $oDB->getAll($sSQL);
-if (PEAR::isError($aParentOfLines)) // possible timeout
-{
+if (PEAR::isError($aParentOfLines)) { // possible timeout
 	$aParentOfLines = [];
 }
 
 $aPlaceSearchNameKeywords = false;
 $aPlaceSearchAddressKeywords = false;
-if (getParamBool('keywords'))
-{
+if (getParamBool('keywords')) {
 	$sSQL = "select * from search_name where place_id = $iPlaceID";
 	$aPlaceSearchName = $oDB->getRow($sSQL);
-	if (PEAR::isError($aPlaceSearchName)) // possible timeout
-	{
+	if (PEAR::isError($aPlaceSearchName)) { // possible timeout
 		$aPlaceSearchName = [];
 	}
 
-	$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'],1,-1).")";
+	$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'], 1, -1).")";
 	$aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
-	if (PEAR::isError($aPlaceSearchNameKeywords)) // possible timeout
-	{
+	if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
 		$aPlaceSearchNameKeywords = [];
 	}
 
 
-	$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'],1,-1).")";
+	$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'], 1, -1).")";
 	$aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
-	if (PEAR::isError($aPlaceSearchAddressKeywords)) // possible timeout
-	{
+	if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
 		$aPlaceSearchAddressKeywords = [];
 	}
-
 }
 
 logEnd($oDB, $hLog, 1);
 
-if ($sOutputFormat=='html')
-{
+if ($sOutputFormat=='html') {
 	$sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
 	$sTileURL = CONST_Map_Tile_URL;
 	$sTileAttribution = CONST_Map_Tile_Attribution;

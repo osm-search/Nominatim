@@ -1,5 +1,6 @@
 <?php
 
+
 function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 {
 	$fStartTime = microtime(true);
@@ -10,7 +11,7 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 	if (isset($_GET['format'])) $sOutputFormat = $_GET['format'];
 
 	if ($sType == 'reverse') {
-		$sOutQuery = (isset($_GET['lat'])?$_GET['lat']:'').'/';
+		$sOutQuery = (isset($_GET['lat']) ? $_GET['lat'] : '').'/';
 		if (isset($_GET['lon'])) $sOutQuery .= $_GET['lon'];
 		if (isset($_GET['zoom'])) $sOutQuery .= '/'.$_GET['zoom'];
 	} else {
@@ -18,20 +19,20 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 	}
 
 	$hLog = array(
-			date('Y-m-d H:i:s', $aStartTime[0]).'.'.$aStartTime[1],
-			$_SERVER["REMOTE_ADDR"],
-			$_SERVER['QUERY_STRING'],
-			$sOutQuery,
-			$sType,
-			$fStartTime
-			);
+	         date('Y-m-d H:i:s', $aStartTime[0]).'.'.$aStartTime[1],
+	         $_SERVER["REMOTE_ADDR"],
+	         $_SERVER['QUERY_STRING'],
+	         $sOutQuery,
+	         $sType,
+	         $fStartTime
+	        );
 
 	if (CONST_Log_DB) {
 		if (isset($_GET['email']))
 			$sUserAgent = $_GET['email'];
-		elseif (isset($_SERVER['HTTP_REFERER']))
+		else if (isset($_SERVER['HTTP_REFERER']))
 			$sUserAgent = $_SERVER['HTTP_REFERER'];
-		elseif (isset($_SERVER['HTTP_USER_AGENT']))
+		else if (isset($_SERVER['HTTP_USER_AGENT']))
 			$sUserAgent = $_SERVER['HTTP_USER_AGENT'];
 		else $sUserAgent = '';
 		$sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format,searchterm)';
@@ -41,7 +42,9 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 	}
 
 	return $hLog;
-}
+
+}//end logStart()
+
 
 function logEnd(&$oDB, $hLog, $iNumResults)
 {
@@ -63,11 +66,12 @@ function logEnd(&$oDB, $hLog, $iNumResults)
 		$aOutdata = sprintf(
 			"[%s] %.4f %d %s \"%s\"\n",
 			$hLog[0],
-			$fEndTime-$hLog[5],
+			($fEndTime - $hLog[5]),
 			$iNumResults,
 			$hLog[4],
 			$hLog[2]
 		);
-		file_put_contents(CONST_Log_File, $aOutdata, FILE_APPEND | LOCK_EX);
+		file_put_contents(CONST_Log_File, $aOutdata, (FILE_APPEND | LOCK_EX));
 	}
-}
+
+}//end logEnd()

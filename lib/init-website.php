@@ -1,7 +1,7 @@
 <?php
 
-require_once('init.php');
-require_once('website.php');
+require_once 'init.php';
+require_once 'website.php';
 
 if (CONST_NoAccessControl) {
 	header("Access-Control-Allow-Origin: *");

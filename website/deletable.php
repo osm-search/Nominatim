@@ -1,9 +1,9 @@
 <?php
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/output.php');
+require_once dirname(dirname(__FILE__)).'/settings/settings.php';
+require_once CONST_BasePath.'/lib/init-website.php';
+require_once CONST_BasePath.'/lib/log.php';
+require_once CONST_BasePath.'/lib/output.php';
 
 $sOutputFormat = 'html';
 ini_set('memory_limit', '200M');
@@ -71,26 +71,28 @@ table td {
 
 if (!$aPolygons) exit;
 echo "<tr>";
-//var_dump($aPolygons[0]);
+// var_dump($aPolygons[0]);
 foreach ($aPolygons[0] as $sCol => $sVal) {
 	echo "<th>".$sCol."</th>";
 }
+
 echo "</tr>";
 foreach ($aPolygons as $aRow) {
 	echo "<tr>";
 	foreach ($aRow as $sCol => $sVal) {
 		switch ($sCol) {
-			case 'osm_id':
-				echo '<td>'.osmLink($aRow).'</td>';
-				break;
-			case 'place_id':
-				echo '<td>'.detailsLink($aRow).'</td>';
-				break;
-			default:
-				echo "<td>".($sVal?$sVal:'&nbsp;')."</td>";
-				break;
+		case 'osm_id':
+			echo '<td>'.osmLink($aRow).'</td>';
+			break;
+		case 'place_id':
+			echo '<td>'.detailsLink($aRow).'</td>';
+			break;
+		default:
+			echo "<td>".($sVal ? $sVal : '&nbsp;')."</td>";
+			break;
 		}
 	}
+
 	echo "</tr>";
 }
 

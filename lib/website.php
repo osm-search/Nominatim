@@ -1,10 +1,9 @@
 <?php
-
-/***************************************************************************
- *
+/**
  * Error handling functions
- *
  */
+
+
 function chksql($oSql, $sMsg = "Database request failed")
 {
 	if (!PEAR::isError($oSql)) return $oSql;
@@ -38,10 +37,13 @@ INTERNALFAIL;
 
 	echo "</pre></p></body></html>";
 	exit;
-}
+
+}//end chksql()
+
 
 function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 {
+
 	header('HTTP/1.0 500 Internal Server Error');
 	header('Content-type: text/html; charset=utf-8');
 	echo "<html><body><h1>Internal Server Error</h1>";
@@ -53,19 +55,23 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 		if ($sSQL) {
 			echo "<h3>SQL query</h3><code>".$sSQL."</code>";
 		}
+
 		if ($vDumpVar) {
 			echo "<h3>Result</h3> <code>";
 			var_dump($vDumpVar);
 			echo "</code>";
 		}
+
 	}
 	echo "\n</body></html>\n";
 	exit;
-}
+
+}//end failInternalError()
 
 
 function userError($sError)
 {
+
 	header('HTTP/1.0 400 Bad Request');
 	header('Content-type: text/html; charset=utf-8');
 	echo "<html><body><h1>Bad Request</h1>";
@@ -74,21 +80,24 @@ function userError($sError)
 	echo '<p>If you feel this error is incorrect feel file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. Please include the error message above and the URL you used.</p>';
 	echo "\n</body></html>\n";
 	exit;
-}
+
+}//end userError()
 
 
-/***************************************************************************
- *
+/**
  * Functions for parsing URL parameters
- *
  */
+
 
 function getParamBool($sName, $bDefault = false)
 {
+
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 	return (bool) $_GET[$sName];
-}
+
+}//end getParamBool()
+
 
 function getParamInt($sName, $bDefault = false)
 {
@@ -99,7 +108,9 @@ function getParamInt($sName, $bDefault = false)
 	}
 
 	return (int) $_GET[$sName];
-}
+
+}//end getParamInt()
+
 
 function getParamFloat($sName, $bDefault = false)
 {
@@ -110,14 +121,18 @@ function getParamFloat($sName, $bDefault = false)
 	}
 
 	return (float) $_GET[$sName];
-}
+
+}//end getParamFloat()
+
 
 function getParamString($sName, $bDefault = false)
 {
 	if (!isset($_GET[$sName]) || strlen($_GET[$sName]) == 0) return $bDefault;
 
 	return $_GET[$sName];
-}
+
+}//end getParamString()
+
 
 function getParamSet($sName, $aValues, $sDefault = false)
 {
@@ -128,4 +143,5 @@ function getParamSet($sName, $aValues, $sDefault = false)
 	}
 
 	return $_GET[$sName];
-}
+
+}//end getParamSet()

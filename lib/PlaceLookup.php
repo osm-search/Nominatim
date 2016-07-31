@@ -21,76 +21,103 @@ class PlaceLookup
 	function PlaceLookup(&$oDB)
 	{
 		$this->oDB =& $oDB;
-	}
+
+	}//end PlaceLookup()
+
 
 	function setLanguagePreference($aLangPrefOrder)
 	{
 		$this->aLangPrefOrder = $aLangPrefOrder;
-	}
+
+	}//end setLanguagePreference()
+
 
 	function setIncludeAddressDetails($bAddressDetails = true)
 	{
 		$this->bAddressDetails = $bAddressDetails;
-	}
+
+	}//end setIncludeAddressDetails()
+
 
 	function setIncludeExtraTags($bExtraTags = false)
 	{
 		$this->bExtraTags = $bExtraTags;
-	}
+
+	}//end setIncludeExtraTags()
+
 
 	function setIncludeNameDetails($bNameDetails = false)
 	{
 		$this->bNameDetails = $bNameDetails;
-	}
+
+	}//end setIncludeNameDetails()
 
 
 	function setIncludePolygonAsPoints($b = true)
 	{
 		$this->bIncludePolygonAsPoints = $b;
-	}
+
+	}//end setIncludePolygonAsPoints()
+
 
 	function getIncludePolygonAsPoints()
 	{
 		return $this->bIncludePolygonAsPoints;
-	}
+
+	}//end getIncludePolygonAsPoints()
+
 
 	function setIncludePolygonAsText($b = true)
 	{
 		$this->bIncludePolygonAsText = $b;
-	}
+
+	}//end setIncludePolygonAsText()
+
 
 	function getIncludePolygonAsText()
 	{
 		return $this->bIncludePolygonAsText;
-	}
+
+	}//end getIncludePolygonAsText()
+
 
 	function setIncludePolygonAsGeoJSON($b = true)
 	{
 		$this->bIncludePolygonAsGeoJSON = $b;
-	}
+
+	}//end setIncludePolygonAsGeoJSON()
+
 
 	function setIncludePolygonAsKML($b = true)
 	{
 		$this->bIncludePolygonAsKML = $b;
-	}
+
+	}//end setIncludePolygonAsKML()
+
 
 	function setIncludePolygonAsSVG($b = true)
 	{
 		$this->bIncludePolygonAsSVG = $b;
-	}
+
+	}//end setIncludePolygonAsSVG()
+
 
 	function setPolygonSimplificationThreshold($f)
 	{
 		$this->fPolygonSimplificationThreshold = $f;
-	}
+
+	}//end setPolygonSimplificationThreshold()
+
 
 	function lookupOSMID($sType, $iID)
 	{
-		$sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int)$iID." order by type = 'postcode' asc";
+		$sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int) $iID." order by type = 'postcode' asc";
 		$iPlaceID = chksql($this->oDB->getOne($sSQL));
 
-		return $this->lookup((int)$iPlaceID);
-	}
+		return $this->lookup((int) $iPlaceID);
+
+	}//end lookupOSMID()
+
 
 	function lookup($iPlaceID, $sType = '', $fInterpolFraction = 0.0)
 	{
@@ -116,7 +143,7 @@ class PlaceLookup
 			$sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
 			$sSQL .= " END as housenumber";
 			$sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
-		} elseif ($bIsInterpolation) {
+		} else if ($bIsInterpolation) {
 			$sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, null as isin, postcode,";
 			$sSQL .= " calculated_country_code as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
 			$sSQL .= " (0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, calculated_country_code, ";
@@ -146,7 +173,7 @@ class PlaceLookup
 			$sSQL .= " (case when centroid is null then st_y(st_centroid(geometry)) else st_y(centroid) end) as lat,";
 			$sSQL .= " (case when centroid is null then st_x(st_centroid(geometry)) else st_x(centroid) end) as lon";
 			$sSQL .= " from placex where place_id = ".$iPlaceID;
-		}
+		}//end if
 
 		$aPlace = chksql($this->oDB->getRow($sSQL), "Could not lookup place");
 
@@ -154,7 +181,7 @@ class PlaceLookup
 
 		if ($this->bAddressDetails) {
 			// to get addressdetails for tiger data, the housenumber is needed
-			$iHousenumber = ($bIsTiger || $bIsInterpolation) ? $aPlace['housenumber'] : -1;
+			$iHousenumber = (($bIsTiger || $bIsInterpolation) ? $aPlace['housenumber'] : -1);
 			$aPlace['aAddress'] = $this->getAddressNames($aPlace['place_id'], $iHousenumber);
 		}
 
@@ -189,9 +216,10 @@ class PlaceLookup
 		}
 
 		$aPlace['addresstype'] = $sAddressType;
-
 		return $aPlace;
-	}
+
+	}//end lookup()
+
 
 	function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
 	{
@@ -202,7 +230,9 @@ class PlaceLookup
 		$sSQL .= " order by rank_address desc,isaddress desc";
 
 		return chksql($this->oDB->getAll($sSQL));
-	}
+
+	}//end getAddressDetails()
+
 
 	function getAddressNames($iPlaceID, $housenumber = -1)
 	{
@@ -217,39 +247,42 @@ class PlaceLookup
 
 			if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) {
 				$aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
-			} elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) {
+			} else if (isset($aClassType[$aLine['class'].':'.$aLine['type']])) {
 				$aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
-			} elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))])) {
-				$aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
+			} else if (isset($aClassType['boundary:administrative:'.((int) ($aLine['rank_address'] / 2))])) {
+				$aTypeLabel = $aClassType['boundary:administrative:'.((int) ($aLine['rank_address'] / 2))];
 				$bFallback = true;
 			} else {
-				$aTypeLabel = array('simplelabel'=>'address'.$aLine['rank_address']);
+				$aTypeLabel = array('simplelabel' => 'address'.$aLine['rank_address']);
 				$bFallback = true;
 			}
 
 			if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
-				$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
+				$sTypeLabel = strtolower(isset($aTypeLabel['simplelabel']) ? $aTypeLabel['simplelabel'] : $aTypeLabel['label']);
 				$sTypeLabel = str_replace(' ', '_', $sTypeLabel);
 				if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
-					$aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
+					$aAddress[$sTypeLabel] = $aLine['localname'] ? $aLine['localname'] : $aLine['housenumber'];
 				}
+
 				$aFallback[$sTypeLabel] = $bFallback;
 			}
-		}
+		}//end foreach
 		return $aAddress;
-	}
+
+	}//end getAddressNames()
 
 
-
-	// returns an array which will contain the keys
-	//   aBoundingBox
-	// and may also contain one or more of the keys
-	//   asgeojson
-	//   askml
-	//   assvg
-	//   astext
-	//   lat
-	//   lon
+	/**
+	 * Returns an array which will contain the keys
+	 *   aBoundingBox
+	 * and may also contain one or more of the keys
+	 *   asgeojson
+	 *   askml
+	 *   assvg
+	 *   astext
+	 *   lat
+	 *   lon
+	 */
 	function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
 	{
 		$aOutlineResult = array();
@@ -286,25 +319,24 @@ class PlaceLookup
 				if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
 				if ($this->bIncludePolygonAsPoints) $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
 
-
-				if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001) {
-					$aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-					$aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
+				if (abs(($aPointPolygon['minlat'] - $aPointPolygon['maxlat'])) < 0.0000001) {
+					$aPointPolygon['minlat'] = ($aPointPolygon['minlat'] - $fRadius);
+					$aPointPolygon['maxlat'] = ($aPointPolygon['maxlat'] + $fRadius);
 				}
 
-				if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001) {
-					$aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-					$aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
+				if (abs(($aPointPolygon['minlon'] - $aPointPolygon['maxlon'])) < 0.0000001) {
+					$aPointPolygon['minlon'] = ($aPointPolygon['minlon'] - $fRadius);
+					$aPointPolygon['maxlon'] = ($aPointPolygon['maxlon'] + $fRadius);
 				}
 
 				$aOutlineResult['aBoundingBox'] = array(
-				                                  (string)$aPointPolygon['minlat'],
-				                                  (string)$aPointPolygon['maxlat'],
-				                                  (string)$aPointPolygon['minlon'],
-				                                  (string)$aPointPolygon['maxlon']
-				                                 );
-			}
-		} // CONST_Search_AreaPolygons
+				                                   (string) $aPointPolygon['minlat'],
+				                                   (string) $aPointPolygon['maxlat'],
+				                                   (string) $aPointPolygon['minlon'],
+				                                   (string) $aPointPolygon['maxlon']
+				                                  );
+			}//end if
+		}//end if
 
 		// as a fallback we generate a bounding box without knowing the size of the geometry
 		if ((!isset($aOutlineResult['aBoundingBox'])) && isset($fLon)) {
@@ -314,18 +346,22 @@ class PlaceLookup
 			}
 
 			$aBounds = array();
-			$aBounds['minlat'] = $fLat - $fRadius;
-			$aBounds['maxlat'] = $fLat + $fRadius;
-			$aBounds['minlon'] = $fLon - $fRadius;
-			$aBounds['maxlon'] = $fLon + $fRadius;
+			$aBounds['minlat'] = ($fLat - $fRadius);
+			$aBounds['maxlat'] = ($fLat + $fRadius);
+			$aBounds['minlon'] = ($fLon - $fRadius);
+			$aBounds['maxlon'] = ($fLon + $fRadius);
 
 			$aOutlineResult['aBoundingBox'] = array(
-			                                  (string)$aBounds['minlat'],
-			                                  (string)$aBounds['maxlat'],
-			                                  (string)$aBounds['minlon'],
-			                                  (string)$aBounds['maxlon']
-			                                 );
+			                                   (string) $aBounds['minlat'],
+			                                   (string) $aBounds['maxlat'],
+			                                   (string) $aBounds['minlon'],
+			                                   (string) $aBounds['maxlon']
+			                                  );
 		}
+
 		return $aOutlineResult;
-	}
-}
+
+	}//end getOutlines()
+
+
+}//end class

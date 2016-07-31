@@ -2,24 +2,24 @@
 
 @define('CONST_ConnectionBucket_PageType', 'Reverse');
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-require_once(CONST_BasePath.'/lib/output.php');
+require_once dirname(dirname(__FILE__)).'/settings/settings.php';
+require_once CONST_BasePath.'/lib/init-website.php';
+require_once CONST_BasePath.'/lib/log.php';
+require_once CONST_BasePath.'/lib/PlaceLookup.php';
+require_once CONST_BasePath.'/lib/output.php';
 
 $oDB =& getDB();
 ini_set('memory_limit', '200M');
 
-// Format for output
+// Format for output.
 $sOutputFormat = getParamSet('format', array('xml', 'json'), 'xml');
 
-// Preferred language
+// Preferred language.
 $aLangPrefOrder = getPreferredLanguages();
 
 $hLog = logStart($oDB, 'place', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
-$aSearchResults = array();
+$aSearchResults     = array();
 $aCleanedQueryParts = array();
 
 $oPlaceLookup = new PlaceLookup($oDB);
@@ -31,41 +31,42 @@ $oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
 $aOsmIds = explode(',', getParamString('osm_ids', ''));
 
 if (count($aOsmIds) > CONST_Places_Max_ID_count) {
-	userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
+	userError('Bulk User: Only '.CONST_Places_Max_ID_count." ids are allowed in one request.");
 }
 
 foreach ($aOsmIds as $sItem) {
-	// Skip empty sItem
+	// Skip empty sItem.
 	if (empty($sItem)) continue;
-	
+
 	$sType = $sItem[0];
-	$iId = (int) substr($sItem, 1);
+	$iId   = (int) substr($sItem, 1);
+
 	if ($iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R')) {
-		$aCleanedQueryParts[] = $sType . $iId;
+		$aCleanedQueryParts[] = $sType.$iId;
 		$oPlace = $oPlaceLookup->lookupOSMID($sType, $iId);
 		if ($oPlace) {
-			// we want to use the search-* output templates, so we need to fill
+			// We want to use the search-* output templates, so we need to fill
 			// $aSearchResults and slightly change the (reverse search) oPlace
-			// key names
+			// key names.
 			$oResult = $oPlace;
 			unset($oResult['aAddress']);
 			if (isset($oPlace['aAddress'])) $oResult['address'] = $oPlace['aAddress'];
 			unset($oResult['langaddress']);
-			$oResult['name'] = $oPlace['langaddress'];
+			$oResult['name']  = $oPlace['langaddress'];
 			$aSearchResults[] = $oResult;
 		}
 	}
-}
+}//end foreach
 
 
 if (CONST_Debug) exit;
 
 $sXmlRootTag = 'lookupresults';
-$sQuery = join(',', $aCleanedQueryParts);
-// we initialize these to avoid warnings in our logfile
-$sViewBox = '';
-$bShowPolygons = '';
+$sQuery      = join(',', $aCleanedQueryParts);
+// We initialize these to avoid warnings in our logfile.
+$sViewBox         = '';
+$bShowPolygons    = '';
 $aExcludePlaceIDs = [];
-$sMoreURL = '';
+$sMoreURL         = '';
 
-include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');
+require CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php';

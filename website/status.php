@@ -2,15 +2,19 @@
 
 @define('CONST_ConnectionBucket_PageType', 'Status');
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
-require_once(CONST_BasePath.'/lib/init-website.php');
+require_once dirname(dirname(__FILE__)).'/settings/settings.php';
+require_once CONST_BasePath.'/lib/init-website.php';
+
 
 function statusError($sMsg)
 {
+
 	header("HTTP/1.0 500 Internal Server Error");
 	echo "ERROR: ".$sMsg;
 	exit;
-}
+
+}//end statusError()
+
 
 $oDB =& DB::connect(CONST_Database_DSN, false);
 if (!$oDB || PEAR::isError($oDB)) {

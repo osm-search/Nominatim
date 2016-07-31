@@ -1,5 +1,6 @@
 <?php
 
+
 function formatOSMType($sType, $bIncludeExternal = true)
 {
 	if ($sType == 'N') return 'node';
@@ -12,16 +13,21 @@ function formatOSMType($sType, $bIncludeExternal = true)
 	if ($sType == 'I') return 'way';
 
 	return '';
-}
+
+}//end formatOSMType()
+
 
 function osmLink($aFeature, $sRefText = false)
 {
 	$sOSMType = formatOSMType($aFeature['osm_type'], false);
 	if ($sOSMType) {
-		return '<a href="//www.openstreetmap.org/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.($sRefText?$sRefText:$aFeature['osm_id']).'</a>';
+		return '<a href="//www.openstreetmap.org/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.($sRefText ? $sRefText : $aFeature['osm_id']).'</a>';
 	}
+
 	return '';
-}
+
+}//end osmLink()
+
 
 function wikipediaLink($aFeature)
 {
@@ -29,12 +35,16 @@ function wikipediaLink($aFeature)
 		list($sLanguage, $sArticle) = explode(':', $aFeature['wikipedia']);
 		return '<a href="https://'.$sLanguage.'.wikipedia.org/wiki/'.urlencode($sArticle).'" target="_blank">'.$aFeature['wikipedia'].'</a>';
 	}
+
 	return '';
-}
+
+}//end wikipediaLink()
+
 
 function detailsLink($aFeature, $sTitle = false)
 {
 	if (!$aFeature['place_id']) return '';
 
-	return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle?$sTitle:$aFeature['place_id']).'</a>';
-}
+	return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle ? $sTitle : $aFeature['place_id']).'</a>';
+
+}//end detailsLink()

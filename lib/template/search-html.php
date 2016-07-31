@@ -81,7 +81,10 @@
 <?php } ?>
 
 		<div id="map-wrapper">
-			<div id="map-position"></div>
+			<div id="map-position">
+				<div id="map-position-inner"></div>
+				<div id="map-position-close"><a href="#">hide</a></div>
+			</div>
 			<div id="map"></div>
 		</div>
 

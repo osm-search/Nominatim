@@ -33,9 +33,9 @@
 
 		protected $bBoundedSearch = false;
 		protected $aViewBox = false;
+		protected $sViewboxCentreSQL = false;
 		protected $sViewboxSmallSQL = false;
 		protected $sViewboxLargeSQL = false;
-		protected $aRoutePoints = false;
 
 		protected $iMaxRank = 20;
 		protected $iMinAddressRank = 0;
@@ -114,17 +114,12 @@
 			if ($iLimit < 1) $iLimit = 1;
 
 			$this->iFinalLimit = $iLimit;
-			$this->iLimit = $this->iFinalLimit + min($this->iFinalLimit, 10);
+			$this->iLimit = $iLimit + min($iLimit, 10);
 		}
 
 		function getExcludedPlaceIDs()
 		{
 			return $this->aExcludePlaceIDs;
-		}
-
-		function setViewBox($fLeft, $fBottom, $fRight, $fTop)
-		{
-			$this->aViewBox = array($fLeft, $fBottom, $fRight, $fTop);
 		}
 
 		function getViewBoxString()
@@ -158,6 +153,43 @@
 			$this->iMaxAddressRank = $iMax;
 		}
 
+		function setRoute($aRoutePoints, $fRouteWidth)
+		{
+			$this->aViewBox = false;
+
+			$this->sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
+			$sSep = '';
+			foreach($this->aRoutePoints as $aPoint)
+			{
+				$fPoint = (float)$aPoint;
+				$this->sViewboxCentreSQL .= $sSep.$fPoint;
+				$sSep = ($sSep == ' ') ? ',' : ' ';
+			}
+			$this->sViewboxCentreSQL .= ")'::geometry,4326)";
+
+			$this->sViewboxSmallSQL = 'st_buffer('.$this->sViewboxCentreSQL;
+			$this->sViewboxSmallSQL .= ','.($fRouteWidth/69).')';
+
+			$this->sViewboxLargeSQL = 'st_buffer('.$this->sViewboxCentreSQL;
+			$this->sViewboxLargeSQL .= ','.($fRouteWidth/30).')';
+		}
+
+		function setViewbox($aViewbox)
+		{
+			$this->aViewBox = array_map('floatval', $aViewbox);
+
+			$fHeight = $this->aViewBox[0] - $this->aViewBox[2];
+			$fWidth = $this->aViewBox[1] - $this->aViewBox[3];
+			$aBigViewBox[0] = $this->aViewBox[0] + $fHeight;
+			$aBigViewBox[2] = $this->aViewBox[2] - $fHeight;
+			$aBigViewBox[1] = $this->aViewBox[1] + $fWidth;
+			$aBigViewBox[3] = $this->aViewBox[3] - $fWidth;
+
+			$this->sViewboxCentreSQL = false;
+			$this->sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".$this->aViewBox[0].",".$this->aViewBox[1]."),ST_Point(".$this->aViewBox[2].",".$this->aViewBox[3].")),4326)";
+			$this->sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".$aBigViewBox[0].",".$aBigViewBox[1]."),ST_Point(".$aBigViewBox[2].",".$aBigViewBox[3].")),4326)";
+		}
+
 		function setNearPoint($aNearPoint, $fRadiusDeg = 0.1)
 		{
 			$this->aNearPoint = array((float)$aNearPoint[0], (float)$aNearPoint[1], (float)$fRadiusDeg);
@@ -175,24 +207,28 @@
 		}
 
 
-		function loadParamArray($aParams)
+		function loadParamArray($oParams)
 		{
-			if (isset($aParams['addressdetails'])) $this->bIncludeAddressDetails = (bool)$aParams['addressdetails'];
-			if (isset($aParams['extratags'])) $this->bIncludeExtraTags = (bool)$aParams['extratags'];
-			if (isset($aParams['namedetails'])) $this->bIncludeNameDetails = (bool)$aParams['namedetails'];
+			$this->bIncludeAddressDetails = $oParams->getBool('addressdetails',
+			                                                  $this->bIncludeAddressDetails);
+			$this->bIncludeExtraTags = $oParams->getBool('extratags',
+			                                             $this->bIncludeExtraTags);
+			$this->bIncludeNameDetails = $oParams->getBool('namedetails',
+			                                               $this->bIncludeNameDetails);
 
-			if (isset($aParams['bounded'])) $this->bBoundedSearch = (bool)$aParams['bounded'];
-			if (isset($aParams['dedupe'])) $this->bDeDupe = (bool)$aParams['dedupe'];
+			$this->bBoundedSearch = $oParams->getBool('bounded', $this->bBoundedSearch);
+			$this->bDeDupe = $oParams->getBool('dedupe', $this->bDeDupe);
 
-			if (isset($aParams['limit'])) $this->setLimit((int)$aParams['limit']);
-			if (isset($aParams['offset'])) $this->iOffset = (int)$aParams['offset'];
+			$this->setLimit($oParams->getInt('limit', $this->iFinalLimit));
+			$this->iOffset = $oParams->getInt('offset', $this->iOffset);
 
-			if (isset($aParams['fallback'])) $this->bFallback = (bool)$aParams['fallback'];
+			$this->bFallback = $oParams->getBool('fallback', $this->bFallback);
 
 			// List of excluded Place IDs - used for more acurate pageing
-			if (isset($aParams['exclude_place_ids']) && $aParams['exclude_place_ids'])
+			$sExcluded = $oParams->getStringList('exclude_place_ids');
+			if ($sExcluded)
 			{
-				foreach(explode(',',$aParams['exclude_place_ids']) as $iExcludedPlaceID)
+				foreach($sExcluded as $iExcludedPlaceID)
 				{
 					$iExcludedPlaceID = (int)$iExcludedPlaceID;
 					if ($iExcludedPlaceID)
@@ -204,66 +240,63 @@
 			}
 
 			// Only certain ranks of feature
-			if (isset($aParams['featureType'])) $this->setFeatureType($aParams['featureType']);
-			if (isset($aParams['featuretype'])) $this->setFeatureType($aParams['featuretype']);
+			$sFeatureType = $oParams->getString('featureType');
+			if (!$sFeatureType) $sFeatureType = $oParams->getString('featuretype');
+			if ($sFeatureType) $this->setFeatureType($sFeatureType);
 
 			// Country code list
-			if (isset($aParams['countrycodes']))
+			$sCountries = $oParams->getStringList('countrycodes');
+			if ($sCountries)
 			{
-				$aCountryCodes = array();
-				foreach(explode(',',$aParams['countrycodes']) as $sCountryCode)
+				foreach($sCountries as $sCountryCode)
 				{
 					if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode))
 					{
-						$aCountryCodes[] = strtolower($sCountryCode);
+						$aCountries[] = strtolower($sCountryCode);
 					}
 				}
-				$this->aCountryCodes = $aCountryCodes;
+				if (isset($aCountryCodes))
+					$this->aCountryCodes = $aCountries;
 			}
 
-			if (isset($aParams['viewboxlbrt']) && $aParams['viewboxlbrt'])
+			$aViewbox = $oParams->getStringList('viewboxlbrt');
+			if ($aViewbox)
 			{
-				$aCoOrdinatesLBRT = explode(',',$aParams['viewboxlbrt']);
-				$this->setViewBox($aCoOrdinatesLBRT[0], $aCoOrdinatesLBRT[1], $aCoOrdinatesLBRT[2], $aCoOrdinatesLBRT[3]);
+				$this->setViewbox($aViewbox);
 			}
-			else if (isset($aParams['viewbox']) && $aParams['viewbox'])
+			else
 			{
-				$aCoOrdinatesLTRB = explode(',',$aParams['viewbox']);
-				$this->setViewBox($aCoOrdinatesLTRB[0], $aCoOrdinatesLTRB[3], $aCoOrdinatesLTRB[2], $aCoOrdinatesLTRB[1]);
-			}
-
-			if (isset($aParams['route']) && $aParams['route'] && isset($aParams['routewidth']) && $aParams['routewidth'])
-			{
-				$aPoints = explode(',',$aParams['route']);
-				if (sizeof($aPoints) % 2 != 0)
+				$aViewbox = $oParams->getStringList('viewbox');
+				if ($aViewbox)
 				{
-					userError("Uneven number of points");
-					exit;
+					$this->setViewBox(array($aViewbox[0], $aViewbox[3],
+					                        $aViewbox[2], $aViewbox[1]));
 				}
-				$fPrevCoord = false;
-				$aRoute = array();
-				foreach($aPoints as $i => $fPoint)
+				else
 				{
-					if ($i%2)
+					$aRoute = $oParams->getStringList('route');
+					$fRouteWidth = $oParams->getFloat('routewidth');
+					if ($aRoute && $fRouteWidth)
 					{
-						$aRoute[] = array((float)$fPoint, $fPrevCoord);
-					}
-					else
-					{
-						$fPrevCoord = (float)$fPoint;
+						$this->setRoute($aRoute, $fRouteWidth);
 					}
 				}
-				$this->aRoutePoints = $aRoute;
 			}
 		}
 
-		function setQueryFromParams($aParams)
+		function setQueryFromParams($oParams)
 		{
 			// Search query
-			$sQuery = (isset($aParams['q'])?trim($aParams['q']):'');
+			$sQuery = $oParams->getString('q');
 			if (!$sQuery)
 			{
-				$this->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
+				$this->setStructuredQuery($oParams->getString('amenity'),
+				                          $oParams->getString('street'),
+				                          $oParams->getString('city'),
+				                          $oParams->getString('county'),
+				                          $oParams->getString('state'),
+				                          $oParams->getString('country'),
+				                          $oParams->getString('postalcode'));
 				$this->setReverseInPlan(false);
 			}
 			else
@@ -783,7 +816,7 @@
 
 			$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
 			$sCountryCodesSQL = false;
-			if ($this->aCountryCodes && sizeof($this->aCountryCodes))
+			if ($this->aCountryCodes)
 			{
 				$sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));
 			}
@@ -798,46 +831,17 @@
 				$sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/','\1louisiana\2', $sQuery);
 			}
 
-			// View Box SQL
-			$sViewboxCentreSQL = false;
-			$bBoundingBoxSearch = false;
-			if ($this->aViewBox)
+			$bBoundingBoxSearch = $this->bBoundedSearch && $this->sViewboxSmallSQL;
+			if ($this->sViewboxCentreSQL)
 			{
-				$fHeight = $this->aViewBox[0]-$this->aViewBox[2];
-				$fWidth = $this->aViewBox[1]-$this->aViewBox[3];
-				$aBigViewBox[0] = $this->aViewBox[0] + $fHeight;
-				$aBigViewBox[2] = $this->aViewBox[2] - $fHeight;
-				$aBigViewBox[1] = $this->aViewBox[1] + $fWidth;
-				$aBigViewBox[3] = $this->aViewBox[3] - $fWidth;
+				// For complex viewboxes (routes) precompute the bounding geometry
+				$sGeom = chksql($this->oDB->getOne("select ".$this->sViewboxSmallSQL),
+				                "Could not get small viewbox");
+				$this->sViewboxSmallSQL = "'".$sGeom."'::geometry";
 
-				$this->sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$this->aViewBox[0].",".(float)$this->aViewBox[1]."),ST_Point(".(float)$this->aViewBox[2].",".(float)$this->aViewBox[3].")),4326)";
-				$this->sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".(float)$aBigViewBox[0].",".(float)$aBigViewBox[1]."),ST_Point(".(float)$aBigViewBox[2].",".(float)$aBigViewBox[3].")),4326)";
-				$bBoundingBoxSearch = $this->bBoundedSearch;
-			}
-
-			// Route SQL
-			if ($this->aRoutePoints)
-			{
-				$sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
-				$bFirst = true;
-				foreach($this->aRoutePoints as $aPoint)
-				{
-					if (!$bFirst) $sViewboxCentreSQL .= ",";
-					$sViewboxCentreSQL .= $aPoint[0].' '.$aPoint[1];
-					$bFirst = false;
-				}
-				$sViewboxCentreSQL .= ")'::geometry,4326)";
-
-				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/69).")";
-				$this->sViewboxSmallSQL = chksql($this->oDB->getOne($sSQL),
-				                                 "Could not get small viewbox.");
-				$this->sViewboxSmallSQL = "'".$this->sViewboxSmallSQL."'::geometry";
-
-				$sSQL = "select st_buffer(".$sViewboxCentreSQL.",".(float)($_GET['routewidth']/30).")";
-				$this->sViewboxLargeSQL = chksql($this->oDB->getOne($sSQL),
-				                                 "Could not get large viewbox.");
-				$this->sViewboxLargeSQL = "'".$this->sViewboxLargeSQL."'::geometry";
-				$bBoundingBoxSearch = $this->bBoundedSearch;
+				$sGeom = chksql($this->oDB->getOne("select ".$this->sViewboxLargeSQL),
+				                "Could not get large viewbox");
+				$this->sViewboxLargeSQL = "'".$sGeom."'::geometry";
 			}
 
 			// Do we have anything that looks like a lat/lon pair?
@@ -1224,7 +1228,7 @@
 									{
 										$sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
 									}
-									if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
+									if ($this->sViewboxCentreSQL) $sSQL .= " order by st_distance($this->sViewboxCentreSQL, ct.centroid) asc";
 									$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
@@ -1239,7 +1243,7 @@
 										if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
 										$sSQL .= " where st_contains($this->sViewboxLargeSQL, ct.centroid)";
 										if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-										if ($sViewboxCentreSQL) $sSQL .= " order by st_distance($sViewboxCentreSQL, ct.centroid) asc";
+										if ($this->sViewboxCentreSQL) $sSQL .= " order by st_distance($this->sViewboxCentreSQL, ct.centroid) asc";
 										$sSQL .= " limit $this->iLimit";
 										if (CONST_Debug) var_dump($sSQL);
 										$aPlaceIDs = chksql($this->oDB->getCol($sSQL));
@@ -1250,7 +1254,7 @@
 									$sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
 									$sSQL .= " and st_contains($this->sViewboxSmallSQL, geometry) and linked_place_id is null";
 									if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-									if ($sViewboxCentreSQL)	$sSQL .= " order by st_distance($sViewboxCentreSQL, centroid) asc";
+									if ($this->sViewboxCentreSQL)	$sSQL .= " order by st_distance($this->sViewboxCentreSQL, centroid) asc";
 									$sSQL .= " limit $this->iLimit";
 									if (CONST_Debug) var_dump($sSQL);
 									$aPlaceIDs = chksql($this->oDB->getCol($sSQL));

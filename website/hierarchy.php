@@ -8,16 +8,18 @@
 	require_once(CONST_BasePath.'/lib/output.php');
 	ini_set('memory_limit', '200M');
 
-	$oDB =& getDB();
+	$oParams = new ParameterParser();
 
-	$sOutputFormat = getParamSet('format', array('html', 'json'), 'html');
-
-	$aLangPrefOrder = getPreferredLanguages();
+	$sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
+	$aLangPrefOrder = $oParams->getPreferredLanguages();
 	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
-	$sPlaceId = getParamString('place_id');
-	$sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
-	$iOsmId = getParamInt('osmid', -1);
+	$sPlaceId = $oParams->getString('place_id');
+	$sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
+	$iOsmId = $oParams->getInt('osmid', -1);
+
+	$oDB =& getDB();
+
 	if ($sOsmType && $iOsmId > 0)
 	{
 		$sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));

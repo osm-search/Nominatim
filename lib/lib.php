@@ -50,62 +50,6 @@
 	}
 
 
-	function getPreferredLanguages($sLangString=false)
-	{
-		if (!$sLangString)
-		{
-			// If we have been provided the value in $_GET it overrides browser value
-			if (isset($_GET['accept-language']) && $_GET['accept-language'])
-			{
-				$_SERVER["HTTP_ACCEPT_LANGUAGE"] = $_GET['accept-language'];
-				$sLangString = $_GET['accept-language'];
-			}
-			else if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
-			{
-				$sLangString = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
-			}
-		}
-
-		$aLanguages = array();
-		if ($sLangString)
-		{
-			if (preg_match_all('/(([a-z]{1,8})(-[a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER))
-			{
-				foreach($aLanguagesParse as $iLang => $aLanguage)
-				{
-					$aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
-					if (!isset($aLanguages[$aLanguage[2]])) $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
-				}
-				arsort($aLanguages);
-			}
-		}
-		if (!sizeof($aLanguages) && CONST_Default_Language) $aLanguages = array(CONST_Default_Language=>1);
-		foreach($aLanguages as $sLangauge => $fLangauagePref)
-		{
-			$aLangPrefOrder['short_name:'.$sLangauge] = 'short_name:'.$sLangauge;
-		}
-		foreach($aLanguages as $sLangauge => $fLangauagePref)
-		{
-			$aLangPrefOrder['name:'.$sLangauge] = 'name:'.$sLangauge;
-		}
-		foreach($aLanguages as $sLangauge => $fLangauagePref)
-		{
-			$aLangPrefOrder['place_name:'.$sLangauge] = 'place_name:'.$sLangauge;
-		}
-		foreach($aLanguages as $sLangauge => $fLangauagePref)
-		{
-			$aLangPrefOrder['official_name:'.$sLangauge] = 'official_name:'.$sLangauge;
-		}
-		$aLangPrefOrder['short_name'] = 'short_name';
-		$aLangPrefOrder['name'] = 'name';
-		$aLangPrefOrder['place_name'] = 'place_name';
-		$aLangPrefOrder['official_name'] = 'official_name';
-		$aLangPrefOrder['ref'] = 'ref';
-		$aLangPrefOrder['type'] = 'type';
-		return $aLangPrefOrder;
-	}
-
-
 	function getWordSets($aWords, $iDepth)
 	{
 		$aResult = array(array(join(' ',$aWords)));

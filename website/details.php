@@ -5,19 +5,20 @@
 	require_once(CONST_BasePath.'/lib/init-website.php');
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/output.php');
+	ini_set('memory_limit', '200M');
+
+	$oParams = new ParameterParser();
 
 	$sOutputFormat = 'html';
+	$aLangPrefOrder = $oParams->getPreferredLanguages();
+	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
 
-	ini_set('memory_limit', '200M');
+	$sPlaceId = $oParams->getString('place_id');
+	$sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
+	$iOsmId = $oParams->getInt('osmid', -1);
 
 	$oDB =& getDB();
 
-	$aLangPrefOrder = getPreferredLanguages();
-	$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
-
-	$sPlaceId = getParamString('place_id');
-	$sOsmType = getParamSet('osmtype', array('N', 'W', 'R'));
-	$iOsmId = getParamInt('osmid', -1);
 	if ($sOsmType && $iOsmId > 0)
 	{
 		$sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));
@@ -125,7 +126,7 @@
 
 	$aPlaceSearchNameKeywords = false;
 	$aPlaceSearchAddressKeywords = false;
-	if (getParamBool('keywords'))
+	if ($oParams->getBool('keywords'))
 	{
 		$sSQL = "select * from search_name where place_id = $iPlaceID";
 		$aPlaceSearchName = $oDB->getRow($sSQL);

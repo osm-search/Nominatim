@@ -17,6 +17,8 @@ script:
   - cd $TRAVIS_BUILD_DIR/tests-php
   - phpunit ./
   - cd $TRAVIS_BUILD_DIR/tests
-  - lettuce --verbosity=2 features/api
-  - lettuce --verbosity=2 features/db
-  - lettuce --verbosity=2 features/osm2pgsql
+  - #lettuce features/api
+  - lettuce features/db -t -Fail -t RiverRhein -t -Tiger -t -poldi-only
+  - lettuce features/osm2pgsql
+notifications:
+  email: false

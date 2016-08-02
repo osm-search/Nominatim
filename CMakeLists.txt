@@ -66,7 +66,6 @@ include_directories(${LIBXML2_INCLUDE_DIR})
 #-----------------------------------------------------------------------------
 
 set(CUSTOMFILES
-    settings/settings.php
     settings/phrase_settings.php
     website/deletable.php
     website/details.php
@@ -91,6 +90,8 @@ set(CUSTOMFILES
 foreach (cfile ${CUSTOMFILES})
     configure_file(${PROJECT_SOURCE_DIR}/${cfile} ${PROJECT_BINARY_DIR}/${cfile})
 endforeach()
+
+configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php ${PROJECT_BINARY_DIR}/settings/settings.php)
 
 set(WEBPATHS css images js)
 

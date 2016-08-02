@@ -32,7 +32,7 @@ sudo update-locale LANG=en_US.UTF-8 #DOCS:
 
     sudo apt-get install -y python-dev python-pip python-levenshtein python-shapely \
                             python-psycopg2 tidy python-nose python-tidylib \
-                            phpunit
+                            python-numpy phpunit
 
     pip install --user lettuce==0.2.18 six==1.7 haversine
 

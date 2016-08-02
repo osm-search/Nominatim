@@ -24,7 +24,7 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
 
 sudo apt-get install -y -qq python-Levenshtein python-shapely \
                         python-psycopg2 tidy python-nose python-tidylib \
-                        phpunit
+                        python-numpy phpunit
 
 sudo -H pip install --quiet 'setuptools>=23.0.0' lettuce==0.2.18 'six>=1.9' haversine
 

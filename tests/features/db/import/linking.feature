@@ -16,7 +16,6 @@ Feature: Linking of places
          | R13     | None
          | N256    | None
 
-    @RiverRhein
     Scenario: Waterways are linked when in waterway relations
         Given the scene split-road
         And the place ways
@@ -40,7 +39,6 @@ Feature: Linking of places
          | osm_type
          | R
 
-    @RiverRhein
     Scenario: Relations are not linked when in waterway relations
         Given the scene split-road
         And the place ways
@@ -60,7 +58,6 @@ Feature: Linking of places
          | R1     | None
          | R2     | None
 
-    @RiverRhein
     Scenario: Empty waterway relations are handled correctly
         Given the scene split-road
         And the place ways
@@ -74,7 +71,6 @@ Feature: Linking of places
          | object | linked_place_id
          | R1     | None
 
-    @RiverRhein
     Scenario: Waterways are not linked when waterway types don't match
         Given the scene split-road
         And the place ways
@@ -95,7 +91,6 @@ Feature: Linking of places
           |  0 | R
           |  1 | W
 
-    @RiverRhein
     Scenario: Side streams are linked only when they have the same name
         Given the scene split-road
         And the place ways

@@ -74,7 +74,7 @@ your `postgresql.conf` file.
     work_mem (50MB)
     effective_cache_size (24GB)
     synchronous_commit = off
-    checkpoint_segments = 100
+    checkpoint_segments = 100 # only for postgresql <= 9.4
     checkpoint_timeout = 10min
     checkpoint_completion_target = 0.9
 

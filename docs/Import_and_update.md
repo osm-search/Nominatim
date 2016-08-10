@@ -19,6 +19,8 @@ Add to your settings/local.php:
 
     @define('CONST_Osm2pgsql_Flatnode_File', '/path/to/flatnode.file');
 
+Replace the second part with a suitable path on your system and make sure
+the directory exists. There should be at least 35GB of free space.
 
 Downloading additional data
 ---------------------------

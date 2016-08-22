@@ -14,7 +14,7 @@ Vagrant.configure("2") do |config|
       checkout = "no"
   end
 
-  config.vm.define "ubuntu" do |sub|
+  config.vm.define "ubuntu", primary: true do |sub|
       sub.vm.box = "bento/ubuntu-16.04"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/install-on-ubuntu-16.sh"

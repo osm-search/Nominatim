@@ -6,14 +6,14 @@
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/Geocode.php');
 	require_once(CONST_BasePath.'/lib/output.php');
-
 	ini_set('memory_limit', '200M');
 
 	$oDB =& getDB();
+	$oParams = new ParameterParser();
 
 	$oGeocode = new Geocode($oDB);
 
-	$aLangPrefOrder = getPreferredLanguages();
+	$aLangPrefOrder = $oParams->getPreferredLanguages();
 	$oGeocode->setLanguagePreference($aLangPrefOrder);
 
 	if (CONST_Search_ReversePlanForAll
@@ -26,21 +26,21 @@
 	}
 
 	// Format for output
-	$sOutputFormat = getParamSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
+	$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
 
 	// Show / use polygons
 	if ($sOutputFormat == 'html')
 	{
-		$oGeocode->setIncludePolygonAsText(getParamBool('polygon'));
+		$oGeocode->setIncludePolygonAsText($oParams->getBool('polygon'));
 		$bAsText = false;
 	}
 	else
 	{
-		$bAsPoints = getParamBool('polygon');
-		$bAsGeoJSON = getParamBool('polygon_geojson');
-		$bAsKML = getParamBool('polygon_kml');
-		$bAsSVG = getParamBool('polygon_svg');
-		$bAsText = getParamBool('polygon_text');
+		$bAsPoints = $oParams->getBool('polygon');
+		$bAsGeoJSON = $oParams->getBool('polygon_geojson');
+		$bAsKML = $oParams->getBool('polygon_kml');
+		$bAsSVG = $oParams->getBool('polygon_svg');
+		$bAsText = $oParams->getBool('polygon_text');
 		if ( ( ($bAsGeoJSON?1:0)
 				 + ($bAsKML?1:0)
 				 + ($bAsSVG?1:0)
@@ -66,9 +66,9 @@
 	}
 
 	// Polygon simplification threshold (optional)
-	$oGeocode->setPolygonSimplificationThreshold(getParamFloat('polygon_threshold', 0.0));
+	$oGeocode->setPolygonSimplificationThreshold($oParams->getFloat('polygon_threshold', 0.0));
 
-	$oGeocode->loadParamArray($_GET);
+	$oGeocode->loadParamArray($oParams);
 
 	if (CONST_Search_BatchMode && isset($_GET['batch']))
 	{
@@ -77,8 +77,9 @@
 		foreach($aBatch as $aBatchParams)
 		{
 			$oBatchGeocode = clone $oGeocode;
-			$oBatchGeocode->loadParamArray($aBatchParams);
-			$oBatchGeocode->setQueryFromParams($aBatchParams);
+			$oBatchParams = new ParameterParser($aBatchParams);
+			$oBatchGeocode->loadParamArray($oBatchParams);
+			$oBatchGeocode->setQueryFromParams($oBatchParams);
 			$aSearchResults = $oBatchGeocode->lookup();
 			$aBatchResults[] = $aSearchResults;
 		}
@@ -86,7 +87,10 @@
 		exit;
 	}
 
-	if (!getParamString('q') && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
+	$oGeocode->setQueryFromParams($oParams);
+
+	if (!$oGeocode->getQueryString()
+	    && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/')
 	{
 		$sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
@@ -95,10 +99,6 @@
 		$aPhrases = array_reverse($aPhrases);
 		$sQuery = join(', ',$aPhrases);
 		$oGeocode->setQuery($sQuery);
-	}
-	else
-	{
-		$oGeocode->setQueryFromParams($_GET);
 	}
 
 	$hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);

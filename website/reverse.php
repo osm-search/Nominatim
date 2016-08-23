@@ -7,11 +7,14 @@
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 	require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 	require_once(CONST_BasePath.'/lib/output.php');
+	ini_set('memory_limit', '200M');
 
-	$bAsGeoJSON = getParamBool('polygon_geojson');
-	$bAsKML = getParamBool('polygon_kml');
-	$bAsSVG = getParamBool('polygon_svg');
-	$bAsText = getParamBool('polygon_text');
+	$oParams = new ParameterParser();
+
+	$bAsGeoJSON = $oParams->getBool('polygon_geojson');
+	$bAsKML = $oParams->getBool('polygon_kml');
+	$bAsSVG = $oParams->getBool('polygon_svg');
+	$bAsText = $oParams->getBool('polygon_text');
 	if ((($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0)
 		+ ($bAsText?1:0)) > CONST_PolygonOutput_MaximumTypes)
 	{
@@ -23,36 +26,32 @@
 		{
 			userError("Polygon output is disabled");
 		}
-		exit;
 	}
 
-
 	// Polygon simplification threshold (optional)
-	$fThreshold = getParamFloat('polygon_threshold', 0.0);
-
-
-	$oDB =& getDB();
-	ini_set('memory_limit', '200M');
+	$fThreshold = $oParams->getFloat('polygon_threshold', 0.0);
 
 	// Format for output
-	$sOutputFormat = getParamSet('format', array('html', 'xml', 'json', 'jsonv2'), 'xml');
+	$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'xml');
 
 	// Preferred language
-	$aLangPrefOrder = getPreferredLanguages();
+	$aLangPrefOrder = $oParams->getPreferredLanguages();
+
+	$oDB =& getDB();
 
 	$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 
 	$oPlaceLookup = new PlaceLookup($oDB);
 	$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-	$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
-	$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
-	$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+	$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
+	$oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));
+	$oPlaceLookup->setIncludeNameDetails($oParams->getBool('namedetails', false));
 
-	$sOsmType = getParamSet('osm_type', array('N', 'W', 'R'));
-	$iOsmId = getParamInt('osm_id', -1);
-	$fLat = getParamFloat('lat');
-	$fLon = getParamFloat('lon');
+	$sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
+	$iOsmId = $oParams->getInt('osm_id', -1);
+	$fLat = $oParams->getFloat('lat');
+	$fLon = $oParams->getFloat('lon');
 	if ($sOsmType && $iOsmId > 0)
 	{
 		$aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
@@ -60,7 +59,7 @@
 	else if ($fLat !== false && $fLon !== false)
 	{
 		$oReverseGeocode = new ReverseGeocode($oDB);
-		$oReverseGeocode->setZoom(getParamInt('zoom', 18));
+		$oReverseGeocode->setZoom($oParams->getInt('zoom', 18));
 
 		$aLookup = $oReverseGeocode->lookup($fLat, $fLon);
 		if (CONST_Debug) var_dump($aLookup);

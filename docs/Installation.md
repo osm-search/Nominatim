@@ -103,7 +103,7 @@ directory and create an alias:
 
     <Directory "/srv/nominatim/build/website">
       Options FollowSymLinks MultiViews
-      AddTpe text/html   .php
+      AddType text/html   .php
       Require all granted
     </Directory>
     Alias /nominatim /srv/nominatim/build/website

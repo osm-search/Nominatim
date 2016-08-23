@@ -108,13 +108,13 @@ Feature: API regression tests
          | 0  | Philippstraße | Düren
 
     Scenario: trac #2830
-        When sending json search query "528, Merkley Drive, K4A 1N5,CA" with address
+        When sending json search query "207, Boardman Street, S0J 1L0, CA" with address
         Then result addresses contain
-         | ID | house_number | road          | postcode | country
-         | 0  | 528          | Merkley Drive | K4A 1N5  | Canada
+         | ID | house_number | road            | postcode | country
+         | 0  | 207          | Boardman Street | S0J 1L0  | Canada
 
     Scenario: trac #2830
-        When sending json search query "K4A 1N5,CA"
+        When sending json search query "S0J 1L0,CA"
         Then results contain
          | ID | class | type     | display_name
          | 0  | place | postcode | .*, Canada
@@ -134,17 +134,8 @@ Feature: API regression tests
     Scenario: trac #2871
         When looking up coordinates -33.906895553,150.99609375
         Then result addresses contain
-         | ID | city       | postcode | country
-         | 0  | [^0-9]*    | 2197     | Australia
-
-    Scenario: trac #2974
-        When sending json search query "Azadi Square, Faruj" with address
-        Then result addresses contain
-         | ID | road        | city
-         | 0  | ميدان آزادي | فاروج
-        And results contain
-         | ID | latlon
-         | 0  | 37.2323,58.2193 +-1km
+         | ID | city       | country
+         | 0  | [^0-9]*$   | Australia
 
      Scenario: trac #2981
         When sending json search query "Ohmstraße 7, Berlin" with address
@@ -202,7 +193,7 @@ Feature: API regression tests
         When sending json search query "<query>" with address
         Then result addresses contain
          | ID | road     | city
-         | 0  | Seegasse | Wieselburg-Land
+         | 0  | Seegasse | .*Wieselburg-Land
 
     Examples:
          | query

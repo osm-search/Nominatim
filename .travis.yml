@@ -1,0 +1,24 @@
+---
+language:
+  - 'python'
+sudo: required
+dist: trusty
+before_install:
+  - git submodule update --init --recursive
+install:
+  - vagrant/install-on-travis-ci.sh
+before_script:
+  - cd $TRAVIS_BUILD_DIR/build
+  - wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+  - ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | grep -v 'ETA (seconds)'
+  - ./utils/specialphrases.php --countries > ../data/specialphrases_countries.sql
+  - psql -d nominatim -f ../data/specialphrases_countries.sql
+script:
+  - cd $TRAVIS_BUILD_DIR/tests-php
+  - phpunit ./
+  - cd $TRAVIS_BUILD_DIR/tests
+  - #lettuce features/api --verbosity=1
+  - lettuce features/db --verbosity=1 -t -Fail -t -Tiger -t -poldi-only
+  - lettuce features/osm2pgsql --verbosity=1 -t -Fail
+notifications:
+  email: false

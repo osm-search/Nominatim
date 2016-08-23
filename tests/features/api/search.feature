@@ -9,7 +9,7 @@ Feature: Search queries
           | road         | Thoresby Road
           | city         | Broxtowe
           | state        | England
-          | country      | United Kingdom
+          | country      | U.*K.*
           | country_code | gb
 
 
@@ -31,13 +31,13 @@ Feature: Search queries
     Scenario: House number interpolation even
         Given the request parameters
           | accept-language
-          | en        
+          | en
         When sending json search query "140 rue Don Bosco, Saguenay" with address
         Then address of result 0 contains
           | type         | value
           | house_number | 140
           | road         | [Rr]ue Don Bosco
-          | city         | Saguenay
+          | city         | .*Saguenay
           | state        | Quebec
           | country      | Canada
           | country_code | ca
@@ -45,13 +45,13 @@ Feature: Search queries
     Scenario: House number interpolation odd
         Given the request parameters
           | accept-language
-          | en        
+          | en
         When sending json search query "141 rue Don Bosco, Saguenay" with address
         Then address of result 0 contains
           | type         | value
           | house_number | 141
           | road         | [rR]ue Don Bosco
-          | city         | Saguenay
+          | city         | .*Saguenay
           | state        | Quebec
           | country      | Canada
           | country_code | ca
@@ -73,7 +73,7 @@ Feature: Search queries
     Scenario: Expansion of Illinois
         Given the request parameters
           | accept-language
-          | en        
+          | en
         When sending json search query "il, us"
         Then results contain
           | ID | display_name

@@ -6,15 +6,17 @@
 	require_once(CONST_BasePath.'/lib/log.php');
 	require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 	require_once(CONST_BasePath.'/lib/output.php');
-
-	$oDB =& getDB();
 	ini_set('memory_limit', '200M');
 
+	$oParams = new ParameterParser();
+
 	// Format for output
-	$sOutputFormat = getParamSet('format', array('xml', 'json'), 'xml');
+	$sOutputFormat = $oParams->getSet('format', array('xml', 'json'), 'xml');
 
 	// Preferred language
-	$aLangPrefOrder = getPreferredLanguages();
+	$aLangPrefOrder = $oParams->getPreferredLanguages();
+
+	$oDB =& getDB();
 
 	$hLog = logStart($oDB, 'place', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
@@ -23,11 +25,11 @@
 
 	$oPlaceLookup = new PlaceLookup($oDB);
 	$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-	$oPlaceLookup->setIncludeAddressDetails(getParamBool('addressdetails', true));
-	$oPlaceLookup->setIncludeExtraTags(getParamBool('extratags', false));
-	$oPlaceLookup->setIncludeNameDetails(getParamBool('namedetails', false));
+	$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
+	$oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));
+	$oPlaceLookup->setIncludeNameDetails($oParams->getBool('namedetails', false));
 
-	$aOsmIds = explode(',', getParamString('osm_ids', ''));
+	$aOsmIds = explode(',', $oParams->getString('osm_ids', ''));
 
 	if (count($aOsmIds) > CONST_Places_Max_ID_count)
 	{

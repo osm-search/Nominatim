@@ -31,7 +31,6 @@ Feature: Search queries
         When sending xml search query "Inuvik" with address
         Then address of result 0 contains
           | type         | value
-          | city         | Inuvik
           | state        | Northwest Territories
           | country      | Canada
           | country_code | ca

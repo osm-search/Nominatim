@@ -5,12 +5,14 @@
 	require_once(CONST_BasePath.'/lib/output.php');
 	ini_set('memory_limit', '200M');
 
-	$oDB =& getDB();
+	$oParams = new ParameterParser();
 
 	$sOutputFormat = 'html';
-	$iDays = getParamInt('days', 1);
-	$bReduced = getParamBool('reduced', false);
-	$sClass = getParamString('class', false);
+	$iDays = $oParams->getInt('days', 1);
+	$bReduced = $oParams->getBool('reduced', false);
+	$sClass = $oParams->getString('class', false);
+
+	$oDB =& getDB();
 
 	$iTotalBroken = (int) chksql($oDB->getOne('select count(*) from import_polygon_error'));
 

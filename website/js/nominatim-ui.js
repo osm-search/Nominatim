@@ -29,6 +29,32 @@ jQuery(document).on('ready', function(){
 		cm.addTo(map);
 	}
 
+	var MapPositionControl = L.Control.extend({
+			options: {
+					position: 'topright'
+			},
+
+			onAdd: function (map) {
+					var container = L.DomUtil.create('div', 'my-custom-control');
+
+					$(container).text('show map bounds').addClass('leaflet-bar btn btn-sm btn-default').on('click', function(e){
+						e.preventDefault();
+						e.stopPropagation();
+						$('#map-position').show();
+						$(container).hide();
+					});
+					$('#map-position-close a').on('click', function(e){
+						e.preventDefault();
+						e.stopPropagation();
+						$('#map-position').hide();
+						$(container).show();
+					});
+
+					return container;
+			}
+	});
+
+	map.addControl(new MapPositionControl());
 
 
 	function display_map_position(mouse_lat_lng){
@@ -45,7 +71,7 @@ jQuery(document).on('ready', function(){
 
 		html_viewbox = "viewbox: " + map_viewbox_as_string();
 
-		$('#map-position').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
+		$('#map-position-inner').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 		$('input#use_viewbox').trigger('change');
 	}
 

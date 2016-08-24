@@ -51,6 +51,7 @@ form label {
 }
 
 #map-position {
+  display: none;
   position: absolute;
   top: 0;
   right: 20px;
@@ -59,6 +60,10 @@ form label {
   font-size: 11px;
   background-color: rgba(255, 255, 255, 0.7);
   z-index: 100;
+}
+
+#map-position-close {
+  text-align: right;
 }
 
 .result {

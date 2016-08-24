@@ -31,7 +31,7 @@ jQuery(document).on('ready', function(){
 
 	var MapPositionControl = L.Control.extend({
 			options: {
-					position: 'bottomright'
+					position: 'topright'
 			},
 
 			onAdd: function (map) {

@@ -137,10 +137,10 @@ Get the source code from Github and change into the source directory
 The code must be built in a separate directory. Create this directory,
 then configure and build Nominatim in there:
 
-    mkdir build
+    sudo mkdir build
     cd build
-    cmake $USERHOME/Nominatim
-    make
+    sudo cmake $USERHOME/Nominatim
+    sudo make
 
 You need to create a minimal configuration file that tells nominatim
 where it is located on the webserver:

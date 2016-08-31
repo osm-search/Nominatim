@@ -146,7 +146,7 @@ You need to create a minimal configuration file that tells nominatim
 where it is located on the webserver:
 
 ```
-tee settings/local.php << EOF
+sudo tee settings/local.php << EOF
 <?php
  @define('CONST_Website_BaseURL', '/nominatim/');
 EOF

@@ -65,7 +65,7 @@ user name and home directory now like this:
 
 Make sure that system servers can read from the home directory:
 
-    chmod a+x $USERHOME
+    sudo chmod a+x $USERHOME
 
 Setting up PostgreSQL
 ---------------------

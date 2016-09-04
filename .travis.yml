@@ -3,6 +3,8 @@ language:
   - 'python'
 sudo: required
 dist: trusty
+addons:
+  postgresql: "9.5"
 before_install:
   - git submodule update --init --recursive
 install:

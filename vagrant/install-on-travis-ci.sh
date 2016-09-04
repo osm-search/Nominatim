@@ -6,7 +6,8 @@
 # user 'travis'
 # $TRAVIS_BUILD_DIR is /home/travis/build/twain47/Nominatim/, for more see
 #   https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
-# Postgres 9.2 installed and started. role 'travis' already superuser
+# Postgres 9.5, PostGIS 2.2 installed and started. role 'travis' already superuser.
+# https://docs.travis-ci.com/user/database-setup/#PostgreSQL
 # Python 2.7.10, pip 7.1.2
 
 # Travis has a 4 MB, 10000 line output limit, so where possible we supress
@@ -19,7 +20,7 @@ sudo apt-get update -qq
 sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
                         libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
-                        postgresql-server-dev-9.3 postgresql-9.3-postgis-2.1 postgresql-contrib-9.3 \
+                        postgresql-server-dev-9.5 \
                         apache2 php5 php5-pgsql php-pear php-db
 
 sudo apt-get install -y -qq python-Levenshtein python-shapely \
@@ -28,7 +29,8 @@ sudo apt-get install -y -qq python-Levenshtein python-shapely \
 
 sudo -H pip install --quiet 'setuptools>=23.0.0' lettuce==0.2.18 'six>=1.9' haversine
 
-sudo service postgresql restart
+#sudo service postgresql restart
+sudo service postgresql start 9.5
 sudo -u postgres createuser -S www-data
 
 # Make sure that system servers can read from the home directory:

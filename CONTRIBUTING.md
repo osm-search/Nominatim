@@ -18,7 +18,7 @@ are in process of consolodating the style. The following rules apply:
  * Python code uses the official Python style
  * indention
    * SQL use 2 spaces
-   * all other use files TABs
+   * all other file types use 4 spaces
    * [BSD style](https://en.wikipedia.org/wiki/Indent_style#Allman_style) for braces
  * spaces
    * spaces before and after equal signs and operators
@@ -26,7 +26,6 @@ are in process of consolodating the style. The following rules apply:
    * no spaces after opening and before closing bracket
    * leave out space between a function name and bracket
      but add one between control statement(if, while, etc.) and bracket
-
 
 This coding style must be applied to any new or changed code. You are also
 welcome to fix the coding style of existing code but please submit separate

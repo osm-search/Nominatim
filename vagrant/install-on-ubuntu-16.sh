@@ -3,6 +3,7 @@
 # hacks for broken vagrant box      #DOCS:
 sudo rm -f /var/lib/dpkg/lock       #DOCS:
 sudo update-locale LANG=en_US.UTF-8 #DOCS:
+echo "set grub-pc/install_devices /dev/sda" | sudo debconf-communicate #DOCS:
 #
 # *Note:* these installation instructions are also available in executable
 #         form for use with vagrant under vagrant/install-on-ubuntu-16.sh.

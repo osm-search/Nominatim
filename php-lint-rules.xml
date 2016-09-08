@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<ruleset name="Nominatim Standard">
+
+  <description>Nominatim coding standard</description>
+
+  <!-- based on another standard, you can find it here -->
+  <!-- /usr/share/php/PHP/CodeSniffer/Standards/PSR2/ruleset.xml -->
+  <!-- https://github.com/squizlabs/PHP_CodeSniffer/blob/master/CodeSniffer/Standards/PSR2/ruleset.xml -->
+  <rule ref="PSR2"/>
+
+
+
+
+  <!-- currently 300 warnings, we set a limit later -->
+  <rule ref="Generic.Files.LineLength">
+    <properties>
+     <property name="lineLimit" value="9999"/>
+     <property name="absoluteLineLimit" value="0"/>
+    </properties>
+  </rule>
+
+
+
+  <!-- **************************************************************
+       DOCUMENTATION
+       ************************************************************** -->
+
+  <rule ref="PEAR.Commenting.FileComment.Missing">
+    <severity>0</severity>
+  </rule>
+  <rule ref="PEAR.Commenting.ClassComment.Missing">
+    <severity>0</severity>
+  </rule>    
+  <rule ref="PEAR.Commenting.FunctionComment.Missing">
+    <severity>0</severity>
+  </rule>
+
+
+
+
+  <!-- **************************************************************
+       COMMENTS
+       ************************************************************** -->
+
+  <!-- We allow comments after statements -->
+  <rule ref="Squiz.Commenting.PostStatementComment.Found">
+    <severity>0</severity>
+  </rule>
+  <!-- ... even without space e.g. //some words -->
+  <rule ref="Squiz.Commenting.InlineComment.NoSpaceBefore">
+    <severity>0</severity>
+  </rule>
+
+  <!-- Comments don't have to start uppercase -->
+  <rule ref="Squiz.Commenting.InlineComment.NotCapital">
+    <severity>0</severity>
+  </rule>
+  <!-- Comments don't have to end with one of .!? -->
+  <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+    <severity>0</severity>
+  </rule>
+
+  <!-- we don't need '} // functionname()' at end of large blocks -->
+  <rule ref="Squiz.Commenting.ClosingDeclarationComment.Missing">
+    <severity>0</severity>
+  </rule>
+  <!-- .. same for conditions -->
+  <rule ref="Squiz.Commenting.LongConditionClosingComment.Missing">
+    <severity>0</severity>
+  </rule>
+
+
+
+
+
+  <!-- **************************************************************
+       INDENTATION, SPACING
+       ************************************************************** -->
+
+  <!-- We use tabs -->
+  <rule ref="Generic.WhiteSpace.DisallowTabIndent.TabsUsed">
+    <severity>0</severity>
+  </rule>
+
+  <!-- We don't need 2 blank lines after function -->
+  <rule ref="Squiz.WhiteSpace.FunctionSpacing.After">
+    <severity>0</severity>
+  </rule>
+
+  <!-- Aligned looks nicer, but causes too many warnings currently -->
+  <rule ref="Generic.Formatting.MultipleStatementAlignment.NotSame">
+    <severity>0</severity>
+  </rule>
+
+  <!-- Aligned looks nicer, but causes too many warnings currently -->
+  <rule ref="Squiz.Arrays.ArrayDeclaration.DoubleArrowNotAligned">
+    <severity>0</severity>
+  </rule>
+
+
+
+
+
+
+
+  <!-- **************************************************************
+       VARIABLES
+       ************************************************************** -->
+
+  <!-- CONST_this_var is fine, we don't need ConstThisVar -->
+  <rule ref="Generic.NamingConventions.UpperCaseConstantName.ConstantNotUpperCase">
+    <severity>0</severity>
+  </rule>
+
+  <!-- simply disagree with "Each line in an array declaration must end in a comma" -->
+  <rule ref="Squiz.Arrays.ArrayDeclaration.NoCommaAfterLast">
+    <severity>0</severity>
+  </rule>
+  <rule ref="Squiz.Arrays.ArrayDeclaration.NoComma">
+    <severity>0</severity>
+  </rule>
+
+  <!-- We allow "$abc = array($aPoint[1], $aPoint[2])" -->
+  <rule ref="Squiz.Arrays.ArrayDeclaration.SingleLineNotAllowed">
+    <severity>0</severity>
+  </rule>
+
+
+
+
+  <!-- **************************************************************
+       CONTROL STRUCTURES
+       ************************************************************** -->
+
+  <!-- we allow "if (a) echo 'b'" without brackets -->
+  <rule ref="Generic.ControlStructures.InlineControlStructure.NotAllowed">
+    <severity>0</severity>
+  </rule>
+  <rule ref="Generic.ControlStructures.InlineControlStructure.Discouraged">
+    <severity>0</severity>
+  </rule>
+  <rule ref="Squiz.PHP.DisallowInlineIf.Found">
+    <severity>0</severity>
+  </rule>
+
+  <!-- We allow "if (a)". No need for "if (a === TRUE)" -->
+  <rule ref="Squiz.Operators.ComparisonOperatorUsage.ImplicitTrue">
+    <severity>0</severity>
+  </rule>
+  <!-- ... same for "if (!a)" -->
+  <rule ref="Squiz.Operators.ComparisonOperatorUsage.NotAllowed">
+    <severity>0</severity>
+  </rule>
+
+  <!-- We allow
+              if (a)
+              {
+  -->
+  <rule ref="PEAR.ControlStructures.MultiLineCondition.NewlineBeforeOpenBrace">
+    <severity>0</severity>
+  </rule>
+  <!-- ... same -->
+  <rule ref="Squiz.WhiteSpace.ControlStructureSpacing.NoLineAfterClose">
+    <severity>0</severity>
+  </rule>
+  <!-- ... same for foreach/while etc -->
+  <rule ref="PEAR.ControlStructures.ControlSignature">
+    <severity>0</severity>
+  </rule>
+  <!-- ... same -->
+  <rule ref="Squiz.WhiteSpace.FunctionClosingBraceSpace.SpacingBeforeClose">
+    <severity>0</severity>
+  </rule>
+
+
+</ruleset>

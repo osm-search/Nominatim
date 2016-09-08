@@ -130,8 +130,7 @@ class Geocode
 
     function setFeatureType($sFeatureType)
     {
-        switch($sFeatureType)
-        {
+        switch ($sFeatureType) {
         case 'country':
             $this->setRankRange(4, 4);
             break;
@@ -159,8 +158,7 @@ class Geocode
 
         $this->sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
         $sSep = '';
-        foreach($this->aRoutePoints as $aPoint)
-        {
+        foreach ($this->aRoutePoints as $aPoint) {
             $fPoint = (float)$aPoint;
             $this->sViewboxCentreSQL .= $sSep.$fPoint;
             $sSep = ($sSep == ' ') ? ',' : ' ';
@@ -226,10 +224,8 @@ class Geocode
 
         // List of excluded Place IDs - used for more acurate pageing
         $sExcluded = $oParams->getStringList('exclude_place_ids');
-        if ($sExcluded)
-        {
-            foreach($sExcluded as $iExcludedPlaceID)
-            {
+        if ($sExcluded) {
+            foreach ($sExcluded as $iExcludedPlaceID) {
                 $iExcludedPlaceID = (int)$iExcludedPlaceID;
                 if ($iExcludedPlaceID)
                     $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
@@ -246,12 +242,9 @@ class Geocode
 
         // Country code list
         $sCountries = $oParams->getStringList('countrycodes');
-        if ($sCountries)
-        {
-            foreach($sCountries as $sCountryCode)
-            {
-                if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode))
-                {
+        if ($sCountries) {
+            foreach ($sCountries as $sCountryCode) {
+                if (preg_match('/^[a-zA-Z][a-zA-Z]$/', $sCountryCode)) {
                     $aCountries[] = strtolower($sCountryCode);
                 }
             }
@@ -260,24 +253,17 @@ class Geocode
         }
 
         $aViewbox = $oParams->getStringList('viewboxlbrt');
-        if ($aViewbox)
-        {
+        if ($aViewbox) {
             $this->setViewbox($aViewbox);
-        }
-        else
-        {
+        } else {
             $aViewbox = $oParams->getStringList('viewbox');
-            if ($aViewbox)
-            {
+            if ($aViewbox) {
                 $this->setViewBox(array($aViewbox[0], $aViewbox[3],
                                         $aViewbox[2], $aViewbox[1]));
-            }
-            else
-            {
+            } else {
                 $aRoute = $oParams->getStringList('route');
                 $fRouteWidth = $oParams->getFloat('routewidth');
-                if ($aRoute && $fRouteWidth)
-                {
+                if ($aRoute && $fRouteWidth) {
                     $this->setRoute($aRoute, $fRouteWidth);
                 }
             }
@@ -288,8 +274,7 @@ class Geocode
     {
         // Search query
         $sQuery = $oParams->getString('q');
-        if (!$sQuery)
-        {
+        if (!$sQuery) {
             $this->setStructuredQuery($oParams->getString('amenity'),
                                       $oParams->getString('street'),
                                       $oParams->getString('city'),
@@ -298,9 +283,7 @@ class Geocode
                                       $oParams->getString('country'),
                                       $oParams->getString('postalcode'));
             $this->setReverseInPlan(false);
-        }
-        else
-        {
+        } else {
             $this->setQuery($sQuery);
         }
     }
@@ -310,8 +293,7 @@ class Geocode
         $sValue = trim($sValue);
         if (!$sValue) return false;
         $this->aStructuredQuery[$sKey] = $sValue;
-        if ($this->iMinAddressRank == 0 && $this->iMaxAddressRank == 30)
-        {
+        if ($this->iMinAddressRank == 0 && $this->iMaxAddressRank == 30) {
             $this->iMinAddressRank = $iNewMinAddressRank;
             $this->iMaxAddressRank = $iNewMaxAddressRank;
         }
@@ -339,11 +321,9 @@ class Geocode
         $this->loadStructuredAddressElement($sPostalCode, 'postalcode' , 5, 11, array(5, 11));
         $this->loadStructuredAddressElement($sCountry, 'country', 4, 4, false);
 
-        if (sizeof($this->aStructuredQuery) > 0)
-        {
+        if (sizeof($this->aStructuredQuery) > 0) {
             $this->sQuery = join(', ', $this->aStructuredQuery);
-            if ($this->iMaxAddressRank < 30)
-            {
+            if ($this->iMaxAddressRank < 30) {
                 $sAllowedTypesSQLList = '(\'place\',\'boundary\')';
             }
         }
@@ -359,10 +339,8 @@ class Geocode
 
         $aOrderToFallback = array('postalcode', 'street', 'city', 'county', 'state');
 
-        foreach($aOrderToFallback as $sType)
-        {
-            if (isset($aParams[$sType]))
-            {
+        foreach ($aOrderToFallback as $sType) {
+            if (isset($aParams[$sType])) {
                 unset($aParams[$sType]);
                 $this->setStructuredQuery(@$aParams['amenity'], @$aParams['street'], @$aParams['city'], @$aParams['county'], @$aParams['state'], @$aParams['country'], @$aParams['postalcode']);
                 return true;
@@ -375,7 +353,7 @@ class Geocode
     function getDetails($aPlaceIDs)
     {
         //$aPlaceIDs is an array with key: placeID and value: tiger-housenumber, if found, else -1
-        if (sizeof($aPlaceIDs) == 0)  return array();
+        if (sizeof($aPlaceIDs) == 0) return array();
 
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
 
@@ -412,22 +390,18 @@ class Geocode
         if ($this->bIncludeNameDetails) $sSQL .= ",name";
         $sSQL .= ",extratags->'place' ";
 
-        if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank)
-        {
+        if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {
             //only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines 
             // with start- and endnumber, the common osm housenumbers are usually saved as points
             $sHousenumbers = "";
             $i = 0;
             $length = count($aPlaceIDs);
-            foreach($aPlaceIDs as $placeID => $housenumber)
-            {
+            foreach ($aPlaceIDs as $placeID => $housenumber) {
                 $i++;
                 $sHousenumbers .= "(".$placeID.", ".$housenumber.")";
-                if($i<$length)
-                    $sHousenumbers .= ", ";
+                if ($i<$length) $sHousenumbers .= ", ";
             }
-            if (CONST_Use_US_Tiger_Data)
-            {
+            if (CONST_Use_US_Tiger_Data) {
                 //Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
                 $sSQL .= " union";
                 $sSQL .= " select 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, 'us' as country_code";
@@ -474,8 +448,7 @@ class Geocode
             $sSQL .= " group by place_id, housenumber_for_place, calculated_country_code "; //is this group by really needed?, place_id + housenumber (in combination) are unique
             if (!$this->bDeDupe) $sSQL .= ", place_id ";
 
-            if (CONST_Use_Aux_Location_data)
-            {
+            if (CONST_Use_Aux_Location_data) {
                 $sSQL .= " union ";
                 $sSQL .= "select 'L' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 0 as rank_search, 0 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, 'us' as country_code, ";
                 $sSQL .= "get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress, ";
@@ -496,7 +469,9 @@ class Geocode
         }
 
         $sSQL .= " order by importance desc";
-        if (CONST_Debug) { echo "<hr>"; var_dump($sSQL); }
+        if (CONST_Debug) {
+            echo "<hr>"; var_dump($sSQL);
+        }
         $aSearchResults = chksql($this->oDB->getAll($sSQL),
                                  "Could not get details for place.");
 
@@ -516,69 +491,53 @@ class Geocode
 
              Score how good the search is so they can be ordered
          */
-        foreach($aPhrases as $iPhrase => $sPhrase)
-        {
+        foreach ($aPhrases as $iPhrase => $sPhrase) {
             $aNewPhraseSearches = array();
             if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
             else $sPhraseType = '';
 
-            foreach($aPhrases[$iPhrase]['wordsets'] as $iWordSet => $aWordset)
-            {
+            foreach ($aPhrases[$iPhrase]['wordsets'] as $iWordSet => $aWordset) {
                 // Too many permutations - too expensive
                 if ($iWordSet > 120) break;
 
                 $aWordsetSearches = $aSearches;
 
                 // Add all words from this wordset
-                foreach($aWordset as $iToken => $sToken)
-                {
+                foreach ($aWordset as $iToken => $sToken) {
                     //echo "<br><b>$sToken</b>";
                     $aNewWordsetSearches = array();
 
-                    foreach($aWordsetSearches as $aCurrentSearch)
-                    {
+                    foreach ($aWordsetSearches as $aCurrentSearch) {
                         //echo "<i>";
                         //var_dump($aCurrentSearch);
                         //echo "</i>";
 
                         // If the token is valid
-                        if (isset($aValidTokens[' '.$sToken]))
-                        {
-                            foreach($aValidTokens[' '.$sToken] as $aSearchTerm)
-                            {
+                        if (isset($aValidTokens[' '.$sToken])) {
+                            foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
                                 $aSearch = $aCurrentSearch;
                                 $aSearch['iSearchRank']++;
-                                if (($sPhraseType == '' || $sPhraseType == 'country') && !empty($aSearchTerm['country_code']) && $aSearchTerm['country_code'] != '0')
-                                {
-                                    if ($aSearch['sCountryCode'] === false)
-                                    {
+                                if (($sPhraseType == '' || $sPhraseType == 'country') && !empty($aSearchTerm['country_code']) && $aSearchTerm['country_code'] != '0') {
+                                    if ($aSearch['sCountryCode'] === false) {
                                         $aSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
                                         // Country is almost always at the end of the string - increase score for finding it anywhere else (optimisation)
-                                        if (($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases)))
-                                        {
+                                        if (($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases))) {
                                             $aSearch['iSearchRank'] += 5;
                                         }
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                }
-                                elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null)
-                                {
-                                    if ($aSearch['fLat'] === '')
-                                    {
+                                } elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null) {
+                                    if ($aSearch['fLat'] === '') {
                                         $aSearch['fLat'] = $aSearchTerm['lat'];
                                         $aSearch['fLon'] = $aSearchTerm['lon'];
                                         $aSearch['fRadius'] = $aSearchTerm['radius'];
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                }
-                                elseif ($sPhraseType == 'postalcode')
-                                {
+                                } elseif ($sPhraseType == 'postalcode') {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
-                                    {
+                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
                                         // If we already have a name try putting the postcode first
-                                        if (sizeof($aSearch['aName']))
-                                        {
+                                        if (sizeof($aSearch['aName'])) {
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
                                             $aNewSearch['aName'] = array();
@@ -586,31 +545,21 @@ class Geocode
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
                                         }
 
-                                        if (sizeof($aSearch['aName']))
-                                        {
-                                            if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false))
-                                            {
+                                        if (sizeof($aSearch['aName'])) {
+                                            if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false)) {
                                                 $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            }
-                                            else
-                                            {
+                                            } else {
                                                 $aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                                 $aSearch['iSearchRank'] += 1000; // skip;
                                             }
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                             //$aSearch['iNamePhrase'] = $iPhrase;
                                         }
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-
-                                }
-                                elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house')
-                                {
-                                    if ($aSearch['sHouseNumber'] === '')
-                                    {
+                                } elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house') {
+                                    if ($aSearch['sHouseNumber'] === '') {
                                         $aSearch['sHouseNumber'] = $sToken;
                                         // sanity check: if the housenumber is not mainly made
                                         // up of numbers, add a penalty
@@ -625,11 +574,8 @@ class Geocode
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                          */
                                     }
-                                }
-                                elseif ($sPhraseType == '' && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null)
-                                {
-                                    if ($aSearch['sClass'] === '')
-                                    {
+                                } elseif ($sPhraseType == '' && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null) {
+                                    if ($aSearch['sClass'] === '') {
                                         $aSearch['sOperator'] = $aSearchTerm['operator'];
                                         $aSearch['sClass'] = $aSearchTerm['class'];
                                         $aSearch['sType'] = $aSearchTerm['type'];
@@ -639,23 +585,15 @@ class Geocode
 
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                }
-                                elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
-                                {
-                                    if (sizeof($aSearch['aName']))
-                                    {
-                                        if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false))
-                                        {
+                                } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+                                    if (sizeof($aSearch['aName'])) {
+                                        if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false)) {
                                             $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             $aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                             $aSearch['iSearchRank'] += 1000; // skip;
                                         }
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                         //$aSearch['iNamePhrase'] = $iPhrase;
                                     }
@@ -666,66 +604,54 @@ class Geocode
                         // Look for partial matches.
                         // Note that there is no point in adding country terms here
                         // because country are omitted in the address.
-                        if (isset($aValidTokens[$sToken]) && $sPhraseType != 'country')
-                        {
+                        if (isset($aValidTokens[$sToken]) && $sPhraseType != 'country') {
                             // Allow searching for a word - but at extra cost
-                            foreach($aValidTokens[$sToken] as $aSearchTerm)
-                            {
-                                if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])
-                                {
-                                    if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strpos($sToken, ' ') === false)
-                                    {
+                            foreach ($aValidTokens[$sToken] as $aSearchTerm) {
+                                if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+                                    if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strpos($sToken, ' ') === false) {
                                         $aSearch = $aCurrentSearch;
                                         $aSearch['iSearchRank'] += 1;
-                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
-                                        {
+                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency) {
                                             $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        }
-                                        elseif (isset($aValidTokens[' '.$sToken])) // revert to the token version?
-                                        {
+                                        } elseif (isset($aValidTokens[' '.$sToken])) { // revert to the token version?
                                             $aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                             $aSearch['iSearchRank'] += 1;
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                            foreach($aValidTokens[' '.$sToken] as $aSearchTermToken)
-                                            {
+                                            foreach ($aValidTokens[' '.$sToken] as $aSearchTermToken) {
                                                 if (empty($aSearchTermToken['country_code'])
                                                         && empty($aSearchTermToken['lat'])
-                                                        && empty($aSearchTermToken['class']))
-                                                {
+                                                        && empty($aSearchTermToken['class'])
+                                                ) {
                                                     $aSearch = $aCurrentSearch;
                                                     $aSearch['iSearchRank'] += 1;
                                                     $aSearch['aAddress'][$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
                                                     if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                                 }
                                             }
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             $aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
                                             if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
                                     }
 
-                                    if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)
-                                    {
+                                    if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase) {
                                         $aSearch = $aCurrentSearch;
                                         $aSearch['iSearchRank'] += 1;
                                         if (!sizeof($aCurrentSearch['aName'])) $aSearch['iSearchRank'] += 1;
                                         if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
-                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency)
+                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency) {
                                             $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        else
+                                        } else {
                                             $aSearch['aNameNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+                                        }
                                         $aSearch['iNamePhrase'] = $iPhrase;
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
+                        } else {
                             // Allow skipping a word - but at EXTREAM cost
                             //$aSearch = $aCurrentSearch;
                             //$aSearch['iSearchRank']+=100;
@@ -742,8 +668,7 @@ class Geocode
                 usort($aNewPhraseSearches, 'bySearchRank');
 
                 $aSearchHash = array();
-                foreach($aNewPhraseSearches as $iSearch => $aSearch)
-                {
+                foreach ($aNewPhraseSearches as $iSearch => $aSearch) {
                     $sHash = serialize($aSearch);
                     if (isset($aSearchHash[$sHash])) unset($aNewPhraseSearches[$iSearch]);
                     else $aSearchHash[$sHash] = 1;
@@ -754,10 +679,8 @@ class Geocode
 
             // Re-group the searches by their score, junk anything over 20 as just not worth trying
             $aGroupedSearches = array();
-            foreach($aNewPhraseSearches as $aSearch)
-            {
-                if ($aSearch['iSearchRank'] < $this->iMaxRank)
-                {
+            foreach ($aNewPhraseSearches as $aSearch) {
+                if ($aSearch['iSearchRank'] < $this->iMaxRank) {
                     if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
                     $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
                 }
@@ -766,18 +689,15 @@ class Geocode
 
             $iSearchCount = 0;
             $aSearches = array();
-            foreach($aGroupedSearches as $iScore => $aNewSearches)
-            {
+            foreach ($aGroupedSearches as $iScore => $aNewSearches) {
                 $iSearchCount += sizeof($aNewSearches);
                 $aSearches = array_merge($aSearches, $aNewSearches);
                 if ($iSearchCount > 50) break;
             }
 
             //if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
-
         }
         return $aGroupedSearches;
-
     }
 
     /* Perform the actual query lookup.
@@ -816,24 +736,21 @@ class Geocode
 
         $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;
-        if ($this->aCountryCodes)
-        {
+        if ($this->aCountryCodes) {
             $sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));
         }
 
         $sQuery = $this->sQuery;
 
         // Conflicts between US state abreviations and various words for 'the' in different languages
-        if (isset($this->aLangPrefOrder['name:en']))
-        {
+        if (isset($this->aLangPrefOrder['name:en'])) {
             $sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/','\1illinois\2', $sQuery);
             $sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/','\1alabama\2', $sQuery);
             $sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/','\1louisiana\2', $sQuery);
         }
 
         $bBoundingBoxSearch = $this->bBoundedSearch && $this->sViewboxSmallSQL;
-        if ($this->sViewboxCentreSQL)
-        {
+        if ($this->sViewboxCentreSQL) {
             // For complex viewboxes (routes) precompute the bounding geometry
             $sGeom = chksql($this->oDB->getOne("select ".$this->sViewboxSmallSQL),
                             "Could not get small viewbox");
@@ -845,15 +762,13 @@ class Geocode
         }
 
         // Do we have anything that looks like a lat/lon pair?
-        if ( $aLooksLike = looksLikeLatLonPair($sQuery) )
-        {
+        if ($aLooksLike = looksLikeLatLonPair($sQuery)) {
             $this->setNearPoint(array($aLooksLike['lat'], $aLooksLike['lon']));
             $sQuery = $aLooksLike['query'];
         }
 
         $aSearchResults = array();
-        if ($sQuery || $this->aStructuredQuery)
-        {
+        if ($sQuery || $this->aStructuredQuery) {
             // Start with a blank search
             $aSearches = array(
                 array('iSearchRank' => 0,
@@ -877,8 +792,7 @@ class Geocode
 
             // Do we have a radius search?
             $sNearPointSQL = false;
-            if ($this->aNearPoint)
-            {
+            if ($this->aNearPoint) {
                 $sNearPointSQL = "ST_SetSRID(ST_Point(".(float)$this->aNearPoint[1].",".(float)$this->aNearPoint[0]."),4326)";
                 $aSearches[0]['fLat'] = (float)$this->aNearPoint[0];
                 $aSearches[0]['fLon'] = (float)$this->aNearPoint[1];
@@ -889,21 +803,19 @@ class Geocode
             $bSpecialTerms = false;
             preg_match_all('/\\[(.*)=(.*)\\]/', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
             $aSpecialTerms = array();
-            foreach($aSpecialTermsRaw as $aSpecialTerm)
-            {
+            foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                 $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
                 $aSpecialTerms[strtolower($aSpecialTerm[1])] = $aSpecialTerm[2];
             }
 
             preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
             $aSpecialTerms = array();
-            if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity'])
-            {
+            if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity']) {
                 $aSpecialTermsRaw[] = array('['.$this->aStructuredQuery['amenity'].']', $this->aStructuredQuery['amenity']);
                 unset($this->aStructuredQuery['amenity']);
             }
-            foreach($aSpecialTermsRaw as $aSpecialTerm)
-            {
+
+            foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                 $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
                 $sToken = chksql($this->oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string"));
                 $sSQL = 'select * from (select word_id,word_token, word, class, type, country_code, operator';
@@ -911,19 +823,15 @@ class Geocode
                 if (CONST_Debug) var_Dump($sSQL);
                 $aSearchWords = chksql($this->oDB->getAll($sSQL));
                 $aNewSearches = array();
-                foreach($aSearches as $aSearch)
-                {
-                    foreach($aSearchWords as $aSearchTerm)
-                    {
+                foreach ($aSearches as $aSearch) {
+                    foreach ($aSearchWords as $aSearchTerm) {
                         $aNewSearch = $aSearch;
-                        if ($aSearchTerm['country_code'])
-                        {
+                        if ($aSearchTerm['country_code']) {
                             $aNewSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
                             $aNewSearches[] = $aNewSearch;
                             $bSpecialTerms = true;
                         }
-                        if ($aSearchTerm['class'])
-                        {
+                        if ($aSearchTerm['class']) {
                             $aNewSearch['sClass'] = $aSearchTerm['class'];
                             $aNewSearch['sType'] = $aSearchTerm['type'];
                             $aNewSearches[] = $aNewSearch;
@@ -936,13 +844,10 @@ class Geocode
 
             // Split query into phrases
             // Commas are used to reduce the search space by indicating where phrases split
-            if ($this->aStructuredQuery)
-            {
+            if ($this->aStructuredQuery) {
                 $aPhrases = $this->aStructuredQuery;
                 $bStructuredPhrases = true;
-            }
-            else
-            {
+            } else {
                 $aPhrases = explode(',',$sQuery);
                 $bStructuredPhrases = false;
             }
@@ -952,19 +857,15 @@ class Geocode
             // Get all 'sets' of words
             // Generate a complete list of all
             $aTokens = array();
-            foreach($aPhrases as $iPhrase => $sPhrase)
-            {
+            foreach ($aPhrases as $iPhrase => $sPhrase) {
                 $aPhrase = chksql($this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string"),
                                   "Cannot nomralize query string (is it an UTF-8 string?)");
-                if (trim($aPhrase['string']))
-                {
+                if (trim($aPhrase['string'])) {
                     $aPhrases[$iPhrase] = $aPhrase;
                     $aPhrases[$iPhrase]['words'] = explode(' ',$aPhrases[$iPhrase]['string']);
                     $aPhrases[$iPhrase]['wordsets'] = getWordSets($aPhrases[$iPhrase]['words'], 0);
                     $aTokens = array_merge($aTokens, getTokensFromSets($aPhrases[$iPhrase]['wordsets']));
-                }
-                else
-                {
+                } else {
                     unset($aPhrases[$iPhrase]);
                 }
             }
@@ -973,8 +874,7 @@ class Geocode
             $aPhraseTypes = array_keys($aPhrases);
             $aPhrases = array_values($aPhrases);
 
-            if (sizeof($aTokens))
-            {
+            if (sizeof($aTokens)) {
                 // Check which tokens we have, get the ID numbers
                 $sSQL = 'select word_id,word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' from word where word_token in ('.join(',',array_map("getDBQuoted",$aTokens)).')';
@@ -982,32 +882,25 @@ class Geocode
                 if (CONST_Debug) var_Dump($sSQL);
 
                 $aValidTokens = array();
-                if (sizeof($aTokens))
-                {
+                if (sizeof($aTokens)) {
                     $aDatabaseWords = chksql($this->oDB->getAll($sSQL),
                                              "Could not get word tokens.");
-                }
-                else
-                {
+                } else {
                     $aDatabaseWords = array();
                 }
                 $aPossibleMainWordIDs = array();
                 $aWordFrequencyScores = array();
-                foreach($aDatabaseWords as $aToken)
-                {
+                foreach ($aDatabaseWords as $aToken) {
                     // Very special case - require 2 letter country param to match the country code found
                     if ($bStructuredPhrases && $aToken['country_code'] && !empty($this->aStructuredQuery['country'])
-                            && strlen($this->aStructuredQuery['country']) == 2 && strtolower($this->aStructuredQuery['country']) != $aToken['country_code'])
-                    {
+                        && strlen($this->aStructuredQuery['country']) == 2 && strtolower($this->aStructuredQuery['country']) != $aToken['country_code']
+                    ) {
                         continue;
                     }
 
-                    if (isset($aValidTokens[$aToken['word_token']]))
-                    {
+                    if (isset($aValidTokens[$aToken['word_token']])) {
                         $aValidTokens[$aToken['word_token']][] = $aToken;
-                    }
-                    else
-                    {
+                    } else {
                         $aValidTokens[$aToken['word_token']] = array($aToken);
                     }
                     if (!$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
@@ -1016,38 +909,26 @@ class Geocode
                 if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
                 // Try and calculate GB postcodes we might be missing
-                foreach($aTokens as $sToken)
-                {
+                foreach ($aTokens as $sToken) {
                     // Source of gb postcodes is now definitive - always use
-                    if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData))
-                    {
-                        if (substr($aData[1],-2,1) != ' ')
-                        {
+                    if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData)) {
+                        if (substr($aData[1],-2,1) != ' ') {
                             $aData[0] = substr($aData[0],0,strlen($aData[1])-1).' '.substr($aData[0],strlen($aData[1])-1);
                             $aData[1] = substr($aData[1],0,-1).' '.substr($aData[1],-1,1);
                         }
                         $aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $this->oDB);
-                        if ($aGBPostcodeLocation)
-                        {
+                        if ($aGBPostcodeLocation) {
                             $aValidTokens[$sToken] = $aGBPostcodeLocation;
                         }
-                    }
-                    // US ZIP+4 codes - if there is no token,
-                    //  merge in the 5-digit ZIP code
-                    else if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData))
-                    {
-                        if (isset($aValidTokens[$aData[1]]))
-                        {
-                            foreach($aValidTokens[$aData[1]] as $aToken)
-                            {
-                                if (!$aToken['class'])
-                                {
-                                    if (isset($aValidTokens[$sToken]))
-                                    {
+                    } else if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
+                        // US ZIP+4 codes - if there is no token,
+                        //  merge in the 5-digit ZIP code
+                        if (isset($aValidTokens[$aData[1]])) {
+                            foreach ($aValidTokens[$aData[1]] as $aToken) {
+                                if (!$aToken['class']) {
+                                    if (isset($aValidTokens[$sToken])) {
                                         $aValidTokens[$sToken][] = $aToken;
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         $aValidTokens[$sToken] = array($aToken);
                                     }
                                 }
@@ -1056,11 +937,9 @@ class Geocode
                     }
                 }
 
-                foreach($aTokens as $sToken)
-                {
+                foreach ($aTokens as $sToken) {
                     // Unknown single word token with a number - assume it is a house number
-                    if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken))
-                    {
+                    if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken)) {
                         $aValidTokens[' '.$sToken] = array(array('class'=>'place','type'=>'house'));
                     }
                 }
@@ -1074,45 +953,35 @@ class Geocode
 
                 $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases);
 
-                if ($this->bReverseInPlan)
-                {
+                if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
                     // the first and final phrase. Don't bother about phrases in the middle
                     // because order in the address doesn't matter.
                     $aPhrases = array_reverse($aPhrases);
                     $aPhrases[0]['wordsets'] = getInverseWordSets($aPhrases[0]['words'], 0);
-                    if (sizeof($aPhrases) > 1)
-                    {
+                    if (sizeof($aPhrases) > 1) {
                         $aFinalPhrase = end($aPhrases);
                         $aPhrases[sizeof($aPhrases)-1]['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
                     }
                     $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false);
 
-                    foreach($aGroupedSearches as $aSearches)
-                    {
-                        foreach($aSearches as $aSearch)
-                        {
-                            if ($aSearch['iSearchRank'] < $this->iMaxRank)
-                            {
+                    foreach ($aGroupedSearches as $aSearches) {
+                        foreach ($aSearches as $aSearch) {
+                            if ($aSearch['iSearchRank'] < $this->iMaxRank) {
                                 if (!isset($aReverseGroupedSearches[$aSearch['iSearchRank']])) $aReverseGroupedSearches[$aSearch['iSearchRank']] = array();
                                 $aReverseGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
                             }
-
                         }
                     }
 
                     $aGroupedSearches = $aReverseGroupedSearches;
                     ksort($aGroupedSearches);
                 }
-            }
-            else
-            {
+            } else {
                 // Re-group the searches by their score, junk anything over 20 as just not worth trying
                 $aGroupedSearches = array();
-                foreach($aSearches as $aSearch)
-                {
-                    if ($aSearch['iSearchRank'] < $this->iMaxRank)
-                    {
+                foreach ($aSearches as $aSearch) {
+                    if ($aSearch['iSearchRank'] < $this->iMaxRank) {
                         if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
                         $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
                     }
@@ -1121,32 +990,24 @@ class Geocode
             }
 
             if (CONST_Debug) var_Dump($aGroupedSearches);
-
-            if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0)
-            {
+            if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0) {
                 $aCopyGroupedSearches = $aGroupedSearches;
-                foreach($aCopyGroupedSearches as $iGroup => $aSearches)
-                {
-                    foreach($aSearches as $iSearch => $aSearch)
-                    {
+                foreach ($aCopyGroupedSearches as $iGroup => $aSearches) {
+                    foreach ($aSearches as $iSearch => $aSearch) {
                         $aReductionsList = array($aSearch['aAddress']);
                         $iSearchRank = $aSearch['iSearchRank'];
-                        while(sizeof($aReductionsList) > 0)
-                        {
+                        while (sizeof($aReductionsList) > 0) {
                             $iSearchRank += 5;
                             if ($iSearchRank > iMaxRank) break 3;
                             $aNewReductionsList = array();
-                            foreach($aReductionsList as $aReductionsWordList)
-                            {
-                                for ($iReductionWord = 0; $iReductionWord < sizeof($aReductionsWordList); $iReductionWord++)
-                                {
+                            foreach ($aReductionsList as $aReductionsWordList) {
+                                for ($iReductionWord = 0; $iReductionWord < sizeof($aReductionsWordList); $iReductionWord++) {
                                     $aReductionsWordListResult = array_merge(array_slice($aReductionsWordList, 0, $iReductionWord), array_slice($aReductionsWordList, $iReductionWord+1));
                                     $aReverseSearch = $aSearch;
                                     $aSearch['aAddress'] = $aReductionsWordListResult;
                                     $aSearch['iSearchRank'] = $iSearchRank;
                                     $aGroupedSearches[$iSearchRank][] = $aReverseSearch;
-                                    if (sizeof($aReductionsWordListResult) > 0)
-                                    {
+                                    if (sizeof($aReductionsWordListResult) > 0) {
                                         $aNewReductionsList[] = $aReductionsWordListResult;
                                     }
                                 }
@@ -1160,18 +1021,13 @@ class Geocode
 
             // Filter out duplicate searches
             $aSearchHash = array();
-            foreach($aGroupedSearches as $iGroup => $aSearches)
-            {
-                foreach($aSearches as $iSearch => $aSearch)
-                {
+            foreach ($aGroupedSearches as $iGroup => $aSearches) {
+                foreach ($aSearches as $iSearch => $aSearch) {
                     $sHash = serialize($aSearch);
-                    if (isset($aSearchHash[$sHash]))
-                    {
+                    if (isset($aSearchHash[$sHash])) {
                         unset($aGroupedSearches[$iGroup][$iSearch]);
                         if (sizeof($aGroupedSearches[$iGroup]) == 0) unset($aGroupedSearches[$iGroup]);
-                    }
-                    else
-                    {
+                    } else {
                         $aSearchHash[$sHash] = 1;
                     }
                 }
@@ -1181,25 +1037,20 @@ class Geocode
 
             $iGroupLoop = 0;
             $iQueryLoop = 0;
-            foreach($aGroupedSearches as $iGroupedRank => $aSearches)
-            {
+            foreach ($aGroupedSearches as $iGroupedRank => $aSearches) {
                 $iGroupLoop++;
-                foreach($aSearches as $aSearch)
-                {
+                foreach ($aSearches as $aSearch) {
                     $iQueryLoop++;
                     $searchedHousenumber = -1;
 
-                    if (CONST_Debug) { echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>"; }
+                    if (CONST_Debug) echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
                     if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
                     // No location term?
-                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon'])
-                    {
-                        if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'])
-                        {
+                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon']) {
+                        if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
-                            if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank)
-                            {
+                            if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
                                 $sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
                                 if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
                                 if ($bBoundingBoxSearch)
@@ -1207,25 +1058,20 @@ class Geocode
                                 $sSQL .= " order by st_area(geometry) desc limit 1";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
-                            }
-                            else
-                            {
+                            } else {
                                 $aPlaceIDs = array();
                             }
-                        }
-                        else
-                        {
+                        } else {
                             if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
                             if (!$aSearch['sClass']) continue;
+
                             $sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
-                            if (chksql($this->oDB->getOne($sSQL)))
-                            {
+                            if (chksql($this->oDB->getOne($sSQL))) {
                                 $sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                 if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
                                 $sSQL .= " where st_contains($this->sViewboxSmallSQL, ct.centroid)";
                                 if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-                                if (sizeof($this->aExcludePlaceIDs))
-                                {
+                                if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                                 }
                                 if ($this->sViewboxCentreSQL) $sSQL .= " order by st_distance($this->sViewboxCentreSQL, ct.centroid) asc";
@@ -1237,8 +1083,7 @@ class Geocode
                                 // there have been results in the small box, so no further
                                 // expansion in that case.
                                 // Also don't expand if bounded results were requested.
-                                if (!sizeof($aPlaceIDs) && !sizeof($this->aExcludePlaceIDs) && !$this->bBoundedSearch)
-                                {
+                                if (!sizeof($aPlaceIDs) && !sizeof($this->aExcludePlaceIDs) && !$this->bBoundedSearch) {
                                     $sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                     if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
                                     $sSQL .= " where st_contains($this->sViewboxLargeSQL, ct.centroid)";
@@ -1248,9 +1093,7 @@ class Geocode
                                     if (CONST_Debug) var_dump($sSQL);
                                     $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 $sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
                                 $sSQL .= " and st_contains($this->sViewboxSmallSQL, geometry) and linked_place_id is null";
                                 if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
@@ -1260,23 +1103,18 @@ class Geocode
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             }
                         }
-                    }
-                    // If a coordinate is given, the search must either
-                    // be for a name or a special search. Ignore everythin else.
-                    else if ($aSearch['fLon'] && !sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['sClass'])
-                    {
+                    } else if ($aSearch['fLon'] && !sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['sClass']) {
+                        // If a coordinate is given, the search must either
+                        // be for a name or a special search. Ignore everythin else.
                         $aPlaceIDs = array();
-                    }
-                    else
-                    {
+                    } else {
                         $aPlaceIDs = array();
 
                         // First we need a position, either aName or fLat or both
                         $aTerms = array();
                         $aOrder = array();
 
-                        if ($aSearch['sHouseNumber'] && sizeof($aSearch['aAddress']))
-                        {
+                        if ($aSearch['sHouseNumber'] && sizeof($aSearch['aAddress'])) {
                             $sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
                             $aOrder[] = "";
                             $aOrder[0] = " (exists(select place_id from placex where parent_place_id = search_name.place_id";
@@ -1291,97 +1129,83 @@ class Geocode
                         // they might be right - but they are just too darned expensive to run
                         if (sizeof($aSearch['aName'])) $aTerms[] = "name_vector @> ARRAY[".join($aSearch['aName'],",")."]";
                         if (sizeof($aSearch['aNameNonSearch'])) $aTerms[] = "array_cat(name_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aNameNonSearch'],",")."]";
-                        if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress'])
-                        {
+                        if (sizeof($aSearch['aAddress']) && $aSearch['aName'] != $aSearch['aAddress']) {
                             // For infrequent name terms disable index usage for address
                             if (CONST_Search_NameOnlySearchFrequencyThreshold &&
                                     sizeof($aSearch['aName']) == 1 &&
-                                    $aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold)
-                            {
+                                    $aWordFrequencyScores[$aSearch['aName'][reset($aSearch['aName'])]] < CONST_Search_NameOnlySearchFrequencyThreshold
+                            ) {
                                 $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join(array_merge($aSearch['aAddress'],$aSearch['aAddressNonSearch']),",")."]";
-                            }
-                            else
-                            {
+                            } else {
                                 $aTerms[] = "nameaddress_vector @> ARRAY[".join($aSearch['aAddress'],",")."]";
-                                if (sizeof($aSearch['aAddressNonSearch'])) $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddressNonSearch'],",")."]";
+                                if (sizeof($aSearch['aAddressNonSearch'])) {
+                                    $aTerms[] = "array_cat(nameaddress_vector,ARRAY[]::integer[]) @> ARRAY[".join($aSearch['aAddressNonSearch'],",")."]";
+                                }
                             }
                         }
                         if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
-                        if ($aSearch['sHouseNumber'])
-                        {
+                        if ($aSearch['sHouseNumber']) {
                             $aTerms[] = "address_rank between 16 and 27";
-                        }
-                        else
-                        {
-                            if ($this->iMinAddressRank > 0)
-                            {
+                        } else {
+                            if ($this->iMinAddressRank > 0) {
                                 $aTerms[] = "address_rank >= ".$this->iMinAddressRank;
                             }
-                            if ($this->iMaxAddressRank < 30)
-                            {
+                            if ($this->iMaxAddressRank < 30) {
                                 $aTerms[] = "address_rank <= ".$this->iMaxAddressRank;
                             }
                         }
-                        if ($aSearch['fLon'] && $aSearch['fLat'])
-                        {
+                        if ($aSearch['fLon'] && $aSearch['fLat']) {
                             $aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";
                             $aOrder[] = "ST_Distance(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326)) ASC";
                         }
-                        if (sizeof($this->aExcludePlaceIDs))
-                        {
+                        if (sizeof($this->aExcludePlaceIDs)) {
                             $aTerms[] = "place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                         }
-                        if ($sCountryCodesSQL)
-                        {
+                        if ($sCountryCodesSQL) {
                             $aTerms[] = "country_code in ($sCountryCodesSQL)";
                         }
 
                         if ($bBoundingBoxSearch) $aTerms[] = "centroid && $this->sViewboxSmallSQL";
                         if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
 
-                        if ($aSearch['sHouseNumber'])
-                        {
+                        if ($aSearch['sHouseNumber']) {
                             $sImportanceSQL = '- abs(26 - address_rank) + 3';
-                        }
-                        else
-                        {
+                        } else {
                             $sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
                         }
                         if ($this->sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
                         if ($this->sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
 
                         $aOrder[] = "$sImportanceSQL DESC";
-                        if (sizeof($aSearch['aFullNameAddress']))
-                        {
+                        if (sizeof($aSearch['aFullNameAddress'])) {
                             $sExactMatchSQL = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'],",").']) INTERSECT select unnest(nameaddress_vector))s) as exactmatch';
                             $aOrder[] = 'exactmatch DESC';
                         } else {
                             $sExactMatchSQL = '0::int as exactmatch';
                         }
 
-                        if (sizeof($aTerms))
-                        {
+                        if (sizeof($aTerms)) {
                             $sSQL = "select place_id, ";
                             $sSQL .= $sExactMatchSQL;
                             $sSQL .= " from search_name";
                             $sSQL .= " where ".join(' and ',$aTerms);
                             $sSQL .= " order by ".join(', ',$aOrder);
-                            if ($aSearch['sHouseNumber'] || $aSearch['sClass'])
+                            if ($aSearch['sHouseNumber'] || $aSearch['sClass']) {
                                 $sSQL .= " limit 20";
-                            elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass'])
+                            } elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass']) {
                                 $sSQL .= " limit 1";
-                            else
+                            } else {
                                 $sSQL .= " limit ".$this->iLimit;
+                            }
 
-                            if (CONST_Debug) { var_dump($sSQL); }
+                            if (CONST_Debug) var_dump($sSQL);
                             $aViewBoxPlaceIDs = chksql($this->oDB->getAll($sSQL),
                                                        "Could not get places for search terms.");
                             //var_dump($aViewBoxPlaceIDs);
                             // Did we have an viewbox matches?
                             $aPlaceIDs = array();
                             $bViewBoxMatch = false;
-                            foreach($aViewBoxPlaceIDs as $aViewBoxRow)
-                            {
+                            foreach ($aViewBoxPlaceIDs as $aViewBoxRow) {
                                 //if ($bViewBoxMatch == 1 && $aViewBoxRow['in_small'] == 'f') break;
                                 //if ($bViewBoxMatch == 2 && $aViewBoxRow['in_large'] == 'f') break;
                                 //if ($aViewBoxRow['in_small'] == 't') $bViewBoxMatch = 1;
@@ -1394,8 +1218,7 @@ class Geocode
                         //exit;
 
                         //now search for housenumber, if housenumber provided
-                        if ($aSearch['sHouseNumber'] && sizeof($aPlaceIDs))
-                        {
+                        if ($aSearch['sHouseNumber'] && sizeof($aPlaceIDs)) {
                             $searchedHousenumber = intval($aSearch['sHouseNumber']);
                             $aRoadPlaceIDs = $aPlaceIDs;
                             $sPlaceIDs = join(',',$aPlaceIDs);
@@ -1403,8 +1226,7 @@ class Geocode
                             // Now they are indexed, look for a house attached to a street we found
                             $sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
                             $sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
-                            if (sizeof($this->aExcludePlaceIDs))
-                            {
+                            if (sizeof($this->aExcludePlaceIDs)) {
                                 $sSQL .= " and place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                             }
                             $sSQL .= " limit $this->iLimit";
@@ -1412,20 +1234,18 @@ class Geocode
                             $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             
                             // if nothing found, search in the interpolation line table
-                            if(!sizeof($aPlaceIDs))
-                            {
+                            if (!sizeof($aPlaceIDs)) {
                                 // do we need to use transliteration and the regex for housenumbers???
                                 //new query for lines, not housenumbers anymore
-                                if($searchedHousenumber%2 == 0){
+                                if ($searchedHousenumber%2 == 0) {
                                     //if housenumber is even, look for housenumber in streets with interpolationtype even or all
                                     $sSQL = "select distinct place_id from location_property_osmline where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
-                                }else{
+                                } else {
                                     //look for housenumber in streets with interpolationtype odd or all
                                     $sSQL = "select distinct place_id from location_property_osmline where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='odd' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
                                 }
 
-                                if (sizeof($this->aExcludePlaceIDs))
-                                {
+                                if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
@@ -1435,11 +1255,9 @@ class Geocode
                             }
                                 
                             // If nothing found try the aux fallback table
-                            if (CONST_Use_Aux_Location_data && !sizeof($aPlaceIDs))
-                            {
+                            if (CONST_Use_Aux_Location_data && !sizeof($aPlaceIDs)) {
                                 $sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
-                                if (sizeof($this->aExcludePlaceIDs))
-                                {
+                                if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " and parent_place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
@@ -1448,19 +1266,17 @@ class Geocode
                             }
 
                             //if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger)
-                            if (CONST_Use_US_Tiger_Data && !sizeof($aPlaceIDs))
-                            {
+                            if (CONST_Use_US_Tiger_Data && !sizeof($aPlaceIDs)) {
                                 //new query for lines, not housenumbers anymore
-                                if($searchedHousenumber%2 == 0){
+                                if ($searchedHousenumber%2 == 0) {
                                     //if housenumber is even, look for housenumber in streets with interpolationtype even or all
                                     $sSQL = "select distinct place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='even' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
-                                }else{
+                                } else {
                                     //look for housenumber in streets with interpolationtype odd or all
                                     $sSQL = "select distinct place_id from location_property_tiger where parent_place_id in (".$sPlaceIDs.") and (interpolationtype='odd' or interpolationtype='all') and ".$searchedHousenumber.">=startnumber and ".$searchedHousenumber."<=endnumber";
                                 }
 
-                                if (sizeof($this->aExcludePlaceIDs))
-                                {
+                                if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
@@ -1470,8 +1286,7 @@ class Geocode
                             }
 
                             // Fallback to the road (if no housenumber was found)
-                            if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber']))
-                            {
+                            if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber'])) {
                                 $aPlaceIDs = $aRoadPlaceIDs;
                                 //set to -1, if no housenumbers were found
                                 $searchedHousenumber = -1;
@@ -1480,13 +1295,11 @@ class Geocode
                         }
 
 
-                        if ($aSearch['sClass'] && sizeof($aPlaceIDs))
-                        {
+                        if ($aSearch['sClass'] && sizeof($aPlaceIDs)) {
                             $sPlaceIDs = join(',', $aPlaceIDs);
                             $aClassPlaceIDs = array();
 
-                            if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name')
-                            {
+                            if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name') {
                                 // If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
                                 $sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
                                 $sSQL .= " and linked_place_id is null";
@@ -1496,8 +1309,7 @@ class Geocode
                                 $aClassPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             }
 
-                            if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') // & in
-                            {
+                            if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') { // & in
                                 $sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
                                 $bCacheTable = chksql($this->oDB->getOne($sSQL));
 
@@ -1508,20 +1320,16 @@ class Geocode
 
                                 // For state / country level searches the normal radius search doesn't work very well
                                 $sPlaceGeom = false;
-                                if ($this->iMaxRank < 9 && $bCacheTable)
-                                {
+                                if ($this->iMaxRank < 9 && $bCacheTable) {
                                     // Try and get a polygon to search in instead
                                     $sSQL = "select geometry from placex where place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank + 5 and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon') order by rank_search asc limit 1";
                                     if (CONST_Debug) var_dump($sSQL);
                                     $sPlaceGeom = chksql($this->oDB->getOne($sSQL));
                                 }
 
-                                if ($sPlaceGeom)
-                                {
+                                if ($sPlaceGeom) {
                                     $sPlaceIDs = false;
-                                }
-                                else
-                                {
+                                } else {
                                     $this->iMaxRank += 5;
                                     $sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank";
                                     if (CONST_Debug) var_dump($sSQL);
@@ -1529,12 +1337,9 @@ class Geocode
                                     $sPlaceIDs = join(',',$aPlaceIDs);
                                 }
 
-                                if ($sPlaceIDs || $sPlaceGeom)
-                                {
-
+                                if ($sPlaceIDs || $sPlaceGeom) {
                                     $fRange = 0.01;
-                                    if ($bCacheTable)
-                                    {
+                                    if ($bCacheTable) {
                                         // More efficient - can make the range bigger
                                         $fRange = 0.05;
 
@@ -1545,18 +1350,15 @@ class Geocode
 
                                         $sSQL = "select distinct l.place_id".($sOrderBySQL?','.$sOrderBySQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
                                         if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
-                                        if ($sPlaceIDs)
-                                        {
+                                        if ($sPlaceIDs) {
                                             $sSQL .= ",placex as f where ";
                                             $sSQL .= "f.place_id in ($sPlaceIDs) and ST_DWithin(l.centroid, f.centroid, $fRange) ";
                                         }
-                                        if ($sPlaceGeom)
-                                        {
+                                        if ($sPlaceGeom) {
                                             $sSQL .= " where ";
                                             $sSQL .= "ST_Contains('".$sPlaceGeom."', l.centroid) ";
                                         }
-                                        if (sizeof($this->aExcludePlaceIDs))
-                                        {
+                                        if (sizeof($this->aExcludePlaceIDs)) {
                                             $sSQL .= " and l.place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                                         }
                                         if ($sCountryCodesSQL) $sSQL .= " and lp.calculated_country_code in ($sCountryCodesSQL)";
@@ -1565,9 +1367,7 @@ class Geocode
                                         $sSQL .= " limit $this->iLimit";
                                         if (CONST_Debug) var_dump($sSQL);
                                         $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         if (isset($aSearch['fRadius']) && $aSearch['fRadius']) $fRange = $aSearch['fRadius'];
 
                                         $sOrderBySQL = '';
@@ -1577,8 +1377,7 @@ class Geocode
                                         $sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from placex as l,placex as f where ";
                                         $sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, f.centroid, $fRange) ";
                                         $sSQL .= "and l.class='".$aSearch['sClass']."' and l.type='".$aSearch['sType']."' ";
-                                        if (sizeof($this->aExcludePlaceIDs))
-                                        {
+                                        if (sizeof($this->aExcludePlaceIDs)) {
                                             $sSQL .= " and l.place_id not in (".join(',',$this->aExcludePlaceIDs).")";
                                         }
                                         if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";
@@ -1590,25 +1389,22 @@ class Geocode
                                     }
                                 }
                             }
-
                             $aPlaceIDs = $aClassPlaceIDs;
-
                         }
-
                     }
 
-                    if (CONST_Debug) { echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs); }
+                    if (CONST_Debug) {
+                        echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs);
+                    }
 
-                    foreach($aPlaceIDs as $iPlaceID)
-                    {
+                    foreach ($aPlaceIDs as $iPlaceID) {
                         // array for placeID => -1 | Tiger housenumber
                         $aResultPlaceIDs[$iPlaceID] = $searchedHousenumber;
                     }
                     if ($iQueryLoop > 20) break;
                 }
 
-                if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30))
-                {
+                if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {
                     // Need to verify passes rank limits before dropping out of the loop (yuk!)
                     // reduces the number of place ids, like a filter
                     // rank_address is 30 for interpolated housenumbers
@@ -1616,8 +1412,7 @@ class Geocode
                     $sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
                     if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
                     if ($this->aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',',$this->aAddressRankList).")";
-                    if (CONST_Use_US_Tiger_Data)
-                    {
+                    if (CONST_Use_US_Tiger_Data) {
                         $sSQL .= ") UNION select place_id from location_property_tiger where place_id in (".join(',',array_keys($aResultPlaceIDs)).") ";
                         $sSQL .= "and (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
                         if ($this->aAddressRankList) $sSQL .= " OR 30 in (".join(',',$this->aAddressRankList).")";
@@ -1627,8 +1422,7 @@ class Geocode
                     if (CONST_Debug) var_dump($sSQL);
                     $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     $tempIDs = array();
-                    foreach($aFilteredPlaceIDs as $placeID)
-                    {
+                    foreach ($aFilteredPlaceIDs as $placeID) {
                         $tempIDs[$placeID] = $aResultPlaceIDs[$placeID];  //assign housenumber to placeID
                     }
                     $aResultPlaceIDs = $tempIDs;
@@ -1641,14 +1435,10 @@ class Geocode
             }
 
             // Did we find anything?
-            if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs))
-            {
+            if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) {
                 $aSearchResults = $this->getDetails($aResultPlaceIDs);
             }
-
-        }
-        else
-        {
+        } else {
             // Just interpret as a reverse geocode
             $oReverse = new ReverseGeocode($this->oDB);
             $oReverse->setZoom(18);
@@ -1659,19 +1449,17 @@ class Geocode
 
             if (CONST_Debug) var_dump("Reverse search", $aLookup);
 
-            if ($aLookup['place_id'])
+            if ($aLookup['place_id']) {
                 $aSearchResults = $this->getDetails(array($aLookup['place_id'] => -1));
-            else
+            } else {
                 $aSearchResults = array();
+            }
         }
 
         // No results? Done
-        if (!sizeof($aSearchResults))
-        {
-            if ($this->bFallback)
-            {
-                if ($this->fallbackStructuredQuery())
-                {
+        if (!sizeof($aSearchResults)) {
+            if ($this->bFallback) {
+                if ($this->fallbackStructuredQuery()) {
                     return $this->lookup();
                 }
             }
@@ -1681,12 +1469,13 @@ class Geocode
 
         $aClassType = getClassTypesWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u',$sQuery);
-        foreach($aRecheckWords as $i => $sWord)
-        {
+        foreach ($aRecheckWords as $i => $sWord) {
             if (!preg_match('/\pL/', $sWord)) unset($aRecheckWords[$i]);
         }
 
-        if (CONST_Debug) { echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords); }
+        if (CONST_Debug) {
+            echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords);
+        }
 
         $oPlaceLookup = new PlaceLookup($this->oDB);
         $oPlaceLookup->setIncludePolygonAsPoints($this->bIncludePolygonAsPoints);
@@ -1696,19 +1485,16 @@ class Geocode
         $oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
         $oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
 
-        foreach($aSearchResults as $iResNum => $aResult)
-        {
+        foreach ($aSearchResults as $iResNum => $aResult) {
             // Default
             $fDiameter = getResultDiameter($aResult);
 
             $aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
-            if ($aOutlineResult)
-            {
+            if ($aOutlineResult) {
                 $aResult = array_merge($aResult, $aOutlineResult);
             }
             
-            if ($aResult['extra_place'] == 'city')
-            {
+            if ($aResult['extra_place'] == 'city') {
                 $aResult['class'] = 'place';
                 $aResult['type'] = 'city';
                 $aResult['rank_search'] = 16;
@@ -1716,51 +1502,41 @@ class Geocode
 
             // Is there an icon set for this type of result?
             if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
-                    && $aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
-            {
+                    && $aClassType[$aResult['class'].':'.$aResult['type']]['icon']
+            ) {
                 $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
             }
 
             if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
-                    && $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
-            {
+                    && $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label']
+            ) {
                 $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'];
-            }
-            elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
-                    && $aClassType[$aResult['class'].':'.$aResult['type']]['label'])
-            {
+            } elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
+                    && $aClassType[$aResult['class'].':'.$aResult['type']]['label']
+            ) {
                 $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
             }
             // if tag '&addressdetails=1' is set in query
-            if ($this->bIncludeAddressDetails)
-            {
+            if ($this->bIncludeAddressDetails) {
                 // getAddressDetails() is defined in lib.php and uses the SQL function get_addressdata in functions.sql
                 $aResult['address'] = getAddressDetails($this->oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code'], $aResultPlaceIDs[$aResult['place_id']]);
-                if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city']))
-                {
+                if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city'])) {
                     $aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
                 }
             }
-            if ($this->bIncludeExtraTags)
-            {
-                if ($aResult['extra'])
-                {
+
+            if ($this->bIncludeExtraTags) {
+                if ($aResult['extra']) {
                     $aResult['sExtraTags'] = json_decode($aResult['extra']);
-                }
-                else
-                {
+                } else {
                     $aResult['sExtraTags'] = (object) array();
                 }
             }
 
-            if ($this->bIncludeNameDetails)
-            {
-                if ($aResult['names'])
-                {
+            if ($this->bIncludeNameDetails) {
+                if ($aResult['names']) {
                     $aResult['sNameDetails'] = json_decode($aResult['names']);
-                }
-                else
-                {
+                } else {
                     $aResult['sNameDetails'] = (object) array();
                 }
             }
@@ -1769,10 +1545,8 @@ class Geocode
             $aResult['importance'] = max(0.001,$aResult['importance']);
             $iCountWords = 0;
             $sAddress = $aResult['langaddress'];
-            foreach($aRecheckWords as $i => $sWord)
-            {
-                if (stripos($sAddress, $sWord)!==false)
-                {
+            foreach ($aRecheckWords as $i => $sWord) {
+                if (stripos($sAddress, $sWord)!==false) {
                     $iCountWords++;
                     if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
                 }
@@ -1785,21 +1559,20 @@ class Geocode
             //   - approximate importance of address parts
             $aResult['foundorder'] = -$aResult['addressimportance']/10;
             //   - number of exact matches from the query
-            if (isset($this->exactMatchCache[$aResult['place_id']]))
+            if (isset($this->exactMatchCache[$aResult['place_id']])) {
                 $aResult['foundorder'] -= $this->exactMatchCache[$aResult['place_id']];
-            else if (isset($this->exactMatchCache[$aResult['parent_place_id']]))
+            } else if (isset($this->exactMatchCache[$aResult['parent_place_id']])) {
                 $aResult['foundorder'] -= $this->exactMatchCache[$aResult['parent_place_id']];
+            }
             //  - importance of the class/type
             if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
-            {
+                && $aClassType[$aResult['class'].':'.$aResult['type']]['importance']
+            ) {
                 $aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
-            }
-            else
-            {
+            } else {
                 $aResult['foundorder'] += 0.01;
             }
-            if (CONST_Debug) { var_dump($aResult); }
+            if (CONST_Debug) var_dump($aResult);
             $aSearchResults[$iResNum] = $aResult;
         }
         uasort($aSearchResults, 'byImportance');
@@ -1810,19 +1583,17 @@ class Geocode
         $aSearchResults = array();
 
         $bFirst = true;
-        foreach($aToFilter as $iResNum => $aResult)
-        {
+        foreach ($aToFilter as $iResNum => $aResult) {
             $this->aExcludePlaceIDs[$aResult['place_id']] = $aResult['place_id'];
-            if ($bFirst)
-            {
+            if ($bFirst) {
                 $fLat = $aResult['lat'];
                 $fLon = $aResult['lon'];
                 if (isset($aResult['zoom'])) $iZoom = $aResult['zoom'];
                 $bFirst = false;
             }
             if (!$this->bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
-                        && !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']])))
-            {
+                        && !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']]))
+            ) {
                 $aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;
                 $aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']] = true;
                 $aSearchResults[] = $aResult;

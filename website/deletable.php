@@ -13,8 +13,7 @@
     $aPolygons = chksql($oDB->getAll($sSQL),
                         "Could not get list of deleted OSM elements.");
 
-    if (CONST_DEBUG)
-    {
+    if (CONST_DEBUG) {
         var_dump($aPolygons);
         exit;
     }
@@ -71,18 +70,14 @@ table td {
     if (!$aPolygons) exit;
     echo "<tr>";
 //var_dump($aPolygons[0]);
-    foreach($aPolygons[0] as $sCol => $sVal)
-    {
+    foreach ($aPolygons[0] as $sCol => $sVal) {
         echo "<th>".$sCol."</th>";
     }
     echo "</tr>";
-    foreach($aPolygons as $aRow)
-    {
+    foreach ($aPolygons as $aRow) {
         echo "<tr>";
-        foreach($aRow as $sCol => $sVal)
-        {
-            switch($sCol)
-            {
+        foreach ($aRow as $sCol => $sVal) {
+            switch ($sCol) {
                 case 'osm_id':
                     echo '<td>'.osmLink($aRow).'</td>';
                     break;

@@ -31,23 +31,20 @@ $oPlaceLookup->setIncludeNameDetails($oParams->getBool('namedetails', false));
 
 $aOsmIds = explode(',', $oParams->getString('osm_ids', ''));
 
-if (count($aOsmIds) > CONST_Places_Max_ID_count)
-{
+if (count($aOsmIds) > CONST_Places_Max_ID_count) {
     userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
 }
 
-foreach ($aOsmIds AS $sItem)
-{
+foreach ($aOsmIds AS $sItem) {
     // Skip empty sItem
     if (empty($sItem)) continue;
     
     $sType = $sItem[0];
     $iId = (int) substr($sItem, 1);
-    if ( $iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R') )
-    {
+    if ($iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R')) {
         $aCleanedQueryParts[] = $sType . $iId;
         $oPlace = $oPlaceLookup->lookupOSMID($sType, $iId);
-        if ($oPlace){
+        if ($oPlace) {
             // we want to use the search-* output templates, so we need to fill
             // $aSearchResults and slightly change the (reverse search) oPlace
             // key names

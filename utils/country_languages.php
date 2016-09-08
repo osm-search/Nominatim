@@ -17,17 +17,13 @@ require_once(CONST_BasePath.'/lib/init-cmd.php');
 
 include(CONST_InstallPath.'/settings/phrase_settings.php');
 
-if (true)
-{
+if (true) {
     $sURL = 'http://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';
     $sWikiPageXML = file_get_contents($sURL);
-    if (preg_match_all('#\\| ([a-z]{2}) \\|\\| [^|]+\\|\\| ([a-z,]+)#', $sWikiPageXML, $aMatches, PREG_SET_ORDER))
-    {
-        foreach($aMatches as $aMatch)
-        {
+    if (preg_match_all('#\\| ([a-z]{2}) \\|\\| [^|]+\\|\\| ([a-z,]+)#', $sWikiPageXML, $aMatches, PREG_SET_ORDER)) {
+        foreach ($aMatches as $aMatch) {
             $aLanguages = explode(',', $aMatch[2]);
-            foreach($aLanguages as $i => $s)
-            {
+            foreach ($aLanguages as $i => $s) {
                 $aLanguages[$i] = '"'.pg_escape_string($s).'"';
             }
             echo "UPDATE country_name set country_default_language_codes = '{".join(',',$aLanguages)."}' where country_code = '".pg_escape_string($aMatch[1])."';\n";

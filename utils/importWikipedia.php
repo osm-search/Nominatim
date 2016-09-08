@@ -58,8 +58,7 @@ exit;
     }
 */
 
-if ($aCMDResult['create-tables'])
-{
+if ($aCMDResult['create-tables']) {
     $sSQL = <<<'EOD'
 CREATE TABLE wikipedia_article (
     language text NOT NULL,
@@ -111,22 +110,18 @@ function _parseWikipediaContent($sPageText)
 
     $aTemplateStack = array();
     $aState = array('body');
-    foreach($aPageText as $i => $sPart)
-    {
-        switch($sPart)
-        {
+    foreach ($aPageText as $i => $sPart) {
+        switch ($sPart) {
         case '{{':
             array_unshift($aTemplateStack, array('', array()));
             array_unshift($aState, 'template');
             break;
         case '}}':
-            if ($aState[0] == 'template' || $aState[0] == 'templateparam')
-            {
+            if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
                 $aTemplate = array_shift($aTemplateStack);
                 array_shift($aState);
 
                 $aTemplates[] = $aTemplate;
-
             }
             break;
         case '[[':
@@ -135,16 +130,14 @@ function _parseWikipediaContent($sPageText)
             array_unshift($aState, 'link');
             break;
         case ']]':
-            if ($aState[0] == 'link' || $aState[0] == 'linksynonim')
-            {
+            if ($aState[0] == 'link' || $aState[0] == 'linksynonim') {
                 if (!$sLinkSyn) $sLinkSyn = $sLinkPage;
                 if (substr($sLinkPage, 0, 6) == 'Image:') $sLinkSyn = substr($sLinkPage, 6);
 
                 $aLinks[] = array($sLinkPage, $sLinkSyn);
 
                 array_shift($aState);
-                switch($aState[0])
-                {
+                switch ($aState[0]) {
                 case 'template':
                     $aTemplateStack[0][0] .= trim($sPart);
                     break;
@@ -167,8 +160,7 @@ function _parseWikipediaContent($sPageText)
             }
             break;
         case '|':
-            if ($aState[0] == 'template' || $aState[0] == 'templateparam')
-            {
+            if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
                 // Create a new template paramater
                 $aState[0] = 'templateparam';
                 array_unshift($aTemplateStack[0][1], '');
@@ -176,8 +168,7 @@ function _parseWikipediaContent($sPageText)
             if ($aState[0] == 'link') $aState[0] = 'linksynonim';
             break;
         default:
-            switch($aState[0])
-            {
+            switch ($aState[0]) {
             case 'template':
                 $aTemplateStack[0][0] .= trim($sPart);
                 break;
@@ -206,181 +197,139 @@ function _parseWikipediaContent($sPageText)
 function _templatesToProperties($aTemplates)
 {
     $aPageProperties = array();
-    foreach($aTemplates as $iTemplate => $aTemplate)
-    {
+    foreach ($aTemplates as $iTemplate => $aTemplate) {
         $aParams = array();
-        foreach(array_reverse($aTemplate[1]) as $iParam => $sParam)
-        {
-            if (($iPos = strpos($sParam, '=')) === FALSE)
-            {
+        foreach (array_reverse($aTemplate[1]) as $iParam => $sParam) {
+            if (($iPos = strpos($sParam, '=')) === FALSE) {
                 $aParams[] = trim($sParam);
-            }
-            else
-            {
+            } else {
                 $aParams[trim(substr($sParam, 0, $iPos))] = trim(substr($sParam, $iPos+1));
             }
         }
         $aTemplates[$iTemplate][1] = $aParams;
         if (!isset($aPageProperties['sOfficialName']) && isset($aParams['official_name']) && $aParams['official_name']) $aPageProperties['sOfficialName'] = $aParams['official_name'];
-        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population']) && $aParams['population'] && preg_match('#^[0-9.,]+#', $aParams['population']))
-        {
+        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population']) && $aParams['population'] && preg_match('#^[0-9.,]+#', $aParams['population'])) {
             $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population']);
         }
-        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_total']) && $aParams['population_total'] && preg_match('#^[0-9.,]+#', $aParams['population_total']))
-        {
+        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_total']) && $aParams['population_total'] && preg_match('#^[0-9.,]+#', $aParams['population_total'])) {
             $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_total']);
         }
-        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_urban']) && $aParams['population_urban'] && preg_match('#^[0-9.,]+#', $aParams['population_urban']))
-        {
+        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_urban']) && $aParams['population_urban'] && preg_match('#^[0-9.,]+#', $aParams['population_urban'])) {
             $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_urban']);
         }
-        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_estimate']) && $aParams['population_estimate'] && preg_match('#^[0-9.,]+#', $aParams['population_estimate']))
-        {
+        if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_estimate']) && $aParams['population_estimate'] && preg_match('#^[0-9.,]+#', $aParams['population_estimate'])) {
             $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_estimate']);
         }
-        if (!isset($aPageProperties['sWebsite']) && isset($aParams['website']) && $aParams['website'])
-        {
-            if (preg_match('#^\\[?([^ \\]]+)[^\\]]*\\]?$#', $aParams['website'], $aMatch))
-            {
+        if (!isset($aPageProperties['sWebsite']) && isset($aParams['website']) && $aParams['website']) {
+            if (preg_match('#^\\[?([^ \\]]+)[^\\]]*\\]?$#', $aParams['website'], $aMatch)) {
                 $aPageProperties['sWebsite'] = $aMatch[1];
-                if (strpos($aPageProperties['sWebsite'],':/'.'/') === FALSE)
-                {
+                if (strpos($aPageProperties['sWebsite'],':/'.'/') === FALSE) {
                     $aPageProperties['sWebsite'] = 'http:/'.'/'.$aPageProperties['sWebsite'];
                 }
             }
         }
-        if (!isset($aPageProperties['sTopLevelDomain']) && isset($aParams['cctld']) && $aParams['cctld'])
-        {
+        if (!isset($aPageProperties['sTopLevelDomain']) && isset($aParams['cctld']) && $aParams['cctld']) {
             $aPageProperties['sTopLevelDomain'] = str_replace(array('[',']','.'),'', $aParams['cctld']);
         }
 
-        if (!isset($aPageProperties['sInfoboxType']) && strtolower(substr($aTemplate[0],0,7)) == 'infobox')
-        {
+        if (!isset($aPageProperties['sInfoboxType']) && strtolower(substr($aTemplate[0],0,7)) == 'infobox') {
             $aPageProperties['sInfoboxType'] = trim(substr($aTemplate[0],8));
             // $aPageProperties['aInfoboxParams'] = $aParams;
         }
 
         // Assume the first template with lots of params is the type (fallback for infobox)
-        if (!isset($aPageProperties['sPossibleInfoboxType']) && sizeof($aParams) > 10)
-        {
+        if (!isset($aPageProperties['sPossibleInfoboxType']) && sizeof($aParams) > 10) {
             $aPageProperties['sPossibleInfoboxType'] = trim($aTemplate[0]);
             // $aPageProperties['aInfoboxParams'] = $aParams;
         }
 
         // do we have a lat/lon
-        if (!isset($aPageProperties['fLat']))
-        {
-            if (isset($aParams['latd']) && isset($aParams['longd']))
-            {
+        if (!isset($aPageProperties['fLat'])) {
+            if (isset($aParams['latd']) && isset($aParams['longd'])) {
                 $aPageProperties['fLat'] = degreesAndMinutesToDecimal($aParams['latd'], @$aParams['latm'], @$aParams['lats'], @$aParams['latNS']);
                 $aPageProperties['fLon'] = degreesAndMinutesToDecimal($aParams['longd'], @$aParams['longm'], @$aParams['longs'], @$aParams['longEW']);
             }
-            if (isset($aParams['lat_degrees']) && isset($aParams['lat_degrees']))
-            {
+            if (isset($aParams['lat_degrees']) && isset($aParams['lat_degrees'])) {
                 $aPageProperties['fLat'] = degreesAndMinutesToDecimal($aParams['lat_degrees'], @$aParams['lat_minutes'], @$aParams['lat_seconds'], @$aParams['lat_direction']);
                 $aPageProperties['fLon'] = degreesAndMinutesToDecimal($aParams['long_degrees'], @$aParams['long_minutes'], @$aParams['long_seconds'], @$aParams['long_direction']);
             }
-            if (isset($aParams['latitude']) && isset($aParams['longitude']))
-            {
-                if (preg_match('#[0-9.]+#', $aParams['latitude']) && preg_match('#[0-9.]+#', $aParams['longitude']))
-                {
+            if (isset($aParams['latitude']) && isset($aParams['longitude'])) {
+                if (preg_match('#[0-9.]+#', $aParams['latitude']) && preg_match('#[0-9.]+#', $aParams['longitude'])) {
                     $aPageProperties['fLat'] = (float)$aParams['latitude'];
                     $aPageProperties['fLon'] = (float)$aParams['longitude'];
                 }
             }
-            if (strtolower($aTemplate[0]) == 'coord')
-            {
-                if (isset($aParams[3]) && (strtoupper($aParams[3]) == 'N' || strtoupper($aParams[3]) == 'S'))
-                {
+            if (strtolower($aTemplate[0]) == 'coord') {
+                if (isset($aParams[3]) && (strtoupper($aParams[3]) == 'N' || strtoupper($aParams[3]) == 'S')) {
                     $aPageProperties['fLat'] = degreesAndMinutesToDecimal($aParams[0], $aParams[1], $aParams[2], $aParams[3]);
                     $aPageProperties['fLon'] = degreesAndMinutesToDecimal($aParams[4], $aParams[5], $aParams[6], $aParams[7]);
-                }
-                elseif (isset($aParams[0]) && isset($aParams[1]) && isset($aParams[2]) && (strtoupper($aParams[2]) == 'N' || strtoupper($aParams[2]) == 'S'))
-                {
+                } elseif (isset($aParams[0]) && isset($aParams[1]) && isset($aParams[2]) && (strtoupper($aParams[2]) == 'N' || strtoupper($aParams[2]) == 'S')) {
                     $aPageProperties['fLat'] = degreesAndMinutesToDecimal($aParams[0], $aParams[1], 0, $aParams[2]);
                     $aPageProperties['fLon'] = degreesAndMinutesToDecimal($aParams[3], $aParams[4], 0, $aParams[5]);
-                }
-                else if (isset($aParams[0]) && isset($aParams[1]) && (strtoupper($aParams[1]) == 'N' || strtoupper($aParams[1]) == 'S'))
-                {
+                } else if (isset($aParams[0]) && isset($aParams[1]) && (strtoupper($aParams[1]) == 'N' || strtoupper($aParams[1]) == 'S')) {
                     $aPageProperties['fLat'] = (strtoupper($aParams[1]) == 'N'?1:-1) * (float)$aParams[0];
                     $aPageProperties['fLon'] = (strtoupper($aParams[3]) == 'E'?1:-1) * (float)$aParams[2];
-                }
-                else if (isset($aParams[0]) && is_numeric($aParams[0]) && isset($aParams[1]) && is_numeric($aParams[1]))
-                {
+                } else if (isset($aParams[0]) && is_numeric($aParams[0]) && isset($aParams[1]) && is_numeric($aParams[1])) {
                     $aPageProperties['fLat'] = (float)$aParams[0];
                     $aPageProperties['fLon'] = (float)$aParams[1];
                 }
             }
-            if (isset($aParams['Latitude']) && isset($aParams['Longitude']))
-            {
+            if (isset($aParams['Latitude']) && isset($aParams['Longitude'])) {
                 $aParams['Latitude'] = str_replace('&nbsp;',' ',$aParams['Latitude']);
                 $aParams['Longitude'] = str_replace('&nbsp;',' ',$aParams['Longitude']);
-                if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([NS]) to ([0-9]+)°( ([0-9]+)′)? ([NS])#', $aParams['Latitude'], $aMatch))
-                {
+                if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([NS]) to ([0-9]+)°( ([0-9]+)′)? ([NS])#', $aParams['Latitude'], $aMatch)) {
                     $aPageProperties['fLat'] =
                         (degreesAndMinutesToDecimal($aMatch[1], $aMatch[3], 0, $aMatch[4])
                         +degreesAndMinutesToDecimal($aMatch[5], $aMatch[7], 0, $aMatch[8])) / 2;
-                }
-                else if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([NS])#', $aParams['Latitude'], $aMatch))
-                {
+                } else if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([NS])#', $aParams['Latitude'], $aMatch)) {
                     $aPageProperties['fLat'] = degreesAndMinutesToDecimal($aMatch[1], $aMatch[3], 0, $aMatch[4]);
                 }
 
-                if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([EW]) to ([0-9]+)°( ([0-9]+)′)? ([EW])#', $aParams['Longitude'], $aMatch))
-                {
+                if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([EW]) to ([0-9]+)°( ([0-9]+)′)? ([EW])#', $aParams['Longitude'], $aMatch)) {
                     $aPageProperties['fLon'] =
                         (degreesAndMinutesToDecimal($aMatch[1], $aMatch[3], 0, $aMatch[4])
                         +degreesAndMinutesToDecimal($aMatch[5], $aMatch[7], 0, $aMatch[8])) / 2;
-                }
-                else if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([EW])#', $aParams['Longitude'], $aMatch))
-                {
+                } else if (preg_match('#^([0-9]+)°( ([0-9]+)′)? ([EW])#', $aParams['Longitude'], $aMatch)) {
                     $aPageProperties['fLon'] = degreesAndMinutesToDecimal($aMatch[1], $aMatch[3], 0, $aMatch[4]);
                 }
             }
         }
     }
-    if (isset($aPageProperties['sPossibleInfoboxType']))
-    {
+    if (isset($aPageProperties['sPossibleInfoboxType'])) {
         if (!isset($aPageProperties['sInfoboxType'])) $aPageProperties['sInfoboxType'] = '#'.$aPageProperties['sPossibleInfoboxType'];
         unset($aPageProperties['sPossibleInfoboxType']);
     }
     return $aPageProperties;
 }
 
-if (isset($aCMDResult['parse-wikipedia']))
-{
+if (isset($aCMDResult['parse-wikipedia'])) {
     $oDB =& getDB();
     $aArticleNames = $oDB->getCol('select page_title from content where page_namespace = 0 and page_id %10 = '.$aCMDResult['parse-wikipedia'].' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))');
 //      $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0 and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\')) and page_title in (\'Virginia\')');
-    foreach($aArticleNames as $sArticleName)
-    {
+    foreach ($aArticleNames as $sArticleName) {
         $sPageText = $oDB->getOne('select page_content from content where page_namespace = 0 and page_title = \''.pg_escape_string($sArticleName).'\'');
         $aP = _templatesToProperties(_parseWikipediaContent($sPageText));
 
-        if (isset($aP['sInfoboxType']))
-        {
+        if (isset($aP['sInfoboxType'])) {
             $aP['sInfoboxType'] = preg_replace('#\\s+#',' ',$aP['sInfoboxType']);
             $sSQL = 'update wikipedia_article set ';
             $sSQL .= 'infobox_type = \''.pg_escape_string($aP['sInfoboxType']).'\'';
             $sSQL .= ' where language = \'en\' and title = \''.pg_escape_string($sArticleName).'\';';
             $oDB->query($sSQL);
         }
-        if (isset($aP['iPopulation']))
-        {
+        if (isset($aP['iPopulation'])) {
             $sSQL = 'update wikipedia_article set ';
             $sSQL .= 'population = \''.pg_escape_string($aP['iPopulation']).'\'';
             $sSQL .= ' where language = \'en\' and title = \''.pg_escape_string($sArticleName).'\';';
             $oDB->query($sSQL);
         }
-        if (isset($aP['sWebsite']))
-        {
+        if (isset($aP['sWebsite'])) {
             $sSQL = 'update wikipedia_article set ';
             $sSQL .= 'website = \''.pg_escape_string($aP['sWebsite']).'\'';
             $sSQL .= ' where language = \'en\' and title = \''.pg_escape_string($sArticleName).'\';';
             $oDB->query($sSQL);
         }
-        if (isset($aP['fLat']) && ($aP['fLat']!='-0' || $aP['fLon']!='-0'))
-        {
+        if (isset($aP['fLat']) && ($aP['fLat']!='-0' || $aP['fLon']!='-0')) {
             if (!isset($aP['sInfoboxType'])) $aP['sInfoboxType'] = '';
             echo $sArticleName.'|'.$aP['sInfoboxType'].'|'.$aP['fLat'].'|'.$aP['fLon'] ."\n";
             $sSQL = 'update wikipedia_article set ';
@@ -395,8 +344,7 @@ if (isset($aCMDResult['parse-wikipedia']))
 function nominatimXMLStart($hParser, $sName, $aAttr)
 {
         global $aNominatRecords;
-        switch($sName)
-        {
+        switch ($sName) {
         case 'PLACE':
                 $aNominatRecords[] = $aAttr;
                 break;
@@ -408,16 +356,14 @@ function nominatimXMLEnd($hParser, $sName)
 }
 
 
-if (isset($aCMDResult['link']))
-{
+if (isset($aCMDResult['link'])) {
     $oDB =& getDB();
     $aWikiArticles = $oDB->getAll("select * from wikipedia_article where language = 'en' and lat is not null and osm_type is null and totalcount < 31 order by importance desc limit 200000");
 
     // If you point this script at production OSM you will be blocked
     $sNominatimBaseURL = 'http://SEVERNAME/search.php';
 
-    foreach($aWikiArticles as $aRecord)
-    {
+    foreach ($aWikiArticles as $aRecord) {
         $aRecord['name'] = str_replace('_',' ',$aRecord['title']);
 
         $sURL = $sNominatimBaseURL.'?format=xml&accept-language=en';
@@ -425,8 +371,7 @@ if (isset($aCMDResult['link']))
         echo "\n-- ".$aRecord['name'].", ".$aRecord['infobox_type']."\n";
         $fMaxDist = 0.0000001;
         $bUnknown = false;
-        switch(strtolower($aRecord['infobox_type']))
-        {
+        switch (strtolower($aRecord['infobox_type'])) {
         case 'former country':
             continue 2;
         case 'sea':
@@ -535,11 +480,9 @@ if (isset($aCMDResult['link']))
         xml_parse($hXMLParser, $sXML, true);
         xml_parser_free($hXMLParser);
 
-        if (!isset($aNominatRecords[0]))
-        {
+        if (!isset($aNominatRecords[0])) {
             $aNameParts = preg_split('#[(,]#',$aRecord['name']);
-            if (sizeof($aNameParts) > 1)
-            {
+            if (sizeof($aNameParts) > 1) {
                 $sNameURL = $sURL.'&q='.urlencode(trim($aNameParts[0]));
                 var_Dump($sNameURL);
                 $sXML = file_get_contents($sNameURL);
@@ -553,8 +496,7 @@ if (isset($aCMDResult['link']))
         }
 
         // assume first is best/right
-        for($i = 0; $i < sizeof($aNominatRecords); $i++)
-        {
+        for ($i = 0; $i < sizeof($aNominatRecords); $i++) {
             $fDiff = ($aRecord['lat']-$aNominatRecords[$i]['LAT']) * ($aRecord['lat']-$aNominatRecords[$i]['LAT']);
             $fDiff += ($aRecord['lon']-$aNominatRecords[$i]['LON']) * ($aRecord['lon']-$aNominatRecords[$i]['LON']);
             $fDiff = sqrt($fDiff);
@@ -572,15 +514,11 @@ if (isset($aCMDResult['link']))
                 else $fMaxDist = 0.001;
             }
             echo "-- FOUND \"".substr($aNominatRecords[$i]['DISPLAY_NAME'],0,50)."\", ".$aNominatRecords[$i]['CLASS'].", ".$aNominatRecords[$i]['TYPE'].", ".$aNominatRecords[$i]['PLACE_RANK'].", ".$aNominatRecords[$i]['OSM_TYPE']." (dist:$fDiff, max:$fMaxDist)\n";
-            if ($fDiff > $fMaxDist)
-            {
+            if ($fDiff > $fMaxDist) {
                 echo "-- Diff too big $fDiff (max: $fMaxDist)".$aRecord['lat'].','.$aNominatRecords[$i]['LAT'].' & '.$aRecord['lon'].','.$aNominatRecords[$i]['LON']." \n";
-            }
-            else
-            {
+            } else {
                 $sSQL = "update wikipedia_article set osm_type=";
-                switch($aNominatRecords[$i]['OSM_TYPE'])
-                {
+                switch ($aNominatRecords[$i]['OSM_TYPE']) {
                 case 'relation': $sSQL .= "'R'"; break;
                 case 'way': $sSQL .= "'W'"; break;
                 case 'node': $sSQL .= "'N'"; break;

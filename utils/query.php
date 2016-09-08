@@ -29,8 +29,7 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 $oDB =& getDB();
 $oParams = new ParameterParser($aCMDResult);
 
-if ($oParams->getBool('search'))
-{
+if ($oParams->getBool('search')) {
     if (isset($aCMDResult['nodedupe'])) $aCMDResult['dedupe'] = 'false';
 
     $oGeocode = new Geocode($oDB);
@@ -41,12 +40,11 @@ if ($oParams->getBool('search'))
 
     $aSearchResults = $oGeocode->lookup();
 
-    if (version_compare(phpversion(), "5.4.0", '<'))
+    if (version_compare(phpversion(), "5.4.0", '<')) {
         echo json_encode($aSearchResults);
-    else
+    } else {
         echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
-}
-else
-{
+    }
+} else {
     showUsage($aCMDOptions, true);
 }

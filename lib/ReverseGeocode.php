@@ -53,8 +53,7 @@ class ReverseGeocode
         $bIsInUnitedStates = false;
         $bPlaceIsTiger = false;
         $bPlaceIsLine = false;
-        while(!$iPlaceID && $fSearchDiam < $fMaxAreaDistance)
-        {
+        while (!$iPlaceID && $fSearchDiam < $fMaxAreaDistance) {
             $fSearchDiam = $fSearchDiam * 2;
 
             // If we have to expand the search area by a large amount then we need a larger feature
@@ -86,8 +85,7 @@ class ReverseGeocode
             $bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
         }
         // if a street or house was found, look in interpolation lines table
-        if ($bDoInterpolation && $this->iMaxRank >= 28 && $aPlace && $aPlace['rank_search'] >= 26)
-        {
+        if ($bDoInterpolation && $this->iMaxRank >= 28 && $aPlace && $aPlace['rank_search'] >= 26) {
             // if a house was found, search the interpolation line that is at least as close as the house
             $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
             $sSQL .= ' FROM location_property_osmline';
@@ -95,24 +93,20 @@ class ReverseGeocode
             $sSQL .= ' and indexed_status = 0 ';
             $sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
             
-            if (CONST_Debug)
-            {
+            if (CONST_Debug) {
                 $sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
                 var_dump($sSQL);
 
                 $aAllHouses = chksql($this->oDB->getAll($sSQL));
-                foreach($aAllHouses as $i)
-                {
+                foreach ($aAllHouses as $i) {
                     echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
                 }
             }
             $aPlaceLine = chksql($this->oDB->getRow($sSQL),
                                  "Could not determine closest housenumber on an osm interpolation line.");
-            if ($aPlaceLine)
-            {
+            if ($aPlaceLine) {
                 if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
-                if ($aPlace['rank_search'] == 30)
-                {
+                if ($aPlace['rank_search'] == 30) {
                     // if a house was already found in placex, we have to find out, 
                     // if the placex house or the interpolated house are closer to the searched point
                     // distance between point and placex house
@@ -126,8 +120,7 @@ class ReverseGeocode
                     $aDistanceInterpolation = chksql($this->oDB->getRow($sSQL),
                                                      "Could not determine distance between searched point and interpolated house.");
                     $fDistanceInterpolation = $aDistanceInterpolation['distance'];
-                    if ($fDistanceInterpolation < $fDistancePlacex)
-                    {
+                    if ($fDistanceInterpolation < $fDistancePlacex) {
                         // interpolation is closer to point than placex house
                         $bPlaceIsLine = true;
                         $aPlace = $aPlaceLine;
@@ -137,9 +130,7 @@ class ReverseGeocode
                         $iMaxRank = 30;
                     }
                     // else: nothing to do, take placex house from above
-                }
-                else
-                {
+                } else {
                     $bPlaceIsLine = true;
                     $aPlace = $aPlaceLine;
                     $iPlaceID = $aPlaceLine['place_id'];
@@ -151,8 +142,7 @@ class ReverseGeocode
         }
         
         // Only street found? If it's in the US we can check TIGER data for nearest housenumber
-        if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $this->iMaxRank >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 ))
-        {
+        if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $this->iMaxRank >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 )) {
             $fSearchDiam = 0.001;
             $sSQL = 'SELECT place_id,parent_place_id,30 as rank_search, ST_line_locate_point(linegeo,'.$sPointSQL.') as fraction';
             //if (CONST_Debug) { $sSQL .= ', housenumber, ST_distance('.$sPointSQL.', centroid) as distance, st_y(centroid) as lat, st_x(centroid) as lon'; }
@@ -160,22 +150,19 @@ class ReverseGeocode
             $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';  //no centroid anymore in Tiger data, now we have lines
             $sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
 
-            if (CONST_Debug)
-            {
+            if (CONST_Debug) {
                 $sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
                 var_dump($sSQL);
 
                 $aAllHouses = chksql($this->oDB->getAll($sSQL));
-                foreach($aAllHouses as $i)
-                {
+                foreach ($aAllHouses as $i) {
                     echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
                 }
             }
 
             $aPlaceTiger = chksql($this->oDB->getRow($sSQL),
                                   "Could not determine closest Tiger place.");
-            if ($aPlaceTiger)
-            {
+            if ($aPlaceTiger) {
                 if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
                 $bPlaceIsTiger = true;
                 $aPlace = $aPlaceTiger;
@@ -187,10 +174,8 @@ class ReverseGeocode
         }
 
         // The point we found might be too small - use the address to find what it is a child of
-        if ($iPlaceID && $iMaxRank < 28)
-        {
-            if (($aPlace['rank_search'] > 28 || $bPlaceIsTiger || $bPlaceIsLine) && $iParentPlaceID)
-            {
+        if ($iPlaceID && $iMaxRank < 28) {
+            if (($aPlace['rank_search'] > 28 || $bPlaceIsTiger || $bPlaceIsLine) && $iParentPlaceID) {
                 $iPlaceID = $iParentPlaceID;
             }
             $sSQL  = 'select address_place_id';
@@ -200,8 +185,7 @@ class ReverseGeocode
             $sSQL .= ' LIMIT 1';
             $iPlaceID = chksql($this->oDB->getOne($sSQL),
                                "Could not get parent for place.");
-            if (!$iPlaceID)
-            {
+            if (!$iPlaceID) {
                 $iPlaceID = $aPlace['place_id'];
             }
         }

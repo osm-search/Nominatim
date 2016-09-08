@@ -12,28 +12,23 @@ function statusError($sMsg)
 }
 
 $oDB =& DB::connect(CONST_Database_DSN, false);
-if (!$oDB || PEAR::isError($oDB))
-{
+if (!$oDB || PEAR::isError($oDB)) {
     statusError("No database");
 }
 
 $sStandardWord = $oDB->getOne("select make_standard_name('a')");
-if (PEAR::isError($sStandardWord))
-{
+if (PEAR::isError($sStandardWord)) {
     statusError("Module failed");
 }
-if ($sStandardWord != 'a')
-{
+if ($sStandardWord != 'a') {
     statusError("Module call failed");
 }
 
 $iWordID = $oDB->getOne("select word_id,word_token, word, class, type, country_code, operator, search_name_count from word where word_token in (' a')");
-if (PEAR::isError($iWordID))
-{
+if (PEAR::isError($iWordID)) {
     statusError("Query failed");
 }
-if (!$iWordID)
-{
+if (!$iWordID) {
     statusError("No value");
 }
 

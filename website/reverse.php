@@ -16,14 +16,11 @@ $bAsKML = $oParams->getBool('polygon_kml');
 $bAsSVG = $oParams->getBool('polygon_svg');
 $bAsText = $oParams->getBool('polygon_text');
 if ((($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0)
-    + ($bAsText?1:0)) > CONST_PolygonOutput_MaximumTypes)
-{
-    if (CONST_PolygonOutput_MaximumTypes)
-    {
+    + ($bAsText?1:0)) > CONST_PolygonOutput_MaximumTypes
+) {
+    if (CONST_PolygonOutput_MaximumTypes) {
         userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-    }
-    else
-    {
+    } else {
         userError("Polygon output is disabled");
     }
 }
@@ -52,12 +49,9 @@ $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);
 $fLat = $oParams->getFloat('lat');
 $fLon = $oParams->getFloat('lon');
-if ($sOsmType && $iOsmId > 0)
-{
+if ($sOsmType && $iOsmId > 0) {
     $aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
-}
-else if ($fLat !== false && $fLon !== false)
-{
+} else if ($fLat !== false && $fLon !== false) {
     $oReverseGeocode = new ReverseGeocode($oDB);
     $oReverseGeocode->setZoom($oParams->getInt('zoom', 18));
 
@@ -66,14 +60,11 @@ else if ($fLat !== false && $fLon !== false)
 
     $aPlace = $oPlaceLookup->lookup((int)$aLookup['place_id'],
                                     $aLookup['type'], $aLookup['fraction']);
-}
-else if ($sOutputFormat != 'html')
-{
+} else if ($sOutputFormat != 'html') {
     userError("Need coordinates or OSM object to lookup.");
 }
 
-if ($aPlace)
-{
+if ($aPlace) {
     $oPlaceLookup->setIncludePolygonAsPoints(false);
     $oPlaceLookup->setIncludePolygonAsText($bAsText);
     $oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
@@ -86,21 +77,18 @@ if ($aPlace)
                                                  $aPlace['lon'], $aPlace['lat'],
                                                  $fRadius);
 
-    if ($aOutlineResult)
-    {
+    if ($aOutlineResult) {
         $aPlace = array_merge($aPlace, $aOutlineResult);
     }
 }
 
 
-if (CONST_Debug)
-{
+if (CONST_Debug) {
     var_dump($aPlace);
     exit;
 }
 
-if ($sOutputFormat=='html')
-{
+if ($sOutputFormat=='html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;

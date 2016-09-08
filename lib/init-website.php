@@ -34,12 +34,9 @@ function chksql($oSql, $sMsg = "Database request failed")
     <p><b>Details:</b> <pre>
 INTERNALFAIL;
 
-    if (CONST_Debug)
-    {
+    if (CONST_Debug) {
         var_dump($oSql);
-    }
-    else
-    {
+    } else {
         echo "<pre>\n".$oSql->getUserInfo()."</pre>";
     }
 
@@ -55,15 +52,12 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
     echo '<p>Nominatim has encountered an internal error while processing your request. This is most likely because of a bug in the software.</p>';
     echo "<p><b>Details:</b> ".$sError,"</p>";
     echo '<p>Feel free to file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. Please include the error message above and the URL you used.</p>';
-    if (CONST_Debug)
-    {
+    if (CONST_Debug) {
         echo "<hr><h2>Debugging Information</h2><br>";
-        if ($sSQL)
-        {
+        if ($sSQL) {
             echo "<h3>SQL query</h3><code>".$sSQL."</code>";
         }
-        if ($vDumpVar)
-        {
+        if ($vDumpVar) {
             echo "<h3>Result</h3> <code>";
             var_dump($vDumpVar);
             echo "</code>";
@@ -91,12 +85,10 @@ function userError($sError)
  * HTTP Reply header setup
  */
 
-if (CONST_NoAccessControl)
-{
+if (CONST_NoAccessControl) {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: OPTIONS,GET");
-    if (!empty($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
-    {
+    if (!empty($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])) {
         header("Access-Control-Allow-Headers: ".$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
     }
 }

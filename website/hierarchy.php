@@ -20,17 +20,14 @@ $iOsmId = $oParams->getInt('osmid', -1);
 
 $oDB =& getDB();
 
-if ($sOsmType && $iOsmId > 0)
-{
+if ($sOsmType && $iOsmId > 0) {
     $sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));
 
     // Be nice about our error messages for broken geometry
-    if (!$sPlaceId)
-    {
+    if (!$sPlaceId) {
         $aPointDetails = chksql($oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1"));
         if ($aPointDetails) {
-            if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches))
-            {
+            if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
                 $aPointDetails['error_x'] = $aMatches[1];
                 $aPointDetails['error_y'] = $aMatches[2];
             }
@@ -44,14 +41,12 @@ if (!$sPlaceId) userError("Please select a place id");
 
 $iPlaceID = (int)$sPlaceId;
 
-if (CONST_Use_US_Tiger_Data)
-{
+if (CONST_Use_US_Tiger_Data) {
     $iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_tiger where place_id = '.$iPlaceID));
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
-if (CONST_Use_Aux_Location_data)
-{
+if (CONST_Use_Aux_Location_data) {
     $iParentPlaceID = chksql($oDB->getOne('select parent_place_id from location_property_aux where place_id = '.$iPlaceID));
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
@@ -65,16 +60,14 @@ $aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
 if (!sizeof($aPlaceAddress)) userError("Unknown place id.");
 
 $aBreadcrums = array();
-foreach($aPlaceAddress as $i => $aPlace)
-{
+foreach ($aPlaceAddress as $i => $aPlace) {
     if (!$aPlace['place_id']) continue;
     $aBreadcrums[] = array('placeId'   => $aPlace['place_id'],
                            'osmType'   => $aPlace['osm_type'],
                            'osmId'     => $aPlace['osm_id'],
                            'localName' => $aPlace['localname']);
 
-    if ($sOutputFormat == 'html')
-    {
+    if ($sOutputFormat == 'html') {
         $sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
         if ($i) echo " &gt; ";
         echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> ('.osmLink($aPlace).')';
@@ -82,8 +75,7 @@ foreach($aPlaceAddress as $i => $aPlace)
 }
 
 
-if ($sOutputFormat == 'json')
-{
+if ($sOutputFormat == 'json') {
     header("content-type: application/json; charset=UTF-8");
     $aDetails = array();
     $aDetails['breadcrumbs'] = $aBreadcrums;
@@ -100,34 +92,28 @@ $sSQL .= " where parent_place_id in (".join(',',$aRelatedPlaceIDs).") and name i
 $sSQL .= " order by rank_address asc,rank_search asc,localname,class, type,housenumber";
 $aParentOfLines = chksql($oDB->getAll($sSQL));
 
-if (sizeof($aParentOfLines))
-{
+if (sizeof($aParentOfLines)) {
     echo '<h2>Parent Of:</h2>';
     $aClassType = getClassTypesWithImportance();
     $aGroupedAddressLines = array();
-    foreach($aParentOfLines as $aAddressLine)
-    {
+    foreach ($aParentOfLines as $aAddressLine) {
         if (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-              && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-        {
+              && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label']
+        ) {
             $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
-        }
-        elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-                && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-        {
+        } elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
+                && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label']
+        ) {
             $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
-        }
-        else $aAddressLine['label'] = ucwords($aAddressLine['type']);
+        } else $aAddressLine['label'] = ucwords($aAddressLine['type']);
 
         if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
             $aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;
     }
 
-    foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
-    {
+    foreach ($aGroupedAddressLines as $sGroupHeading => $aParentOfLines) {
         echo "<h3>$sGroupHeading</h3>";
-        foreach($aParentOfLines as $aAddressLine)
-        {
+        foreach ($aParentOfLines as $aAddressLine) {
             $aAddressLine['localname'] = $aAddressLine['localname']?$aAddressLine['localname']:$aAddressLine['housenumber'];
             $sOSMType = formatOSMType($aAddressLine['osm_type'], false);
 

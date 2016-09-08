@@ -17,8 +17,7 @@ function formatOSMType($sType, $bIncludeExternal=true)
 function osmLink($aFeature, $sRefText=false)
 {
     $sOSMType = formatOSMType($aFeature['osm_type'], false);
-    if ($sOSMType)
-    {
+    if ($sOSMType) {
         return '<a href="//www.openstreetmap.org/'.$sOSMType.'/'.$aFeature['osm_id'].'">'.$sOSMType.' '.($sRefText?$sRefText:$aFeature['osm_id']).'</a>';
     }
     return '';
@@ -26,8 +25,7 @@ function osmLink($aFeature, $sRefText=false)
 
 function wikipediaLink($aFeature)
 {
-    if ($aFeature['wikipedia'])
-    {
+    if ($aFeature['wikipedia']) {
         list($sLanguage, $sArticle) = explode(':',$aFeature['wikipedia']);
         return '<a href="https://'.$sLanguage.'.wikipedia.org/wiki/'.urlencode($sArticle).'" target="_blank">'.$aFeature['wikipedia'].'</a>';
     }

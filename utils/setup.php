@@ -44,20 +44,16 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 $bDidSomething = false;
 
 // Check if osm-file is set and points to a valid file if --all or --import-data is given
-if ($aCMDResult['import-data'] || $aCMDResult['all'])
-{
-    if (!isset($aCMDResult['osm-file']))
-    {
+if ($aCMDResult['import-data'] || $aCMDResult['all']) {
+    if (!isset($aCMDResult['osm-file'])) {
         fail('missing --osm-file for data import');
     }
 
-    if (!file_exists($aCMDResult['osm-file']))
-    {
+    if (!file_exists($aCMDResult['osm-file'])) {
         fail('the path supplied to --osm-file does not exist');
     }
 
-    if (!is_readable($aCMDResult['osm-file']))
-    {
+    if (!is_readable($aCMDResult['osm-file'])) {
         fail('osm-file "'.$aCMDResult['osm-file'].'" not readable');
     }
 }
@@ -65,44 +61,36 @@ if ($aCMDResult['import-data'] || $aCMDResult['all'])
 
 // This is a pretty hard core default - the number of processors in the box - 1
 $iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
-if ($iInstances < 1)
-{
+if ($iInstances < 1) {
     $iInstances = 1;
     echo "WARNING: resetting threads to $iInstances\n";
 }
-if ($iInstances > getProcessorCount())
-{
+if ($iInstances > getProcessorCount()) {
     $iInstances = getProcessorCount();
     echo "WARNING: resetting threads to $iInstances\n";
 }
 
 // Assume we can steal all the cache memory in the box (unless told otherwise)
-if (isset($aCMDResult['osm2pgsql-cache']))
-{
+if (isset($aCMDResult['osm2pgsql-cache'])) {
     $iCacheMemory = $aCMDResult['osm2pgsql-cache'];
-}
-else
-{
+} else {
     $iCacheMemory = getCacheMemoryMB();
 }
 
 $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
-if ($aCMDResult['create-db'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     echo "Create DB\n";
     $bDidSomething = true;
     $oDB = DB::connect(CONST_Database_DSN, false);
-    if (!PEAR::isError($oDB))
-    {
+    if (!PEAR::isError($oDB)) {
         fail('database already exists ('.CONST_Database_DSN.')');
     }
     passthruCheckReturn('createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
 }
 
-if ($aCMDResult['setup-db'] || $aCMDResult['all'])
-{
+if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     echo "Setup DB\n";
     $bDidSomething = true;
     // TODO: path detection, detection memory, etc.
@@ -112,8 +100,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all'])
     $fPostgresVersion = getPostgresVersion($oDB);
     echo 'Postgres version found: '.$fPostgresVersion."\n";
 
-    if ($fPostgresVersion < 9.1)
-    {
+    if ($fPostgresVersion < 9.1) {
         fail("Minimum supported version of Postgresql is 9.1.");
     }
 
@@ -125,8 +112,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all'])
     // versions add a dummy function that returns nothing.
     $iNumFunc = chksql($oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'"));
 
-    if ($iNumFunc == 0)
-    {
+    if ($iNumFunc == 0) {
         pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
         echo "WARNING: Postgresql is too old. extratags and namedetails API not available.";
     }
@@ -134,8 +120,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all'])
     $fPostgisVersion = getPostgisVersion($oDB);
     echo 'Postgis version found: '.$fPostgisVersion."\n";
 
-    if ($fPostgisVersion < 2.1)
-    {
+    if ($fPostgisVersion < 2.1) {
         // Function was renamed in 2.1 and throws an annoying deprecation warning
         pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
     }
@@ -144,21 +129,16 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all'])
     pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
     pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
     pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
-    if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz'))
-    {
+    if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
         pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
-    }
-    else
-    {
+    } else {
         echo "WARNING: external UK postcode table not found.\n";
     }
-    if (CONST_Use_Extra_US_Postcodes)
-    {
+    if (CONST_Use_Extra_US_Postcodes) {
         pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
     }
 
-    if ($aCMDResult['no-partitions'])
-    {
+    if ($aCMDResult['no-partitions']) {
         pgsqlRunScript('update country_name set partition = 0');
     }
 
@@ -170,20 +150,17 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all'])
     pgsqlRunScript('create type wikipedia_article_match as ()');
 }
 
-if ($aCMDResult['import-data'] || $aCMDResult['all'])
-{
+if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     echo "Import\n";
     $bDidSomething = true;
 
     $osm2pgsql = CONST_Osm2pgsql_Binary;
-    if (!file_exists($osm2pgsql))
-    {
+    if (!file_exists($osm2pgsql)) {
         echo "Please download and build osm2pgsql.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
         fail("osm2pgsql not found in '$osm2pgsql'");
     }
 
-    if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-    {
+    if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
         $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
     }
     if (CONST_Tablespace_Osm2pgsql_Data)
@@ -201,22 +178,19 @@ if ($aCMDResult['import-data'] || $aCMDResult['all'])
     passthruCheckReturn($osm2pgsql);
 
     $oDB =& getDB();
-    if (!chksql($oDB->getRow('select * from place limit 1')))
-    {
+    if (!chksql($oDB->getRow('select * from place limit 1'))) {
         fail('No Data');
     }
 }
 
-if ($aCMDResult['create-functions'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     echo "Functions\n";
     $bDidSomething = true;
     if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
     create_sql_functions($aCMDResult);
 }
 
-if ($aCMDResult['create-tables'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
 
     echo "Tables\n";
@@ -241,8 +215,7 @@ if ($aCMDResult['create-tables'] || $aCMDResult['all'])
     create_sql_functions($aCMDResult);
 }
 
-if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
     echo "Partition Tables\n";
     $bDidSomething = true;
 
@@ -264,8 +237,7 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all'])
 }
 
 
-if ($aCMDResult['create-partition-functions'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     echo "Partition Functions\n";
     $bDidSomething = true;
 
@@ -274,36 +246,28 @@ if ($aCMDResult['create-partition-functions'] || $aCMDResult['all'])
     pgsqlRunPartitionScript($sTemplate);
 }
 
-if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all'])
-{
+if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $sWikiArticlesFile = CONST_BasePath.'/data/wikipedia_article.sql.bin';
     $sWikiRedirectsFile = CONST_BasePath.'/data/wikipedia_redirect.sql.bin';
-    if (file_exists($sWikiArticlesFile))
-    {
+    if (file_exists($sWikiArticlesFile)) {
         echo "Importing wikipedia articles...";
         pgsqlRunDropAndRestore($sWikiArticlesFile);
         echo "...done\n";
-    }
-    else
-    {
+    } else {
         echo "WARNING: wikipedia article dump file not found - places will have default importance\n";
     }
-    if (file_exists($sWikiRedirectsFile))
-    {
+    if (file_exists($sWikiRedirectsFile)) {
         echo "Importing wikipedia redirects...";
         pgsqlRunDropAndRestore($sWikiRedirectsFile);
         echo "...done\n";
-    }
-    else
-    {
+    } else {
         echo "WARNING: wikipedia redirect dump file not found - some place importance values may be missing\n";
     }
 }
 
 
-if ($aCMDResult['load-data'] || $aCMDResult['all'])
-{
+if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     echo "Drop old Data\n";
     $bDidSomething = true;
 
@@ -332,8 +296,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all'])
     $sSQL = 'select distinct partition from country_name';
     $aPartitions = chksql($oDB->getCol($sSQL));
     if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
-    foreach($aPartitions as $sPartition)
-    {
+    foreach ($aPartitions as $sPartition) {
         if (!pg_query($oDB->connection, 'TRUNCATE location_road_'.$sPartition)) fail(pg_last_error($oDB->connection));
         echo '.';
     }
@@ -343,8 +306,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all'])
     echo ".\n";
 
     // pre-create the word list
-    if (!$aCMDResult['disable-token-precalc'])
-    {
+    if (!$aCMDResult['disable-token-precalc']) {
         echo "Loading word list\n";
         pgsqlRunScriptFile(CONST_BasePath.'/data/words.sql');
     }
@@ -352,8 +314,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all'])
     echo "Load Data\n";
     $aDBInstances = array();
     $iLoadThreads = max(1, $iInstances - 1);
-    for($i = 0; $i < $iLoadThreads; $i++)
-    {
+    for ($i = 0; $i < $iLoadThreads; $i++) {
         $aDBInstances[$i] =& getDB(true);
         $sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
         $sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
@@ -371,11 +332,9 @@ if ($aCMDResult['load-data'] || $aCMDResult['all'])
     if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
     $bAnyBusy = true;
-    while($bAnyBusy)
-    {
+    while ($bAnyBusy) {
         $bAnyBusy = false;
-        for($i = 0; $i <= $iLoadThreads; $i++)
-        {
+        for ($i = 0; $i <= $iLoadThreads; $i++) {
             if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
         }
         sleep(1);
@@ -386,8 +345,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all'])
     pgsqlRunScript('ANALYSE');
 }
 
-if ($aCMDResult['import-tiger-data'])
-{
+if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
@@ -399,31 +357,25 @@ if ($aCMDResult['import-tiger-data'])
     pgsqlRunScript($sTemplate, false);
 
     $aDBInstances = array();
-    for($i = 0; $i < $iInstances; $i++)
-    {
+    for ($i = 0; $i < $iInstances; $i++) {
         $aDBInstances[$i] =& getDB(true);
     }
 
-    foreach(glob(CONST_Tiger_Data_Path.'/*.sql') as $sFile)
-    {
+    foreach (glob(CONST_Tiger_Data_Path.'/*.sql') as $sFile) {
         echo $sFile.': ';
         $hFile = fopen($sFile, "r");
         $sSQL = fgets($hFile, 100000);
         $iLines = 0;
 
-        while(true)
-        {
-            for($i = 0; $i < $iInstances; $i++)
-            {
-                if (!pg_connection_busy($aDBInstances[$i]->connection))
-                {
-                    while(pg_get_result($aDBInstances[$i]->connection));
+        while (true) {
+            for ($i = 0; $i < $iInstances; $i++) {
+                if (!pg_connection_busy($aDBInstances[$i]->connection)) {
+                    while (pg_get_result($aDBInstances[$i]->connection));
                     $sSQL = fgets($hFile, 100000);
                     if (!$sSQL) break 2;
                     if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
                     $iLines++;
-                    if ($iLines == 1000)
-                    {
+                    if ($iLines == 1000) {
                         echo ".";
                         $iLines = 0;
                     }
@@ -435,11 +387,9 @@ if ($aCMDResult['import-tiger-data'])
         fclose($hFile);
 
         $bAnyBusy = true;
-        while($bAnyBusy)
-        {
+        while ($bAnyBusy) {
             $bAnyBusy = false;
-            for($i = 0; $i < $iInstances; $i++)
-            {
+            for ($i = 0; $i < $iInstances; $i++) {
                 if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
             }
             usleep(10);
@@ -457,8 +407,7 @@ if ($aCMDResult['import-tiger-data'])
     pgsqlRunScript($sTemplate, false);
 }
 
-if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])
-{
+if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oDB =& getDB();
     if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
@@ -469,8 +418,7 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])
     $sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
-    if (CONST_Use_Extra_US_Postcodes)
-    {
+    if (CONST_Use_Extra_US_Postcodes) {
         $sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
         $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
         $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
@@ -478,27 +426,19 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all'])
     }
 }
 
-if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop'])) // no use doing osmosis-init when dropping update tables
-{
+if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop'])) { // no use doing osmosis-init when dropping update tables
     $bDidSomething = true;
     $oDB =& getDB();
 
-    if (!file_exists(CONST_Osmosis_Binary))
-    {
+    if (!file_exists(CONST_Osmosis_Binary)) {
         echo "Please download osmosis.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
-        if (!$aCMDResult['all'])
-        {
+        if (!$aCMDResult['all']) {
             fail("osmosis not found in '".CONST_Osmosis_Binary."'");
         }
-    }
-    else
-    {
-        if (file_exists(CONST_InstallPath.'/settings/configuration.txt'))
-        {
+    } else {
+        if (file_exists(CONST_InstallPath.'/settings/configuration.txt')) {
             echo "settings/configuration.txt already exists\n";
-        }
-        else
-        {
+        } else {
             passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_InstallPath.'/settings');
             // update osmosis configuration.txt with our settings
             passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_InstallPath.'/settings/configuration.txt');
@@ -520,11 +460,9 @@ if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop']))
         // download.geofabrik.de:    <a href="000/">000/</a></td><td align="right">26-Feb-2013 11:53  </td>
         // planet.openstreetmap.org: <a href="273/">273/</a>                    2013-03-11 07:41    -
         preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-        if ($aRepMatches)
-        {
+        if ($aRepMatches) {
             $aPrevRepMatch = false;
-            foreach($aRepMatches as $aRepMatch)
-            {
+            foreach ($aRepMatches as $aRepMatch) {
                 if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
                 $aPrevRepMatch = $aRepMatch;
             }
@@ -534,8 +472,7 @@ if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop']))
             $sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
             preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
             $aPrevRepMatch = false;
-            foreach($aRepMatches as $aRepMatch)
-            {
+            foreach ($aRepMatches as $aRepMatch) {
                 if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
                 $aPrevRepMatch = $aRepMatch;
             }
@@ -545,8 +482,7 @@ if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop']))
             $sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
             preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
             $aPrevRepMatch = false;
-            foreach($aRepMatches as $aRepMatch)
-            {
+            foreach ($aRepMatches as $aRepMatch) {
                 if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
                 $aPrevRepMatch = $aRepMatch;
             }
@@ -561,19 +497,15 @@ if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop']))
             pg_query($oDB->connection, 'TRUNCATE import_status');
             $sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
             pg_query($oDB->connection, $sSQL);
-        }
-        else
-        {
-            if (!$aCMDResult['all'])
-            {
+        } else {
+            if (!$aCMDResult['all']) {
                 fail("Cannot read state file directory.");
             }
         }
     }
 }
 
-if ($aCMDResult['index'] || $aCMDResult['all'])
-{
+if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $sOutputFile = '';
     $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
@@ -584,8 +516,7 @@ if ($aCMDResult['index'] || $aCMDResult['all'])
     passthruCheckReturn($sBaseCmd.' -r 26');
 }
 
-if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])
-{
+if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     echo "Search indices\n";
     $bDidSomething = true;
 
@@ -600,8 +531,7 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all'])
     pgsqlRunScript($sTemplate);
 }
 
-if ($aCMDResult['drop'])
-{
+if ($aCMDResult['drop']) {
     // The implementation is potentially a bit dangerous because it uses
     // a positive selection of tables to keep, and deletes everything else.
     // Including any tables that the unsuspecting user might have manually
@@ -631,13 +561,10 @@ if ($aCMDResult['drop'])
     $aDropTables = array();
     $aHaveTables = chksql($oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'"));
 
-    foreach($aHaveTables as $sTable)
-    {
+    foreach ($aHaveTables as $sTable) {
         $bFound = false;
-        foreach ($aKeepTables as $sKeep)
-        {
-            if (fnmatch($sKeep, $sTable))
-            {
+        foreach ($aKeepTables as $sKeep) {
+            if (fnmatch($sKeep, $sTable)) {
                 $bFound = true;
                 break;
             }
@@ -645,27 +572,22 @@ if ($aCMDResult['drop'])
         if (!$bFound) array_push($aDropTables, $sTable);
     }
 
-    foreach ($aDropTables as $sDrop)
-    {
+    foreach ($aDropTables as $sDrop) {
         if ($aCMDResult['verbose']) echo "dropping table $sDrop\n";
         @pg_query($oDB->connection, "DROP TABLE $sDrop CASCADE");
         // ignore warnings/errors as they might be caused by a table having
         // been deleted already by CASCADE
     }
 
-    if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-    {
+    if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
         if ($aCMDResult['verbose']) echo "deleting ".CONST_Osm2pgsql_Flatnode_File."\n";
         unlink(CONST_Osm2pgsql_Flatnode_File);
     }
 }
 
-if (!$bDidSomething)
-{
+if (!$bDidSomething) {
     showUsage($aCMDOptions, true);
-}
-else
-{
+} else {
     echo "Setup finished.\n";
 }
 
@@ -679,8 +601,7 @@ function pgsqlRunScriptFile($sFilename)
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
 
     $ahGzipPipes = null;
-    if (preg_match('/\\.gz$/', $sFilename))
-    {
+    if (preg_match('/\\.gz$/', $sFilename)) {
         $aDescriptors = array(
             0 => array('pipe', 'r'),
             1 => array('pipe', 'w'),
@@ -690,9 +611,7 @@ function pgsqlRunScriptFile($sFilename)
         if (!is_resource($hGzipProcess)) fail('unable to start zcat');
         $aReadPipe = $ahGzipPipes[1];
         fclose($ahGzipPipes[0]);
-    }
-    else
-    {
+    } else {
         $sCMD .= ' -f '.$sFilename;
         $aReadPipe = array('pipe', 'r');
     }
@@ -708,19 +627,16 @@ function pgsqlRunScriptFile($sFilename)
 
 
     // TODO: error checking
-    while(!feof($ahPipes[1]))
-    {
+    while (!feof($ahPipes[1])) {
         echo fread($ahPipes[1], 4096);
     }
     fclose($ahPipes[1]);
 
     $iReturn = proc_close($hProcess);
-    if ($iReturn > 0)
-    {
+    if ($iReturn > 0) {
         fail("pgsql returned with error code ($iReturn)");
     }
-    if ($ahGzipPipes)
-    {
+    if ($ahGzipPipes) {
         fclose($ahGzipPipes[1]);
         proc_close($hGzipProcess);
     }
@@ -745,16 +661,14 @@ function pgsqlRunScript($sScript, $bfatal = true)
     $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pgsql');
 
-    while(strlen($sScript))
-    {
+    while (strlen($sScript)) {
         $written = fwrite($ahPipes[0], $sScript);
         if ($written <= 0) break;
         $sScript = substr($sScript, $written);
     }
     fclose($ahPipes[0]);
     $iReturn = proc_close($hProcess);
-    if ($bfatal && $iReturn > 0)
-    {
+    if ($bfatal && $iReturn > 0) {
         fail("pgsql returned with error code ($iReturn)");
     }
 }
@@ -769,11 +683,9 @@ function pgsqlRunPartitionScript($sTemplate)
     if (!$aCMDResult['no-partitions']) $aPartitions[] = 0;
 
     preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-    foreach($aMatches as $aMatch)
-    {
+    foreach ($aMatches as $aMatch) {
         $sResult = '';
-        foreach($aPartitions as $sPartitionName)
-        {
+        foreach ($aPartitions as $sPartitionName) {
             $sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
         }
         $sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
@@ -801,8 +713,7 @@ function pgsqlRunRestoreData($sDumpFile)
     fclose($ahPipes[0]);
 
     // TODO: error checking
-    while(!feof($ahPipes[1]))
-    {
+    while (!feof($ahPipes[1])) {
         echo fread($ahPipes[1], 4096);
     }
     fclose($ahPipes[1]);
@@ -829,8 +740,7 @@ function pgsqlRunDropAndRestore($sDumpFile)
     fclose($ahPipes[0]);
 
     // TODO: error checking
-    while(!feof($ahPipes[1]))
-    {
+    while (!feof($ahPipes[1])) {
         echo fread($ahPipes[1], 4096);
     }
     fclose($ahPipes[1]);
@@ -847,11 +757,12 @@ function passthruCheckReturn($cmd)
 
 function replace_tablespace($sTemplate, $sTablespace, $sSql)
 {
-    if ($sTablespace)
+    if ($sTablespace) {
         $sSql = str_replace($sTemplate, 'TABLESPACE "'.$sTablespace.'"',
                             $sSql);
-    else
+    } else {
         $sSql = str_replace($sTemplate, '', $sSql);
+    }
 
     return $sSql;
 }
@@ -860,24 +771,19 @@ function create_sql_functions($aCMDResult)
 {
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
     $sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
-    if ($aCMDResult['enable-diff-updates'])
-    {
+    if ($aCMDResult['enable-diff-updates']) {
         $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
     }
-    if ($aCMDResult['enable-debug-statements'])
-    {
+    if ($aCMDResult['enable-debug-statements']) {
         $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
     }
-    if (CONST_Limit_Reindexing)
-    {
+    if (CONST_Limit_Reindexing) {
         $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
     }
-    if (!CONST_Use_US_Tiger_Data)
-    {
+    if (!CONST_Use_US_Tiger_Data) {
         $sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
     }
-    if (!CONST_Use_Aux_Location_data)
-    {
+    if (!CONST_Use_Aux_Location_data) {
         $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
     }
     pgsqlRunScript($sTemplate);

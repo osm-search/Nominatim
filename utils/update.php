@@ -47,24 +47,20 @@ if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 // cache memory to be used by osm2pgsql, should not be more than the available memory
 $iCacheMemory = (isset($aResult['osm2pgsql-cache'])?$aResult['osm2pgsql-cache']:2000);
-if ($iCacheMemory + 500 > getTotalMemoryMB())
-{
+if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     $iCacheMemory = getCacheMemoryMB();
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
 $sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
-if (!is_null(CONST_Osm2pgsql_Flatnode_File))
-{
+if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
     $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
 }
 
 
-if (isset($aResult['import-diff']))
-{
+if (isset($aResult['import-diff'])) {
     // import diff directly (e.g. from osmosis --rri)
     $sNextFile = $aResult['import-diff'];
-    if (!file_exists($sNextFile))
-    {
+    if (!file_exists($sNextFile)) {
         fail("Cannot open $sNextFile\n");
     }
 
@@ -73,8 +69,7 @@ if (isset($aResult['import-diff']))
     echo $sCMD."\n";
     exec($sCMD, $sJunk, $iErrorLevel);
 
-    if ($iErrorLevel)
-    {
+    if ($iErrorLevel) {
         fail("Error from osm2pgsql, $iErrorLevel\n");
     }
 
@@ -83,55 +78,43 @@ if (isset($aResult['import-diff']))
 
 $sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
 $bHaveDiff = false;
-if (isset($aResult['import-file']) && $aResult['import-file'])
-{
+if (isset($aResult['import-file']) && $aResult['import-file']) {
     $bHaveDiff = true;
     $sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
     echo $sCMD."\n";
     exec($sCMD, $sJunk, $iErrorLevel);
-    if ($iErrorLevel)
-    {
+    if ($iErrorLevel) {
         fail("Error converting osm to osc, osmosis returned: $iErrorLevel\n");
     }
 }
 
 $bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
 $sContentURL = '';
-if (isset($aResult['import-node']) && $aResult['import-node'])
-{
-    if ($bUseOSMApi)
-    {
+if (isset($aResult['import-node']) && $aResult['import-node']) {
+    if ($bUseOSMApi) {
         $sContentURL = 'http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node'];
-    }
-    else
-    {
+    } else {
         $sContentURL = 'http://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;';
     }
 }
-if (isset($aResult['import-way']) && $aResult['import-way'])
-{
-    if ($bUseOSMApi)
-    {
+
+if (isset($aResult['import-way']) && $aResult['import-way']) {
+    if ($bUseOSMApi) {
         $sContentURL = 'http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
-    }
-    else
-    {
+    } else {
         $sContentURL = 'http://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
     }
 }
-if (isset($aResult['import-relation']) && $aResult['import-relation'])
-{
-    if ($bUseOSMApi)
-    {
+
+if (isset($aResult['import-relation']) && $aResult['import-relation']) {
+    if ($bUseOSMApi) {
         $sContentURLsModifyXMLstr = 'http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
-    }
-    else
-    {
+    } else {
         $sContentURL = 'http://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;';
     }
 }
-if ($sContentURL)
-{
+
+if ($sContentURL) {
     $sModifyXMLstr = file_get_contents($sContentURL);
     $bHaveDiff = true;
 
@@ -143,8 +126,7 @@ if ($sContentURL)
     $sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
     echo $sCMD."\n";
     $hProc = proc_open($sCMD, $aSpec, $aPipes);
-    if (!is_resource($hProc))
-    {
+    if (!is_resource($hProc)) {
         fail("Error converting osm to osc, osmosis failed\n");
     }
     fwrite($aPipes[0], $sModifyXMLstr);
@@ -155,31 +137,26 @@ if ($sContentURL)
     $sErrors = stream_get_contents($aPipes[2]);
     if ($aResult['verbose']) echo $sErrors;
     fclose($aPipes[2]);
-    if ($iError = proc_close($hProc))
-    {
+    if ($iError = proc_close($hProc)) {
         echo $sOut;
         echo $sErrors;
         fail("Error converting osm to osc, osmosis returned: $iError\n");
     }
 }
 
-if ($bHaveDiff)
-{
+if ($bHaveDiff) {
     // import generated change file
     $sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
     echo $sCMD."\n";
     exec($sCMD, $sJunk, $iErrorLevel);
-    if ($iErrorLevel)
-    {
+    if ($iErrorLevel) {
         fail("osm2pgsql exited with error level $iErrorLevel\n");
     }
 }
 
-if ($aResult['deduplicate'])
-{
-
-    if (getPostgresVersion() < 9.3)
-    {
+if ($aResult['deduplicate']) {
+    //
+    if (getPostgresVersion() < 9.3) {
         fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
     }
 
@@ -190,8 +167,7 @@ if ($aResult['deduplicate'])
 
     $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' ' and class is null and type is null and country_code is null group by word_token having count(*) > 1 order by word_token";
     $aDuplicateTokens = chksql($oDB->getAll($sSQL));
-    foreach($aDuplicateTokens as $aToken)
-    {
+    foreach ($aDuplicateTokens as $aToken) {
         if (trim($aToken['word_token']) == '' || trim($aToken['word_token']) == '-') continue;
         echo "Deduping ".$aToken['word_token']."\n";
         $sSQL = "select word_id,(select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num from word where word_token = '".$aToken['word_token']."' and class is null and type is null and country_code is null order by num desc";
@@ -200,8 +176,7 @@ if ($aResult['deduplicate'])
         $aKeep = array_shift($aTokenSet);
         $iKeepID = $aKeep['word_id'];
 
-        foreach($aTokenSet as $aRemove)
-        {
+        foreach ($aTokenSet as $aRemove) {
             $sSQL = "update search_name set";
             $sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID."),";
             $sSQL .= " nameaddress_vector = array_replace(nameaddress_vector,".$aRemove['word_id'].",".$iKeepID.")";
@@ -218,8 +193,7 @@ if ($aResult['deduplicate'])
             $sSQL .= " where keywords @> ARRAY[".$aRemove['word_id']."]";
             chksql($oDB->query($sSQL));
 
-            foreach ($aPartitions as $sPartition)
-            {
+            foreach ($aPartitions as $sPartition) {
                 $sSQL = "update search_name_".$sPartition." set";
                 $sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID.")";
                 $sSQL .= " where name_vector @> ARRAY[".$aRemove['word_id']."]";
@@ -237,14 +211,12 @@ if ($aResult['deduplicate'])
     }
 }
 
-if ($aResult['index'])
-{
+if ($aResult['index']) {
     passthru(CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
 }
 
-if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
-{
-
+if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
+    //
     if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
         fail("Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n");
     }
@@ -256,28 +228,20 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
     $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
     $sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 
-    while(true)
-    {
+    while (true) {
         $fStartTime = time();
         $iFileSize = 1001;
 
-        if (!file_exists($sImportFile))
-        {
+        if (!file_exists($sImportFile)) {
             // First check if there are new updates published (except for minutelies - there's always new diffs to process)
-            if ( CONST_Replication_Update_Interval > 60 )
-            {
-
+            if (CONST_Replication_Update_Interval > 60) {
                 unset($aReplicationLag);
                 exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
-                while ($iErrorLevel > 0 || $aReplicationLag[0] < 1)
-                {
-                    if ($iErrorLevel)
-                    {
+                while ($iErrorLevel > 0 || $aReplicationLag[0] < 1) {
+                    if ($iErrorLevel) {
                         echo "Error: $iErrorLevel. ";
                         echo "Re-trying: ".$sCMDCheckReplicationLag." in ".CONST_Replication_Recheck_Interval." secs\n";
-                    }
-                    else
-                    {
+                    } else {
                         echo ".";
                     }
                     sleep(CONST_Replication_Recheck_Interval);
@@ -291,8 +255,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
             $fCMDStartTime = time();
             echo $sCMDDownload."\n";
             exec($sCMDDownload, $sJunk, $iErrorLevel);
-            while ($iErrorLevel > 0)
-            {
+            while ($iErrorLevel > 0) {
                 echo "Error: $iErrorLevel\n";
                 sleep(60);
                 echo 'Re-trying: '.$sCMDDownload."\n";
@@ -313,8 +276,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
         $fCMDStartTime = time();
         echo $sCMDImport."\n";
         exec($sCMDImport, $sJunk, $iErrorLevel);
-        if ($iErrorLevel)
-        {
+        if ($iErrorLevel) {
             echo "Error: $iErrorLevel\n";
             exit($iErrorLevel);
         }
@@ -332,12 +294,10 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
         $sThisIndexCmd = $sCMDIndex;
         $fCMDStartTime = time();
 
-        if (!$aResult['no-index'])
-        {
+        if (!$aResult['no-index']) {
             echo "$sThisIndexCmd\n";
             exec($sThisIndexCmd, $sJunk, $iErrorLevel);
-            if ($iErrorLevel)
-            {
+            if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);
             }
@@ -355,12 +315,9 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all'])
         echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60,2)." minutes\n";
         if (!$aResult['import-osmosis-all']) exit(0);
 
-        if ( CONST_Replication_Update_Interval > 60 )
-        {
+        if (CONST_Replication_Update_Interval > 60) {
             $iSleep = max(0,(strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
-        }
-        else
-        {
+        } else {
             $iSleep = max(0,CONST_Replication_Update_Interval-$fDuration);
         }
         echo date('Y-m-d H:i:s')." Sleeping $iSleep seconds\n";

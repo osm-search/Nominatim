@@ -7,7 +7,7 @@ require_once('cmd.php');
 if (CONST_HTTP_Proxy) {
     $proxy = 'tcp://' . CONST_HTTP_Proxy_Host . ':' . CONST_HTTP_Proxy_Port;
     $aHeaders = array();
-    if(CONST_HTTP_Proxy_Login != null && CONST_HTTP_Proxy_Login != '' && CONST_HTTP_Proxy_Password != null && CONST_HTTP_Proxy_Password != '') {
+    if (CONST_HTTP_Proxy_Login != null && CONST_HTTP_Proxy_Login != '' && CONST_HTTP_Proxy_Password != null && CONST_HTTP_Proxy_Password != '') {
         $auth = base64_encode(CONST_HTTP_Proxy_Login . ':' . CONST_HTTP_Proxy_Password);
         $aHeaders = array("Proxy-Authorization: Basic $auth");
     }

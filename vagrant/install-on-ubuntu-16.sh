@@ -3,7 +3,9 @@
 # hacks for broken vagrant box      #DOCS:
 sudo rm -f /var/lib/dpkg/lock       #DOCS:
 sudo update-locale LANG=en_US.UTF-8 #DOCS:
-echo "set grub-pc/install_devices /dev/sda" | sudo debconf-communicate #DOCS:
+export APT_LISTCHANGES_FRONTEND=none #DOCS:
+export DEBIAN_FRONTEND=noninteractive #DOCS:
+
 #
 # *Note:* these installation instructions are also available in executable
 #         form for use with vagrant under vagrant/install-on-ubuntu-16.sh.
@@ -17,7 +19,7 @@ echo "set grub-pc/install_devices /dev/sda" | sudo debconf-communicate #DOCS:
 #
 
     sudo apt-get update -qq
-    sudo apt-get upgrade -y
+    apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade
 
 # Now you can install all packages needed for Nominatim:
 

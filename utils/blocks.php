@@ -5,7 +5,8 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
-$aCMDOptions = array(
+$aCMDOptions
+ = array(
     "Manage service blocks / restrictions",
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
@@ -13,7 +14,7 @@ $aCMDOptions = array(
     array('list', 'l', 0, 1, 0, 0, 'bool', 'List recent blocks'),
     array('delete', 'd', 0, 1, 0, 0, 'bool', 'Clear recent blocks list'),
     array('flush', '', 0, 1, 0, 0, 'bool', 'Flush all blocks / stats'),
-);
+   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
 $m = getBucketMemcache();

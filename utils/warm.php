@@ -6,13 +6,13 @@ require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
 $aCMDOptions = array(
-    "Tools to warm nominatim db",
-    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-    array('reverse-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
-    array('search-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
-);
+                "Tools to warm nominatim db",
+                array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+                array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+                array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+                array('reverse-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
+                array('search-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
+               );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
 require_once(CONST_BasePath.'/lib/log.php');

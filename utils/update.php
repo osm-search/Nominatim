@@ -5,34 +5,35 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
-$aCMDOptions = array(
-    "Import / update / index osm data",
-    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+$aCMDOptions
+= array(
+   "Import / update / index osm data",
+   array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+   array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+   array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import using osmosis'),
-    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import using osmosis forever'),
-    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolate)'),
-    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
+   array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import using osmosis'),
+   array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import using osmosis forever'),
+   array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolate)'),
+   array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
-    array('import-all', '', 0, 1, 0, 0, 'bool', 'Import all available files'),
+   array('import-all', '', 0, 1, 0, 0, 'bool', 'Import all available files'),
 
-    array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
-    array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
-    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+   array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
+   array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
+   array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
 
-    array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
-    array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
-    array('import-relation', '', 0, 1, 1, 1, 'int', 'Re-import relation'),
-    array('import-from-main-api', '', 0, 1, 0, 0, 'bool', 'Use OSM API instead of Overpass to download objects'),
+   array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
+   array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
+   array('import-relation', '', 0, 1, 1, 1, 'int', 'Re-import relation'),
+   array('import-from-main-api', '', 0, 1, 0, 0, 'bool', 'Use OSM API instead of Overpass to download objects'),
 
-    array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
-    array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
-    array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
+   array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
+   array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
+   array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
 
-    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
-);
+   array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
+  );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
 if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
@@ -119,10 +120,10 @@ if ($sContentURL) {
     $bHaveDiff = true;
 
     $aSpec = array(
-        0 => array("pipe", "r"),  // stdin
-        1 => array("pipe", "w"),  // stdout
-        2 => array("pipe", "w") // stderr
-    );
+              0 => array("pipe", "r"),  // stdin
+              1 => array("pipe", "w"),  // stdout
+              2 => array("pipe", "w") // stderr
+             );
     $sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
     echo $sCMD."\n";
     $hProc = proc_open($sCMD, $aSpec, $aPipes);

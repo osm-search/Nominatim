@@ -258,8 +258,12 @@ class Geocode
         } else {
             $aViewbox = $oParams->getStringList('viewbox');
             if ($aViewbox) {
-                $this->setViewBox(array($aViewbox[0], $aViewbox[3],
-                                        $aViewbox[2], $aViewbox[1]));
+                $this->setViewBox(array(
+                                   $aViewbox[0],
+                                   $aViewbox[3],
+                                   $aViewbox[2],
+                                   $aViewbox[1]
+                                  ));
             } else {
                 $aRoute = $oParams->getStringList('route');
                 $fRouteWidth = $oParams->getFloat('routewidth');
@@ -771,24 +775,25 @@ class Geocode
         if ($sQuery || $this->aStructuredQuery) {
             // Start with a blank search
             $aSearches = array(
-                array('iSearchRank' => 0,
-                            'iNamePhrase' => -1,
-                            'sCountryCode' => false,
-                            'aName' => array(),
-                            'aAddress' => array(),
-                            'aFullNameAddress' => array(),
-                            'aNameNonSearch' => array(),
-                            'aAddressNonSearch' => array(),
-                            'sOperator' => '',
-                            'aFeatureName' => array(),
-                            'sClass' => '',
-                            'sType' => '',
-                            'sHouseNumber' => '',
-                            'fLat' => '',
-                            'fLon' => '',
-                            'fRadius' => ''
-                        )
-            );
+                          array(
+                           'iSearchRank' => 0,
+                           'iNamePhrase' => -1,
+                           'sCountryCode' => false,
+                           'aName' => array(),
+                           'aAddress' => array(),
+                           'aFullNameAddress' => array(),
+                           'aNameNonSearch' => array(),
+                           'aAddressNonSearch' => array(),
+                           'sOperator' => '',
+                           'aFeatureName' => array(),
+                           'sClass' => '',
+                           'sType' => '',
+                           'sHouseNumber' => '',
+                           'fLat' => '',
+                           'fLon' => '',
+                           'fRadius' => ''
+                          )
+                         );
 
             // Do we have a radius search?
             $sNearPointSQL = false;
@@ -940,7 +945,7 @@ class Geocode
                 foreach ($aTokens as $sToken) {
                     // Unknown single word token with a number - assume it is a house number
                     if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken,' ') === false && preg_match('/[0-9]/', $sToken)) {
-                        $aValidTokens[' '.$sToken] = array(array('class'=>'place','type'=>'house'));
+                        $aValidTokens[' '.$sToken] = array(array('class' => 'place', 'type' => 'house'));
                     }
                 }
 

@@ -5,40 +5,41 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
-$aCMDOptions = array(
-    "Create and setup nominatim search system",
-    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+$aCMDOptions
+= array(
+   "Create and setup nominatim search system",
+   array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+   array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+   array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-    array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
-    array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+   array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
+   array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
 
-    array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
+   array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
-    array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
-    array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
-    array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
-    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
-    array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
-    array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
-    array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
-    array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
-    array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
-    array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
-    array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
-    array('no-partitions', '', 0, 1, 0, 0, 'bool', "Do not partition search indices (speeds up import of single country extracts)"),
-    array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
-    array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
-    array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
-    array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
-    array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
-    array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
-    array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
-    array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
-    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
-    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
-);
+   array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
+   array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
+   array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
+   array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+   array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
+   array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
+   array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
+   array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
+   array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
+   array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
+   array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
+   array('no-partitions', '', 0, 1, 0, 0, 'bool', "Do not partition search indices (speeds up import of single country extracts)"),
+   array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
+   array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
+   array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
+   array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
+   array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
+   array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
+   array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
+   array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
+   array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
+   array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
+  );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 $bDidSomething = false;
@@ -540,22 +541,22 @@ if ($aCMDResult['drop']) {
 
     // tables we want to keep. everything else goes.
     $aKeepTables = array(
-       "*columns",
-       "import_polygon_*",
-       "import_status",
-       "place_addressline",
-       "location_property*",
-       "placex",
-       "search_name",
-       "seq_*",
-       "word",
-       "query_log",
-       "new_query_log",
-       "gb_postcode",
-       "spatial_ref_sys",
-       "country_name",
-       "place_classtype_*"
-    );
+                    "*columns",
+                    "import_polygon_*",
+                    "import_status",
+                    "place_addressline",
+                    "location_property*",
+                    "placex",
+                    "search_name",
+                    "seq_*",
+                    "word",
+                    "query_log",
+                    "new_query_log",
+                    "gb_postcode",
+                    "spatial_ref_sys",
+                    "country_name",
+                    "place_classtype_*"
+                   );
 
     $oDB =& getDB();
     $aDropTables = array();
@@ -603,10 +604,10 @@ function pgsqlRunScriptFile($sFilename)
     $ahGzipPipes = null;
     if (preg_match('/\\.gz$/', $sFilename)) {
         $aDescriptors = array(
-            0 => array('pipe', 'r'),
-            1 => array('pipe', 'w'),
-            2 => array('file', '/dev/null', 'a')
-        );
+                         0 => array('pipe', 'r'),
+                         1 => array('pipe', 'w'),
+                         2 => array('file', '/dev/null', 'a')
+                        );
         $hGzipProcess = proc_open('zcat '.$sFilename, $aDescriptors, $ahGzipPipes);
         if (!is_resource($hGzipProcess)) fail('unable to start zcat');
         $aReadPipe = $ahGzipPipes[1];
@@ -617,10 +618,10 @@ function pgsqlRunScriptFile($sFilename)
     }
 
     $aDescriptors = array(
-        0 => $aReadPipe,
-        1 => array('pipe', 'w'),
-        2 => array('file', '/dev/null', 'a')
-    );
+                     0 => $aReadPipe,
+                     1 => array('pipe', 'w'),
+                     2 => array('file', '/dev/null', 'a')
+                    );
     $ahPipes = null;
     $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pgsql');
@@ -653,10 +654,10 @@ function pgsqlRunScript($sScript, $bfatal = true)
     if ($bfatal && !$aCMDResult['ignore-errors'])
         $sCMD .= ' -v ON_ERROR_STOP=1';
     $aDescriptors = array(
-        0 => array('pipe', 'r'),
-        1 => STDOUT, 
-        2 => STDERR
-    );
+                     0 => array('pipe', 'r'),
+                     1 => STDOUT, 
+                     2 => STDERR
+                    );
     $ahPipes = null;
     $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pgsql');
@@ -702,10 +703,10 @@ function pgsqlRunRestoreData($sDumpFile)
     $sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc -a '.$sDumpFile;
 
     $aDescriptors = array(
-        0 => array('pipe', 'r'),
-        1 => array('pipe', 'w'),
-        2 => array('file', '/dev/null', 'a')
-    );
+                     0 => array('pipe', 'r'),
+                     1 => array('pipe', 'w'),
+                     2 => array('file', '/dev/null', 'a')
+                    );
     $ahPipes = null;
     $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pg_restore');
@@ -729,10 +730,10 @@ function pgsqlRunDropAndRestore($sDumpFile)
     $sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
 
     $aDescriptors = array(
-        0 => array('pipe', 'r'),
-        1 => array('pipe', 'w'),
-        2 => array('file', '/dev/null', 'a')
-    );
+                     0 => array('pipe', 'r'),
+                     1 => array('pipe', 'w'),
+                     2 => array('file', '/dev/null', 'a')
+                    );
     $ahPipes = null;
     $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pg_restore');

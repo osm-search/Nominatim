@@ -12,16 +12,16 @@ if (CONST_HTTP_Proxy) {
         $aHeaders = array("Proxy-Authorization: Basic $auth");
     }
     $aContext = array(
-        'http' => array(
-            'proxy' => $proxy,
-            'request_fulluri' => true,
-            'header' => $aHeaders
-        ),
-        'https' => array(
-            'proxy' => $proxy,
-            'request_fulluri' => true,
-            'header' => $aHeaders
-        )
-    );
+                 'http' => array(
+                            'proxy' => $proxy,
+                            'request_fulluri' => true,
+                            'header' => $aHeaders
+                           ),
+                 'https' => array(
+                             'proxy' => $proxy,
+                             'request_fulluri' => true,
+                             'header' => $aHeaders
+                            )
+                );
     stream_context_set_default($aContext);
 }

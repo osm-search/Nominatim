@@ -5,7 +5,8 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
-$aCMDOptions = array(
+$aCMDOptions
+ = array(
     "Create and setup nominatim search system",
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
@@ -14,7 +15,7 @@ $aCMDOptions = array(
     array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create wikipedia tables'),
     array('parse-articles', '', 0, 1, 0, 0, 'bool', 'Parse wikipedia articles'),
     array('link', '', 0, 1, 0, 0, 'bool', 'Try to link to existing OSM ids'),
-);
+   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 /*
@@ -209,16 +210,16 @@ function _templatesToProperties($aTemplates)
         $aTemplates[$iTemplate][1] = $aParams;
         if (!isset($aPageProperties['sOfficialName']) && isset($aParams['official_name']) && $aParams['official_name']) $aPageProperties['sOfficialName'] = $aParams['official_name'];
         if (!isset($aPageProperties['iPopulation']) && isset($aParams['population']) && $aParams['population'] && preg_match('#^[0-9.,]+#', $aParams['population'])) {
-            $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population']);
+            $aPageProperties['iPopulation'] = (int)str_replace(array(',', '.'), '', $aParams['population']);
         }
         if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_total']) && $aParams['population_total'] && preg_match('#^[0-9.,]+#', $aParams['population_total'])) {
-            $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_total']);
+            $aPageProperties['iPopulation'] = (int)str_replace(array(',', '.'), '', $aParams['population_total']);
         }
         if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_urban']) && $aParams['population_urban'] && preg_match('#^[0-9.,]+#', $aParams['population_urban'])) {
-            $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_urban']);
+            $aPageProperties['iPopulation'] = (int)str_replace(array(',', '.'), '', $aParams['population_urban']);
         }
         if (!isset($aPageProperties['iPopulation']) && isset($aParams['population_estimate']) && $aParams['population_estimate'] && preg_match('#^[0-9.,]+#', $aParams['population_estimate'])) {
-            $aPageProperties['iPopulation'] = (int)str_replace(array(',','.'), '', $aParams['population_estimate']);
+            $aPageProperties['iPopulation'] = (int)str_replace(array(',', '.'), '', $aParams['population_estimate']);
         }
         if (!isset($aPageProperties['sWebsite']) && isset($aParams['website']) && $aParams['website']) {
             if (preg_match('#^\\[?([^ \\]]+)[^\\]]*\\]?$#', $aParams['website'], $aMatch)) {
@@ -229,7 +230,7 @@ function _templatesToProperties($aTemplates)
             }
         }
         if (!isset($aPageProperties['sTopLevelDomain']) && isset($aParams['cctld']) && $aParams['cctld']) {
-            $aPageProperties['sTopLevelDomain'] = str_replace(array('[',']','.'),'', $aParams['cctld']);
+            $aPageProperties['sTopLevelDomain'] = str_replace(array('[', ']', '.'),'', $aParams['cctld']);
         }
 
         if (!isset($aPageProperties['sInfoboxType']) && strtolower(substr($aTemplate[0],0,7)) == 'infobox') {

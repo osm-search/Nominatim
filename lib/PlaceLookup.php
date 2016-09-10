@@ -221,7 +221,7 @@ class PlaceLookup
                 $aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
                 $bFallback = true;
             } else {
-                $aTypeLabel = array('simplelabel'=>'address'.$aLine['rank_address']);
+                $aTypeLabel = array('simplelabel' => 'address'.$aLine['rank_address']);
                 $bFallback = true;
             }
             if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
@@ -297,11 +297,11 @@ class PlaceLookup
                 }
 
                 $aOutlineResult['aBoundingBox'] = array(
-                                                  (string)$aPointPolygon['minlat'],
-                                                  (string)$aPointPolygon['maxlat'],
-                                                  (string)$aPointPolygon['minlon'],
-                                                  (string)$aPointPolygon['maxlon']
-                                                 );
+                                                   (string)$aPointPolygon['minlat'],
+                                                   (string)$aPointPolygon['maxlat'],
+                                                   (string)$aPointPolygon['minlon'],
+                                                   (string)$aPointPolygon['maxlon']
+                                                  );
             }
         } // CONST_Search_AreaPolygons
 
@@ -320,11 +320,11 @@ class PlaceLookup
             $aBounds['maxlon'] = $fLon + $fRadius;
 
             $aOutlineResult['aBoundingBox'] = array(
-                                              (string)$aBounds['minlat'],
-                                              (string)$aBounds['maxlat'],
-                                              (string)$aBounds['minlon'],
-                                              (string)$aBounds['maxlon']
-                                             );
+                                               (string)$aBounds['minlat'],
+                                               (string)$aBounds['maxlat'],
+                                               (string)$aBounds['minlon'],
+                                               (string)$aBounds['maxlon']
+                                              );
         }
         return $aOutlineResult;
     }

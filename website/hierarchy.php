@@ -62,10 +62,12 @@ if (!sizeof($aPlaceAddress)) userError("Unknown place id.");
 $aBreadcrums = array();
 foreach ($aPlaceAddress as $i => $aPlace) {
     if (!$aPlace['place_id']) continue;
-    $aBreadcrums[] = array('placeId'   => $aPlace['place_id'],
-                           'osmType'   => $aPlace['osm_type'],
-                           'osmId'     => $aPlace['osm_id'],
-                           'localName' => $aPlace['localname']);
+    $aBreadcrums[] = array(
+                      'placeId'   => $aPlace['place_id'],
+                      'osmType'   => $aPlace['osm_type'],
+                      'osmId'     => $aPlace['osm_id'],
+                      'localName' => $aPlace['localname']
+                     );
 
     if ($sOutputFormat == 'html') {
         $sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];

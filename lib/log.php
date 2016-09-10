@@ -18,12 +18,12 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
     }
 
     $hLog = array(
-            date('Y-m-d H:i:s',$aStartTime[0]).'.'.$aStartTime[1],
-            $_SERVER["REMOTE_ADDR"],
-            $_SERVER['QUERY_STRING'],
-            $sOutQuery,
-            $sType,
-            $fStartTime
+             date('Y-m-d H:i:s',$aStartTime[0]).'.'.$aStartTime[1],
+             $_SERVER["REMOTE_ADDR"],
+             $_SERVER['QUERY_STRING'],
+             $sOutQuery,
+             $sType,
+             $fStartTime
             );
 
     if (CONST_Log_DB) {

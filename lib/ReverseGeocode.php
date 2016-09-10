@@ -14,27 +14,27 @@ class ReverseGeocode
     {
         // Zoom to rank, this could probably be calculated but a lookup gives fine control
         $aZoomRank = array(
-            0 => 2, // Continent / Sea
-            1 => 2,
-            2 => 2,
-            3 => 4, // Country
-            4 => 4,
-            5 => 8, // State
-            6 => 10, // Region
-            7 => 10,
-            8 => 12, // County
-            9 => 12,
-            10 => 17, // City
-            11 => 17,
-            12 => 18, // Town / Village
-            13 => 18,
-            14 => 22, // Suburb
-            15 => 22,
-            16 => 26, // Street, TODO: major street?
-            17 => 26,
-            18 => 30, // or >, Building
-            19 => 30, // or >, Building
-            );
+                      0 => 2, // Continent / Sea
+                      1 => 2,
+                      2 => 2,
+                      3 => 4, // Country
+                      4 => 4,
+                      5 => 8, // State
+                      6 => 10, // Region
+                      7 => 10,
+                      8 => 12, // County
+                      9 => 12,
+                      10 => 17, // City
+                      11 => 17,
+                      12 => 18, // Town / Village
+                      13 => 18,
+                      14 => 22, // Suburb
+                      15 => 22,
+                      16 => 26, // Street, TODO: major street?
+                      17 => 26,
+                      18 => 30, // or >, Building
+                      19 => 30, // or >, Building
+                     );
         $this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
     }
 
@@ -189,9 +189,11 @@ class ReverseGeocode
                 $iPlaceID = $aPlace['place_id'];
             }
         }
-        return array('place_id' => $iPlaceID,
-                    'type' => $bPlaceIsTiger ? 'tiger' : ($bPlaceIsLine ? 'interpolation' : 'osm'),
-                    'fraction' => ($bPlaceIsTiger || $bPlaceIsLine) ? $fFraction : -1);
+        return array(
+                'place_id' => $iPlaceID,
+                'type' => $bPlaceIsTiger ? 'tiger' : ($bPlaceIsLine ? 'interpolation' : 'osm'),
+                'fraction' => ($bPlaceIsTiger || $bPlaceIsLine) ? $fFraction : -1
+               );
     }
     
 }

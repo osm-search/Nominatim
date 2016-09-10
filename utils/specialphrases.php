@@ -6,14 +6,15 @@ require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 ini_set('display_errors', 'stderr');
 
-$aCMDOptions = array(
-        "Import and export special phrases",
-        array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-        array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-        array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-        array('countries', '', 0, 1, 0, 0, 'bool', 'Create import script for country codes and names'),
-        array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
-);
+$aCMDOptions
+= array(
+   "Import and export special phrases",
+   array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+   array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+   array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+   array('countries', '', 0, 1, 0, 0, 'bool', 'Create import script for country codes and names'),
+   array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
+  );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 include(CONST_InstallPath.'/settings/phrase_settings.php');

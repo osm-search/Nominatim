@@ -4,16 +4,17 @@
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 
-    ini_set('memory_limit', '800M');
-    ini_set('display_errors', 'stderr');
+ini_set('memory_limit', '800M');
+ini_set('display_errors', 'stderr');
 
-    $aCMDOptions = array(
-            "Import country language data from osm wiki",
-            array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-            array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-            array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-    );
-    getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
+$aCMDOptions
+ = array(
+    "Import country language data from osm wiki",
+    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+   );
+getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 include(CONST_InstallPath.'/settings/phrase_settings.php');
 

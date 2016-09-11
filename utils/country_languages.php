@@ -27,7 +27,7 @@ if (true) {
             foreach ($aLanguages as $i => $s) {
                 $aLanguages[$i] = '"'.pg_escape_string($s).'"';
             }
-            echo "UPDATE country_name set country_default_language_codes = '{".join(',',$aLanguages)."}' where country_code = '".pg_escape_string($aMatch[1])."';\n";
+            echo "UPDATE country_name set country_default_language_codes = '{".join(',', $aLanguages)."}' where country_code = '".pg_escape_string($aMatch[1])."';\n";
         }
     }
 }

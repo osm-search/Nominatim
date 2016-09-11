@@ -101,7 +101,7 @@ table td {
         foreach ($aRow as $sCol => $sVal) {
             switch ($sCol) {
             case 'error message':
-                if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/',$sVal,$aMatch)) {
+                if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/', $sVal, $aMatch)) {
                     $aRow['lat'] = $aMatch[2];
                     $aRow['lon'] = $aMatch[1];
                     echo "<td><a href=\"http://www.openstreetmap.org/?lat=".$aMatch[2]."&lon=".$aMatch[1]."&zoom=18&layers=M&".$sOSMType."=".$aRow['id']."\">".($sVal?$sVal:'&nbsp;')."</a></td>";

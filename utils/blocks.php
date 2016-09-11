@@ -32,9 +32,15 @@ if ($aResult['list']) {
     printf(" %-40s | %12s | %7s | %13s | %31s | %8s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Block Time", "Sleeping");
     printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-31s-|-%'-8s\n", "", "", "", "", "", "");
     foreach ($aBlocks as $sKey => $aDetails) {
-        printf(" %-40s | %12s | %7s | %13s | %31s | %8s\n", $sKey, $aDetails['totalBlocks'], 
-            (int)$aDetails['currentBucketSize'], $aDetails['currentlyBlocked']?'Y':'N', 
-            date("r", $aDetails['lastBlockTimestamp']), $aDetails['isSleeping']?'Y':'N');
+        printf(
+            " %-40s | %12s | %7s | %13s | %31s | %8s\n",
+            $sKey,
+            $aDetails['totalBlocks'], 
+            (int)$aDetails['currentBucketSize'],
+            $aDetails['currentlyBlocked']?'Y':'N', 
+            date("r", $aDetails['lastBlockTimestamp']),
+            $aDetails['isSleeping']?'Y':'N'
+        );
     }
     echo "\n";
 }

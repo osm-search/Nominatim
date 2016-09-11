@@ -38,13 +38,8 @@ if ($sOutputFormat == 'html') {
     $bAsKML = $oParams->getBool('polygon_kml');
     $bAsSVG = $oParams->getBool('polygon_svg');
     $bAsText = $oParams->getBool('polygon_text');
-    if (( ($bAsGeoJSON?1:0)
-             + ($bAsKML?1:0)
-             + ($bAsSVG?1:0)
-             + ($bAsText?1:0)
-             + ($bAsPoints?1:0)
-             ) > CONST_PolygonOutput_MaximumTypes
-    ) {
+    $iWantedTypes = ($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0) + ($bAsText?1:0) + ($bAsPoints?1:0);
+    if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
         if (CONST_PolygonOutput_MaximumTypes) {
             userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
         } else {
@@ -82,13 +77,15 @@ if (CONST_Search_BatchMode && isset($_GET['batch'])) {
 $oGeocode->setQueryFromParams($oParams);
 
 if (!$oGeocode->getQueryString()
-    && isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'][0] == '/') {
+    && isset($_SERVER['PATH_INFO'])
+    && $_SERVER['PATH_INFO'][0] == '/'
+) {
     $sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);
 
     // reverse order of '/' separated string
     $aPhrases = explode('/', $sQuery);
     $aPhrases = array_reverse($aPhrases);
-    $sQuery = join(', ',$aPhrases);
+    $sQuery = join(', ', $aPhrases);
     $oGeocode->setQuery($sQuery);
 }
 
@@ -107,7 +104,7 @@ $sViewBox = $oGeocode->getViewBoxString();
 $bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 $aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',',$aExcludePlaceIDs);
+$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',', $aExcludePlaceIDs);
 if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';

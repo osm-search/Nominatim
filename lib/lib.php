@@ -52,7 +52,7 @@ function byImportance($a, $b)
 
 function getWordSets($aWords, $iDepth)
 {
-    $aResult = array(array(join(' ',$aWords)));
+    $aResult = array(array(join(' ', $aWords)));
     $sFirstToken = '';
     if ($iDepth < 8) {
         while (sizeof($aWords) > 1) {
@@ -60,7 +60,7 @@ function getWordSets($aWords, $iDepth)
             $sFirstToken .= ($sFirstToken?' ':'').$sWord;
             $aRest = getWordSets($aWords, $iDepth+1);
             foreach ($aRest as $aSet) {
-                $aResult[] = array_merge(array($sFirstToken),$aSet);
+                $aResult[] = array_merge(array($sFirstToken), $aSet);
             }
         }
     }
@@ -69,7 +69,7 @@ function getWordSets($aWords, $iDepth)
 
 function getInverseWordSets($aWords, $iDepth)
 {
-    $aResult = array(array(join(' ',$aWords)));
+    $aResult = array(array(join(' ', $aWords)));
     $sFirstToken = '';
     if ($iDepth < 8) {
         while (sizeof($aWords) > 1) {
@@ -77,7 +77,7 @@ function getInverseWordSets($aWords, $iDepth)
             $sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
             $aRest = getInverseWordSets($aWords, $iDepth+1);
             foreach ($aRest as $aSet) {
-                $aResult[] = array_merge(array($sFirstToken),$aSet);
+                $aResult[] = array_merge(array($sFirstToken), $aSet);
             }
         }
     }
@@ -453,9 +453,9 @@ function getResultDiameter($aResult)
     ) {
         $fDiameter = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['defdiameter'];
     } elseif (isset($aResult['class'])
-              && isset($aResult['type'])
-              && isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
-              && $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter']
+        && isset($aResult['type'])
+        && isset($aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'])
+        && $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter']
     ) {
         $fDiameter = $aClassType[$aResult['class'].':'.$aResult['type']]['defdiameter'];
     }
@@ -474,7 +474,7 @@ function javascript_renderData($xVal, $iOptions = 0)
         header("Content-Type: application/json; charset=UTF-8");
         echo $jsonout;
     } else {
-        if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u',$_GET['json_callback'])) {
+        if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u', $_GET['json_callback'])) {
             header("Content-Type: application/javascript; charset=UTF-8");
             echo $_GET['json_callback'].'('.$jsonout.')';
         } else {
@@ -583,7 +583,7 @@ function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCo
         }
         if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
             $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-            $sTypeLabel = str_replace(' ','_',$sTypeLabel);
+            $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
             if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
                 $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
             }
@@ -600,7 +600,7 @@ function addQuotes($s)
 }
 
 // returns boolean
-function validLatLon($fLat,$fLon)
+function validLatLon($fLat, $fLon)
 {
     return ($fLat <= 90.1 && $fLat >= -90.1 && $fLon <= 180.1 && $fLon >= -180.1);
 }

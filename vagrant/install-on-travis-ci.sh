@@ -27,6 +27,7 @@ sudo apt-get install -y -qq python-Levenshtein python-shapely \
                         python-numpy phpunit
 
 sudo -H pip install --quiet 'setuptools>=23.0.0' lettuce==0.2.18 'six>=1.9' haversine
+sudo pear install PHP_CodeSniffer
 
 sudo service postgresql restart
 sudo -u postgres createuser -S www-data

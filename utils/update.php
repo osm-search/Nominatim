@@ -264,10 +264,10 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             }
             $iFileSize = filesize($sImportFile);
             $sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-            $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
+            $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
             var_Dump($sSQL);
             $oDB->query($sSQL);
-            echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+            echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
         }
 
         $iFileSize = filesize($sImportFile);
@@ -281,10 +281,10 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             echo "Error: $iErrorLevel\n";
             exit($iErrorLevel);
         }
-        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
+        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
         var_Dump($sSQL);
         $oDB->query($sSQL);
-        echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+        echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
 
         // Archive for debug?
         unlink($sImportFile);
@@ -304,22 +304,22 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             }
         }
 
-        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s',$fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
         var_Dump($sSQL);
         $oDB->query($sSQL);
-        echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60,2)." minutes\n";
+        echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
 
         $sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
         $oDB->query($sSQL);
 
         $fDuration = time() - $fStartTime;
-        echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60,2)." minutes\n";
+        echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60, 2)." minutes\n";
         if (!$aResult['import-osmosis-all']) exit(0);
 
         if (CONST_Replication_Update_Interval > 60) {
-            $iSleep = max(0,(strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
+            $iSleep = max(0, (strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
         } else {
-            $iSleep = max(0,CONST_Replication_Update_Interval-$fDuration);
+            $iSleep = max(0, CONST_Replication_Update_Interval-$fDuration);
         }
         echo date('Y-m-d H:i:s')." Sleeping $iSleep seconds\n";
         sleep($iSleep);
@@ -330,5 +330,5 @@ function getosmosistimestamp($sOsmosisConfigDirectory)
 {
     $sStateFile = file_get_contents($sOsmosisConfigDirectory.'/state.txt');
     preg_match('#timestamp=(.+)#', $sStateFile, $aResult);
-    return str_replace('\:',':',$aResult[1]);
+    return str_replace('\:', ':', $aResult[1]);
 }

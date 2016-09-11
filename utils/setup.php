@@ -197,18 +197,36 @@ if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     echo "Tables\n";
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tables.sql');
     $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:address-data}',
-                                    CONST_Tablespace_Address_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:address-index}',
-                                    CONST_Tablespace_Address_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:search-data}',
-                                    CONST_Tablespace_Search_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:search-index}',
-                                    CONST_Tablespace_Search_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-data}',
-                                    CONST_Tablespace_Aux_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-index}',
-                                    CONST_Tablespace_Aux_Index, $sTemplate);
+    $sTemplate = replace_tablespace(
+        '{ts:address-data}',
+        CONST_Tablespace_Address_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:address-index}',
+        CONST_Tablespace_Address_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:search-data}',
+        CONST_Tablespace_Search_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:search-index}',
+        CONST_Tablespace_Search_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-data}',
+        CONST_Tablespace_Aux_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-index}',
+        CONST_Tablespace_Aux_Index,
+        $sTemplate
+    );
     pgsqlRunScript($sTemplate, false);
 
     // re-run the functions
@@ -221,18 +239,36 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
-    $sTemplate = replace_tablespace('{ts:address-data}',
-                                    CONST_Tablespace_Address_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:address-index}',
-                                    CONST_Tablespace_Address_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:search-data}',
-                                    CONST_Tablespace_Search_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:search-index}',
-                                    CONST_Tablespace_Search_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-data}',
-                                    CONST_Tablespace_Aux_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-index}',
-                                    CONST_Tablespace_Aux_Index, $sTemplate);
+    $sTemplate = replace_tablespace(
+        '{ts:address-data}',
+        CONST_Tablespace_Address_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:address-index}',
+        CONST_Tablespace_Address_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:search-data}',
+        CONST_Tablespace_Search_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:search-index}',
+        CONST_Tablespace_Search_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-data}',
+        CONST_Tablespace_Aux_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-index}',
+        CONST_Tablespace_Aux_Index,
+        $sTemplate
+    );
 
     pgsqlRunPartitionScript($sTemplate);
 }
@@ -351,10 +387,16 @@ if ($aCMDResult['import-tiger-data']) {
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
     $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-data}',
-                                    CONST_Tablespace_Aux_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-index}',
-                                    CONST_Tablespace_Aux_Index, $sTemplate);
+    $sTemplate = replace_tablespace(
+        '{ts:aux-data}',
+        CONST_Tablespace_Aux_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-index}',
+        CONST_Tablespace_Aux_Index,
+        $sTemplate
+    );
     pgsqlRunScript($sTemplate, false);
 
     $aDBInstances = array();
@@ -401,10 +443,16 @@ if ($aCMDResult['import-tiger-data']) {
     echo "Creating indexes\n";
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_finish.sql');
     $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-data}',
-                                    CONST_Tablespace_Aux_Data, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-index}',
-                                    CONST_Tablespace_Aux_Index, $sTemplate);
+    $sTemplate = replace_tablespace(
+        '{ts:aux-data}',
+        CONST_Tablespace_Aux_Data,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-index}',
+        CONST_Tablespace_Aux_Index,
+        $sTemplate
+    );
     pgsqlRunScript($sTemplate, false);
 }
 
@@ -522,12 +570,21 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
-    $sTemplate = replace_tablespace('{ts:address-index}',
-                                    CONST_Tablespace_Address_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:search-index}',
-                                    CONST_Tablespace_Search_Index, $sTemplate);
-    $sTemplate = replace_tablespace('{ts:aux-index}',
-                                    CONST_Tablespace_Aux_Index, $sTemplate);
+    $sTemplate = replace_tablespace(
+        '{ts:address-index}',
+        CONST_Tablespace_Address_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:search-index}',
+        CONST_Tablespace_Search_Index,
+        $sTemplate
+    );
+    $sTemplate = replace_tablespace(
+        '{ts:aux-index}',
+        CONST_Tablespace_Aux_Index,
+        $sTemplate
+    );
 
     pgsqlRunScript($sTemplate);
 }
@@ -759,8 +816,7 @@ function passthruCheckReturn($cmd)
 function replace_tablespace($sTemplate, $sTablespace, $sSql)
 {
     if ($sTablespace) {
-        $sSql = str_replace($sTemplate, 'TABLESPACE "'.$sTablespace.'"',
-                            $sSql);
+        $sSql = str_replace($sTemplate, 'TABLESPACE "'.$sTablespace.'"', $sSql);
     } else {
         $sSql = str_replace($sTemplate, '', $sSql);
     }

@@ -109,8 +109,8 @@ function showUsage($aSpec, $bExit = false, $sError = false)
             $aNames = array();
             if ($aLine[1]) $aNames[] = '-'.$aLine[1];
             if ($aLine[0]) $aNames[] = '--'.$aLine[0];
-            $sName = join(', ',$aNames);
-            echo '  '.$sName.str_repeat(' ',30-strlen($sName)).$aLine[7]."\n";
+            $sName = join(', ', $aNames);
+            echo '  '.$sName.str_repeat(' ', 30-strlen($sName)).$aLine[7]."\n";
         } else {
             echo $aLine."\n";
         }

@@ -4,12 +4,12 @@ class ParameterParser
 {
     private $aParams;
 
-    function __construct($aParams=NULL)
+    function __construct($aParams = NULL)
     {
         $this->aParams = ($aParams === NULL) ? $_GET : $aParams;
     }
 
-    function getBool($sName, $bDefault=false)
+    function getBool($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -18,7 +18,7 @@ class ParameterParser
         return (bool) $this->aParams[$sName];
     }
 
-    function getInt($sName, $bDefault=false)
+    function getInt($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -31,7 +31,7 @@ class ParameterParser
         return (int) $this->aParams[$sName];
     }
 
-    function getFloat($sName, $bDefault=false)
+    function getFloat($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -44,7 +44,7 @@ class ParameterParser
         return (float) $this->aParams[$sName];
     }
 
-    function getString($sName, $bDefault=false)
+    function getString($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -53,7 +53,7 @@ class ParameterParser
         return $this->aParams[$sName];
     }
 
-    function getSet($sName, $aValues, $sDefault=false)
+    function getSet($sName, $aValues, $sDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $sDefault;
@@ -66,7 +66,7 @@ class ParameterParser
         return $this->aParams[$sName];
     }
 
-    function getStringList($sName, $aDefault=false)
+    function getStringList($sName, $aDefault = false)
     {
         $sValue = $this->getString($sName);
 
@@ -77,7 +77,7 @@ class ParameterParser
         return $aDefault;
     }
 
-    function getPreferredLanguages($sFallback=NULL)
+    function getPreferredLanguages($sFallback = NULL)
     {
         if ($sFallback === NULL && isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
             $sFallback = $_SERVER["HTTP_ACCEPT_LANGUAGE"];

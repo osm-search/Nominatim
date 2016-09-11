@@ -12,7 +12,7 @@ $oParams = new ParameterParser();
 
 $sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
 $aLangPrefOrder = $oParams->getPreferredLanguages();
-$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
+$sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $aLangPrefOrder))."]";
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
@@ -90,7 +90,7 @@ $aRelatedPlaceIDs = chksql($oDB->getCol($sSQL = "select place_id from placex whe
 $sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,  st_area(geometry) as area, ";
 $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
 $sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
-$sSQL .= " where parent_place_id in (".join(',',$aRelatedPlaceIDs).") and name is not null order by rank_address asc,rank_search asc limit 500) as obj";
+$sSQL .= " where parent_place_id in (".join(',', $aRelatedPlaceIDs).") and name is not null order by rank_address asc,rank_search asc limit 500) as obj";
 $sSQL .= " order by rank_address asc,rank_search asc,localname,class, type,housenumber";
 $aParentOfLines = chksql($oDB->getAll($sSQL));
 
@@ -100,11 +100,11 @@ if (sizeof($aParentOfLines)) {
     $aGroupedAddressLines = array();
     foreach ($aParentOfLines as $aAddressLine) {
         if (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-              && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label']
+            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label']
         ) {
             $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
         } elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-                && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label']
+            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label']
         ) {
             $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
         } else $aAddressLine['label'] = ucwords($aAddressLine['type']);

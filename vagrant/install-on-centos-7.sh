@@ -31,6 +31,7 @@
                         python-numpy php-phpunit-PHPUnit
     pip install --user --upgrade pip setuptools lettuce==0.2.18 six==1.9 \
                                  haversine Shapely pytidylib
+    sudo pear install PHP_CodeSniffer
 
 #
 # System Configuration

@@ -39,8 +39,11 @@ if (!$aResult['search-only']) {
         if ($bVerbose) echo "$fLat, $fLon = ";
         $aLookup = $oReverseGeocode->lookup($fLat, $fLon);
         if ($aLookup && $aLookup['place_id']) {
-            $aDetails = $oPlaceLookup->lookup((int)$aLookup['place_id'],
-                                              $aLookup['type'], $aLookup['fraction']);
+            $aDetails = $oPlaceLookup->lookup(
+                (int)$aLookup['place_id'],
+                $aLookup['type'],
+                $aLookup['fraction']
+            );
             if ($bVerbose) echo $aDetails['langaddress']."\n";
         } else {
             echo ".";

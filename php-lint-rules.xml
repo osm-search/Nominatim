@@ -77,11 +77,6 @@
        INDENTATION, SPACING
        ************************************************************** -->
 
-  <!-- We use tabs -->
-  <rule ref="Generic.WhiteSpace.DisallowTabIndent.TabsUsed">
-    <severity>0</severity>
-  </rule>
-
   <!-- We don't need 2 blank lines after function -->
   <rule ref="Squiz.WhiteSpace.FunctionSpacing.After">
     <severity>0</severity>

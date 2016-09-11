@@ -38,6 +38,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             python-numpy phpunit
 
     pip install --user lettuce==0.2.18 six==1.7 haversine
+    sudo pear install PHP_CodeSniffer
 
 #
 # System Configuration

@@ -18,7 +18,7 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
     }
 
     $hLog = array(
-             date('Y-m-d H:i:s',$aStartTime[0]).'.'.$aStartTime[1],
+             date('Y-m-d H:i:s', $aStartTime[0]).'.'.$aStartTime[1],
              $_SERVER["REMOTE_ADDR"],
              $_SERVER['QUERY_STRING'],
              $sOutQuery,
@@ -36,7 +36,7 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
         else $sUserAgent = '';
         $sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format,searchterm)';
         $sSQL .= ' values ('.getDBQuoted($sType).','.getDBQuoted($hLog[0]).','.getDBQuoted($hLog[2]);
-        $sSQL .= ','.getDBQuoted($hLog[1]).','.getDBQuoted($sUserAgent).','.getDBQuoted(join(',',$aLanguageList)).','.getDBQuoted($sOutputFormat).','.getDBQuoted($hLog[3]).')';
+        $sSQL .= ','.getDBQuoted($hLog[1]).','.getDBQuoted($sUserAgent).','.getDBQuoted(join(',', $aLanguageList)).','.getDBQuoted($sOutputFormat).','.getDBQuoted($hLog[3]).')';
         $oDB->query($sSQL);
     }
 
@@ -50,7 +50,7 @@ function logEnd(&$oDB, $hLog, $iNumResults)
     if (CONST_Log_DB) {
         $aEndTime = explode('.', $fEndTime);
         if (!$aEndTime[1]) $aEndTime[1] = '0';
-        $sEndTime = date('Y-m-d H:i:s',$aEndTime[0]).'.'.$aEndTime[1];
+        $sEndTime = date('Y-m-d H:i:s', $aEndTime[0]).'.'.$aEndTime[1];
 
         $sSQL = 'update new_query_log set endtime = '.getDBQuoted($sEndTime).', results = '.$iNumResults;
         $sSQL .= ' where starttime = '.getDBQuoted($hLog[0]);
@@ -60,9 +60,14 @@ function logEnd(&$oDB, $hLog, $iNumResults)
     }
 
     if (CONST_Log_File) {
-        $aOutdata = sprintf("[%s] %.4f %d %s \"%s\"\n",
-                            $hLog[0], $fEndTime-$hLog[5], $iNumResults,
-                            $hLog[4], $hLog[2]);
+        $aOutdata = sprintf(
+            "[%s] %.4f %d %s \"%s\"\n",
+            $hLog[0],
+            $fEndTime-$hLog[5],
+            $iNumResults,
+            $hLog[4],
+            $hLog[2]
+        );
         file_put_contents(CONST_Log_File, $aOutdata, FILE_APPEND | LOCK_EX);
     }
 

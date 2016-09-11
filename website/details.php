@@ -11,7 +11,7 @@ $oParams = new ParameterParser();
 
 $sOutputFormat = 'html';
 $aLangPrefOrder = $oParams->getPreferredLanguages();
-$sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted",$aLangPrefOrder))."]";
+$sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $aLangPrefOrder))."]";
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
@@ -66,8 +66,7 @@ $sSQL .= " ST_y(centroid) as lat, ST_x(centroid) as lon,";
 $sSQL .= " case when importance = 0 OR importance IS NULL then 0.75-(rank_search::float/40) else importance end as calculated_importance, ";
 $sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 $sSQL .= " from placex where place_id = $iPlaceID";
-$aPointDetails = chksql($oDB->getRow($sSQL),
-                        "Could not get details of place object.");
+$aPointDetails = chksql($oDB->getRow($sSQL), "Could not get details of place object.");
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
 
 $aClassType = getClassTypesWithImportance();
@@ -122,14 +121,14 @@ if ($oParams->getBool('keywords')) {
         $aPlaceSearchName = [];
     }
 
-    $sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'],1,-1).")";
+    $sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'], 1, -1).")";
     $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
         $aPlaceSearchNameKeywords = [];
     }
 
 
-    $sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'],1,-1).")";
+    $sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['nameaddress_vector'], 1, -1).")";
     $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
         $aPlaceSearchAddressKeywords = [];

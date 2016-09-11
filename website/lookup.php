@@ -62,7 +62,7 @@ foreach ($aOsmIds AS $sItem) {
 if (CONST_Debug) exit;
 
 $sXmlRootTag = 'lookupresults';
-$sQuery = join(',',$aCleanedQueryParts);
+$sQuery = join(',', $aCleanedQueryParts);
 // we initialize these to avoid warnings in our logfile
 $sViewBox = '';
 $bShowPolygons = '';

@@ -96,7 +96,7 @@ class PlaceLookup
     {
         if (!$iPlaceID) return null;
 
-        $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
+        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $bIsTiger = CONST_Use_US_Tiger_Data && $sType == 'tiger';
         $bIsInterpolation = $sType == 'interpolation';
 
@@ -116,7 +116,7 @@ class PlaceLookup
             $sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
             $sSQL .= " END as housenumber";
             $sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
-        } else if ($bIsInterpolation) {
+        } elseif ($bIsInterpolation) {
             $sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, null as isin, postcode,";
             $sSQL .= " calculated_country_code as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
             $sSQL .= " (0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, calculated_country_code, ";
@@ -155,8 +155,7 @@ class PlaceLookup
         if ($this->bAddressDetails) {
             // to get addressdetails for tiger data, the housenumber is needed
             $iHousenumber = ($bIsTiger || $bIsInterpolation) ? $aPlace['housenumber'] : -1;
-            $aPlace['aAddress'] = $this->getAddressNames($aPlace['place_id'],
-                                                         $iHousenumber);
+            $aPlace['aAddress'] = $this->getAddressNames($aPlace['place_id'], $iHousenumber);
         }
 
         if ($this->bExtraTags) {
@@ -194,7 +193,7 @@ class PlaceLookup
 
     function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
     {
-        $sLanguagePrefArraySQL = "ARRAY[".join(',',array_map("getDBQuoted", $this->aLangPrefOrder))."]";
+        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
         $sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$iPlaceID.",".$housenumber.")";
         if (!$bAll) $sSQL .= " WHERE isaddress OR type = 'country_code'";
@@ -226,7 +225,7 @@ class PlaceLookup
             }
             if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
                 $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-                $sTypeLabel = str_replace(' ','_',$sTypeLabel);
+                $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
                 if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
                     $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
                 }
@@ -247,7 +246,7 @@ class PlaceLookup
     //   astext
     //   lat
     //   lon
-    function getOutlines($iPlaceID, $fLon=null, $fLat=null, $fRadius=null)
+    function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
     {
 
         $aOutlineResult = array();
@@ -270,8 +269,7 @@ class PlaceLookup
                 $sSQL .= $sFrom;
             }
 
-            $aPointPolygon = chksql($this->oDB->getRow($sSQL),
-                                    "Could not get outline");
+            $aPointPolygon = chksql($this->oDB->getRow($sSQL), "Could not get outline");
 
             if ($aPointPolygon['place_id']) {
                 if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {

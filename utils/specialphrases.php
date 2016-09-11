@@ -46,8 +46,9 @@ if ($aCMDResult['wiki-import']) {
                 # quotes into the wiki
                 $sType = preg_replace('/&quot;/', '', $sType);
                 # sanity check, in case somebody added garbage in the wiki
-                if (preg_match('/^\\w+$/', $sClass) < 1 ||
-                    preg_match('/^\\w+$/', $sType) < 1) {
+                if (preg_match('/^\\w+$/', $sClass) < 1
+                    || preg_match('/^\\w+$/', $sType) < 1
+                ) {
                     trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
                     exit;
                 }

@@ -26,7 +26,7 @@ if (isset($aCMDResult['parse-tiger'])) {
 
     foreach (glob($aCMDResult['parse-tiger'].'/tl_20??_?????_edges.zip', 0) as $sImportFile) {
         set_time_limit(30);
-        preg_match('#([0-9]{5})_(.*)#',basename($sImportFile), $aMatch);
+        preg_match('#([0-9]{5})_(.*)#', basename($sImportFile), $aMatch);
         $sCountyID = $aMatch[1];
         echo "Processing ".$sCountyID."...\n";
         $sUnzipCmd = "unzip -d $sTempDir $sImportFile";

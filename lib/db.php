@@ -5,8 +5,10 @@ require_once('DB.php');
 function &getDB($bNew = false, $bPersistent = false)
 {
     // Get the database object
-    $oDB = chksql(DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), $bPersistent),
-                  "Failed to establish database connection");
+    $oDB = chksql(
+        DB::connect(CONST_Database_DSN.($bNew?'?new_link=true':''), $bPersistent),
+        "Failed to establish database connection"
+    );
     $oDB->setFetchMode(DB_FETCHMODE_ASSOC);
     $oDB->query("SET DateStyle TO 'sql,european'");
     $oDB->query("SET client_encoding TO 'utf-8'");

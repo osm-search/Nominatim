@@ -42,24 +42,24 @@ if ($aCMDResult['wiki-import']) {
                 $sLabel = trim($aMatch[1]);
                 $sClass = trim($aMatch[2]);
                 $sType = trim($aMatch[3]);
-                # hack around a bug where building=yes was imported with
-                # quotes into the wiki
+                // hack around a bug where building=yes was imported with
+                // quotes into the wiki
                 $sType = preg_replace('/&quot;/', '', $sType);
-                # sanity check, in case somebody added garbage in the wiki
+                // sanity check, in case somebody added garbage in the wiki
                 if (preg_match('/^\\w+$/', $sClass) < 1
                     || preg_match('/^\\w+$/', $sType) < 1
                 ) {
                     trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
                     exit;
                 }
-                # blacklisting: disallow certain class/type combinations
+                // blacklisting: disallow certain class/type combinations
                 if (isset($aTagsBlacklist[$sClass]) && in_array($sType, $aTagsBlacklist[$sClass])) {
-                    # fwrite(STDERR, "Blacklisted: ".$sClass."/".$sType."\n");
+                    // fwrite(STDERR, "Blacklisted: ".$sClass."/".$sType."\n");
                     continue;
                 }
-                # whitelisting: if class is in whitelist, allow only tags in the list
+                // whitelisting: if class is in whitelist, allow only tags in the list
                 if (isset($aTagsWhitelist[$sClass]) && !in_array($sType, $aTagsWhitelist[$sClass])) {
-                    # fwrite(STDERR, "Non-Whitelisted: ".$sClass."/".$sType."\n");
+                    // fwrite(STDERR, "Non-Whitelisted: ".$sClass."/".$sType."\n");
                     continue;
                 }
                 $aPairs[$sClass.'|'.$sType] = array($sClass, $sType);

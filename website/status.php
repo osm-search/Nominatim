@@ -4,6 +4,7 @@
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-website.php');
 
+
 function statusError($sMsg)
 {
     header("HTTP/1.0 500 Internal Server Error");
@@ -34,4 +35,3 @@ if (!$iWordID) {
 
 echo "OK";
 exit;
-

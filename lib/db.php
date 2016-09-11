@@ -2,6 +2,7 @@
 
 require_once('DB.php');
 
+
 function &getDB($bNew = false, $bPersistent = false)
 {
     // Get the database object

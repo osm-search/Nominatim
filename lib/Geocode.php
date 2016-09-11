@@ -48,6 +48,7 @@ class Geocode
     protected $sQuery = false;
     protected $aStructuredQuery = false;
 
+
     function Geocode(&$oDB)
     {
         $this->oDB =& $oDB;
@@ -131,18 +132,18 @@ class Geocode
     function setFeatureType($sFeatureType)
     {
         switch ($sFeatureType) {
-        case 'country':
-            $this->setRankRange(4, 4);
-            break;
-        case 'state':
-            $this->setRankRange(8, 8);
-            break;
-        case 'city':
-            $this->setRankRange(14, 16);
-            break;
-        case 'settlement':
-            $this->setRankRange(8, 20);
-            break;
+            case 'country':
+                $this->setRankRange(4, 4);
+                break;
+            case 'state':
+                $this->setRankRange(8, 8);
+                break;
+            case 'city':
+                $this->setRankRange(14, 16);
+                break;
+            case 'settlement':
+                $this->setRankRange(8, 20);
+                break;
         }
     }
 
@@ -397,7 +398,7 @@ class Geocode
         $sSQL .= ",extratags->'place' ";
 
         if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {
-            //only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines 
+            // only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines
             // with start- and endnumber, the common osm housenumbers are usually saved as points
             $sHousenumbers = "";
             $i = 0;
@@ -408,7 +409,7 @@ class Geocode
                 if ($i<$length) $sHousenumbers .= ", ";
             }
             if (CONST_Use_US_Tiger_Data) {
-                //Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
+                // Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
                 $sSQL .= " union";
                 $sSQL .= " select 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, 30 as rank_search, 30 as rank_address, min(place_id) as place_id, min(parent_place_id) as parent_place_id, 'us' as country_code";
                 $sSQL .= ", get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress ";
@@ -421,7 +422,7 @@ class Geocode
                 $sSQL .= ", (select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance ";
                 $sSQL .= ", null as extra_place ";
                 $sSQL .= " from (select place_id";
-                //interpolate the Tiger housenumbers here
+                // interpolate the Tiger housenumbers here
                 $sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as centroid, parent_place_id, housenumber_for_place";
                 $sSQL .= " from (location_property_tiger ";
                 $sSQL .= " join (values ".$sHousenumbers.") as housenumbers(place_id, housenumber_for_place) using(place_id)) ";
@@ -444,7 +445,7 @@ class Geocode
             $sSQL .= " where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance,";
             $sSQL .= " null as extra_place ";
             $sSQL .= " from (select place_id, calculated_country_code ";
-            //interpolate the housenumbers here
+            // interpolate the housenumbers here
             $sSQL .= ", CASE WHEN startnumber != endnumber THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
             $sSQL .= " ELSE ST_LineInterpolatePoint(linegeo, 0.5) END as centroid";
             $sSQL .= ", parent_place_id, housenumber_for_place ";
@@ -476,7 +477,8 @@ class Geocode
 
         $sSQL .= " order by importance desc";
         if (CONST_Debug) {
-            echo "<hr>"; var_dump($sSQL);
+            echo "<hr>";
+            var_dump($sSQL);
         }
         $aSearchResults = chksql(
             $this->oDB->getAll($sSQL),
@@ -738,6 +740,8 @@ class Geocode
             name: full name (currently the same as langaddress)
             foundorder: secondary ordering for places with same importance
     */
+
+
     function lookup()
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return false;
@@ -939,7 +943,7 @@ class Geocode
                         }
                     } elseif (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
                         // US ZIP+4 codes - if there is no token,
-                        //  merge in the 5-digit ZIP code
+                        // merge in the 5-digit ZIP code
                         if (isset($aValidTokens[$aData[1]])) {
                             foreach ($aValidTokens[$aData[1]] as $aToken) {
                                 if (!$aToken['class']) {
@@ -1413,7 +1417,8 @@ class Geocode
                     }
 
                     if (CONST_Debug) {
-                        echo "<br><b>Place IDs:</b> "; var_Dump($aPlaceIDs);
+                        echo "<br><b>Place IDs:</b> ";
+                        var_Dump($aPlaceIDs);
                     }
 
                     foreach ($aPlaceIDs as $iPlaceID) {
@@ -1495,7 +1500,8 @@ class Geocode
         }
 
         if (CONST_Debug) {
-            echo '<i>Recheck words:<\i>'; var_dump($aRecheckWords);
+            echo '<i>Recheck words:<\i>';
+            var_dump($aRecheckWords);
         }
 
         $oPlaceLookup = new PlaceLookup($this->oDB);
@@ -1577,15 +1583,15 @@ class Geocode
 
             $aResult['name'] = $aResult['langaddress'];
             // secondary ordering (for results with same importance (the smaller the better):
-            //   - approximate importance of address parts
+            // - approximate importance of address parts
             $aResult['foundorder'] = -$aResult['addressimportance']/10;
-            //   - number of exact matches from the query
+            // - number of exact matches from the query
             if (isset($this->exactMatchCache[$aResult['place_id']])) {
                 $aResult['foundorder'] -= $this->exactMatchCache[$aResult['place_id']];
             } elseif (isset($this->exactMatchCache[$aResult['parent_place_id']])) {
                 $aResult['foundorder'] -= $this->exactMatchCache[$aResult['parent_place_id']];
             }
-            //  - importance of the class/type
+            // - importance of the class/type
             if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
                 && $aClassType[$aResult['class'].':'.$aResult['type']]['importance']
             ) {
@@ -1625,9 +1631,5 @@ class Geocode
         }
 
         return $aSearchResults;
-
     } // end lookup()
-
-
 } // end class
-

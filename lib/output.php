@@ -1,5 +1,6 @@
 <?php
 
+
 function formatOSMType($sType, $bIncludeExternal = true)
 {
     if ($sType == 'N') return 'node';
@@ -38,4 +39,3 @@ function detailsLink($aFeature, $sTitle = false)
 
     return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle?$sTitle:$aFeature['place_id']).'</a>';
 }
-

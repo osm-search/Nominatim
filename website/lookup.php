@@ -35,7 +35,7 @@ if (count($aOsmIds) > CONST_Places_Max_ID_count) {
     userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
 }
 
-foreach ($aOsmIds AS $sItem) {
+foreach ($aOsmIds as $sItem) {
     // Skip empty sItem
     if (empty($sItem)) continue;
     

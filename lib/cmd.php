@@ -1,5 +1,6 @@
 <?php
 
+
 function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnknown = false)
 {
     $aQuick = array();

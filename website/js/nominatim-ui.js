@@ -75,8 +75,14 @@ jQuery(document).on('ready', function(){
         $('input#use_viewbox').trigger('change');
     }
 
+    function update_viewbox_field(){
+        // hidden HTML field
+        $('input[name=viewbox]').val( $('input#use_viewbox').prop('checked') ? map_viewbox_as_string() : '');
+    }
+
     map.on('move', function(e) {
         display_map_position();
+        update_viewbox_field();
     });
 
     map.on('mousemove', function(e) {
@@ -94,7 +100,7 @@ jQuery(document).on('ready', function(){
 
 
     $('input#use_viewbox').on('change', function(){
-        $('input[name=viewbox]').val( $(this).prop('checked') ? map_viewbox_as_string() : '');
+        update_viewbox_field();
     });
 
 
@@ -102,10 +108,11 @@ jQuery(document).on('ready', function(){
     function map_viewbox_as_string() {
         // since .toBBoxString() doesn't round numbers
         return [
-            map.getBounds().getSouthWest().lat.toFixed(5),
-            map.getBounds().getSouthWest().lng.toFixed(5),
-            map.getBounds().getNorthEast().lat.toFixed(5),
-            map.getBounds().getNorthEast().lng.toFixed(5) ].join(',');
+            map.getBounds().getSouthWest().lng.toFixed(5), // left
+            map.getBounds().getNorthEast().lat.toFixed(5), // top
+            map.getBounds().getNorthEast().lng.toFixed(5), // right
+            map.getBounds().getSouthWest().lat.toFixed(5)  // bottom
+        ].join(',');
     }
     function map_link_to_osm(){
         return "http://openstreetmap.org/#map=" + map.getZoom() + "/" + map.getCenter().lat + "/" + map.getCenter().lng;

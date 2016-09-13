@@ -22,10 +22,8 @@
             <?php } ?>
             <input type="hidden" name="viewbox" value="<?php echo $sViewBox; ?>" />
             <div class="checkbox-inline">
-                <label>
-                    <input type="checkbox" id="use_viewbox" <?php if ($sViewBox) echo "checked='checked'"; ?>>
-                    apply viewbox
-                </label>
+                <input type="checkbox" id="use_viewbox" <?php if ($sViewBox) echo "checked='checked'"; ?>>
+                <label for="use_viewbox">apply viewbox</label>
             </div>
         </div>
         <div class="search-type-link">

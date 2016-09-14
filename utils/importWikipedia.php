@@ -389,15 +389,16 @@ if (isset($aCMDResult['link'])) {
             break;
         case 'prefecture japan':
             $aRecord['name'] = trim(str_replace(' Prefecture', ' ', $aRecord['name']));
+            break;
         case 'state':
         case '#us state':
         case 'county':
         case 'u.s. state':
         case 'u.s. state symbols':
         case 'german state':
-        case 'province or territory of canada';
-        case 'indian jurisdiction';
-        case 'province';
+        case 'province or territory of canada':
+        case 'indian jurisdiction':
+        case 'province':
         case 'french region':
         case 'region of italy':
         case 'kommune':
@@ -415,6 +416,7 @@ if (isset($aCMDResult['link'])) {
             break;
         case 'settlement':
             $bUnknown = true;
+            break;
         case 'french commune':
         case 'italian comune':
         case 'uk place':
@@ -442,7 +444,7 @@ if (isset($aCMDResult['link'])) {
         case 'airport':
             $fMaxDist = 0.2;
             $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
-
+            break;
         case 'ship begin':
             $fMaxDist = 0.1;
             $aTypes = array('wreck');

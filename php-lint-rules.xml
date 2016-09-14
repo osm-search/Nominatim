@@ -20,6 +20,15 @@
   </rule>
 
 
+  <!-- "A file should declare new symbols (classes, functions, constants, etc.) and cause no
+    other side effects, or it should execute logic with side effects, but should not do both."
+    ... we have too many script and includes to be able to enforce that.
+     -->
+  <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+    <severity>0</severity>
+  </rule>
+
+
 
   <!-- **************************************************************
        DOCUMENTATION
@@ -42,12 +51,22 @@
        COMMENTS
        ************************************************************** -->
 
+  <!-- any comments in the lines before function() are better than forcing
+       a PHPdoc style right now -->
+  <rule ref="PEAR.Commenting.FunctionComment.WrongStyle">
+    <severity>0</severity>
+  </rule>
+
   <!-- We allow comments after statements -->
   <rule ref="Squiz.Commenting.PostStatementComment.Found">
     <severity>0</severity>
   </rule>
   <!-- ... even without space e.g. //some words -->
   <rule ref="Squiz.Commenting.InlineComment.NoSpaceBefore">
+    <severity>0</severity>
+  </rule>
+  <!-- blank lines after inline comments are fine -->
+  <rule ref="Squiz.Commenting.InlineComment.SpacingAfter">
     <severity>0</severity>
   </rule>
 
@@ -57,6 +76,10 @@
   </rule>
   <!-- Comments don't have to end with one of .!? -->
   <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+    <severity>0</severity>
+  </rule>
+  <!-- Empty comments are fine -->
+  <rule ref="Squiz.Commenting.InlineComment.Empty">
     <severity>0</severity>
   </rule>
 
@@ -84,6 +107,9 @@
 
   <!-- Aligned looks nicer, but causes too many warnings currently -->
   <rule ref="Generic.Formatting.MultipleStatementAlignment.NotSame">
+    <severity>0</severity>
+  </rule>
+  <rule ref="Generic.Formatting.MultipleStatementAlignment.NotSameWarning">
     <severity>0</severity>
   </rule>
 
@@ -147,25 +173,6 @@
     <severity>0</severity>
   </rule>
 
-  <!-- We allow
-              if (a)
-              {
-  -->
-  <rule ref="PEAR.ControlStructures.MultiLineCondition.NewlineBeforeOpenBrace">
-    <severity>0</severity>
-  </rule>
-  <!-- ... same -->
-  <rule ref="Squiz.WhiteSpace.ControlStructureSpacing.NoLineAfterClose">
-    <severity>0</severity>
-  </rule>
-  <!-- ... same for foreach/while etc -->
-  <rule ref="PEAR.ControlStructures.ControlSignature">
-    <severity>0</severity>
-  </rule>
-  <!-- ... same -->
-  <rule ref="Squiz.WhiteSpace.FunctionClosingBraceSpace.SpacingBeforeClose">
-    <severity>0</severity>
-  </rule>
 
 
 </ruleset>

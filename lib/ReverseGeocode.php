@@ -5,10 +5,12 @@ class ReverseGeocode
     protected $oDB;
     protected $iMaxRank = 28;
 
+
     function ReverseGeocode(&$oDB)
     {
         $this->oDB =& $oDB;
     }
+
 
     function setZoom($iZoom)
     {
@@ -38,8 +40,13 @@ class ReverseGeocode
         $this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
     }
 
-    // returns { place_id =>, type => '(osm|tiger)' }
-    // fails if no place was found
+
+    /* lookup()
+     * returns { place_id =>, type => '(osm|tiger)' }
+     * fails if no place was found
+     */
+
+
     function lookup($fLat, $fLon, $bDoInterpolation = true)
     {
         $sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
@@ -111,7 +118,7 @@ class ReverseGeocode
             if ($aPlaceLine) {
                 if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
                 if ($aPlace['rank_search'] == 30) {
-                    // if a house was already found in placex, we have to find out, 
+                    // if a house was already found in placex, we have to find out,
                     // if the placex house or the interpolated house are closer to the searched point
                     // distance between point and placex house
                     $sSQL = 'SELECT ST_distance('.$sPointSQL.', house.geometry) as distance FROM placex as house WHERE house.place_id='.$iPlaceID;
@@ -204,5 +211,4 @@ class ReverseGeocode
                 'fraction' => ($bPlaceIsTiger || $bPlaceIsLine) ? $fFraction : -1
                );
     }
-    
 }

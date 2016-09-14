@@ -90,11 +90,13 @@ EOD;
     $oDB->query($sSQL);
 }
 
+
 function degreesAndMinutesToDecimal($iDegrees, $iMinutes = 0, $fSeconds = 0, $sNSEW = 'N')
 {
     $sNSEW = strtoupper($sNSEW);
     return ($sNSEW == 'S' || $sNSEW == 'W'?-1:1) * ((float)$iDegrees + (float)$iMinutes/60 + (float)$fSeconds/3600);
 }
+
 
 function _parseWikipediaContent($sPageText)
 {
@@ -113,83 +115,83 @@ function _parseWikipediaContent($sPageText)
     $aState = array('body');
     foreach ($aPageText as $i => $sPart) {
         switch ($sPart) {
-        case '{{':
-            array_unshift($aTemplateStack, array('', array()));
-            array_unshift($aState, 'template');
-            break;
-        case '}}':
-            if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
-                $aTemplate = array_shift($aTemplateStack);
-                array_shift($aState);
+            case '{{':
+                array_unshift($aTemplateStack, array('', array()));
+                array_unshift($aState, 'template');
+                break;
+            case '}}':
+                if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
+                    $aTemplate = array_shift($aTemplateStack);
+                    array_shift($aState);
 
-                $aTemplates[] = $aTemplate;
-            }
-            break;
-        case '[[':
-            $sLinkPage = '';
-            $sLinkSyn = '';
-            array_unshift($aState, 'link');
-            break;
-        case ']]':
-            if ($aState[0] == 'link' || $aState[0] == 'linksynonim') {
-                if (!$sLinkSyn) $sLinkSyn = $sLinkPage;
-                if (substr($sLinkPage, 0, 6) == 'Image:') $sLinkSyn = substr($sLinkPage, 6);
-
-                $aLinks[] = array($sLinkPage, $sLinkSyn);
-
-                array_shift($aState);
-                switch ($aState[0]) {
-                case 'template':
-                    $aTemplateStack[0][0] .= trim($sPart);
-                    break;
-                case 'templateparam':
-                    $aTemplateStack[0][1][0] .= $sLinkSyn;
-                    break;
-                case 'link':
-                    $sLinkPage .= trim($sPart);
-                    break;
-                case 'linksynonim':
-                    $sLinkSyn .= $sPart;
-                    break;
-                case 'body':
-                    $sPageBody .= $sLinkSyn;
-                    break;
-                default:
-                    var_dump($aState, $sPageName, $aTemplateStack, $sPart, $aPageText);
-                    fail('unknown state');
+                    $aTemplates[] = $aTemplate;
                 }
-            }
-            break;
-        case '|':
-            if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
-                // Create a new template paramater
-                $aState[0] = 'templateparam';
-                array_unshift($aTemplateStack[0][1], '');
-            }
-            if ($aState[0] == 'link') $aState[0] = 'linksynonim';
-            break;
-        default:
-            switch ($aState[0]) {
-            case 'template':
-                $aTemplateStack[0][0] .= trim($sPart);
                 break;
-            case 'templateparam':
-                $aTemplateStack[0][1][0] .= $sPart;
+            case '[[':
+                $sLinkPage = '';
+                $sLinkSyn = '';
+                array_unshift($aState, 'link');
                 break;
-            case 'link':
-                $sLinkPage .= trim($sPart);
+            case ']]':
+                if ($aState[0] == 'link' || $aState[0] == 'linksynonim') {
+                    if (!$sLinkSyn) $sLinkSyn = $sLinkPage;
+                    if (substr($sLinkPage, 0, 6) == 'Image:') $sLinkSyn = substr($sLinkPage, 6);
+
+                    $aLinks[] = array($sLinkPage, $sLinkSyn);
+
+                    array_shift($aState);
+                    switch ($aState[0]) {
+                        case 'template':
+                            $aTemplateStack[0][0] .= trim($sPart);
+                            break;
+                        case 'templateparam':
+                            $aTemplateStack[0][1][0] .= $sLinkSyn;
+                            break;
+                        case 'link':
+                            $sLinkPage .= trim($sPart);
+                            break;
+                        case 'linksynonim':
+                            $sLinkSyn .= $sPart;
+                            break;
+                        case 'body':
+                            $sPageBody .= $sLinkSyn;
+                            break;
+                        default:
+                            var_dump($aState, $sPageName, $aTemplateStack, $sPart, $aPageText);
+                            fail('unknown state');
+                    }
+                }
                 break;
-            case 'linksynonim':
-                $sLinkSyn .= $sPart;
-                break;
-            case 'body':
-                $sPageBody .= $sPart;
+            case '|':
+                if ($aState[0] == 'template' || $aState[0] == 'templateparam') {
+                    // Create a new template paramater
+                    $aState[0] = 'templateparam';
+                    array_unshift($aTemplateStack[0][1], '');
+                }
+                if ($aState[0] == 'link') $aState[0] = 'linksynonim';
                 break;
             default:
-                var_dump($aState, $aPageText);
-                fail('unknown state');
-            }
-            break;
+                switch ($aState[0]) {
+                    case 'template':
+                        $aTemplateStack[0][0] .= trim($sPart);
+                        break;
+                    case 'templateparam':
+                        $aTemplateStack[0][1][0] .= $sPart;
+                        break;
+                    case 'link':
+                        $sLinkPage .= trim($sPart);
+                        break;
+                    case 'linksynonim':
+                        $sLinkSyn .= $sPart;
+                        break;
+                    case 'body':
+                        $sPageBody .= $sPart;
+                        break;
+                    default:
+                        var_dump($aState, $aPageText);
+                        fail('unknown state');
+                }
+                break;
         }
     }
     return $aTemplates;
@@ -201,7 +203,7 @@ function _templatesToProperties($aTemplates)
     foreach ($aTemplates as $iTemplate => $aTemplate) {
         $aParams = array();
         foreach (array_reverse($aTemplate[1]) as $iParam => $sParam) {
-            if (($iPos = strpos($sParam, '=')) === FALSE) {
+            if (($iPos = strpos($sParam, '=')) === false) {
                 $aParams[] = trim($sParam);
             } else {
                 $aParams[trim(substr($sParam, 0, $iPos))] = trim(substr($sParam, $iPos+1));
@@ -224,7 +226,7 @@ function _templatesToProperties($aTemplates)
         if (!isset($aPageProperties['sWebsite']) && isset($aParams['website']) && $aParams['website']) {
             if (preg_match('#^\\[?([^ \\]]+)[^\\]]*\\]?$#', $aParams['website'], $aMatch)) {
                 $aPageProperties['sWebsite'] = $aMatch[1];
-                if (strpos($aPageProperties['sWebsite'], ':/'.'/') === FALSE) {
+                if (strpos($aPageProperties['sWebsite'], ':/'.'/') === false) {
                     $aPageProperties['sWebsite'] = 'http:/'.'/'.$aPageProperties['sWebsite'];
                 }
             }
@@ -306,7 +308,7 @@ function _templatesToProperties($aTemplates)
 if (isset($aCMDResult['parse-wikipedia'])) {
     $oDB =& getDB();
     $aArticleNames = $oDB->getCol('select page_title from content where page_namespace = 0 and page_id %10 = '.$aCMDResult['parse-wikipedia'].' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))');
-//      $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0 and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\')) and page_title in (\'Virginia\')');
+    // $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0 and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\')) and page_title in (\'Virginia\')');
     foreach ($aArticleNames as $sArticleName) {
         $sPageText = $oDB->getOne('select page_content from content where page_namespace = 0 and page_title = \''.pg_escape_string($sArticleName).'\'');
         $aP = _templatesToProperties(_parseWikipediaContent($sPageText));
@@ -342,15 +344,17 @@ if (isset($aCMDResult['parse-wikipedia'])) {
     }
 }
 
+
 function nominatimXMLStart($hParser, $sName, $aAttr)
 {
-        global $aNominatRecords;
-        switch ($sName) {
+    global $aNominatRecords;
+    switch ($sName) {
         case 'PLACE':
-                $aNominatRecords[] = $aAttr;
-                break;
-        }
+            $aNominatRecords[] = $aAttr;
+            break;
+    }
 }
+
 
 function nominatimXMLEnd($hParser, $sName)
 {
@@ -373,102 +377,104 @@ if (isset($aCMDResult['link'])) {
         $fMaxDist = 0.0000001;
         $bUnknown = false;
         switch (strtolower($aRecord['infobox_type'])) {
-        case 'former country':
-            continue 2;
-        case 'sea':
-            $fMaxDist = 60; // effectively turn it off
-            $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
-            break;
-        case 'country':
-        case 'island':
-        case 'islands':
-        case 'continent':
-            $fMaxDist = 60; // effectively turn it off
-            $sURL .= "&featuretype=country";
-            $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
-            break;
-        case 'prefecture japan':
-            $aRecord['name'] = trim(str_replace(' Prefecture', ' ', $aRecord['name']));
-        case 'state':
-        case '#us state':
-        case 'county':
-        case 'u.s. state':
-        case 'u.s. state symbols':
-        case 'german state':
-        case 'province or territory of canada';
-        case 'indian jurisdiction';
-        case 'province';
-        case 'french region':
-        case 'region of italy':
-        case 'kommune':
-        case '#australia state or territory':
-        case 'russian federal subject':
-            $fMaxDist = 4;
-            $sURL .= "&featuretype=state";
-            $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
-            break;
-        case 'protected area':
-            $fMaxDist = 1;
-            $sURL .= "&nearlat=".$aRecord['lat'];
-            $sURL .= "&nearlon=".$aRecord['lon'];
-            $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
-            break;
-        case 'settlement':
-            $bUnknown = true;
-        case 'french commune':
-        case 'italian comune':
-        case 'uk place':
-        case 'italian comune':
-        case 'australian place':
-        case 'german place':
-        case '#geobox':
-        case 'u.s. county':
-        case 'municipality':
-        case 'city japan':
-        case 'russian inhabited locality':
-        case 'finnish municipality/land area':
-        case 'england county':
-        case 'israel municipality':
-        case 'russian city':
-        case 'city':
-            $fMaxDist = 0.2;
-            $sURL .= "&featuretype=settlement";
-            $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
-            break;
-        case 'mountain':
-        case 'mountain pass':
-        case 'river':
-        case 'lake':
-        case 'airport':
-            $fMaxDist = 0.2;
-            $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
-
-        case 'ship begin':
-            $fMaxDist = 0.1;
-            $aTypes = array('wreck');
-            $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
-            $sURL .= "&nearlat=".$aRecord['lat'];
-            $sURL .= "&nearlon=".$aRecord['lon'];
-            break;
-        case 'road':
-        case 'university':
-        case 'company':
-        case 'department':
-            $fMaxDist = 0.005;
-            $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
-            $sURL .= "&bounded=1";
-            $sURL .= "&nearlat=".$aRecord['lat'];
-            $sURL .= "&nearlon=".$aRecord['lon'];
-            break;
-        default:
-            $bUnknown = true;
-            $fMaxDist = 0.005;
-            $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
-//              $sURL .= "&bounded=1";
-            $sURL .= "&nearlat=".$aRecord['lat'];
-            $sURL .= "&nearlon=".$aRecord['lon'];
-            echo "-- Unknown: ".$aRecord['infobox_type']."\n";
-            break;
+            case 'former country':
+                continue 2;
+            case 'sea':
+                $fMaxDist = 60; // effectively turn it off
+                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                break;
+            case 'country':
+            case 'island':
+            case 'islands':
+            case 'continent':
+                $fMaxDist = 60; // effectively turn it off
+                $sURL .= "&featuretype=country";
+                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                break;
+            case 'prefecture japan':
+                $aRecord['name'] = trim(str_replace(' Prefecture', ' ', $aRecord['name']));
+                break;
+            case 'state':
+            case '#us state':
+            case 'county':
+            case 'u.s. state':
+            case 'u.s. state symbols':
+            case 'german state':
+            case 'province or territory of canada':
+            case 'indian jurisdiction':
+            case 'province':
+            case 'french region':
+            case 'region of italy':
+            case 'kommune':
+            case '#australia state or territory':
+            case 'russian federal subject':
+                $fMaxDist = 4;
+                $sURL .= "&featuretype=state";
+                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                break;
+            case 'protected area':
+                $fMaxDist = 1;
+                $sURL .= "&nearlat=".$aRecord['lat'];
+                $sURL .= "&nearlon=".$aRecord['lon'];
+                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                break;
+            case 'settlement':
+                $bUnknown = true;
+                break;
+            case 'french commune':
+            case 'italian comune':
+            case 'uk place':
+            case 'italian comune':
+            case 'australian place':
+            case 'german place':
+            case '#geobox':
+            case 'u.s. county':
+            case 'municipality':
+            case 'city japan':
+            case 'russian inhabited locality':
+            case 'finnish municipality/land area':
+            case 'england county':
+            case 'israel municipality':
+            case 'russian city':
+            case 'city':
+                $fMaxDist = 0.2;
+                $sURL .= "&featuretype=settlement";
+                $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
+                break;
+            case 'mountain':
+            case 'mountain pass':
+            case 'river':
+            case 'lake':
+            case 'airport':
+                $fMaxDist = 0.2;
+                $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
+                break;
+            case 'ship begin':
+                $fMaxDist = 0.1;
+                $aTypes = array('wreck');
+                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
+                $sURL .= "&nearlat=".$aRecord['lat'];
+                $sURL .= "&nearlon=".$aRecord['lon'];
+                break;
+            case 'road':
+            case 'university':
+            case 'company':
+            case 'department':
+                $fMaxDist = 0.005;
+                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
+                $sURL .= "&bounded=1";
+                $sURL .= "&nearlat=".$aRecord['lat'];
+                $sURL .= "&nearlon=".$aRecord['lon'];
+                break;
+            default:
+                $bUnknown = true;
+                $fMaxDist = 0.005;
+                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
+                // $sURL .= "&bounded=1";
+                $sURL .= "&nearlat=".$aRecord['lat'];
+                $sURL .= "&nearlon=".$aRecord['lon'];
+                echo "-- Unknown: ".$aRecord['infobox_type']."\n";
+                break;
         }
         $sNameURL = $sURL.'&q='.urlencode($aRecord['name']);
 
@@ -492,7 +498,7 @@ if (isset($aCMDResult['link'])) {
                 $hXMLParser = xml_parser_create();
                 xml_set_element_handler($hXMLParser, 'nominatimXMLStart', 'nominatimXMLEnd');
                 xml_parse($hXMLParser, $sXML, true);
-                xml_parser_free($hXMLParser);#
+                xml_parser_free($hXMLParser);
             }
         }
 
@@ -520,9 +526,15 @@ if (isset($aCMDResult['link'])) {
             } else {
                 $sSQL = "update wikipedia_article set osm_type=";
                 switch ($aNominatRecords[$i]['OSM_TYPE']) {
-                case 'relation': $sSQL .= "'R'"; break;
-                case 'way': $sSQL .= "'W'"; break;
-                case 'node': $sSQL .= "'N'"; break;
+                    case 'relation':
+                        $sSQL .= "'R'";
+                        break;
+                    case 'way':
+                        $sSQL .= "'W'";
+                        break;
+                    case 'node':
+                        $sSQL .= "'N'";
+                        break;
                 }
                 $sSQL .= ", osm_id=".$aNominatRecords[$i]['OSM_ID']." where language = '".pg_escape_string($aRecord['language'])."' and title = '".pg_escape_string($aRecord['title'])."'";
                 $oDB->query($sSQL);

@@ -1,5 +1,6 @@
 <?php
 
+
 function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;
@@ -97,10 +98,6 @@ function getTokensFromSets($aSets)
     return $aTokens;
 }
 
-
-/*
-   GB Postcode functions
- */
 
 function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
 {
@@ -599,72 +596,78 @@ function addQuotes($s)
     return "'".$s."'";
 }
 
-// returns boolean
 function validLatLon($fLat, $fLon)
 {
     return ($fLat <= 90.1 && $fLat >= -90.1 && $fLon <= 180.1 && $fLon >= -180.1);
 }
 
-// Do we have anything that looks like a lat/lon pair?
-// returns array(lat,lon,query_with_lat_lon_removed)
-// or null
 function looksLikeLatLonPair($sQuery)
 {
+    // Do we have anything that looks like a lat/lon pair?
+    // returns array(lat,lon,query_with_lat_lon_removed)
+    // or null
     $sFound    = null;
     $fQueryLat = null;
     $fQueryLon = null;
 
     if (preg_match('/\\b([NS])[ ]+([0-9]+[0-9.]*)[° ]+([0-9.]+)?[′\']*[, ]+([EW])[ ]+([0-9]+)[° ]+([0-9]+[0-9.]*)[′\']*?\\b/', $sQuery, $aData)) {
-        //              1         2                   3                  4         5            6
-        // degrees decimal minutes
-        // N 40 26.767, W 79 58.933
-        // N 40°26.767′, W 79°58.933′
+        /*              1         2                   3                  4         5            6
+         * degrees decimal minutes
+         * N 40 26.767, W 79 58.933
+         * N 40°26.767′, W 79°58.933′
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60);
         $fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[5] + $aData[6]/60);
     } elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\']*[ ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\' ]+([EW])\\b/', $sQuery, $aData)) {
-        //                    1             2                      3          4            5                    6
-        // degrees decimal minutes
-        // 40 26.767 N, 79 58.933 W
-        // 40° 26.767′ N 79° 58.933′ W
+        /*                    1             2                      3          4            5                    6
+         * degrees decimal minutes
+         * 40 26.767 N, 79 58.933 W
+         * 40° 26.767′ N 79° 58.933′ W
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[3]=='N'?1:-1) * ($aData[1] + $aData[2]/60);
         $fQueryLon = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
     } elseif (preg_match('/\\b([NS])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*[, ]+([EW])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*\\b/', $sQuery, $aData)) {
-        //                    1        2            3            4                5        6            7            8
-        // degrees decimal seconds
-        // N 40 26 46 W 79 58 56
-        // N 40° 26′ 46″, W 79° 58′ 56″
+        /*                    1        2            3            4                5        6            7            8
+         * degrees decimal seconds
+         * N 40 26 46 W 79 58 56
+         * N 40° 26′ 46″, W 79° 58′ 56″
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60 + $aData[4]/3600);
         $fQueryLon = ($aData[5]=='E'?1:-1) * ($aData[6] + $aData[7]/60 + $aData[8]/3600);
     } elseif (preg_match('/\\b([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([EW])\\b/', $sQuery, $aData)) {
-        //                    1            2            3            4          5            6            7            8
-        // degrees decimal seconds
-        // 40 26 46 N 79 58 56 W
-        // 40° 26′ 46″ N, 79° 58′ 56″ W
+        /*                    1            2            3            4          5            6            7            8
+         * degrees decimal seconds
+         * 40 26 46 N 79 58 56 W
+         * 40° 26′ 46″ N, 79° 58′ 56″ W
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[4]=='N'?1:-1) * ($aData[1] + $aData[2]/60 + $aData[3]/3600);
         $fQueryLon = ($aData[8]=='E'?1:-1) * ($aData[5] + $aData[6]/60 + $aData[7]/3600);
     } elseif (preg_match('/\\b([NS])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*[, ]+([EW])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*\\b/', $sQuery, $aData)) {
-        //                    1        2                               3        4
-        // degrees decimal
-        // N 40.446° W 79.982°
+        /*                    1        2                               3        4
+         * degrees decimal
+         * N 40.446° W 79.982°
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2]);
         $fQueryLon = ($aData[3]=='E'?1:-1) * ($aData[4]);
     } elseif (preg_match('/\\b([0-9]+[0-9]*\\.[0-9]+)[° ]+([NS])[, ]+([0-9]+[0-9]*\\.[0-9]+)[° ]+([EW])\\b/', $sQuery, $aData)) {
-        //                    1                           2          3                           4
-        // degrees decimal
-        // 40.446° N 79.982° W
+        /*                    1                           2          3                           4
+         * degrees decimal
+         * 40.446° N 79.982° W
+         */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[2]=='N'?1:-1) * ($aData[1]);
         $fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[3]);
     } elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData)) {
-        //                 1          2                             3                        4
-        // degrees decimal
-        // 12.34, 56.78
-        // [12.456,-78.90]
+        /*                 1          2                             3                        4
+         * degrees decimal
+         * 12.34, 56.78
+         * [12.456,-78.90]
+         */
         $sFound    = $aData[0];
         $fQueryLat = $aData[2];
         $fQueryLon = $aData[3];
@@ -679,7 +682,7 @@ function looksLikeLatLonPair($sQuery)
 
 function geometryText2Points($geometry_as_text, $fRadius)
 {
-    $aPolyPoints = NULL;
+    $aPolyPoints = null;
     if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
         //
         preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);

@@ -94,8 +94,9 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     echo "Setup DB\n";
     $bDidSomething = true;
-    // TODO: path detection, detection memory, etc.
 
+    // TODO: path detection, detection memory, etc.
+    //
     $oDB =& getDB();
 
     $fPostgresVersion = getPostgresVersion($oDB);
@@ -649,6 +650,7 @@ if (!$bDidSomething) {
     echo "Setup finished.\n";
 }
 
+
 function pgsqlRunScriptFile($sFilename)
 {
     if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
@@ -698,7 +700,6 @@ function pgsqlRunScriptFile($sFilename)
         fclose($ahGzipPipes[1]);
         proc_close($hGzipProcess);
     }
-
 }
 
 function pgsqlRunScript($sScript, $bfatal = true)
@@ -712,7 +713,7 @@ function pgsqlRunScript($sScript, $bfatal = true)
         $sCMD .= ' -v ON_ERROR_STOP=1';
     $aDescriptors = array(
                      0 => array('pipe', 'r'),
-                     1 => STDOUT, 
+                     1 => STDOUT,
                      2 => STDERR
                     );
     $ahPipes = null;
@@ -844,6 +845,4 @@ function create_sql_functions($aCMDResult)
         $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
     }
     pgsqlRunScript($sTemplate);
-
 }
-

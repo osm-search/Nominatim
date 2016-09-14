@@ -1,8 +1,7 @@
 #!/usr/bin/php -Cq
 <?php
 
-// Apache log file
-$sFile = "sample.log.txt";
+$sFile = "sample.log.txt"; // Apache log file
 $sHost1 = 'http://mq-open-search-lm02.ihost.aol.com:8000/nominatim/v1';
 $sHost2 = 'http://mq-open-search-lm03.ihost.aol.com:8000/nominatim/v1';
 
@@ -50,13 +49,13 @@ while (($sLine = fgets($hFile, 10000)) !== false) {
 
             $sRes = $sURL1.":\n";
             for ($j = 0; $j < strlen($sRes1); $j+=40) {
-                $sRes  .= substr($sRes1, $j, 40)."\n";
+                $sRes .= substr($sRes1, $j, 40)."\n";
             }
             file_put_contents('log/'.$i.'.1', $sRes);
 
             $sRes = $sURL2.":\n";
             for ($j = 0; $j < strlen($sRes2); $j+=40) {
-                $sRes  .= substr($sRes2, $j, 40)."\n";
+                $sRes .= substr($sRes2, $j, 40)."\n";
             }
             file_put_contents('log/'.$i.'.2', $sRes);
         }

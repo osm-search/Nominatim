@@ -9,6 +9,7 @@ require_once('ParameterParser.php');
  *
  */
 
+
 function chksql($oSql, $sMsg = "Database request failed")
 {
     if (!PEAR::isError($oSql)) return $oSql;
@@ -95,4 +96,3 @@ if (CONST_NoAccessControl) {
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
 
 if (CONST_Debug) header('Content-type: text/html; charset=utf-8');
-

@@ -237,15 +237,18 @@ class PlaceLookup
 
 
 
-    // returns an array which will contain the keys
-    //   aBoundingBox
-    // and may also contain one or more of the keys
-    //   asgeojson
-    //   askml
-    //   assvg
-    //   astext
-    //   lat
-    //   lon
+    /* returns an array which will contain the keys
+     *   aBoundingBox
+     * and may also contain one or more of the keys
+     *   asgeojson
+     *   askml
+     *   assvg
+     *   astext
+     *   lat
+     *   lon
+     */
+
+
     function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
     {
 
@@ -301,7 +304,7 @@ class PlaceLookup
                                                    (string)$aPointPolygon['maxlon']
                                                   );
             }
-        } // CONST_Search_AreaPolygons
+        }
 
         // as a fallback we generate a bounding box without knowing the size of the geometry
         if ((!isset($aOutlineResult['aBoundingBox'])) && isset($fLon)) {

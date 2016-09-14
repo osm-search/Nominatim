@@ -1,17 +1,14 @@
 <?php
 
-for($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6, 15, 2013); $iTimestamp += 24*60*60)
-{
+for ($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6, 15, 2013); $iTimestamp += 24*60*60) {
     $sYear = date("Y", $iTimestamp);
     $sMonth = date("Y-m", $iTimestamp);
     $sDay = date("Ymd", $iTimestamp);
 
-    for($iHour = 0; $iHour < 24; $iHour++)
-    {
+    for ($iHour = 0; $iHour < 24; $iHour++) {
         $sFilename = sprintf("pagecounts-".$sDay."-%02d0000", $iHour);
         echo $sFilename."\n";
-        if (!file_exists($sFilename.'.gz'))
-        {
+        if (!file_exists($sFilename.'.gz')) {
             exec('wget http://dumps.wikimedia.org/other/pagecounts-raw/'.$sYear.'/'.$sMonth.'/'.$sFilename.'.gz');
         }
 
@@ -25,57 +22,42 @@ for($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6, 
         $sPrevLine = true;
         $sDayLine = true;
 
-        do
-        {
-            if ($sPrevKey === $sDayKey)
-            {
+        do {
+            if ($sPrevKey === $sDayKey) {
                 if ($sPrevLine !== true) fputs($hNewTotals, "$sPrevKey ".($iPrevValue+$iDayValue)."\n");
                 $sPrevLine = true;
                 $sDayLine = true;
-            }
-            else if ($sDayKey !== false && ($sPrevKey > $sDayKey || $sPrevKey === false))
-            {
+            } elseif ($sDayKey !== false && ($sPrevKey > $sDayKey || $sPrevKey === false)) {
                 fputs($hNewTotals, "$sDayKey ".($iDayValue)."\n");
                 $sDayLine = true;
-            }
-            else if ($sPrevKey !== false && ($sDayKey > $sPrevKey || $sDayKey === false))
-            {
+            } elseif ($sPrevKey !== false && ($sDayKey > $sPrevKey || $sDayKey === false)) {
                 fputs($hNewTotals, "$sPrevKey ".($iPrevValue)."\n");
                 $sPrevLine = true;
             }
 
-            if ($sPrevLine === true)
-            {
+            if ($sPrevLine === true) {
                 $sPrevLine = $hPrevTotals?fgets($hPrevTotals, 4096):false;
-                if ($sPrevLine !== false)
-                {
+                if ($sPrevLine !== false) {
                     $aPrevLine = explode(' ', $sPrevLine);
                     $sPrevKey = $aPrevLine[0].' '.$aPrevLine[1];
                     $iPrevValue = (int)$aPrevLine[2];
-                }
-                else
-                {
+                } else {
                     $sPrevKey = false;
                     $iPrevValue =  0;
                 }
             }
 
-            if ($sDayLine === true)
-            {
+            if ($sDayLine === true) {
                 $sDayLine = $hDayTotals?fgets($hDayTotals, 4096):false;
-                if ($sDayLine !== false)
-                {
+                if ($sDayLine !== false) {
                     preg_match('#^([a-z]{2}) ([^ :]+) ([0-9]+) [0-9]+$#', $sDayLine, $aMatch);
                     $sDayKey = $aMatch[1].' '.$aMatch[2];
                     $iDayValue = (int)$aMatch[3];
-                }
-                else
-                {
+                } else {
                     $sDayKey = false;
                     $iDayValue = 0;
                 }
             }
-
         } while ($sPrevLine !== false || $sDayLine !== false);
 
         @fclose($hPrevTotals);

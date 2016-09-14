@@ -67,4 +67,3 @@ if (!$aResult['reverse-only']) {
         else echo ".";
     }
 }
-

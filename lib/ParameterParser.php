@@ -4,9 +4,10 @@ class ParameterParser
 {
     private $aParams;
 
-    function __construct($aParams = NULL)
+
+    function __construct($aParams = null)
     {
-        $this->aParams = ($aParams === NULL) ? $_GET : $aParams;
+        $this->aParams = ($aParams === null) ? $_GET : $aParams;
     }
 
     function getBool($sName, $bDefault = false)
@@ -77,9 +78,9 @@ class ParameterParser
         return $aDefault;
     }
 
-    function getPreferredLanguages($sFallback = NULL)
+    function getPreferredLanguages($sFallback = null)
     {
-        if ($sFallback === NULL && isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+        if ($sFallback === null && isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
             $sFallback = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
         }
 

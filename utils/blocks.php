@@ -35,9 +35,9 @@ if ($aResult['list']) {
         printf(
             " %-40s | %12s | %7s | %13s | %31s | %8s\n",
             $sKey,
-            $aDetails['totalBlocks'], 
+            $aDetails['totalBlocks'],
             (int)$aDetails['currentBucketSize'],
-            $aDetails['currentlyBlocked']?'Y':'N', 
+            $aDetails['currentlyBlocked']?'Y':'N',
             date("r", $aDetails['lastBlockTimestamp']),
             $aDetails['isSleeping']?'Y':'N'
         );

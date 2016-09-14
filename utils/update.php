@@ -237,7 +237,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             // First check if there are new updates published (except for minutelies - there's always new diffs to process)
             if (CONST_Replication_Update_Interval > 60) {
                 unset($aReplicationLag);
-                exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
+                exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel);
                 while ($iErrorLevel > 0 || $aReplicationLag[0] < 1) {
                     if ($iErrorLevel) {
                         echo "Error: $iErrorLevel. ";
@@ -247,7 +247,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                     }
                     sleep(CONST_Replication_Recheck_Interval);
                     unset($aReplicationLag);
-                    exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel); 
+                    exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel);
                 }
                 // There are new replication files - use osmosis to download the file
                 echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
@@ -325,6 +325,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         sleep($iSleep);
     }
 }
+
 
 function getosmosistimestamp($sOsmosisConfigDirectory)
 {

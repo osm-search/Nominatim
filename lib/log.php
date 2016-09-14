@@ -1,5 +1,6 @@
 <?php
 
+
 function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 {
     $fStartTime = microtime(true);
@@ -70,5 +71,4 @@ function logEnd(&$oDB, $hLog, $iNumResults)
         );
         file_put_contents(CONST_Log_File, $aOutdata, FILE_APPEND | LOCK_EX);
     }
-
 }

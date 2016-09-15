@@ -393,7 +393,7 @@ if (isset($aCMDResult['link'])) {
                 break;
             case 'prefecture japan':
                 $aRecord['name'] = trim(str_replace(' Prefecture', ' ', $aRecord['name']));
-                break;
+                // intentionally no break
             case 'state':
             case '#us state':
             case 'county':
@@ -420,7 +420,7 @@ if (isset($aCMDResult['link'])) {
                 break;
             case 'settlement':
                 $bUnknown = true;
-                break;
+                // intentionally no break
             case 'french commune':
             case 'italian comune':
             case 'uk place':

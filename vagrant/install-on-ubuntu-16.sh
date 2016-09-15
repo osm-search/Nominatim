@@ -19,7 +19,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 
     sudo apt-get update -qq
-    sudo apt-get -o Dpkg::Options::="--force-confnew" --force-yes -fuy dist-upgrade #DOCS:    sudo apt-get upgrade
+    sudo apt-get -o Dpkg::Options::="--force-confold" --force-yes -fuy dist-upgrade #DOCS:    sudo apt-get upgrade
 
 # Now you can install all packages needed for Nominatim:
 

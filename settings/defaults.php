@@ -13,15 +13,15 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Limit_Reindexing', true);
 // Set to false to avoid importing extra postcodes for the US.
 @define('CONST_Use_Extra_US_Postcodes', true);
-// Set to true after importing Tiger house number data for the US.
-// Note: The tables must already exist or queries will throw errors.
-//       After changing this setting run ./utils/setup --create-functions
-//       again.
+/* Set to true after importing Tiger house number data for the US.
+   Note: The tables must already exist or queries will throw errors.
+         After changing this setting run ./utils/setup --create-functions
+         again. */
 @define('CONST_Use_US_Tiger_Data', false);
-// Set to true after importing other external house number data.
-// Note: the aux tables must already exist or queries will throw errors.
-//       After changing this setting run ./utils/setup --create-functions
-//       again.
+/* Set to true after importing other external house number data.
+   Note: the aux tables must already exist or queries will throw errors.
+        After changing this setting run ./utils/setup --create-functions
+        again. */
 @define('CONST_Use_Aux_Location_data', false);
 
 // Proxy settings
@@ -89,7 +89,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 
 // Maximum number of OSM ids that may be queried at once
 // for the places endpoint.
-@define('CONST_Places_Max_ID_count', 50); 
+@define('CONST_Places_Max_ID_count', 50);
 
 // Number of different geometry formats that may be queried in parallel.
 // Set to zero to disable polygon output.
@@ -101,4 +101,3 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Log_DB', false);
 // Set to a file name to enable logging to a file.
 @define('CONST_Log_File', false);
-

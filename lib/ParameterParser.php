@@ -1,16 +1,18 @@
 <?php
 
+namespace Nominatim;
+
 class ParameterParser
 {
     private $aParams;
 
 
-    function __construct($aParams = null)
+    public function __construct($aParams = null)
     {
         $this->aParams = ($aParams === null) ? $_GET : $aParams;
     }
 
-    function getBool($sName, $bDefault = false)
+    public function getBool($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -19,7 +21,7 @@ class ParameterParser
         return (bool) $this->aParams[$sName];
     }
 
-    function getInt($sName, $bDefault = false)
+    public function getInt($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -32,7 +34,7 @@ class ParameterParser
         return (int) $this->aParams[$sName];
     }
 
-    function getFloat($sName, $bDefault = false)
+    public function getFloat($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -45,7 +47,7 @@ class ParameterParser
         return (float) $this->aParams[$sName];
     }
 
-    function getString($sName, $bDefault = false)
+    public function getString($sName, $bDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $bDefault;
@@ -54,7 +56,7 @@ class ParameterParser
         return $this->aParams[$sName];
     }
 
-    function getSet($sName, $aValues, $sDefault = false)
+    public function getSet($sName, $aValues, $sDefault = false)
     {
         if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
             return $sDefault;
@@ -67,7 +69,7 @@ class ParameterParser
         return $this->aParams[$sName];
     }
 
-    function getStringList($sName, $aDefault = false)
+    public function getStringList($sName, $aDefault = false)
     {
         $sValue = $this->getString($sName);
 
@@ -78,7 +80,7 @@ class ParameterParser
         return $aDefault;
     }
 
-    function getPreferredLanguages($sFallback = null)
+    public function getPreferredLanguages($sFallback = null)
     {
         if ($sFallback === null && isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
             $sFallback = $_SERVER["HTTP_ACCEPT_LANGUAGE"];

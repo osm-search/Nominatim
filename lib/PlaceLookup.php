@@ -1,5 +1,7 @@
 <?php
 
+namespace Nominatim;
+
 class PlaceLookup
 {
     protected $oDB;
@@ -18,73 +20,73 @@ class PlaceLookup
     protected $fPolygonSimplificationThreshold = 0.0;
 
 
-    function PlaceLookup(&$oDB)
+    public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
     }
 
-    function setLanguagePreference($aLangPrefOrder)
+    public function setLanguagePreference($aLangPrefOrder)
     {
         $this->aLangPrefOrder = $aLangPrefOrder;
     }
 
-    function setIncludeAddressDetails($bAddressDetails = true)
+    public function setIncludeAddressDetails($bAddressDetails = true)
     {
         $this->bAddressDetails = $bAddressDetails;
     }
 
-    function setIncludeExtraTags($bExtraTags = false)
+    public function setIncludeExtraTags($bExtraTags = false)
     {
         $this->bExtraTags = $bExtraTags;
     }
 
-    function setIncludeNameDetails($bNameDetails = false)
+    public function setIncludeNameDetails($bNameDetails = false)
     {
         $this->bNameDetails = $bNameDetails;
     }
 
 
-    function setIncludePolygonAsPoints($b = true)
+    public function setIncludePolygonAsPoints($b = true)
     {
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    function getIncludePolygonAsPoints()
+    public function getIncludePolygonAsPoints()
     {
         return $this->bIncludePolygonAsPoints;
     }
 
-    function setIncludePolygonAsText($b = true)
+    public function setIncludePolygonAsText($b = true)
     {
         $this->bIncludePolygonAsText = $b;
     }
 
-    function getIncludePolygonAsText()
+    public function getIncludePolygonAsText()
     {
         return $this->bIncludePolygonAsText;
     }
 
-    function setIncludePolygonAsGeoJSON($b = true)
+    public function setIncludePolygonAsGeoJSON($b = true)
     {
         $this->bIncludePolygonAsGeoJSON = $b;
     }
 
-    function setIncludePolygonAsKML($b = true)
+    public function setIncludePolygonAsKML($b = true)
     {
         $this->bIncludePolygonAsKML = $b;
     }
 
-    function setIncludePolygonAsSVG($b = true)
+    public function setIncludePolygonAsSVG($b = true)
     {
         $this->bIncludePolygonAsSVG = $b;
     }
 
-    function setPolygonSimplificationThreshold($f)
+    public function setPolygonSimplificationThreshold($f)
     {
         $this->fPolygonSimplificationThreshold = $f;
     }
 
-    function lookupOSMID($sType, $iID)
+    public function lookupOSMID($sType, $iID)
     {
         $sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int)$iID." order by type = 'postcode' asc";
         $iPlaceID = chksql($this->oDB->getOne($sSQL));
@@ -92,7 +94,7 @@ class PlaceLookup
         return $this->lookup((int)$iPlaceID);
     }
 
-    function lookup($iPlaceID, $sType = '', $fInterpolFraction = 0.0)
+    public function lookup($iPlaceID, $sType = '', $fInterpolFraction = 0.0)
     {
         if (!$iPlaceID) return null;
 
@@ -191,7 +193,7 @@ class PlaceLookup
         return $aPlace;
     }
 
-    function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
+    public function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
     {
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
 
@@ -202,7 +204,7 @@ class PlaceLookup
         return chksql($this->oDB->getAll($sSQL));
     }
 
-    function getAddressNames($iPlaceID, $housenumber = -1)
+    public function getAddressNames($iPlaceID, $housenumber = -1)
     {
         $aAddressLines = $this->getAddressDetails($iPlaceID, false, $housenumber);
 
@@ -249,7 +251,7 @@ class PlaceLookup
      */
 
 
-    function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
+    public function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
     {
 
         $aOutlineResult = array();

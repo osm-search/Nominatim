@@ -9,9 +9,9 @@ require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
 $oDB =& getDB();
-$oParams = new ParameterParser();
+$oParams = new Nominatim\ParameterParser();
 
-$oGeocode = new Geocode($oDB);
+$oGeocode = new Nominatim\Geocode($oDB);
 
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 $oGeocode->setLanguagePreference($aLangPrefOrder);
@@ -64,7 +64,7 @@ if (CONST_Search_BatchMode && isset($_GET['batch'])) {
     $aBatchResults = array();
     foreach ($aBatch as $aBatchParams) {
         $oBatchGeocode = clone $oGeocode;
-        $oBatchParams = new ParameterParser($aBatchParams);
+        $oBatchParams = new Nominatim\ParameterParser($aBatchParams);
         $oBatchGeocode->loadParamArray($oBatchParams);
         $oBatchGeocode->setQueryFromParams($oBatchParams);
         $aSearchResults = $oBatchGeocode->lookup();

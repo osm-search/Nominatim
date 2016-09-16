@@ -28,12 +28,12 @@ $aCMDOptions
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 $oDB =& getDB();
-$oParams = new ParameterParser($aCMDResult);
+$oParams = new Nominatim\ParameterParser($aCMDResult);
 
 if ($oParams->getBool('search')) {
     if (isset($aCMDResult['nodedupe'])) $aCMDResult['dedupe'] = 'false';
 
-    $oGeocode = new Geocode($oDB);
+    $oGeocode = new Nominatim\Geocode($oDB);
 
     $oGeocode->setLanguagePreference($oParams->getPreferredLanguages(false));
     $oGeocode->loadParamArray($oParams);

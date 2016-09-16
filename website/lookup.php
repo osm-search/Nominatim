@@ -8,7 +8,7 @@ require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
-$oParams = new ParameterParser();
+$oParams = new Nominatim\ParameterParser();
 
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('xml', 'json'), 'xml');
@@ -23,7 +23,7 @@ $hLog = logStart($oDB, 'place', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 $aSearchResults = array();
 $aCleanedQueryParts = array();
 
-$oPlaceLookup = new PlaceLookup($oDB);
+$oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->setLanguagePreference($aLangPrefOrder);
 $oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
 $oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));

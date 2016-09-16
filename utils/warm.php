@@ -25,9 +25,9 @@ $oDB =& getDB();
 $bVerbose = $aResult['verbose'];
 
 if (!$aResult['search-only']) {
-    $oReverseGeocode = new ReverseGeocode($oDB);
+    $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
     $oReverseGeocode->setZoom(20);
-    $oPlaceLookup = new PlaceLookup($oDB);
+    $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
     $oPlaceLookup->setIncludeAddressDetails(true);
     $oPlaceLookup->setLanguagePreference(array('en'));
 
@@ -53,7 +53,7 @@ if (!$aResult['search-only']) {
 }
 
 if (!$aResult['reverse-only']) {
-    $oGeocode =& new Geocode($oDB);
+    $oGeocode =& new Nominatim\Geocode($oDB);
 
     echo "Warm search: ";
     if ($bVerbose) echo "\n";

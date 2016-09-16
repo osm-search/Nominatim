@@ -7,7 +7,7 @@ require_once(CONST_BasePath.'/lib/log.php');
 require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
-$oParams = new ParameterParser();
+$oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = 'html';
 $aLangPrefOrder = $oParams->getPreferredLanguages();

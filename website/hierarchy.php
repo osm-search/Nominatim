@@ -8,7 +8,7 @@ require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
-$oParams = new ParameterParser();
+$oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
 $aLangPrefOrder = $oParams->getPreferredLanguages();
@@ -51,7 +51,7 @@ if (CONST_Use_Aux_Location_data) {
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
-$oPlaceLookup = new PlaceLookup($oDB);
+$oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->setLanguagePreference($aLangPrefOrder);
 $oPlaceLookup->setIncludeAddressDetails(true);
 

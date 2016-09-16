@@ -1,4 +1,7 @@
 <?php
+
+namespace Nominatim;
+
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 
@@ -49,67 +52,67 @@ class Geocode
     protected $aStructuredQuery = false;
 
 
-    function Geocode(&$oDB)
+    public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
     }
 
-    function setReverseInPlan($bReverse)
+    public function setReverseInPlan($bReverse)
     {
         $this->bReverseInPlan = $bReverse;
     }
 
-    function setLanguagePreference($aLangPref)
+    public function setLanguagePreference($aLangPref)
     {
         $this->aLangPrefOrder = $aLangPref;
     }
 
-    function getIncludeAddressDetails()
+    public function getIncludeAddressDetails()
     {
         return $this->bIncludeAddressDetails;
     }
 
-    function getIncludeExtraTags()
+    public function getIncludeExtraTags()
     {
         return $this->bIncludeExtraTags;
     }
 
-    function getIncludeNameDetails()
+    public function getIncludeNameDetails()
     {
         return $this->bIncludeNameDetails;
     }
 
-    function setIncludePolygonAsPoints($b = true)
+    public function setIncludePolygonAsPoints($b = true)
     {
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    function setIncludePolygonAsText($b = true)
+    public function setIncludePolygonAsText($b = true)
     {
         $this->bIncludePolygonAsText = $b;
     }
 
-    function setIncludePolygonAsGeoJSON($b = true)
+    public function setIncludePolygonAsGeoJSON($b = true)
     {
         $this->bIncludePolygonAsGeoJSON = $b;
     }
 
-    function setIncludePolygonAsKML($b = true)
+    public function setIncludePolygonAsKML($b = true)
     {
         $this->bIncludePolygonAsKML = $b;
     }
 
-    function setIncludePolygonAsSVG($b = true)
+    public function setIncludePolygonAsSVG($b = true)
     {
         $this->bIncludePolygonAsSVG = $b;
     }
 
-    function setPolygonSimplificationThreshold($f)
+    public function setPolygonSimplificationThreshold($f)
     {
         $this->fPolygonSimplificationThreshold = $f;
     }
 
-    function setLimit($iLimit = 10)
+    public function setLimit($iLimit = 10)
     {
         if ($iLimit > 50) $iLimit = 50;
         if ($iLimit < 1) $iLimit = 1;
@@ -118,18 +121,18 @@ class Geocode
         $this->iLimit = $iLimit + min($iLimit, 10);
     }
 
-    function getExcludedPlaceIDs()
+    public function getExcludedPlaceIDs()
     {
         return $this->aExcludePlaceIDs;
     }
 
-    function getViewBoxString()
+    public function getViewBoxString()
     {
         if (!$this->aViewBox) return null;
         return $this->aViewBox[0].','.$this->aViewBox[3].','.$this->aViewBox[2].','.$this->aViewBox[1];
     }
 
-    function setFeatureType($sFeatureType)
+    public function setFeatureType($sFeatureType)
     {
         switch ($sFeatureType) {
             case 'country':
@@ -147,13 +150,13 @@ class Geocode
         }
     }
 
-    function setRankRange($iMin, $iMax)
+    public function setRankRange($iMin, $iMax)
     {
         $this->iMinAddressRank = $iMin;
         $this->iMaxAddressRank = $iMax;
     }
 
-    function setRoute($aRoutePoints, $fRouteWidth)
+    public function setRoute($aRoutePoints, $fRouteWidth)
     {
         $this->aViewBox = false;
 
@@ -173,7 +176,7 @@ class Geocode
         $this->sViewboxLargeSQL .= ','.($fRouteWidth/30).')';
     }
 
-    function setViewbox($aViewbox)
+    public function setViewbox($aViewbox)
     {
         $this->aViewBox = array_map('floatval', $aViewbox);
 
@@ -189,24 +192,24 @@ class Geocode
         $this->sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".$aBigViewBox[0].",".$aBigViewBox[1]."),ST_Point(".$aBigViewBox[2].",".$aBigViewBox[3].")),4326)";
     }
 
-    function setNearPoint($aNearPoint, $fRadiusDeg = 0.1)
+    public function setNearPoint($aNearPoint, $fRadiusDeg = 0.1)
     {
         $this->aNearPoint = array((float)$aNearPoint[0], (float)$aNearPoint[1], (float)$fRadiusDeg);
     }
 
-    function setQuery($sQueryString)
+    public function setQuery($sQueryString)
     {
         $this->sQuery = $sQueryString;
         $this->aStructuredQuery = false;
     }
 
-    function getQueryString()
+    public function getQueryString()
     {
         return $this->sQuery;
     }
 
 
-    function loadParamArray($oParams)
+    public function loadParamArray($oParams)
     {
         $this->bIncludeAddressDetails
          = $oParams->getBool('addressdetails', $this->bIncludeAddressDetails);
@@ -275,7 +278,7 @@ class Geocode
         }
     }
 
-    function setQueryFromParams($oParams)
+    public function setQueryFromParams($oParams)
     {
         // Search query
         $sQuery = $oParams->getString('q');
@@ -295,7 +298,7 @@ class Geocode
         }
     }
 
-    function loadStructuredAddressElement($sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
+    public function loadStructuredAddressElement($sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
     {
         $sValue = trim($sValue);
         if (!$sValue) return false;
@@ -308,7 +311,7 @@ class Geocode
         return true;
     }
 
-    function setStructuredQuery($sAmentiy = false, $sStreet = false, $sCity = false, $sCounty = false, $sState = false, $sCountry = false, $sPostalCode = false)
+    public function setStructuredQuery($sAmentiy = false, $sStreet = false, $sCity = false, $sCounty = false, $sState = false, $sCountry = false, $sPostalCode = false)
     {
         $this->sQuery = false;
 
@@ -336,7 +339,7 @@ class Geocode
         }
     }
 
-    function fallbackStructuredQuery()
+    public function fallbackStructuredQuery()
     {
         if (!$this->aStructuredQuery) return false;
 
@@ -357,7 +360,7 @@ class Geocode
         return false;
     }
 
-    function getDetails($aPlaceIDs)
+    public function getDetails($aPlaceIDs)
     {
         //$aPlaceIDs is an array with key: placeID and value: tiger-housenumber, if found, else -1
         if (sizeof($aPlaceIDs) == 0) return array();
@@ -488,7 +491,7 @@ class Geocode
         return $aSearchResults;
     }
 
-    function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
+    public function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
     {
         /*
              Calculate all searches using aValidTokens i.e.
@@ -742,7 +745,7 @@ class Geocode
     */
 
 
-    function lookup()
+    public function lookup()
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return false;
 
@@ -1464,7 +1467,7 @@ class Geocode
             }
         } else {
             // Just interpret as a reverse geocode
-            $oReverse = new ReverseGeocode($this->oDB);
+            $oReverse = new Nominatim\ReverseGeocode($this->oDB);
             $oReverse->setZoom(18);
 
             $aLookup = $oReverse->lookup(

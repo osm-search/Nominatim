@@ -9,7 +9,7 @@ require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
-$oParams = new ParameterParser();
+$oParams = new Nominatim\ParameterParser();
 
 $bAsGeoJSON = $oParams->getBool('polygon_geojson');
 $bAsKML = $oParams->getBool('polygon_kml');
@@ -39,7 +39,7 @@ $oDB =& getDB();
 $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 
-$oPlaceLookup = new PlaceLookup($oDB);
+$oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->setLanguagePreference($aLangPrefOrder);
 $oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
 $oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));
@@ -52,7 +52,7 @@ $fLon = $oParams->getFloat('lon');
 if ($sOsmType && $iOsmId > 0) {
     $aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
 } elseif ($fLat !== false && $fLon !== false) {
-    $oReverseGeocode = new ReverseGeocode($oDB);
+    $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
     $oReverseGeocode->setZoom($oParams->getInt('zoom', 18));
 
     $aLookup = $oReverseGeocode->lookup($fLat, $fLon);

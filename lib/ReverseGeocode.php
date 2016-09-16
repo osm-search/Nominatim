@@ -1,18 +1,20 @@
 <?php
 
+namespace Nominatim;
+
 class ReverseGeocode
 {
     protected $oDB;
     protected $iMaxRank = 28;
 
 
-    function ReverseGeocode(&$oDB)
+    public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
     }
 
 
-    function setZoom($iZoom)
+    public function setZoom($iZoom)
     {
         // Zoom to rank, this could probably be calculated but a lookup gives fine control
         $aZoomRank = array(
@@ -47,7 +49,7 @@ class ReverseGeocode
      */
 
 
-    function lookup($fLat, $fLon, $bDoInterpolation = true)
+    public function lookup($fLat, $fLon, $bDoInterpolation = true)
     {
         $sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
         $iMaxRank = $this->iMaxRank;

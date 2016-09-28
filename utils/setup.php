@@ -38,6 +38,7 @@ $aCMDOptions
    array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
    array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
+   array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
@@ -588,6 +589,32 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     );
 
     pgsqlRunScript($sTemplate);
+}
+
+if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
+    echo 'Creating search index for default country names';
+    $bDidSomething = true;
+
+    pgsqlRunScript("select getorcreate_country(make_standard_name('uk'), 'gb')");
+    pgsqlRunScript("select getorcreate_country(make_standard_name('united states'), 'us')");
+    pgsqlRunScript("select count(*) from (select getorcreate_country(make_standard_name(country_code), country_code) from country_name where country_code is not null) as x");
+    pgsqlRunScript("select count(*) from (select getorcreate_country(make_standard_name(name->'name'), country_code) from country_name where name ? 'name') as x");
+
+    $sSQL = 'select count(*) from (select getorcreate_country(make_standard_name(v), country_code) from (select country_code, skeys(name) as k, svals(name) as v from country_name) x where k ';
+    if (CONST_Languages) {
+        $sSQL .= 'in ';
+        $sDelim = '(';
+        foreach (explode(',', CONST_Languages) as $sLang) {
+            $sSQL .= $sDelim."'name:$sLang'";
+            $sDelim = ',';
+        }
+        $sSQL .= ')';
+    } else {
+        // all include all simple name tags
+        $sSQL .= "like 'name:%'";
+    }
+    $sSQL .= ') v';
+    pgsqlRunScript($sSQL);
 }
 
 if ($aCMDResult['drop']) {

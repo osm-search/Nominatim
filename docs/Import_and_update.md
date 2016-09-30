@@ -67,10 +67,8 @@ avoid swapping, never give more than 2/3 of RAM to osm2pgsql.
 Loading additional datasets
 ---------------------------
 
-The following commands will create additional entries for countries and POI searches:
+The following commands will create additional entries for POI searches:
 
-    ./utils/specialphrases.php --countries > specialphrases_countries.sql
-    psql -d nominatim -f specialphrases_countries.sql
     ./utils/specialphrases.php --wiki-import > specialphrases.sql
     psql -d nominatim -f specialphrases.sql
 

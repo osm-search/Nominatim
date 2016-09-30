@@ -11,6 +11,13 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Database_Web_User', 'www-data');
 @define('CONST_Max_Word_Frequency', '50000');
 @define('CONST_Limit_Reindexing', true);
+// Restrict search languages.
+// Normally Nominatim will include all language variants of name:XX
+// in the search index. Set this to a comma separated list of language
+// codes, to restrict import to a subset of languages.
+// Currently only affects the import of country names and special phrases.
+@define('CONST_Languages', false);
+
 // Set to false to avoid importing extra postcodes for the US.
 @define('CONST_Use_Extra_US_Postcodes', true);
 /* Set to true after importing Tiger house number data for the US.

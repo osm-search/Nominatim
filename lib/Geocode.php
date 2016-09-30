@@ -1467,7 +1467,7 @@ class Geocode
             }
         } else {
             // Just interpret as a reverse geocode
-            $oReverse = new Nominatim\ReverseGeocode($this->oDB);
+            $oReverse = new ReverseGeocode($this->oDB);
             $oReverse->setZoom(18);
 
             $aLookup = $oReverse->lookup(

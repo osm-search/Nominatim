@@ -1480,6 +1480,7 @@ class Geocode
 
             if ($aLookup['place_id']) {
                 $aSearchResults = $this->getDetails(array($aLookup['place_id'] => -1));
+                $aResultPlaceIDs[$aLookup['place_id']] = -1;
             } else {
                 $aSearchResults = array();
             }

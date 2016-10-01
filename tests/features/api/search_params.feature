@@ -35,6 +35,12 @@ Feature: Search queries
           | country      | Canada
           | country_code | ca
 
+    Scenario: coordinate search with addressdetails
+        When sending json search query "51.193058013916,15.5245780944824" with address
+        Then result addresses contain
+          | village    | country | country_code
+          | Kraszowice | Polska  | pl
+
     Scenario: Address details with unknown class types
         When sending json search query "foobar, Essen" with address
         Then results contain

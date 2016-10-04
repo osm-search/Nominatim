@@ -2343,7 +2343,7 @@ BEGIN
 
   IF for_place_id IS NULL THEN
     select parent_place_id, calculated_country_code, housenumber, rank_search, postcode, name, class, type from placex 
-      WHERE place_id = in_place_id and rank_address = 30 
+      WHERE place_id = in_place_id and  rank_search > 27
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 

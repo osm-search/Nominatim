@@ -207,3 +207,11 @@ Feature: API regression tests
          | osm_type   | osm_id     | latlon
          | node       | 257363453  | 35.8404121,128.5586643 +-100m
 
+    Scenario: trac #5427
+        Given the request parameters
+         | countrycodes |
+         | DE           |
+        When sending json search query "12345" with address
+        Then result addresses contain
+         | country_code |
+         | de           |

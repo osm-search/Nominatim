@@ -252,7 +252,7 @@ class Geocode
                     $aCountries[] = strtolower($sCountryCode);
                 }
             }
-            if (isset($aCountryCodes))
+            if (isset($aCountries))
                 $this->aCountryCodes = $aCountries;
         }
 

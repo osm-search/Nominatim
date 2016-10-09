@@ -66,11 +66,23 @@ $sSQL .= " ST_y(centroid) as lat, ST_x(centroid) as lon,";
 $sSQL .= " case when importance = 0 OR importance IS NULL then 0.75-(rank_search::float/40) else importance end as calculated_importance, ";
 $sSQL .= " ST_AsText(CASE WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ELSE geometry END) as outlinestring";
 $sSQL .= " from placex where place_id = $iPlaceID";
+
 $aPointDetails = chksql($oDB->getRow($sSQL), "Could not get details of place object.");
+
+if (!$aPointDetails) {
+    userError("Unknown place id.");
+}
+
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
 
 $aClassType = getClassTypesWithImportance();
-$aPointDetails['icon'] = $aClassType[$aPointDetails['class'].':'.$aPointDetails['type']]['icon'];
+
+$sPointClassType = $aPointDetails['class'].':'.$aPointDetails['type'];
+if (isset($aClassType[$sPointClassType]) && $aClassType[$aPointDetails]['icon']) {
+    $aPointDetails['icon'] = $aClassType[$aPointClassType]['icon'];
+} else {
+    $aPointDetails['icon'] = false;
+}
 
 // Get all alternative names (languages, etc)
 $sSQL = "select (each(name)).key,(each(name)).value from placex where place_id = $iPlaceID order by (each(name)).key";

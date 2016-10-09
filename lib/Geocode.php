@@ -162,7 +162,7 @@ class Geocode
 
         $this->sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
         $sSep = '';
-        foreach ($this->aRoutePoints as $aPoint) {
+        foreach ($aRoutePoints as $aPoint) {
             $fPoint = (float)$aPoint;
             $this->sViewboxCentreSQL .= $sSep.$fPoint;
             $sSep = ($sSep == ' ') ? ',' : ' ';

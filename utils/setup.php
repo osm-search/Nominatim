@@ -163,7 +163,8 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 
     $osm2pgsql = CONST_Osm2pgsql_Binary;
     if (!file_exists($osm2pgsql)) {
-        echo "Please download and build osm2pgsql.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
+        echo "Check CONST_Osm2pgsql_Binary in your local settings file.\n";
+        echo "Normally you should not need to set this manually.\n";
         fail("osm2pgsql not found in '$osm2pgsql'");
     }
 

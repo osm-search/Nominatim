@@ -27,9 +27,11 @@ are in process of consolodating the style. The following rules apply:
    * leave out space between a function name and bracket
      but add one between control statement(if, while, etc.) and bracket
 
-This coding style must be applied to any new or changed code. You are also
-welcome to fix the coding style of existing code but please submit separate
-PRs for this.
+The coding style is enforced with PHPCS and can be tested with:
+
+```
+  phpcs --report-width=120 --colors */**.php
+```
 
 ## Testing
 

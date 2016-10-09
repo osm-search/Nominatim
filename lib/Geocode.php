@@ -1552,7 +1552,7 @@ class Geocode
                 // getAddressDetails() is defined in lib.php and uses the SQL function get_addressdata in functions.sql
                 $aResult['address'] = getAddressDetails($this->oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code'], $aResultPlaceIDs[$aResult['place_id']]);
                 if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city'])) {
-                    $aResult['address'] = array_merge(array('city' => array_shift(array_values($aResult['address']))), $aResult['address']);
+                    $aResult['address'] = array_merge(array('city' => array_values($aResult['address'])[0]), $aResult['address']);
                 }
             }
 

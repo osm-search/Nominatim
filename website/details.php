@@ -78,8 +78,8 @@ $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localn
 $aClassType = getClassTypesWithImportance();
 
 $sPointClassType = $aPointDetails['class'].':'.$aPointDetails['type'];
-if (isset($aClassType[$sPointClassType]) && $aClassType[$aPointDetails]['icon']) {
-    $aPointDetails['icon'] = $aClassType[$aPointClassType]['icon'];
+if (isset($aClassType[$sPointClassType]) && $aClassType[$sPointClassType]['icon']) {
+    $aPointDetails['icon'] = $aClassType[$sPointClassType]['icon'];
 } else {
     $aPointDetails['icon'] = false;
 }

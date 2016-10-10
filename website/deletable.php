@@ -13,7 +13,7 @@ $oDB =& getDB();
 $sSQL = "select placex.place_id, calculated_country_code as country_code, name->'name' as name, i.* from placex, import_polygon_delete i where placex.osm_id = i.osm_id and placex.osm_type = i.osm_type and placex.class = i.class and placex.type = i.type";
 $aPolygons = chksql($oDB->getAll($sSQL), "Could not get list of deleted OSM elements.");
 
-if (CONST_DEBUG) {
+if (CONST_Debug) {
     var_dump($aPolygons);
     exit;
 }

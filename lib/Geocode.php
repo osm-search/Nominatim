@@ -180,6 +180,16 @@ class Geocode
     {
         $this->aViewBox = array_map('floatval', $aViewbox);
 
+        if ($this->aViewBox[0] < -180
+            || $this->aViewBox[2] > 180
+            || $this->aViewBox[0] >= $this->aViewBox[2]
+            || $this->aViewBox[1] < -90
+            || $this->aViewBox[3] > 90
+            || $this->aViewBox[1] >= $this->aViewBox[3]
+        ) {
+            userError("Bad parameter 'viewbox'. Out of range".$this->aViewBox[0]."|".$this->aViewBox[1]."|".$this->aViewBox[2]."|".$this->aViewBox[3]);
+        }
+
         $fHeight = $this->aViewBox[0] - $this->aViewBox[2];
         $fWidth = $this->aViewBox[1] - $this->aViewBox[3];
         $aBigViewBox[0] = $this->aViewBox[0] + $fHeight;
@@ -258,10 +268,16 @@ class Geocode
 
         $aViewbox = $oParams->getStringList('viewboxlbrt');
         if ($aViewbox) {
+            if (count($aViewbox) != 4) {
+                userError("Bad parmater 'viewbox'. Expected 4 coordinates.");
+            }
             $this->setViewbox($aViewbox);
         } else {
             $aViewbox = $oParams->getStringList('viewbox');
             if ($aViewbox) {
+                if (count($aViewbox) != 4) {
+                    userError("Bad parmater 'viewbox'. Expected 4 coordinates.");
+                }
                 $this->setViewBox(array(
                                    $aViewbox[0],
                                    $aViewbox[3],

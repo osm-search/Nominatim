@@ -187,7 +187,7 @@ class Geocode
             || $this->aViewBox[3] > 90
             || $this->aViewBox[1] >= $this->aViewBox[3]
         ) {
-            userError("Bad parameter 'viewbox'. Out of range".$this->aViewBox[0]."|".$this->aViewBox[1]."|".$this->aViewBox[2]."|".$this->aViewBox[3]);
+            userError("Bad parameter 'viewbox'. Out of range.");
         }
 
         $fHeight = $this->aViewBox[0] - $this->aViewBox[2];

@@ -178,7 +178,7 @@ Feature: API regression tests
      Scenario: trac #5238
         Given the request parameters
          | bounded | viewbox
-         | 1       | 0,0,-1,-1
+         | 1       | -1,0,0,-1
         When sending json search query "sy"
         Then exactly 0 results are returned
 

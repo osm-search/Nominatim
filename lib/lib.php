@@ -55,7 +55,7 @@ function getWordSets($aWords, $iDepth)
 {
     $aResult = array(array(join(' ', $aWords)));
     $sFirstToken = '';
-    if ($iDepth < 8) {
+    if ($iDepth < 7) {
         while (sizeof($aWords) > 1) {
             $sWord = array_shift($aWords);
             $sFirstToken .= ($sFirstToken?' ':'').$sWord;

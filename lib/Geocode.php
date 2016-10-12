@@ -880,7 +880,7 @@ class Geocode
             foreach ($aPhrases as $iPhrase => $sPhrase) {
                 $aPhrase = chksql(
                     $this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string"),
-                    "Cannot nomralize query string (is it an UTF-8 string?)"
+                    "Cannot normalize query string (is it a UTF-8 string?)"
                 );
                 if (trim($aPhrase['string'])) {
                     $aPhrases[$iPhrase] = $aPhrase;

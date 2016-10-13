@@ -180,14 +180,15 @@ class Geocode
     {
         $this->aViewBox = array_map('floatval', $aViewbox);
 
-        if ($this->aViewBox[0] < -180
-            || $this->aViewBox[2] > 180
-            || $this->aViewBox[0] >= $this->aViewBox[2]
-            || $this->aViewBox[1] < -90
-            || $this->aViewBox[3] > 90
-            || $this->aViewBox[1] >= $this->aViewBox[3]
+        $this->aViewBox[0] = max(-180.0, min(180, $this->aViewBox[0]));
+        $this->aViewBox[1] = max(-90.0, min(90, $this->aViewBox[1]));
+        $this->aViewBox[2] = max(-180.0, min(180, $this->aViewBox[2]));
+        $this->aViewBox[3] = max(-90.0, min(90, $this->aViewBox[3]));
+
+        if (abs($this->aViewBox[0] - $this->aViewBox[2]) < 0.000000001
+            || abs($this->aViewBox[1] - $this->aViewBox[3]) < 0.000000001
         ) {
-            userError("Bad parameter 'viewbox'. Out of range.");
+            userError("Bad parameter 'viewbox'. Not a box.");
         }
 
         $fHeight = $this->aViewBox[0] - $this->aViewBox[2];

@@ -71,7 +71,9 @@ for ($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6,
 
 // Notes:
 /*
- gzip -dc $FILE.gz | grep -e "^en [^ :]\+ [0-9]\+" | sed "s#\(^[a-z]\{2\}\) \([^ :]\+\) \([0-9]\+\) [0-9]\+#update wikipedia_article set hit_count = coalesce(hit_count,0) + \3 where language = '\1' and title = catch_decode_url_part('\2');#g" | /opt/mapquest/stdbase-dev$
+    gzip -dc $FILE.gz | grep -e "^en [^ :]\+ [0-9]\+" |
+    sed "s#\(^[a-z]\{2\}\) \([^ :]\+\) \([0-9]\+\) [0-9]\+#update wikipedia_article set hit_count = coalesce(hit_count,0) + \3 where language = '\1'
+      and title = catch_decode_url_part('\2');#g" | /opt/mapquest/stdbase-dev$
  cat totals.txt | sed "s#\(^[a-z]\{2\}\) \([^ ]\+\) \([0-9]\+\)\$#update entity_link set hits = s,0) + \3 where target = '\1wiki' and value = catch_decode_url_part('\2');#g"
  cat totals.txt | sed "s#\(^[a-z]\{2\}\) \([^ ]\+\) \([0-9]\+\)\$#update entity_link set hits = coalesce(hits,0) + \3 where target = '\1wiki' and value = catch_decode_url_part('\2');#g"
 */

@@ -346,7 +346,11 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     }
 
     // used by getorcreate_word_id to ignore frequent partial words
-    if (!pg_query($oDB->connection, 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS $$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE')) fail(pg_last_error($oDB->connection));
+    $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
+    $sSQL .= '$$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
+    if (!pg_query($oDB->connection, $sSQL)) {
+        fail(pg_last_error($oDB->connection));
+    }
     echo ".\n";
 
     // pre-create the word list

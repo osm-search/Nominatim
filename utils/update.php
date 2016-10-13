@@ -166,12 +166,17 @@ if ($aResult['deduplicate']) {
     $aPartitions = chksql($oDB->getCol($sSQL));
     $aPartitions[] = 0;
 
-    $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' ' and class is null and type is null and country_code is null group by word_token having count(*) > 1 order by word_token";
+    $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' '";
+    $sSQL .= " and class is null and type is null and country_code is null";
+    $sSQL .= " group by word_token having count(*) > 1 order by word_token";
     $aDuplicateTokens = chksql($oDB->getAll($sSQL));
     foreach ($aDuplicateTokens as $aToken) {
         if (trim($aToken['word_token']) == '' || trim($aToken['word_token']) == '-') continue;
         echo "Deduping ".$aToken['word_token']."\n";
-        $sSQL = "select word_id,(select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num from word where word_token = '".$aToken['word_token']."' and class is null and type is null and country_code is null order by num desc";
+        $sSQL = "select word_id,";
+        $sSQL .= " (select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num";
+        $sSQL .= " from word where word_token = '".$aToken['word_token'];
+        $sSQL .= "' and class is null and type is null and country_code is null order by num desc";
         $aTokenSet = chksql($oDB->getAll($sSQL));
 
         $aKeep = array_shift($aTokenSet);

@@ -115,8 +115,21 @@ if ($hFile) {
                     } elseif ($aClaim['m'][2] == 'globecoordinate') {
                         //
                         if ($aClaim['m'][3]['globe'] != 'http://www.wikidata.org/entity/Q2') $bFail = true;
-                        fputcsv($hFileEntityProperty, array($iID, $iClaim, $iPID, null, null, "SRID=4326;POINT(".((float) $aClaim['m'][3]['longitude'])." ".((float)$aClaim['m'][3]['latitude']).")", null));
-                        // echo "insert into entity_property values (nextval('seq_entity_property'),".$iID.",".$iPID.",null,null,ST_SetSRID(ST_MakePoint(".((float)$aClaim['m'][3]['longitude']).", ".((float)$aClaim['m'][3]['latitude'])."),4326));\n";
+                        fputcsv(
+                            $hFileEntityProperty,
+                            array(
+                             $iID,
+                             $iClaim,
+                             $iPID,
+                             null,
+                             null,
+                             "SRID=4326;POINT(".((float) $aClaim['m'][3]['longitude'])." ".((float)$aClaim['m'][3]['latitude']).")", null
+                            )
+                        );
+                        /* echo "insert into entity_property values (nextval('seq_entity_property'),";
+                         * echo $iID.",".$iPID.",null,null,ST_SetSRID(ST_MakePoint(".((float)$aClaim['m'][3]['longitude']);
+                         * echo ", ".((float)$aClaim['m'][3]['latitude'])."),4326));\n";
+                         */
                     } elseif ($aClaim['m'][2] == 'time') {
                         // TODO!
                         /*

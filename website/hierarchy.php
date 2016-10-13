@@ -25,7 +25,12 @@ if ($sOsmType && $iOsmId > 0) {
 
     // Be nice about our error messages for broken geometry
     if (!$sPlaceId) {
-        $aPointDetails = chksql($oDB->getRow("select osm_type, osm_id, errormessage, class, type, get_name_by_language(name,$sLanguagePrefArraySQL) as localname, ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom from import_polygon_error where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by updated desc limit 1"));
+        $sSQL = "select osm_type, osm_id, errormessage, class, type,";
+        $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname,";
+        $sSQL .= " ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom";
+        $sSQL .= " from import_polygon_error where osm_type = '".$sOsmType;
+        $sSQL .= "' and osm_id = ".$iOsmId." order by updated desc limit 1";
+        $aPointDetails = chksql($oDB->getRow($sSQL));
         if ($aPointDetails) {
             if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
                 $aPointDetails['error_x'] = $aMatches[1];
@@ -87,7 +92,8 @@ if ($sOutputFormat == 'json') {
 
 $aRelatedPlaceIDs = chksql($oDB->getCol($sSQL = "select place_id from placex where linked_place_id = $iPlaceID or place_id = $iPlaceID"));
 
-$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,  st_area(geometry) as area, ";
+$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level,";
+$sSQL .= " rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,  st_area(geometry) as area, ";
 $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
 $sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
 $sSQL .= " where parent_place_id in (".join(',', $aRelatedPlaceIDs).") and name is not null order by rank_address asc,rank_search asc limit 500) as obj";

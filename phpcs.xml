@@ -8,14 +8,10 @@
   <!-- https://github.com/squizlabs/PHP_CodeSniffer/blob/master/CodeSniffer/Standards/PSR2/ruleset.xml -->
   <rule ref="PSR2"/>
 
-
-
-
-  <!-- currently 300 warnings, we set a limit later -->
   <rule ref="Generic.Files.LineLength">
     <properties>
-     <property name="lineLimit" value="9999"/>
-     <property name="absoluteLineLimit" value="0"/>
+     <property name="lineLimit" value="199"/>
+     <property name="absoluteLineLimit" value="199"/>
     </properties>
   </rule>
 

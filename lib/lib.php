@@ -494,7 +494,10 @@ function _debugDumpGroupedSearches($aData, $aTokens)
         }
     }
     echo "<table border=\"1\">";
-    echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th><th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th><th>class</th><th>type</th><th>house#</th><th>Lat</th><th>Lon</th><th>Radius</th></tr>";
+    echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>";
+    echo "<th>Address Tokens</th><th>Address Not</th><th>country</th>";
+    echo "<th>operator</th><th>class</th><th>type</th><th>house#</th>";
+    echo "<th>Lat</th><th>Lon</th><th>Radius</th></tr>";
     foreach ($aData as $iRank => $aRankedSet) {
         foreach ($aRankedSet as $aRow) {
             echo "<tr>";

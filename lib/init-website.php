@@ -52,7 +52,8 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
     echo "<html><body><h1>Internal Server Error</h1>";
     echo '<p>Nominatim has encountered an internal error while processing your request. This is most likely because of a bug in the software.</p>';
     echo "<p><b>Details:</b> ".$sError,"</p>";
-    echo '<p>Feel free to file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. Please include the error message above and the URL you used.</p>';
+    echo '<p>Feel free to file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. ';
+    echo 'Please include the error message above and the URL you used.</p>';
     if (CONST_Debug) {
         echo "<hr><h2>Debugging Information</h2><br>";
         if ($sSQL) {
@@ -76,7 +77,8 @@ function userError($sError)
     echo "<html><body><h1>Bad Request</h1>";
     echo '<p>Nominatim has encountered an error with your request.</p>';
     echo "<p><b>Details:</b> ".$sError."</p>";
-    echo '<p>If you feel this error is incorrect feel file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. Please include the error message above and the URL you used.</p>';
+    echo '<p>If you feel this error is incorrect feel file an issue on <a href="https://github.com/twain47/Nominatim/issues">Github</a>. ';
+    echo 'Please include the error message above and the URL you used.</p>';
     echo "\n</body></html>\n";
     exit;
 }

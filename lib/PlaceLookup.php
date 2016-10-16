@@ -138,7 +138,9 @@ class PlaceLookup
             // but this will never happen, because if the searched point is that close to the endnumber, the endnumber house will be directly taken from placex (in ReverseGeocode.php line 220)
             // and not interpolated
         } else {
-            $sSQL = "select placex.place_id, partition, osm_type, osm_id, class, type, admin_level, housenumber, street, isin, postcode, country_code, parent_place_id, linked_place_id, rank_address, rank_search, ";
+            $sSQL = "select placex.place_id, partition, osm_type, osm_id, class,";
+            $sSQL .= " type, admin_level, housenumber, street, isin, postcode, country_code,";
+            $sSQL .= " parent_place_id, linked_place_id, rank_address, rank_search, ";
             $sSQL .= " coalesce(importance,0.75-(rank_search::float/40)) as importance, indexed_status, indexed_date, wikipedia, calculated_country_code, ";
             $sSQL .= " get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress,";
             $sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";

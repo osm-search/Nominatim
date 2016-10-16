@@ -307,8 +307,14 @@ function _templatesToProperties($aTemplates)
 
 if (isset($aCMDResult['parse-wikipedia'])) {
     $oDB =& getDB();
-    $aArticleNames = $oDB->getCol('select page_title from content where page_namespace = 0 and page_id %10 = '.$aCMDResult['parse-wikipedia'].' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))');
-    // $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0 and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\')) and page_title in (\'Virginia\')');
+    $sSQL = 'select page_title from content where page_namespace = 0 and page_id %10 = ';
+    $sSQL .= $aCMDResult['parse-wikipedia'];
+    $sSQL .= ' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))'
+    $aArticleNames = $oDB->getCol($sSQL);
+    /* $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0
+        and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\'
+        and page_content ilike \'%lon%\')) and page_title in (\'Virginia\')');
+     */
     foreach ($aArticleNames as $sArticleName) {
         $sPageText = $oDB->getOne('select page_content from content where page_namespace = 0 and page_title = \''.pg_escape_string($sArticleName).'\'');
         $aP = _templatesToProperties(_parseWikipediaContent($sPageText));
@@ -520,7 +526,10 @@ if (isset($aCMDResult['link'])) {
                 elseif ($iRank <= 26) $fMaxDist = 0.001;
                 else $fMaxDist = 0.001;
             }
-            echo "-- FOUND \"".substr($aNominatRecords[$i]['DISPLAY_NAME'], 0, 50)."\", ".$aNominatRecords[$i]['CLASS'].", ".$aNominatRecords[$i]['TYPE'].", ".$aNominatRecords[$i]['PLACE_RANK'].", ".$aNominatRecords[$i]['OSM_TYPE']." (dist:$fDiff, max:$fMaxDist)\n";
+            echo "-- FOUND \"".substr($aNominatRecords[$i]['DISPLAY_NAME'], 0, 50);
+            echo "\", ".$aNominatRecords[$i]['CLASS'].", ".$aNominatRecords[$i]['TYPE'];
+            echo ", ".$aNominatRecords[$i]['PLACE_RANK'].", ".$aNominatRecords[$i]['OSM_TYPE'];
+            echo " (dist:$fDiff, max:$fMaxDist)\n";
             if ($fDiff > $fMaxDist) {
                 echo "-- Diff too big $fDiff (max: $fMaxDist)".$aRecord['lat'].','.$aNominatRecords[$i]['LAT'].' & '.$aRecord['lon'].','.$aNominatRecords[$i]['LON']." \n";
             } else {

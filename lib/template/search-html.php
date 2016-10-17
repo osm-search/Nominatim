@@ -103,9 +103,9 @@
 			'tile_url' => $sTileURL,
 			'tile_attribution' => $sTileAttribution
 		);
-		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
+		echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit) . ';';
 
-		echo 'var nominatim_results = ' . json_encode($aSearchResults, JSON_PRETTY_PRINT) . ';'; 
+		echo 'var nominatim_results = ' . json_encode($aSearchResults) . ';';
 	?>
 	</script>
 	<?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>

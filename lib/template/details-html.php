@@ -281,14 +281,14 @@
       'tile_url' => $sTileURL,
       'tile_attribution' => $sTileAttribution
     );
-    echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
+    echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit) . ';';
 
     $aPlace = array(
 			'outlinestring' => $aPointDetails['outlinestring'],
 			'lon' => $aPointDetails['lon'],
 			'lat' => $aPointDetails['lat'],
 	);
-	  echo 'var nominatim_result = ' . json_encode($aPlace, JSON_PRETTY_PRINT) . ';'; 
+	  echo 'var nominatim_result = ' . json_encode($aPlace) . ';'; 
 
 
   ?>

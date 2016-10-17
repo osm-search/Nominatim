@@ -44,3 +44,7 @@ Before submitting a pull request make sure that the following tests pass:
   cd test-php
   phpunit ./
 ```
+
+```
+  phpcs --report-width=120 */**.php
+```

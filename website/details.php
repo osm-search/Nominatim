@@ -90,7 +90,7 @@
 	$aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
 	if (PEAR::isError($aPointDetails['aNames'])) // possible timeout
 	{
-		$aPointDetails['aNames'] = [];
+		$aPointDetails['aNames'] = array();
 	}
 
 	// Extra tags
@@ -98,7 +98,7 @@
 	$aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
 	if (PEAR::isError($aPointDetails['aExtraTags'])) // possible timeout
 	{
-		$aPointDetails['aExtraTags'] = [];
+		$aPointDetails['aExtraTags'] = array();
 	}
 
 	// Address
@@ -113,7 +113,7 @@
 	$aLinkedLines = $oDB->getAll($sSQL);
 	if (PEAR::isError($aLinkedLines)) // possible timeout
 	{
-		$aLinkedLines = [];
+		$aLinkedLines = array();
 	}
 
 	// All places this is an imediate parent of
@@ -126,7 +126,7 @@
 	$aParentOfLines = $oDB->getAll($sSQL);
 	if (PEAR::isError($aParentOfLines)) // possible timeout
 	{
-		$aParentOfLines = [];
+		$aParentOfLines = array();
 	}
 
 	$aPlaceSearchNameKeywords = false;
@@ -137,14 +137,14 @@
 		$aPlaceSearchName = $oDB->getRow($sSQL);
 		if (PEAR::isError($aPlaceSearchName)) // possible timeout
 		{
-			$aPlaceSearchName = [];
+			$aPlaceSearchName = array();
 		}
 
 		$sSQL = "select * from word where word_id in (".substr($aPlaceSearchName['name_vector'],1,-1).")";
 		$aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
 		if (PEAR::isError($aPlaceSearchNameKeywords)) // possible timeout
 		{
-			$aPlaceSearchNameKeywords = [];
+			$aPlaceSearchNameKeywords = array();
 		}
 
 
@@ -152,7 +152,7 @@
 		$aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
 		if (PEAR::isError($aPlaceSearchAddressKeywords)) // possible timeout
 		{
-			$aPlaceSearchAddressKeywords = [];
+			$aPlaceSearchAddressKeywords = array();
 		}
 
 	}

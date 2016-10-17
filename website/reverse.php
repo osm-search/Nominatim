@@ -67,7 +67,7 @@ if ($sOsmType && $iOsmId > 0) {
     userError("Need coordinates or OSM object to lookup.");
 }
 
-if ($aPlace) {
+if (isset($aPlace)) {
     $oPlaceLookup->setIncludePolygonAsPoints(false);
     $oPlaceLookup->setIncludePolygonAsText($bAsText);
     $oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);

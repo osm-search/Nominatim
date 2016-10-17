@@ -13,12 +13,12 @@
     <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
         <div class="form-group">
             <input name="format" type="hidden" value="html">
-            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars($_GET['lat']); ?>" >
-            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars($_GET['lon']); ?>" >
+            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars(isset($_GET['lat']) ? $_GET['lat'] : ''); ?>" >
+            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars(isset($_GET['lon']) ? $_GET['lon'] : ''); ?>" >
             max zoom
 
-            <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars($_GET['zoom']); ?>">
-                <option value="" <?php echo $_GET['zoom']==''?'selected':'' ?> >--</option>
+            <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars(isset($_GET['zoom']) ? $_GET['zoom'] : ''); ?>">
+                <option value="" <?php echo (isset($_GET['zoom']) ? $_GET['zoom'] : '') == '' ? 'selected' : '' ?> >--</option>
                 <?php
 
                     $aZoomLevels = array(
@@ -65,7 +65,7 @@
 
     <div id="content">
 
-<?php if ($aPlace) { ?>
+<?php if (isset($aPlace)) { ?>
 
         <div id="searchresults" class="sidebar">
         <?php
@@ -123,7 +123,7 @@
         );
         echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
-        echo 'var nominatim_results = ' . json_encode([$aPlace], JSON_PRETTY_PRINT) . ';'; 
+        echo 'var nominatim_results = ' . json_encode([isset($aPlace)?$aPlace:[]], JSON_PRETTY_PRINT) . ';'; 
     ?>
     </script>
     <?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>

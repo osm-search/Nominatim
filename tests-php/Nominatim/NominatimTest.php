@@ -186,7 +186,7 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 
 
         $this->assertEquals(
-            65536,
+            41226,
             count(getWordSets(array_fill(0, 18, 'a'), 0))
         );
     }

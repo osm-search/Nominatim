@@ -13,8 +13,8 @@
     <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
         <div class="form-group">
             <input name="format" type="hidden" value="html">
-            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars(isset($_GET['lat']) ? $_GET['lat'] : ''); ?>" >
-            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars(isset($_GET['lon']) ? $_GET['lon'] : ''); ?>" >
+            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars(isset($_GET['lat']) && $_GET['lat']); ?>" >
+            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars(isset($_GET['lon']) && $_GET['lon']); ?>" >
             max zoom
 
             <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars(isset($_GET['zoom']) ? $_GET['zoom'] : ''); ?>">

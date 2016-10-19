@@ -17,8 +17,8 @@
             <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars(isset($_GET['lon']) && $_GET['lon']); ?>" >
             max zoom
 
-            <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars(isset($_GET['zoom']) ? $_GET['zoom'] : ''); ?>">
-                <option value="" <?php echo (isset($_GET['zoom']) ? $_GET['zoom'] : '') == '' ? 'selected' : '' ?> >--</option>
+            <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars(isset($_GET['zoom']) && $_GET['zoom']); ?>">
+                <option value="" <?php echo (isset($_GET['zoom']) && $_GET['zoom']) == '' && 'selected' ?> >--</option>
                 <?php
 
                     $aZoomLevels = array(

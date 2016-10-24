@@ -126,10 +126,10 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     if ($fPostgisVersion < 2.1) {
         // Functions were renamed in 2.1 and throw an annoying deprecation warning
         pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
-        pgsqlRunScript('ALTER FUNCTION ST_Line_Locate_Point(geometry, double precision) RENAME TO ST_LineLocatePoint');
+        pgsqlRunScript('ALTER FUNCTION ST_Line_Locate_Point(geometry, geometry) RENAME TO ST_LineLocatePoint');
     }
     if ($fPostgisVersion < 2.2) {
-        pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, double precision) RENAME TO ST_DistanceSpheroid');
+        pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, geometry, spheroid) RENAME TO ST_DistanceSpheroid');
     }
 
     pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');

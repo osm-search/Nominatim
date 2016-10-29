@@ -169,10 +169,10 @@ class Geocode
         }
         $this->sViewboxCentreSQL .= ")'::geometry,4326)";
 
-        $this->sViewboxSmallSQL = 'st_buffer('.$this->sViewboxCentreSQL;
+        $this->sViewboxSmallSQL = 'ST_BUFFER('.$this->sViewboxCentreSQL;
         $this->sViewboxSmallSQL .= ','.($fRouteWidth/69).')';
 
-        $this->sViewboxLargeSQL = 'st_buffer('.$this->sViewboxCentreSQL;
+        $this->sViewboxLargeSQL = 'ST_BUFFER('.$this->sViewboxCentreSQL;
         $this->sViewboxLargeSQL .= ','.($fRouteWidth/30).')';
     }
 
@@ -199,8 +199,20 @@ class Geocode
         $aBigViewBox[3] = $this->aViewBox[3] - $fWidth;
 
         $this->sViewboxCentreSQL = false;
-        $this->sViewboxSmallSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".$this->aViewBox[0].",".$this->aViewBox[1]."),ST_Point(".$this->aViewBox[2].",".$this->aViewBox[3].")),4326)";
-        $this->sViewboxLargeSQL = "ST_SetSRID(ST_MakeBox2D(ST_Point(".$aBigViewBox[0].",".$aBigViewBox[1]."),ST_Point(".$aBigViewBox[2].",".$aBigViewBox[3].")),4326)";
+        $this->sViewboxSmallSQL = sprintf(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
+            $this->aViewBox[0],
+            $this->aViewBox[1],
+            $this->aViewBox[2],
+            $this->aViewBox[3]
+        );
+        $this->sViewboxLargeSQL = sprintf(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
+            $aBigViewBox[0],
+            $aBigViewBox[1],
+            $aBigViewBox[2],
+            $aBigViewBox[3]
+        );
     }
 
     public function setNearPoint($aNearPoint, $fRadiusDeg = 0.1)
@@ -388,37 +400,71 @@ class Geocode
         $sPlaceIDs = join(',', array_keys($aPlaceIDs));
 
         $sImportanceSQL = '';
-        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " case when ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
-        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " case when ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
 
-        $sSQL = "select osm_type,osm_id,class,type,admin_level,rank_search,rank_address,min(place_id) as place_id, min(parent_place_id) as parent_place_id, calculated_country_code as country_code,";
-        $sSQL .= "get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress,";
-        $sSQL .= "get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
-        $sSQL .= "get_name_by_language(name, ARRAY['ref']) as ref,";
-        if ($this->bIncludeExtraTags) $sSQL .= "hstore_to_json(extratags)::text as extra,";
-        if ($this->bIncludeNameDetails) $sSQL .= "hstore_to_json(name)::text as names,";
-        $sSQL .= "avg(ST_X(centroid)) as lon,avg(ST_Y(centroid)) as lat, ";
-        $sSQL .= $sImportanceSQL."coalesce(importance,0.75-(rank_search::float/40)) as importance, ";
-        $sSQL .= "(select max(p.importance*(p.rank_address+2))";
-        $sSQL .= "   from place_addressline s, placex p";
-        $sSQL .= "   where s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)";
-        $sSQL .= "   and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance, ";
-        $sSQL .= "(extratags->'place') as extra_place ";
-        $sSQL .= "from placex where place_id in ($sPlaceIDs) ";
-        $sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
-        if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
-        if ($this->aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
-        $sSQL .= ") ";
-        if ($this->sAllowedTypesSQLList) $sSQL .= "and placex.class in $this->sAllowedTypesSQLList ";
-        $sSQL .= "and linked_place_id is null ";
-        $sSQL .= "group by osm_type,osm_id,class,type,admin_level,rank_search,rank_address,calculated_country_code,importance";
-        if (!$this->bDeDupe) $sSQL .= ",place_id";
-        $sSQL .= ",langaddress ";
-        $sSQL .= ",placename ";
-        $sSQL .= ",ref ";
-        if ($this->bIncludeExtraTags) $sSQL .= ",extratags";
-        if ($this->bIncludeNameDetails) $sSQL .= ",name";
-        $sSQL .= ",extratags->'place' ";
+        $sSQL  = "SELECT ";
+        $sSQL .= "    osm_type,";
+        $sSQL .= "    osm_id,";
+        $sSQL .= "    class,";
+        $sSQL .= "    type,";
+        $sSQL .= "    admin_level,";
+        $sSQL .= "    rank_search,";
+        $sSQL .= "    rank_address,";
+        $sSQL .= "    min(place_id) AS place_id, ";
+        $sSQL .= "    min(parent_place_id) AS parent_place_id, ";
+        $sSQL .= "    calculated_country_code AS country_code, ";
+        $sSQL .= "    get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) AS langaddress,";
+        $sSQL .= "    get_name_by_language(name, $sLanguagePrefArraySQL) AS placename,";
+        $sSQL .= "    get_name_by_language(name, ARRAY['ref']) AS ref,";
+        if ($this->bIncludeExtraTags) $sSQL .= "hstore_to_json(extratags)::text AS extra,";
+        if ($this->bIncludeNameDetails) $sSQL .= "hstore_to_json(name)::text AS names,";
+        $sSQL .= "    avg(ST_X(centroid)) AS lon, ";
+        $sSQL .= "    avg(ST_Y(centroid)) AS lat, ";
+        $sSQL .= "    ".$sImportanceSQL."COALESCE(importance,0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .= "    ( ";
+        $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
+        $sSQL .= "       FROM ";
+        $sSQL .= "         place_addressline s, ";
+        $sSQL .= "         placex p";
+        $sSQL .= "       WHERE s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)";
+        $sSQL .= "         AND p.place_id = s.address_place_id ";
+        $sSQL .= "         AND s.isaddress ";
+        $sSQL .= "         AND p.importance is not null ";
+        $sSQL .= "    ) AS addressimportance, ";
+        $sSQL .= "    (extratags->'place') AS extra_place ";
+        $sSQL .= " FROM placex";
+        $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
+        $sSQL .= "   AND (";
+        $sSQL .= "            placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
+        if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) {
+            $sSQL .= "        OR (extratags->'place') = 'city'";
+        }
+        if ($this->aAddressRankList) {
+            $sSQL .= "        OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
+        }
+        $sSQL .= "       ) ";
+        if ($this->sAllowedTypesSQLList) {
+            $sSQL .= "AND placex.class in $this->sAllowedTypesSQLList ";
+        }
+        $sSQL .= "    AND linked_place_id is null ";
+        $sSQL .= " GROUP BY ";
+        $sSQL .= "     osm_type, ";
+        $sSQL .= "     osm_id, ";
+        $sSQL .= "     class, ";
+        $sSQL .= "     type, ";
+        $sSQL .= "     admin_level, ";
+        $sSQL .= "     rank_search, ";
+        $sSQL .= "     rank_address, ";
+        $sSQL .= "     calculated_country_code, ";
+        $sSQL .= "     importance, ";
+        if (!$this->bDeDupe) $sSQL .= "place_id,";
+        $sSQL .= "     langaddress, ";
+        $sSQL .= "     placename, ";
+        $sSQL .= "     ref, ";
+        if ($this->bIncludeExtraTags) $sSQL .= "extratags, ";
+        if ($this->bIncludeNameDetails) $sSQL .= "name, ";
+        $sSQL .= "     extratags->'place' ";
 
         if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {
             // only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines
@@ -434,83 +480,151 @@ class Geocode
             if (CONST_Use_US_Tiger_Data) {
                 // Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
                 $sSQL .= " union";
-                $sSQL .= " select 'T' as osm_type, place_id as osm_id, 'place' as class,";
-                $sSQL .= " 'house' as type, null as admin_level, 30 as rank_search,";
-                $sSQL .= " 30 as rank_address, min(place_id) as place_id,";
-                $sSQL .= " min(parent_place_id) as parent_place_id, 'us' as country_code,";
-                $sSQL .= " get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress,";
-                $sSQL .= " null as placename, null as ref";
-                if ($this->bIncludeExtraTags) $sSQL .= ", null as extra";
-                if ($this->bIncludeNameDetails) $sSQL .= ", null as names";
-                $sSQL .= ", avg(st_x(centroid)) as lon, avg(st_y(centroid)) as lat,";
-                $sSQL .= $sImportanceSQL."-1.15 as importance ";
-                $sSQL .= ", (select max(p.importance*(p.rank_address+2))";
-                $sSQL .= "   from place_addressline s, placex p";
-                $sSQL .= "   where s.place_id = min(blub.parent_place_id)";
-                $sSQL .= "   and p.place_id = s.address_place_id and s.isaddress";
-                $sSQL .= "   and p.importance is not null) as addressimportance ";
-                $sSQL .= ", null as extra_place ";
-                $sSQL .= " from (select place_id";
-                // interpolate the Tiger housenumbers here
-                $sSQL .= ", ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) as centroid, parent_place_id, housenumber_for_place";
-                $sSQL .= " from (location_property_tiger ";
-                $sSQL .= " join (values ".$sHousenumbers.") as housenumbers(place_id, housenumber_for_place) using(place_id)) ";
-                $sSQL .= " where housenumber_for_place>=0 and 30 between $this->iMinAddressRank and $this->iMaxAddressRank) as blub"; //postgres wants an alias here
-                $sSQL .= " group by place_id, housenumber_for_place"; //is this group by really needed?, place_id + housenumber (in combination) are unique
+                $sSQL .= " SELECT ";
+                $sSQL .= "     'T' AS osm_type, ";
+                $sSQL .= "     place_id AS osm_id, ";
+                $sSQL .= "     'place' AS class, ";
+                $sSQL .= "     'house' AS type, ";
+                $sSQL .= "     null AS admin_level, ";
+                $sSQL .= "     30 AS rank_search, ";
+                $sSQL .= "     30 AS rank_address, ";
+                $sSQL .= "     min(place_id) AS place_id, ";
+                $sSQL .= "     min(parent_place_id) AS parent_place_id, ";
+                $sSQL .= "     'us' AS country_code, ";
+                $sSQL .= "     get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) AS langaddress,";
+                $sSQL .= "     null AS placename, ";
+                $sSQL .= "     null AS ref, ";
+                if ($this->bIncludeExtraTags) $sSQL .= "null AS extra,";
+                if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
+                $sSQL .= "     avg(st_x(centroid)) AS lon, ";
+                $sSQL .= "     avg(st_y(centroid)) AS lat,";
+                $sSQL .= "     ".$sImportanceSQL."-1.15 AS importance, ";
+                $sSQL .= "     (";
+                $sSQL .= "        SELECT max(p.importance*(p.rank_address+2))";
+                $sSQL .= "        FROM ";
+                $sSQL .= "          place_addressline s, ";
+                $sSQL .= "          placex p";
+                $sSQL .= "        WHERE s.place_id = min(blub.parent_place_id)";
+                $sSQL .= "          AND p.place_id = s.address_place_id ";
+                $sSQL .= "          AND s.isaddress";
+                $sSQL .= "          AND p.importance is not null";
+                $sSQL .= "     ) AS addressimportance, ";
+                $sSQL .= "     null AS extra_place ";
+                $sSQL .= " FROM (";
+                $sSQL .= "     SELECT place_id, ";    // interpolate the Tiger housenumbers here
+                $sSQL .= "         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ";
+                $sSQL .= "         parent_place_id, ";
+                $sSQL .= "         housenumber_for_place";
+                $sSQL .= "     FROM (";
+                $sSQL .= "            location_property_tiger ";
+                $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)) ";
+                $sSQL .= "     WHERE ";
+                $sSQL .= "         housenumber_for_place>=0";
+                $sSQL .= "         AND 30 between $this->iMinAddressRank AND $this->iMaxAddressRank";
+                $sSQL .= " ) AS blub"; //postgres wants an alias here
+                $sSQL .= " GROUP BY";
+                $sSQL .= "      place_id, ";
+                $sSQL .= "      housenumber_for_place"; //is this group by really needed?, place_id + housenumber (in combination) are unique
                 if (!$this->bDeDupe) $sSQL .= ", place_id ";
             }
             // osmline
             // interpolation line search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
-            $sSQL .= " union ";
-            $sSQL .= "select 'W' as osm_type, place_id as osm_id, 'place' as class,";
-            $sSQL .= " 'house' as type, null as admin_level, 30 as rank_search,";
-            $sSQL .= " 30 as rank_address, min(place_id) as place_id,";
-            $sSQL .= " min(parent_place_id) as parent_place_id, calculated_country_code as country_code, ";
-            $sSQL .= "get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) as langaddress, ";
-            $sSQL .= "null as placename, ";
-            $sSQL .= "null as ref, ";
-            if ($this->bIncludeExtraTags) $sSQL .= "null as extra, ";
-            if ($this->bIncludeNameDetails) $sSQL .= "null as names, ";
-            $sSQL .= " avg(st_x(centroid)) as lon, avg(st_y(centroid)) as lat,";
-            $sSQL .= $sImportanceSQL."-0.1 as importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
-            $sSQL .= " (select max(p.importance*(p.rank_address+2)) from place_addressline s, placex p";
-            $sSQL .= " where s.place_id = min(blub.parent_place_id) and p.place_id = s.address_place_id and s.isaddress and p.importance is not null) as addressimportance,";
-            $sSQL .= " null as extra_place ";
-            $sSQL .= " from (select place_id, calculated_country_code ";
-            // interpolate the housenumbers here
-            $sSQL .= ", CASE WHEN startnumber != endnumber THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
-            $sSQL .= " ELSE ST_LineInterpolatePoint(linegeo, 0.5) END as centroid";
-            $sSQL .= ", parent_place_id, housenumber_for_place ";
-            $sSQL .= " from (location_property_osmline ";
-            $sSQL .= " join (values ".$sHousenumbers.") as housenumbers(place_id, housenumber_for_place) using(place_id)) ";
-            $sSQL .= " where housenumber_for_place>=0 and 30 between $this->iMinAddressRank and $this->iMaxAddressRank) as blub"; //postgres wants an alias here
-            $sSQL .= " group by place_id, housenumber_for_place, calculated_country_code "; //is this group by really needed?, place_id + housenumber (in combination) are unique
+            $sSQL .= " UNION ";
+            $sSQL .= "SELECT ";
+            $sSQL .= "  'W' AS osm_type, ";
+            $sSQL .= "  place_id AS osm_id, ";
+            $sSQL .= "  'place' AS class, ";
+            $sSQL .= "  'house' AS type, ";
+            $sSQL .= "  null AS admin_level, ";
+            $sSQL .= "  30 AS rank_search, ";
+            $sSQL .= "  30 AS rank_address, ";
+            $sSQL .= "  min(place_id) as place_id, ";
+            $sSQL .= "  min(parent_place_id) AS parent_place_id, ";
+            $sSQL .= "  calculated_country_code AS country_code, ";
+            $sSQL .= "  get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) AS langaddress, ";
+            $sSQL .= "  null AS placename, ";
+            $sSQL .= "  null AS ref, ";
+            if ($this->bIncludeExtraTags) $sSQL .= "null AS extra, ";
+            if ($this->bIncludeNameDetails) $sSQL .= "null AS names, ";
+            $sSQL .= "  AVG(st_x(centroid)) AS lon, ";
+            $sSQL .= "  AVG(st_y(centroid)) AS lat, ";
+            $sSQL .= "  ".$sImportanceSQL."-0.1 AS importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
+            $sSQL .= "  (";
+            $sSQL .= "     SELECT ";
+            $sSQL .= "       MAX(p.importance*(p.rank_address+2)) ";
+            $sSQL .= "     FROM";
+            $sSQL .= "       place_addressline s, ";
+            $sSQL .= "       placex p";
+            $sSQL .= "     WHERE s.place_id = min(blub.parent_place_id) ";
+            $sSQL .= "       AND p.place_id = s.address_place_id ";
+            $sSQL .= "       AND s.isaddress ";
+            $sSQL .= "       AND p.importance is not null";
+            $sSQL .= "  ) AS addressimportance,";
+            $sSQL .= "  null AS extra_place ";
+            $sSQL .= "  FROM (";
+            $sSQL .= "     SELECT ";
+            $sSQL .= "         place_id, ";
+            $sSQL .= "         calculated_country_code, ";
+            $sSQL .= "         CASE ";             // interpolate the housenumbers here
+            $sSQL .= "           WHEN startnumber != endnumber ";
+            $sSQL .= "           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
+            $sSQL .= "           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ";
+            $sSQL .= "         END as centroid, ";
+            $sSQL .= "         parent_place_id, ";
+            $sSQL .= "         housenumber_for_place ";
+            $sSQL .= "     FROM (";
+            $sSQL .= "            location_property_osmline ";
+            $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)";
+            $sSQL .= "          ) ";
+            $sSQL .= "     WHERE housenumber_for_place>=0 ";
+            $sSQL .= "       AND 30 between $this->iMinAddressRank AND $this->iMaxAddressRank";
+            $sSQL .= "  ) as blub"; //postgres wants an alias here
+            $sSQL .= "  GROUP BY ";
+            $sSQL .= "    osm_id, ";
+            $sSQL .= "    place_id, ";
+            $sSQL .= "    housenumber_for_place, ";
+            $sSQL .= "    calculated_country_code "; //is this group by really needed?, place_id + housenumber (in combination) are unique
             if (!$this->bDeDupe) $sSQL .= ", place_id ";
 
             if (CONST_Use_Aux_Location_data) {
-                $sSQL .= " union ";
-                $sSQL .= "select 'L' as osm_type, place_id as osm_id, 'place' as class,";
-                $sSQL .= " 'house' as type, null as admin_level, 0 as rank_search,";
-                $sSQL .= " 0 as rank_address, min(place_id) as place_id,";
-                $sSQL .= " min(parent_place_id) as parent_place_id, 'us' as country_code, ";
-                $sSQL .= "get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress, ";
-                $sSQL .= "null as placename, ";
-                $sSQL .= "null as ref, ";
-                if ($this->bIncludeExtraTags) $sSQL .= "null as extra, ";
-                if ($this->bIncludeNameDetails) $sSQL .= "null as names, ";
-                $sSQL .= "avg(ST_X(centroid)) as lon, avg(ST_Y(centroid)) as lat, ";
-                $sSQL .= $sImportanceSQL."-1.10 as importance, ";
-                $sSQL .= "(select max(p.importance*(p.rank_address+2))";
-                $sSQL .= " from place_addressline s, placex p";
-                $sSQL .= " where s.place_id = min(location_property_aux.parent_place_id)";
-                $sSQL .= " and p.place_id = s.address_place_id and s.isaddress";
-                $sSQL .= " and p.importance is not null) as addressimportance, ";
-                $sSQL .= "null as extra_place ";
-                $sSQL .= "from location_property_aux where place_id in ($sPlaceIDs) ";
-                $sSQL .= "and 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
-                $sSQL .= "group by place_id";
-                if (!$this->bDeDupe) $sSQL .= ", place_id";
-                $sSQL .= ", get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) ";
+                $sSQL .= " UNION ";
+                $sSQL .= "  SELECT ";
+                $sSQL .= "     'L' AS osm_type, ";
+                $sSQL .= "     place_id AS osm_id, ";
+                $sSQL .= "     'place' AS class,";
+                $sSQL .= "     'house' AS type, ";
+                $sSQL .= "     null AS admin_level, ";
+                $sSQL .= "     0 AS rank_search,";
+                $sSQL .= "     0 AS rank_address, ";
+                $sSQL .= "     min(place_id) AS place_id,";
+                $sSQL .= "     min(parent_place_id) AS parent_place_id, ";
+                $sSQL .= "     'us' AS country_code, ";
+                $sSQL .= "     get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) AS langaddress, ";
+                $sSQL .= "     null AS placename, ";
+                $sSQL .= "     null AS ref, ";
+                if ($this->bIncludeExtraTags) $sSQL .= "null AS extra, ";
+                if ($this->bIncludeNameDetails) $sSQL .= "null AS names, ";
+                $sSQL .= "     avg(ST_X(centroid)) AS lon, ";
+                $sSQL .= "     avg(ST_Y(centroid)) AS lat, ";
+                $sSQL .= "     ".$sImportanceSQL."-1.10 AS importance, ";
+                $sSQL .= "     ( ";
+                $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
+                $sSQL .= "       FROM ";
+                $sSQL .= "          place_addressline s, ";
+                $sSQL .= "          placex p";
+                $sSQL .= "       WHERE s.place_id = min(location_property_aux.parent_place_id)";
+                $sSQL .= "         AND p.place_id = s.address_place_id ";
+                $sSQL .= "         AND s.isaddress";
+                $sSQL .= "         AND p.importance is not null";
+                $sSQL .= "     ) AS addressimportance, ";
+                $sSQL .= "     null AS extra_place ";
+                $sSQL .= "  FROM location_property_aux ";
+                $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
+                $sSQL .= "    AND 30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
+                $sSQL .= "  GROUP BY ";
+                $sSQL .= "     place_id, ";
+                if (!$this->bDeDupe) $sSQL .= "place_id, ";
+                $sSQL .= "     get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) ";
             }
         }
 
@@ -873,9 +987,15 @@ class Geocode
 
             foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                 $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
-                $sToken = chksql($this->oDB->getOne("select make_standard_name('".$aSpecialTerm[1]."') as string"));
-                $sSQL = 'select * from (select word_id,word_token, word, class, type, country_code, operator';
-                $sSQL .= ' from word where word_token in (\' '.$sToken.'\')) as x where (class is not null and class not in (\'place\')) or country_code is not null';
+                $sToken = chksql($this->oDB->getOne("SELECT make_standard_name('".$aSpecialTerm[1]."') AS string"));
+                $sSQL = 'SELECT * ';
+                $sSQL .= 'FROM ( ';
+                $sSQL .= '   SELECT word_id, word_token, word, class, type, country_code, operator';
+                $sSQL .= '   FROM word ';
+                $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
+                $sSQL .= ') AS x ';
+                $sSQL .= ' WHERE (class is not null AND class not in (\'place\')) ';
+                $sSQL .= ' OR country_code is not null';
                 if (CONST_Debug) var_Dump($sSQL);
                 $aSearchWords = chksql($this->oDB->getAll($sSQL));
                 $aNewSearches = array();
@@ -915,7 +1035,7 @@ class Geocode
             $aTokens = array();
             foreach ($aPhrases as $iPhrase => $sPhrase) {
                 $aPhrase = chksql(
-                    $this->oDB->getRow("select make_standard_name('".pg_escape_string($sPhrase)."') as string"),
+                    $this->oDB->getRow("SELECT make_standard_name('".pg_escape_string($sPhrase)."') as string"),
                     "Cannot normalize query string (is it a UTF-8 string?)"
                 );
                 if (trim($aPhrase['string'])) {
@@ -934,8 +1054,9 @@ class Geocode
 
             if (sizeof($aTokens)) {
                 // Check which tokens we have, get the ID numbers
-                $sSQL = 'select word_id,word_token, word, class, type, country_code, operator, search_name_count';
-                $sSQL .= ' from word where word_token in ('.join(',', array_map("getDBQuoted", $aTokens)).')';
+                $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
+                $sSQL .= ' FROM word ';
+                $sSQL .= ' WHERE word_token in ('.join(',', array_map("getDBQuoted", $aTokens)).')';
 
                 if (CONST_Debug) var_Dump($sSQL);
 
@@ -1111,11 +1232,11 @@ class Geocode
                         if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
-                                $sSQL = "select place_id from placex where calculated_country_code='".$aSearch['sCountryCode']."' and rank_search = 4";
-                                if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
+                                $sSQL = "SELECT place_id FROM placex WHERE calculated_country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
+                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
                                 if ($bBoundingBoxSearch)
-                                    $sSQL .= " and _st_intersects($this->sViewboxSmallSQL, geometry)";
-                                $sSQL .= " order by st_area(geometry) desc limit 1";
+                                    $sSQL .= " AND _st_intersects($this->sViewboxSmallSQL, geometry)";
+                                $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             } else {
@@ -1125,16 +1246,16 @@ class Geocode
                             if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
                             if (!$aSearch['sClass']) continue;
 
-                            $sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+                            $sSQL = "SELECT COUNT(*) FROM pg_tables WHERE tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
                             if (chksql($this->oDB->getOne($sSQL))) {
-                                $sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
-                                if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-                                $sSQL .= " where st_contains($this->sViewboxSmallSQL, ct.centroid)";
-                                if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
+                                $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
+                                if ($sCountryCodesSQL) $sSQL .= " JOIN placex USING (place_id)";
+                                $sSQL .= " WHERE st_contains($this->sViewboxSmallSQL, ct.centroid)";
+                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
                                 if (sizeof($this->aExcludePlaceIDs)) {
-                                    $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                    $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
-                                if ($this->sViewboxCentreSQL) $sSQL .= " order by st_distance($this->sViewboxCentreSQL, ct.centroid) asc";
+                                if ($this->sViewboxCentreSQL) $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
                                 $sSQL .= " limit $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
@@ -1144,21 +1265,25 @@ class Geocode
                                 // expansion in that case.
                                 // Also don't expand if bounded results were requested.
                                 if (!sizeof($aPlaceIDs) && !sizeof($this->aExcludePlaceIDs) && !$this->bBoundedSearch) {
-                                    $sSQL = "select place_id from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
+                                    $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                     if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-                                    $sSQL .= " where st_contains($this->sViewboxLargeSQL, ct.centroid)";
-                                    if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-                                    if ($this->sViewboxCentreSQL) $sSQL .= " order by st_distance($this->sViewboxCentreSQL, ct.centroid) asc";
-                                    $sSQL .= " limit $this->iLimit";
+                                    $sSQL .= " WHERE ST_Contains($this->sViewboxLargeSQL, ct.centroid)";
+                                    if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                    if ($this->sViewboxCentreSQL) $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
+                                    $sSQL .= " LIMIT $this->iLimit";
                                     if (CONST_Debug) var_dump($sSQL);
                                     $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                                 }
                             } else {
-                                $sSQL = "select place_id from placex where class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-                                $sSQL .= " and st_contains($this->sViewboxSmallSQL, geometry) and linked_place_id is null";
-                                if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-                                if ($this->sViewboxCentreSQL)   $sSQL .= " order by st_distance($this->sViewboxCentreSQL, centroid) asc";
-                                $sSQL .= " limit $this->iLimit";
+                                $sSQL = "SELECT place_id ";
+                                $sSQL .= "FROM placex ";
+                                $sSQL .= "WHERE class='".$aSearch['sClass']."' ";
+                                $sSQL .= "  AND type='".$aSearch['sType']."'";
+                                $sSQL .= "  AND ST_Contains($this->sViewboxSmallSQL, geometry) ";
+                                $sSQL .= "  AND linked_place_id is null";
+                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                if ($this->sViewboxCentreSQL)   $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, centroid) ASC";
+                                $sSQL .= " LIMIT $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             }
@@ -1177,12 +1302,25 @@ class Geocode
                         if ($aSearch['sHouseNumber'] && sizeof($aSearch['aAddress'])) {
                             $sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
                             $aOrder[] = "";
-                            $aOrder[0] = " (exists(select place_id from placex where parent_place_id = search_name.place_id";
-                            $aOrder[0] .= " and transliteration(housenumber) ~* E'".$sHouseNumberRegex."' limit 1) ";
+                            $aOrder[0] = "  (";
+                            $aOrder[0] .= "   EXISTS(";
+                            $aOrder[0] .= "     SELECT place_id ";
+                            $aOrder[0] .= "     FROM placex ";
+                            $aOrder[0] .= "     WHERE parent_place_id = search_name.place_id";
+                            $aOrder[0] .= "       AND transliteration(housenumber) ~* E'".$sHouseNumberRegex."' ";
+                            $aOrder[0] .= "     LIMIT 1";
+                            $aOrder[0] .= "   ) ";
                             // also housenumbers from interpolation lines table are needed
-                            $aOrder[0] .= " or exists(select place_id from location_property_osmline where parent_place_id = search_name.place_id";
-                            $aOrder[0] .= " and ".intval($aSearch['sHouseNumber']).">=startnumber and ".intval($aSearch['sHouseNumber'])."<=endnumber limit 1))";
-                            $aOrder[0] .= " desc";
+                            $aOrder[0] .= "   OR EXISTS(";
+                            $aOrder[0] .= "     SELECT place_id ";
+                            $aOrder[0] .= "     FROM location_property_osmline ";
+                            $aOrder[0] .= "     WHERE parent_place_id = search_name.place_id";
+                            $aOrder[0] .= "       AND ".intval($aSearch['sHouseNumber']).">=startnumber ";
+                            $aOrder[0] .= "       AND ".intval($aSearch['sHouseNumber'])."<=endnumber ";
+                            $aOrder[0] .= "     LIMIT 1";
+                            $aOrder[0] .= "   )";
+                            $aOrder[0] .= " )";
+                            $aOrder[0] .= " DESC";
                         }
 
                         // TODO: filter out the pointless search terms (2 letter name tokens and less)
@@ -1215,7 +1353,13 @@ class Geocode
                             }
                         }
                         if ($aSearch['fLon'] && $aSearch['fLat']) {
-                            $aTerms[] = "ST_DWithin(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326), ".$aSearch['fRadius'].")";
+                            $aTerms[] = sprintf(
+                                'ST_DWithin(centroid, ST_SetSRID(ST_Point(%F,%F),4326), %F)',
+                                $aSearch['fLon'],
+                                $aSearch['fLat'],
+                                $aSearch['fRadius']
+                            );
+
                             $aOrder[] = "ST_Distance(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326)) ASC";
                         }
                         if (sizeof($this->aExcludePlaceIDs)) {
@@ -1226,36 +1370,42 @@ class Geocode
                         }
 
                         if ($bBoundingBoxSearch) $aTerms[] = "centroid && $this->sViewboxSmallSQL";
-                        if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) asc";
+                        if ($sNearPointSQL) $aOrder[] = "ST_Distance($sNearPointSQL, centroid) ASC";
 
                         if ($aSearch['sHouseNumber']) {
                             $sImportanceSQL = '- abs(26 - address_rank) + 3';
                         } else {
-                            $sImportanceSQL = '(case when importance = 0 OR importance IS NULL then 0.75-(search_rank::float/40) else importance end)';
+                            $sImportanceSQL = '(CASE WHEN importance = 0 OR importance IS NULL THEN 0.75-(search_rank::float/40) ELSE importance END)';
                         }
-                        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
-                        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " * case when ST_Contains($this->sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
+                        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " * CASE WHEN ST_Contains($this->sViewboxSmallSQL, centroid) THEN 1 ELSE 0.5 END";
+                        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " * CASE WHEN ST_Contains($this->sViewboxLargeSQL, centroid) THEN 1 ELSE 0.5 END";
 
                         $aOrder[] = "$sImportanceSQL DESC";
                         if (sizeof($aSearch['aFullNameAddress'])) {
-                            $sExactMatchSQL = '(select count(*) from (select unnest(ARRAY['.join($aSearch['aFullNameAddress'], ",").']) INTERSECT select unnest(nameaddress_vector))s) as exactmatch';
+                            $sExactMatchSQL = ' ( ';
+                            $sExactMatchSQL .= '   SELECT count(*) FROM ( ';
+                            $sExactMatchSQL .= '      SELECT unnest(ARRAY['.join($aSearch['aFullNameAddress'], ",").']) ';
+                            $sExactMatchSQL .= '      INTERSECT ';
+                            $sExactMatchSQL .= '      SELECT unnest(nameaddress_vector)';
+                            $sExactMatchSQL .= '   ) s';
+                            $sExactMatchSQL .= ') as exactmatch';
                             $aOrder[] = 'exactmatch DESC';
                         } else {
                             $sExactMatchSQL = '0::int as exactmatch';
                         }
 
                         if (sizeof($aTerms)) {
-                            $sSQL = "select place_id, ";
+                            $sSQL = "SELECT place_id, ";
                             $sSQL .= $sExactMatchSQL;
-                            $sSQL .= " from search_name";
-                            $sSQL .= " where ".join(' and ', $aTerms);
-                            $sSQL .= " order by ".join(', ', $aOrder);
+                            $sSQL .= " FROM search_name";
+                            $sSQL .= " WHERE ".join(' and ', $aTerms);
+                            $sSQL .= " ORDER BY ".join(', ', $aOrder);
                             if ($aSearch['sHouseNumber'] || $aSearch['sClass']) {
-                                $sSQL .= " limit 20";
+                                $sSQL .= " LIMIT 20";
                             } elseif (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && $aSearch['sClass']) {
-                                $sSQL .= " limit 1";
+                                $sSQL .= " LIMIT 1";
                             } else {
-                                $sSQL .= " limit ".$this->iLimit;
+                                $sSQL .= " LIMIT ".$this->iLimit;
                             }
 
                             if (CONST_Debug) var_dump($sSQL);
@@ -1287,11 +1437,12 @@ class Geocode
 
                             // Now they are indexed, look for a house attached to a street we found
                             $sHouseNumberRegex = '\\\\m'.$aSearch['sHouseNumber'].'\\\\M';
-                            $sSQL = "select place_id from placex where parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
+                            $sSQL = "SELECT place_id FROM placex ";
+                            $sSQL .= "WHERE parent_place_id in (".$sPlaceIDs.") and transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
                             if (sizeof($this->aExcludePlaceIDs)) {
-                                $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                             }
-                            $sSQL .= " limit $this->iLimit";
+                            $sSQL .= " LIMIT $this->iLimit";
                             if (CONST_Debug) var_dump($sSQL);
                             $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
 
@@ -1299,8 +1450,8 @@ class Geocode
                             if (!sizeof($aPlaceIDs)) {
                                 // do we need to use transliteration and the regex for housenumbers???
                                 //new query for lines, not housenumbers anymore
-                                $sSQL = "select distinct place_id from location_property_osmline";
-                                $sSQL .= " where parent_place_id in (".$sPlaceIDs.") and (";
+                                $sSQL = "SELECT distinct place_id FROM location_property_osmline";
+                                $sSQL .= " WHERE parent_place_id in (".$sPlaceIDs.") and (";
                                 if ($searchedHousenumber%2 == 0) {
                                     //if housenumber is even, look for housenumber in streets with interpolationtype even or all
                                     $sSQL .= "interpolationtype='even'";
@@ -1313,7 +1464,7 @@ class Geocode
                                 $sSQL .= $searchedHousenumber."<=endnumber";
 
                                 if (sizeof($this->aExcludePlaceIDs)) {
-                                    $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                    $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
@@ -1323,9 +1474,11 @@ class Geocode
 
                             // If nothing found try the aux fallback table
                             if (CONST_Use_Aux_Location_data && !sizeof($aPlaceIDs)) {
-                                $sSQL = "select place_id from location_property_aux where parent_place_id in (".$sPlaceIDs.") and housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
+                                $sSQL = "SELECT place_id FROM location_property_aux ";
+                                $sSQL .= " WHERE parent_place_id in (".$sPlaceIDs.") ";
+                                $sSQL .= " AND housenumber = '".pg_escape_string($aSearch['sHouseNumber'])."'";
                                 if (sizeof($this->aExcludePlaceIDs)) {
-                                    $sSQL .= " and parent_place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                    $sSQL .= " AND parent_place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
@@ -1334,8 +1487,8 @@ class Geocode
 
                             //if nothing was found in placex or location_property_aux, then search in Tiger data for this housenumber(location_property_tiger)
                             if (CONST_Use_US_Tiger_Data && !sizeof($aPlaceIDs)) {
-                                $sSQL = "select distinct place_id from location_property_tiger";
-                                $sSQL .= " where parent_place_id in (".$sPlaceIDs.") and (";
+                                $sSQL = "SELECT distinct place_id FROM location_property_tiger";
+                                $sSQL .= " WHERE parent_place_id in (".$sPlaceIDs.") and (";
                                 if ($searchedHousenumber%2 == 0) {
                                     $sSQL .= "interpolationtype='even'";
                                 } else {
@@ -1346,7 +1499,7 @@ class Geocode
                                 $sSQL .= $searchedHousenumber."<=endnumber";
 
                                 if (sizeof($this->aExcludePlaceIDs)) {
-                                    $sSQL .= " and place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                    $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
                                 //$sSQL .= " limit $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
@@ -1370,19 +1523,25 @@ class Geocode
 
                             if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'name') {
                                 // If they were searching for a named class (i.e. 'Kings Head pub') then we might have an extra match
-                                $sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and class='".$aSearch['sClass']."' and type='".$aSearch['sType']."'";
-                                $sSQL .= " and linked_place_id is null";
-                                if ($sCountryCodesSQL) $sSQL .= " and calculated_country_code in ($sCountryCodesSQL)";
-                                $sSQL .= " order by rank_search asc limit $this->iLimit";
+                                $sSQL = "SELECT place_id ";
+                                $sSQL .= " FROM placex ";
+                                $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
+                                $sSQL .= "   AND class='".$aSearch['sClass']."' ";
+                                $sSQL .= "   AND type='".$aSearch['sType']."'";
+                                $sSQL .= "   AND linked_place_id is null";
+                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                $sSQL .= " ORDER BY rank_search ASC ";
+                                $sSQL .= " LIMIT $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aClassPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             }
 
                             if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') { // & in
-                                $sSQL = "select count(*) from pg_tables where tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+                                $sSQL = "SELECT count(*) FROM pg_tables ";
+                                $sSQL .= "WHERE tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
                                 $bCacheTable = chksql($this->oDB->getOne($sSQL));
 
-                                $sSQL = "select min(rank_search) from placex where place_id in ($sPlaceIDs)";
+                                $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
 
                                 if (CONST_Debug) var_dump($sSQL);
                                 $this->iMaxRank = ((int)chksql($this->oDB->getOne($sSQL)));
@@ -1391,11 +1550,13 @@ class Geocode
                                 $sPlaceGeom = false;
                                 if ($this->iMaxRank < 9 && $bCacheTable) {
                                     // Try and get a polygon to search in instead
-                                    $sSQL = "select geometry from placex";
-                                    $sSQL .= " where place_id in ($sPlaceIDs)";
-                                    $sSQL .= " and rank_search < $this->iMaxRank + 5";
-                                    $sSQL .= " and st_geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon')";
-                                    $sSQL .= " order by rank_search asc limit 1";
+                                    $sSQL = "SELECT geometry ";
+                                    $sSQL .= " FROM placex";
+                                    $sSQL .= " WHERE place_id in ($sPlaceIDs)";
+                                    $sSQL .= "   AND rank_search < $this->iMaxRank + 5";
+                                    $sSQL .= "   AND ST_Geometrytype(geometry) in ('ST_Polygon','ST_MultiPolygon')";
+                                    $sSQL .= " ORDER BY rank_search ASC ";
+                                    $sSQL .= " LIMIT 1";
                                     if (CONST_Debug) var_dump($sSQL);
                                     $sPlaceGeom = chksql($this->oDB->getOne($sSQL));
                                 }
@@ -1404,7 +1565,7 @@ class Geocode
                                     $sPlaceIDs = false;
                                 } else {
                                     $this->iMaxRank += 5;
-                                    $sSQL = "select place_id from placex where place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank";
+                                    $sSQL = "SELECT place_id FROM placex WHERE place_id in ($sPlaceIDs) and rank_search < $this->iMaxRank";
                                     if (CONST_Debug) var_dump($sSQL);
                                     $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                                     $sPlaceIDs = join(',', $aPlaceIDs);
@@ -1447,15 +1608,18 @@ class Geocode
                                         if ($sNearPointSQL) $sOrderBySQL = "ST_Distance($sNearPointSQL, l.geometry)";
                                         else $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
 
-                                        $sSQL = "select distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'')." from placex as l,placex as f where ";
-                                        $sSQL .= "f.place_id in ( $sPlaceIDs) and ST_DWithin(l.geometry, f.centroid, $fRange) ";
-                                        $sSQL .= "and l.class='".$aSearch['sClass']."' and l.type='".$aSearch['sType']."' ";
+                                        $sSQL = "SELECT distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'');
+                                        $sSQL .= " FROM placex as l, placex as f ";
+                                        $sSQL .= " WHERE f.place_id in ($sPlaceIDs) ";
+                                        $sSQL .= "  AND ST_DWithin(l.geometry, f.centroid, $fRange) ";
+                                        $sSQL .= "  AND l.class='".$aSearch['sClass']."' ";
+                                        $sSQL .= "  AND l.type='".$aSearch['sType']."' ";
                                         if (sizeof($this->aExcludePlaceIDs)) {
-                                            $sSQL .= " and l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
+                                            $sSQL .= " AND l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                         }
-                                        if ($sCountryCodesSQL) $sSQL .= " and l.calculated_country_code in ($sCountryCodesSQL)";
-                                        if ($sOrderBy) $sSQL .= "order by ".$OrderBysSQL." asc";
-                                        if ($this->iOffset) $sSQL .= " offset $this->iOffset";
+                                        if ($sCountryCodesSQL) $sSQL .= " AND l.calculated_country_code in ($sCountryCodesSQL)";
+                                        if ($sOrderBy) $sSQL .= "ORDER BY ".$OrderBysSQL." ASC";
+                                        if ($this->iOffset) $sSQL .= " OFFSET $this->iOffset";
                                         $sSQL .= " limit $this->iLimit";
                                         if (CONST_Debug) var_dump($sSQL);
                                         $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
@@ -1482,17 +1646,31 @@ class Geocode
                     // Need to verify passes rank limits before dropping out of the loop (yuk!)
                     // reduces the number of place ids, like a filter
                     // rank_address is 30 for interpolated housenumbers
-                    $sSQL = "select place_id from placex where place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
-                    $sSQL .= "and (placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
-                    if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) $sSQL .= " OR (extratags->'place') = 'city'";
-                    if ($this->aAddressRankList) $sSQL .= " OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
+                    $sSQL = "SELECT place_id ";
+                    $sSQL .= "FROM placex ";
+                    $sSQL .= "WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
+                    $sSQL .= "  AND (";
+                    $sSQL .= "         placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
+                    if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) {
+                        $sSQL .= "     OR (extratags->'place') = 'city'";
+                    }
+                    if ($this->aAddressRankList) {
+                        $sSQL .= "     OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
+                    }
                     if (CONST_Use_US_Tiger_Data) {
-                        $sSQL .= ") UNION select place_id from location_property_tiger where place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
-                        $sSQL .= "and (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
+                        $sSQL .= "  ) ";
+                        $sSQL .= "UNION ";
+                        $sSQL .= "  SELECT place_id ";
+                        $sSQL .= "  FROM location_property_tiger ";
+                        $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
+                        $sSQL .= "    AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
                         if ($this->aAddressRankList) $sSQL .= " OR 30 in (".join(',', $this->aAddressRankList).")";
                     }
-                    $sSQL .= ") UNION select place_id from location_property_osmline where place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
-                    $sSQL .= " and (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
+                    $sSQL .= ") UNION ";
+                    $sSQL .= "  SELECT place_id ";
+                    $sSQL .= "  FROM location_property_osmline ";
+                    $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
+                    $sSQL .= "    AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
                     if (CONST_Debug) var_dump($sSQL);
                     $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     $tempIDs = array();

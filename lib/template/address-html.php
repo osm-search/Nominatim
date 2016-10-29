@@ -13,12 +13,12 @@
     <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
         <div class="form-group">
             <input name="format" type="hidden" value="html">
-            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars(isset($_GET['lat']) && $_GET['lat']); ?>" >
-            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars(isset($_GET['lon']) && $_GET['lon']); ?>" >
+            <input name="lat" type="text" class="form-control input-sm" placeholder="latitude" value="<?php echo $fLat; ?>" >
+            <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo $fLon; ?>" >
             max zoom
 
-            <select name="zoom" class="form-control input-sm" value="<?php echo htmlspecialchars(isset($_GET['zoom']) && $_GET['zoom']); ?>">
-                <option value="" <?php echo (isset($_GET['zoom']) && $_GET['zoom']) == '' && 'selected' ?> >--</option>
+            <select name="zoom" class="form-control input-sm" value="<?php echo $iZoom; ?>">
+                <option value="" <?php echo ($iZoom === 0) && 'selected' ?> >--</option>
                 <?php
 
                     $aZoomLevels = array(
@@ -48,7 +48,7 @@
 
                     foreach($aZoomLevels as $iZoomLevel => $sLabel)
                     {
-                        $bSel = isset($_GET['zoom']) && ($_GET['zoom'] == (string)$iZoomLevel);
+                        $bSel = $iZoom === $iZoomLevel;
                         echo '<option value="'.$iZoomLevel.'"'.($bSel?'selected':'').'>'.$iZoomLevel.' '.$sLabel.'</option>'."\n";
                     }
                 ?>
@@ -65,7 +65,7 @@
 
     <div id="content">
 
-<?php if (isset($aPlace)) { ?>
+<?php if (count($aPlace)>0) { ?>
 
         <div id="searchresults" class="sidebar">
         <?php
@@ -115,15 +115,15 @@
     <?php
 
         $aNominatimMapInit = array(
-            'zoom' => isset($_GET['zoom']) ? htmlspecialchars($_GET['zoom']) : CONST_Default_Zoom,
-            'lat'  => isset($_GET['lat']) ? htmlspecialchars($_GET['lat']) : CONST_Default_Lat,
-            'lon'  => isset($_GET['lon']) ? htmlspecialchars($_GET['lon']) : CONST_Default_Lon,
+            'zoom' => $iZoom !== false ? $iZoom : CONST_Default_Zoom,
+            'lat'  => $fLat !== false ? $fLat : CONST_Default_Lat,
+            'lon'  => $fLon !== false ? $fLon : CONST_Default_Lon,
             'tile_url' => $sTileURL,
             'tile_attribution' => $sTileAttribution
         );
         echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
-        echo 'var nominatim_results = ' . json_encode([isset($aPlace)?$aPlace:[]], JSON_PRETTY_PRINT) . ';'; 
+        echo 'var nominatim_results = ' . json_encode([$aPlace], JSON_PRETTY_PRINT) . ';'; 
     ?>
     </script>
     <?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>

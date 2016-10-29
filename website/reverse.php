@@ -49,11 +49,12 @@ $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);
 $fLat = $oParams->getFloat('lat');
 $fLon = $oParams->getFloat('lon');
+$iZoom = $oParams->getInt('zoom');
 if ($sOsmType && $iOsmId > 0) {
     $aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
 } elseif ($fLat !== false && $fLon !== false) {
     $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
-    $oReverseGeocode->setZoom($oParams->getInt('zoom', 18));
+    $oReverseGeocode->setZoom($iZoom !== false ? $iZoom : 18);
 
     $aLookup = $oReverseGeocode->lookup($fLat, $fLon);
     if (CONST_Debug) var_dump($aLookup);
@@ -86,6 +87,8 @@ if (isset($aPlace)) {
     if ($aOutlineResult) {
         $aPlace = array_merge($aPlace, $aOutlineResult);
     }
+} else {
+    $aPlace = [];
 }
 
 
@@ -94,7 +97,7 @@ if (CONST_Debug) {
     exit;
 }
 
-if ($sOutputFormat=='html') {
+if ($sOutputFormat == 'html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;

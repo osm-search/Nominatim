@@ -61,7 +61,7 @@ Feature: Search queries
         When sending json search query "3 West Victory Way, Craig"
         Then results contain
          | osm_type
-         | tiger
+         | way
 
     @Tiger
     Scenario: TIGER house number (road fallback)
@@ -69,6 +69,9 @@ Feature: Search queries
         Then results contain
          | osm_type
          | way
+
+
+
 
     Scenario: Expansion of Illinois
         Given the request parameters

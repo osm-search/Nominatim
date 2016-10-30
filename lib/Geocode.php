@@ -477,12 +477,13 @@ class Geocode
                 $sHousenumbers .= "(".$placeID.", ".$housenumber.")";
                 if ($i<$length) $sHousenumbers .= ", ";
             }
+
             if (CONST_Use_US_Tiger_Data) {
                 // Tiger search only if a housenumber was searched and if it was found (i.e. aPlaceIDs[placeID] = housenumber != -1) (realized through a join)
                 $sSQL .= " union";
                 $sSQL .= " SELECT ";
                 $sSQL .= "     'T' AS osm_type, ";
-                $sSQL .= "     place_id AS osm_id, ";
+                $sSQL .= "     (SELECT osm_id from placex p WHERE p.place_id=min(blub.parent_place_id)) as osm_id, ";
                 $sSQL .= "     'place' AS class, ";
                 $sSQL .= "     'house' AS type, ";
                 $sSQL .= "     null AS admin_level, ";

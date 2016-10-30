@@ -69,6 +69,11 @@ if (CONST_Use_US_Tiger_Data) {
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
+// interpolated house numbers
+$iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_osmline WHERE place_id = '.$iPlaceID));
+if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+
+
 if (CONST_Use_Aux_Location_data) {
     $iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_aux WHERE place_id = '.$iPlaceID));
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;

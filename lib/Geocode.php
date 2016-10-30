@@ -532,7 +532,7 @@ class Geocode
             $sSQL .= " UNION ";
             $sSQL .= "SELECT ";
             $sSQL .= "  'W' AS osm_type, ";
-            $sSQL .= "  place_id AS osm_id, ";
+            $sSQL .= "  osm_id, ";
             $sSQL .= "  'place' AS class, ";
             $sSQL .= "  'house' AS type, ";
             $sSQL .= "  null AS admin_level, ";
@@ -563,6 +563,7 @@ class Geocode
             $sSQL .= "  null AS extra_place ";
             $sSQL .= "  FROM (";
             $sSQL .= "     SELECT ";
+            $sSQL .= "         osm_id, ";
             $sSQL .= "         place_id, ";
             $sSQL .= "         calculated_country_code, ";
             $sSQL .= "         CASE ";             // interpolate the housenumbers here

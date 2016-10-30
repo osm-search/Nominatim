@@ -207,7 +207,6 @@ Feature: Import of address interpolations
           | startnumber | endnumber | geometry
           | 2           | 6         | 0 0, 0 0.001
 
-
     Scenario: addr:street on interpolation way
         Given the scene parallel-road
         And the place nodes
@@ -239,6 +238,18 @@ Feature: Import of address interpolations
           | object | parent_place_id | startnumber | endnumber
           | W10    | W2              | 2           | 6
           | W11    | W3              | 12          | 16
+        When sending query "16 Cloud Street"
+        Then results contain
+         | ID | osm_type | osm_id
+         | 0  | N        | 4
+        When sending query "14 Cloud Street"
+        Then results contain
+         | ID | osm_type | osm_id
+         | 0  | W        | 11
+        When sending query "18 Cloud Street"
+        Then results contain
+         | ID | osm_type | osm_id
+         | 0  | W        | 3
 
     Scenario: addr:street on housenumber way
         Given the scene parallel-road
@@ -271,6 +282,14 @@ Feature: Import of address interpolations
           | object | parent_place_id | startnumber | endnumber
           | W10    | W2              | 2           | 6
           | W11    | W3              | 12          | 16
+        When sending query "16 Cloud Street"
+        Then results contain
+         | ID | osm_type | osm_id
+         | 0  | N        | 4
+        When sending query "14 Cloud Street"
+        Then results contain
+         | ID | osm_type | osm_id
+         | 0  | W        | 11
 
     Scenario: Geometry of points and way don't match (github #253)
         Given the place nodes

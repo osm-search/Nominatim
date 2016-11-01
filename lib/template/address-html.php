@@ -14,6 +14,7 @@
         <div class="form-group">
             <input name="format" type="hidden" value="html">
             <input name="lat" type="text" class="form-control input-sm" placeholder="latitude"  value="<?php echo htmlspecialchars($_GET['lat']); ?>" >
+            <span id="switch-coords">&lt;&gt;</span>
             <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo htmlspecialchars($_GET['lon']); ?>" >
             max zoom
 

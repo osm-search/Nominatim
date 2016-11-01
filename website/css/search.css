@@ -26,6 +26,12 @@ form label {
   right: 0
 }
 
+#switch-coords {
+  font-size: 0.8em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 .sidebar {
   width: 25%;
   padding: 15px;

@@ -908,6 +908,9 @@ class Geocode
         }
 
         $sQuery = $this->sQuery;
+        if (!preg_match('//u', $sQuery)) {
+            userError("Query string is not UTF-8 encoded.");
+        }
 
         // Conflicts between US state abreviations and various words for 'the' in different languages
         if (isset($this->aLangPrefOrder['name:en'])) {

@@ -9,7 +9,7 @@ function formatOSMType($sType, $bIncludeExternal = true)
 
     if (!$bIncludeExternal) return '';
 
-    if ($sType == 'T') return 'tiger';
+    if ($sType == 'T') return 'way';
     if ($sType == 'I') return 'way';
 
     return '';

@@ -28,14 +28,14 @@ Feature: Reverse geocoding
         Given the request parameters
           | addressdetails
           | 1
-        When looking up coordinates 40.6863624710666,-112.060005720023
+        When looking up jsonv2 coordinates 40.6863624710666,-112.060005720023
         And exactly 1 result is returned
         And result addresses contain
           | ID | house_number | road               | postcode | country_code
           | 0  | 709.         | Kings Estate Drive | 84128    | us
         And results contain
-          | osm_type
-          | tiger
+          | osm_type | category | type
+          | way      | place    | house
 
     @Tiger
     Scenario: No TIGER house number for zoom < 18

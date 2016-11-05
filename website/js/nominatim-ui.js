@@ -72,6 +72,15 @@ jQuery(document).on('ready', function(){
         html_viewbox = "viewbox: " + map_viewbox_as_string();
 
         $('#map-position-inner').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
+
+        var reverse_params = {
+            lat: map.getCenter().lat.toFixed(5),
+            lon: map.getCenter().lng.toFixed(5),
+            zoom: map.getZoom(),
+            format: 'html'
+        }
+        $('#switch-to-reverse').attr('href', 'reverse.php?' + $.param(reverse_params));
+
         $('input#use_viewbox').trigger('change');
     }
 
@@ -200,6 +209,14 @@ jQuery(document).on('ready', function(){
         map.on('click', function(e){
             $('form input[name=lat]').val( e.latlng.lat);
             $('form input[name=lon]').val( e.latlng.lng);
+            $('form').submit();
+        });
+
+        $('#switch-coords').on('click', function(e){
+            var lat = $('form input[name=lat]').val();
+            var lon = $('form input[name=lon]').val();
+            $('form input[name=lat]').val(lon);
+            $('form input[name=lon]').val(lat);
             $('form').submit();
         });
     }

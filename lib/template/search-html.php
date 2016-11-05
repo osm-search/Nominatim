@@ -27,7 +27,7 @@
             </div>
         </div>
         <div class="search-type-link">
-            <a href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
+            <a id="switch-to-reverse" href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
         </div>
     </form>
 

@@ -14,11 +14,12 @@
         <div class="form-group">
             <input name="format" type="hidden" value="html">
             <input name="lat" type="text" class="form-control input-sm" placeholder="latitude" value="<?php echo $fLat; ?>" >
+            <span id="switch-coords">&lt;&gt;</span>
             <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo $fLon; ?>" >
             max zoom
 
             <select name="zoom" class="form-control input-sm" value="<?php echo $iZoom; ?>">
-                <option value="" <?php echo ($iZoom === 0) && 'selected' ?> >--</option>
+                <option value="" <?php if (!isset($iZoom)) echo 'selected' ?> >--</option>
                 <?php
 
                     $aZoomLevels = array(

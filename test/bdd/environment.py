@@ -18,6 +18,8 @@ userconfig = {
     'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php'
 }
 
+use_step_matcher("re")
+
 class NominatimEnvironment(object):
     """ Collects all functions for the execution of Nominatim functions.
     """
@@ -139,13 +141,23 @@ class OSMDataFactory(object):
         self.scene_path = os.environ.get('SCENE_PATH',
                            os.path.join(scriptpath, '..', 'scenes', 'data'))
 
+    def make_geometry(self, geom):
+        if geom.find(',') < 0:
+            return 'POINT(%s)' % geom
+
+        if geom.find('(') < 0:
+            return 'LINESTRING(%s)' % geom
+
+        return 'POLYGON(%s)' % geom
+
 
 def before_all(context):
-    for k,v in userconfig.items():
-        context.config.userdata.setdefault(k, v)
-    print('config:', context.config.userdata)
     # logging setup
     context.config.setup_logging()
+    # set up -D options
+    for k,v in userconfig.items():
+        context.config.userdata.setdefault(k, v)
+    logging.debug('User config: %s' %(str(context.config.userdata)))
     # Nominatim test setup
     context.nominatim = NominatimEnvironment(context.config.userdata)
     context.osm = OSMDataFactory()

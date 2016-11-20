@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 userconfig = {
     'BASEURL' : 'http://localhost/nominatim',
-    'BUILDDIR' : '../build',
+    'BUILDDIR' : os.path.join(os.path.split(__file__)[0], "../../build"),
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,
     'TEMPLATE_DB' : 'test_template_nominatim',
@@ -140,15 +140,53 @@ class OSMDataFactory(object):
         scriptpath = os.path.dirname(os.path.abspath(__file__))
         self.scene_path = os.environ.get('SCENE_PATH',
                            os.path.join(scriptpath, '..', 'scenes', 'data'))
+        self.scene_cache = {}
 
-    def make_geometry(self, geom):
+    def parse_geometry(self, geom, scene):
+        if geom[0].find(':') >= 0:
+            out = self.get_scene_geometry(scene, geom[1:])
         if geom.find(',') < 0:
-            return 'POINT(%s)' % geom
+            out = 'POINT(%s)' % geom
+        elif geom.find('(') < 0:
+            out = 'LINESTRING(%s)' % geom
+        else:
+            out = 'POLYGON(%s)' % geom
 
-        if geom.find('(') < 0:
-            return 'LINESTRING(%s)' % geom
+        # TODO parse precision
+        return out, 0
 
-        return 'POLYGON(%s)' % geom
+    def get_scene_geometry(self, default_scene, name):
+        geoms = []
+        defscene = self.load_scene(default_scene)
+        for obj in name.split('+'):
+            oname = obj.strip()
+            if oname.startswith(':'):
+                wkt = defscene[oname[1:]]
+            else:
+                scene, obj = oname.split(':', 2)
+                scene_geoms = world.load_scene(scene)
+                wkt = scene_geoms[obj]
+
+            geoms.append("'%s'::geometry" % wkt)
+
+        if len(geoms) == 1:
+            return geoms[0]
+        else:
+            return 'ST_LineMerge(ST_Collect(ARRAY[%s]))' % ','.join(geoms)
+
+    def load_scene(self, name):
+        if name in self.scene_cache:
+            return self.scene_cache[name]
+
+        scene = {}
+        with open(os.path.join(self.scene_path, "%s.wkt" % name), 'r') as fd:
+            for line in fd:
+                if line.strip():
+                    obj, wkt = line.split('|', 2)
+                    scene[obj.strip()] = wkt.strip()
+            self.scene_cache[name] = scene
+
+        return scene
 
 
 def before_all(context):
@@ -169,6 +207,7 @@ def after_all(context):
 def before_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.setup_db(context)
+    context.scene = None
 
 def after_scenario(context, scenario):
     if 'DB' in context.tags:

@@ -4,6 +4,7 @@ import os
 import psycopg2
 import psycopg2.extras
 import subprocess
+from nose.tools import * # for assert functions
 from sys import version_info as python_version
 
 logger = logging.getLogger(__name__)
@@ -143,28 +144,28 @@ class OSMDataFactory(object):
         self.scene_cache = {}
 
     def parse_geometry(self, geom, scene):
-        if geom[0].find(':') >= 0:
-            out = self.get_scene_geometry(scene, geom[1:])
-        if geom.find(',') < 0:
-            out = 'POINT(%s)' % geom
+        if geom.find(':') >= 0:
+            out = self.get_scene_geometry(scene, geom)
+        elif geom.find(',') < 0:
+            out = "'POINT(%s)'::geometry" % geom
         elif geom.find('(') < 0:
-            out = 'LINESTRING(%s)' % geom
+            out = "'LINESTRING(%s)'::geometry" % geom
         else:
-            out = 'POLYGON(%s)' % geom
+            out = "'POLYGON(%s)'::geometry" % geom
 
-        # TODO parse precision
-        return out, 0
+        return "ST_SetSRID(%s, 4326)" % out
 
     def get_scene_geometry(self, default_scene, name):
         geoms = []
-        defscene = self.load_scene(default_scene)
         for obj in name.split('+'):
             oname = obj.strip()
             if oname.startswith(':'):
+                assert_is_not_none(default_scene, "You need to set a scene")
+                defscene = self.load_scene(default_scene)
                 wkt = defscene[oname[1:]]
             else:
                 scene, obj = oname.split(':', 2)
-                scene_geoms = world.load_scene(scene)
+                scene_geoms = self.load_scene(scene)
                 wkt = scene_geoms[obj]
 
             geoms.append("'%s'::geometry" % wkt)

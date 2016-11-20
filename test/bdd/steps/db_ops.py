@@ -8,7 +8,7 @@ import psycopg2.extras
 class PlaceColumn:
 
     def __init__(self, context, force_name):
-        self.columns = {}
+        self.columns = { 'admin_level' : 100}
         self.force_name = force_name
         self.context = context
         self.geometry = None
@@ -41,14 +41,12 @@ class PlaceColumn:
     def set_key_housenr(self, value):
         self.columns['housenumber'] = value
 
-    def set_key_cc(self, value):
-        ok_(len(value) == 2)
+    def set_key_country(self, value):
         self.columns['country_code'] = value
 
     def set_key_geometry(self, value):
-        geom, precision = self.context.osm.parse_geometry(value, self.context.scene)
-        assert_is_not_none(geom)
-        self.geometry = "ST_SetSRID('%s'::geometry, 4326)" % geom
+        self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
+        assert_is_not_none(self.geometry)
 
     def add_hstore(self, column, key, value):
         if column in self.columns:
@@ -104,6 +102,9 @@ class NominatimID:
 
         return where, params
 
+@given(u'the scene (?P<scene>.+)')
+def set_default_scene(context, scene):
+    context.scene = scene
 
 @given("the (?P<named>named )?places")
 def add_data_to_place_table(context, named):
@@ -169,5 +170,18 @@ def check_placex_contents(context, exact):
                     assert_almost_equal(float(x) * fac, res['cx'])
                     assert_almost_equal(float(y) * fac, res['cy'])
                 else:
-                    eq_(row[h], str(res[h]))
+                    eq_(row[h], str(res[h]),
+                        "Row '%s': expected: %s, got: %s" % (h, row[h], str(res[h])))
+    context.db.commit()
+
+@then("placex has no entry for (?P<oid>.*)")
+def check_placex_has_entry(context, oid):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    nid = NominatimID(oid)
+    where, params = nid.table_select()
+    cur.execute("""SELECT *, ST_AsText(geometry) as geomtxt,
+                   ST_X(centroid) as cx, ST_Y(centroid) as cy
+                   FROM placex where %s""" % where,
+                params)
+    eq_(0, cur.rowcount)
     context.db.commit()

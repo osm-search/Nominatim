@@ -32,7 +32,7 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 #
 #-----------------------------------------------------------------------------
 
-set(BUILD_TESTS on CACHE BOOL "Build test suite" FORCE)
+set(BUILD_TESTS off CACHE BOOL "Build test suite" FORCE)
 set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
 add_subdirectory(osm2pgsql)
 

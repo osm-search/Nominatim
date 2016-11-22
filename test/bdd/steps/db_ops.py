@@ -102,6 +102,31 @@ class NominatimID:
 
         return where, params
 
+    def get_place_id(self, cur):
+        where, params = self.table_select()
+        cur.execute("SELECT place_id FROM placex WHERE %s" % where, params)
+        eq_(1, cur.rowcount, "Expected exactly 1 entry in placex found %s" % cur.rowcount)
+
+        return cur.fetchone()[0]
+
+
+def assert_db_column(row, column, value):
+    if column == 'object':
+        return
+
+    if column.startswith('centroid'):
+        fac = float(column[9:]) if h.startswith('centroid*') else 1.0
+        x, y = value.split(' ')
+        assert_almost_equal(float(x) * fac, row['cx'])
+        assert_almost_equal(float(y) * fac, row['cy'])
+    else:
+        eq_(value, str(row[column]),
+            "Row '%s': expected: %s, got: %s"
+            % (column, value, str(row[column])))
+
+
+################################ STEPS ##################################
+
 @given(u'the scene (?P<scene>.+)')
 def set_default_scene(context, scene):
     context.scene = scene
@@ -139,13 +164,12 @@ def import_and_index_data_from_place_table(context):
     context.nominatim.run_setup_script('index', 'index-noanalyse')
 
 
+
 @then("placex contains(?P<exact> exactly)?")
 def check_placex_contents(context, exact):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    if exact:
-        cur.execute('SELECT osm_type, osm_id, class from placex')
-        to_match = [(r[0], r[1], r[2]) for r in cur]
 
+    expected_content = set()
     for row in context.table:
         nid = NominatimID(row['object'])
         where, params = nid.table_select()
@@ -155,33 +179,66 @@ def check_placex_contents(context, exact):
                     params)
 
         for res in cur:
+            if exact:
+                expected_content.add((res['osm_type'], res['osm_id'], res['class']))
             for h in row.headings:
-                if h == 'object':
-                    pass
-                elif h.startswith('name'):
+                if h.startswith('name'):
                     name = h[5:] if h.startswith('name+') else 'name'
                     assert_in(name, res['name'])
                     eq_(res['name'][name], row[h])
                 elif h.startswith('extratags+'):
                     eq_(res['extratags'][h[10:]], row[h])
-                elif h.startswith('centroid'):
-                    fac = float(h[9:]) if h.startswith('centroid*') else 1.0
-                    x, y = row[h].split(' ')
-                    assert_almost_equal(float(x) * fac, res['cx'])
-                    assert_almost_equal(float(y) * fac, res['cy'])
                 else:
-                    eq_(row[h], str(res[h]),
-                        "Row '%s': expected: %s, got: %s" % (h, row[h], str(res[h])))
+                    assert_db_column(res, h, row[h])
+
+    if exact:
+        cur.execute('SELECT osm_type, osm_id, class from placex')
+        eq_(expected_content, set([(r[0], r[1], r[2]) for r in cur]))
+
     context.db.commit()
+
+@then("search_name contains")
+def check_search_name_contents(context):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    for row in context.table:
+        pid = NominatimID(row['object']).get_place_id(cur)
+        cur.execute("""SELECT *, ST_X(centroid) as cx, ST_Y(centroid) as cy
+                       FROM search_name WHERE place_id = %s""", (pid, ))
+
+        for res in cur:
+            for h in row.headings:
+                if h in ('name_vector', 'nameaddress_vector'):
+                    terms = [x.strip().replace('#', ' ') for x in row[h].split(',')]
+                    subcur = context.db.cursor()
+                    subcur.execute("""SELECT word_id, word_token
+                                      FROM word, (SELECT unnest(%s) as term) t
+                                      WHERE word_token = make_standard_name(t.term)""",
+                                   (terms,))
+                    ok_(subcur.rowcount >= len(terms))
+                    for wid in subcur:
+                        assert_in(wid[0], res[h],
+                                  "Missing term for %s/%s: %s" % (pid, h, wid[1]))
+                else:
+                    assert_db_column(res, h, row[h])
+
+
+    context.db.commit()
+
 
 @then("placex has no entry for (?P<oid>.*)")
 def check_placex_has_entry(context, oid):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     nid = NominatimID(oid)
     where, params = nid.table_select()
-    cur.execute("""SELECT *, ST_AsText(geometry) as geomtxt,
-                   ST_X(centroid) as cx, ST_Y(centroid) as cy
-                   FROM placex where %s""" % where,
-                params)
+    cur.execute("SELECT * FROM placex where %s" % where, params)
+    eq_(0, cur.rowcount)
+    context.db.commit()
+
+@then("search_name has no entry for (?P<oid>.*)")
+def check_search_name_has_entry(context, oid):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    pid = NominatimID(oid).get_place_id(cur)
+    cur.execute("SELECT * FROM search_name WHERE place_id = %s", (pid, ))
     eq_(0, cur.rowcount)
     context.db.commit()

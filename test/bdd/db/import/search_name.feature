@@ -24,7 +24,6 @@ Feature: Creation of search terms
          | object | name_vector | nameaddress_vector |
          | N1     | foo         | the road |
 
-    @wip
     Scenario: Roads take over the postcode from attached houses
         Given the scene roads-with-pois
         And the places

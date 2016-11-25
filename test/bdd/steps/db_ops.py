@@ -63,7 +63,8 @@ class PlaceColumn:
         if self.columns['osm_type'] == 'N' and self.geometry is None:
             self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % (
                             random.random()*360 - 180, random.random()*180 - 90)
-
+        else:
+            assert_is_not_none(self.geometry, "Geometry missing")
         query = 'INSERT INTO place (%s, geometry) values(%s, %s)' % (
                      ','.join(self.columns.keys()),
                      ','.join(['%s' for x in range(len(self.columns))]),
@@ -76,7 +77,7 @@ class NominatimID:
         identifier instead that is of the form <osmtype><osmid>[:<class>].
     """
 
-    id_regex = re.compile(r"(?P<tp>[NRW])(?P<id>\d+)(?P<cls>:\w+)?")
+    id_regex = re.compile(r"(?P<tp>[NRW])(?P<id>\d+)(:(?P<cls>\w+))?")
 
     def __init__(self, oid):
         self.typ = self.oid = self.cls = None
@@ -146,6 +147,55 @@ def add_data_to_place_table(context, named):
     cur.close()
     context.db.commit()
 
+@given("the relations")
+def add_data_to_planet_relations(context):
+    cur = context.db.cursor()
+    for r in context.table:
+        last_node = 0
+        last_way = 0
+        parts = []
+        members = []
+        for m in r['members'].split(','):
+            mid = NominatimID(m)
+            if mid.typ == 'N':
+                parts.insert(last_node, int(mid.oid))
+                members.insert(2 * last_node, mid.cls)
+                members.insert(2 * last_node, 'n' + mid.oid)
+                last_node += 1
+                last_way += 1
+            elif mid.typ == 'W':
+                parts.insert(last_way, int(mid.oid))
+                members.insert(2 * last_way, mid.cls)
+                members.insert(2 * last_way, 'w' + mid.oid)
+                last_way += 1
+            else:
+                parts.append(int(mid.oid))
+                members.extend(('r' + mid.oid, mid.cls))
+
+        tags = []
+        for h in r.headings:
+            if h.startswith("tags+"):
+                tags.extend((h[5:], r[h]))
+
+        cur.execute("""INSERT INTO planet_osm_rels (id, way_off, rel_off, parts, members, tags)
+                       VALUES (%s, %s, %s, %s, %s, %s)""",
+                    (r['id'], last_node, last_way, parts, members, tags))
+    context.db.commit()
+
+@given("the ways")
+def add_data_to_planet_ways(context):
+    cur = context.db.cursor()
+    for r in context.table:
+        tags = []
+        for h in r.headings:
+            if h.startswith("tags+"):
+                tags.extend((h[5:], r[h]))
+
+        nodes = [ int(x.strip()) for x in r['nodes'].split(',') ]
+
+        cur.execute("INSERT INTO planet_osm_ways (id, nodes, tags) VALUES (%s, %s, %s)",
+                    (r['id'], nodes, tags))
+    context.db.commit()
 
 @when("importing")
 def import_and_index_data_from_place_table(context):
@@ -188,6 +238,12 @@ def check_placex_contents(context, exact):
                     eq_(res['name'][name], row[h])
                 elif h.startswith('extratags+'):
                     eq_(res['extratags'][h[10:]], row[h])
+                elif h == 'parent_place_id':
+                    if row[h] == '0':
+                        eq_(0, res[h])
+                    else:
+                        eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
+                            res[h])
                 else:
                     assert_db_column(res, h, row[h])
 

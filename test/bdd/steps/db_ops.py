@@ -154,23 +154,23 @@ def add_data_to_planet_relations(context):
         last_node = 0
         last_way = 0
         parts = []
-        members = []
-        for m in r['members'].split(','):
-            mid = NominatimID(m)
-            if mid.typ == 'N':
-                parts.insert(last_node, int(mid.oid))
-                members.insert(2 * last_node, mid.cls)
-                members.insert(2 * last_node, 'n' + mid.oid)
-                last_node += 1
-                last_way += 1
-            elif mid.typ == 'W':
-                parts.insert(last_way, int(mid.oid))
-                members.insert(2 * last_way, mid.cls)
-                members.insert(2 * last_way, 'w' + mid.oid)
-                last_way += 1
-            else:
-                parts.append(int(mid.oid))
-                members.extend(('r' + mid.oid, mid.cls))
+        if r['members']:
+            members = []
+            for m in r['members'].split(','):
+                mid = NominatimID(m)
+                if mid.typ == 'N':
+                    parts.insert(last_node, int(mid.oid))
+                    last_node += 1
+                    last_way += 1
+                elif mid.typ == 'W':
+                    parts.insert(last_way, int(mid.oid))
+                    last_way += 1
+                else:
+                    parts.append(int(mid.oid))
+
+                members.extend((mid.typ.lower() + mid.oid, mid.cls or ''))
+        else:
+            members = None
 
         tags = []
         for h in r.headings:
@@ -238,9 +238,11 @@ def check_placex_contents(context, exact):
                     eq_(res['name'][name], row[h])
                 elif h.startswith('extratags+'):
                     eq_(res['extratags'][h[10:]], row[h])
-                elif h == 'parent_place_id':
+                elif h in ('linked_place_id', 'parent_place_id'):
                     if row[h] == '0':
                         eq_(0, res[h])
+                    elif row[h] == '-':
+                        assert_is_none(res[h])
                     else:
                         eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
                             res[h])

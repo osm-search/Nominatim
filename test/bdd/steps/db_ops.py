@@ -23,7 +23,7 @@ class PlaceColumn:
         else:
             assert_in(key, ('class', 'type', 'street', 'addr_place',
                             'isin', 'postcode'))
-            self.columns[key] = value
+            self.columns[key] = None if value == '' else value
 
     def set_key_name(self, value):
         self.add_hstore('name', 'name', value)
@@ -39,10 +39,10 @@ class PlaceColumn:
         self.columns['admin_level'] = int(value)
 
     def set_key_housenr(self, value):
-        self.columns['housenumber'] = value
+        self.columns['housenumber'] = None if value == '' else value
 
     def set_key_country(self, value):
-        self.columns['country_code'] = value
+        self.columns['country_code'] = None if value == '' else value
 
     def set_key_geometry(self, value):
         self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
@@ -111,7 +111,7 @@ class NominatimID:
         return cur.fetchone()[0]
 
 
-def assert_db_column(row, column, value):
+def assert_db_column(row, column, value, context):
     if column == 'object':
         return
 
@@ -120,6 +120,12 @@ def assert_db_column(row, column, value):
         x, y = value.split(' ')
         assert_almost_equal(float(x) * fac, row['cx'])
         assert_almost_equal(float(y) * fac, row['cy'])
+    elif column == 'geometry':
+        geom = context.osm.parse_geometry(value, context.scene)
+        cur = context.db.cursor()
+        cur.execute("SELECT ST_MaxDistance(%s, ST_SetSRID(%%s::geometry, 4326))" % geom,
+                    (row['geomtxt'],))
+        assert_less(cur.fetchone()[0], 0.005)
     else:
         eq_(value, str(row[column]),
             "Row '%s': expected: %s, got: %s"
@@ -247,7 +253,7 @@ def check_placex_contents(context, exact):
                         eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
                             res[h])
                 else:
-                    assert_db_column(res, h, row[h])
+                    assert_db_column(res, h, row[h], context)
 
     if exact:
         cur.execute('SELECT osm_type, osm_id, class from placex')
@@ -278,10 +284,48 @@ def check_search_name_contents(context):
                         assert_in(wid[0], res[h],
                                   "Missing term for %s/%s: %s" % (pid, h, wid[1]))
                 else:
-                    assert_db_column(res, h, row[h])
+                    assert_db_column(res, h, row[h], context)
 
 
     context.db.commit()
+
+@then("(?P<oid>\w+) expands to interpolation")
+def check_location_property_osmline(context, oid):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    nid = NominatimID(oid)
+
+    eq_('W', nid.typ, "interpolation must be a way")
+
+    cur.execute("""SELECT *, ST_AsText(linegeo) as geomtxt
+                   FROM location_property_osmline WHERE osm_id = %s""",
+                (nid.oid, ))
+
+    todo = list(range(len([context.table])))
+    for res in cur:
+        for i in todo:
+            row = context.table[i]
+            if (int(row['start']) == res['startnumber']
+                and int(row['end']) == res['endnumber']):
+                todo.remove(i)
+                break
+        else:
+            assert(False, "Unexpected row %s" % (str(res)))
+
+        for h in row.headings:
+            if h in ('start', 'end'):
+                continue
+            elif h == 'parent_place_id':
+                if row[h] == '0':
+                    eq_(0, res[h])
+                elif row[h] == '-':
+                    assert_is_none(res[h])
+                else:
+                    eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
+                        res[h])
+            else:
+                assert_db_column(res, h, row[h], context)
+
+    eq_(todo, [])
 
 
 @then("placex has no entry for (?P<oid>.*)")

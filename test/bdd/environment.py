@@ -122,15 +122,17 @@ class NominatimEnvironment(object):
         if not self.keep_scenario_db:
             self.db_drop_database(self.test_db)
 
-    def run_setup_script(self, *args):
-        self.run_nominatim_script('setup', *args)
+    def run_setup_script(self, *args, **kwargs):
+        self.run_nominatim_script('setup', *args, **kwargs)
 
     def run_update_script(self, *args):
         self.run_nominatim_script('update', *args)
 
-    def run_nominatim_script(self, script, *args):
+    def run_nominatim_script(self, script, *args, **kwargs):
         cmd = [os.path.join(self.build_dir, 'utils', '%s.php' % script)]
         cmd.extend(['--%s' % x for x in args])
+        for k, v in kwargs.items():
+            cmd.extend(('--' + k.replace('_', '-'), str(v)))
         proc = subprocess.Popen(cmd, cwd=self.build_dir,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outp, outerr) = proc.communicate()

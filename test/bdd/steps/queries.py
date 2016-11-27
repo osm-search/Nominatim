@@ -44,8 +44,8 @@ class SearchResponse(object):
                     assert_equal(str(res[h]), str(row[h]))
 
 
-@when(u'searching for "(?P<query>.*)"')
-def query_cmd(context, query):
+@when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
+def query_cmd(context, query, dups):
     """ Query directly via PHP script.
     """
     cmd = [os.path.join(context.nominatim.build_dir, 'utils', 'query.php'),
@@ -56,6 +56,9 @@ def query_cmd(context, query):
             value = context.table[0][h].strip()
             if value:
                 cmd.extend(('--' + h, value))
+
+    if dups:
+        cmd.extend(('--dedupe', '0'))
 
     proc = subprocess.Popen(cmd, cwd=context.nominatim.build_dir,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)

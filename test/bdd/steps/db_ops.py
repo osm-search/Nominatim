@@ -98,7 +98,7 @@ class NominatimID:
         params = [self.typ, self. oid]
 
         if self.cls is not None:
-            where += ' class = %s'
+            where += ' and class = %s'
             params.append(self.cls)
 
         return where, params
@@ -116,16 +116,16 @@ def assert_db_column(row, column, value, context):
         return
 
     if column.startswith('centroid'):
-        fac = float(column[9:]) if h.startswith('centroid*') else 1.0
+        fac = float(column[9:]) if column.startswith('centroid*') else 1.0
         x, y = value.split(' ')
         assert_almost_equal(float(x) * fac, row['cx'])
         assert_almost_equal(float(y) * fac, row['cy'])
     elif column == 'geometry':
         geom = context.osm.parse_geometry(value, context.scene)
         cur = context.db.cursor()
-        cur.execute("SELECT ST_MaxDistance(%s, ST_SetSRID(%%s::geometry, 4326))" % geom,
+        cur.execute("SELECT ST_Equals(%s, ST_SetSRID(%%s::geometry, 4326))" % geom,
                     (row['geomtxt'],))
-        assert_less(cur.fetchone()[0], 0.005)
+        eq_(cur.fetchone()[0], True)
     else:
         eq_(value, str(row[column]),
             "Row '%s': expected: %s, got: %s"
@@ -219,7 +219,32 @@ def import_and_index_data_from_place_table(context):
     context.db.commit()
     context.nominatim.run_setup_script('index', 'index-noanalyse')
 
+@when("updating places")
+def update_place_table(context):
+    context.nominatim.run_setup_script(
+        'create-functions', 'create-partition-functions', 'enable-diff-updates')
+    cur = context.db.cursor()
+    for r in context.table:
+        col = PlaceColumn(context, False)
 
+        for h in r.headings:
+            col.add(h, r[h])
+
+        col.db_insert(cur)
+
+    context.db.commit()
+    context.nominatim.run_update_script('index')
+
+@when("marking for delete (?P<oids>.*)")
+def delete_places(context, oids):
+    context.nominatim.run_setup_script(
+        'create-functions', 'create-partition-functions', 'enable-diff-updates')
+    cur = context.db.cursor()
+    for oid in oids.split(','):
+        where, params = NominatimID(oid).table_select()
+        cur.execute("DELETE FROM place WHERE " + where, params)
+    context.db.commit()
+    context.nominatim.run_update_script('index')
 
 @then("placex contains(?P<exact> exactly)?")
 def check_placex_contents(context, exact):
@@ -300,7 +325,7 @@ def check_location_property_osmline(context, oid):
                    FROM location_property_osmline WHERE osm_id = %s""",
                 (nid.oid, ))
 
-    todo = list(range(len([context.table])))
+    todo = list(range(len(list(context.table))))
     for res in cur:
         for i in todo:
             row = context.table[i]
@@ -309,7 +334,7 @@ def check_location_property_osmline(context, oid):
                 todo.remove(i)
                 break
         else:
-            assert(False, "Unexpected row %s" % (str(res)))
+            assert False, "Unexpected row %s" % (str(res))
 
         for h in row.headings:
             if h in ('start', 'end'):

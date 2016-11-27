@@ -314,8 +314,8 @@ def check_search_name_contents(context):
 
     context.db.commit()
 
-@then("(?P<oid>\w+) expands to interpolation")
-def check_location_property_osmline(context, oid):
+@then("(?P<oid>\w+) expands to(?P<neg> no)? interpolation")
+def check_location_property_osmline(context, oid, neg):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     nid = NominatimID(oid)
 
@@ -324,6 +324,10 @@ def check_location_property_osmline(context, oid):
     cur.execute("""SELECT *, ST_AsText(linegeo) as geomtxt
                    FROM location_property_osmline WHERE osm_id = %s""",
                 (nid.oid, ))
+
+    if neg:
+        eq_(0, cur.rowcount)
+        return
 
     todo = list(range(len(list(context.table))))
     for res in cur:

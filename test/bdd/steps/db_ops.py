@@ -296,7 +296,8 @@ def check_placex_contents(context, exact):
     for row in context.table:
         nid = NominatimID(row['object'])
         where, params = nid.table_select()
-        cur.execute("""SELECT *, ST_AsText(geometry) as geomtxt
+        cur.execute("""SELECT *, ST_AsText(geometry) as geomtxt,
+                       ST_GeometryType(geometry) as geometrytype
                        FROM place where %s""" % where,
                     params)
         assert_less(0, cur.rowcount, "No rows found for " + row['object'])

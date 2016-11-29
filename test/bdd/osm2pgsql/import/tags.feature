@@ -87,12 +87,14 @@ Feature: Tag evaluation
          n1 Thighway=yes,name:%20%de=Foo,name=real1
          n2 Thighway=yes,name:%a%de=Foo,name=real2
          n3 Thighway=yes,name:%9%de=Foo,name:\\=real3
+         n4 Thighway=yes,name:%9%de=Foo,name:\=real3
          """
         Then place contains
          | object | name |
          | N1     | 'name: de' : 'Foo', 'name' : 'real1' |
          | N2     | 'name: de' : 'Foo', 'name' : 'real2' |
          | N3     | 'name: de' : 'Foo', 'name:\\\\' : 'real3' |
+         | N4     | 'name: de' : 'Foo', 'name:\\' : 'real3' |
 
     Scenario Outline: Included places
         When loading osm data

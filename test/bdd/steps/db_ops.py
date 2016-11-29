@@ -127,6 +127,8 @@ def assert_db_column(row, column, value, context):
                  geom, row['geomtxt'],)
         cur.execute(query)
         eq_(cur.fetchone()[0], True, "(Row %s failed: %s)" % (column, query))
+    elif value == '-':
+        assert_is_none(row[column], "Row %s" % column)
     else:
         eq_(value, str(row[column]),
             "Row '%s': expected: %s, got: %s"
@@ -308,8 +310,11 @@ def check_placex_contents(context, exact):
             for h in row.headings:
                 msg = "%s: %s" % (row['object'], h)
                 if h in ('name', 'extratags'):
-                    vdict = eval('{' + row[h] + '}')
-                    assert_equals(vdict, res[h], msg)
+                    if row[h] == '-':
+                        assert_is_none(res[h], msg)
+                    else:
+                        vdict = eval('{' + row[h] + '}')
+                        assert_equals(vdict, res[h], msg)
                 elif h.startswith('name+'):
                     assert_equals(res['name'][h[5:]], row[h], msg)
                 elif h.startswith('extratags+'):
@@ -403,12 +408,12 @@ def check_location_property_osmline(context, oid, neg):
     eq_(todo, [])
 
 
-@then("placex has no entry for (?P<oid>.*)")
-def check_placex_has_entry(context, oid):
+@then("(?P<table>placex|place) has no entry for (?P<oid>.*)")
+def check_placex_has_entry(context, table, oid):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     nid = NominatimID(oid)
     where, params = nid.table_select()
-    cur.execute("SELECT * FROM placex where %s" % where, params)
+    cur.execute("SELECT * FROM %s where %s" % (table, where), params)
     eq_(0, cur.rowcount)
     context.db.commit()
 

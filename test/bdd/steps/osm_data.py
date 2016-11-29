@@ -12,8 +12,8 @@ def load_osm_file(context):
         fname = fd.name
         for line in context.text.splitlines():
             if line.startswith('n') and line.find(' x') < 0:
-                    line += " x%d y%d" % (random.random()*360 - 180,
-                                          random.random()*180 - 90)
+                    line += " x%d y%d" % (random.random() * 360 - 180,
+                                          random.random() * 180 - 90)
             fd.write(line.encode('utf-8'))
             fd.write(b'\n')
 
@@ -31,3 +31,28 @@ def load_osm_file(context):
 
     os.remove(fname)
 
+@when(u'updating osm data')
+def update_from_osm_file(context):
+    context.nominatim.run_setup_script('create-functions', 'create-partition-functions')
+
+    cur = context.db.cursor()
+    cur.execute("""insert into placex (osm_type, osm_id, class, type, name,
+                   admin_level,  housenumber, street, addr_place, isin, postcode,
+                   country_code, extratags, geometry) select * from place""")
+    context.db.commit()
+    context.nominatim.run_setup_script('index', 'index-noanalyse')
+    context.nominatim.run_setup_script('create-functions', 'create-partition-functions',
+                                       'enable-diff-updates')
+
+    # create a OSM file in /tmp and import it
+    with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.opl', delete=False) as fd:
+        fname = fd.name
+        for line in context.text.splitlines():
+            if line.startswith('n') and line.find(' x') < 0:
+                    line += " x%d y%d" % (random.random() * 360 - 180,
+                                          random.random() * 180 - 90)
+            fd.write(line.encode('utf-8'))
+            fd.write(b'\n')
+
+    context.nominatim.run_update_script(import_diff=fname)
+    os.remove(fname)

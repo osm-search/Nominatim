@@ -125,8 +125,8 @@ class NominatimEnvironment(object):
     def run_setup_script(self, *args, **kwargs):
         self.run_nominatim_script('setup', *args, **kwargs)
 
-    def run_update_script(self, *args):
-        self.run_nominatim_script('update', *args)
+    def run_update_script(self, *args, **kwargs):
+        self.run_nominatim_script('update', *args, **kwargs)
 
     def run_nominatim_script(self, script, *args, **kwargs):
         cmd = [os.path.join(self.build_dir, 'utils', '%s.php' % script)]

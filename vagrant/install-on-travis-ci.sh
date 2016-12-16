@@ -41,6 +41,7 @@ sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF > /dev/null
     <Directory "$TRAVIS_BUILD_DIR/build/website">
       Options FollowSymLinks MultiViews
       AddType text/html   .php
+      DirectoryIndex search.php
       Require all granted
     </Directory>
 

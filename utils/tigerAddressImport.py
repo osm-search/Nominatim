@@ -3824,6 +3824,13 @@ def addressways(waylist, nodelist, first_id):
                 ltags.extend(tags)
                 rtags.extend(tags)
 
+                # A typo in the Tiger 2016 data. The 
+                if (name == "Russel Way") and (county == 'Belknap, NH'):
+                    zipl = zipl.replace("83809", "03809")
+                    zipr = zipr.replace("83809", "03809")
+
+
+
 #Write the nodes of the offset ways
                 if right:
                     rlinestring = [];

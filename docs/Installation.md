@@ -104,6 +104,7 @@ directory and create an alias:
     <Directory "/srv/nominatim/build/website">
       Options FollowSymLinks MultiViews
       AddType text/html   .php
+      DirectoryIndex search.php
       Require all granted
     </Directory>
     Alias /nominatim /srv/nominatim/build/website
@@ -134,13 +135,15 @@ follows:
 Tell nginx that php files are special and to fastcgi_pass to the php-fpm
 unix socket by adding the location definition to the default configuration.
 
+    root /srv/nominatim/build/website;
+    index search.php index.html;
     location ~ [^/]\.php(/|$) {
         fastcgi_split_path_info ^(.+?\.php)(/.*)$;
         if (!-f $document_root$fastcgi_script_name) {
             return 404;
         }
         fastcgi_pass unix:/var/run/php5-fpm.sock;
-        fastcgi_index index.php;
+        fastcgi_index search.php;
         include fastcgi.conf;
     }
 

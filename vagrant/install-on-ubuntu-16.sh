@@ -104,6 +104,7 @@ sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
+  DirectoryIndex search.php
   Require all granted
 </Directory>
 

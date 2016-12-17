@@ -16,6 +16,7 @@ userconfig = {
     'KEEP_TEST_DB' : False,
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
+    'API_TEST_DB' : 'test_api_nominatim',
     'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php'
 }
 
@@ -29,6 +30,7 @@ class NominatimEnvironment(object):
         self.build_dir = os.path.abspath(config['BUILDDIR'])
         self.template_db = config['TEMPLATE_DB']
         self.test_db = config['TEST_DB']
+        self.api_test_db = config['API_TEST_DB']
         self.local_settings_file = config['TEST_SETTINGS_FILE']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
@@ -98,7 +100,8 @@ class NominatimEnvironment(object):
                               'create-partition-tables', 'create-partition-functions',
                               'load-data', 'create-search-indices')
 
-
+    def setup_api_db(self, context):
+        self.write_nominatim_config(self.api_test_db)
 
     def setup_db(self, context):
         self.setup_template_db()
@@ -213,6 +216,8 @@ def after_all(context):
 def before_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.setup_db(context)
+    elif 'APIDB' in context.tags:
+        context.nominatim.setup_api_db(context)
     context.scene = None
 
 def after_scenario(context, scenario):

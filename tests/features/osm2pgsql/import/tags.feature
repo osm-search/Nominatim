@@ -92,7 +92,7 @@ Feature: Tag evaluation
          | object | name
          | N1     | 'name: de' : 'Foo', 'name' : 'real1'
          | N2     | 'name: de' : 'Foo', 'name' : 'real2'
-         | N3     | 'name: de' : 'Foo', 'name:\\\\' : 'real3'
+         | N3     | 'name: de' : 'Foo', 'name:\\' : 'real3'
 
     Scenario Outline: Included places
         Given the osm nodes:

@@ -148,6 +148,71 @@ class SearchResponse(object):
         return [ x[prop] for x in self.result ]
 
 
+class ReverseResponse(object):
+
+    def __init__(self, page, fmt='json', errorcode=200):
+        self.page = page
+        self.format = fmt
+        self.errorcode = errorcode
+        self.result = []
+        self.header = dict()
+
+        if errorcode == 200:
+            getattr(self, 'parse_' + fmt)()
+
+    def parse_html(self):
+        content, errors = tidy_document(self.page,
+                                        options={'char-encoding' : 'utf8'})
+        #eq_(len(errors), 0 , "Errors found in HTML document:\n%s" % errors)
+
+        b = content.find('nominatim_results =')
+        e = content.find('</script>')
+        content = content[b:e]
+        b = content.find('[')
+        e = content.rfind(']')
+
+        self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(content[b:e+1])
+
+    def parse_json(self):
+        m = re.fullmatch(r'([\w$][^(]*)\((.*)\)', self.page)
+        if m is None:
+            code = self.page
+        else:
+            code = m.group(2)
+            self.header['json_func'] = m.group(1)
+        self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)]
+
+    def parse_xml(self):
+        et = ET.fromstring(self.page)
+
+        self.header = dict(et.attrib)
+        self.result = []
+
+        for child in et:
+            if child.tag == 'result':
+                eq_(0, len(self.result), "More than one result in reverse result")
+                self.result.append(dict(child.attrib))
+            elif child.tag == 'addressparts':
+                address = {}
+                for sub in child:
+                    address[sub.tag] = sub.text
+                self.result[0]['address'] = address
+            elif child.tag == 'extratags':
+                self.result[0]['extratags'] = {}
+                for tag in child:
+                    self.result[0]['extratags'][tag.attrib['key']] = tag.attrib['value']
+            elif child.tag == 'namedetails':
+                self.result[0]['namedetails'] = {}
+                for tag in child:
+                    self.result[0]['namedetails'][tag.attrib['desc']] = tag.text
+            elif child.tag in ('geokml'):
+                self.result[0][child.tag] = True
+            else:
+                assert child.tag == 'error', \
+                        "Unknown XML tag %s on page: %s" % (child.tag, self.page)
+
+
+
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
 def query_cmd(context, query, dups):
     """ Query directly via PHP script.
@@ -172,18 +237,9 @@ def query_cmd(context, query, dups):
 
     context.response = SearchResponse(outp.decode('utf-8'), 'json')
 
-
-@when(u'sending (?P<fmt>\S+ )?search query "(?P<query>.*)"(?P<addr> with address)?')
-def website_search_request(context, fmt, query, addr):
-    env = BASE_SERVER_ENV
-
-    params = {}
-    if query:
-        params['q'] = query
+def send_api_query(endpoint, params, fmt, context):
     if fmt is not None:
         params['format'] = fmt.strip()
-    if addr is not None:
-        params['addressdetails'] = '1'
     if context.table:
         if context.table.headings[0] == 'param':
             for line in context.table:
@@ -191,15 +247,18 @@ def website_search_request(context, fmt, query, addr):
         else:
             for h in context.table.headings:
                 params[h] = context.table[0][h]
+
+    env = BASE_SERVER_ENV
     env['QUERY_STRING'] = urlencode(params)
 
-    env['REQUEST_URI'] = '/search.php?' + env['QUERY_STRING']
-    env['SCRIPT_NAME'] = '/search.php'
+    env['SCRIPT_NAME'] = '/%s.php' % endpoint
+    env['REQUEST_URI'] = '%s?%s' % (env['SCRIPT_NAME'], env['QUERY_STRING'])
     env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.build_dir, 'website')
-    env['SCRIPT_FILENAME'] = os.path.join(context.nominatim.build_dir, 'website', 'search.php')
+    env['SCRIPT_FILENAME'] = os.path.join(env['CONTEXT_DOCUMENT_ROOT'],
+                                          '%s.php' % endpoint)
     env['NOMINATIM_SETTINGS'] = context.nominatim.local_settings_file
 
-    cmd = [ '/usr/bin/php-cgi', env['SCRIPT_FILENAME']]
+    cmd = ['/usr/bin/php-cgi', env['SCRIPT_FILENAME']]
     for k,v in params.items():
         cmd.append("%s=%s" % (k, v))
 
@@ -221,7 +280,20 @@ def website_search_request(context, fmt, query, addr):
         status = 200
 
     content_start = outp.find('\r\n\r\n')
-    assert_less(11, content_start)
+
+    return outp[content_start + 4:], status
+
+
+@when(u'sending (?P<fmt>\S+ )?search query "(?P<query>.*)"(?P<addr> with address)?')
+def website_search_request(context, fmt, query, addr):
+
+    params = {}
+    if query:
+        params['q'] = query
+    if addr is not None:
+        params['addressdetails'] = '1'
+
+    outp, status = send_api_query('search', params, fmt, context)
 
     if fmt is None:
         outfmt = 'html'
@@ -230,7 +302,27 @@ def website_search_request(context, fmt, query, addr):
     else:
         outfmt = fmt.strip()
 
-    context.response = SearchResponse(outp[content_start + 4:], outfmt, status)
+    context.response = SearchResponse(outp, outfmt, status)
+
+@when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>[0-9.-]+)?,(?P<lon>[0-9.-]+)?')
+def website_reverse_request(context, fmt, lat, lon):
+    params = {}
+    if lat is not None:
+        params['lat'] = lat
+    if lon is not None:
+        params['lon'] = lon
+
+    outp, status = send_api_query('reverse', params, fmt, context)
+
+    if fmt is None:
+        outfmt = 'xml'
+    elif fmt == 'jsonv2 ':
+        outfmt = 'json'
+    else:
+        outfmt = fmt.strip()
+
+    context.response = ReverseResponse(outp, outfmt, status)
+
 
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
@@ -246,6 +338,7 @@ def check_http_return_status(context, status):
 
 @then(u'the result is valid (?P<fmt>\w+)')
 def step_impl(context, fmt):
+    context.execute_steps("Then a HTTP 200 is returned")
     eq_(context.response.format, fmt)
 
 @then(u'result header contains')

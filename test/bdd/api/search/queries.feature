@@ -56,3 +56,12 @@ Feature: Search queries
         Then results contain
           | place_rank |
           | 30 |
+
+    # https://trac.openstreetmap.org/ticket/5094
+    Scenario: housenumbers are ordered by complete match first
+        When sending json search query "6395 geminis, montevideo" with address
+        Then result addresses contain
+          | ID | house_number |
+          | 0  | 6395 |
+          | 1  | 6395 BIS |
+

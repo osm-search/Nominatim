@@ -177,7 +177,9 @@ def query_cmd(context, query, dups):
 def website_search_request(context, fmt, query, addr):
     env = BASE_SERVER_ENV
 
-    params = { 'q' : query }
+    params = {}
+    if query:
+        params['q'] = query
     if fmt is not None:
         params['format'] = fmt.strip()
     if addr is not None:

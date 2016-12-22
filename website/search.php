@@ -110,6 +110,7 @@ if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';
 if ($oGeocode->getIncludeExtraTags()) $sMoreURL .= '&extratags=1';
 if ($oGeocode->getIncludeNameDetails()) $sMoreURL .= '&namedetails=1';
+if ($oGeocode->getCountryCodes()) $sMoreURL .= '&countrycodes='.join(',', $oGeocode->getCountryCodes());
 if ($sViewBox) $sMoreURL .= '&viewbox='.urlencode($sViewBox);
 if (isset($_GET['nearlat']) && isset($_GET['nearlon'])) $sMoreURL .= '&nearlat='.(float)$_GET['nearlat'].'&nearlon='.(float)$_GET['nearlon'];
 $sMoreURL .= '&q='.urlencode($sQuery);

@@ -2,6 +2,31 @@
 Feature: Update of address interpolations
     Test the interpolated address are updated correctly
 
+    @wip
+    Scenario: new interpolation added to existing street
+      Given the scene parallel-road
+      And the places
+          | osm | class   | type         | name         | geometry |
+          | W2  | highway | unclassified | Sun Way      | :w-north |
+          | W3  | highway | unclassified | Cloud Street | :w-south |
+      And the ways
+          | id  | nodes |
+          | 10  | 1,100,101,102,2 |
+      When importing
+      Then W10 expands to no interpolation
+      When updating places
+          | osm | class | type  | housenr | geometry |
+          | N1  | place | house | 2       | :n-middle-w |
+          | N2  | place | house | 6       | :n-middle-e |
+          | W10 | place | houses | even   | :w-middle |
+      Then placex contains
+          | object | parent_place_id |
+          | N1     | W2 |
+          | N2     | W2 |
+      And W10 expands to interpolation
+          | parent_place_id | start | end |
+          | W2              | 2     | 6 |
+
     Scenario: addr:street added to interpolation
       Given the scene parallel-road
       And the places

@@ -54,8 +54,40 @@ def compare(operator, op1, op2):
     else:
         raise Exception("unknown operator '%s'" % operator)
 
+class GenericResponse(object):
 
-class SearchResponse(object):
+    def match_row(self, row):
+        if 'ID' in row.headings:
+            todo = [int(row['ID'])]
+        else:
+            todo = range(len(self.result))
+
+        for i in todo:
+            res = self.result[i]
+            for h in row.headings:
+                if h == 'ID':
+                    pass
+                elif h == 'osm':
+                    assert_equal(res['osm_type'], row[h][0])
+                    assert_equal(res['osm_id'], row[h][1:])
+                elif h == 'centroid':
+                    x, y = row[h].split(' ')
+                    assert_almost_equal(float(y), float(res['lat']))
+                    assert_almost_equal(float(x), float(res['lon']))
+                elif row[h].startswith("^"):
+                    assert_in(h, res)
+                    assert_is_not_none(re.fullmatch(row[h], res[h]),
+                                       "attribute '%s': expected: '%s', got '%s'"
+                                          % (h, row[h], res[h]))
+                else:
+                    assert_in(h, res)
+                    assert_equal(str(res[h]), str(row[h]))
+
+    def property_list(self, prop):
+        return [ x[prop] for x in self.result ]
+
+
+class SearchResponse(GenericResponse):
 
     def __init__(self, page, fmt='json', errorcode=200):
         self.page = page
@@ -117,38 +149,8 @@ class SearchResponse(object):
                 self.result[-1]['address'] = address
 
 
-    def match_row(self, row):
-        if 'ID' in row.headings:
-            todo = [int(row['ID'])]
-        else:
-            todo = range(len(self.result))
 
-        for i in todo:
-            res = self.result[i]
-            for h in row.headings:
-                if h == 'ID':
-                    pass
-                elif h == 'osm':
-                    assert_equal(res['osm_type'], row[h][0])
-                    assert_equal(res['osm_id'], row[h][1:])
-                elif h == 'centroid':
-                    x, y = row[h].split(' ')
-                    assert_almost_equal(float(y), float(res['lat']))
-                    assert_almost_equal(float(x), float(res['lon']))
-                elif row[h].startswith("^"):
-                    assert_in(h, res)
-                    assert_is_not_none(re.fullmatch(row[h], res[h]),
-                                       "attribute '%s': expected: '%s', got '%s'"
-                                          % (h, row[h], res[h]))
-                else:
-                    assert_in(h, res)
-                    assert_equal(str(res[h]), str(row[h]))
-
-    def property_list(self, prop):
-        return [ x[prop] for x in self.result ]
-
-
-class ReverseResponse(object):
+class ReverseResponse(GenericResponse):
 
     def __init__(self, page, fmt='json', errorcode=200):
         self.page = page
@@ -210,7 +212,6 @@ class ReverseResponse(object):
             else:
                 assert child.tag == 'error', \
                         "Unknown XML tag %s on page: %s" % (child.tag, self.page)
-
 
 
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')

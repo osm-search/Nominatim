@@ -67,17 +67,17 @@ Feature: Simple Reverse Tests
       | json |
       | jsonv2 |
 
-    Scenario Outline: Reverse-geocoding without address
-        When sending <format> reverse coordinates 53.603,10.041
-          | addressdetails |
-          | 0 |
-        Then exactly 1 result is returned
+    @wip
+    Scenario Outline: Boundingbox is returned
+        When sending <format> reverse coordinates 14.62,108.1
+          | zoom |
+          | 4 |
+        Then result has bounding box in 9,20,102,113
 
     Examples:
       | format |
       | json |
       | jsonv2 |
-      | html |
       | xml |
 
     Scenario Outline: Reverse-geocoding with zoom

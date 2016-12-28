@@ -292,8 +292,8 @@ if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $sWikiArticlesFile = CONST_BasePath.'/data/wikipedia_article.sql.bin';
-    $sWikiRedirectsFile = CONST_BasePath.'/data/wikipedia_redirect.sql.bin';
+    $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikipedia_article.sql.bin';
+    $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
     if (file_exists($sWikiArticlesFile)) {
         echo "Importing wikipedia articles...";
         pgsqlRunDropAndRestore($sWikiArticlesFile);

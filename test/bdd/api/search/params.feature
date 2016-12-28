@@ -30,6 +30,8 @@ Feature: Search queries
 
     Scenario: XML search with addressdetails
         When sending xml search query "Aleg" with address
+          | accept-language |
+          | en |
         Then address of result 0 is
           | type         | value |
           | city         | Aleg |
@@ -39,6 +41,8 @@ Feature: Search queries
 
     Scenario: coordinate search with addressdetails
         When sending json search query "14.271104294939,107.69828796387"
+          | accept-language |
+          | en |
         Then results contain
           | display_name |
           | Plei Ya Rê, Kon Tum province, Vietnam |

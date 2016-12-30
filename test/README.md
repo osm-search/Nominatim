@@ -100,7 +100,8 @@ These tests are meant to test the different API endpoints and their parameters.
 They require a preimported test database, which consists of the import of a
 planet extract. The polygons defining the extract can be found in the test/testdb
 directory. There is also a reduced set of wikipedia data for this extract,
-which you need to import as well.
+which you need to import as well. For Tiger tests the data of South Dakota
+is required. Get the Tiger files `46*`.
 
 The official test dataset is derived from the 160725 planet. Newer
 planets are likely to work as well but you may see isolated test

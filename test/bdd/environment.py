@@ -10,7 +10,6 @@ from sys import version_info as python_version
 logger = logging.getLogger(__name__)
 
 userconfig = {
-    'BASEURL' : 'http://localhost/nominatim',
     'BUILDDIR' : os.path.join(os.path.split(__file__)[0], "../../build"),
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,

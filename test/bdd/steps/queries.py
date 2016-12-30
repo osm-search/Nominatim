@@ -264,7 +264,7 @@ def send_api_query(endpoint, params, fmt, context):
             for h in context.table.headings:
                 params[h] = context.table[0][h]
 
-    env = BASE_SERVER_ENV
+    env = dict(BASE_SERVER_ENV)
     env['QUERY_STRING'] = urlencode(params)
 
     env['SCRIPT_NAME'] = '/%s.php' % endpoint

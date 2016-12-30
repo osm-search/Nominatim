@@ -8,13 +8,13 @@
     processIsolation="false"
     stopOnFailure="false"
     syntaxCheck="true"
-    bootstrap="tests-php/bootstrap.php"
+    bootstrap="test/php/bootstrap.php"
     >
     <php>
     </php>
     <testsuites>
         <testsuite name="Nominatim PHP Test Suite">
-            <directory>./tests-php/Nominatim</directory>
+            <directory>./test/php/Nominatim</directory>
         </testsuite>
     </testsuites>
     <filter>

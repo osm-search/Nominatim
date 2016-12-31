@@ -70,6 +70,9 @@ Feature: Search queries
          | osm_type
          | way
 
+
+
+
     Scenario: Expansion of Illinois
         Given the request parameters
           | accept-language

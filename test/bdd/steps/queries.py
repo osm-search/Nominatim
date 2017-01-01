@@ -8,12 +8,15 @@ import json
 import os
 import io
 import re
+import logging
 from tidylib import tidy_document
 import xml.etree.ElementTree as ET
 import subprocess
 from urllib.parse import urlencode
 from collections import OrderedDict
 from nose.tools import * # for assert functions
+
+logger = logging.getLogger(__name__)
 
 BASE_SERVER_ENV = {
     'HTTP_HOST' : 'localhost',
@@ -274,6 +277,8 @@ def send_api_query(endpoint, params, fmt, context):
                                           '%s.php' % endpoint)
     env['NOMINATIM_SETTINGS'] = context.nominatim.local_settings_file
 
+    logger.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
+
     if hasattr(context, 'http_headers'):
         env.update(context.http_headers)
 
@@ -285,13 +290,15 @@ def send_api_query(endpoint, params, fmt, context):
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     (outp, err) = proc.communicate()
+    outp = outp.decode('utf-8')
+
+    logger.debug("Result: \n===============================\n"
+                 + outp + "\n===============================\n")
 
     assert_equals(0, proc.returncode,
                   "query.php failed with message: %s\noutput: %s" % (err, outp))
 
     assert_equals(0, len(err), "Unexpected PHP error: %s" % (err))
-
-    outp = outp.decode('utf-8')
 
     if outp.startswith('Status: '):
         status = int(outp[8:11])

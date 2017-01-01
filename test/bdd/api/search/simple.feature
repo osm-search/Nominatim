@@ -219,3 +219,10 @@ Feature: Simple Tests
         When sending json search query "-21.0,-33.0"
         Then exactly 0 results are returned
 
+    Scenario: Country code selection is retained in more URL (#596)
+        When sending xml search query "Vaduz"
+          | countrycodes |
+          | pl,1,,invalid,undefined,%3Cb%3E,bo,, |
+       Then result header contains
+          | attr     | value |
+          | more_url | .*&countrycodes=pl,bo&.* |

@@ -126,6 +126,12 @@ class Geocode
         return $this->aExcludePlaceIDs;
     }
 
+
+    public function getCountryCodes()
+    {
+        return $this->aCountryCodes;
+    }
+
     public function getViewBoxString()
     {
         if (!$this->aViewBox) return null;

@@ -68,18 +68,18 @@ Feature: Search queries
     Scenario: Search with bounded viewbox in right area
         When sending json search query "restaurant" with address
           | bounded | viewbox |
-          | 1       | 9.93027,53.61634,10.10073,53.54500 |
+          | 1       | -56.16786,-34.84061,-56.12525,-34.86526 |
         Then result addresses contain
-          | state |
-          | Hamburg |
+          | city |
+          | Montevideo |
 
     Scenario: Search with bounded viewboxlbrt in right area
         When sending json search query "restaurant" with address
           | bounded | viewboxlbrt |
-          | 1       | 9.93027,53.54500,10.10073,53.61634 |
+          | 1       | -56.16786,-34.86526,-56.12525,-34.84061 |
         Then result addresses contain
-          | state |
-          | Hamburg |
+          | city |
+          | Montevideo |
 
     Scenario: No POI search with unbounded viewbox
         When sending json search query "restaurant"

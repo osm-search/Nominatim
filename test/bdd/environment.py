@@ -196,6 +196,15 @@ class OSMDataFactory(object):
 
         return scene
 
+    def clear_grid(self):
+        self.grid = {}
+
+    def add_grid_node(self, nodeid, x, y):
+        self.grid[nodeid] = (x, y)
+
+    def grid_node(self, nodeid):
+        return self.grid.get(nodeid)
+
 
 def before_all(context):
     # logging setup

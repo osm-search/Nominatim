@@ -42,6 +42,29 @@ class ReverseGeocode
         $this->iMaxRank = (isset($iZoom) && isset($aZoomRank[$iZoom]))?$aZoomRank[$iZoom]:28;
     }
 
+    /**
+     * Find the closest interpolation with the given search diameter.
+     *
+     * @param string $sPointSQL   Reverse geocoding point as SQL
+     * @param float  $fSearchDiam Search diameter
+     *
+     * @return Record of the interpolation or null.
+     */
+    protected function lookupInterpolation($sPointSQL, $fSearchDiam)
+    {
+        $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search,';
+        $sSQL .= ' ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction';
+        $sSQL .= ' , ST_Distance(linegeo,'.$sPointSQL.') as distance';
+        $sSQL .= ' FROM location_property_osmline';
+        $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
+        $sSQL .= ' and indexed_status = 0 ';
+        $sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
+
+        return chksql(
+            $this->oDB->getRow($sSQL),
+            "Could not determine closest housenumber on an osm interpolation line."
+        );
+    }
 
     /* lookup()
      * returns { place_id =>, type => '(osm|tiger)' }
@@ -57,7 +80,6 @@ class ReverseGeocode
         // Find the nearest point
         $fSearchDiam = 0.0004;
         $iPlaceID = null;
-        $aArea = false;
         $fMaxAreaDistance = 1;
         $bIsInUnitedStates = false;
         $bPlaceIsTiger = false;
@@ -74,7 +96,27 @@ class ReverseGeocode
             if ($fSearchDiam > 0.2 && $iMaxRank > 17) $iMaxRank = 17;
             if ($fSearchDiam > 0.1 && $iMaxRank > 18) $iMaxRank = 18;
             if ($fSearchDiam > 0.008 && $iMaxRank > 22) $iMaxRank = 22;
-            if ($fSearchDiam > 0.001 && $iMaxRank > 26) $iMaxRank = 26;
+            if ($fSearchDiam > 0.001 && $iMaxRank > 26) {
+                // try with interpolations before continuing
+                if ($bDoInterpolation) {
+                    // no house found, try with interpolations
+                    $aPlaceLine = $this->lookupInterpolation($sPointSQL, $fSearchDiam/2);
+
+                    if ($aPlaceLine) {
+                        // interpolation is closer to point than placex house
+                        $bPlaceIsLine = true;
+                        $aPlace = $aPlaceLine;
+                        $iPlaceID = $aPlaceLine['place_id'];
+                        $iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
+                        $fFraction = $aPlaceLine['fraction'];
+                        $iMaxRank = 30;
+
+                        break;
+                    }
+                }
+                // no interpolation found, continue search
+                $iMaxRank = 26;
+            }
 
             $sSQL = 'select place_id,parent_place_id,rank_search,calculated_country_code';
             $sSQL .= ' FROM placex';
@@ -95,69 +137,32 @@ class ReverseGeocode
             $iParentPlaceID = $aPlace['parent_place_id'];
             $bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
         }
-        // if a street or house was found, look in interpolation lines table
-        if ($bDoInterpolation && $this->iMaxRank >= 28 && $aPlace && $aPlace['rank_search'] >= 26) {
-            // if a house was found, search the interpolation line that is at least as close as the house
-            $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search, ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction';
-            $sSQL .= ' FROM location_property_osmline';
-            $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
-            $sSQL .= ' and indexed_status = 0 ';
-            $sSQL .= ' ORDER BY ST_distance('.$sPointSQL.', linegeo) ASC limit 1';
-            
-            if (CONST_Debug) {
-                $sSQL = preg_replace('/limit 1/', 'limit 100', $sSQL);
-                var_dump($sSQL);
 
-                $aAllHouses = chksql($this->oDB->getAll($sSQL));
-                foreach ($aAllHouses as $i) {
-                    echo $i['housenumber'] . ' | ' . $i['distance'] * 1000 . ' | ' . $i['lat'] . ' | ' . $i['lon']. ' | '. "<br>\n";
-                }
-            }
-            $aPlaceLine = chksql(
-                $this->oDB->getRow($sSQL),
-                "Could not determine closest housenumber on an osm interpolation line."
+        // If a house was found make sure there isn't an interpolation line
+        // that is closer
+        if ($bDoInterpolation && !$bPlaceIsLine && $aPlace && $aPlace['rank_search'] == 30) {
+            // get the distance of the house to the search point
+            $sSQL = 'SELECT ST_distance('.$sPointSQL.', house.geometry)';
+            $sSQL .= ' FROM placex as house WHERE house.place_id='.$iPlaceID;
+
+            $fDistancePlacex = chksql(
+                $this->oDB->getOne($sSQL),
+                "Could not determine distance between searched point and placex house."
             );
+
+            // look for an interpolation that is closer
+            $aPlaceLine = $this->lookupInterpolation($sPointSQL, $fDistancePlacex);
+
             if ($aPlaceLine) {
-                if (CONST_Debug) var_dump('found housenumber in interpolation lines table', $aPlaceLine);
-                if ($aPlace['rank_search'] == 30) {
-                    // if a house was already found in placex, we have to find out,
-                    // if the placex house or the interpolated house are closer to the searched point
-                    // distance between point and placex house
-                    $sSQL = 'SELECT ST_distance('.$sPointSQL.', house.geometry) as distance FROM placex as house WHERE house.place_id='.$iPlaceID;
-                    $aDistancePlacex = chksql(
-                        $this->oDB->getRow($sSQL),
-                        "Could not determine distance between searched point and placex house."
-                    );
-                    $fDistancePlacex = $aDistancePlacex['distance'];
-                    // distance between point and interpolated house (fraction on interpolation line)
-                    $sSQL = 'SELECT ST_distance('.$sPointSQL.', ST_LineInterpolatePoint(linegeo, '.$aPlaceLine['fraction'].')) as distance';
-                    $sSQL .= ' FROM location_property_osmline WHERE place_id = '.$aPlaceLine['place_id'];
-                    $aDistanceInterpolation = chksql(
-                        $this->oDB->getRow($sSQL),
-                        "Could not determine distance between searched point and interpolated house."
-                    );
-                    $fDistanceInterpolation = $aDistanceInterpolation['distance'];
-                    if ($fDistanceInterpolation < $fDistancePlacex) {
-                        // interpolation is closer to point than placex house
-                        $bPlaceIsLine = true;
-                        $aPlace = $aPlaceLine;
-                        $iPlaceID = $aPlaceLine['place_id'];
-                        $iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
-                        $fFraction = $aPlaceLine['fraction'];
-                        $iMaxRank = 30;
-                    }
-                    // else: nothing to do, take placex house from above
-                } else {
-                    $bPlaceIsLine = true;
-                    $aPlace = $aPlaceLine;
-                    $iPlaceID = $aPlaceLine['place_id'];
-                    $iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
-                    $fFraction = $aPlaceLine['fraction'];
-                    $iMaxRank = 30;
-                }
+                // interpolation is closer to point than placex house
+                $bPlaceIsLine = true;
+                $aPlace = $aPlaceLine;
+                $iPlaceID = $aPlaceLine['place_id'];
+                $iParentPlaceID = $aPlaceLine['parent_place_id']; // the street
+                $fFraction = $aPlaceLine['fraction'];
             }
         }
-        
+
         // Only street found? If it's in the US we can check TIGER data for nearest housenumber
         if (CONST_Use_US_Tiger_Data && $bDoInterpolation && $bIsInUnitedStates && $this->iMaxRank >= 28 && $iPlaceID && ($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27 )) {
             $fSearchDiam = 0.001;

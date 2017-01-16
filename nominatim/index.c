@@ -376,7 +376,7 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                         1, pg_prepare_params);
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
-            fprintf(stderr, "Failed preparing index_placex: %s\n", PQerrorMessage(conn));
+            fprintf(stderr, "Failed preparing index_placex: %s\n", PQerrorMessage(thread_data[i].conn));
             exit(EXIT_FAILURE);
         }
         PQclear(res);
@@ -387,18 +387,19 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
                         1, pg_prepare_params);
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
-            fprintf(stderr, "Failed preparing index_osmline: %s\n", PQerrorMessage(conn));
+            fprintf(stderr, "Failed preparing index_osmline: %s\n", PQerrorMessage(thread_data[i].conn));
             exit(EXIT_FAILURE);
         }
         PQclear(res);
 
-        /*res = PQexec(thread_data[i].conn, "set enable_seqscan = false");
+        // Make sure the error message is not localized as we parse it later.
+        res = PQexec(thread_data[i].conn, "SET lc_messages TO 'C'");
         if (PQresultStatus(res) != PGRES_COMMAND_OK)
         {
-            fprintf(stderr, "Failed disabling sequential scan: %s\n", PQerrorMessage(conn));
+            fprintf(stderr, "Failed to set langauge: %s\n", PQerrorMessage(thread_data[i].conn));
             exit(EXIT_FAILURE);
         }
-        PQclear(res);*/
+        PQclear(res);
 
         nominatim_exportCreatePreparedQueries(thread_data[i].conn);
     }

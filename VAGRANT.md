@@ -49,8 +49,6 @@ is.
   cd build
     wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
     ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
-    ./utils/specialphrases.php --countries > ../data/specialphrases_countries.sql
-    psql -d nominatim -f ../data/specialphrases_countries.sql
     ```
 
   To repeat an import you'd need to delete the database first

@@ -11,7 +11,7 @@ Prerequisites
 
 To get the prerequisites on a a fresh Ubuntu LTS 16.04 run:
 
-     [sudo] apt-get install python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit
+     [sudo] apt-get install python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit php-cgi
      pip3 install --user behave nose
 
 

@@ -24,10 +24,10 @@ Here is a quick summary of the necessary steps.
 
 1. Compile Nominatim:
 
-     mkdir build
-     cd build
-     cmake ..
-     make
+        mkdir build
+        cd build
+        cmake ..
+        make
 
    For more detailed installation instructions see [docs/Installation.md](docs/Installation.md).
    There are also step-by-step instructions for
@@ -36,7 +36,7 @@ Here is a quick summary of the necessary steps.
 
 2. Get OSM data and import:
 
-     ./build/utils/setup.php --osm-file <your planet file> --all
+        ./build/utils/setup.php --osm-file <your planet file> --all
 
    Details can be found in [docs/Import_and_update.md](docs/Import_and_update.md)
 

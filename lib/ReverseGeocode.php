@@ -201,6 +201,8 @@ class ReverseGeocode
         if ($iPlaceID && $iMaxRank < 28) {
             if (($aPlace['rank_search'] > 28 || $bPlaceIsTiger || $bPlaceIsLine) && $iParentPlaceID) {
                 $iPlaceID = $iParentPlaceID;
+                $bPlaceIsLine = false;
+                $bPlaceIsTiger = false;
             }
             $sSQL  = 'select address_place_id';
             $sSQL .= ' FROM place_addressline';

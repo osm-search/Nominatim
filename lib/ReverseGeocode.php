@@ -153,7 +153,7 @@ class ReverseGeocode
             // look for an interpolation that is closer
             $aPlaceLine = $this->lookupInterpolation($sPointSQL, $fDistancePlacex);
 
-            if ($aPlaceLine) {
+            if ($aPlaceLine && (float) $aPlaceLine['distance'] < (float) $fDistancePlacex) {
                 // interpolation is closer to point than placex house
                 $bPlaceIsLine = true;
                 $aPlace = $aPlaceLine;

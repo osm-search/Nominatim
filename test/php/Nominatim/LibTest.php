@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require '../../lib/lib.php';
+require_once(CONST_BasePath.'/lib/lib.php');
 
 class NominatimTest extends \PHPUnit_Framework_TestCase
 {

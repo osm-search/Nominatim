@@ -65,7 +65,7 @@ user name and home directory now like this:
 
 Make sure that system servers can read from the home directory:
 
-    chmod a+x $USERHOME
+    sudo chmod a+x $USERHOME
 
 Setting up PostgreSQL
 ---------------------
@@ -127,7 +127,7 @@ Get the source code from Github and change into the source directory
 
 
     cd $USERHOME
-    git clone --recursive git://github.com/twain47/Nominatim.git
+    sudo git clone --recursive git://github.com/twain47/Nominatim.git
     cd Nominatim
 
 
@@ -137,16 +137,16 @@ Get the source code from Github and change into the source directory
 The code must be built in a separate directory. Create this directory,
 then configure and build Nominatim in there:
 
-    mkdir build
+    sudo mkdir build
     cd build
-    cmake $USERHOME/Nominatim
-    make
+    sudo cmake $USERHOME/Nominatim
+    sudo make
 
 You need to create a minimal configuration file that tells nominatim
 where it is located on the webserver:
 
 ```
-tee settings/local.php << EOF
+sudo tee settings/local.php << EOF
 <?php
  @define('CONST_Website_BaseURL', '/nominatim/');
 EOF

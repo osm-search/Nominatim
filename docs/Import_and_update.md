@@ -15,7 +15,7 @@ If you plan to import a large dataset (e.g. Europe, North America, planet),
 you should also enable flatnode storage of node locations. With this
 setting enabled, node coordinates are stored in a simple file instead
 of the database. This will save you import time and disk storage.
-Add to your settings/local.php:
+Add to your `settings/local.php`:
 
     @define('CONST_Osm2pgsql_Flatnode_File', '/path/to/flatnode.file');
 
@@ -57,9 +57,9 @@ Download the data to import and load the data with the following command:
 
     ./utils/setup.php --osm-file <your data file> --all [--osm2pgsql-cache 28000] 2>&1 | tee setup.log
 
-The --osm2pgsql-cache parameter is optional but strongly recommended for
+The `--osm2pgsql-cache` parameter is optional but strongly recommended for
 planet imports. It sets the node cache size for the osm2pgsql import part
-(see -C parameter in osm2pgsql help). 28GB are recommended for a full planet
+(see `-C` parameter in osm2pgsql help). 28GB are recommended for a full planet
 import, for excerpts you can use less. Adapt to your available RAM to
 avoid swapping, never give more than 2/3 of RAM to osm2pgsql.
 

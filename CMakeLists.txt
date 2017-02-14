@@ -34,7 +34,12 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 
 set(BUILD_TESTS off CACHE BOOL "Build test suite" FORCE)
 set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
-add_subdirectory(osm2pgsql)
+find_program(OSM2PGSQL osm2pgsql DOC "System installed osm2pgsql")
+if (NOT EXISTS ${OSM2PGSQL})
+        add_subdirectory(osm2pgsql)
+else()
+	message(STATUS "Using osm2pgsql at ${OSM2PGSQL}")
+endif()
 
 find_package(Threads REQUIRED)
 
@@ -57,6 +62,7 @@ find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 
 find_package(LibXml2 REQUIRED)
+
 include_directories(${LIBXML2_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------

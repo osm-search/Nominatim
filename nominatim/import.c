@@ -486,7 +486,7 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
             }
             paramValues[7] = (const char *)featureExtraTagString;
 
-            if (strlen(feature.parentPlaceID) == 0)
+            if (xmlStrlen(feature.parentPlaceID) == 0)
                 paramValues[8] = "0";
             else
                 paramValues[8] = (const char *)feature.parentPlaceID;
@@ -541,10 +541,10 @@ void EndElement(xmlTextReaderPtr reader, const xmlChar *name)
 
             if (featureNameLines)
             {
-                if (strlen(feature.parentPlaceID) > 0 && featureAddressLines == 0)
+                if (xmlStrlen(feature.parentPlaceID) > 0 && featureAddressLines == 0)
 		{
                     paramValues[0] = (const char *)place_id;
-                    paramValues[1] = feature.parentPlaceID;
+                    paramValues[1] = (const char *)feature.parentPlaceID;
                     if (verbose) fprintf(stderr, "search_name_from_parent_insert: INSERT %s %s\n", paramValues[0], paramValues[1]);
                     res = PQexecPrepared(conn, "search_name_from_parent_insert", 2, paramValues, NULL, NULL, 0);
                     if (PQresultStatus(res) != PGRES_COMMAND_OK)

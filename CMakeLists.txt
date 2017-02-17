@@ -47,7 +47,7 @@ if (NOT EXISTS "${OSMOSIS}")
         set(OSMOSIS_PATH "/nonexistent")
         message(WARNING "Osmosis not found (required for updates)")
 else()
-        set(OSMOSIS_PATH "${OSMOSIS}"
+        set(OSMOSIS_PATH "${OSMOSIS}")
         message(STATUS "Using osmosis at ${OSMOSIS_PATH}")
 endif()
 

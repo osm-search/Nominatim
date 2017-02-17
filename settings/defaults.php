@@ -40,7 +40,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 
 // Paths
 @define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
-@define('CONST_Osmosis_Binary', '/usr/bin/osmosis');
+@define('CONST_Osmosis_Binary', '@OSMOSIS_PATH@');
 @define('CONST_Tiger_Data_Path', CONST_BasePath.'/data/tiger');
 @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/data');
 

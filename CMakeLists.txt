@@ -42,6 +42,15 @@ unset(PostgreSQL_TYPE_INCLUDE_DIR CACHE)
 set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/")
 find_package(PostgreSQL REQUIRED)
 include_directories(${PostgreSQL_INCLUDE_DIRS})
+find_program(OSMOSIS osmosis)
+if (NOT EXISTS "${OSMOSIS}")
+        set(OSMOSIS_PATH "/nonexistent")
+        message(WARNING "Osmosis not found (required for updates)")
+else()
+        set(OSMOSIS_PATH "${OSMOSIS}")
+        message(STATUS "Using osmosis at ${OSMOSIS_PATH}")
+endif()
+
 
 find_program(PG_CONFIG pg_config)
 execute_process(COMMAND ${PG_CONFIG} --pgxs

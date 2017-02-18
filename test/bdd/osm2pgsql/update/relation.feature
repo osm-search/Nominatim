@@ -104,7 +104,6 @@ Feature: Update of relations by osm2pgsql
           """
         Then place has no entry for R1
 
-    @wip
     Scenario: Type tag is renamed to something unknown
         When loading osm data
           """
@@ -123,4 +122,38 @@ Feature: Update of relations by osm2pgsql
           r1 Ttype=multipolygonn,tourism=hotel,name=XY Mw2@
           """
         Then place has no entry for R1
+
+    Scenario: Country boundary names are left untouched when country_code unknown
+        When loading osm data
+          """
+          n200 Tamenity=prison x0 y0
+          n201 x0 y0.0001
+          n202 x0.0001 y0.0001
+          n203 x0.0001 y0
+          """
+        And updating osm data
+          """
+          w1 Nn200,n201,n202,n203,n200
+          r1 Ttype=boundary,boundary=administrative,name=Foo,country_code=XX,admin_level=2 Mw1@
+          """
+        Then place contains
+          | object | country_code | name           |
+          | R1     | XX           | 'name' : 'Foo' |
+
+    Scenario: Country boundary names are extended when country_code known
+        When loading osm data
+          """
+          n200 Tamenity=prison x0 y0
+          n201 x0 y0.0001
+          n202 x0.0001 y0.0001
+          n203 x0.0001 y0
+          """
+        And updating osm data
+          """
+          w1 Nn200,n201,n202,n203,n200
+          r1 Ttype=boundary,boundary=administrative,name=Foo,country_code=ch,admin_level=2 Mw1@
+          """
+        Then place contains
+            | object | country_code | name+name:de | name+name |
+            | R1     | ch           | Schweiz      | Foo       |
 

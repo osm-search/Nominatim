@@ -1988,7 +1988,10 @@ BEGIN
 
     -- Patch in additional country names
     IF NEW.admin_level = 2 AND NEW.type = 'administrative' AND NEW.country_code is not null THEN
-      select coalesce(country_name.name || NEW.name,NEW.name) from country_name where country_name.country_code = lower(NEW.country_code) INTO NEW.name;
+        SELECT name FROM country_name WHERE country_code = lower(NEW.country_code) INTO existing;
+        IF existing.name IS NOT NULL THEN
+            NEW.name = existing.name || NEW.name;
+        END IF;
     END IF;
       
     -- Have we already done this place?

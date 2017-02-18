@@ -34,7 +34,18 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 
 set(BUILD_TESTS off CACHE BOOL "Build test suite" FORCE)
 set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
+set(WWW_PUBLIC /var/www/nominatim CACHE PATH "Public www root")
+set(WWW_APP ${CMAKE_INSTALL_PREFIX}/share/nominatim CACHE PATH "Web application root")
+find_program(OSM2PGSQL osm2pgsql DOC "System installed osm2pgsql")
 add_subdirectory(osm2pgsql)
+find_program(OSMOSIS osmosis)
+if (NOT EXISTS "${OSMOSIS}")
+	set(OSMOSIS_PATH "/nonexistent")
+	message(WARNING "Osmosis not found (required for updates)")
+else()
+	message(STATUS "Using osmosis at ${OSMOSIS_PATH}")
+endif()
+
 
 find_package(Threads REQUIRED)
 
@@ -57,6 +68,7 @@ find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 
 find_package(LibXml2 REQUIRED)
+
 include_directories(${LIBXML2_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------

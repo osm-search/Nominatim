@@ -42,6 +42,8 @@ unset(PostgreSQL_TYPE_INCLUDE_DIR CACHE)
 set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/")
 find_package(PostgreSQL REQUIRED)
 include_directories(${PostgreSQL_INCLUDE_DIRS})
+link_directories(${PostgreSQL_LIBRARY_DIRS})
+
 find_program(OSMOSIS osmosis)
 if (NOT EXISTS "${OSMOSIS}")
         set(OSMOSIS_PATH "/nonexistent")

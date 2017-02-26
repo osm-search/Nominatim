@@ -1,0 +1,3 @@
+[behave]
+show_skipped=False
+tags=~@Fail

@@ -149,18 +149,31 @@ class OSMDataFactory(object):
         self.scene_path = os.environ.get('SCENE_PATH',
                            os.path.join(scriptpath, '..', 'scenes', 'data'))
         self.scene_cache = {}
+        self.clear_grid()
 
     def parse_geometry(self, geom, scene):
         if geom.find(':') >= 0:
-            out = self.get_scene_geometry(scene, geom)
+            out = "POINT(%s)" % self.get_scene_geometry(scene, geom)
         elif geom.find(',') < 0:
-            out = "'POINT(%s)'::geometry" % geom
+            out = "POINT(%s)" % self.mk_wkt_point(geom)
         elif geom.find('(') < 0:
-            out = "'LINESTRING(%s)'::geometry" % geom
+            line = ','.join([self.mk_wkt_point(x) for x in geom.split(',')])
+            out = "LINESTRING(%s)" % line
         else:
-            out = "'POLYGON(%s)'::geometry" % geom
+            inner = geom.strip('() ')
+            line = ','.join([self.mk_wkt_point(x) for x in inner.split(',')])
+            out = "POLYGON((%s))" % line
 
-        return "ST_SetSRID(%s, 4326)" % out
+        return "ST_SetSRID('%s'::geometry, 4326)" % out
+
+    def mk_wkt_point(self, point):
+        geom = point.strip()
+        if geom.find(' ') >= 0:
+            return geom
+        else:
+            pt = self.grid_node(int(geom))
+            assert_is_not_none(pt, "Point not found in grid")
+            return "%f %f" % pt
 
     def get_scene_geometry(self, default_scene, name):
         geoms = []

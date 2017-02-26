@@ -61,8 +61,11 @@ class PlaceColumn:
                                            for _ in range(int(random.random()*30))))
 
         if self.columns['osm_type'] == 'N' and self.geometry is None:
-            self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % (
-                            random.random()*360 - 180, random.random()*180 - 90)
+            pt = self.context.osm.grid_node(self.columns['osm_id'])
+            if pt is None:
+                pt = (random.random()*360 - 180, random.random()*180 - 90)
+
+            self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % pt
         else:
             assert_is_not_none(self.geometry, "Geometry missing")
         query = 'INSERT INTO place (%s, geometry) values(%s, %s)' % (

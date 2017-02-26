@@ -167,6 +167,8 @@ GRANT SELECT on location_area to "{www-user}" ;
 -- insert creates the location tables, creates location indexes if indexed == true
 CREATE TRIGGER placex_before_insert BEFORE INSERT ON placex
     FOR EACH ROW EXECUTE PROCEDURE placex_insert();
+CREATE TRIGGER osmline_before_insert BEFORE INSERT ON location_property_osmline
+    FOR EACH ROW EXECUTE PROCEDURE osmline_insert();
 
 -- update insert creates the location tables
 CREATE TRIGGER placex_before_update BEFORE UPDATE ON placex

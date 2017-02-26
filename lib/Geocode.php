@@ -1326,6 +1326,7 @@ class Geocode
                             $aOrder[0] .= "     SELECT place_id ";
                             $aOrder[0] .= "     FROM location_property_osmline ";
                             $aOrder[0] .= "     WHERE parent_place_id = search_name.place_id";
+                            $aOrder[0] .= "       AND startnumber is not NULL";
                             $aOrder[0] .= "       AND ".intval($aSearch['sHouseNumber']).">=startnumber ";
                             $aOrder[0] .= "       AND ".intval($aSearch['sHouseNumber'])."<=endnumber ";
                             $aOrder[0] .= "     LIMIT 1";
@@ -1462,7 +1463,7 @@ class Geocode
                                 // do we need to use transliteration and the regex for housenumbers???
                                 //new query for lines, not housenumbers anymore
                                 $sSQL = "SELECT distinct place_id FROM location_property_osmline";
-                                $sSQL .= " WHERE parent_place_id in (".$sPlaceIDs.") and (";
+                                $sSQL .= " WHERE startnumber is not NULL and parent_place_id in (".$sPlaceIDs.") and (";
                                 if ($searchedHousenumber%2 == 0) {
                                     //if housenumber is even, look for housenumber in streets with interpolationtype even or all
                                     $sSQL .= "interpolationtype='even'";
@@ -1681,7 +1682,7 @@ class Geocode
                     $sSQL .= "  SELECT place_id ";
                     $sSQL .= "  FROM location_property_osmline ";
                     $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
-                    $sSQL .= "    AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
+                    $sSQL .= "    AND startnumber is not NULL AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
                     if (CONST_Debug) var_dump($sSQL);
                     $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     $tempIDs = array();

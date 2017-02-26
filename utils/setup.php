@@ -373,8 +373,11 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     }
     // last thread for interpolation lines
     $aDBInstances[$iLoadThreads] =& getDB(true);
-    $sSQL = 'select insert_osmline (osm_id, housenumber, street, addr_place, postcode, country_code, ';
-    $sSQL .= 'geometry) from place where ';
+    $sSQL = 'insert into location_property_osmline';
+    $sSQL .= ' (osm_id, interpolationtype, street, addr_place,';
+    $sSQL .= '  postcode, calculated_country_code, linegeo)';
+    $sSQL .= ' SELECT osm_id, housenumber, street, addr_place,';
+    $sSQL .= ' postcode, country_code, geometry from place where ';
     $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
     if ($aCMDResult['verbose']) echo "$sSQL\n";
     if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
@@ -475,7 +478,8 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,calculated_country_code,";
     $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select calculated_country_code,postcode,";
     $sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
-    $sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x";
+    $sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x ";
+    $sSQL .= "where ST_Point(x,y) is not null";
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
     if (CONST_Use_Extra_US_Postcodes) {

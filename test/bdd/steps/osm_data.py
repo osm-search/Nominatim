@@ -82,9 +82,13 @@ def update_from_osm_file(context):
                    admin_level,  housenumber, street, addr_place, isin, postcode,
                    country_code, extratags, geometry) select * from place""")
     cur.execute(
-        """select insert_osmline (osm_id, housenumber, street, addr_place,
-           postcode, country_code, geometry)
-           from place where class='place' and type='houses' and osm_type='W'""")
+        """insert into location_property_osmline
+               (osm_id, interpolationtype, street, addr_place,
+                postcode, calculated_country_code, linegeo)
+             SELECT osm_id, housenumber, street, addr_place,
+                    postcode, country_code, geometry from place
+              WHERE class='place' and type='houses' and osm_type='W'
+                    and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()
     context.nominatim.run_setup_script('index', 'index-noanalyse')
     context.nominatim.run_setup_script('create-functions', 'create-partition-functions',

@@ -216,9 +216,13 @@ def import_and_index_data_from_place_table(context):
            geometry)
            select * from place where not (class='place' and type='houses' and osm_type='W')""")
     cur.execute(
-        """select insert_osmline (osm_id, housenumber, street, addr_place,
-           postcode, country_code, geometry)
-           from place where class='place' and type='houses' and osm_type='W'""")
+            """insert into location_property_osmline
+               (osm_id, interpolationtype, street, addr_place,
+                postcode, calculated_country_code, linegeo)
+             SELECT osm_id, housenumber, street, addr_place,
+                    postcode, country_code, geometry from place
+              WHERE class='place' and type='houses' and osm_type='W'
+                    and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()
     context.nominatim.run_setup_script('index', 'index-noanalyse')
 
@@ -373,7 +377,8 @@ def check_location_property_osmline(context, oid, neg):
     eq_('W', nid.typ, "interpolation must be a way")
 
     cur.execute("""SELECT *, ST_AsText(linegeo) as geomtxt
-                   FROM location_property_osmline WHERE osm_id = %s""",
+                   FROM location_property_osmline
+                   WHERE osm_id = %s AND startnumber IS NOT NULL""",
                 (nid.oid, ))
 
     if neg:

@@ -598,7 +598,7 @@ BEGIN
 
   IF addr_street is null and addr_place is null THEN
     select nodes from planet_osm_ways where id = wayid INTO waynodes;
-    FOR location IN SELECT placex.street, placex.addr_place from placex 
+    FOR location IN SELECT placex.street, placex.addr_place from placex
                     where osm_type = 'N' and osm_id = ANY(waynodes)
                           and (placex.street is not null or placex.addr_place is not null)
                           and indexed_status < 100
@@ -647,101 +647,27 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION insert_osmline(wayid BIGINT, interpolationtype TEXT,
-                                                street TEXT, addr_place TEXT, 
-                                                defpostalcode TEXT, country_code TEXT,
-                                                geom GEOMETRY)
-RETURNS INTEGER AS $$
-DECLARE
-
-  newpoints INTEGER;
-  waynodes BIGINT[];
-  nodeid BIGINT;
-  prevnode RECORD;
-  nextnode RECORD;
-  startnumber INTEGER;
-  endnumber INTEGER;
-  housenum INTEGER;
-  linegeo GEOMETRY;
-  splitline GEOMETRY;
-  sectiongeo GEOMETRY;
-  pointgeo GEOMETRY;
-  place_centroid GEOMETRY;
-  calculated_country_code VARCHAR(2);
-  partition INTEGER;
-  geometry_sector INTEGER;
-
+CREATE OR REPLACE FUNCTION osmline_insert() RETURNS TRIGGER
+  AS $$
 BEGIN
-  place_centroid := ST_PointOnSurface(geom);
-  calculated_country_code := lower(get_country_code(place_centroid));
-  partition := get_partition(calculated_country_code);
-  geometry_sector := geometry_sector(partition, place_centroid);
+  NEW.place_id := nextval('seq_place');
+  NEW.indexed_date := now();
 
-  IF interpolationtype != 'odd' AND interpolationtype != 'even' AND interpolationtype!='all' THEN
-    -- other interpolation types than odd/even/all (e.g. numeric ones) are not supported
-    RETURN 0;
+  IF NEW.indexed_status IS NULL THEN
+      IF NEW.interpolationtype NOT IN ('odd', 'even', 'all') THEN
+        -- other interpolation types than odd/even/all (e.g. numeric ones) are not supported
+        RETURN NULL;
+      END IF;
+
+      NEW.indexed_status := 1; --STATUS_NEW
+
+      NEW.calculated_country_code := lower(get_country_code(NEW.linegeo));
+
+      NEW.partition := get_partition(NEW.calculated_country_code);
+      NEW.geometry_sector := geometry_sector(NEW.partition, NEW.linegeo);
   END IF;
 
-  select nodes from planet_osm_ways where id = wayid INTO waynodes;
-
-  IF array_upper(waynodes, 1) IS NULL THEN
-    RETURN 0;
-  END IF;
-
-  linegeo := geom;
-  startnumber := NULL;
-
-  FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
-
-    select * from place where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
-                               and housenumber is not NULL limit 1 INTO nextnode;
-    --RAISE NOTICE 'Nextnode.place_id: %s', nextnode.place_id;
-    IF nextnode.osm_id IS NOT NULL THEN
-      --RAISE NOTICE 'place_id is not null';
-      IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
-        -- Make sure that the point is actually on the line. That might
-        -- be a bit paranoid but ensures that the algorithm still works
-        -- should osm2pgsql attempt to repair geometries.
-        splitline := split_line_on_node(linegeo, nextnode.geometry);
-        sectiongeo := ST_GeometryN(splitline, 1);
-        linegeo := ST_GeometryN(splitline, 2);
-      ELSE
-        sectiongeo = linegeo;
-      END IF;
-      endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
-
-      IF startnumber IS NOT NULL AND endnumber IS NOT NULL
-         AND startnumber != endnumber
-         AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
-
-        IF (startnumber > endnumber) THEN
-          housenum := endnumber;
-          endnumber := startnumber;
-          startnumber := housenum;
-          sectiongeo := ST_Reverse(sectiongeo);
-        END IF;
-
-        insert into location_property_osmline
-          values (sectiongeo, nextval('seq_place'), partition, wayid, NULL,
-                  startnumber, endnumber, interpolationtype,
-                  coalesce(street, prevnode.street, nextnode.street),
-                  coalesce(addr_place, prevnode.addr_place, nextnode.addr_place),
-                  coalesce(defpostalcode, prevnode.postcode, nextnode.postcode),
-                  calculated_country_code, geometry_sector, 2, now());
-      END IF;
-
-      -- early break if we are out of line string,
-      -- might happen when a line string loops back on itself
-      IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
-          RETURN 0;
-      END IF;
-
-      startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
-      prevnode := nextnode;
-    END IF;
-  END LOOP;
-
-  RETURN 1;
+  RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
@@ -759,19 +685,6 @@ DECLARE
   classtable TEXT;
   line RECORD;
 BEGIN
-  --DEBUG: RAISE WARNING '% %',NEW.osm_type,NEW.osm_id;
-
-  -- ignore interpolated addresses, not necessary anymore, cause interpolated addresses are now in location_property_osmline
-  IF NEW.class = 'place' and NEW.type = 'address' THEN
-    RETURN NEW;
-  END IF;
-
-  IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    -- block all invalid geometary - just not worth the risk.  seg faults are causing serious problems.
-    RAISE WARNING 'invalid geometry %',NEW.osm_id;
-    RETURN NULL;
-  END IF;
-
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
   NEW.place_id := nextval('seq_place');
@@ -1069,6 +982,18 @@ TRIGGER
   AS $$
 DECLARE
   place_centroid GEOMETRY;
+  waynodes BIGINT[];
+  prevnode RECORD;
+  nextnode RECORD;
+  startnumber INTEGER;
+  endnumber INTEGER;
+  housenum INTEGER;
+  linegeo GEOMETRY;
+  splitline GEOMETRY;
+  sectiongeo GEOMETRY;
+  street TEXT;
+  addr_place TEXT;
+  postcode TEXT;
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
@@ -1080,18 +1005,105 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- do the reparenting: (finally here, because ALL places in placex, that are needed for reparenting, need to be up to date)
-  -- (the osm interpolationline in location_property_osmline was marked for reparenting in placex_insert/placex_delete with index_status = 1 or 2 (1 inset, 2 delete)
+  -- do the reparenting: (finally here, because ALL places in placex,
+  -- that are needed for reparenting, need to be up to date)
+  -- (the osm interpolationline in location_property_osmline was marked for
+  --  reparenting in placex_insert/placex_delete with index_status = 1 or 2 (1 inset, 2 delete)
   -- => index.c: sets index_status back to 0
   -- => triggers this function)
   place_centroid := ST_PointOnSurface(NEW.linegeo);
-  -- marking descendants for reparenting is not needed, because there are actually no descendants for interpolation lines
+  -- marking descendants for reparenting is not needed, because there are
+  -- actually no descendants for interpolation lines
   NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
                                                  NEW.partition, place_centroid, NEW.linegeo);
-  return NEW;
+
+  -- if we are just updating then our work is done
+  IF OLD.indexed_status != 1 THEN
+      return NEW;
+  END IF;
+
+  -- otherwise split the line as necessary
+  select nodes from planet_osm_ways where id = NEW.osm_id INTO waynodes;
+
+  IF array_upper(waynodes, 1) IS NULL THEN
+    RETURN 0;
+  END IF;
+
+  linegeo := NEW.linegeo;
+  startnumber := NULL;
+  street := NEW.street;
+  addr_place := NEW.addr_place;
+  postcode := NEW.postcode;
+
+  FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
+
+    select * from place where osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
+                               and housenumber is not NULL limit 1 INTO nextnode;
+    --RAISE NOTICE 'Nextnode.place_id: %s', nextnode.place_id;
+    IF nextnode.osm_id IS NOT NULL THEN
+      --RAISE NOTICE 'place_id is not null';
+      IF nodeidpos > 1 and nodeidpos < array_upper(waynodes, 1) THEN
+        -- Make sure that the point is actually on the line. That might
+        -- be a bit paranoid but ensures that the algorithm still works
+        -- should osm2pgsql attempt to repair geometries.
+        splitline := split_line_on_node(linegeo, nextnode.geometry);
+        sectiongeo := ST_GeometryN(splitline, 1);
+        linegeo := ST_GeometryN(splitline, 2);
+      ELSE
+        sectiongeo = linegeo;
+      END IF;
+      endnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
+
+      IF startnumber IS NOT NULL AND endnumber IS NOT NULL
+         AND startnumber != endnumber
+         AND ST_GeometryType(sectiongeo) = 'ST_LineString' THEN
+
+        IF (startnumber > endnumber) THEN
+          housenum := endnumber;
+          endnumber := startnumber;
+          startnumber := housenum;
+          sectiongeo := ST_Reverse(sectiongeo);
+        END IF;
+
+        IF NEW.startnumber IS NULL THEN
+            NEW.startnumber := startnumber;
+            NEW.endnumber := endnumber;
+            NEW.linegeo := sectiongeo;
+            NEW.street := coalesce(street, prevnode.street, nextnode.street);
+            NEW.addr_place := coalesce(addr_place, prevnode.addr_place, nextnode.addr_place);
+            NEW.postcode := coalesce(postcode, prevnode.postcode, nextnode.postcode);
+         ELSE
+          insert into location_property_osmline
+                 (linegeo, partition, osm_id, parent_place_id,
+                  startnumber, endnumber, interpolationtype,
+                  street, addr_place, postcode, calculated_country_code,
+                  geometry_sector, indexed_status)
+          values (sectiongeo, NEW.partition, NEW.osm_id, NEW.parent_place_id,
+                  startnumber, endnumber, NEW.interpolationtype,
+                  coalesce(street, prevnode.street, nextnode.street),
+                  coalesce(addr_place, prevnode.addr_place, nextnode.addr_place),
+                  coalesce(postcode, prevnode.postcode, nextnode.postcode),
+                  NEW.calculated_country_code, NEW.geometry_sector, 0);
+         END IF;
+      END IF;
+
+      -- early break if we are out of line string,
+      -- might happen when a line string loops back on itself
+      IF ST_GeometryType(linegeo) != 'ST_LineString' THEN
+          RETURN NEW;
+      END IF;
+
+      startnumber := substring(nextnode.housenumber,'[0-9]+')::integer;
+      prevnode := nextnode;
+    END IF;
+  END LOOP;
+
+  RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
+
+
 
 CREATE OR REPLACE FUNCTION placex_update() RETURNS
 TRIGGER
@@ -1924,7 +1936,7 @@ BEGIN
     RETURN null;
   END IF;
 
-  -- decide, whether it is an osm interpolation line => insert_osmline, or else just insert into placex
+  -- decide, whether it is an osm interpolation line => insert intoosmline, or else just placex
   IF NEW.class='place' and NEW.type='houses' and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString' THEN
     -- Have we already done this place?
     select * from place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existing;
@@ -1949,11 +1961,16 @@ BEGIN
     update placex p set indexed_status = 2
       from planet_osm_ways w
       where w.id = NEW.osm_id and p.osm_type = 'N' and p.osm_id = any(w.nodes);
-    -- insert new line into location_property_osmline, use function insert_osmline
+
+
+    INSERT INTO location_property_osmline
+           (osm_id, interpolationtype, street,
+            addr_place, postcode, calculated_country_code, linegeo)
+    VALUES (NEW.osm_id, NEW.housenumber, NEW.street,
+            NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
 
 
     IF existing.osm_type IS NULL THEN
-      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
       return NEW;
     END IF;
 
@@ -1978,8 +1995,6 @@ BEGIN
         admin_level = NEW.admin_level,
         geometry = NEW.geometry
         where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
-
-      i = insert_osmline(NEW.osm_id, NEW.housenumber, NEW.street, NEW.addr_place, NEW.postcode, NEW.country_code, NEW.geometry);
     END IF;
 
     RETURN NULL;

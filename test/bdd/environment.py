@@ -153,8 +153,9 @@ class OSMDataFactory(object):
 
     def parse_geometry(self, geom, scene):
         if geom.find(':') >= 0:
-            out = "POINT(%s)" % self.get_scene_geometry(scene, geom)
-        elif geom.find(',') < 0:
+            return "ST_SetSRID(%s, 4326)" % self.get_scene_geometry(scene, geom)
+
+        if geom.find(',') < 0:
             out = "POINT(%s)" % self.mk_wkt_point(geom)
         elif geom.find('(') < 0:
             line = ','.join([self.mk_wkt_point(x) for x in geom.split(',')])

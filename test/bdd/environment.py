@@ -40,6 +40,7 @@ class NominatimEnvironment(object):
     def write_nominatim_config(self, dbname):
         f = open(self.local_settings_file, 'w')
         f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://@/%s');\n" % dbname)
+        f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
         f.close()
 
     def cleanup(self):

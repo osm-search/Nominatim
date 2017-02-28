@@ -1737,7 +1737,7 @@ class Geocode
         $aClassType = getClassTypesWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
         foreach ($aRecheckWords as $i => $sWord) {
-            if (!preg_match('/\pL/', $sWord)) unset($aRecheckWords[$i]);
+            if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
         }
 
         if (CONST_Debug) {

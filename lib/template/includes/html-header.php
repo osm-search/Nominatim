@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <title>OpenStreetMap Nominatim: Search</title>
+    <meta content="IE=edge" http-equiv="x-ua-compatible" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <base href="<?php echo CONST_Website_BaseURL;?>" />

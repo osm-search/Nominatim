@@ -1,6 +1,6 @@
 @APIDB
 Feature: Parameters for Reverse API
-    Testing diferent parameter options for reverse API.
+    Testing different parameter options for reverse API.
 
     Scenario Outline: Reverse-geocoding without address
         When sending <format> reverse coordinates 53.603,10.041

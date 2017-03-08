@@ -1,6 +1,6 @@
 @DB
 Feature: Parenting of objects
-    Tests that the correct parent is choosen
+    Tests that the correct parent is chosen
 
     Scenario: Address inherits postcode from its street unless it has a postcode
         Given the scene roads-with-pois

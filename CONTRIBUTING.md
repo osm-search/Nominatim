@@ -38,11 +38,11 @@ The coding style is enforced with PHPCS and can be tested with:
 Before submitting a pull request make sure that the following tests pass:
 
 ```
-  cd tests
-  NOMINATIM_DIR=<builddir> lettuce -t -Fail -t -Tiger features/db features/osm2pgsql
+  cd test/bdd
+  behave -DBUILDDIR=<builddir> db osm2pgsql
 ```
 
 ```
-  cd test-php
+  cd test/php
   phpunit ./
 ```

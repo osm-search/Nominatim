@@ -243,7 +243,14 @@ def update_place_table(context):
         col.db_insert(cur)
 
     context.db.commit()
-    context.nominatim.run_update_script('index')
+
+    while True:
+        context.nominatim.run_update_script('index')
+
+        cur = context.db.cursor()
+        cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
+        if cur.rowcount == 0:
+            break
 
 @when("marking for delete (?P<oids>.*)")
 def delete_places(context, oids):
@@ -254,7 +261,14 @@ def delete_places(context, oids):
         where, params = NominatimID(oid).table_select()
         cur.execute("DELETE FROM place WHERE " + where, params)
     context.db.commit()
-    context.nominatim.run_update_script('index')
+
+    while True:
+        context.nominatim.run_update_script('index')
+
+        cur = context.db.cursor()
+        cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
+        if cur.rowcount == 0:
+            break
 
 @then("placex contains(?P<exact> exactly)?")
 def check_placex_contents(context, exact):

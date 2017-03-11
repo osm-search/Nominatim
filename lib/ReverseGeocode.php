@@ -85,8 +85,6 @@ class ReverseGeocode
         $bPlaceIsTiger = false;
         $bPlaceIsLine = false;
         while (!$iPlaceID && $fSearchDiam < $fMaxAreaDistance) {
-            $fSearchDiam = $fSearchDiam * 2;
-
             // If we have to expand the search area by a large amount then we need a larger feature
             // then there is a limit to how small the feature should be
             if ($fSearchDiam > 2 && $iMaxRank > 4) $iMaxRank = 4;
@@ -136,6 +134,8 @@ class ReverseGeocode
             $iPlaceID = $aPlace['place_id'];
             $iParentPlaceID = $aPlace['parent_place_id'];
             $bIsInUnitedStates = ($aPlace['calculated_country_code'] == 'us');
+            
+            $fSearchDiam = $fSearchDiam * 2;
         }
 
         // If a house was found make sure there isn't an interpolation line

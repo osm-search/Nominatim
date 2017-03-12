@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/openstreetmap/Nominatim.svg?branch=master)](https://travis-ci.org/openstreetmap/Nominatim)
+
 Nominatim
 =========
 

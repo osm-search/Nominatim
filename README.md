@@ -56,4 +56,4 @@ For questions you can join the geocoding mailinglist, see
 http://lists.openstreetmap.org/listinfo/geocoding
 
 Bugs may be reported on the github project site:
-https://github.com/twain47/Nominatim
+https://github.com/openstreetmap/Nominatim

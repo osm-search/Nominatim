@@ -144,7 +144,7 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 if [ "x$1" == "xyes" ]; then  #DOCS:
 
     cd $USERHOME
-    git clone --recursive git://github.com/twain47/Nominatim.git
+    git clone --recursive git://github.com/openstreetmap/Nominatim.git
 #DOCS:    cd Nominatim
 
 else                               #DOCS:

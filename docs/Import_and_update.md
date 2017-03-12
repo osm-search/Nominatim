@@ -178,5 +178,5 @@ The following command will keep your database constantly up to date:
 
 If you have imported multiple country extracts and want to keep them
 up-to-date, have a look at the script in
-[issue #60](https://github.com/twain47/Nominatim/issues/60).
+[issue #60](https://github.com/openstreetmap/Nominatim/issues/60).
 

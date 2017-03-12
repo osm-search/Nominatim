@@ -127,7 +127,7 @@ Get the source code from Github and change into the source directory
 
 
     cd $USERHOME
-    git clone --recursive git://github.com/twain47/Nominatim.git
+    git clone --recursive git://github.com/openstreetmap/Nominatim.git
     cd Nominatim
 
 

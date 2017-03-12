@@ -7,7 +7,7 @@
     to check how the address was generated before reporting a problem.
 </p>
 <p>
-    Use <a target="_blank" href="https://github.com/twain47/nominatim/issues">Nominatim issues on github</a>
+    Use <a target="_blank" href="https://github.com/openstreetmap/nominatim/issues">Nominatim issues on github</a>
     to report problems.
 <!-- You can search for existing bug reports
     <a href="http://trac.openstreetmap.org/query?status=new&amp;status=assigned&amp;status=reopened&amp;component=nominatim&amp;order=priority">here</a>.</p>

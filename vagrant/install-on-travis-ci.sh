@@ -4,7 +4,7 @@
 # https://docs.travis-ci.com/user/trusty-ci-environment/
 # Ubuntu 14 (trusty)
 # user 'travis'
-# $TRAVIS_BUILD_DIR is /home/travis/build/twain47/Nominatim/, for others see
+# $TRAVIS_BUILD_DIR is /home/travis/build/openstreetmap/Nominatim/, for others see
 #   https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 # Postgres 9.6 installed and started. role 'travis' already superuser
 # Python 3.6

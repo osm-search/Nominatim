@@ -17,7 +17,7 @@ is.
 
 3. Nominatim 
 
-        git clone --recursive https://github.com/twain47/Nominatim.git
+        git clone --recursive https://github.com/openstreetmap/Nominatim.git
 
     If you haven't used `--recursive`, then you can load the submodules using
     

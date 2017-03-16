@@ -693,10 +693,11 @@ class Geocode
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 } elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null) {
-                                    if ($aSearch['fLat'] === '') {
-                                        $aSearch['fLat'] = $aSearchTerm['lat'];
-                                        $aSearch['fLon'] = $aSearchTerm['lon'];
-                                        $aSearch['fRadius'] = $aSearchTerm['radius'];
+                                    if ($aSearch['oNear'] === false) {
+                                        $aSearch['oNear'] = new NearPoint(
+                                                 $aSearchTerm['lat'],
+                                                 $aSearchTerm['lon'],
+                                                 $aSearchTerm['radius']);
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 } elseif ($sPhraseType == 'postalcode') {
@@ -961,18 +962,9 @@ class Geocode
                            'sClass' => '',
                            'sType' => '',
                            'sHouseNumber' => '',
-                           'fLat' => '',
-                           'fLon' => '',
-                           'fRadius' => ''
+                           'oNear' => $oNearPoint
                           )
                          );
-
-            // Do we have a radius search?
-            if ($oNearPoint) {
-                $aSearches[0]['fLat'] = $oNearPoint->lat();
-                $aSearches[0]['fLon'] = $oNearPoint->lon();
-                $aSearches[0]['fRadius'] = $oNearPoint->radius();
-            }
 
             // Any 'special' terms in the search?
             $bSpecialTerms = false;
@@ -1233,7 +1225,7 @@ class Geocode
                     if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
                     // No location term?
-                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['fLon']) {
+                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['oNear']) {
                         if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
@@ -1248,7 +1240,7 @@ class Geocode
                                 $aPlaceIDs = array();
                             }
                         } else {
-                            if (!$bBoundingBoxSearch && !$aSearch['fLon']) continue;
+                            if (!$bBoundingBoxSearch && !$aSearch['oNear']) continue;
                             if (!$aSearch['sClass']) continue;
 
                             $sSQL = "SELECT COUNT(*) FROM pg_tables WHERE tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
@@ -1293,7 +1285,7 @@ class Geocode
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                             }
                         }
-                    } elseif ($aSearch['fLon'] && !sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['sClass']) {
+                    } elseif ($aSearch['oNear'] && !sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['sClass']) {
                         // If a coordinate is given, the search must either
                         // be for a name or a special search. Ignore everythin else.
                         $aPlaceIDs = array();
@@ -1358,15 +1350,10 @@ class Geocode
                                 $aTerms[] = "address_rank <= ".$this->iMaxAddressRank;
                             }
                         }
-                        if ($aSearch['fLon'] && $aSearch['fLat']) {
-                            $aTerms[] = sprintf(
-                                'ST_DWithin(centroid, ST_SetSRID(ST_Point(%F,%F),4326), %F)',
-                                $aSearch['fLon'],
-                                $aSearch['fLat'],
-                                $aSearch['fRadius']
-                            );
+                        if ($aSearch['oNear']) {
+                            $aTerms[] = $aSearch['oNear']->withinSQL('centroid');
 
-                            $aOrder[] = "ST_Distance(centroid, ST_SetSRID(ST_Point(".$aSearch['fLon'].",".$aSearch['fLat']."),4326)) ASC";
+                            $aOrder[] = $aSearch['oNear']->distanceSQL('centroid');
                         }
                         if (sizeof($this->aExcludePlaceIDs)) {
                             $aTerms[] = "place_id not in (".join(',', $this->aExcludePlaceIDs).")";
@@ -1614,7 +1601,9 @@ class Geocode
                                         if (CONST_Debug) var_dump($sSQL);
                                         $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
                                     } else {
-                                        if (isset($aSearch['fRadius']) && $aSearch['fRadius']) $fRange = $aSearch['fRadius'];
+                                        if ($aSearch['oNear']) {
+                                            $fRange = $aSearch['oNear']->radius();
+                                        }
 
                                         $sOrderBySQL = '';
                                         if ($oNearPoint) {

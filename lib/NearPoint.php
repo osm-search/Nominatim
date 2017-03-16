@@ -32,6 +32,17 @@ class NearPoint
         return 'ST_Distance('.$this->sSQL.", $sObj)";
     }
 
+    public function withinSQL($sObj)
+    {
+        return sprintf(
+            'ST_DWithin(%S, ST_SetSRID(ST_Point(%F,%F),4326), %F)',
+            $sObj,
+            $this->fLon,
+            $this->fLat,
+            $this->fRadius
+            );
+    }
+
     /**
      * Check that the coordinates are valid WSG84 coordinates.
      */

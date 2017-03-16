@@ -34,13 +34,7 @@ class NearPoint
 
     public function withinSQL($sObj)
     {
-        return sprintf(
-            'ST_DWithin(%S, ST_SetSRID(ST_Point(%F,%F),4326), %F)',
-            $sObj,
-            $this->fLon,
-            $this->fLat,
-            $this->fRadius
-            );
+        return sprintf('ST_DWithin(%s, %s, %F)', $sObj, $this->sSQL, $this->fRadius);
     }
 
     /**

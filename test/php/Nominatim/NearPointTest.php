@@ -65,4 +65,24 @@ class NearPointTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals(-79.982, $aRes['pt']->lon(), 'degrees decimal ' . $sQuery, 0.01);
         }
     }
+
+    public function testWithinSQL()
+    {
+        $np = new NearPoint(0.1, 23, 1);
+
+        $this->assertEquals(
+            'ST_DWithin(foo, ST_SetSRID(ST_Point(23,0.1),4326), 1.000000)',
+            $np->withinSQL('foo')
+        );
+    }
+
+    public function testDistanceSQL()
+    {
+        $np = new NearPoint(0.1, 23, 1);
+
+        $this->assertEquals(
+            'ST_Distance(ST_SetSRID(ST_Point(23,0.1),4326), foo)',
+            $np->distanceSQL('foo')
+        );
+    }
 }

@@ -6,6 +6,8 @@ require '../../lib/NearPoint.php';
 
 class NearPointTest extends \PHPUnit_Framework_TestCase
 {
+
+
     protected function setUp()
     {
     }

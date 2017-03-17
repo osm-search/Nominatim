@@ -695,9 +695,10 @@ class Geocode
                                 } elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null) {
                                     if ($aSearch['oNear'] === false) {
                                         $aSearch['oNear'] = new NearPoint(
-                                                 $aSearchTerm['lat'],
-                                                 $aSearchTerm['lon'],
-                                                 $aSearchTerm['radius']);
+                                            $aSearchTerm['lat'],
+                                            $aSearchTerm['lon'],
+                                            $aSearchTerm['radius']
+                                        );
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 } elseif ($sPhraseType == 'postalcode') {
@@ -1574,7 +1575,7 @@ class Geocode
 
                                         $sOrderBySQL = '';
                                         if ($oNearPoint) {
-                                           $sOrderBySQL = $oNearPoint->distanceSQL('l.centroid');
+                                            $sOrderBySQL = $oNearPoint->distanceSQL('l.centroid');
                                         } elseif ($sPlaceIDs) {
                                             $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
                                         } elseif ($sPlaceGeom) {

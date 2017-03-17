@@ -13,6 +13,7 @@ class NearPoint
 
     private $sSQL;
 
+
     public function __construct($lat, $lon, $radius = 0.1)
     {
         $this->fLat = (float)$lat;
@@ -21,11 +22,20 @@ class NearPoint
         $this->sSQL = 'ST_SetSRID(ST_Point('.$this->fLon.','.$this->fLat.'),4326)';
     }
 
-    public function lat() { return $this->fLat; }
+    public function lat()
+    {
+        return $this->fLat;
+    }
 
-    public function lon() { return $this->fLon; }
+    public function lon()
+    {
+        return $this->fLon;
+    }
 
-    public function radius() { return $this->fRadius; }
+    public function radius()
+    {
+        return $this->fRadius;
+    }
 
     public function distanceSQL($sObj)
     {
@@ -39,6 +49,8 @@ class NearPoint
 
     /**
      * Check that the coordinates are valid WSG84 coordinates.
+     *
+     * @return bool True if the coordinates are correctly bounded.
      */
     public function isValid()
     {
@@ -53,6 +65,12 @@ class NearPoint
      *
      * If a coordinate is found an array of a new NearPoint and the
      * remaining query is returned or false otherwise.
+     *
+     * @param string $sQuery Query to scan.
+     *
+     * @return array|false If a coordinate was found, an array with
+     *                     `pt` as the NearPoint coordinates and `query`
+     *                      with the remaining query string. False otherwiese.
      */
     public static function extractFromQuery($sQuery)
     {
@@ -125,16 +143,15 @@ class NearPoint
             $fQueryLat = $aData[2];
             $fQueryLon = $aData[3];
         } else {
-            return False;
+            return false;
         }
 
         $oPt = new NearPoint($fQueryLat, $fQueryLon);
 
-        if (!$oPt->isValid()) return False;
+        if (!$oPt->isValid()) return false;
 
         $sQuery = trim(str_replace($sFound, ' ', $sQuery));
 
         return array('pt' => $oPt, 'query' => $sQuery);
     }
-
 }

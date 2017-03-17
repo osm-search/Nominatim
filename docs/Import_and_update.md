@@ -80,10 +80,10 @@ Nominatim is able to use the official TIGER address set to complement the
 OSM housenumber data in the US. You can add TIGER data to your own Nominatim
 instance by following these steps:
 
-  1. Install the GDAL library and python bindings
+  1. Install the GDAL library and python bindings and the unzip tool
 
-       * Ubuntu: `sudo apt-get install python-gdal`
-       * CentOS: `sudo yum install gdal-python`
+       * Ubuntu: `sudo apt-get install python-gdal unzip`
+       * CentOS: `sudo yum install gdal-python unzip`
 
   2. Get the TIGER 2015 data. You will need the EDGES files
      (3,234 zip files, 11GB total). Choose one of the two sources:

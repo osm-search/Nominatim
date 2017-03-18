@@ -1,4 +1,4 @@
-create or replace function getNearFeatures(in_partition INTEGER, point GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeaturecentr AS $$
+create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
 BEGIN
@@ -6,14 +6,14 @@ BEGIN
 -- start
   IF in_partition = -partition- THEN
     FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(point, centroid)) as distance, isguess, centroid FROM (
-        SELECT * FROM location_area_large_-partition- WHERE ST_Contains(geometry, point) and rank_search < maxrank
+      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, centroid FROM (
+        SELECT * FROM location_area_large_-partition- WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
         UNION ALL
-        SELECT * FROM location_area_country WHERE ST_Contains(geometry, point) and rank_search < maxrank
+        SELECT * FROM location_area_country WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
       ) as location_area
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
-        ST_Distance(point, centroid) * 
+        ST_Distance(feature, centroid) *
           CASE 
                WHEN rank_address = 16 AND rank_search = 15 THEN 0.2 -- capital city
                WHEN rank_address = 16 AND rank_search = 16 THEN 0.25 -- city

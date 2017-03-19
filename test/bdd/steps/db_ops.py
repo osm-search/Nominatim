@@ -93,6 +93,12 @@ class NominatimID:
             self.oid = m.group('id')
             self.cls = m.group('cls')
 
+    def __str__(self):
+        if self.cls is None:
+            return self.typ + self.oid
+
+        return '%s%d:%s' % (self.typ, self.oid, self.cls)
+
     def table_select(self):
         """ Return where clause and parameter list to select the object
             from a Nominatim table.
@@ -109,7 +115,9 @@ class NominatimID:
     def get_place_id(self, cur):
         where, params = self.table_select()
         cur.execute("SELECT place_id FROM placex WHERE %s" % where, params)
-        eq_(1, cur.rowcount, "Expected exactly 1 entry in placex found %s" % cur.rowcount)
+        eq_(1, cur.rowcount,
+            "Expected exactly 1 entry in placex for %s found %s"
+              % (str(self), cur.rowcount))
 
         return cur.fetchone()[0]
 
@@ -383,6 +391,27 @@ def check_search_name_contents(context):
                 else:
                     assert_db_column(res, h, row[h], context)
 
+
+    context.db.commit()
+
+@then("place_addressline contains")
+def check_place_addressline(context):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    for row in context.table:
+        pid = NominatimID(row['object']).get_place_id(cur)
+        apid = NominatimID(row['address']).get_place_id(cur)
+        cur.execute(""" SELECT * FROM place_addressline
+                        WHERE place_id = %s AND address_place_id = %s""",
+                    (pid, apid))
+        assert_less(0, cur.rowcount,
+                    "No rows found for place %s and address %s"
+                      % (row['object'], row['address']))
+
+        for res in cur:
+            for h in row.headings:
+                if h not in ('address', 'object'):
+                    assert_db_column(res, h, row[h], context)
 
     context.db.commit()
 

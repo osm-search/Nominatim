@@ -30,8 +30,8 @@ $sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2
 
 // Show / use polygons
 if ($sOutputFormat == 'html') {
-    $oGeocode->setIncludePolygonAsText($oParams->getBool('polygon'));
-    $bAsText = false;
+    $oGeocode->setIncludePolygonAsGeoJSON($oParams->getBool('polygon_geojson'));
+    $bAsGeoJSON = false;
 } else {
     $bAsPoints = $oParams->getBool('polygon');
     $bAsGeoJSON = $oParams->getBool('polygon_geojson');

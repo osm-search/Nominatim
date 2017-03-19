@@ -241,7 +241,7 @@
         echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
         $aPlace = array(
-                'outlinestring' => $aPointDetails['outlinestring'],
+                'asgeojson' => $aPointDetails['asgeojson'],
                 'lon' => $aPointDetails['lon'],
                 'lat' => $aPointDetails['lat'],
         );

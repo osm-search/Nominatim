@@ -99,10 +99,10 @@ $sSQL .= "    CASE ";
 $sSQL .= "       WHEN importance = 0 OR importance IS NULL THEN 0.75-(rank_search::float/40) ";
 $sSQL .= "       ELSE importance ";
 $sSQL .= "       END as calculated_importance, ";
-$sSQL .= "    ST_AsText(CASE ";
+$sSQL .= "    ST_AsGeoJSON(CASE ";
 $sSQL .= "                WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ";
 $sSQL .= "                ELSE geometry ";
-$sSQL .= "                END) as outlinestring";
+$sSQL .= "                END) as asgeojson";
 $sSQL .= " FROM placex ";
 $sSQL .= " WHERE place_id = $iPlaceID";
 

@@ -1,6 +1,22 @@
 var map;
 var last_click_latlng;
 
+function parse_and_normalize_geojson_string(raw_string){
+    // normalize places the geometry into a featurecollection, similar to
+    // https://github.com/mapbox/geojson-normalize
+    var parsed_geojson = {
+        type: "FeatureCollection",
+        features: [
+            {
+                type: "Feature",
+                geometry: JSON.parse(raw_string),
+                properties: {}
+            }
+        ]
+    };
+    return parsed_geojson;
+}
+
 jQuery(document).on('ready', function(){
 
     if ( !$('#search-page,#reverse-page').length ){ return; }
@@ -159,12 +175,18 @@ jQuery(document).on('ready', function(){
 
             var bounds = [[result.aBoundingBox[0]*1,result.aBoundingBox[2]*1], [result.aBoundingBox[1]*1,result.aBoundingBox[3]*1]];
             map.fitBounds(bounds);
-            if (result.astext && result.astext.match(/(POLY)|(LINE)/) ){
-                var geojson_layer = L.geoJson(null, {
-                    // http://leafletjs.com/reference.html#geojson-style
-                    style: function(feature) { return { clickable: false, color: 'blue' }; }
-                });
-                omnivore.wkt.parse(result.astext,null,geojson_layer);
+
+            if (result.asgeojson && result.asgeojson.match(/(Polygon)|(Line)/) ){
+
+                var geojson_layer = L.geoJson(
+                    parse_and_normalize_geojson_string(result.asgeojson),
+                    {
+                        // http://leafletjs.com/reference-1.0.3.html#path-option
+                        style: function(feature) {
+                            return { interactive: false, color: 'blue' }; 
+                        }
+                    }
+                );
                 layerGroup.addLayer(geojson_layer);
             }
             else {
@@ -252,14 +274,18 @@ jQuery(document).on('ready', function(){
         var circle = L.circleMarker([nominatim_result.lat,nominatim_result.lon], { radius: 10, weight: 2, fillColor: '#ff7800', color: 'blue', opacity: 0.75});
         map.addLayer(circle);
 
-        if ( nominatim_result.outlinestring ){
+        if ( nominatim_result.asgeojson ){
 
-            var geojson_layer = L.geoJson(null, {
-                // http://leafletjs.com/reference.html#geojson-style
-                style: function(feature) { return { clickable: false, color: 'blue' }; }
-            });
-            omnivore.wkt.parse(nominatim_result.outlinestring,null,geojson_layer);
-            layerGroup.addLayer(geojson_layer);
+            var geojson_layer = L.geoJson(
+                parse_and_normalize_geojson_string(nominatim_result.asgeojson),
+                {
+                    // http://leafletjs.com/reference-1.0.3.html#path-option
+                    style: function(feature) {
+                        return { interactive: false, color: 'blue' }; 
+                    }
+                }
+            );
+            map.addLayer(geojson_layer);
             map.fitBounds(geojson_layer.getBounds());
         } else {
             map.setView([nominatim_result.lat,nominatim_result.lon],10);

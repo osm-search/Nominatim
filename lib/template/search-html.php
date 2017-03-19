@@ -17,8 +17,8 @@
         <div class="form-group search-button-group">
             <button type="submit" class="btn btn-primary btn-sm">Search</button>
             <?php if (CONST_Search_AreaPolygons) { ?>
-                <!-- <input type="checkbox" value="1" name="polygon" <?php if ($bAsText) echo "checked='checked'"; ?>/> Highlight -->
-                <input type="hidden" value="1" name="polygon" />
+                <!-- <input type="checkbox" value="1" name="polygon_geojson" <?php if ($bAsGeoJSON) echo "checked='checked'"; ?>/> Highlight -->
+                <input type="hidden" value="1" name="polygon_geojson" />
             <?php } ?>
             <input type="hidden" name="viewbox" value="<?php echo $sViewBox; ?>" />
             <div class="checkbox-inline">

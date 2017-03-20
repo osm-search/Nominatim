@@ -65,7 +65,7 @@ form label {
   color: #333;
   font-size: 11px;
   background-color: rgba(255, 255, 255, 0.7);
-  z-index: 100;
+  z-index: 500;
 }
 
 #map-position-close {

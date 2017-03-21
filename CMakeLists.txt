@@ -38,7 +38,7 @@ set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/osm2pgsql/CMakeLists.txt")
     message(FATAL_ERROR "The osm2pgsql directory is empty.\
     Did you forget to check out Nominatim recursively?\
-    \nTry updating submodules with: git submodules update --init")
+    \nTry updating submodules with: git submodule update --init")
 endif()
 add_subdirectory(osm2pgsql)
 

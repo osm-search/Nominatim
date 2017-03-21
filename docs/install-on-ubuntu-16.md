@@ -3,6 +3,9 @@
 
 
 
+
+
+
 *Note:* these installation instructions are also available in executable
         form for use with vagrant under vagrant/install-on-ubuntu-16.sh.
 
@@ -14,8 +17,8 @@ These instructions expect that you have a freshly installed Ubuntu 16.04.
 Make sure all packages are are up-to-date by running:
 
 
+
     sudo apt-get update -qq
-    sudo apt-get upgrade -y
 
 Now you can install all packages needed for Nominatim:
 
@@ -29,11 +32,10 @@ Now you can install all packages needed for Nominatim:
 If you want to run the test suite, you need to install the following
 additional packages:
 
-    sudo apt-get install -y python-dev python-pip python-levenshtein python-shapely \
-                            python-psycopg2 tidy python-nose python-tidylib \
-                            phpunit
+    sudo apt-get install -y python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit
 
-    pip install --user lettuce==0.2.18 six==1.7 haversine
+    pip3 install --user behave nose # urllib3
+    sudo pear install PHP_CodeSniffer
 
 
 System Configuration
@@ -99,6 +101,7 @@ sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/Nominatim/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
+  DirectoryIndex search.php
   Require all granted
 </Directory>
 

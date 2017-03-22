@@ -92,7 +92,6 @@ if (!$oGeocode->getQueryString()
 $hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 
 $aSearchResults = $oGeocode->lookup();
-if ($aSearchResults === false) $aSearchResults = array();
 
 if ($sOutputFormat=='html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
@@ -104,7 +103,7 @@ $sViewBox = $oGeocode->getViewBoxString();
 $bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
 $aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-$sMoreURL = CONST_Website_BaseURL.'search.php?format='.urlencode($sOutputFormat).'&exclude_place_ids='.join(',', $aExcludePlaceIDs);
+$sMoreURL = CONST_Website_BaseURL.'search.php?format='.$sOutputFormat.'&exclude_place_ids='.join(',', $aExcludePlaceIDs);
 if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
 if ($bShowPolygons) $sMoreURL .= '&polygon=1';
 if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';
@@ -112,7 +111,6 @@ if ($oGeocode->getIncludeExtraTags()) $sMoreURL .= '&extratags=1';
 if ($oGeocode->getIncludeNameDetails()) $sMoreURL .= '&namedetails=1';
 if ($oGeocode->getCountryCodes()) $sMoreURL .= '&countrycodes='.join(',', $oGeocode->getCountryCodes());
 if ($sViewBox) $sMoreURL .= '&viewbox='.urlencode($sViewBox);
-if (isset($_GET['nearlat']) && isset($_GET['nearlon'])) $sMoreURL .= '&nearlat='.(float)$_GET['nearlat'].'&nearlon='.(float)$_GET['nearlon'];
 $sMoreURL .= '&q='.urlencode($sQuery);
 
 if (CONST_Debug) exit;

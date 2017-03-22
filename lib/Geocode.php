@@ -902,7 +902,7 @@ class Geocode
 
     public function lookup()
     {
-        if (!$this->sQuery && !$this->aStructuredQuery) return false;
+        if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;

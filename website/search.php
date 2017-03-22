@@ -99,19 +99,13 @@ if ($sOutputFormat=='html') {
 logEnd($oDB, $hLog, sizeof($aSearchResults));
 
 $sQuery = $oGeocode->getQueryString();
-$sViewBox = $oGeocode->getViewBoxString();
-$bShowPolygons = (isset($_GET['polygon']) && $_GET['polygon']);
-$aExcludePlaceIDs = $oGeocode->getExcludedPlaceIDs();
 
-$sMoreURL = CONST_Website_BaseURL.'search.php?format='.$sOutputFormat.'&exclude_place_ids='.join(',', $aExcludePlaceIDs);
-if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) $sMoreURL .= '&accept-language='.$_SERVER["HTTP_ACCEPT_LANGUAGE"];
-if ($bShowPolygons) $sMoreURL .= '&polygon=1';
-if ($oGeocode->getIncludeAddressDetails()) $sMoreURL .= '&addressdetails=1';
-if ($oGeocode->getIncludeExtraTags()) $sMoreURL .= '&extratags=1';
-if ($oGeocode->getIncludeNameDetails()) $sMoreURL .= '&namedetails=1';
-if ($oGeocode->getCountryCodes()) $sMoreURL .= '&countrycodes='.join(',', $oGeocode->getCountryCodes());
-if ($sViewBox) $sMoreURL .= '&viewbox='.urlencode($sViewBox);
-$sMoreURL .= '&q='.urlencode($sQuery);
+$aMoreParams = $oGeocode->getMoreUrlParams();
+if ($sOutputFormat != 'html') $aMoreParams['format'] = $sOutputFormat;
+if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
+    $aMoreParams['accept-language'] = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
+}
+$sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
 
 if (CONST_Debug) exit;
 

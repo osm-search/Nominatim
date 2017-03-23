@@ -67,19 +67,45 @@ class Geocode
         $this->aLangPrefOrder = $aLangPref;
     }
 
-    public function getIncludeAddressDetails()
+    public function getMoreUrlParams()
     {
-        return $this->bIncludeAddressDetails;
-    }
+        if ($this->aStructuredQuery) {
+            $aParams = $this->aStructuredQuery;
+        } else {
+            $aParams = array('q' => $this->sQuery);
+        }
 
-    public function getIncludeExtraTags()
-    {
-        return $this->bIncludeExtraTags;
-    }
+        if ($this->aExcludePlaceIDs) {
+            $aParams['exclude_place_ids'] = implode(',', $this->aExcludePlaceIDs);
+        }
 
-    public function getIncludeNameDetails()
-    {
-        return $this->bIncludeNameDetails;
+        if ($this->bIncludeAddressDetails) $aParams['addressdetails'] = '1';
+        if ($this->bIncludeExtraTags) $aParams['extratags'] = '1';
+        if ($this->bIncludeNameDetails) $aParams['namedetails'] = '1';
+
+        if ($this->bIncludePolygonAsPoints) $aParams['polygon'] = '1';
+        if ($this->bIncludePolygonAsText) $aParams['polygon_text'] = '1';
+        if ($this->bIncludePolygonAsGeoJSON) $aParams['polygon_geojson'] = '1';
+        if ($this->bIncludePolygonAsKML) $aParams['polygon_kml'] = '1';
+        if ($this->bIncludePolygonAsSVG) $aParams['polygon_svg'] = '1';
+
+        if ($this->fPolygonSimplificationThreshold > 0.0) {
+            $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
+        }
+
+        if ($this->bBoundedSearch) $aParams['bounded'] = '1';
+        if (!$this->bDeDupe) $aParams['dedupe'] = '0';
+
+        if ($this->aCountryCodes) {
+            $aParams['countrycodes'] = implode(',', $this->aCountryCodes);
+        }
+
+        if ($this->aViewBox) {
+            $aParams['viewbox'] = $this->aViewBox[0].','.$this->aViewBox[3]
+                                  .','.$this->aViewBox[2].','.$this->aViewBox[1];
+        }
+
+        return $aParams;
     }
 
     public function setIncludePolygonAsPoints($b = true)
@@ -119,23 +145,6 @@ class Geocode
 
         $this->iFinalLimit = $iLimit;
         $this->iLimit = $iLimit + min($iLimit, 10);
-    }
-
-    public function getExcludedPlaceIDs()
-    {
-        return $this->aExcludePlaceIDs;
-    }
-
-
-    public function getCountryCodes()
-    {
-        return $this->aCountryCodes;
-    }
-
-    public function getViewBoxString()
-    {
-        if (!$this->aViewBox) return null;
-        return $this->aViewBox[0].','.$this->aViewBox[3].','.$this->aViewBox[2].','.$this->aViewBox[1];
     }
 
     public function setFeatureType($sFeatureType)
@@ -341,7 +350,7 @@ class Geocode
         return true;
     }
 
-    public function setStructuredQuery($sAmentiy = false, $sStreet = false, $sCity = false, $sCounty = false, $sState = false, $sCountry = false, $sPostalCode = false)
+    public function setStructuredQuery($sAmenity = false, $sStreet = false, $sCity = false, $sCounty = false, $sState = false, $sCountry = false, $sPostalCode = false)
     {
         $this->sQuery = false;
 
@@ -353,7 +362,7 @@ class Geocode
         $this->aStructuredQuery = array();
         $this->sAllowedTypesSQLList = '';
 
-        $this->loadStructuredAddressElement($sAmentiy, 'amenity', 26, 30, false);
+        $this->loadStructuredAddressElement($sAmenity, 'amenity', 26, 30, false);
         $this->loadStructuredAddressElement($sStreet, 'street', 26, 30, false);
         $this->loadStructuredAddressElement($sCity, 'city', 14, 24, false);
         $this->loadStructuredAddressElement($sCounty, 'county', 9, 13, false);
@@ -902,7 +911,7 @@ class Geocode
 
     public function lookup()
     {
-        if (!$this->sQuery && !$this->aStructuredQuery) return false;
+        if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;

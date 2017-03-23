@@ -20,7 +20,7 @@ foreach($aSearchResults as $iResNum => $aPointDetails)
     {
         $aPlace['boundingbox'] = $aPointDetails['aBoundingBox'];
 
-        if (isset($aPointDetails['aPolyPoints']) && $bShowPolygons)
+        if (isset($aPointDetails['aPolyPoints']))
         {
             $aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
         }

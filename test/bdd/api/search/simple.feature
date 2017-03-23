@@ -89,7 +89,7 @@ Feature: Simple Tests
           | attr        | value |
           | querystring | xnznxvcx |
           | polygon     | false |
-          | more_url    | .*format=xml.*q=xnznxvcx.* |
+          | more_url    | .*q=xnznxvcx.*format=xml |
 
     Scenario: Empty XML search with special XML characters
         When sending xml search query "xfdghn&zxn"xvbyx<vxx>cssdex"
@@ -97,7 +97,7 @@ Feature: Simple Tests
           | attr        | value |
           | querystring | xfdghn&zxn"xvbyx<vxx>cssdex |
           | polygon     | false |
-          | more_url    | .*format=xml.*q=xfdghn%26zxn%22xvbyx%3Cvxx%3Ecssdex.* |
+          | more_url    | .*q=xfdghn%26zxn%22xvbyx%3Cvxx%3Ecssdex.*format=xml |
 
     Scenario: Empty XML search with viewbox
         When sending xml search query "xnznxvcx"
@@ -225,4 +225,4 @@ Feature: Simple Tests
           | pl,1,,invalid,undefined,%3Cb%3E,bo,, |
        Then result header contains
           | attr     | value |
-          | more_url | .*&countrycodes=pl,bo&.* |
+          | more_url | .*&countrycodes=pl%2Cbo&.* |

@@ -59,7 +59,7 @@ form label {
 #map-position {
   display: none;
   position: absolute;
-  top: 0;
+  bottom: -90px;
   right: 20px;
   padding: 0 5px;
   color: #333;

@@ -102,8 +102,8 @@ Feature: Tag evaluation
          n1 T<key>=<value>,name=real
          """
         Then place contains
-         | object | name |
-         | N1     | 'name' : 'real' |
+         | object | class | type    | name |
+         | N1     | <key> | <value> | 'name' : 'real' |
 
     Examples:
      | key       | value |
@@ -300,7 +300,7 @@ Feature: Tag evaluation
           n11 T<key>=<value>
           """
         Then place contains
-          | object | class   | type      | postcode |
+          | object | class   | type      | addr+postcode |
           | N10    | highway | secondary | <value> |
           | N11    | place   | postcode  | <value> |
         And place has no entry for N10:place
@@ -320,9 +320,9 @@ Feature: Tag evaluation
           n20 Tamenity=hospital,addr:place=Foo%20%Town
           """
         Then place contains
-          | object | class   | type     | street  | addr_place |
-          | N10    | amenity | hospital | Foo St  | None |
-          | N20    | amenity | hospital | -       | Foo Town |
+          | object | class   | type     | addr+street | addr+place |
+          | N10    | amenity | hospital | Foo St      | -        |
+          | N20    | amenity | hospital | -           | Foo Town |
 
 
     Scenario Outline: Import of country
@@ -331,16 +331,16 @@ Feature: Tag evaluation
           n10 Tplace=village,<key>=<value>
           """
         Then place contains
-          | object | class   | type    | country_code |
+          | object | class   | type    | addr+country |
           | N10    | place   | village | <value> |
 
     Examples:
-        | key                            | value |
-        | country_code                   | us |
-        | ISO3166-1                      | XX |
-        | is_in:country_code          | __ |
-        | addr:country                | .. |
-        | addr:country_code           | cv |
+        | key                  | value |
+        | country_code         | us |
+        | ISO3166-1            | XX |
+        | is_in:country_code   | __ |
+        | addr:country         | .. |
+        | addr:country_code    | cv |
 
     Scenario Outline: Ignore country codes with wrong length
         When loading osm data
@@ -348,7 +348,7 @@ Feature: Tag evaluation
           n10 Tplace=village,country_code=<value>
           """
         Then place contains
-          | object | class   | type    | country_code |
+          | object | class   | type    | addr+country |
           | N10    | place   | village | - |
 
     Examples:
@@ -368,24 +368,11 @@ Feature: Tag evaluation
           n13 Tbuilding=yes,addr:conscriptionnumber=3,addr:streetnumber=111
           """
         Then place contains
-          | object | class | type   | housenumber |
-          | N10    | building | yes  | 4b |
-          | N11    | building | yes  | 003 |
-          | N12    | building | yes  | 2345 |
-          | N13    | building | yes  | 3/111 |
-
-    Scenario: Import of address interpolations
-        When loading osm data
-          """
-          n10 Taddr:interpolation=odd
-          n11 Taddr:housenumber=10,addr:interpolation=odd
-          n12 Taddr:interpolation=odd,addr:housenumber=23
-          """
-        Then place contains
-          | object | class   | type    | housenumber |
-          | N10    | place   | houses  | odd |
-          | N11    | place   | houses  | odd |
-          | N12    | place   | houses  | odd |
+          | object | class | type    | address |
+          | N10    | building | yes  | 'housenumber' : '4b' |
+          | N11    | building | yes  | 'conscriptionnumber' : '003' |
+          | N12    | building | yes  | 'streetnumber' : '2345' |
+          | N13    | building | yes  | 'conscriptionnumber' : '3', 'streetnumber' : '111' |
 
     Scenario: Shorten tiger:county tags
         When loading osm data
@@ -395,26 +382,26 @@ Feature: Tag evaluation
           n12 Tplace=village,tiger:county=Feebourgh
           """
         Then place contains
-          | object | class   | type    | isin |
+          | object | class   | type    | addr+tiger:county |
           | N10    | place   | village | Feebourgh county |
-          | N11    | place   | village | Alabama,Feebourgh county |
+          | N11    | place   | village | Feebourgh county |
           | N12    | place   | village | Feebourgh county |
 
     Scenario Outline: Import of address tags
         When loading osm data
           """
-          n10 Tplace=village,<key>=<value>
+          n10 Tplace=village,addr:<key>=<value>
+          n11 Tplace=village,is_in:<key>=<value>
           """
         Then place contains
-          | object | class   | type    | isin |
-          | N10    | place   | village | <value> |
+          | object | class   | type    | address |
+          | N10    | place   | village | '<key>' : '<value>' |
 
     Examples:
-      | key             | value |
-      | is_in:country   | Xanadu |
-      | addr:suburb     | hinein |
-      | addr:city       | Sydney |
-      | addr:state      | Jura |
+      | key       | value |
+      | suburb    | hinein |
+      | city      | Sydney |
+      | state     | Jura |
 
     Scenario: Import of isin tags with space
         When loading osm data
@@ -423,9 +410,9 @@ Feature: Tag evaluation
           n11 Tplace=village,addr:county=le%20%havre
           """
         Then place contains
-          | object | class   | type    | isin |
-          | N10    | place   | village | Stockholm, Sweden |
-          | N11    | place   | village | le havre |
+          | object | class   | type    | address |
+          | N10    | place   | village | 'is_in' : 'Stockholm, Sweden' |
+          | N11    | place   | village | 'county' : 'le havre' |
 
     Scenario: Import of admin level
         When loading osm data
@@ -438,8 +425,8 @@ Feature: Tag evaluation
         Then place contains
           | object | class   | type     | admin_level |
           | N10    | amenity | hospital | 3 |
-          | N11    | amenity | hospital | 100 |
-          | N12    | amenity | hospital | 100 |
+          | N11    | amenity | hospital | 15 |
+          | N12    | amenity | hospital | 15 |
           | N13    | amenity | hospital | 3 |
 
     Scenario Outline: Import of extra tags
@@ -550,5 +537,5 @@ Feature: Tag evaluation
           n290393920 Taddr:city=Perpignan,addr:country=FR,addr:housenumber=43\,addr:postcode=66000,addr:street=Rue%20%Pierre%20%Constant%20%d`Ivry,source=cadastre-dgi-fr%20%source%20%:%20%Direction%20%Générale%20%des%20%Impôts%20%-%20%Cadastre%20%;%20%mise%20%à%20%jour%20%:2008
           """
         Then place contains
-         | object     | class   | type | housenumber |
-         | N290393920 | place   | house| 43\ |
+         | object     | class   | type | address |
+         | N290393920 | place   | house| 'city' : 'Perpignan', 'country' : 'FR', 'housenumber' : '43\\', 'postcode' : '66000', 'street' : 'Rue Pierre Constant d`Ivry' |

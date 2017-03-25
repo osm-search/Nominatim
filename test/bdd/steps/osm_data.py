@@ -79,14 +79,10 @@ def update_from_osm_file(context):
 
     cur = context.db.cursor()
     cur.execute("""insert into placex (osm_type, osm_id, class, type, name,
-                   admin_level,  housenumber, street, addr_place, isin, postcode,
-                   country_code, extratags, geometry) select * from place""")
+                   admin_level, address, extratags, geometry) select * from place""")
     cur.execute(
-        """insert into location_property_osmline
-               (osm_id, interpolationtype, street, addr_place,
-                postcode, calculated_country_code, linegeo)
-             SELECT osm_id, housenumber, street, addr_place,
-                    postcode, country_code, geometry from place
+        """insert into location_property_osmline (osm_id, address, linegeo)
+             SELECT osm_id, address, geometry from place
               WHERE class='place' and type='houses' and osm_type='W'
                     and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()

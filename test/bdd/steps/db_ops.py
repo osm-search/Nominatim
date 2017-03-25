@@ -20,9 +20,10 @@ class PlaceColumn:
             self.add_hstore('name', key[5:], value)
         elif key.startswith('extra+'):
             self.add_hstore('extratags', key[6:], value)
+        elif key.startswith('addr+'):
+            self.add_hstore('address', key[6:], value)
         else:
-            assert_in(key, ('class', 'type', 'street', 'addr_place',
-                            'isin', 'postcode'))
+            assert_in(key, ('class', 'type'))
             self.columns[key] = None if value == '' else value
 
     def set_key_name(self, value):
@@ -39,10 +40,16 @@ class PlaceColumn:
         self.columns['admin_level'] = int(value)
 
     def set_key_housenr(self, value):
-        self.columns['housenumber'] = None if value == '' else value
+        self.add_hstore('address', 'housenumber', None if value == '' else value)
+
+    def set_key_street(self, value):
+        self.add_hstore('address', 'street', None if value == '' else value)
+
+    def set_key_addr_place(self, value):
+        self.add_hstore('address', 'place', None if value == '' else value)
 
     def set_key_country(self, value):
-        self.columns['country_code'] = None if value == '' else value
+        self.add_hstore('address', 'country', None if value == '' else value)
 
     def set_key_geometry(self, value):
         self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
@@ -223,15 +230,11 @@ def import_and_index_data_from_place_table(context):
     cur = context.db.cursor()
     cur.execute(
         """insert into placex (osm_type, osm_id, class, type, name, admin_level,
-           housenumber, street, addr_place, isin, postcode, country_code, extratags,
-           geometry)
+           address, extratags, geometry)
            select * from place where not (class='place' and type='houses' and osm_type='W')""")
     cur.execute(
-            """insert into location_property_osmline
-               (osm_id, interpolationtype, street, addr_place,
-                postcode, calculated_country_code, linegeo)
-             SELECT osm_id, housenumber, street, addr_place,
-                    postcode, country_code, geometry from place
+            """insert into location_property_osmline (osm_id, address, linegeo)
+             SELECT osm_id, address, geometry from place
               WHERE class='place' and type='houses' and osm_type='W'
                     and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()
@@ -338,7 +341,7 @@ def check_placex_contents(context, exact):
                 expected_content.add((res['osm_type'], res['osm_id'], res['class']))
             for h in row.headings:
                 msg = "%s: %s" % (row['object'], h)
-                if h in ('name', 'extratags'):
+                if h in ('name', 'extratags', 'address'):
                     if row[h] == '-':
                         assert_is_none(res[h], msg)
                     else:
@@ -348,6 +351,12 @@ def check_placex_contents(context, exact):
                     assert_equals(res['name'][h[5:]], row[h], msg)
                 elif h.startswith('extratags+'):
                     assert_equals(res['extratags'][h[10:]], row[h], msg)
+                elif h.startswith('addr+'):
+                    if row[h] == '-':
+                        if res['address']  is not None:
+                            assert_not_in(h[5:], res['address'])
+                    else:
+                        assert_equals(res['address'][h[5:]], row[h], msg)
                 elif h in ('linked_place_id', 'parent_place_id'):
                     if row[h] == '0':
                         assert_equals(0, res[h], msg)

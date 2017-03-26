@@ -8,8 +8,8 @@ Feature: Import into placex
           | N1  | highway | primary  | country:us |
         When importing
         Then placex contains
-          | object | country_code | calculated_country_code |
-          | N1     | None         | us                      |
+          | object | addr+country | country_code |
+          | N1     | -            | us           |
 
     Scenario: Location overwrites country code tag
         Given the named places
@@ -17,8 +17,8 @@ Feature: Import into placex
           | N1  | highway | primary  | de      | country:us |
         When importing
         Then placex contains
-          | object | country_code | calculated_country_code |
-          | N1     | de           | us                      |
+          | object | addr+country | country_code |
+          | N1     | de           | us           |
 
     Scenario: Country code tag overwrites location for countries
         Given the named places
@@ -26,8 +26,8 @@ Feature: Import into placex
           | R1  | boundary | administrative  | 2     | de      | (-100 40, -101 40, -101 41, -100 41, -100 40) |
         When importing
         Then placex contains
-          | object | country_code | calculated_country_code |
-          | R1     | de           | de                      |
+          | object | addr+country | country_code |
+          | R1     | de           | de           |
 
     Scenario: Illegal country code tag for countries is ignored
         Given the named places
@@ -35,8 +35,8 @@ Feature: Import into placex
           | R1  | boundary | administrative  | 2     | xx      | (-100 40, -101 40, -101 41, -100 41, -100 40) |
         When importing
         Then placex contains
-          | object | country_code | calculated_country_code |
-          | R1     | xx           | us                      |
+          | object | addr+country | country_code |
+          | R1     | xx           | us           |
 
     Scenario: admin level is copied over
         Given the named places
@@ -46,24 +46,6 @@ Feature: Import into placex
         Then placex contains
           | object | admin_level |
           | N1     | 3           |
-
-    Scenario: admin level is default 15
-        Given the named places
-          | osm | class   | type   |
-          | N1  | amenity | prison |
-        When importing
-        Then placex contains
-          | object | admin_level |
-          | N1     | 15          |
-
-    Scenario: admin level is never larger than 15
-        Given the named places
-          | osm | class   | type   | admin |
-          | N1  | amenity | prison | 16 |
-        When importing
-        Then placex contains
-          | object | admin_level |
-          | N1     | 15          |
 
     Scenario: postcode node without postcode is dropped
         Given the places
@@ -87,10 +69,10 @@ Feature: Import into placex
          | N3   | place | postcode | Y45      | country:gb |
         When importing
         Then placex contains
-         | object | postcode | calculated_country_code | rank_search | rank_address |
-         | N1     | E45 2CD  | gb                      | 25          | 5 |
-         | N2     | E45 2    | gb                      | 23          | 5 |
-         | N3     | Y45      | gb                      | 21          | 5 |
+         | object | postcode | country_code | rank_search | rank_address |
+         | N1     | E45 2CD  | gb           | 25          | 5 |
+         | N2     | E45 2    | gb           | 23          | 5 |
+         | N3     | Y45      | gb           | 21          | 5 |
 
     Scenario: wrongly formatted GB postcodes are down-ranked
         Given the places
@@ -100,10 +82,10 @@ Feature: Import into placex
          | N3   | place | postcode | y45      | country:gb |
         When importing
         Then placex contains
-         | object | calculated_country_code | rank_search | rank_address |
-         | N1     | gb                      | 30          | 30 |
-         | N2     | gb                      | 30          | 30 |
-         | N3     | gb                      | 30          | 30 |
+         | object | country_code | rank_search | rank_address |
+         | N1     | gb           | 30          | 30 |
+         | N2     | gb           | 30          | 30 |
+         | N3     | gb           | 30          | 30 |
 
     Scenario: search and address rank for DE postcodes correctly assigned
         Given the places
@@ -114,11 +96,11 @@ Feature: Import into placex
          | N4  | place | postcode | 564276   | country:de |
         When importing
         Then placex contains
-         | object | calculated_country_code | rank_search | rank_address |
-         | N1     | de                      | 21          | 11 |
-         | N2     | de                      | 30          | 30 |
-         | N3     | de                      | 30          | 30 |
-         | N4     | de                      | 30          | 30 |
+         | object | country_code | rank_search | rank_address |
+         | N1     | de           | 21          | 11 |
+         | N2     | de           | 30          | 30 |
+         | N3     | de           | 30          | 30 |
+         | N4     | de           | 30          | 30 |
 
     Scenario: search and address rank for other postcodes are correctly assigned
         Given the places
@@ -134,16 +116,16 @@ Feature: Import into placex
          | N9  | place | postcode | A1:bc10  | country:ca |
         When importing
         Then placex contains
-         | object | calculated_country_code | rank_search | rank_address |
-         | N1     | ca                      | 21          | 11 |
-         | N2     | ca                      | 21          | 11 |
-         | N3     | ca                      | 21          | 11 |
-         | N4     | ca                      | 21          | 11 |
-         | N5     | ca                      | 21          | 11 |
-         | N6     | ca                      | 21          | 11 |
-         | N7     | ca                      | 25          | 11 |
-         | N8     | ca                      | 25          | 11 |
-         | N9     | ca                      | 25          | 11 |
+         | object | country_code | rank_search | rank_address |
+         | N1     | ca           | 21          | 11 |
+         | N2     | ca           | 21          | 11 |
+         | N3     | ca           | 21          | 11 |
+         | N4     | ca           | 21          | 11 |
+         | N5     | ca           | 21          | 11 |
+         | N6     | ca           | 21          | 11 |
+         | N7     | ca           | 25          | 11 |
+         | N8     | ca           | 25          | 11 |
+         | N9     | ca           | 25          | 11 |
 
     Scenario: search and address ranks for places are correctly assigned
         Given the named places

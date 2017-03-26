@@ -7,6 +7,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 2       | 1 1 |
           | N2  | place | house  | 6       | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001 |
         And the ways
           | id | nodes |
@@ -21,6 +23,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 2       | 1 1 |
           | N2  | place | house  | 6       | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1.001, 1 1 |
         And the ways
           | id | nodes |
@@ -35,6 +39,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 1       | 1 1 |
           | N2  | place | house  | 11      | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | odd     | 1 1, 1 1.001 |
         And the ways
           | id | nodes |
@@ -49,6 +55,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 1       | 1 1 |
           | N2  | place | house  | 3       | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | all     | 1 1, 1 1.001 |
         And the ways
           | id | nodes |
@@ -63,6 +71,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 2       | 1 1 |
           | N2  | place | house  | 10      | 1.001 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
         And the ways
           | id | nodes |
@@ -77,6 +87,8 @@ Feature: Import of address interpolations
           | osm | class | type   | housenr | geometry |
           | N1  | place | house  | 2       | 1 1 |
           | N2  | place | house  | 10      | 1.001 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
         And the ways
           | id | nodes |
@@ -92,6 +104,8 @@ Feature: Import of address interpolations
           | N1  | place | house  | 2       | 1 1 |
           | N2  | place | house  | 14      | 1.001 1.001 |
           | N3  | place | house  | 10      | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
         And the ways
           | id | nodes |
@@ -109,6 +123,8 @@ Feature: Import of address interpolations
           | N2  | place | house | 14      | 1.001 1.001 |
           | N3  | place | house | 10      | 1 1.001 |
           | N4  | place | house | 18      | 1.001 1.002 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001, 1.001 1.002 |
         And the ways
           | id | nodes |
@@ -126,6 +142,8 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       | 1 1 |
           | N2  | place | house | 14      | 1.001 1.001 |
           | N3  | place | house | 10      | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1.001 1.001, 1 1.001, 1 1 |
         And the ways
           | id | nodes |
@@ -142,6 +160,8 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       | 1 1 |
           | N2  | place | house | 8       | 1.001 1.001 |
           | N3  | place | house | 7       | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
         And the ways
           | id | nodes |
@@ -158,6 +178,8 @@ Feature: Import of address interpolations
           | N1  | place | house | 2       | 0 0 |
           | N2  | place | house | 6       | 0 0.001 |
           | N3  | place | house | 10      | 0 0.002 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 0 0, 0 0.001, 0 0.002, 0 0.001 |
         And the ways
           | id | nodes |
@@ -174,6 +196,8 @@ Feature: Import of address interpolations
           | osm | class | type  | housenr | geometry |
           | N1  | place | house | 2       | 0 0 |
           | N2  | place | house | 6       | 0 0.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
           | W1  | place | houses | even    | 0 0, 0 0.001, 0 0.002, 0 0.001 |
         And the ways
           | id | nodes |
@@ -192,7 +216,7 @@ Feature: Import of address interpolations
           | N3  | place | house | 12      | :n-middle-w |
           | N4  | place | house | 16      | :n-middle-e |
         And the places
-          | osm | class   | type    | housenr | street       | geometry |
+          | osm | class   | type    | addr+interpolation | street       | geometry |
           | W10 | place   | houses  | even    |              | :w-middle |
           | W11 | place   | houses  | even    | Cloud Street | :w-middle |
         And the places
@@ -238,9 +262,9 @@ Feature: Import of address interpolations
           | N3  | place | house | 12      | Cloud Street | :n-middle-w |
           | N4  | place | house | 16      | Cloud Street | :n-middle-e |
         And the places
-          | osm | class   | type    | housenr | geometry |
-          | W10 | place   | houses  | even    | :w-middle |
-          | W11 | place   | houses  | even    | :w-middle |
+          | osm | class   | type    | addr+interpolation | geometry |
+          | W10 | place   | houses  | even               | :w-middle |
+          | W11 | place   | houses  | even               | :w-middle |
         And the places
           | osm | class   | type     | name         | geometry |
           | W2  | highway | tertiary | Sun Way      | :w-north |
@@ -277,7 +301,9 @@ Feature: Import of address interpolations
           | N1  | place | house       | 10      | 144.9632341 -37.76163 |
           | N2  | place | house       | 6       | 144.9630541 -37.7628174 |
           | N3  | shop  | supermarket | 2       | 144.9629794 -37.7630755 |
-          | W1  | place | houses      | even    | 144.9632341 -37.76163,144.9630541 -37.7628172,144.9629794 -37.7630755 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even    | 144.9632341 -37.76163,144.9630541 -37.7628172,144.9629794 -37.7630755 |
         And the ways
           | id | nodes |
           | 1  | 1,2,3 |
@@ -288,19 +314,23 @@ Feature: Import of address interpolations
           | 6     | 10  | 144.9630541 -37.7628174, 144.9632341 -37.76163 |
 
     Scenario: Place with missing address information
-        Given the places
-          | osm | class   | type   | housenr | geometry |
-          | N1  | place   | house  | 23      | 0.0001 0.0001 |
-          | N2  | amenity | school |         | 0.0001 0.0002 |
-          | N3  | place   | house  | 29      | 0.0001 0.0004 |
-          | W1  | place   | houses | odd     | 0.0001 0.0001,0.0001 0.0002,0.0001 0.0004 |
+        Given the grid
+          | 1 |  | 2 |  |  | 3 |
+        And the places
+          | osm | class   | type   | housenr |
+          | N1  | place   | house  | 23      |
+          | N2  | amenity | school |         |
+          | N3  | place   | house  | 29      |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | odd                | 1,2,3 |
         And the ways
           | id | nodes |
           | 1  | 1,2,3 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 23    | 29  | 0.0001 0.0001, 0.0001 0.0002, 0.0001 0.0004 |
+          | 23    | 29  | 1,2,3 |
 
     Scenario: Ways without node entries are ignored
         Given the places

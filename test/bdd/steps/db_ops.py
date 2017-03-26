@@ -8,7 +8,7 @@ import psycopg2.extras
 class PlaceColumn:
 
     def __init__(self, context, force_name):
-        self.columns = { 'admin_level' : 100}
+        self.columns = { 'admin_level' : 15}
         self.force_name = force_name
         self.context = context
         self.geometry = None
@@ -21,7 +21,7 @@ class PlaceColumn:
         elif key.startswith('extra+'):
             self.add_hstore('extratags', key[6:], value)
         elif key.startswith('addr+'):
-            self.add_hstore('address', key[6:], value)
+            self.add_hstore('address', key[5:], value)
         else:
             assert_in(key, ('class', 'type'))
             self.columns[key] = None if value == '' else value
@@ -41,6 +41,9 @@ class PlaceColumn:
 
     def set_key_housenr(self, value):
         self.add_hstore('address', 'housenumber', None if value == '' else value)
+
+    def set_key_postcode(self, value):
+        self.add_hstore('address', 'postcode', None if value == '' else value)
 
     def set_key_street(self, value):
         self.add_hstore('address', 'street', None if value == '' else value)
@@ -80,6 +83,46 @@ class PlaceColumn:
                      ','.join(['%s' for x in range(len(self.columns))]),
                      self.geometry)
         cursor.execute(query, list(self.columns.values()))
+
+class LazyFmt(object):
+
+    def __init__(self, fmtstr, *args):
+        self.fmt = fmtstr
+        self.args = args
+
+    def __str__(self):
+        return self.fmt % self.args
+
+class PlaceObjName(object):
+
+    def __init__(self, placeid, conn):
+        self.pid = placeid
+        self.conn = conn
+
+    def __str__(self):
+        if self.pid is None:
+            return "<null>"
+
+        self.conn.cursor().execute("""SELECT osm_type, osm_id, class
+                                      FROM placex WHERE place_id = %s""",
+                                   self.pid)
+        eq_(1, cur.rowcount, "No entry found for place id %s" % self.pid)
+
+        return "%s%s:%s" % cur.fetchone()
+
+def compare_place_id(expected, result, column, context):
+    if expected == '0':
+        eq_(0, result,
+            LazyFmt("Bad place id in column %s. Expected: 0, got: %s.",
+                    column, PlaceObjName(result, context.db)))
+    elif expected == '-':
+        assert_is_none(result,
+                LazyFmt("bad place id in column %s: %s.",
+                        column, PlaceObjName(result, context.db)))
+    else:
+        eq_(NominatimID(expected).get_place_id(context.db.cursor()), result,
+            LazyFmt("Bad place id in column %s. Expected: %s, got: %s.",
+                    column, expected, PlaceObjName(result, context.db)))
 
 class NominatimID:
     """ Splits a unique identifier for places into its components.
@@ -305,14 +348,16 @@ def check_placex_contents(context, exact):
                     eq_(res['name'][name], row[h])
                 elif h.startswith('extratags+'):
                     eq_(res['extratags'][h[10:]], row[h])
-                elif h in ('linked_place_id', 'parent_place_id'):
-                    if row[h] == '0':
-                        eq_(0, res[h])
-                    elif row[h] == '-':
-                        assert_is_none(res[h])
+                elif h.startswith('addr+'):
+                    if row[h] == '-':
+                        if res['address'] is not None:
+                            assert_not_in(h[5:], res['address'])
                     else:
-                        eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
-                            res[h])
+                        assert_in(h[5:], res['address'], "column " + h)
+                        assert_equals(res['address'][h[5:]], row[h],
+                                      "column %s" % h)
+                elif h in ('linked_place_id', 'parent_place_id'):
+                    compare_place_id(row[h], res[h], h, context)
                 else:
                     assert_db_column(res, h, row[h], context)
 
@@ -358,13 +403,7 @@ def check_placex_contents(context, exact):
                     else:
                         assert_equals(res['address'][h[5:]], row[h], msg)
                 elif h in ('linked_place_id', 'parent_place_id'):
-                    if row[h] == '0':
-                        assert_equals(0, res[h], msg)
-                    elif row[h] == '-':
-                        assert_is_none(res[h], msg)
-                    else:
-                        assert_equals(NominatimID(row[h]).get_place_id(context.db.cursor()),
-                                      res[h], msg)
+                    compare_place_id(row[h], res[h], h, context)
                 else:
                     assert_db_column(res, h, row[h], context)
 
@@ -455,13 +494,7 @@ def check_location_property_osmline(context, oid, neg):
             if h in ('start', 'end'):
                 continue
             elif h == 'parent_place_id':
-                if row[h] == '0':
-                    eq_(0, res[h])
-                elif row[h] == '-':
-                    assert_is_none(res[h])
-                else:
-                    eq_(NominatimID(row[h]).get_place_id(context.db.cursor()),
-                        res[h])
+                compare_place_id(row[h], res[h], h, context)
             else:
                 assert_db_column(res, h, row[h], context)
 

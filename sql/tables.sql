@@ -184,10 +184,10 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
-DROP SEQUENCE seq_postcodes;
+DROP SEQUENCE IF EXISTS seq_postcodes;
 CREATE SEQUENCE seq_postcodes start 1;
 
-drop table import_polygon_error;
+DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (
   osm_type char(1),
   osm_id INTEGER,
@@ -203,7 +203,7 @@ SELECT AddGeometryColumn('import_polygon_error', 'newgeometry', 4326, 'GEOMETRY'
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
 GRANT SELECT ON import_polygon_error TO "{www-user}";
 
-drop table import_polygon_delete;
+DROP TABLE IF EXISTS import_polygon_delete;
 CREATE TABLE import_polygon_delete (
   osm_type char(1),
   osm_id INTEGER,
@@ -213,7 +213,7 @@ CREATE TABLE import_polygon_delete (
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
 GRANT SELECT ON import_polygon_delete TO "{www-user}";
 
-drop sequence file;
+DROP SEQUENCE IF EXISTS file;
 CREATE SEQUENCE file start 1;
 
 -- null table so it won't error

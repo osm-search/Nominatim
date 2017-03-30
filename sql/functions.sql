@@ -1026,7 +1026,7 @@ BEGIN
   select nodes from planet_osm_ways where id = NEW.osm_id INTO waynodes;
 
   IF array_upper(waynodes, 1) IS NULL THEN
-    RETURN 0;
+    RETURN NEW;
   END IF;
 
   linegeo := NEW.linegeo;

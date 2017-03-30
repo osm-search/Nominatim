@@ -301,3 +301,20 @@ Feature: Import of address interpolations
         Then W1 expands to interpolation
           | start | end | geometry |
           | 23    | 29  | 0.0001 0.0001, 0.0001 0.0002, 0.0001 0.0004 |
+
+    Scenario: Ways without node entries are ignored
+        Given the places
+          | osm | class | type   | housenr | geometry |
+          | W1  | place | houses | even    | 1 1, 1 1.001 |
+        When importing
+        Then W1 expands to no interpolation
+
+    Scenario: Ways without nodes without housenumbers are ignored
+        Given the places
+          | osm | class | type   | housenr | geometry |
+          | N1  | place | house  |         | 1 1 |
+          | N2  | place | house  |         | 1 1.001 |
+          | W1  | place | houses | even    | 1 1, 1 1.001 |
+        When importing
+        Then W1 expands to no interpolation
+

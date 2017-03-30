@@ -40,19 +40,24 @@ class PlaceColumn:
         self.columns['admin_level'] = int(value)
 
     def set_key_housenr(self, value):
-        self.add_hstore('address', 'housenumber', None if value == '' else value)
+        if value:
+            self.add_hstore('address', 'housenumber', value)
 
     def set_key_postcode(self, value):
-        self.add_hstore('address', 'postcode', None if value == '' else value)
+        if value:
+            self.add_hstore('address', 'postcode', value)
 
     def set_key_street(self, value):
-        self.add_hstore('address', 'street', None if value == '' else value)
+        if value:
+            self.add_hstore('address', 'street', value)
 
     def set_key_addr_place(self, value):
-        self.add_hstore('address', 'place', None if value == '' else value)
+        if value:
+            self.add_hstore('address', 'place', value)
 
     def set_key_country(self, value):
-        self.add_hstore('address', 'country', None if value == '' else value)
+        if value:
+            self.add_hstore('address', 'country', value)
 
     def set_key_geometry(self, value):
         self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
@@ -103,9 +108,10 @@ class PlaceObjName(object):
         if self.pid is None:
             return "<null>"
 
-        self.conn.cursor().execute("""SELECT osm_type, osm_id, class
-                                      FROM placex WHERE place_id = %s""",
-                                   self.pid)
+        cur = self.conn.cursor()
+        cur.execute("""SELECT osm_type, osm_id, class
+                       FROM placex WHERE place_id = %s""",
+                    (self.pid, ))
         eq_(1, cur.rowcount, "No entry found for place id %s" % self.pid)
 
         return "%s%s:%s" % cur.fetchone()
@@ -432,7 +438,8 @@ def check_search_name_contents(context):
                                       FROM word, (SELECT unnest(%s) as term) t
                                       WHERE word_token = make_standard_name(t.term)""",
                                    (terms,))
-                    ok_(subcur.rowcount >= len(terms))
+                    ok_(subcur.rowcount >= len(terms),
+                        "No word entry found for " + row[h])
                     for wid in subcur:
                         assert_in(wid[0], res[h],
                                   "Missing term for %s/%s: %s" % (pid, h, wid[1]))

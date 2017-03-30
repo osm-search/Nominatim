@@ -1001,24 +1001,24 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  NEW.interpolationtype = NEW.address->'interpolation';
-
-  IF NEW.address is not NULL THEN
-      IF NEW.address ? 'street' THEN
-          NEW.street = NEW.address->'street';
-      END IF;
-
-      IF NEW.address ? 'place' THEN
-          NEW.addr_place = NEW.address->'place';
-      END IF;
-
-      IF NEW.address ? 'postcode' THEN
-          NEW.addr_place = NEW.address->'postcode';
-      END IF;
-  END IF;
-
   -- if the line was newly inserted, split the line as necessary
   IF OLD.indexed_status = 1 THEN
+      NEW.interpolationtype = NEW.address->'interpolation';
+
+      IF NEW.address is not NULL THEN
+          IF NEW.address ? 'street' THEN
+              NEW.street = NEW.address->'street';
+          END IF;
+
+          IF NEW.address ? 'place' THEN
+              NEW.addr_place = NEW.address->'place';
+          END IF;
+
+          IF NEW.address ? 'postcode' THEN
+              NEW.addr_place = NEW.address->'postcode';
+          END IF;
+      END IF;
+
       select nodes from planet_osm_ways where id = NEW.osm_id INTO waynodes;
 
       IF array_upper(waynodes, 1) IS NULL THEN
@@ -1222,7 +1222,7 @@ BEGIN
       END IF;
 
       IF NEW.address ? 'postcode' THEN
-        NEW.addr_place = NEW.address->'postcode';
+        NEW.postcode = NEW.address->'postcode';
       END IF;
   END IF;
 
@@ -2146,13 +2146,13 @@ BEGIN
 
 
       IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
-          IF NEW.postcode IS NULL THEN
+          IF NEW.address is NULL OR NOT NEW.address ? 'postcode' THEN
               -- postcode was deleted, no longer retain in placex
               DELETE FROM placex where place_id = existingplacex.place_id;
               RETURN NULL;
           END IF;
 
-          NEW.name := hstore('ref', NEW.postcode);
+          NEW.name := hstore('ref', NEW.address->'postcode');
       END IF;
 
       update placex set 

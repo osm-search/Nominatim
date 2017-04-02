@@ -598,13 +598,14 @@ BEGIN
 
   IF addr_street is null and addr_place is null THEN
     select nodes from planet_osm_ways where id = wayid INTO waynodes;
-    FOR location IN SELECT placex.street, placex.addr_place from placex
+    FOR location IN SELECT placex.address from placex
                     where osm_type = 'N' and osm_id = ANY(waynodes)
-                          and (placex.street is not null or placex.addr_place is not null)
+                          and placex.address is not null
+                          and (placex.address ? 'street' or placex.address ? 'place')
                           and indexed_status < 100
                     limit 1 LOOP
-      addr_street = location.street;
-      addr_place = location.addr_place;
+      addr_street = location.address->'street';
+      addr_place = location.address->'place';
     END LOOP;
   END IF;
 
@@ -984,11 +985,7 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
-  street TEXT;
-  addr_place TEXT;
   postcode TEXT;
-  seg_street TEXT;
-  seg_place TEXT;
   seg_postcode TEXT;
 BEGIN
   -- deferred delete
@@ -1001,24 +998,20 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  NEW.interpolationtype = NEW.address->'interpolation';
+
+  place_centroid := ST_PointOnSurface(NEW.linegeo);
+  NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.address->'street',
+                                                 NEW.address->'place',
+                                                 NEW.partition, place_centroid, NEW.linegeo);
+
+
+  IF NEW.address is not NULL and NEW.address ? 'postcode' THEN
+      NEW.postcode = NEW.address->'postcode';
+  END IF;
+
   -- if the line was newly inserted, split the line as necessary
   IF OLD.indexed_status = 1 THEN
-      NEW.interpolationtype = NEW.address->'interpolation';
-
-      IF NEW.address is not NULL THEN
-          IF NEW.address ? 'street' THEN
-              NEW.street = NEW.address->'street';
-          END IF;
-
-          IF NEW.address ? 'place' THEN
-              NEW.addr_place = NEW.address->'place';
-          END IF;
-
-          IF NEW.address ? 'postcode' THEN
-              NEW.addr_place = NEW.address->'postcode';
-          END IF;
-      END IF;
-
       select nodes from planet_osm_ways where id = NEW.osm_id INTO waynodes;
 
       IF array_upper(waynodes, 1) IS NULL THEN
@@ -1027,8 +1020,6 @@ BEGIN
 
       linegeo := NEW.linegeo;
       startnumber := NULL;
-      street := NEW.street;
-      addr_place := NEW.addr_place;
       postcode := NEW.postcode;
 
       FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
@@ -1062,12 +1053,6 @@ BEGIN
               sectiongeo := ST_Reverse(sectiongeo);
             END IF;
 
-            seg_street := coalesce(street,
-                                   prevnode.address->'street',
-                                   nextnode.address->'street');
-            seg_place := coalesce(addr_place,
-                                  prevnode.address->'place',
-                                  nextnode.address->'place');
             seg_postcode := coalesce(postcode,
                                      prevnode.address->'postcode',
                                      nextnode.address->'postcode');
@@ -1076,18 +1061,16 @@ BEGIN
                 NEW.startnumber := startnumber;
                 NEW.endnumber := endnumber;
                 NEW.linegeo := sectiongeo;
-                NEW.street := seg_street;
-                NEW.addr_place := seg_place;
                 NEW.postcode := seg_postcode;
              ELSE
               insert into location_property_osmline
                      (linegeo, partition, osm_id, parent_place_id,
                       startnumber, endnumber, interpolationtype,
-                      address, street, addr_place, postcode, country_code,
+                      address, postcode, country_code,
                       geometry_sector, indexed_status)
               values (sectiongeo, NEW.partition, NEW.osm_id, NEW.parent_place_id,
                       startnumber, endnumber, NEW.interpolationtype,
-                      NEW.address, seg_street, seg_place, seg_postcode,
+                      NEW.address, seg_postcode,
                       NEW.country_code, NEW.geometry_sector, 0);
              END IF;
           END IF;
@@ -1103,10 +1086,6 @@ BEGIN
         END IF;
       END LOOP;
   END IF;
-
-  place_centroid := ST_PointOnSurface(NEW.linegeo);
-  NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.street, NEW.addr_place,
-                                                 NEW.partition, place_centroid, NEW.linegeo);
 
   -- marking descendants for reparenting is not needed, because there are
   -- actually no descendants for interpolation lines
@@ -1213,17 +1192,9 @@ BEGIN
         i := getorcreate_housenumber_id(make_standard_name(NEW.housenumber));
       END IF;
 
-      IF NEW.address ? 'street' THEN
-        NEW.street = NEW.address->'street';
-      END IF;
-
-      IF NEW.address ? 'place' THEN
-        NEW.addr_place = NEW.address->'place';
-      END IF;
-
-      IF NEW.address ? 'postcode' THEN
-        NEW.postcode = NEW.address->'postcode';
-      END IF;
+      NEW.street = NEW.address->'street';
+      NEW.addr_place = NEW.address->'place';
+      NEW.postcode = NEW.address->'postcode';
   END IF;
 
   -- Speed up searches - just use the centroid of the feature
@@ -1321,13 +1292,14 @@ BEGIN
     IF NEW.osm_type = 'N' AND NEW.street IS NULL AND NEW.addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
       FOR location IN select * from placex where ST_Covers(geometry, place_centroid)
-            and (housenumber is not null or street is not null or addr_place is not null)
+            and address is not null
+            and (address ? 'housenumber' or address ? 'street' or address ? 'place')
             and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
             limit 1
       LOOP
-        NEW.housenumber := location.housenumber;
-        NEW.street := location.street;
-        NEW.addr_place := location.addr_place;
+        NEW.housenumber := location.address->'housenumber';
+        NEW.street := location.address->'street';
+        NEW.addr_place := location.address->'place';
       END LOOP;
     END IF;
 

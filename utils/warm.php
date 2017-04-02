@@ -53,7 +53,7 @@ if (!$aResult['search-only']) {
 }
 
 if (!$aResult['reverse-only']) {
-    $oGeocode =& new Nominatim\Geocode($oDB);
+    $oGeocode = new Nominatim\Geocode($oDB);
 
     echo "Warm search: ";
     if ($bVerbose) echo "\n";

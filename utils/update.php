@@ -166,6 +166,15 @@ if ($aResult['deduplicate']) {
     $aPartitions = chksql($oDB->getCol($sSQL));
     $aPartitions[] = 0;
 
+    // we don't care about empty search_name_* artitions, they can't contain mentions of duplicates
+    foreach ($aPartitions as $i => $sPartition) {
+        $sSQL = "select count(*) from search_name_".$sPartition;
+        $nEntries = chksql($oDB->getOne($sSQL));
+        if ($nEntries == 0) {
+            unset($aPartitions[$i]);
+        }
+    }
+
     $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' '";
     $sSQL .= " and class is null and type is null and country_code is null";
     $sSQL .= " group by word_token having count(*) > 1 order by word_token";

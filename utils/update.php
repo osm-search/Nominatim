@@ -156,12 +156,12 @@ if ($bHaveDiff) {
 }
 
 if ($aResult['deduplicate']) {
-    //
-    if (getPostgresVersion() < 9.3) {
+    $oDB =& getDB();
+
+    if (getPostgresVersion($oDB) < 9.3) {
         fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
     }
 
-    $oDB =& getDB();
     $sSQL = 'select partition from country_name order by country_code';
     $aPartitions = chksql($oDB->getCol($sSQL));
     $aPartitions[] = 0;

@@ -103,7 +103,7 @@ class PlaceLookup
         $bIsInterpolation = $sType == 'interpolation';
 
         if ($bIsTiger) {
-            $sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, null as street, postcode,";
+            $sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, postcode,";
             $sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
             $sSQL .= " coalesce(null,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, 'us' as country_code, ";
             $sSQL .= " get_address_by_language(place_id, housenumber, $sLanguagePrefArraySQL) as langaddress,";
@@ -119,7 +119,7 @@ class PlaceLookup
             $sSQL .= " END as housenumber";
             $sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
         } elseif ($bIsInterpolation) {
-            $sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, null as street, postcode,";
+            $sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, postcode,";
             $sSQL .= " country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
             $sSQL .= " (0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, country_code, ";
             $sSQL .= " get_address_by_language(place_id, housenumber, $sLanguagePrefArraySQL) as langaddress,";
@@ -139,7 +139,7 @@ class PlaceLookup
             // and not interpolated
         } else {
             $sSQL = "select placex.place_id, partition, osm_type, osm_id, class,";
-            $sSQL .= " type, admin_level, housenumber, street, postcode, country_code,";
+            $sSQL .= " type, admin_level, housenumber, postcode, country_code,";
             $sSQL .= " parent_place_id, linked_place_id, rank_address, rank_search, ";
             $sSQL .= " coalesce(importance,0.75-(rank_search::float/40)) as importance, indexed_status, indexed_date, wikipedia, country_code, ";
             $sSQL .= " get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress,";

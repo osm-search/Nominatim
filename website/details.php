@@ -83,7 +83,7 @@ $hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 // Get the details for this point
 $sSQL = "SELECT place_id, osm_type, osm_id, class, type, name, admin_level,";
-$sSQL .= "    housenumber, street, postcode, country_code,";
+$sSQL .= "    housenumber, postcode, country_code,";
 $sSQL .= "    importance, wikipedia,";
 $sSQL .= "    to_char(indexed_date, 'YYYY-MM-DD HH24:MI') AS indexed_date,";
 $sSQL .= "    parent_place_id, ";

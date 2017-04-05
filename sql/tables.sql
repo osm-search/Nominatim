@@ -144,8 +144,6 @@ CREATE TABLE placex (
   wikipedia TEXT, -- calculated wikipedia article name (language:title)
   geometry_sector INTEGER,
   country_code varchar(2),
-  street TEXT,
-  addr_place TEXT,
   housenumber TEXT,
   postcode TEXT
   ) {ts:search-data};

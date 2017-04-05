@@ -911,9 +911,9 @@ BEGIN
 
         -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
         update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
+         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and address ? 'place'));
         update placex set indexed_status = 2 where (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry)) 
-         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and addr_place is not null));
+         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and address ? 'place'));
       END IF;
     ELSE
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
@@ -945,7 +945,7 @@ BEGIN
           update location_property_osmline set indexed_status = 2 where indexed_status = 0 and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
         ELSEIF NEW.rank_search >= 16 THEN
           -- up to rank 16, street-less addresses may need reparenting
-          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
+          update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or address ? 'place');
         ELSE
           -- for all other places the search terms may change as well
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null);
@@ -1122,7 +1122,10 @@ DECLARE
   address_street_word_id INTEGER;
   address_street_word_ids INTEGER[];
   parent_place_id_rank BIGINT;
-  
+
+  addr_street TEXT;
+  addr_place TEXT;
+
   isin TEXT[];
   isin_tokens INT[];
 
@@ -1192,8 +1195,9 @@ BEGIN
         i := getorcreate_housenumber_id(make_standard_name(NEW.housenumber));
       END IF;
 
-      NEW.street = NEW.address->'street';
-      NEW.addr_place = NEW.address->'place';
+      addr_street = NEW.address->'street';
+      addr_place = NEW.address->'place';
+
       NEW.postcode = NEW.address->'postcode';
   END IF;
 
@@ -1289,7 +1293,7 @@ BEGIN
 
     -- if we have a POI and there is no address information,
     -- see if we can get it from a surrounding building
-    IF NEW.osm_type = 'N' AND NEW.street IS NULL AND NEW.addr_place IS NULL
+    IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
       FOR location IN select * from placex where ST_Covers(geometry, place_centroid)
             and address is not null
@@ -1298,8 +1302,8 @@ BEGIN
             limit 1
       LOOP
         NEW.housenumber := location.address->'housenumber';
-        NEW.street := location.address->'street';
-        NEW.addr_place := location.address->'place';
+        addr_street := location.address->'street';
+        addr_place := location.address->'place';
       END LOOP;
     END IF;
 
@@ -1324,8 +1328,8 @@ BEGIN
 
 
     -- Note that addr:street links can only be indexed once the street itself is indexed
-    IF NEW.parent_place_id IS NULL AND NEW.street IS NOT NULL THEN
-      address_street_word_ids := get_name_ids(make_standard_name(NEW.street));
+    IF NEW.parent_place_id IS NULL AND addr_street IS NOT NULL THEN
+      address_street_word_ids := get_name_ids(make_standard_name(addr_street));
       IF address_street_word_ids IS NOT NULL THEN
         FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
             NEW.parent_place_id := location.place_id;
@@ -1333,8 +1337,8 @@ BEGIN
       END IF;
     END IF;
 
-    IF NEW.parent_place_id IS NULL AND NEW.addr_place IS NOT NULL THEN
-      address_street_word_ids := get_name_ids(make_standard_name(NEW.addr_place));
+    IF NEW.parent_place_id IS NULL AND addr_place IS NOT NULL THEN
+      address_street_word_ids := get_name_ids(make_standard_name(addr_place));
       IF address_street_word_ids IS NOT NULL THEN
         FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
           NEW.parent_place_id := location.place_id;
@@ -1356,7 +1360,7 @@ BEGIN
     -- Is this node part of a way?
     IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
-      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.rank_search, p.street, p.addr_place from placex p, planet_osm_ways w
+      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.rank_search, p.address from placex p, planet_osm_ways w
          where p.osm_type = 'W' and p.rank_search >= 26 and p.geometry && NEW.geometry and w.id = p.osm_id and NEW.osm_id = any(w.nodes) 
       LOOP
 
@@ -1367,8 +1371,8 @@ BEGIN
         END IF;
 
         -- If the way mentions a street or place address, try that for parenting.
-        IF NEW.parent_place_id IS NULL AND location.street IS NOT NULL THEN
-          address_street_word_ids := get_name_ids(make_standard_name(location.street));
+        IF NEW.parent_place_id IS NULL AND location.address ? 'street' THEN
+          address_street_word_ids := get_name_ids(make_standard_name(location.address->'street'));
           IF address_street_word_ids IS NOT NULL THEN
             FOR linkedplacex IN SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
                 NEW.parent_place_id := linkedplacex.place_id;
@@ -1376,8 +1380,8 @@ BEGIN
           END IF;
         END IF;
 
-        IF NEW.parent_place_id IS NULL AND location.addr_place IS NOT NULL THEN
-          address_street_word_ids := get_name_ids(make_standard_name(location.addr_place));
+        IF NEW.parent_place_id IS NULL AND location.address ? 'place' THEN
+          address_street_word_ids := get_name_ids(make_standard_name(location.address->'place'));
           IF address_street_word_ids IS NOT NULL THEN
             FOR linkedplacex IN SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
               NEW.parent_place_id := linkedplacex.place_id;
@@ -2823,9 +2827,9 @@ BEGIN
     IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
       FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address > 'place'));
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and addr_place is not null));
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
       END LOOP;
     ELSE
         diameter := 0;
@@ -2850,7 +2854,7 @@ BEGIN
             update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter);
           ELSEIF rank >= 16 THEN
             -- up to rank 16, street-less addresses may need reparenting
-            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null or addr_place is not null);
+            update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null or address ? 'place');
           ELSE
             -- for all other places the search terms may change as well
             update placex set indexed_status = 2 where indexed_status = 0 and rank_search > rank and ST_DWithin(placex.geometry, placegeom, diameter) and (rank_search < 28 or name is not null);

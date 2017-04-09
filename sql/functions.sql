@@ -1183,7 +1183,7 @@ BEGIN
         i := getorcreate_housenumber_id(make_standard_name(NEW.address->'conscriptionnumber'));
         IF NEW.address ? 'streetnumber' THEN
             i := getorcreate_housenumber_id(make_standard_name(NEW.address->'streetnumber'));
-            NEW.housenumber := NEW.address->'conscriptionnumber' || '/' || NEW.address->'streetnumber';
+            NEW.housenumber := (NEW.address->'conscriptionnumber') || '/' || (NEW.address->'streetnumber');
         ELSE
             NEW.housenumber := NEW.address->'conscriptionnumber';
         END IF;

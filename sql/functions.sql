@@ -1681,8 +1681,10 @@ BEGIN
   -- RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
   FOR location IN
     SELECT * from getNearFeatures(NEW.partition,
-                                  CASE WHEN NEW.rank_search >= 26 THEN NEW.geometry
-                                  ELSE place_centroid END,
+                                  CASE WHEN NEW.rank_search >= 26
+                                             AND NEW.rank_search < 30
+                                       THEN NEW.geometry
+                                       ELSE place_centroid END,
                                   search_maxrank, isin_tokens)
   LOOP
 

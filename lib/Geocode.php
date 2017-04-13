@@ -423,7 +423,7 @@ class Geocode
         $sSQL .= "    rank_address,";
         $sSQL .= "    min(place_id) AS place_id, ";
         $sSQL .= "    min(parent_place_id) AS parent_place_id, ";
-        $sSQL .= "    calculated_country_code AS country_code, ";
+        $sSQL .= "    country_code, ";
         $sSQL .= "    get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) AS langaddress,";
         $sSQL .= "    get_name_by_language(name, $sLanguagePrefArraySQL) AS placename,";
         $sSQL .= "    get_name_by_language(name, ARRAY['ref']) AS ref,";
@@ -466,7 +466,7 @@ class Geocode
         $sSQL .= "     admin_level, ";
         $sSQL .= "     rank_search, ";
         $sSQL .= "     rank_address, ";
-        $sSQL .= "     calculated_country_code, ";
+        $sSQL .= "     country_code, ";
         $sSQL .= "     importance, ";
         if (!$this->bDeDupe) $sSQL .= "place_id,";
         $sSQL .= "     langaddress, ";
@@ -551,7 +551,7 @@ class Geocode
             $sSQL .= "  30 AS rank_address, ";
             $sSQL .= "  min(place_id) as place_id, ";
             $sSQL .= "  min(parent_place_id) AS parent_place_id, ";
-            $sSQL .= "  calculated_country_code AS country_code, ";
+            $sSQL .= "  country_code, ";
             $sSQL .= "  get_address_by_language(place_id, housenumber_for_place, $sLanguagePrefArraySQL) AS langaddress, ";
             $sSQL .= "  null AS placename, ";
             $sSQL .= "  null AS ref, ";
@@ -576,7 +576,7 @@ class Geocode
             $sSQL .= "     SELECT ";
             $sSQL .= "         osm_id, ";
             $sSQL .= "         place_id, ";
-            $sSQL .= "         calculated_country_code, ";
+            $sSQL .= "         country_code, ";
             $sSQL .= "         CASE ";             // interpolate the housenumbers here
             $sSQL .= "           WHEN startnumber != endnumber ";
             $sSQL .= "           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
@@ -595,7 +595,7 @@ class Geocode
             $sSQL .= "    osm_id, ";
             $sSQL .= "    place_id, ";
             $sSQL .= "    housenumber_for_place, ";
-            $sSQL .= "    calculated_country_code "; //is this group by really needed?, place_id + housenumber (in combination) are unique
+            $sSQL .= "    country_code "; //is this group by really needed?, place_id + housenumber (in combination) are unique
             if (!$this->bDeDupe) $sSQL .= ", place_id ";
 
             if (CONST_Use_Aux_Location_data) {
@@ -1239,8 +1239,8 @@ class Geocode
                         if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
-                                $sSQL = "SELECT place_id FROM placex WHERE calculated_country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
-                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                $sSQL = "SELECT place_id FROM placex WHERE country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
+                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if ($bBoundingBoxSearch)
                                     $sSQL .= " AND _st_intersects($this->sViewboxSmallSQL, geometry)";
                                 $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
@@ -1258,7 +1258,7 @@ class Geocode
                                 $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                 if ($sCountryCodesSQL) $sSQL .= " JOIN placex USING (place_id)";
                                 $sSQL .= " WHERE st_contains($this->sViewboxSmallSQL, ct.centroid)";
-                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
@@ -1275,7 +1275,7 @@ class Geocode
                                     $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                     if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
                                     $sSQL .= " WHERE ST_Contains($this->sViewboxLargeSQL, ct.centroid)";
-                                    if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                    if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                     if ($this->sViewboxCentreSQL) $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
                                     $sSQL .= " LIMIT $this->iLimit";
                                     if (CONST_Debug) var_dump($sSQL);
@@ -1288,7 +1288,7 @@ class Geocode
                                 $sSQL .= "  AND type='".$aSearch['sType']."'";
                                 $sSQL .= "  AND ST_Contains($this->sViewboxSmallSQL, geometry) ";
                                 $sSQL .= "  AND linked_place_id is null";
-                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if ($this->sViewboxCentreSQL)   $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, centroid) ASC";
                                 $sSQL .= " LIMIT $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
@@ -1534,7 +1534,7 @@ class Geocode
                                 $sSQL .= "   AND class='".$aSearch['sClass']."' ";
                                 $sSQL .= "   AND type='".$aSearch['sType']."'";
                                 $sSQL .= "   AND linked_place_id is null";
-                                if ($sCountryCodesSQL) $sSQL .= " AND calculated_country_code in ($sCountryCodesSQL)";
+                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 $sSQL .= " ORDER BY rank_search ASC ";
                                 $sSQL .= " LIMIT $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
@@ -1604,7 +1604,7 @@ class Geocode
                                         if (sizeof($this->aExcludePlaceIDs)) {
                                             $sSQL .= " and l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                         }
-                                        if ($sCountryCodesSQL) $sSQL .= " and lp.calculated_country_code in ($sCountryCodesSQL)";
+                                        if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
                                         if ($sOrderBySQL) $sSQL .= "order by ".$sOrderBySQL." asc";
                                         if ($this->iOffset) $sSQL .= " offset $this->iOffset";
                                         $sSQL .= " limit $this->iLimit";
@@ -1631,7 +1631,7 @@ class Geocode
                                         if (sizeof($this->aExcludePlaceIDs)) {
                                             $sSQL .= " AND l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                         }
-                                        if ($sCountryCodesSQL) $sSQL .= " AND l.calculated_country_code in ($sCountryCodesSQL)";
+                                        if ($sCountryCodesSQL) $sSQL .= " AND l.country_code in ($sCountryCodesSQL)";
                                         if ($sOrderBy) $sSQL .= "ORDER BY ".$OrderBysSQL." ASC";
                                         if ($this->iOffset) $sSQL .= " OFFSET $this->iOffset";
                                         $sSQL .= " limit $this->iLimit";

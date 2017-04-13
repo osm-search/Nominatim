@@ -137,7 +137,7 @@ Feature: Update of relations by osm2pgsql
           r1 Ttype=boundary,boundary=administrative,name=Foo,country_code=XX,admin_level=2 Mw1@
           """
         Then place contains
-          | object | country_code | name           |
+          | object | addr+country | name           |
           | R1     | XX           | 'name' : 'Foo' |
 
     Scenario: Country boundary names are extended when country_code known
@@ -154,6 +154,6 @@ Feature: Update of relations by osm2pgsql
           r1 Ttype=boundary,boundary=administrative,name=Foo,country_code=ch,admin_level=2 Mw1@
           """
         Then place contains
-            | object | country_code | name+name:de | name+name |
+            | object | addr+country | name+name:de | name+name |
             | R1     | ch           | Schweiz      | Foo       |
 

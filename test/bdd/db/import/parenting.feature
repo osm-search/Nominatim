@@ -325,11 +325,11 @@ Feature: Parenting of objects
          | W3  | highway  | residential | foo  | :w-NS |
         When importing
         Then placex contains
-         | object | parent_place_id | street | addr_place | housenumber |
-         | W1     | W3              | foo    | nowhere    | 3 |
-         | N1     | W3              | foo    | nowhere    | 3 |
-         | N2     | W3              | foo    | nowhere    | 3 |
-         | N3     | W3              | foo    | nowhere    | 3 |
+         | object | parent_place_id | housenumber |
+         | W1     | W3              | 3 |
+         | N1     | W3              | 3 |
+         | N2     | W3              | 3 |
+         | N3     | W3              | 3 |
 
     Scenario: POIs don't inherit from streets
         Given the scene building-on-street-corner
@@ -344,8 +344,8 @@ Feature: Parenting of objects
          | W3  | highway  | residential | foo  | :w-NS |
         When importing
         Then placex contains
-         | object | parent_place_id | street | addr_place | housenumber |
-         | N1     | W3              | None   | None       | None |
+         | object | parent_place_id | housenumber |
+         | N1     | W3              | None |
 
     Scenario: POIs with own address do not inherit building address
         Given the scene building-on-street-corner
@@ -370,11 +370,11 @@ Feature: Parenting of objects
          | W3  | highway  | residential | foo  | :w-NS |
         When importing
         Then placex contains
-         | object | parent_place_id | street | addr_place | housenumber |
-         | W1     | N4              | None   | theplace   | 3 |
-         | N1     | W2              | bar    | None       | None |
-         | N2     | W3              | None   | None       | 4 |
-         | N3     | W2              | None   | nowhere    | None |
+         | object | parent_place_id | housenumber |
+         | W1     | N4              | 3 |
+         | N1     | W2              | None |
+         | N2     | W3              | 4 |
+         | N3     | W2              | None |
 
     Scenario: POIs parent a road if they are attached to it
         Given the scene points-on-roads

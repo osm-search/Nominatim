@@ -94,10 +94,9 @@ CREATE TABLE location_property_osmline (
     startnumber INTEGER,
     endnumber INTEGER,
     interpolationtype TEXT,
-    street TEXT,
-    addr_place TEXT,
+    address HSTORE,
     postcode TEXT,
-    calculated_country_code VARCHAR(2),
+    country_code VARCHAR(2),
     geometry_sector INTEGER,
     indexed_status INTEGER,
     indexed_date TIMESTAMP){ts:search-data};
@@ -144,7 +143,9 @@ CREATE TABLE placex (
   indexed_date TIMESTAMP,
   wikipedia TEXT, -- calculated wikipedia article name (language:title)
   geometry_sector INTEGER,
-  calculated_country_code varchar(2)
+  country_code varchar(2),
+  housenumber TEXT,
+  postcode TEXT
   ) {ts:search-data};
 SELECT AddGeometryColumn('placex', 'centroid', 4326, 'GEOMETRY', 2);
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id) {ts:search-index};

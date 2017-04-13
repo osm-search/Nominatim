@@ -4,6 +4,7 @@ import os
 import psycopg2
 import psycopg2.extras
 import subprocess
+import tempfile
 from nose.tools import * # for assert functions
 from sys import version_info as python_version
 
@@ -88,17 +89,20 @@ class NominatimEnvironment(object):
         conn.commit()
         conn.close()
 
-        # execute osm2pgsql on an empty file to get the right tables
-        osm2pgsql = os.path.join(self.build_dir, 'osm2pgsql', 'osm2pgsql')
-        proc = subprocess.Popen([osm2pgsql, '-lsc', '-r', 'xml',
-                                 '-O', 'gazetteer', '-d', self.template_db, '-'],
-                                cwd=self.build_dir, stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        [outstr, errstr] = proc.communicate(input=b'<osm version="0.6"></osm>')
-        logger.debug("running osm2pgsql for template: %s\n%s\n%s" % (osm2pgsql, outstr, errstr))
-        self.run_setup_script('create-functions', 'create-tables',
-                              'create-partition-tables', 'create-partition-functions',
-                              'load-data', 'create-search-indices')
+        # execute osm2pgsql import on an empty file to get the right tables
+        with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
+            fd.write(b'<osm version="0.6"></osm>')
+            fd.flush()
+            self.run_setup_script('import-data',
+                                  'ignore-errors',
+                                  'create-functions',
+                                  'create-tables',
+                                  'create-partition-tables',
+                                  'create-partition-functions',
+                                  'load-data',
+                                  'create-search-indices',
+                                  osm_file=fd.name,
+                                  osm2pgsql_cache='200')
 
     def setup_api_db(self, context):
         self.write_nominatim_config(self.api_test_db)

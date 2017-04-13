@@ -186,7 +186,7 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     passthruCheckReturn($osm2pgsql);
 
     $oDB =& getDB();
-    if (!chksql($oDB->getRow('select * from place limit 1'))) {
+    if (!$aCMDResult['ignore-errors'] && !chksql($oDB->getRow('select * from place limit 1'))) {
         fail('No Data');
     }
 }
@@ -365,8 +365,8 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     for ($i = 0; $i < $iLoadThreads; $i++) {
         $aDBInstances[$i] =& getDB(true);
         $sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-        $sSQL .= 'housenumber, street, addr_place, isin, postcode, country_code, extratags, ';
-        $sSQL .= 'geometry) select * from place where osm_id % '.$iLoadThreads.' = '.$i;
+        $sSQL .= '                   address, extratags, geometry) ';
+        $sSQL .= 'select * from place where osm_id % '.$iLoadThreads.' = '.$i;
         $sSQL .= " and not (class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString')";
         if ($aCMDResult['verbose']) echo "$sSQL\n";
         if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
@@ -374,10 +374,8 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     // last thread for interpolation lines
     $aDBInstances[$iLoadThreads] =& getDB(true);
     $sSQL = 'insert into location_property_osmline';
-    $sSQL .= ' (osm_id, interpolationtype, street, addr_place,';
-    $sSQL .= '  postcode, calculated_country_code, linegeo)';
-    $sSQL .= ' SELECT osm_id, housenumber, street, addr_place,';
-    $sSQL .= ' postcode, country_code, geometry from place where ';
+    $sSQL .= ' (osm_id, address, linegeo)';
+    $sSQL .= ' SELECT osm_id, address, geometry from place where ';
     $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
     if ($aCMDResult['verbose']) echo "$sSQL\n";
     if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
@@ -474,16 +472,16 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oDB =& getDB();
     if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
-    $sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
-    $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,calculated_country_code,";
-    $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select calculated_country_code,postcode,";
+    $sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
+    $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,country_code,";
+    $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select country_code,postcode,";
     $sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
-    $sSQL .= "from placex where postcode is not null group by calculated_country_code,postcode) as x ";
+    $sSQL .= "from placex where postcode is not null group by country_code,postcode) as x ";
     $sSQL .= "where ST_Point(x,y) is not null";
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
     if (CONST_Use_Extra_US_Postcodes) {
-        $sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,calculated_country_code,geometry) ";
+        $sSQL = "insert into placex (osm_type,osm_id,class,type,postcode,country_code,geometry) ";
         $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',postcode,'us',";
         $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));

@@ -7,8 +7,8 @@ drop type if exists nearfeature cascade;
 create type nearfeature as (
   place_id BIGINT,
   keywords int[],
-  rank_address integer,
-  rank_search integer,
+  rank_address smallint,
+  rank_search smallint,
   distance float,
   isguess boolean
 );
@@ -17,8 +17,8 @@ drop type if exists nearfeaturecentr cascade;
 create type nearfeaturecentr as (
   place_id BIGINT,
   keywords int[],
-  rank_address integer,
-  rank_search integer,
+  rank_address smallint,
+  rank_search smallint,
   distance float,
   isguess boolean,
   centroid GEOMETRY
@@ -27,8 +27,8 @@ create type nearfeaturecentr as (
 drop table IF EXISTS search_name_blank CASCADE;
 CREATE TABLE search_name_blank (
   place_id BIGINT,
-  search_rank integer,
-  address_rank integer,
+  search_rank smallint,
+  address_rank smallint,
   name_vector integer[]
   );
 SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
@@ -52,8 +52,8 @@ CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USI
 CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector) WITH (fastupdate = off) {ts:address-index};
 
 CREATE TABLE location_road_-partition- (
-  partition integer,
   place_id BIGINT,
+  partition SMALLINT,
   country_code VARCHAR(2)
   ) {ts:address-data};
 SELECT AddGeometryColumn('location_road_-partition-', 'geometry', 4326, 'GEOMETRY', 2);

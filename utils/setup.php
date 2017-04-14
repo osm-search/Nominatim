@@ -360,13 +360,13 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     }
 
     echo "Load Data\n";
+    $sColumns = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry';
+
     $aDBInstances = array();
     $iLoadThreads = max(1, $iInstances - 1);
     for ($i = 0; $i < $iLoadThreads; $i++) {
         $aDBInstances[$i] =& getDB(true);
-        $sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
-        $sSQL .= '                   address, extratags, geometry) ';
-        $sSQL .= 'select * from place where osm_id % '.$iLoadThreads.' = '.$i;
+        $sSQL = "INSERT INTO placex ($sColumns) SELECT $sColumns FROM place WHERE osm_id % $iLoadThreads = $i";
         $sSQL .= " and not (class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString')";
         if ($aCMDResult['verbose']) echo "$sSQL\n";
         if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));

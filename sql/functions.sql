@@ -1246,7 +1246,8 @@ BEGIN
   END IF;
 
   -- Adding ourselves to the list simplifies address calculations later
-  INSERT INTO place_addressline VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
+  INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
+    VALUES (NEW.place_id, NEW.place_id, true, true, 0, NEW.rank_address); 
 
   -- What level are we searching from
   search_maxrank := NEW.rank_search;
@@ -1734,7 +1735,8 @@ BEGIN
       IF location.rank_search > 4 THEN
           nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
       END IF;
-      INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
+      INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
+        VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
       IF location_isaddress THEN
 
@@ -1768,7 +1770,8 @@ BEGIN
 
           IF location.rank_search > 4 THEN
               nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-              INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+              INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
+                VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
               address_havelevel[location.rank_address] := true;
 
               IF location.rank_address > parent_place_id_rank THEN
@@ -1800,7 +1803,8 @@ BEGIN
 
         -- Add it to the list of search terms
         nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-        INSERT INTO place_addressline VALUES (NEW.place_id, location.place_id, true, false, location.distance, location.rank_address); 
+        INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
+          VALUES (NEW.place_id, location.place_id, true, false, location.distance, location.rank_address); 
 
       END IF;
 
@@ -1912,7 +1916,7 @@ BEGIN
   IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN
     SELECT bool_or(not (rank_address = 0 or rank_address > 26)) as ranked FROM placex WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type INTO has_rank;
     IF has_rank THEN
-      insert into import_polygon_delete values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
+      insert into import_polygon_delete (osm_type, osm_id, class, type) values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
       RETURN NULL;
     END IF;
   END IF;
@@ -1948,9 +1952,8 @@ BEGIN
   --DEBUG: RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
   -- filter wrong tupels
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
-    INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type,
-                                             NEW.name, NEW.address->'country',
-      now(), ST_IsValidReason(NEW.geometry), null, NEW.geometry);
+    INSERT INTO import_polygon_error (osm_type, osm_id, class, type, name, country_code, updated, errormessage, prevgeometry, newgeometry)
+      VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.address->'country', now(), ST_IsValidReason(NEW.geometry), null, NEW.geometry);
 --    RAISE WARNING 'Invalid Geometry: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
     RETURN null;
   END IF;
@@ -2039,7 +2042,8 @@ BEGIN
       AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon')
       AND st_area(NEW.geometry) < st_area(existing.geometry)*0.5
       THEN
-      INSERT INTO import_polygon_error values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
+      INSERT INTO import_polygon_error (osm_type, osm_id, class, type, name, country_code, updated, errormessage, prevgeometry, newgeometry)
+        VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
         'Area reduced from '||st_area(existing.geometry)||' to '||st_area(NEW.geometry), existing.geometry, NEW.geometry);
       RETURN null;
     END IF;

@@ -369,7 +369,9 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
         $sSQL .= 'select * from place where osm_id % '.$iLoadThreads.' = '.$i;
         $sSQL .= " and not (class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString')";
         if ($aCMDResult['verbose']) echo "$sSQL\n";
-        if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+        if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) {
+            fail(pg_last_error($aDBInstances[$i]->connection));
+        }
     }
     // last thread for interpolation lines
     $aDBInstances[$iLoadThreads] =& getDB(true);
@@ -378,7 +380,9 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $sSQL .= ' SELECT osm_id, address, geometry from place where ';
     $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
     if ($aCMDResult['verbose']) echo "$sSQL\n";
-    if (!pg_send_query($aDBInstances[$iLoadThreads]->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+    if (!pg_send_query($aDBInstances[$iLoadThreads]->connection, $sSQL)) {
+        fail(pg_last_error($aDBInstances[$iLoadThreads]->->connection));
+    }
 
     $bAnyBusy = true;
     while ($bAnyBusy) {

@@ -381,7 +381,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
     if ($aCMDResult['verbose']) echo "$sSQL\n";
     if (!pg_send_query($aDBInstances[$iLoadThreads]->connection, $sSQL)) {
-        fail(pg_last_error($aDBInstances[$iLoadThreads]->->connection));
+        fail(pg_last_error($aDBInstances[$iLoadThreads]->connection));
     }
 
     $bAnyBusy = true;

@@ -2,6 +2,7 @@
 *.pyc
 
 build
+build-*
 settings/local.php
 
 data/wiki_import.sql

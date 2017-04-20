@@ -278,9 +278,9 @@ def import_and_index_data_from_place_table(context):
     context.nominatim.run_setup_script('create-functions', 'create-partition-functions')
     cur = context.db.cursor()
     cur.execute(
-        """insert into placex (osm_type, osm_id, class, type, name, admin_level,
-           address, extratags, geometry)
-           select * from place where not (class='place' and type='houses' and osm_type='W')""")
+        """insert into placex (osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry)
+           select              osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry
+           from place where not (class='place' and type='houses' and osm_type='W')""")
     cur.execute(
             """insert into location_property_osmline (osm_id, address, linegeo)
              SELECT osm_id, address, geometry from place

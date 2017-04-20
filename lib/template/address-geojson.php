@@ -64,27 +64,6 @@ else
     }
 
 }
-/*
-"geometry": {
-"type": "Point",
-"coordinates": [
--58.64107131958008,
--34.59852521332562
-]
-}
-*/
-// $aGeoJson = array("type" => "FeatureCollection", "features" => array());
-// foreach ($aFilteredPlaces as $aPlace) {
-//     $oGeom = isset($aPlace['geojson']) ? $aPlace['geojson'] : false;
-//     if ($oGeom) {
-//         unset($aPlace['geojson']);
-//     } else { // if there is no polygon in response, set the Point geometry
-//         $oGeom = array("type"=>"Point","coordinates"=>array($aPlace['lon']*1,$aPlace['lat']*1));
-//     }
-//     $aGeoJson[] = array(
-//         "type" => "Feature", "properties" => $aFilteredPlaces, "geometry" => array("type"=>"Point","coordinates"=>array($aFilteredPlaces['lon']*1,$aFilteredPlaces['lat']*1))
-//     );
-// }
 
 javascript_renderData(array(
     "type" => "Feature", "properties" => $aFilteredPlaces, "geometry" => array("type"=>"Point","coordinates"=>array($aFilteredPlaces['lon']*1,$aFilteredPlaces['lat']*1))

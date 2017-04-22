@@ -78,8 +78,8 @@ def update_from_osm_file(context):
     context.nominatim.run_setup_script('create-functions', 'create-partition-functions')
 
     cur = context.db.cursor()
-    cur.execute("""insert into placex (osm_type, osm_id, class, type, name,
-                   admin_level, address, extratags, geometry) select * from place""")
+    cur.execute("""insert into placex (osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry)
+                     select            osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry from place""")
     cur.execute(
         """insert into location_property_osmline (osm_id, address, linegeo)
              SELECT osm_id, address, geometry from place

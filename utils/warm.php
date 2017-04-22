@@ -11,7 +11,7 @@ $aCMDOptions = array(
                 array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
                 array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
                 array('reverse-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
-                array('search-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
+                array('search-only', '', 0, 1, 0, 0, 'bool', 'Warm search only'),
                );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
@@ -53,7 +53,7 @@ if (!$aResult['search-only']) {
 }
 
 if (!$aResult['reverse-only']) {
-    $oGeocode =& new Nominatim\Geocode($oDB);
+    $oGeocode = new Nominatim\Geocode($oDB);
 
     echo "Warm search: ";
     if ($bVerbose) echo "\n";

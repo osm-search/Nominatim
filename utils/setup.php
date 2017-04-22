@@ -367,7 +367,9 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
         $sSQL = 'insert into placex (osm_type, osm_id, class, type, name, admin_level, ';
         $sSQL .= '                   address, extratags, geometry) ';
         $sSQL .= 'select * from place where osm_id % '.$iLoadThreads.' = '.$i;
-        $sSQL .= " and not (class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString')";
+        $sSQL .= " and not (class='place' and type='houses' and osm_type='W'";
+        $sSQL .= "          and ST_GeometryType(geometry) = 'ST_LineString')";
+        $sSQL .= " and ST_IsValid(geometry)";
         if ($aCMDResult['verbose']) echo "$sSQL\n";
         if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) {
             fail(pg_last_error($aDBInstances[$i]->connection));

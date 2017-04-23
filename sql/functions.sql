@@ -2043,7 +2043,7 @@ BEGIN
       AND st_area(NEW.geometry) < st_area(existing.geometry)*0.5
       THEN
       INSERT INTO import_polygon_error (osm_type, osm_id, class, type, name, country_code, updated, errormessage, prevgeometry, newgeometry)
-        VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.country_code, now(), 
+        VALUES (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name, NEW.address->'country', now(), 
         'Area reduced from '||st_area(existing.geometry)||' to '||st_area(NEW.geometry), existing.geometry, NEW.geometry);
       RETURN null;
     END IF;

@@ -98,14 +98,14 @@ configuration. Add a separate nominatim configuration to your webserver:
 
 ```
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/Nominatim/build/website">
+<Directory "$USERHOME/Nominatim/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/Nominatim/build/website
+Alias /nominatim $USERHOME/Nominatim/website
 EOFAPACHECONF
 ```
 

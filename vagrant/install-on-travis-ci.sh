@@ -45,6 +45,7 @@ EOFAPACHECONF
 sudo a2enconf nominatim
 sudo service apache2 restart
 
+wget -O data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
 
 mkdir build
 cd build
@@ -58,3 +59,4 @@ tee settings/local.php << EOF
  @define('CONST_Database_DSN', 'pgsql://@/test_api_nominatim');
  @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
 EOF
+

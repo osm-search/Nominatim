@@ -132,9 +132,15 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
         pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, geometry, spheroid) RENAME TO ST_DistanceSpheroid');
     }
 
+    if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
+        echo "Error: you need to download the country_osm_grid first:";
+        echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz\n";
+        exit(1);
+    }
+
     pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
     pgsqlRunScriptFile(CONST_BasePath.'/data/country_naturalearthdata.sql');
-    pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql');
+    pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql.gz');
     pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
     if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
         pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');

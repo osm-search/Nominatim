@@ -28,8 +28,7 @@ required for compiling osm2pgsql.
 
 For running tests:
 
-  * [lettuce](http://lettuce.it)
-  * [Shapely](http://toblerity.org/shapely/index.html)
+  * [behave](http://pythonhosted.org/behave/)
   * [Psycopg2](http://initd.org/psycopg)
   * [nose](https://nose.readthedocs.io)
   * [phpunit](https://phpunit.de)

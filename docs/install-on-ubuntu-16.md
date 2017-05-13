@@ -137,6 +137,13 @@ Get the source code from Github and change into the source directory
 
 
 
+When installing the latest source from github, you also need to
+download the country grid:
+
+
+    wget -O data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
+
+
 The code must be built in a separate directory. Create this directory,
 then configure and build Nominatim in there:
 

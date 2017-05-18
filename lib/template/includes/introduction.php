@@ -6,4 +6,6 @@ look up data by its geographic coordinate(reverse search). Each result comes wit
 link to a details page where you can inspect what data about the object is saved in 
 the database and investigate how the address of the object has been computed.</p>
 
-For more information visit the <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim wiki page</a>.
+<p>For more information visit the <a href="http://wiki.openstreetmap.org/wiki/Nominatim">Nominatim wiki page</a>.</p>
+
+<p>All usage of nominatim.openstreetmap.org must follow the <a href="https://operations.osmfoundation.org/policies/nominatim/">Nominatim Usage Policy</a>.</p>

@@ -465,6 +465,10 @@ function javascript_renderData($xVal, $iOptions = 0)
 {
     if (defined('PHP_VERSION_ID') && PHP_VERSION_ID > 50400)
         $iOptions |= JSON_UNESCAPED_UNICODE;
+        if (isset($_GET['pretty']) && $_GET['pretty'] && strtolower($_GET['pretty']) != 'false') {
+            $iOptions |= JSON_PRETTY_PRINT;
+        }
+
     $jsonout = json_encode($xVal, $iOptions);
 
     if (! isset($_GET['json_callback'])) {

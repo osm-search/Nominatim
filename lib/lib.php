@@ -33,6 +33,18 @@ function getCacheMemoryMB()
     return (int)($aMatches[1]/1024);
 }
 
+function getDatabaseDate(&$oDB)
+{
+    // Find the newest node in the DB
+    $iLastOSMID = $oDB->getOne("select max(osm_id) from place where osm_type = 'N'");
+    // Lookup the timestamp that node was created
+    $sLastNodeURL = 'http://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID."/1";
+    $sLastNodeXML = file_get_contents($sLastNodeURL);
+    preg_match('#timestamp="(([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z)"#', $sLastNodeXML, $aLastNodeDate);
+
+    return $aLastNodeDate[1];
+}
+
 
 function bySearchRank($a, $b)
 {

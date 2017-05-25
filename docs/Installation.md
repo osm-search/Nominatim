@@ -44,7 +44,7 @@ For running Nominatim:
 
 For running continuous updates:
 
-  * [osmosis](http://wiki.openstreetmap.org/wiki/Osmosis)
+  * [pyosmium](http://osmcode.org/pyosmium/)
 
 ### Hardware
 

@@ -43,15 +43,15 @@ is.
     
     See the FAQ how to skip this step and point Nominatim to an existing database.
 
-  ```
-  # inside the virtual machine:
-  mkdir data
-  cd build
-    wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
-    ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
-    ```
+      ```
+      # inside the virtual machine:
+      mkdir data
+      cd build
+      wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+      ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
+      ```
 
-  To repeat an import you'd need to delete the database first
+    To repeat an import you'd need to delete the database first
 
         dropdb -if-exists nominatim
 

@@ -7,7 +7,7 @@
 # ================================
 #
 # These instructions expect that you have a freshly installed CentOS version 7.
-# Make sure all packages are are up-to-date by running:
+# Make sure all packages are up-to-date by running:
 #
     sudo yum update -y
 

@@ -12,8 +12,9 @@ $aCMDOptions
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-   array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import using osmosis'),
-   array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import using osmosis forever'),
+   array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
+   array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
+   array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolate)'),
    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
@@ -57,10 +58,39 @@ if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
     $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
 }
 
+if ($aResult['init-updates']) {
+    $sSetup = CONST_InstallPath.'/utils/setup.php';
+    $iRet = -1;
+    passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
+    if ($iRet != 0) {
+        fail('Error running setup script');
+    }
 
-if (isset($aResult['import-diff'])) {
-    // import diff directly (e.g. from osmosis --rri)
-    $sNextFile = $aResult['import-diff'];
+    $sDatabaseDate = getDatabaseDate($oDB);
+    $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ',
+                          strtotime($sDatabaseDate) - (3*60*60));
+
+    // get the appropriate state id
+    $aOutput = 0;
+    exec(CONST_Pyosmium_Get_Changes.' -D '.$sWindBack.' --server '.CONST_Replication_Url,
+        $aOutput, $iRet);
+    if ($iRet != 0) {
+        fail('Error running pyosmium tools');
+    }
+
+    pg_query($oDB->connection, 'TRUNCATE import_status');
+    $sSQL = "INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES('";
+    $sSQL .= $sDatabaseDate."',".$aOutput[0].", true)";
+    if (!pg_query($oDB->connection, $sSQL)) {
+        fail("Could not enter sequence into database.");
+    }
+
+    echo "Done. Database updates will start at sequence $aOutput[0] ($sWindBack)\n";
+}
+
+if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
+    // import diffs and files directly (e.g. from osmosis --rri)
+    $sNextFile = isset($aResult['import-diff']) ? $aResult['import-diff'] : $aResult['import-file'];
     if (!file_exists($sNextFile)) {
         fail("Cannot open $sNextFile\n");
     }
@@ -79,16 +109,6 @@ if (isset($aResult['import-diff'])) {
 
 $sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
 $bHaveDiff = false;
-if (isset($aResult['import-file']) && $aResult['import-file']) {
-    $bHaveDiff = true;
-    $sCMD = CONST_Osmosis_Binary.' --read-xml \''.$aResult['import-file'].'\' --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
-    echo $sCMD."\n";
-    exec($sCMD, $sJunk, $iErrorLevel);
-    if ($iErrorLevel) {
-        fail("Error converting osm to osc, osmosis returned: $iErrorLevel\n");
-    }
-}
-
 $bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
 $sContentURL = '';
 if (isset($aResult['import-node']) && $aResult['import-node']) {
@@ -116,33 +136,8 @@ if (isset($aResult['import-relation']) && $aResult['import-relation']) {
 }
 
 if ($sContentURL) {
-    $sModifyXMLstr = file_get_contents($sContentURL);
+    file_put_contents($sTemporaryFile, file_get_contents($sContentURL));
     $bHaveDiff = true;
-
-    $aSpec = array(
-              0 => array("pipe", "r"),  // stdin
-              1 => array("pipe", "w"),  // stdout
-              2 => array("pipe", "w") // stderr
-             );
-    $sCMD = CONST_Osmosis_Binary.' --read-xml - --read-empty --derive-change --write-xml-change '.$sTemporaryFile;
-    echo $sCMD."\n";
-    $hProc = proc_open($sCMD, $aSpec, $aPipes);
-    if (!is_resource($hProc)) {
-        fail("Error converting osm to osc, osmosis failed\n");
-    }
-    fwrite($aPipes[0], $sModifyXMLstr);
-    fclose($aPipes[0]);
-    $sOut = stream_get_contents($aPipes[1]);
-    if ($aResult['verbose']) echo $sOut;
-    fclose($aPipes[1]);
-    $sErrors = stream_get_contents($aPipes[2]);
-    if ($aResult['verbose']) echo $sErrors;
-    fclose($aPipes[2]);
-    if ($iError = proc_close($hProc)) {
-        echo $sOut;
-        echo $sErrors;
-        fail("Error converting osm to osc, osmosis returned: $iError\n");
-    }
 }
 
 if ($bHaveDiff) {
@@ -166,7 +161,7 @@ if ($aResult['deduplicate']) {
     $aPartitions = chksql($oDB->getCol($sSQL));
     $aPartitions[] = 0;
 
-    // we don't care about empty search_name_* artitions, they can't contain mentions of duplicates
+    // we don't care about empty search_name_* partitions, they can't contain mentions of duplicates
     foreach ($aPartitions as $i => $sPartition) {
         $sSQL = "select count(*) from search_name_".$sPartition;
         $nEntries = chksql($oDB->getOne($sSQL));
@@ -236,10 +231,8 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         fail("Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n");
     }
 
-    $sImportFile = CONST_BasePath.'/data/osmosischange.osc';
-    $sOsmosisConfigDirectory = CONST_InstallPath.'/settings';
-    $sCMDDownload = CONST_Osmosis_Binary.' --read-replication-interval workingDirectory='.$sOsmosisConfigDirectory.' --simplify-change --write-xml-change '.$sImportFile;
-    $sCMDCheckReplicationLag = CONST_Osmosis_Binary.' -q --read-replication-lag workingDirectory='.$sOsmosisConfigDirectory;
+    $sImportFile = CONST_InstallPath.'/osmosischange.osc';
+    $sCMDDownload = CONST_Pyosmium_Get_Changes.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
     $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
     $sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 
@@ -247,103 +240,95 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         $fStartTime = time();
         $iFileSize = 1001;
 
-        if (!file_exists($sImportFile)) {
-            // First check if there are new updates published (except for minutelies - there's always new diffs to process)
-            if (CONST_Replication_Update_Interval > 60) {
-                unset($aReplicationLag);
-                exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel);
-                while ($iErrorLevel > 0 || $aReplicationLag[0] < 1) {
-                    if ($iErrorLevel) {
-                        echo "Error: $iErrorLevel. ";
-                        echo "Re-trying: ".$sCMDCheckReplicationLag." in ".CONST_Replication_Recheck_Interval." secs\n";
-                    } else {
-                        echo ".";
-                    }
+        $aLastState = chksql($oDB->getRow('SELECT * FROM import_status'));
+
+        if (!$aLastState['sequence_id']) {
+            echo "Updates not set up. Please run ./utils/update.php --init-updates.\n";
+            exit(1);
+        }
+
+        echo 'Currently at sequence '.$aLastState['sequence_id'].' ('.$aLastState['lastimportdate'].') - '.$aLastState['indexed']." indexed\n";
+
+        $sBatchEnd = $aLastState['lastimportdate'];
+        $iEndSequence = $aLastState['sequence_id'];
+
+        if ($aLastState['indexed'] == 't') {
+            // Sleep if the update interval has not yet been reached.
+            $fNextUpdate = $aLastState['lastimportdate'] + CONST_Replication_Update_Interval;
+            if ($fNextUpdate > $fStartTime) {
+                $iSleepTime = $fNextUpdate - $fStartTime;
+                echo "Waiting for next update for $iSleepTime sec.";
+                sleep($iSleepTime);
+            }
+
+            // Download the next batch of changes.
+            unlink($sImportFile);
+            do {
+                $fCMDStartTime = time();
+                $iNextSeq = (int) $aLastState['sequence_id'] + 1;
+                unset($aOutput);
+                echo "$sCMDDownload -I $iNextSeq\n";
+                exec($sCMDDownload.' -I '.$iNextSeq, $aOutput, $iResult);
+
+                if ($iResult == 3) {
+                    echo 'No new updates. Sleeping for '.CONST_Replication_Recheck_Interval." sec.\n";
                     sleep(CONST_Replication_Recheck_Interval);
-                    unset($aReplicationLag);
-                    exec($sCMDCheckReplicationLag, $aReplicationLag, $iErrorLevel);
+                } else if ($iResult != 0) {
+                    echo 'ERROR: updates failed.';
+                    exit($iResult);
+                } else {
+                    $iEndSequence = (int)$aOutput[0];
                 }
-                // There are new replication files - use osmosis to download the file
-                echo "\n".date('Y-m-d H:i:s')." Replication Delay is ".$aReplicationLag[0]."\n";
-            }
-            $fStartTime = time();
+            } while ($iResult);
+
+            // Import the file
             $fCMDStartTime = time();
-            echo $sCMDDownload."\n";
-            exec($sCMDDownload, $sJunk, $iErrorLevel);
-            while ($iErrorLevel > 0) {
-                echo "Error: $iErrorLevel\n";
-                sleep(60);
-                echo 'Re-trying: '.$sCMDDownload."\n";
-                exec($sCMDDownload, $sJunk, $iErrorLevel);
+            echo $sCMDImport."\n";
+            unset($sJunk);
+            exec($sCMDImport, $sJunk, $iErrorLevel);
+            if ($iErrorLevel) {
+                echo "Error executing osm2pgsql: $iErrorLevel\n";
+                exit($iErrorLevel);
             }
+
+            // write the update logs
             $iFileSize = filesize($sImportFile);
-            $sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-            $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','osmosis')";
+            $sBatchEnd = getDatabaseDate($oDB);
+            $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
-            $oDB->query($sSQL);
-            echo date('Y-m-d H:i:s')." Completed osmosis step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
+            chksql($oDB->query($sSQL));
+
+            // update the status
+            $sSQL = "UPDATE import_status SET lastimportdate = '$sBatchEnd', indexed=false, sequence_id = $iEndSequence";
+            var_Dump($sSQL);
+            chksql($oDB->query($sSQL));
+            echo date('Y-m-d H:i:s')." Completed download step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
         }
-
-        $iFileSize = filesize($sImportFile);
-        $sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
-
-        // Import the file
-        $fCMDStartTime = time();
-        echo $sCMDImport."\n";
-        exec($sCMDImport, $sJunk, $iErrorLevel);
-        if ($iErrorLevel) {
-            echo "Error: $iErrorLevel\n";
-            exit($iErrorLevel);
-        }
-        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','osm2pgsql')";
-        var_Dump($sSQL);
-        $oDB->query($sSQL);
-        echo date('Y-m-d H:i:s')." Completed osm2pgsql step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
-
-        // Archive for debug?
-        unlink($sImportFile);
-
-        $sBatchEnd = getosmosistimestamp($sOsmosisConfigDirectory);
 
         // Index file
-        $sThisIndexCmd = $sCMDIndex;
-        $fCMDStartTime = time();
-
         if (!$aResult['no-index']) {
+            $sThisIndexCmd = $sCMDIndex;
+            $fCMDStartTime = time();
+
             echo "$sThisIndexCmd\n";
             exec($sThisIndexCmd, $sJunk, $iErrorLevel);
             if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);
             }
+
+            $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+            var_Dump($sSQL);
+            $oDB->query($sSQL);
+            echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
+
+            $sSQL = "update import_status set indexed = true";
+            $oDB->query($sSQL);
         }
-
-        $sSQL = "INSERT INTO import_osmosis_log values ('$sBatchEnd',$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
-        var_Dump($sSQL);
-        $oDB->query($sSQL);
-        echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
-
-        $sSQL = "update import_status set lastimportdate = '$sBatchEnd'";
-        $oDB->query($sSQL);
 
         $fDuration = time() - $fStartTime;
         echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60, 2)." minutes\n";
         if (!$aResult['import-osmosis-all']) exit(0);
-
-        if (CONST_Replication_Update_Interval > 60) {
-            $iSleep = max(0, (strtotime($sBatchEnd)+CONST_Replication_Update_Interval-time()));
-        } else {
-            $iSleep = max(0, CONST_Replication_Update_Interval-$fDuration);
-        }
-        echo date('Y-m-d H:i:s')." Sleeping $iSleep seconds\n";
-        sleep($iSleep);
     }
 }
 
-
-function getosmosistimestamp($sOsmosisConfigDirectory)
-{
-    $sStateFile = file_get_contents($sOsmosisConfigDirectory.'/state.txt');
-    preg_match('#timestamp=(.+)#', $sStateFile, $aResult);
-    return str_replace('\:', ':', $aResult[1]);
-}

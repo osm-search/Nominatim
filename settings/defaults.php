@@ -41,7 +41,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 // Paths
 @define('CONST_ExtraDataPath', CONST_BasePath.'/data');
 @define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
-@define('CONST_Osmosis_Binary', '@OSMOSIS_PATH@');
+@define('CONST_Pyosmium_Binary', '@PYOSMIUM_PATH@');
 @define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/tiger');
 @define('CONST_Wikipedia_Data_Path', CONST_ExtraDataPath);
 
@@ -67,7 +67,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 
 // Replication settings
 @define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');
-@define('CONST_Replication_MaxInterval', '3600');
+@define('CONST_Replication_Max_Diff_size', '30'); // MB of update data to download per batch
 @define('CONST_Replication_Update_Interval', '60');  // How often upstream publishes diffs
 @define('CONST_Replication_Recheck_Interval', '60'); // How long to sleep if no update found yet
 

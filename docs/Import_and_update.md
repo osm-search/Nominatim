@@ -118,21 +118,24 @@ Updates
 =======
 
 There are many different possibilities to update your Nominatim database.
-The following section describes how to keep it up-to-date with osmosis.
+The following section describes how to keep it up-to-date with Pyosmium.
 For a list of other methods see the output of `./utils/update.php --help`.
 
-Installing the newest version of osmosis
-----------------------------------------
+Installing the newest version of Pyosmium
+-----------------------------------------
 
-The version of osmosis that comes with your distribution should be sufficient
-in most cases.
+It is recommended to install Pyosmium via pip:
 
-If you want to install it by hand, get the latest version from the
-[Osmosis website](http://wiki.openstreetmap.org/wiki/Osmosis). Then
-tell Nominatim to use this version by adding the following line to
-your `settings/local.php`:
+    pip install --user osmium
 
-    @define('CONST_Osmosis_Binary', '/usr/local/bin/osmosis');
+Nominatim needs a tool called `pyosmium-get-updates` that comes with
+Pyosmium. You need to tell Nominatim where to find it. Add the
+following line to your `settings/local.php`:
+
+    @define('CONST_Pyosmium_Binary', '/home/user/.local/bin/pyosmium-get-changes');
+
+The path above is fine if you used the `--user` parameter with pip.
+Replace `user` with your user name.
 
 Setting up the update process
 -----------------------------
@@ -146,35 +149,27 @@ diffs for Ireland from geofabrik add the following:
 
     // base URL of the replication service
     @define('CONST_Replication_Url', 'http://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
-    // Process each update separately, osmosis cannot merge multiple updates
-    @define('CONST_Replication_MaxInterval', '40000');
     // How often upstream publishes diffs
     @define('CONST_Replication_Update_Interval', '86400');
     // How long to sleep if no update found yet
     @define('CONST_Replication_Recheck_Interval', '900');
 
+To set up the update process now run the following command:
 
-Delete any existing `settings/configuration.txt`, then run the following command
-to create the osmosis configuration files:
+    ./utils/update --init-updates
 
-    ./utils/setup.php --osmosis-init
+It outputs the date where updates will start. Recheck that this date is
+what you expect.
 
-Enabling hierarchical updates
------------------------------
-
-When a place is updated in the database, all places that contain this place
-in their address need to be updated as well. These hierarchical updates are
-disabled by default because they slow down the initial import.
-Enable them with the following command:
-
-    ./utils/setup.php --create-functions --enable-diff-updates
+The --init-updates command needs to be rerun whenever the replication service
+is changed.
 
 Updating Nominatim
 ------------------
 
 The following command will keep your database constantly up to date:
 
-    ./utils/update.php --import-osmosis-all --no-npi
+    ./utils/update.php --import-osmosis-all
 
 If you have imported multiple country extracts and want to keep them
 up-to-date, have a look at the script in

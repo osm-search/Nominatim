@@ -404,6 +404,12 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     echo "\n";
     echo "Reanalysing database...\n";
     pgsqlRunScript('ANALYSE');
+
+    $sDatabaseDate = getDatabaseDate($oDB);
+    pg_query($oDB->connection, 'TRUNCATE import_status');
+    $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
+    pg_query($oDB->connection, $sSQL);
+    echo "Latest data imported from $sDatabaseDate.\n";
 }
 
 if ($aCMDResult['import-tiger-data']) {
@@ -500,83 +506,9 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     }
 }
 
-if ($aCMDResult['osmosis-init'] || ($aCMDResult['all'] && !$aCMDResult['drop'])) { // no use doing osmosis-init when dropping update tables
+if ($aCMDResult['osmosis-init']) {
     $bDidSomething = true;
-    $oDB =& getDB();
-
-    if (!file_exists(CONST_Osmosis_Binary)) {
-        echo "Please download osmosis.\nIf it is already installed, check the path in your local settings (settings/local.php) file.\n";
-        if (!$aCMDResult['all']) {
-            fail("osmosis not found in '".CONST_Osmosis_Binary."'");
-        }
-    } else {
-        if (file_exists(CONST_InstallPath.'/settings/configuration.txt')) {
-            echo "settings/configuration.txt already exists\n";
-        } else {
-            passthru(CONST_Osmosis_Binary.' --read-replication-interval-init '.CONST_InstallPath.'/settings');
-            // update osmosis configuration.txt with our settings
-            passthru("sed -i 's!baseUrl=.*!baseUrl=".CONST_Replication_Url."!' ".CONST_InstallPath.'/settings/configuration.txt');
-            passthru("sed -i 's:maxInterval = .*:maxInterval = ".CONST_Replication_MaxInterval.":' ".CONST_InstallPath.'/settings/configuration.txt');
-        }
-
-        // Find the last node in the DB
-        $iLastOSMID = $oDB->getOne("select max(osm_id) from place where osm_type = 'N'");
-
-        // Lookup the timestamp that node was created (less 3 hours for margin for changsets to be closed)
-        $sLastNodeURL = 'http://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID."/1";
-        $sLastNodeXML = file_get_contents($sLastNodeURL);
-        preg_match('#timestamp="(([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z)"#', $sLastNodeXML, $aLastNodeDate);
-        $iLastNodeTimestamp = strtotime($aLastNodeDate[1]) - (3*60*60);
-
-        // Search for the correct state file - uses file timestamps so need to sort by date descending
-        $sRepURL = CONST_Replication_Url."/";
-        $sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
-        // download.geofabrik.de:    <a href="000/">000/</a></td><td align="right">26-Feb-2013 11:53  </td>
-        // planet.openstreetmap.org: <a href="273/">273/</a>                    2013-03-11 07:41    -
-        preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-        if ($aRepMatches) {
-            $aPrevRepMatch = false;
-            foreach ($aRepMatches as $aRepMatch) {
-                if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-                $aPrevRepMatch = $aRepMatch;
-            }
-            if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
-
-            $sRepURL .= $aRepMatch[1];
-            $sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
-            preg_match_all('#<a href="[0-9]{3}/">([0-9]{3}/)</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-            $aPrevRepMatch = false;
-            foreach ($aRepMatches as $aRepMatch) {
-                if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-                $aPrevRepMatch = $aRepMatch;
-            }
-            if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
-
-            $sRepURL .= $aRepMatch[1];
-            $sRep = file_get_contents($sRepURL."?C=M;O=D;F=1");
-            preg_match_all('#<a href="[0-9]{3}.state.txt">([0-9]{3}).state.txt</a>\s*([-0-9a-zA-Z]+ [0-9]{2}:[0-9]{2})#', $sRep, $aRepMatches, PREG_SET_ORDER);
-            $aPrevRepMatch = false;
-            foreach ($aRepMatches as $aRepMatch) {
-                if (strtotime($aRepMatch[2]) < $iLastNodeTimestamp) break;
-                $aPrevRepMatch = $aRepMatch;
-            }
-            if ($aPrevRepMatch) $aRepMatch = $aPrevRepMatch;
-
-            $sRepURL .= $aRepMatch[1].'.state.txt';
-            echo "Getting state file: $sRepURL\n";
-            $sStateFile = file_get_contents($sRepURL);
-            if (!$sStateFile || strlen($sStateFile) > 1000) fail("unable to obtain state file");
-            file_put_contents(CONST_InstallPath.'/settings/state.txt', $sStateFile);
-            echo "Updating DB status\n";
-            pg_query($oDB->connection, 'TRUNCATE import_status');
-            $sSQL = "INSERT INTO import_status VALUES('".$aRepMatch[2]."')";
-            pg_query($oDB->connection, $sSQL);
-        } else {
-            if (!$aCMDResult['all']) {
-                fail("Cannot read state file directory.");
-            }
-        }
-    }
+    echo "Command 'osmosis-init' no longer available, please use utils/update.php --init-updates.\n";
 }
 
 if ($aCMDResult['index'] || $aCMDResult['all']) {

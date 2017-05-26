@@ -1,12 +1,15 @@
 drop table if exists import_status;
 CREATE TABLE import_status (
-  lastimportdate timestamp NOT NULL
+  lastimportdate timestamp NOT NULL,
+  sequence_id integer,
+  indexed boolean
   );
 GRANT SELECT ON import_status TO "{www-user}" ;
 
 drop table if exists import_osmosis_log;
 CREATE TABLE import_osmosis_log (
   batchend timestamp,
+  batchseq integer,
   batchsize integer,
   starttime timestamp,
   endtime timestamp,

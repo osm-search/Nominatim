@@ -72,7 +72,7 @@ if ($aResult['init-updates']) {
 
     // get the appropriate state id
     $aOutput = 0;
-    exec(CONST_Pyosmium_Get_Changes.' -D '.$sWindBack.' --server '.CONST_Replication_Url,
+    exec(CONST_Pyosmium_Binary.' -D '.$sWindBack.' --server '.CONST_Replication_Url,
         $aOutput, $iRet);
     if ($iRet != 0) {
         fail('Error running pyosmium tools');
@@ -232,7 +232,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     }
 
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';
-    $sCMDDownload = CONST_Pyosmium_Get_Changes.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
+    $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
     $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
     $sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
 

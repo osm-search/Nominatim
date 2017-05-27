@@ -262,12 +262,12 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             }
 
             // Download the next batch of changes.
-            unlink($sImportFile);
             do {
                 $fCMDStartTime = time();
-                $iNextSeq = (int) $aLastState['sequence_id'] + 1;
+                $iNextSeq = (int) $aLastState['sequence_id'];
                 unset($aOutput);
                 echo "$sCMDDownload -I $iNextSeq\n";
+                unlink($sImportFile);
                 exec($sCMDDownload.' -I '.$iNextSeq, $aOutput, $iResult);
 
                 if ($iResult == 3) {

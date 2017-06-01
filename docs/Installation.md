@@ -39,6 +39,7 @@ For running Nominatim:
   * [PostGIS](http://postgis.refractions.net) (2.0 or later)
   * [PHP](http://php.net) (5.4 or later)
   * PHP-pgsql
+  * PHP-intl (bundled with PHP)
   * [PEAR::DB](http://pear.php.net/package/DB)
   * a webserver (apache or nginx are recommended)
 

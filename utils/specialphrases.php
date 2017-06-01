@@ -19,6 +19,7 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 include(CONST_InstallPath.'/settings/phrase_settings.php');
 
 if ($aCMDResult['wiki-import']) {
+    $oNormalizer = Transliterator::createFromRules(":: NFD (); [:Nonspacing Mark:] >;  :: lower (); [[:Punctuation:][:Space:]]+ > ' '; :: NFC ();");
     $aPairs = array();
 
     $sLanguageIn = CONST_Languages ? CONST_Languages :
@@ -31,6 +32,7 @@ if ($aCMDResult['wiki-import']) {
         if (preg_match_all('#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN])#', $sWikiPageXML, $aMatches, PREG_SET_ORDER)) {
             foreach ($aMatches as $aMatch) {
                 $sLabel = trim($aMatch[1]);
+                $sTrans = pg_escape_string($oNormalizer->transliterate($sLabel));
                 $sClass = trim($aMatch[2]);
                 $sType = trim($aMatch[3]);
                 // hack around a bug where building=yes was imported with
@@ -57,13 +59,13 @@ if ($aCMDResult['wiki-import']) {
 
                 switch (trim($aMatch[4])) {
                     case 'near':
-                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType', 'near');\n";
+                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType', 'near');\n";
                         break;
                     case 'in':
-                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType', 'in');\n";
+                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType', 'in');\n";
                         break;
                     default:
-                        echo "select getorcreate_amenity(make_standard_name('".pg_escape_string($sLabel)."'), '$sClass', '$sType');\n";
+                        echo "select getorcreate_amenity(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType');\n";
                         break;
                 }
             }

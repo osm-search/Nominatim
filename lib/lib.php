@@ -475,16 +475,14 @@ function getResultDiameter($aResult)
 
 function javascript_renderData($xVal, $iOptions = 0)
 {
-    if (defined('PHP_VERSION_ID') && PHP_VERSION_ID > 50400) {
-        $iOptions |= JSON_UNESCAPED_UNICODE;
-        if (isset($_GET['pretty']) && in_array(strtolower($_GET['pretty']), array('1', 'true'))) {
-            $iOptions |= JSON_PRETTY_PRINT;
-        }
+    $iOptions |= JSON_UNESCAPED_UNICODE;
+    if (isset($_GET['pretty']) && in_array(strtolower($_GET['pretty']), array('1', 'true'))) {
+        $iOptions |= JSON_PRETTY_PRINT;
     }
 
     $jsonout = json_encode($xVal, $iOptions);
 
-    if (! isset($_GET['json_callback'])) {
+    if (!isset($_GET['json_callback'])) {
         header("Content-Type: application/json; charset=UTF-8");
         echo $jsonout;
     } else {

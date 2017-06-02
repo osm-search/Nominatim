@@ -33,6 +33,7 @@ Please add the following information to your issue:
  * hardware configuration: RAM size, kind of disks
  * Operating system (also mention if you are running on a cloud server)
  * Postgres and Postgis version
+ * list of settings you changed in your Postgres configuration
  * Nominatim version (commit id, if you run from the github repo)
  * (if applicable) exact command line of the command that was causing the issues
 

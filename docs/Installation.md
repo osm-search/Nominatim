@@ -112,7 +112,7 @@ directory and create an alias:
 build directory.
 
 After making changes in the apache config you need to restart apache.
-The website should now be available on http://localhost/nominatim.
+The website should now be available on http://localhost/nominatim/search.php.
 
 #### Configure for use with Nginx
 
@@ -147,7 +147,7 @@ unix socket by adding the location definition to the default configuration.
     }
 
 Restart the nginx and php5-fpm services and the website should now be available
-on http://localhost/.
+on http://localhost/search.php.
 
 
 Now continue with [importing the database](Import_and_update.md).

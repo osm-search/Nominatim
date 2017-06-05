@@ -23,7 +23,16 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "centos" do |sub|
+  config.vm.define "travis" do |sub|
+      sub.vm.box = "bento/ubuntu-14.04"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/install-on-travis-ci.sh"
+        s.privileged = false
+        s.args = [checkout]
+      end
+  end
+
+   config.vm.define "centos" do |sub|
       sub.vm.box = "bento/centos-7.2"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/install-on-centos-7.sh"

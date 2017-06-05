@@ -21,7 +21,7 @@
 
     sudo yum install -y postgresql-server postgresql-contrib postgresql-devel postgis postgis-utils \
                         git cmake make gcc gcc-c++ libtool policycoreutils-python \
-                        php-pgsql php php-pear php-pear-DB libpqxx-devel proj-epsg \
+                        php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel proj-epsg \
                         bzip2-devel proj-devel geos-devel libxml2-devel boost-devel expat-devel zlib-devel
 
 # If you want to run the test suite, you need to install the following

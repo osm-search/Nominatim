@@ -653,7 +653,7 @@ class Geocode
         return $aSearchResults;
     }
 
-    public function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases)
+    public function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery)
     {
         /*
              Calculate all searches using aValidTokens i.e.
@@ -752,13 +752,19 @@ class Geocode
                                          */
                                     }
                                 } elseif ($sPhraseType == '' && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null) {
-                                    if ($aSearch['sClass'] === '') {
-                                        $aSearch['sOperator'] = $aSearchTerm['operator'];
+                                    // require a normalized exact match of the term
+                                    // if we have the normalizer version of the query
+                                    // available
+                                    if ($aSearch['sClass'] === ''
+                                        && ($sNormQuery === null || !($aSearchTerm['word'] && strpos($sNormQuery, $aSearchTerm['word']) === false))) {
                                         $aSearch['sClass'] = $aSearchTerm['class'];
                                         $aSearch['sType'] = $aSearchTerm['type'];
-                                        if (sizeof($aSearch['aName'])) $aSearch['sOperator'] = 'name';
-                                        else $aSearch['sOperator'] = 'near'; // near = in for the moment
-                                        if (strlen($aSearchTerm['operator']) == 0) $aSearch['iSearchRank'] += 1;
+                                        if ($aSearchTerm['operator'] == '') {
+                                            $aSearch['sOperator'] = sizeof($aSearch['aName']) ? 'name' :  'near';
+                                            $aSearch['iSearchRank'] += 2;
+                                        } else {
+                                            $aSearch['sOperator'] = 'near'; // near = in for the moment
+                                        }
 
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
@@ -912,6 +918,13 @@ class Geocode
     public function lookup()
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
+
+        $oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
+        if ($oNormalizer !== null) {
+            $sNormQuery = $oNormalizer->transliterate($this->sQuery);
+        } else {
+            $sNormQuery = null;
+        }
 
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;
@@ -1139,7 +1152,7 @@ class Geocode
                 // array with: placeid => -1 | tiger-housenumber
                 $aResultPlaceIDs = array();
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery);
 
                 if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
@@ -1151,7 +1164,7 @@ class Geocode
                         $aFinalPhrase = end($aPhrases);
                         $aPhrases[sizeof($aPhrases)-1]['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false, $sNormQuery);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {

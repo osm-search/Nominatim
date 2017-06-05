@@ -24,6 +24,7 @@ tests for specific PHP functions.
 
 This test directory is sturctured as follows:
 
+```
  -+-   bdd         Functional API tests
   | \
   | +-  steps      Step implementations for test descriptions
@@ -34,7 +35,7 @@ This test directory is sturctured as follows:
   +-   php         PHP unit tests
   +-   scenes      Geometry test data
   +-   testdb      Base data for generating API test database
-
+```
 
 PHP Unit Tests
 ==============

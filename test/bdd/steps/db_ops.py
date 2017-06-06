@@ -348,7 +348,13 @@ def check_placex_contents(context, exact):
             if exact:
                 expected_content.add((res['osm_type'], res['osm_id'], res['class']))
             for h in row.headings:
-                if h.startswith('name'):
+                if h in ('extratags', 'address'):
+                    if row[h] == '-':
+                        assert_is_none(res[h])
+                    else:
+                        vdict = eval('{' + row[h] + '}')
+                        assert_equals(vdict, res[h])
+                elif h.startswith('name'):
                     name = h[5:] if h.startswith('name+') else 'name'
                     assert_in(name, res['name'])
                     eq_(res['name'][name], row[h])

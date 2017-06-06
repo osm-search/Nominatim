@@ -2167,6 +2167,20 @@ BEGIN
           update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);
       END IF;
 
+      -- linked places should get potential new naming and addresses
+      IF existingplacex.linked_place_id is not NULL THEN
+        update placex x set
+          name = p.name,
+          extratags = p.extratags,
+          indexed_status = 2
+        from place p
+        where x.place_id = existingplacex.linked_place_id
+              and x.indexed_status = 0
+              and x.osm_type = p.osm_type
+              and x.osm_id = p.osm_id
+              and x.class = p.class;
+      END IF;
+
     END IF;
 
     -- Abort the add (we modified the existing place instead)

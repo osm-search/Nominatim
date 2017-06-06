@@ -85,11 +85,10 @@ instance by following these steps:
        * Ubuntu: `sudo apt-get install python-gdal unzip`
        * CentOS: `sudo yum install gdal-python unzip`
 
-  2. Get the TIGER 2015 data. You will need the EDGES files
-     (3,234 zip files, 11GB total). Choose one of the two sources:
+  2. Get the TIGER 2016 data. You will need the EDGES files
+     (3,234 zip files, 11GB total)
 
-         wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2015/EDGES/
-         wget -r ftp://mirror1.shellbot.com/census/geo/tiger/TIGER2015/EDGES/
+         wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2016/EDGES/
 
      The first one is the original source, the second a considerably faster
      mirror.

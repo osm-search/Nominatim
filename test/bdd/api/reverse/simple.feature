@@ -67,7 +67,6 @@ Feature: Simple Reverse Tests
       | json |
       | jsonv2 |
 
-    @wip
     Scenario Outline: Boundingbox is returned
         When sending <format> reverse coordinates 14.62,108.1
           | zoom |

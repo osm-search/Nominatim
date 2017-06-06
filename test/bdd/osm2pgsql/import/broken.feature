@@ -13,7 +13,6 @@ Feature: Import of objects with broken geometries by osm2pgsql
           | object | class   | type    | geometry |
           | W1     | highway | primary | 0 0, 0 0.1, 0.1 0.2 |
 
-    @wip
     Scenario: Import of ballon areas
         When loading osm data
           """

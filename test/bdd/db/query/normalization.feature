@@ -127,7 +127,6 @@ Feature: Import and search of names
          | ID | osm_type | osm_id |
          | 0  | R        | 2 |
 
-    @wip
     Scenario: Postcode boundaries without ref
         Given the places
           | osm | class    | type        | postcode | geometry |

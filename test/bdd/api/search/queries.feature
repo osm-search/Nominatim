@@ -52,7 +52,7 @@ Feature: Search queries
          | way |
 
     Scenario: Search with class-type feature
-        When sending jsonv2 search query "Hotel California"
+        When sending jsonv2 search query "Hotel in California"
         Then results contain
           | place_rank |
           | 30 |

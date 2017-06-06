@@ -1555,8 +1555,9 @@ class Geocode
                             }
 
                             if (!$aSearch['sOperator'] || $aSearch['sOperator'] == 'near') { // & in
+                                $sClassTable = 'place_classtype_'.$aSearch['sClass'].'_'.$aSearch['sType'];
                                 $sSQL = "SELECT count(*) FROM pg_tables ";
-                                $sSQL .= "WHERE tablename = 'place_classtype_".$aSearch['sClass']."_".$aSearch['sType']."'";
+                                $sSQL .= "WHERE tablename = '$sClassTable'";
                                 $bCacheTable = chksql($this->oDB->getOne($sSQL));
 
                                 $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
@@ -1604,7 +1605,8 @@ class Geocode
                                             $sOrderBysSQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
                                         }
 
-                                        $sSQL = "select distinct l.place_id".($sOrderBySQL?','.$sOrderBySQL:'')." from place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." as l";
+                                        $sSQL = "select distinct i.place_id".($sOrderBySQL?', i.order_term':'')." from (";
+                                        $sSQL .= "select l.place_id".($sOrderBySQL?','.$sOrderBySQL.' as order_term':'')." from ".$sClassTable." as l";
                                         if ($sCountryCodesSQL) $sSQL .= " join placex as lp using (place_id)";
                                         if ($sPlaceIDs) {
                                             $sSQL .= ",placex as f where ";
@@ -1618,7 +1620,8 @@ class Geocode
                                             $sSQL .= " and l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                         }
                                         if ($sCountryCodesSQL) $sSQL .= " and lp.country_code in ($sCountryCodesSQL)";
-                                        if ($sOrderBySQL) $sSQL .= "order by ".$sOrderBySQL." asc";
+                                        $sSQL .= 'limit 300) i ';
+                                        if ($sOrderBySQL) $sSQL .= "order by order_term asc";
                                         if ($this->iOffset) $sSQL .= " offset $this->iOffset";
                                         $sSQL .= " limit $this->iLimit";
                                         if (CONST_Debug) var_dump($sSQL);

@@ -69,3 +69,19 @@ Feature: Update of simple objects
         Then placex contains
           | object | class | type |
           | N3     | place | house |
+
+    Scenario: remove boundary when changing from polygon to way
+        Given the grid
+          | 1 | 2 |
+          | 3 | 4 |
+        And the places
+          | osm | class    | type           | name | admin | geometry        |
+          | W1  | boundary | administrative | Haha | 5     | (1, 2, 4, 3, 1) |
+        When importing
+        Then placex contains
+          | object |
+          | W1 |
+        When updating places
+          | osm | class    | type           | name | admin | geometry   |
+          | W1  | boundary | administrative | Haha | 5     | 1, 2, 4, 3 |
+        Then placex has no entry for W1

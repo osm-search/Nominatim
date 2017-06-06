@@ -2144,6 +2144,12 @@ BEGIN
           NEW.name := hstore('ref', NEW.address->'postcode');
       END IF;
 
+      IF NEW.class in ('boundary')
+         AND ST_GeometryType(NEW.geometry) not in ('ST_Polygon','ST_MultiPolygon') THEN
+          DELETE FROM placex where place_id = existingplacex.place_id;
+          RETURN NULL;
+      END IF;
+
       update placex set 
         name = NEW.name,
         address = NEW.address,

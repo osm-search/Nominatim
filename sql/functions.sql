@@ -1492,7 +1492,8 @@ BEGIN
       FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
 
         FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-          and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
+          and osm_id = substring(relMember.member,2,10000)::bigint
+          and class = 'place' order by rank_search desc limit 1 LOOP
 
           -- If we don't already have one use this as the centre point of the geometry
           IF NEW.centroid IS NULL THEN
@@ -1523,7 +1524,8 @@ BEGIN
         FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
 
           FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-            and osm_id = substring(relMember.member,2,10000)::bigint order by rank_search desc limit 1 LOOP
+            and osm_id = substring(relMember.member,2,10000)::bigint
+            and class = 'place' order by rank_search desc limit 1 LOOP
 
             -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
             -- But that can be fixed by explicitly setting the label in the data

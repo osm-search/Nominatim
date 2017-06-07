@@ -108,3 +108,22 @@ Feature: Linking of places
         Then results contain
          | osm_type |
          | W |
+
+    # github #573
+    Scenario: Boundaries should only be linked to places
+        Given the named places
+         | osm | class    | type           | extra+wikidata | admin | geometry |
+         | R1  | boundary | administrative | 34             | 8     | poly-area:0.1 |
+        And the named places
+         | osm | class    | type           | geometry |
+         | N3  | natural  | island         | 0.00001 0 |
+         | N3  | place    | city           | 0.00001 0 |
+        And the relations
+         | id | members  |
+         | 1  | N3:label |
+        When importing
+        Then placex contains
+         | object     | linked_place_id |
+         | N3:natural | -               |
+         | N3:place   | R1              |
+

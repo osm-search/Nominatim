@@ -29787,8 +29787,8 @@ st	5557484
 -- prefill word table
 
 select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;
-select count(make_keywords(v)) from (select distinct postcode as v from place) as w where v is not null;
-select count(getorcreate_housenumber_id(make_standard_name(v))) from (select distinct housenumber as v from place where housenumber is not null) as w;
+select count(make_keywords(v)) from (select distinct address->'postcode' as v from place where address ? 'postcode') as w where v is not null;
+select count(getorcreate_housenumber_id(make_standard_name(v))) from (select distinct address->'housenumber' as v from place where address ? 'housenumber') as w;
 
 -- copy the word frequencies
 update word set search_name_count = count from word_frequencies wf where wf.word_token = word.word_token;

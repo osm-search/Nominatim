@@ -102,6 +102,20 @@ class PlaceLookup
         $bIsTiger = CONST_Use_US_Tiger_Data && $sType == 'tiger';
         $bIsInterpolation = $sType == 'interpolation';
 
+        // The 'greatest(1000,least(1006,someval))' construct makes sure that someval is >= 1000 and <= 1006
+        // Otherwise we'd end up with
+        // interpolationtype=odd, startnumber=1000, endnumber=1006, fInterpolFraction=1 => housenumber=1007 => error in st_lineinterpolatepoint
+        $sSQLhousenumber  = " GREATEST(startnumber,LEAST(endnumber, ";
+        $sSQLhousenumber .= "   CASE ";
+        $sSQLhousenumber .= "     WHEN interpolationtype='odd' ";
+        $sSQLhousenumber .= "       THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
+        $sSQLhousenumber .= "     WHEN interpolationtype='even' ";
+        $sSQLhousenumber .= "       THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
+        $sSQLhousenumber .= "     WHEN interpolationtype='all' ";
+        $sSQLhousenumber .= "       THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
+        $sSQLhousenumber .= "   END";
+        $sSQLhousenumber .= " )) as housenumber";
+
         if ($bIsTiger) {
             $sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, postcode,";
             $sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
@@ -113,10 +127,7 @@ class PlaceLookup
             if ($this->bNameDetails) $sSQL .= " null as names,";
             $sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
             $sSQL .= " (select *, ";
-            $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-            $sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-            $sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
-            $sSQL .= " END as housenumber";
+            $sSQL .= $sSQLhousenumber;
             $sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
         } elseif ($bIsInterpolation) {
             $sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, postcode,";
@@ -129,14 +140,8 @@ class PlaceLookup
             if ($this->bNameDetails) $sSQL .= " null as names,";
             $sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
             $sSQL .= " (select *, ";
-            $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-            $sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-            $sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
-            $sSQL .= " END as housenumber";
+            $sSQL .= $sSQLhousenumber;
             $sSQL .= " from location_property_osmline where place_id = ".$iPlaceID.") as blub1) as blub2";
-            // testcase: interpolationtype=odd, startnumber=1000, endnumber=1006, fInterpolFraction=1 => housenumber=1007 => error in st_lineinterpolatepoint
-            // but this will never happen, because if the searched point is that close to the endnumber, the endnumber house will be directly taken from placex (in ReverseGeocode.php line 220)
-            // and not interpolated
         } else {
             $sSQL = "select placex.place_id, partition, osm_type, osm_id, class,";
             $sSQL .= " type, admin_level, housenumber, postcode, country_code,";

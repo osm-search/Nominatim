@@ -407,9 +407,13 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 
     $sDatabaseDate = getDatabaseDate($oDB);
     pg_query($oDB->connection, 'TRUNCATE import_status');
-    $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
-    pg_query($oDB->connection, $sSQL);
-    echo "Latest data imported from $sDatabaseDate.\n";
+    if ($sDatabaseDate === false) {
+        echo "WARNING: could not determine database date.\n";
+    } else {
+        $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
+        pg_query($oDB->connection, $sSQL);
+        echo "Latest data imported from $sDatabaseDate.\n";
+    }
 }
 
 if ($aCMDResult['import-tiger-data']) {

@@ -67,6 +67,9 @@ if ($aResult['init-updates']) {
     }
 
     $sDatabaseDate = getDatabaseDate($oDB);
+    if ($sDatabaseDate === false) {
+        fail("Cannot determine date of database.");
+    }
     $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ',
                           strtotime($sDatabaseDate) - (3*60*60));
 
@@ -293,7 +296,14 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             // write the update logs
             $iFileSize = filesize($sImportFile);
-            $sBatchEnd = getDatabaseDate($oDB);
+            // get the newest object from the diff file
+            $sBatchEnd = 0;
+            $iRet = 0;
+            exec(CONST_BasePath.'/utils/osm_file_date.py '.$sImportFile, $sBatchEnd, $iRet);
+            if ($iRet != 0) {
+                fail('Error getting date from diff file.');
+            }
+            $sBatchEnd = $sBatchEnd[0];
             $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
             chksql($oDB->query($sSQL));

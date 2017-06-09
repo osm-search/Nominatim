@@ -27,7 +27,7 @@ Now you can install all packages needed for Nominatim:
                             libbz2-dev libpq-dev libgeos-dev libgeos++-dev libproj-dev \
                             postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \
                             apache2 php php-pgsql libapache2-mod-php php-pear php-db \
-                            git
+                            php-intl git
 
 If you want to run the test suite, you need to install the following
 additional packages:

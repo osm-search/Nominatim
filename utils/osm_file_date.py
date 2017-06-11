@@ -28,6 +28,7 @@ if __name__ == '__main__':
 
     h.apply_file(sys.argv[1])
 
+    if h.filedate is None:
+        exit(5)
+
     print(h.filedate)
-
-

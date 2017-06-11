@@ -241,9 +241,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
     while (true) {
         $fStartTime = time();
-        $iFileSize = 1001;
-
-        $aLastState = chksql($oDB->getRow('SELECT * FROM import_status'));
+        $aLastState = chksql($oDB->getRow('SELECT *, EXTRACT (EPOCH FROM lastimportdate) as unix_ts FROM import_status'));
 
         if (!$aLastState['sequence_id']) {
             echo "Updates not set up. Please run ./utils/update.php --init-updates.\n";
@@ -257,7 +255,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
         if ($aLastState['indexed'] == 't') {
             // Sleep if the update interval has not yet been reached.
-            $fNextUpdate = $aLastState['lastimportdate'] + CONST_Replication_Update_Interval;
+            $fNextUpdate = $aLastState['unix_ts'] + CONST_Replication_Update_Interval;
             if ($fNextUpdate > $fStartTime) {
                 $iSleepTime = $fNextUpdate - $fStartTime;
                 echo "Waiting for next update for $iSleepTime sec.";
@@ -284,6 +282,23 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 }
             } while ($iResult);
 
+            // get the newest object from the diff file
+            $sBatchEnd = 0;
+            $iRet = 0;
+            exec(CONST_BasePath.'/utils/osm_file_date.py '.$sImportFile, $sBatchEnd, $iRet);
+            if ($iRet == 5) {
+                echo "Diff file is empty. skipping import.\n";
+                if (!$aResult['import-osmosis-all']) {
+                    exit(0);
+                } else {
+                    continue;
+                }
+            }
+            if ($iRet != 0) {
+                fail('Error getting date from diff file.');
+            }
+            $sBatchEnd = $sBatchEnd[0];
+
             // Import the file
             $fCMDStartTime = time();
             echo $sCMDImport."\n";
@@ -296,14 +311,6 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             // write the update logs
             $iFileSize = filesize($sImportFile);
-            // get the newest object from the diff file
-            $sBatchEnd = 0;
-            $iRet = 0;
-            exec(CONST_BasePath.'/utils/osm_file_date.py '.$sImportFile, $sBatchEnd, $iRet);
-            if ($iRet != 0) {
-                fail('Error getting date from diff file.');
-            }
-            $sBatchEnd = $sBatchEnd[0];
             $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
             chksql($oDB->query($sSQL));

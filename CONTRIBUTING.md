@@ -30,12 +30,13 @@ Please make sure to add the following information:
 
 Please add the following information to your issue:
 
- * hardware configuration: RAM size, kind of disks
- * Operating system (also mention if you are running on a cloud server)
+ * hardware configuration: RAM size, CPUs, kind and size of disks
+ * Operating system (also mention if you are running on a cloud service)
  * Postgres and Postgis version
  * list of settings you changed in your Postgres configuration
- * Nominatim version (commit id, if you run from the github repo)
- * (if applicable) exact command line of the command that was causing the issues
+ * Nominatim version (release version or,
+   if you run from the git repo, the output of `git rev-parse HEAD`)
+ * (if applicable) exact command line of the command that was causing the issue
 
 
 ## Workflow for Pull Requests

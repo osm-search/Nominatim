@@ -12,7 +12,8 @@ $aCMDOptions
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-    array('parse-tiger', '', 0, 1, 1, 1, 'realpath', 'Convert tiger edge files to nominatim sql import - datafiles from 2011 or later (source: edges directory of tiger data)'),
+    array('parse-tiger', '', 0, 1, 1, 1, 'realpath', 'Convert Tiger edge files to nominatim sql import - datafiles from 2011 or later (source: edges directory of tiger data)'),
+    array('patch-tiger', '', 0, 1, 0, 0, 'bool', 'Fix converted Tiger data files')
    );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -20,7 +21,7 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 if (isset($aCMDResult['parse-tiger'])) {
     if (!file_exists(CONST_Tiger_Data_Path)) mkdir(CONST_Tiger_Data_Path);
 
-    $sTempDir = tempnam('/tmp', 'tiger');
+    $sTempDir = tempnam(sys_get_temp_dir(), 'tiger');
     unlink($sTempDir);
     mkdir($sTempDir);
 
@@ -45,8 +46,11 @@ if (isset($aCMDResult['parse-tiger'])) {
             }
         }
         // Cleanup
-        foreach (glob($sTempDir.'/*') as $sTmpFile) {
-            unlink($sTmpFile);
-        }
+        array_map('unlink', glob($sTempDir.'/*'));
     }
+}
+
+if (isset($aCMDResult['patch-tiger'])) {
+    $sPatchSQL = CONST_InstallPath.'/utils/tigerPatchSQL.sh ' . CONST_Tiger_Data_Path;
+    exec($sPatchSQL);
 }

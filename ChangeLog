@@ -1,3 +1,34 @@
+3.0
+
+ * move to cmake build system
+ * various fixes to HTML output
+ * reverse endpoint now can return geometries
+ * add support for PHP7
+ * move to on-the-fly computation of interpolations
+ * improve handling of linked places (updating)
+ * improve test framework:
+    * replace lettuce with behave
+    * use smaller database for API tests
+ * drop support for postgres < 9.1, postgis < 2.0 and PHP < 5.4
+ * make external data use optional (useful for imports without US)
+ * detect postgres and postgis versions automatically
+ * clean up query logging and remove unused tables
+ * move installation documentation into this repo
+ * add self-documenting vagrant scripts
+ * remove --create-website, recommend to use website directory in build
+ * add accessor functions for URL parameters and improve erro checking
+ * remove IP blocking and rate-limiting code
+ * enable CI via travis
+ * reformatting for more consistent coding style
+ * make country search term creation part of setup
+ * update country names and country grid
+ * handle roads that cross boundaries better
+ * keep full information on address tags
+ * update to refactored osm2pgsql which use libosmium based types
+ * switch from osmosis to pyosmium for updates
+ * be more strict when matching against special search terms
+ * handle postcode entries with mutliple values correctly
+
 2.5
 
  * reverse geocoding includes looking up housenumbers from Tiger data

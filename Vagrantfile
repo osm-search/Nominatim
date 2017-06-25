@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "ubuntu", primary: true do |sub|
       sub.vm.box = "bento/ubuntu-16.04"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/install-on-ubuntu-16.sh"
+        s.path = "vagrant/Install-on-Ubuntu-16.sh"
         s.privileged = false
         s.args = [checkout]
       end
@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
    config.vm.define "centos" do |sub|
       sub.vm.box = "bento/centos-7.2"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/install-on-centos-7.sh"
+        s.path = "vagrant/Install-on-Centos-7.sh"
         s.privileged = false
         s.args = [checkout]
       end

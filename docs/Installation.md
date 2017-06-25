@@ -5,8 +5,8 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
-  * [Ubuntu 16.04](install-on-ubuntu-16.md)
-  * [CentOS 7.2](install-on-centos-7.md)
+  * [Ubuntu 16.04](Install-on-Ubuntu-16.md)
+  * [CentOS 7.2](Install-on-Centos-7.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
@@ -151,4 +151,4 @@ Restart the nginx and php5-fpm services and the website should now be available
 on http://localhost/.
 
 
-Now continue with [importing the database](Import_and_update.md).
+Now continue with [importing the database](Import-and-Update.md).

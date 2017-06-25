@@ -1,8 +1,8 @@
 # Auto-generated vagrant install documentation
 
 set (INSTALLDOCFILES
-     install-on-centos-7
-     install-on-ubuntu-16
+     Install-on-Centos-7
+     Install-on-Ubuntu-16
     )
 
 foreach (df ${INSTALLDOCFILES})
@@ -18,9 +18,11 @@ ADD_CUSTOM_TARGET( md_install_${df} ALL
         )
 endforeach()
 
+# Copied static documentation
+
 set (GENERALDOCFILES
      Installation.md
-     Import_and_update.md
+     Import-and-Update.md
      Faq.md
     )
 

@@ -1,48 +1,43 @@
 #!/bin/bash
 #
-# hacks for broken vagrant box      #DOCS:
-sudo rm -f /var/lib/dpkg/lock       #DOCS:
-sudo update-locale LANG=en_US.UTF-8 #DOCS:
-export APT_LISTCHANGES_FRONTEND=none #DOCS:
-export DEBIAN_FRONTEND=noninteractive #DOCS:
-
-#
 # *Note:* these installation instructions are also available in executable
-#         form for use with vagrant under vagrant/install-on-ubuntu-16.sh.
+#         form for use with vagrant under `vagrant/Install-on-Centos-7.sh`.
 #
 # Installing the Required Software
 # ================================
 #
-# These instructions expect that you have a freshly installed Ubuntu 16.04.
+# These instructions expect that you have a freshly installed CentOS version 7.
+# Make sure all packages are up-to-date by running:
 #
-# Make sure all packages are are up-to-date by running:
-#
+    sudo yum update -y
 
-    sudo apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" --force-yes -fuy install grub-pc #DOCS:
-    sudo apt-get update -qq
+# The standard CentOS repositories don't contain all the required packages,
+# you need to enable the EPEL repository as well. To enable it on CentOS,
+# install the epel-release RPM by running:
+
+    sudo yum install -y epel-release
 
 # Now you can install all packages needed for Nominatim:
 
-    sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
-                            libbz2-dev libpq-dev libgeos-dev libgeos++-dev libproj-dev \
-                            postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \
-                            apache2 php php-pgsql libapache2-mod-php php-pear php-db \
-                            php-intl git
+    sudo yum install -y postgresql-server postgresql-contrib postgresql-devel postgis postgis-utils \
+                        git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel proj-epsg \
+                        bzip2-devel proj-devel geos-devel libxml2-devel boost-devel expat-devel zlib-devel
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
-    sudo apt-get install -y python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit
-
-    pip3 install --user behave nose # urllib3
+    sudo yum install -y python-pip python-Levenshtein python-psycopg2 \
+                        python-numpy php-phpunit-PHPUnit
+    pip install --user --upgrade pip setuptools lettuce==0.2.18 six==1.9 \
+                                 haversine Shapely pytidylib
     sudo pear install PHP_CodeSniffer
 
 #
 # System Configuration
 # ====================
 #
-# The following steps are meant to configure a fresh Ubuntu installation
+# The following steps are meant to configure a fresh CentOS installation
 # for use with Nominatim. You may skip some of the steps if you have your
 # OS already configured.
 #
@@ -73,22 +68,29 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Setting up PostgreSQL
 # ---------------------
 #
-# Tune the postgresql configuration, which is located in 
-# `/etc/postgresql/9.5/main/postgresql.conf`. See section *Postgres Tuning* in
+# CentOS does not automatically create a database cluster. Therefore, start
+# with initializing the database, then enable the server to start at boot:
+
+    sudo postgresql-setup initdb
+    sudo systemctl enable postgresql
+
+#
+# Next tune the postgresql configuration, which is located in 
+# `/var/lib/pgsql/data/postgresql.conf`. See section *Postgres Tuning* in
 # [the installation page](Installation.md) for the parameters to change.
 #
-# Restart the postgresql service after updating this config file.
+# Now start the postgresql service after updating this config file.
 
     sudo systemctl restart postgresql
 
 #
 # Finally, we need to add two postgres users: one for the user that does
 # the import and another for the webserver which should access the database
-# for reading only:
+# only for reading:
 #
 
     sudo -u postgres createuser -s $USERNAME
-    sudo -u postgres createuser www-data
+    sudo -u postgres createuser apache
 
 #
 # Setting up the Apache Webserver
@@ -98,7 +100,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # configuration. Add a separate nominatim configuration to your webserver:
 
 #DOCS:```
-sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
+sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
@@ -110,14 +112,25 @@ Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/Nomin
 EOFAPACHECONF
 #DOCS:```
 
-sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf #DOCS:
+sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 
 #
-# Then enable the configuration and restart apache
+# Then reload apache
 #
 
-    sudo a2enconf nominatim
-    sudo systemctl restart apache2
+    sudo systemctl restart httpd
+
+#
+# Adding SELinux Security Settings
+# --------------------------------
+#
+# It is a good idea to leave SELinux enabled and enforcing, particularly
+# with a web server accessible from the Internet. At a minimum the
+# following SELinux labeling should be done for Nominatim:
+
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t lib_t "$USERHOME/Nominatim/module/nominatim.so"
+    sudo restorecon -R -v $USERHOME/Nominatim
 
 #
 # Installing Nominatim
@@ -154,15 +167,16 @@ fi                                 #DOCS:
     make
 
 # You need to create a minimal configuration file that tells nominatim
-# where it is located on the webserver:
+# the name of your webserver user and the URL of the website:
 
 #DOCS:```
 tee settings/local.php << EOF
 <?php
+ @define('CONST_Database_Web_User', 'apache');
  @define('CONST_Website_BaseURL', '/nominatim/');
 EOF
 #DOCS:```
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](Import_and_update.md).
+# [importing a database from OSM data](Import-and-Update.md).

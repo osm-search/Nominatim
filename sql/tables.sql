@@ -197,8 +197,17 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
-DROP SEQUENCE IF EXISTS seq_postcodes;
-CREATE SEQUENCE seq_postcodes start 1;
+DROP TABLE IF EXISTS location_postcode;
+CREATE TABLE location_postcode (
+  place_id BIGINT,
+  parent_place_id BIGINT,
+  rank_address SMALLINT,
+  indexed_status SMALLINT,
+  indexed_date TIMESTAMP,
+  country_code varchar(2),
+  postcode TEXT,
+  geometry GEOMETRY(Geometry, 4326)
+  );
 
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (

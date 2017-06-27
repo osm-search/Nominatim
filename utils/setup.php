@@ -493,22 +493,34 @@ if ($aCMDResult['import-tiger-data']) {
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oDB =& getDB();
-    if (!pg_query($oDB->connection, 'DELETE from placex where osm_type=\'P\'')) fail(pg_last_error($oDB->connection));
-    $sSQL = "insert into placex (osm_type,osm_id,class,type,address,country_code,geometry) ";
-    $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',";
-    $sSQL .= "hstore('postcode', pc),country_code,";
-    $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from (select country_code,";
-    $sSQL .= "address->'postcode' as pc,";
-    $sSQL .= "avg(st_x(st_centroid(geometry))) as x,avg(st_y(st_centroid(geometry))) as y ";
-    $sSQL .= "from placex where address ? 'postcode' group by country_code,pc) as x ";
-    $sSQL .= "where ST_Point(x,y) is not null";
-    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+    if (!pg_query($oDB->connection, 'TRUNCATE location_postcode')) {
+        fail(pg_last_error($oDB->connection));
+    }
+
+    $sSQL  = "INSERT INTO location_postcode";
+    $sSQL .= " (place_id, indexed_status, country_code, postcode, geometry) ";
+    $sSQL .= "SELECT nextval('seq_place'), 1, country_code,";
+    $sSQL .= "       lower(trim (both ' ' from address->'postcode')) as pc,";
+    $sSQL .= "       ST_Centroid(ST_Collect(ST_Centroid(geometry)))";
+    $sSQL .= "  FROM placex";
+    $sSQL .= " WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'";
+    $sSQL .= "       AND geometry IS NOT null";
+    $sSQL .= " GROUP BY country_code, pc";
+
+    if (!pg_query($oDB->connection, $sSQL)) {
+        fail(pg_last_error($oDB->connection));
+    }
 
     if (CONST_Use_Extra_US_Postcodes) {
-        $sSQL = "insert into placex (osm_type,osm_id,class,type,address,country_code,geometry) ";
-        $sSQL .= "select 'P',nextval('seq_postcodes'),'place','postcode',";
-        $sSQL .= "hstore('postcode', postcode),'us',";
-        $sSQL .= "ST_SetSRID(ST_Point(x,y),4326) as geometry from us_postcode";
+        // only add postcodes that are not yet available in OSM
+        $sSQL  = "INSERT INTO location_postcode";
+        $sSQL .= " (place_id, indexed_status, country_code, postcode, geometry) ";
+        $sSQL .= "SELECT nextval('seq_place'), 1, 'us', postcode,";
+        $sSQL .= "       ST_SetSRID(ST_Point(x,y),4326)";
+        $sSQL .= "  FROM us_postcode WHERE postcode NOT IN";
+        $sSQL .= "        (SELECT postcode FROM location_postcode";
+        $sSQL .= "          WHERE country_code = 'us')";
+
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
     }
 }

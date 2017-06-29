@@ -33,14 +33,14 @@ Here is a quick summary of the necessary steps.
 
    For more detailed installation instructions see [docs/Installation.md](docs/Installation.md).
    There are also step-by-step instructions for
-     [Ubuntu 16.04](docs/install-on-ubuntu-16.md) and
-     [CentOS 7.2](docs/install-on-centos-7.md).
+     [Ubuntu 16.04](docs/Install-on-Ubuntu-16.md) and
+     [CentOS 7.2](docs/Install-on-Centos-7.md).
 
 2. Get OSM data and import:
 
         ./build/utils/setup.php --osm-file <your planet file> --all
 
-   Details can be found in [docs/Import_and_update.md](docs/Import_and_update.md)
+   Details can be found in [docs/Import_and_update.md](docs/Import-and-Update.md)
 
 3. Point your webserver to the ./build/website directory.
 
@@ -51,7 +51,7 @@ License
 
 The source code is available under a GPLv2 license.
 
-Contact and Bugreports
+Contact and Bug reports
 ======================
 
 For questions you can join the geocoding mailinglist, see

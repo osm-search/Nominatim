@@ -173,29 +173,6 @@ $$
 LANGUAGE plpgsql;
 
 
-create or replace function getNearestPostcode(in_partition INTEGER, point GEOMETRY) 
-  RETURNS TEXT AS $$
-DECLARE
-  out_postcode TEXT;
-BEGIN
-
--- start
-  IF in_partition = -partition- THEN
-    SELECT postcode
-        FROM location_area_large_-partition- join placex using (place_id)
-        WHERE st_contains(location_area_large_-partition-.geometry, point)
-        AND class = 'place' and type = 'postcode' 
-      ORDER BY st_distance(location_area_large_-partition-.centroid, point) ASC limit 1
-      INTO out_postcode;
-    RETURN out_postcode;
-  END IF;
--- end
-
-  RAISE EXCEPTION 'Unknown partition %', in_partition;
-END
-$$
-LANGUAGE plpgsql;
-
 create or replace function insertSearchName(
   in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), 
   in_name_vector INTEGER[], in_nameaddress_vector INTEGER[],

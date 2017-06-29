@@ -2683,9 +2683,7 @@ BEGIN
   IF out_postcode IS NULL THEN
     SELECT postcode from placex where place_id = out_parent_place_id INTO out_postcode;
   END IF;
-  IF out_postcode IS NULL THEN
-    out_postcode := getNearestPostcode(out_partition, place_centroid);
-  END IF;
+  -- XXX look into postcode table
 
   newpoints := 0;
   insert into location_property_aux (place_id, partition, parent_place_id, housenumber, postcode, centroid)

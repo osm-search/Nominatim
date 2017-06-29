@@ -252,6 +252,7 @@ gettokenstring( PG_FUNCTION_ARGS )
 	str_replace(buffer, &len, &changes, " und ", 5, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " en ", 4, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " et ", 4, " ", 1, 0);
+	str_replace(buffer, &len, &changes, " e ", 3, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " y ", 3, " ", 1, 0);
 
 	// 'the' (and similar)
@@ -260,8 +261,10 @@ gettokenstring( PG_FUNCTION_ARGS )
 	str_replace(buffer, &len, &changes, " den ", 5, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " die ", 5, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " das ", 5, " ", 1, 0);
+	str_replace(buffer, &len, &changes, " gli ", 5, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " la ", 4, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " le ", 4, " ", 1, 0);
+	str_replace(buffer, &len, &changes, " lo ", 4, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " el ", 4, " ", 1, 0);
 	str_replace(buffer, &len, &changes, " il ", 4, " ", 1, 0);
 

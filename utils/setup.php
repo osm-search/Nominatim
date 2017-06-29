@@ -500,7 +500,7 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $sSQL  = "INSERT INTO location_postcode";
     $sSQL .= " (place_id, indexed_status, country_code, postcode, geometry) ";
     $sSQL .= "SELECT nextval('seq_place'), 1, country_code,";
-    $sSQL .= "       lower(trim (both ' ' from address->'postcode')) as pc,";
+    $sSQL .= "       upper(trim (both ' ' from address->'postcode')) as pc,";
     $sSQL .= "       ST_Centroid(ST_Collect(ST_Centroid(geometry)))";
     $sSQL .= "  FROM placex";
     $sSQL .= " WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'";
@@ -523,6 +523,10 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
 
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
     }
+
+    echo "Indexing postcodes....\n";
+    $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
+    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }
 
 if ($aCMDResult['osmosis-init']) {

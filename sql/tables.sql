@@ -197,10 +197,12 @@ CREATE TRIGGER place_before_delete BEFORE DELETE ON place
 CREATE TRIGGER place_before_insert BEFORE INSERT ON place
     FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
+-- Table for synthetic postcodes.
 DROP TABLE IF EXISTS location_postcode;
 CREATE TABLE location_postcode (
   place_id BIGINT,
   parent_place_id BIGINT,
+  rank_search SMALLINT,
   rank_address SMALLINT,
   indexed_status SMALLINT,
   indexed_date TIMESTAMP,
@@ -208,6 +210,10 @@ CREATE TABLE location_postcode (
   postcode TEXT,
   geometry GEOMETRY(Geometry, 4326)
   );
+CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {ts:address-index};
+
+CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcode
+    FOR EACH ROW EXECUTE PROCEDURE postcode_update();
 
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (

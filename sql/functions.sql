@@ -236,6 +236,65 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+
+CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
+                                      OUT rank_search SMALLINT, OUT rank_address SMALLINT)
+AS $$
+DECLARE
+  part TEXT;
+BEGIN
+    rank_search := 30;
+    rank_address := 30;
+
+    IF country_code = 'gb' THEN
+        IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
+            rank_search := 25;
+            rank_address := 5;
+        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
+            rank_search := 23;
+            rank_address := 5;
+        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
+            rank_search := 21;
+            rank_address := 5;
+        END IF;
+
+    ELSEIF country_code = 'sg' THEN
+        IF postcode ~ '^([0-9]{6})$' THEN
+            rank_search := 25;
+            rank_address := 11;
+        END IF;
+
+    ELSEIF country_code = 'de' THEN
+        IF postcode ~ '^([0-9]{5})$' THEN
+            rank_search := 21;
+            rank_address := 11;
+        END IF;
+
+    ELSE
+        -- Guess at the postcode format and coverage (!)
+        IF postcode ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
+            rank_search := 21;
+            rank_address := 11;
+        ELSE
+            -- Does it look splitable into and area and local code?
+            part := substring(postcode from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
+
+            IF part IS NOT NULL THEN
+                rank_search := 25;
+                rank_address := 11;
+            ELSEIF postcode ~ '^[- :A-Z0-9]{6,}$' THEN
+                rank_search := 21;
+                rank_address := 11;
+            END IF;
+        END IF;
+    END IF;
+
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+
+
 CREATE OR REPLACE FUNCTION create_country(src HSTORE, lookup_country_code varchar(2)) RETURNS VOID
   AS $$
 DECLARE
@@ -725,51 +784,8 @@ BEGIN
         NEW.postcode := NEW.address->'postcode';
         NEW.name := hstore('ref', NEW.postcode);
 
-        IF NEW.country_code = 'gb' THEN
-
-          IF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            NEW.rank_search := 25;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
-            NEW.rank_search := 23;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 5;
-          END IF;
-
-        ELSEIF NEW.country_code = 'sg' THEN
-
-          IF NEW.postcode ~ '^([0-9]{6})$' THEN
-            NEW.rank_search := 25;
-            NEW.rank_address := 11;
-          END IF;
-
-        ELSEIF NEW.country_code = 'de' THEN
-
-          IF NEW.postcode ~ '^([0-9]{5})$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          END IF;
-
-        ELSE
-          -- Guess at the postcode format and coverage (!)
-          IF upper(NEW.postcode) ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          ELSE
-            -- Does it look splitable into and area and local code?
-            postcode := substring(upper(NEW.postcode) from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
-
-            IF postcode IS NOT NULL THEN
-              NEW.rank_search := 25;
-              NEW.rank_address := 11;
-            ELSEIF NEW.postcode ~ '^[- :A-Z0-9]{6,}$' THEN
-              NEW.rank_search := 21;
-              NEW.rank_address := 11;
-            END IF;
-          END IF;
-        END IF;
+        SELECT * FROM get_postcode_rank(NEW.country_code, NEW.postcode)
+          INTO NEW.rank_search, NEW.rank_address;
 
     ELSEIF NEW.class = 'place' THEN
       IF NEW.type in ('continent') THEN
@@ -1094,7 +1110,42 @@ END;
 $$
 LANGUAGE plpgsql;
 
+-- Trigger for updates of location_postcode
+--
+-- Computes the parent object the postcode most likely refers to.
+-- This will be the place that determines the address displayed when
+-- searching for this postcode.
+CREATE OR REPLACE FUNCTION postcode_update() RETURNS
+TRIGGER
+  AS $$
+DECLARE
+  partition SMALLINT;
+  location RECORD;
+BEGIN
+    IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+        RETURN NEW;
+    END IF;
 
+    NEW.indexed_date = now();
+
+    partition := get_partition(NEW.country_code);
+
+    SELECT * FROM get_postcode_rank(NEW.country_code, NEW.postcode)
+      INTO NEW.rank_search, NEW.rank_address;
+
+    NEW.parent_place_id = 0;
+    FOR location IN
+      SELECT place_id
+        FROM getNearFeatures(partition, NEW.geometry, NEW.rank_search, '{}'::int[])
+        WHERE NOT isguess ORDER BY rank_address DESC LIMIT 1
+    LOOP
+        NEW.parent_place_id = location.place_id;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION placex_update() RETURNS
 TRIGGER

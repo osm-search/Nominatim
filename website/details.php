@@ -130,6 +130,13 @@ if (PEAR::isError($aPointDetails['aNames'])) { // possible timeout
     $aPointDetails['aNames'] = [];
 }
 
+// Address tags
+$sSQL = "SELECT (each(address)).key as key,(each(address)).value FROM placex WHERE place_id = $iPlaceID ORDER BY key";
+$aPointDetails['aAddressTags'] = $oDB->getAssoc($sSQL);
+if (PEAR::isError($aPointDetails['aAddressTags'])) { // possible timeout
+    $aPointDetails['aAddressTags'] = [];
+}
+
 // Extra tags
 $sSQL = "SELECT (each(extratags)).key,(each(extratags)).value FROM placex WHERE place_id = $iPlaceID ORDER BY (each(extratags)).key";
 $aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);

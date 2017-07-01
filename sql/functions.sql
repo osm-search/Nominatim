@@ -574,36 +574,39 @@ CREATE OR REPLACE FUNCTION add_location(
     keywords INTEGER[],
     rank_search INTEGER,
     rank_address INTEGER,
+    in_postcode TEXT,
     geometry GEOMETRY
   ) 
   RETURNS BOOLEAN
   AS $$
 DECLARE
   locationid INTEGER;
-  isarea BOOLEAN;
   centroid GEOMETRY;
   diameter FLOAT;
   x BOOLEAN;
   splitGeom RECORD;
   secgeo GEOMETRY;
+  postcode TEXT;
 BEGIN
 
   IF rank_search > 25 THEN
     RAISE EXCEPTION 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
   END IF;
 
---  RAISE WARNING 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
-
   x := deleteLocationArea(partition, place_id, rank_search);
 
-  isarea := false;
-  IF (ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(geometry)) THEN
+  -- add postcode only if it contains a single entry, i.e. ignore postcode lists
+  IF in_postcode IS NULL OR in_postcode similar to '%(,|;)%' THEN
+      postcode := NULL;
+  ELSE
+      postcode := in_postcode;
+  END IF;
 
-    isArea := true;
+  IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
     centroid := ST_Centroid(geometry);
 
     FOR secgeo IN select split_geometry(geometry) AS geom LOOP
-      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
+      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, postcode, centroid, secgeo);
     END LOOP;
 
   ELSE
@@ -628,7 +631,7 @@ BEGIN
 --    RAISE WARNING 'adding % diameter %', place_id, diameter;
 
     secgeo := ST_Buffer(geometry, diameter);
-    x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, ST_Centroid(geometry), secgeo);
+    x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, ST_Centroid(geometry), secgeo);
 
   END IF;
 
@@ -1529,7 +1532,7 @@ BEGIN
       -- Just be happy with inheriting from parent road only
 
       IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.address->'postcode', NEW.geometry);
         --DEBUG: RAISE WARNING 'Place added to location table';
       END IF;
 
@@ -1901,7 +1904,7 @@ BEGIN
   IF NEW.name IS NOT NULL THEN
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.address->'postcode', NEW.geometry);
       --DEBUG: RAISE WARNING 'added to location (full)';
     END IF;
 

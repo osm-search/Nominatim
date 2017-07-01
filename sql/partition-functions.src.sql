@@ -55,8 +55,8 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaLarge(
-  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_keywords INTEGER[], 
-  in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
+  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_keywords INTEGER[],
+  in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, postcode TEXT,
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
@@ -72,8 +72,8 @@ BEGIN
 
 -- start
   IF in_partition = -partition- THEN
-    INSERT INTO location_area_large_-partition- (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, centroid, geometry)
-      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    INSERT INTO location_area_large_-partition- (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
+      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 -- end

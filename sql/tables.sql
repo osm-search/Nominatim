@@ -62,6 +62,7 @@ CREATE TABLE location_area (
   rank_address SMALLINT NOT NULL,
   country_code VARCHAR(2),
   isguess BOOL,
+  postcode TEXT,
   centroid GEOMETRY(Point, 4326),
   geometry GEOMETRY(Geometry, 4326)
   );

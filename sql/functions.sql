@@ -293,6 +293,27 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- Find the nearest artificial postcode for the given geometry.
+-- TODO For areas there should not be more than two inside the geometry.
+CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY) RETURNS TEXT
+  AS $$
+DECLARE
+  item RECORD;
+BEGIN
+    FOR item IN
+        SELECT postcode FROM location_postcode
+        WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
+              AND location_postcode.country_code = country
+        ORDER BY ST_Distance(geom, location_postcode.geometry)
+        LIMIT 1
+    LOOP
+        RETURN item.postcode;
+    END LOOP;
+
+    RETURN null;
+END;
+$$
+LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION create_country(src HSTORE, lookup_country_code varchar(2)) RETURNS VOID
@@ -1212,11 +1233,6 @@ BEGIN
 
   --DEBUG: RAISE WARNING 'placex_update % % (%)',NEW.osm_type,NEW.osm_id,NEW.place_id;
 
-  IF NEW.class = 'place' AND NEW.type = 'postcodearea' THEN
-    -- Silently do nothing
-    RETURN NEW;
-  END IF;
-
   NEW.indexed_date = now();
 
   result := deleteSearchName(NEW.partition, NEW.place_id);
@@ -1252,8 +1268,6 @@ BEGIN
 
       addr_street = NEW.address->'street';
       addr_place = NEW.address->'place';
-
-      NEW.postcode = NEW.address->'postcode';
   END IF;
 
   -- Speed up searches - just use the centroid of the feature
@@ -1496,6 +1510,16 @@ BEGIN
       NEW.country_code := location.country_code;
       --DEBUG: RAISE WARNING 'Got parent details from search name';
 
+      -- determine postcode
+      IF NEW.address is not null AND NEW.address ? 'postcode' THEN
+          NEW.postcode = NEW.address->'postcode';
+      ELSE
+         SELECT postcode FROM placex WHERE place_id = parent_place_id INTO NEW.postcode;
+      END IF;
+      IF NEW.postcode is null THEN
+        NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
+      END IF;
+
       -- Merge the postcode into the parent's address if necessary
       IF NEW.postcode IS NOT NULL THEN
         --DEBUG: RAISE WARNING 'Merging postcode into parent';
@@ -1719,6 +1743,7 @@ BEGIN
     isin := avals(NEW.address);
     IF array_upper(isin, 1) IS NOT NULL THEN
       FOR i IN 1..array_upper(isin, 1) LOOP
+        -- TODO further split terms with comma and semicolon
         address_street_word_id := get_name_id(make_standard_name(isin[i]));
         IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
           nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
@@ -1733,26 +1758,6 @@ BEGIN
       END LOOP;
     END IF;
   END IF;
-  --DEBUG: RAISE WARNING '"address:* tokens collected';
-  IF NEW.postcode IS NOT NULL THEN
-    isin := regexp_split_to_array(NEW.postcode, E'[;,]');
-    IF array_upper(isin, 1) IS NOT NULL THEN
-      FOR i IN 1..array_upper(isin, 1) LOOP
-        address_street_word_id := get_name_id(make_standard_name(isin[i]));
-        IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-          isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-
-        -- merge into address vector
-        address_street_word_id := get_word_id(make_standard_name(isin[i]));
-        IF address_street_word_id IS NOT NULL THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-        END IF;
-      END LOOP;
-    END IF;
-  END IF;
-  --DEBUG: RAISE WARNING 'postcode tokens collected';
 
   -- %NOTIGERDATA% IF 0 THEN
   -- for the USA we have an additional address table.  Merge in zip codes from there too
@@ -1824,6 +1829,11 @@ BEGIN
         VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
       IF location_isaddress THEN
+        -- add postcode if we have one
+        -- (If multiple postcodes are available, we end up with the highest ranking one.)
+        IF location.postcode is not null THEN
+            NEW.postcode = location.postcode;
+        END IF;
 
         address_havelevel[location.rank_address] := true;
         IF NOT location.isguess THEN
@@ -1858,6 +1868,11 @@ BEGIN
               nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
               INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
                 VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+              IF NEW.postcode is null AND location.postcode is not null
+                 AND NOT address_havelevel[location.rank_address] THEN
+                NEW.postcode := location.postcode;
+              END IF;
+
               address_havelevel[location.rank_address] := true;
 
               IF location.rank_address > parent_place_id_rank THEN
@@ -1899,6 +1914,15 @@ BEGIN
 
   END IF;
   --DEBUG: RAISE WARNING 'search terms for long ways added';
+
+  IF NEW.address is not null AND NEW.address ? 'postcode' 
+     AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
+    NEW.postcode := NEW.address->'postcode';
+  END IF;
+
+  IF NEW.postcode is null AND NEW.rank_search > 8 THEN
+    NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
+  END IF;
 
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN

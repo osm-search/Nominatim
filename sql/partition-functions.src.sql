@@ -6,12 +6,12 @@ BEGIN
 -- start
   IF in_partition = -partition- THEN
     FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, centroid FROM (
+      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid FROM (
         SELECT * FROM location_area_large_-partition- WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
         UNION ALL
         SELECT * FROM location_area_country WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
       ) as location_area
-      GROUP BY place_id, keywords, rank_address, rank_search, isguess, centroid
+      GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
         ST_Distance(feature, centroid) *
           CASE 

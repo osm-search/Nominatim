@@ -21,6 +21,7 @@ create type nearfeaturecentr as (
   rank_search smallint,
   distance float,
   isguess boolean,
+  postcode TEXT,
   centroid GEOMETRY
 );
 

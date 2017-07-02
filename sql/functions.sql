@@ -804,7 +804,6 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        NEW.postcode := NEW.address->'postcode';
         NEW.name := hstore('ref', NEW.postcode);
 
         SELECT * FROM get_postcode_rank(NEW.country_code, NEW.postcode)
@@ -2430,9 +2429,8 @@ BEGIN
   found := 1000;
   hadcountry := false;
   FOR location IN 
-    select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
-      class, type, admin_level, true as fromarea, true as isaddress,
+    select placex.place_id, osm_type, osm_id, name,
+      class, type, admin_level, true as isaddress,
       CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       0 as distance, country_code, postcode
       from placex
@@ -2442,13 +2440,9 @@ BEGIN
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
-    IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
+    IF location.type in ('postcode', 'postal_code') THEN
       location.isaddress := FALSE;
-    END IF;
-    IF searchpostcode IS NULL and location.postcode IS NOT NULL THEN
-      searchpostcode := location.postcode;
-    END IF;
-    IF location.rank_address = 4 AND location.isaddress THEN
+    ELSEIF location.rank_address = 4 THEN
       hadcountry := true;
     END IF;
     IF location.rank_address < 4 AND NOT hadcountry THEN
@@ -2459,15 +2453,14 @@ BEGIN
       END IF;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id, location.name, location.class, 
-                           location.type, location.admin_level, location.fromarea, location.isaddress, location.rank_address, 
+                           location.type, location.admin_level, true, location.isaddress, location.rank_address,
                            location.distance)::addressline;
     RETURN NEXT countrylocation;
     found := location.rank_address;
   END LOOP;
 
   FOR location IN 
-    select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
+    select placex.place_id, osm_type, osm_id, name,
       CASE WHEN extratags ? 'place' THEN 'place' ELSE class END as class,
       CASE WHEN extratags ? 'place' THEN extratags->'place' ELSE type END as type,
       admin_level, fromarea, isaddress,
@@ -2484,11 +2477,8 @@ BEGIN
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
-    IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
+    IF location.type in ('postcode', 'postal_code') THEN
       location.isaddress := FALSE;
-    END IF;
-    IF searchpostcode IS NULL and location.isaddress and location.type != 'postcode' and location.postcode IS NOT NULL and location.postcode not similar to '%(,|;)%' THEN
-      searchpostcode := location.postcode;
     END IF;
     IF location.rank_address = 4 AND location.isaddress THEN
       hadcountry := true;
@@ -2523,7 +2513,6 @@ BEGIN
 
   IF searchhousename IS NOT NULL THEN
     location := ROW(in_place_id, null, null, searchhousename, searchclass, searchtype, null, true, true, 29, 0)::addressline;
---    location := ROW(in_place_id, null, null, searchhousename, 'place', 'house_name', null, true, true, 29, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

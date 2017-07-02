@@ -617,10 +617,9 @@ BEGIN
   x := deleteLocationArea(partition, place_id, rank_search);
 
   -- add postcode only if it contains a single entry, i.e. ignore postcode lists
-  IF in_postcode IS NULL OR in_postcode similar to '%(,|;)%' THEN
-      postcode := NULL;
-  ELSE
-      postcode := in_postcode;
+  postcode := NULL;
+  IF in_postcode is not null AND in_postcode not similar to '%(,|;)%' THEN
+      postcode := upper(trim (both ' ' from in_postcode));
   END IF;
 
   IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN

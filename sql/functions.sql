@@ -2324,46 +2324,6 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-
-CREATE OR REPLACE FUNCTION get_address_postcode(for_place_id BIGINT) RETURNS TEXT
-  AS $$
-DECLARE
-  result TEXT[];
-  search TEXT[];
-  for_postcode TEXT;
-  found INTEGER;
-  location RECORD;
-BEGIN
-
-  found := 1000;
-  search := ARRAY['ref'];
-  result := '{}';
-
-  select postcode from placex where place_id = for_place_id limit 1 into for_postcode;
-
-  FOR location IN 
-    select rank_address,name,distance,length(name::text) as namelength 
-      from place_addressline join placex on (address_place_id = placex.place_id) 
-      where place_addressline.place_id = for_place_id and rank_address in (5,11)
-      order by rank_address desc,rank_search desc,fromarea desc,distance asc,namelength desc
-  LOOP
-    IF array_upper(search, 1) IS NOT NULL AND array_upper(location.name, 1) IS NOT NULL THEN
-      FOR j IN 1..array_upper(search, 1) LOOP
-        FOR k IN 1..array_upper(location.name, 1) LOOP
-          IF (found > location.rank_address AND location.name[k].key = search[j] AND location.name[k].value != '') AND NOT result @> ARRAY[trim(location.name[k].value)] AND (for_postcode IS NULL OR location.name[k].value ilike for_postcode||'%') THEN
-            result[(100 - location.rank_address)] := trim(location.name[k].value);
-            found := location.rank_address;
-          END IF;
-        END LOOP;
-      END LOOP;
-    END IF;
-  END LOOP;
-
-  RETURN array_to_string(result,', ');
-END;
-$$
-LANGUAGE plpgsql;
-
 --housenumber only needed for tiger data
 CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT, housenumber INTEGER, languagepref TEXT[]) RETURNS TEXT
   AS $$

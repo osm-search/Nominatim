@@ -1272,6 +1272,7 @@ BEGIN
   -- cheaper but less acurate
   place_centroid := ST_PointOnSurface(NEW.geometry);
   NEW.centroid := null;
+  NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(place_centroid);
 
   -- recalculate country and partition
@@ -1512,7 +1513,7 @@ BEGIN
       IF NEW.address is not null AND NEW.address ? 'postcode' THEN
           NEW.postcode = NEW.address->'postcode';
       ELSE
-         SELECT postcode FROM placex WHERE place_id = parent_place_id INTO NEW.postcode;
+         SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
       END IF;
       IF NEW.postcode is null THEN
         NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);

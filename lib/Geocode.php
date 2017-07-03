@@ -666,12 +666,12 @@ class Geocode
 
              Score how good the search is so they can be ordered
          */
-        foreach ($aPhrases as $iPhrase => $sPhrase) {
+        foreach ($aPhrases as $iPhrase => $aPhrase) {
             $aNewPhraseSearches = array();
             if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
             else $sPhraseType = '';
 
-            foreach ($aPhrases[$iPhrase]['wordsets'] as $iWordSet => $aWordset) {
+            foreach ($aPhrase['wordsets'] as $iWordSet => $aWordset) {
                 // Too many permutations - too expensive
                 if ($iWordSet > 120) break;
 
@@ -710,30 +710,25 @@ class Geocode
                                         );
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                } elseif ($sPhraseType == 'postalcode') {
+                                } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
                                     if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
-                                        // If we already have a name try putting the postcode first
-                                        if (sizeof($aSearch['aName'])) {
+                                        // If we have structured search or this is the first term,
+                                        // make the postcode the primary search element.
+                                        if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']) == 0) {
                                             $aNewSearch = $aSearch;
+                                            $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
-                                            $aNewSearch['aName'] = array();
-                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_token'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
                                         }
 
-                                        if (sizeof($aSearch['aName'])) {
-                                            if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false)) {
-                                                $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            } else {
-                                                $aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                                $aSearch['iSearchRank'] += 1000; // skip;
-                                            }
-                                        } else {
-                                            $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            //$aSearch['iNamePhrase'] = $iPhrase;
+                                        // If we have a structured search or this is not the first term,
+                                        // add the postcode as an addendum.
+                                        if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName'])) {
+                                            $aSearch['sPostcode'] = $aSearchTerm['word_token'];
+                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 } elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house') {
                                     if ($aSearch['sHouseNumber'] === '') {
@@ -985,6 +980,7 @@ class Geocode
                            'sClass' => '',
                            'sType' => '',
                            'sHouseNumber' => '',
+                           'sPostcode' => '',
                            'oNear' => $oNearPoint
                           )
                          );

@@ -226,8 +226,8 @@ CREATE TABLE import_polygon_error (
   country_code varchar(2),
   updated timestamp,
   errormessage text,
-  prevgeometry GEOMTRY(Geometry, 4326),
-  newgeometry GEOMTRY(Geometry, 4326)
+  prevgeometry GEOMETRY(Geometry, 4326),
+  newgeometry GEOMETRY(Geometry, 4326)
   );
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
 GRANT SELECT ON import_polygon_error TO "{www-user}";

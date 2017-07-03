@@ -83,6 +83,26 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION getorcreate_postcode_id(postcode TEXT)
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  lookup_token TEXT;
+  lookup_word TEXT;
+  return_word_id INTEGER;
+BEGIN
+  lookup_word := upper(trim(postcode));
+  lookup_token := ' ' || make_standard_name(lookup_word);
+  SELECT min(word_id) FROM word WHERE word_token = lookup_token and class='place' and type='postcode' into return_word_id;
+  IF return_word_id IS NULL THEN
+    return_word_id := nextval('seq_word');
+    INSERT INTO word VALUES (return_word_id, lookup_token, lookup_word, 'place', 'postcode', null, 0);
+  END IF;
+  RETURN return_word_id;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION getorcreate_country(lookup_word TEXT, lookup_country_code varchar(2))
   RETURNS INTEGER
   AS $$
@@ -619,7 +639,7 @@ BEGIN
   -- add postcode only if it contains a single entry, i.e. ignore postcode lists
   postcode := NULL;
   IF in_postcode is not null AND in_postcode not similar to '%(,|;)%' THEN
-      postcode := upper(trim (both ' ' from in_postcode));
+      postcode := upper(trim (in_postcode));
   END IF;
 
   IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
@@ -1266,6 +1286,10 @@ BEGIN
 
       addr_street = NEW.address->'street';
       addr_place = NEW.address->'place';
+
+      IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(,|;)%' THEN
+        i := getorcreate_postcode_id(NEW.address->'postcode');
+      END IF;
   END IF;
 
   -- Speed up searches - just use the centroid of the feature

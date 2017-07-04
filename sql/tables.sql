@@ -212,6 +212,7 @@ CREATE TABLE location_postcode (
   geometry GEOMETRY(Geometry, 4326)
   );
 CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {ts:address-index};
+GRANT SELECT ON location_postcode TO "{www-user}" ;
 
 CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcode
     FOR EACH ROW EXECUTE PROCEDURE postcode_update();

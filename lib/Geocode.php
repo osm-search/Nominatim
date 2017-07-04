@@ -476,6 +476,35 @@ class Geocode
         if ($this->bIncludeNameDetails) $sSQL .= "name, ";
         $sSQL .= "     extratags->'place' ";
 
+        // postcode table
+        $sSQL .= "UNION ";
+        $sSQL .= "SELECT";
+        $sSQL .= "  'P' as osm_type,";
+        $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = parent_place_id) as osm_id,";
+        $sSQL .= "  'place' as class, 'postcode' as type,";
+        $sSQL .= "  null as admin_level, rank_search, rank_address,";
+        $sSQL .= "  place_id, parent_place_id, country_code,";
+        $sSQL .= "  get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) AS langaddress,";
+        $sSQL .= "  postcode as placename,";
+        $sSQL .= "  postcode as ref,";
+        if ($this->bIncludeExtraTags) $sSQL .= "null AS extra,";
+        if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
+        $sSQL .= "  ST_x(st_centroid(geometry)) AS lon, ST_y(st_centroid(geometry)) AS lat,";
+        $sSQL .=    $sImportanceSQL."(0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .= "  (";
+        $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
+        $sSQL .= "     FROM ";
+        $sSQL .= "       place_addressline s, ";
+        $sSQL .= "       placex p";
+        $sSQL .= "     WHERE s.place_id = parent_place_id";
+        $sSQL .= "       AND p.place_id = s.address_place_id ";
+        $sSQL .= "       AND s.isaddress";
+        $sSQL .= "       AND p.importance is not null";
+        $sSQL .= "  ) AS addressimportance, ";
+        $sSQL .= "  null AS extra_place ";
+        $sSQL .= "FROM location_postcode";
+        $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
+
         if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {
             // only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines
             // with start- and endnumber, the common osm housenumbers are usually saved as points
@@ -719,7 +748,7 @@ class Geocode
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
-                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_token'];
+                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = substr($aSearchTerm['word_token'], 1);
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
                                         }
 
@@ -1308,6 +1337,18 @@ class Geocode
                         // If a coordinate is given, the search must either
                         // be for a name or a special search. Ignore everythin else.
                         $aPlaceIDs = array();
+                    } elseif ($aSearch['sOperator'] == 'postcode') {
+                        $sSQL  = "SELECT place_id FROM location_postcode ";
+                        $sSQL .= "WHERE postcode = '".pg_escape_string(reset($aSearch['aName']))."'";
+                        if ($aSearch['sCountryCode']) {
+                            $sSQL .= " AND country_code = '".$aSearch['sCountryCode']."'";
+                        }
+                        if ($sCountryCodesSQL) {
+                            $sSQL .= " AND country_code in ($sCountryCodesSQL)";
+                        }
+                        $sSQL .= " LIMIT $this->iLimit";
+                        if (CONST_Debug) var_dump($sSQL);
+                        $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     } else {
                         $aPlaceIDs = array();
 

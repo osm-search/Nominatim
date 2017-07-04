@@ -2431,10 +2431,18 @@ BEGIN
   -- %NOAUXDATA% IF 0 THEN
   IF for_place_id IS NULL THEN
     select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_aux
-      WHERE place_id = in_place_id 
+      WHERE place_id = in_place_id
       INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
   -- %NOAUXDATA% END IF;
+
+  -- postcode table
+  IF for_place_id IS NULL THEN
+    select parent_place_id, country_code, rank_address, postcode, 'place', 'postcode'
+      FROM location_postcode
+      WHERE place_id = in_place_id
+      INTO for_place_id, searchcountrycode, searchrankaddress, searchpostcode, searchclass, searchtype;
+  END IF;
 
   IF for_place_id IS NULL THEN
     select parent_place_id, country_code, housenumber, rank_search, postcode, name, class, type from placex 

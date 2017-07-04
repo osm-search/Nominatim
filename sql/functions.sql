@@ -1543,27 +1543,6 @@ BEGIN
         NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
       END IF;
 
-      -- Merge the postcode into the parent's address if necessary
-      IF NEW.postcode IS NOT NULL THEN
-        --DEBUG: RAISE WARNING 'Merging postcode into parent';
-        isin_tokens := '{}'::int[];
-        address_street_word_id := getorcreate_word_id(make_standard_name(NEW.postcode));
-        IF address_street_word_id is not null
-           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-           isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-        address_street_word_id := getorcreate_name_id(make_standard_name(NEW.postcode));
-        IF address_street_word_id is not null
-           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-           isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-        IF isin_tokens != '{}'::int[] THEN
-           UPDATE search_name
-              SET nameaddress_vector = search_name.nameaddress_vector || isin_tokens
-            WHERE place_id = NEW.parent_place_id;
-        END IF;
-      END IF;
-
       -- If there is no name it isn't searchable, don't bother to create a search record
       IF NEW.name is NULL THEN
         --DEBUG: RAISE WARNING 'Not a searchable place % %', NEW.osm_type, NEW.osm_id;

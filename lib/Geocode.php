@@ -755,7 +755,7 @@ class Geocode
                                         // If we have a structured search or this is not the first term,
                                         // add the postcode as an addendum.
                                         if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName'])) {
-                                            $aSearch['sPostcode'] = $aSearchTerm['word_token'];
+                                            $aSearch['sPostcode'] = substr($aSearchTerm['word_token'], 1);
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
                                     }
@@ -1423,6 +1423,8 @@ class Geocode
                             $aTerms[] = $aSearch['oNear']->withinSQL('centroid');
 
                             $aOrder[] = $aSearch['oNear']->distanceSQL('centroid');
+                        } elseif ($aSearch['sPostcode']) {
+                            $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."')";
                         }
                         if (sizeof($this->aExcludePlaceIDs)) {
                             $aTerms[] = "place_id not in (".join(',', $this->aExcludePlaceIDs).")";
@@ -1709,6 +1711,21 @@ class Geocode
                     if (CONST_Debug) {
                         echo "<br><b>Place IDs:</b> ";
                         var_Dump($aPlaceIDs);
+                    }
+
+                    if ($aSearch['sPostcode']) {
+                        $sSQL = 'SELECT place_id FROM placex';
+                        $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
+                        $sSQL .= " AND postcode = '".pg_escape_string($aSearch['sPostcode'])."'";
+                        if (CONST_Debug) var_dump($sSQL);
+                        $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
+                        if ($aFilteredPlaceIDs) {
+                            $aPlaceIDs = $aFilteredPlaceIDs;
+                            if (CONST_Debug) {
+                                echo "<br><b>Place IDs after postcode filtering:</b> ";
+                                var_Dump($aPlaceIDs);
+                            }
+                        }
                     }
 
                     foreach ($aPlaceIDs as $iPlaceID) {

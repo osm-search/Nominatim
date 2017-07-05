@@ -744,7 +744,7 @@ class Geocode
                                     if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
-                                        if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']) == 0) {
+                                        if ($aSearchTerm['operator'] == '' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']) == 0)) {
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
@@ -1338,13 +1338,20 @@ class Geocode
                         // be for a name or a special search. Ignore everythin else.
                         $aPlaceIDs = array();
                     } elseif ($aSearch['sOperator'] == 'postcode') {
-                        $sSQL  = "SELECT place_id FROM location_postcode ";
-                        $sSQL .= "WHERE postcode = '".pg_escape_string(reset($aSearch['aName']))."'";
+                        $sSQL  = "SELECT p.place_id FROM location_postcode p ";
+                        if (sizeof($aSearch['aAddress'])) {
+                            $sSQL .= ", search_name s ";
+                            $sSQL .= "WHERE s.place_id = p.parent_place_id ";
+                            $sSQL .= "AND array_cat(s.nameaddress_vector, s.name_vector) @> ARRAY[".join($aSearch['aAddress'], ",")."] AND ";
+                        } else {
+                            $sSQL .= " WHERE ";
+                        }
+                        $sSQL .= "p.postcode = '".pg_escape_string(reset($aSearch['aName']))."'";
                         if ($aSearch['sCountryCode']) {
-                            $sSQL .= " AND country_code = '".$aSearch['sCountryCode']."'";
+                            $sSQL .= " AND p.country_code = '".$aSearch['sCountryCode']."'";
                         }
                         if ($sCountryCodesSQL) {
-                            $sSQL .= " AND country_code in ($sCountryCodesSQL)";
+                            $sSQL .= " AND p.country_code in ($sCountryCodesSQL)";
                         }
                         $sSQL .= " LIMIT $this->iLimit";
                         if (CONST_Debug) var_dump($sSQL);

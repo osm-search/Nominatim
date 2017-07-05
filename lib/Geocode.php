@@ -1272,13 +1272,16 @@ class Geocode
                     if (CONST_Debug) echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
                     if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
+                    if ($sCountryCodesSQL && $aSearch['sCountryCode'] && !in_array($aSearch['sCountryCode'], $this->aCountryCodes)) {
+                        continue;
+                    }
+
                     // No location term?
                     if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['oNear']) {
                         if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
                                 $sSQL = "SELECT place_id FROM placex WHERE country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
-                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if ($bBoundingBoxSearch)
                                     $sSQL .= " AND _st_intersects($this->sViewboxSmallSQL, geometry)";
                                 $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
@@ -1349,8 +1352,7 @@ class Geocode
                         $sSQL .= "p.postcode = '".pg_escape_string(reset($aSearch['aName']))."'";
                         if ($aSearch['sCountryCode']) {
                             $sSQL .= " AND p.country_code = '".$aSearch['sCountryCode']."'";
-                        }
-                        if ($sCountryCodesSQL) {
+                        } elseif ($sCountryCodesSQL) {
                             $sSQL .= " AND p.country_code in ($sCountryCodesSQL)";
                         }
                         $sSQL .= " LIMIT $this->iLimit";

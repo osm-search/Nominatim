@@ -116,25 +116,6 @@ function getTokensFromSets($aSets)
 }
 
 
-function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
-{
-    // Try an exact match on the gb_postcode table
-    $sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where postcode = \''.$sPostcode.'\'';
-    $aNearPostcodes = chksql($oDB->getAll($sSQL));
-
-    if (sizeof($aNearPostcodes)) {
-        $aPostcodes = array();
-        foreach ($aNearPostcodes as $aPostcode) {
-            $aPostcodes[] = array('lat' => $aPostcode['lat'], 'lon' => $aPostcode['lon'], 'radius' => 0.005);
-        }
-
-        return $aPostcodes;
-    }
-
-    return false;
-}
-
-
 function getClassTypes()
 {
     return array(

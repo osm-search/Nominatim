@@ -1134,21 +1134,9 @@ class Geocode
                 }
                 if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
-                // Try and calculate GB postcodes we might be missing
+                // US ZIP+4 codes - if there is no token, merge in the 5-digit ZIP code
                 foreach ($aTokens as $sToken) {
-                    // Source of gb postcodes is now definitive - always use
-                    if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData)) {
-                        if (substr($aData[1], -2, 1) != ' ') {
-                            $aData[0] = substr($aData[0], 0, strlen($aData[1])-1).' '.substr($aData[0], strlen($aData[1])-1);
-                            $aData[1] = substr($aData[1], 0, -1).' '.substr($aData[1], -1, 1);
-                        }
-                        $aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $this->oDB);
-                        if ($aGBPostcodeLocation) {
-                            $aValidTokens[$sToken] = $aGBPostcodeLocation;
-                        }
-                    } elseif (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
-                        // US ZIP+4 codes - if there is no token,
-                        // merge in the 5-digit ZIP code
+                    if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
                         if (isset($aValidTokens[$aData[1]])) {
                             foreach ($aValidTokens[$aData[1]] as $aToken) {
                                 if (!$aToken['class']) {

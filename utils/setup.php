@@ -522,7 +522,22 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
         $sSQL .= "          WHERE country_code = 'us')";
 
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+
+        $sSQL = "SELECT count(getorcreate_postcode_id(postcode))  FROM us_postcode";
+        if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
     }
+
+    // add missing postcodes for GB (if available)
+    $sSQL  = "INSERT INTO location_postcode";
+    $sSQL .= " (place_id, indexed_status, country_code, postcode, geometry) ";
+    $sSQL .= "SELECT nextval('seq_place'), 1, 'gb', postcode, geometry";
+    $sSQL .= "  FROM gb_postcode WHERE postcode NOT IN";
+    $sSQL .= "           (SELECT postcode FROM location_postcode";
+    $sSQL .= "             WHERE country_code = 'gb')";
+    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+
+        $sSQL = "SELECT count(getorcreate_postcode_id(postcode))  FROM gb_postcode";
+        if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }
 
 if ($aCMDResult['osmosis-init']) {
@@ -541,6 +556,7 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     passthruCheckReturn($sBaseCmd.' -r 26');
 
     echo "Indexing postcodes....\n";
+    $oDB =& getDB();
     $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }

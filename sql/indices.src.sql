@@ -25,8 +25,5 @@ DROP INDEX IF EXISTS place_id_idx;
 CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type) {ts:address-index};
 
 
-CREATE INDEX idx_gb_postcode_postcode ON gb_postcode USING BTREE (postcode) {ts:search-index};
-
 CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id) {ts:search-index};
-CREATE INDEX idx_postcode_parent_id ON location_postcode USING BTREE (parent_place_id) {ts:search-index} where parent_place_id IS NOT NULL;
-CREATE INDEX idx_postcode_postcode ON location_postcode USING BTREE (postcode, country_code) {ts:search-index};
+CREATE INDEX idx_postcode_postcode ON location_postcode USING BTREE (postcode) {ts:search-index};

@@ -523,10 +523,6 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
 
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
     }
-
-    echo "Indexing postcodes....\n";
-    $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
-    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }
 
 if ($aCMDResult['osmosis-init']) {
@@ -543,6 +539,10 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     passthruCheckReturn($sBaseCmd.' -r 26');
+
+    echo "Indexing postcodes....\n";
+    $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
+    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {

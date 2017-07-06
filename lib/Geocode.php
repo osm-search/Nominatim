@@ -51,10 +51,22 @@ class Geocode
     protected $sQuery = false;
     protected $aStructuredQuery = false;
 
+    protected $oNormalizer = null;
+
 
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
+        $this->oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
+    }
+
+    private function normTerm($sTerm)
+    {
+        if ($this->oNormalizer === null) {
+            return null;
+        }
+
+        return $this->oNormalizer->transliterate($sTerm);
     }
 
     public function setReverseInPlan($bReverse)
@@ -741,21 +753,21 @@ class Geocode
                                     }
                                 } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
                                         if ($aSearchTerm['operator'] == '' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']) == 0)) {
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
-                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = substr($aSearchTerm['word_token'], 1);
+                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
                                         }
 
                                         // If we have a structured search or this is not the first term,
                                         // add the postcode as an addendum.
                                         if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName'])) {
-                                            $aSearch['sPostcode'] = substr($aSearchTerm['word_token'], 1);
+                                            $aSearch['sPostcode'] = $aSearchTerm['word'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
                                     }
@@ -943,13 +955,7 @@ class Geocode
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
-        $oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
-        if ($oNormalizer !== null) {
-            $sNormQuery = $oNormalizer->transliterate($this->sQuery);
-        } else {
-            $sNormQuery = null;
-        }
-
+        $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;
         if ($this->aCountryCodes) {

@@ -742,15 +742,6 @@ class Geocode
                                         }
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                } elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null) {
-                                    if ($aSearch['oNear'] === false) {
-                                        $aSearch['oNear'] = new NearPoint(
-                                            $aSearchTerm['lat'],
-                                            $aSearchTerm['lon'],
-                                            $aSearchTerm['radius']
-                                        );
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                    }
                                 } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
                                     if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {

@@ -265,6 +265,7 @@ DECLARE
 BEGIN
     rank_search := 30;
     rank_address := 30;
+    postcode := upper(postcode);
 
     IF country_code = 'gb' THEN
         IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
@@ -824,9 +825,9 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        NEW.name := hstore('ref', NEW.postcode);
+        NEW.name := hstore('ref', NEW.address->'postcode');
 
-        SELECT * FROM get_postcode_rank(NEW.country_code, NEW.postcode)
+        SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
           INTO NEW.rank_search, NEW.rank_address;
 
     ELSEIF NEW.class = 'place' THEN

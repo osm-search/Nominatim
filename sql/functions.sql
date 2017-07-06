@@ -1043,8 +1043,8 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
+  interpol_postcode TEXT;
   postcode TEXT;
-  seg_postcode TEXT;
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
@@ -1063,9 +1063,11 @@ BEGIN
                                                  NEW.address->'place',
                                                  NEW.partition, place_centroid, NEW.linegeo);
 
-
-  IF NEW.address is not NULL and NEW.address ? 'postcode' THEN
-      NEW.postcode = NEW.address->'postcode';
+  IF NEW.address is not NULL AND NEW.address ? 'postcode' AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
+    interpol_postcode := NEW.address->'postcode';
+    housenum := getorcreate_postcode_id(NEW.address->'postcode');
+  ELSE
+    interpol_postcode := NULL;
   END IF;
 
   -- if the line was newly inserted, split the line as necessary
@@ -1078,7 +1080,6 @@ BEGIN
 
       linegeo := NEW.linegeo;
       startnumber := NULL;
-      postcode := NEW.postcode;
 
       FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
@@ -1111,15 +1112,24 @@ BEGIN
               sectiongeo := ST_Reverse(sectiongeo);
             END IF;
 
-            seg_postcode := coalesce(postcode,
-                                     prevnode.address->'postcode',
-                                     nextnode.address->'postcode');
+            -- determine postcode
+            postcode := coalesce(interpol_postcode,
+                                 prevnode.address->'postcode',
+                                 nextnode.address->'postcode',
+                                 postcode);
+
+            IF postcode is NULL THEN
+                SELECT placex.postcode FROM placex WHERE place_id = NEW.parent_place_id INTO postcode;
+            END IF;
+            IF postcode is NULL THEN
+                postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);
+            END IF;
 
             IF NEW.startnumber IS NULL THEN
                 NEW.startnumber := startnumber;
                 NEW.endnumber := endnumber;
                 NEW.linegeo := sectiongeo;
-                NEW.postcode := seg_postcode;
+                NEW.postcode := postcode;
              ELSE
               insert into location_property_osmline
                      (linegeo, partition, osm_id, parent_place_id,
@@ -1128,7 +1138,7 @@ BEGIN
                       geometry_sector, indexed_status)
               values (sectiongeo, NEW.partition, NEW.osm_id, NEW.parent_place_id,
                       startnumber, endnumber, NEW.interpolationtype,
-                      NEW.address, seg_postcode,
+                      NEW.address, postcode,
                       NEW.country_code, NEW.geometry_sector, 0);
              END IF;
           END IF;

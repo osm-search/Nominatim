@@ -156,7 +156,7 @@ diffs for Ireland from geofabrik add the following:
 
 To set up the update process now run the following command:
 
-    ./utils/update --init-updates
+    ./utils/update.php --init-updates
 
 It outputs the date where updates will start. Recheck that this date is
 what you expect.

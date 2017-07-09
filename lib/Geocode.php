@@ -422,8 +422,15 @@ class Geocode
         $sPlaceIDs = join(',', array_keys($aPlaceIDs));
 
         $sImportanceSQL = '';
-        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
-        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+        $sImportanceSQLGeom = '';
+        if ($this->sViewboxSmallSQL) {
+            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, geometry) THEN 1 ELSE 0.75 END * ";
+        }
+        if ($this->sViewboxLargeSQL) {
+            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, geometry) THEN 1 ELSE 0.75 END * ";
+        }
 
         $sSQL  = "SELECT ";
         $sSQL .= "    osm_type,";
@@ -502,7 +509,7 @@ class Geocode
         if ($this->bIncludeExtraTags) $sSQL .= "null AS extra,";
         if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
         $sSQL .= "  ST_x(st_centroid(geometry)) AS lon, ST_y(st_centroid(geometry)) AS lat,";
-        $sSQL .=    $sImportanceSQL."(0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .=    $sImportanceSQLGeom."(0.75-(rank_search::float/40)) AS importance, ";
         $sSQL .= "  (";
         $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
         $sSQL .= "     FROM ";
@@ -747,7 +754,7 @@ class Geocode
                                     if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
-                                        if ($aSearchTerm['operator'] == '' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']) == 0)) {
+                                        if ($aSearchTerm['operator'] == '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
@@ -1698,7 +1705,7 @@ class Geocode
                         var_Dump($aPlaceIDs);
                     }
 
-                    if ($aSearch['sPostcode']) {
+                    if (sizeof($aPlaceIDs) && $aSearch['sPostcode']) {
                         $sSQL = 'SELECT place_id FROM placex';
                         $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
                         $sSQL .= " AND postcode = '".pg_escape_string($aSearch['sPostcode'])."'";

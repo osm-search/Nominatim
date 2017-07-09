@@ -321,6 +321,22 @@ CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETR
 DECLARE
   item RECORD;
 BEGIN
+    -- If the geometry is an area then only one postcode must be within
+    -- that area, otherwise consider the area as not having a postcode.
+    IF ST_GeometryType(geom) in ('ST_Polygon','ST_MultiPolygon') THEN
+        FOR item IN
+            SELECT min(postcode) as postcode, count(*) as cnt FROM
+              (SELECT postcode FROM location_postcode
+                WHERE ST_Contains(geom, location_postcode.geometry) LIMIT 2) sub
+        LOOP
+            IF item.cnt > 1 THEN
+                RETURN null;
+            ELSEIF item.cnt = 1 THEN
+                RETURN item.postcode;
+            END IF;
+        END LOOP;
+    END IF;
+
     FOR item IN
         SELECT postcode FROM location_postcode
         WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
@@ -1545,13 +1561,15 @@ BEGIN
       --DEBUG: RAISE WARNING 'Got parent details from search name';
 
       -- determine postcode
-      IF NEW.address is not null AND NEW.address ? 'postcode' THEN
-          NEW.postcode = NEW.address->'postcode';
-      ELSE
-         SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
-      END IF;
-      IF NEW.postcode is null THEN
-        NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
+      IF NEW.rank_search > 4 THEN
+          IF NEW.address is not null AND NEW.address ? 'postcode' THEN
+              NEW.postcode = NEW.address->'postcode';
+          ELSE
+             SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
+          END IF;
+          IF NEW.postcode is null THEN
+            NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
+          END IF;
       END IF;
 
       -- If there is no name it isn't searchable, don't bother to create a search record

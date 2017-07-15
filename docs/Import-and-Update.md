@@ -39,6 +39,10 @@ This data is available as a binary download:
 Combined the 2 files are around 1.5GB and add around 30GB to the install
 size of nominatim. They also increase the install time by an hour or so.
 
+*NOTE:* you'll need to download the Wikipedia rankings before performing
+the initial import of the data if you want the rankings applied to the
+loaded data.
+
 ### UK postcodes
 
 Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded: 

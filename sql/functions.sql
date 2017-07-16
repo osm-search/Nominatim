@@ -319,35 +319,31 @@ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY) RETURNS TEXT
   AS $$
 DECLARE
-  item RECORD;
+  outcode TEXT;
+  cnt INTEGER;
 BEGIN
     -- If the geometry is an area then only one postcode must be within
     -- that area, otherwise consider the area as not having a postcode.
     IF ST_GeometryType(geom) in ('ST_Polygon','ST_MultiPolygon') THEN
-        FOR item IN
-            SELECT min(postcode) as postcode, count(*) as cnt FROM
+        SELECT min(postcode), count(*) FROM
               (SELECT postcode FROM location_postcode
                 WHERE ST_Contains(geom, location_postcode.geometry) LIMIT 2) sub
-        LOOP
-            IF item.cnt > 1 THEN
-                RETURN null;
-            ELSEIF item.cnt = 1 THEN
-                RETURN item.postcode;
-            END IF;
-        END LOOP;
+          INTO outcode, cnt;
+
+        IF cnt = 1 THEN
+            RETURN outcode;
+        ELSE
+            RETURN null;
+        END IF;
     END IF;
 
-    FOR item IN
-        SELECT postcode FROM location_postcode
-        WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
-              AND location_postcode.country_code = country
-        ORDER BY ST_Distance(geom, location_postcode.geometry)
-        LIMIT 1
-    LOOP
-        RETURN item.postcode;
-    END LOOP;
+    SELECT postcode FROM location_postcode
+     WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
+          AND location_postcode.country_code = country
+     ORDER BY ST_Distance(geom, location_postcode.geometry) LIMIT 1
+    INTO outcode;
 
-    RETURN null;
+    RETURN outcode;
 END;
 $$
 LANGUAGE plpgsql;

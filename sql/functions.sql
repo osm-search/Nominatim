@@ -1142,7 +1142,7 @@ BEGIN
                 NEW.startnumber := startnumber;
                 NEW.endnumber := endnumber;
                 NEW.linegeo := sectiongeo;
-                NEW.postcode := postcode;
+                NEW.postcode := upper(trim(postcode));
              ELSE
               insert into location_property_osmline
                      (linegeo, partition, osm_id, parent_place_id,
@@ -1559,7 +1559,7 @@ BEGIN
       -- determine postcode
       IF NEW.rank_search > 4 THEN
           IF NEW.address is not null AND NEW.address ? 'postcode' THEN
-              NEW.postcode = NEW.address->'postcode';
+              NEW.postcode = upper(trim(NEW.address->'postcode'));
           ELSE
              SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
           END IF;
@@ -1583,7 +1583,7 @@ BEGIN
       -- Just be happy with inheriting from parent road only
 
       IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.address->'postcode', NEW.geometry);
+        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
         --DEBUG: RAISE WARNING 'Place added to location table';
       END IF;
 
@@ -1944,7 +1944,7 @@ BEGIN
 
   IF NEW.address is not null AND NEW.address ? 'postcode' 
      AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
-    NEW.postcode := NEW.address->'postcode';
+    NEW.postcode := upper(trim(NEW.address->'postcode'));
   END IF;
 
   IF NEW.postcode is null AND NEW.rank_search > 8 THEN
@@ -1955,7 +1955,7 @@ BEGIN
   IF NEW.name IS NOT NULL THEN
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.address->'postcode', NEW.geometry);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
       --DEBUG: RAISE WARNING 'added to location (full)';
     END IF;
 

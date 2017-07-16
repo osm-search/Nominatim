@@ -522,9 +522,6 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
         $sSQL .= "          WHERE country_code = 'us')";
 
         if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
-
-        $sSQL = "SELECT count(getorcreate_postcode_id(postcode))  FROM us_postcode";
-        if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
     }
 
     // add missing postcodes for GB (if available)
@@ -536,8 +533,19 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $sSQL .= "             WHERE country_code = 'gb')";
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
-        $sSQL = "SELECT count(getorcreate_postcode_id(postcode))  FROM gb_postcode";
-        if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+    if (!$aCMDResult['all']) {
+        $sSQL = "DELETE FROM word WHERE class='place' and type='postcode'";
+        $sSQL .= "and word NOT IN (SELECT postcode FROM location_postcode)";
+        if (!pg_query($oDB->connection, $sSQL)) {
+            fail(pg_last_error($oDB->connection));
+        }
+    }
+    $sSQL = "SELECT count(getorcreate_postcode_id(v)) FROM ";
+    $sSQL .= "(SELECT distinct(postcode) FROM location_postcode) p";
+
+    if (!pg_query($oDB->connection, $sSQL)) {
+        fail(pg_last_error($oDB->connection));
+    }
 }
 
 if ($aCMDResult['osmosis-init']) {

@@ -120,6 +120,21 @@ Before importing make sure to add the following to your local settings:
     @define('CONST_Database_DSN', 'pgsql://@/test_api_nominatim');
     @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
 
+#### Code Coverage
+
+The API tests also support code coverage tests. You need to install
+PHP_CodeCoverage. On Debian/Ubuntu run:
+
+    apt-get install php-codecoverage
+
+The run the API tests as follows:
+
+    behave api -DPHPCOV=<coverage output dir>
+
+To generate reports, you can use the phpcov tool:
+
+    phpcov merge --html=<report output dir> <coverage output dir>
+
 ### Indexing Tests (`test/bdd/db`)
 
 These tests check the import and update of the Nominatim database. They do not

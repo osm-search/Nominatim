@@ -17,7 +17,8 @@ userconfig = {
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
-    'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php'
+    'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php',
+    'PHPCOV' : False, # set to output directory to enable code coverage
 }
 
 use_step_matcher("re")
@@ -28,15 +29,24 @@ class NominatimEnvironment(object):
 
     def __init__(self, config):
         self.build_dir = os.path.abspath(config['BUILDDIR'])
+        self.src_dir = os.path.abspath(os.path.join(os.path.split(__file__)[0], "../.."))
         self.template_db = config['TEMPLATE_DB']
         self.test_db = config['TEST_DB']
         self.api_test_db = config['API_TEST_DB']
         self.local_settings_file = config['TEST_SETTINGS_FILE']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
+        self.code_coverage_path = config['PHPCOV']
+        self.code_coverage_id = 1
         os.environ['NOMINATIM_SETTINGS'] = self.local_settings_file
 
         self.template_db_done = False
+
+    def next_code_coverage_file(self):
+        fn = os.path.join(self.code_coverage_path, "%06d.cov" % self.code_coverage_id)
+        self.code_coverage_id += 1
+
+        return fn
 
     def write_nominatim_config(self, dbname):
         f = open(self.local_settings_file, 'w')

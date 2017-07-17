@@ -282,7 +282,18 @@ def send_api_query(endpoint, params, fmt, context):
     if hasattr(context, 'http_headers'):
         env.update(context.http_headers)
 
-    cmd = ['/usr/bin/php-cgi', env['SCRIPT_FILENAME']]
+    cmd = ['/usr/bin/php-cgi', '-f']
+    if context.nominatim.code_coverage_path:
+        env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
+        env['COV_PHP_DIR'] = os.path.join(context.nominatim.src_dir, "lib")
+        env['COV_TEST_NAME'] = '%s:%s' % (context.scenario.filename, context.scenario.line)
+        env['SCRIPT_FILENAME'] = \
+                os.path.join(os.path.split(__file__)[0], 'cgi-with-coverage.php')
+        cmd.append(env['SCRIPT_FILENAME'])
+        env['PHP_CODE_COVERAGE_FILE'] = context.nominatim.next_code_coverage_file()
+    else:
+        cmd.append(env['SCRIPT_FILENAME'])
+
     for k,v in params.items():
         cmd.append("%s=%s" % (k, v))
 

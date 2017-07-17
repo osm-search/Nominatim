@@ -145,10 +145,10 @@ if [ "x$1" == "xyes" ]; then  #DOCS:
 
     cd $USERHOME
     git clone --recursive git://github.com/openstreetmap/Nominatim.git
-#DOCS:    cd Nominatim
+    cd Nominatim
 
 else                               #DOCS:
-    cd $USERHOME                   #DOCS:
+    cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
 
 # When installing the latest source from github, you also need to
@@ -161,6 +161,7 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
+    cd $USERHOME                   #DOCS:
     mkdir build
     cd build
     cmake $USERHOME/Nominatim

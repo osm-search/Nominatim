@@ -47,7 +47,6 @@ is.
       # inside the virtual machine:
       mkdir data
       cd build
-      wget -O /home/vagrant/Nominatim/data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
       wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
       ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | tee monaco.$$.log
       ```

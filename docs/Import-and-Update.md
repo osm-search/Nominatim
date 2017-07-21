@@ -175,6 +175,8 @@ The following command will keep your database constantly up to date:
 
     ./utils/update.php --import-osmosis-all
 
+(Note that even though the old name "import-osmosis-all" has been kept for compatibility reasons, Osmosis is not required to run this - it uses pyosmium behind the scenes.)
+
 If you have imported multiple country extracts and want to keep them
 up-to-date, have a look at the script in
 [issue #60](https://github.com/openstreetmap/Nominatim/issues/60).

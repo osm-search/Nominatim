@@ -287,7 +287,7 @@ def import_and_index_data_from_place_table(context):
               WHERE class='place' and type='houses' and osm_type='W'
                     and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()
-    context.nominatim.run_setup_script('index', 'index-noanalyse')
+    context.nominatim.run_setup_script('calculate-postcodes', 'index', 'index-noanalyse')
 
 @when("updating places")
 def update_place_table(context):

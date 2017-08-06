@@ -541,7 +541,7 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
         }
     }
     $sSQL = "SELECT count(getorcreate_postcode_id(v)) FROM ";
-    $sSQL .= "(SELECT distinct(postcode) FROM location_postcode) p";
+    $sSQL .= "(SELECT distinct(postcode) as v FROM location_postcode) p";
 
     if (!pg_query($oDB->connection, $sSQL)) {
         fail(pg_last_error($oDB->connection));

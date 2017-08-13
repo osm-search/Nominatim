@@ -1,4 +1,9 @@
-3.0
+3.0.1
+
+ * fix bug in geometry building algorithm in osm2pgsql
+ * fix typos in build instructions
+
+3.0.0
 
  * move to cmake build system
  * various fixes to HTML output

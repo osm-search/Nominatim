@@ -2892,7 +2892,7 @@ BEGIN
     IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
       FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address > 'place'));
+        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
         update placex set indexed_status = 2 where (st_covers(geom, placex.geometry) OR ST_Intersects(geom, placex.geometry)) 
         AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
       END LOOP;

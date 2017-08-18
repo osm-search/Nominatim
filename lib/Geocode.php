@@ -751,10 +751,11 @@ class Geocode
                                     }
                                 } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
+                                    if ($aSearch['sPostcode'] === '' &&
+                                        isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
-                                        if ($aSearchTerm['operator'] == '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {
+                                        if ($aSearch['sOperator'] === '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {
                                             $aNewSearch = $aSearch;
                                             $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
@@ -1207,7 +1208,6 @@ class Geocode
                 ksort($aGroupedSearches);
             }
 
-            if (CONST_Debug) var_Dump($aGroupedSearches);
             if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0) {
                 $aCopyGroupedSearches = $aGroupedSearches;
                 foreach ($aCopyGroupedSearches as $iGroup => $aSearches) {

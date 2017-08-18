@@ -499,7 +499,7 @@ class Geocode
         $sSQL .= "UNION ";
         $sSQL .= "SELECT";
         $sSQL .= "  'P' as osm_type,";
-        $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = parent_place_id) as osm_id,";
+        $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,";
         $sSQL .= "  'place' as class, 'postcode' as type,";
         $sSQL .= "  null as admin_level, rank_search, rank_address,";
         $sSQL .= "  place_id, parent_place_id, country_code,";
@@ -515,13 +515,13 @@ class Geocode
         $sSQL .= "     FROM ";
         $sSQL .= "       place_addressline s, ";
         $sSQL .= "       placex p";
-        $sSQL .= "     WHERE s.place_id = parent_place_id";
+        $sSQL .= "     WHERE s.place_id = lp.parent_place_id";
         $sSQL .= "       AND p.place_id = s.address_place_id ";
         $sSQL .= "       AND s.isaddress";
         $sSQL .= "       AND p.importance is not null";
         $sSQL .= "  ) AS addressimportance, ";
         $sSQL .= "  null AS extra_place ";
-        $sSQL .= "FROM location_postcode";
+        $sSQL .= "FROM location_postcode lp";
         $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
 
         if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {

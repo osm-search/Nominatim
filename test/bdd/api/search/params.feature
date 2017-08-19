@@ -25,7 +25,6 @@ Feature: Search queries
           | type         | value |
           | city         | Montevideo |
           | state        | Montevideo |
-          | postcode     | 11000 |
           | country      | Uruguay |
           | country_code | uy |
 

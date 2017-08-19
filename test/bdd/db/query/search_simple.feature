@@ -25,7 +25,9 @@ Feature: Searching of simple objects
           | osm | class    | type        | postcode | geometry |
           | R1  | boundary | postal_code | 54321    | poly-area:1.0 |
         And searching for "12345"
-        Then exactly 0 results are returned
+        Then results contain
+         | osm_type |
+         | P        |
         When searching for "54321"
         Then results contain
          | ID | osm_type | osm_id |

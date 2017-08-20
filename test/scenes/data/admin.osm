@@ -1,0 +1,250 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='false' generator='JOSM'>
+  <node id='-30473' action='modify' lat='60.07585759191' lon='73.80849562007' />
+  <node id='-30475' action='modify' lat='60.05736451143' lon='73.80125385169' />
+  <node id='-30477' action='modify' lat='60.0371590755' lon='73.82255317047' />
+  <node id='-30479' action='modify' lat='60.03545700058' lon='73.84939031213' />
+  <node id='-30481' action='modify' lat='60.03566976474' lon='73.88432119493' />
+  <node id='-30483' action='modify' lat='60.03566976474' lon='73.91925207773' />
+  <node id='-30485' action='modify' lat='60.05141051018' lon='73.92606785974' />
+  <node id='-30487' action='modify' lat='60.07224481634' lon='73.91414024122' />
+  <node id='-30489' action='modify' lat='60.07033201023' lon='73.88048731755' />
+  <node id='-30491' action='modify' lat='60.09179158393' lon='73.87196759004' />
+  <node id='-30493' action='modify' lat='60.08754327238' lon='73.8255350751' />
+  <node id='-30495' action='modify' lat='60.06119151655' lon='73.844704462' />
+  <node id='-30497' action='modify' lat='60.05077251777' lon='73.86941167178' />
+  <node id='-30499' action='modify' lat='60.05172950176' lon='73.8830432358' />
+  <node id='-30501' action='modify' lat='60.06747055357' lon='73.86928433032' />
+  <node id='-30503' action='modify' lat='60.05910557298' lon='73.92166332136' />
+  <node id='-30505' action='modify' lat='60.05237575233' lon='73.90753676249' />
+  <node id='-30507' action='modify' lat='60.03588252753' lon='73.90498153415' />
+  <node id='-30509' action='modify' lat='60.07638874281' lon='73.84193576355'>
+    <tag k='test:id' v='c1:N' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30511' action='modify' lat='60.04885836023' lon='73.8393798453'>
+    <tag k='test:id' v='c1:E' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30513' action='modify' lat='60.05885273763' lon='73.86792093246'>
+    <tag k='test:id' v='c0' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30515' action='modify' lat='60.06310474639' lon='73.89624902644'>
+    <tag k='test:id' v='c2:N' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30517' action='modify' lat='60.04343461246' lon='73.89326712181'>
+    <tag k='test:id' v='c2:S' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30519' action='modify' lat='60.04715688821' lon='73.91627038609'>
+    <tag k='test:id' v='c2:E' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30521' action='modify' lat='60.05587600549' lon='73.89901793788'>
+    <tag k='test:id' v='c1:W' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30523' action='modify' lat='60.05970318321' lon='73.8568452867'>
+    <tag k='test:id' v='c2:W' />
+    <tag k='test:section' v='admin-areas' />
+  </node>
+  <node id='-30525' action='modify' lat='60.06129765646' lon='73.88368253486' />
+  <node id='-30527' action='modify' lat='60.05980943422' lon='73.88804889521' />
+  <node id='-30529' action='modify' lat='60.06012834464' lon='73.89539716019' />
+  <node id='-30531' action='modify' lat='60.05895899137' lon='73.90338440473' />
+  <node id='-30533' action='modify' lat='60.04970916969' lon='73.85237221676' />
+  <node id='-30535' action='modify' lat='60.05204849025' lon='73.85791003964' />
+  <node id='-30537' action='modify' lat='60.05736451143' lon='73.86174391702' />
+  <node id='-30539' action='modify' lat='60.05545084244' lon='73.87068963091' />
+  <node id='-30541' action='modify' lat='60.06049547301' lon='73.89636177639' />
+  <node id='-30543' action='modify' lat='60.06022493568' lon='73.89614625694' />
+  <node id='-30545' action='modify' lat='60.06011324975' lon='73.89670909505' />
+  <node id='-30547' action='modify' lat='60.060383788' lon='73.89692461449' />
+  <node id='100000' action='delete' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' version='1' changeset='1' lat='3.0' lon='2.0' />
+  <node id='100001' action='delete' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' version='1' changeset='1' lat='3.5' lon='2.0' />
+  <node id='100002' action='delete' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' version='1' changeset='1' lat='3.5' lon='2.5' />
+  <node id='100003' action='delete' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' version='1' changeset='1' lat='3.0' lon='2.5' />
+  <way id='-30553' action='modify'>
+    <nd ref='-30489' />
+    <nd ref='-30491' />
+    <nd ref='-30493' />
+    <nd ref='-30473' />
+    <nd ref='-30475' />
+  </way>
+  <way id='-30555' action='modify'>
+    <nd ref='-30495' />
+    <nd ref='-30501' />
+  </way>
+  <way id='-30557' action='modify'>
+    <nd ref='-30495' />
+    <nd ref='-30497' />
+  </way>
+  <way id='-30559' action='modify'>
+    <nd ref='-30497' />
+    <nd ref='-30499' />
+  </way>
+  <way id='-30561' action='modify'>
+    <nd ref='-30499' />
+    <nd ref='-30505' />
+  </way>
+  <way id='-30563' action='modify'>
+    <nd ref='-30505' />
+    <nd ref='-30507' />
+  </way>
+  <way id='-30565' action='modify'>
+    <nd ref='-30503' />
+    <nd ref='-30487' />
+    <nd ref='-30489' />
+  </way>
+  <way id='-30567' action='modify'>
+    <nd ref='-30507' />
+    <nd ref='-30483' />
+    <nd ref='-30485' />
+    <nd ref='-30503' />
+  </way>
+  <way id='-30569' action='modify'>
+    <nd ref='-30481' />
+    <nd ref='-30507' />
+  </way>
+  <way id='-30571' action='modify'>
+    <nd ref='-30475' />
+    <nd ref='-30477' />
+    <nd ref='-30479' />
+    <nd ref='-30481' />
+  </way>
+  <way id='-30573' action='modify'>
+    <nd ref='-30475' />
+    <nd ref='-30495' />
+  </way>
+  <way id='-30575' action='modify'>
+    <nd ref='-30501' />
+    <nd ref='-30489' />
+  </way>
+  <way id='-30577' action='modify'>
+    <nd ref='-30497' />
+    <nd ref='-30481' />
+  </way>
+  <way id='-30579' action='modify'>
+    <nd ref='-30505' />
+    <nd ref='-30503' />
+  </way>
+  <way id='-30581' action='modify'>
+    <nd ref='-30499' />
+    <nd ref='-30501' />
+  </way>
+  <way id='-30583' action='modify'>
+    <nd ref='-30525' />
+    <nd ref='-30527' />
+    <nd ref='-30529' />
+    <nd ref='-30531' />
+    <tag k='test:id' v='w2N' />
+    <tag k='test:section' v='admin-areas' />
+  </way>
+  <way id='-30585' action='modify'>
+    <nd ref='-30533' />
+    <nd ref='-30535' />
+    <nd ref='-30537' />
+    <nd ref='-30539' />
+    <tag k='test:id' v='w1W:2W' />
+    <tag k='test:section' v='admin-areas' />
+  </way>
+  <way id='-30587' action='modify'>
+    <nd ref='-30541' />
+    <nd ref='-30543' />
+    <nd ref='-30545' />
+    <nd ref='-30547' />
+    <nd ref='-30541' />
+    <tag k='test:id' v='building:w2N' />
+    <tag k='test:section' v='admin-areas' />
+  </way>
+  <way id='100000' action='delete' timestamp='2014-01-01T00:00:00Z' uid='1' user='test' version='1' changeset='1'>
+    <tag k='note' v='test area, do not leave' />
+  </way>
+  <relation id='-30590' action='modify'>
+    <member type='way' ref='-30553' role='' />
+    <member type='way' ref='-30571' role='' />
+    <member type='way' ref='-30569' role='' />
+    <member type='way' ref='-30567' role='' />
+    <member type='way' ref='-30565' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b0' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30592' action='modify'>
+    <member type='way' ref='-30553' role='' />
+    <member type='way' ref='-30573' role='' />
+    <member type='way' ref='-30555' role='' />
+    <member type='way' ref='-30575' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b1:N' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30594' action='modify'>
+    <member type='way' ref='-30571' role='' />
+    <member type='way' ref='-30573' role='' />
+    <member type='way' ref='-30557' role='' />
+    <member type='way' ref='-30577' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b1:W' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30596' action='modify'>
+    <member type='way' ref='-30565' role='' />
+    <member type='way' ref='-30567' role='' />
+    <member type='way' ref='-30569' role='' />
+    <member type='way' ref='-30577' role='' />
+    <member type='way' ref='-30557' role='' />
+    <member type='way' ref='-30555' role='' />
+    <member type='way' ref='-30575' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b1:E' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30598' action='modify'>
+    <member type='way' ref='-30565' role='' />
+    <member type='way' ref='-30579' role='' />
+    <member type='way' ref='-30561' role='' />
+    <member type='way' ref='-30581' role='' />
+    <member type='way' ref='-30575' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b2:N' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30600' action='modify'>
+    <member type='way' ref='-30555' role='' />
+    <member type='way' ref='-30557' role='' />
+    <member type='way' ref='-30559' role='' />
+    <member type='way' ref='-30581' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b2:W' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30602' action='modify'>
+    <member type='way' ref='-30577' role='' />
+    <member type='way' ref='-30559' role='' />
+    <member type='way' ref='-30561' role='' />
+    <member type='way' ref='-30563' role='' />
+    <member type='way' ref='-30569' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b2:S' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+  <relation id='-30604' action='modify'>
+    <member type='way' ref='-30579' role='' />
+    <member type='way' ref='-30567' role='' />
+    <member type='way' ref='-30563' role='' />
+    <tag k='boundary' v='administrative' />
+    <tag k='test:id' v='b2:E' />
+    <tag k='test:section' v='admin-areas' />
+    <tag k='type' v='multipolygon' />
+  </relation>
+</osm>

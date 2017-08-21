@@ -751,7 +751,7 @@ class Geocode
                                     }
                                 } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if ($aSearch['sPostcode'] === '' &&
+                                    if ($aSearch['sPostcode'] === '' && $aSearch['sHouseNumber'] === '' &&
                                         isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
@@ -765,13 +765,13 @@ class Geocode
 
                                         // If we have a structured search or this is not the first term,
                                         // add the postcode as an addendum.
-                                        if ($sPhraseType == 'postalcode' || sizeof($aSearch['aName'])) {
+                                        if ($aSearch['sOperator'] !== 'postcode' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']))) {
                                             $aSearch['sPostcode'] = $aSearchTerm['word'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
                                     }
                                 } elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house') {
-                                    if ($aSearch['sHouseNumber'] === '') {
+                                    if ($aSearch['sHouseNumber'] === '' && $aSearch['sOperator'] !== 'postcode') {
                                         $aSearch['sHouseNumber'] = $sToken;
                                         // sanity check: if the housenumber is not mainly made
                                         // up of numbers, add a penalty
@@ -1416,7 +1416,11 @@ class Geocode
 
                             $aOrder[] = $aSearch['oNear']->distanceSQL('centroid');
                         } elseif ($aSearch['sPostcode']) {
-                            $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."')";
+                            if (!sizeof($aSearch['aAddress'])) {
+                                $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."' AND ST_DWithin(search_name.centroid, p.geometry, 0.1))";
+                            } else {
+                                $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."')";
+                            }
                         }
                         if (sizeof($this->aExcludePlaceIDs)) {
                             $aTerms[] = "place_id not in (".join(',', $this->aExcludePlaceIDs).")";

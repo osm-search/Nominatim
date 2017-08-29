@@ -59,6 +59,13 @@ if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
 }
 
 if ($aResult['init-updates']) {
+    // sanity check that the replication URL is correct
+    $sBaseState = file_get_contents(CONST_Replication_Url.'/state.txt');
+    if ($sBaseState === false) {
+        echo "\nCannot find state.txt file at the configured replication URL.\n";
+        echo "Does the URL point to a directory containing OSM update data?\n\n";
+        fail("replication URL not reachable.");
+    }
     $sSetup = CONST_InstallPath.'/utils/setup.php';
     $iRet = -1;
     passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
@@ -75,9 +82,9 @@ if ($aResult['init-updates']) {
 
     // get the appropriate state id
     $aOutput = 0;
-    exec(CONST_Pyosmium_Binary.' -D '.$sWindBack.' --server '.CONST_Replication_Url,
-        $aOutput, $iRet);
-    if ($iRet != 0) {
+    $sCmd = CONST_Pyosmium_Binary.' -D '.$sWindBack.' --server '.CONST_Replication_Url;
+    exec($sCmd, $aOutput, $iRet);
+    if ($iRet != 0 || $aOutput[0] == 'None') {
         fail('Error running pyosmium tools');
     }
 

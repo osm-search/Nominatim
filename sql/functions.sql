@@ -844,6 +844,9 @@ BEGIN
       ELSE
         NEW.rank_address := 0;
       END IF;
+    ELSEIF NEW.class = 'leisure' and NEW.type in ('park') THEN
+      NEW.rank_search := 24;
+      NEW.rank_address := 0;
     ELSEIF NEW.class = 'natural' and NEW.type in ('peak','volcano','mountain_range') THEN
       NEW.rank_search := 18;
       NEW.rank_address := 0;

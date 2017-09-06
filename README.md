@@ -21,8 +21,13 @@ http://wiki.openstreetmap.org/wiki/Nominatim
 Installation
 ============
 
-There are detailed installation instructions in the /docs directory.
-Here is a quick summary of the necessary steps.
+The latest stable release can be downloaded from http://nominatim.org.
+There you can also find [installation instructions for the release](http://nominatim.org/release-docs/latest/Installation).
+
+Detailed installation instructions for the development version can be
+found in the `/docs` directory, see [docs/Installation.md](docs/Installation.md).
+
+A quick summary of the necessary steps:
 
 1. Compile Nominatim:
 
@@ -31,19 +36,11 @@ Here is a quick summary of the necessary steps.
         cmake ..
         make
 
-   For more detailed installation instructions see [docs/Installation.md](docs/Installation.md).
-   There are also step-by-step instructions for
-     [Ubuntu 16.04](docs/Install-on-Ubuntu-16.md) and
-     [CentOS 7.2](docs/Install-on-Centos-7.md).
-
 2. Get OSM data and import:
 
         ./build/utils/setup.php --osm-file <your planet file> --all
 
-   Details can be found in [docs/Import_and_update.md](docs/Import-and-Update.md)
-
 3. Point your webserver to the ./build/website directory.
-
 
 
 License

@@ -66,7 +66,7 @@ Feature: Search queries
         Then there are duplicates
 
     Scenario: Search with bounded viewbox in right area
-        When sending json search query "restaurant" with address
+        When sending json search query "bar" with address
           | bounded | viewbox |
           | 1       | -56.16786,-34.84061,-56.12525,-34.86526 |
         Then result addresses contain
@@ -74,7 +74,7 @@ Feature: Search queries
           | Montevideo |
 
     Scenario: Search with bounded viewboxlbrt in right area
-        When sending json search query "restaurant" with address
+        When sending json search query "bar" with address
           | bounded | viewboxlbrt |
           | 1       | -56.16786,-34.86526,-56.12525,-34.84061 |
         Then result addresses contain

@@ -116,25 +116,6 @@ function getTokensFromSets($aSets)
 }
 
 
-function gbPostcodeCalculate($sPostcode, $sPostcodeSector, $sPostcodeEnd, &$oDB)
-{
-    // Try an exact match on the gb_postcode table
-    $sSQL = 'select \'AA\', ST_X(ST_Centroid(geometry)) as lon,ST_Y(ST_Centroid(geometry)) as lat from gb_postcode where postcode = \''.$sPostcode.'\'';
-    $aNearPostcodes = chksql($oDB->getAll($sSQL));
-
-    if (sizeof($aNearPostcodes)) {
-        $aPostcodes = array();
-        foreach ($aNearPostcodes as $aPostcode) {
-            $aPostcodes[] = array('lat' => $aPostcode['lat'], 'lon' => $aPostcode['lon'], 'radius' => 0.005);
-        }
-
-        return $aPostcodes;
-    }
-
-    return false;
-}
-
-
 function getClassTypes()
 {
     return array(
@@ -516,7 +497,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
     echo "<table border=\"1\">";
     echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>";
     echo "<th>Address Tokens</th><th>Address Not</th><th>country</th>";
-    echo "<th>operator</th><th>class</th><th>type</th><th>house#</th>";
+    echo "<th>operator</th><th>class</th><th>type</th><th>postcode</th><th>house#</th>";
     echo "<th>Lat</th><th>Lon</th><th>Radius</th></tr>";
     foreach ($aData as $iRank => $aRankedSet) {
         foreach ($aRankedSet as $aRow) {
@@ -561,6 +542,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
             echo "<td>".$aRow['sClass']."</td>";
             echo "<td>".$aRow['sType']."</td>";
 
+            echo "<td>".$aRow['sPostcode']."</td>";
             echo "<td>".$aRow['sHouseNumber']."</td>";
 
             echo "<td>".$aRow['fLat']."</td>";

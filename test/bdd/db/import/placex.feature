@@ -79,13 +79,11 @@ Feature: Import into placex
          | osm  | class | type     | postcode | geometry |
          | N1   | place | postcode | EA452CD  | country:gb |
          | N2   | place | postcode | E45 23   | country:gb |
-         | N3   | place | postcode | y45      | country:gb |
         When importing
         Then placex contains
          | object | country_code | rank_search | rank_address |
          | N1     | gb           | 30          | 30 |
          | N2     | gb           | 30          | 30 |
-         | N3     | gb           | 30          | 30 |
 
     Scenario: search and address rank for DE postcodes correctly assigned
         Given the places

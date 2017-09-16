@@ -6,12 +6,12 @@ BEGIN
 -- start
   IF in_partition = -partition- THEN
     FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, centroid FROM (
+      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid FROM (
         SELECT * FROM location_area_large_-partition- WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
         UNION ALL
         SELECT * FROM location_area_country WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
       ) as location_area
-      GROUP BY place_id, keywords, rank_address, rank_search, isguess, centroid
+      GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
         ST_Distance(feature, centroid) *
           CASE 
@@ -55,8 +55,8 @@ $$
 LANGUAGE plpgsql;
 
 create or replace function insertLocationAreaLarge(
-  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_keywords INTEGER[], 
-  in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, 
+  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), in_keywords INTEGER[],
+  in_rank_search INTEGER, in_rank_address INTEGER, in_estimate BOOLEAN, postcode TEXT,
   in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
@@ -72,8 +72,8 @@ BEGIN
 
 -- start
   IF in_partition = -partition- THEN
-    INSERT INTO location_area_large_-partition- (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, centroid, geometry)
-      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+    INSERT INTO location_area_large_-partition- (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
+      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
 -- end
@@ -172,29 +172,6 @@ END
 $$
 LANGUAGE plpgsql;
 
-
-create or replace function getNearestPostcode(in_partition INTEGER, point GEOMETRY) 
-  RETURNS TEXT AS $$
-DECLARE
-  out_postcode TEXT;
-BEGIN
-
--- start
-  IF in_partition = -partition- THEN
-    SELECT postcode
-        FROM location_area_large_-partition- join placex using (place_id)
-        WHERE st_contains(location_area_large_-partition-.geometry, point)
-        AND class = 'place' and type = 'postcode' 
-      ORDER BY st_distance(location_area_large_-partition-.centroid, point) ASC limit 1
-      INTO out_postcode;
-    RETURN out_postcode;
-  END IF;
--- end
-
-  RAISE EXCEPTION 'Unknown partition %', in_partition;
-END
-$$
-LANGUAGE plpgsql;
 
 create or replace function insertSearchName(
   in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), 

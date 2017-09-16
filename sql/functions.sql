@@ -83,6 +83,26 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION getorcreate_postcode_id(postcode TEXT)
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  lookup_token TEXT;
+  lookup_word TEXT;
+  return_word_id INTEGER;
+BEGIN
+  lookup_word := upper(trim(postcode));
+  lookup_token := ' ' || make_standard_name(lookup_word);
+  SELECT min(word_id) FROM word WHERE word_token = lookup_token and class='place' and type='postcode' into return_word_id;
+  IF return_word_id IS NULL THEN
+    return_word_id := nextval('seq_word');
+    INSERT INTO word VALUES (return_word_id, lookup_token, lookup_word, 'place', 'postcode', null, 0);
+  END IF;
+  RETURN return_word_id;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION getorcreate_country(lookup_word TEXT, lookup_country_code varchar(2))
   RETURNS INTEGER
   AS $$
@@ -235,6 +255,99 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
+                                      OUT rank_search SMALLINT, OUT rank_address SMALLINT)
+AS $$
+DECLARE
+  part TEXT;
+BEGIN
+    rank_search := 30;
+    rank_address := 30;
+    postcode := upper(postcode);
+
+    IF country_code = 'gb' THEN
+        IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
+            rank_search := 25;
+            rank_address := 5;
+        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
+            rank_search := 23;
+            rank_address := 5;
+        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
+            rank_search := 21;
+            rank_address := 5;
+        END IF;
+
+    ELSEIF country_code = 'sg' THEN
+        IF postcode ~ '^([0-9]{6})$' THEN
+            rank_search := 25;
+            rank_address := 11;
+        END IF;
+
+    ELSEIF country_code = 'de' THEN
+        IF postcode ~ '^([0-9]{5})$' THEN
+            rank_search := 21;
+            rank_address := 11;
+        END IF;
+
+    ELSE
+        -- Guess at the postcode format and coverage (!)
+        IF postcode ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
+            rank_search := 21;
+            rank_address := 11;
+        ELSE
+            -- Does it look splitable into and area and local code?
+            part := substring(postcode from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
+
+            IF part IS NOT NULL THEN
+                rank_search := 25;
+                rank_address := 11;
+            ELSEIF postcode ~ '^[- :A-Z0-9]{6,}$' THEN
+                rank_search := 21;
+                rank_address := 11;
+            END IF;
+        END IF;
+    END IF;
+
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Find the nearest artificial postcode for the given geometry.
+-- TODO For areas there should not be more than two inside the geometry.
+CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY) RETURNS TEXT
+  AS $$
+DECLARE
+  outcode TEXT;
+  cnt INTEGER;
+BEGIN
+    -- If the geometry is an area then only one postcode must be within
+    -- that area, otherwise consider the area as not having a postcode.
+    IF ST_GeometryType(geom) in ('ST_Polygon','ST_MultiPolygon') THEN
+        SELECT min(postcode), count(*) FROM
+              (SELECT postcode FROM location_postcode
+                WHERE ST_Contains(geom, location_postcode.geometry) LIMIT 2) sub
+          INTO outcode, cnt;
+
+        IF cnt = 1 THEN
+            RETURN outcode;
+        ELSE
+            RETURN null;
+        END IF;
+    END IF;
+
+    SELECT postcode FROM location_postcode
+     WHERE ST_DWithin(geom, location_postcode.geometry, 0.05)
+          AND location_postcode.country_code = country
+     ORDER BY ST_Distance(geom, location_postcode.geometry) LIMIT 1
+    INTO outcode;
+
+    RETURN outcode;
+END;
+$$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION create_country(src HSTORE, lookup_country_code varchar(2)) RETURNS VOID
   AS $$
@@ -515,36 +628,38 @@ CREATE OR REPLACE FUNCTION add_location(
     keywords INTEGER[],
     rank_search INTEGER,
     rank_address INTEGER,
+    in_postcode TEXT,
     geometry GEOMETRY
   ) 
   RETURNS BOOLEAN
   AS $$
 DECLARE
   locationid INTEGER;
-  isarea BOOLEAN;
   centroid GEOMETRY;
   diameter FLOAT;
   x BOOLEAN;
   splitGeom RECORD;
   secgeo GEOMETRY;
+  postcode TEXT;
 BEGIN
 
   IF rank_search > 25 THEN
     RAISE EXCEPTION 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
   END IF;
 
---  RAISE WARNING 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
-
   x := deleteLocationArea(partition, place_id, rank_search);
 
-  isarea := false;
-  IF (ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(geometry)) THEN
+  -- add postcode only if it contains a single entry, i.e. ignore postcode lists
+  postcode := NULL;
+  IF in_postcode is not null AND in_postcode not similar to '%(,|;)%' THEN
+      postcode := upper(trim (in_postcode));
+  END IF;
 
-    isArea := true;
+  IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
     centroid := ST_Centroid(geometry);
 
     FOR secgeo IN select split_geometry(geometry) AS geom LOOP
-      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, centroid, secgeo);
+      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, postcode, centroid, secgeo);
     END LOOP;
 
   ELSE
@@ -569,7 +684,7 @@ BEGIN
 --    RAISE WARNING 'adding % diameter %', place_id, diameter;
 
     secgeo := ST_Buffer(geometry, diameter);
-    x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, ST_Centroid(geometry), secgeo);
+    x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, ST_Centroid(geometry), secgeo);
 
   END IF;
 
@@ -722,54 +837,10 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        NEW.postcode := NEW.address->'postcode';
-        NEW.name := hstore('ref', NEW.postcode);
+        NEW.name := hstore('ref', NEW.address->'postcode');
 
-        IF NEW.country_code = 'gb' THEN
-
-          IF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            NEW.rank_search := 25;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
-            NEW.rank_search := 23;
-            NEW.rank_address := 5;
-          ELSEIF NEW.postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 5;
-          END IF;
-
-        ELSEIF NEW.country_code = 'sg' THEN
-
-          IF NEW.postcode ~ '^([0-9]{6})$' THEN
-            NEW.rank_search := 25;
-            NEW.rank_address := 11;
-          END IF;
-
-        ELSEIF NEW.country_code = 'de' THEN
-
-          IF NEW.postcode ~ '^([0-9]{5})$' THEN
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          END IF;
-
-        ELSE
-          -- Guess at the postcode format and coverage (!)
-          IF upper(NEW.postcode) ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
-            NEW.rank_search := 21;
-            NEW.rank_address := 11;
-          ELSE
-            -- Does it look splitable into and area and local code?
-            postcode := substring(upper(NEW.postcode) from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
-
-            IF postcode IS NOT NULL THEN
-              NEW.rank_search := 25;
-              NEW.rank_address := 11;
-            ELSEIF NEW.postcode ~ '^[- :A-Z0-9]{6,}$' THEN
-              NEW.rank_search := 21;
-              NEW.rank_address := 11;
-            END IF;
-          END IF;
-        END IF;
+        SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
+          INTO NEW.rank_search, NEW.rank_address;
 
     ELSEIF NEW.class = 'place' THEN
       IF NEW.type in ('continent') THEN
@@ -988,8 +1059,8 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
+  interpol_postcode TEXT;
   postcode TEXT;
-  seg_postcode TEXT;
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
@@ -1008,9 +1079,11 @@ BEGIN
                                                  NEW.address->'place',
                                                  NEW.partition, place_centroid, NEW.linegeo);
 
-
-  IF NEW.address is not NULL and NEW.address ? 'postcode' THEN
-      NEW.postcode = NEW.address->'postcode';
+  IF NEW.address is not NULL AND NEW.address ? 'postcode' AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
+    interpol_postcode := NEW.address->'postcode';
+    housenum := getorcreate_postcode_id(NEW.address->'postcode');
+  ELSE
+    interpol_postcode := NULL;
   END IF;
 
   -- if the line was newly inserted, split the line as necessary
@@ -1023,7 +1096,6 @@ BEGIN
 
       linegeo := NEW.linegeo;
       startnumber := NULL;
-      postcode := NEW.postcode;
 
       FOR nodeidpos in 1..array_upper(waynodes, 1) LOOP
 
@@ -1056,15 +1128,24 @@ BEGIN
               sectiongeo := ST_Reverse(sectiongeo);
             END IF;
 
-            seg_postcode := coalesce(postcode,
-                                     prevnode.address->'postcode',
-                                     nextnode.address->'postcode');
+            -- determine postcode
+            postcode := coalesce(interpol_postcode,
+                                 prevnode.address->'postcode',
+                                 nextnode.address->'postcode',
+                                 postcode);
+
+            IF postcode is NULL THEN
+                SELECT placex.postcode FROM placex WHERE place_id = NEW.parent_place_id INTO postcode;
+            END IF;
+            IF postcode is NULL THEN
+                postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);
+            END IF;
 
             IF NEW.startnumber IS NULL THEN
                 NEW.startnumber := startnumber;
                 NEW.endnumber := endnumber;
                 NEW.linegeo := sectiongeo;
-                NEW.postcode := seg_postcode;
+                NEW.postcode := upper(trim(postcode));
              ELSE
               insert into location_property_osmline
                      (linegeo, partition, osm_id, parent_place_id,
@@ -1073,7 +1154,7 @@ BEGIN
                       geometry_sector, indexed_status)
               values (sectiongeo, NEW.partition, NEW.osm_id, NEW.parent_place_id,
                       startnumber, endnumber, NEW.interpolationtype,
-                      NEW.address, seg_postcode,
+                      NEW.address, postcode,
                       NEW.country_code, NEW.geometry_sector, 0);
              END IF;
           END IF;
@@ -1097,7 +1178,42 @@ END;
 $$
 LANGUAGE plpgsql;
 
+-- Trigger for updates of location_postcode
+--
+-- Computes the parent object the postcode most likely refers to.
+-- This will be the place that determines the address displayed when
+-- searching for this postcode.
+CREATE OR REPLACE FUNCTION postcode_update() RETURNS
+TRIGGER
+  AS $$
+DECLARE
+  partition SMALLINT;
+  location RECORD;
+BEGIN
+    IF NEW.indexed_status != 0 OR OLD.indexed_status = 0 THEN
+        RETURN NEW;
+    END IF;
 
+    NEW.indexed_date = now();
+
+    partition := get_partition(NEW.country_code);
+
+    SELECT * FROM get_postcode_rank(NEW.country_code, NEW.postcode)
+      INTO NEW.rank_search, NEW.rank_address;
+
+    NEW.parent_place_id = 0;
+    FOR location IN
+      SELECT place_id
+        FROM getNearFeatures(partition, NEW.geometry, NEW.rank_search, '{}'::int[])
+        WHERE NOT isguess ORDER BY rank_address DESC LIMIT 1
+    LOOP
+        NEW.parent_place_id = location.place_id;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION placex_update() RETURNS
 TRIGGER
@@ -1161,11 +1277,6 @@ BEGIN
 
   --DEBUG: RAISE WARNING 'placex_update % % (%)',NEW.osm_type,NEW.osm_id,NEW.place_id;
 
-  IF NEW.class = 'place' AND NEW.type = 'postcodearea' THEN
-    -- Silently do nothing
-    RETURN NEW;
-  END IF;
-
   NEW.indexed_date = now();
 
   result := deleteSearchName(NEW.partition, NEW.place_id);
@@ -1202,13 +1313,16 @@ BEGIN
       addr_street = NEW.address->'street';
       addr_place = NEW.address->'place';
 
-      NEW.postcode = NEW.address->'postcode';
+      IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(,|;)%' THEN
+        i := getorcreate_postcode_id(NEW.address->'postcode');
+      END IF;
   END IF;
 
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   place_centroid := ST_PointOnSurface(NEW.geometry);
   NEW.centroid := null;
+  NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(place_centroid);
 
   -- recalculate country and partition
@@ -1445,25 +1559,16 @@ BEGIN
       NEW.country_code := location.country_code;
       --DEBUG: RAISE WARNING 'Got parent details from search name';
 
-      -- Merge the postcode into the parent's address if necessary
-      IF NEW.postcode IS NOT NULL THEN
-        --DEBUG: RAISE WARNING 'Merging postcode into parent';
-        isin_tokens := '{}'::int[];
-        address_street_word_id := getorcreate_word_id(make_standard_name(NEW.postcode));
-        IF address_street_word_id is not null
-           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-           isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-        address_street_word_id := getorcreate_name_id(make_standard_name(NEW.postcode));
-        IF address_street_word_id is not null
-           and not ARRAY[address_street_word_id] <@ location.nameaddress_vector THEN
-           isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-        IF isin_tokens != '{}'::int[] THEN
-           UPDATE search_name
-              SET nameaddress_vector = search_name.nameaddress_vector || isin_tokens
-            WHERE place_id = NEW.parent_place_id;
-        END IF;
+      -- determine postcode
+      IF NEW.rank_search > 4 THEN
+          IF NEW.address is not null AND NEW.address ? 'postcode' THEN
+              NEW.postcode = upper(trim(NEW.address->'postcode'));
+          ELSE
+             SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
+          END IF;
+          IF NEW.postcode is null THEN
+            NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
+          END IF;
       END IF;
 
       -- If there is no name it isn't searchable, don't bother to create a search record
@@ -1481,7 +1586,7 @@ BEGIN
       -- Just be happy with inheriting from parent road only
 
       IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
         --DEBUG: RAISE WARNING 'Place added to location table';
       END IF;
 
@@ -1668,6 +1773,7 @@ BEGIN
     isin := avals(NEW.address);
     IF array_upper(isin, 1) IS NOT NULL THEN
       FOR i IN 1..array_upper(isin, 1) LOOP
+        -- TODO further split terms with comma and semicolon
         address_street_word_id := get_name_id(make_standard_name(isin[i]));
         IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
           nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
@@ -1682,26 +1788,6 @@ BEGIN
       END LOOP;
     END IF;
   END IF;
-  --DEBUG: RAISE WARNING '"address:* tokens collected';
-  IF NEW.postcode IS NOT NULL THEN
-    isin := regexp_split_to_array(NEW.postcode, E'[;,]');
-    IF array_upper(isin, 1) IS NOT NULL THEN
-      FOR i IN 1..array_upper(isin, 1) LOOP
-        address_street_word_id := get_name_id(make_standard_name(isin[i]));
-        IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-          isin_tokens := isin_tokens || address_street_word_id;
-        END IF;
-
-        -- merge into address vector
-        address_street_word_id := get_word_id(make_standard_name(isin[i]));
-        IF address_street_word_id IS NOT NULL THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-        END IF;
-      END LOOP;
-    END IF;
-  END IF;
-  --DEBUG: RAISE WARNING 'postcode tokens collected';
 
   -- %NOTIGERDATA% IF 0 THEN
   -- for the USA we have an additional address table.  Merge in zip codes from there too
@@ -1773,6 +1859,11 @@ BEGIN
         VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
 
       IF location_isaddress THEN
+        -- add postcode if we have one
+        -- (If multiple postcodes are available, we end up with the highest ranking one.)
+        IF location.postcode is not null THEN
+            NEW.postcode = location.postcode;
+        END IF;
 
         address_havelevel[location.rank_address] := true;
         IF NOT location.isguess THEN
@@ -1807,6 +1898,11 @@ BEGIN
               nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
               INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
                 VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
+              IF NEW.postcode is null AND location.postcode is not null
+                 AND NOT address_havelevel[location.rank_address] THEN
+                NEW.postcode := location.postcode;
+              END IF;
+
               address_havelevel[location.rank_address] := true;
 
               IF location.rank_address > parent_place_id_rank THEN
@@ -1849,11 +1945,20 @@ BEGIN
   END IF;
   --DEBUG: RAISE WARNING 'search terms for long ways added';
 
+  IF NEW.address is not null AND NEW.address ? 'postcode' 
+     AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
+    NEW.postcode := upper(trim(NEW.address->'postcode'));
+  END IF;
+
+  IF NEW.postcode is null AND NEW.rank_search > 8 THEN
+    NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
+  END IF;
+
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, NEW.geometry);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
       --DEBUG: RAISE WARNING 'added to location (full)';
     END IF;
 
@@ -2250,46 +2355,6 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-
-CREATE OR REPLACE FUNCTION get_address_postcode(for_place_id BIGINT) RETURNS TEXT
-  AS $$
-DECLARE
-  result TEXT[];
-  search TEXT[];
-  for_postcode TEXT;
-  found INTEGER;
-  location RECORD;
-BEGIN
-
-  found := 1000;
-  search := ARRAY['ref'];
-  result := '{}';
-
-  select postcode from placex where place_id = for_place_id limit 1 into for_postcode;
-
-  FOR location IN 
-    select rank_address,name,distance,length(name::text) as namelength 
-      from place_addressline join placex on (address_place_id = placex.place_id) 
-      where place_addressline.place_id = for_place_id and rank_address in (5,11)
-      order by rank_address desc,rank_search desc,fromarea desc,distance asc,namelength desc
-  LOOP
-    IF array_upper(search, 1) IS NOT NULL AND array_upper(location.name, 1) IS NOT NULL THEN
-      FOR j IN 1..array_upper(search, 1) LOOP
-        FOR k IN 1..array_upper(location.name, 1) LOOP
-          IF (found > location.rank_address AND location.name[k].key = search[j] AND location.name[k].value != '') AND NOT result @> ARRAY[trim(location.name[k].value)] AND (for_postcode IS NULL OR location.name[k].value ilike for_postcode||'%') THEN
-            result[(100 - location.rank_address)] := trim(location.name[k].value);
-            found := location.rank_address;
-          END IF;
-        END LOOP;
-      END LOOP;
-    END IF;
-  END LOOP;
-
-  RETURN array_to_string(result,', ');
-END;
-$$
-LANGUAGE plpgsql;
-
 --housenumber only needed for tiger data
 CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT, housenumber INTEGER, languagepref TEXT[]) RETURNS TEXT
   AS $$
@@ -2373,10 +2438,18 @@ BEGIN
   -- %NOAUXDATA% IF 0 THEN
   IF for_place_id IS NULL THEN
     select parent_place_id,'us', housenumber, 30, postcode, null, 'place', 'house' from location_property_aux
-      WHERE place_id = in_place_id 
+      WHERE place_id = in_place_id
       INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
   -- %NOAUXDATA% END IF;
+
+  -- postcode table
+  IF for_place_id IS NULL THEN
+    select parent_place_id, country_code, rank_address, postcode, 'place', 'postcode'
+      FROM location_postcode
+      WHERE place_id = in_place_id
+      INTO for_place_id, searchcountrycode, searchrankaddress, searchpostcode, searchclass, searchtype;
+  END IF;
 
   IF for_place_id IS NULL THEN
     select parent_place_id, country_code, housenumber, rank_search, postcode, name, class, type from placex 
@@ -2396,9 +2469,8 @@ BEGIN
   found := 1000;
   hadcountry := false;
   FOR location IN 
-    select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
-      class, type, admin_level, true as fromarea, true as isaddress,
+    select placex.place_id, osm_type, osm_id, name,
+      class, type, admin_level, true as isaddress,
       CASE WHEN rank_address = 0 THEN 100 WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
       0 as distance, country_code, postcode
       from placex
@@ -2408,13 +2480,9 @@ BEGIN
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
-    IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
+    IF location.type in ('postcode', 'postal_code') THEN
       location.isaddress := FALSE;
-    END IF;
-    IF searchpostcode IS NULL and location.postcode IS NOT NULL THEN
-      searchpostcode := location.postcode;
-    END IF;
-    IF location.rank_address = 4 AND location.isaddress THEN
+    ELSEIF location.rank_address = 4 THEN
       hadcountry := true;
     END IF;
     IF location.rank_address < 4 AND NOT hadcountry THEN
@@ -2425,15 +2493,14 @@ BEGIN
       END IF;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id, location.name, location.class, 
-                           location.type, location.admin_level, location.fromarea, location.isaddress, location.rank_address, 
+                           location.type, location.admin_level, true, location.isaddress, location.rank_address,
                            location.distance)::addressline;
     RETURN NEXT countrylocation;
     found := location.rank_address;
   END LOOP;
 
   FOR location IN 
-    select placex.place_id, osm_type, osm_id,
-      CASE WHEN class = 'place' and type = 'postcode' THEN hstore('name', postcode) ELSE name END as name,
+    select placex.place_id, osm_type, osm_id, name,
       CASE WHEN extratags ? 'place' THEN 'place' ELSE class END as class,
       CASE WHEN extratags ? 'place' THEN extratags->'place' ELSE type END as type,
       admin_level, fromarea, isaddress,
@@ -2450,11 +2517,8 @@ BEGIN
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
-    IF searchpostcode IS NOT NULL and location.type = 'postcode' THEN
+    IF location.type in ('postcode', 'postal_code') THEN
       location.isaddress := FALSE;
-    END IF;
-    IF searchpostcode IS NULL and location.isaddress and location.type != 'postcode' and location.postcode IS NOT NULL and location.postcode not similar to '%(,|;)%' THEN
-      searchpostcode := location.postcode;
     END IF;
     IF location.rank_address = 4 AND location.isaddress THEN
       hadcountry := true;
@@ -2489,7 +2553,6 @@ BEGIN
 
   IF searchhousename IS NOT NULL THEN
     location := ROW(in_place_id, null, null, searchhousename, searchclass, searchtype, null, true, true, 29, 0)::addressline;
---    location := ROW(in_place_id, null, null, searchhousename, 'place', 'house_name', null, true, true, 29, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
@@ -2635,9 +2698,7 @@ BEGIN
   IF out_postcode IS NULL THEN
     SELECT postcode from placex where place_id = out_parent_place_id INTO out_postcode;
   END IF;
-  IF out_postcode IS NULL THEN
-    out_postcode := getNearestPostcode(out_partition, place_centroid);
-  END IF;
+  -- XXX look into postcode table
 
   newpoints := 0;
   insert into location_property_aux (place_id, partition, parent_place_id, housenumber, postcode, centroid)

@@ -124,6 +124,8 @@
                         kv('Wikipedia Calculated' , wikipediaLink($aPointDetails) );
                     }
 
+                    kv('Computed Postcode', $aPointDetails['postcode']);
+                    kv('Address Tags'    , hash_to_subtable($aPointDetails['aAddressTags']) );
                     kv('Extra Tags'      , hash_to_subtable($aPointDetails['aExtraTags']) );
 
                 ?>

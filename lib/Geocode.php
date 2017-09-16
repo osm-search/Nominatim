@@ -51,10 +51,22 @@ class Geocode
     protected $sQuery = false;
     protected $aStructuredQuery = false;
 
+    protected $oNormalizer = null;
+
 
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
+        $this->oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
+    }
+
+    private function normTerm($sTerm)
+    {
+        if ($this->oNormalizer === null) {
+            return null;
+        }
+
+        return $this->oNormalizer->transliterate($sTerm);
     }
 
     public function setReverseInPlan($bReverse)
@@ -410,8 +422,15 @@ class Geocode
         $sPlaceIDs = join(',', array_keys($aPlaceIDs));
 
         $sImportanceSQL = '';
-        if ($this->sViewboxSmallSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
-        if ($this->sViewboxLargeSQL) $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+        $sImportanceSQLGeom = '';
+        if ($this->sViewboxSmallSQL) {
+            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, geometry) THEN 1 ELSE 0.75 END * ";
+        }
+        if ($this->sViewboxLargeSQL) {
+            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
+            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, geometry) THEN 1 ELSE 0.75 END * ";
+        }
 
         $sSQL  = "SELECT ";
         $sSQL .= "    osm_type,";
@@ -475,6 +494,35 @@ class Geocode
         if ($this->bIncludeExtraTags) $sSQL .= "extratags, ";
         if ($this->bIncludeNameDetails) $sSQL .= "name, ";
         $sSQL .= "     extratags->'place' ";
+
+        // postcode table
+        $sSQL .= "UNION ";
+        $sSQL .= "SELECT";
+        $sSQL .= "  'P' as osm_type,";
+        $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,";
+        $sSQL .= "  'place' as class, 'postcode' as type,";
+        $sSQL .= "  null as admin_level, rank_search, rank_address,";
+        $sSQL .= "  place_id, parent_place_id, country_code,";
+        $sSQL .= "  get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) AS langaddress,";
+        $sSQL .= "  postcode as placename,";
+        $sSQL .= "  postcode as ref,";
+        if ($this->bIncludeExtraTags) $sSQL .= "null AS extra,";
+        if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
+        $sSQL .= "  ST_x(st_centroid(geometry)) AS lon, ST_y(st_centroid(geometry)) AS lat,";
+        $sSQL .=    $sImportanceSQLGeom."(0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .= "  (";
+        $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
+        $sSQL .= "     FROM ";
+        $sSQL .= "       place_addressline s, ";
+        $sSQL .= "       placex p";
+        $sSQL .= "     WHERE s.place_id = lp.parent_place_id";
+        $sSQL .= "       AND p.place_id = s.address_place_id ";
+        $sSQL .= "       AND s.isaddress";
+        $sSQL .= "       AND p.importance is not null";
+        $sSQL .= "  ) AS addressimportance, ";
+        $sSQL .= "  null AS extra_place ";
+        $sSQL .= "FROM location_postcode lp";
+        $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
 
         if (30 >= $this->iMinAddressRank && 30 <= $this->iMaxAddressRank) {
             // only Tiger housenumbers and interpolation lines need to be interpolated, because they are saved as lines
@@ -666,12 +714,12 @@ class Geocode
 
              Score how good the search is so they can be ordered
          */
-        foreach ($aPhrases as $iPhrase => $sPhrase) {
+        foreach ($aPhrases as $iPhrase => $aPhrase) {
             $aNewPhraseSearches = array();
             if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
             else $sPhraseType = '';
 
-            foreach ($aPhrases[$iPhrase]['wordsets'] as $iWordSet => $aWordset) {
+            foreach ($aPhrase['wordsets'] as $iWordSet => $aWordset) {
                 // Too many permutations - too expensive
                 if ($iWordSet > 120) break;
 
@@ -701,42 +749,29 @@ class Geocode
                                         }
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
-                                } elseif (isset($aSearchTerm['lat']) && $aSearchTerm['lat'] !== '' && $aSearchTerm['lat'] !== null) {
-                                    if ($aSearch['oNear'] === false) {
-                                        $aSearch['oNear'] = new NearPoint(
-                                            $aSearchTerm['lat'],
-                                            $aSearchTerm['lon'],
-                                            $aSearchTerm['radius']
-                                        );
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                    }
-                                } elseif ($sPhraseType == 'postalcode') {
+                                } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
-                                        // If we already have a name try putting the postcode first
-                                        if (sizeof($aSearch['aName'])) {
+                                    if ($aSearch['sPostcode'] === '' && $aSearch['sHouseNumber'] === '' &&
+                                        isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
+                                        // If we have structured search or this is the first term,
+                                        // make the postcode the primary search element.
+                                        if ($aSearch['sOperator'] === '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {
                                             $aNewSearch = $aSearch;
+                                            $aNewSearch['sOperator'] = 'postcode';
                                             $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
-                                            $aNewSearch['aName'] = array();
-                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
+                                            $aNewSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word'];
                                             if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
                                         }
 
-                                        if (sizeof($aSearch['aName'])) {
-                                            if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false)) {
-                                                $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            } else {
-                                                $aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                                $aSearch['iSearchRank'] += 1000; // skip;
-                                            }
-                                        } else {
-                                            $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            //$aSearch['iNamePhrase'] = $iPhrase;
+                                        // If we have a structured search or this is not the first term,
+                                        // add the postcode as an addendum.
+                                        if ($aSearch['sOperator'] !== 'postcode' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']))) {
+                                            $aSearch['sPostcode'] = $aSearchTerm['word'];
+                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         }
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                     }
                                 } elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house') {
-                                    if ($aSearch['sHouseNumber'] === '') {
+                                    if ($aSearch['sHouseNumber'] === '' && $aSearch['sOperator'] !== 'postcode') {
                                         $aSearch['sHouseNumber'] = $sToken;
                                         // sanity check: if the housenumber is not mainly made
                                         // up of numbers, add a penalty
@@ -919,13 +954,7 @@ class Geocode
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
-        $oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
-        if ($oNormalizer !== null) {
-            $sNormQuery = $oNormalizer->transliterate($this->sQuery);
-        } else {
-            $sNormQuery = null;
-        }
-
+        $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
         $sCountryCodesSQL = false;
         if ($this->aCountryCodes) {
@@ -985,6 +1014,7 @@ class Geocode
                            'sClass' => '',
                            'sType' => '',
                            'sHouseNumber' => '',
+                           'sPostcode' => '',
                            'oNear' => $oNearPoint
                           )
                          );
@@ -1109,21 +1139,9 @@ class Geocode
                 }
                 if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
-                // Try and calculate GB postcodes we might be missing
+                // US ZIP+4 codes - if there is no token, merge in the 5-digit ZIP code
                 foreach ($aTokens as $sToken) {
-                    // Source of gb postcodes is now definitive - always use
-                    if (preg_match('/^([A-Z][A-Z]?[0-9][0-9A-Z]? ?[0-9])([A-Z][A-Z])$/', strtoupper(trim($sToken)), $aData)) {
-                        if (substr($aData[1], -2, 1) != ' ') {
-                            $aData[0] = substr($aData[0], 0, strlen($aData[1])-1).' '.substr($aData[0], strlen($aData[1])-1);
-                            $aData[1] = substr($aData[1], 0, -1).' '.substr($aData[1], -1, 1);
-                        }
-                        $aGBPostcodeLocation = gbPostcodeCalculate($aData[0], $aData[1], $aData[2], $this->oDB);
-                        if ($aGBPostcodeLocation) {
-                            $aValidTokens[$sToken] = $aGBPostcodeLocation;
-                        }
-                    } elseif (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
-                        // US ZIP+4 codes - if there is no token,
-                        // merge in the 5-digit ZIP code
+                    if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
                         if (isset($aValidTokens[$aData[1]])) {
                             foreach ($aValidTokens[$aData[1]] as $aToken) {
                                 if (!$aToken['class']) {
@@ -1190,7 +1208,6 @@ class Geocode
                 ksort($aGroupedSearches);
             }
 
-            if (CONST_Debug) var_Dump($aGroupedSearches);
             if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0) {
                 $aCopyGroupedSearches = $aGroupedSearches;
                 foreach ($aCopyGroupedSearches as $iGroup => $aSearches) {
@@ -1247,13 +1264,16 @@ class Geocode
                     if (CONST_Debug) echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
                     if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
 
+                    if ($sCountryCodesSQL && $aSearch['sCountryCode'] && !in_array($aSearch['sCountryCode'], $this->aCountryCodes)) {
+                        continue;
+                    }
+
                     // No location term?
                     if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['oNear']) {
                         if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
                                 $sSQL = "SELECT place_id FROM placex WHERE country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
-                                if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if ($bBoundingBoxSearch)
                                     $sSQL .= " AND _st_intersects($this->sViewboxSmallSQL, geometry)";
                                 $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
@@ -1312,6 +1332,24 @@ class Geocode
                         // If a coordinate is given, the search must either
                         // be for a name or a special search. Ignore everythin else.
                         $aPlaceIDs = array();
+                    } elseif ($aSearch['sOperator'] == 'postcode') {
+                        $sSQL  = "SELECT p.place_id FROM location_postcode p ";
+                        if (sizeof($aSearch['aAddress'])) {
+                            $sSQL .= ", search_name s ";
+                            $sSQL .= "WHERE s.place_id = p.parent_place_id ";
+                            $sSQL .= "AND array_cat(s.nameaddress_vector, s.name_vector) @> ARRAY[".join($aSearch['aAddress'], ",")."] AND ";
+                        } else {
+                            $sSQL .= " WHERE ";
+                        }
+                        $sSQL .= "p.postcode = '".pg_escape_string(reset($aSearch['aName']))."'";
+                        if ($aSearch['sCountryCode']) {
+                            $sSQL .= " AND p.country_code = '".$aSearch['sCountryCode']."'";
+                        } elseif ($sCountryCodesSQL) {
+                            $sSQL .= " AND p.country_code in ($sCountryCodesSQL)";
+                        }
+                        $sSQL .= " LIMIT $this->iLimit";
+                        if (CONST_Debug) var_dump($sSQL);
+                        $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     } else {
                         $aPlaceIDs = array();
 
@@ -1377,6 +1415,12 @@ class Geocode
                             $aTerms[] = $aSearch['oNear']->withinSQL('centroid');
 
                             $aOrder[] = $aSearch['oNear']->distanceSQL('centroid');
+                        } elseif ($aSearch['sPostcode']) {
+                            if (!sizeof($aSearch['aAddress'])) {
+                                $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."' AND ST_DWithin(search_name.centroid, p.geometry, 0.1))";
+                            } else {
+                                $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$aSearch['sPostcode']."')";
+                            }
                         }
                         if (sizeof($this->aExcludePlaceIDs)) {
                             $aTerms[] = "place_id not in (".join(',', $this->aExcludePlaceIDs).")";
@@ -1663,6 +1707,21 @@ class Geocode
                     if (CONST_Debug) {
                         echo "<br><b>Place IDs:</b> ";
                         var_Dump($aPlaceIDs);
+                    }
+
+                    if (sizeof($aPlaceIDs) && $aSearch['sPostcode']) {
+                        $sSQL = 'SELECT place_id FROM placex';
+                        $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
+                        $sSQL .= " AND postcode = '".pg_escape_string($aSearch['sPostcode'])."'";
+                        if (CONST_Debug) var_dump($sSQL);
+                        $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
+                        if ($aFilteredPlaceIDs) {
+                            $aPlaceIDs = $aFilteredPlaceIDs;
+                            if (CONST_Debug) {
+                                echo "<br><b>Place IDs after postcode filtering:</b> ";
+                                var_Dump($aPlaceIDs);
+                            }
+                        }
                     }
 
                     foreach ($aPlaceIDs as $iPlaceID) {

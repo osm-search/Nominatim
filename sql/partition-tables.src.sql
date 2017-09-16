@@ -21,6 +21,7 @@ create type nearfeaturecentr as (
   rank_search smallint,
   distance float,
   isguess boolean,
+  postcode TEXT,
   centroid GEOMETRY
 );
 
@@ -29,9 +30,9 @@ CREATE TABLE search_name_blank (
   place_id BIGINT,
   search_rank smallint,
   address_rank smallint,
-  name_vector integer[]
+  name_vector integer[],
+  centroid GEOMETRY(Geometry, 4326)
   );
-SELECT AddGeometryColumn('search_name_blank', 'centroid', 4326, 'GEOMETRY', 2);
 
 
 CREATE TABLE location_area_country () INHERITS (location_area_large) {ts:address-data};
@@ -54,9 +55,9 @@ CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- 
 CREATE TABLE location_road_-partition- (
   place_id BIGINT,
   partition SMALLINT,
-  country_code VARCHAR(2)
+  country_code VARCHAR(2),
+  geometry GEOMETRY(Geometry, 4326)
   ) {ts:address-data};
-SELECT AddGeometryColumn('location_road_-partition-', 'geometry', 4326, 'GEOMETRY', 2);
 CREATE INDEX idx_location_road_-partition-_geometry ON location_road_-partition- USING GIST (geometry) {ts:address-index};
 CREATE INDEX idx_location_road_-partition-_place_id ON location_road_-partition- USING BTREE (place_id) {ts:address-index};
 

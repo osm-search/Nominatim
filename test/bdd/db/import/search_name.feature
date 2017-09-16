@@ -23,17 +23,3 @@ Feature: Creation of search terms
         Then search_name contains
          | object | name_vector | nameaddress_vector |
          | N1     | foo         | the road |
-
-    Scenario: Roads take over the postcode from attached houses
-        Given the scene roads-with-pois
-        And the places
-         | osm | class | type  | housenr | postcode | street   | geometry |
-         | N1  | place | house | 1       | 12345    | North St | :p-S1 |
-        And the places
-         | osm | class   | type        | name     | geometry |
-         | W1  | highway | residential | North St | :w-north |
-        When importing
-        Then search_name contains
-         | object | nameaddress_vector |
-         | W1     | 12345 |
-

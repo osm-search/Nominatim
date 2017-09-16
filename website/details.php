@@ -73,6 +73,9 @@ if (CONST_Use_US_Tiger_Data) {
 $iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_osmline WHERE place_id = '.$iPlaceID));
 if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
+// artificial postcodes
+$iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_postcode WHERE place_id = '.$iPlaceID));
+if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
 if (CONST_Use_Aux_Location_data) {
     $iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_aux WHERE place_id = '.$iPlaceID));
@@ -128,6 +131,13 @@ $sSQL = "SELECT (each(name)).key,(each(name)).value FROM placex WHERE place_id =
 $aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aNames'])) { // possible timeout
     $aPointDetails['aNames'] = [];
+}
+
+// Address tags
+$sSQL = "SELECT (each(address)).key as key,(each(address)).value FROM placex WHERE place_id = $iPlaceID ORDER BY key";
+$aPointDetails['aAddressTags'] = $oDB->getAssoc($sSQL);
+if (PEAR::isError($aPointDetails['aAddressTags'])) { // possible timeout
+    $aPointDetails['aAddressTags'] = [];
 }
 
 // Extra tags

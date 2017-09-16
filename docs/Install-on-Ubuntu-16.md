@@ -32,7 +32,8 @@ Now you can install all packages needed for Nominatim:
 If you want to run the test suite, you need to install the following
 additional packages:
 
-    sudo apt-get install -y python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit
+    sudo apt-get install -y python3-setuptools python3-dev python3-pip \
+                            python3-psycopg2 python3-tidylib phpunit php-cgi
 
     pip3 install --user behave nose # urllib3
     sudo pear install PHP_CodeSniffer
@@ -146,6 +147,7 @@ download the country grid:
 
 The code must be built in a separate directory. Create this directory,
 then configure and build Nominatim in there:
+
 
     mkdir build
     cd build

@@ -130,6 +130,13 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
         pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, geometry, spheroid) RENAME TO ST_DistanceSpheroid');
     }
 
+    $i = chksql($oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'"));
+    if ($i == 0) {
+        echo "ERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
+        echo "\n          createuser ".CONST_Database_Web_User."\n\n";
+        exit(1);
+    }
+
     if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
         echo "Error: you need to download the country_osm_grid first:";
         echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz\n";

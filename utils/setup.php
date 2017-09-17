@@ -81,7 +81,6 @@ if (isset($aCMDResult['osm2pgsql-cache'])) {
 
 $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     echo "Create DB\n";
     $bDidSomething = true;
@@ -89,7 +88,14 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     if (!PEAR::isError($oDB)) {
         fail('database already exists ('.CONST_Database_DSN.')');
     }
-    passthruCheckReturn('createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+
+    passthruCheckReturn(implode(' ', array(
+        'createdb -E UTF-8',
+        '-p ' . $aDSNInfo['port'],
+        '-h ' . $aDSNInfo['hostspec'],
+        '-U ' . $aDSNInfo['username'],
+        $aDSNInfo['database']
+    )));
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
@@ -97,7 +103,6 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
 
     // TODO: path detection, detection memory, etc.
-    //
     $oDB =& getDB();
 
     $fPostgresVersion = getPostgresVersion($oDB);
@@ -159,8 +164,10 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     // is only defined in the subsequently called create_tables.
     // Create dummies here that will be overwritten by the proper
     // versions in create-tables.
-    pgsqlRunScript('CREATE TABLE place_boundingbox ()');
-    pgsqlRunScript('create type wikipedia_article_match as ()');
+    pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');
+    if ($oDB->getOne('SELECT exists (SELECT 1 FROM pg_type WHERE pg_type.typname = \'wikipedia_article_match\')') != "t") {
+        pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()');
+    }
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
@@ -188,6 +195,8 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $osm2pgsql .= ' -lsc -O gazetteer --hstore --number-processes 1';
     $osm2pgsql .= ' -C '.$iCacheMemory;
     $osm2pgsql .= ' -P '.$aDSNInfo['port'];
+    $osm2pgsql .= ' -U '.$aDSNInfo['username'];
+    $osm2pgsql .= ' -H '.$aDSNInfo['hostspec'];
     $osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
     passthruCheckReturn($osm2pgsql);
 
@@ -556,7 +565,15 @@ if ($aCMDResult['osmosis-init']) {
 if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $sOutputFile = '';
-    $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+
+    $sBaseCmd = implode(' ', array(
+        CONST_InstallPath.'/nominatim/nominatim -i',
+        '-d ' . $aDSNInfo['database'],
+        '-H ' . $aDSNInfo['hostspec'],
+        '-U ' . $aDSNInfo['username'],
+        '-P ' . $aDSNInfo['port'],
+        '-t ' . $iInstances,
+    ));
     passthruCheckReturn($sBaseCmd.' -R 4');
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
@@ -679,7 +696,6 @@ if (!$bDidSomething) {
     echo "Setup finished.\n";
 }
 
-
 function pgsqlRunScriptFile($sFilename)
 {
     if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
@@ -687,7 +703,13 @@ function pgsqlRunScriptFile($sFilename)
     // Convert database DSN to psql parameters
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    $sCMD = implode(' ', array(
+        'psql',
+        '-p ' . $aDSNInfo['port'],
+        '-h ' . $aDSNInfo['hostspec'],
+        '-U ' . $aDSNInfo['username'],
+        '-d ' . $aDSNInfo['database'],
+    ));
 
     $ahGzipPipes = null;
     if (preg_match('/\\.gz$/', $sFilename)) {
@@ -737,14 +759,21 @@ function pgsqlRunScript($sScript, $bfatal = true)
     // Convert database DSN to psql parameters
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
-    if ($bfatal && !$aCMDResult['ignore-errors'])
+    $sCMD = implode(' ', array(
+        'psql',
+        '-p ' . $aDSNInfo['port'],
+        '-h ' . $aDSNInfo['hostspec'],
+        '-U ' . $aDSNInfo['username'],
+        '-d ' . $aDSNInfo['database'],
+    ));
+    if ($bfatal && !$aCMDResult['ignore-errors']) {
         $sCMD .= ' -v ON_ERROR_STOP=1';
+    }
     $aDescriptors = array(
-                     0 => array('pipe', 'r'),
-                     1 => STDOUT,
-                     2 => STDERR
-                    );
+        array('pipe', 'r'),
+        STDOUT,
+        STDERR
+    );
     $ahPipes = null;
     $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
     if (!is_resource($hProcess)) fail('unable to start pgsql');

@@ -128,3 +128,23 @@ function chksql($oSql, $sMsg = false)
 
     return $oSql;
 }
+
+function info($sMsg)
+{
+    echo date('Y-m-d H:i:s == ').$sMsg."\n";
+}
+
+$aWarnings = [];
+
+function warn($sMsg)
+{
+    $GLOBALS['aWarnings'][] = $sMsg;
+    echo date('Y-m-d H:i:s == ').'WARNING: '.$sMsg."\n";
+}
+
+function repeatWarnings()
+{
+    foreach ($GLOBALS['aWarnings'] as $sMsg) {
+        echo '  * ',$sMsg."\n";
+    }
+}

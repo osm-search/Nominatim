@@ -65,11 +65,11 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 $iInstances = isset($aCMDResult['threads'])?$aCMDResult['threads']:(getProcessorCount()-1);
 if ($iInstances < 1) {
     $iInstances = 1;
-    echo "WARNING: resetting threads to $iInstances\n";
+    warn("resetting threads to $iInstances");
 }
 if ($iInstances > getProcessorCount()) {
     $iInstances = getProcessorCount();
-    echo "WARNING: resetting threads to $iInstances\n";
+    warn("resetting threads to $iInstances");
 }
 
 // Assume we can steal all the cache memory in the box (unless told otherwise)
@@ -83,7 +83,7 @@ $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
-    echo "Create DB\n";
+    info("Create DB");
     $bDidSomething = true;
     $oDB = DB::connect(CONST_Database_DSN, false);
     if (!PEAR::isError($oDB)) {
@@ -93,11 +93,9 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
-    echo "Setup DB\n";
+    info("Setup DB");
     $bDidSomething = true;
 
-    // TODO: path detection, detection memory, etc.
-    //
     $oDB =& getDB();
 
     $fPostgresVersion = getPostgresVersion($oDB);
@@ -117,7 +115,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
 
     if ($iNumFunc == 0) {
         pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
-        echo "WARNING: Postgresql is too old. extratags and namedetails API not available.";
+        warn('Postgresql is too old. extratags and namedetails API not available.');
     }
 
     $fPostgisVersion = getPostgisVersion($oDB);
@@ -145,7 +143,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
         pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
     } else {
-        echo "WARNING: external UK postcode table not found.\n";
+        warn('external UK postcode table not found.');
     }
     if (CONST_Use_Extra_US_Postcodes) {
         pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
@@ -164,7 +162,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
-    echo "Import\n";
+    info('Import data');
     $bDidSomething = true;
 
     $osm2pgsql = CONST_Osm2pgsql_Binary;
@@ -198,16 +196,18 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
-    echo "Functions\n";
+    info('Create Functions');
     $bDidSomething = true;
-    if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) fail("nominatim module not built");
+    if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) {
+        fail("nominatim module not built");
+    }
     create_sql_functions($aCMDResult);
 }
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
+    info('Create Tables');
     $bDidSomething = true;
 
-    echo "Tables\n";
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tables.sql');
     $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
     $sTemplate = replace_tablespace(
@@ -243,12 +243,12 @@ if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     pgsqlRunScript($sTemplate, false);
 
     // re-run the functions
-    echo "Functions\n";
+    info('Recreate Functions');
     create_sql_functions($aCMDResult);
 }
 
 if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
-    echo "Partition Tables\n";
+    info('Create Partition Tables');
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
@@ -288,7 +288,7 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
 
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
-    echo "Partition Functions\n";
+    info('Create Partition Functions');
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
@@ -301,24 +301,22 @@ if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikipedia_article.sql.bin';
     $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
     if (file_exists($sWikiArticlesFile)) {
-        echo "Importing wikipedia articles...";
+        info('Importing wikipedia articles');
         pgsqlRunDropAndRestore($sWikiArticlesFile);
-        echo "...done\n";
     } else {
-        echo "WARNING: wikipedia article dump file not found - places will have default importance\n";
+        warn('wikipedia article dump file not found - places will have default importance');
     }
     if (file_exists($sWikiRedirectsFile)) {
-        echo "Importing wikipedia redirects...";
+        info('Importing wikipedia redirects');
         pgsqlRunDropAndRestore($sWikiRedirectsFile);
-        echo "...done\n";
     } else {
-        echo "WARNING: wikipedia redirect dump file not found - some place importance values may be missing\n";
+        warn('wikipedia redirect dump file not found - some place importance values may be missing');
     }
 }
 
 
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
-    echo "Drop old Data\n";
+    info('Drop old Data');
     $bDidSomething = true;
 
     $oDB =& getDB();
@@ -361,11 +359,11 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 
     // pre-create the word list
     if (!$aCMDResult['disable-token-precalc']) {
-        echo "Loading word list\n";
+        info('Loading word list');
         pgsqlRunScriptFile(CONST_BasePath.'/data/words.sql');
     }
 
-    echo "Load Data\n";
+    info('Load Data');
     $sColumns = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry';
 
     $aDBInstances = array();
@@ -402,13 +400,13 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
         echo '.';
     }
     echo "\n";
-    echo "Reanalysing database...\n";
+    info('Reanalysing database');
     pgsqlRunScript('ANALYSE');
 
     $sDatabaseDate = getDatabaseDate($oDB);
     pg_query($oDB->connection, 'TRUNCATE import_status');
     if ($sDatabaseDate === false) {
-        echo "WARNING: could not determine database date.\n";
+        warn('could not determine database date.');
     } else {
         $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
         pg_query($oDB->connection, $sSQL);
@@ -417,6 +415,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['import-tiger-data']) {
+    info('Import Tiger data');
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
@@ -474,7 +473,7 @@ if ($aCMDResult['import-tiger-data']) {
         echo "\n";
     }
 
-    echo "Creating indexes\n";
+    info('Creating indexes on Tiger data');
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_finish.sql');
     $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
     $sTemplate = replace_tablespace(
@@ -491,6 +490,7 @@ if ($aCMDResult['import-tiger-data']) {
 }
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
+    info('Calculate Postcodes');
     $bDidSomething = true;
     $oDB =& getDB();
     if (!pg_query($oDB->connection, 'TRUNCATE location_postcode')) {
@@ -557,20 +557,23 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $sOutputFile = '';
     $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+    info('Index ranks 0 - 4');
     passthruCheckReturn($sBaseCmd.' -R 4');
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
+    info('Index ranks 5 - 25');
     passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
+    info('Index ranks 26 - 30');
     passthruCheckReturn($sBaseCmd.' -r 26');
 
-    echo "Indexing postcodes....\n";
+    info('Index postcodes');
     $oDB =& getDB();
     $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
     if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
-    echo "Search indices\n";
+    info('Create Search indices');
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
@@ -594,7 +597,7 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
-    echo 'Creating search index for default country names';
+    info('Create search index for default country names');
     $bDidSomething = true;
 
     pgsqlRunScript("select getorcreate_country(make_standard_name('uk'), 'gb')");
@@ -620,6 +623,7 @@ if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
 }
 
 if ($aCMDResult['drop']) {
+    info('Drop tables only required for updates');
     // The implementation is potentially a bit dangerous because it uses
     // a positive selection of tables to keep, and deletes everything else.
     // Including any tables that the unsuspecting user might have manually
@@ -676,7 +680,10 @@ if ($aCMDResult['drop']) {
 if (!$bDidSomething) {
     showUsage($aCMDOptions, true);
 } else {
-    echo "Setup finished.\n";
+    echo "Summary of warnings:\n\n";
+    repeatWarnings();
+    echo "\n";
+    info('Setup finished.');
 }
 
 

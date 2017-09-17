@@ -123,15 +123,17 @@ Before importing make sure to add the following to your local settings:
 #### Code Coverage
 
 The API tests also support code coverage tests. You need to install
-PHP_CodeCoverage. On Debian/Ubuntu run:
+[PHP_CodeCoverage](https://github.com/sebastianbergmann/php-code-coverage).
+On Debian/Ubuntu run:
 
-    apt-get install php-codecoverage
+    apt-get install php-codecoverage php-xdebug
 
 The run the API tests as follows:
 
     behave api -DPHPCOV=<coverage output dir>
 
-To generate reports, you can use the phpcov tool:
+The output directory must be an absolute path. To generate reports, you can use
+the [phpcov](https://github.com/sebastianbergmann/phpcov) tool:
 
     phpcov merge --html=<report output dir> <coverage output dir>
 

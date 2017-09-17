@@ -132,8 +132,21 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
 
     $i = chksql($oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'"));
     if ($i == 0) {
-        echo "ERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
+        echo "\nERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
         echo "\n          createuser ".CONST_Database_Web_User."\n\n";
+        exit(1);
+    }
+
+    // Try accessing the C module, so we know early if something is wrong
+    // and can simply error out.
+    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
+    $sSQL .= CONST_InstallPath."/module/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+    $oResult = $oDB->query($sSQL);
+
+    if (PEAR::isError($oResult)) {
+        echo "\nERROR: Failed to load nominatim module. Reason:\n";
+        echo $oResult->userinfo."\n\n";
         exit(1);
     }
 

@@ -689,12 +689,16 @@ if (!$bDidSomething) {
 
 function pgsqlRunScriptFile($sFilename)
 {
+    global $aCMDResult;
     if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
     // Convert database DSN to psql parameters
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    if (!$aCMDResult['verbose']) {
+        $sCMD .= ' -q';
+    }
 
     $ahGzipPipes = null;
     if (preg_match('/\\.gz$/', $sFilename)) {
@@ -745,6 +749,9 @@ function pgsqlRunScript($sScript, $bfatal = true)
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    if (!$aCMDResult['verbose']) {
+        $sCMD .= ' -q';
+    }
     if ($bfatal && !$aCMDResult['ignore-errors'])
         $sCMD .= ' -v ON_ERROR_STOP=1';
     $aDescriptors = array(

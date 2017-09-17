@@ -218,7 +218,7 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
                     usleep(1000);
 
                     // Aim for one update per second
-                    if (sleepcount++ > 500)
+                    if (sleepcount++ > 1000)
                     {
                         rankPerSecond = ((float)rankCountTuples + (float)count) / MAX(difftime(time(0), rankStartTime),1);
                         if(interpolation)

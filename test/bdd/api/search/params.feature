@@ -115,6 +115,38 @@ Feature: Search queries
           | ID | state |
           | 0  | Florida |
 
+    Scenario: viewboxes cannot be points
+        When sending json search query "foo"
+          | viewbox |
+          | 1.01,34.6,1.01,34.6 |
+        Then a HTTP 400 is returned
+
+    Scenario Outline: viewbox must have four coordinate numbers
+        When sending json search query "foo"
+          | viewbox |
+          | <viewbox> |
+        Then a HTTP 400 is returned
+
+    Examples:
+        | viewbox |
+        | 34      |
+        | 0.003,-84.4 |
+        | 5.2,4.5542,12.4 |
+        | 23.1,-6,0.11,44.2,9.1 |
+
+    Scenario Outline: viewboxlbrt must have four coordinate numbers
+        When sending json search query "foo"
+          | viewboxlbrt |
+          | <viewbox> |
+        Then a HTTP 400 is returned
+
+    Examples:
+        | viewbox |
+        | 34      |
+        | 0.003,-84.4 |
+        | 5.2,4.5542,12.4 |
+        | 23.1,-6,0.11,44.2,9.1 |
+
     Scenario: Overly large limit number for search results
         When sending json search query "restaurant"
           | limit |
@@ -298,3 +330,11 @@ Feature: Search queries
         | xml      | geojson |
         | json     | geojson |
         | jsonv2   | geojson |
+
+    Scenario: Search along a route
+        When sending json search query "restaurant" with address
+          | bounded | routewidth | route                                   |
+          | 1       | 0.1        | -103.23255,44.08198,-103.22516,44.08079 |
+        Then result addresses contain
+          | city |
+          | Rapid City |

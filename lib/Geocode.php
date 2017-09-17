@@ -304,7 +304,7 @@ class Geocode
         $aViewbox = $oParams->getStringList('viewboxlbrt');
         if ($aViewbox) {
             if (count($aViewbox) != 4) {
-                userError("Bad parmater 'viewbox'. Expected 4 coordinates.");
+                userError("Bad parmater 'viewboxlbrt'. Expected 4 coordinates.");
             }
             $this->setViewbox($aViewbox);
         } else {
@@ -372,7 +372,7 @@ class Geocode
         $this->aAddressRankList = array();
 
         $this->aStructuredQuery = array();
-        $this->sAllowedTypesSQLList = '';
+        $this->sAllowedTypesSQLList = False;
 
         $this->loadStructuredAddressElement($sAmenity, 'amenity', 26, 30, false);
         $this->loadStructuredAddressElement($sStreet, 'street', 26, 30, false);
@@ -385,7 +385,7 @@ class Geocode
         if (sizeof($this->aStructuredQuery) > 0) {
             $this->sQuery = join(', ', $this->aStructuredQuery);
             if ($this->iMaxAddressRank < 30) {
-                $sAllowedTypesSQLList = '(\'place\',\'boundary\')';
+                $this->sAllowedTypesSQLList = '(\'place\',\'boundary\')';
             }
         }
     }
@@ -1403,7 +1403,7 @@ class Geocode
                         if ($aSearch['sCountryCode']) $aTerms[] = "country_code = '".pg_escape_string($aSearch['sCountryCode'])."'";
                         if ($aSearch['sHouseNumber']) {
                             $aTerms[] = "address_rank between 16 and 27";
-                        } else {
+                        } elseif (!$aSearch['sClass'] || $aSearch['sOperator'] == 'name') {
                             if ($this->iMinAddressRank > 0) {
                                 $aTerms[] = "address_rank >= ".$this->iMinAddressRank;
                             }

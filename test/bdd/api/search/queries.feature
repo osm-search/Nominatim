@@ -57,6 +57,15 @@ Feature: Search queries
           | place_rank |
           | 30 |
 
+    Scenario: Search with specific amenity
+        When sending json search query "[restaurant] Vaduz" with address
+        Then result addresses contain
+          | country |
+          | Liechtenstein |
+        And  results contain
+          | class   | type |
+          | amenity | restaurant |
+
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
         When sending json search query "6395 geminis, montevideo" with address

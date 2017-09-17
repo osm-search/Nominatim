@@ -31,6 +31,17 @@ Feature: Structured search queries
           | attr        | value |
           | querystring | Old Palace Road, GU2 7UP, United Kingdom |
 
+    Scenario: Amenity, city
+        When sending json search query "" with address
+          | city  | amenity |
+          | Vaduz | church  |
+        Then result addresses contain
+          | country |
+          | Liechtenstein |
+        And  results contain
+          | class   | type |
+          | amenity | place_of_worship |
+
     Scenario: gihub #176
         When sending json search query "" with address
           | city |

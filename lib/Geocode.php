@@ -1021,15 +1021,24 @@ class Geocode
 
             // Any 'special' terms in the search?
             $bSpecialTerms = false;
-            preg_match_all('/\\[(.*)=(.*)\\]/', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
-            $aSpecialTerms = array();
+            preg_match_all('/\\[([\\w_]*)=([\\w_]*)\\]/', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
             foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                 $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
-                $aSpecialTerms[strtolower($aSpecialTerm[1])] = $aSpecialTerm[2];
+                if (!$bSpecialTerms) {
+                    $aNewSearches = array();
+                    foreach ($aSearches as $aSearch) {
+                        $aNewSearch = $aSearch;
+                        $aNewSearch['sClass'] = $aSpecialTerm[1];
+                        $aNewSearch['sType'] = $aSpecialTerm[2];
+                        $aNewSearches[] = $aNewSearch;
+                    }
+
+                    $aSearches = $aNewSearches;
+                    $bSpecialTerms = true;
+                }
             }
 
             preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
-            $aSpecialTerms = array();
             if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity']) {
                 $aSpecialTermsRaw[] = array('['.$this->aStructuredQuery['amenity'].']', $this->aStructuredQuery['amenity']);
                 unset($this->aStructuredQuery['amenity']);
@@ -1037,6 +1046,10 @@ class Geocode
 
             foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                 $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
+                if ($bSpecialTerms) {
+                    continue;
+                }
+
                 $sToken = chksql($this->oDB->getOne("SELECT make_standard_name('".$aSpecialTerm[1]."') AS string"));
                 $sSQL = 'SELECT * ';
                 $sSQL .= 'FROM ( ';
@@ -1044,25 +1057,17 @@ class Geocode
                 $sSQL .= '   FROM word ';
                 $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
                 $sSQL .= ') AS x ';
-                $sSQL .= ' WHERE (class is not null AND class not in (\'place\')) ';
-                $sSQL .= ' OR country_code is not null';
+                $sSQL .= ' WHERE (class is not null AND class not in (\'place\'))';
                 if (CONST_Debug) var_Dump($sSQL);
                 $aSearchWords = chksql($this->oDB->getAll($sSQL));
                 $aNewSearches = array();
                 foreach ($aSearches as $aSearch) {
                     foreach ($aSearchWords as $aSearchTerm) {
                         $aNewSearch = $aSearch;
-                        if ($aSearchTerm['country_code']) {
-                            $aNewSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
-                            $aNewSearches[] = $aNewSearch;
-                            $bSpecialTerms = true;
-                        }
-                        if ($aSearchTerm['class']) {
-                            $aNewSearch['sClass'] = $aSearchTerm['class'];
-                            $aNewSearch['sType'] = $aSearchTerm['type'];
-                            $aNewSearches[] = $aNewSearch;
-                            $bSpecialTerms = true;
-                        }
+                        $aNewSearch['sClass'] = $aSearchTerm['class'];
+                        $aNewSearch['sType'] = $aSearchTerm['type'];
+                        $aNewSearches[] = $aNewSearch;
+                        $bSpecialTerms = true;
                     }
                 }
                 $aSearches = $aNewSearches;
@@ -1646,7 +1651,7 @@ class Geocode
                                         } elseif ($sPlaceIDs) {
                                             $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
                                         } elseif ($sPlaceGeom) {
-                                            $sOrderBysSQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
+                                            $sOrderBySQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
                                         }
 
                                         $sSQL = "select distinct i.place_id".($sOrderBySQL?', i.order_term':'')." from (";
@@ -1682,7 +1687,7 @@ class Geocode
                                             $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
                                         }
 
-                                        $sSQL = "SELECT distinct l.place_id".($sOrderBysSQL?','.$sOrderBysSQL:'');
+                                        $sSQL = "SELECT distinct l.place_id".($sOrderBySQL?','.$sOrderBySQL:'');
                                         $sSQL .= " FROM placex as l, placex as f ";
                                         $sSQL .= " WHERE f.place_id in ($sPlaceIDs) ";
                                         $sSQL .= "  AND ST_DWithin(l.geometry, f.centroid, $fRange) ";
@@ -1692,7 +1697,7 @@ class Geocode
                                             $sSQL .= " AND l.place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                         }
                                         if ($sCountryCodesSQL) $sSQL .= " AND l.country_code in ($sCountryCodesSQL)";
-                                        if ($sOrderBy) $sSQL .= "ORDER BY ".$OrderBysSQL." ASC";
+                                        if ($sOrderBySQL) $sSQL .= "ORDER BY ".$sOrderBySQL." ASC";
                                         if ($this->iOffset) $sSQL .= " OFFSET $this->iOffset";
                                         $sSQL .= " limit $this->iLimit";
                                         if (CONST_Debug) var_dump($sSQL);

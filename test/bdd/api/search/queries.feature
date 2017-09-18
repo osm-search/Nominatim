@@ -66,6 +66,24 @@ Feature: Search queries
           | class   | type |
           | amenity | restaurant |
 
+    Scenario: Search with key-value amenity
+        When sending json search query "[shop=hifi] hamburg"
+        Then results contain
+          | class | type |
+          | shop  | hifi |
+
+    Scenario: With multiple amenity search only the first is used
+        When sending json search query "[shop=hifi] [church] hamburg"
+        Then results contain
+          | class | type |
+          | shop  | hifi |
+
+    Scenario: With multiple amenity search only the first is used
+        When sending json search query "[church] [restaurant] hamburg"
+        Then results contain
+          | class   | type |
+          | amenity | place_of_worship |
+
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
         When sending json search query "6395 geminis, montevideo" with address

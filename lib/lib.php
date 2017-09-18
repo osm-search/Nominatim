@@ -545,8 +545,8 @@ function _debugDumpGroupedSearches($aData, $aTokens)
             echo "<td>".$aRow['sPostcode']."</td>";
             echo "<td>".$aRow['sHouseNumber']."</td>";
 
-            echo "<td>".$aRow['fLat']."</td>";
-            echo "<td>".$aRow['fLon']."</td>";
+            echo "<td>".$aRow['oNear']->lat()."</td>";
+            echo "<td>".$aRow['oNear']->lon()."</td>";
             echo "<td>".$aRow['fRadius']."</td>";
 
             echo "</tr>";

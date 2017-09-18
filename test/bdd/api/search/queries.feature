@@ -84,6 +84,18 @@ Feature: Search queries
           | class   | type |
           | amenity | place_of_worship |
 
+    Scenario: POI search near given coordinate
+        When sending json search query "restaurant near 47.16712,9.51100"
+        Then results contain
+          | class   | type |
+          | amenity | restaurant |
+
+    Scenario: Arbitrary key/value search near given coordinate
+        When sending json search query "[man_made=mast]  47.15739,9.61264"
+        Then results contain
+          | class    | type |
+          | man_made | mast |
+
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
         When sending json search query "6395 geminis, montevideo" with address

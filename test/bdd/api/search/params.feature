@@ -73,6 +73,12 @@ Feature: Search queries
           | city |
           | Montevideo |
 
+    Scenario: Country search with bounded viewbox remain in the area
+        When sending json search query "" with address
+          | bounded | viewbox                                 | country |
+          | 1       | -56.16786,-34.84061,-56.12525,-34.86526 | de |
+        Then less than 1 result is returned
+
     Scenario: Search with bounded viewboxlbrt in right area
         When sending json search query "bar" with address
           | bounded | viewboxlbrt |
@@ -90,7 +96,7 @@ Feature: Search queries
           | ^[^,]*[Rr]estaurant.* |
 
     Scenario: bounded search remains within viewbox, even with no results
-         When sending json search query "restaurant"
+         When sending json search query "[restaurant]"
            | bounded | viewbox |
            | 1       | 43.5403125,-5.6563282,43.54285,-5.662003 |
         Then less than 1 result is returned

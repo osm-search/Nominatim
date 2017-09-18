@@ -1274,8 +1274,8 @@ class Geocode
                     }
 
                     // No location term?
-                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress']) && !$aSearch['oNear']) {
-                        if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber']) {
+                    if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress'])) {
+                        if ($aSearch['sCountryCode'] && !$aSearch['sClass'] && !$aSearch['sHouseNumber'] && !$aSearch['oNear']) {
                             // Just looking for a country by code - look it up
                             if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
                                 $sSQL = "SELECT place_id FROM placex WHERE country_code='".$aSearch['sCountryCode']."' AND rank_search = 4";
@@ -1295,39 +1295,32 @@ class Geocode
                             if (chksql($this->oDB->getOne($sSQL))) {
                                 $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
                                 if ($sCountryCodesSQL) $sSQL .= " JOIN placex USING (place_id)";
-                                $sSQL .= " WHERE st_contains($this->sViewboxSmallSQL, ct.centroid)";
+                                if ($aSearch['oNear']) {
+                                    $sSQL .= " WHERE ".$aSearch['oNear']->withinSQL('ct.centroid');
+                                } else {
+                                    $sSQL .= " WHERE st_contains($this->sViewboxSmallSQL, ct.centroid)";
+                                }
                                 if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
                                 if (sizeof($this->aExcludePlaceIDs)) {
                                     $sSQL .= " AND place_id not in (".join(',', $this->aExcludePlaceIDs).")";
                                 }
-                                if ($this->sViewboxCentreSQL) $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
+                                if ($this->sViewboxCentreSQL) {
+                                    $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
+                                } elseif ($aSearch['oNear']) {
+                                    $sSQL .= " ORDER BY ".$aSearch['oNear']->distanceSQL('ct.centroid').' ASC';
+                                }
                                 $sSQL .= " limit $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
-
-                                // If excluded place IDs are given, it is fair to assume that
-                                // there have been results in the small box, so no further
-                                // expansion in that case.
-                                // Also don't expand if bounded results were requested.
-                                if (!sizeof($aPlaceIDs) && !sizeof($this->aExcludePlaceIDs) && !$this->bBoundedSearch) {
-                                    $sSQL = "SELECT place_id FROM place_classtype_".$aSearch['sClass']."_".$aSearch['sType']." ct";
-                                    if ($sCountryCodesSQL) $sSQL .= " join placex using (place_id)";
-                                    $sSQL .= " WHERE ST_Contains($this->sViewboxLargeSQL, ct.centroid)";
-                                    if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
-                                    if ($this->sViewboxCentreSQL) $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, ct.centroid) ASC";
-                                    $sSQL .= " LIMIT $this->iLimit";
-                                    if (CONST_Debug) var_dump($sSQL);
-                                    $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
-                                }
-                            } else {
+                            } else if ($aSearch['oNear']) {
                                 $sSQL = "SELECT place_id ";
                                 $sSQL .= "FROM placex ";
                                 $sSQL .= "WHERE class='".$aSearch['sClass']."' ";
                                 $sSQL .= "  AND type='".$aSearch['sType']."'";
-                                $sSQL .= "  AND ST_Contains($this->sViewboxSmallSQL, geometry) ";
+                                $sSQL .= "  AND ".$aSearch['oNear']->withinSQL('geometry');
                                 $sSQL .= "  AND linked_place_id is null";
                                 if ($sCountryCodesSQL) $sSQL .= " AND country_code in ($sCountryCodesSQL)";
-                                if ($this->sViewboxCentreSQL)   $sSQL .= " ORDER BY ST_Distance($this->sViewboxCentreSQL, centroid) ASC";
+                                $sSQL .= " ORDER BY ".$aSearch['oNear']->distanceSQL('centroid')." ASC";
                                 $sSQL .= " LIMIT $this->iLimit";
                                 if (CONST_Debug) var_dump($sSQL);
                                 $aPlaceIDs = chksql($this->oDB->getCol($sSQL));

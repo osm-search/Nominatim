@@ -35,6 +35,10 @@ class NearPointTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($aRes['pt']->radius(), 0.1);
         $this->assertEquals($aRes['query'], '');
 
+        $aRes = NearPoint::extractFromQuery(' -12.456,-78.90 ');
+        $this->assertEquals($aRes['pt']->lat(), -12.456);
+        $this->assertEquals($aRes['pt']->lon(), -78.90);
+
         // http://en.wikipedia.org/wiki/Geographic_coordinate_conversion
         // these all represent the same location
         $aQueries = array(

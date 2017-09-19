@@ -133,8 +133,8 @@ class NearPoint
             $sFound    = $aData[0];
             $fQueryLat = ($aData[2]=='N'?1:-1) * ($aData[1]);
             $fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[3]);
-        } elseif (preg_match('/(\\[|^|\\b)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData)) {
-            /*                 1          2                             3                        4
+        } elseif (preg_match('/(\\[|^|\\b)?(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]|$|\\b)/', $sQuery, $aData)) {
+            /*                 1           2                             3                        4
              * degrees decimal
              * 12.34, 56.78
              * [12.456,-78.90]

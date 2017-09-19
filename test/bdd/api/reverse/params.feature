@@ -15,6 +15,15 @@ Feature: Parameters for Reverse API
       | jsonv2 |
       | xml |
 
+    Scenario Outline: Coordinates must be floating-point numbers
+        When sending reverse coordinates <coords>
+        Then a HTTP 400 is returned
+
+    Examples:
+      | coords    |
+      | -45.3,;   |
+      | gkjd,50   |
+
     Scenario Outline: Reverse Geocoding with extratags
         When sending <format> reverse coordinates 10.776234290950017,106.70425325632095
           | extratags |

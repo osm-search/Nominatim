@@ -19,6 +19,12 @@ Feature: Search queries
         And result 0 has not attributes address
         And result 0 has bounding box in 46.5,47.5,9,10
 
+    Scenario: Unknown formats returns a user error
+        When sending search query "Vaduz"
+          | format |
+          | x45    |
+        Then a HTTP 400 is returned
+
     Scenario: JSON search with addressdetails
         When sending json search query "Montevideo" with address
         Then address of result 0 is
@@ -164,6 +170,12 @@ Feature: Search queries
           | limit |
           | 4 |
         Then exactly 4 results are returned
+
+    Scenario: Limit parameter must be a number
+        When sending search query "Blue Laguna"
+          | limit |
+          | );    |
+        Then a HTTP 400 is returned
 
     Scenario: Restrict to feature type country
         When sending xml search query "Uruguay"

@@ -349,7 +349,7 @@ def website_search_request(context, fmt, query, addr):
 
     context.response = SearchResponse(outp, outfmt, status)
 
-@when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>[0-9.-]+)?,(?P<lon>[0-9.-]+)?')
+@when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>.+)?,(?P<lon>.+)?')
 def website_reverse_request(context, fmt, lat, lon):
     params = {}
     if lat is not None:

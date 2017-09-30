@@ -313,12 +313,7 @@ class Geocode
                 if (count($aViewbox) != 4) {
                     userError("Bad parmater 'viewbox'. Expected 4 coordinates.");
                 }
-                $this->setViewBox(array(
-                                   $aViewbox[0],
-                                   $aViewbox[3],
-                                   $aViewbox[2],
-                                   $aViewbox[1]
-                                  ));
+                $this->setViewBox($aViewbox);
             } else {
                 $aRoute = $oParams->getStringList('route');
                 $fRouteWidth = $oParams->getFloat('routewidth');

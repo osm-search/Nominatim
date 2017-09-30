@@ -63,7 +63,7 @@ class Geocode
     private function normTerm($sTerm)
     {
         if ($this->oNormalizer === null) {
-            return null;
+            return $sTerm;
         }
 
         return $this->oNormalizer->transliterate($sTerm);

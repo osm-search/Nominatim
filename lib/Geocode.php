@@ -752,7 +752,7 @@ class Geocode
                                 } elseif ($sPhraseType == 'postalcode' || ($aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode')) {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
                                     if ($aSearch['sPostcode'] === '' && $aSearch['sHouseNumber'] === '' &&
-                                        isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
+                                        isset($aSearchTerm['word']) && $aSearchTerm['word'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
                                         // If we have structured search or this is the first term,
                                         // make the postcode the primary search element.
                                         if ($aSearch['sOperator'] === '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {

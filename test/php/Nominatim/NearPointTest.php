@@ -27,7 +27,7 @@ class NearPointTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($aRes['pt']->lat(), 12.456);
         $this->assertEquals($aRes['pt']->lon(), -78.90);
         $this->assertEquals($aRes['pt']->radius(), 0.1);
-        $this->assertEquals($aRes['query'], 'abc   def');
+        $this->assertEquals($aRes['query'], 'abc def');
 
         $aRes = NearPoint::extractFromQuery(' [12.456,-78.90] ');
         $this->assertEquals($aRes['pt']->lat(), 12.456);
@@ -69,6 +69,7 @@ class NearPointTest extends \PHPUnit_Framework_TestCase
             $aRes = NearPoint::extractFromQuery($sQuery);
             $this->assertEquals(40.446, $aRes['pt']->lat(), 'degrees decimal ' . $sQuery, 0.01);
             $this->assertEquals(-79.982, $aRes['pt']->lon(), 'degrees decimal ' . $sQuery, 0.01);
+            $this->assertEquals('', $aRes['query']);
         }
     }
 

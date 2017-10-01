@@ -128,7 +128,8 @@ For a list of other methods see the output of `./utils/update.php --help`.
 Installing the newest version of Pyosmium
 -----------------------------------------
 
-It is recommended to install Pyosmium via pip:
+It is recommended to install Pyosmium via pip. Run (as the same user who
+will later run the updates):
 
     pip install --user osmium
 

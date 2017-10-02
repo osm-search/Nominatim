@@ -1124,14 +1124,10 @@ class Geocode
                 if (CONST_Debug) var_Dump($sSQL);
 
                 $aValidTokens = array();
-                if (sizeof($aTokens)) {
-                    $aDatabaseWords = chksql(
-                        $this->oDB->getAll($sSQL),
-                        "Could not get word tokens."
-                    );
-                } else {
-                    $aDatabaseWords = array();
-                }
+                $aDatabaseWords = chksql(
+                    $this->oDB->getAll($sSQL),
+                    "Could not get word tokens."
+                );
                 $aPossibleMainWordIDs = array();
                 $aWordFrequencyScores = array();
                 foreach ($aDatabaseWords as $aToken) {

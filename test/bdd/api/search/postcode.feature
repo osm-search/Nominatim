@@ -18,3 +18,10 @@ Feature: Searches with postcodes
             | country_code |
             | li           |
 
+    Scenario: Postcode search with country code restriction
+        When sending json search query "9490" with address
+            | countrycodes |
+            | li |
+        Then result addresses contain
+            | country_code |
+            | li           |

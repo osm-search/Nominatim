@@ -96,6 +96,24 @@ Feature: Search queries
           | class    | type |
           | man_made | mast |
 
+    Scenario: Arbitrary key/value search near a road
+        When sending json search query "[leisure=table_soccer_table] immenbusch"
+        Then results contain
+          | class   | type |
+          | leisure | table_soccer_table |
+
+    Scenario: Ignore other country codes in structured search with country
+        When sending json search query ""
+            | city | country |
+            | li   | de      |
+        Then exactly 0 results are returned
+
+    Scenario: Ignore country searches when query is restricted to countries
+        When sending json search query "de"
+            | countrycodes |
+            | li  |
+        Then exactly 0 results are returned
+
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
         When sending json search query "6395 geminis, montevideo" with address

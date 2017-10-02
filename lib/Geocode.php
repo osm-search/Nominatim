@@ -1739,20 +1739,19 @@ class Geocode
                     if ($this->aAddressRankList) {
                         $sSQL .= "     OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
                     }
-                    if (CONST_Use_US_Tiger_Data) {
-                        $sSQL .= "  ) ";
+                    $sSQL .= "  ) ";
+                    if (CONST_Use_US_Tiger_Data && $this->iMaxAddressRank == 30) {
                         $sSQL .= "UNION ";
                         $sSQL .= "  SELECT place_id ";
                         $sSQL .= "  FROM location_property_tiger ";
                         $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
-                        $sSQL .= "    AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank ";
-                        if ($this->aAddressRankList) $sSQL .= " OR 30 in (".join(',', $this->aAddressRankList).")";
                     }
-                    $sSQL .= ") UNION ";
-                    $sSQL .= "  SELECT place_id ";
-                    $sSQL .= "  FROM location_property_osmline ";
-                    $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
-                    $sSQL .= "    AND startnumber is not NULL AND (30 between $this->iMinAddressRank and $this->iMaxAddressRank)";
+                    if ($this->iMaxAddressRank == 30) {
+                        $sSQL .= "UNION ";
+                        $sSQL .= "  SELECT place_id ";
+                        $sSQL .= "  FROM location_property_osmline ";
+                        $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
+                    }
                     if (CONST_Debug) var_dump($sSQL);
                     $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
                     $tempIDs = array();

@@ -910,6 +910,19 @@ class Geocode
 
             //if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
         }
+
+        // Revisit searches, giving penalty to unlikely combinations
+        $aGroupedSearches = array();
+        foreach ($aSearches as $aSearch) {
+            if (!$aSearch['aName']) {
+                if ($aSearch['sHouseNumber']) {
+                    continue;
+                }
+            }
+            $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
+        }
+        ksort($aGroupedSearches);
+
         return $aGroupedSearches;
     }
 
@@ -1563,7 +1576,8 @@ class Geocode
                             }
 
                             // Fallback to the road (if no housenumber was found)
-                            if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber'])) {
+                            if (!sizeof($aPlaceIDs) && preg_match('/[0-9]+/', $aSearch['sHouseNumber'])
+                                && ($aSearch['aAddress'] || $aSearch['sCountryCode'])) {
                                 $aPlaceIDs = $aRoadPlaceIDs;
                                 //set to -1, if no housenumbers were found
                                 $searchedHousenumber = -1;

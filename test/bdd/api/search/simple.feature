@@ -107,7 +107,7 @@ Feature: Simple Tests
           | attr        | value |
           | querystring | xnznxvcx |
           | polygon     | false |
-          | viewbox     | 12,45.13,77,33 |
+          | viewbox     | 12,33,77,45.13 |
 
     Scenario: Empty XML search with viewboxlbrt
         When sending xml search query "xnznxvcx"
@@ -127,7 +127,7 @@ Feature: Simple Tests
           | attr        | value |
           | querystring | pub |
           | polygon     | false |
-          | viewbox     | 12,45.13,77,33 |
+          | viewbox     | 12,33,77,45.13 |
 
     Scenario Outline: Empty XML search with polygon values
         When sending xml search query "xnznxvcx"

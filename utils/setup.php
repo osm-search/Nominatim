@@ -765,34 +765,12 @@ function pgsqlRunScriptFile($sFilename)
 function pgsqlRunScript($sScript, $bfatal = true)
 {
     global $aCMDResult;
-    // Convert database DSN to psql parameters
-    $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
-    if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
-    if (!$aCMDResult['verbose']) {
-        $sCMD .= ' -q';
-    }
-    if ($bfatal && !$aCMDResult['ignore-errors'])
-        $sCMD .= ' -v ON_ERROR_STOP=1';
-    $aDescriptors = array(
-                     0 => array('pipe', 'r'),
-                     1 => STDOUT,
-                     2 => STDERR
-                    );
-    $ahPipes = null;
-    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
-    if (!is_resource($hProcess)) fail('unable to start pgsql');
-
-    while (strlen($sScript)) {
-        $written = fwrite($ahPipes[0], $sScript);
-        if ($written <= 0) break;
-        $sScript = substr($sScript, $written);
-    }
-    fclose($ahPipes[0]);
-    $iReturn = proc_close($hProcess);
-    if ($bfatal && $iReturn > 0) {
-        fail("pgsql returned with error code ($iReturn)");
-    }
+    runSQLScript(
+        $sScript,
+        $bfatal,
+        $aCMDResult['verbose'],
+        $aCMDResult['ignore-errors']
+    );
 }
 
 function pgsqlRunPartitionScript($sTemplate)

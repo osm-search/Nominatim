@@ -136,15 +136,53 @@ function info($sMsg)
 
 $aWarnings = [];
 
+
 function warn($sMsg)
 {
     $GLOBALS['aWarnings'][] = $sMsg;
     echo date('Y-m-d H:i:s == ').'WARNING: '.$sMsg."\n";
 }
 
+
 function repeatWarnings()
 {
     foreach ($GLOBALS['aWarnings'] as $sMsg) {
         echo '  * ',$sMsg."\n";
+    }
+}
+
+
+function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreErrors = false)
+{
+    // Convert database DSN to psql parameters
+    $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+    if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
+    $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    if (!$bVerbose) {
+        $sCMD .= ' -q';
+    }
+    if ($bfatal && !$bIgnoreErrors) {
+        $sCMD .= ' -v ON_ERROR_STOP=1';
+    }
+    $aDescriptors = array(
+                     0 => array('pipe', 'r'),
+                     1 => STDOUT,
+                     2 => STDERR
+                    );
+    $ahPipes = null;
+    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
+    if (!is_resource($hProcess)) {
+        fail('unable to start pgsql');
+    }
+
+    while (strlen($sScript)) {
+        $written = fwrite($ahPipes[0], $sScript);
+        if ($written <= 0) break;
+        $sScript = substr($sScript, $written);
+    }
+    fclose($ahPipes[0]);
+    $iReturn = proc_close($hProcess);
+    if ($bfatal && $iReturn > 0) {
+        fail("pgsql returned with error code ($iReturn)");
     }
 }

@@ -12,3 +12,9 @@ Feature: Object details
      | N4267356889 |
      | W230804120 |
      | R123924 |
+
+    Scenario: Details with keywords
+        When sending details query for W78099902
+            | keywords |
+            | 1 |
+        Then the result is valid html

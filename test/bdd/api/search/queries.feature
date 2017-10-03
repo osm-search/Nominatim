@@ -44,6 +44,17 @@ Feature: Search queries
           | country      | Deutschland |
           | country_code | de |
 
+    Scenario: With missing housenumber search falls back to road
+        When sending json search query "342 rocha, santa lucia" with address
+        Then address of result 0 is
+          | type         | value |
+          | road         | Rocha |
+          | city         | Santa Lucía |
+          | state        | Canelones |
+          | postcode     | 90700 |
+          | country      | Uruguay |
+          | country_code | uy |
+
     @Tiger
     Scenario: TIGER house number
         When sending json search query "323 22nd Street Southwest, Huron"
@@ -91,10 +102,24 @@ Feature: Search queries
           | amenity | restaurant |
 
     Scenario: Arbitrary key/value search near given coordinate
-        When sending json search query "[man_made=mast]  47.15739,9.61264"
+        When sending json search query "[man_made=mast]  47.15739° N 9.61264° E"
         Then results contain
           | class    | type |
           | man_made | mast |
+
+    Scenario: Arbitrary key/value search near given coordinate and named place
+        When sending json search query "[man_made=mast] amerlugalpe  47° 9′ 26″ N 9° 36′ 45″ E"
+        Then results contain
+          | class    | type |
+          | man_made | mast |
+
+    Scenario: Name search near given coordinate
+        When sending json search query "amerlugalpe, N 47.15739° E 9.61264°"
+        Then exactly 1 result is returned
+
+    Scenario: Name search near given coordinate without result
+        When sending json search query "amerlugalpe, N 47 15 7 W 9 61 26"
+        Then exactly 0 results are returned
 
     Scenario: Arbitrary key/value search near a road
         When sending json search query "[leisure=table_soccer_table] immenbusch"

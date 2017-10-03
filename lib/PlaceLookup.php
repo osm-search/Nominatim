@@ -45,25 +45,14 @@ class PlaceLookup
         $this->bNameDetails = $bNameDetails;
     }
 
-
     public function setIncludePolygonAsPoints($b = true)
     {
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    public function getIncludePolygonAsPoints()
-    {
-        return $this->bIncludePolygonAsPoints;
-    }
-
     public function setIncludePolygonAsText($b = true)
     {
         $this->bIncludePolygonAsText = $b;
-    }
-
-    public function getIncludePolygonAsText()
-    {
-        return $this->bIncludePolygonAsText;
     }
 
     public function setIncludePolygonAsGeoJSON($b = true)

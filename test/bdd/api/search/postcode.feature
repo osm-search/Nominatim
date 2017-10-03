@@ -25,3 +25,11 @@ Feature: Searches with postcodes
         Then result addresses contain
             | country_code |
             | li           |
+
+    Scenario: Postcode search with structured query
+        When sending json search query "" with address
+            | postalcode | country |
+            | 9490       | li |
+        Then result addresses contain
+            | country_code | postcode |
+            | li           | 9490     |

@@ -1738,9 +1738,11 @@ class Geocode
                     // Need to verify passes rank limits before dropping out of the loop (yuk!)
                     // reduces the number of place ids, like a filter
                     // rank_address is 30 for interpolated housenumbers
+                    $sWherePlaceId = 'WHERE place_id in (';
+                    $sWherePlaceId .= join(',', array_keys($aResultPlaceIDs)).') ';
+
                     $sSQL = "SELECT place_id ";
-                    $sSQL .= "FROM placex ";
-                    $sSQL .= "WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
+                    $sSQL .= "FROM placex ".$sWherePlaceId;
                     $sSQL .= "  AND (";
                     $sSQL .= "         placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
                     if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) {
@@ -1749,18 +1751,22 @@ class Geocode
                     if ($this->aAddressRankList) {
                         $sSQL .= "     OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
                     }
-                    $sSQL .= "  ) ";
+                    $sSQL .= "  ) UNION ";
+                    $sSQL .= " SELECT place_id FROM location_postcode lp ".$sWherePlaceId;
+                    $sSQL .= "  AND (lp.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
+                    if ($this->aAddressRankList) {
+                        $sSQL .= "     OR lp.rank_address in (".join(',', $this->aAddressRankList).")";
+                    }
+                    $sSQL .= ") ";
                     if (CONST_Use_US_Tiger_Data && $this->iMaxAddressRank == 30) {
                         $sSQL .= "UNION ";
                         $sSQL .= "  SELECT place_id ";
-                        $sSQL .= "  FROM location_property_tiger ";
-                        $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).") ";
+                        $sSQL .= "  FROM location_property_tiger ".$sWherePlaceId;
                     }
                     if ($this->iMaxAddressRank == 30) {
                         $sSQL .= "UNION ";
                         $sSQL .= "  SELECT place_id ";
-                        $sSQL .= "  FROM location_property_osmline ";
-                        $sSQL .= "  WHERE place_id in (".join(',', array_keys($aResultPlaceIDs)).")";
+                        $sSQL .= "  FROM location_property_osmline ".$sWherePlaceId;
                     }
                     if (CONST_Debug) var_dump($sSQL);
                     $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));

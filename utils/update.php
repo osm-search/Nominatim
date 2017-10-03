@@ -15,10 +15,9 @@ $aCMDOptions
    array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
-   array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolate)'),
    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
-   array('import-all', '', 0, 1, 0, 0, 'bool', 'Import all available files'),
+   array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Update postcode centroid table'),
 
    array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
    array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
@@ -34,6 +33,7 @@ $aCMDOptions
    array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
 
    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
+   array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
@@ -101,6 +101,7 @@ if ($aResult['init-updates']) {
 if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     // import diffs and files directly (e.g. from osmosis --rri)
     $sNextFile = isset($aResult['import-diff']) ? $aResult['import-diff'] : $aResult['import-file'];
+
     if (!file_exists($sNextFile)) {
         fail("Cannot open $sNextFile\n");
     }
@@ -115,6 +116,12 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     }
 
     // Don't update the import status - we don't know what this file contains
+}
+
+if ($aResult['calculate-postcodes']) {
+    info("Update postcodes centroids");
+    $sTemplate = file_get_contents(CONST_BasePath.'/sql/update-postcodes.sql');
+    runSQLScript($sTemplate, true, true);
 }
 
 $sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';

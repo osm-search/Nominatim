@@ -541,8 +541,10 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
         $sSQL .= "        (SELECT postcode FROM location_postcode";
         $sSQL .= "          WHERE country_code = 'us')";
 
-        if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
+    } else {
+        $sSQL .= "TRUNCATE TABLE us_postcode";
     }
+    if (!pg_query($oDB->connection, $sSQL)) fail(pg_last_error($oDB->connection));
 
     // add missing postcodes for GB (if available)
     $sSQL  = "INSERT INTO location_postcode";

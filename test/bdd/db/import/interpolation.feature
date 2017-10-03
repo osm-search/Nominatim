@@ -248,10 +248,6 @@ Feature: Import of address interpolations
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | W        | 11 |
-        When searching for "18 Cloud Street"
-        Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | W        | 3 |
 
     Scenario: addr:street on housenumber way
         Given the scene parallel-road

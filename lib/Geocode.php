@@ -785,7 +785,7 @@ class Geocode
                                     // require a normalized exact match of the term
                                     // if we have the normalizer version of the query
                                     // available
-                                    if ($aSearch['sClass'] === ''
+                                    if ($aSearch['sOperator'] === ''
                                         && ($sNormQuery === null || !($aSearchTerm['word'] && strpos($sNormQuery, $aSearchTerm['word']) === false))) {
                                         $aSearch['sClass'] = $aSearchTerm['class'];
                                         $aSearch['sType'] = $aSearchTerm['type'];

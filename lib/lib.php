@@ -548,10 +548,10 @@ function _debugDumpGroupedSearches($aData, $aTokens)
             if ($aRow['oNear']) {
                 echo "<td>".$aRow['oNear']->lat()."</td>";
                 echo "<td>".$aRow['oNear']->lon()."</td>";
+                echo "<td>".$aRow['oNear']->radius()."</td>";
             } else {
-                echo "<td></td><td></td>";
+                echo "<td></td><td></td><td></td>";
             }
-            echo "<td>".$aRow['fRadius']."</td>";
 
             echo "</tr>";
         }

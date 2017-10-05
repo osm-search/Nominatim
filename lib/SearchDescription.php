@@ -8,15 +8,17 @@ namespace Nominatim;
 abstract final class Operator
 {
     /// No operator selected.
-    const NONE = -1;
+    const NONE = 0;
+    /// Search for POI of the given type.
+    const TYPE = 1;
     /// Search for POIs near the given place.
-    const NEAR = 0;
+    const NEAR = 2;
     /// Search for POIS in the given place.
-    const IN = 1;
+    const IN = 3;
     /// Search for POIS named as given.
-    const NAME = 3;
+    const NAME = 4;
     /// Search for postcodes.
-    const POSTCODE = 4;
+    const POSTCODE = 5;
 }
 
 /**
@@ -55,4 +57,56 @@ class SearchDescription
 
     /// Index of phrase currently processed
     private $iNamePhrase = -1;
+
+    public getRank()
+    {
+        return $this->iSearchRank;
+    }
+
+    /**
+     * Set the geographic search radius.
+     */
+    public setNear(&$oNearPoint)
+    {
+        $this->oNearPoint = $oNearPoint;
+    }
+
+    public setPoiSearch($iOperator, $sClass, $sType)
+    {
+        $this->iOperator = $iOperator;
+        $this->sClass = $sClass;
+        $this->sType = $sType;
+    }
+
+    public hasOperator()
+    {
+        return $this->iOperator != Operator::NONE;
+    }
+
+    /**
+     * Extract special terms from the query, amend the search
+     * and return the shortended query.
+     *
+     * Only the first special term found will be used but all will
+     * be removed from the query.
+     */
+    public extractKeyValuePairs(&$oDB, $sQuery)
+    {
+        // Search for terms of kind [<key>=<value>].
+        preg_match_all(
+            '/\\[([\\w_]*)=([\\w_]*)\\]/',
+            $sQuery,
+            $aSpecialTermsRaw,
+            PREG_SET_ORDER
+        );
+
+        foreach ($aSpecialTermsRaw as $aTerm) {
+            $sQuery = str_replace($aTerm[0], ' ', $sQuery);
+            if (!$this->hasOperator()) {
+                $this->setPoiSearch(Operator::TYPE, $aTerm[1], $aTerm[2]);
+            }
+        }
+
+        return $sQuery;
+    }
 };

@@ -1023,76 +1023,59 @@ class Geocode
 
         $aSearchResults = array();
         if ($sQuery || $this->aStructuredQuery) {
-            // Start with a blank search
-            $aSearches = array(
-                          array(
-                           'iSearchRank' => 0,
-                           'iNamePhrase' => -1,
-                           'sCountryCode' => false,
-                           'aName' => array(),
-                           'aAddress' => array(),
-                           'aFullNameAddress' => array(),
-                           'aNameNonSearch' => array(),
-                           'aAddressNonSearch' => array(),
-                           'sOperator' => '',
-                           'aFeatureName' => array(),
-                           'sClass' => '',
-                           'sType' => '',
-                           'sHouseNumber' => '',
-                           'sPostcode' => '',
-                           'oNear' => $oNearPoint
-                          )
-                         );
+            // Start with a single blank search
+            $aSearches = array(new SearchDescription());
 
-            // Any 'special' terms in the search?
-            $bSpecialTerms = false;
-            preg_match_all('/\\[([\\w_]*)=([\\w_]*)\\]/', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
-            foreach ($aSpecialTermsRaw as $aSpecialTerm) {
-                $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
-                if (!$bSpecialTerms) {
-                    $aNewSearches = array();
-                    foreach ($aSearches as $aSearch) {
-                        $aNewSearch = $aSearch;
-                        $aNewSearch['sClass'] = $aSpecialTerm[1];
-                        $aNewSearch['sType'] = $aSpecialTerm[2];
-                        $aNewSearches[] = $aNewSearch;
-                    }
-
-                    $aSearches = $aNewSearches;
-                    $bSpecialTerms = true;
-                }
+            if ($oNearPoint) {
+                $aSearches[0]->setNear($oNearPoint);
             }
 
-            preg_match_all('/\\[([\\w ]*)\\]/u', $sQuery, $aSpecialTermsRaw, PREG_SET_ORDER);
-            if (isset($this->aStructuredQuery['amenity']) && $this->aStructuredQuery['amenity']) {
-                $aSpecialTermsRaw[] = array('['.$this->aStructuredQuery['amenity'].']', $this->aStructuredQuery['amenity']);
+            if ($sQuery) {
+                $sQuery = $aSearches[0]->extractKeyValuePairs($sQuery);
+            }
+
+            $sSpecialTerm = '';
+            if ($sQuery) {
+                preg_match_all(
+                    '/\\[([\\w ]*)\\]/u',
+                    $sQuery,
+                    $aSpecialTermsRaw,
+                    PREG_SET_ORDER
+                );
+                foreach ($aSpecialTermsRaw as $aSpecialTerm) {
+                    $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
+                    if (!$sSpecialTerm) {
+                        $sSpecialTerm = $aSpecialTerm[1];
+                    }
+                }
+            }
+            if (!$sSpecialTerm && $this->aStructuredQuery
+                && isset($this->aStructuredQuery['amenity'])) {
+                $sSpecialTerm = $this->aStructuredQuery['amenity'];
                 unset($this->aStructuredQuery['amenity']);
             }
 
-            foreach ($aSpecialTermsRaw as $aSpecialTerm) {
-                $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
-                if ($bSpecialTerms) {
-                    continue;
-                }
-
-                $sToken = chksql($this->oDB->getOne("SELECT make_standard_name('".pg_escape_string($aSpecialTerm[1])."') AS string"));
-                $sSQL = 'SELECT * ';
-                $sSQL .= 'FROM ( ';
-                $sSQL .= '   SELECT word_id, word_token, word, class, type, country_code, operator';
-                $sSQL .= '   FROM word ';
+            if ($sSpecialTerm && !$aSearches[0]->hasOperator()) {
+                $sSpecialTerm = pg_escape_string($sSpecialTerm);
+                $sToken = chksql(
+                    $this->oDB->getOne("SELECT make_standard_name('$sSpecialTerm')"),
+                    "Cannot decode query. Wrong encoding?"
+                );
+                $sSQL = 'SELECT class, type FROM word ';
                 $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
-                $sSQL .= ') AS x ';
-                $sSQL .= ' WHERE (class is not null AND class not in (\'place\'))';
+                $sSQL .= '   AND class is not null AND class not in (\'place\')';
                 if (CONST_Debug) var_Dump($sSQL);
                 $aSearchWords = chksql($this->oDB->getAll($sSQL));
                 $aNewSearches = array();
-                foreach ($aSearches as $aSearch) {
+                foreach ($aSearches as $oSearch) {
                     foreach ($aSearchWords as $aSearchTerm) {
-                        $aNewSearch = $aSearch;
-                        $aNewSearch['sClass'] = $aSearchTerm['class'];
-                        $aNewSearch['sType'] = $aSearchTerm['type'];
-                        $aNewSearches[] = $aNewSearch;
-                        $bSpecialTerms = true;
+                        $oNewSearch = clone $oSearch;
+                        $oNewSearch->setPoiSearch(
+                            Operator::TYPE,
+                            $aSearchTerm['class'],
+                            $aSearchTerm['type'],
+                        );
+                        $aNewSearches[] = $oNewSearch;
                     }
                 }
                 $aSearches = $aNewSearches;
@@ -1212,10 +1195,10 @@ class Geocode
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
-                            if ($aSearch['iSearchRank'] < $this->iMaxRank) {
-                                if (!isset($aReverseGroupedSearches[$aSearch['iSearchRank']])) $aReverseGroupedSearches[$aSearch['iSearchRank']] = array();
-                                $aReverseGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
+                            if (!isset($aReverseGroupedSearches[$aSearch->getRank()])) {
+                                $aReverseGroupedSearches[$aSearch->getRank()] = array();
                             }
+                            $aReverseGroupedSearches[$aSearch->getRank()][] = $aSearch;
                         }
                     }
 
@@ -1226,9 +1209,9 @@ class Geocode
                 // Re-group the searches by their score, junk anything over 20 as just not worth trying
                 $aGroupedSearches = array();
                 foreach ($aSearches as $aSearch) {
-                    if ($aSearch['iSearchRank'] < $this->iMaxRank) {
-                        if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
-                        $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
+                    if ($aSearch->getRank() < $this->iMaxRank) {
+                        if (!isset($aGroupedSearches[$aSearch->getRank()])) $aGroupedSearches[$aSearch->getRank()] = array();
+                        $aGroupedSearches[$aSearch->getRank()][] = $aSearch;
                     }
                 }
                 ksort($aGroupedSearches);

@@ -1061,7 +1061,7 @@ class Geocode
                     continue;
                 }
 
-                $sToken = chksql($this->oDB->getOne("SELECT make_standard_name('".$aSpecialTerm[1]."') AS string"));
+                $sToken = chksql($this->oDB->getOne("SELECT make_standard_name('".pg_escape_string($aSpecialTerm[1])."') AS string"));
                 $sSQL = 'SELECT * ';
                 $sSQL .= 'FROM ( ';
                 $sSQL .= '   SELECT word_id, word_token, word, class, type, country_code, operator';

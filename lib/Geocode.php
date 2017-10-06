@@ -859,7 +859,7 @@ class Geocode
                                         }
                                     }
 
-                                    if ((!$aCurrentSearch['sPostcode'] && !$aSearch['aAddress'] && !$aSearch['aAddressNonSearch'])
+                                    if ((!$aCurrentSearch['sPostcode'] && !$aCurrentSearch['aAddress'] && !$aCurrentSearch['aAddressNonSearch'])
                                         && (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)) {
                                         $aSearch = $aCurrentSearch;
                                         $aSearch['iSearchRank'] += 1;

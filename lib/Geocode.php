@@ -859,7 +859,8 @@ class Geocode
                                         }
                                     }
 
-                                    if (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase) {
+                                    if ((!$aCurrentSearch['sPostcode'] && !$aSearch['aAddress'] && !$aSearch['aAddressNonSearch'])
+                                        && (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)) {
                                         $aSearch = $aCurrentSearch;
                                         $aSearch['iSearchRank'] += 1;
                                         if (!sizeof($aCurrentSearch['aName'])) $aSearch['iSearchRank'] += 1;

@@ -709,6 +709,8 @@ class Geocode
 
              Score how good the search is so they can be ordered
          */
+        $iGlobalRank = 0;
+
         foreach ($aPhrases as $iPhrase => $aPhrase) {
             $aNewPhraseSearches = array();
             if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
@@ -745,6 +747,11 @@ class Geocode
                                             $aSearch['iSearchRank'] += 5;
                                         }
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
+                                        // If it is at the beginning, we can be almost sure that this is the wrong order
+                                        // Increase score for all searches.
+                                        if ($iToken == 0 && $iPhrase == 0) {
+                                            $iGlobalRank++;
+                                        }
                                     }
                                 } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode') {
                                     // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
@@ -922,6 +929,7 @@ class Geocode
                     continue;
                 }
             }
+            $aSearch['iSearchRank'] += $iGlobalRank;
             $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
         }
         ksort($aGroupedSearches);

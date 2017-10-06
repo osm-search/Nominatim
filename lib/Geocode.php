@@ -781,8 +781,8 @@ class Geocode
                                         // sanity check: if the housenumber is not mainly made
                                         // up of numbers, add a penalty
                                         if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
-                                        // also housenumbers should appear in the first or second phrase
-                                        if ($iPhrase > 1) $aSearch['iSearchRank'] += 1;
+                                        // also must not appear in the middle of the address
+                                        if ($aSearch['aAddress'] || $aSearch['aAddressNonSearch']) $aSearch['iSearchRank'] += 1;
                                         if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                         /*
                                         // Fall back to not searching for this item (better than nothing)

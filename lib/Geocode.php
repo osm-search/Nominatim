@@ -922,7 +922,7 @@ class Geocode
             //if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
         }
 
-        // Revisit searches, giving penalty to unlikely combinations
+        // Revisit searches, drop bad searches and give penalty to unlikely combinations.
         $aGroupedSearches = array();
         foreach ($aSearches as $aSearch) {
             if (!$aSearch['aName']) {
@@ -930,6 +930,11 @@ class Geocode
                     continue;
                 }
             }
+            if ($this->aCountryCodes && $aSearch['sCountryCode']
+                && !in_array($aSearch['sCountryCode'], $this->aCountryCodes)) {
+                continue;
+            }
+
             $aSearch['iSearchRank'] += $iGlobalRank;
             $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
         }
@@ -1255,10 +1260,6 @@ class Geocode
 
                     if (CONST_Debug) echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
                     if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($aSearch)), $aValidTokens);
-
-                    if ($sCountryCodesSQL && $aSearch['sCountryCode'] && !in_array($aSearch['sCountryCode'], $this->aCountryCodes)) {
-                        continue;
-                    }
 
                     // No location term?
                     if (!sizeof($aSearch['aName']) && !sizeof($aSearch['aAddress'])) {

@@ -101,7 +101,6 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 
 @define('CONST_Search_BatchMode', false);
 
-@define('CONST_Search_TryDroppedAddressTerms', false);
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
 // If set to true, then reverse order of queries will be tried by default.
 // When set to false only selected languages alloow reverse search.

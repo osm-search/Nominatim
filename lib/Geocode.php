@@ -1229,35 +1229,6 @@ class Geocode
                 ksort($aGroupedSearches);
             }
 
-            if (CONST_Search_TryDroppedAddressTerms && sizeof($this->aStructuredQuery) > 0) {
-                $aCopyGroupedSearches = $aGroupedSearches;
-                foreach ($aCopyGroupedSearches as $iGroup => $aSearches) {
-                    foreach ($aSearches as $iSearch => $aSearch) {
-                        $aReductionsList = array($aSearch['aAddress']);
-                        $iSearchRank = $aSearch['iSearchRank'];
-                        while (sizeof($aReductionsList) > 0) {
-                            $iSearchRank += 5;
-                            if ($iSearchRank > iMaxRank) break 3;
-                            $aNewReductionsList = array();
-                            foreach ($aReductionsList as $aReductionsWordList) {
-                                for ($iReductionWord = 0; $iReductionWord < sizeof($aReductionsWordList); $iReductionWord++) {
-                                    $aReductionsWordListResult = array_merge(array_slice($aReductionsWordList, 0, $iReductionWord), array_slice($aReductionsWordList, $iReductionWord+1));
-                                    $aReverseSearch = $aSearch;
-                                    $aSearch['aAddress'] = $aReductionsWordListResult;
-                                    $aSearch['iSearchRank'] = $iSearchRank;
-                                    $aGroupedSearches[$iSearchRank][] = $aReverseSearch;
-                                    if (sizeof($aReductionsWordListResult) > 0) {
-                                        $aNewReductionsList[] = $aReductionsWordListResult;
-                                    }
-                                }
-                            }
-                            $aReductionsList = $aNewReductionsList;
-                        }
-                    }
-                }
-                ksort($aGroupedSearches);
-            }
-
             // Filter out duplicate searches
             $aSearchHash = array();
             foreach ($aGroupedSearches as $iGroup => $aSearches) {

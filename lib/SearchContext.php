@@ -16,10 +16,12 @@ require_once(CONST_BasePath.'/lib/lib.php');
 class SearchContext
 {
     private $fNearRadius = false;
-
-    // cached SQL
+    public $bViewboxBounded = false;
 
     public $sqlNear = '';
+    public $sqlViewboxSmall = '';
+    public $sqlViewboxLarge = '';
+    public $sqlViewboxCentre = '';
 
     public function hasNearPoint()
     {
@@ -35,6 +37,58 @@ class SearchContext
     {
         $this->fNearRadius = $fRadius;
         $this->sqlNear = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
+    }
+
+    public function isBoundedSearch()
+    {
+        return $this->hasNearPoint() || ($this->sqlViewboxSmall && $this->bViewboxBounded);
+
+    }
+
+    public function setViewboxFromBox(&$aViewBox, $bBounded)
+    {
+        $this->bViewboxBounded = $bBounded;
+        $this->sqlViewboxCentre = '';
+
+        $this->sqlViewboxSmall = sprintf(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
+            $aViewBox[0],
+            $aViewBox[1],
+            $aViewBox[2],
+            $aViewBox[3]
+        );
+
+        $fHeight = $aViewBox[0] - $aViewBox[2];
+        $fWidth = $aViewBox[1] - $aViewBox[3];
+
+        $this->sqlViewboxLarge = sprintf(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
+            max($aViewBox[0], $aViewBox[2]) + $fHeight,
+            max($aViewBox[1], $aViewBox[3]) + $fWidth,
+            min($aViewBox[0], $aViewBox[2]) - $fHeight,
+            min($aViewBox[1], $aViewBox[3]) - $fWidth
+        );
+    }
+
+    public function setViewboxFromRoute(&$oDB, $aRoutePoints, $fRouteWidth, $bBounded)
+    {
+        $this->bViewboxBounded = $bBounded;
+        $this->sqlViewboxCentre = "ST_SetSRID('LINESTRING(";
+        $sSep = '';
+        foreach ($aRoutePoints as $aPoint) {
+            $fPoint = (float)$aPoint;
+            $this->sqlViewboxCentre .= $sSep.$fPoint;
+            $sSep = ($sSep == ' ') ? ',' : ' ';
+        }
+        $this->sqlViewboxCentre .= ")'::geometry,4326)";
+
+        $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/69).')';
+        $sGeom = chksql($oDB->getOne("select ".$sSQL), "Could not get small viewbox");
+        $this->sqlViewboxSmall = "'".$sGeom."'::geometry";
+
+        $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/30).')';
+        $sGeom = chksql($oDB->getOne("select ".$sSQL), "Could not get large viewbox");
+        $this->sqlViewboxLarge = "'".$sGeom."'::geometry";
     }
 
     /**
@@ -69,5 +123,19 @@ class SearchContext
     public function withinSQL($sObj)
     {
         return sprintf('ST_DWithin(%s, %s, %F)', $sObj, $this->sqlNear, $this->fNearRadius);
+    }
+
+    public function viewboxImportanceSQL($sObj)
+    {
+        $sSQL = '';
+
+        if ($this->sqlViewboxSmall) {
+            $sSQL = " * CASE WHEN ST_Contains($this->sqlViewboxSmall, $sObj) THEN 1 ELSE 0.5 END";
+        }
+        if ($this->sqlViewboxLarge) {
+            $sSQL = " * CASE WHEN ST_Contains($this->sqlViewboxLarge, $sObj) THEN 1 ELSE 0.5 END";
+        }
+
+        return $sSQL;
     }
 }

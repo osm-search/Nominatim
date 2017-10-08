@@ -37,9 +37,8 @@ class Geocode
 
     protected $bBoundedSearch = false;
     protected $aViewBox = false;
-    protected $sViewboxCentreSQL = false;
-    protected $sViewboxSmallSQL = false;
-    protected $sViewboxLargeSQL = false;
+    protected $aRoutePoints = false;
+    protected $aRouteWidth = false;
 
     protected $iMaxRank = 20;
     protected $iMinAddressRank = 0;
@@ -184,26 +183,6 @@ class Geocode
         $this->iMaxAddressRank = $iMax;
     }
 
-    public function setRoute($aRoutePoints, $fRouteWidth)
-    {
-        $this->aViewBox = false;
-
-        $this->sViewboxCentreSQL = "ST_SetSRID('LINESTRING(";
-        $sSep = '';
-        foreach ($aRoutePoints as $aPoint) {
-            $fPoint = (float)$aPoint;
-            $this->sViewboxCentreSQL .= $sSep.$fPoint;
-            $sSep = ($sSep == ' ') ? ',' : ' ';
-        }
-        $this->sViewboxCentreSQL .= ")'::geometry,4326)";
-
-        $this->sViewboxSmallSQL = 'ST_BUFFER('.$this->sViewboxCentreSQL;
-        $this->sViewboxSmallSQL .= ','.($fRouteWidth/69).')';
-
-        $this->sViewboxLargeSQL = 'ST_BUFFER('.$this->sViewboxCentreSQL;
-        $this->sViewboxLargeSQL .= ','.($fRouteWidth/30).')';
-    }
-
     public function setViewbox($aViewbox)
     {
         $this->aViewBox = array_map('floatval', $aViewbox);
@@ -218,29 +197,6 @@ class Geocode
         ) {
             userError("Bad parameter 'viewbox'. Not a box.");
         }
-
-        $fHeight = $this->aViewBox[0] - $this->aViewBox[2];
-        $fWidth = $this->aViewBox[1] - $this->aViewBox[3];
-        $aBigViewBox[0] = $this->aViewBox[0] + $fHeight;
-        $aBigViewBox[2] = $this->aViewBox[2] - $fHeight;
-        $aBigViewBox[1] = $this->aViewBox[1] + $fWidth;
-        $aBigViewBox[3] = $this->aViewBox[3] - $fWidth;
-
-        $this->sViewboxCentreSQL = false;
-        $this->sViewboxSmallSQL = sprintf(
-            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
-            $this->aViewBox[0],
-            $this->aViewBox[1],
-            $this->aViewBox[2],
-            $this->aViewBox[3]
-        );
-        $this->sViewboxLargeSQL = sprintf(
-            'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',
-            $aBigViewBox[0],
-            $aBigViewBox[1],
-            $aBigViewBox[2],
-            $aBigViewBox[3]
-        );
     }
 
     public function setQuery($sQueryString)
@@ -319,7 +275,8 @@ class Geocode
                 $aRoute = $oParams->getStringList('route');
                 $fRouteWidth = $oParams->getFloat('routewidth');
                 if ($aRoute && $fRouteWidth) {
-                    $this->setRoute($aRoute, $fRouteWidth);
+                    $this->aRoutePoints = $aRoute;
+                    $this->aRouteWidth = $fRouteWidth;
                 }
             }
         }
@@ -407,7 +364,7 @@ class Geocode
         return false;
     }
 
-    public function getDetails($aPlaceIDs)
+    public function getDetails($aPlaceIDs, $oCtx)
     {
         //$aPlaceIDs is an array with key: placeID and value: tiger-housenumber, if found, else -1
         if (sizeof($aPlaceIDs) == 0) return array();
@@ -419,16 +376,8 @@ class Geocode
         // Get the details for display (is this a redundant extra step?)
         $sPlaceIDs = join(',', array_keys($aPlaceIDs));
 
-        $sImportanceSQL = '';
-        $sImportanceSQLGeom = '';
-        if ($this->sViewboxSmallSQL) {
-            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
-            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxSmallSQL, geometry) THEN 1 ELSE 0.75 END * ";
-        }
-        if ($this->sViewboxLargeSQL) {
-            $sImportanceSQL .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, ST_Collect(centroid)) THEN 1 ELSE 0.75 END * ";
-            $sImportanceSQLGeom .= " CASE WHEN ST_Contains($this->sViewboxLargeSQL, geometry) THEN 1 ELSE 0.75 END * ";
-        }
+        $sImportanceSQL = $oCtx->viewboxImportanceSQL('ST_Collect(centroid)');
+        $sImportanceSQLGeom = $oCtx->viewboxImportanceSQL('geometry');
 
         $sSQL  = "SELECT ";
         $sSQL .= "    osm_type,";
@@ -448,7 +397,7 @@ class Geocode
         if ($this->bIncludeNameDetails) $sSQL .= "hstore_to_json(name)::text AS names,";
         $sSQL .= "    avg(ST_X(centroid)) AS lon, ";
         $sSQL .= "    avg(ST_Y(centroid)) AS lat, ";
-        $sSQL .= "    ".$sImportanceSQL."COALESCE(importance,0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .= "    COALESCE(importance,0.75-(rank_search::float/40)) $sImportanceSQL AS importance, ";
         $sSQL .= "    ( ";
         $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
         $sSQL .= "       FROM ";
@@ -507,7 +456,7 @@ class Geocode
         if ($this->bIncludeExtraTags) $sSQL .= "null AS extra,";
         if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
         $sSQL .= "  ST_x(st_centroid(geometry)) AS lon, ST_y(st_centroid(geometry)) AS lat,";
-        $sSQL .=    $sImportanceSQLGeom."(0.75-(rank_search::float/40)) AS importance, ";
+        $sSQL .= "  (0.75-(rank_search::float/40)) $sImportanceSQLGeom AS importance, ";
         $sSQL .= "  (";
         $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
         $sSQL .= "     FROM ";
@@ -555,7 +504,7 @@ class Geocode
                 if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
                 $sSQL .= "     avg(st_x(centroid)) AS lon, ";
                 $sSQL .= "     avg(st_y(centroid)) AS lat,";
-                $sSQL .= "     ".$sImportanceSQL."-1.15 AS importance, ";
+                $sSQL .= "     -1.15".$sImportanceSQL." AS importance, ";
                 $sSQL .= "     (";
                 $sSQL .= "        SELECT max(p.importance*(p.rank_address+2))";
                 $sSQL .= "        FROM ";
@@ -605,7 +554,7 @@ class Geocode
             if ($this->bIncludeNameDetails) $sSQL .= "null AS names, ";
             $sSQL .= "  AVG(st_x(centroid)) AS lon, ";
             $sSQL .= "  AVG(st_y(centroid)) AS lat, ";
-            $sSQL .= "  ".$sImportanceSQL."-0.1 AS importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
+            $sSQL .= "  -0.1".$sImportanceSQL." AS importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
             $sSQL .= "  (";
             $sSQL .= "     SELECT ";
             $sSQL .= "       MAX(p.importance*(p.rank_address+2)) ";
@@ -664,7 +613,7 @@ class Geocode
                 if ($this->bIncludeNameDetails) $sSQL .= "null AS names, ";
                 $sSQL .= "     avg(ST_X(centroid)) AS lon, ";
                 $sSQL .= "     avg(ST_Y(centroid)) AS lat, ";
-                $sSQL .= "     ".$sImportanceSQL."-1.10 AS importance, ";
+                $sSQL .= "     -1.10".$sImportanceSQL." AS importance, ";
                 $sSQL .= "     ( ";
                 $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
                 $sSQL .= "       FROM ";
@@ -890,6 +839,17 @@ class Geocode
 
         $oCtx = new SearchContext();
 
+        if ($this->aRoutePoints) {
+            $oCtx->setViewboxFromRoute(
+                $this->oDB,
+                $this->aRoutePoints,
+                $this->aRouteWidth,
+                $this->bBoundedSearch
+            );
+        } else if ($this->aViewBox) {
+            $oCtx->setViewboxFromBox($this->aViewBox, $this->bBoundedSearch);
+        }
+
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
             array_map("getDBQuoted", $this->aLangPrefOrder)
@@ -909,22 +869,6 @@ class Geocode
             $sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/', '\1illinois\2', $sQuery);
             $sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/', '\1alabama\2', $sQuery);
             $sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/', '\1louisiana\2', $sQuery);
-        }
-
-        $bBoundingBoxSearch = $this->bBoundedSearch && $this->sViewboxSmallSQL;
-        if ($this->sViewboxCentreSQL) {
-            // For complex viewboxes (routes) precompute the bounding geometry
-            $sGeom = chksql(
-                $this->oDB->getOne("select ".$this->sViewboxSmallSQL),
-                "Could not get small viewbox"
-            );
-            $this->sViewboxSmallSQL = "'".$sGeom."'::geometry";
-
-            $sGeom = chksql(
-                $this->oDB->getOne("select ".$this->sViewboxLargeSQL),
-                "Could not get large viewbox"
-            );
-            $this->sViewboxLargeSQL = "'".$sGeom."'::geometry";
         }
 
         // Do we have anything that looks like a lat/lon pair?
@@ -1153,22 +1097,17 @@ class Geocode
                     if ($oSearch->isCountrySearch()) {
                         // Just looking for a country - look it up
                         if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
-                            $aPlaceIDs = $oSearch->queryCountry(
-                                $this->oDB,
-                                $bBoundingBoxSearch ? $this->sViewboxSmallSQL : ''
-                            );
+                            $aPlaceIDs = $oSearch->queryCountry($this->oDB);
                         }
                     } elseif (!$oSearch->isNamedSearch()) {
                         // looking for a POI in a geographic area
-                        if (!$bBoundingBoxSearch && !$oCtx->hasNearPoint()) {
+                        if (!$oCtx->isBoundedSearch()) {
                             continue;
                         }
 
                         $aPlaceIDs = $oSearch->queryNearbyPoi(
                             $this->oDB,
                             $sCountryCodesSQL,
-                            $bBoundingBoxSearch ? $this->sViewboxSmallSQL : '',
-                            $this->sViewboxCentreSQL,
                             $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                             $this->iLimit
                         );
@@ -1188,8 +1127,6 @@ class Geocode
                             $this->iMinAddressRank,
                             $this->iMaxAddressRank,
                             $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
-                            $bBoundingBoxSearch ? $this->sViewboxSmallSQL : '',
-                            $bBoundingBoxSearch ? $this->sViewboxLargeSQL : '',
                             $this->iLimit
                         );
 
@@ -1306,7 +1243,7 @@ class Geocode
 
             // Did we find anything?
             if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) {
-                $aSearchResults = $this->getDetails($aResultPlaceIDs);
+                $aSearchResults = $this->getDetails($aResultPlaceIDs, $oCtx);
             }
         } else {
             // Just interpret as a reverse geocode
@@ -1318,7 +1255,7 @@ class Geocode
             if (CONST_Debug) var_dump("Reverse search", $aLookup);
 
             if ($aLookup['place_id']) {
-                $aSearchResults = $this->getDetails(array($aLookup['place_id'] => -1));
+                $aSearchResults = $this->getDetails(array($aLookup['place_id'] => -1), $oCtx);
                 $aResultPlaceIDs[$aLookup['place_id']] = -1;
             } else {
                 $aSearchResults = array();

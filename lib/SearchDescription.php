@@ -367,13 +367,13 @@ class SearchDescription
     /////////// Query functions
 
 
-    public function queryCountry(&$oDB, $sViewboxSQL)
+    public function queryCountry(&$oDB)
     {
         $sSQL = 'SELECT place_id FROM placex ';
         $sSQL .= "WHERE country_code='".$this->sCountryCode."'";
         $sSQL .= ' AND rank_search = 4';
-        if ($sViewboxSQL) {
-            $sSQL .= " AND ST_Intersects($sViewboxSQL, geometry)";
+        if ($this->oContext->bViewboxBounded) {
+            $sSQL .= ' AND ST_Intersects('.$this->oContext->sqlViewboxSmall.', geometry)';
         }
         $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
 
@@ -382,7 +382,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNearbyPoi(&$oDB, $sCountryList, $sViewboxSQL, $sViewboxCentreSQL, $sExcludeSQL, $iLimit)
+    public function queryNearbyPoi(&$oDB, $sCountryList, $sExcludeSQL, $iLimit)
     {
         if (!$this->sClass) {
             return array();
@@ -398,8 +398,8 @@ class SearchDescription
             }
             if ($this->oContext->hasNearPoint()) {
                 $sSQL .= ' WHERE '.$this->oContext->withinSQL('ct.centroid');
-            } else {
-                $sSQL .= " WHERE ST_Contains($sViewboxSQL, ct.centroid)";
+            } else if ($this->oContext->bViewboxBounded) {
+                $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', ct.centroid)';
             }
             if ($sCountryList) {
                 $sSQL .= " AND country_code in ($sCountryList)";
@@ -407,8 +407,9 @@ class SearchDescription
             if ($sExcludeSQL) {
                 $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
             }
-            if ($sViewboxCentreSQL) {
-                $sSQL .= " ORDER BY ST_Distance($sViewboxCentreSQL, ct.centroid) ASC";
+            if ($this->oContext->sqlViewboxCentre) {
+                $sSQL .= ' ORDER BY ST_Distance(';
+                $sSQL .= $this->oContext->sqlViewboxCentre.', ct.centroid) ASC';
             } elseif ($this->oContext->hasNearPoint()) {
                 $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('ct.centroid').' ASC';
             }
@@ -459,7 +460,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $sExcludeSQL, $sViewboxSmall, $sViewboxLarge, $iLimit)
+    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $sExcludeSQL, $iLimit)
     {
         $aTerms = array();
         $aOrder = array();
@@ -537,8 +538,8 @@ class SearchDescription
             $aTerms[] = 'place_id not in ('.$sExcludeSQL.')';
         }
 
-        if ($sViewboxSmall) {
-            $aTerms[] = 'centroid && '.$sViewboxSmall;
+        if ($this->oContext->bViewboxBounded) {
+            $aTerms[] = 'centroid && '.$this->oContext->sqlViewboxSmall;
         }
 
         if ($this->oContext->hasNearPoint()) {
@@ -550,12 +551,7 @@ class SearchDescription
         } else {
             $sImportanceSQL = '(CASE WHEN importance = 0 OR importance IS NULL THEN 0.75-(search_rank::float/40) ELSE importance END)';
         }
-        if ($sViewboxSmall) {
-            $sImportanceSQL .= " * CASE WHEN ST_Contains($sViewboxSmall, centroid) THEN 1 ELSE 0.5 END";
-        }
-        if ($sViewboxLarge) {
-            $sImportanceSQL .= " * CASE WHEN ST_Contains($sViewboxLarge, centroid) THEN 1 ELSE 0.5 END";
-        }
+        $sImportanceSQL .= $this->oContext->viewboxImportanceSQL('centroid');
         $aOrder[] = "$sImportanceSQL DESC";
 
         if (sizeof($this->aFullNameAddress)) {

@@ -5,7 +5,7 @@ namespace Nominatim;
 /**
  * Operators describing special searches.
  */
-abstract final class Operator
+abstract class Operator
 {
     /// No operator selected.
     const NONE = 0;
@@ -103,7 +103,7 @@ class SearchDescription
     public function isCountrySearch()
     {
         return $this->sCountryCode && sizeof($this->aName) == 0
-               && !$this->iOperator && !$this->oNear;
+               && !$this->iOperator && !$this->oNearPoint;
     }
 
     /**
@@ -111,7 +111,7 @@ class SearchDescription
      */
     public function isNearSearch()
     {
-        return (bool) $this->oNear;
+        return (bool) $this->oNearPoint;
     }
 
     public function isPoiSearch()
@@ -147,7 +147,7 @@ class SearchDescription
             return $sVar.' = \''.$this->sCountryCode."'";
         }
         if ($sCountryList) {
-            return $sVar.' in ('.$this->sCountryCode.')';
+            return $sVar.' in ('.$sCountryList.')';
         }
 
         return '';
@@ -193,7 +193,7 @@ class SearchDescription
             }
         }
         if ($aCountryCodes
-            && $this->sCounrtyCode
+            && $this->sCountryCode
             && !in_array($this->sCountryCode, $aCountryCodes)
         ) {
             return false;
@@ -289,7 +289,7 @@ class SearchDescription
                 && (isset($aSearchTerm['word']) && $aSearchTerm['word'])
                 && $bWordInQuery
             ) {
-                $oSearch = clone this;
+                $oSearch = clone $this;
                 $oSearch->iSearchRank++;
 
                 $iOp = Operator::NEAR; // near == in for the moment
@@ -307,13 +307,12 @@ class SearchDescription
             $iWordID = $aSearchTerm['word_id'];
             if (sizeof($this->aName)) {
                 if (($sPhraseType == '' || !$bFirstPhrase)
-                    && $sPhraseType != 'country'))
+                    && $sPhraseType != 'country'
                     && !$bHasPartial
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress[$iWordID] = $iWordID;
-                    );
                     $aNewSearches[] = $oSearch;
                 }
                 else {
@@ -345,18 +344,18 @@ class SearchDescription
             && strpos($aSearchTerm['word_token'], ' ') === false
         ) {
             if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
-                $oSearch = clone this;
+                $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddress[$iWordID] = $iWordID;
                 $aNewSearches[] = $oSearch;
             } else {
-                $oSearch = clone this;
+                $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
                 if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
                     $oSearch->iSearchRank += 2;
                 }
-                if (sizeof($aFullTokens) {
+                if (sizeof($aFullTokens)) {
                     $oSearch->iSearchRank++;
                 }
                 $aNewSearches[] = $oSearch;
@@ -382,18 +381,18 @@ class SearchDescription
             $oSearch = clone $this;
             $oSearch->iSearchRank++;
             if (!sizeof($this->aName)) {
-                $aSearch->iSearchRank += 1;
+                $oSearch->iSearchRank += 1;
             }
-            if (preg_match('#^[0-9]+$#', $sSerchTerm['word_token')) {
+            if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
                 $oSearch->iSearchRank += 2;
             }
             if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
-                $aSearch->aNameNonSearch[$iWordID] = $iWordID;
+                $oSearch->aNameNonSearch[$iWordID] = $iWordID;
             }
             $oSearch->iNamePhrase = $iPhrase;
-            $aNewSearches[] = $aSearch;
+            $aNewSearches[] = $oSearch;
         }
 
         return $aNewSearches;
@@ -406,7 +405,7 @@ class SearchDescription
         $sSQL = 'SELECT place_id FROM placex ';
         $sSQL .= "WHERE country_code='".$this->sCountryCode."'";
         $sSQL .= ' AND rank_search = 4';
-        if ($ViewboxSQL) {
+        if ($sViewboxSQL) {
             $sSQL .= " AND ST_Intersects($sViewboxSQL, geometry)";
         }
         $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
@@ -448,7 +447,7 @@ class SearchDescription
             }
             $sSQL .= " limit $iLimit";
             if (CONST_Debug) var_dump($sSQL);
-            return chksql($this->oDB->getCol($sSQL));
+            return chksql($oDB->getCol($sSQL));
         }
 
         if ($this->oNearPoint) {
@@ -462,7 +461,7 @@ class SearchDescription
             $sSQL .= ' ORDER BY '.$this->oNearPoint->distanceSQL('centroid')." ASC";
             $sSQL .= " LIMIT $iLimit";
             if (CONST_Debug) var_dump($sSQL);
-            return chksql($this->oDB->getCol($sSQL));
+            return chksql($oDB->getCol($sSQL));
         }
 
         return array();
@@ -490,7 +489,7 @@ class SearchDescription
 
         if (CONST_Debug) var_dump($sSQL);
 
-        return chksql($this->oDB->getCol($sSQL));
+        return chksql($oDB->getCol($sSQL));
     }
 
     public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $sExcludeSQL, $sViewboxSmall, $sViewboxLarge, $iLimit)
@@ -540,7 +539,7 @@ class SearchDescription
             }
         }
 
-        $sCountryTerm = $this->countryCodeSQL('p.country_code', $sCountryList);
+        $sCountryTerm = $this->countryCodeSQL('country_code', $sCountryList);
         if ($sCountryTerm) {
             $aTerms[] = $sCountryTerm;
         }
@@ -568,7 +567,7 @@ class SearchDescription
         }
 
         if ($sExcludeSQL) {
-            $aTerms = 'place_id not in ('.$sExcludeSQL.')';
+            $aTerms[] = 'place_id not in ('.$sExcludeSQL.')';
         }
 
         if ($sViewboxSmall) {
@@ -619,7 +618,7 @@ class SearchDescription
             if (CONST_Debug) var_dump($sSQL);
 
             return chksql(
-                $this->oDB->getAll($sSQL),
+                $oDB->getAll($sSQL),
                 "Could not get places for search terms."
             );
         }
@@ -643,7 +642,7 @@ class SearchDescription
 
         if (CONST_Debug) var_dump($sSQL);
 
-        $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
+        $aPlaceIDs = chksql($oDB->getCol($sSQL));
 
         if (sizeof($aPlaceIDs)) {
             return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => -1);
@@ -668,14 +667,14 @@ class SearchDescription
             $sSQL .= $iHousenumber.">=startnumber and ";
             $sSQL .= $iHousenumber."<=endnumber";
 
-            if ($sExcludeSQL)) {
+            if ($sExcludeSQL) {
                 $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
             }
             $sSQL .= " limit $iLimit";
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($this->oDB->getCol($sSQL, 0));
+            $aPlaceIDs = chksql($oDB->getCol($sSQL, 0));
 
             if (sizeof($aPlaceIDs)) {
                 return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => $iHousenumber);
@@ -694,7 +693,7 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
+            $aPlaceIDs = chksql($oDB->getCol($sSQL));
 
             if (sizeof($aPlaceIDs)) {
                 return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => -1);
@@ -721,7 +720,7 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($this->oDB->getCol($sSQL, 0));
+            $aPlaceIDs = chksql($oDB->getCol($sSQL, 0));
 
             if (sizeof($aPlaceIDs)) {
                 return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => $iHousenumber);
@@ -750,18 +749,18 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aClassPlaceIDs = chksql($this->oDB->getCol($sSQL));
+            $aClassPlaceIDs = chksql($oDB->getCol($sSQL));
         }
 
         // NEAR and IN are handled the same
         if ($this->iOperator == Operator::TYPE || $this->iOperator == Operator::NEAR) {
             $sClassTable = $this->poiTable();
             $sSQL = "SELECT count(*) FROM pg_tables WHERE tablename = '$sClassTable'";
-            $bCacheTable = (bool) chksql($this->oDB->getOne($sSQL));
+            $bCacheTable = (bool) chksql($oDB->getOne($sSQL));
 
             $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
             if (CONST_Debug) var_dump($sSQL);
-            $iMaxRank = (int)chksql($this->oDB->getOne($sSQL));
+            $iMaxRank = (int)chksql($oDB->getOne($sSQL));
 
             // For state / country level searches the normal radius search doesn't work very well
             $sPlaceGeom = false;
@@ -774,7 +773,7 @@ class SearchDescription
                 $sSQL .= " ORDER BY rank_search ASC ";
                 $sSQL .= " LIMIT 1";
                 if (CONST_Debug) var_dump($sSQL);
-                $sPlaceGeom = chksql($this->oDB->getOne($sSQL));
+                $sPlaceGeom = chksql($oDB->getOne($sSQL));
             }
 
             if ($sPlaceGeom) {
@@ -784,7 +783,7 @@ class SearchDescription
                 $sSQL = 'SELECT place_id FROM placex';
                 $sSQL .= " WHERE place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
                 if (CONST_Debug) var_dump($sSQL);
-                $aPlaceIDs = chksql($this->oDB->getCol($sSQL));
+                $aPlaceIDs = chksql($oDB->getCol($sSQL));
                 $sPlaceIDs = join(',', $aPlaceIDs);
             }
 
@@ -832,7 +831,7 @@ class SearchDescription
 
                     if (CONST_Debug) var_dump($sSQL);
 
-                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
+                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($oDB->getCol($sSQL)));
                 } else {
                     if ($this->oNearPoint) {
                         $fRange = $this->oNearPoint->radius();
@@ -864,11 +863,25 @@ class SearchDescription
 
                     if (CONST_Debug) var_dump($sSQL);
 
-                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($this->oDB->getCol($sSQL)));
+                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($oDB->getCol($sSQL)));
                 }
             }
         }
 
         return $aClassPlaceIDs;
     }
+
+
+    /////////// Sort functions
+
+    static function bySearchRank($a, $b)
+    {
+        if ($a->iSearchRank == $b->iSearchRank) {
+            return $a->iOperator + strlen($a->sHouseNumber)
+                     - $b->iOperator - strlen($b->sHouseNumber);
+        }
+
+        return $a->iSearchRank < $b->iSearchRank ? -1 : 1;
+    }
+
 };

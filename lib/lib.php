@@ -51,14 +51,6 @@ function getDatabaseDate(&$oDB)
 }
 
 
-function bySearchRank($a, $b)
-{
-    if ($a['iSearchRank'] == $b['iSearchRank'])
-        return strlen($a['sOperator']) + strlen($a['sHouseNumber']) - strlen($b['sOperator']) - strlen($b['sHouseNumber']);
-    return ($a['iSearchRank'] < $b['iSearchRank']?-1:1);
-}
-
-
 function byImportance($a, $b)
 {
     if ($a['importance'] != $b['importance'])

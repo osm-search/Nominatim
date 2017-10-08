@@ -5,6 +5,7 @@ namespace Nominatim;
 require_once(CONST_BasePath.'/lib/NearPoint.php');
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
+require_once(CONST_BasePath.'/lib/SearchDescription.php');
 
 class Geocode
 {
@@ -743,7 +744,7 @@ class Geocode
                             // Recheck if the original word shows up in the query.
                             $bWordInQuery = false;
                             if (isset($aSearchTerm['word']) && $aSearchTerm['word']) {
-                                $bWordInQuery = $this->normTerm($aSearchTerm['word'])) !== false;
+                                $bWordInQuery = $this->normTerm($aSearchTerm['word']) !== false;
                             }
                             foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
                                 $aNewSearches = $oCurrentSearch->extendWithFullTerm(
@@ -790,13 +791,13 @@ class Geocode
                         }
                     }
                     // Sort and cut
-                    usort($aNewWordsetSearches, 'bySearchRank');
+                    usort($aNewWordsetSearches, array('Nominatim\SearchDescription', 'bySearchRank'));
                     $aWordsetSearches = array_slice($aNewWordsetSearches, 0, 50);
                 }
                 //var_Dump('<hr>',sizeof($aWordsetSearches)); exit;
 
                 $aNewPhraseSearches = array_merge($aNewPhraseSearches, $aNewWordsetSearches);
-                usort($aNewPhraseSearches, 'bySearchRank');
+                usort($aNewPhraseSearches, array('Nominatim\SearchDescription', 'bySearchRank'));
 
                 $aSearchHash = array();
                 foreach ($aNewPhraseSearches as $iSearch => $aSearch) {
@@ -835,12 +836,12 @@ class Geocode
         // Revisit searches, drop bad searches and give penalty to unlikely combinations.
         $aGroupedSearches = array();
         foreach ($aSearches as $oSearch) {
-            if (!$oSearch->isValidSearch()) {
+            if (!$oSearch->isValidSearch($this->aCountryCodes)) {
                 continue;
             }
 
             $iRank = $oSearch->addToRank($iGlobalRank);
-            if (!isset($aGroupedSearches[$iRank]) {
+            if (!isset($aGroupedSearches[$iRank])) {
                 $aGroupedSearches[$iRank] = array();
             }
             $aGroupedSearches[$iRank][] = $oSearch;
@@ -983,7 +984,7 @@ class Geocode
                         $oNewSearch->setPoiSearch(
                             Operator::TYPE,
                             $aSearchTerm['class'],
-                            $aSearchTerm['type'],
+                            $aSearchTerm['type']
                         );
                         $aNewSearches[] = $oNewSearch;
                     }
@@ -1077,8 +1078,8 @@ class Geocode
 
                 foreach ($aTokens as $sToken) {
                     // Unknown single word token with a number - assume it is a house number
-                    if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken, ' ') === false && preg_match('/[0-9]/', $sToken)) {
-                        $aValidTokens[' '.$sToken] = array(array('class' => 'place', 'type' => 'house'));
+                    if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken, ' ') === false && preg_match('/^[0-9]+$/', $sToken)) {
+                        $aValidTokens[' '.$sToken] = array(array('class' => 'place', 'type' => 'house', 'word_token' => ' '.$sToken));
                     }
                 }
 
@@ -1173,7 +1174,7 @@ class Geocode
                             $this->oDB,
                             $sCountryCodesSQL,
                             $bBoundingBoxSearch ? $this->sViewboxSmallSQL : '',
-                            $sViewboxCentreSQL,
+                            $this->sViewboxCentreSQL,
                             $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                             $this->iLimit
                         );
@@ -1210,13 +1211,13 @@ class Geocode
                             $aResult = $oSearch->queryHouseNumber(
                                 $this->oDB,
                                 $aPlaceIDs,
-                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : ''
+                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                                 $this->iLimit
                             );
 
                             if (sizeof($aResult)) {
                                 $searchedHousenumber = $aResult['iHouseNumber'];
-                                $aPlaceIDs = $aResults['aPlaceIDs'];
+                                $aPlaceIDs = $aResult['aPlaceIDs'];
                             } elseif (!$oSearch->looksLikeFullAddress()) {
                                 $aPlaceIDs = array();
                             }
@@ -1227,7 +1228,7 @@ class Geocode
                             $aPlaceIDs = $oSearch->queryPoiByOperator(
                                 $this->oDB,
                                 $aPlaceIDs,
-                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : ''
+                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                                 $this->iLimit
                             );
                         }

@@ -1,46 +1,8 @@
 <?php
 
+require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
+
 namespace Nominatim;
-
-/**
- * Operators describing special searches.
- */
-abstract class Operator
-{
-    /// No operator selected.
-    const NONE = 0;
-    /// Search for POI of the given type.
-    const TYPE = 1;
-    /// Search for POIs near the given place.
-    const NEAR = 2;
-    /// Search for POIS in the given place.
-    const IN = 3;
-    /// Search for POIS named as given.
-    const NAME = 4;
-    /// Search for postcodes.
-    const POSTCODE = 5;
-
-    private static $aConstantNames = null;
-
-    public static function toString($iOperator)
-    {
-        if ($iOperator == Operator::NONE) {
-            return '';
-        }
-
-        if (Operator::$aConstantNames === null) {
-            $oReflector = new \ReflectionClass ('Nominatim\Operator');
-            $aConstants = $oReflector->getConstants();
-
-            Operator::$aConstantNames = array();
-            foreach ($aConstants as $sName => $iValue) {
-                Operator::$aConstantNames[$iValue] = $sName;
-            }
-        }
-
-        return Operator::$aConstantNames[$iOperator];
-    }
-}
 
 /**
  * Description of a single interpretation of a search query.
@@ -79,6 +41,7 @@ class SearchDescription
     /// Index of phrase currently processed
     private $iNamePhrase = -1;
 
+
     public function getRank()
     {
         return $this->iSearchRank;
@@ -95,9 +58,6 @@ class SearchDescription
         return $this->sPostcode;
     }
 
-    /**
-     * Set the geographic search radius.
-     */
     public function setNear(&$oNearPoint)
     {
         $this->oNearPoint = $oNearPoint;
@@ -110,26 +70,17 @@ class SearchDescription
         $this->sType = $sType;
     }
 
-    /**
-     * Check if name or address for the search are specified.
-     */
     public function isNamedSearch()
     {
         return sizeof($this->aName) > 0 || sizeof($this->aAddress) > 0;
     }
 
-    /**
-     * Check if only a country is requested.
-     */
     public function isCountrySearch()
     {
         return $this->sCountryCode && sizeof($this->aName) == 0
                && !$this->iOperator && !$this->oNearPoint;
     }
 
-    /**
-     * Check if a search near a geographic location is requested.
-     */
     public function isNearSearch()
     {
         return (bool) $this->oNearPoint;
@@ -179,13 +130,6 @@ class SearchDescription
         return $this->iOperator != Operator::NONE;
     }
 
-    /**
-     * Extract special terms from the query, amend the search
-     * and return the shortended query.
-     *
-     * Only the first special term found will be used but all will
-     * be removed from the query.
-     */
     public function extractKeyValuePairs($sQuery)
     {
         // Search for terms of kind [<key>=<value>].
@@ -224,6 +168,7 @@ class SearchDescription
     }
 
     /////////// Search building functions
+
 
     public function extendWithFullTerm($aSearchTerm, $bWordInQuery, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
     {
@@ -335,8 +280,7 @@ class SearchDescription
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
-                }
-                else {
+                } else {
                     $this->aFullNameAddress[$iWordID] = $iWordID;
                 }
             } else {
@@ -393,7 +337,7 @@ class SearchDescription
                         $aNewSearches[] = $oSearch;
                     }
                 }
-            } 
+            }
         }
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
@@ -420,6 +364,7 @@ class SearchDescription
     }
 
     /////////// Query functions
+
 
     public function queryCountry(&$oDB, $sViewboxSQL)
     {
@@ -490,7 +435,7 @@ class SearchDescription
 
     public function queryPostcode(&$oDB, $sCountryList, $iLimit)
     {
-        $sSQL  = 'SELECT p.place_id FROM location_postcode p ';
+        $sSQL = 'SELECT p.place_id FROM location_postcode p ';
 
         if (sizeof($this->aAddress)) {
             $sSQL .= ', search_name s ';
@@ -592,7 +537,7 @@ class SearchDescription
         }
 
         if ($sViewboxSmall) {
-           $aTerms[] = 'centroid && '.$sViewboxSmall;
+            $aTerms[] = 'centroid && '.$sViewboxSmall;
         }
 
         if ($this->oNearPoint) {
@@ -895,7 +840,8 @@ class SearchDescription
 
     /////////// Sort functions
 
-    static function bySearchRank($a, $b)
+
+    public static function bySearchRank($a, $b)
     {
         if ($a->iSearchRank == $b->iSearchRank) {
             return $a->iOperator + strlen($a->sHouseNumber)
@@ -907,9 +853,12 @@ class SearchDescription
 
     //////////// Debugging functions
 
-    function dumpAsHtmlTableRow(&$aWordIDs)
+
+    public function dumpAsHtmlTableRow(&$aWordIDs)
     {
-        $kf = function($k) use (&$aWordIDs) { return $aWordIDs[$k]; };
+        $kf = function ($k) use (&$aWordIDs) {
+            return $aWordIDs[$k];
+        };
 
         echo "<tr>";
         echo "<td>$this->iSearchRank</td>";
@@ -934,4 +883,4 @@ class SearchDescription
 
         echo "</tr>";
     }
-};
+}

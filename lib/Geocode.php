@@ -368,7 +368,7 @@ class Geocode
         $this->aAddressRankList = array();
 
         $this->aStructuredQuery = array();
-        $this->sAllowedTypesSQLList = False;
+        $this->sAllowedTypesSQLList = false;
 
         $this->loadStructuredAddressElement($sAmenity, 'amenity', 26, 30, false);
         $this->loadStructuredAddressElement($sStreet, 'street', 26, 30, false);
@@ -413,8 +413,7 @@ class Geocode
         if (sizeof($aPlaceIDs) == 0) return array();
 
         $sLanguagePrefArraySQL = getArraySQL(
-            array_map("getDBQuoted",
-            $this->aLangPrefOrder)
+            array_map("getDBQuoted", $this->aLangPrefOrder)
         );
 
         // Get the details for display (is this a redundant extra step?)
@@ -789,7 +788,6 @@ class Geocode
                                         $aNewWordsetSearches[] = $oSearch;
                                     }
                                 }
-
                             }
                         }
                     }
@@ -892,8 +890,7 @@ class Geocode
 
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
-            array_map("getDBQuoted",
-            $this->aLangPrefOrder)
+            array_map("getDBQuoted", $this->aLangPrefOrder)
         );
         $sCountryCodesSQL = false;
         if ($this->aCountryCodes) {

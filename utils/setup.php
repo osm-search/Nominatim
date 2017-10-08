@@ -540,7 +540,6 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
         $sSQL .= "  FROM us_postcode WHERE postcode NOT IN";
         $sSQL .= "        (SELECT postcode FROM location_postcode";
         $sSQL .= "          WHERE country_code = 'us')";
-
     } else {
         $sSQL .= "TRUNCATE TABLE us_postcode";
     }

@@ -19,6 +19,27 @@ abstract class Operator
     const NAME = 4;
     /// Search for postcodes.
     const POSTCODE = 5;
+
+    private $aConstantNames = null;
+
+    public static function toString($iOperator)
+    {
+        if ($iOperator == Operator::NONE) {
+            return '';
+        }
+
+        if ($aConstantNames === null) {
+            $oReflector = new \ReflectionClass ('Nominatim\Operator');
+            $aConstants = $oReflector->getConstants();
+
+            $aConstantNames = array();
+            foreach ($aConstants as $sName => $iValue) {
+                $aConstantNames[$iValue] = $sName;
+            }
+        }
+
+        return $aConstantNames[$iOperator];
+    }
 }
 
 /**
@@ -884,4 +905,33 @@ class SearchDescription
         return $a->iSearchRank < $b->iSearchRank ? -1 : 1;
     }
 
+    //////////// Debugging functions
+
+    function dumpAsHtmlTableRow(&$aWordIDs)
+    {
+        $kf = function($k) use (&$aWordIDs) { return $aWordIDs[$k]; };
+
+        echo "<tr>";
+        echo "<td>$this->iSearchRank</td>";
+        echo "<td>".join(', ', array_map($kf, $this->aName))."</td>";
+        echo "<td>".join(', ', array_map($kf, $this->aNameNonSearch))."</td>";
+        echo "<td>".join(', ', array_map($kf, $this->aAddress))."</td>";
+        echo "<td>".join(', ', array_map($kf, $this->aAddressNonSearch))."</td>";
+        echo "<td>".$this->sCountryCode."</td>";
+        echo "<td>".Operator::toString($this->iOperator)."</td>";
+        echo "<td>".$this->sClass."</td>";
+        echo "<td>".$this->sType."</td>";
+        echo "<td>".$this->sPostcode."</td>";
+        echo "<td>".$this->sHouseNumber."</td>";
+
+        if ($this->oNearPoint) {
+            echo "<td>".$this->oNearPoint->lat()."</td>";
+            echo "<td>".$this->oNearPoint->lon()."</td>";
+            echo "<td>".$this->oNearPoint->radius()."</td>";
+        } else {
+            echo "<td></td><td></td><td></td>";
+        }
+
+        echo "</tr>";
+    }
 };

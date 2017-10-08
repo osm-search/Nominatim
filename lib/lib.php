@@ -481,7 +481,8 @@ function _debugDumpGroupedSearches($aData, $aTokens)
         foreach ($aTokens as $sToken => $aWords) {
             if ($aWords) {
                 foreach ($aWords as $aToken) {
-                    $aWordsIDs[$aToken['word_id']] = $sToken.'('.$aToken['word_id'].')';
+                    $aWordsIDs[$aToken['word_id']] =
+                        '#'.$sToken.'('.$aToken['word_id'].')#';
                 }
             }
         }
@@ -493,59 +494,7 @@ function _debugDumpGroupedSearches($aData, $aTokens)
     echo "<th>Lat</th><th>Lon</th><th>Radius</th></tr>";
     foreach ($aData as $iRank => $aRankedSet) {
         foreach ($aRankedSet as $aRow) {
-            echo "<tr>";
-            echo "<td>$iRank</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aName'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aNameNonSearch'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aAddress'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aAddressNonSearch'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>".$aRow['sCountryCode']."</td>";
-
-            echo "<td>".$aRow['sOperator']."</td>";
-            echo "<td>".$aRow['sClass']."</td>";
-            echo "<td>".$aRow['sType']."</td>";
-
-            echo "<td>".$aRow['sPostcode']."</td>";
-            echo "<td>".$aRow['sHouseNumber']."</td>";
-
-            if ($aRow['oNear']) {
-                echo "<td>".$aRow['oNear']->lat()."</td>";
-                echo "<td>".$aRow['oNear']->lon()."</td>";
-                echo "<td>".$aRow['oNear']->radius()."</td>";
-            } else {
-                echo "<td></td><td></td><td></td>";
-            }
-
-            echo "</tr>";
+            $aRow->dumpAsHtmlTableRow($aWordsIDs);
         }
     }
     echo "</table>";

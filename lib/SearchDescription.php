@@ -63,6 +63,12 @@ class SearchDescription
         return $this->iSearchRank;
     }
 
+    public function addToRank($iAddRank)
+    {
+        $this->iSearchRank += $iAddRank;
+        return $this->iSearchRank;
+    }
+
     public function getPostCode()
     {
         return $this->sPostcode;
@@ -178,6 +184,222 @@ class SearchDescription
 
         return $sQuery;
     }
+
+    public function isValidSearch(&$aCountryCodes)
+    {
+        if (!sizeof($this->aName)) {
+            if ($this->sHouseNumber) {
+                return false;
+            }
+        }
+        if ($aCountryCodes
+            && $this->sCounrtyCode
+            && !in_array($this->sCountryCode, $aCountryCodes)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /////////// Search building functions
+
+    public function extendWithFullTerm($aSearchTerm, $bWordInQuery, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
+    {
+        $aNewSearches = array();
+
+        if (($sPhraseType == '' || $sPhraseType == 'country')
+            && !empty($aSearchTerm['country_code'])
+            && $aSearchTerm['country_code'] != '0'
+        ) {
+            if (!$this->sCountryCode) {
+                $oSearch = clone $this;
+                $oSearch->iSearchRank++;
+                $oSearch->sCountryCode = $aSearchTerm['country_code'];
+                // Country is almost always at the end of the string
+                // - increase score for finding it anywhere else (optimisation)
+                if (!$bLastToken) {
+                    $oSearch->iSearchRank += 5;
+                }
+                $aNewSearches[] = $oSearch;
+
+                // If it is at the beginning, we can be almost sure that
+                // the terms are in the wrong order. Increase score for all searches.
+                if ($bFirstToken) {
+                    $iGlobalRank++;
+                }
+            }
+        } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
+                  && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode'
+        ) {
+            // We need to try the case where the postal code is the primary element
+            // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
+            // so try both.
+            if (!$this->sPostcode && $bWordInQuery) {
+                // If we have structured search or this is the first term,
+                // make the postcode the primary search element.
+                if ($this->iOperator == Operator::NONE
+                    && ($sPhraseType == 'postalcode' || $bFirstToken)
+                ) {
+                    $oSearch = clone $this;
+                    $oSearch->iSearchRank++;
+                    $oSearch->iOperator = Operator::POSTCODE;
+                    $oSearch->aAddress = array_merge($this->aAddress, $this->aName);
+                    $oSearch->aName =
+                        array($aSearchTerm['word_id'] => $aSearchTerm['word']);
+                    $aNewSearches[] = $oSearch;
+                }
+
+                // If we have a structured search or this is not the first term,
+                // add the postcode as an addendum.
+                if ($this->iOperator != Operator::POSTCODE
+                    && ($sPhraseType == 'postalcode' || sizeof($this->aName))
+                ) {
+                    $oSearch = clone $this;
+                    $oSearch->iSearchRank++;
+                    $oSearch->sPostcode = $aSearchTerm['word'];
+                    $aNewSearches[] = $oSearch;
+                }
+            }
+        } elseif (($sPhraseType == '' || $sPhraseType == 'street')
+                 && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house'
+        ) {
+            if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
+                $oSearch = clone $this;
+                $oSearch->iSearchRank++;
+                $oSearch->sHouseNumber = trim($aSearchTerm['word_token']);
+                // sanity check: if the housenumber is not mainly made
+                // up of numbers, add a penalty
+                if (preg_match_all("/[^0-9]/", $oSearch->sHouseNumber, $aMatches) > 2) {
+                    $oSearch->iSearchRank++;
+                }
+                // also must not appear in the middle of the address
+                if (sizeof($this->aAddress) || sizeof($this->aAddressNonSearch)) {
+                    $oSearch->iSearchRank++;
+                }
+                $aNewSearches[] = $oSearch;
+            }
+        } elseif ($sPhraseType == ''
+                  && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null
+        ) {
+            // require a normalized exact match of the term
+            // if we have the normalizer version of the query
+            // available
+            if ($this->iOperator == Operator::NONE
+                && (isset($aSearchTerm['word']) && $aSearchTerm['word'])
+                && $bWordInQuery
+            ) {
+                $oSearch = clone this;
+                $oSearch->iSearchRank++;
+
+                $iOp = Operator::NEAR; // near == in for the moment
+                if ($aSearchTerm['operator'] == '') {
+                    if (sizeof($this->aName)) {
+                        $iOp = Operator::NAME;
+                    }
+                    $oSearch->iSearchRank += 2;
+                }
+
+                $oSearch->setPoiSearch($iOp, $aSearchTerm['class'], $aSearchTerm['type']);
+                $aNewWordsetSearches[] = $oSearch;
+            }
+        } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+            $iWordID = $aSearchTerm['word_id'];
+            if (sizeof($this->aName)) {
+                if (($sPhraseType == '' || !$bFirstPhrase)
+                    && $sPhraseType != 'country'))
+                    && !$bHasPartial
+                ) {
+                    $oSearch = clone $this;
+                    $oSearch->iSearchRank++;
+                    $oSearch->aAddress[$iWordID] = $iWordID;
+                    );
+                    $aNewSearches[] = $oSearch;
+                }
+                else {
+                    $this->aFullNameAddress[$iWordID] = $iWordID;
+                }
+            } else {
+                $oSearch = clone $this;
+                $oSearch->iSearchRank++;
+                $oSearch->aName = array($iWordID => $iWordID);
+                $aNewSearches[] = $oSearch;
+            }
+        }
+
+        return $aNewSearches;
+    }
+
+    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, &$aWordFrequencyScores, $aFullTokens)
+    {
+        // Only allow name terms.
+        if (!(isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])) {
+            return array();
+        }
+
+        $aNewSearches = array();
+        $iWordID = $aSearchTerm['word_id'];
+
+        if ((!$bStructuredPhrases || $iPhrase > 0)
+            && sizeof($this->aName)
+            && strpos($aSearchTerm['word_token'], ' ') === false
+        ) {
+            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+                $oSearch = clone this;
+                $oSearch->iSearchRank++;
+                $oSearch->aAddress[$iWordID] = $iWordID;
+                $aNewSearches[] = $oSearch;
+            } else {
+                $oSearch = clone this;
+                $oSearch->iSearchRank++;
+                $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
+                if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
+                    $oSearch->iSearchRank += 2;
+                }
+                if (sizeof($aFullTokens) {
+                    $oSearch->iSearchRank++;
+                }
+                $aNewSearches[] = $oSearch;
+
+                // revert to the token version?
+                foreach ($aFullTokens as $aSearchTermToken) {
+                    if (empty($aSearchTermToken['country_code'])
+                        && empty($aSearchTermToken['lat'])
+                        && empty($aSearchTermToken['class'])
+                    ) {
+                        $oSearch = clone $this;
+                        $oSearch->iSearchRank++;
+                        $oSearch->aAddress[$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
+                        $aNewSearches[] = $oSearch;
+                    }
+                }
+            } 
+        }
+
+        if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
+            && (!sizeof($this->aName) || $this->iNamePhrase == $iPhrase)
+        ) {
+            $oSearch = clone $this;
+            $oSearch->iSearchRank++;
+            if (!sizeof($this->aName)) {
+                $aSearch->iSearchRank += 1;
+            }
+            if (preg_match('#^[0-9]+$#', $sSerchTerm['word_token')) {
+                $oSearch->iSearchRank += 2;
+            }
+            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+                $oSearch->aName[$iWordID] = $iWordID;
+            } else {
+                $aSearch->aNameNonSearch[$iWordID] = $iWordID;
+            }
+            $oSearch->iNamePhrase = $iPhrase;
+            $aNewSearches[] = $aSearch;
+        }
+
+        return $aNewSearches;
+    }
+
+    /////////// Query functions
 
     public function queryCountry(&$oDB, $sViewboxSQL)
     {

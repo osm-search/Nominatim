@@ -716,8 +716,11 @@ class Geocode
 
         foreach ($aPhrases as $iPhrase => $aPhrase) {
             $aNewPhraseSearches = array();
-            if ($bStructuredPhrases) $sPhraseType = $aPhraseTypes[$iPhrase];
-            else $sPhraseType = '';
+            if ($bStructuredPhrases) {
+                $sPhraseType = $aPhraseTypes[$iPhrase];
+            } else {
+                $sPhraseType = '';
+            }
 
             foreach ($aPhrase['wordsets'] as $iWordSet => $aWordset) {
                 // Too many permutations - too expensive
@@ -730,159 +733,60 @@ class Geocode
                     //echo "<br><b>$sToken</b>";
                     $aNewWordsetSearches = array();
 
-                    foreach ($aWordsetSearches as $aCurrentSearch) {
+                    foreach ($aWordsetSearches as $oCurrentSearch) {
                         //echo "<i>";
-                        //var_dump($aCurrentSearch);
+                        //var_dump($oCurrentSearch);
                         //echo "</i>";
 
                         // If the token is valid
                         if (isset($aValidTokens[' '.$sToken])) {
-                            // TODO variable should go into aCurrentSearch
-                            $bHavePostcode = false;
+                            // Recheck if the original word shows up in the query.
+                            $bWordInQuery = false;
+                            if (isset($aSearchTerm['word']) && $aSearchTerm['word']) {
+                                $bWordInQuery = $this->normTerm($aSearchTerm['word'])) !== false;
+                            }
                             foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
-                                $aSearch = $aCurrentSearch;
-                                $aSearch['iSearchRank']++;
-                                if (($sPhraseType == '' || $sPhraseType == 'country') && !empty($aSearchTerm['country_code']) && $aSearchTerm['country_code'] != '0') {
-                                    if ($aSearch['sCountryCode'] === false) {
-                                        $aSearch['sCountryCode'] = strtolower($aSearchTerm['country_code']);
-                                        // Country is almost always at the end of the string - increase score for finding it anywhere else (optimisation)
-                                        if (($iToken+1 != sizeof($aWordset) || $iPhrase+1 != sizeof($aPhrases))) {
-                                            $aSearch['iSearchRank'] += 5;
-                                        }
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        // If it is at the beginning, we can be almost sure that this is the wrong order
-                                        // Increase score for all searches.
-                                        if ($iToken == 0 && $iPhrase == 0) {
-                                            $iGlobalRank++;
-                                        }
-                                    }
-                                } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode') {
-                                    // We need to try the case where the postal code is the primary element (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode) so try both
-                                    if ($aSearch['sPostcode'] === '' &&
-                                        isset($aSearchTerm['word']) && $aSearchTerm['word'] && strpos($sNormQuery, $this->normTerm($aSearchTerm['word'])) !== false) {
-                                        // If we have structured search or this is the first term,
-                                        // make the postcode the primary search element.
-                                        if (!$bHavePostcode && $aSearch['sOperator'] === '' && ($sPhraseType == 'postalcode' || ($iToken == 0 && $iPhrase == 0))) {
-                                            $aNewSearch = $aSearch;
-                                            $aNewSearch['sOperator'] = 'postcode';
-                                            $aNewSearch['aAddress'] = array_merge($aNewSearch['aAddress'], $aNewSearch['aName']);
-                                            $aNewSearch['aName'] = array($aSearchTerm['word_id'] => $aSearchTerm['word']);
-                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aNewSearch;
-                                            $bHavePostcode = true;
-                                        }
+                                $aNewSearches = $oCurrentSearch->extendWithFullTerm(
+                                    $aSearchTerm,
+                                    $bWordInQuery,
+                                    isset($aValidTokens[$sToken])
+                                      && strpos($sToken, ' ') === false,
+                                    $sPhraseType,
+                                    $iToken == 0 && $iPhrase == 0,
+                                    $iPhrase == 0,
+                                    $iToken + 1 == sizeof($aWordset)
+                                      && $iPhrase + 1 == sizeof($aPhrases),
+                                    $iGlobalRank
+                                );
 
-                                        // If we have a structured search or this is not the first term,
-                                        // add the postcode as an addendum.
-                                        if ($aSearch['sOperator'] !== 'postcode' && ($sPhraseType == 'postalcode' || sizeof($aSearch['aName']))) {
-                                            $aSearch['sPostcode'] = $aSearchTerm['word'];
-                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        }
+                                foreach ($aNewSearches as $oSearch) {
+                                    if ($oSearch->getRank() < $this->iMaxRank) {
+                                        $aNewWordsetSearches[] = $oSearch;
                                     }
-                                } elseif (($sPhraseType == '' || $sPhraseType == 'street') && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house') {
-                                    if ($aSearch['sHouseNumber'] === '' && $aSearch['sOperator'] !== 'postcode') {
-                                        $aSearch['sHouseNumber'] = $sToken;
-                                        // sanity check: if the housenumber is not mainly made
-                                        // up of numbers, add a penalty
-                                        if (preg_match_all("/[^0-9]/", $sToken, $aMatches) > 2) $aSearch['iSearchRank']++;
-                                        // also must not appear in the middle of the address
-                                        if ($aSearch['aAddress'] || $aSearch['aAddressNonSearch']) $aSearch['iSearchRank'] += 1;
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        /*
-                                        // Fall back to not searching for this item (better than nothing)
-                                        $aSearch = $aCurrentSearch;
-                                        $aSearch['iSearchRank'] += 1;
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                         */
-                                    }
-                                } elseif ($sPhraseType == '' && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null) {
-                                    // require a normalized exact match of the term
-                                    // if we have the normalizer version of the query
-                                    // available
-                                    if ($aSearch['sOperator'] === ''
-                                        && ($sNormQuery === null || !($aSearchTerm['word'] && strpos($sNormQuery, $aSearchTerm['word']) === false))) {
-                                        $aSearch['sClass'] = $aSearchTerm['class'];
-                                        $aSearch['sType'] = $aSearchTerm['type'];
-                                        if ($aSearchTerm['operator'] == '') {
-                                            $aSearch['sOperator'] = sizeof($aSearch['aName']) ? 'name' :  'near';
-                                            $aSearch['iSearchRank'] += 2;
-                                        } else {
-                                            $aSearch['sOperator'] = 'near'; // near = in for the moment
-                                        }
-
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                    }
-                                } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
-                                    if (sizeof($aSearch['aName'])) {
-                                        if ((!$bStructuredPhrases || $iPhrase > 0) && $sPhraseType != 'country' && (!isset($aValidTokens[$sToken]) || strpos($sToken, ' ') !== false)) {
-                                            $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        } else {
-                                            $aCurrentSearch['aFullNameAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            $aSearch['iSearchRank'] += 1000; // skip;
-                                        }
-                                    } else {
-                                        $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        //$aSearch['iNamePhrase'] = $iPhrase;
-                                    }
-                                    if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
                                 }
                             }
                         }
                         // Look for partial matches.
                         // Note that there is no point in adding country terms here
-                        // because country are omitted in the address.
+                        // because country is omitted in the address.
                         if (isset($aValidTokens[$sToken]) && $sPhraseType != 'country') {
                             // Allow searching for a word - but at extra cost
                             foreach ($aValidTokens[$sToken] as $aSearchTerm) {
-                                if (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
-                                    if ((!$bStructuredPhrases || $iPhrase > 0) && sizeof($aCurrentSearch['aName']) && strpos($sToken, ' ') === false) {
-                                        $aSearch = $aCurrentSearch;
-                                        $aSearch['iSearchRank'] += 1;
-                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency) {
-                                            $aSearch['aAddress'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        } elseif (isset($aValidTokens[' '.$sToken])) { // revert to the token version?
-                                            $aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            $aSearch['iSearchRank'] += 1;
-                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                            foreach ($aValidTokens[' '.$sToken] as $aSearchTermToken) {
-                                                if (empty($aSearchTermToken['country_code'])
-                                                    && empty($aSearchTermToken['lat'])
-                                                    && empty($aSearchTermToken['class'])
-                                                ) {
-                                                    $aSearch = $aCurrentSearch;
-                                                    $aSearch['iSearchRank'] += 1;
-                                                    $aSearch['aAddress'][$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
-                                                    if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                                }
-                                            }
-                                        } else {
-                                            $aSearch['aAddressNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                            if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
-                                            if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
-                                        }
-                                    }
+                                $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
+                                    $aSearchTerm,
+                                    $bStructuredPhrases,
+                                    $iPhrase,
+                                    $aWordFrequencyScores,
+                                    isset($aValidTokens[' '.$sToken]) ? $aValidTokens[' '.$sToken] : array()
+                                );
 
-                                    if ((!$aCurrentSearch['sPostcode'] && !$aCurrentSearch['aAddress'] && !$aCurrentSearch['aAddressNonSearch'])
-                                        && (!sizeof($aCurrentSearch['aName']) || $aCurrentSearch['iNamePhrase'] == $iPhrase)) {
-                                        $aSearch = $aCurrentSearch;
-                                        $aSearch['iSearchRank'] += 1;
-                                        if (!sizeof($aCurrentSearch['aName'])) $aSearch['iSearchRank'] += 1;
-                                        if (preg_match('#^[0-9]+$#', $sToken)) $aSearch['iSearchRank'] += 2;
-                                        if ($aWordFrequencyScores[$aSearchTerm['word_id']] < CONST_Max_Word_Frequency) {
-                                            $aSearch['aName'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        } else {
-                                            $aSearch['aNameNonSearch'][$aSearchTerm['word_id']] = $aSearchTerm['word_id'];
-                                        }
-                                        $aSearch['iNamePhrase'] = $iPhrase;
-                                        if ($aSearch['iSearchRank'] < $this->iMaxRank) $aNewWordsetSearches[] = $aSearch;
+                                foreach ($aNewSearches as $oSearch) {
+                                    if ($oSearch->getRank() < $this->iMaxRank) {
+                                        $aNewWordsetSearches[] = $oSearch;
                                     }
                                 }
+
                             }
-                        } else {
-                            // Allow skipping a word - but at EXTREAM cost
-                            //$aSearch = $aCurrentSearch;
-                            //$aSearch['iSearchRank']+=100;
-                            //$aNewWordsetSearches[] = $aSearch;
                         }
                     }
                     // Sort and cut
@@ -907,9 +811,12 @@ class Geocode
             // Re-group the searches by their score, junk anything over 20 as just not worth trying
             $aGroupedSearches = array();
             foreach ($aNewPhraseSearches as $aSearch) {
-                if ($aSearch['iSearchRank'] < $this->iMaxRank) {
-                    if (!isset($aGroupedSearches[$aSearch['iSearchRank']])) $aGroupedSearches[$aSearch['iSearchRank']] = array();
-                    $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
+                $iRank = $aSearch->getRank();
+                if ($iRank < $this->iMaxRank) {
+                    if (!isset($aGroupedSearches[$iRank])) {
+                        $aGroupedSearches[$iRank] = array();
+                    }
+                    $aGroupedSearches[$iRank][] = $aSearch;
                 }
             }
             ksort($aGroupedSearches);
@@ -927,19 +834,16 @@ class Geocode
 
         // Revisit searches, drop bad searches and give penalty to unlikely combinations.
         $aGroupedSearches = array();
-        foreach ($aSearches as $aSearch) {
-            if (!$aSearch['aName']) {
-                if ($aSearch['sHouseNumber']) {
-                    continue;
-                }
-            }
-            if ($this->aCountryCodes && $aSearch['sCountryCode']
-                && !in_array($aSearch['sCountryCode'], $this->aCountryCodes)) {
+        foreach ($aSearches as $oSearch) {
+            if (!$oSearch->isValidSearch()) {
                 continue;
             }
 
-            $aSearch['iSearchRank'] += $iGlobalRank;
-            $aGroupedSearches[$aSearch['iSearchRank']][] = $aSearch;
+            $iRank = $oSearch->addToRank($iGlobalRank);
+            if (!isset($aGroupedSearches[$iRank]) {
+                $aGroupedSearches[$iRank] = array();
+            }
+            $aGroupedSearches[$iRank][] = $oSearch;
         }
         ksort($aGroupedSearches);
 

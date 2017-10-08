@@ -849,6 +849,9 @@ class Geocode
         } else if ($this->aViewBox) {
             $oCtx->setViewboxFromBox($this->aViewBox, $this->bBoundedSearch);
         }
+        if ($this->aExcludePlaceIDs) {
+            $oCtx->setExcludeList($this->aExcludePlaceIDs);
+        }
 
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
@@ -1108,7 +1111,6 @@ class Geocode
                         $aPlaceIDs = $oSearch->queryNearbyPoi(
                             $this->oDB,
                             $sCountryCodesSQL,
-                            $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                             $this->iLimit
                         );
                     } elseif ($oSearch->isOperator(Operator::POSTCODE)) {
@@ -1126,7 +1128,6 @@ class Geocode
                             $sCountryCodesSQL,
                             $this->iMinAddressRank,
                             $this->iMaxAddressRank,
-                            $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                             $this->iLimit
                         );
 
@@ -1142,7 +1143,6 @@ class Geocode
                             $aResult = $oSearch->queryHouseNumber(
                                 $this->oDB,
                                 $aPlaceIDs,
-                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                                 $this->iLimit
                             );
 
@@ -1159,7 +1159,6 @@ class Geocode
                             $aPlaceIDs = $oSearch->queryPoiByOperator(
                                 $this->oDB,
                                 $aPlaceIDs,
-                                $this->aExcludePlaceIDs ? join(',', $this->aExcludePlaceIDs) : '',
                                 $this->iLimit
                             );
                         }

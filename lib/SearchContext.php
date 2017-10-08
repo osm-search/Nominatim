@@ -22,6 +22,7 @@ class SearchContext
     public $sqlViewboxSmall = '';
     public $sqlViewboxLarge = '';
     public $sqlViewboxCentre = '';
+    private $sqlExcludeList = '';
 
     public function hasNearPoint()
     {
@@ -91,6 +92,11 @@ class SearchContext
         $this->sqlViewboxLarge = "'".$sGeom."'::geometry";
     }
 
+    public function setExcludeList($aExcluded)
+    {
+        $this->sqlExcludeList = ' not in ('.join(',', $aExcluded).')';
+    }
+
     /**
      * Extract a coordinate point from a query string.
      *
@@ -137,5 +143,14 @@ class SearchContext
         }
 
         return $sSQL;
+    }
+
+    public function excludeSQL($sVariable)
+    {
+        if ($this->sqlExcludeList) {
+            return $sVariable.$this->sqlExcludeList;
+        }
+
+        return '';
     }
 }

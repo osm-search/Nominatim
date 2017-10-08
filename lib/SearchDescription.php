@@ -382,7 +382,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNearbyPoi(&$oDB, $sCountryList, $sExcludeSQL, $iLimit)
+    public function queryNearbyPoi(&$oDB, $sCountryList, $iLimit)
     {
         if (!$this->sClass) {
             return array();
@@ -404,9 +404,7 @@ class SearchDescription
             if ($sCountryList) {
                 $sSQL .= " AND country_code in ($sCountryList)";
             }
-            if ($sExcludeSQL) {
-                $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
-            }
+            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             if ($this->oContext->sqlViewboxCentre) {
                 $sSQL .= ' ORDER BY ST_Distance(';
                 $sSQL .= $this->oContext->sqlViewboxCentre.', ct.centroid) ASC';
@@ -453,6 +451,7 @@ class SearchDescription
         if ($sCountryTerm) {
             $sSQL .= ' AND '.$sCountryTerm;
         }
+        $sSQL .= $this->oContext->excludeSQL(' AND p.place_id');
         $sSQL .= " LIMIT $iLimit";
 
         if (CONST_Debug) var_dump($sSQL);
@@ -460,7 +459,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $sExcludeSQL, $iLimit)
+    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $iLimit)
     {
         $aTerms = array();
         $aOrder = array();
@@ -534,8 +533,9 @@ class SearchDescription
             }
         }
 
+        $sExcludeSQL = $this->oContext->excludeSQL('place_id');
         if ($sExcludeSQL) {
-            $aTerms[] = 'place_id not in ('.$sExcludeSQL.')';
+            $aTerms[] = $sExcludeSQL;
         }
 
         if ($this->oContext->bViewboxBounded) {
@@ -590,7 +590,7 @@ class SearchDescription
     }
 
 
-    public function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $sExcludeSQL, $iLimit)
+    public function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
     {
         $sPlaceIDs = join(',', $aRoadPlaceIDs);
 
@@ -598,9 +598,7 @@ class SearchDescription
         $sSQL = 'SELECT place_id FROM placex ';
         $sSQL .= 'WHERE parent_place_id in ('.$sPlaceIDs.')';
         $sSQL .= "  AND transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
-        if ($sExcludeSQL) {
-            $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
-        }
+        $sSQL .= $this->oContext->excludeSQL(' AND place_id');
         $sSQL .= " LIMIT $iLimit";
 
         if (CONST_Debug) var_dump($sSQL);
@@ -629,10 +627,7 @@ class SearchDescription
             $sSQL .= " or interpolationtype='all') and ";
             $sSQL .= $iHousenumber.">=startnumber and ";
             $sSQL .= $iHousenumber."<=endnumber";
-
-            if ($sExcludeSQL) {
-                $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
-            }
+            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
             if (CONST_Debug) var_dump($sSQL);
@@ -649,9 +644,7 @@ class SearchDescription
             $sSQL = 'SELECT place_id FROM location_property_aux';
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.')';
             $sSQL .= " AND housenumber = '".$this->sHouseNumber."'";
-            if ($sExcludeSQL) {
-                $sSQL .= " AND place_id not in ($sExcludeSQL)";
-            }
+            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
             if (CONST_Debug) var_dump($sSQL);
@@ -675,10 +668,7 @@ class SearchDescription
             $sSQL .= " or interpolationtype='all') and ";
             $sSQL .= $iHousenumber.">=startnumber and ";
             $sSQL .= $iHousenumber."<=endnumber";
-
-            if ($sExcludeSQL) {
-                $sSQL .= ' AND place_id not in ('.$sExcludeSQL.')';
-            }
+            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
             if (CONST_Debug) var_dump($sSQL);
@@ -694,7 +684,7 @@ class SearchDescription
     }
 
 
-    public function queryPoiByOperator(&$oDB, $aParentIDs, $sExcludeSQL, $iLimit)
+    public function queryPoiByOperator(&$oDB, $aParentIDs, $iLimit)
     {
         $sPlaceIDs = join(',', $aParentIDs);
         $aClassPlaceIDs = array();
@@ -707,6 +697,7 @@ class SearchDescription
             $sSQL .= "   AND class='".$this->sClass."' ";
             $sSQL .= "   AND type='".$this->sType."'";
             $sSQL .= "   AND linked_place_id is null";
+            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " ORDER BY rank_search ASC ";
             $sSQL .= " LIMIT $iLimit";
 
@@ -783,9 +774,7 @@ class SearchDescription
                         $sSQL .= " WHERE ST_Contains('$sPlaceGeom', l.centroid)";
                     }
 
-                    if ($sExcludeSQL) {
-                        $sSQL .= ' AND l.place_id not in ('.$sExcludeSQL.')';
-                    }
+                    $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
                     $sSQL .= 'limit 300) i ';
                     if ($sOrderBySQL) {
                         $sSQL .= 'order by order_term asc';
@@ -816,9 +805,7 @@ class SearchDescription
                     $sSQL .= "  AND ST_DWithin(l.geometry, f.centroid, $fRange)";
                     $sSQL .= "  AND l.class='".$this->sClass."'";
                     $sSQL .= "  AND l.type='".$this->sType."'";
-                    if ($sExcludeSQL) {
-                        $sSQL .= " AND l.place_id not in (".$sExcludeSQL.")";
-                    }
+                    $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
                     if ($sOrderBySQL) {
                         $sSQL .= "ORDER BY orderterm ASC";
                     }

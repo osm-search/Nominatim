@@ -1,8 +1,8 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
-
 namespace Nominatim;
+
+require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
 
 /**
  * Description of a single interpretation of a search query.

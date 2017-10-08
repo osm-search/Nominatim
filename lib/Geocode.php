@@ -852,15 +852,14 @@ class Geocode
         if ($this->aExcludePlaceIDs) {
             $oCtx->setExcludeList($this->aExcludePlaceIDs);
         }
+        if ($this->aCountryCodes) {
+            $oCtx->setCountryList($this->aCountryCodes);
+        }
 
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
             array_map("getDBQuoted", $this->aLangPrefOrder)
         );
-        $sCountryCodesSQL = false;
-        if ($this->aCountryCodes) {
-            $sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));
-        }
 
         $sQuery = $this->sQuery;
         if (!preg_match('//u', $sQuery)) {
@@ -1107,25 +1106,16 @@ class Geocode
                         if (!$oCtx->isBoundedSearch()) {
                             continue;
                         }
-
-                        $aPlaceIDs = $oSearch->queryNearbyPoi(
-                            $this->oDB,
-                            $sCountryCodesSQL,
-                            $this->iLimit
-                        );
+                        $aPlaceIDs = $oSearch->queryNearbyPoi($this->oDB, $this->iLimit);
                     } elseif ($oSearch->isOperator(Operator::POSTCODE)) {
-                        $aPlaceIDs = $oSearch->queryPostcode(
-                            $this->oDB,
-                            $sCountryCodesSQL,
-                            $this->iLimit
-                        );
+                        // looking for postcode
+                        $aPlaceIDs = $oSearch->queryPostcode($this->oDB, $this->iLimit);
                     } else {
                         // Ordinary search:
                         // First search for places according to name and address.
                         $aNamedPlaceIDs = $oSearch->queryNamedPlace(
                             $this->oDB,
                             $aWordFrequencyScores,
-                            $sCountryCodesSQL,
                             $this->iMinAddressRank,
                             $this->iMaxAddressRank,
                             $this->iLimit

@@ -109,13 +109,13 @@ class SearchDescription
         return 'place_classtype_'.$this->sClass.'_'.$this->sType;
     }
 
-    public function countryCodeSQL($sVar, $sCountryList)
+    public function countryCodeSQL($sVar)
     {
         if ($this->sCountryCode) {
             return $sVar.' = \''.$this->sCountryCode."'";
         }
-        if ($sCountryList) {
-            return $sVar.' in ('.$sCountryList.')';
+        if ($this->oContext->sqlCountryList) {
+            return $sVar.' in '.$this->oContext->sqlCountryList;
         }
 
         return '';
@@ -382,7 +382,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNearbyPoi(&$oDB, $sCountryList, $iLimit)
+    public function queryNearbyPoi(&$oDB, $iLimit)
     {
         if (!$this->sClass) {
             return array();
@@ -393,7 +393,7 @@ class SearchDescription
         $sSQL = 'SELECT count(*) FROM pg_tables WHERE tablename = \''.$sPoiTable."'";
         if (chksql($oDB->getOne($sSQL))) {
             $sSQL = 'SELECT place_id FROM '.$sPoiTable.' ct';
-            if ($sCountryList) {
+            if ($this->oContext->sqlCountryList) {
                 $sSQL .= ' JOIN placex USING (place_id)';
             }
             if ($this->oContext->hasNearPoint()) {
@@ -401,8 +401,8 @@ class SearchDescription
             } else if ($this->oContext->bViewboxBounded) {
                 $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', ct.centroid)';
             }
-            if ($sCountryList) {
-                $sSQL .= " AND country_code in ($sCountryList)";
+            if ($this->oContext->sqlCountryList) {
+                $sSQL .= ' AND country_code in '.$this->oContext->sqlCountryList;
             }
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             if ($this->oContext->sqlViewboxCentre) {
@@ -421,8 +421,8 @@ class SearchDescription
             $sSQL .= 'class=\''.$this->sClass."' and type='".$this->sType."'";
             $sSQL .= ' AND '.$this->oContext->withinSQL('geometry');
             $sSQL .= ' AND linked_place_id is null';
-            if ($sCountryList) {
-                $sSQL .= " AND country_code in ($sCountryList)";
+            if ($this->oContext->sqlCountryList) {
+                $sSQL .= ' AND country_code in '.$this->oContext->sqlCountryList;
             }
             $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid')." ASC";
             $sSQL .= " LIMIT $iLimit";
@@ -433,7 +433,7 @@ class SearchDescription
         return array();
     }
 
-    public function queryPostcode(&$oDB, $sCountryList, $iLimit)
+    public function queryPostcode(&$oDB, $iLimit)
     {
         $sSQL = 'SELECT p.place_id FROM location_postcode p ';
 
@@ -447,10 +447,7 @@ class SearchDescription
         }
 
         $sSQL .= "p.postcode = '".reset($this->aName)."'";
-        $sCountryTerm = $this->countryCodeSQL('p.country_code', $sCountryList);
-        if ($sCountryTerm) {
-            $sSQL .= ' AND '.$sCountryTerm;
-        }
+        $sSQL .= $this->countryCodeSQL(' AND p.country_code');
         $sSQL .= $this->oContext->excludeSQL(' AND p.place_id');
         $sSQL .= " LIMIT $iLimit";
 
@@ -459,7 +456,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $sCountryList, $iMinAddressRank, $iMaxAddressRank, $iLimit)
+    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $iMinAddressRank, $iMaxAddressRank, $iLimit)
     {
         $aTerms = array();
         $aOrder = array();
@@ -506,7 +503,7 @@ class SearchDescription
             }
         }
 
-        $sCountryTerm = $this->countryCodeSQL('country_code', $sCountryList);
+        $sCountryTerm = $this->countryCodeSQL('country_code');
         if ($sCountryTerm) {
             $aTerms[] = $sCountryTerm;
         }
@@ -588,7 +585,6 @@ class SearchDescription
 
         return array();
     }
-
 
     public function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
     {

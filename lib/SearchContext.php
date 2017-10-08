@@ -22,6 +22,7 @@ class SearchContext
     public $sqlViewboxSmall = '';
     public $sqlViewboxLarge = '';
     public $sqlViewboxCentre = '';
+    public $sqlCountryList = '';
     private $sqlExcludeList = '';
 
     public function hasNearPoint()
@@ -95,6 +96,11 @@ class SearchContext
     public function setExcludeList($aExcluded)
     {
         $this->sqlExcludeList = ' not in ('.join(',', $aExcluded).')';
+    }
+
+    public function setCountryList($aCountries)
+    {
+        $this->sqlCountryList = '('.join(',', array_map('addQuotes', $aCountries)).')';
     }
 
     /**

@@ -20,7 +20,7 @@ abstract class Operator
     /// Search for postcodes.
     const POSTCODE = 5;
 
-    private $aConstantNames = null;
+    private static $aConstantNames = null;
 
     public static function toString($iOperator)
     {
@@ -28,17 +28,17 @@ abstract class Operator
             return '';
         }
 
-        if ($aConstantNames === null) {
+        if (Operator::$aConstantNames === null) {
             $oReflector = new \ReflectionClass ('Nominatim\Operator');
             $aConstants = $oReflector->getConstants();
 
-            $aConstantNames = array();
+            Operator::$aConstantNames = array();
             foreach ($aConstants as $sName => $iValue) {
-                $aConstantNames[$iValue] = $sName;
+                Operator::$aConstantNames[$iValue] = $sName;
             }
         }
 
-        return $aConstantNames[$iOperator];
+        return Operator::$aConstantNames[$iOperator];
     }
 }
 
@@ -322,7 +322,7 @@ class SearchDescription
                 }
 
                 $oSearch->setPoiSearch($iOp, $aSearchTerm['class'], $aSearchTerm['type']);
-                $aNewWordsetSearches[] = $oSearch;
+                $aNewSearches[] = $oSearch;
             }
         } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
             $iWordID = $aSearchTerm['word_id'];
@@ -501,10 +501,10 @@ class SearchDescription
             $sSQL .= 'WHERE ';
         }
 
-        $sSQL .= "p.postcode = '".pg_escape_string(reset($this->$aName))."'";
+        $sSQL .= "p.postcode = '".pg_escape_string(reset($this->aName))."'";
         $sCountryTerm = $this->countryCodeSQL('p.country_code', $sCountryList);
         if ($sCountryTerm) {
-            $sSQL .= ' AND '.$sCountyTerm;
+            $sSQL .= ' AND '.$sCountryTerm;
         }
         $sSQL .= " LIMIT $iLimit";
 

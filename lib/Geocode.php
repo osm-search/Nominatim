@@ -741,12 +741,15 @@ class Geocode
 
                         // If the token is valid
                         if (isset($aValidTokens[' '.$sToken])) {
-                            // Recheck if the original word shows up in the query.
-                            $bWordInQuery = false;
-                            if (isset($aSearchTerm['word']) && $aSearchTerm['word']) {
-                                $bWordInQuery = $this->normTerm($aSearchTerm['word']) !== false;
-                            }
                             foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
+                                // Recheck if the original word shows up in the query.
+                                $bWordInQuery = false;
+                                if (isset($aSearchTerm['word']) && $aSearchTerm['word']) {
+                                    $bWordInQuery = strpos(
+                                        $sNormQuery,
+                                        $this->normTerm($aSearchTerm['word'])
+                                    ) !== false;
+                                }
                                 $aNewSearches = $oCurrentSearch->extendWithFullTerm(
                                     $aSearchTerm,
                                     $bWordInQuery,
@@ -1180,7 +1183,7 @@ class Geocode
                         );
                     } elseif ($oSearch->isOperator(Operator::POSTCODE)) {
                         $aPlaceIDs = $oSearch->queryPostcode(
-                            $oDB,
+                            $this->oDB,
                             $sCountryCodesSQL,
                             $this->iLimit
                         );

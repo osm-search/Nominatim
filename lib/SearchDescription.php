@@ -3,6 +3,7 @@
 namespace Nominatim;
 
 require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
+require_once(CONST_BasePath.'/lib/SearchContext.php');
 
 /**
  * Description of a single interpretation of a search query.
@@ -33,14 +34,19 @@ class SearchDescription
     private $sHouseNumber = '';
     /// Postcode for the object.
     private $sPostcode = '';
-    /// Geographic search area.
-    private $oNearPoint = false;
+    /// Global search constraints.
+    private $oContext;
 
     // Temporary values used while creating the search description.
 
-    /// Index of phrase currently processed
+    /// Index of phrase currently processed.
     private $iNamePhrase = -1;
 
+
+    public function __construct($oContext)
+    {
+        $this->oContext = $oContext;
+    }
 
     public function getRank()
     {
@@ -58,11 +64,6 @@ class SearchDescription
         return $this->sPostcode;
     }
 
-    public function setNear(&$oNearPoint)
-    {
-        $this->oNearPoint = $oNearPoint;
-    }
-
     public function setPoiSearch($iOperator, $sClass, $sType)
     {
         $this->iOperator = $iOperator;
@@ -78,12 +79,7 @@ class SearchDescription
     public function isCountrySearch()
     {
         return $this->sCountryCode && sizeof($this->aName) == 0
-               && !$this->iOperator && !$this->oNearPoint;
-    }
-
-    public function isNearSearch()
-    {
-        return (bool) $this->oNearPoint;
+               && !$this->iOperator && !$this->oContext->hasNearPoint();
     }
 
     public function isPoiSearch()
@@ -400,8 +396,8 @@ class SearchDescription
             if ($sCountryList) {
                 $sSQL .= ' JOIN placex USING (place_id)';
             }
-            if ($this->oNearPoint) {
-                $sSQL .= ' WHERE '.$this->oNearPoint->withinSQL('ct.centroid');
+            if ($this->oContext->hasNearPoint()) {
+                $sSQL .= ' WHERE '.$this->oContext->withinSQL('ct.centroid');
             } else {
                 $sSQL .= " WHERE ST_Contains($sViewboxSQL, ct.centroid)";
             }
@@ -413,23 +409,23 @@ class SearchDescription
             }
             if ($sViewboxCentreSQL) {
                 $sSQL .= " ORDER BY ST_Distance($sViewboxCentreSQL, ct.centroid) ASC";
-            } elseif ($this->oNearPoint) {
-                $sSQL .= ' ORDER BY '.$this->oNearPoint->distanceSQL('ct.centroid').' ASC';
+            } elseif ($this->oContext->hasNearPoint()) {
+                $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('ct.centroid').' ASC';
             }
             $sSQL .= " limit $iLimit";
             if (CONST_Debug) var_dump($sSQL);
             return chksql($oDB->getCol($sSQL));
         }
 
-        if ($this->oNearPoint) {
+        if ($this->oContext->hasNearPoint()) {
             $sSQL = 'SELECT place_id FROM placex WHERE ';
             $sSQL .= 'class=\''.$this->sClass."' and type='".$this->sType."'";
-            $sSQL .= ' AND '.$this->oNearPoint->withinSQL('geometry');
+            $sSQL .= ' AND '.$this->oContext->withinSQL('geometry');
             $sSQL .= ' AND linked_place_id is null';
             if ($sCountryList) {
                 $sSQL .= " AND country_code in ($sCountryList)";
             }
-            $sSQL .= ' ORDER BY '.$this->oNearPoint->distanceSQL('centroid')." ASC";
+            $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid')." ASC";
             $sSQL .= " LIMIT $iLimit";
             if (CONST_Debug) var_dump($sSQL);
             return chksql($oDB->getCol($sSQL));
@@ -526,9 +522,9 @@ class SearchDescription
             }
         }
 
-        if ($this->oNearPoint) {
-            $aTerms[] = $this->oNearPoint->withinSQL('centroid');
-            $aOrder[] = $this->oNearPoint->distanceSQL('centroid');
+        if ($this->oContext->hasNearPoint()) {
+            $aTerms[] = $this->oContext->withinSQL('centroid');
+            $aOrder[] = $this->oContext->distanceSQL('centroid');
         } elseif ($this->sPostcode) {
             if (!sizeof($this->aAddress)) {
                 $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."' AND ST_DWithin(search_name.centroid, p.geometry, 0.1))";
@@ -545,8 +541,8 @@ class SearchDescription
             $aTerms[] = 'centroid && '.$sViewboxSmall;
         }
 
-        if ($this->oNearPoint) {
-            $aOrder[] = $this->oNearPoint->distanceSQL('centroid');
+        if ($this->oContext->hasNearPoint()) {
+            $aOrder[] = $this->oContext->distanceSQL('centroid');
         }
 
         if ($this->sHouseNumber) {
@@ -765,8 +761,8 @@ class SearchDescription
                     $fRange = 0.05;
 
                     $sOrderBySQL = '';
-                    if ($this->oNearPoint) {
-                        $sOrderBySQL = $this->oNearPoint->distanceSQL('l.centroid');
+                    if ($this->oContext->hasNearPoint()) {
+                        $sOrderBySQL = $this->oContext->distanceSQL('l.centroid');
                     } elseif ($sPlaceIDs) {
                         $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
                     } elseif ($sPlaceGeom) {
@@ -804,13 +800,13 @@ class SearchDescription
 
                     $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($oDB->getCol($sSQL)));
                 } else {
-                    if ($this->oNearPoint) {
-                        $fRange = $this->oNearPoint->radius();
+                    if ($this->oContext->hasNearPoint()) {
+                        $fRange = $this->oContext->nearRadius();
                     }
 
                     $sOrderBySQL = '';
-                    if ($this->oNearPoint) {
-                        $sOrderBySQL = $this->oNearPoint->distanceSQL('l.geometry');
+                    if ($this->oContext->hasNearPoint()) {
+                        $sOrderBySQL = $this->oContext->distanceSQL('l.geometry');
                     } else {
                         $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
                     }
@@ -877,14 +873,6 @@ class SearchDescription
         echo "<td>".$this->sType."</td>";
         echo "<td>".$this->sPostcode."</td>";
         echo "<td>".$this->sHouseNumber."</td>";
-
-        if ($this->oNearPoint) {
-            echo "<td>".$this->oNearPoint->lat()."</td>";
-            echo "<td>".$this->oNearPoint->lon()."</td>";
-            echo "<td>".$this->oNearPoint->radius()."</td>";
-        } else {
-            echo "<td></td><td></td><td></td>";
-        }
 
         echo "</tr>";
     }

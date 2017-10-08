@@ -66,15 +66,22 @@ class ReverseGeocode
         );
     }
 
+    public function lookup($fLat, $fLon, $bDoInterpolation = true)
+    {
+        return $this->lookupPoint(
+            'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)',
+            $bDoInterpolation
+        );
+    }
+
     /* lookup()
      * returns { place_id =>, type => '(osm|tiger)' }
      * fails if no place was found
      */
 
 
-    public function lookup($fLat, $fLon, $bDoInterpolation = true)
+    public function lookupPoint($sPointSQL, $bDoInterpolation = true)
     {
-        $sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
         $iMaxRank = $this->iMaxRank;
 
         // Find the nearest point

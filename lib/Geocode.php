@@ -2,10 +2,10 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/NearPoint.php');
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 require_once(CONST_BasePath.'/lib/SearchDescription.php');
+require_once(CONST_BasePath.'/lib/SearchContext.php');
 
 class Geocode
 {
@@ -888,6 +888,8 @@ class Geocode
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
+        $oCtx = new SearchContext();
+
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
             array_map("getDBQuoted", $this->aLangPrefOrder)
@@ -926,20 +928,12 @@ class Geocode
         }
 
         // Do we have anything that looks like a lat/lon pair?
-        $oNearPoint = false;
-        if ($aLooksLike = NearPoint::extractFromQuery($sQuery)) {
-            $oNearPoint = $aLooksLike['pt'];
-            $sQuery = $aLooksLike['query'];
-        }
+        $sQuery = $oCtx->setNearPointFromQuery($sQuery);
 
         $aSearchResults = array();
         if ($sQuery || $this->aStructuredQuery) {
             // Start with a single blank search
-            $aSearches = array(new SearchDescription());
-
-            if ($oNearPoint) {
-                $aSearches[0]->setNear($oNearPoint);
-            }
+            $aSearches = array(new SearchDescription($oCtx));
 
             if ($sQuery) {
                 $sQuery = $aSearches[0]->extractKeyValuePairs($sQuery);
@@ -1166,7 +1160,7 @@ class Geocode
                         }
                     } elseif (!$oSearch->isNamedSearch()) {
                         // looking for a POI in a geographic area
-                        if (!$bBoundingBoxSearch && !$oSearch->isNearSearch()) {
+                        if (!$bBoundingBoxSearch && !$oCtx->hasNearPoint()) {
                             continue;
                         }
 
@@ -1319,11 +1313,7 @@ class Geocode
             $oReverse = new ReverseGeocode($this->oDB);
             $oReverse->setZoom(18);
 
-            $aLookup = $oReverse->lookup(
-                $oNearPoint->lat(),
-                $oNearPoint->lon(),
-                false
-            );
+            $aLookup = $oReverse->lookupPoint($oCtx->sqlNear, false);
 
             if (CONST_Debug) var_dump("Reverse search", $aLookup);
 

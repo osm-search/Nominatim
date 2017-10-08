@@ -201,7 +201,9 @@ class SearchDescription
             // We need to try the case where the postal code is the primary element
             // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
             // so try both.
-            if (!$this->sPostcode && $bWordInQuery) {
+            if (!$this->sPostcode && $bWordInQuery
+                && pg_escape_string($aSearchTerm['word']) == $aSearchTerm['word']
+            ) {
                 // If we have structured search or this is the first term,
                 // make the postcode the primary search element.
                 if ($this->iOperator == Operator::NONE
@@ -237,6 +239,9 @@ class SearchDescription
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
                 if (preg_match_all("/[^0-9]/", $oSearch->sHouseNumber, $aMatches) > 2) {
+                    $oSearch->iSearchRank++;
+                }
+                if (!isset($aSearchTerm['word_id'])) {
                     $oSearch->iSearchRank++;
                 }
                 // also must not appear in the middle of the address
@@ -446,7 +451,7 @@ class SearchDescription
             $sSQL .= 'WHERE ';
         }
 
-        $sSQL .= "p.postcode = '".pg_escape_string(reset($this->aName))."'";
+        $sSQL .= "p.postcode = '".reset($this->aName)."'";
         $sCountryTerm = $this->countryCodeSQL('p.country_code', $sCountryList);
         if ($sCountryTerm) {
             $sSQL .= ' AND '.$sCountryTerm;

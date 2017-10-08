@@ -411,7 +411,10 @@ class Geocode
         //$aPlaceIDs is an array with key: placeID and value: tiger-housenumber, if found, else -1
         if (sizeof($aPlaceIDs) == 0) return array();
 
-        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
+        $sLanguagePrefArraySQL = getArraySQL(
+            array_map("getDBQuoted",
+            $this->aLangPrefOrder)
+        );
 
         // Get the details for display (is this a redundant extra step?)
         $sPlaceIDs = join(',', array_keys($aPlaceIDs));
@@ -980,7 +983,10 @@ class Geocode
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
         $sNormQuery = $this->normTerm($this->sQuery);
-        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
+        $sLanguagePrefArraySQL = getArraySQL(
+            array_map("getDBQuoted",
+            $this->aLangPrefOrder)
+        );
         $sCountryCodesSQL = false;
         if ($this->aCountryCodes) {
             $sCountryCodesSQL = join(',', array_map('addQuotes', $this->aCountryCodes));

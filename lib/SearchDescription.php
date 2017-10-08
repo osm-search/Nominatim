@@ -130,18 +130,9 @@ class SearchDescription
         return (bool) $this->sHouseNumber;
     }
 
-    public function poiTable()
+    private function poiTable()
     {
         return 'place_classtype_'.$this->sClass.'_'.$this->sType;
-    }
-
-    public function addressArraySQL()
-    {
-        return 'ARRAY['.join(',', $this->aAddress).']';
-    }
-    public function nameArraySQL()
-    {
-        return 'ARRAY['.join(',', $this->aName).']';
     }
 
     public function countryCodeSQL($sVar, $sCountryList)
@@ -263,7 +254,7 @@ class SearchDescription
             $sSQL .= ', search_name s ';
             $sSQL .= 'WHERE s.place_id = p.parent_place_id ';
             $sSQL .= 'AND array_cat(s.nameaddress_vector, s.name_vector)';
-            $sSQL .= '      @> '.$this->addressArraySQL().' AND ';
+            $sSQL .= '      @> '.getArraySQL($this->aAddress).' AND ';
         } else {
             $sSQL .= 'WHERE ';
         }
@@ -312,7 +303,7 @@ class SearchDescription
         }
 
         if (sizeof($this->aName)) {
-            $aTerms[] = 'name_vector @> '.$this->nameArraySQL();
+            $aTerms[] = 'name_vector @> '.getArraySQL($this->aName);
         }
         if (sizeof($this->aAddress)) {
             // For infrequent name terms disable index usage for address
@@ -321,9 +312,9 @@ class SearchDescription
                 && $aWordFrequencyScores[$this->aName[reset($this->aName)]]
                      < CONST_Search_NameOnlySearchFrequencyThreshold
             ) {
-                $aTerms[] = 'array_cat(nameaddress_vector,ARRAY[]::integer[]) @> '.$this->addressArraySQL();
+                $aTerms[] = 'array_cat(nameaddress_vector,ARRAY[]::integer[]) @> '.getArraySQL($this->aAddress);
             } else {
-                $aTerms[] = 'nameaddress_vector @> '.$this->addressArraySQL();
+                $aTerms[] = 'nameaddress_vector @> '.getArraySQL($this->aAddress);
             }
         }
 
@@ -381,11 +372,11 @@ class SearchDescription
 
         if (sizeof($this->aFullNameAddress)) {
             $sExactMatchSQL = ' ( ';
-            $sExactMatchSQL .= '   SELECT count(*) FROM ( ';
-            $sExactMatchSQL .= '      SELECT unnest(ARRAY['.join($this->aFullNameAddress, ",").']) ';
-            $sExactMatchSQL .= '      INTERSECT ';
-            $sExactMatchSQL .= '      SELECT unnest(nameaddress_vector)';
-            $sExactMatchSQL .= '   ) s';
+            $sExactMatchSQL .= ' SELECT count(*) FROM ( ';
+            $sExactMatchSQL .= '  SELECT unnest('.getArraySQL($this->aFullNameAddress).')';
+            $sExactMatchSQL .= '    INTERSECT ';
+            $sExactMatchSQL .= '  SELECT unnest(nameaddress_vector)';
+            $sExactMatchSQL .= ' ) s';
             $sExactMatchSQL .= ') as exactmatch';
             $aOrder[] = 'exactmatch DESC';
         } else {

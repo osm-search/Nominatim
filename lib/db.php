@@ -23,6 +23,11 @@ function getDBQuoted($s)
     return "'".pg_escape_string($s)."'";
 }
 
+function getArraySQL($a)
+{
+    return 'ARRAY['.join(',', $a).']';
+}
+
 function getPostgresVersion(&$oDB)
 {
     $sVersionString = $oDB->getOne('select version()');

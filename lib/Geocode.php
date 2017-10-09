@@ -1026,10 +1026,6 @@ class Geocode
                 // Any words that have failed completely?
                 // TODO: suggestions
 
-                // Start the search process
-                // array with: placeid => -1 | tiger-housenumber
-                $aResultPlaceIDs = array();
-
                 $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery);
 
                 if ($this->bReverseInPlan) {
@@ -1084,104 +1080,38 @@ class Geocode
 
             if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
 
+            // Start the search process
+            // array with: placeid => -1 | tiger-housenumber
+            $aResultPlaceIDs = array();
             $iGroupLoop = 0;
             $iQueryLoop = 0;
             foreach ($aGroupedSearches as $iGroupedRank => $aSearches) {
                 $iGroupLoop++;
                 foreach ($aSearches as $oSearch) {
                     $iQueryLoop++;
-                    $searchedHousenumber = -1;
-
-                    if (CONST_Debug) echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
-                    if (CONST_Debug) _debugDumpGroupedSearches(array($iGroupedRank => array($oSearch)), $aValidTokens);
-
-                    $aPlaceIDs = array();
-                    if ($oSearch->isCountrySearch()) {
-                        // Just looking for a country - look it up
-                        if (4 >= $this->iMinAddressRank && 4 <= $this->iMaxAddressRank) {
-                            $aPlaceIDs = $oSearch->queryCountry($this->oDB);
-                        }
-                    } elseif (!$oSearch->isNamedSearch()) {
-                        // looking for a POI in a geographic area
-                        if (!$oCtx->isBoundedSearch()) {
-                            continue;
-                        }
-                        $aPlaceIDs = $oSearch->queryNearbyPoi($this->oDB, $this->iLimit);
-                    } elseif ($oSearch->isOperator(Operator::POSTCODE)) {
-                        // looking for postcode
-                        $aPlaceIDs = $oSearch->queryPostcode($this->oDB, $this->iLimit);
-                    } else {
-                        // Ordinary search:
-                        // First search for places according to name and address.
-                        $aNamedPlaceIDs = $oSearch->queryNamedPlace(
-                            $this->oDB,
-                            $aWordFrequencyScores,
-                            $this->iMinAddressRank,
-                            $this->iMaxAddressRank,
-                            $this->iLimit
-                        );
-
-                        if (sizeof($aNamedPlaceIDs)) {
-                            foreach ($aNamedPlaceIDs as $aRow) {
-                                $aPlaceIDs[] = $aRow['place_id'];
-                                $this->exactMatchCache[$aRow['place_id']] = $aRow['exactmatch'];
-                            }
-                        }
-
-                        //now search for housenumber, if housenumber provided
-                        if ($oSearch->hasHouseNumber() && sizeof($aPlaceIDs)) {
-                            $aResult = $oSearch->queryHouseNumber(
-                                $this->oDB,
-                                $aPlaceIDs,
-                                $this->iLimit
-                            );
-
-                            if (sizeof($aResult)) {
-                                $searchedHousenumber = $aResult['iHouseNumber'];
-                                $aPlaceIDs = $aResult['aPlaceIDs'];
-                            } elseif (!$oSearch->looksLikeFullAddress()) {
-                                $aPlaceIDs = array();
-                            }
-                        }
-
-                        // finally get POIs if requested
-                        if ($oSearch->isPoiSearch() && sizeof($aPlaceIDs)) {
-                            $aPlaceIDs = $oSearch->queryPoiByOperator(
-                                $this->oDB,
-                                $aPlaceIDs,
-                                $this->iLimit
-                            );
-                        }
-                    }
 
                     if (CONST_Debug) {
-                        echo "<br><b>Place IDs:</b> ";
-                        var_Dump($aPlaceIDs);
+                        echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
+                        _debugDumpGroupedSearches(array($iGroupedRank => array($oSearch)), $aValidTokens);
                     }
 
-                    if (sizeof($aPlaceIDs) && $oSearch->getPostcode()) {
-                        $sSQL = 'SELECT place_id FROM placex';
-                        $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
-                        $sSQL .= " AND postcode = '".$oSearch->getPostcode()."'";
-                        if (CONST_Debug) var_dump($sSQL);
-                        $aFilteredPlaceIDs = chksql($this->oDB->getCol($sSQL));
-                        if ($aFilteredPlaceIDs) {
-                            $aPlaceIDs = $aFilteredPlaceIDs;
-                            if (CONST_Debug) {
-                                echo "<br><b>Place IDs after postcode filtering:</b> ";
-                                var_Dump($aPlaceIDs);
-                            }
-                        }
-                    }
+                    $aRes = $oSearch->query(
+                        $this->oDB,
+                        $aWordFrequencyScores,
+                        $this->exactMatchCache,
+                        $this->iMinAddressRank,
+                        $this->iMaxAddressRank,
+                        $this->iLimit
+                    );
 
-                    foreach ($aPlaceIDs as $iPlaceID) {
+                    foreach ($aRes['IDs'] as $iPlaceID) {
                         // array for placeID => -1 | Tiger housenumber
-                        $aResultPlaceIDs[$iPlaceID] = $searchedHousenumber;
+                        $aResultPlaceIDs[$iPlaceID] = $aRes['houseNumber'];
                     }
                     if ($iQueryLoop > 20) break;
                 }
 
-                if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {
+                if (sizeof($aResultPlaceIDs) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {
                     // Need to verify passes rank limits before dropping out of the loop (yuk!)
                     // reduces the number of place ids, like a filter
                     // rank_address is 30 for interpolated housenumbers
@@ -1224,14 +1154,13 @@ class Geocode
                     $aResultPlaceIDs = $tempIDs;
                 }
 
-                //exit;
-                if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) break;
+                if (sizeof($aResultPlaceIDs)) break;
                 if ($iGroupLoop > 4) break;
                 if ($iQueryLoop > 30) break;
             }
 
             // Did we find anything?
-            if (isset($aResultPlaceIDs) && sizeof($aResultPlaceIDs)) {
+            if (sizeof($aResultPlaceIDs)) {
                 $aSearchResults = $this->getDetails($aResultPlaceIDs, $oCtx);
             }
         } else {

@@ -59,11 +59,6 @@ class SearchDescription
         return $this->iSearchRank;
     }
 
-    public function getPostCode()
-    {
-        return $this->sPostcode;
-    }
-
     public function setPoiSearch($iOperator, $sClass, $sType)
     {
         $this->iOperator = $iOperator;
@@ -71,37 +66,11 @@ class SearchDescription
         $this->sType = $sType;
     }
 
-    public function isNamedSearch()
-    {
-        return sizeof($this->aName) > 0 || sizeof($this->aAddress) > 0;
-    }
-
-    public function isCountrySearch()
-    {
-        return $this->sCountryCode && sizeof($this->aName) == 0
-               && !$this->iOperator && !$this->oContext->hasNearPoint();
-    }
-
-    public function isPoiSearch()
-    {
-        return (bool) $this->sClass;
-    }
-
     public function looksLikeFullAddress()
     {
         return sizeof($this->aName)
                && (sizeof($this->aAddress || $this->sCountryCode))
                && preg_match('/[0-9]+/', $this->sHouseNumber);
-    }
-
-    public function isOperator($iType)
-    {
-        return $this->iOperator == $iType;
-    }
-
-    public function hasHouseNumber()
-    {
-        return (bool) $this->sHouseNumber;
     }
 
     private function poiTable()
@@ -366,8 +335,91 @@ class SearchDescription
 
     /////////// Query functions
 
+    public function query(&$oDB, &$aWordFrequencyScores, &$aExactMatchCache, $iMinRank, $iMaxRank, $iLimit)
+    {
+        $aPlaceIDs = array();
+        $iHousenumber = -1;
 
-    public function queryCountry(&$oDB)
+        if ($this->sCountryCode
+            && !sizeof($this->aName)
+            && !$this->iOperator
+            && !$this->sClass
+            && !$this->oContext->hasNearPoint()
+        ) {
+            // Just looking for a country - look it up
+            if (4 >= $iMinRank && 4 <= $iMaxRank) {
+                $aPlaceIDs = $this->queryCountry($oDB);
+            }
+        } elseif (!sizeof($this->aName) && !sizeof($this->aAddress)) {
+            // Neither name nor address? Then we must be
+            // looking for a POI in a geographic area.
+            if ($this->oContext->isBoundedSearch()) {
+                $aPlaceIDs = $this->queryNearbyPoi($oDB, $iLimit);
+            }
+        } elseif ($this->iOperator == Operator::POSTCODE) {
+            // looking for postcode
+            $aPlaceIDs = $this->queryPostcode($oDB, $iLimit);
+        } else {
+            // Ordinary search:
+            // First search for places according to name and address.
+            $aNamedPlaceIDs = $this->queryNamedPlace(
+                $oDB,
+                $aWordFrequencyScores,
+                $iMinRank,
+                $iMaxRank,
+                $iLimit
+            );
+
+            if (sizeof($aNamedPlaceIDs)) {
+                foreach ($aNamedPlaceIDs as $aRow) {
+                    $aPlaceIDs[] = $aRow['place_id'];
+                    $aExactMatchCache[$aRow['place_id']] = $aRow['exactmatch'];
+                }
+            }
+
+            //now search for housenumber, if housenumber provided
+            if ($this->sHouseNumber && sizeof($aPlaceIDs)) {
+                $aResult = $this->queryHouseNumber($oDB, $aPlaceIDs, $iLimit);
+
+                if (sizeof($aResult)) {
+                    $iHousenumber = $aResult['iHouseNumber'];
+                    $aPlaceIDs = $aResult['aPlaceIDs'];
+                } elseif (!$this->looksLikeFullAddress()) {
+                    $aPlaceIDs = array();
+                }
+            }
+
+            // finally get POIs if requested
+            if ($this->sClass && sizeof($aPlaceIDs)) {
+                $aPlaceIDs = $this->queryPoiByOperator($oDB, $aPlaceIDs, $iLimit);
+            }
+        }
+
+        if (CONST_Debug) {
+            echo "<br><b>Place IDs:</b> ";
+            var_Dump($aPlaceIDs);
+        }
+
+        if (sizeof($aPlaceIDs) && $this->sPostcode) {
+            $sSQL = 'SELECT place_id FROM placex';
+            $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
+            $sSQL .= " AND postcode = '".$this->sPostcode."'";
+            if (CONST_Debug) var_dump($sSQL);
+            $aFilteredPlaceIDs = chksql($oDB->getCol($sSQL));
+            if ($aFilteredPlaceIDs) {
+                $aPlaceIDs = $aFilteredPlaceIDs;
+                if (CONST_Debug) {
+                    echo "<br><b>Place IDs after postcode filtering:</b> ";
+                    var_Dump($aPlaceIDs);
+                }
+            }
+        }
+
+        return array('IDs' => $aPlaceIDs, 'houseNumber' => $iHousenumber);
+    }
+
+
+    private function queryCountry(&$oDB)
     {
         $sSQL = 'SELECT place_id FROM placex ';
         $sSQL .= "WHERE country_code='".$this->sCountryCode."'";
@@ -382,7 +434,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNearbyPoi(&$oDB, $iLimit)
+    private function queryNearbyPoi(&$oDB, $iLimit)
     {
         if (!$this->sClass) {
             return array();
@@ -433,7 +485,7 @@ class SearchDescription
         return array();
     }
 
-    public function queryPostcode(&$oDB, $iLimit)
+    private function queryPostcode(&$oDB, $iLimit)
     {
         $sSQL = 'SELECT p.place_id FROM location_postcode p ';
 
@@ -456,7 +508,7 @@ class SearchDescription
         return chksql($oDB->getCol($sSQL));
     }
 
-    public function queryNamedPlace(&$oDB, $aWordFrequencyScores, $iMinAddressRank, $iMaxAddressRank, $iLimit)
+    private function queryNamedPlace(&$oDB, $aWordFrequencyScores, $iMinAddressRank, $iMaxAddressRank, $iLimit)
     {
         $aTerms = array();
         $aOrder = array();
@@ -586,7 +638,7 @@ class SearchDescription
         return array();
     }
 
-    public function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
+    private function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
     {
         $sPlaceIDs = join(',', $aRoadPlaceIDs);
 
@@ -680,7 +732,7 @@ class SearchDescription
     }
 
 
-    public function queryPoiByOperator(&$oDB, $aParentIDs, $iLimit)
+    private function queryPoiByOperator(&$oDB, $aParentIDs, $iLimit)
     {
         $sPlaceIDs = join(',', $aParentIDs);
         $aClassPlaceIDs = array();

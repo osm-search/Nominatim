@@ -73,23 +73,6 @@ class SearchDescription
                && preg_match('/[0-9]+/', $this->sHouseNumber);
     }
 
-    private function poiTable()
-    {
-        return 'place_classtype_'.$this->sClass.'_'.$this->sType;
-    }
-
-    public function countryCodeSQL($sVar)
-    {
-        if ($this->sCountryCode) {
-            return $sVar.' = \''.$this->sCountryCode."'";
-        }
-        if ($this->oContext->sqlCountryList) {
-            return $sVar.' in '.$this->oContext->sqlCountryList;
-        }
-
-        return '';
-    }
-
     public function hasOperator()
     {
         return $this->iOperator != Operator::NONE;
@@ -335,6 +318,7 @@ class SearchDescription
 
     /////////// Query functions
 
+
     public function query(&$oDB, &$aWordFrequencyScores, &$aExactMatchCache, $iMinRank, $iMaxRank, $iLimit)
     {
         $aPlaceIDs = array();
@@ -450,7 +434,7 @@ class SearchDescription
             }
             if ($this->oContext->hasNearPoint()) {
                 $sSQL .= ' WHERE '.$this->oContext->withinSQL('ct.centroid');
-            } else if ($this->oContext->bViewboxBounded) {
+            } elseif ($this->oContext->bViewboxBounded) {
                 $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', ct.centroid)';
             }
             if ($this->oContext->sqlCountryList) {
@@ -869,6 +853,22 @@ class SearchDescription
         return $aClassPlaceIDs;
     }
 
+    private function poiTable()
+    {
+        return 'place_classtype_'.$this->sClass.'_'.$this->sType;
+    }
+
+    private function countryCodeSQL($sVar)
+    {
+        if ($this->sCountryCode) {
+            return $sVar.' = \''.$this->sCountryCode."'";
+        }
+        if ($this->oContext->sqlCountryList) {
+            return $sVar.' in '.$this->oContext->sqlCountryList;
+        }
+
+        return '';
+    }
 
     /////////// Sort functions
 

@@ -846,7 +846,7 @@ class Geocode
                 $this->aRouteWidth,
                 $this->bBoundedSearch
             );
-        } else if ($this->aViewBox) {
+        } elseif ($this->aViewBox) {
             $oCtx->setViewboxFromBox($this->aViewBox, $this->bBoundedSearch);
         }
         if ($this->aExcludePlaceIDs) {

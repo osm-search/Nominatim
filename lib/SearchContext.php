@@ -6,7 +6,7 @@ require_once(CONST_BasePath.'/lib/lib.php');
 
 
 /**
- * Collects search constraints that are independent of the
+ * Collection of search constraints that are independent of the
  * actual interpretation of the search query.
  *
  * The search context is shared between all SearchDescriptions. This
@@ -15,15 +15,24 @@ require_once(CONST_BasePath.'/lib/lib.php');
  */
 class SearchContext
 {
+    /// Search radius around a given Near reference point.
     private $fNearRadius = false;
+    /// True if search must be restricted to viewbox only.
     public $bViewboxBounded = false;
 
+    /// Reference point for search (as SQL).
     public $sqlNear = '';
+    /// Viewbox selected for search (as SQL).
     public $sqlViewboxSmall = '';
+    /// Viewbox with a larger buffer around (as SQL).
     public $sqlViewboxLarge = '';
+    /// Reference along a route (as SQL).
     public $sqlViewboxCentre = '';
+    /// List of countries to restrict search to (as SQL).
     public $sqlCountryList = '';
+    /// List of place IDs to exclude (as SQL).
     private $sqlExcludeList = '';
+
 
     public function hasNearPoint()
     {
@@ -44,7 +53,6 @@ class SearchContext
     public function isBoundedSearch()
     {
         return $this->hasNearPoint() || ($this->sqlViewboxSmall && $this->bViewboxBounded);
-
     }
 
     public function setViewboxFromBox(&$aViewBox, $bBounded)

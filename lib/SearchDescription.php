@@ -43,22 +43,55 @@ class SearchDescription
     private $iNamePhrase = -1;
 
 
+    /**
+     * Create an empty search description.
+     *
+     * @param object $oContext Global context to use. Will be inherited by
+     *                         all derived search objects.
+     */
     public function __construct($oContext)
     {
         $this->oContext = $oContext;
     }
 
+    /**
+     * Get current search rank.
+     *
+     * The higher the search rank the lower the likelyhood that the
+     * search is a correct interpretation of the search query.
+     *
+     * @return integer Search rank.
+     */
     public function getRank()
     {
         return $this->iSearchRank;
     }
 
+    /**
+     * Increase the search rank.
+     *
+     * @param integer $iAddRank Number of ranks to increase.
+     *
+     * @return void
+     */
     public function addToRank($iAddRank)
     {
         $this->iSearchRank += $iAddRank;
         return $this->iSearchRank;
     }
 
+    /**
+     * Make this search a POI search.
+     *
+     * In a POI search, objects are not (only) searched by their name
+     * but also by the primary OSM key/value pair (class and type in Nominatim).
+     *
+     * @param integer $iOperator Type of POI search
+     * @param string  $sClass    Class (or OSM tag key) of POI.
+     * @param string  $sType     Type (or OSM tag value) of POI.
+     *
+     * @return void
+     */
     public function setPoiSearch($iOperator, $sClass, $sType)
     {
         $this->iOperator = $iOperator;
@@ -66,6 +99,11 @@ class SearchDescription
         $this->sType = $sType;
     }
 
+    /**
+     * Check if this might be a full address search.
+     *
+     * @return bool True if the search contains name, address and housenumber.
+     */
     public function looksLikeFullAddress()
     {
         return sizeof($this->aName)
@@ -73,11 +111,27 @@ class SearchDescription
                && preg_match('/[0-9]+/', $this->sHouseNumber);
     }
 
+    /**
+     * Check if any operator is set.
+     *
+     * @return bool True, if this is a special search operation.
+     */
     public function hasOperator()
     {
         return $this->iOperator != Operator::NONE;
     }
 
+    /**
+     * Extract key/value pairs from a query.
+     *
+     * Key/value pairs are recognised if they are of the form [<key>=<value>].
+     * If multiple terms of this kind are found then all terms are removed
+     * but only the first is used for search.
+     *
+     * @param string $sQuery Original query string.
+     *
+     * @return string The query string with the special search patterns removed.
+     */
     public function extractKeyValuePairs($sQuery)
     {
         // Search for terms of kind [<key>=<value>].
@@ -98,6 +152,13 @@ class SearchDescription
         return $sQuery;
     }
 
+    /**
+     * Check if the combination of parameters is sensible.
+     *
+     * @param string[] $aCountryCodes List of country codes.
+     *
+     * @return bool True, if the search looks valid.
+     */
     public function isValidSearch(&$aCountryCodes)
     {
         if (!sizeof($this->aName)) {
@@ -118,6 +179,25 @@ class SearchDescription
     /////////// Search building functions
 
 
+    /**
+     * Derive new searches by adding a full term to the existing search.
+     *
+     * @param mixed[] $aSearchTerm  Description of the token.
+     * @param bool    $bWordInQuery True, if the normalised version of the word
+     *                              is contained in the query.
+     * @param bool    $bHasPartial  True if there are also tokens of partial terms
+     *                              with the same name.
+     * @param string  $sPhraseType  Type of phrase the token is contained in.
+     * @param bool    $bFirstToken  True if the token is at the beginning of the
+     *                              query.
+     * @param bool    $bFirstPhrase True if the token is in the first phrase of
+     *                              the query.
+     * @param bool    $bLastToken   True if the token is at the end of the query.
+     * @param integer $iGlobalRank  Changable ranking of all searches in the
+     *                              batch.
+     *
+     * @return SearchDescription[] List of derived search descriptions.
+     */
     public function extendWithFullTerm($aSearchTerm, $bWordInQuery, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
     {
         $aNewSearches = array();
@@ -247,6 +327,19 @@ class SearchDescription
         return $aNewSearches;
     }
 
+    /**
+     * Derive new searches by adding a partial term to the existing search.
+     *
+     * @param mixed[] $aSearchTerm          Description of the token.
+     * @param bool    $bStructuredPhrases   True if the search is structured.
+     * @param integer $iPhrase              Number of the phrase the token is in.
+     * @param mixed[] $aWordFrequencyScores Number of times tokens appears
+     *                                      overall in a planet database.
+     * @param array[] $aFullTokens          List of full term tokens with the
+     *                                      same name.
+     *
+     * @return SearchDescription[] List of derived search descriptions.
+     */
     public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, &$aWordFrequencyScores, $aFullTokens)
     {
         // Only allow name terms.
@@ -319,6 +412,23 @@ class SearchDescription
     /////////// Query functions
 
 
+    /**
+     * Query database for places that match this search.
+     *
+     * @param object  $oDB                  Database connection to use.
+     * @param mixed[] $aWordFrequencyScores Number of times tokens appears
+     *                                      overall in a planet database.
+     * @param mixed[] $aExactMatchCache     Saves number of exact matches.
+     * @param integer $iMinRank             Minimum address rank to restrict
+     *                                      search to.
+     * @param integer $iMaxRank             Maximum address rank to restrict
+     *                                      search to.
+     * @param integer $iLimit               Maximum number of results.
+     *
+     * @return mixed[] An array with two fields: IDs contains the list of
+     *                 matching place IDs and houseNumber the houseNumber
+     *                 if appicable or -1 if not.
+     */
     public function query(&$oDB, &$aWordFrequencyScores, &$aExactMatchCache, $iMinRank, $iMaxRank, $iLimit)
     {
         $aPlaceIDs = array();

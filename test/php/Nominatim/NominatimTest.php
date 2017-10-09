@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require '../../lib/lib.php';
+require_once '../../lib/lib.php';
 
 class NominatimTest extends \PHPUnit_Framework_TestCase
 {
@@ -202,5 +202,64 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
             ),
             geometryText2Points('MULTIPOLYGON(((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', $fRadius)
         );
+    }
+
+    public function testParseLatLon()
+    {
+        // no coordinates expected
+        $this->assertFalse(parseLatLon(''));
+        $this->assertFalse(parseLatLon('abc'));
+        $this->assertFalse(parseLatLon('12 34'));
+
+        // coordinates expected
+        $this->assertNotNull(parseLatLon('0.0 -0.0'));
+
+        $aRes = parseLatLon(' abc 12.456 -78.90 def ');
+        $this->assertEquals($aRes[1], 12.456);
+        $this->assertEquals($aRes[2], -78.90);
+        $this->assertEquals($aRes[0], ' 12.456 -78.90 ');
+
+        $aRes = parseLatLon(' [12.456,-78.90] ');
+        $this->assertEquals($aRes[1], 12.456);
+        $this->assertEquals($aRes[2], -78.90);
+        $this->assertEquals($aRes[0], ' [12.456,-78.90] ');
+
+        $aRes = parseLatLon(' -12.456,-78.90 ');
+        $this->assertEquals($aRes[1], -12.456);
+        $this->assertEquals($aRes[2], -78.90);
+        $this->assertEquals($aRes[0], ' -12.456,-78.90 ');
+
+        // http://en.wikipedia.org/wiki/Geographic_coordinate_conversion
+        // these all represent the same location
+        $aQueries = array(
+                     '40 26.767 N 79 58.933 W',
+                     '40° 26.767′ N 79° 58.933′ W',
+                     "40° 26.767' N 79° 58.933' W",
+                     'N 40 26.767, W 79 58.933',
+                     'N 40°26.767′, W 79°58.933′',
+                     "N 40°26.767', W 79°58.933'",
+ 
+                     '40 26 46 N 79 58 56 W',
+                     '40° 26′ 46″ N 79° 58′ 56″ W',
+                     'N 40 26 46 W 79 58 56',
+                     'N 40° 26′ 46″, W 79° 58′ 56″',
+                     'N 40° 26\' 46", W 79° 58\' 56"',
+ 
+                     '40.446 -79.982',
+                     '40.446,-79.982',
+                     '40.446° N 79.982° W',
+                     'N 40.446° W 79.982°',
+ 
+                     '[40.446 -79.982]',
+                     '       40.446  ,   -79.982     ',
+                    );
+
+
+        foreach ($aQueries as $sQuery) {
+            $aRes = parseLatLon($sQuery);
+            $this->assertEquals(40.446, $aRes[1], 'degrees decimal ' . $sQuery, 0.01);
+            $this->assertEquals(-79.982, $aRes[2], 'degrees decimal ' . $sQuery, 0.01);
+            $this->assertEquals($sQuery, $aRes[0]);
+        }
     }
 }

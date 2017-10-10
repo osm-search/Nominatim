@@ -398,16 +398,20 @@ class Geocode
         $sSQL .= "    avg(ST_X(centroid)) AS lon, ";
         $sSQL .= "    avg(ST_Y(centroid)) AS lat, ";
         $sSQL .= "    COALESCE(importance,0.75-(rank_search::float/40)) $sImportanceSQL AS importance, ";
-        $sSQL .= "    ( ";
-        $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
-        $sSQL .= "       FROM ";
-        $sSQL .= "         place_addressline s, ";
-        $sSQL .= "         placex p";
-        $sSQL .= "       WHERE s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)";
-        $sSQL .= "         AND p.place_id = s.address_place_id ";
-        $sSQL .= "         AND s.isaddress ";
-        $sSQL .= "         AND p.importance is not null ";
-        $sSQL .= "    ) AS addressimportance, ";
+        if ($oCtx->hasNearPoint()) {
+            $sSQL .= $oCtx->distanceSQL('ST_Collect(centroid)')." AS addressimportance,";
+        } else {
+            $sSQL .= "    ( ";
+            $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
+            $sSQL .= "       FROM ";
+            $sSQL .= "         place_addressline s, ";
+            $sSQL .= "         placex p";
+            $sSQL .= "       WHERE s.place_id = min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)";
+            $sSQL .= "         AND p.place_id = s.address_place_id ";
+            $sSQL .= "         AND s.isaddress ";
+            $sSQL .= "         AND p.importance is not null ";
+            $sSQL .= "    ) AS addressimportance, ";
+        }
         $sSQL .= "    (extratags->'place') AS extra_place ";
         $sSQL .= " FROM placex";
         $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
@@ -457,16 +461,20 @@ class Geocode
         if ($this->bIncludeNameDetails) $sSQL .= "null AS names,";
         $sSQL .= "  ST_x(st_centroid(geometry)) AS lon, ST_y(st_centroid(geometry)) AS lat,";
         $sSQL .= "  (0.75-(rank_search::float/40)) $sImportanceSQLGeom AS importance, ";
-        $sSQL .= "  (";
-        $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
-        $sSQL .= "     FROM ";
-        $sSQL .= "       place_addressline s, ";
-        $sSQL .= "       placex p";
-        $sSQL .= "     WHERE s.place_id = lp.parent_place_id";
-        $sSQL .= "       AND p.place_id = s.address_place_id ";
-        $sSQL .= "       AND s.isaddress";
-        $sSQL .= "       AND p.importance is not null";
-        $sSQL .= "  ) AS addressimportance, ";
+        if ($oCtx->hasNearPoint()) {
+            $sSQL .= $oCtx->distanceSQL('geometry')." AS addressimportance,";
+        } else {
+            $sSQL .= "  (";
+            $sSQL .= "     SELECT max(p.importance*(p.rank_address+2))";
+            $sSQL .= "     FROM ";
+            $sSQL .= "       place_addressline s, ";
+            $sSQL .= "       placex p";
+            $sSQL .= "     WHERE s.place_id = lp.parent_place_id";
+            $sSQL .= "       AND p.place_id = s.address_place_id ";
+            $sSQL .= "       AND s.isaddress";
+            $sSQL .= "       AND p.importance is not null";
+            $sSQL .= "  ) AS addressimportance, ";
+        }
         $sSQL .= "  null AS extra_place ";
         $sSQL .= "FROM location_postcode lp";
         $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
@@ -505,16 +513,20 @@ class Geocode
                 $sSQL .= "     avg(st_x(centroid)) AS lon, ";
                 $sSQL .= "     avg(st_y(centroid)) AS lat,";
                 $sSQL .= "     -1.15".$sImportanceSQL." AS importance, ";
-                $sSQL .= "     (";
-                $sSQL .= "        SELECT max(p.importance*(p.rank_address+2))";
-                $sSQL .= "        FROM ";
-                $sSQL .= "          place_addressline s, ";
-                $sSQL .= "          placex p";
-                $sSQL .= "        WHERE s.place_id = min(blub.parent_place_id)";
-                $sSQL .= "          AND p.place_id = s.address_place_id ";
-                $sSQL .= "          AND s.isaddress";
-                $sSQL .= "          AND p.importance is not null";
-                $sSQL .= "     ) AS addressimportance, ";
+                if ($oCtx->hasNearPoint()) {
+                    $sSQL .= $oCtx->distanceSQL('ST_Collect(centroid)')." AS addressimportance,";
+                } else {
+                    $sSQL .= "     (";
+                    $sSQL .= "        SELECT max(p.importance*(p.rank_address+2))";
+                    $sSQL .= "        FROM ";
+                    $sSQL .= "          place_addressline s, ";
+                    $sSQL .= "          placex p";
+                    $sSQL .= "        WHERE s.place_id = min(blub.parent_place_id)";
+                    $sSQL .= "          AND p.place_id = s.address_place_id ";
+                    $sSQL .= "          AND s.isaddress";
+                    $sSQL .= "          AND p.importance is not null";
+                    $sSQL .= "     ) AS addressimportance, ";
+                }
                 $sSQL .= "     null AS extra_place ";
                 $sSQL .= " FROM (";
                 $sSQL .= "     SELECT place_id, ";    // interpolate the Tiger housenumbers here
@@ -555,17 +567,21 @@ class Geocode
             $sSQL .= "  AVG(st_x(centroid)) AS lon, ";
             $sSQL .= "  AVG(st_y(centroid)) AS lat, ";
             $sSQL .= "  -0.1".$sImportanceSQL." AS importance, ";  // slightly smaller than the importance for normal houses with rank 30, which is 0
-            $sSQL .= "  (";
-            $sSQL .= "     SELECT ";
-            $sSQL .= "       MAX(p.importance*(p.rank_address+2)) ";
-            $sSQL .= "     FROM";
-            $sSQL .= "       place_addressline s, ";
-            $sSQL .= "       placex p";
-            $sSQL .= "     WHERE s.place_id = min(blub.parent_place_id) ";
-            $sSQL .= "       AND p.place_id = s.address_place_id ";
-            $sSQL .= "       AND s.isaddress ";
-            $sSQL .= "       AND p.importance is not null";
-            $sSQL .= "  ) AS addressimportance,";
+            if ($oCtx->hasNearPoint()) {
+                $sSQL .= $oCtx->distanceSQL('ST_Collect(centroid)')." AS addressimportance,";
+            } else {
+                $sSQL .= "  (";
+                $sSQL .= "     SELECT ";
+                $sSQL .= "       MAX(p.importance*(p.rank_address+2)) ";
+                $sSQL .= "     FROM";
+                $sSQL .= "       place_addressline s, ";
+                $sSQL .= "       placex p";
+                $sSQL .= "     WHERE s.place_id = min(blub.parent_place_id) ";
+                $sSQL .= "       AND p.place_id = s.address_place_id ";
+                $sSQL .= "       AND s.isaddress ";
+                $sSQL .= "       AND p.importance is not null";
+                $sSQL .= "  ) AS addressimportance,";
+            }
             $sSQL .= "  null AS extra_place ";
             $sSQL .= "  FROM (";
             $sSQL .= "     SELECT ";
@@ -614,16 +630,20 @@ class Geocode
                 $sSQL .= "     avg(ST_X(centroid)) AS lon, ";
                 $sSQL .= "     avg(ST_Y(centroid)) AS lat, ";
                 $sSQL .= "     -1.10".$sImportanceSQL." AS importance, ";
-                $sSQL .= "     ( ";
-                $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
-                $sSQL .= "       FROM ";
-                $sSQL .= "          place_addressline s, ";
-                $sSQL .= "          placex p";
-                $sSQL .= "       WHERE s.place_id = min(location_property_aux.parent_place_id)";
-                $sSQL .= "         AND p.place_id = s.address_place_id ";
-                $sSQL .= "         AND s.isaddress";
-                $sSQL .= "         AND p.importance is not null";
-                $sSQL .= "     ) AS addressimportance, ";
+                if ($oCtx->hasNearPoint()) {
+                    $sSQL .= $oCtx->distanceSQL('ST_Collect(centroid)')." AS addressimportance,";
+                } else {
+                    $sSQL .= "     ( ";
+                    $sSQL .= "       SELECT max(p.importance*(p.rank_address+2))";
+                    $sSQL .= "       FROM ";
+                    $sSQL .= "          place_addressline s, ";
+                    $sSQL .= "          placex p";
+                    $sSQL .= "       WHERE s.place_id = min(location_property_aux.parent_place_id)";
+                    $sSQL .= "         AND p.place_id = s.address_place_id ";
+                    $sSQL .= "         AND s.isaddress";
+                    $sSQL .= "         AND p.importance is not null";
+                    $sSQL .= "     ) AS addressimportance, ";
+                }
                 $sSQL .= "     null AS extra_place ";
                 $sSQL .= "  FROM location_property_aux ";
                 $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
@@ -1266,36 +1286,43 @@ class Geocode
                 }
             }
 
-            // Adjust importance for the number of exact string matches in the result
-            $aResult['importance'] = max(0.001, $aResult['importance']);
-            $iCountWords = 0;
-            $sAddress = $aResult['langaddress'];
-            foreach ($aRecheckWords as $i => $sWord) {
-                if (stripos($sAddress, $sWord)!==false) {
-                    $iCountWords++;
-                    if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
-                }
-            }
-
-            $aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
-
             $aResult['name'] = $aResult['langaddress'];
-            // secondary ordering (for results with same importance (the smaller the better):
-            // - approximate importance of address parts
-            $aResult['foundorder'] = -$aResult['addressimportance']/10;
-            // - number of exact matches from the query
-            if (isset($this->exactMatchCache[$aResult['place_id']])) {
-                $aResult['foundorder'] -= $this->exactMatchCache[$aResult['place_id']];
-            } elseif (isset($this->exactMatchCache[$aResult['parent_place_id']])) {
-                $aResult['foundorder'] -= $this->exactMatchCache[$aResult['parent_place_id']];
-            }
-            // - importance of the class/type
-            if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['importance']
-            ) {
-                $aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+
+            if ($oCtx->hasNearPoint())
+            {
+                $aResult['importance'] = 0.001;
+                $aResult['foundorder'] = $aResult['addressimportance'];
             } else {
-                $aResult['foundorder'] += 0.01;
+                // Adjust importance for the number of exact string matches in the result
+                $aResult['importance'] = max(0.001, $aResult['importance']);
+                $iCountWords = 0;
+                $sAddress = $aResult['langaddress'];
+                foreach ($aRecheckWords as $i => $sWord) {
+                    if (stripos($sAddress, $sWord)!==false) {
+                        $iCountWords++;
+                        if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
+                    }
+                }
+
+                $aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
+
+                // secondary ordering (for results with same importance (the smaller the better):
+                // - approximate importance of address parts
+                $aResult['foundorder'] = -$aResult['addressimportance']/10;
+                // - number of exact matches from the query
+                if (isset($this->exactMatchCache[$aResult['place_id']])) {
+                    $aResult['foundorder'] -= $this->exactMatchCache[$aResult['place_id']];
+                } elseif (isset($this->exactMatchCache[$aResult['parent_place_id']])) {
+                    $aResult['foundorder'] -= $this->exactMatchCache[$aResult['parent_place_id']];
+                }
+                // - importance of the class/type
+                if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
+                    && $aClassType[$aResult['class'].':'.$aResult['type']]['importance']
+                ) {
+                    $aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+                } else {
+                    $aResult['foundorder'] += 0.01;
+                }
             }
             if (CONST_Debug) var_dump($aResult);
             $aSearchResults[$iResNum] = $aResult;

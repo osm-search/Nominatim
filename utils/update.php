@@ -77,8 +77,7 @@ if ($aResult['init-updates']) {
     if ($sDatabaseDate === false) {
         fail("Cannot determine date of database.");
     }
-    $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ',
-                          strtotime($sDatabaseDate) - (3*60*60));
+    $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ', strtotime($sDatabaseDate) - (3*60*60));
 
     // get the appropriate state id
     $aOutput = 0;
@@ -288,7 +287,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 if ($iResult == 3) {
                     echo 'No new updates. Sleeping for '.CONST_Replication_Recheck_Interval." sec.\n";
                     sleep(CONST_Replication_Recheck_Interval);
-                } else if ($iResult != 0) {
+                } elseif ($iResult != 0) {
                     echo 'ERROR: updates failed.';
                     exit($iResult);
                 } else {
@@ -325,7 +324,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             // write the update logs
             $iFileSize = filesize($sImportFile);
-            $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','import')";
+            $sSQL = 'INSERT INTO import_osmosis_log';
+            $sSQL .= '(batchend, batchseq, batchsize, starttime, endtime, event)';
+            $sSQL .= " values ('$sBatchEnd',$iEndSequence,$iFileSize,'";
+            $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
+            $sSQL .= date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
             chksql($oDB->query($sSQL));
 
@@ -348,7 +351,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 exit($iErrorLevel);
             }
 
-            $sSQL = "INSERT INTO import_osmosis_log (batchend, batchseq, batchsize, starttime, endtime, event) values ('$sBatchEnd',$iEndSequence,$iFileSize,'".date('Y-m-d H:i:s', $fCMDStartTime)."','".date('Y-m-d H:i:s')."','index')";
+            $sSQL = 'INSERT INTO import_osmosis_log';
+            $sSQL .= '(batchend, batchseq, batchsize, starttime, endtime, event)';
+            $sSQL .= " values ('$sBatchEnd',$iEndSequence,$iFileSize,'";
+            $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
+            $sSQL .= date('Y-m-d H:i:s')."','index')";
             var_Dump($sSQL);
             $oDB->query($sSQL);
             echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
@@ -362,4 +369,3 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         if (!$aResult['import-osmosis-all']) exit(0);
     }
 }
-

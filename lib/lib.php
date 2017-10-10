@@ -51,14 +51,6 @@ function getDatabaseDate(&$oDB)
 }
 
 
-function bySearchRank($a, $b)
-{
-    if ($a['iSearchRank'] == $b['iSearchRank'])
-        return strlen($a['sOperator']) + strlen($a['sHouseNumber']) - strlen($b['sOperator']) - strlen($b['sHouseNumber']);
-    return ($a['iSearchRank'] < $b['iSearchRank']?-1:1);
-}
-
-
 function byImportance($a, $b)
 {
     if ($a['importance'] != $b['importance'])
@@ -489,71 +481,19 @@ function _debugDumpGroupedSearches($aData, $aTokens)
         foreach ($aTokens as $sToken => $aWords) {
             if ($aWords) {
                 foreach ($aWords as $aToken) {
-                    $aWordsIDs[$aToken['word_id']] = $sToken.'('.$aToken['word_id'].')';
+                    $aWordsIDs[$aToken['word_id']] =
+                        '#'.$sToken.'('.$aToken['word_id'].')#';
                 }
             }
         }
     }
     echo "<table border=\"1\">";
     echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>";
-    echo "<th>Address Tokens</th><th>Address Not</th><th>country</th>";
-    echo "<th>operator</th><th>class</th><th>type</th><th>postcode</th><th>house#</th>";
-    echo "<th>Lat</th><th>Lon</th><th>Radius</th></tr>";
+    echo "<th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th>";
+    echo "<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>";
     foreach ($aData as $iRank => $aRankedSet) {
         foreach ($aRankedSet as $aRow) {
-            echo "<tr>";
-            echo "<td>$iRank</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aName'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aNameNonSearch'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aAddress'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>";
-            $sSep = '';
-            foreach ($aRow['aAddressNonSearch'] as $iWordID) {
-                echo $sSep.'#'.$aWordsIDs[$iWordID].'#';
-                $sSep = ', ';
-            }
-            echo "</td>";
-
-            echo "<td>".$aRow['sCountryCode']."</td>";
-
-            echo "<td>".$aRow['sOperator']."</td>";
-            echo "<td>".$aRow['sClass']."</td>";
-            echo "<td>".$aRow['sType']."</td>";
-
-            echo "<td>".$aRow['sPostcode']."</td>";
-            echo "<td>".$aRow['sHouseNumber']."</td>";
-
-            if ($aRow['oNear']) {
-                echo "<td>".$aRow['oNear']->lat()."</td>";
-                echo "<td>".$aRow['oNear']->lon()."</td>";
-                echo "<td>".$aRow['oNear']->radius()."</td>";
-            } else {
-                echo "<td></td><td></td><td></td>";
-            }
-
-            echo "</tr>";
+            $aRow->dumpAsHtmlTableRow($aWordsIDs);
         }
     }
     echo "</table>";
@@ -603,6 +543,81 @@ function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCo
 function addQuotes($s)
 {
     return "'".$s."'";
+}
+
+function parseLatLon($sQuery)
+{
+    $sFound    = null;
+    $fQueryLat = null;
+    $fQueryLon = null;
+
+    if (preg_match('/\\s*([NS])[ ]+([0-9]+[0-9.]*)[° ]+([0-9.]+)?[′\']*[, ]+([EW])[ ]+([0-9]+)[° ]+([0-9]+[0-9.]*)[′\']*\\s*/', $sQuery, $aData)) {
+        /*               1         2                   3                    4         5            6
+         * degrees decimal minutes
+         * N 40 26.767, W 79 58.933
+         * N 40°26.767′, W 79°58.933′
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60);
+        $fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[5] + $aData[6]/60);
+    } elseif (preg_match('/\\s*([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\']*[ ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+[0-9.]*)?[′\' ]+([EW])\\s*/', $sQuery, $aData)) {
+        /*                     1            2                         3          4            5                      6
+         * degrees decimal minutes
+         * 40 26.767 N, 79 58.933 W
+         * 40° 26.767′ N 79° 58.933′ W
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[3]=='N'?1:-1) * ($aData[1] + $aData[2]/60);
+        $fQueryLon = ($aData[6]=='E'?1:-1) * ($aData[4] + $aData[5]/60);
+    } elseif (preg_match('/\\s*([NS])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*[, ]+([EW])[ ]([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″"]*\\s*/', $sQuery, $aData)) {
+        /*                     1        2            3              4                 5        6            7              8
+         * degrees decimal seconds
+         * N 40 26 46 W 79 58 56
+         * N 40° 26′ 46″, W 79° 58′ 56″
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60 + $aData[4]/3600);
+        $fQueryLon = ($aData[5]=='E'?1:-1) * ($aData[6] + $aData[7]/60 + $aData[8]/3600);
+    } elseif (preg_match('/\\s*([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([EW])\\s*/', $sQuery, $aData)) {
+        /*                     1            2              3             4          5            6              7             8
+         * degrees decimal seconds
+         * 40 26 46 N 79 58 56 W
+         * 40° 26′ 46″ N, 79° 58′ 56″ W
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[4]=='N'?1:-1) * ($aData[1] + $aData[2]/60 + $aData[3]/3600);
+        $fQueryLon = ($aData[8]=='E'?1:-1) * ($aData[5] + $aData[6]/60 + $aData[7]/3600);
+    } elseif (preg_match('/\\s*([NS])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*[, ]+([EW])[ ]([0-9]+[0-9]*\\.[0-9]+)[°]*\\s*/', $sQuery, $aData)) {
+        /*                     1        2                               3        4
+         * degrees decimal
+         * N 40.446° W 79.982°
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2]);
+        $fQueryLon = ($aData[3]=='E'?1:-1) * ($aData[4]);
+    } elseif (preg_match('/\\s*([0-9]+[0-9]*\\.[0-9]+)[° ]+([NS])[, ]+([0-9]+[0-9]*\\.[0-9]+)[° ]+([EW])\\s*/', $sQuery, $aData)) {
+        /*                     1                           2          3                           4
+         * degrees decimal
+         * 40.446° N 79.982° W
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = ($aData[2]=='N'?1:-1) * ($aData[1]);
+        $fQueryLon = ($aData[4]=='E'?1:-1) * ($aData[3]);
+    } elseif (preg_match('/(\\s*\\[|^\\s*|\\s*)(-?[0-9]+[0-9]*\\.[0-9]+)[, ]+(-?[0-9]+[0-9]*\\.[0-9]+)(\\]\\s*|\\s*$|\\s*)/', $sQuery, $aData)) {
+        /*                 1                   2                             3                        4
+         * degrees decimal
+         * 12.34, 56.78
+         * 12.34 56.78
+         * [12.456,-78.90]
+         */
+        $sFound    = $aData[0];
+        $fQueryLat = $aData[2];
+        $fQueryLon = $aData[3];
+    } else {
+        return false;
+    }
+
+    return array($sFound, $fQueryLat, $fQueryLon);
 }
 
 

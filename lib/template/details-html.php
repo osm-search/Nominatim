@@ -68,7 +68,8 @@
         echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
         echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
         echo '  <td>' . osmLink($aAddressLine) . "</td>\n";
-        echo '  <td>' . (isset($aAddressLine['admin_level']) ? $aAddressLine['admin_level'] : '') . "</td>\n";
+        echo '  <td>' . (isset($aAddressLine['rank_address']) ? $aAddressLine['rank_address'] : '') . "</td>\n";
+        echo '  <td>' . ($aAddressLine['admin_level'] < 15 ? $aAddressLine['admin_level'] : '') . "</td>\n";
         echo '  <td>' . format_distance($aAddressLine['distance'])."</td>\n";
         echo '  <td>' . detailsLink($aAddressLine,'details &gt;') . "</td>\n";
         echo "</tr>\n";
@@ -149,6 +150,7 @@
                       <td>Local name</td>
                       <td>Type</td>
                       <td>OSM</td>
+                      <td>Address rank</td>
                       <td>Admin level</td>
                       <td>Distance</td>
                       <td></td>

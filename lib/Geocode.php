@@ -3,6 +3,7 @@
 namespace Nominatim;
 
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+require_once(CONST_BasePath.'/lib/Phrase.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 require_once(CONST_BasePath.'/lib/SearchDescription.php');
 require_once(CONST_BasePath.'/lib/SearchContext.php');
@@ -668,7 +669,7 @@ class Geocode
         return $aSearchResults;
     }
 
-    public function getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery)
+    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bIsStructured, $sNormQuery)
     {
         /*
              Calculate all searches using aValidTokens i.e.
@@ -683,15 +684,11 @@ class Geocode
          */
         $iGlobalRank = 0;
 
-        foreach ($aPhrases as $iPhrase => $aPhrase) {
+        foreach ($aPhrases as $iPhrase => $oPhrase) {
             $aNewPhraseSearches = array();
-            if ($bStructuredPhrases) {
-                $sPhraseType = $aPhraseTypes[$iPhrase];
-            } else {
-                $sPhraseType = '';
-            }
+            $sPhraseType = $bIsStructured ? $oPhrase->getPhraseType() : '';
 
-            foreach ($aPhrase['wordsets'] as $iWordSet => $aWordset) {
+            foreach ($oPhrase->getWordSets() as $iWordSet => $aWordset) {
                 // Too many permutations - too expensive
                 if ($iWordSet > 120) break;
 
@@ -746,7 +743,7 @@ class Geocode
                             foreach ($aValidTokens[$sToken] as $aSearchTerm) {
                                 $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
                                     $aSearchTerm,
-                                    $bStructuredPhrases,
+                                    $bIsStructured,
                                     $iPhrase,
                                     $aWordFrequencyScores,
                                     isset($aValidTokens[' '.$sToken]) ? $aValidTokens[' '.$sToken] : array()
@@ -955,10 +952,10 @@ class Geocode
             // Split query into phrases
             // Commas are used to reduce the search space by indicating where phrases split
             if ($this->aStructuredQuery) {
-                $aPhrases = $this->aStructuredQuery;
+                $aInPhrases = $this->aStructuredQuery;
                 $bStructuredPhrases = true;
             } else {
-                $aPhrases = explode(',', $sQuery);
+                $aInPhrases = explode(',', $sQuery);
                 $bStructuredPhrases = false;
             }
 
@@ -967,24 +964,18 @@ class Geocode
             // Get all 'sets' of words
             // Generate a complete list of all
             $aTokens = array();
-            foreach ($aPhrases as $iPhrase => $sPhrase) {
-                $aPhrase = chksql(
-                    $this->oDB->getRow("SELECT make_standard_name('".pg_escape_string($sPhrase)."') as string"),
+            $aPhrases = array();
+            foreach ($aInPhrases as $iPhrase => $sPhrase) {
+                $sPhrase = chksql(
+                    $this->oDB->getOne('SELECT make_standard_name('.getDBQuoted($sPhrase).')'),
                     "Cannot normalize query string (is it a UTF-8 string?)"
                 );
-                if (trim($aPhrase['string'])) {
-                    $aPhrases[$iPhrase] = $aPhrase;
-                    $aPhrases[$iPhrase]['words'] = explode(' ', $aPhrases[$iPhrase]['string']);
-                    $aPhrases[$iPhrase]['wordsets'] = getWordSets($aPhrases[$iPhrase]['words'], 0);
-                    $aTokens = array_merge($aTokens, getTokensFromSets($aPhrases[$iPhrase]['wordsets']));
-                } else {
-                    unset($aPhrases[$iPhrase]);
+                if (trim($sPhrase)) {
+                    $oPhrase = new Phrase($sPhrase, is_string($iPhrase) ? $iPhrase : '');
+                    $oPhrase->addTokens($aTokens);
+                    $aPhrases[] = $oPhrase;
                 }
             }
-
-            // Reindex phrases - we make assumptions later on that they are numerically keyed in order
-            $aPhraseTypes = array_keys($aPhrases);
-            $aPhrases = array_values($aPhrases);
 
             if (sizeof($aTokens)) {
                 // Check which tokens we have, get the ID numbers
@@ -1046,19 +1037,18 @@ class Geocode
                 // Any words that have failed completely?
                 // TODO: suggestions
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhraseTypes, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery);
 
                 if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
                     // the first and final phrase. Don't bother about phrases in the middle
                     // because order in the address doesn't matter.
                     $aPhrases = array_reverse($aPhrases);
-                    $aPhrases[0]['wordsets'] = getInverseWordSets($aPhrases[0]['words'], 0);
+                    $aPhrases[0]->invertWordSets();
                     if (sizeof($aPhrases) > 1) {
-                        $aFinalPhrase = end($aPhrases);
-                        $aPhrases[sizeof($aPhrases)-1]['wordsets'] = getInverseWordSets($aFinalPhrase['words'], 0);
+                        $aPhrases[sizeof($aPhrases)-1]->invertWordSets();
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, null, $aPhrases, $aValidTokens, $aWordFrequencyScores, false, $sNormQuery);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, false, $sNormQuery);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {

@@ -669,7 +669,7 @@ class Geocode
         return $aSearchResults;
     }
 
-    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bIsStructured, $sNormQuery)
+    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bIsStructured, $sNormQuery)
     {
         /*
              Calculate all searches using aValidTokens i.e.
@@ -745,7 +745,6 @@ class Geocode
                                     $aSearchTerm,
                                     $bIsStructured,
                                     $iPhrase,
-                                    $aWordFrequencyScores,
                                     isset($aValidTokens[' '.$sToken]) ? $aValidTokens[' '.$sToken] : array()
                                 );
 
@@ -1037,7 +1036,7 @@ class Geocode
                 // Any words that have failed completely?
                 // TODO: suggestions
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, $bStructuredPhrases, $sNormQuery);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bStructuredPhrases, $sNormQuery);
 
                 if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
@@ -1048,7 +1047,7 @@ class Geocode
                     if (sizeof($aPhrases) > 1) {
                         $aPhrases[sizeof($aPhrases)-1]->invertWordSets();
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $aWordFrequencyScores, false, $sNormQuery);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, false, $sNormQuery);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {

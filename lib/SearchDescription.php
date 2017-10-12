@@ -333,14 +333,12 @@ class SearchDescription
      * @param mixed[] $aSearchTerm          Description of the token.
      * @param bool    $bStructuredPhrases   True if the search is structured.
      * @param integer $iPhrase              Number of the phrase the token is in.
-     * @param mixed[] $aWordFrequencyScores Number of times tokens appears
-     *                                      overall in a planet database.
      * @param array[] $aFullTokens          List of full term tokens with the
      *                                      same name.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, &$aWordFrequencyScores, $aFullTokens)
+    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
     {
         // Only allow name terms.
         if (!(isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])) {
@@ -354,7 +352,7 @@ class SearchDescription
             && sizeof($this->aName)
             && strpos($aSearchTerm['word_token'], ' ') === false
         ) {
-            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddress[$iWordID] = $iWordID;
@@ -397,7 +395,7 @@ class SearchDescription
             if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
                 $oSearch->iSearchRank += 2;
             }
-            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;

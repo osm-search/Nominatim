@@ -1757,7 +1757,7 @@ BEGIN
   END IF;
 
   -- make sure all names are in the word table
-  IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL THEN
+  IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R' THEN
     perform create_country(NEW.name, lower(NEW.country_code));
     --DEBUG: RAISE WARNING 'Country names updated';
   END IF;

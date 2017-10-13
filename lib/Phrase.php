@@ -29,16 +29,35 @@ class Phrase
         $this->aWordSets = $this->createWordSets($this->aWords, 0);
     }
 
+    /**
+     * Return the element type of the phrase.
+     *
+     * @return string Pharse type if the phrase comes from a structured query
+     *                or empty string otherwise.
+     */
     public function getPhraseType()
     {
         return $this->sPhraseType;
     }
 
+    /**
+     * Return the array of possible segmentations of the phrase.
+     *
+     * @return string[][] Array of segmentations, each consisting of an
+     *                    array of terms.
+     */
     public function getWordSets()
     {
         return $this->aWordSets;
     }
 
+    /**
+     * Add the tokens from this phrase to the given list of tokens.
+     *
+     * @param string[] $aTokens List of tokens to append.
+     *
+     * @return void
+     */
     public function addTokens(&$aTokens)
     {
         foreach ($this->aWordSets as $aSet) {
@@ -49,6 +68,11 @@ class Phrase
         }
     }
 
+    /**
+     * Invert the set of possible segmentations.
+     *
+     * @return void
+     */
     public function invertWordSets()
     {
         $this->aWordSets = $this->createInverseWordSets($this->aWords, 0);
@@ -72,7 +96,7 @@ class Phrase
         return $aResult;
     }
 
-    public function createInverseWordSets($aWords, $iDepth)
+    private function createInverseWordSets($aWords, $iDepth)
     {
         $aResult = array(array(join(' ', $aWords)));
         $sFirstToken = '';

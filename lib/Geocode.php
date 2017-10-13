@@ -989,7 +989,6 @@ class Geocode
                     $this->oDB->getAll($sSQL),
                     "Could not get word tokens."
                 );
-                $aPossibleMainWordIDs = array();
                 $aWordFrequencyScores = array();
                 foreach ($aDatabaseWords as $aToken) {
                     // Very special case - require 2 letter country param to match the country code found
@@ -1004,7 +1003,6 @@ class Geocode
                     } else {
                         $aValidTokens[$aToken['word_token']] = array($aToken);
                     }
-                    if (!$aToken['class'] && !$aToken['country_code']) $aPossibleMainWordIDs[$aToken['word_id']] = 1;
                     $aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
                 }
                 if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);

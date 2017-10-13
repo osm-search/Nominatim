@@ -669,7 +669,7 @@ class Geocode
         return $aSearchResults;
     }
 
-    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bIsStructured, $sNormQuery)
+    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bIsStructured)
     {
         /*
              Calculate all searches using aValidTokens i.e.
@@ -707,17 +707,8 @@ class Geocode
                         // If the token is valid
                         if (isset($aValidTokens[' '.$sToken])) {
                             foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
-                                // Recheck if the original word shows up in the query.
-                                $bWordInQuery = false;
-                                if (isset($aSearchTerm['word']) && $aSearchTerm['word']) {
-                                    $bWordInQuery = strpos(
-                                        $sNormQuery,
-                                        $this->normTerm($aSearchTerm['word'])
-                                    ) !== false;
-                                }
                                 $aNewSearches = $oCurrentSearch->extendWithFullTerm(
                                     $aSearchTerm,
-                                    $bWordInQuery,
                                     isset($aValidTokens[$sToken])
                                       && strpos($sToken, ' ') === false,
                                     $sPhraseType,
@@ -999,6 +990,14 @@ class Geocode
                         continue;
                     }
 
+                    // Special terms need to appear in their normalized form.
+                    if ($aToken['word'] && $aToken['class']) {
+                        $sNormWord = $this->normTerm($aToken['word']);
+                        if (strpos($sNormQuery, $sNormWord) === false) {
+                            continue;
+                        }
+                    }
+
                     if (isset($aValidTokens[$aToken['word_token']])) {
                         $aValidTokens[$aToken['word_token']][] = $aToken;
                     } else {
@@ -1035,7 +1034,7 @@ class Geocode
                 // Any words that have failed completely?
                 // TODO: suggestions
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bStructuredPhrases, $sNormQuery);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bStructuredPhrases);
 
                 if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
@@ -1046,7 +1045,7 @@ class Geocode
                     if (sizeof($aPhrases) > 1) {
                         $aPhrases[sizeof($aPhrases)-1]->invertWordSets();
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, false, $sNormQuery);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, false);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {

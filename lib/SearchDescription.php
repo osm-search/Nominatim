@@ -178,8 +178,6 @@ class SearchDescription
      * Derive new searches by adding a full term to the existing search.
      *
      * @param mixed[] $aSearchTerm  Description of the token.
-     * @param bool    $bWordInQuery True, if the normalised version of the word
-     *                              is contained in the query.
      * @param bool    $bHasPartial  True if there are also tokens of partial terms
      *                              with the same name.
      * @param string  $sPhraseType  Type of phrase the token is contained in.
@@ -193,7 +191,7 @@ class SearchDescription
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($aSearchTerm, $bWordInQuery, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
+    public function extendWithFullTerm($aSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
     {
         $aNewSearches = array();
 
@@ -224,7 +222,8 @@ class SearchDescription
             // We need to try the case where the postal code is the primary element
             // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
             // so try both.
-            if (!$this->sPostcode && $bWordInQuery
+            if (!$this->sPostcode
+                && $aSearchTerm['word']
                 && pg_escape_string($aSearchTerm['word']) == $aSearchTerm['word']
             ) {
                 // If we have structured search or this is the first term,
@@ -273,16 +272,8 @@ class SearchDescription
                 }
                 $aNewSearches[] = $oSearch;
             }
-        } elseif ($sPhraseType == ''
-                  && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null
-        ) {
-            // require a normalized exact match of the term
-            // if we have the normalizer version of the query
-            // available
-            if ($this->iOperator == Operator::NONE
-                && (isset($aSearchTerm['word']) && $aSearchTerm['word'])
-                && $bWordInQuery
-            ) {
+        } elseif ($sPhraseType == '' && $aSearchTerm['class']) {
+            if ($this->iOperator == Operator::NONE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
 

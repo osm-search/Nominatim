@@ -9,7 +9,7 @@ namespace Nominatim;
  */
 class Phrase
 {
-    CONST MAX_DEPTH = 7;
+    const MAX_DEPTH = 7;
 
     // Complete phrase as a string.
     private $sPhrase;
@@ -113,4 +113,4 @@ class Phrase
 
         return $aResult;
     }
-};
+}

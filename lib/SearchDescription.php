@@ -319,11 +319,11 @@ class SearchDescription
     /**
      * Derive new searches by adding a partial term to the existing search.
      *
-     * @param mixed[] $aSearchTerm          Description of the token.
-     * @param bool    $bStructuredPhrases   True if the search is structured.
-     * @param integer $iPhrase              Number of the phrase the token is in.
-     * @param array[] $aFullTokens          List of full term tokens with the
-     *                                      same name.
+     * @param mixed[] $aSearchTerm        Description of the token.
+     * @param bool    $bStructuredPhrases True if the search is structured.
+     * @param integer $iPhrase            Number of the phrase the token is in.
+     * @param array[] $aFullTokens        List of full term tokens with the
+     *                                    same name.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */

@@ -1275,8 +1275,7 @@ class Geocode
 
             $aResult['name'] = $aResult['langaddress'];
 
-            if ($oCtx->hasNearPoint())
-            {
+            if ($oCtx->hasNearPoint()) {
                 $aResult['importance'] = 0.001;
                 $aResult['foundorder'] = $aResult['addressimportance'];
             } else {

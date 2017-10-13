@@ -802,7 +802,7 @@ class Geocode
         // Revisit searches, drop bad searches and give penalty to unlikely combinations.
         $aGroupedSearches = array();
         foreach ($aSearches as $oSearch) {
-            if (!$oSearch->isValidSearch($this->aCountryCodes)) {
+            if (!$oSearch->isValidSearch()) {
                 continue;
             }
 
@@ -991,9 +991,10 @@ class Geocode
                 );
                 $aWordFrequencyScores = array();
                 foreach ($aDatabaseWords as $aToken) {
-                    // Very special case - require 2 letter country param to match the country code found
-                    if ($bStructuredPhrases && $aToken['country_code'] && !empty($this->aStructuredQuery['country'])
-                        && strlen($this->aStructuredQuery['country']) == 2 && strtolower($this->aStructuredQuery['country']) != $aToken['country_code']
+                    // Filter country tokens that do not match restricted countries.
+                    if ($this->aCountryCodes
+                        && $aToken['country_code']
+                        && !in_array($aToken['country_code'], $this->aCountryCodes)
                     ) {
                         continue;
                     }

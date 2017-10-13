@@ -155,22 +155,17 @@ class SearchDescription
     /**
      * Check if the combination of parameters is sensible.
      *
-     * @param string[] $aCountryCodes List of country codes.
-     *
      * @return bool True, if the search looks valid.
      */
-    public function isValidSearch(&$aCountryCodes)
+    public function isValidSearch()
     {
         if (!sizeof($this->aName)) {
             if ($this->sHouseNumber) {
                 return false;
             }
-        }
-        if ($aCountryCodes
-            && $this->sCountryCode
-            && !in_array($this->sCountryCode, $aCountryCodes)
-        ) {
-            return false;
+            if (!$this->sClass && !$this->sCountryCode) {
+                return false;
+            }
         }
 
         return true;
@@ -302,7 +297,10 @@ class SearchDescription
                 $oSearch->setPoiSearch($iOp, $aSearchTerm['class'], $aSearchTerm['type']);
                 $aNewSearches[] = $oSearch;
             }
-        } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+        } elseif (isset($aSearchTerm['word_id'])
+                  && $aSearchTerm['word_id']
+                  && $sPhraseType != 'country'
+        ) {
             $iWordID = $aSearchTerm['word_id'];
             if (sizeof($this->aName)) {
                 if (($sPhraseType == '' || !$bFirstPhrase)

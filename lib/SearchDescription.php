@@ -155,22 +155,17 @@ class SearchDescription
     /**
      * Check if the combination of parameters is sensible.
      *
-     * @param string[] $aCountryCodes List of country codes.
-     *
      * @return bool True, if the search looks valid.
      */
-    public function isValidSearch(&$aCountryCodes)
+    public function isValidSearch()
     {
         if (!sizeof($this->aName)) {
             if ($this->sHouseNumber) {
                 return false;
             }
-        }
-        if ($aCountryCodes
-            && $this->sCountryCode
-            && !in_array($this->sCountryCode, $aCountryCodes)
-        ) {
-            return false;
+            if (!$this->sClass && !$this->sCountryCode) {
+                return false;
+            }
         }
 
         return true;
@@ -183,8 +178,6 @@ class SearchDescription
      * Derive new searches by adding a full term to the existing search.
      *
      * @param mixed[] $aSearchTerm  Description of the token.
-     * @param bool    $bWordInQuery True, if the normalised version of the word
-     *                              is contained in the query.
      * @param bool    $bHasPartial  True if there are also tokens of partial terms
      *                              with the same name.
      * @param string  $sPhraseType  Type of phrase the token is contained in.
@@ -198,7 +191,7 @@ class SearchDescription
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($aSearchTerm, $bWordInQuery, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
+    public function extendWithFullTerm($aSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
     {
         $aNewSearches = array();
 
@@ -229,7 +222,8 @@ class SearchDescription
             // We need to try the case where the postal code is the primary element
             // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
             // so try both.
-            if (!$this->sPostcode && $bWordInQuery
+            if (!$this->sPostcode
+                && $aSearchTerm['word']
                 && pg_escape_string($aSearchTerm['word']) == $aSearchTerm['word']
             ) {
                 // If we have structured search or this is the first term,
@@ -278,16 +272,8 @@ class SearchDescription
                 }
                 $aNewSearches[] = $oSearch;
             }
-        } elseif ($sPhraseType == ''
-                  && $aSearchTerm['class'] !== '' && $aSearchTerm['class'] !== null
-        ) {
-            // require a normalized exact match of the term
-            // if we have the normalizer version of the query
-            // available
-            if ($this->iOperator == Operator::NONE
-                && (isset($aSearchTerm['word']) && $aSearchTerm['word'])
-                && $bWordInQuery
-            ) {
+        } elseif ($sPhraseType == '' && $aSearchTerm['class']) {
+            if ($this->iOperator == Operator::NONE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
 
@@ -302,7 +288,10 @@ class SearchDescription
                 $oSearch->setPoiSearch($iOp, $aSearchTerm['class'], $aSearchTerm['type']);
                 $aNewSearches[] = $oSearch;
             }
-        } elseif (isset($aSearchTerm['word_id']) && $aSearchTerm['word_id']) {
+        } elseif (isset($aSearchTerm['word_id'])
+                  && $aSearchTerm['word_id']
+                  && $sPhraseType != 'country'
+        ) {
             $iWordID = $aSearchTerm['word_id'];
             if (sizeof($this->aName)) {
                 if (($sPhraseType == '' || !$bFirstPhrase)
@@ -330,17 +319,15 @@ class SearchDescription
     /**
      * Derive new searches by adding a partial term to the existing search.
      *
-     * @param mixed[] $aSearchTerm          Description of the token.
-     * @param bool    $bStructuredPhrases   True if the search is structured.
-     * @param integer $iPhrase              Number of the phrase the token is in.
-     * @param mixed[] $aWordFrequencyScores Number of times tokens appears
-     *                                      overall in a planet database.
-     * @param array[] $aFullTokens          List of full term tokens with the
-     *                                      same name.
+     * @param mixed[] $aSearchTerm        Description of the token.
+     * @param bool    $bStructuredPhrases True if the search is structured.
+     * @param integer $iPhrase            Number of the phrase the token is in.
+     * @param array[] $aFullTokens        List of full term tokens with the
+     *                                    same name.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, &$aWordFrequencyScores, $aFullTokens)
+    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
     {
         // Only allow name terms.
         if (!(isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])) {
@@ -354,7 +341,7 @@ class SearchDescription
             && sizeof($this->aName)
             && strpos($aSearchTerm['word_token'], ' ') === false
         ) {
-            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddress[$iWordID] = $iWordID;
@@ -397,7 +384,7 @@ class SearchDescription
             if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
                 $oSearch->iSearchRank += 2;
             }
-            if ($aWordFrequencyScores[$iWordID] < CONST_Max_Word_Frequency) {
+            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;

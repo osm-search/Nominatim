@@ -56,14 +56,10 @@ if ($sOsmType && $iOsmId > 0) {
     $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
     $oReverseGeocode->setZoom($iZoom !== false ? $iZoom : 18);
 
-    $aLookup = $oReverseGeocode->lookup($fLat, $fLon);
-    if (CONST_Debug) var_dump($aLookup);
+    $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
+    if (CONST_Debug) var_dump($oLookup);
 
-    $aPlace = $oPlaceLookup->lookup(
-        (int)$aLookup['place_id'],
-        $aLookup['type'],
-        $aLookup['fraction']
-    );
+    $aPlace = $oPlaceLookup->lookup($oLookup);
 } elseif ($sOutputFormat != 'html') {
     userError("Need coordinates or OSM object to lookup.");
 }

@@ -1197,12 +1197,12 @@ class Geocode
             $oReverse = new ReverseGeocode($this->oDB);
             $oReverse->setZoom(18);
 
-            $aLookup = $oReverse->lookupPoint($oCtx->sqlNear, false);
+            $oLookup = $oReverse->lookupPoint($oCtx->sqlNear, false);
 
             if (CONST_Debug) var_dump("Reverse search", $aLookup);
 
-            if ($aLookup['place_id']) {
-                $aResults = array($aLookup['place_id'] => new Result($aLookup['place_id']));
+            if ($oLookup) {
+                $aResults = array($oLookup->iId => $oLookup);
                 $aSearchResults = $this->getDetails($aResults, $oCtx);
             } else {
                 $aSearchResults = array();

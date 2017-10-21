@@ -13,8 +13,10 @@
     <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
         <div class="form-group">
             <input name="format" type="hidden" value="html">
+            lat
             <input name="lat" type="text" class="form-control input-sm" placeholder="latitude" value="<?php echo $fLat; ?>" >
-            <span id="switch-coords">&lt;&gt;</span>
+            <span id="switch-coords" title="switch lat and lon">&lt;&gt;</span>
+            lon
             <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo $fLon; ?>" >
             max zoom
 

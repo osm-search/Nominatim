@@ -21,8 +21,8 @@
                     About &amp; Help <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right">
-                    <li><a href="http://wiki.openstreetmap.org/wiki/Nominatim" target="_blank">Documentation</a></li>
-                    <li><a href="http://wiki.openstreetmap.org/wiki/Nominatim/FAQ" target="_blank">FAQ</a></li>
+                    <li><a href="https://wiki.openstreetmap.org/wiki/Nominatim" target="_blank">Documentation</a></li>
+                    <li><a href="https://wiki.openstreetmap.org/wiki/Nominatim/FAQ" target="_blank">FAQ</a></li>
                     <li role="separator" class="divider"></li>
                     <li><a href="#" class="" data-toggle="modal" data-target="#report-modal">Report problem with results</a></li>
                 </ul>

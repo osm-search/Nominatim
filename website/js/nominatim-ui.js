@@ -27,7 +27,7 @@ jQuery(document).on('ready', function(){
 
     map = new L.map('map', {
                 attributionControl: (nominatim_map_init.tile_attribution && nominatim_map_init.tile_attribution.length),
-                scrollWheelZoom:    !L.Browser.touch,
+                scrollWheelZoom:    true, // !L.Browser.touch,
                 touchZoom:          false
             });
 
@@ -38,6 +38,9 @@ jQuery(document).on('ready', function(){
     }).addTo(map);
 
     map.setView([nominatim_map_init.lat, nominatim_map_init.lon], nominatim_map_init.zoom);
+
+    var osm2 = new L.TileLayer(nominatim_map_init.tile_url, {minZoom: 0, maxZoom: 13, attribution: (nominatim_map_init.tile_attribution || null )});
+    var miniMap = new L.Control.MiniMap(osm2, {toggleDisplay: true}).addTo(map);
 
     if ( is_reverse_search ){
         // We don't need a marker, but an L.circle instance changes radius once you zoom in/out
@@ -90,9 +93,9 @@ jQuery(document).on('ready', function(){
         $('#map-position-inner').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 
         var reverse_params = {
-            lat: map.getCenter().lat.toFixed(5),
-            lon: map.getCenter().lng.toFixed(5),
-            zoom: map.getZoom(),
+            // lat: map.getCenter().lat.toFixed(5),
+            // lon: map.getCenter().lng.toFixed(5),
+            // zoom: 2,
             format: 'html'
         }
         $('#switch-to-reverse').attr('href', 'reverse.php?' + $.param(reverse_params));
@@ -258,7 +261,7 @@ jQuery(document).on('ready', function(){
                     // center: [nominatim_map_init.lat, nominatim_map_init.lon],
                     // zoom:   nominatim_map_init.zoom,
                     attributionControl: (nominatim_map_init.tile_attribution && nominatim_map_init.tile_attribution.length),
-                    scrollWheelZoom:    false,
+                    scrollWheelZoom:    true, // !L.Browser.touch,
                     touchZoom:          false,
                 });
 
@@ -268,6 +271,8 @@ jQuery(document).on('ready', function(){
             attribution: (nominatim_map_init.tile_attribution || null ) //'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
+        var osm2 = new L.TileLayer(nominatim_map_init.tile_url, {minZoom: 0, maxZoom: 13, attribution: (nominatim_map_init.tile_attribution || null )});
+        var miniMap = new L.Control.MiniMap(osm2, {toggleDisplay: true}).addTo(map);
 
         var layerGroup = new L.layerGroup().addTo(map);
 

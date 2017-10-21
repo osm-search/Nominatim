@@ -102,7 +102,7 @@ and then
 
 ## Running unit tests
 
-    cd ~/Nominatim/tests-php
+    cd ~/Nominatim/tests/php
     phpunit ./
 
 

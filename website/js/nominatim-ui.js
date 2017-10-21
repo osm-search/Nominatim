@@ -248,6 +248,14 @@ jQuery(document).on('ready', function(){
 
     highlight_result(0, false);
 
+    // common mistake is to copy&paste latitude and longitude into the 'lat' search box
+    $('form input[name=lat]').on('change', function(){
+        var coords = $(this).val().split(',');
+        if (coords.length == 2) {
+            $(this).val(coords[0]);
+            $(this).siblings('input[name=lon]').val(coords[1]);
+        }
+    });
 
 });
 

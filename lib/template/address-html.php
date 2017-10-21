@@ -15,7 +15,7 @@
             <input name="format" type="hidden" value="html">
             lat
             <input name="lat" type="text" class="form-control input-sm" placeholder="latitude" value="<?php echo $fLat; ?>" >
-            <span id="switch-coords" title="switch lat and lon">&lt;&gt;</span>
+            <button class="btn btn-default btn-xs" id="switch-coords" title="switch lat and lon">&lt;&gt;</button>
             lon
             <input name="lon" type="text" class="form-control input-sm" placeholder="longitude" value="<?php echo $fLon; ?>" >
             max zoom

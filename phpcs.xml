@@ -129,6 +129,23 @@
 
 
 
+
+  <!-- **************************************************************
+       STRING QUOTING
+       ************************************************************** -->
+
+  <!-- Prefer single quoted strings -->
+  <rule ref="Squiz.Strings.DoubleQuoteUsage" />
+
+  <!-- We allow variabled inside double-quoted strings "abc $somevar" -->
+  <rule ref="Squiz.Strings.DoubleQuoteUsage.ContainsVar">
+    <severity>0</severity>
+  </rule>
+
+
+
+
+
   <!-- **************************************************************
        CONTROL STRUCTURES
        ************************************************************** -->

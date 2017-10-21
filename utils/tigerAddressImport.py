@@ -3469,6 +3469,12 @@ def parse_shp_for_osm( filename ):
 
     poLayer = poDS.GetLayer( 0 )
 
+    fieldNameList = []
+    layerDefinition = poLayer.GetLayerDefn()
+    for i in range(layerDefinition.GetFieldCount()):
+        fieldNameList.append(layerDefinition.GetFieldDefn(i).GetName())
+    # sys.stderr.write(",".join(fieldNameList))
+
     poLayer.ResetReading()
 
     ret = []
@@ -3561,11 +3567,13 @@ def parse_shp_for_osm( filename ):
                 if tags["highway"] != "primary":
                     tags["highway"] = "secondary"
 
-        divroad = poFeature.GetField("DIVROAD")
-        if divroad != None:
-            if divroad == "Y" and "highway" in tags and tags["highway"] == "residential":
-                tags["highway"] = "tertiary"
-            tags["tiger:separated"] = divroad
+        # TIGER 2017 no longer contains this field
+        if 'DIVROAD' in fieldNameList:
+            divroad = poFeature.GetField("DIVROAD")
+            if divroad != None:
+                if divroad == "Y" and "highway" in tags and tags["highway"] == "residential":
+                    tags["highway"] = "tertiary"
+                tags["tiger:separated"] = divroad
 
         statefp = poFeature.GetField("STATEFP")
         countyfp = poFeature.GetField("COUNTYFP")

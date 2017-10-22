@@ -133,17 +133,16 @@ class PlaceLookup
             return null;
         }
 
-        return $this->lookup(new Result($iPlaceID));
+        $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
+
+        return sizeof($aResults) ? reset($aResults) : null;
     }
 
-    public function lookup($oResult, $iMinRank = 0, $iMaxRank = 30)
+    public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
     {
-        if ($oResult === null) {
-            return null;
+        if (!sizeof($aResults)) {
+            return array();
         }
-
-        $aResults = array($oResult->iId => $oResult);
-
         $aSubSelects = array();
 
         $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
@@ -381,19 +380,13 @@ class PlaceLookup
         if (CONST_Debug) var_dump($aSubSelects);
 
         if (!sizeof($aSubSelects)) {
-            return null;
+            return array();
         }
 
         $aPlaces = chksql(
             $this->oDB->getAll(join(' UNION ', $aSubSelects)),
             "Could not lookup place"
         );
-
-        if (!sizeof($aPlaces)) {
-            return null;
-        }
-
-        if (CONST_Debug) var_dump($aPlaces);
 
         foreach ($aPlaces as &$aPlace) {
             if ($this->bAddressDetails) {
@@ -437,7 +430,7 @@ class PlaceLookup
 
         if (CONST_Debug) var_dump($aPlaces);
 
-        return reset($aPlaces);
+        return $aPlaces;
     }
 
     private function getAddressDetails($iPlaceID, $bAll, $sHousenumber)

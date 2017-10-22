@@ -59,7 +59,12 @@ if ($sOsmType && $iOsmId > 0) {
     $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
     if (CONST_Debug) var_dump($oLookup);
 
-    $aPlace = $oPlaceLookup->lookup($oLookup);
+    if ($oLookup) {
+        $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
+        if (sizeof($aPlaces)) {
+            $aPlace = reset($aPlaces);
+        }
+    }
 } elseif ($sOutputFormat != 'html') {
     userError("Need coordinates or OSM object to lookup.");
 }

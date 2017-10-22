@@ -173,7 +173,7 @@ class PlaceLookup
             $sSQL .= '    avg(ST_Y(centroid)) AS lat, ';
             $sSQL .= '    COALESCE(importance,0.75-(rank_search::float/40)) AS importance, ';
             $sSQL .= $this->addressImportanceSql(
-                'centroid',
+                'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
             $sSQL .= "    (extratags->'place') AS extra_place ";
@@ -388,6 +388,7 @@ class PlaceLookup
             "Could not lookup place"
         );
 
+        $aClassType = getClassTypes();
         foreach ($aPlaces as &$aPlace) {
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
@@ -413,7 +414,6 @@ class PlaceLookup
                 }
             }
 
-            $aClassType = getClassTypes();
             $sAddressType = '';
             $sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
             if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel'])) {

@@ -28,20 +28,24 @@ if (isset($aCMDResult['parse-tiger'])) {
         set_time_limit(30);
         preg_match('#([0-9]{5})_(.*)#', basename($sImportFile), $aMatch);
         $sCountyID = $aMatch[1];
+
         echo "Processing ".$sCountyID."...\n";
         $sUnzipCmd = "unzip -d $sTempDir $sImportFile";
         exec($sUnzipCmd);
-        $sShapeFile = $sTempDir.'/'.basename($sImportFile, '.zip').'.shp';
-        if (!file_exists($sShapeFile)) {
+
+        $sShapeFilename = $sTempDir.'/'.basename($sImportFile, '.zip').'.shp';
+        $sSqlFilenameTmp = $sTempDir.'/'.$sCountyID.'.sql';
+        $sSqlFilename = CONST_Tiger_Data_Path.'/'.$sCountyID.'.sql';
+
+        if (!file_exists($sShapeFilename)) {
             echo "Failed unzip ($sImportFile)\n";
         } else {
-            $sParseCmd = CONST_BasePath.'/utils/tigerAddressImport.py '.$sShapeFile;
+            $sParseCmd = CONST_BasePath.'/utils/tigerAddressImport.py '.$sShapeFilename.' '.$sSqlFilenameTmp;
             exec($sParseCmd);
-            $sOsmFile = $sTempDir.'/'.basename($sImportFile, '.zip').'.osm1.osm';
-            if (!file_exists($sOsmFile)) {
+            if (!file_exists($sSqlFilenameTmp)) {
                 echo "Failed parse ($sImportFile)\n";
             } else {
-                copy($sOsmFile, CONST_Tiger_Data_Path.'/'.$sCountyID.'.sql');
+                copy($sSqlFilenameTmp, $sSqlFilename);
             }
         }
         // Cleanup

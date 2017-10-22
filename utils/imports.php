@@ -34,16 +34,18 @@ if (isset($aCMDResult['parse-tiger'])) {
         exec($sUnzipCmd);
 
         $sShapeFilename = $sTempDir.'/'.basename($sImportFile, '.zip').'.shp';
-        $sSqlFilename = CONST_Tiger_Data_Path.'/'.$sCountyID.'.sql')
+        $sSqlFilenameTmp = $sTempDir.'/'.$sCountyID.'.sql';
+        $sSqlFilename = CONST_Tiger_Data_Path.'/'.$sCountyID.'.sql';
 
         if (!file_exists($sShapeFilename)) {
             echo "Failed unzip ($sImportFile)\n";
         } else {
-            $sParseCmd = CONST_BasePath.'/utils/tigerAddressImport.py '.$sShapeFilename.' '.$sSqlFilename;
+            $sParseCmd = CONST_BasePath.'/utils/tigerAddressImport.py '.$sShapeFilename.' '.$sSqlFilenameTmp;
             exec($sParseCmd);
-            if (!file_exists($sOsmFile)) {
+            if (!file_exists($sSqlFilenameTmp)) {
                 echo "Failed parse ($sImportFile)\n";
-                if file_exists($sSqlFilename) unlink($sSqlFilename);
+            } else {
+                copy($sSqlFilenameTmp, $sSqlFilename);
             }
         }
         // Cleanup

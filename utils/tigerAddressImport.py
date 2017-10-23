@@ -161,9 +161,9 @@ def parse_shp_for_geom_and_tags( filename ):
         statefp = poFeature.GetField("STATEFP")
         countyfp = poFeature.GetField("COUNTYFP")
         if (statefp != None) and (countyfp != None):
-            county_name = county_fips_data[statefp + '' + countyfp]
+            county_name = county_fips_data.get(statefp + '' + countyfp)
             if county_name:
-                tags["tiger:county"] = county_name
+                tags["tiger:county"] = county_name.encode("utf-8")
 
         # tlid = poFeature.GetField("TLID")
         # if tlid != None:

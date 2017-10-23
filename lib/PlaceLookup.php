@@ -32,6 +32,36 @@ class PlaceLookup
         $this->oDB =& $oDB;
     }
 
+    public function loadParamArray($oParams)
+    {
+        $aLangs = $oParams->getPreferredLanguages();
+        $this->aLangPrefOrderSql =
+            'ARRAY['.join(',', array_map('getDBQuoted', $aLangs)).']';
+
+        $this->bExtraTags = $oParams->getBool('extratags', false);
+        $this->bNameDetails = $oParams->getBool('namedetails', false);
+
+        $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
+        $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
+        $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
+        $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+        $this->fPolygonSimplificationThreshold
+            = $oParams->getFloat('polygon_threshold', 0.0);
+
+        $iWantedTypes =
+            ($this->bIncludePolygonAsText ? 1 : 0) +
+            ($this->bIncludePolygonAsGeoJSON ? 1 : 0) +
+            ($this->bIncludePolygonAsKML ? 1 : 0) +
+            ($this->bIncludePolygonAsSVG ? 1 : 0);
+        if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
+            if (CONST_PolygonOutput_MaximumTypes) {
+                userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
+            } else {
+                userError("Polygon output is disabled");
+            }
+        }
+    }
+
     public function setAnchorSql($sPoint)
     {
         $this->sAnchorSql = $sPoint;

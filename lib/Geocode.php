@@ -12,21 +12,13 @@ class Geocode
 {
     protected $oDB;
 
+    protected $oPlaceLookup;
+
     protected $aLangPrefOrder = array();
 
     protected $bIncludeAddressDetails = false;
-    protected $bIncludeExtraTags = false;
-    protected $bIncludeNameDetails = false;
-
-    protected $bIncludePolygonAsPoints = false;
-    protected $bIncludePolygonAsText = false;
-    protected $bIncludePolygonAsGeoJSON = false;
-    protected $bIncludePolygonAsKML = false;
-    protected $bIncludePolygonAsSVG = false;
-    protected $fPolygonSimplificationThreshold = 0.0;
 
     protected $aExcludePlaceIDs = array();
-    protected $bDeDupe = true;
     protected $bReverseInPlan = false;
 
     protected $iLimit = 20;
@@ -57,6 +49,7 @@ class Geocode
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
+        $this->oPlaceLookup = new PlaceLookup($this->oDB);
         $this->oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
     }
 
@@ -87,26 +80,14 @@ class Geocode
             $aParams = array('q' => $this->sQuery);
         }
 
+        $aParams = array_merge($aParams, $this->oPlaceLookup->getMoreUrlParams());
+
         if ($this->aExcludePlaceIDs) {
             $aParams['exclude_place_ids'] = implode(',', $this->aExcludePlaceIDs);
         }
 
         if ($this->bIncludeAddressDetails) $aParams['addressdetails'] = '1';
-        if ($this->bIncludeExtraTags) $aParams['extratags'] = '1';
-        if ($this->bIncludeNameDetails) $aParams['namedetails'] = '1';
-
-        if ($this->bIncludePolygonAsPoints) $aParams['polygon'] = '1';
-        if ($this->bIncludePolygonAsText) $aParams['polygon_text'] = '1';
-        if ($this->bIncludePolygonAsGeoJSON) $aParams['polygon_geojson'] = '1';
-        if ($this->bIncludePolygonAsKML) $aParams['polygon_kml'] = '1';
-        if ($this->bIncludePolygonAsSVG) $aParams['polygon_svg'] = '1';
-
-        if ($this->fPolygonSimplificationThreshold > 0.0) {
-            $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
-        }
-
         if ($this->bBoundedSearch) $aParams['bounded'] = '1';
-        if (!$this->bDeDupe) $aParams['dedupe'] = '0';
 
         if ($this->aCountryCodes) {
             $aParams['countrycodes'] = implode(',', $this->aCountryCodes);
@@ -117,36 +98,6 @@ class Geocode
         }
 
         return $aParams;
-    }
-
-    public function setIncludePolygonAsPoints($b = true)
-    {
-        $this->bIncludePolygonAsPoints = $b;
-    }
-
-    public function setIncludePolygonAsText($b = true)
-    {
-        $this->bIncludePolygonAsText = $b;
-    }
-
-    public function setIncludePolygonAsGeoJSON($b = true)
-    {
-        $this->bIncludePolygonAsGeoJSON = $b;
-    }
-
-    public function setIncludePolygonAsKML($b = true)
-    {
-        $this->bIncludePolygonAsKML = $b;
-    }
-
-    public function setIncludePolygonAsSVG($b = true)
-    {
-        $this->bIncludePolygonAsSVG = $b;
-    }
-
-    public function setPolygonSimplificationThreshold($f)
-    {
-        $this->fPolygonSimplificationThreshold = $f;
     }
 
     public function setLimit($iLimit = 10)
@@ -229,17 +180,12 @@ class Geocode
     }
 
 
-    public function loadParamArray($oParams)
+    public function loadParamArray($oParams, $sForceGeometryType = null)
     {
         $this->bIncludeAddressDetails
          = $oParams->getBool('addressdetails', $this->bIncludeAddressDetails);
-        $this->bIncludeExtraTags
-         = $oParams->getBool('extratags', $this->bIncludeExtraTags);
-        $this->bIncludeNameDetails
-         = $oParams->getBool('namedetails', $this->bIncludeNameDetails);
 
         $this->bBoundedSearch = $oParams->getBool('bounded', $this->bBoundedSearch);
-        $this->bDeDupe = $oParams->getBool('dedupe', $this->bDeDupe);
 
         $this->setLimit($oParams->getInt('limit', $this->iFinalLimit));
         $this->iOffset = $oParams->getInt('offset', $this->iOffset);
@@ -298,6 +244,10 @@ class Geocode
                 }
             }
         }
+
+        $this->oPlaceLookup->loadParamArray($oParams, $sForceGeometryType);
+        $this->oPlaceLookup->setIncludeAddressDetails(false);
+        $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
     }
 
     public function setQueryFromParams($oParams)
@@ -906,26 +856,16 @@ class Geocode
             return array();
         }
 
-        $oPlaceLookup = new PlaceLookup($this->oDB);
-        $oPlaceLookup->setIncludePolygonAsPoints($this->bIncludePolygonAsPoints);
-        $oPlaceLookup->setIncludePolygonAsText($this->bIncludePolygonAsText);
-        $oPlaceLookup->setIncludePolygonAsGeoJSON($this->bIncludePolygonAsGeoJSON);
-        $oPlaceLookup->setIncludePolygonAsKML($this->bIncludePolygonAsKML);
-        $oPlaceLookup->setIncludePolygonAsSVG($this->bIncludePolygonAsSVG);
-        $oPlaceLookup->setPolygonSimplificationThreshold($this->fPolygonSimplificationThreshold);
-        $oPlaceLookup->setDeDupe($this->bDeDupe);
         if ($this->aAddressRankList) {
-            $oPlaceLookup->setAddressRankList($this->aAddressRankList);
+            $this->oPlaceLookup->setAddressRankList($this->aAddressRankList);
         }
-        $oPlaceLookup->setAllowedTypesSQLList($this->sAllowedTypesSQLList);
-        $oPlaceLookup->setLanguagePreference($this->aLangPrefOrder);
-        $oPlaceLookup->setIncludeExtraTags($this->bIncludeExtraTags);
-        $oPlaceLookup->setIncludeNameDetails($this->bIncludeNameDetails);
+        $this->oPlaceLookup->setAllowedTypesSQLList($this->sAllowedTypesSQLList);
+        $this->oPlaceLookup->setLanguagePreference($this->aLangPrefOrder);
         if ($oCtx->hasNearPoint()) {
-            $oPlaceLookup->setAnchorSql($oCtx->sqlNear);
+            $this->oPlaceLookup->setAnchorSql($oCtx->sqlNear);
         }
 
-        $aSearchResults = $oPlaceLookup->lookup($aResults);
+        $aSearchResults = $this->oPlaceLookup->lookup($aResults);
 
         $aClassType = getClassTypesWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
@@ -942,7 +882,7 @@ class Geocode
             // Default
             $fDiameter = getResultDiameter($aResult);
 
-            $aOutlineResult = $oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
+            $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
             if ($aOutlineResult) {
                 $aResult = array_merge($aResult, $aOutlineResult);
             }
@@ -1036,7 +976,7 @@ class Geocode
                 if (isset($aResult['zoom'])) $iZoom = $aResult['zoom'];
                 $bFirst = false;
             }
-            if (!$this->bDeDupe || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
+            if (!$this->oPlaceLookup->doDeDupe() || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
                 && !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']]))
             ) {
                 $aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']] = true;

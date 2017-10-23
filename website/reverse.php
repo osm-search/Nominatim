@@ -23,7 +23,6 @@ $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
-$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
 
 $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);

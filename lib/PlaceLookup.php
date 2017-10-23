@@ -32,19 +32,40 @@ class PlaceLookup
         $this->oDB =& $oDB;
     }
 
-    public function loadParamArray($oParams)
+    public function doDeDupe()
+    {
+        return $this->bDeDupe;
+    }
+
+    public function setIncludePolygonAsPoints($b = true)
+    {
+        $this->bIncludePolygonAsPoints = $b;
+    }
+
+    public function loadParamArray($oParams, $sGeomType = null)
     {
         $aLangs = $oParams->getPreferredLanguages();
         $this->aLangPrefOrderSql =
             'ARRAY['.join(',', array_map('getDBQuoted', $aLangs)).']';
 
+        $this->bAddressDetails = $oParams->getBool('addressdetails', true);
         $this->bExtraTags = $oParams->getBool('extratags', false);
         $this->bNameDetails = $oParams->getBool('namedetails', false);
 
-        $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
-        $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
-        $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
-        $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+        $this->bDeDupe = $oParams->getBool('dedupe', $this->bDeDupe);
+
+        if ($sGeomType === null || $sGeomType == 'text') {
+            $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
+        }
+        if ($sGeomType === null || $sGeomType == 'geojson') {
+            $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
+        }
+        if ($sGeomType === null || $sGeomType == 'kml') {
+            $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
+        }
+        if ($sGeomType === null || $sGeomType == 'svg') {
+            $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+        }
         $this->fPolygonSimplificationThreshold
             = $oParams->getFloat('polygon_threshold', 0.0);
 
@@ -62,14 +83,32 @@ class PlaceLookup
         }
     }
 
+    public function getMoreUrlParams()
+    {
+        $aParams = array();
+
+        if ($this->bAddressDetails) $aParams['addressdetails'] = '1';
+        if ($this->bExtraTags) $aParams['extratags'] = '1';
+        if ($this->bNameDetails) $aParams['namedetails'] = '1';
+
+        if ($this->bIncludePolygonAsPoints) $aParams['polygon'] = '1';
+        if ($this->bIncludePolygonAsText) $aParams['polygon_text'] = '1';
+        if ($this->bIncludePolygonAsGeoJSON) $aParams['polygon_geojson'] = '1';
+        if ($this->bIncludePolygonAsKML) $aParams['polygon_kml'] = '1';
+        if ($this->bIncludePolygonAsSVG) $aParams['polygon_svg'] = '1';
+
+        if ($this->fPolygonSimplificationThreshold > 0.0) {
+            $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
+        }
+
+        if (!$this->bDeDupe) $aParams['dedupe'] = '0';
+
+        return $aParams;
+    }
+
     public function setAnchorSql($sPoint)
     {
         $this->sAnchorSql = $sPoint;
-    }
-
-    public function setDeDupe($bDeDupe)
-    {
-        $this->bDeDupe = $bDeDupe;
     }
 
     public function setAddressRankList($aList)
@@ -91,46 +130,6 @@ class PlaceLookup
     public function setIncludeAddressDetails($bAddressDetails = true)
     {
         $this->bAddressDetails = $bAddressDetails;
-    }
-
-    public function setIncludeExtraTags($bExtraTags = false)
-    {
-        $this->bExtraTags = $bExtraTags;
-    }
-
-    public function setIncludeNameDetails($bNameDetails = false)
-    {
-        $this->bNameDetails = $bNameDetails;
-    }
-
-    public function setIncludePolygonAsPoints($b = true)
-    {
-        $this->bIncludePolygonAsPoints = $b;
-    }
-
-    public function setIncludePolygonAsText($b = true)
-    {
-        $this->bIncludePolygonAsText = $b;
-    }
-
-    public function setIncludePolygonAsGeoJSON($b = true)
-    {
-        $this->bIncludePolygonAsGeoJSON = $b;
-    }
-
-    public function setIncludePolygonAsKML($b = true)
-    {
-        $this->bIncludePolygonAsKML = $b;
-    }
-
-    public function setIncludePolygonAsSVG($b = true)
-    {
-        $this->bIncludePolygonAsSVG = $b;
-    }
-
-    public function setPolygonSimplificationThreshold($f)
-    {
-        $this->fPolygonSimplificationThreshold = $f;
     }
 
     private function addressImportanceSql($sGeometry, $sPlaceId)

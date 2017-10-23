@@ -26,7 +26,7 @@ if (CONST_Search_ReversePlanForAll
 }
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
+$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson'), 'html');
 
 // Show / use polygons
 if ($sOutputFormat == 'html') {
@@ -34,7 +34,7 @@ if ($sOutputFormat == 'html') {
     $bAsGeoJSON = false;
 } else {
     $bAsPoints = $oParams->getBool('polygon');
-    $bAsGeoJSON = $oParams->getBool('polygon_geojson');
+    $bAsGeoJSON = $oParams->getBool('polygon_geojson') || $sOutputFormat === 'geojson';
     $bAsKML = $oParams->getBool('polygon_kml');
     $bAsSVG = $oParams->getBool('polygon_svg');
     $bAsText = $oParams->getBool('polygon_text');

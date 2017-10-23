@@ -29,7 +29,8 @@ if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
 $fThreshold = $oParams->getFloat('polygon_threshold', 0.0);
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'xml');
+$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson'), 'xml');
+$bAsGeoJSON = $bAsGeoJSON || $sOutputFormat === 'geojson';
 
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();

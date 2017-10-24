@@ -457,6 +457,7 @@ class Geocode
                 continue;
             }
 
+            $iRank = $oSearch->getRank();
             if (!isset($aGroupedSearches[$iRank])) {
                 $aGroupedSearches[$iRank] = array();
             }

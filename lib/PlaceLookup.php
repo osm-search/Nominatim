@@ -2,11 +2,13 @@
 
 namespace Nominatim;
 
+require_once(CONST_BasePath.'/lib/Result.php');
+
 class PlaceLookup
 {
     protected $oDB;
 
-    protected $aLangPrefOrder = array();
+    protected $aLangPrefOrderSql = "''";
 
     protected $bAddressDetails = false;
     protected $bExtraTags = false;
@@ -19,30 +21,20 @@ class PlaceLookup
     protected $bIncludePolygonAsSVG = false;
     protected $fPolygonSimplificationThreshold = 0.0;
 
+    protected $sAnchorSql = null;
+    protected $sAddressRankListSql = null;
+    protected $sAllowedTypesSQLList = null;
+    protected $bDeDupe = true;
+
 
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
     }
 
-    public function setLanguagePreference($aLangPrefOrder)
+    public function doDeDupe()
     {
-        $this->aLangPrefOrder = $aLangPrefOrder;
-    }
-
-    public function setIncludeAddressDetails($bAddressDetails = true)
-    {
-        $this->bAddressDetails = $bAddressDetails;
-    }
-
-    public function setIncludeExtraTags($bExtraTags = false)
-    {
-        $this->bExtraTags = $bExtraTags;
-    }
-
-    public function setIncludeNameDetails($bNameDetails = false)
-    {
-        $this->bNameDetails = $bNameDetails;
+        return $this->bDeDupe;
     }
 
     public function setIncludePolygonAsPoints($b = true)
@@ -50,154 +42,446 @@ class PlaceLookup
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    public function setIncludePolygonAsText($b = true)
+    public function loadParamArray($oParams, $sGeomType = null)
     {
-        $this->bIncludePolygonAsText = $b;
+        $aLangs = $oParams->getPreferredLanguages();
+        $this->aLangPrefOrderSql =
+            'ARRAY['.join(',', array_map('getDBQuoted', $aLangs)).']';
+
+        $this->bAddressDetails = $oParams->getBool('addressdetails', true);
+        $this->bExtraTags = $oParams->getBool('extratags', false);
+        $this->bNameDetails = $oParams->getBool('namedetails', false);
+
+        $this->bDeDupe = $oParams->getBool('dedupe', $this->bDeDupe);
+
+        if ($sGeomType === null || $sGeomType == 'text') {
+            $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
+        }
+        if ($sGeomType === null || $sGeomType == 'geojson') {
+            $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
+        }
+        if ($sGeomType === null || $sGeomType == 'kml') {
+            $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
+        }
+        if ($sGeomType === null || $sGeomType == 'svg') {
+            $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+        }
+        $this->fPolygonSimplificationThreshold
+            = $oParams->getFloat('polygon_threshold', 0.0);
+
+        $iWantedTypes =
+            ($this->bIncludePolygonAsText ? 1 : 0) +
+            ($this->bIncludePolygonAsGeoJSON ? 1 : 0) +
+            ($this->bIncludePolygonAsKML ? 1 : 0) +
+            ($this->bIncludePolygonAsSVG ? 1 : 0);
+        if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
+            if (CONST_PolygonOutput_MaximumTypes) {
+                userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
+            } else {
+                userError("Polygon output is disabled");
+            }
+        }
     }
 
-    public function setIncludePolygonAsGeoJSON($b = true)
+    public function getMoreUrlParams()
     {
-        $this->bIncludePolygonAsGeoJSON = $b;
+        $aParams = array();
+
+        if ($this->bAddressDetails) $aParams['addressdetails'] = '1';
+        if ($this->bExtraTags) $aParams['extratags'] = '1';
+        if ($this->bNameDetails) $aParams['namedetails'] = '1';
+
+        if ($this->bIncludePolygonAsPoints) $aParams['polygon'] = '1';
+        if ($this->bIncludePolygonAsText) $aParams['polygon_text'] = '1';
+        if ($this->bIncludePolygonAsGeoJSON) $aParams['polygon_geojson'] = '1';
+        if ($this->bIncludePolygonAsKML) $aParams['polygon_kml'] = '1';
+        if ($this->bIncludePolygonAsSVG) $aParams['polygon_svg'] = '1';
+
+        if ($this->fPolygonSimplificationThreshold > 0.0) {
+            $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
+        }
+
+        if (!$this->bDeDupe) $aParams['dedupe'] = '0';
+
+        return $aParams;
     }
 
-    public function setIncludePolygonAsKML($b = true)
+    public function setAnchorSql($sPoint)
     {
-        $this->bIncludePolygonAsKML = $b;
+        $this->sAnchorSql = $sPoint;
     }
 
-    public function setIncludePolygonAsSVG($b = true)
+    public function setAddressRankList($aList)
     {
-        $this->bIncludePolygonAsSVG = $b;
+        $this->sAddressRankListSql = '('.join(',', $aList).')';
     }
 
-    public function setPolygonSimplificationThreshold($f)
+    public function setAllowedTypesSQLList($sSql)
     {
-        $this->fPolygonSimplificationThreshold = $f;
+        $this->sAllowedTypesSQLList = $sSql;
+    }
+
+    public function setLanguagePreference($aLangPrefOrder)
+    {
+        $this->aLangPrefOrderSql =
+            'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
+    }
+
+    public function setIncludeAddressDetails($bAddressDetails = true)
+    {
+        $this->bAddressDetails = $bAddressDetails;
+    }
+
+    private function addressImportanceSql($sGeometry, $sPlaceId)
+    {
+        if ($this->sAnchorSql) {
+            $sSQL = 'ST_Distance('.$this->sAnchorSql.','.$sGeometry.')';
+        } else {
+            $sSQL = '(SELECT max(ai_p.importance * (ai_p.rank_address + 2))';
+            $sSQL .= '   FROM place_addressline ai_s, placex ai_p';
+            $sSQL .= '   WHERE ai_s.place_id = '.$sPlaceId;
+            $sSQL .= '     AND ai_p.place_id = ai_s.address_place_id ';
+            $sSQL .= '     AND ai_s.isaddress ';
+            $sSQL .= '     AND ai_p.importance is not null)';
+        }
+
+        return $sSQL.' AS addressimportance,';
+    }
+
+    private function langAddressSql($sHousenumber)
+    {
+        return 'get_address_by_language(place_id,'.$sHousenumber.','.$this->aLangPrefOrderSql.') AS langaddress,';
     }
 
     public function lookupOSMID($sType, $iID)
     {
-        $sSQL = "select place_id from placex where osm_type = '".pg_escape_string($sType)."' and osm_id = ".(int)$iID." order by type = 'postcode' asc";
+        $sSQL = "select place_id from placex where osm_type = '".$sType."' and osm_id = ".$iID;
         $iPlaceID = chksql($this->oDB->getOne($sSQL));
 
-        return $this->lookup((int)$iPlaceID);
+        if (!$iPlaceID) {
+            return null;
+        }
+
+        $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
+
+        return sizeof($aResults) ? reset($aResults) : null;
     }
 
-    public function lookup($iPlaceID, $sType = '', $fInterpolFraction = 0.0)
+    public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
     {
-        if (!$iPlaceID) return null;
+        if (!sizeof($aResults)) {
+            return array();
+        }
+        $aSubSelects = array();
 
-        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
-        $bIsTiger = CONST_Use_US_Tiger_Data && $sType == 'tiger';
-        $bIsInterpolation = $sType == 'interpolation';
+        $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
+        if (CONST_Debug) var_dump('PLACEX', $sPlaceIDs);
+        if ($sPlaceIDs) {
+            $sSQL  = 'SELECT ';
+            $sSQL .= '    osm_type,';
+            $sSQL .= '    osm_id,';
+            $sSQL .= '    class,';
+            $sSQL .= '    type,';
+            $sSQL .= '    admin_level,';
+            $sSQL .= '    rank_search,';
+            $sSQL .= '    rank_address,';
+            $sSQL .= '    min(place_id) AS place_id,';
+            $sSQL .= '    min(parent_place_id) AS parent_place_id,';
+            $sSQL .= '    housenumber,';
+            $sSQL .= '    country_code,';
+            $sSQL .= $this->langAddressSql('-1');
+            $sSQL .= '    get_name_by_language(name,'.$this->aLangPrefOrderSql.') AS placename,';
+            $sSQL .= "    get_name_by_language(name, ARRAY['ref']) AS ref,";
+            if ($this->bExtraTags) {
+                $sSQL .= 'hstore_to_json(extratags)::text AS extra,';
+            }
+            if ($this->bNameDetails) {
+                $sSQL .= 'hstore_to_json(name)::text AS names,';
+            }
+            $sSQL .= '    avg(ST_X(centroid)) AS lon, ';
+            $sSQL .= '    avg(ST_Y(centroid)) AS lat, ';
+            $sSQL .= '    COALESCE(importance,0.75-(rank_search::float/40)) AS importance, ';
+            $sSQL .= $this->addressImportanceSql(
+                'ST_Collect(centroid)',
+                'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
+            );
+            $sSQL .= "    (extratags->'place') AS extra_place ";
+            $sSQL .= ' FROM placex';
+            $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
+            $sSQL .= '   AND (';
+            $sSQL .= "        placex.rank_address between $iMinRank and $iMaxRank ";
+            if (14 >= $iMinRank && 14 <= $iMaxRank) {
+                $sSQL .= "    OR (extratags->'place') = 'city'";
+            }
+            if ($this->sAddressRankListSql) {
+                $sSQL .= '    OR placex.rank_address in '.$this->sAddressRankListSql;
+            }
+            $sSQL .= "       ) ";
+            if ($this->sAllowedTypesSQLList) {
+                $sSQL .= 'AND placex.class in '.$this->sAllowedTypesSQLList;
+            }
+            $sSQL .= '    AND linked_place_id is null ';
+            $sSQL .= ' GROUP BY ';
+            $sSQL .= '     osm_type, ';
+            $sSQL .= '     osm_id, ';
+            $sSQL .= '     class, ';
+            $sSQL .= '     type, ';
+            $sSQL .= '     admin_level, ';
+            $sSQL .= '     rank_search, ';
+            $sSQL .= '     rank_address, ';
+            $sSQL .= '     housenumber,';
+            $sSQL .= '     country_code, ';
+            $sSQL .= '     importance, ';
+            if (!$this->bDeDupe) $sSQL .= 'place_id,';
+            $sSQL .= '     langaddress, ';
+            $sSQL .= '     placename, ';
+            $sSQL .= '     ref, ';
+            if ($this->bExtraTags) $sSQL .= 'extratags, ';
+            if ($this->bNameDetails) $sSQL .= 'name, ';
+            $sSQL .= "     extratags->'place' ";
 
-        if ($bIsTiger) {
-            $sSQL = "select place_id,partition, 'T' as osm_type, place_id as osm_id, 'place' as class, 'house' as type, null as admin_level, housenumber, postcode,";
-            $sSQL .= " 'us' as country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
-            $sSQL .= " coalesce(null,0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, 'us' as country_code, ";
-            $sSQL .= " get_address_by_language(place_id, housenumber, $sLanguagePrefArraySQL) as langaddress,";
-            $sSQL .= " null as placename,";
-            $sSQL .= " null as ref,";
-            if ($this->bExtraTags) $sSQL .= " null as extra,";
-            if ($this->bNameDetails) $sSQL .= " null as names,";
-            $sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
-            $sSQL .= " (select *, ";
-            $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-            $sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-            $sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
-            $sSQL .= " END as housenumber";
-            $sSQL .= " from location_property_tiger where place_id = ".$iPlaceID.") as blub1) as blub2";
-        } elseif ($bIsInterpolation) {
-            $sSQL = "select place_id, partition, 'W' as osm_type, osm_id, 'place' as class, 'house' as type, null admin_level, housenumber, postcode,";
-            $sSQL .= " country_code, parent_place_id, null as linked_place_id, 30 as rank_address, 30 as rank_search,";
-            $sSQL .= " (0.75-(30::float/40)) as importance, null as indexed_status, null as indexed_date, null as wikipedia, country_code, ";
-            $sSQL .= " get_address_by_language(place_id, housenumber, $sLanguagePrefArraySQL) as langaddress,";
-            $sSQL .= " null as placename,";
-            $sSQL .= " null as ref,";
-            if ($this->bExtraTags) $sSQL .= " null as extra,";
-            if ($this->bNameDetails) $sSQL .= " null as names,";
-            $sSQL .= " ST_X(point) as lon, ST_Y(point) as lat from (select *, ST_LineInterpolatePoint(linegeo, (housenumber-startnumber::float)/(endnumber-startnumber)::float) as point from ";
-            $sSQL .= " (select *, ";
-            $sSQL .= " CASE WHEN interpolationtype='odd' THEN floor((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2+1";
-            $sSQL .= " WHEN interpolationtype='even' THEN ((".$fInterpolFraction."*(endnumber-startnumber)+startnumber)/2)::int*2";
-            $sSQL .= " WHEN interpolationtype='all' THEN (".$fInterpolFraction."*(endnumber-startnumber)+startnumber)::int";
-            $sSQL .= " END as housenumber";
-            $sSQL .= " from location_property_osmline where place_id = ".$iPlaceID.") as blub1) as blub2";
-            // testcase: interpolationtype=odd, startnumber=1000, endnumber=1006, fInterpolFraction=1 => housenumber=1007 => error in st_lineinterpolatepoint
-            // but this will never happen, because if the searched point is that close to the endnumber, the endnumber house will be directly taken from placex (in ReverseGeocode.php line 220)
-            // and not interpolated
-        } else {
-            $sSQL = "select placex.place_id, partition, osm_type, osm_id, class,";
-            $sSQL .= " type, admin_level, housenumber, postcode, country_code,";
-            $sSQL .= " parent_place_id, linked_place_id, rank_address, rank_search, ";
-            $sSQL .= " coalesce(importance,0.75-(rank_search::float/40)) as importance, indexed_status, indexed_date, wikipedia, country_code, ";
-            $sSQL .= " get_address_by_language(place_id, -1, $sLanguagePrefArraySQL) as langaddress,";
-            $sSQL .= " get_name_by_language(name, $sLanguagePrefArraySQL) as placename,";
-            $sSQL .= " get_name_by_language(name, ARRAY['ref']) as ref,";
-            if ($this->bExtraTags) $sSQL .= " hstore_to_json(extratags) as extra,";
-            if ($this->bNameDetails) $sSQL .= " hstore_to_json(name) as names,";
-            $sSQL .= " (case when centroid is null then st_y(st_centroid(geometry)) else st_y(centroid) end) as lat,";
-            $sSQL .= " (case when centroid is null then st_x(st_centroid(geometry)) else st_x(centroid) end) as lon";
-            $sSQL .= " from placex where place_id = ".$iPlaceID;
+            $aSubSelects[] = $sSQL;
         }
 
-        $aPlace = chksql($this->oDB->getRow($sSQL), "Could not lookup place");
+        // postcode table
+        $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_POSTCODE);
+        if ($sPlaceIDs) {
+            $sSQL = 'SELECT';
+            $sSQL .= "  'P' as osm_type,";
+            $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,";
+            $sSQL .= "  'place' as class, 'postcode' as type,";
+            $sSQL .= '  null as admin_level, rank_search, rank_address,';
+            $sSQL .= '  place_id, parent_place_id,';
+            $sSQL .= '  null as housenumber,';
+            $sSQL .= '  country_code,';
+            $sSQL .= $this->langAddressSql('-1');
+            $sSQL .= "  postcode as placename,";
+            $sSQL .= "  postcode as ref,";
+            if ($this->bExtraTags) $sSQL .= "null AS extra,";
+            if ($this->bNameDetails) $sSQL .= "null AS names,";
+            $sSQL .= "  ST_x(geometry) AS lon, ST_y(geometry) AS lat,";
+            $sSQL .= "  (0.75-(rank_search::float/40)) AS importance, ";
+            $sSQL .= $this->addressImportanceSql('geometry', 'lp.parent_place_id');
+            $sSQL .= "  null AS extra_place ";
+            $sSQL .= "FROM location_postcode lp";
+            $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
+            $sSQL .= "   AND lp.rank_address between $iMinRank and $iMaxRank";
 
-        if (!$aPlace['place_id']) return null;
-
-        if ($this->bAddressDetails) {
-            // to get addressdetails for tiger data, the housenumber is needed
-            $iHousenumber = ($bIsTiger || $bIsInterpolation) ? $aPlace['housenumber'] : -1;
-            $aPlace['aAddress'] = $this->getAddressNames($aPlace['place_id'], $iHousenumber);
+            $aSubSelects[] = $sSQL;
         }
 
-        if ($this->bExtraTags) {
-            if ($aPlace['extra']) {
-                $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
-            } else {
-                $aPlace['sExtraTags'] = (object) array();
+        // All other tables are rank 30 only.
+        if ($iMaxRank == 30) {
+            // TIGER table
+            if (CONST_Use_US_Tiger_Data) {
+                $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_TIGER);
+                if ($sPlaceIDs) {
+                    $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_TIGER);
+                    // Tiger search only if a housenumber was searched and if it was found
+                    // (realized through a join)
+                    $sSQL = " SELECT ";
+                    $sSQL .= "     'T' AS osm_type, ";
+                    $sSQL .= "     (SELECT osm_id from placex p WHERE p.place_id=blub.parent_place_id) as osm_id, ";
+                    $sSQL .= "     'place' AS class, ";
+                    $sSQL .= "     'house' AS type, ";
+                    $sSQL .= '     null AS admin_level, ';
+                    $sSQL .= '     30 AS rank_search, ';
+                    $sSQL .= '     30 AS rank_address, ';
+                    $sSQL .= '     place_id, ';
+                    $sSQL .= '     parent_place_id, ';
+                    $sSQL .= '     housenumber_for_place as housenumber,';
+                    $sSQL .= "     'us' AS country_code, ";
+                    $sSQL .= $this->langAddressSql('housenumber_for_place');
+                    $sSQL .= "     null AS placename, ";
+                    $sSQL .= "     null AS ref, ";
+                    if ($this->bExtraTags) $sSQL .= "null AS extra,";
+                    if ($this->bNameDetails) $sSQL .= "null AS names,";
+                    $sSQL .= "     st_x(centroid) AS lon, ";
+                    $sSQL .= "     st_y(centroid) AS lat,";
+                    $sSQL .= "     -1.15 AS importance, ";
+                    $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
+                    $sSQL .= "     null AS extra_place ";
+                    $sSQL .= " FROM (";
+                    $sSQL .= "     SELECT place_id, ";    // interpolate the Tiger housenumbers here
+                    $sSQL .= "         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ";
+                    $sSQL .= "         parent_place_id, ";
+                    $sSQL .= "         housenumber_for_place";
+                    $sSQL .= "     FROM (";
+                    $sSQL .= "            location_property_tiger ";
+                    $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)) ";
+                    $sSQL .= "     WHERE ";
+                    $sSQL .= "         housenumber_for_place >= startnumber";
+                    $sSQL .= "         AND housenumber_for_place <= endnumber";
+                    $sSQL .= " ) AS blub"; //postgres wants an alias here
+
+                    $aSubSelects[] = $sSQL;
+                }
+            }
+
+            // osmline - interpolated housenumbers
+            $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_OSMLINE);
+            if ($sPlaceIDs) {
+                $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_OSMLINE);
+                // interpolation line search only if a housenumber was searched
+                // (realized through a join)
+                $sSQL = "SELECT ";
+                $sSQL .= "  'W' AS osm_type, ";
+                $sSQL .= "  osm_id, ";
+                $sSQL .= "  'place' AS class, ";
+                $sSQL .= "  'house' AS type, ";
+                $sSQL .= '  15 AS admin_level, ';
+                $sSQL .= '  30 AS rank_search, ';
+                $sSQL .= '  30 AS rank_address, ';
+                $sSQL .= '  place_id, ';
+                $sSQL .= '  parent_place_id, ';
+                $sSQL .= '  housenumber_for_place as housenumber,';
+                $sSQL .= '  country_code, ';
+                $sSQL .= $this->langAddressSql('housenumber_for_place');
+                $sSQL .= '  null AS placename, ';
+                $sSQL .= '  null AS ref, ';
+                if ($this->bExtraTags) $sSQL .= 'null AS extra, ';
+                if ($this->bNameDetails) $sSQL .= 'null AS names, ';
+                $sSQL .= '  st_x(centroid) AS lon, ';
+                $sSQL .= '  st_y(centroid) AS lat, ';
+                // slightly smaller than the importance for normal houses
+                $sSQL .= "  -0.1 AS importance, ";
+                $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
+                $sSQL .= "  null AS extra_place ";
+                $sSQL .= "  FROM (";
+                $sSQL .= "     SELECT ";
+                $sSQL .= "         osm_id, ";
+                $sSQL .= "         place_id, ";
+                $sSQL .= "         country_code, ";
+                $sSQL .= "         CASE ";             // interpolate the housenumbers here
+                $sSQL .= "           WHEN startnumber != endnumber ";
+                $sSQL .= "           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
+                $sSQL .= "           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ";
+                $sSQL .= "         END as centroid, ";
+                $sSQL .= "         parent_place_id, ";
+                $sSQL .= "         housenumber_for_place ";
+                $sSQL .= "     FROM (";
+                $sSQL .= "            location_property_osmline ";
+                $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)";
+                $sSQL .= "          ) ";
+                $sSQL .= "     WHERE housenumber_for_place >= 0 ";
+                $sSQL .= "  ) as blub"; //postgres wants an alias here
+
+                $aSubSelects[] = $sSQL;
+            }
+
+            if (CONST_Use_Aux_Location_data) {
+                $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_AUX);
+                if ($sPlaceIDs) {
+                    $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_AUX);
+                    $sSQL = "  SELECT ";
+                    $sSQL .= "     'L' AS osm_type, ";
+                    $sSQL .= "     place_id AS osm_id, ";
+                    $sSQL .= "     'place' AS class,";
+                    $sSQL .= "     'house' AS type, ";
+                    $sSQL .= '     null AS admin_level, ';
+                    $sSQL .= '     30 AS rank_search,';
+                    $sSQL .= '     30 AS rank_address, ';
+                    $sSQL .= '     place_id,';
+                    $sSQL .= '     parent_place_id, ';
+                    $sSQL .= '     housenumber,';
+                    $sSQL .= "     'us' AS country_code, ";
+                    $sSQL .= $this->langAddressSql('-1');
+                    $sSQL .= "     null AS placename, ";
+                    $sSQL .= "     null AS ref, ";
+                    if ($this->bExtraTags) $sSQL .= "null AS extra, ";
+                    if ($this->bNameDetails) $sSQL .= "null AS names, ";
+                    $sSQL .= "     ST_X(centroid) AS lon, ";
+                    $sSQL .= "     ST_Y(centroid) AS lat, ";
+                    $sSQL .= "     -1.10 AS importance, ";
+                    $sSQL .= $this->addressImportanceSql(
+                        'centroid',
+                        'location_property_aux.parent_place_id'
+                    );
+                    $sSQL .= "     null AS extra_place ";
+                    $sSQL .= "  FROM location_property_aux ";
+                    $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
+
+                    $aSubSelects[] = $sSQL;
+                }
             }
         }
 
-        if ($this->bNameDetails) {
-            if ($aPlace['names']) {
-                $aPlace['sNameDetails'] = json_decode($aPlace['names']);
-            } else {
-                $aPlace['sNameDetails'] = (object) array();
-            }
+        if (CONST_Debug) var_dump($aSubSelects);
+
+        if (!sizeof($aSubSelects)) {
+            return array();
         }
+
+        $aPlaces = chksql(
+            $this->oDB->getAll(join(' UNION ', $aSubSelects)),
+            "Could not lookup place"
+        );
 
         $aClassType = getClassTypes();
-        $sAddressType = '';
-        $sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
-        if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel'])) {
-            $sAddressType = $aClassType[$aClassType]['simplelabel'];
-        } else {
-            $sClassType = $aPlace['class'].':'.$aPlace['type'];
-            if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel']))
-                $sAddressType = $aClassType[$sClassType]['simplelabel'];
-            else $sAddressType = $aPlace['class'];
+        foreach ($aPlaces as &$aPlace) {
+            if ($this->bAddressDetails) {
+                // to get addressdetails for tiger data, the housenumber is needed
+                $aPlace['aAddress'] = $this->getAddressNames(
+                    $aPlace['place_id'],
+                    $aPlace['housenumber']
+                );
+            }
+
+            if ($this->bExtraTags) {
+                if ($aPlace['extra']) {
+                    $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
+                } else {
+                    $aPlace['sExtraTags'] = (object) array();
+                }
+            }
+
+            if ($this->bNameDetails) {
+                if ($aPlace['names']) {
+                    $aPlace['sNameDetails'] = json_decode($aPlace['names']);
+                } else {
+                    $aPlace['sNameDetails'] = (object) array();
+                }
+            }
+
+            $sAddressType = '';
+            $sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
+            if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel'])) {
+                $sAddressType = $aClassType[$aClassType]['simplelabel'];
+            } else {
+                $sClassType = $aPlace['class'].':'.$aPlace['type'];
+                if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel']))
+                    $sAddressType = $aClassType[$sClassType]['simplelabel'];
+                else $sAddressType = $aPlace['class'];
+            }
+
+            $aPlace['addresstype'] = $sAddressType;
         }
 
-        $aPlace['addresstype'] = $sAddressType;
+        if (CONST_Debug) var_dump($aPlaces);
 
-        return $aPlace;
+        return $aPlaces;
     }
 
-    public function getAddressDetails($iPlaceID, $bAll = false, $housenumber = -1)
+    private function getAddressDetails($iPlaceID, $bAll, $sHousenumber)
     {
-        $sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $this->aLangPrefOrder))."]";
-
-        $sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(".$iPlaceID.",".$housenumber.")";
-        if (!$bAll) $sSQL .= " WHERE isaddress OR type = 'country_code'";
-        $sSQL .= " order by rank_address desc,isaddress desc";
+        $sSQL = 'SELECT *,';
+        $sSQL .= '  get_name_by_language(name,'.$this->aLangPrefOrderSql.') as localname';
+        $sSQL .= ' FROM get_addressdata('.$iPlaceID.','.$sHousenumber.')';
+        if (!$bAll) {
+            $sSQL .= " WHERE isaddress OR type = 'country_code'";
+        }
+        $sSQL .= ' ORDER BY rank_address desc,isaddress DESC';
 
         return chksql($this->oDB->getAll($sSQL));
     }
 
-    public function getAddressNames($iPlaceID, $housenumber = -1)
+    public function getAddressNames($iPlaceID, $sHousenumber = null)
     {
-        $aAddressLines = $this->getAddressDetails($iPlaceID, false, $housenumber);
+        $aAddressLines = $this->getAddressDetails(
+            $iPlaceID,
+            false,
+            $sHousenumber === null ? -1 : $sHousenumber
+        );
 
         $aAddress = array();
         $aFallback = array();

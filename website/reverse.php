@@ -11,23 +11,6 @@ ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
 
-$bAsGeoJSON = $oParams->getBool('polygon_geojson');
-$bAsKML = $oParams->getBool('polygon_kml');
-$bAsSVG = $oParams->getBool('polygon_svg');
-$bAsText = $oParams->getBool('polygon_text');
-
-$iWantedTypes = ($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0) + ($bAsText?1:0);
-if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
-    if (CONST_PolygonOutput_MaximumTypes) {
-        userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-    } else {
-        userError("Polygon output is disabled");
-    }
-}
-
-// Polygon simplification threshold (optional)
-$fThreshold = $oParams->getFloat('polygon_threshold', 0.0);
-
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'xml');
 
@@ -38,44 +21,35 @@ $oDB =& getDB();
 
 $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
-
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
-$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
-$oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));
-$oPlaceLookup->setIncludeNameDetails($oParams->getBool('namedetails', false));
+$oPlaceLookup->loadParamArray($oParams);
 
 $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);
 $fLat = $oParams->getFloat('lat');
 $fLon = $oParams->getFloat('lon');
-$iZoom = $oParams->getInt('zoom');
+$iZoom = $oParams->getInt('zoom', 18);
+
 if ($sOsmType && $iOsmId > 0) {
     $aPlace = $oPlaceLookup->lookupOSMID($sOsmType, $iOsmId);
 } elseif ($fLat !== false && $fLon !== false) {
     $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
-    $oReverseGeocode->setZoom($iZoom !== false ? $iZoom : 18);
+    $oReverseGeocode->setZoom($iZoom);
 
-    $aLookup = $oReverseGeocode->lookup($fLat, $fLon);
-    if (CONST_Debug) var_dump($aLookup);
+    $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
+    if (CONST_Debug) var_dump($oLookup);
 
-    $aPlace = $oPlaceLookup->lookup(
-        (int)$aLookup['place_id'],
-        $aLookup['type'],
-        $aLookup['fraction']
-    );
+    if ($oLookup) {
+        $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
+        if (sizeof($aPlaces)) {
+            $aPlace = reset($aPlaces);
+        }
+    }
 } elseif ($sOutputFormat != 'html') {
     userError("Need coordinates or OSM object to lookup.");
 }
 
 if (isset($aPlace)) {
-    $oPlaceLookup->setIncludePolygonAsPoints(false);
-    $oPlaceLookup->setIncludePolygonAsText($bAsText);
-    $oPlaceLookup->setIncludePolygonAsGeoJSON($bAsGeoJSON);
-    $oPlaceLookup->setIncludePolygonAsKML($bAsKML);
-    $oPlaceLookup->setIncludePolygonAsSVG($bAsSVG);
-    $oPlaceLookup->setPolygonSimplificationThreshold($fThreshold);
-
     $fRadius = $fDiameter = getResultDiameter($aPlace);
     $aOutlineResult = $oPlaceLookup->getOutlines(
         $aPlace['place_id'],

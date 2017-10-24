@@ -24,10 +24,7 @@ $aSearchResults = array();
 $aCleanedQueryParts = array();
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
-$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
-$oPlaceLookup->setIncludeExtraTags($oParams->getBool('extratags', false));
-$oPlaceLookup->setIncludeNameDetails($oParams->getBool('namedetails', false));
+$oPlaceLookup->loadParamArray($oParams);
 
 $aOsmIds = explode(',', $oParams->getString('osm_ids', ''));
 

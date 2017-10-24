@@ -28,36 +28,8 @@ if (CONST_Search_ReversePlanForAll
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
 
-// Show / use polygons
-if ($sOutputFormat == 'html') {
-    $oGeocode->setIncludePolygonAsGeoJSON($oParams->getBool('polygon_geojson'));
-    $bAsGeoJSON = false;
-} else {
-    $bAsPoints = $oParams->getBool('polygon');
-    $bAsGeoJSON = $oParams->getBool('polygon_geojson');
-    $bAsKML = $oParams->getBool('polygon_kml');
-    $bAsSVG = $oParams->getBool('polygon_svg');
-    $bAsText = $oParams->getBool('polygon_text');
-    $iWantedTypes = ($bAsGeoJSON?1:0) + ($bAsKML?1:0) + ($bAsSVG?1:0) + ($bAsText?1:0) + ($bAsPoints?1:0);
-    if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
-        if (CONST_PolygonOutput_MaximumTypes) {
-            userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
-        } else {
-            userError("Polygon output is disabled");
-        }
-        exit;
-    }
-    $oGeocode->setIncludePolygonAsPoints($bAsPoints);
-    $oGeocode->setIncludePolygonAsText($bAsText);
-    $oGeocode->setIncludePolygonAsGeoJSON($bAsGeoJSON);
-    $oGeocode->setIncludePolygonAsKML($bAsKML);
-    $oGeocode->setIncludePolygonAsSVG($bAsSVG);
-}
-
-// Polygon simplification threshold (optional)
-$oGeocode->setPolygonSimplificationThreshold($oParams->getFloat('polygon_threshold', 0.0));
-
-$oGeocode->loadParamArray($oParams);
+$sForcedGeometry = ($sOutputFormat == 'html') ? "geojson" : null;
+$oGeocode->loadParamArray($oParams, $sForcedGeometry);
 
 if (CONST_Search_BatchMode && isset($_GET['batch'])) {
     $aBatch = json_decode($_GET['batch'], true);

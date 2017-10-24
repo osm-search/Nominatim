@@ -4,6 +4,7 @@ namespace Nominatim;
 
 require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
 require_once(CONST_BasePath.'/lib/SearchContext.php');
+require_once(CONST_BasePath.'/lib/Result.php');
 
 /**
  * Description of a single interpretation of a search query.
@@ -405,7 +406,6 @@ class SearchDescription
      * @param object  $oDB                  Database connection to use.
      * @param mixed[] $aWordFrequencyScores Number of times tokens appears
      *                                      overall in a planet database.
-     * @param mixed[] $aExactMatchCache     Saves number of exact matches.
      * @param integer $iMinRank             Minimum address rank to restrict
      *                                      search to.
      * @param integer $iMaxRank             Maximum address rank to restrict
@@ -416,9 +416,9 @@ class SearchDescription
      *                 matching place IDs and houseNumber the houseNumber
      *                 if appicable or -1 if not.
      */
-    public function query(&$oDB, &$aWordFrequencyScores, &$aExactMatchCache, $iMinRank, $iMaxRank, $iLimit)
+    public function query(&$oDB, &$aWordFrequencyScores, $iMinRank, $iMaxRank, $iLimit)
     {
-        $aPlaceIDs = array();
+        $aResults = array();
         $iHousenumber = -1;
 
         if ($this->sCountryCode
@@ -429,21 +429,21 @@ class SearchDescription
         ) {
             // Just looking for a country - look it up
             if (4 >= $iMinRank && 4 <= $iMaxRank) {
-                $aPlaceIDs = $this->queryCountry($oDB);
+                $aResults = $this->queryCountry($oDB);
             }
         } elseif (!sizeof($this->aName) && !sizeof($this->aAddress)) {
             // Neither name nor address? Then we must be
             // looking for a POI in a geographic area.
             if ($this->oContext->isBoundedSearch()) {
-                $aPlaceIDs = $this->queryNearbyPoi($oDB, $iLimit);
+                $aResults = $this->queryNearbyPoi($oDB, $iLimit);
             }
         } elseif ($this->iOperator == Operator::POSTCODE) {
             // looking for postcode
-            $aPlaceIDs = $this->queryPostcode($oDB, $iLimit);
+            $aResults = $this->queryPostcode($oDB, $iLimit);
         } else {
             // Ordinary search:
             // First search for places according to name and address.
-            $aNamedPlaceIDs = $this->queryNamedPlace(
+            $aResults = $this->queryNamedPlace(
                 $oDB,
                 $aWordFrequencyScores,
                 $iMinRank,
@@ -451,52 +451,50 @@ class SearchDescription
                 $iLimit
             );
 
-            if (sizeof($aNamedPlaceIDs)) {
-                foreach ($aNamedPlaceIDs as $aRow) {
-                    $aPlaceIDs[] = $aRow['place_id'];
-                    $aExactMatchCache[$aRow['place_id']] = $aRow['exactmatch'];
-                }
-            }
-
             //now search for housenumber, if housenumber provided
-            if ($this->sHouseNumber && sizeof($aPlaceIDs)) {
-                $aResult = $this->queryHouseNumber($oDB, $aPlaceIDs, $iLimit);
+            if ($this->sHouseNumber && sizeof($aResults)) {
+                $aNamedPlaceIDs = $aResults;
+                $aResults = $this->queryHouseNumber($oDB, $aNamedPlaceIDs, $iLimit);
 
-                if (sizeof($aResult)) {
-                    $iHousenumber = $aResult['iHouseNumber'];
-                    $aPlaceIDs = $aResult['aPlaceIDs'];
-                } elseif (!$this->looksLikeFullAddress()) {
-                    $aPlaceIDs = array();
+                if (!sizeof($aResults) && $this->looksLikeFullAddress()) {
+                    $aResults = $aNamedPlaceIDs;
                 }
             }
 
             // finally get POIs if requested
-            if ($this->sClass && sizeof($aPlaceIDs)) {
-                $aPlaceIDs = $this->queryPoiByOperator($oDB, $aPlaceIDs, $iLimit);
+            if ($this->sClass && sizeof($aResults)) {
+                $aResults = $this->queryPoiByOperator($oDB, $aResults, $iLimit);
             }
         }
 
         if (CONST_Debug) {
             echo "<br><b>Place IDs:</b> ";
-            var_Dump($aPlaceIDs);
+            var_dump(array_keys($aResults));
         }
 
-        if (sizeof($aPlaceIDs) && $this->sPostcode) {
-            $sSQL = 'SELECT place_id FROM placex';
-            $sSQL .= ' WHERE place_id in ('.join(',', $aPlaceIDs).')';
-            $sSQL .= " AND postcode = '".$this->sPostcode."'";
-            if (CONST_Debug) var_dump($sSQL);
-            $aFilteredPlaceIDs = chksql($oDB->getCol($sSQL));
-            if ($aFilteredPlaceIDs) {
-                $aPlaceIDs = $aFilteredPlaceIDs;
-                if (CONST_Debug) {
-                    echo "<br><b>Place IDs after postcode filtering:</b> ";
-                    var_Dump($aPlaceIDs);
+        if (sizeof($aResults) && $this->sPostcode) {
+            $sPlaceIds = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
+            if ($sPlaceIds) {
+                $sSQL = 'SELECT place_id FROM placex';
+                $sSQL .= ' WHERE place_id in ('.$sPlaceIds.')';
+                $sSQL .= " AND postcode = '".$this->sPostcode."'";
+                if (CONST_Debug) var_dump($sSQL);
+                $aFilteredPlaceIDs = chksql($oDB->getCol($sSQL));
+                if ($aFilteredPlaceIDs) {
+                    $aNewResults = array();
+                    foreach ($aFilteredPlaceIDs as $iPlaceId) {
+                        $aNewResults[$iPlaceId] = $aResults[$iPLaceId];
+                    }
+                    $aResults = $aNewResults;
+                    if (CONST_Debug) {
+                        echo "<br><b>Place IDs after postcode filtering:</b> ";
+                        var_dump(array_keys($aResults));
+                    }
                 }
             }
         }
 
-        return array('IDs' => $aPlaceIDs, 'houseNumber' => $iHousenumber);
+        return $aResults;
     }
 
 
@@ -512,7 +510,12 @@ class SearchDescription
 
         if (CONST_Debug) var_dump($sSQL);
 
-        return chksql($oDB->getCol($sSQL));
+        $aResults = array();
+        foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+            $aResults[$iPlaceId] = new Result($iPlaceId);
+        }
+
+        return $aResults;
     }
 
     private function queryNearbyPoi(&$oDB, $iLimit)
@@ -521,6 +524,7 @@ class SearchDescription
             return array();
         }
 
+        $aDBResults = array();
         $sPoiTable = $this->poiTable();
 
         $sSQL = 'SELECT count(*) FROM pg_tables WHERE tablename = \''.$sPoiTable."'";
@@ -546,7 +550,7 @@ class SearchDescription
             }
             $sSQL .= " limit $iLimit";
             if (CONST_Debug) var_dump($sSQL);
-            return chksql($oDB->getCol($sSQL));
+            $aDBResults = chksql($oDB->getCol($sSQL));
         }
 
         if ($this->oContext->hasNearPoint()) {
@@ -560,10 +564,15 @@ class SearchDescription
             $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid')." ASC";
             $sSQL .= " LIMIT $iLimit";
             if (CONST_Debug) var_dump($sSQL);
-            return chksql($oDB->getCol($sSQL));
+            $aDBResults = chksql($oDB->getCol($sSQL));
         }
 
-        return array();
+        $aResults = array();
+        foreach ($aDBResults as $iPlaceId) {
+            $aResults[$iPlaceId] = new Result($iPlaceId);
+        }
+
+        return $aResults;
     }
 
     private function queryPostcode(&$oDB, $iLimit)
@@ -586,7 +595,12 @@ class SearchDescription
 
         if (CONST_Debug) var_dump($sSQL);
 
-        return chksql($oDB->getCol($sSQL));
+        $aResults = array();
+        foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+            $aResults[$iPlaceId] = new Result($iPlaceId, Result::TABLE_POSTCODE);
+        }
+
+        return $aResults;
     }
 
     private function queryNamedPlace(&$oDB, $aWordFrequencyScores, $iMinAddressRank, $iMaxAddressRank, $iLimit)
@@ -701,6 +715,8 @@ class SearchDescription
             $iLimit = 20;
         }
 
+        $aResults = array();
+
         if (sizeof($aTerms)) {
             $sSQL = 'SELECT place_id,'.$sExactMatchSQL;
             $sSQL .= ' FROM search_name';
@@ -710,18 +726,29 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            return chksql(
+            $aDBResults = chksql(
                 $oDB->getAll($sSQL),
                 "Could not get places for search terms."
             );
+
+            foreach ($aDBResults as $aResult) {
+                $oResult = new Result($aResult['place_id']);
+                $oResult->iExactMatches = $aResult['exactmatch'];
+                $aResults[$aResult['place_id']] = $oResult;
+            }
         }
 
-        return array();
+        return $aResults;
     }
 
     private function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
     {
-        $sPlaceIDs = join(',', $aRoadPlaceIDs);
+        $aResults = array();
+        $sPlaceIDs = Result::joinIdsByTable($aRoadPlaceIDs, Result::TABLE_PLACEX);
+
+        if (!$sPlaceIDs) {
+            return $aResults;
+        }
 
         $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
         $sSQL = 'SELECT place_id FROM placex ';
@@ -732,15 +759,14 @@ class SearchDescription
 
         if (CONST_Debug) var_dump($sSQL);
 
-        $aPlaceIDs = chksql($oDB->getCol($sSQL));
-
-        if (sizeof($aPlaceIDs)) {
-            return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => -1);
+        // XXX should inherit the exactMatches from its parent
+        foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+            $aResults[$iPlaceId] = new Result($iPlaceId);
         }
 
         $bIsIntHouseNumber= (bool) preg_match('/[0-9]+/', $this->sHouseNumber);
         $iHousenumber = intval($this->sHouseNumber);
-        if ($bIsIntHouseNumber) {
+        if ($bIsIntHouseNumber && !sizeof($aResults)) {
             // if nothing found, search in the interpolation line table
             $sSQL = 'SELECT distinct place_id FROM location_property_osmline';
             $sSQL .= ' WHERE startnumber is not NULL';
@@ -761,15 +787,15 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($oDB->getCol($sSQL, 0));
-
-            if (sizeof($aPlaceIDs)) {
-                return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => $iHousenumber);
+            foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                $oResult = new Result($iPlaceId, Result::TABLE_OSMLINE);
+                $oResult->iHouseNumber = $iHousenumber;
+                $aResults[$iPlaceId] = $oResult;
             }
         }
 
         // If nothing found try the aux fallback table
-        if (CONST_Use_Aux_Location_data) {
+        if (CONST_Use_Aux_Location_data && !sizeof($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_aux';
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.')';
             $sSQL .= " AND housenumber = '".$this->sHouseNumber."'";
@@ -778,16 +804,14 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($oDB->getCol($sSQL));
-
-            if (sizeof($aPlaceIDs)) {
-                return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => -1);
+            foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                $aResults[$iPlaceId] = new Result($iPlaceId, Result::TABLE_AUX);
             }
         }
 
         // If nothing found then search in Tiger data (location_property_tiger)
-        if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber) {
-            $sSQL = 'SELECT distinct place_id FROM location_property_tiger';
+        if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber && !sizeof($aResults)) {
+            $sSQL = 'SELECT place_id FROM location_property_tiger';
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.') and (';
             if ($iHousenumber % 2 == 0) {
                 $sSQL .= "interpolationtype='even'";
@@ -802,21 +826,25 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aPlaceIDs = chksql($oDB->getCol($sSQL, 0));
-
-            if (sizeof($aPlaceIDs)) {
-                return array('aPlaceIDs' => $aPlaceIDs, 'iHouseNumber' => $iHousenumber);
+            foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                $oResult = new Result($iPlaceId, Result::TABLE_TIGER);
+                $oResult->iHouseNumber = $iHousenumber;
+                $aResults[$iPlaceId] = $oResult;
             }
         }
 
-        return array();
+        return $aResults;
     }
 
 
     private function queryPoiByOperator(&$oDB, $aParentIDs, $iLimit)
     {
-        $sPlaceIDs = join(',', $aParentIDs);
-        $aClassPlaceIDs = array();
+        $aResults = array();
+        $sPlaceIDs = Result::joinIdsByTable($aParentIDs, Result::TABLE_PLACEX);
+
+        if (!$sPlaceIDs) {
+            return $aResults;
+        }
 
         if ($this->iOperator == Operator::TYPE || $this->iOperator == Operator::NAME) {
             // If they were searching for a named class (i.e. 'Kings Head pub')
@@ -832,7 +860,9 @@ class SearchDescription
 
             if (CONST_Debug) var_dump($sSQL);
 
-            $aClassPlaceIDs = chksql($oDB->getCol($sSQL));
+            foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                $aResults[$iPlaceId] = new Result($iPlaceId);
+            }
         }
 
         // NEAR and IN are handled the same
@@ -912,7 +942,9 @@ class SearchDescription
 
                     if (CONST_Debug) var_dump($sSQL);
 
-                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($oDB->getCol($sSQL)));
+                    foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                        $aResults[$iPlaceId] = new Result($iPlaceId);
+                    }
                 } else {
                     if ($this->oContext->hasNearPoint()) {
                         $fRange = $this->oContext->nearRadius();
@@ -942,12 +974,14 @@ class SearchDescription
 
                     if (CONST_Debug) var_dump($sSQL);
 
-                    $aClassPlaceIDs = array_merge($aClassPlaceIDs, chksql($oDB->getCol($sSQL)));
+                    foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+                        $aResults[$iPlaceId] = new Result($iPlaceId);
+                    }
                 }
             }
         }
 
-        return $aClassPlaceIDs;
+        return $aResults;
     }
 
     private function poiTable()

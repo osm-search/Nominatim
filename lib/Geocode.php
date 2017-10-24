@@ -345,8 +345,6 @@ class Geocode
 
              Score how good the search is so they can be ordered
          */
-        $iGlobalRank = 0;
-
         foreach ($aPhrases as $iPhrase => $oPhrase) {
             $aNewPhraseSearches = array();
             $sPhraseType = $bIsStructured ? $oPhrase->getPhraseType() : '';
@@ -378,8 +376,7 @@ class Geocode
                                     $iToken == 0 && $iPhrase == 0,
                                     $iPhrase == 0,
                                     $iToken + 1 == sizeof($aWordset)
-                                      && $iPhrase + 1 == sizeof($aPhrases),
-                                    $iGlobalRank
+                                      && $iPhrase + 1 == sizeof($aPhrases)
                                 );
 
                                 foreach ($aNewSearches as $oSearch) {
@@ -460,7 +457,6 @@ class Geocode
                 continue;
             }
 
-            $iRank = $oSearch->addToRank($iGlobalRank);
             if (!isset($aGroupedSearches[$iRank])) {
                 $aGroupedSearches[$iRank] = array();
             }

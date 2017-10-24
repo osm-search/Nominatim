@@ -69,19 +69,6 @@ class SearchDescription
     }
 
     /**
-     * Increase the search rank.
-     *
-     * @param integer $iAddRank Number of ranks to increase.
-     *
-     * @return void
-     */
-    public function addToRank($iAddRank)
-    {
-        $this->iSearchRank += $iAddRank;
-        return $this->iSearchRank;
-    }
-
-    /**
      * Make this search a POI search.
      *
      * In a POI search, objects are not (only) searched by their name
@@ -187,12 +174,10 @@ class SearchDescription
      * @param bool    $bFirstPhrase True if the token is in the first phrase of
      *                              the query.
      * @param bool    $bLastToken   True if the token is at the end of the query.
-     * @param integer $iGlobalRank  Changable ranking of all searches in the
-     *                              batch.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($aSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken, &$iGlobalRank)
+    public function extendWithFullTerm($aSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
     {
         $aNewSearches = array();
 
@@ -210,12 +195,6 @@ class SearchDescription
                     $oSearch->iSearchRank += 5;
                 }
                 $aNewSearches[] = $oSearch;
-
-                // If it is at the beginning, we can be almost sure that
-                // the terms are in the wrong order. Increase score for all searches.
-                if ($bFirstToken) {
-                    $iGlobalRank++;
-                }
             }
         } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
                   && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode'

@@ -247,7 +247,10 @@ class SearchDescription
                     $oSearch->iSearchRank++;
                 }
                 // also must not appear in the middle of the address
-                if (sizeof($this->aAddress) || sizeof($this->aAddressNonSearch)) {
+                if (sizeof($this->aAddress)
+                    || sizeof($this->aAddressNonSearch)
+                    || $this->sPostcode
+                ) {
                     $oSearch->iSearchRank++;
                 }
                 $aNewSearches[] = $oSearch;

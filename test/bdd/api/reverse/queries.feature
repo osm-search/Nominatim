@@ -32,3 +32,16 @@ Feature: Reverse geocoding
         And result addresses contain
           | house_number | road |
           | 1410         | Juan Antonio Lavalleja |
+
+    Scenario: Address with non-numerical house number
+        When sending jsonv2 reverse coordinates 53.579805460944,9.9475670458196
+        Then result addresses contain
+          | house_number | road |
+          | 43 Haus 4    | Stellinger Weg |
+
+
+    Scenario: Address with numerical house number
+        When sending jsonv2 reverse coordinates 53.580206752486,9.9502944945198
+        Then result addresses contain
+          | house_number | road |
+          | 5            | Clasingstraße |

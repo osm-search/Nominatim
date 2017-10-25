@@ -187,7 +187,7 @@ class PlaceLookup
             $sSQL .= '    rank_address,';
             $sSQL .= '    min(place_id) AS place_id,';
             $sSQL .= '    min(parent_place_id) AS parent_place_id,';
-            $sSQL .= '    housenumber,';
+            $sSQL .= '    -1 as housenumber,';
             $sSQL .= '    country_code,';
             $sSQL .= $this->langAddressSql('-1');
             $sSQL .= '    get_name_by_language(name,'.$this->aLangPrefOrderSql.') AS placename,';

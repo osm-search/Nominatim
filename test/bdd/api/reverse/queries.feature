@@ -45,3 +45,9 @@ Feature: Reverse geocoding
         Then result addresses contain
           | house_number | road |
           | 5            | Clasingstraße |
+
+    Scenario: Location off the coast
+        When sending jsonv2 reverse coordinates 54.046489113,8.5546870529
+        Then results contain
+         | display_name |
+         | Freie und Hansestadt Hamburg, Deutschland |

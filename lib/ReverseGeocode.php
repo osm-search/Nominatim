@@ -121,9 +121,17 @@ class ReverseGeocode
 
             $sSQL = 'select place_id,parent_place_id,rank_search,country_code,';
             $sSQL .= '  ST_distance('.$sPointSQL.', geometry) as distance';
-            $sSQL .= ' FROM placex';
-            $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
-            $sSQL .= ' and rank_search != 28 and rank_search >= '.$iMaxRank;
+            $sSQL .= ' FROM ';
+            if ($fSearchDiam < 0.01) {
+                $sSQL .= ' placex';
+                $sSQL .= '   WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
+                $sSQL .= '   AND';
+            } else {
+                $sSQL .= ' (SELECT * FROM placex ';
+                $sSQL .= '   WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
+                $sSQL .= '   LIMIT 1000) as p WHERE';
+            }
+            $sSQL .= ' rank_search != 28 and rank_search >= '.$iMaxRank;
             $sSQL .= ' and (name is not null or housenumber is not null)';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
             $sSQL .= ' and indexed_status = 0 ';

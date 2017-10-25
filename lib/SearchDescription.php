@@ -465,7 +465,7 @@ class SearchDescription
                 if ($aFilteredPlaceIDs) {
                     $aNewResults = array();
                     foreach ($aFilteredPlaceIDs as $iPlaceId) {
-                        $aNewResults[$iPlaceId] = $aResults[$iPLaceId];
+                        $aNewResults[$iPlaceId] = $aResults[$iPlaceId];
                     }
                     $aResults = $aNewResults;
                     if (CONST_Debug) {

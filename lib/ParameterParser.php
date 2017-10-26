@@ -82,8 +82,8 @@ class ParameterParser
 
     public function getPreferredLanguages($sFallback = null)
     {
-        if ($sFallback === null && isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
-            $sFallback = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
+        if ($sFallback === null && isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            $sFallback = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
         }
 
         $aLanguages = array();

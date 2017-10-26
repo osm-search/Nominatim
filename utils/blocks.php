@@ -7,7 +7,7 @@ ini_set('memory_limit', '800M');
 
 $aCMDOptions
  = array(
-    "Manage service blocks / restrictions",
+    'Manage service blocks / restrictions',
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
@@ -29,8 +29,8 @@ if ($aResult['list']) {
 
     $aBlocks = getBucketBlocks();
     echo "\n";
-    printf(" %-40s | %12s | %7s | %13s | %31s | %8s\n", "Key", "Total Blocks", "Current", "Still Blocked", "Last Block Time", "Sleeping");
-    printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-31s-|-%'-8s\n", "", "", "", "", "", "");
+    printf(" %-40s | %12s | %7s | %13s | %31s | %8s\n", 'Key', 'Total Blocks', 'Current', 'Still Blocked', 'Last Block Time', 'Sleeping');
+    printf(" %'--40s-|-%'-12s-|-%'-7s-|-%'-13s-|-%'-31s-|-%'-8s\n", '', '', '', '', '', '');
     foreach ($aBlocks as $sKey => $aDetails) {
         printf(
             " %-40s | %12s | %7s | %13s | %31s | %8s\n",
@@ -38,7 +38,7 @@ if ($aResult['list']) {
             $aDetails['totalBlocks'],
             (int)$aDetails['currentBucketSize'],
             $aDetails['currentlyBlocked']?'Y':'N',
-            date("r", $aDetails['lastBlockTimestamp']),
+            date('r', $aDetails['lastBlockTimestamp']),
             $aDetails['isSleeping']?'Y':'N'
         );
     }

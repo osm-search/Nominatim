@@ -1,14 +1,14 @@
 #!/usr/bin/php -Cq
 <?php
 
-$hFile = @fopen("wikidatawiki-20130623-pages-articles.xml", "r");
+$hFile = @fopen('wikidatawiki-20130623-pages-articles.xml', 'r');
 
-$hFileEntity = fopen("entity.csv", "w");
-$hFileEntityLabel = fopen("entity_label.csv", "w");
-$hFileEntityDescription = fopen("entity_description.csv", "w");
-$hFileEntityAlias = fopen("entity_alias.csv", "w");
-$hFileEntityLink = fopen("entity_link.csv", "w");
-$hFileEntityProperty = fopen("entity_property.csv", "w");
+$hFileEntity = fopen('entity.csv', 'w');
+$hFileEntityLabel = fopen('entity_label.csv', 'w');
+$hFileEntityDescription = fopen('entity_description.csv', 'w');
+$hFileEntityAlias = fopen('entity_alias.csv', 'w');
+$hFileEntityLink = fopen('entity_link.csv', 'w');
+$hFileEntityProperty = fopen('entity_property.csv', 'w');
 
 $iCount = 0;
 
@@ -50,7 +50,7 @@ if ($hFile) {
             $sText = html_entity_decode(substr($sLine, 33, -8), ENT_COMPAT, 'UTF-8');
             $aArticle = json_decode($sText, true);
 
-            if (array_diff(array_keys($aArticle), array("label", "description", "aliases", "links", "entity", "claims", "datatype")) != array()) {
+            if (array_diff(array_keys($aArticle), array('label', 'description', 'aliases', 'links', 'entity', 'claims', 'datatype')) != array()) {
                 // DEBUG
                 var_dump($sTitle);
                 var_dump(array_keys($aArticle));
@@ -67,7 +67,7 @@ if ($hFile) {
                 continue;
             }
 
-            echo ".";
+            echo '.';
 
             fputcsv($hFileEntity, array($iID, $sTitle, $iPID, $iQID, @$aArticle['datatype']));
 
@@ -123,7 +123,7 @@ if ($hFile) {
                              $iPID,
                              null,
                              null,
-                             "SRID=4326;POINT(".((float) $aClaim['m'][3]['longitude'])." ".((float)$aClaim['m'][3]['latitude']).")", null
+                             'SRID=4326;POINT('.((float) $aClaim['m'][3]['longitude']).' '.((float)$aClaim['m'][3]['latitude']).')', null
                             )
                         );
                         /* echo "insert into entity_property values (nextval('seq_entity_property'),";

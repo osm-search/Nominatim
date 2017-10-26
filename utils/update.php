@@ -7,7 +7,7 @@ ini_set('memory_limit', '800M');
 
 $aCMDOptions
 = array(
-   "Import / update / index osm data",
+   'Import / update / index osm data',
    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
@@ -64,7 +64,7 @@ if ($aResult['init-updates']) {
     if ($sBaseState === false) {
         echo "\nCannot find state.txt file at the configured replication URL.\n";
         echo "Does the URL point to a directory containing OSM update data?\n\n";
-        fail("replication URL not reachable.");
+        fail('replication URL not reachable.');
     }
     $sSetup = CONST_InstallPath.'/utils/setup.php';
     $iRet = -1;
@@ -75,7 +75,7 @@ if ($aResult['init-updates']) {
 
     $sDatabaseDate = getDatabaseDate($oDB);
     if ($sDatabaseDate === false) {
-        fail("Cannot determine date of database.");
+        fail('Cannot determine date of database.');
     }
     $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ', strtotime($sDatabaseDate) - (3*60*60));
 
@@ -89,9 +89,9 @@ if ($aResult['init-updates']) {
 
     pg_query($oDB->connection, 'TRUNCATE import_status');
     $sSQL = "INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES('";
-    $sSQL .= $sDatabaseDate."',".$aOutput[0].", true)";
+    $sSQL .= $sDatabaseDate."',".$aOutput[0].', true)';
     if (!pg_query($oDB->connection, $sSQL)) {
-        fail("Could not enter sequence into database.");
+        fail('Could not enter sequence into database.');
     }
 
     echo "Done. Database updates will start at sequence $aOutput[0] ($sWindBack)\n";
@@ -118,7 +118,7 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
 }
 
 if ($aResult['calculate-postcodes']) {
-    info("Update postcodes centroids");
+    info('Update postcodes centroids');
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/update-postcodes.sql');
     runSQLScript($sTemplate, true, true);
 }
@@ -170,7 +170,7 @@ if ($aResult['deduplicate']) {
     $oDB =& getDB();
 
     if (getPostgresVersion($oDB) < 9.3) {
-        fail("ERROR: deduplicate is only currently supported in postgresql 9.3");
+        fail('ERROR: deduplicate is only currently supported in postgresql 9.3');
     }
 
     $sSQL = 'select partition from country_name order by country_code';
@@ -179,7 +179,7 @@ if ($aResult['deduplicate']) {
 
     // we don't care about empty search_name_* partitions, they can't contain mentions of duplicates
     foreach ($aPartitions as $i => $sPartition) {
-        $sSQL = "select count(*) from search_name_".$sPartition;
+        $sSQL = 'select count(*) from search_name_'.$sPartition;
         $nEntries = chksql($oDB->getOne($sSQL));
         if ($nEntries == 0) {
             unset($aPartitions[$i]);
@@ -187,14 +187,14 @@ if ($aResult['deduplicate']) {
     }
 
     $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' '";
-    $sSQL .= " and class is null and type is null and country_code is null";
-    $sSQL .= " group by word_token having count(*) > 1 order by word_token";
+    $sSQL .= ' and class is null and type is null and country_code is null';
+    $sSQL .= ' group by word_token having count(*) > 1 order by word_token';
     $aDuplicateTokens = chksql($oDB->getAll($sSQL));
     foreach ($aDuplicateTokens as $aToken) {
         if (trim($aToken['word_token']) == '' || trim($aToken['word_token']) == '-') continue;
-        echo "Deduping ".$aToken['word_token']."\n";
-        $sSQL = "select word_id,";
-        $sSQL .= " (select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num";
+        echo 'Deduping '.$aToken['word_token']."\n";
+        $sSQL = 'select word_id,';
+        $sSQL .= ' (select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num';
         $sSQL .= " from word where word_token = '".$aToken['word_token'];
         $sSQL .= "' and class is null and type is null and country_code is null order by num desc";
         $aTokenSet = chksql($oDB->getAll($sSQL));
@@ -203,35 +203,35 @@ if ($aResult['deduplicate']) {
         $iKeepID = $aKeep['word_id'];
 
         foreach ($aTokenSet as $aRemove) {
-            $sSQL = "update search_name set";
-            $sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID."),";
-            $sSQL .= " nameaddress_vector = array_replace(nameaddress_vector,".$aRemove['word_id'].",".$iKeepID.")";
-            $sSQL .= " where name_vector @> ARRAY[".$aRemove['word_id']."]";
+            $sSQL = 'update search_name set';
+            $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.'),';
+            $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
+            $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
             chksql($oDB->query($sSQL));
 
-            $sSQL = "update search_name set";
-            $sSQL .= " nameaddress_vector = array_replace(nameaddress_vector,".$aRemove['word_id'].",".$iKeepID.")";
-            $sSQL .= " where nameaddress_vector @> ARRAY[".$aRemove['word_id']."]";
+            $sSQL = 'update search_name set';
+            $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
+            $sSQL .= ' where nameaddress_vector @> ARRAY['.$aRemove['word_id'].']';
             chksql($oDB->query($sSQL));
 
-            $sSQL = "update location_area_country set";
-            $sSQL .= " keywords = array_replace(keywords,".$aRemove['word_id'].",".$iKeepID.")";
-            $sSQL .= " where keywords @> ARRAY[".$aRemove['word_id']."]";
+            $sSQL = 'update location_area_country set';
+            $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
+            $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
             chksql($oDB->query($sSQL));
 
             foreach ($aPartitions as $sPartition) {
-                $sSQL = "update search_name_".$sPartition." set";
-                $sSQL .= " name_vector = array_replace(name_vector,".$aRemove['word_id'].",".$iKeepID.")";
-                $sSQL .= " where name_vector @> ARRAY[".$aRemove['word_id']."]";
+                $sSQL = 'update search_name_'.$sPartition.' set';
+                $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.')';
+                $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
                 chksql($oDB->query($sSQL));
 
-                $sSQL = "update location_area_country set";
-                $sSQL .= " keywords = array_replace(keywords,".$aRemove['word_id'].",".$iKeepID.")";
-                $sSQL .= " where keywords @> ARRAY[".$aRemove['word_id']."]";
+                $sSQL = 'update location_area_country set';
+                $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
+                $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
                 chksql($oDB->query($sSQL));
             }
 
-            $sSQL = "delete from word where word_id = ".$aRemove['word_id'];
+            $sSQL = 'delete from word where word_id = '.$aRemove['word_id'];
             chksql($oDB->query($sSQL));
         }
     }
@@ -360,7 +360,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $oDB->query($sSQL);
             echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
 
-            $sSQL = "update import_status set indexed = true";
+            $sSQL = 'update import_status set indexed = true';
             $oDB->query($sSQL);
         }
 

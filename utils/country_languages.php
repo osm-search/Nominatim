@@ -9,7 +9,7 @@ ini_set('display_errors', 'stderr');
 
 $aCMDOptions
  = array(
-    "Import country language data from osm wiki",
+    'Import country language data from osm wiki',
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),

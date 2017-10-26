@@ -1,7 +1,7 @@
 #!/usr/bin/php -Cq
 <?php
 
-$sFile = "sample.log.txt"; // Apache log file
+$sFile = 'sample.log.txt'; // Apache log file
 $sHost1 = 'http://mq-open-search-lm02.ihost.aol.com:8000/nominatim/v1';
 $sHost2 = 'http://mq-open-search-lm03.ihost.aol.com:8000/nominatim/v1';
 
@@ -11,7 +11,7 @@ $sHost2Escaped = str_replace('/', '\\/', $sHost2);
 
 $aToDo = array(251, 293, 328, 399.1, 455.1, 479, 496, 499, 574, 609, 702, 790, 846, 865, 878, 894, 902, 961, 980);
 
-$hFile = @fopen($sFile, "r");
+$hFile = @fopen($sFile, 'r');
 if (!$hFile) {
     echo "Unable to open file: $sFile\n";
     exit;

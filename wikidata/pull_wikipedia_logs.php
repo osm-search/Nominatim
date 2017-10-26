@@ -1,12 +1,12 @@
 <?php
 
 for ($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6, 15, 2013); $iTimestamp += 24*60*60) {
-    $sYear = date("Y", $iTimestamp);
-    $sMonth = date("Y-m", $iTimestamp);
-    $sDay = date("Ymd", $iTimestamp);
+    $sYear = date('Y', $iTimestamp);
+    $sMonth = date('Y-m', $iTimestamp);
+    $sDay = date('Ymd', $iTimestamp);
 
     for ($iHour = 0; $iHour < 24; $iHour++) {
-        $sFilename = sprintf("pagecounts-".$sDay."-%02d0000", $iHour);
+        $sFilename = sprintf('pagecounts-'.$sDay.'-%02d0000', $iHour);
         echo $sFilename."\n";
         if (!file_exists($sFilename.'.gz')) {
             exec('wget http://dumps.wikimedia.org/other/pagecounts-raw/'.$sYear.'/'.$sMonth.'/'.$sFilename.'.gz');
@@ -14,9 +14,9 @@ for ($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6,
 
         exec('gzip -dc '.$sFilename.'.gz'.' | grep -e "^[a-z]\{2\} [^ :]\+ [0-9]\+" > hour.txt');
 
-        $hPrevTotals = @fopen("totals.txt", "r");
-        $hDayTotals = @fopen("hour.txt", "r");
-        $hNewTotals = @fopen("newtotals.txt", "w");
+        $hPrevTotals = @fopen('totals.txt', 'r');
+        $hDayTotals = @fopen('hour.txt', 'r');
+        $hNewTotals = @fopen('newtotals.txt', 'w');
 
         $sPrevKey = $sDayKey = true;
         $sPrevLine = true;
@@ -64,8 +64,8 @@ for ($iTimestamp = mktime(0, 0, 0, 5, 1, 2013); $iTimestamp < mktime(0, 0, 0, 6,
         @fclose($hDayTotals);
         @fclose($hNewTotals);
 
-        @unlink("totals.txt");
-        rename("newtotals.txt", "totals.txt");
+        @unlink('totals.txt');
+        rename('newtotals.txt', 'totals.txt');
     }
 }
 

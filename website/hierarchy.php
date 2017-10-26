@@ -12,7 +12,7 @@ $oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
 $aLangPrefOrder = $oParams->getPreferredLanguages();
-$sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $aLangPrefOrder))."]";
+$sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
@@ -25,11 +25,11 @@ if ($sOsmType && $iOsmId > 0) {
 
     // Be nice about our error messages for broken geometry
     if (!$sPlaceId) {
-        $sSQL = "select osm_type, osm_id, errormessage, class, type,";
+        $sSQL = 'select osm_type, osm_id, errormessage, class, type,';
         $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname,";
-        $sSQL .= " ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom";
+        $sSQL .= ' ST_AsText(prevgeometry) as prevgeom, ST_AsText(newgeometry) as newgeom';
         $sSQL .= " from import_polygon_error where osm_type = '".$sOsmType;
-        $sSQL .= "' and osm_id = ".$iOsmId." order by updated desc limit 1";
+        $sSQL .= "' and osm_id = ".$iOsmId.' order by updated desc limit 1';
         $aPointDetails = chksql($oDB->getRow($sSQL));
         if ($aPointDetails) {
             if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
@@ -42,7 +42,7 @@ if ($sOsmType && $iOsmId > 0) {
     }
 }
 
-if (!$sPlaceId) userError("Please select a place id");
+if (!$sPlaceId) userError('Please select a place id');
 
 $iPlaceID = (int)$sPlaceId;
 
@@ -62,7 +62,7 @@ $oPlaceLookup->setIncludeAddressDetails(true);
 
 $aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
 
-if (!sizeof($aPlaceAddress)) userError("Unknown place id.");
+if (!sizeof($aPlaceAddress)) userError('Unknown place id.');
 
 $aBreadcrums = array();
 foreach ($aPlaceAddress as $i => $aPlace) {
@@ -76,14 +76,14 @@ foreach ($aPlaceAddress as $i => $aPlace) {
 
     if ($sOutputFormat == 'html') {
         $sPlaceUrl = 'hierarchy.php?place_id='.$aPlace['place_id'];
-        if ($i) echo " &gt; ";
+        if ($i) echo ' &gt; ';
         echo '<a href="'.$sPlaceUrl.'">'.$aPlace['localname'].'</a> ('.osmLink($aPlace).')';
     }
 }
 
 
 if ($sOutputFormat == 'json') {
-    header("content-type: application/json; charset=UTF-8");
+    header('content-type: application/json; charset=UTF-8');
     $aDetails = array();
     $aDetails['breadcrumbs'] = $aBreadcrums;
     javascript_renderData($aDetails);
@@ -92,12 +92,12 @@ if ($sOutputFormat == 'json') {
 
 $aRelatedPlaceIDs = chksql($oDB->getCol($sSQL = "select place_id from placex where linked_place_id = $iPlaceID or place_id = $iPlaceID"));
 
-$sSQL = "select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level,";
+$sSQL = 'select obj.place_id, osm_type, osm_id, class, type, housenumber, admin_level,';
 $sSQL .= " rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') as isarea,  st_area(geometry) as area, ";
 $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) as localname, length(name::text) as namelength ";
-$sSQL .= " from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ";
-$sSQL .= " where parent_place_id in (".join(',', $aRelatedPlaceIDs).") and name is not null order by rank_address asc,rank_search asc limit 500) as obj";
-$sSQL .= " order by rank_address asc,rank_search asc,localname,class, type,housenumber";
+$sSQL .= ' from (select placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name from placex ';
+$sSQL .= ' where parent_place_id in ('.join(',', $aRelatedPlaceIDs).') and name is not null order by rank_address asc,rank_search asc limit 500) as obj';
+$sSQL .= ' order by rank_address asc,rank_search asc,localname,class, type,housenumber';
 $aParentOfLines = chksql($oDB->getAll($sSQL));
 
 if (sizeof($aParentOfLines)) {

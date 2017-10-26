@@ -65,7 +65,7 @@ class ReverseGeocode
 
         return chksql(
             $this->oDB->getRow($sSQL),
-            "Could not determine closest housenumber on an osm interpolation line."
+            'Could not determine closest housenumber on an osm interpolation line.'
         );
     }
 
@@ -141,7 +141,7 @@ class ReverseGeocode
             if (CONST_Debug) var_dump($sSQL);
             $aPlace = chksql(
                 $this->oDB->getRow($sSQL),
-                "Could not determine closest place."
+                'Could not determine closest place.'
             );
             if ($aPlace) {
                 $oResult = new Result($aPlace['place_id']);
@@ -186,7 +186,7 @@ class ReverseGeocode
 
             $aPlaceTiger = chksql(
                 $this->oDB->getRow($sSQL),
-                "Could not determine closest Tiger place."
+                'Could not determine closest Tiger place.'
             );
             if ($aPlaceTiger) {
                 if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
@@ -210,7 +210,7 @@ class ReverseGeocode
             $sSQL .= " WHERE place_id = $iPlaceID";
             $sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
             $sSQL .= ' LIMIT 1';
-            $iPlaceID = chksql($this->oDB->getOne($sSQL), "Could not get parent for place.");
+            $iPlaceID = chksql($this->oDB->getOne($sSQL), 'Could not get parent for place.');
             if ($iPlaceID) {
                 $oResult = new Result($iPlaceID);
             }

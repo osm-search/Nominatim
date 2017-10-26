@@ -24,9 +24,9 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             array(
-             'label' => "Country",
+             'label' => 'Country',
              'frequency' => 0,
-             'icon' => "poi_boundary_administrative",
+             'icon' => 'poi_boundary_administrative',
              'defzoom' => 6,
              'defdiameter' => 15,
              'importance' => 3

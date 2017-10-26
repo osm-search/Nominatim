@@ -7,7 +7,7 @@ ini_set('memory_limit', '800M');
 
 $aCMDOptions
  = array(
-    "Create and setup nominatim search system",
+    'Create and setup nominatim search system',
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
@@ -29,7 +29,7 @@ if (isset($aCMDResult['parse-tiger'])) {
         preg_match('#([0-9]{5})_(.*)#', basename($sImportFile), $aMatch);
         $sCountyID = $aMatch[1];
 
-        echo "Processing ".$sCountyID."...\n";
+        echo 'Processing '.$sCountyID."...\n";
         $sUnzipCmd = "unzip -d $sTempDir $sImportFile";
         exec($sUnzipCmd);
 

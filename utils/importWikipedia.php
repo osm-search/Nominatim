@@ -7,7 +7,7 @@ ini_set('memory_limit', '800M');
 
 $aCMDOptions
  = array(
-    "Create and setup nominatim search system",
+    'Create and setup nominatim search system',
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
@@ -379,7 +379,7 @@ if (isset($aCMDResult['link'])) {
 
         $sURL = $sNominatimBaseURL.'?format=xml&accept-language=en';
 
-        echo "\n-- ".$aRecord['name'].", ".$aRecord['infobox_type']."\n";
+        echo "\n-- ".$aRecord['name'].', '.$aRecord['infobox_type']."\n";
         $fMaxDist = 0.0000001;
         $bUnknown = false;
         switch (strtolower($aRecord['infobox_type'])) {
@@ -387,15 +387,15 @@ if (isset($aCMDResult['link'])) {
                 continue 2;
             case 'sea':
                 $fMaxDist = 60; // effectively turn it off
-                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                $sURL .= '&viewbox='.($aRecord['lon']-$fMaxDist).','.($aRecord['lat']+$fMaxDist).','.($aRecord['lon']+$fMaxDist).','.($aRecord['lat']-$fMaxDist);
                 break;
             case 'country':
             case 'island':
             case 'islands':
             case 'continent':
                 $fMaxDist = 60; // effectively turn it off
-                $sURL .= "&featuretype=country";
-                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                $sURL .= '&featuretype=country';
+                $sURL .= '&viewbox='.($aRecord['lon']-$fMaxDist).','.($aRecord['lat']+$fMaxDist).','.($aRecord['lon']+$fMaxDist).','.($aRecord['lat']-$fMaxDist);
                 break;
             case 'prefecture japan':
                 $aRecord['name'] = trim(str_replace(' Prefecture', ' ', $aRecord['name']));
@@ -415,14 +415,14 @@ if (isset($aCMDResult['link'])) {
             case '#australia state or territory':
             case 'russian federal subject':
                 $fMaxDist = 4;
-                $sURL .= "&featuretype=state";
-                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                $sURL .= '&featuretype=state';
+                $sURL .= '&viewbox='.($aRecord['lon']-$fMaxDist).','.($aRecord['lat']+$fMaxDist).','.($aRecord['lon']+$fMaxDist).','.($aRecord['lat']-$fMaxDist);
                 break;
             case 'protected area':
                 $fMaxDist = 1;
-                $sURL .= "&nearlat=".$aRecord['lat'];
-                $sURL .= "&nearlon=".$aRecord['lon'];
-                $sURL .= "&viewbox=".($aRecord['lon']-$fMaxDist).",".($aRecord['lat']+$fMaxDist).",".($aRecord['lon']+$fMaxDist).",".($aRecord['lat']-$fMaxDist);
+                $sURL .= '&nearlat='.$aRecord['lat'];
+                $sURL .= '&nearlon='.$aRecord['lon'];
+                $sURL .= '&viewbox='.($aRecord['lon']-$fMaxDist).','.($aRecord['lat']+$fMaxDist).','.($aRecord['lon']+$fMaxDist).','.($aRecord['lat']-$fMaxDist);
                 break;
             case 'settlement':
                 $bUnknown = true;
@@ -444,8 +444,8 @@ if (isset($aCMDResult['link'])) {
             case 'russian city':
             case 'city':
                 $fMaxDist = 0.2;
-                $sURL .= "&featuretype=settlement";
-                $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
+                $sURL .= '&featuretype=settlement';
+                $sURL .= '&viewbox='.($aRecord['lon']-0.5).','.($aRecord['lat']+0.5).','.($aRecord['lon']+0.5).','.($aRecord['lat']-0.5);
                 break;
             case 'mountain':
             case 'mountain pass':
@@ -453,33 +453,33 @@ if (isset($aCMDResult['link'])) {
             case 'lake':
             case 'airport':
                 $fMaxDist = 0.2;
-                $sURL .= "&viewbox=".($aRecord['lon']-0.5).",".($aRecord['lat']+0.5).",".($aRecord['lon']+0.5).",".($aRecord['lat']-0.5);
+                $sURL .= '&viewbox='.($aRecord['lon']-0.5).','.($aRecord['lat']+0.5).','.($aRecord['lon']+0.5).','.($aRecord['lat']-0.5);
                 break;
             case 'ship begin':
                 $fMaxDist = 0.1;
                 $aTypes = array('wreck');
-                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
-                $sURL .= "&nearlat=".$aRecord['lat'];
-                $sURL .= "&nearlon=".$aRecord['lon'];
+                $sURL .= '&viewbox='.($aRecord['lon']-0.01).','.($aRecord['lat']+0.01).','.($aRecord['lon']+0.01).','.($aRecord['lat']-0.01);
+                $sURL .= '&nearlat='.$aRecord['lat'];
+                $sURL .= '&nearlon='.$aRecord['lon'];
                 break;
             case 'road':
             case 'university':
             case 'company':
             case 'department':
                 $fMaxDist = 0.005;
-                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
-                $sURL .= "&bounded=1";
-                $sURL .= "&nearlat=".$aRecord['lat'];
-                $sURL .= "&nearlon=".$aRecord['lon'];
+                $sURL .= '&viewbox='.($aRecord['lon']-0.01).','.($aRecord['lat']+0.01).','.($aRecord['lon']+0.01).','.($aRecord['lat']-0.01);
+                $sURL .= '&bounded=1';
+                $sURL .= '&nearlat='.$aRecord['lat'];
+                $sURL .= '&nearlon='.$aRecord['lon'];
                 break;
             default:
                 $bUnknown = true;
                 $fMaxDist = 0.005;
-                $sURL .= "&viewbox=".($aRecord['lon']-0.01).",".($aRecord['lat']+0.01).",".($aRecord['lon']+0.01).",".($aRecord['lat']-0.01);
+                $sURL .= '&viewbox='.($aRecord['lon']-0.01).','.($aRecord['lat']+0.01).','.($aRecord['lon']+0.01).','.($aRecord['lat']-0.01);
                 // $sURL .= "&bounded=1";
-                $sURL .= "&nearlat=".$aRecord['lat'];
-                $sURL .= "&nearlon=".$aRecord['lon'];
-                echo "-- Unknown: ".$aRecord['infobox_type']."\n";
+                $sURL .= '&nearlat='.$aRecord['lat'];
+                $sURL .= '&nearlon='.$aRecord['lon'];
+                echo '-- Unknown: '.$aRecord['infobox_type']."\n";
                 break;
         }
         $sNameURL = $sURL.'&q='.urlencode($aRecord['name']);
@@ -526,14 +526,14 @@ if (isset($aCMDResult['link'])) {
                 elseif ($iRank <= 26) $fMaxDist = 0.001;
                 else $fMaxDist = 0.001;
             }
-            echo "-- FOUND \"".substr($aNominatRecords[$i]['DISPLAY_NAME'], 0, 50);
-            echo "\", ".$aNominatRecords[$i]['CLASS'].", ".$aNominatRecords[$i]['TYPE'];
-            echo ", ".$aNominatRecords[$i]['PLACE_RANK'].", ".$aNominatRecords[$i]['OSM_TYPE'];
+            echo '-- FOUND "'.substr($aNominatRecords[$i]['DISPLAY_NAME'], 0, 50);
+            echo '", '.$aNominatRecords[$i]['CLASS'].', '.$aNominatRecords[$i]['TYPE'];
+            echo ', '.$aNominatRecords[$i]['PLACE_RANK'].', '.$aNominatRecords[$i]['OSM_TYPE'];
             echo " (dist:$fDiff, max:$fMaxDist)\n";
             if ($fDiff > $fMaxDist) {
                 echo "-- Diff too big $fDiff (max: $fMaxDist)".$aRecord['lat'].','.$aNominatRecords[$i]['LAT'].' & '.$aRecord['lon'].','.$aNominatRecords[$i]['LON']." \n";
             } else {
-                $sSQL = "update wikipedia_article set osm_type=";
+                $sSQL = 'update wikipedia_article set osm_type=';
                 switch ($aNominatRecords[$i]['OSM_TYPE']) {
                     case 'relation':
                         $sSQL .= "'R'";
@@ -545,7 +545,7 @@ if (isset($aCMDResult['link'])) {
                         $sSQL .= "'N'";
                         break;
                 }
-                $sSQL .= ", osm_id=".$aNominatRecords[$i]['OSM_ID']." where language = '".pg_escape_string($aRecord['language'])."' and title = '".pg_escape_string($aRecord['title'])."'";
+                $sSQL .= ', osm_id='.$aNominatRecords[$i]['OSM_ID']." where language = '".pg_escape_string($aRecord['language'])."' and title = '".pg_escape_string($aRecord['title'])."'";
                 $oDB->query($sSQL);
                 break;
             }

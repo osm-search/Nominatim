@@ -38,7 +38,7 @@ function getDatabaseDate(&$oDB)
     // Find the newest node in the DB
     $iLastOSMID = $oDB->getOne("select max(osm_id) from place where osm_type = 'N'");
     // Lookup the timestamp that node was created
-    $sLastNodeURL = 'https://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID."/1";
+    $sLastNodeURL = 'https://www.openstreetmap.org/api/0.6/node/'.$iLastOSMID.'/1';
     $sLastNodeXML = file_get_contents($sLastNodeURL);
 
     if ($sLastNodeXML === false) {
@@ -413,11 +413,11 @@ function javascript_renderData($xVal, $iOptions = 0)
     $jsonout = json_encode($xVal, $iOptions);
 
     if (!isset($_GET['json_callback'])) {
-        header("Content-Type: application/json; charset=UTF-8");
+        header('Content-Type: application/json; charset=UTF-8');
         echo $jsonout;
     } else {
         if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u', $_GET['json_callback'])) {
-            header("Content-Type: application/javascript; charset=UTF-8");
+            header('Content-Type: application/javascript; charset=UTF-8');
             echo $_GET['json_callback'].'('.$jsonout.')';
         } else {
             header('HTTP/1.0 400 Bad Request');
@@ -439,16 +439,16 @@ function _debugDumpGroupedSearches($aData, $aTokens)
             }
         }
     }
-    echo "<table border=\"1\">";
-    echo "<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>";
-    echo "<th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th>";
-    echo "<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>";
+    echo '<table border="1">';
+    echo '<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>';
+    echo '<th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th>';
+    echo '<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>';
     foreach ($aData as $iRank => $aRankedSet) {
         foreach ($aRankedSet as $aRow) {
             $aRow->dumpAsHtmlTableRow($aWordsIDs);
         }
     }
-    echo "</table>";
+    echo '</table>';
 }
 
 
@@ -456,7 +456,7 @@ function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCo
 {
     $sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID, $housenumber)";
     if (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
-    $sSQL .= " order by rank_address desc,isaddress desc";
+    $sSQL .= ' order by rank_address desc,isaddress desc';
 
     $aAddressLines = chksql($oDB->getAll($sSQL));
     if ($bRaw) return $aAddressLines;

@@ -99,7 +99,7 @@ function showUsage($aSpec, $bExit = false, $sError = false)
         echo 'Try `'.basename($_SERVER['argv'][0]).' --help` for more information.'."\n";
         exit;
     }
-    echo "Usage: ".basename($_SERVER['argv'][0])."\n";
+    echo 'Usage: '.basename($_SERVER['argv'][0])."\n";
     $bFirst = true;
     foreach ($aSpec as $aLine) {
         if (is_array($aLine)) {

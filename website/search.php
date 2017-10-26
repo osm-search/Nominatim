@@ -28,7 +28,7 @@ if (CONST_Search_ReversePlanForAll
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
 
-$sForcedGeometry = ($sOutputFormat == 'html') ? "geojson" : null;
+$sForcedGeometry = ($sOutputFormat == 'html') ? 'geojson' : null;
 $oGeocode->loadParamArray($oParams, $sForcedGeometry);
 
 if (CONST_Search_BatchMode && isset($_GET['batch'])) {
@@ -74,8 +74,8 @@ $sQuery = $oGeocode->getQueryString();
 
 $aMoreParams = $oGeocode->getMoreUrlParams();
 if ($sOutputFormat != 'html') $aMoreParams['format'] = $sOutputFormat;
-if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
-    $aMoreParams['accept-language'] = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
+if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+    $aMoreParams['accept-language'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 }
 $sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
 

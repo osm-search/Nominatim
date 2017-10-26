@@ -240,7 +240,7 @@ class SearchDescription
                 $oSearch->sHouseNumber = trim($aSearchTerm['word_token']);
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
-                if (preg_match_all("/[^0-9]/", $oSearch->sHouseNumber, $aMatches) > 2) {
+                if (preg_match_all('/[^0-9]/', $oSearch->sHouseNumber, $aMatches) > 2) {
                     $oSearch->iSearchRank++;
                 }
                 if (!isset($aSearchTerm['word_id'])) {
@@ -450,7 +450,7 @@ class SearchDescription
         }
 
         if (CONST_Debug) {
-            echo "<br><b>Place IDs:</b> ";
+            echo '<br><b>Place IDs:</b> ';
             var_dump(array_keys($aResults));
         }
 
@@ -469,7 +469,7 @@ class SearchDescription
                     }
                     $aResults = $aNewResults;
                     if (CONST_Debug) {
-                        echo "<br><b>Place IDs after postcode filtering:</b> ";
+                        echo '<br><b>Place IDs after postcode filtering:</b> ';
                         var_dump(array_keys($aResults));
                     }
                 }
@@ -488,7 +488,7 @@ class SearchDescription
         if ($this->oContext->bViewboxBounded) {
             $sSQL .= ' AND ST_Intersects('.$this->oContext->sqlViewboxSmall.', geometry)';
         }
-        $sSQL .= " ORDER BY st_area(geometry) DESC LIMIT 1";
+        $sSQL .= ' ORDER BY st_area(geometry) DESC LIMIT 1';
 
         if (CONST_Debug) var_dump($sSQL);
 
@@ -543,7 +543,7 @@ class SearchDescription
             if ($this->oContext->sqlCountryList) {
                 $sSQL .= ' AND country_code in '.$this->oContext->sqlCountryList;
             }
-            $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid')." ASC";
+            $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid').' ASC';
             $sSQL .= " LIMIT $iLimit";
             if (CONST_Debug) var_dump($sSQL);
             $aDBResults = chksql($oDB->getCol($sSQL));
@@ -638,13 +638,13 @@ class SearchDescription
         }
 
         if ($this->sHouseNumber) {
-            $aTerms[] = "address_rank between 16 and 27";
+            $aTerms[] = 'address_rank between 16 and 27';
         } elseif (!$this->sClass || $this->iOperator == Operator::NAME) {
             if ($iMinAddressRank > 0) {
-                $aTerms[] = "address_rank >= ".$iMinAddressRank;
+                $aTerms[] = 'address_rank >= '.$iMinAddressRank;
             }
             if ($iMaxAddressRank < 30) {
-                $aTerms[] = "address_rank <= ".$iMaxAddressRank;
+                $aTerms[] = 'address_rank <= '.$iMaxAddressRank;
             }
         }
 
@@ -710,7 +710,7 @@ class SearchDescription
 
             $aDBResults = chksql(
                 $oDB->getAll($sSQL),
-                "Could not get places for search terms."
+                'Could not get places for search terms.'
             );
 
             foreach ($aDBResults as $aResult) {
@@ -762,8 +762,8 @@ class SearchDescription
                 $sSQL .= "interpolationtype='odd'";
             }
             $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.">=startnumber and ";
-            $sSQL .= $iHousenumber."<=endnumber";
+            $sSQL .= $iHousenumber.'>=startnumber and ';
+            $sSQL .= $iHousenumber.'<=endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
@@ -801,8 +801,8 @@ class SearchDescription
                 $sSQL .= "interpolationtype='odd'";
             }
             $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.">=startnumber and ";
-            $sSQL .= $iHousenumber."<=endnumber";
+            $sSQL .= $iHousenumber.'>=startnumber and ';
+            $sSQL .= $iHousenumber.'<=endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
@@ -835,9 +835,9 @@ class SearchDescription
             $sSQL .= " WHERE place_id in ($sPlaceIDs)";
             $sSQL .= "   AND class='".$this->sClass."' ";
             $sSQL .= "   AND type='".$this->sType."'";
-            $sSQL .= "   AND linked_place_id is null";
+            $sSQL .= '   AND linked_place_id is null';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-            $sSQL .= " ORDER BY rank_search ASC ";
+            $sSQL .= ' ORDER BY rank_search ASC ';
             $sSQL .= " LIMIT $iLimit";
 
             if (CONST_Debug) var_dump($sSQL);
@@ -865,8 +865,8 @@ class SearchDescription
                 $sSQL .= " WHERE place_id in ($sPlaceIDs)";
                 $sSQL .= "   AND rank_search < $iMaxRank + 5";
                 $sSQL .= "   AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')";
-                $sSQL .= " ORDER BY rank_search ASC ";
-                $sSQL .= " LIMIT 1";
+                $sSQL .= ' ORDER BY rank_search ASC ';
+                $sSQL .= ' LIMIT 1';
                 if (CONST_Debug) var_dump($sSQL);
                 $sPlaceGeom = chksql($oDB->getOne($sSQL));
             }
@@ -892,7 +892,7 @@ class SearchDescription
                     if ($this->oContext->hasNearPoint()) {
                         $sOrderBySQL = $this->oContext->distanceSQL('l.centroid');
                     } elseif ($sPlaceIDs) {
-                        $sOrderBySQL = "ST_Distance(l.centroid, f.geometry)";
+                        $sOrderBySQL = 'ST_Distance(l.centroid, f.geometry)';
                     } elseif ($sPlaceGeom) {
                         $sOrderBySQL = "ST_Distance(st_centroid('".$sPlaceGeom."'), l.centroid)";
                     }
@@ -908,7 +908,7 @@ class SearchDescription
                     $sSQL .= ' from '.$sClassTable.' as l';
 
                     if ($sPlaceIDs) {
-                        $sSQL .= ",placex as f WHERE ";
+                        $sSQL .= ',placex as f WHERE ';
                         $sSQL .= "f.place_id in ($sPlaceIDs) ";
                         $sSQL .= " AND ST_DWithin(l.centroid, f.centroid, $fRange)";
                     } elseif ($sPlaceGeom) {
@@ -936,7 +936,7 @@ class SearchDescription
                     if ($this->oContext->hasNearPoint()) {
                         $sOrderBySQL = $this->oContext->distanceSQL('l.geometry');
                     } else {
-                        $sOrderBySQL = "ST_Distance(l.geometry, f.geometry)";
+                        $sOrderBySQL = 'ST_Distance(l.geometry, f.geometry)';
                     }
 
                     $sSQL = 'SELECT distinct l.place_id';
@@ -950,7 +950,7 @@ class SearchDescription
                     $sSQL .= "  AND l.type='".$this->sType."'";
                     $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
                     if ($sOrderBySQL) {
-                        $sSQL .= "ORDER BY orderterm ASC";
+                        $sSQL .= 'ORDER BY orderterm ASC';
                     }
                     $sSQL .= " limit $iLimit";
 
@@ -1005,19 +1005,19 @@ class SearchDescription
             return $aWordIDs[$k];
         };
 
-        echo "<tr>";
+        echo '<tr>';
         echo "<td>$this->iSearchRank</td>";
-        echo "<td>".join(', ', array_map($kf, $this->aName))."</td>";
-        echo "<td>".join(', ', array_map($kf, $this->aNameNonSearch))."</td>";
-        echo "<td>".join(', ', array_map($kf, $this->aAddress))."</td>";
-        echo "<td>".join(', ', array_map($kf, $this->aAddressNonSearch))."</td>";
-        echo "<td>".$this->sCountryCode."</td>";
-        echo "<td>".Operator::toString($this->iOperator)."</td>";
-        echo "<td>".$this->sClass."</td>";
-        echo "<td>".$this->sType."</td>";
-        echo "<td>".$this->sPostcode."</td>";
-        echo "<td>".$this->sHouseNumber."</td>";
+        echo '<td>'.join(', ', array_map($kf, $this->aName)).'</td>';
+        echo '<td>'.join(', ', array_map($kf, $this->aNameNonSearch)).'</td>';
+        echo '<td>'.join(', ', array_map($kf, $this->aAddress)).'</td>';
+        echo '<td>'.join(', ', array_map($kf, $this->aAddressNonSearch)).'</td>';
+        echo '<td>'.$this->sCountryCode.'</td>';
+        echo '<td>'.Operator::toString($this->iOperator).'</td>';
+        echo '<td>'.$this->sClass.'</td>';
+        echo '<td>'.$this->sType.'</td>';
+        echo '<td>'.$this->sPostcode.'</td>';
+        echo '<td>'.$this->sHouseNumber.'</td>';
 
-        echo "</tr>";
+        echo '</tr>';
     }
 }

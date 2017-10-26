@@ -46,7 +46,7 @@ if ($sOsmType && $iOsmId > 0) {
         }
     }
 } elseif ($sOutputFormat != 'html') {
-    userError("Need coordinates or OSM object to lookup.");
+    userError('Need coordinates or OSM object to lookup.');
 }
 
 if (isset($aPlace)) {

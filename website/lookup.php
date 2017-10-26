@@ -29,7 +29,7 @@ $oPlaceLookup->loadParamArray($oParams);
 $aOsmIds = explode(',', $oParams->getString('osm_ids', ''));
 
 if (count($aOsmIds) > CONST_Places_Max_ID_count) {
-    userError('Bulk User: Only ' . CONST_Places_Max_ID_count . " ids are allowed in one request.");
+    userError('Bulk User: Only ' . CONST_Places_Max_ID_count . ' ids are allowed in one request.');
 }
 
 foreach ($aOsmIds as $sItem) {

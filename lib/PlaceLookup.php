@@ -76,9 +76,9 @@ class PlaceLookup
             ($this->bIncludePolygonAsSVG ? 1 : 0);
         if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
             if (CONST_PolygonOutput_MaximumTypes) {
-                userError("Select only ".CONST_PolygonOutput_MaximumTypes." polgyon output option");
+                userError('Select only '.CONST_PolygonOutput_MaximumTypes.' polgyon output option');
             } else {
-                userError("Polygon output is disabled");
+                userError('Polygon output is disabled');
             }
         }
     }
@@ -216,7 +216,7 @@ class PlaceLookup
             if ($this->sAddressRankListSql) {
                 $sSQL .= '    OR placex.rank_address in '.$this->sAddressRankListSql;
             }
-            $sSQL .= "       ) ";
+            $sSQL .= '       ) ';
             if ($this->sAllowedTypesSQLList) {
                 $sSQL .= 'AND placex.class in '.$this->sAllowedTypesSQLList;
             }
@@ -248,22 +248,22 @@ class PlaceLookup
         if ($sPlaceIDs) {
             $sSQL = 'SELECT';
             $sSQL .= "  'P' as osm_type,";
-            $sSQL .= "  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,";
+            $sSQL .= '  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,';
             $sSQL .= "  'place' as class, 'postcode' as type,";
             $sSQL .= '  null as admin_level, rank_search, rank_address,';
             $sSQL .= '  place_id, parent_place_id,';
             $sSQL .= '  null as housenumber,';
             $sSQL .= '  country_code,';
             $sSQL .= $this->langAddressSql('-1');
-            $sSQL .= "  postcode as placename,";
-            $sSQL .= "  postcode as ref,";
-            if ($this->bExtraTags) $sSQL .= "null AS extra,";
-            if ($this->bNameDetails) $sSQL .= "null AS names,";
-            $sSQL .= "  ST_x(geometry) AS lon, ST_y(geometry) AS lat,";
-            $sSQL .= "  (0.75-(rank_search::float/40)) AS importance, ";
+            $sSQL .= '  postcode as placename,';
+            $sSQL .= '  postcode as ref,';
+            if ($this->bExtraTags) $sSQL .= 'null AS extra,';
+            if ($this->bNameDetails) $sSQL .= 'null AS names,';
+            $sSQL .= '  ST_x(geometry) AS lon, ST_y(geometry) AS lat,';
+            $sSQL .= '  (0.75-(rank_search::float/40)) AS importance, ';
             $sSQL .= $this->addressImportanceSql('geometry', 'lp.parent_place_id');
-            $sSQL .= "  null AS extra_place ";
-            $sSQL .= "FROM location_postcode lp";
+            $sSQL .= '  null AS extra_place ';
+            $sSQL .= 'FROM location_postcode lp';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= "   AND lp.rank_address between $iMinRank and $iMaxRank";
 
@@ -279,9 +279,9 @@ class PlaceLookup
                     $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_TIGER);
                     // Tiger search only if a housenumber was searched and if it was found
                     // (realized through a join)
-                    $sSQL = " SELECT ";
+                    $sSQL = ' SELECT ';
                     $sSQL .= "     'T' AS osm_type, ";
-                    $sSQL .= "     (SELECT osm_id from placex p WHERE p.place_id=blub.parent_place_id) as osm_id, ";
+                    $sSQL .= '     (SELECT osm_id from placex p WHERE p.place_id=blub.parent_place_id) as osm_id, ';
                     $sSQL .= "     'place' AS class, ";
                     $sSQL .= "     'house' AS type, ";
                     $sSQL .= '     null AS admin_level, ';
@@ -292,27 +292,27 @@ class PlaceLookup
                     $sSQL .= '     housenumber_for_place as housenumber,';
                     $sSQL .= "     'us' AS country_code, ";
                     $sSQL .= $this->langAddressSql('housenumber_for_place');
-                    $sSQL .= "     null AS placename, ";
-                    $sSQL .= "     null AS ref, ";
-                    if ($this->bExtraTags) $sSQL .= "null AS extra,";
-                    if ($this->bNameDetails) $sSQL .= "null AS names,";
-                    $sSQL .= "     st_x(centroid) AS lon, ";
-                    $sSQL .= "     st_y(centroid) AS lat,";
-                    $sSQL .= "     -1.15 AS importance, ";
+                    $sSQL .= '     null AS placename, ';
+                    $sSQL .= '     null AS ref, ';
+                    if ($this->bExtraTags) $sSQL .= 'null AS extra,';
+                    if ($this->bNameDetails) $sSQL .= 'null AS names,';
+                    $sSQL .= '     st_x(centroid) AS lon, ';
+                    $sSQL .= '     st_y(centroid) AS lat,';
+                    $sSQL .= '     -1.15 AS importance, ';
                     $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
-                    $sSQL .= "     null AS extra_place ";
-                    $sSQL .= " FROM (";
-                    $sSQL .= "     SELECT place_id, ";    // interpolate the Tiger housenumbers here
-                    $sSQL .= "         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ";
-                    $sSQL .= "         parent_place_id, ";
-                    $sSQL .= "         housenumber_for_place";
-                    $sSQL .= "     FROM (";
-                    $sSQL .= "            location_property_tiger ";
-                    $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)) ";
-                    $sSQL .= "     WHERE ";
-                    $sSQL .= "         housenumber_for_place >= startnumber";
-                    $sSQL .= "         AND housenumber_for_place <= endnumber";
-                    $sSQL .= " ) AS blub"; //postgres wants an alias here
+                    $sSQL .= '     null AS extra_place ';
+                    $sSQL .= ' FROM (';
+                    $sSQL .= '     SELECT place_id, ';    // interpolate the Tiger housenumbers here
+                    $sSQL .= '         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ';
+                    $sSQL .= '         parent_place_id, ';
+                    $sSQL .= '         housenumber_for_place';
+                    $sSQL .= '     FROM (';
+                    $sSQL .= '            location_property_tiger ';
+                    $sSQL .= '            JOIN (values '.$sHousenumbers.') AS housenumbers(place_id, housenumber_for_place) USING(place_id)) ';
+                    $sSQL .= '     WHERE ';
+                    $sSQL .= '         housenumber_for_place >= startnumber';
+                    $sSQL .= '         AND housenumber_for_place <= endnumber';
+                    $sSQL .= ' ) AS blub'; //postgres wants an alias here
 
                     $aSubSelects[] = $sSQL;
                 }
@@ -324,9 +324,9 @@ class PlaceLookup
                 $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_OSMLINE);
                 // interpolation line search only if a housenumber was searched
                 // (realized through a join)
-                $sSQL = "SELECT ";
+                $sSQL = 'SELECT ';
                 $sSQL .= "  'W' AS osm_type, ";
-                $sSQL .= "  osm_id, ";
+                $sSQL .= '  osm_id, ';
                 $sSQL .= "  'place' AS class, ";
                 $sSQL .= "  'house' AS type, ";
                 $sSQL .= '  15 AS admin_level, ';
@@ -344,27 +344,27 @@ class PlaceLookup
                 $sSQL .= '  st_x(centroid) AS lon, ';
                 $sSQL .= '  st_y(centroid) AS lat, ';
                 // slightly smaller than the importance for normal houses
-                $sSQL .= "  -0.1 AS importance, ";
+                $sSQL .= '  -0.1 AS importance, ';
                 $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
-                $sSQL .= "  null AS extra_place ";
-                $sSQL .= "  FROM (";
-                $sSQL .= "     SELECT ";
-                $sSQL .= "         osm_id, ";
-                $sSQL .= "         place_id, ";
-                $sSQL .= "         country_code, ";
-                $sSQL .= "         CASE ";             // interpolate the housenumbers here
-                $sSQL .= "           WHEN startnumber != endnumber ";
-                $sSQL .= "           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ";
-                $sSQL .= "           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ";
-                $sSQL .= "         END as centroid, ";
-                $sSQL .= "         parent_place_id, ";
-                $sSQL .= "         housenumber_for_place ";
-                $sSQL .= "     FROM (";
-                $sSQL .= "            location_property_osmline ";
-                $sSQL .= "            JOIN (values ".$sHousenumbers.") AS housenumbers(place_id, housenumber_for_place) USING(place_id)";
-                $sSQL .= "          ) ";
-                $sSQL .= "     WHERE housenumber_for_place >= 0 ";
-                $sSQL .= "  ) as blub"; //postgres wants an alias here
+                $sSQL .= '  null AS extra_place ';
+                $sSQL .= '  FROM (';
+                $sSQL .= '     SELECT ';
+                $sSQL .= '         osm_id, ';
+                $sSQL .= '         place_id, ';
+                $sSQL .= '         country_code, ';
+                $sSQL .= '         CASE ';             // interpolate the housenumbers here
+                $sSQL .= '           WHEN startnumber != endnumber ';
+                $sSQL .= '           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ';
+                $sSQL .= '           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ';
+                $sSQL .= '         END as centroid, ';
+                $sSQL .= '         parent_place_id, ';
+                $sSQL .= '         housenumber_for_place ';
+                $sSQL .= '     FROM (';
+                $sSQL .= '            location_property_osmline ';
+                $sSQL .= '            JOIN (values '.$sHousenumbers.') AS housenumbers(place_id, housenumber_for_place) USING(place_id)';
+                $sSQL .= '          ) ';
+                $sSQL .= '     WHERE housenumber_for_place >= 0 ';
+                $sSQL .= '  ) as blub'; //postgres wants an alias here
 
                 $aSubSelects[] = $sSQL;
             }
@@ -373,9 +373,9 @@ class PlaceLookup
                 $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_AUX);
                 if ($sPlaceIDs) {
                     $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_AUX);
-                    $sSQL = "  SELECT ";
+                    $sSQL = '  SELECT ';
                     $sSQL .= "     'L' AS osm_type, ";
-                    $sSQL .= "     place_id AS osm_id, ";
+                    $sSQL .= '     place_id AS osm_id, ';
                     $sSQL .= "     'place' AS class,";
                     $sSQL .= "     'house' AS type, ";
                     $sSQL .= '     null AS admin_level, ';
@@ -386,19 +386,19 @@ class PlaceLookup
                     $sSQL .= '     housenumber,';
                     $sSQL .= "     'us' AS country_code, ";
                     $sSQL .= $this->langAddressSql('-1');
-                    $sSQL .= "     null AS placename, ";
-                    $sSQL .= "     null AS ref, ";
-                    if ($this->bExtraTags) $sSQL .= "null AS extra, ";
-                    if ($this->bNameDetails) $sSQL .= "null AS names, ";
-                    $sSQL .= "     ST_X(centroid) AS lon, ";
-                    $sSQL .= "     ST_Y(centroid) AS lat, ";
-                    $sSQL .= "     -1.10 AS importance, ";
+                    $sSQL .= '     null AS placename, ';
+                    $sSQL .= '     null AS ref, ';
+                    if ($this->bExtraTags) $sSQL .= 'null AS extra, ';
+                    if ($this->bNameDetails) $sSQL .= 'null AS names, ';
+                    $sSQL .= '     ST_X(centroid) AS lon, ';
+                    $sSQL .= '     ST_Y(centroid) AS lat, ';
+                    $sSQL .= '     -1.10 AS importance, ';
                     $sSQL .= $this->addressImportanceSql(
                         'centroid',
                         'location_property_aux.parent_place_id'
                     );
-                    $sSQL .= "     null AS extra_place ";
-                    $sSQL .= "  FROM location_property_aux ";
+                    $sSQL .= '     null AS extra_place ';
+                    $sSQL .= '  FROM location_property_aux ';
                     $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
 
                     $aSubSelects[] = $sSQL;
@@ -414,7 +414,7 @@ class PlaceLookup
 
         $aPlaces = chksql(
             $this->oDB->getAll(join(' UNION ', $aSubSelects)),
-            "Could not lookup place"
+            'Could not lookup place'
         );
 
         $aClassType = getClassTypes();
@@ -534,22 +534,22 @@ class PlaceLookup
 
         if (CONST_Search_AreaPolygons) {
             // Get the bounding box and outline polygon
-            $sSQL  = "select place_id,0 as numfeatures,st_area(geometry) as area,";
-            $sSQL .= "ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,";
-            $sSQL .= "ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,";
-            $sSQL .= "ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon";
-            if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ",ST_AsGeoJSON(geometry) as asgeojson";
-            if ($this->bIncludePolygonAsKML) $sSQL .= ",ST_AsKML(geometry) as askml";
-            if ($this->bIncludePolygonAsSVG) $sSQL .= ",ST_AsSVG(geometry) as assvg";
-            if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ",ST_AsText(geometry) as astext";
-            $sFrom = " from placex where place_id = ".$iPlaceID;
+            $sSQL  = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
+            $sSQL .= 'ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,';
+            $sSQL .= 'ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
+            $sSQL .= 'ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
+            if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
+            if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
+            if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
+            if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
+            $sFrom = ' from placex where place_id = '.$iPlaceID;
             if ($this->fPolygonSimplificationThreshold > 0) {
-                $sSQL .= " from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,".$this->fPolygonSimplificationThreshold.") as geometry".$sFrom.") as plx";
+                $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
             } else {
                 $sSQL .= $sFrom;
             }
 
-            $aPointPolygon = chksql($this->oDB->getRow($sSQL), "Could not get outline");
+            $aPointPolygon = chksql($this->oDB->getRow($sSQL), 'Could not get outline');
 
             if ($aPointPolygon['place_id']) {
                 if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {

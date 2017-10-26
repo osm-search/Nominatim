@@ -11,7 +11,7 @@ $oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = 'html';
 $aLangPrefOrder = $oParams->getPreferredLanguages();
-$sLanguagePrefArraySQL = "ARRAY[".join(',', array_map("getDBQuoted", $aLangPrefOrder))."]";
+$sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
@@ -30,20 +30,20 @@ if ($sOsmType && $iOsmId > 0) {
     // Be nice about our error messages for broken geometry
 
     if (!$sPlaceId) {
-        $sSQL = "SELECT ";
-        $sSQL .= "    osm_type, ";
-        $sSQL .= "    osm_id, ";
-        $sSQL .= "    errormessage, ";
-        $sSQL .= "    class, ";
-        $sSQL .= "    type, ";
+        $sSQL = 'SELECT ';
+        $sSQL .= '    osm_type, ';
+        $sSQL .= '    osm_id, ';
+        $sSQL .= '    errormessage, ';
+        $sSQL .= '    class, ';
+        $sSQL .= '    type, ';
         $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname,";
-        $sSQL .= "    ST_AsText(prevgeometry) AS prevgeom, ";
-        $sSQL .= "    ST_AsText(newgeometry) AS newgeom";
-        $sSQL .= " FROM import_polygon_error ";
+        $sSQL .= '    ST_AsText(prevgeometry) AS prevgeom, ';
+        $sSQL .= '    ST_AsText(newgeometry) AS newgeom';
+        $sSQL .= ' FROM import_polygon_error ';
         $sSQL .= " WHERE osm_type = '".$sOsmType."'";
-        $sSQL .= "  AND osm_id = ".$iOsmId;
-        $sSQL .= " ORDER BY updated DESC";
-        $sSQL .= " LIMIT 1";
+        $sSQL .= '  AND osm_id = '.$iOsmId;
+        $sSQL .= ' ORDER BY updated DESC';
+        $sSQL .= ' LIMIT 1';
         $aPointDetails = chksql($oDB->getRow($sSQL));
         if (!PEAR::isError($aPointDetails) && $aPointDetails) {
             if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
@@ -60,7 +60,7 @@ if ($sOsmType && $iOsmId > 0) {
 }
 
 
-if (!$sPlaceId) userError("Please select a place id");
+if (!$sPlaceId) userError('Please select a place id');
 
 $iPlaceID = (int)$sPlaceId;
 
@@ -85,34 +85,34 @@ if (CONST_Use_Aux_Location_data) {
 $hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 // Get the details for this point
-$sSQL = "SELECT place_id, osm_type, osm_id, class, type, name, admin_level,";
-$sSQL .= "    housenumber, postcode, country_code,";
-$sSQL .= "    importance, wikipedia,";
+$sSQL = 'SELECT place_id, osm_type, osm_id, class, type, name, admin_level,';
+$sSQL .= '    housenumber, postcode, country_code,';
+$sSQL .= '    importance, wikipedia,';
 $sSQL .= "    to_char(indexed_date, 'YYYY-MM-DD HH24:MI') AS indexed_date,";
-$sSQL .= "    parent_place_id, ";
-$sSQL .= "    rank_address, ";
-$sSQL .= "    rank_search, ";
-$sSQL .= "    get_searchrank_label(rank_search) AS rank_search_label,";
+$sSQL .= '    parent_place_id, ';
+$sSQL .= '    rank_address, ';
+$sSQL .= '    rank_search, ';
+$sSQL .= '    get_searchrank_label(rank_search) AS rank_search_label,';
 $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
 $sSQL .= "    ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea, ";
 //$sSQL .= " ST_Area(geometry::geography) AS area, ";
-$sSQL .= "    ST_y(centroid) AS lat, ";
-$sSQL .= "    ST_x(centroid) AS lon,";
-$sSQL .= "    CASE ";
-$sSQL .= "       WHEN importance = 0 OR importance IS NULL THEN 0.75-(rank_search::float/40) ";
-$sSQL .= "       ELSE importance ";
-$sSQL .= "       END as calculated_importance, ";
-$sSQL .= "    ST_AsGeoJSON(CASE ";
-$sSQL .= "                WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ";
-$sSQL .= "                ELSE geometry ";
-$sSQL .= "                END) as asgeojson";
-$sSQL .= " FROM placex ";
+$sSQL .= '    ST_y(centroid) AS lat, ';
+$sSQL .= '    ST_x(centroid) AS lon,';
+$sSQL .= '    CASE ';
+$sSQL .= '       WHEN importance = 0 OR importance IS NULL THEN 0.75-(rank_search::float/40) ';
+$sSQL .= '       ELSE importance ';
+$sSQL .= '       END as calculated_importance, ';
+$sSQL .= '    ST_AsGeoJSON(CASE ';
+$sSQL .= '                WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ';
+$sSQL .= '                ELSE geometry ';
+$sSQL .= '                END) as asgeojson';
+$sSQL .= ' FROM placex ';
 $sSQL .= " WHERE place_id = $iPlaceID";
 
-$aPointDetails = chksql($oDB->getRow($sSQL), "Could not get details of place object.");
+$aPointDetails = chksql($oDB->getRow($sSQL), 'Could not get details of place object.');
 
 if (!$aPointDetails) {
-    userError("Unknown place id.");
+    userError('Unknown place id.');
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
@@ -151,56 +151,56 @@ if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
 $aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], -1, true);
 
 // Linked places
-$sSQL = "SELECT placex.place_id, osm_type, osm_id, class, type, housenumber,";
-$sSQL .= " admin_level, rank_address, ";
+$sSQL = 'SELECT placex.place_id, osm_type, osm_id, class, type, housenumber,';
+$sSQL .= ' admin_level, rank_address, ';
 $sSQL .= " ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea,";
 $sSQL .= " ST_DistanceSpheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') AS distance, ";
 $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
-$sSQL .= " length(name::text) AS namelength ";
-$sSQL .= " FROM ";
-$sSQL .= "    placex, ";
-$sSQL .= "    ( ";
-$sSQL .= "      SELECT centroid AS placegeometry ";
-$sSQL .= "      FROM placex ";
+$sSQL .= ' length(name::text) AS namelength ';
+$sSQL .= ' FROM ';
+$sSQL .= '    placex, ';
+$sSQL .= '    ( ';
+$sSQL .= '      SELECT centroid AS placegeometry ';
+$sSQL .= '      FROM placex ';
 $sSQL .= "      WHERE place_id = $iPlaceID ";
-$sSQL .= "    ) AS x";
+$sSQL .= '    ) AS x';
 $sSQL .= " WHERE linked_place_id = $iPlaceID";
-$sSQL .= " ORDER BY ";
-$sSQL .= "   rank_address ASC, ";
-$sSQL .= "   rank_search ASC, ";
+$sSQL .= ' ORDER BY ';
+$sSQL .= '   rank_address ASC, ';
+$sSQL .= '   rank_search ASC, ';
 $sSQL .= "   get_name_by_language(name, $sLanguagePrefArraySQL), ";
-$sSQL .= "   housenumber";
+$sSQL .= '   housenumber';
 $aLinkedLines = $oDB->getAll($sSQL);
 if (PEAR::isError($aLinkedLines)) { // possible timeout
     $aLinkedLines = [];
 }
 
 // All places this is an imediate parent of
-$sSQL = "SELECT obj.place_id, osm_type, osm_id, class, type, housenumber,";
+$sSQL = 'SELECT obj.place_id, osm_type, osm_id, class, type, housenumber,';
 $sSQL .= " admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea,";
 $sSQL .= " ST_DistanceSpheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') AS distance, ";
 $sSQL .= " get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
-$sSQL .= " length(name::text) AS namelength ";
-$sSQL .= " FROM ";
-$sSQL .= "    ( ";
-$sSQL .= "      SELECT placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name ";
-$sSQL .= "      FROM placex ";
+$sSQL .= ' length(name::text) AS namelength ';
+$sSQL .= ' FROM ';
+$sSQL .= '    ( ';
+$sSQL .= '      SELECT placex.place_id, osm_type, osm_id, class, type, housenumber, admin_level, rank_address, rank_search, geometry, name ';
+$sSQL .= '      FROM placex ';
 $sSQL .= "      WHERE parent_place_id = $iPlaceID ";
-$sSQL .= "      ORDER BY ";
-$sSQL .= "         rank_address ASC, ";
-$sSQL .= "         rank_search ASC ";
-$sSQL .= "      LIMIT 500 ";
-$sSQL .= "    ) AS obj,";
-$sSQL .= "    ( ";
-$sSQL .= "      SELECT centroid AS placegeometry ";
-$sSQL .= "      FROM placex ";
+$sSQL .= '      ORDER BY ';
+$sSQL .= '         rank_address ASC, ';
+$sSQL .= '         rank_search ASC ';
+$sSQL .= '      LIMIT 500 ';
+$sSQL .= '    ) AS obj,';
+$sSQL .= '    ( ';
+$sSQL .= '      SELECT centroid AS placegeometry ';
+$sSQL .= '      FROM placex ';
 $sSQL .= "      WHERE place_id = $iPlaceID ";
-$sSQL .= "    ) AS x";
-$sSQL .= " ORDER BY ";
-$sSQL .= "    rank_address ASC, ";
-$sSQL .= "    rank_search ASC, ";
-$sSQL .= "    localname, ";
-$sSQL .= "    housenumber";
+$sSQL .= '    ) AS x';
+$sSQL .= ' ORDER BY ';
+$sSQL .= '    rank_address ASC, ';
+$sSQL .= '    rank_search ASC, ';
+$sSQL .= '    localname, ';
+$sSQL .= '    housenumber';
 $aParentOfLines = $oDB->getAll($sSQL);
 if (PEAR::isError($aParentOfLines)) { // possible timeout
     $aParentOfLines = [];
@@ -215,13 +215,13 @@ if ($oParams->getBool('keywords')) {
         $aPlaceSearchName = [];
     }
 
-    $sSQL = "SELECT * FROM word WHERE word_id in (".substr($aPlaceSearchName['name_vector'], 1, -1).")";
+    $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['name_vector'], 1, -1).')';
     $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
         $aPlaceSearchNameKeywords = [];
     }
 
-    $sSQL = "SELECT * FROM word WHERE word_id in (".substr($aPlaceSearchName['nameaddress_vector'], 1, -1).")";
+    $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['nameaddress_vector'], 1, -1).')';
     $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
         $aPlaceSearchAddressKeywords = [];

@@ -146,11 +146,11 @@ class SearchContext
         $this->sqlViewboxCentre .= ")'::geometry,4326)";
 
         $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/69).')';
-        $sGeom = chksql($oDB->getOne("select ".$sSQL), "Could not get small viewbox");
+        $sGeom = chksql($oDB->getOne('select '.$sSQL), 'Could not get small viewbox');
         $this->sqlViewboxSmall = "'".$sGeom."'::geometry";
 
         $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/30).')';
-        $sGeom = chksql($oDB->getOne("select ".$sSQL), "Could not get large viewbox");
+        $sGeom = chksql($oDB->getOne('select '.$sSQL), 'Could not get large viewbox');
         $this->sqlViewboxLarge = "'".$sGeom."'::geometry";
     }
 

@@ -9,7 +9,7 @@ ini_set('memory_limit', '800M');
 
 $aCMDOptions
 = array(
-   "Query database from command line. Returns search result as JSON.",
+   'Query database from command line. Returns search result as JSON.',
    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
@@ -41,7 +41,7 @@ if ($oParams->getBool('search')) {
 
     $aSearchResults = $oGeocode->lookup();
 
-    if (version_compare(phpversion(), "5.4.0", '<')) {
+    if (version_compare(phpversion(), '5.4.0', '<')) {
         echo json_encode($aSearchResults);
     } else {
         echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";

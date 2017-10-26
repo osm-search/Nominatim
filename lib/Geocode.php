@@ -525,12 +525,12 @@ class Geocode
 
         $sNormQuery = $this->normTerm($this->sQuery);
         $sLanguagePrefArraySQL = getArraySQL(
-            array_map("getDBQuoted", $this->aLangPrefOrder)
+            array_map('getDBQuoted', $this->aLangPrefOrder)
         );
 
         $sQuery = $this->sQuery;
         if (!preg_match('//u', $sQuery)) {
-            userError("Query string is not UTF-8 encoded.");
+            userError('Query string is not UTF-8 encoded.');
         }
 
         // Conflicts between US state abreviations and various words for 'the' in different languages
@@ -577,7 +577,7 @@ class Geocode
                 $sSpecialTerm = pg_escape_string($sSpecialTerm);
                 $sToken = chksql(
                     $this->oDB->getOne("SELECT make_standard_name('$sSpecialTerm')"),
-                    "Cannot decode query. Wrong encoding?"
+                    'Cannot decode query. Wrong encoding?'
                 );
                 $sSQL = 'SELECT class, type FROM word ';
                 $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
@@ -618,7 +618,7 @@ class Geocode
             foreach ($aInPhrases as $iPhrase => $sPhrase) {
                 $sPhrase = chksql(
                     $this->oDB->getOne('SELECT make_standard_name('.getDBQuoted($sPhrase).')'),
-                    "Cannot normalize query string (is it a UTF-8 string?)"
+                    'Cannot normalize query string (is it a UTF-8 string?)'
                 );
                 if (trim($sPhrase)) {
                     $oPhrase = new Phrase($sPhrase, is_string($iPhrase) ? $iPhrase : '');
@@ -631,14 +631,14 @@ class Geocode
                 // Check which tokens we have, get the ID numbers
                 $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' FROM word ';
-                $sSQL .= ' WHERE word_token in ('.join(',', array_map("getDBQuoted", $aTokens)).')';
+                $sSQL .= ' WHERE word_token in ('.join(',', array_map('getDBQuoted', $aTokens)).')';
 
                 if (CONST_Debug) var_Dump($sSQL);
 
                 $aValidTokens = array();
                 $aDatabaseWords = chksql(
                     $this->oDB->getAll($sSQL),
-                    "Could not get word tokens."
+                    'Could not get word tokens.'
                 );
                 $aWordFrequencyScores = array();
                 foreach ($aDatabaseWords as $aToken) {
@@ -780,15 +780,15 @@ class Geocode
                     if ($sPlaceIds) {
                         $sSQL = 'SELECT place_id FROM placex ';
                         $sSQL .= 'WHERE place_id in ('.$sPlaceIds.') ';
-                        $sSQL .= "  AND (";
+                        $sSQL .= '  AND (';
                         $sSQL .= "         placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
                         if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) {
                             $sSQL .= "     OR (extratags->'place') = 'city'";
                         }
                         if ($this->aAddressRankList) {
-                            $sSQL .= "     OR placex.rank_address in (".join(',', $this->aAddressRankList).")";
+                            $sSQL .= '     OR placex.rank_address in ('.join(',', $this->aAddressRankList).')';
                         }
-                        $sSQL .= ")";
+                        $sSQL .= ')';
                         $aFilterSql[] = $sSQL;
                     }
                     $sPlaceIds = Result::joinIdsByTable($aResults, Result::TABLE_POSTCODE);
@@ -797,9 +797,9 @@ class Geocode
                         $sSQL .= 'WHERE place_id in ('.$sPlaceIds.') ';
                         $sSQL .= "  AND (lp.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
                         if ($this->aAddressRankList) {
-                            $sSQL .= "     OR lp.rank_address in (".join(',', $this->aAddressRankList).")";
+                            $sSQL .= '     OR lp.rank_address in ('.join(',', $this->aAddressRankList).')';
                         }
-                        $sSQL .= ") ";
+                        $sSQL .= ') ';
                         $aFilterSql[] = $sSQL;
                     }
 
@@ -835,7 +835,7 @@ class Geocode
 
             $oLookup = $oReverse->lookupPoint($oCtx->sqlNear, false);
 
-            if (CONST_Debug) var_dump("Reverse search", $aLookup);
+            if (CONST_Debug) var_dump('Reverse search', $aLookup);
 
             if ($oLookup) {
                 $aResults = array($oLookup->iId => $oLookup);
@@ -932,7 +932,7 @@ class Geocode
                 foreach ($aRecheckWords as $i => $sWord) {
                     if (stripos($sAddress, $sWord)!==false) {
                         $iCountWords++;
-                        if (preg_match("/(^|,)\s*".preg_quote($sWord, '/')."\s*(,|$)/", $sAddress)) $iCountWords += 0.1;
+                        if (preg_match('/(^|,)\s*'.preg_quote($sWord, '/').'\s*(,|$)/', $sAddress)) $iCountWords += 0.1;
                     }
                 }
 

@@ -192,4 +192,33 @@ class NominatimTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals($sQuery, $aRes[0]);
         }
     }
+
+    private function closestHouseNumberEvenOddOther($startnumber, $endnumber, $fraction, $aExpected)
+    {
+        foreach (['even', 'odd', 'other'] as $itype) {
+            $this->assertEquals(
+                $aExpected[$itype],
+                closestHouseNumber([
+                                    'startnumber' => $startnumber,
+                                    'endnumber' => $endnumber,
+                                    'fraction' => $fraction,
+                                    'interpolationtype' => $itype
+                                   ]),
+                "$startnumber => $endnumber, $fraction, $itype"
+            );
+        }
+    }
+
+    public function testClosestHouseNumber()
+    {
+        $this->closestHouseNumberEvenOddOther(50, 100, 0.5, ['even' => 76, 'odd' => 75, 'other' => 75]);
+        // upper bound
+        $this->closestHouseNumberEvenOddOther(50, 100, 1.5, ['even' => 100, 'odd' => 100, 'other' => 100]);
+        // lower bound
+        $this->closestHouseNumberEvenOddOther(50, 100, -0.5, ['even' => 50, 'odd' => 50, 'other' => 50]);
+        // fraction 0
+        $this->closestHouseNumberEvenOddOther(50, 100, 0, ['even' => 50, 'odd' => 51, 'other' => 50]);
+        // start == end
+        $this->closestHouseNumberEvenOddOther(50, 50, 0.5, ['even' => 50, 'odd' => 50, 'other' => 50]);
+    }
 }

@@ -132,7 +132,8 @@ class ReverseGeocode
                 $sSQL .= '   LIMIT 1000) as p WHERE';
             }
             $sSQL .= ' rank_search != 28 and rank_search >= '.$iMaxRank;
-            $sSQL .= ' and (name is not null or housenumber is not null)';
+            $sSQL .= ' and (name is not null or housenumber is not null';
+            $sSQL .= '      or rank_search between 26 and 27)';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';

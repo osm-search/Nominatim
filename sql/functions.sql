@@ -2509,7 +2509,7 @@ BEGIN
       from place_addressline join placex on (address_place_id = placex.place_id) 
       where place_addressline.place_id = for_place_id 
       and (cached_rank_address > 0 AND cached_rank_address < searchrankaddress)
-      and address_place_id != for_place_id
+      and address_place_id != for_place_id and linked_place_id is null
       and (placex.country_code IS NULL OR searchcountrycode IS NULL OR placex.country_code = searchcountrycode)
       order by rank_address desc,isaddress desc,fromarea desc,distance asc,rank_search desc
   LOOP

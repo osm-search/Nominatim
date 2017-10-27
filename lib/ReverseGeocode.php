@@ -134,7 +134,7 @@ class ReverseGeocode
             $sSQL .= ' rank_search != 28 and rank_search >= '.$iMaxRank;
             $sSQL .= ' and (name is not null or housenumber is not null)';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
-            $sSQL .= ' and indexed_status = 0 ';
+            $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
             $sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
             $sSQL .= ' ORDER BY distance ASC limit 1';
@@ -205,9 +205,9 @@ class ReverseGeocode
             } else {
                 $iPlaceID = $oResult->iId;
             }
-            $sSQL  = 'select address_place_id';
-            $sSQL .= ' FROM place_addressline';
-            $sSQL .= " WHERE place_id = $iPlaceID";
+            $sSQL  = 'select coalesce(p.linked_place_id, a.address_place_id)';
+            $sSQL .= ' FROM place_addressline a, placex p';
+            $sSQL .= " WHERE a.place_id = $iPlaceID and a.place_id = p.place_id";
             $sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
             $sSQL .= ' LIMIT 1';
             $iPlaceID = chksql($this->oDB->getOne($sSQL), 'Could not get parent for place.');

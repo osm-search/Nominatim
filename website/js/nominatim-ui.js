@@ -37,6 +37,8 @@ jQuery(document).ready(function(){
         attribution: (nominatim_map_init.tile_attribution || null ) //'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+    map.setView([nominatim_map_init.lat, nominatim_map_init.lon], nominatim_map_init.zoom);
+
     var osm2 = new L.TileLayer(nominatim_map_init.tile_url, {minZoom: 0, maxZoom: 13, attribution: (nominatim_map_init.tile_attribution || null )});
     var miniMap = new L.Control.MiniMap(osm2, {toggleDisplay: true}).addTo(map);
 

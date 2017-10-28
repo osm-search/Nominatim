@@ -35,9 +35,10 @@ except:
     import ogr
     import osr
 
-# tiger_county_fips was generated from the following:
-# wget http://www.census.gov/datamap/fipslist/AllSt.txt
-# cat AllSt.txt  | grep '^                [0-9]' | awk "{printf \"'%s' : '%s' ,\\n\", \$1, substr(\$0, 31)}" | > countyfips.py
+# https://www.census.gov/geo/reference/codes/cou.html 
+# tiger_county_fips.json was generated from the following:
+# wget https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt
+# cat national_county.txt | perl -F, -naE'($F[0] ne 'AS') && $F[3] =~ s/ ((city|City|County|District|Borough|City and Borough|Municipio|Municipality|Parish|Island|Census Area)(?:, |\Z))+//; say qq(  "$F[1]$F[2]": "$F[3], $F[0]",)'
 json_fh = open(os.path.dirname(sys.argv[0]) + "/tiger_county_fips.json")
 county_fips_data = json.load(json_fh)
 

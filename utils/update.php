@@ -33,6 +33,7 @@ $aCMDOptions
    array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
 
    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
+   array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
@@ -235,6 +236,12 @@ if ($aResult['deduplicate']) {
             chksql($oDB->query($sSQL));
         }
     }
+}
+
+if ($aResult['recompute-word-counts']) {
+    info('Recompute frequency of full-word search terms');
+    $sTemplate = file_get_contents(CONST_BasePath.'/sql/words_from_search_name.sql');
+    runSQLScript($sTemplate, true, true);
 }
 
 if ($aResult['index']) {

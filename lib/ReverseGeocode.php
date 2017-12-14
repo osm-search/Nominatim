@@ -206,9 +206,10 @@ class ReverseGeocode
             } else {
                 $iPlaceID = $oResult->iId;
             }
-            $sSQL  = 'select coalesce(p.linked_place_id, a.address_place_id)';
+            $sSQL  = 'select a.address_place_id';
             $sSQL .= ' FROM place_addressline a, placex p';
-            $sSQL .= " WHERE a.place_id = $iPlaceID and a.place_id = p.place_id";
+            $sSQL .= " WHERE a.place_id = $iPlaceID and a.address_place_id = p.place_id";
+            $sSQL .= '   AND p.linked_place_id is null';
             $sSQL .= " ORDER BY abs(cached_rank_address - $iMaxRank) asc,cached_rank_address desc,isaddress desc,distance desc";
             $sSQL .= ' LIMIT 1';
             $iPlaceID = chksql($this->oDB->getOne($sSQL), 'Could not get parent for place.');

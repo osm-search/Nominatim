@@ -68,6 +68,17 @@ import, for excerpts you can use less. Adapt to your available RAM to
 avoid swapping, never give more than 2/3 of RAM to osm2pgsql.
 
 
+Computing word frequency for search terms can improve the performance of
+forward geocoding in particular under high load as it helps Postgres' query
+planner to make the right decisions. To recompute word counts run:
+
+    ./utils/update.php --recompute-word-counts
+
+This will take a couple of hours for a full planet installation. You can
+also defer that step to a later point in time when you realise that
+performance becomes an issue. Just make sure that updates are stopped before
+running this function.
+
 Loading additional datasets
 ---------------------------
 

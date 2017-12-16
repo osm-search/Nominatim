@@ -40,11 +40,11 @@ Feature: Linking of places
     Scenario: Relations are not linked when in waterway relations
         Given the scene split-road
         And the places
-         | osm | class    | type  | name  | geometry |
-         | W1  | waterway | river | Rhein | :w-2 |
-         | W2  | waterway | river | Rhein | :w-3 |
-         | R1  | waterway | river | Rhein | :w-1 + :w-2 + :w-3 |
-         | R2  | waterway | river | Limmat| :w-4a |
+         | osm | class    | type   | name  | geometry |
+         | W1  | waterway | stream | Rhein | :w-2 |
+         | W2  | waterway | river  | Rhein | :w-3 |
+         | R1  | waterway | river  | Rhein | :w-1 + :w-2 + :w-3 |
+         | R2  | waterway | river  | Limmat| :w-4a |
         And the relations
          | id | members                          | tags+type |
          | 1  | R2                               | waterway  |
@@ -69,11 +69,11 @@ Feature: Linking of places
          | object | linked_place_id |
          | R1     | - |
 
-    Scenario: Waterways are not linked when waterway types don't match
+    Scenario: Waterways are not linked when the way type is not a river feature
         Given the scene split-road
         And the places
          | osm | class    | type     | name  | geometry |
-         | W1  | waterway | drain    | Rhein | :w-2 |
+         | W1  | waterway | lock     | Rhein | :w-2 |
          | R1  | waterway | river    | Rhein | :w-1 + :w-2 + :w-3 |
         And the relations
          | id | members               | tags+type |

@@ -1355,7 +1355,7 @@ BEGIN
                 --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation_members[i];
                 FOR linked_node_id IN SELECT place_id FROM placex
                   WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
-                  and class = NEW.class and type = NEW.type
+                  and class = NEW.class and type in ('river', 'stream', 'canal', 'drain', 'ditch')
                   and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;

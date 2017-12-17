@@ -326,7 +326,7 @@ class SearchDescription
         ) {
             if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
-                $oSearch->iSearchRank++;
+                $oSearch->iSearchRank += 2;
                 $oSearch->aAddress[$iWordID] = $iWordID;
                 $aNewSearches[] = $oSearch;
             } else {

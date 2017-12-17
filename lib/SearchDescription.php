@@ -360,7 +360,7 @@ class SearchDescription
             && (!sizeof($this->aName) || $this->iNamePhrase == $iPhrase)
         ) {
             $oSearch = clone $this;
-            $oSearch->iSearchRank++;
+            $oSearch->iSearchRank += 2;
             if (!sizeof($this->aName)) {
                 $oSearch->iSearchRank += 1;
             }

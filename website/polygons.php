@@ -9,7 +9,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = 'html';
-$iDays = $oParams->getInt('days', 1);
+$iDays = $oParams->getInt('days', false);
 $bReduced = $oParams->getBool('reduced', false);
 $sClass = $oParams->getString('class', false);
 
@@ -22,11 +22,20 @@ while ($iTotalBroken && !sizeof($aPolygons)) {
     $sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
     $sSQL .= 'country_code as "country",errormessage as "error message",updated';
     $sSQL .= ' from import_polygon_error';
-    $sSQL .= " where updated > 'now'::timestamp - '".$iDays." day'::interval";
-    $iDays++;
 
-    if ($bReduced) $sSQL .= " and errormessage like 'Area reduced%'";
-    if ($sClass) $sSQL .= " and class = '".pg_escape_string($sClass)."'";
+    $aWhere = array();
+    if ($iDays) {
+        $aWhere[] = "updated > 'now'::timestamp - '".$iDays." day'::interval";
+        $iDays++;
+    }
+
+    if ($bReduced) $aWhere[] = "errormessage like 'Area reduced%'";
+    if ($sClass) $sWhere[] = "class = '".pg_escape_string($sClass)."'";
+
+    if (sizeof($aWhere)) {
+        $sSQL .= ' where '.join(' and ', $aWhere);
+    }
+
     $sSQL .= ' order by updated desc limit 1000';
     $aPolygons = chksql($oDB->getAll($sSQL));
 }

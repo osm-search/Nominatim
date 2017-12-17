@@ -262,7 +262,7 @@ class SearchDescription
 
                 $iOp = Operator::NEAR; // near == in for the moment
                 if ($aSearchTerm['operator'] == '') {
-                    if (sizeof($this->aName)) {
+                    if (sizeof($this->aName) || $this->oContext->isBoundedSearch()) {
                         $iOp = Operator::NAME;
                     }
                     $oSearch->iSearchRank += 2;

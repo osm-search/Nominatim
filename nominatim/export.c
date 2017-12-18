@@ -152,7 +152,7 @@ void nominatim_exportCreatePreparedQueries(PGconn * conn)
 
     pg_prepare_params[0] = PG_OID_INT8;
     res = PQprepare(conn, "placex_details",
-                    "select placex.osm_type, placex.osm_id, placex.class, placex.type, placex.name, placex.housenumber, placex.country_code, ST_AsText(placex.geometry), placex.admin_level, placex.rank_address, placex.rank_search, placex.parent_place_id, parent.osm_type, parent.osm_id, placex.indexed_status from placex left outer join placex as parent on (placex.parent_place_id = parent.place_id) where placex.place_id = $1",
+                    "select placex.osm_type, placex.osm_id, placex.class, placex.type, placex.name, placex.housenumber, placex.country_code, ST_AsText(placex.geometry), placex.admin_level, placex.rank_address, placex.rank_search, placex.parent_place_id, parent.osm_type, parent.osm_id, placex.indexed_status, placex.linked_place_id from placex left outer join placex as parent on (placex.parent_place_id = parent.place_id) where placex.place_id = $1",
                     1, pg_prepare_params);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
@@ -355,7 +355,7 @@ void nominatim_exportFreeQueries(struct export_data * querySet)
 /*
  * Requirements: the prepared queries must exist
  */
-void nominatim_exportPlace(uint64_t place_id, PGconn * conn, 
+void nominatim_exportPlace(uint64_t place_id, PGconn * conn,
   xmlTextWriterPtr writer, pthread_mutex_t * writer_mutex, struct export_data * prevQuerySet)
 {
     struct export_data		querySet;
@@ -387,7 +387,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn,
         {
             // Add
             if (writer_mutex) pthread_mutex_lock( writer_mutex );
-            nominatim_exportStartMode(writer, 1);  
+            nominatim_exportStartMode(writer, 1);
         }
         else
         {
@@ -396,14 +396,14 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn,
             // TODO: detect changes
 
             if (writer_mutex) pthread_mutex_lock( writer_mutex );
-            nominatim_exportStartMode(writer, 2);  
+            nominatim_exportStartMode(writer, 2);
         }
     }
     else
     {
        // Add
        if (writer_mutex) pthread_mutex_lock( writer_mutex );
-       nominatim_exportStartMode(writer, 1);  
+       nominatim_exportStartMode(writer, 1);
     }
 
     xmlTextWriterStartElement(writer, BAD_CAST "feature");
@@ -417,6 +417,7 @@ void nominatim_exportPlace(uint64_t place_id, PGconn * conn,
     xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_place_id", BAD_CAST PQgetvalue(querySet.res, 0, 11));
     xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_type", BAD_CAST PQgetvalue(querySet.res, 0, 12));
     xmlTextWriterWriteAttribute(writer, BAD_CAST "parent_id", BAD_CAST PQgetvalue(querySet.res, 0, 13));
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "linked_place_id", BAD_CAST PQgetvalue(querySet.res, 0, 15));
 
     if (PQntuples(querySet.resNames))
     {

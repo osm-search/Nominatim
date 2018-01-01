@@ -13,6 +13,7 @@ $aCMDOptions
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
    array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
+   array('check-for-updates', '', 0, 1, 0, 0, 'bool', 'Check if new updates are available'),
    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
@@ -96,6 +97,17 @@ if ($aResult['init-updates']) {
     }
 
     echo "Done. Database updates will start at sequence $aOutput[0] ($sWindBack)\n";
+}
+
+if ($aResult['check-for-updates']) {
+    $aLastState = chksql($oDB->getRow('SELECT sequence_id FROM import_status'));
+
+    if (!$aLastState['sequence_id']) {
+        fail('Updates not set up. Please run ./utils/update.php --init-updates.');
+    }
+
+    system(CONST_BasePath.'/utils/check_server_for_updates.py '.CONST_Replication_Url.' '.$aLastState['sequence_id'], $iRet);
+    exit($iRet);
 }
 
 if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {

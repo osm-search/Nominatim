@@ -72,7 +72,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 //// Replication settings
 
 // Base URL of replication service
-@define('CONST_Replication_Url', 'http://planet.openstreetmap.org/replication/minute');
+@define('CONST_Replication_Url', 'https://planet.openstreetmap.org/replication/minute');
 
 // Maximum size in MB of data to download per batch
 @define('CONST_Replication_Max_Diff_size', '30');

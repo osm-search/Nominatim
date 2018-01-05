@@ -19,7 +19,7 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 include(CONST_InstallPath.'/settings/phrase_settings.php');
 
 if (true) {
-    $sURL = 'http://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';
+    $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';
     $sWikiPageXML = file_get_contents($sURL);
     if (preg_match_all('#\\| ([a-z]{2}) \\|\\| [^|]+\\|\\| ([a-z,]+)#', $sWikiPageXML, $aMatches, PREG_SET_ORDER)) {
         foreach ($aMatches as $aMatch) {

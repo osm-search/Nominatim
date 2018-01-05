@@ -130,25 +130,25 @@ $bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-m
 $sContentURL = '';
 if (isset($aResult['import-node']) && $aResult['import-node']) {
     if ($bUseOSMApi) {
-        $sContentURL = 'http://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node'];
+        $sContentURL = 'https://www.openstreetmap.org/api/0.6/node/'.$aResult['import-node'];
     } else {
-        $sContentURL = 'http://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;';
+        $sContentURL = 'https://overpass-api.de/api/interpreter?data=node('.$aResult['import-node'].');out%20meta;';
     }
 }
 
 if (isset($aResult['import-way']) && $aResult['import-way']) {
     if ($bUseOSMApi) {
-        $sContentURL = 'http://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
+        $sContentURL = 'https://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
     } else {
-        $sContentURL = 'http://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
+        $sContentURL = 'https://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
     }
 }
 
 if (isset($aResult['import-relation']) && $aResult['import-relation']) {
     if ($bUseOSMApi) {
-        $sContentURLsModifyXMLstr = 'http://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
+        $sContentURLsModifyXMLstr = 'https://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
     } else {
-        $sContentURL = 'http://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;';
+        $sContentURL = 'https://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;';
     }
 }
 
@@ -251,7 +251,7 @@ if ($aResult['index']) {
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     //
     if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
-        fail("Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://wiki.openstreetmap.org/wiki/Nominatim/Installation#Updates)\n");
+        fail("Error: Update interval too low for download.geofabrik.de.  Please check install documentation (http://nominatim.org/release-docs/latest/Import-and-Update#setting-up-the-update-process)\n");
     }
 
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';

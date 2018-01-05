@@ -143,7 +143,7 @@ jQuery(document).ready(function(){
         ].join(',');
     }
     function map_link_to_osm(){
-        return "http://openstreetmap.org/#map=" + map.getZoom() + "/" + map.getCenter().lat + "/" + map.getCenter().lng;
+        return "https://openstreetmap.org/#map=" + map.getZoom() + "/" + map.getCenter().lat + "/" + map.getCenter().lng;
     }
 
     function get_result_element(position){

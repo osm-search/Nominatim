@@ -27,7 +27,7 @@ if ($aCMDResult['wiki-import']) {
          'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi');
 
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
-        $sURL = 'http://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
+        $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
         $sWikiPageXML = file_get_contents($sURL);
         if (preg_match_all('#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN])#', $sWikiPageXML, $aMatches, PREG_SET_ORDER)) {
             foreach ($aMatches as $aMatch) {

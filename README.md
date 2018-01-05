@@ -6,7 +6,7 @@ Nominatim
 Nominatim (from the Latin, 'by name') is a tool to search OpenStreetMap data
 by name and address (geocoding) and to generate synthetic addresses of
 OSM points (reverse geocoding). An instance with up-to-date data can be found
-at http://nominatim.openstreetmap.org. Nominatim is also used as one of the
+at https://nominatim.openstreetmap.org. Nominatim is also used as one of the
 sources for the Search box on the OpenStreetMap home page and powers the search
 on the MapQuest Open Initiative websites.
 
@@ -16,7 +16,7 @@ Documentation
 More information about Nominatim, including usage and installation instructions,
 can be found in the docs/ subdirectory and in the OSM wiki at:
 
-http://wiki.openstreetmap.org/wiki/Nominatim
+http://nominatim.org
 
 Installation
 ============
@@ -52,7 +52,7 @@ Contact and Bug reports
 ======================
 
 For questions you can join the geocoding mailinglist, see
-http://lists.openstreetmap.org/listinfo/geocoding
+https://lists.openstreetmap.org/listinfo/geocoding
 
 Bugs may be reported on the github project site:
 https://github.com/openstreetmap/Nominatim

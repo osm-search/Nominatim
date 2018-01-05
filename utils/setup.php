@@ -655,6 +655,7 @@ if ($aCMDResult['drop']) {
                     'import_polygon_*',
                     'import_status',
                     'place_addressline',
+                    'location_postcode',
                     'location_property*',
                     'placex',
                     'search_name',
@@ -662,7 +663,6 @@ if ($aCMDResult['drop']) {
                     'word',
                     'query_log',
                     'new_query_log',
-                    'gb_postcode',
                     'spatial_ref_sys',
                     'country_name',
                     'place_classtype_*'

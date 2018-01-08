@@ -9,7 +9,16 @@ require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
 $oDB =& getDB();
-$oParams = new Nominatim\ParameterParser();
+
+$params = null;
+if ( $argc > 0 ) {
+    foreach ($argv as $arg){
+        list($x,$y) = explode('=', $arg);
+        $params[$x] = $y;  
+    }
+}
+
+$oParams = new Nominatim\ParameterParser($params);
 
 $oGeocode = new Nominatim\Geocode($oDB);
 

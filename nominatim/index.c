@@ -438,9 +438,9 @@ void *nominatim_indexThread(void * thread_data_in)
     uint64_t    paramPlaceID;
     uint64_t    place_id;
     time_t      updateStartTime;
-    uint        table;
+    unsigned    table;
     
-    table = (uint)(thread_data->table);
+    table = thread_data->table;
 
     while (1)
     {

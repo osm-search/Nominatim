@@ -14,7 +14,7 @@ struct index_thread_data
     pthread_mutex_t * count_mutex;
     xmlTextWriterPtr writer;
     pthread_mutex_t * writer_mutex;
-    uint table;
+    unsigned table;
 };
 void nominatim_index(int rank_min, int rank_max, int num_threads, const char *conninfo, const char *structuredoutputfile);
 void *nominatim_indexThread(void * thread_data_in);

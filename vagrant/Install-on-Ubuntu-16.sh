@@ -143,7 +143,7 @@ fi                                 #DOCS:
 # download the country grid:
 
 if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:
-    wget -O data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
+    wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,

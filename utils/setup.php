@@ -152,7 +152,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
 
     if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
         echo 'Error: you need to download the country_osm_grid first:';
-        echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz\n";
+        echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
         exit(1);
     }
 

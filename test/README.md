@@ -100,7 +100,7 @@ be documented.
 These tests are meant to test the different API endpoints and their parameters.
 They require a preimported test database, which consists of the import of a
 planet extract. A precompiled PBF with the necessary data can be downloaded from
-http://www.nominatim.org/data/test/nominatim-api-testdata.pbf
+https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
 
 The polygons defining the extract can be found in the test/testdb
 directory. There is also a reduced set of wikipedia data for this extract,
@@ -112,7 +112,7 @@ planets are likely to work as well but you may see isolated test
 failures where the data has changed. To recreate the input data
 for the test database run:
 
-    wget http://free.nchc.org.tw/osm.planet/pbf/planet-160725.osm.pbf
+    wget https://free.nchc.org.tw/osm.planet/pbf/planet-160725.osm.pbf
     osmconvert planet-160725.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
 
 Before importing make sure to add the following to your local settings:

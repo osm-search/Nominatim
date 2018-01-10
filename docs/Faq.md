@@ -40,7 +40,7 @@ then you can resume with the following command:
 
    ./utils/setup.php --index --create-search-indices --create-country-names
 
-If the reported rank is 26 or higher, you can also safely add `-index-noanalyse`.
+If the reported rank is 26 or higher, you can also safely add `--index-noanalyse`.
 
 
 ### When running the setup.php script I get a warning:

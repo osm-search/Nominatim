@@ -45,7 +45,7 @@ EOFAPACHECONF
 sudo a2enconf nominatim
 sudo service apache2 restart
 
-wget -O $TRAVIS_BUILD_DIR/data/country_osm_grid.sql.gz http://www.nominatim.org/data/country_grid.sql.gz
+wget -O $TRAVIS_BUILD_DIR/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 
 mkdir build
 cd build

@@ -33,8 +33,8 @@ but it will improve the quality of the results if this is installed.
 This data is available as a binary download:
 
     cd $NOMINATIM_SOURCE_DIR/data
-    wget http://www.nominatim.org/data/wikipedia_article.sql.bin
-    wget http://www.nominatim.org/data/wikipedia_redirect.sql.bin
+    wget https://www.nominatim.org/data/wikipedia_article.sql.bin
+    wget https://www.nominatim.org/data/wikipedia_redirect.sql.bin
 
 Combined the 2 files are around 1.5GB and add around 30GB to the install
 size of nominatim. They also increase the install time by an hour or so.
@@ -48,7 +48,7 @@ loaded data.
 Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded: 
 
     cd $NOMINATIM_SOURCE_DIR/data
-    wget http://www.nominatim.org/data/gb_postcode_data.sql.gz
+    wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
 
 
 Initial import of the data

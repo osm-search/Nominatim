@@ -55,7 +55,7 @@ Initial import of the data
 --------------------------
 
 **Important:** first try the import with a small excerpt, for example from
-[Geofabrik](http://download.geofabrik.de).
+[Geofabrik](https://download.geofabrik.de).
 
 Download the data to import and load the data with the following command:
 
@@ -164,7 +164,7 @@ to `settings/local.php`. For example, to use the daily country extracts
 diffs for Ireland from geofabrik add the following:
 
     // base URL of the replication service
-    @define('CONST_Replication_Url', 'http://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
+    @define('CONST_Replication_Url', 'https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
     // How often upstream publishes diffs
     @define('CONST_Replication_Update_Interval', '86400');
     // How long to sleep if no update found yet

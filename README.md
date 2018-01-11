@@ -16,13 +16,13 @@ Documentation
 More information about Nominatim, including usage and installation instructions,
 can be found in the docs/ subdirectory and in the OSM wiki at:
 
-http://nominatim.org
+https://nominatim.org
 
 Installation
 ============
 
-The latest stable release can be downloaded from http://nominatim.org.
-There you can also find [installation instructions for the release](http://nominatim.org/release-docs/latest/Installation).
+The latest stable release can be downloaded from https://nominatim.org.
+There you can also find [installation instructions for the release](https://nominatim.org/release-docs/latest/Installation).
 
 Detailed installation instructions for the development version can be
 found in the `/docs` directory, see [docs/Installation.md](docs/Installation.md).

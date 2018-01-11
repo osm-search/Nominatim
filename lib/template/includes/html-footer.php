@@ -3,7 +3,7 @@
         Addresses and postcodes are approximate
     </p>
     <p class="copyright">
-        &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors
+        &copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors
     </p>
 </footer>
 

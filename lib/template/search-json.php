@@ -6,7 +6,7 @@ foreach($aSearchResults as $iResNum => $aPointDetails)
 {
     $aPlace = array(
             'place_id'=>$aPointDetails['place_id'],
-            'licence'=>"Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright",
+            'licence'=>"Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright",
         );
     
     $sOSMType = formatOSMType($aPointDetails['osm_type']);

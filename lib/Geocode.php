@@ -479,9 +479,9 @@ class Geocode
             osm_id: id of corresponding OSM object
             class: general object class (corresponds to tag key of primary OSM tag)
             type: subclass of object (corresponds to tag value of primary OSM tag)
-            admin_level: see http://wiki.openstreetmap.org/wiki/Admin_level
+            admin_level: see https://wiki.openstreetmap.org/wiki/Admin_level
             rank_search: rank in search hierarchy
-                        (see also http://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
+                        (see also https://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level)
             rank_address: rank in address hierarchy (determines orer in address)
             place_id: internal key (may differ between different instances)
             country_code: ISO country code

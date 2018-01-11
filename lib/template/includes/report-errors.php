@@ -10,7 +10,7 @@
     Use <a target="_blank" href="https://github.com/openstreetmap/nominatim/issues">Nominatim issues on github</a>
     to report problems.
 <!-- You can search for existing bug reports
-    <a href="http://trac.openstreetmap.org/query?status=new&amp;status=assigned&amp;status=reopened&amp;component=nominatim&amp;order=priority">here</a>.</p>
+    <a href="https://trac.openstreetmap.org/query?status=new&amp;status=assigned&amp;status=reopened&amp;component=nominatim&amp;order=priority">here</a>.</p>
  -->
 </p>
 <p>

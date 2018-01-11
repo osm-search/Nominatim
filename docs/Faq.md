@@ -6,7 +6,7 @@ Running Your Own Instance
 
 ### Can I import only a few countries and also keep them up to date?
 
-You should use the extracts and updates from http://download.geofabrik.de.
+You should use the extracts and updates from https://download.geofabrik.de.
 For the intial import, download the countries you need and merge them.
 See [OSM Help](https://help.openstreetmap.org/questions/48843/merging-two-or-more-geographical-areas-to-import-two-or-more-osm-files-in-nominatim)
 for examples how to do that. Use the resulting single osm file when

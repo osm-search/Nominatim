@@ -1,8 +1,4 @@
-Frequently Asked Questions
-==========================
-
-Running Your Own Instance
--------------------------
+# Running Your Own Instance
 
 ### Can I import only a few countries and also keep them up to date?
 
@@ -25,8 +21,7 @@ for a script that runs the updates using osmosis.
 Make sure there are no spaces at the beginning of your `settings/local.php` file.
 
 
-Installation
-------------
+# Installation
 
 ### I accidentally killed the import process after it has been running for many hours. Can it be resumed?
 
@@ -34,11 +29,14 @@ It is possible if the import already got to the indexing stage.
 Check the last line of output that was logged before the process
 was killed. If it looks like this:
 
-   Done 844 in 13 @ 64.923080 per second - Rank 26 ETA (seconds): 7.886255
+
+    Done 844 in 13 @ 64.923080 per second - Rank 26 ETA (seconds): 7.886255
 
 then you can resume with the following command:
 
-   ./utils/setup.php --index --create-search-indices --create-country-names
+```sh
+./utils/setup.php --index --create-search-indices --create-country-names
+```
 
 If the reported rank is 26 or higher, you can also safely add `--index-noanalyse`.
 
@@ -69,8 +67,9 @@ something like this:
 
 Or
 
-   echo "date.timezone = 'America/Denver'" > /etc/php.d/timezone.ini
-
+```
+echo "date.timezone = 'America/Denver'" > /etc/php.d/timezone.ini
+```
 
 ### When running the import I get a version mismatch:
     `COPY_END for place failed: ERROR: incompatible library "/opt/Nominatim/module/nominatim.so": version mismatch`
@@ -98,7 +97,7 @@ to get the full error message.
 On CentOS v7 the PostgreSQL server is started with `systemd`.
 Check if `/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`.
 If so then Apache cannot see the `/tmp/.s.PGSQL.5432` file. It's a good security feature,
-so use the [[#PostgreSQL_UNIX_Socket_Location_on_CentOS|preferred solution]] 
+so use the [preferred solution](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
 
 However, you can solve this the quick and dirty way by commenting out that line and then run
 
@@ -120,7 +119,7 @@ have the [http://pear.php.net/package/DB/ Pear module 'DB'] installed.
 
     sudo pear install DB
 
-### I forgot to delete the flatnodes file before starting an import
+### I forgot to delete the flatnodes file before starting an import.
 
 That's fine. For each import the flatnodes file get overwritten.
 See https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage

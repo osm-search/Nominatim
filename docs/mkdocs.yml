@@ -13,3 +13,6 @@ pages:
     - 'Appendix':
         - 'Installation on CentOS 7' : 'appendix/Install-on-Centos-7.md'
         - 'Installation on Ubuntu 16' : 'appendix/Install-on-Ubuntu-16.md'
+markdown_extensions:
+    - codehilite:
+        use_pygments: False

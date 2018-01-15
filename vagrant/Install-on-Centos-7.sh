@@ -19,6 +19,7 @@
 
 # Now you can install all packages needed for Nominatim:
 
+#DOCS:    :::sh
     sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
                         postgis postgis-utils \
                         git cmake make gcc gcc-c++ libtool policycoreutils-python \
@@ -29,6 +30,7 @@
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
+#DOCS:    :::sh
     sudo yum install -y python34-pip python34-setuptools python34-devel \
                         php-phpunit-PHPUnit
     pip3 install --user behave nose pytidylib psycopg2
@@ -101,7 +103,7 @@
 # You need to create an alias to the website directory in your apache
 # configuration. Add a separate nominatim configuration to your webserver:
 
-#DOCS:```
+#DOCS:```sh
 sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
 <Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
   Options FollowSymLinks MultiViews
@@ -143,12 +145,10 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 #
 # Get the source code from Github and change into the source directory
 #
-if [ "x$1" == "xyes" ]; then  #DOCS:
-
+if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
     git clone --recursive git://github.com/openstreetmap/Nominatim.git
     cd Nominatim
-
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -156,14 +156,14 @@ fi                                 #DOCS:
 # When installing the latest source from github, you also need to
 # download the country grid:
 
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:
+if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
     wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME                   #DOCS:
+    cd $USERHOME                   #DOCS:    :::sh
     mkdir build
     cd build
     cmake $USERHOME/Nominatim
@@ -172,7 +172,7 @@ fi                                 #DOCS:
 # You need to create a minimal configuration file that tells nominatim
 # the name of your webserver user and the URL of the website:
 
-#DOCS:```
+#DOCS:```sh
 tee settings/local.php << EOF
 <?php
  @define('CONST_Database_Web_User', 'apache');

@@ -25,8 +25,9 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 
     sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
-                            libbz2-dev libpq-dev libgeos-dev libgeos++-dev libproj-dev \
-                            postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 postgresql-contrib-9.5 \
+                            libbz2-dev libpq-dev libproj-dev \
+                            postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 \
+                            postgresql-contrib-9.5 \
                             apache2 php php-pgsql libapache2-mod-php php-pear php-db \
                             php-intl git
 
@@ -36,7 +37,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
     sudo apt-get install -y python3-setuptools python3-dev python3-pip \
                             python3-psycopg2 python3-tidylib phpunit php-cgi
 
-    pip3 install --user behave nose # urllib3
+    pip3 install --user behave nose
     sudo pear install PHP_CodeSniffer
 
 #
@@ -76,7 +77,8 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 # Tune the postgresql configuration, which is located in 
 # `/etc/postgresql/9.5/main/postgresql.conf`. See section *Postgres Tuning* in
-# [the installation page](Installation.md) for the parameters to change.
+# [the installation page](../admin/Installation.md#postgresql-tuning)
+# for the parameters to change.
 #
 # Restart the postgresql service after updating this config file.
 
@@ -167,4 +169,4 @@ EOF
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](Import-and-Update.md).
+# [importing a database from OSM data](../admin/Import-and-Update.md).

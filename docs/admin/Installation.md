@@ -19,8 +19,7 @@ For compiling:
   * a recent C++ compiler
 
 Nominatim comes with its own version of osm2pgsql. See the
-[osm2pgsql README](../osm2pgsql/README.md) for additional dependencies
-required for compiling osm2pgsql.
+osm2pgsql README for additional dependencies required for compiling osm2pgsql.
 
 For running tests:
 

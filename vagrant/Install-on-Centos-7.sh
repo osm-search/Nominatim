@@ -19,18 +19,19 @@
 
 # Now you can install all packages needed for Nominatim:
 
-    sudo yum install -y postgresql-server postgresql-contrib postgresql-devel postgis postgis-utils \
+    sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
+                        postgis postgis-utils \
                         git cmake make gcc gcc-c++ libtool policycoreutils-python \
-                        php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel proj-epsg \
-                        bzip2-devel proj-devel geos-devel libxml2-devel boost-devel expat-devel zlib-devel
+                        php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel \
+                        proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
+                        expat-devel zlib-devel
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
-    sudo yum install -y python-pip python-Levenshtein python-psycopg2 \
-                        python-numpy php-phpunit-PHPUnit
-    pip install --user --upgrade pip setuptools lettuce==0.2.18 six==1.9 \
-                                 haversine Shapely pytidylib
+    sudo yum install -y python34-pip python34-setuptools python34-devel \
+                        php-phpunit-PHPUnit
+    pip3 install --user behave nose pytidylib psycopg2
     sudo pear install PHP_CodeSniffer
 
 #
@@ -77,7 +78,8 @@
 #
 # Next tune the postgresql configuration, which is located in 
 # `/var/lib/pgsql/data/postgresql.conf`. See section *Postgres Tuning* in
-# [the installation page](Installation.md) for the parameters to change.
+# [the installation page](../admin/Installation.md#postgresql-tuning)
+# for the parameters to change.
 #
 # Now start the postgresql service after updating this config file.
 
@@ -180,4 +182,4 @@ EOF
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](Import-and-Update.md).
+# [importing a database from OSM data](../admin/Import-and-Update.md).

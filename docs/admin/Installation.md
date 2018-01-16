@@ -1,20 +1,16 @@
-Nominatim installation
-======================
-
 This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
-  * [Ubuntu 16.04](Install-on-Ubuntu-16.md)
-  * [CentOS 7.2](Install-on-Centos-7.md)
+  * [Ubuntu 16.04](../appendix/Install-on-Ubuntu-16.md)
+  * [CentOS 7.2](../appendix/Install-on-Centos-7.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
 
-Prerequisites
--------------
+# Prerequisites
 
-### Software
+## Software
 
 For compiling:
 
@@ -23,8 +19,7 @@ For compiling:
   * a recent C++ compiler
 
 Nominatim comes with its own version of osm2pgsql. See the
-[osm2pgsql README](../osm2pgsql/README.md) for additional dependencies
-required for compiling osm2pgsql.
+osm2pgsql README for additional dependencies required for compiling osm2pgsql.
 
 For running tests:
 
@@ -47,23 +42,22 @@ For running continuous updates:
 
   * [pyosmium](http://osmcode.org/pyosmium/)
 
-### Hardware
+## Hardware
 
 A minimum of 2GB of RAM is required or installation will fail. For a full
 planet import 32GB of RAM or more strongly are recommended.
 
-For a full planet install you will need about 500GB of hard disk space (as of
-June 2016, take into account that the OSM database is growing fast). SSD disks
+For a full planet install you will need about 600GB of hard disk space (as of
+January 2017, take into account that the OSM database is growing fast). SSD disks
 will help considerably to speed up import and queries.
 
 On a 6-core machine with 32GB RAM and SSDs the import of a full planet takes
 a bit more than 2 days. Without SSDs 7-8 days are more realistic.
 
 
-Setup of the server
--------------------
+# Setup of the server
 
-### PostgreSQL tuning
+## PostgreSQL tuning
 
 You might want to tune your PostgreSQL installation so that the later steps
 make best use of your hardware. You should tune the following parameters in
@@ -90,13 +84,13 @@ Don't forget to reenable them after the initial import or you risk database
 corruption. Autovacuum must not be switched off because it ensures that the
 tables are frequently analysed.
 
-### Webserver setup
+## Webserver setup
 
 The `website/` directory in the build directory contains the configured
 website. Include the directory into your webbrowser to serve php files
 from there.
 
-#### Configure for use with Apache
+### Configure for use with Apache
 
 Make sure your Apache configuration contains the required permissions for the
 directory and create an alias:
@@ -115,7 +109,7 @@ build directory.
 After making changes in the apache config you need to restart apache.
 The website should now be available on http://localhost/nominatim.
 
-#### Configure for use with Nginx
+### Configure for use with Nginx
 
 Use php-fpm as a deamon for serving PHP cgi. Install php-fpm together with nginx.
 
@@ -148,7 +142,7 @@ unix socket by adding the location definition to the default configuration.
     }
 
 Restart the nginx and php5-fpm services and the website should now be available
-on http://localhost/.
+at `http://localhost/`.
 
 
 Now continue with [importing the database](Import-and-Update.md).

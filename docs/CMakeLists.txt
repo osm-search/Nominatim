@@ -1,32 +1,17 @@
 # Auto-generated vagrant install documentation
 
-set (INSTALLDOCFILES
-     Install-on-Centos-7
-     Install-on-Ubuntu-16
-    )
 
-foreach (df ${INSTALLDOCFILES})
-    ADD_CUSTOM_COMMAND( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${df}.md
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/${df}.sh ${CMAKE_CURRENT_BINARY_DIR}/${df}.md
-        MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/vagrant/${df}.sh
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh
-        COMMENT "Creating markdown docs from vagrant/${df}.sh"
-        )
+# build the actual documentation
 
-ADD_CUSTOM_TARGET( md_install_${df} ALL
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${df}.md
-        )
-endforeach()
+configure_file(mkdocs.yml ../mkdocs.yml)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/appendix)
 
-# Copied static documentation
+ADD_CUSTOM_TARGET(doc
+   COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/admin ${CMAKE_CURRENT_BINARY_DIR}/admin
+   COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/index.md ${CMAKE_CURRENT_BINARY_DIR}/index.md
+   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Centos-7.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Centos-7.md
+   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Ubuntu-16.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Ubuntu-16.md
+   COMMAND mkdocs build -d ${CMAKE_CURRENT_BINARY_DIR}/../site-html -f ${CMAKE_CURRENT_BINARY_DIR}/../mkdocs.yml
+)
 
-set (GENERALDOCFILES
-     Installation.md
-     Import-and-Update.md
-     Faq.md
-    )
-
-foreach (df ${GENERALDOCFILES})
-   CONFIGURE_FILE(${df} ${df})
-endforeach()
 

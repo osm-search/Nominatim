@@ -1,0 +1,18 @@
+site_name: Nominatim Documentation
+theme: readthedocs
+docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
+site_url: http://nominatim.org
+repo_url: https://github.com/openstreetmap/Nominatim
+pages:
+    - 'Introduction' : 'index.md'
+    - 'Administration Guide':
+        - 'Basic Installation': 'admin/Installation.md'
+        - 'Importing and Updating' : 'admin/Import-and-Update.md'
+        - 'Migration from older Versions' : 'admin/Migration.md'
+        - 'Troubleshooting' : 'admin/Faq.md'
+    - 'Appendix':
+        - 'Installation on CentOS 7' : 'appendix/Install-on-Centos-7.md'
+        - 'Installation on Ubuntu 16' : 'appendix/Install-on-Ubuntu-16.md'
+markdown_extensions:
+    - codehilite:
+        use_pygments: False

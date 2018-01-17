@@ -1,3 +1,23 @@
+3.1.0
+
+ * rework postcode handling and introduce location_postcode table
+ * make setup less verbose and print a summary in the end
+ * setup: error out when web site user does not exist
+ * add more API tests to complete code coverage
+ * reinstate key-value amenity search (special term [key=value])
+ * fix detection of coordinates in query
+ * various smaller tweaks to ranking of search interpretations
+ * complete overhaul of PHP frontend code using OOP
+ * add address rank to details page
+ * update Tiger scripts for 2017 data and clean up unused code
+ * various bug fixes and improvements to UI
+ * improve reverse geocoding performance close to coasts
+ * more PHP style cleanup (quoting)
+ * allow unnamed road in reverse geocoding to avoid too far off results
+ * add function to recalculate counts for full-word search term
+ * add function to check if new updates are available
+ * update documentation and switch to mkdocs for generating HTML
+
 3.0.1
 
  * fix bug in geometry building algorithm in osm2pgsql

@@ -2,8 +2,8 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
-  * [Ubuntu 16.04](../appendix/Install-on-Ubuntu-16.md)
-  * [CentOS 7.2](../appendix/Install-on-Centos-7.md)
+  * [Ubuntu 16.04](../../vagrant/Install-on-Ubuntu-16.md)
+  * [CentOS 7.2](../../vagrant/Install-on-Centos-7.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.

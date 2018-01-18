@@ -25,7 +25,7 @@ The latest stable release can be downloaded from https://nominatim.org.
 There you can also find [installation instructions for the release](https://nominatim.org/release-docs/latest/Installation).
 
 Detailed installation instructions for the development version can be
-found in the `/docs` directory, see [docs/Installation.md](docs/Installation.md).
+found in the `/docs` directory, see [docs/Installation.md](docs/admin/Installation.md).
 
 A quick summary of the necessary steps:
 

@@ -300,7 +300,9 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 $iNextSeq = (int) $aLastState['sequence_id'];
                 unset($aOutput);
                 echo "$sCMDDownload -I $iNextSeq\n";
-                unlink($sImportFile);
+                if (file_exists($sImportFile)) {
+                    unlink($sImportFile);
+                }
                 exec($sCMDDownload.' -I '.$iNextSeq, $aOutput, $iResult);
 
                 if ($iResult == 3) {

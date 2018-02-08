@@ -530,11 +530,12 @@ function parseLatLon($sQuery)
         $sFound    = $aData[0];
         $fQueryLat = ($aData[1]=='N'?1:-1) * ($aData[2] + $aData[3]/60 + $aData[4]/3600);
         $fQueryLon = ($aData[5]=='E'?1:-1) * ($aData[6] + $aData[7]/60 + $aData[8]/3600);
-    } elseif (preg_match('/\\s*([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+)[″" ]+([EW])\\s*/', $sQuery, $aData)) {
-        /*                     1            2              3             4          5            6              7             8
+    } elseif (preg_match('/\\s*([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+[0-9.]*)[″" ]+([NS])[, ]+([0-9]+)[° ]+([0-9]+)[′\' ]+([0-9]+[0-9.]*)[″" ]+([EW])\\s*/', $sQuery, $aData)) {
+        /*                     1            2              3                    4          5            6              7                     8
          * degrees decimal seconds
          * 40 26 46 N 79 58 56 W
          * 40° 26′ 46″ N, 79° 58′ 56″ W
+         * 40° 26′ 46.78″ N, 79° 58′ 56.89″ W
          */
         $sFound    = $aData[0];
         $fQueryLat = ($aData[4]=='N'?1:-1) * ($aData[1] + $aData[2]/60 + $aData[3]/3600);

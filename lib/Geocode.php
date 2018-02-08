@@ -225,14 +225,14 @@ class Geocode
         $aViewbox = $oParams->getStringList('viewboxlbrt');
         if ($aViewbox) {
             if (count($aViewbox) != 4) {
-                userError("Bad parmater 'viewboxlbrt'. Expected 4 coordinates.");
+                userError("Bad parameter 'viewboxlbrt'. Expected 4 coordinates.");
             }
             $this->setViewbox($aViewbox);
         } else {
             $aViewbox = $oParams->getStringList('viewbox');
             if ($aViewbox) {
                 if (count($aViewbox) != 4) {
-                    userError("Bad parmater 'viewbox'. Expected 4 coordinates.");
+                    userError("Bad parameter 'viewbox'. Expected 4 coordinates.");
                 }
                 $this->setViewBox($aViewbox);
             } else {

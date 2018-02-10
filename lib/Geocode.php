@@ -535,9 +535,9 @@ class Geocode
 
         // Conflicts between US state abreviations and various words for 'the' in different languages
         if (isset($this->aLangPrefOrder['name:en'])) {
-            $sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/', '\1illinois\2', $sQuery);
-            $sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/', '\1alabama\2', $sQuery);
-            $sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/', '\1louisiana\2', $sQuery);
+            $sQuery = preg_replace('/(^|,)\s*il\s*(,|$)/i', '\1illinois\2', $sQuery);
+            $sQuery = preg_replace('/(^|,)\s*al\s*(,|$)/i', '\1alabama\2', $sQuery);
+            $sQuery = preg_replace('/(^|,)\s*la\s*(,|$)/i', '\1louisiana\2', $sQuery);
         }
 
         // Do we have anything that looks like a lat/lon pair?

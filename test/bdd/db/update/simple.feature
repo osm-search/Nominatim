@@ -85,3 +85,22 @@ Feature: Update of simple objects
           | osm | class    | type           | name | admin | geometry   |
           | W1  | boundary | administrative | Haha | 5     | 1, 2, 4, 3 |
         Then placex has no entry for W1
+
+     #895
+     Scenario: update rank when boundary is downgraded from admin to historic
+        Given the grid
+          | 1 | 2 |
+          | 3 | 4 |
+        And the places
+          | osm | class    | type           | name | admin | geometry        |
+          | W1  | boundary | administrative | Haha | 5     | (1, 2, 4, 3, 1) |
+        When importing
+        Then placex contains
+          | object | rank_address |
+          | W1     | 10           |
+        When updating places
+          | osm | class    | type           | name | admin | geometry        |
+          | W1  | boundary | historic       | Haha | 5     | (1, 2, 4, 3, 1) |
+        Then placex contains
+          | object | rank_address |
+          | W1     | 0            |

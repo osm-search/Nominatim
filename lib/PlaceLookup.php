@@ -462,7 +462,7 @@ class PlaceLookup
         return $aPlaces;
     }
 
-    private function getAddressDetails($iPlaceID, $bAll, $sHousenumber)
+    public function getAddressDetails($iPlaceID, $bAll = false, $sHousenumber = -1)
     {
         $sSQL = 'SELECT *,';
         $sSQL .= '  get_name_by_language(name,'.$this->aLangPrefOrderSql.') as localname';

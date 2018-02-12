@@ -192,7 +192,7 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
         fail("osm2pgsql not found in '$osm2pgsql'");
     }
 
-    if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
+    if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
         $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
     }
     if (CONST_Tablespace_Osm2pgsql_Data)
@@ -690,7 +690,7 @@ if ($aCMDResult['drop']) {
         // been deleted already by CASCADE
     }
 
-    if (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
+    if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
         if ($aCMDResult['verbose']) echo 'deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
         unlink(CONST_Osm2pgsql_Flatnode_File);
     }

@@ -532,6 +532,7 @@
 	str_replace(buffer, &len, &changes, " sving ", 7, " sv ", 4, 0);
 	str_replace(buffer, &len, &changes, " gaten ", 7, " g ", 3, 0);
 	str_replace(buffer, &len, &changes, " veien ", 7, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, " vegen ", 7, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " vliet ", 7, " vlt ", 5, 0);
 	str_replace(buffer, &len, &changes, " dolne ", 7, " dln ", 5, 0);
 	str_replace(buffer, &len, &changes, " b dul ", 7, " bd ", 4, 0);
@@ -687,6 +688,7 @@
 	str_replace(buffer, &len, &changes, "plass ", 6, " pl ", 4, 0);
 	str_replace(buffer, &len, &changes, "gaten ", 6, " g ", 3, 0);
 	str_replace(buffer, &len, &changes, "veien ", 6, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, "vegen ", 6, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " gata ", 6, " g ", 3, 0);
 	str_replace(buffer, &len, &changes, " sint ", 6, " st ", 4, 0);
 	str_replace(buffer, &len, &changes, " caus ", 6, " cway ", 6, 0);
@@ -827,6 +829,7 @@
 	str_replace(buffer, &len, &changes, "laan ", 5, " ln ", 4, 0);
 	str_replace(buffer, &len, &changes, " bda ", 5, " b ", 3, 0);
 	str_replace(buffer, &len, &changes, " vei ", 5, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, " veg ", 5, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " via ", 5, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " way ", 5, " wy ", 4, 0);
 	str_replace(buffer, &len, &changes, " upr ", 5, " up ", 4, 0);
@@ -858,6 +861,8 @@
 	str_replace(buffer, &len, &changes, " vn ", 4, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " gt ", 4, " g ", 3, 0);
 	str_replace(buffer, &len, &changes, "vei ", 4, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, "veg ", 4, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, "vn ", 3, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, "vlt ", 4, " vlt ", 5, 1);
 	str_replace(buffer, &len, &changes, " ce ", 4, " cv ", 4, 0);
 	str_replace(buffer, &len, &changes, " ii ", 4, " 2 ", 3, 0);

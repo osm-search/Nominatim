@@ -830,6 +830,7 @@
 	str_replace(buffer, &len, &changes, " bda ", 5, " b ", 3, 0);
 	str_replace(buffer, &len, &changes, " vei ", 5, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " veg ", 5, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, " vej ", 5, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " via ", 5, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, " way ", 5, " wy ", 4, 0);
 	str_replace(buffer, &len, &changes, " upr ", 5, " up ", 4, 0);
@@ -862,7 +863,9 @@
 	str_replace(buffer, &len, &changes, " gt ", 4, " g ", 3, 0);
 	str_replace(buffer, &len, &changes, "vei ", 4, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, "veg ", 4, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, "vej ", 4, " v ", 3, 0);
 	str_replace(buffer, &len, &changes, "vn ", 3, " v ", 3, 0);
+	str_replace(buffer, &len, &changes, "v ", 2, " v ", 3, 1);
 	str_replace(buffer, &len, &changes, "vlt ", 4, " vlt ", 5, 1);
 	str_replace(buffer, &len, &changes, " ce ", 4, " cv ", 4, 0);
 	str_replace(buffer, &len, &changes, " ii ", 4, " 2 ", 3, 0);

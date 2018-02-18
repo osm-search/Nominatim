@@ -47,7 +47,7 @@ class SearchContext
     /**
      * Get radius around reference point.
      *
-     * @return float Search radius around refernce point.
+     * @return float Search radius around reference point.
      */
     public function nearRadius()
     {

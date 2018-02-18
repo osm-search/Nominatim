@@ -2,7 +2,7 @@
 Feature: Import of postcodes
     Tests for postcode estimation
 
-    Scenario: Postcodes on the object are prefered over those on the address
+    Scenario: Postcodes on the object are preferred over those on the address
         Given the scene admin-areas
         And the named places
             | osm | class    | type           | admin | addr+postcode | geometry |

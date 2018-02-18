@@ -58,7 +58,7 @@ class SearchDescription
     /**
      * Get current search rank.
      *
-     * The higher the search rank the lower the likelyhood that the
+     * The higher the search rank the lower the likelihood that the
      * search is a correct interpretation of the search query.
      *
      * @return integer Search rank.

@@ -8,6 +8,13 @@ the following operating systems:
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
 
+Users have created instructions for other frameworks. We haven't tested those
+and can't offer support.
+
+  * [Docker](https://github.com/mediagis/nominatim-docker)
+  * [Docker on Kubernetes](https://github.com/peter-evans/nominatim-k8s)
+  * [Ansible](https://github.com/synthesio/infra-ansible-nominatim)
+
 # Prerequisites
 
 ## Software

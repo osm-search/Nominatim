@@ -20,8 +20,10 @@
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
-                        postgis postgis-utils \
+    sudo rpm -Uvh http://yum.postgresql.org/9.5/redhat/rhel-7-x86_64/pgdg-centos95-9.5-2.noarch.rpm
+
+    sudo yum install -y postgresql95-server postgresql95-contrib postgresql95-devel \
+                        postgis24_95 postgis24_95-utils \
                         git cmake make gcc gcc-c++ libtool policycoreutils-python \
                         php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
@@ -71,11 +73,17 @@
 # Setting up PostgreSQL
 # ---------------------
 #
+# Make sure cnake finds pg_config in $PATH
+
+    echo 'pathmunge /usr/pgsql-9.5/bin' | sudo tee -a /etc/profile.d/postgresql95.sh
+    sudo chmod +x /etc/profile.d/postgresql95.sh
+    source /etc/profile
+
 # CentOS does not automatically create a database cluster. Therefore, start
 # with initializing the database, then enable the server to start at boot:
 
-    sudo postgresql-setup initdb
-    sudo systemctl enable postgresql
+    sudo /usr/pgsql-9.5/bin/postgresql95-setup initdb
+    sudo systemctl enable postgresql-9.5.service
 
 #
 # Next tune the postgresql configuration, which is located in 
@@ -85,7 +93,7 @@
 #
 # Now start the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql
+    sudo systemctl restart postgresql-9.5
 
 #
 # Finally, we need to add two postgres users: one for the user that does

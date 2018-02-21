@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
   end
 
    config.vm.define "centos" do |sub|
-      sub.vm.box = "bento/centos-7.2"
+      sub.vm.box = "bento/centos-7.4"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Centos-7.sh"
         s.privileged = false

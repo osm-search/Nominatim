@@ -39,7 +39,7 @@ Ubuntu / Debian 7:
 
 Debian 8:
 
-	sudo apt-get install build-essential libxml2-dev libpq-dev libbz2-dev
+	sudo apt-get install build-essential libxml2-dev libpq-dev libbz2-dev \
 	libtool automake libproj-dev libboost-dev libboost-system-dev \
 	libboost-filesystem-dev libboost-thread-dev libexpat-dev gcc \
 	proj-bin libgeos-c1 libgeos++-dev libexpat-dev php5 php-pear \

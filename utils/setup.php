@@ -658,7 +658,7 @@ if ($aCMDResult['drop']) {
                     'location_postcode',
                     'location_property*',
                     'placex',
-                    'search_name',
+                    'search_name*',
                     'seq_*',
                     'word',
                     'query_log',

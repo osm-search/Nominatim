@@ -22,7 +22,7 @@
 #DOCS:    :::sh
     sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
                         postgis postgis-utils \
-                        git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
                         php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
                         expat-devel zlib-devel
@@ -52,7 +52,8 @@
 # we assume this user is called nominatim and the installation will be in
 # /srv/nominatim. To create the user and directory run:
 #
-#     sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+sudo mkdir -p /opt/nominatim       #DOCS:    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+sudo chown vagrant /opt/nominatim  #DOCS:
 #
 # You may find a more suitable location if you wish.
 #
@@ -60,7 +61,7 @@
 # user name and home directory now like this:
 #
     export USERNAME=vagrant        #DOCS:    export USERNAME=nominatim
-    export USERHOME=/home/vagrant  #DOCS:    export USERHOME=/srv/nominatim
+    export USERHOME=/opt/nominatim #DOCS:    export USERHOME=/srv/nominatim
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
@@ -122,6 +123,7 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # Then reload apache
 #
 
+    sudo systemctl enable httpd
     sudo systemctl restart httpd
 
 #
@@ -133,7 +135,7 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # following SELinux labeling should be done for Nominatim:
 
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
-    sudo semanage fcontext -a -t lib_t "$USERHOME/Nominatim/module/nominatim.so"
+    sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
     sudo restorecon -R -v $USERHOME/Nominatim
 
 #

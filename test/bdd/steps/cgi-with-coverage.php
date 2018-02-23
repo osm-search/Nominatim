@@ -1,6 +1,7 @@
 <?php
 require_once 'SebastianBergmann/CodeCoverage/autoload.php';
 
+
 function coverage_shutdown($oCoverage)
 {
     $oCoverage->stop();
@@ -16,5 +17,3 @@ $coverage->start($_SERVER['COV_TEST_NAME']);
 register_shutdown_function('coverage_shutdown', $coverage);
 
 include $_SERVER['COV_SCRIPT_FILENAME'];
-
-

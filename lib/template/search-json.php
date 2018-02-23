@@ -1,33 +1,28 @@
 <?php
-header("content-type: application/json; charset=UTF-8");
+header('content-type: application/json; charset=UTF-8');
 
 $aFilteredPlaces = array();
-foreach($aSearchResults as $iResNum => $aPointDetails)
-{
+foreach ($aSearchResults as $iResNum => $aPointDetails) {
     $aPlace = array(
-            'place_id'=>$aPointDetails['place_id'],
-            'licence'=>"Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright",
-        );
+               'place_id'=>$aPointDetails['place_id'],
+               'licence'=>'Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright',
+              );
     
     $sOSMType = formatOSMType($aPointDetails['osm_type']);
-    if ($sOSMType)
-    {
+    if ($sOSMType) {
         $aPlace['osm_type'] = $sOSMType;
         $aPlace['osm_id'] = $aPointDetails['osm_id'];
     }
 
-    if (isset($aPointDetails['aBoundingBox']))
-    {
+    if (isset($aPointDetails['aBoundingBox'])) {
         $aPlace['boundingbox'] = $aPointDetails['aBoundingBox'];
 
-        if (isset($aPointDetails['aPolyPoints']))
-        {
+        if (isset($aPointDetails['aPolyPoints'])) {
             $aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
         }
     }
 
-    if (isset($aPointDetails['zoom']))
-    {
+    if (isset($aPointDetails['zoom'])) {
         $aPlace['zoom'] = $aPointDetails['zoom'];
     }
 
@@ -40,33 +35,27 @@ foreach($aSearchResults as $iResNum => $aPointDetails)
 
     $aPlace['importance'] = $aPointDetails['importance'];
 
-    if (isset($aPointDetails['icon']) && $aPointDetails['icon'])
-    {
+    if (isset($aPointDetails['icon']) && $aPointDetails['icon']) {
         $aPlace['icon'] = $aPointDetails['icon'];
     }
 
-    if (isset($aPointDetails['address']))
-    {
+    if (isset($aPointDetails['address'])) {
         $aPlace['address'] = $aPointDetails['address'];
     }
 
-    if (isset($aPointDetails['asgeojson']))
-    {
+    if (isset($aPointDetails['asgeojson'])) {
         $aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
     }
 
-    if (isset($aPointDetails['assvg']))
-    {
+    if (isset($aPointDetails['assvg'])) {
         $aPlace['svg'] = $aPointDetails['assvg'];
     }
 
-    if (isset($aPointDetails['astext']))
-    {
+    if (isset($aPointDetails['astext'])) {
         $aPlace['geotext'] = $aPointDetails['astext'];
     }
 
-    if (isset($aPointDetails['askml']))
-    {
+    if (isset($aPointDetails['askml'])) {
         $aPlace['geokml'] = $aPointDetails['askml'];
     }
 

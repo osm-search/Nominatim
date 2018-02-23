@@ -2,20 +2,15 @@
 
 $aFilteredPlaces = array();
 
-if (!sizeof($aPlace))
-{
+if (!sizeof($aPlace)) {
     if (isset($sError))
         $aFilteredPlaces['error'] = $sError;
-    else
-        $aFilteredPlaces['error'] = 'Unable to geocode';
-}
-else
-{
+    else $aFilteredPlaces['error'] = 'Unable to geocode';
+} else {
     if ($aPlace['place_id']) $aFilteredPlaces['place_id'] = $aPlace['place_id'];
-    $aFilteredPlaces['licence'] = "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright";
+    $aFilteredPlaces['licence'] = 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright';
     $sOSMType = formatOSMType($aPlace['osm_type']);
-    if ($sOSMType)
-    {
+    if ($sOSMType) {
         $aFilteredPlaces['osm_type'] = $sOSMType;
         $aFilteredPlaces['osm_id'] = $aPlace['osm_id'];
     }
@@ -38,31 +33,25 @@ else
     if (isset($aPlace['sExtraTags'])) $aFilteredPlaces['extratags'] = $aPlace['sExtraTags'];
     if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['namedetails'] = $aPlace['sNameDetails'];
 
-    if (isset($aPlace['aBoundingBox']))
-    {
+    if (isset($aPlace['aBoundingBox'])) {
         $aFilteredPlaces['boundingbox'] = $aPlace['aBoundingBox'];
     }
 
-    if (isset($aPlace['asgeojson']))
-    {
+    if (isset($aPlace['asgeojson'])) {
         $aFilteredPlaces['geojson'] = json_decode($aPlace['asgeojson']);
     }
 
-    if (isset($aPlace['assvg']))
-    {
+    if (isset($aPlace['assvg'])) {
         $aFilteredPlaces['svg'] = $aPlace['assvg'];
     }
 
-    if (isset($aPlace['astext']))
-    {
+    if (isset($aPlace['astext'])) {
         $aFilteredPlaces['geotext'] = $aPlace['astext'];
     }
 
-    if (isset($aPlace['askml']))
-    {
+    if (isset($aPlace['askml'])) {
         $aFilteredPlaces['geokml'] = $aPlace['askml'];
     }
-
 }
 
 javascript_renderData($aFilteredPlaces);

@@ -6,6 +6,8 @@ require_once '../../lib/Phrase.php';
 
 class PhraseTest extends \PHPUnit_Framework_TestCase
 {
+
+
     private function serializeSets($aSets)
     {
         $aParts = array();

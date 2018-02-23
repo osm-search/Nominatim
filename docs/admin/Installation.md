@@ -3,10 +3,17 @@ prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
   * [Ubuntu 16.04](../appendix/Install-on-Ubuntu-16.md)
-  * [CentOS 7.2](../appendix/Install-on-Centos-7.md)
+  * [CentOS 7.4](../appendix/Install-on-Centos-7.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.
+
+Users have created instructions for other frameworks. We haven't tested those
+and can't offer support.
+
+  * [Docker](https://github.com/mediagis/nominatim-docker)
+  * [Docker on Kubernetes](https://github.com/peter-evans/nominatim-k8s)
+  * [Ansible](https://github.com/synthesio/infra-ansible-nominatim)
 
 # Prerequisites
 

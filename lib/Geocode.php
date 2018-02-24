@@ -133,7 +133,7 @@ class Geocode
         $this->iMaxAddressRank = $iMax;
     }
 
-    public function setViewbox($aViewbox)
+    public function setViewbox($aViewbox, $format = 'html')
     {
         $aBox = array_map('floatval', $aViewbox);
 
@@ -145,7 +145,7 @@ class Geocode
         if ($this->aViewBox[2] - $this->aViewBox[0] < 0.000000001
             || $this->aViewBox[3] - $this->aViewBox[1] < 0.000000001
         ) {
-            userError("Bad parameter 'viewbox'. Not a box.");
+            userError("Bad parameter 'viewbox'. Not a box.",$format);
         }
     }
 
@@ -225,14 +225,20 @@ class Geocode
         $aViewbox = $oParams->getStringList('viewboxlbrt');
         if ($aViewbox) {
             if (count($aViewbox) != 4) {
-                userError("Bad parameter 'viewboxlbrt'. Expected 4 coordinates.");
+                userError(
+                    "Bad parameter 'viewboxlbrt'. Expected 4 coordinates.",
+                    $oParams->getString('format')
+                );
             }
-            $this->setViewbox($aViewbox);
+            $this->setViewbox($aViewbox,$oParams->getString('format'));
         } else {
             $aViewbox = $oParams->getStringList('viewbox');
             if ($aViewbox) {
                 if (count($aViewbox) != 4) {
-                    userError("Bad parameter 'viewbox'. Expected 4 coordinates.");
+                    userError(
+                        "Bad parameter 'viewbox'. Expected 4 coordinates.",
+                        $oParams->getString('format')
+                    );
                 }
                 $this->setViewBox($aViewbox);
             } else {

@@ -60,7 +60,7 @@ if ($sOsmType && $iOsmId > 0) {
 }
 
 
-if (!$sPlaceId) userError('Please select a place id');
+if (!$sPlaceId) userError('Please select a place id', $oParams->getString('format'));
 
 $iPlaceID = (int)$sPlaceId;
 
@@ -112,7 +112,7 @@ $sSQL .= " WHERE place_id = $iPlaceID";
 $aPointDetails = chksql($oDB->getRow($sSQL), 'Could not get details of place object.');
 
 if (!$aPointDetails) {
-    userError('Unknown place id.');
+    userError('Unknown place id.', $oParams->getString('format'));
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];

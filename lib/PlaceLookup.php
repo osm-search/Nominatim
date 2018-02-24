@@ -76,9 +76,9 @@ class PlaceLookup
             ($this->bIncludePolygonAsSVG ? 1 : 0);
         if ($iWantedTypes > CONST_PolygonOutput_MaximumTypes) {
             if (CONST_PolygonOutput_MaximumTypes) {
-                userError('Select only '.CONST_PolygonOutput_MaximumTypes.' polgyon output option');
+                userError('Select only '.CONST_PolygonOutput_MaximumTypes.' polgyon output option', $oParams->getString('format'));
             } else {
-                userError('Polygon output is disabled');
+                userError('Polygon output is disabled', $oParams->getString('format'));
             }
         }
     }

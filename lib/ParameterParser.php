@@ -28,7 +28,7 @@ class ParameterParser
         }
 
         if (!preg_match('/^[+-]?[0-9]+$/', $this->aParams[$sName])) {
-            userError("Integer number expected for parameter '$sName'");
+            userError("Integer number expected for parameter '$sName'", $this->getString('format'));
         }
 
         return (int) $this->aParams[$sName];
@@ -41,7 +41,8 @@ class ParameterParser
         }
 
         if (!preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $this->aParams[$sName])) {
-            userError("Floating-point number expected for parameter '$sName'");
+            userError("Floating-point number expected for parameter '$sName'", $this->getString('format') 
+            );
         }
 
         return (float) $this->aParams[$sName];
@@ -63,7 +64,7 @@ class ParameterParser
         }
 
         if (!in_array($this->aParams[$sName], $aValues)) {
-            userError("Parameter '$sName' must be one of: ".join(', ', $aValues));
+            userError("Parameter '$sName' must be one of: ".join(', ', $aValues), $this->getString('format'));
         }
 
         return $this->aParams[$sName];

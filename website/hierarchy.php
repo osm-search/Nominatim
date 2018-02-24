@@ -42,7 +42,7 @@ if ($sOsmType && $iOsmId > 0) {
     }
 }
 
-if (!$sPlaceId) userError('Please select a place id');
+if (!$sPlaceId) userError('Please select a place id', $oParams->getString('format'));
 
 $iPlaceID = (int)$sPlaceId;
 
@@ -62,7 +62,7 @@ $oPlaceLookup->setIncludeAddressDetails(true);
 
 $aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
 
-if (!sizeof($aPlaceAddress)) userError('Unknown place id.');
+if (!sizeof($aPlaceAddress)) userError('Unknown place id.', $oParams->getString('format'));
 
 $aBreadcrums = array();
 foreach ($aPlaceAddress as $i => $aPlace) {

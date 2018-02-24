@@ -45,58 +45,59 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
     {
         $oParams = new ParameterParser([
                                         'int1' => '5',
-                                        'int2' => 'a',
-                                        'int3' => '-1',
-                                        'int4' => '',
-                                        'int5' => 0
+                                        'int2' => '-1',
+                                        'int3' => '',
+                                        'int4' => 0
                                        ]);
 
         $this->assertEquals(false, $oParams->getInt('non-exists'));
         $this->assertEquals(999, $oParams->getInt('non-exists', 999));
         $this->assertEquals(5, $oParams->getInt('int1'));
 
-        try {
-            $this->assertEquals(false, $oParams->getInt('int2'));
-        } catch (Exception $e) {
-            $this->assertEquals($e->getMessage(), "Integer number expected for parameter 'int2'");
-        }
-        $this->assertEquals(-1, $oParams->getInt('int3'));
-        $this->assertEquals(false, $oParams->getInt('int4'));
-        $this->assertEquals(false, $oParams->getInt('int5')); // FIXME: should be 0 instead?
+        $this->assertEquals(-1, $oParams->getInt('int2'));
+        $this->assertEquals(false, $oParams->getInt('int3'));
+        $this->assertEquals(false, $oParams->getInt('int4')); // FIXME: should be 0 instead?
+    }
+
+
+    public function testGetIntWithEmpytString()
+    {
+        $this->setExpectedException(Exception::class, "Integer number expected for parameter 'int5'");
+        (new ParameterParser(['int5' => 'a']))->getInt('int5');
     }
 
 
     public function testGetFloat()
     {
+
         $oParams = new ParameterParser([
                                         'float1' => '1.0',
                                         'float2' => '-5',
-                                        'float3' => '-55.',
-                                        'float4' => 'a',
-                                        'float5' => '',
-                                        'float6' => 0
+                                        'float3' => '',
+                                        'float4' => 0
                                        ]);
 
         $this->assertEquals(false, $oParams->getFloat('non-exists'));
         $this->assertEquals(999, $oParams->getFloat('non-exists', 999));
         $this->assertEquals(1, $oParams->getFloat('float1'));
         $this->assertEquals(-5, $oParams->getFloat('float2'));
-
-        try {
-            $this->assertEquals(false, $oParams->getFloat('float3'));
-        } catch (Exception $e) {
-            $this->assertEquals($e->getMessage(), "Floating-point number expected for parameter 'float3'");
-        }
-
-        try {
-            $this->assertEquals(false, $oParams->getFloat('float4'));
-        } catch (Exception $e) {
-            $this->assertEquals($e->getMessage(), "Floating-point number expected for parameter 'float4'");
-        }
-        $this->assertEquals(false, $oParams->getFloat('float5'));
-        $this->assertEquals(false, $oParams->getFloat('float6')); // FIXME: should be 0 instead?
+        $this->assertEquals(false, $oParams->getFloat('float3'));
+        $this->assertEquals(false, $oParams->getFloat('float4')); // FIXME: should be 0 instead?
     }
 
+
+    public function testGetFloatWithString()
+    {
+        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float5'");
+        (new ParameterParser(['float5' => 'a']))->getFloat('float5');
+    }
+
+
+    public function testGetFloatWithInvalidNumber()
+    {
+        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float6'");
+        (new ParameterParser(['float6' => '-55.']))->getFloat('float6');
+    }
 
 
     public function testGetString()
@@ -115,14 +116,12 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
     }
 
 
-
     public function testGetSet()
     {
         $oParams = new ParameterParser([
                                         'val1' => 'foo',
-                                        'val2' => 'FOO',
-                                        'val3' => '',
-                                        'val4' => 0
+                                        'val2' => '',
+                                        'val3' => 0
                                        ]);
 
         $this->assertEquals(false, $oParams->getSet('non-exists', ['foo', 'bar']));
@@ -130,13 +129,15 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('default', $oParams->getSet('non-exists', ['foo', 'bar'], 'default'));
         $this->assertEquals('foo', $oParams->getSet('val1', ['foo', 'bar']));
 
-        try {
-            $this->assertEquals(false, $oParams->getSet('val2', ['foo', 'bar']));
-        } catch (Exception $e) {
-            $this->assertEquals($e->getMessage(), "Parameter 'val2' must be one of: foo, bar");
-        }
+        $this->assertEquals(false, $oParams->getSet('val2', ['foo', 'bar']));
         $this->assertEquals(false, $oParams->getSet('val3', ['foo', 'bar']));
-        $this->assertEquals(false, $oParams->getSet('val4', ['foo', 'bar']));
+    }
+
+
+    public function testGetSetWithValueNotInSet()
+    {
+        $this->setExpectedException(Exception::class, "Parameter 'val4' must be one of: foo, bar");
+        (new ParameterParser(['val4' => 'faz']))->getSet('val4', ['foo', 'bar']);
     }
 
 
@@ -157,6 +158,7 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(false, $oParams->getStringList('list3'));
         $this->assertEquals(false, $oParams->getStringList('list4'));
     }
+
 
     public function testGetPreferredLanguages()
     {

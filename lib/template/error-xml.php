@@ -1,5 +1,5 @@
-<?php 
-header('content-type: text/xml; charset=UTF-8'); 
+<?php
+header('content-type: text/xml; charset=UTF-8');
 $errorXml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <error>

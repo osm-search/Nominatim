@@ -41,8 +41,7 @@ class ParameterParser
         }
 
         if (!preg_match('/^[+-]?[0-9]*\.?[0-9]+$/', $this->aParams[$sName])) {
-            userError("Floating-point number expected for parameter '$sName'", $this->getString('format') 
-            );
+            userError("Floating-point number expected for parameter '$sName'", $this->getString('format'));
         }
 
         return (float) $this->aParams[$sName];

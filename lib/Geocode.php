@@ -145,7 +145,7 @@ class Geocode
         if ($this->aViewBox[2] - $this->aViewBox[0] < 0.000000001
             || $this->aViewBox[3] - $this->aViewBox[1] < 0.000000001
         ) {
-            userError("Bad parameter 'viewbox'. Not a box.",$format);
+            userError("Bad parameter 'viewbox'. Not a box.", $format);
         }
     }
 
@@ -230,7 +230,7 @@ class Geocode
                     $oParams->getString('format')
                 );
             }
-            $this->setViewbox($aViewbox,$oParams->getString('format'));
+            $this->setViewbox($aViewbox, $oParams->getString('format'));
         } else {
             $aViewbox = $oParams->getStringList('viewbox');
             if ($aViewbox) {
@@ -506,7 +506,7 @@ class Geocode
     */
 
 
-    public function lookup()
+    public function lookup($format = 'html')
     {
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
 
@@ -536,7 +536,7 @@ class Geocode
 
         $sQuery = $this->sQuery;
         if (!preg_match('//u', $sQuery)) {
-            userError('Query string is not UTF-8 encoded.');
+            userError('Query string is not UTF-8 encoded.', $format);
         }
 
         // Conflicts between US state abreviations and various words for 'the' in different languages

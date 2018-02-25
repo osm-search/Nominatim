@@ -168,7 +168,7 @@ void str_replace(char* buffer, int* len, int* changes, char* from, int fromlen, 
         p = strstr(buffer, from);
         while(p)
         {
-                if (!isspace || p == buffer || *(p-1) != ' ')
+                if (!isspace || (p > buffer && *(p-1) != ' '))
                 {
                         (*changes)++;
                         if (tolen != fromlen) memmove(p+tolen, p+fromlen, *len-(p-buffer)+1);

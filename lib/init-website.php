@@ -72,11 +72,11 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 
 function userError($sError, $format = "html")
 {
-    $errortemplate = "template/error-$format.php";
+    $errortemplate = "/srv/nominatim/lib/template/error-$format.php";
     if(file_exists($errortemplate)){
         require_once $errortemplate;
     }else{
-        require_once 'template/error-html.php';
+        require_once '/srv/nominatim/lib/template/error-html.php';
     }
 }
 

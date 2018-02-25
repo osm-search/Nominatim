@@ -72,7 +72,7 @@ function failInternalError($sError, $sSQL = false, $vDumpVar = false)
 
 function userError($sError, $format = 'html')
 {
-    $errortemplate = CONST_BasePath.'/lib/template/error-$format.php';
+    $errortemplate = CONST_BasePath.'/lib/template/error-'.$format.'.php';
     if (file_exists($errortemplate)) {
         require_once $errortemplate;
     } else {

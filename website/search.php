@@ -10,7 +10,6 @@ ini_set('memory_limit', '200M');
 
 $oDB =& getDB();
 $oParams = new Nominatim\ParameterParser();
-
 $oGeocode = new Nominatim\Geocode($oDB);
 
 $aLangPrefOrder = $oParams->getPreferredLanguages();
@@ -39,7 +38,7 @@ if (CONST_Search_BatchMode && isset($_GET['batch'])) {
         $oBatchParams = new Nominatim\ParameterParser($aBatchParams);
         $oBatchGeocode->loadParamArray($oBatchParams);
         $oBatchGeocode->setQueryFromParams($oBatchParams);
-        $aSearchResults = $oBatchGeocode->lookup();
+        $aSearchResults = $oBatchGeocode->lookup($oParams->getString('format'));
         $aBatchResults[] = $aSearchResults;
     }
     include(CONST_BasePath.'/lib/template/search-batch-json.php');
@@ -63,7 +62,7 @@ if (!$oGeocode->getQueryString()
 
 $hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 
-$aSearchResults = $oGeocode->lookup();
+$aSearchResults = $oGeocode->lookup($oParams->getString('format'));
 
 if ($sOutputFormat=='html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));

@@ -3,12 +3,17 @@
 namespace Nominatim;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 require_once('../../lib/db.php');
 require_once('../../lib/Status.php');
 =======
 require_once('../../lib/Status.php');
 require_once('DB.php');
 >>>>>>> /status can now output json, including data date
+=======
+require_once('../../lib/db.php');
+require_once('../../lib/Status.php');
+>>>>>>> travis: try to get DB.php to load
 
 class StatusTest extends \PHPUnit_Framework_TestCase
 {

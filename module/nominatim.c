@@ -157,17 +157,18 @@ transliteration( PG_FUNCTION_ARGS )
 	PG_RETURN_TEXT_P(result);
 }
 
+// Set isspace=1 if the replacement _only_ adds a space before the search string.  I.e. to == " " + from
 void str_replace(char* buffer, int* len, int* changes, char* from, int fromlen, char* to, int tolen, int isspace)
 {
         char *p;
 
-        // Search string is too long to be pressent
+        // Search string is too long to be present
         if (fromlen > *len) return;
 
         p = strstr(buffer, from);
         while(p)
         {
-                if (!isspace || *(p-1) != ' ')
+                if (!isspace || (p > buffer && *(p-1) != ' '))
                 {
                         (*changes)++;
                         if (tolen != fromlen) memmove(p+tolen, p+fromlen, *len-(p-buffer)+1);
@@ -230,7 +231,7 @@ gettokenstring( PG_FUNCTION_ARGS )
 	sourcedata = (unsigned char *)VARDATA(source);
 	sourcedatalength = VARSIZE(source) - VARHDRSZ;
 
-	// Buffer for doing the replace in - string could get slightly longer (double is mastive overkill)
+	// Buffer for doing the replace in - string could get slightly longer (double is massive overkill)
 	buffer = (char *)palloc((sourcedatalength*2)*sizeof(char));
 	memcpy(buffer+1, sourcedata, sourcedatalength);
 	buffer[0] = 32;

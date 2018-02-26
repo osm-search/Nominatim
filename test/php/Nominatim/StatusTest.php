@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
+require_once('../../lib/db.php');
 require_once('../../lib/Status.php');
-require_once('DB.php');
 
 class StatusTest extends \PHPUnit_Framework_TestCase
 {

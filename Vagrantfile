@@ -37,7 +37,8 @@ Vagrant.configure("2") do |config|
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Centos-7.sh"
         s.privileged = false
-        s.args = [checkout]
+        s.args = "yes"
+        sub.vm.synced_folder ".", "/vagrant", disabled: true
       end
   end
 

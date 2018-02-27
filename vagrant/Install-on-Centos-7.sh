@@ -52,8 +52,8 @@
 # we assume this user is called nominatim and the installation will be in
 # /srv/nominatim. To create the user and directory run:
 #
-sudo mkdir -p /opt/nominatim       #DOCS:    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
-sudo chown vagrant /opt/nominatim  #DOCS:
+sudo mkdir -p /srv/nominatim       #DOCS:    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # You may find a more suitable location if you wish.
 #
@@ -61,7 +61,7 @@ sudo chown vagrant /opt/nominatim  #DOCS:
 # user name and home directory now like this:
 #
     export USERNAME=vagrant        #DOCS:    export USERNAME=nominatim
-    export USERHOME=/opt/nominatim #DOCS:    export USERHOME=/srv/nominatim
+    export USERHOME=/srv/nominatim
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
@@ -126,17 +126,6 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
     sudo systemctl enable httpd
     sudo systemctl restart httpd
 
-#
-# Adding SELinux Security Settings
-# --------------------------------
-#
-# It is a good idea to leave SELinux enabled and enforcing, particularly
-# with a web server accessible from the Internet. At a minimum the
-# following SELinux labeling should be done for Nominatim:
-
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
-    sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim
 
 #
 # Installing Nominatim
@@ -170,6 +159,21 @@ fi                                 #DOCS:
     cd build
     cmake $USERHOME/Nominatim
     make
+
+#
+# Adding SELinux Security Settings
+# --------------------------------
+#
+# It is a good idea to leave SELinux enabled and enforcing, particularly
+# with a web server accessible from the Internet. At a minimum the
+# following SELinux labeling should be done for Nominatim:
+
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
+    sudo restorecon -R -v $USERHOME/Nominatim
+    sudo restorecon -R -v $USERHOME/build
+
 
 # You need to create a minimal configuration file that tells nominatim
 # the name of your webserver user and the URL of the website:

@@ -8,6 +8,12 @@
   <!-- https://github.com/squizlabs/PHP_CodeSniffer/blob/master/CodeSniffer/Standards/PSR2/ruleset.xml -->
   <rule ref="PSR2"/>
 
+  <exclude-pattern>./lib/template/*html*</exclude-pattern>
+  <exclude-pattern>./lib/template/includes/</exclude-pattern>
+  <exclude-pattern>./module/</exclude-pattern>
+  <exclude-pattern>./website/css</exclude-pattern>
+  <exclude-pattern>./website/js</exclude-pattern>
+
   <rule ref="Generic.Files.LineLength">
     <properties>
      <property name="lineLimit" value="194"/>
@@ -79,19 +85,6 @@
   <!-- **************************************************************
        INDENTATION, SPACING
        ************************************************************** -->
-
-  <!-- We don't need 2 blank lines after function -->
-  <rule ref="Squiz.WhiteSpace.FunctionSpacing.After">
-    <severity>0</severity>
-  </rule>
-
-  <!-- Aligned looks nicer, but causes too many warnings currently -->
-  <rule ref="Generic.Formatting.MultipleStatementAlignment.NotSame">
-    <severity>0</severity>
-  </rule>
-  <rule ref="Generic.Formatting.MultipleStatementAlignment.NotSameWarning">
-    <severity>0</severity>
-  </rule>
 
   <!-- Aligned looks nicer, but causes too many warnings currently -->
   <rule ref="Squiz.Arrays.ArrayDeclaration.DoubleArrowNotAligned">

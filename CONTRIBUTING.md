@@ -82,7 +82,7 @@ are in process of consolodating the style. The following rules apply:
 The coding style is enforced with PHPCS and can be tested with:
 
 ```
-  phpcs --report-width=120 --colors */**.php
+  phpcs --report-width=120 --colors .
 ```
 
 ## Testing

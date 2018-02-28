@@ -31,13 +31,13 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'bool5' => ''
                                        ]);
 
-        $this->assertEquals(false, $oParams->getBool('non-exists'));
-        $this->assertEquals(true, $oParams->getBool('non-exists', true));
-        $this->assertEquals(true, $oParams->getBool('bool1'));
-        $this->assertEquals(false, $oParams->getBool('bool2'));
-        $this->assertEquals(true, $oParams->getBool('bool3'));
-        $this->assertEquals(true, $oParams->getBool('bool4'));
-        $this->assertEquals(false, $oParams->getBool('bool5'));
+        $this->assertSame(false, $oParams->getBool('non-exists'));
+        $this->assertSame(true, $oParams->getBool('non-exists', true));
+        $this->assertSame(true, $oParams->getBool('bool1'));
+        $this->assertSame(false, $oParams->getBool('bool2'));
+        $this->assertSame(true, $oParams->getBool('bool3'));
+        $this->assertSame(true, $oParams->getBool('bool4'));
+        $this->assertSame(false, $oParams->getBool('bool5'));
     }
 
 
@@ -50,13 +50,13 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'int4' => 0
                                        ]);
 
-        $this->assertEquals(false, $oParams->getInt('non-exists'));
-        $this->assertEquals(999, $oParams->getInt('non-exists', 999));
-        $this->assertEquals(5, $oParams->getInt('int1'));
+        $this->assertSame(false, $oParams->getInt('non-exists'));
+        $this->assertSame(999, $oParams->getInt('non-exists', 999));
+        $this->assertSame(5, $oParams->getInt('int1'));
 
-        $this->assertEquals(-1, $oParams->getInt('int2'));
-        $this->assertEquals(false, $oParams->getInt('int3'));
-        $this->assertEquals(false, $oParams->getInt('int4')); // FIXME: should be 0 instead?
+        $this->assertSame(-1, $oParams->getInt('int2'));
+        $this->assertSame(false, $oParams->getInt('int3')); // FIXME: should be 0 instead?
+        $this->assertSame(0, $oParams->getInt('int4'));
     }
 
 
@@ -77,12 +77,12 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'float4' => 0
                                        ]);
 
-        $this->assertEquals(false, $oParams->getFloat('non-exists'));
-        $this->assertEquals(999, $oParams->getFloat('non-exists', 999));
-        $this->assertEquals(1, $oParams->getFloat('float1'));
-        $this->assertEquals(-5, $oParams->getFloat('float2'));
-        $this->assertEquals(false, $oParams->getFloat('float3'));
-        $this->assertEquals(false, $oParams->getFloat('float4')); // FIXME: should be 0 instead?
+        $this->assertSame(false, $oParams->getFloat('non-exists'));
+        $this->assertSame(999, $oParams->getFloat('non-exists', 999));
+        $this->assertSame(1.0, $oParams->getFloat('float1'));
+        $this->assertSame(-5.0, $oParams->getFloat('float2'));
+        $this->assertSame(false, $oParams->getFloat('float3')); // FIXME: should be 0 instead?
+        $this->assertSame(0.0, $oParams->getFloat('float4'));
     }
 
 
@@ -108,11 +108,11 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'str3' => '0'
                                        ]);
 
-        $this->assertEquals(false, $oParams->getString('non-exists'));
-        $this->assertEquals('default', $oParams->getString('non-exists', 'default'));
-        $this->assertEquals('abc', $oParams->getString('str1'));
-        $this->assertEquals(false, $oParams->getStringList('str2'));
-        $this->assertEquals(false, $oParams->getStringList('str3')); // FIXME: should be 0 instead?
+        $this->assertSame(false, $oParams->getString('non-exists'));
+        $this->assertSame('default', $oParams->getString('non-exists', 'default'));
+        $this->assertSame('abc', $oParams->getString('str1'));
+        $this->assertSame(false, $oParams->getStringList('str2'));
+        $this->assertSame(false, $oParams->getStringList('str3')); // FIXME: should be 0 instead?
     }
 
 
@@ -124,13 +124,13 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'val3' => 0
                                        ]);
 
-        $this->assertEquals(false, $oParams->getSet('non-exists', ['foo', 'bar']));
+        $this->assertSame(false, $oParams->getSet('non-exists', ['foo', 'bar']));
         // FIXME: unclear if the default value has to be part of the set
-        $this->assertEquals('default', $oParams->getSet('non-exists', ['foo', 'bar'], 'default'));
-        $this->assertEquals('foo', $oParams->getSet('val1', ['foo', 'bar']));
+        $this->assertSame('default', $oParams->getSet('non-exists', ['foo', 'bar'], 'default'));
+        $this->assertSame('foo', $oParams->getSet('val1', ['foo', 'bar']));
 
-        $this->assertEquals(false, $oParams->getSet('val2', ['foo', 'bar']));
-        $this->assertEquals(false, $oParams->getSet('val3', ['foo', 'bar']));
+        $this->assertSame(false, $oParams->getSet('val2', ['foo', 'bar']));
+        $this->assertSame(0, $oParams->getSet('val3', ['foo', 'bar']));
     }
 
 
@@ -150,67 +150,67 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                         'list4' => '0'
                                        ]);
 
-        $this->assertEquals(false, $oParams->getStringList('non-exists'));
-        $this->assertEquals(['a', 'b'], $oParams->getStringList('non-exists', ['a', 'b']));
+        $this->assertSame(false, $oParams->getStringList('non-exists'));
+        $this->assertSame(['a', 'b'], $oParams->getStringList('non-exists', ['a', 'b']));
         // FIXME: unclear if empty string items should be removed
-        $this->assertEquals(['', 'a', 'b', 'c', '', 'c', 'd'], $oParams->getStringList('list1'));
-        $this->assertEquals(['a'], $oParams->getStringList('list2'));
-        $this->assertEquals(false, $oParams->getStringList('list3'));
-        $this->assertEquals(false, $oParams->getStringList('list4'));
+        $this->assertSame(['', 'a', 'b', 'c', '', 'c', 'd'], $oParams->getStringList('list1'));
+        $this->assertSame(['a'], $oParams->getStringList('list2'));
+        $this->assertSame(false, $oParams->getStringList('list3'));
+        $this->assertSame(false, $oParams->getStringList('list4'));
     }
 
 
     public function testGetPreferredLanguages()
     {
         $oParams = new ParameterParser(['accept-language' => '']);
-        $this->assertEquals([
-                             'brand' => 'brand',
-                             'ref' => 'ref',
-                             'type' => 'type',
-                             'name' => 'name',
-                             'name:default' => 'name:default',
-                             'short_name' => 'short_name',
-                             'short_name:default' => 'short_name:default',
-                             'official_name' => 'official_name',
-                             'official_name:default' => 'official_name:default',
-                            ], $oParams->getPreferredLanguages('default'));
+        $this->assertSame([
+                           'short_name:default' => 'short_name:default',
+                           'name:default' => 'name:default',
+                           'short_name' => 'short_name',
+                           'name' => 'name',
+                           'brand' => 'brand',
+                           'official_name:default' => 'official_name:default',
+                           'official_name' => 'official_name',
+                           'ref' => 'ref',
+                           'type' => 'type'
+                          ], $oParams->getPreferredLanguages('default'));
 
         $oParams = new ParameterParser(['accept-language' => 'de,en']);
-        $this->assertEquals([
-                             'brand' => 'brand',
-                             'ref' => 'ref',
-                             'type' => 'type',
-                             'name' => 'name',
-                             'name:de' => 'name:de',
-                             'name:en' => 'name:en',
-                             'short_name' => 'short_name',
-                             'short_name:de' => 'short_name:de',
-                             'short_name:en' => 'short_name:en',
-                             'official_name' => 'official_name',
-                             'official_name:de' => 'official_name:de',
-                             'official_name:en' => 'official_name:en',
-                            ], $oParams->getPreferredLanguages('default'));
+        $this->assertSame([
+                           'short_name:de' => 'short_name:de',
+                           'name:de' => 'name:de',
+                           'short_name:en' => 'short_name:en',
+                           'name:en' => 'name:en',
+                           'short_name' => 'short_name',
+                           'name' => 'name',
+                           'brand' => 'brand',
+                           'official_name:de' => 'official_name:de',
+                           'official_name:en' => 'official_name:en',
+                           'official_name' => 'official_name',
+                           'ref' => 'ref',
+                           'type' => 'type'
+                          ], $oParams->getPreferredLanguages('default'));
 
         $oParams = new ParameterParser(['accept-language' => 'fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3']);
-        $this->assertEquals([
-                             'short_name:fr-ca' => 'short_name:fr-ca',
-                             'name:fr-ca' => 'name:fr-ca',
-                             'short_name:fr' => 'short_name:fr',
-                             'name:fr' => 'name:fr',
-                             'short_name:en-ca' => 'short_name:en-ca',
-                             'name:en-ca' => 'name:en-ca',
-                             'short_name:en' => 'short_name:en',
-                             'name:en' => 'name:en',
-                             'short_name' => 'short_name',
-                             'name' => 'name',
-                             'brand' => 'brand',
-                             'official_name:fr-ca' => 'official_name:fr-ca',
-                             'official_name:fr' => 'official_name:fr',
-                             'official_name:en-ca' => 'official_name:en-ca',
-                             'official_name:en' => 'official_name:en',
-                             'official_name' => 'official_name',
-                             'ref' => 'ref',
-                             'type' => 'type',
-                            ], $oParams->getPreferredLanguages('default'));
+        $this->assertSame([
+                           'short_name:fr-ca' => 'short_name:fr-ca',
+                           'name:fr-ca' => 'name:fr-ca',
+                           'short_name:fr' => 'short_name:fr',
+                           'name:fr' => 'name:fr',
+                           'short_name:en-ca' => 'short_name:en-ca',
+                           'name:en-ca' => 'name:en-ca',
+                           'short_name:en' => 'short_name:en',
+                           'name:en' => 'name:en',
+                           'short_name' => 'short_name',
+                           'name' => 'name',
+                           'brand' => 'brand',
+                           'official_name:fr-ca' => 'official_name:fr-ca',
+                           'official_name:fr' => 'official_name:fr',
+                           'official_name:en-ca' => 'official_name:en-ca',
+                           'official_name:en' => 'official_name:en',
+                           'official_name' => 'official_name',
+                           'ref' => 'ref',
+                           'type' => 'type',
+                          ], $oParams->getPreferredLanguages('default'));
     }
 }

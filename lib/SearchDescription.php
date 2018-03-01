@@ -276,11 +276,12 @@ class SearchDescription
                   && $sPhraseType != 'country'
         ) {
             $iWordID = $aSearchTerm['word_id'];
-            if (sizeof($this->aName)) {
-                if (($sPhraseType == '' || !$bFirstPhrase)
-                    && $sPhraseType != 'country'
-                    && !$bHasPartial
-                ) {
+            // Full words can only be a name if they appear at the beginning
+            // of the phrase. In structured search the name must forcably in
+            // the first phrase. In unstructured search it may be in a later
+            // phrase when the first phrase is a house number.
+            if (sizeof($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
+                if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress[$iWordID] = $iWordID;
@@ -289,14 +290,10 @@ class SearchDescription
                     $this->aFullNameAddress[$iWordID] = $iWordID;
                 }
             } else {
-                // in structured search only the first phrase can be the
-                // designated name
-                if ($sPhraseType == '' || $bFirstPhrase) {
-                    $oSearch = clone $this;
-                    $oSearch->iSearchRank++;
-                    $oSearch->aName = array($iWordID => $iWordID);
-                    $aNewSearches[] = $oSearch;
-                }
+                $oSearch = clone $this;
+                $oSearch->iSearchRank++;
+                $oSearch->aName = array($iWordID => $iWordID);
+                $aNewSearches[] = $oSearch;
             }
         }
 

@@ -289,10 +289,14 @@ class SearchDescription
                     $this->aFullNameAddress[$iWordID] = $iWordID;
                 }
             } else {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank++;
-                $oSearch->aName = array($iWordID => $iWordID);
-                $aNewSearches[] = $oSearch;
+                // in structured search only the first phrase can be the
+                // designated name
+                if ($sPhraseType == '' || $bFirstPhrase) {
+                    $oSearch = clone $this;
+                    $oSearch->iSearchRank++;
+                    $oSearch->aName = array($iWordID => $iWordID);
+                    $aNewSearches[] = $oSearch;
+                }
             }
         }
 

@@ -14,6 +14,7 @@ env:
 install:
   - vagrant/install-on-travis-ci.sh
   - sudo pear install --soft --force DB
+  - pyrus install pear/DB
   - phpenv rehash
   - sudo find / | grep DB.php
 before_script:

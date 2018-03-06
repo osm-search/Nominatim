@@ -128,7 +128,6 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
                                        ]);
 
         $this->assertSame(false, $oParams->getSet('non-exists', ['foo', 'bar']));
-        // FIXME: unclear if the default value has to be part of the set
         $this->assertSame('default', $oParams->getSet('non-exists', ['foo', 'bar'], 'default'));
         $this->assertSame('foo', $oParams->getSet('val1', ['foo', 'bar']));
 

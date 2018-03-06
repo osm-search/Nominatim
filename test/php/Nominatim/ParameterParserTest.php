@@ -16,11 +16,6 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
 {
 
 
-    protected function setUp()
-    {
-    }
-
-
     public function testGetBool()
     {
         $oParams = new ParameterParser([
@@ -46,8 +41,7 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $oParams = new ParameterParser([
                                         'int1' => '5',
                                         'int2' => '-1',
-                                        'int3' => '',
-                                        'int4' => 0
+                                        'int3' => 0
                                        ]);
 
         $this->assertSame(false, $oParams->getInt('non-exists'));
@@ -55,15 +49,21 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(5, $oParams->getInt('int1'));
 
         $this->assertSame(-1, $oParams->getInt('int2'));
-        $this->assertSame(false, $oParams->getInt('int3')); // FIXME: should be 0 instead?
-        $this->assertSame(0, $oParams->getInt('int4'));
+        $this->assertSame(0, $oParams->getInt('int3'));
+    }
+
+
+    public function testGetIntWithNonNumber()
+    {
+        $this->setExpectedException(Exception::class, "Integer number expected for parameter 'int4'");
+        (new ParameterParser(['int4' => 'a']))->getInt('int4');
     }
 
 
     public function testGetIntWithEmpytString()
     {
         $this->setExpectedException(Exception::class, "Integer number expected for parameter 'int5'");
-        (new ParameterParser(['int5' => 'a']))->getInt('int5');
+        (new ParameterParser(['int5' => '']))->getInt('int5');
     }
 
 

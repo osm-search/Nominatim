@@ -74,7 +74,8 @@ class ParameterParser
         $sValue = $this->getString($sName);
 
         if ($sValue) {
-            return explode(',', $sValue);
+            // removes all NULL, FALSE and Empty Strings but leaves 0 (zero) values
+            return array_values(array_filter(explode(',', $sValue), 'strlen'));
         }
 
         return $aDefault;

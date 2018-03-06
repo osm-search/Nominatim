@@ -115,7 +115,7 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('default', $oParams->getString('non-exists', 'default'));
         $this->assertSame('abc', $oParams->getString('str1'));
         $this->assertSame(false, $oParams->getStringList('str2'));
-        $this->assertSame(false, $oParams->getStringList('str3')); // FIXME: should be 0 instead?
+        $this->assertSame(false, $oParams->getStringList('str3')); // sadly PHP magic treats 0 as false when returned
     }
 
 
@@ -155,8 +155,7 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame(false, $oParams->getStringList('non-exists'));
         $this->assertSame(['a', 'b'], $oParams->getStringList('non-exists', ['a', 'b']));
-        // FIXME: unclear if empty string items should be removed
-        $this->assertSame(['', 'a', 'b', 'c', '', 'c', 'd'], $oParams->getStringList('list1'));
+        $this->assertSame(['a', 'b', 'c', 'c', 'd'], $oParams->getStringList('list1'));
         $this->assertSame(['a'], $oParams->getStringList('list2'));
         $this->assertSame(false, $oParams->getStringList('list3'));
         $this->assertSame(false, $oParams->getStringList('list4'));

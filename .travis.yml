@@ -14,7 +14,7 @@ env:
 install:
   - vagrant/install-on-travis-ci.sh
   - sudo pear install --soft --force DB
-  - sudo find / | grep DB.pm
+  - sudo find / | grep DB.php
 before_script:
   - psql -U postgres -c "create extension postgis"
 script:

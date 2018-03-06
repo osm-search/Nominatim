@@ -36,7 +36,7 @@ class ParameterParser
 
     public function getFloat($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])) {
             return $bDefault;
         }
 

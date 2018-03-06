@@ -73,20 +73,23 @@ class ParameterParserTest extends \PHPUnit_Framework_TestCase
         $oParams = new ParameterParser([
                                         'float1' => '1.0',
                                         'float2' => '-5',
-                                        'float3' => '',
-                                        'float4' => 0
+                                        'float3' => 0
                                        ]);
 
         $this->assertSame(false, $oParams->getFloat('non-exists'));
         $this->assertSame(999, $oParams->getFloat('non-exists', 999));
         $this->assertSame(1.0, $oParams->getFloat('float1'));
         $this->assertSame(-5.0, $oParams->getFloat('float2'));
-        $this->assertSame(false, $oParams->getFloat('float3')); // FIXME: should be 0 instead?
-        $this->assertSame(0.0, $oParams->getFloat('float4'));
+        $this->assertSame(0.0, $oParams->getFloat('float3'));
     }
 
+    public function testGetFloatWithEmptyString()
+    {
+        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float4'");
+        (new ParameterParser(['float4' => '']))->getFloat('float4');
+    }
 
-    public function testGetFloatWithString()
+    public function testGetFloatWithTextString()
     {
         $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float5'");
         (new ParameterParser(['float5' => 'a']))->getFloat('float5');

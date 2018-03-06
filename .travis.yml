@@ -13,7 +13,7 @@ env:
   - TEST_SUITE=monaco
 install:
   - vagrant/install-on-travis-ci.sh
-  - pear install --soft --force DB
+  - sudo pear install --soft --force DB
 before_script:
   - psql -U postgres -c "create extension postgis"
 script:

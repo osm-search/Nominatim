@@ -13,36 +13,35 @@ $sOutputFormat = $oParams->getSet('format', array('text', 'json'), 'text');
 $oDB =& DB::connect(CONST_Database_DSN, false);
 $oStatus = new Nominatim\Status($oDB);
 
-$sStatus = $oStatus->status();
-$bGotError = ($sStatus != 'OK');
-
 $aResponse = [
               'status' => 'ok',
               'code' => 200,
-              'message' => $sStatus
+              'message' => 'OK'
              ];
 
-if (!$bGotError && $sOutputFormat == 'json') {
+$sErrorMsg = $oStatus->status(); // can be nil
+
+
+if ($sOutputFormat == 'json' && !$sErrorMsg) {
     try {
         $aResponse['data_updated_date'] = $oStatus->dataDate();
     } catch (Exception $oErr) {
-        $bGotError = true;
-        $sStatus = $oErr->getMessage();
+        $sErrorMsg = $oErr->getMessage();
     }
 }
 
 
 
-if ($bGotError) {
+if ($sErrorMsg) {
     $aResponse = [
                   'status' => 'error',
                   'code' => 500,
-                  'message' => $sStatus
+                  'message' => $sErrorMsg
                  ];
 }
 
 
-if ($bGotError) {
+if ($sErrorMsg) {
     header('HTTP/1.0 500 Internal Server Error');
 }
 
@@ -51,7 +50,8 @@ if ($sOutputFormat == 'json') {
     javascript_renderData($aResponse);
 } else {
     header('content-type: text/plain; charset=UTF-8');
-    echo ($bGotError ? 'ERROR: '.$sStatus : 'OK');
+    if ($sErrorMsg) echo 'ERROR: ';
+    echo $aResponse['message'];
 }
 
 exit;

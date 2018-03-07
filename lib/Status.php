@@ -15,6 +15,7 @@ class Status
         $this->oDB =& $oDB;
     }
 
+    // return null on success
     public function status()
     {
         if (!$this->oDB || PEAR::isError($this->oDB)) {
@@ -40,7 +41,7 @@ class Status
             return 'No value';
         }
 
-        return 'OK';
+        return;
     }
 
     public function dataDate()

@@ -55,7 +55,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
                 }));
 
         $oStatus = new Status($oDbStub);
-        $this->assertEquals('OK', $oStatus->status());
+        $this->assertNull($oStatus->status());
     }
 
     public function testDataDate()

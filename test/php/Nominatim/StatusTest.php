@@ -11,8 +11,10 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testNoDatabaseConnectionFail()
     {
+        // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
+        // failure on travis
         // $oDB = \DB::connect('', false); // returns a DB_Error instance
-        $oDB = new \DB_Error;
+        $oDB = null;
 
         $oStatus = new Status($oDB);
         $this->assertEquals('No database', $oStatus->status());

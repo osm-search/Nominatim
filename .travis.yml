@@ -13,14 +13,6 @@ env:
   - TEST_SUITE=monaco
 install:
   - vagrant/install-on-travis-ci.sh
-  - sudo pear install --soft --force DB
-  - phpenv rehash
-  - sudo find / | grep DB.php
-  - ls -la /usr/share/php/DB.php
-  - sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/5.6.*/share/pear/
-  - sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.0.*/share/pear/
-  - sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.1.*/share/pear/
-  - sudo find / | grep DB.php
 before_script:
   - psql -U postgres -c "create extension postgis"
 script:

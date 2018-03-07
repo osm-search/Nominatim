@@ -32,39 +32,21 @@ Vagrant.configure("2") do |config|
       end
   end
 
-   config.vm.define "centos" do |sub|
+  config.vm.define "centos" do |sub|
       sub.vm.box = "centos/7"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Centos-7.sh"
         s.privileged = false
         s.args = "yes"
-        sub.vm.synced_folder ".", "/vagrant", disabled: true
       end
+      sub.vm.synced_folder ".", "/home/vagrant/Nominatim", disabled: true
+      sub.vm.synced_folder ".", "/vagrant", disabled: true
   end
-
-  # configure shared package cache if possible
-  #if Vagrant.has_plugin?("vagrant-cachier")
-  #  config.cache.enable :apt
-  #  config.cache.scope = :box
-  #end
-
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
-    vb.customize ["modifyvm", :id, "--memory", "2048"]
+    vb.memory = 2048
+    vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate//vagrant","0"]
   end
-
-
-  # config.vm.provider :digital_ocean do |provider, override|
-  #   override.ssh.private_key_path = '~/.ssh/id_rsa'
-  #   override.vm.box = 'digital_ocean'
-  #   override.vm.box_url = "https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box"
-
-  #   provider.token = ''
-  #   # provider.token = 'YOUR TOKEN'
-  #   provider.image = 'ubuntu-14-04-x64'
-  #   provider.region = 'nyc2'
-  #   provider.size = '512mb'
-  # end
 
 end

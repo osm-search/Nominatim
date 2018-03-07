@@ -11,7 +11,8 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testNoDatabaseConnectionFail()
     {
-        $oDB = \DB::connect('', false); // returns a DB_Error instance
+        // $oDB = \DB::connect('', false); // returns a DB_Error instance
+        $oDB = new \DB_Error;
 
         $oStatus = new Status($oDB);
         $this->assertEquals('No database', $oStatus->status());

@@ -106,14 +106,14 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 
 #DOCS:```sh
 sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/build/website">
+<Directory "$USERHOME/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/build/website
+Alias /nominatim $USERHOME/build/website
 EOFAPACHECONF
 #DOCS:```
 
@@ -154,7 +154,8 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME                   #DOCS:    :::sh
+#DOCS:    :::sh
+    cd $USERHOME
     mkdir build
     cd build
     cmake $USERHOME/Nominatim

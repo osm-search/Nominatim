@@ -276,11 +276,12 @@ class SearchDescription
                   && $sPhraseType != 'country'
         ) {
             $iWordID = $aSearchTerm['word_id'];
-            if (sizeof($this->aName)) {
-                if (($sPhraseType == '' || !$bFirstPhrase)
-                    && $sPhraseType != 'country'
-                    && !$bHasPartial
-                ) {
+            // Full words can only be a name if they appear at the beginning
+            // of the phrase. In structured search the name must forcably in
+            // the first phrase. In unstructured search it may be in a later
+            // phrase when the first phrase is a house number.
+            if (sizeof($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
+                if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress[$iWordID] = $iWordID;
@@ -675,7 +676,7 @@ class SearchDescription
         if ($this->sHouseNumber) {
             $sImportanceSQL = '- abs(26 - address_rank) + 3';
         } else {
-            $sImportanceSQL = '(CASE WHEN importance = 0 OR importance IS NULL THEN 0.75-(search_rank::float/40) ELSE importance END)';
+            $sImportanceSQL = '(CASE WHEN importance = 0 OR importance IS NULL THEN 0.75001-(search_rank::float/40) ELSE importance END)';
         }
         $sImportanceSQL .= $this->oContext->viewboxImportanceSQL('centroid');
         $aOrder[] = "$sImportanceSQL DESC";

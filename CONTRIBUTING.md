@@ -41,7 +41,7 @@ Please add the following information to your issue:
 
 ## Workflow for Pull Requests
 
-We love to get pull reuqests from you. We operate the "Fork & Pull" model
+We love to get pull requests from you. We operate the "Fork & Pull" model
 explained at
 
 https://help.github.com/articles/using-pull-requests
@@ -65,7 +65,7 @@ that duplicate work can be avoided.
 ## Coding style
 
 Nominatim historically hasn't followed a particular coding style but we
-are in process of consolodating the style. The following rules apply:
+are in process of consolidating the style. The following rules apply:
 
  * Python code uses the official Python style
  * indention

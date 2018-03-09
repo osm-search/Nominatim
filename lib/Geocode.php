@@ -921,12 +921,12 @@ class Geocode
                 $aResult['importance'] = 0.001;
                 $aResult['foundorder'] = $aResult['addressimportance'];
             } else {
-                // Adjust importance for the number of exact string matches in the result
+                $aResult['importance'] = max(0.001, $aResult['importance']);
                 $aResult['importance'] *= $this->viewboxImportanceFactor(
                     $aResult['lon'],
                     $aResult['lat']
                 );
-                $aResult['importance'] = max(0.001, $aResult['importance']);
+                // Adjust importance for the number of exact string matches in the result
                 $iCountWords = 0;
                 $sAddress = $aResult['langaddress'];
                 foreach ($aRecheckWords as $i => $sWord) {

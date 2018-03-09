@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once('../../lib/db.php');
 require_once('../../lib/Status.php');
+require_once('DB.php');
 
 class StatusTest extends \PHPUnit_Framework_TestCase
 {
@@ -11,7 +11,10 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testNoDatabaseConnectionFail()
     {
-        $oDB = \DB::connect('', false); // returns a DB_Error instance
+        // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
+        // failure on travis
+        // $oDB = \DB::connect('', false); // returns a DB_Error instance
+        $oDB = null;
 
         $oStatus = new Status($oDB);
         $this->assertEquals('No database', $oStatus->status());
@@ -55,7 +58,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
                 }));
 
         $oStatus = new Status($oDbStub);
-        $this->assertEquals('OK', $oStatus->status());
+        $this->assertNull($oStatus->status());
     }
 
     public function testDataDate()

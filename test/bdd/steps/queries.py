@@ -232,6 +232,10 @@ class DetailsResponse(GenericResponse):
                                         options={'char-encoding' : 'utf8'})
         self.result = {}
 
+    def parse_json(self):
+        self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(self.page)]
+
+
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
 def query_cmd(context, query, dups):
     """ Query directly via PHP script.
@@ -379,7 +383,12 @@ def website_details_request(context, fmt, query):
         params['place_id'] = query
     outp, status = send_api_query('details', params, fmt, context)
 
-    context.response = DetailsResponse(outp, 'html', status)
+    if fmt is None:
+        outfmt = 'html'
+    else:
+        outfmt = fmt.strip()
+
+    context.response = DetailsResponse(outp, outfmt, status)
 
 @when(u'sending (?P<fmt>\S+ )?lookup query for (?P<query>.*)')
 def website_lookup_request(context, fmt, query):

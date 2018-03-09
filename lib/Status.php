@@ -46,17 +46,13 @@ class Status
 
     public function dataDate()
     {
-        $sSQL = "SELECT EXTRACT(EPOCH FROM lastimportdate - '2 minutes'::interval), ";
-        $sSQL .= "TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' ";
-        $sSQL .= 'FROM import_status LIMIT 1';
-        $oDataDates = $this->oDB->getAll($sSQL);
+        $sSQL = "SELECT EXTRACT(EPOCH FROM lastimportdate - '2 minutes'::interval) FROM import_status LIMIT 1";
+        $iDataDateEpoch = $this->oDB->getOne($sSQL);
 
-        if (PEAR::isError($oDataDates)) {
-            throw Exception('Data date query failed '.$oDataDates->getMessage());
+        if (PEAR::isError($iDataDateEpoch)) {
+            throw Exception('Data date query failed '.$iDataDateEpoch->getMessage());
         }
-        return [
-                'epoch' => $oDataDates[0][0],
-                'formatted' => $oDataDates[0][1]
-               ];
+
+        return $iDataDateEpoch;
     }
 }

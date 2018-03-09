@@ -24,7 +24,7 @@ $sErrorMsg = $oStatus->status(); // can be nil
 
 if ($sOutputFormat == 'json' && !$sErrorMsg) {
     try {
-        $aResponse['data_updated_date'] = $oStatus->dataDate();
+        $aResponse['data_updated'] = $oStatus->dataDate();
     } catch (Exception $oErr) {
         $sErrorMsg = $oErr->getMessage();
     }

@@ -63,15 +63,12 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testDataDate()
     {
-        $oDbStub = $this->getMock(\DB::class, ['getAll']);
+        $oDbStub = $this->getMock(\DB::class, ['getOne']);
      
-        $oDbStub->method('getAll')
-                ->willReturn([[1519430221, '2018/02/23 23:57 GMT']]);
+        $oDbStub->method('getOne')
+                ->willReturn(1519430221);
 
         $oStatus = new Status($oDbStub);
-        $this->assertEquals([
-                             'epoch' => 1519430221,
-                             'formatted' => '2018/02/23 23:57 GMT'
-                            ], $oStatus->dataDate());
+        $this->assertEquals(1519430221, $oStatus->dataDate());
     }
 }

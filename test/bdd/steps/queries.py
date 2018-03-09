@@ -232,7 +232,6 @@ class DetailsResponse(GenericResponse):
                                         options={'char-encoding' : 'utf8'})
         self.result = {}
 
-
 class StatusResponse(GenericResponse):
 
     def __init__(self, page, fmt='text', errorcode=200):
@@ -240,6 +239,11 @@ class StatusResponse(GenericResponse):
         self.format = fmt
         self.errorcode = errorcode
 
+        if errorcode == 200 and fmt!='text':
+            getattr(self, 'parse_' + fmt)()
+
+    def parse_json(self):
+        self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(self.page)]
 
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
 def query_cmd(context, query, dups):
@@ -406,10 +410,10 @@ def website_status_request(context, fmt):
     params = {}
     outp, status = send_api_query('status', params, fmt, context)
 
-    if fmt == 'json ':
-        outfmt = 'json'
-    else:
+    if fmt is None:
         outfmt = 'text'
+    else:
+        outfmt = fmt.strip()
 
     context.response = StatusResponse(outp, outfmt, status)
 

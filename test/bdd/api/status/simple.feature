@@ -4,10 +4,13 @@ Feature: Status queries
 
     Scenario: Status as text
         When sending status query
-        Then a HTTP 500 is returned
-        And the page contents equals "ERROR: No database"
+        Then a HTTP 200 is returned
+        And the page contents equals "OK"
 
     Scenario: Status as json
         When sending json status query
-        Then a HTTP 500 is returned
-        And the page contents equals "{"status":"error","code":500,"message":"No database"}"
+        Then the result is valid json
+        And results contain
+          | status | code | message |
+          | ok     | 200  | OK      |
+        And result has attributes data_updated

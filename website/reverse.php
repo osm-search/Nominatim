@@ -76,4 +76,6 @@ if ($sOutputFormat == 'html') {
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;
 }
-include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');
+
+$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+include(CONST_BasePath.'/lib/template/address-'.$sOutputTemplate.'.php');

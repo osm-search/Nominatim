@@ -81,4 +81,5 @@ $sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
 
 if (CONST_Debug) exit;
 
-include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');
+$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');

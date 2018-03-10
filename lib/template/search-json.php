@@ -1,11 +1,10 @@
 <?php
-header('content-type: application/json; charset=UTF-8');
 
 $aFilteredPlaces = array();
 foreach ($aSearchResults as $iResNum => $aPointDetails) {
     $aPlace = array(
                'place_id'=>$aPointDetails['place_id'],
-               'licence'=>'Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright',
+               'licence'=>'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
               );
     
     $sOSMType = formatOSMType($aPointDetails['osm_type']);
@@ -30,7 +29,12 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
     $aPlace['lon'] = $aPointDetails['lon'];
     $aPlace['display_name'] = $aPointDetails['name'];
 
-    $aPlace['class'] = $aPointDetails['class'];
+    if ($sOutputFormat == 'jsonv2') {
+        $aPlace['place_rank'] = $aPointDetails['rank_search'];
+        $aPlace['category'] = $aPointDetails['class'];
+    } else {
+        $aPlace['class'] = $aPointDetails['class'];
+    }
     $aPlace['type'] = $aPointDetails['type'];
 
     $aPlace['importance'] = $aPointDetails['importance'];
@@ -39,7 +43,7 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
         $aPlace['icon'] = $aPointDetails['icon'];
     }
 
-    if (isset($aPointDetails['address'])) {
+    if (isset($aPointDetails['address']) && sizeof($aPointDetails['address'])>0) {
         $aPlace['address'] = $aPointDetails['address'];
     }
 

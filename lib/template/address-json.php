@@ -16,7 +16,22 @@ if (!sizeof($aPlace)) {
     }
     if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
     if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
+
+    if ($sOutputFormat == 'jsonv2') {
+        $aFilteredPlaces['place_rank'] = $aPlace['rank_search'];
+
+        $aFilteredPlaces['category'] = $aPlace['class'];
+        $aFilteredPlaces['type'] = $aPlace['type'];
+
+        $aFilteredPlaces['importance'] = $aPlace['importance'];
+
+        $aFilteredPlaces['addresstype'] = strtolower($aPlace['addresstype']);
+
+        $aFilteredPlaces['name'] = $aPlace['placename'];
+    }
+
     $aFilteredPlaces['display_name'] = $aPlace['langaddress'];
+
     if (isset($aPlace['aAddress'])) $aFilteredPlaces['address'] = $aPlace['aAddress'];
     if (isset($aPlace['sExtraTags'])) $aFilteredPlaces['extratags'] = $aPlace['sExtraTags'];
     if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['namedetails'] = $aPlace['sNameDetails'];

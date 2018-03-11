@@ -92,13 +92,27 @@ Feature: Simple Reverse Tests
       | html |
       | xml |
 
-    Scenario: Missing lon parameter
-        When sending reverse coordinates 52.52,
+    Scenario Outline: Missing lon parameter error
+        When sending <format> reverse coordinates 52.52,
+        Then the result page will include <text> 
+
+    Examples:
+      | format | text |
+      | json | Need coordinates or OSM object to lookup. |
+      | jsonv2 | Need coordinates or OSM object to lookup. |
+      | html | Need coordinates or OSM object to lookup. |
+      | xml | Need coordinates or OSM object to lookup. |
+
+    Scenario Outline: Missing lat parameter
+        When sending <format> reverse coordinates ,52.52
         Then a HTTP 400 is returned
 
-    Scenario: Missing lat parameter
-        When sending reverse coordinates ,52.52
-        Then a HTTP 400 is returned
+    Examples:
+      | format |
+      | json |
+      | jsonv2 |
+      | html |
+      | xml |
 
     Scenario: Missing osm_id parameter
         When sending reverse coordinates ,

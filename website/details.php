@@ -60,7 +60,7 @@ if ($sOsmType && $iOsmId > 0) {
 }
 
 
-if (!$sPlaceId) userError('Please select a place id', $oParams->getString('format'));
+if (!$sPlaceId) userError('Please select a place id', $sOutputFormat);
 
 $iPlaceID = (int)$sPlaceId;
 

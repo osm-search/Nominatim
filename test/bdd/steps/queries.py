@@ -533,6 +533,5 @@ def check_for_duplicates(context, neg):
 
 @then(u'the result page will include (?P<error>.*).')
 def error_check(context,error):
-    if not error in getattr(context.response,'page'):
-        assert not error, "Incorrect error displayed. Expected page to contain \"%s\" but got %s" % (error, vars(context.response))
+    assert_in(error,context.response.page,'thisIsTheError')
 

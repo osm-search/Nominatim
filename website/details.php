@@ -19,11 +19,10 @@ $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osmid', -1);
 $sClass = $oParams->getString('class');
 
-
-$bIncludeAddressDetails = ($sOutputFormat == 'html') ? 1 : $oParams->getBool('addressdetails');
-$bIncludeLinkedPlaces = ($sOutputFormat == 'html') ? 1 : $oParams->getBool('linkedplaces');
-$bIncludeChildPlaces = ($sOutputFormat == 'html') ? 1 : $oParams->getBool('childplaces');
-$bGroupParents = $oParams->getBool('group_parents', 0);
+$bIncludeAddressDetails = $oParams->getBool('addressdetails', $sOutputFormat == 'html');
+$bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', $sOutputFormat == 'html');
+$bIncludeChildPlaces = $oParams->getBool('childplaces', $sOutputFormat == 'html');
+$bGroupParents = $oParams->getBool('group_parents', false);
 
 $oDB =& getDB();
 
@@ -140,21 +139,24 @@ if (isset($aClassType[$sPointClassType]) && $aClassType[$sPointClassType]['icon'
 }
 
 // Get all alternative names (languages, etc)
-$sSQL = "SELECT (each(name)).key,(each(name)).value FROM placex WHERE place_id = $iPlaceID ORDER BY (each(name)).key";
+$sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';
+$sSQL .= "WHERE place_id = $iPlaceID ORDER BY (each(name)).key";
 $aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aNames'])) { // possible timeout
     $aPointDetails['aNames'] = [];
 }
 
 // Address tags
-$sSQL = "SELECT (each(address)).key as key,(each(address)).value FROM placex WHERE place_id = $iPlaceID ORDER BY key";
+$sSQL = 'SELECT (each(address)).key as key,(each(address)).value FROM placex ';
+$sSQL .= "WHERE place_id = $iPlaceID ORDER BY key";
 $aPointDetails['aAddressTags'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aAddressTags'])) { // possible timeout
     $aPointDetails['aAddressTags'] = [];
 }
 
 // Extra tags
-$sSQL = "SELECT (each(extratags)).key,(each(extratags)).value FROM placex WHERE place_id = $iPlaceID ORDER BY (each(extratags)).key";
+$sSQL = 'SELECT (each(extratags)).key,(each(extratags)).value FROM placex ';
+$sSQL .= "WHERE place_id = $iPlaceID ORDER BY (each(extratags)).key";
 $aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
     $aPointDetails['aExtraTags'] = [];
@@ -163,7 +165,14 @@ if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
 // Address
 $aAddressLines = false;
 if ($bIncludeAddressDetails) {
-    $aAddressLines = getAddressDetails($oDB, $sLanguagePrefArraySQL, $iPlaceID, $aPointDetails['country_code'], -1, true);
+    $aAddressLines = getAddressDetails(
+        $oDB,
+        $sLanguagePrefArraySQL,
+        $iPlaceID,
+        $aPointDetails['country_code'],
+        -1,
+        true
+    );
 }
 
 // Linked places

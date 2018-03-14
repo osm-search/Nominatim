@@ -19,7 +19,7 @@ is.
 
         git clone --recursive https://github.com/openstreetmap/Nominatim.git
 
-    If forgot `--recursive`, you can later load the submodules using
+    If you forgot `--recursive`, it you can later load the submodules using
     
         git submodule init
         git submodule update
@@ -62,8 +62,9 @@ You edit code on your host machine in any editor you like. There is no need to
 restart any software: just refresh your browser window.
 
 Note that the webserver uses files from the /build directory. If you change
-files in Nominatim/lib for example you first need to copy them into the
-/build directory.
+files in Nominatim/website or Nominatim/utils for example you first need to
+copy them into the /build directory by running the `cmake` step from the
+installation.
 
 PHP errors are written to `/var/log/apache2/error.log`.
 
@@ -103,8 +104,12 @@ To run the full test suite
 To run a single file
 
     behave -DBUILDDIR=/home/vagrant/build/ features/api/reverse.feature
+
+Or a single test by line number
+
+    behave -DBUILDDIR=/home/vagrant/build/ features/api/reverse.feature:34
     
-To run specific tests you can add tags just before the `Scenario line`, e.g.
+To run specific groups of tests you can add tags just before the `Scenario line`, e.g.
 
     @bug-34
     Scenario: address lookup for non-existing or invalid node, way, relation

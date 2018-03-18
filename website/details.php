@@ -19,6 +19,7 @@ $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osmid', -1);
 $sClass = $oParams->getString('class');
 
+$bIncludeKeywords = $oParams->getBool('keywords');
 $bIncludeAddressDetails = $oParams->getBool('addressdetails', $sOutputFormat == 'html');
 $bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', $sOutputFormat == 'html');
 $bIncludeChildPlaces = $oParams->getBool('childplaces', $sOutputFormat == 'html');
@@ -239,7 +240,7 @@ if ($bIncludeChildPlaces) {
 
 $aPlaceSearchNameKeywords = false;
 $aPlaceSearchAddressKeywords = false;
-if ($oParams->getBool('keywords')) {
+if ($bIncludeKeywords) {
     $sSQL = "SELECT * FROM search_name WHERE place_id = $iPlaceID";
     $aPlaceSearchName = $oDB->getRow($sSQL); // can be null
     if (!$aPlaceSearchName || PEAR::isError($aPlaceSearchName)) { // possible timeout

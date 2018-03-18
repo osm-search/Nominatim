@@ -181,17 +181,14 @@
 
 
 
-    if ($aPlaceSearchNameKeywords)
+    if ($bIncludeKeywords)
     {
         headline('Name Keywords');
         foreach($aPlaceSearchNameKeywords as $aRow)
         {
             _one_keyword_row($aRow['word_token'], $aRow['word_id']);
         }
-    }
 
-    if ($aPlaceSearchAddressKeywords)
-    {
         headline('Address Keywords');
         foreach($aPlaceSearchAddressKeywords as $aRow)
         {

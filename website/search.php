@@ -26,7 +26,7 @@ if (CONST_Search_ReversePlanForAll
 }
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'html');
+$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'html');
 
 $sForcedGeometry = ($sOutputFormat == 'html') ? 'geojson' : null;
 $oGeocode->loadParamArray($oParams, $sForcedGeometry);
@@ -81,5 +81,5 @@ $sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
 
 if (CONST_Debug) exit;
 
-$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+$sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
 include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');

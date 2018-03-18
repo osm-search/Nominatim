@@ -11,6 +11,8 @@ Feature: Simple Reverse Tests
         Then the result is valid json
         When sending jsonv2 reverse coordinates <lat>,<lon>
         Then the result is valid json
+        When sending geojson reverse coordinates <lat>,<lon>
+        Then the result is valid geojson
         When sending html reverse coordinates <lat>,<lon>
         Then the result is valid html
 
@@ -42,6 +44,10 @@ Feature: Simple Reverse Tests
           | param       | value   |
           | <parameter> | <value> |
         Then the result is valid json
+        When sending geojson reverse coordinates 53.603,10.041
+          | param       | value   |
+          | <parameter> | <value> |
+        Then the result is valid geojson
 
     Examples:
      | parameter        | value |
@@ -60,12 +66,13 @@ Feature: Simple Reverse Tests
         When sending <format> reverse coordinates 67.3245,0.456
         | json_callback |
         | foo |
-        Then the result is valid json
+        Then the result is valid <outformat>
 
     Examples:
-      | format |
-      | json |
-      | jsonv2 |
+      | format | outformat |
+      | json | json |
+      | jsonv2 | json |
+      | geojson | geojson |
 
     Scenario Outline: Boundingbox is returned
         When sending <format> reverse coordinates 14.62,108.1
@@ -77,6 +84,7 @@ Feature: Simple Reverse Tests
       | format |
       | json |
       | jsonv2 |
+      | geojson |
       | xml |
 
     Scenario Outline: Reverse-geocoding with zoom
@@ -89,6 +97,7 @@ Feature: Simple Reverse Tests
       | format |
       | json |
       | jsonv2 |
+      | geojson |
       | html |
       | xml |
 

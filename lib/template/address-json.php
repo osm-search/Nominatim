@@ -17,7 +17,7 @@ if (empty($aPlace)) {
     if (isset($aPlace['lat'])) $aFilteredPlaces['lat'] = $aPlace['lat'];
     if (isset($aPlace['lon'])) $aFilteredPlaces['lon'] = $aPlace['lon'];
 
-    if ($sOutputFormat == 'jsonv2') {
+    if ($sOutputFormat == 'jsonv2' || $sOutputFormat == 'geojson') {
         $aFilteredPlaces['place_rank'] = $aPlace['rank_search'];
 
         $aFilteredPlaces['category'] = $aPlace['class'];

@@ -11,7 +11,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('xml', 'json'), 'xml');
+$sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'geojson'), 'xml');
 
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();
@@ -66,4 +66,5 @@ $bShowPolygons = '';
 $aExcludePlaceIDs = array();
 $sMoreURL = '';
 
-include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');
+$sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
+include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');

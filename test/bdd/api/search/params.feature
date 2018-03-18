@@ -276,6 +276,7 @@ Feature: Search queries
         | xml |
         | json |
         | jsonv2 |
+        | geojson |
 
     Scenario Outline: Search with namedetails
         When sending <format> search query "Hauptstr"
@@ -288,6 +289,7 @@ Feature: Search queries
         | xml |
         | json |
         | jsonv2 |
+        | geojson |
 
     Scenario Outline: Search result with contains TEXT geometry
         When sending <format> search query "Highmore"
@@ -348,6 +350,20 @@ Feature: Search queries
         | xml      | geojson |
         | json     | geojson |
         | jsonv2   | geojson |
+        | geojson  | geojson |
+
+    Scenario Outline: Search result in geojson format contains no non-geojson geometry
+        When sending geojson search query "Highmore"
+          | polygon_text | polygon | polygon_svg | polygon_geokml |
+          | 1            | 1       | 1           | 1              |
+        Then result 0 has not attributes <response_attribute>
+
+    Examples:
+        | response_attribute |
+        | geotext            |
+        | polygonpoints      |
+        | svg                |
+        | geokml             |
 
     Scenario: Search along a route
         When sending json search query "restaurant" with address
@@ -356,3 +372,5 @@ Feature: Search queries
         Then result addresses contain
           | city |
           | Rapid City |
+
+

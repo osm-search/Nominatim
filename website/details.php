@@ -23,7 +23,8 @@ $bIncludeKeywords = $oParams->getBool('keywords');
 $bIncludeAddressDetails = $oParams->getBool('addressdetails', $sOutputFormat == 'html');
 $bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', $sOutputFormat == 'html');
 $bIncludeChildPlaces = $oParams->getBool('childplaces', $sOutputFormat == 'html');
-$bGroupParents = $oParams->getBool('group_parents', false);
+$bGroupChildPlaces = $oParams->getBool('group_childplaces', false);
+$bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson', $sOutputFormat == 'html');
 
 $oDB =& getDB();
 
@@ -108,17 +109,22 @@ $sSQL .= '    rank_search, ';
 $sSQL .= '    get_searchrank_label(rank_search) AS rank_search_label,';
 $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
 $sSQL .= "    ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea, ";
-//$sSQL .= " ST_Area(geometry::geography) AS area, ";
 $sSQL .= '    ST_y(centroid) AS lat, ';
-$sSQL .= '    ST_x(centroid) AS lon,';
+$sSQL .= '    ST_x(centroid) AS lon, ';
 $sSQL .= '    CASE ';
-$sSQL .= '       WHEN importance = 0 OR importance IS NULL THEN 0.75-(rank_search::float/40) ';
+$sSQL .= '       WHEN importance = 0 OR importance IS NULL ';
+$sSQL .= '       THEN 0.75-(rank_search::float/40) ';
 $sSQL .= '       ELSE importance ';
 $sSQL .= '       END as calculated_importance, ';
-$sSQL .= '    ST_AsGeoJSON(CASE ';
-$sSQL .= '                WHEN ST_NPoints(geometry) > 5000 THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ';
-$sSQL .= '                ELSE geometry ';
-$sSQL .= '                END) as asgeojson';
+if ($bIncludePolygonAsGeoJSON) {
+    $sSQL .= '    ST_AsGeoJSON(CASE ';
+    $sSQL .= '                WHEN ST_NPoints(geometry) > 5000 ';
+    $sSQL .= '                THEN ST_SimplifyPreserveTopology(geometry, 0.0001) ';
+    $sSQL .= '                ELSE geometry ';
+    $sSQL .= '                END) as asgeojson';
+} else {
+    $sSQL .= '    ST_AsGeoJSON(centroid) as asgeojson';
+}
 $sSQL .= ' FROM placex ';
 $sSQL .= " WHERE place_id = $iPlaceID";
 

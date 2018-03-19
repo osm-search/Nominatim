@@ -38,7 +38,7 @@ $aPlaceDetails['lon'] = (float) $aPointDetails['lon'];
 
 $aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
 
-$funcMapAddressLines = function($aFull) {
+$funcMapAddressLines = function ($aFull) {
     $aMapped = [
         'localname' => $aFull['localname'],
         'place_id' => (int) $aFull['place_id'],
@@ -53,7 +53,7 @@ $funcMapAddressLines = function($aFull) {
     return $aMapped;
 };
 
-$funcMapKeywords = function($aFull) {
+$funcMapKeywords = function ($aFull) {
     $aMapped = [
         'id' => (int) $aFull['word_id'],
         'token' => $aFull['word_token']
@@ -62,29 +62,29 @@ $funcMapKeywords = function($aFull) {
 };
 
 if ($aAddressLines) {
-    $aPlaceDetails['address'] = array_map($funcLines, $aAddressLines);
+    $aPlaceDetails['address'] = array_map($funcMapAddressLines, $aAddressLines);
 }
 
 if ($aLinkedLines) {
-    $aPlaceDetails['linked_places'] = array_map($funcLines, $aLinkedLines);
+    $aPlaceDetails['linked_places'] = array_map($funcMapAddressLines, $aLinkedLines);
 }
 
 if ($bIncludeKeywords) {
     $aPlaceDetails['keywords'] = array();
 
     if ($aPlaceSearchNameKeywords) {
-        $aPlaceDetails['keywords']['name'] = array_map($funcKeywords, $aPlaceSearchNameKeywords);
+        $aPlaceDetails['keywords']['name'] = array_map($funcMapKeywords, $aPlaceSearchNameKeywords);
     }
 
     if ($aPlaceSearchAddressKeywords) {
-        $aPlaceDetails['keywords']['address'] = array_map($funcKeywords, $aPlaceSearchAddressKeywords);
+        $aPlaceDetails['keywords']['address'] = array_map($funcMapKeywords, $aPlaceSearchAddressKeywords);
     }
 }
 
 if ($bIncludeChildPlaces) {
-    $aPlaceDetails['parentof'] =  array_map($funcLines, $aParentOfLines);
+    $aPlaceDetails['parentof'] =  array_map($funcMapAddressLines, $aParentOfLines);
 
-    if ($bGroupParents) {
+    if ($bGroupChildPlaces) {
         $aGroupedAddressLines = [];
         foreach ($aParentOfLines as $aAddressLine) {
             if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];

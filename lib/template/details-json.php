@@ -12,6 +12,7 @@ $aPlaceDetails['category'] = $aPointDetails['class'];
 $aPlaceDetails['type'] = $aPointDetails['type'];
 $aPlaceDetails['admin_level'] = $aPointDetails['admin_level'];
 
+$aPlaceDetails['localname'] = $aPointDetails['localname'];
 $aPlaceDetails['names'] = $aPointDetails['aNames'];
 
 $aPlaceDetails['addresstags'] = $aPointDetails['aAddressTags'];

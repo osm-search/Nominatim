@@ -49,7 +49,7 @@ foreach ($aBatchResults as $aSearchResults) {
             $aPlace['icon'] = $aPointDetails['icon'];
         }
 
-        if (isset($aPointDetails['address']) && sizeof($aPointDetails['address'])>0) {
+        if (isset($aPointDetails['address']) && !empty($aPointDetails['address'])) {
             $aPlace['address'] = $aPointDetails['address'];
         }
 

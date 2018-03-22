@@ -62,7 +62,7 @@ $oPlaceLookup->setIncludeAddressDetails(true);
 
 $aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
 
-if (!sizeof($aPlaceAddress)) userError('Unknown place id.');
+if (empty($aPlaceAddress)) userError('Unknown place id.');
 
 $aBreadcrums = array();
 foreach ($aPlaceAddress as $i => $aPlace) {
@@ -100,7 +100,7 @@ $sSQL .= ' where parent_place_id in ('.join(',', $aRelatedPlaceIDs).') and name 
 $sSQL .= ' order by rank_address asc,rank_search asc,localname,class, type,housenumber';
 $aParentOfLines = chksql($oDB->getAll($sSQL));
 
-if (sizeof($aParentOfLines)) {
+if (!empty($aParentOfLines)) {
     echo '<h2>Parent Of:</h2>';
     $aClassType = getClassTypesWithImportance();
     $aGroupedAddressLines = array();
@@ -136,7 +136,7 @@ if (sizeof($aParentOfLines)) {
             echo '</div>';
         }
     }
-    if (sizeof($aParentOfLines) >= 500) {
+    if (count($aParentOfLines) >= 500) {
         echo '<p>There are more child objects which are not shown.</p>';
     }
     echo '</div>';

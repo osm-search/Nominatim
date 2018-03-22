@@ -2,7 +2,7 @@
 
 $aFilteredPlaces = array();
 
-if (!sizeof($aPlace)) {
+if (empty($aPlace)) {
     if (isset($sError))
         $aFilteredPlaces['error'] = $sError;
     else $aFilteredPlaces['error'] = 'Unable to geocode';

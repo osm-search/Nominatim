@@ -91,7 +91,7 @@ statements.
 
 ## Running functional tests
 
-Tests in `/features/db` and `/features/osm2pgsql` have to pass 100%. Other
+Tests in `test/bdd/db` and `test/bdd/osm2pgsql` have to pass 100%. Other
 tests might require full planet-wide data. Sadly even if you have your own
 planet-wide data there will be enough differences to the openstreetmap.org
 installation to cause false positives in the other tests (see FAQ). 
@@ -103,11 +103,11 @@ To run the full test suite
 
 To run a single file
 
-    behave -DBUILDDIR=/home/vagrant/build/ features/api/reverse.feature
+    behave -DBUILDDIR=/home/vagrant/build/ api/lookup/simple.feature
 
 Or a single test by line number
 
-    behave -DBUILDDIR=/home/vagrant/build/ features/api/reverse.feature:34
+    behave -DBUILDDIR=/home/vagrant/build/ api/lookup/simple.feature:34
     
 To run specific groups of tests you can add tags just before the `Scenario line`, e.g.
 

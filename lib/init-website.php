@@ -2,6 +2,7 @@
 
 require_once('init.php');
 require_once('ParameterParser.php');
+require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
 
 /***************************************************************************
  *

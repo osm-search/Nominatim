@@ -27,6 +27,17 @@ class Result
     /// Subranking within the results (the higher the worse).
     public $iResultRank = 0;
 
+    public function debugInfo()
+    {
+        return array(
+                'Table' => $this->iTable,
+                'ID' => $this->iId,
+                'House number' => $this->iHouseNumber,
+                'Exact Matches' => $this->iExactMatches,
+                'Result rank' => $this->iResultRank
+               );
+    }
+
 
     public function __construct($sId, $iTable = Result::TABLE_PLACEX)
     {

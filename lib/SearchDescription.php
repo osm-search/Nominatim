@@ -43,7 +43,6 @@ class SearchDescription
     /// Index of phrase currently processed.
     private $iNamePhrase = -1;
 
-
     /**
      * Create an empty search description.
      *
@@ -450,10 +449,7 @@ class SearchDescription
             }
         }
 
-        if (CONST_Debug) {
-            echo '<br><b>Place IDs:</b> ';
-            var_dump(array_keys($aResults));
-        }
+        Debug::printDebugTable('Place IDs', $aResults);
 
         if (!empty($aResults) && $this->sPostcode) {
             $sPlaceIds = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
@@ -461,7 +457,7 @@ class SearchDescription
                 $sSQL = 'SELECT place_id FROM placex';
                 $sSQL .= ' WHERE place_id in ('.$sPlaceIds.')';
                 $sSQL .= " AND postcode = '".$this->sPostcode."'";
-                if (CONST_Debug) var_dump($sSQL);
+                Debug::printSQL($sSQL);
                 $aFilteredPlaceIDs = chksql($oDB->getCol($sSQL));
                 if ($aFilteredPlaceIDs) {
                     $aNewResults = array();
@@ -469,10 +465,7 @@ class SearchDescription
                         $aNewResults[$iPlaceId] = $aResults[$iPlaceId];
                     }
                     $aResults = $aNewResults;
-                    if (CONST_Debug) {
-                        echo '<br><b>Place IDs after postcode filtering:</b> ';
-                        var_dump(array_keys($aResults));
-                    }
+                    Debug::printVar('Place IDs after postcode filtering', $aResults);
                 }
             }
         }
@@ -491,7 +484,7 @@ class SearchDescription
         }
         $sSQL .= ' ORDER BY st_area(geometry) DESC LIMIT 1';
 
-        if (CONST_Debug) var_dump($sSQL);
+        Debug::printSQL($sSQL);
 
         $aResults = array();
         foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
@@ -532,7 +525,7 @@ class SearchDescription
                 $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('ct.centroid').' ASC';
             }
             $sSQL .= " limit $iLimit";
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
             $aDBResults = chksql($oDB->getCol($sSQL));
         }
 
@@ -546,7 +539,7 @@ class SearchDescription
             }
             $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid').' ASC';
             $sSQL .= " LIMIT $iLimit";
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
             $aDBResults = chksql($oDB->getCol($sSQL));
         }
 
@@ -576,7 +569,7 @@ class SearchDescription
         $sSQL .= $this->oContext->excludeSQL(' AND p.place_id');
         $sSQL .= " LIMIT $iLimit";
 
-        if (CONST_Debug) var_dump($sSQL);
+        Debug::printSQL($sSQL);
 
         $aResults = array();
         foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
@@ -707,7 +700,7 @@ class SearchDescription
             $sSQL .= ' ORDER BY '.join(', ', $aOrder);
             $sSQL .= ' LIMIT '.$iLimit;
 
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
 
             $aDBResults = chksql(
                 $oDB->getAll($sSQL),
@@ -740,7 +733,7 @@ class SearchDescription
         $sSQL .= $this->oContext->excludeSQL(' AND place_id');
         $sSQL .= " LIMIT $iLimit";
 
-        if (CONST_Debug) var_dump($sSQL);
+        Debug::printSQL($sSQL);
 
         // XXX should inherit the exactMatches from its parent
         foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
@@ -768,7 +761,7 @@ class SearchDescription
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
 
             foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                 $oResult = new Result($iPlaceId, Result::TABLE_OSMLINE);
@@ -785,7 +778,7 @@ class SearchDescription
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
 
             foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                 $aResults[$iPlaceId] = new Result($iPlaceId, Result::TABLE_AUX);
@@ -807,7 +800,7 @@ class SearchDescription
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
             $sSQL .= " limit $iLimit";
 
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
 
             foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                 $oResult = new Result($iPlaceId, Result::TABLE_TIGER);
@@ -841,7 +834,7 @@ class SearchDescription
             $sSQL .= ' ORDER BY rank_search ASC ';
             $sSQL .= " LIMIT $iLimit";
 
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
 
             foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                 $aResults[$iPlaceId] = new Result($iPlaceId);
@@ -855,7 +848,7 @@ class SearchDescription
             $bCacheTable = (bool) chksql($oDB->getOne($sSQL));
 
             $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
             $iMaxRank = (int)chksql($oDB->getOne($sSQL));
 
             // For state / country level searches the normal radius search doesn't work very well
@@ -868,7 +861,7 @@ class SearchDescription
                 $sSQL .= "   AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')";
                 $sSQL .= ' ORDER BY rank_search ASC ';
                 $sSQL .= ' LIMIT 1';
-                if (CONST_Debug) var_dump($sSQL);
+                Debug::printSQL($sSQL);
                 $sPlaceGeom = chksql($oDB->getOne($sSQL));
             }
 
@@ -878,7 +871,7 @@ class SearchDescription
                 $iMaxRank += 5;
                 $sSQL = 'SELECT place_id FROM placex';
                 $sSQL .= " WHERE place_id in ($sPlaceIDs) and rank_search < $iMaxRank";
-                if (CONST_Debug) var_dump($sSQL);
+                Debug::printSQL($sSQL);
                 $aPlaceIDs = chksql($oDB->getCol($sSQL));
                 $sPlaceIDs = join(',', $aPlaceIDs);
             }
@@ -923,7 +916,7 @@ class SearchDescription
                     }
                     $sSQL .= " limit $iLimit";
 
-                    if (CONST_Debug) var_dump($sSQL);
+                    Debug::printSQL($sSQL);
 
                     foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                         $aResults[$iPlaceId] = new Result($iPlaceId);
@@ -955,7 +948,7 @@ class SearchDescription
                     }
                     $sSQL .= " limit $iLimit";
 
-                    if (CONST_Debug) var_dump($sSQL);
+                    Debug::printSQL($sSQL);
 
                     foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
                         $aResults[$iPlaceId] = new Result($iPlaceId);
@@ -999,6 +992,24 @@ class SearchDescription
 
     //////////// Debugging functions
 
+
+    public function debugInfo()
+    {
+        return array(
+                'Search rank' => $this->iSearchRank,
+                'Country code' => $this->sCountryCode,
+                'Name terms' => $this->aName,
+                'Name terms (stop words)' => $this->aNameNonSearch,
+                'Address terms' => $this->aAddress,
+                'Address terms (stop words)' => $this->aAddressNonSearch,
+                'Address terms (full words)' => $this->aFullNameAddress,
+                'Special search' => $this->iOperator,
+                'Class' => $this->sClass,
+                'Type' => $this->sType,
+                'House number' => $this->sHouseNumber,
+                'Postcode' => $this->sPostcode
+               );
+    }
 
     public function dumpAsHtmlTableRow(&$aWordIDs)
     {

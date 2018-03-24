@@ -303,7 +303,7 @@ class Geocode
         $this->loadStructuredAddressElement($sPostalCode, 'postalcode', 5, 11, array(5, 11));
         $this->loadStructuredAddressElement($sCountry, 'country', 4, 4, false);
 
-        if (sizeof($this->aStructuredQuery) > 0) {
+        if (!empty($this->aStructuredQuery)) {
             $this->sQuery = join(', ', $this->aStructuredQuery);
             if ($this->iMaxAddressRank < 30) {
                 $this->sAllowedTypesSQLList = '(\'place\',\'boundary\')';
@@ -317,7 +317,7 @@ class Geocode
 
         $aParams = $this->aStructuredQuery;
 
-        if (sizeof($aParams) == 1) return false;
+        if (count($aParams) == 1) return false;
 
         $aOrderToFallback = array('postalcode', 'street', 'city', 'county', 'state');
 
@@ -375,8 +375,8 @@ class Geocode
                                     $sPhraseType,
                                     $iToken == 0 && $iPhrase == 0,
                                     $iPhrase == 0,
-                                    $iToken + 1 == sizeof($aWordset)
-                                      && $iPhrase + 1 == sizeof($aPhrases)
+                                    $iToken + 1 == count($aWordset)
+                                      && $iPhrase + 1 == count($aPhrases)
                                 );
 
                                 foreach ($aNewSearches as $oSearch) {
@@ -411,7 +411,7 @@ class Geocode
                     usort($aNewWordsetSearches, array('Nominatim\SearchDescription', 'bySearchRank'));
                     $aWordsetSearches = array_slice($aNewWordsetSearches, 0, 50);
                 }
-                //var_Dump('<hr>',sizeof($aWordsetSearches)); exit;
+                //var_Dump('<hr>',count($aWordsetSearches)); exit;
 
                 $aNewPhraseSearches = array_merge($aNewPhraseSearches, $aNewWordsetSearches);
                 usort($aNewPhraseSearches, array('Nominatim\SearchDescription', 'bySearchRank'));
@@ -442,7 +442,7 @@ class Geocode
             $iSearchCount = 0;
             $aSearches = array();
             foreach ($aGroupedSearches as $iScore => $aNewSearches) {
-                $iSearchCount += sizeof($aNewSearches);
+                $iSearchCount += count($aNewSearches);
                 $aSearches = array_merge($aSearches, $aNewSearches);
                 if ($iSearchCount > 50) break;
             }
@@ -627,7 +627,7 @@ class Geocode
                 }
             }
 
-            if (sizeof($aTokens)) {
+            if (!empty($aTokens)) {
                 // Check which tokens we have, get the ID numbers
                 $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' FROM word ';
@@ -702,8 +702,8 @@ class Geocode
                     // because order in the address doesn't matter.
                     $aPhrases = array_reverse($aPhrases);
                     $aPhrases[0]->invertWordSets();
-                    if (sizeof($aPhrases) > 1) {
-                        $aPhrases[sizeof($aPhrases)-1]->invertWordSets();
+                    if (count($aPhrases) > 1) {
+                        $aPhrases[count($aPhrases)-1]->invertWordSets();
                     }
                     $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, false);
 
@@ -738,7 +738,7 @@ class Geocode
                     $sHash = serialize($aSearch);
                     if (isset($aSearchHash[$sHash])) {
                         unset($aGroupedSearches[$iGroup][$iSearch]);
-                        if (sizeof($aGroupedSearches[$iGroup]) == 0) unset($aGroupedSearches[$iGroup]);
+                        if (empty($aGroupedSearches[$iGroup])) unset($aGroupedSearches[$iGroup]);
                     } else {
                         $aSearchHash[$sHash] = 1;
                     }
@@ -771,7 +771,7 @@ class Geocode
                     if ($iQueryLoop > 20) break;
                 }
 
-                if (sizeof($aResults) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {
+                if (!empty($aResults) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {
                     // Need to verify passes rank limits before dropping out of the loop (yuk!)
                     // reduces the number of place ids, like a filter
                     // rank_address is 30 for interpolated housenumbers
@@ -824,7 +824,7 @@ class Geocode
                     $aResults = $tempIDs;
                 }
 
-                if (sizeof($aResults)) break;
+                if (!empty($aResults)) break;
                 if ($iGroupLoop > 4) break;
                 if ($iQueryLoop > 30) break;
             }
@@ -843,7 +843,7 @@ class Geocode
         }
 
         // No results? Done
-        if (!sizeof($aResults)) {
+        if (empty($aResults)) {
             if ($this->bFallback) {
                 if ($this->fallbackStructuredQuery()) {
                     return $this->lookup();
@@ -982,7 +982,7 @@ class Geocode
             }
 
             // Absolute limit on number of results
-            if (sizeof($aSearchResults) >= $this->iFinalLimit) break;
+            if (count($aSearchResults) >= $this->iFinalLimit) break;
         }
 
         if (CONST_Debug) var_dump($aSearchResults);

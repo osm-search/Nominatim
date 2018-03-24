@@ -83,7 +83,7 @@ class Phrase
         $aResult = array(array(join(' ', $aWords)));
         $sFirstToken = '';
         if ($iDepth < Phrase::MAX_DEPTH) {
-            while (sizeof($aWords) > 1) {
+            while (count($aWords) > 1) {
                 $sWord = array_shift($aWords);
                 $sFirstToken .= ($sFirstToken?' ':'').$sWord;
                 $aRest = $this->createWordSets($aWords, $iDepth + 1);
@@ -101,7 +101,7 @@ class Phrase
         $aResult = array(array(join(' ', $aWords)));
         $sFirstToken = '';
         if ($iDepth < Phrase::MAX_DEPTH) {
-            while (sizeof($aWords) > 1) {
+            while (count($aWords) > 1) {
                 $sWord = array_pop($aWords);
                 $sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
                 $aRest = $this->createInverseWordSets($aWords, $iDepth + 1);

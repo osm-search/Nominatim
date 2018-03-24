@@ -68,7 +68,7 @@ $aSearchResults = $oGeocode->lookup();
 if ($sOutputFormat=='html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
 }
-logEnd($oDB, $hLog, sizeof($aSearchResults));
+logEnd($oDB, $hLog, count($aSearchResults));
 
 $sQuery = $oGeocode->getQueryString();
 

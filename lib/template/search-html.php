@@ -57,7 +57,7 @@
                 echo '</div>';
                 $i = $i+1;
             }
-            if (sizeof($aSearchResults) && $sMoreURL)
+            if (!empty($aSearchResults) && $sMoreURL)
             {
                 echo '<div class="more"><a class="btn btn-primary" href="'.htmlentities($sMoreURL).'">Search for more results</a></div>';
             }

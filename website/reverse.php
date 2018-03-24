@@ -41,7 +41,7 @@ if ($sOsmType && $iOsmId > 0) {
 
     if ($oLookup) {
         $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
-        if (sizeof($aPlaces)) {
+        if (!empty($aPlaces)) {
             $aPlace = reset($aPlaces);
         }
     }

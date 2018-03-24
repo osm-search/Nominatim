@@ -16,7 +16,7 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
 
     $aResult = array();
     $bUnknown = false;
-    $iSize = sizeof($aArg);
+    $iSize = count($aArg);
     for ($i = 1; $i < $iSize; $i++) {
         if (isset($aQuick[$aArg[$i]])) {
             $aLine = $aQuick[$aArg[$i]];

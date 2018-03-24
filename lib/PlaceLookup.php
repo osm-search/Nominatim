@@ -164,12 +164,12 @@ class PlaceLookup
 
         $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
 
-        return sizeof($aResults) ? reset($aResults) : null;
+        return empty($aResults) ? null : reset($aResults);
     }
 
     public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
     {
-        if (!sizeof($aResults)) {
+        if (empty($aResults)) {
             return array();
         }
         $aSubSelects = array();
@@ -408,7 +408,7 @@ class PlaceLookup
 
         if (CONST_Debug) var_dump($aSubSelects);
 
-        if (!sizeof($aSubSelects)) {
+        if (empty($aSubSelects)) {
             return array();
         }
 

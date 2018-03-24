@@ -94,8 +94,8 @@ class SearchDescription
      */
     public function looksLikeFullAddress()
     {
-        return sizeof($this->aName)
-               && (sizeof($this->aAddress || $this->sCountryCode))
+        return (!empty($this->aName))
+               && (!empty($this->aAddress) || $this->sCountryCode)
                && preg_match('/[0-9]+/', $this->sHouseNumber);
     }
 
@@ -147,7 +147,7 @@ class SearchDescription
      */
     public function isValidSearch()
     {
-        if (!sizeof($this->aName)) {
+        if (empty($this->aName)) {
             if ($this->sHouseNumber) {
                 return false;
             }
@@ -223,7 +223,7 @@ class SearchDescription
                 // If we have a structured search or this is not the first term,
                 // add the postcode as an addendum.
                 if ($this->iOperator != Operator::POSTCODE
-                    && ($sPhraseType == 'postalcode' || sizeof($this->aName))
+                    && ($sPhraseType == 'postalcode' || !empty($this->aName))
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
@@ -247,8 +247,8 @@ class SearchDescription
                     $oSearch->iSearchRank++;
                 }
                 // also must not appear in the middle of the address
-                if (sizeof($this->aAddress)
-                    || sizeof($this->aAddressNonSearch)
+                if (!empty($this->aAddress)
+                    || (!empty($this->aAddressNonSearch))
                     || $this->sPostcode
                 ) {
                     $oSearch->iSearchRank++;
@@ -262,7 +262,7 @@ class SearchDescription
 
                 $iOp = Operator::NEAR; // near == in for the moment
                 if ($aSearchTerm['operator'] == '') {
-                    if (sizeof($this->aName) || $this->oContext->isBoundedSearch()) {
+                    if (!empty($this->aName) || $this->oContext->isBoundedSearch()) {
                         $iOp = Operator::NAME;
                     }
                     $oSearch->iSearchRank += 2;
@@ -280,7 +280,7 @@ class SearchDescription
             // of the phrase. In structured search the name must forcably in
             // the first phrase. In unstructured search it may be in a later
             // phrase when the first phrase is a house number.
-            if (sizeof($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
+            if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
                 if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
@@ -322,7 +322,7 @@ class SearchDescription
         $iWordID = $aSearchTerm['word_id'];
 
         if ((!$bStructuredPhrases || $iPhrase > 0)
-            && sizeof($this->aName)
+            && (!empty($this->aName))
             && strpos($aSearchTerm['word_token'], ' ') === false
         ) {
             if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
@@ -337,7 +337,7 @@ class SearchDescription
                 if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
                     $oSearch->iSearchRank += 2;
                 }
-                if (sizeof($aFullTokens)) {
+                if (!empty($aFullTokens)) {
                     $oSearch->iSearchRank++;
                 }
                 $aNewSearches[] = $oSearch;
@@ -358,11 +358,11 @@ class SearchDescription
         }
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
-            && (!sizeof($this->aName) || $this->iNamePhrase == $iPhrase)
+            && (empty($this->aName) || $this->iNamePhrase == $iPhrase)
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank += 2;
-            if (!sizeof($this->aName)) {
+            if (empty($this->aName)) {
                 $oSearch->iSearchRank += 1;
             }
             if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
@@ -405,7 +405,7 @@ class SearchDescription
         $iHousenumber = -1;
 
         if ($this->sCountryCode
-            && !sizeof($this->aName)
+            && empty($this->aName)
             && !$this->iOperator
             && !$this->sClass
             && !$this->oContext->hasNearPoint()
@@ -414,7 +414,7 @@ class SearchDescription
             if (4 >= $iMinRank && 4 <= $iMaxRank) {
                 $aResults = $this->queryCountry($oDB);
             }
-        } elseif (!sizeof($this->aName) && !sizeof($this->aAddress)) {
+        } elseif (empty($this->aName) && empty($this->aAddress)) {
             // Neither name nor address? Then we must be
             // looking for a POI in a geographic area.
             if ($this->oContext->isBoundedSearch()) {
@@ -435,17 +435,17 @@ class SearchDescription
             );
 
             //now search for housenumber, if housenumber provided
-            if ($this->sHouseNumber && sizeof($aResults)) {
+            if ($this->sHouseNumber && !empty($aResults)) {
                 $aNamedPlaceIDs = $aResults;
                 $aResults = $this->queryHouseNumber($oDB, $aNamedPlaceIDs, $iLimit);
 
-                if (!sizeof($aResults) && $this->looksLikeFullAddress()) {
+                if (empty($aResults) && $this->looksLikeFullAddress()) {
                     $aResults = $aNamedPlaceIDs;
                 }
             }
 
             // finally get POIs if requested
-            if ($this->sClass && sizeof($aResults)) {
+            if ($this->sClass && !empty($aResults)) {
                 $aResults = $this->queryPoiByOperator($oDB, $aResults, $iLimit);
             }
         }
@@ -455,7 +455,7 @@ class SearchDescription
             var_dump(array_keys($aResults));
         }
 
-        if (sizeof($aResults) && $this->sPostcode) {
+        if (!empty($aResults) && $this->sPostcode) {
             $sPlaceIds = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
             if ($sPlaceIds) {
                 $sSQL = 'SELECT place_id FROM placex';
@@ -562,7 +562,7 @@ class SearchDescription
     {
         $sSQL = 'SELECT p.place_id FROM location_postcode p ';
 
-        if (sizeof($this->aAddress)) {
+        if (!empty($this->aAddress)) {
             $sSQL .= ', search_name s ';
             $sSQL .= 'WHERE s.place_id = p.parent_place_id ';
             $sSQL .= 'AND array_cat(s.nameaddress_vector, s.name_vector)';
@@ -591,7 +591,7 @@ class SearchDescription
         $aTerms = array();
         $aOrder = array();
 
-        if ($this->sHouseNumber && sizeof($this->aAddress)) {
+        if ($this->sHouseNumber && !empty($this->aAddress)) {
             $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
             $aOrder[] = ' (';
             $aOrder[0] .= 'EXISTS(';
@@ -617,13 +617,13 @@ class SearchDescription
             $aOrder[0] .= ') DESC';
         }
 
-        if (sizeof($this->aName)) {
+        if (!empty($this->aName)) {
             $aTerms[] = 'name_vector @> '.getArraySQL($this->aName);
         }
-        if (sizeof($this->aAddress)) {
+        if (!empty($this->aAddress)) {
             // For infrequent name terms disable index usage for address
             if (CONST_Search_NameOnlySearchFrequencyThreshold
-                && sizeof($this->aName) == 1
+                && count($this->aName) == 1
                 && $aWordFrequencyScores[$this->aName[reset($this->aName)]]
                      < CONST_Search_NameOnlySearchFrequencyThreshold
             ) {
@@ -653,7 +653,7 @@ class SearchDescription
             $aTerms[] = $this->oContext->withinSQL('centroid');
             $aOrder[] = $this->oContext->distanceSQL('centroid');
         } elseif ($this->sPostcode) {
-            if (!sizeof($this->aAddress)) {
+            if (empty($this->aAddress)) {
                 $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."' AND ST_DWithin(search_name.centroid, p.geometry, 0.1))";
             } else {
                 $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."')";
@@ -681,7 +681,7 @@ class SearchDescription
         $sImportanceSQL .= $this->oContext->viewboxImportanceSQL('centroid');
         $aOrder[] = "$sImportanceSQL DESC";
 
-        if (sizeof($this->aFullNameAddress)) {
+        if (!empty($this->aFullNameAddress)) {
             $sExactMatchSQL = ' ( ';
             $sExactMatchSQL .= ' SELECT count(*) FROM ( ';
             $sExactMatchSQL .= '  SELECT unnest('.getArraySQL($this->aFullNameAddress).')';
@@ -700,7 +700,7 @@ class SearchDescription
 
         $aResults = array();
 
-        if (sizeof($aTerms)) {
+        if (!empty($aTerms)) {
             $sSQL = 'SELECT place_id,'.$sExactMatchSQL;
             $sSQL .= ' FROM search_name';
             $sSQL .= ' WHERE '.join(' and ', $aTerms);
@@ -749,7 +749,7 @@ class SearchDescription
 
         $bIsIntHouseNumber= (bool) preg_match('/[0-9]+/', $this->sHouseNumber);
         $iHousenumber = intval($this->sHouseNumber);
-        if ($bIsIntHouseNumber && !sizeof($aResults)) {
+        if ($bIsIntHouseNumber && empty($aResults)) {
             // if nothing found, search in the interpolation line table
             $sSQL = 'SELECT distinct place_id FROM location_property_osmline';
             $sSQL .= ' WHERE startnumber is not NULL';
@@ -778,7 +778,7 @@ class SearchDescription
         }
 
         // If nothing found try the aux fallback table
-        if (CONST_Use_Aux_Location_data && !sizeof($aResults)) {
+        if (CONST_Use_Aux_Location_data && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_aux';
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.')';
             $sSQL .= " AND housenumber = '".$this->sHouseNumber."'";
@@ -793,7 +793,7 @@ class SearchDescription
         }
 
         // If nothing found then search in Tiger data (location_property_tiger)
-        if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber && !sizeof($aResults)) {
+        if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_tiger';
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.') and (';
             if ($iHousenumber % 2 == 0) {

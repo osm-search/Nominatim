@@ -4,15 +4,8 @@ namespace Nominatim;
 
 require_once '../../lib/lib.php';
 
-class NominatimTest extends \PHPUnit_Framework_TestCase
+class LibTest extends \PHPUnit_Framework_TestCase
 {
-
-
-    protected function setUp()
-    {
-    }
-
-
     public function testGetClassTypesWithImportance()
     {
         $aClasses = getClassTypesWithImportance();

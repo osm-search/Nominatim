@@ -446,8 +446,6 @@ class Geocode
                 $aSearches = array_merge($aSearches, $aNewSearches);
                 if ($iSearchCount > 50) break;
             }
-
-            //if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
         }
 
         // Revisit searches, drop bad searches and give penalty to unlikely combinations.
@@ -502,7 +500,10 @@ class Geocode
 
     public function lookup()
     {
+        Debug::newFunction('Geocode::lookup');
         if (!$this->sQuery && !$this->aStructuredQuery) return array();
+
+        Debug::printDebugArray('Geocode', $this);
 
         $oCtx = new SearchContext();
 
@@ -523,7 +524,11 @@ class Geocode
             $oCtx->setCountryList($this->aCountryCodes);
         }
 
+        Debug::newSection('Query Preprocessing');
+
         $sNormQuery = $this->normTerm($this->sQuery);
+        Debug::printVar('Normalized query', $sNormQuery);
+
         $sLanguagePrefArraySQL = getArraySQL(
             array_map('getDBQuoted', $this->aLangPrefOrder)
         );
@@ -560,6 +565,10 @@ class Geocode
                     $aSpecialTermsRaw,
                     PREG_SET_ORDER
                 );
+                if (!empty($aSpecialTermsRaw)) {
+                    Debug::printVar('Special terms', $aSpecialTermsRaw);
+                }
+
                 foreach ($aSpecialTermsRaw as $aSpecialTerm) {
                     $sQuery = str_replace($aSpecialTerm[0], ' ', $sQuery);
                     if (!$sSpecialTerm) {
@@ -582,7 +591,8 @@ class Geocode
                 $sSQL = 'SELECT class, type FROM word ';
                 $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
                 $sSQL .= '   AND class is not null AND class not in (\'place\')';
-                if (CONST_Debug) var_Dump($sSQL);
+
+                Debug::printSQL($sSQL);
                 $aSearchWords = chksql($this->oDB->getAll($sSQL));
                 $aNewSearches = array();
                 foreach ($aSearches as $oSearch) {
@@ -609,10 +619,15 @@ class Geocode
                 $bStructuredPhrases = false;
             }
 
+            Debug::printDebugArray('Search context', $oCtx);
+            Debug::printDebugArray('Base search', $aSearches[0]);
+            Debug::printVar('Final query phrases', $aInPhrases);
+
             // Convert each phrase to standard form
             // Create a list of standard words
             // Get all 'sets' of words
             // Generate a complete list of all
+            Debug::newSection('Tokenization');
             $aTokens = array();
             $aPhrases = array();
             foreach ($aInPhrases as $iPhrase => $sPhrase) {
@@ -627,13 +642,16 @@ class Geocode
                 }
             }
 
+            Debug::printDebugTable('Phrases', $aPhrases);
+            Debug::printVar('Tokens', $aTokens);
+
             if (!empty($aTokens)) {
                 // Check which tokens we have, get the ID numbers
                 $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' FROM word ';
                 $sSQL .= ' WHERE word_token in ('.join(',', array_map('getDBQuoted', $aTokens)).')';
 
-                if (CONST_Debug) var_Dump($sSQL);
+                Debug::printSQL($sSQL);
 
                 $aValidTokens = array();
                 $aDatabaseWords = chksql(
@@ -665,7 +683,6 @@ class Geocode
                     }
                     $aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
                 }
-                if (CONST_Debug) var_Dump($aPhrases, $aValidTokens);
 
                 // US ZIP+4 codes - if there is no token, merge in the 5-digit ZIP code
                 foreach ($aTokens as $sToken) {
@@ -690,9 +707,11 @@ class Geocode
                         $aValidTokens[' '.$sToken] = array(array('class' => 'place', 'type' => 'house', 'word_token' => ' '.$sToken));
                     }
                 }
+                Debug::printGroupTable('Valid Tokens', $aValidTokens);
 
                 // Any words that have failed completely?
                 // TODO: suggestions
+                Debug::newSection('Search candidates');
 
                 $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bStructuredPhrases);
 
@@ -806,7 +825,7 @@ class Geocode
                     $aFilteredIDs = array();
                     if ($aFilterSql) {
                         $sSQL = join(' UNION ', $aFilterSql);
-                        if (CONST_Debug) var_dump($sSQL);
+                        Debug::printSQL($sSQL);
                         $aFilteredIDs = chksql($this->oDB->getCol($sSQL));
                     }
 
@@ -835,7 +854,7 @@ class Geocode
 
             $oLookup = $oReverse->lookupPoint($oCtx->sqlNear, false);
 
-            if (CONST_Debug) var_dump('Reverse search', $aLookup);
+            Debug::printVar('Reverse search', $oLookup);
 
             if ($oLookup) {
                 $aResults = array($oLookup->iId => $oLookup);
@@ -870,10 +889,7 @@ class Geocode
             if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
         }
 
-        if (CONST_Debug) {
-            echo '<i>Recheck words:<\i>';
-            var_dump($aRecheckWords);
-        }
+        Debug::printVar('Recheck words', $aRecheckWords);
 
         foreach ($aSearchResults as $iIdx => $aResult) {
             // Default
@@ -952,17 +968,15 @@ class Geocode
                     $aResult['foundorder'] += 0.01;
                 }
             }
-            if (CONST_Debug) var_dump($aResult);
             $aSearchResults[$iIdx] = $aResult;
         }
         uasort($aSearchResults, 'byImportance');
+        Debug::printVar('Pre-filter results', $aSearchResults);
 
         $aOSMIDDone = array();
         $aClassTypeNameDone = array();
         $aToFilter = $aSearchResults;
         $aSearchResults = array();
-
-        if (CONST_Debug) var_dump($aToFilter);
 
         $bFirst = true;
         foreach ($aToFilter as $aResult) {
@@ -985,7 +999,30 @@ class Geocode
             if (count($aSearchResults) >= $this->iFinalLimit) break;
         }
 
-        if (CONST_Debug) var_dump($aSearchResults);
+        Debug::printVar('Post-filter results', $aSearchResults);
         return $aSearchResults;
     } // end lookup()
+
+    public function debugInfo()
+    {
+        return array(
+                'Query' => $this->sQuery,
+                'Structured query' => $this->aStructuredQuery,
+                'Name keys' => Debug::fmtArrayVals($this->aLangPrefOrder),
+                'Include address' => $this->bIncludeAddressDetails,
+                'Excluded place IDs' => Debug::fmtArrayVals($this->aExcludePlaceIDs),
+                'Try reversed query'=> $this->bReverseInPlan,
+                'Limit (for searches)' => $this->iLimit,
+                'Limit (for results)'=> $this->iFinalLimit,
+                'Country codes' => Debug::fmtArrayVals($this->aCountryCodes),
+                'Bounded search' => $this->bBoundedSearch,
+                'Viewbox' => Debug::fmtArrayVals($this->aViewBox),
+                'Route points' => Debug::fmtArrayVals($this->aRoutePoints),
+                'Route width' => $this->aRouteWidth,
+                'Max rank' => $this->iMaxRank,
+                'Min address rank' => $this->iMinAddressRank,
+                'Max address rank' => $this->iMaxAddressRank,
+                'Address rank list' => Debug::fmtArrayVals($this->aAddressRankList)
+               );
+    }
 } // end class

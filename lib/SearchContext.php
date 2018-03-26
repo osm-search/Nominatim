@@ -267,4 +267,18 @@ class SearchContext
 
         return '';
     }
+
+    public function debugInfo()
+    {
+        return array(
+                'Near radius' => $this->fNearRadius,
+                'Near point (SQL)' => $this->sqlNear,
+                'Bounded viewbox' => $this->bViewboxBounded,
+                'Viewbox (SQL, small)' => $this->sqlViewboxSmall,
+                'Viewbox (SQL, large)' => $this->sqlViewboxLarge,
+                'Viewbox (SQL, centre)' => $this->sqlViewboxCentre,
+                'Countries (SQL)' => $this->sqlCountryList,
+                'Excluded IDs (SQL)' => $this->sqlExcludeList
+               );
+    }
 }

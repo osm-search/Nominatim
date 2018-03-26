@@ -113,4 +113,14 @@ class Phrase
 
         return $aResult;
     }
+
+    public function debugInfo()
+    {
+        return array(
+                'Type' => $this->sPhraseType,
+                'Phrase' => $this->sPhrase,
+                'Words' => $this->aWords,
+                'WordSets' => $this->aWordSets
+               );
+    }
 }

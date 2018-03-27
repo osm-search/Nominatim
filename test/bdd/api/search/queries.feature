@@ -11,6 +11,8 @@ Feature: Search queries
           | house_number | 2 |
           | hamlet       | Steinwald |
           | postcode     | 6811 |
+          | county       | Feldkirch |
+          | state        | Vorarlberg |
           | country      | Austria |
           | country_code | at |
 
@@ -122,7 +124,7 @@ Feature: Search queries
         Then exactly 0 results are returned
 
     Scenario: Arbitrary key/value search near a road
-        When sending json search query "[leisure=table_soccer_table] immenbusch"
+        When sending json search query "[leisure=table_soccer_table] immenbusch, germany"
         Then results contain
           | class   | type |
           | leisure | table_soccer_table |

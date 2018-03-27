@@ -620,7 +620,7 @@ class Geocode
             }
 
             Debug::printDebugArray('Search context', $oCtx);
-            Debug::printDebugArray('Base search', $aSearches[0]);
+            Debug::printDebugArray('Base search', empty($aSearches) ? null : $aSearches[0]);
             Debug::printVar('Final query phrases', $aInPhrases);
 
             // Convert each phrase to standard form

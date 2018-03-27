@@ -37,7 +37,7 @@ $sTestPageText = <<<EOD
 | coasters = 12
 | water_rides = 2
 | owner = [[Six Flags]]
-| general_manager = 
+| general_manager =
 | homepage = [http://www.sixflags.com/parks/greatadventure/ Six Flags Great Adventure]
 }}
 EOD;

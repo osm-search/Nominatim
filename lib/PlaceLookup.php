@@ -164,19 +164,21 @@ class PlaceLookup
 
         $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
 
-        return sizeof($aResults) ? reset($aResults) : null;
+        return empty($aResults) ? null : reset($aResults);
     }
 
     public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
     {
-        if (!sizeof($aResults)) {
+        Debug::newFunction('Place lookup');
+
+        if (empty($aResults)) {
             return array();
         }
         $aSubSelects = array();
 
         $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
-        if (CONST_Debug) var_dump('PLACEX', $sPlaceIDs);
         if ($sPlaceIDs) {
+            Debug::printVar('Ids from placex', $sPlaceIDs);
             $sSQL  = 'SELECT ';
             $sSQL .= '    osm_type,';
             $sSQL .= '    osm_id,';
@@ -246,6 +248,7 @@ class PlaceLookup
         // postcode table
         $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_POSTCODE);
         if ($sPlaceIDs) {
+            Debug::printVar('Ids from location_postcode', $sPlaceIDs);
             $sSQL = 'SELECT';
             $sSQL .= "  'P' as osm_type,";
             $sSQL .= '  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,';
@@ -276,6 +279,7 @@ class PlaceLookup
             if (CONST_Use_US_Tiger_Data) {
                 $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_TIGER);
                 if ($sPlaceIDs) {
+                    Debug::printVar('Ids from Tiger table', $sPlaceIDs);
                     $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_TIGER);
                     // Tiger search only if a housenumber was searched and if it was found
                     // (realized through a join)
@@ -321,6 +325,7 @@ class PlaceLookup
             // osmline - interpolated housenumbers
             $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_OSMLINE);
             if ($sPlaceIDs) {
+                Debug::printVar('Ids from interpolation', $sPlaceIDs);
                 $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_OSMLINE);
                 // interpolation line search only if a housenumber was searched
                 // (realized through a join)
@@ -406,16 +411,13 @@ class PlaceLookup
             }
         }
 
-        if (CONST_Debug) var_dump($aSubSelects);
-
-        if (!sizeof($aSubSelects)) {
+        if (empty($aSubSelects)) {
             return array();
         }
 
-        $aPlaces = chksql(
-            $this->oDB->getAll(join(' UNION ', $aSubSelects)),
-            'Could not lookup place'
-        );
+        $sSQL = join(' UNION ', $aSubSelects);
+        Debug::printSQL($sSQL);
+        $aPlaces = chksql($this->oDB->getAll($sSQL), 'Could not lookup place');
 
         $aClassType = getClassTypes();
         foreach ($aPlaces as &$aPlace) {
@@ -457,7 +459,7 @@ class PlaceLookup
             $aPlace['addresstype'] = $sAddressType;
         }
 
-        if (CONST_Debug) var_dump($aPlaces);
+        Debug::printVar('Places', $aPlaces);
 
         return $aPlaces;
     }

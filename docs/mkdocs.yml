@@ -5,6 +5,10 @@ site_url: http://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
 pages:
     - 'Introduction' : 'index.md'
+    - 'API Reference':
+        - 'Search': 'api/Search.md'
+        - 'Reverse': 'api/Reverse.md'
+        - 'Address Lookup': 'api/Lookup.md'
     - 'Administration Guide':
         - 'Basic Installation': 'admin/Installation.md'
         - 'Importing and Updating' : 'admin/Import-and-Update.md'

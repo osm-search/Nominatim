@@ -22,7 +22,7 @@
 #DOCS:    :::sh
     sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
                         postgis postgis-utils \
-                        git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
                         php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
                         expat-devel zlib-devel
@@ -52,7 +52,8 @@
 # we assume this user is called nominatim and the installation will be in
 # /srv/nominatim. To create the user and directory run:
 #
-#     sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+sudo mkdir -p /srv/nominatim       #DOCS:    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # You may find a more suitable location if you wish.
 #
@@ -60,7 +61,7 @@
 # user name and home directory now like this:
 #
     export USERNAME=vagrant        #DOCS:    export USERNAME=nominatim
-    export USERHOME=/home/vagrant  #DOCS:    export USERHOME=/srv/nominatim
+    export USERHOME=/srv/nominatim
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
@@ -105,14 +106,14 @@
 
 #DOCS:```sh
 sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
+<Directory "$USERHOME/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/Nominatim/build/website
+Alias /nominatim $USERHOME/build/website
 EOFAPACHECONF
 #DOCS:```
 
@@ -122,19 +123,9 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # Then reload apache
 #
 
+    sudo systemctl enable httpd
     sudo systemctl restart httpd
 
-#
-# Adding SELinux Security Settings
-# --------------------------------
-#
-# It is a good idea to leave SELinux enabled and enforcing, particularly
-# with a web server accessible from the Internet. At a minimum the
-# following SELinux labeling should be done for Nominatim:
-
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
-    sudo semanage fcontext -a -t lib_t "$USERHOME/Nominatim/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim
 
 #
 # Installing Nominatim
@@ -163,11 +154,27 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME                   #DOCS:    :::sh
+#DOCS:    :::sh
+    cd $USERHOME
     mkdir build
     cd build
     cmake $USERHOME/Nominatim
     make
+
+#
+# Adding SELinux Security Settings
+# --------------------------------
+#
+# It is a good idea to leave SELinux enabled and enforcing, particularly
+# with a web server accessible from the Internet. At a minimum the
+# following SELinux labeling should be done for Nominatim:
+
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
+    sudo restorecon -R -v $USERHOME/Nominatim
+    sudo restorecon -R -v $USERHOME/build
+
 
 # You need to create a minimal configuration file that tells nominatim
 # the name of your webserver user and the URL of the website:

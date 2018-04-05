@@ -23,7 +23,7 @@ class ParameterParser
 
     public function getInt($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -36,7 +36,7 @@ class ParameterParser
 
     public function getFloat($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -74,7 +74,8 @@ class ParameterParser
         $sValue = $this->getString($sName);
 
         if ($sValue) {
-            return explode(',', $sValue);
+            // removes all NULL, FALSE and Empty Strings but leaves 0 (zero) values
+            return array_values(array_filter(explode(',', $sValue), 'strlen'));
         }
 
         return $aDefault;
@@ -98,7 +99,7 @@ class ParameterParser
                 arsort($aLanguages);
             }
         }
-        if (!sizeof($aLanguages) && CONST_Default_Language) {
+        if (empty($aLanguages) && CONST_Default_Language) {
             $aLanguages[CONST_Default_Language] = 1;
         }
 

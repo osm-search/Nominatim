@@ -11,7 +11,7 @@ echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.ope
 echo " querystring='".htmlspecialchars($_SERVER['QUERY_STRING'], ENT_QUOTES)."'";
 echo ">\n";
 
-if (!sizeof($aPlace)) {
+if (empty($aPlace)) {
     if (isset($sError))
         echo "<error>$sError</error>";
     else echo '<error>Unable to geocode</error>';

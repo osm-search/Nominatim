@@ -196,7 +196,7 @@
         }
     }
     
-    if (sizeof($aHierarchyLines))
+    if (!empty($aHierarchyLines))
     {
         headline('Parent Of');
 
@@ -220,7 +220,7 @@
                 _one_row($aAddressLine);
             }
         }
-        if (sizeof($aHierarchyLines) >= 500) {
+        if (count($aHierarchyLines) >= 500) {
             echo '<p>There are more child objects which are not shown.</p>';
         }
     }

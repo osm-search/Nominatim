@@ -29,12 +29,12 @@ Feature: Object details
         Then the result is valid json
         And result has attributes linked_places
 
-    Scenario: JSON Details with childplaces
+    Scenario: JSON Details with hierarchy
         When sending json details query for W78099902
-            | childplaces |
+            | hierarchy |
             | 1 |
         Then the result is valid json
-        And result has attributes parentof
+        And result has attributes hierarchy
 
     Scenario: JSON Details with linkedplaces
         When sending json details query for R123924

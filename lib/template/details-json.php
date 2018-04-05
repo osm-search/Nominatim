@@ -17,16 +17,16 @@ $aPlaceDetails['names'] = $aPointDetails['aNames'];
 
 $aPlaceDetails['addresstags'] = $aPointDetails['aAddressTags'];
 $aPlaceDetails['housenumber'] = $aPointDetails['housenumber'];
-$aPlaceDetails['postcode'] = $aPointDetails['postcode']; // computed
+$aPlaceDetails['calculated_postcode'] = $aPointDetails['postcode'];
 $aPlaceDetails['country_code'] = $aPointDetails['country_code'];
 
-$aPlaceDetails['indexed_date'] = $aPointDetails['indexed_date'];
+$aPlaceDetails['indexed_date'] = (new DateTime('@'.$aPointDetails['indexed_epoch']))->format(DateTime::RFC822);
 $aPlaceDetails['importance'] = (float) $aPointDetails['importance'];
 $aPlaceDetails['calculated_importance'] = (float) $aPointDetails['calculated_importance'];
 
 $aPlaceDetails['extratags'] = $aPointDetails['aExtraTags'];
 $aPlaceDetails['calculated_wikipedia'] = $aPointDetails['wikipedia'];
-$aPlaceDetails['icon'] = $aPointDetails['icon'];
+$aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png';
 
 $aPlaceDetails['rank_address'] = (int) $aPointDetails['rank_address'];
 $aPlaceDetails['rank_search'] = (int) $aPointDetails['rank_search'];
@@ -39,22 +39,23 @@ $aPlaceDetails['lon'] = (float) $aPointDetails['lon'];
 
 $aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
 
-$funcMapAddressLines = function ($aFull) {
+$funcMapAddressLine = function ($aFull) {
     $aMapped = [
         'localname' => $aFull['localname'],
-        'place_id' => (int) $aFull['place_id'],
-        'osm_id' => (int) $aFull['osm_id'],
-        'osm_type' => formatOSMType($aFull['osm_type']),
+        'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
+        'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
+        'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
         'class' => $aFull['class'],
         'type' => $aFull['type'],
-        'admin_level' => (int) $aFull['admin_level'],
-        'rank_address' => (int) $aFull['rank_address'],
+        'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
+        'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
         'distance' => (float) $aFull['distance']
     ];
+
     return $aMapped;
 };
 
-$funcMapKeywords = function ($aFull) {
+$funcMapKeyword = function ($aFull) {
     $aMapped = [
         'id' => (int) $aFull['word_id'],
         'token' => $aFull['word_token']
@@ -63,39 +64,38 @@ $funcMapKeywords = function ($aFull) {
 };
 
 if ($aAddressLines) {
-    $aPlaceDetails['address'] = array_map($funcMapAddressLines, $aAddressLines);
+    $aPlaceDetails['address'] = array_map($funcMapAddressLine, $aAddressLines);
 }
 
 if ($aLinkedLines) {
-    $aPlaceDetails['linked_places'] = array_map($funcMapAddressLines, $aLinkedLines);
+    $aPlaceDetails['linked_places'] = array_map($funcMapAddressLine, $aLinkedLines);
 }
 
 if ($bIncludeKeywords) {
     $aPlaceDetails['keywords'] = array();
 
     if ($aPlaceSearchNameKeywords) {
-        $aPlaceDetails['keywords']['name'] = array_map($funcMapKeywords, $aPlaceSearchNameKeywords);
+        $aPlaceDetails['keywords']['name'] = array_map($funcMapKeyword, $aPlaceSearchNameKeywords);
     }
 
     if ($aPlaceSearchAddressKeywords) {
-        $aPlaceDetails['keywords']['address'] = array_map($funcMapKeywords, $aPlaceSearchAddressKeywords);
+        $aPlaceDetails['keywords']['address'] = array_map($funcMapKeyword, $aPlaceSearchAddressKeywords);
     }
 }
 
-if ($bIncludeChildPlaces) {
-    $aPlaceDetails['parentof'] =  array_map($funcMapAddressLines, $aParentOfLines);
-
-    if ($bGroupChildPlaces) {
-        $aGroupedAddressLines = [];
-        foreach ($aParentOfLines as $aAddressLine) {
+if ($bIncludeHierarchy) {
+    if ($bGroupHierarchy) {
+        $aPlaceDetails['hierarchy'] = array();
+        foreach ($aHierarchyLines as $aAddressLine) {
             if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];
             else $sType = $aAddressLine['type'];
 
-            if (!isset($aGroupedAddressLines[$sType]))
-                $aGroupedAddressLines[$sType] = [];
-            $aGroupedAddressLines[$sType][] = $aAddressLine;
+            if (!isset($aPlaceDetails['hierarchy'][$sType]))
+                $aPlaceDetails['hierarchy'][$sType] = array();
+            $aPlaceDetails['hierarchy'][$sType][] = $funcMapAddressLine($aAddressLine);
         }
-        $aPlaceDetails['parentof'] = $aGroupedAddressLines;
+    } else {
+        $aPlaceDetails['hierarchy'] = array_map($funcMapAddressLine, $aHierarchyLines);
     }
 }
 

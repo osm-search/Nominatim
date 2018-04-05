@@ -1311,8 +1311,8 @@ BEGIN
         i := getorcreate_housenumber_id(make_standard_name(NEW.housenumber));
       END IF;
 
-      addr_street = NEW.address->'street';
-      addr_place = NEW.address->'place';
+      addr_street := NEW.address->'street';
+      addr_place := NEW.address->'place';
 
       IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(,|;)%' THEN
         i := getorcreate_postcode_id(NEW.address->'postcode');
@@ -1419,7 +1419,7 @@ BEGIN
     -- see if we can get it from a surrounding building
     IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
-      FOR location IN select * from placex where ST_Covers(geometry, place_centroid)
+      FOR location IN select address from placex where ST_Covers(geometry, place_centroid)
             and address is not null
             and (address ? 'housenumber' or address ? 'street' or address ? 'place')
             and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
@@ -1456,9 +1456,7 @@ BEGIN
     IF NEW.parent_place_id IS NULL AND addr_street IS NOT NULL THEN
       address_street_word_ids := get_name_ids(make_standard_name(addr_street));
       IF address_street_word_ids IS NOT NULL THEN
-        FOR location IN SELECT * from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-            NEW.parent_place_id := location.place_id;
-        END LOOP;
+        SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
       END IF;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for addr:street (%)', NEW.parent_place_id;
@@ -1466,88 +1464,80 @@ BEGIN
     IF NEW.parent_place_id IS NULL AND addr_place IS NOT NULL THEN
       address_street_word_ids := get_name_ids(make_standard_name(addr_place));
       IF address_street_word_ids IS NOT NULL THEN
-        FOR location IN SELECT * from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-          NEW.parent_place_id := location.place_id;
-        END LOOP;
+        SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
       END IF;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for addr:place (%)', NEW.parent_place_id;
 
     -- Is this node part of an interpolation?
     IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
-      FOR location IN
-        SELECT q.parent_place_id FROM location_property_osmline q, planet_osm_ways x
-         WHERE q.linegeo && NEW.geometry and x.id = q.osm_id and NEW.osm_id = any(x.nodes)
-         LIMIT 1
-      LOOP
-         NEW.parent_place_id := location.parent_place_id;
-      END LOOP;
+      SELECT q.parent_place_id FROM location_property_osmline q, planet_osm_ways x
+        WHERE q.linegeo && NEW.geometry and x.id = q.osm_id and NEW.osm_id = any(x.nodes)
+        LIMIT 1 INTO NEW.parent_place_id;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for interpolation (%)', NEW.parent_place_id;
 
     -- Is this node part of a way?
     IF NEW.parent_place_id IS NULL AND NEW.osm_type = 'N' THEN
 
-      FOR location IN select p.place_id, p.osm_id, p.parent_place_id, p.rank_search, p.address from placex p, planet_osm_ways w
-         where p.osm_type = 'W' and p.rank_search >= 26 and p.geometry && NEW.geometry and w.id = p.osm_id and NEW.osm_id = any(w.nodes) 
+      FOR location IN
+        SELECT p.place_id, p.osm_id, p.rank_search, p.address from placex p, planet_osm_ways w
+         WHERE p.osm_type = 'W' and p.rank_search >= 26 and p.geometry && NEW.geometry and w.id = p.osm_id and NEW.osm_id = any(w.nodes)
       LOOP
         --DEBUG: RAISE WARNING 'Node is part of way % ', location.osm_id;
 
         -- Way IS a road then we are on it - that must be our road
-        IF location.rank_search < 28 AND NEW.parent_place_id IS NULL THEN
+        IF location.rank_search < 28 THEN
 --RAISE WARNING 'node in way that is a street %',location;
           NEW.parent_place_id := location.place_id;
+          EXIT;
         END IF;
         --DEBUG: RAISE WARNING 'Checked if way is street (%)', NEW.parent_place_id;
 
         -- If the way mentions a street or place address, try that for parenting.
-        IF NEW.parent_place_id IS NULL AND location.address ? 'street' THEN
-          address_street_word_ids := get_name_ids(make_standard_name(location.address->'street'));
-          IF address_street_word_ids IS NOT NULL THEN
-            FOR linkedplacex IN SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-                NEW.parent_place_id := linkedplacex.place_id;
-            END LOOP;
+        IF location.address is not null THEN
+          IF location.address ? 'street' THEN
+            address_street_word_ids := get_name_ids(make_standard_name(location.address->'street'));
+            IF address_street_word_ids IS NOT NULL THEN
+              SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+              EXIT WHEN NEW.parent_place_id is not NULL;
+            END IF;
           END IF;
-        END IF;
-        --DEBUG: RAISE WARNING 'Checked for addr:street in way (%)', NEW.parent_place_id;
+          --DEBUG: RAISE WARNING 'Checked for addr:street in way (%)', NEW.parent_place_id;
 
-        IF NEW.parent_place_id IS NULL AND location.address ? 'place' THEN
-          address_street_word_ids := get_name_ids(make_standard_name(location.address->'place'));
-          IF address_street_word_ids IS NOT NULL THEN
-            FOR linkedplacex IN SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) LOOP
-              NEW.parent_place_id := linkedplacex.place_id;
-            END LOOP;
+          IF location.address ? 'place' THEN
+            address_street_word_ids := get_name_ids(make_standard_name(location.address->'place'));
+            IF address_street_word_ids IS NOT NULL THEN
+              SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+              EXIT WHEN NEW.parent_place_id is not NULL;
+            END IF;
           END IF;
-        END IF;
         --DEBUG: RAISE WARNING 'Checked for addr:place in way (%)', NEW.parent_place_id;
+        END IF;
 
         -- Is the WAY part of a relation
-        IF NEW.parent_place_id IS NULL THEN
-            FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
-            LOOP
-              -- At the moment we only process one type of relation - associatedStreet
-              IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
-                FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
-                  IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
-  --RAISE WARNING 'node in way that is in a relation %',relation;
-                    SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
-                      and rank_search = 26 and name is not null INTO NEW.parent_place_id;
-                  END IF;
-                END LOOP;
+        FOR relation IN select * from planet_osm_rels where parts @> ARRAY[location.osm_id] and members @> ARRAY['w'||location.osm_id]
+        LOOP
+          -- At the moment we only process one type of relation - associatedStreet
+          IF relation.tags @> ARRAY['associatedStreet'] AND array_upper(relation.members, 1) IS NOT NULL THEN
+            FOR i IN 1..array_upper(relation.members, 1) BY 2 LOOP
+              IF NEW.parent_place_id IS NULL AND relation.members[i+1] = 'street' THEN
+--RAISE WARNING 'node in way that is in a relation %',relation;
+                SELECT place_id from placex where osm_type='W' and osm_id = substring(relation.members[i],2,200)::bigint 
+                  and rank_search = 26 and name is not null INTO NEW.parent_place_id;
               END IF;
             END LOOP;
-        END IF;
+          END IF;
+        END LOOP;
+        EXIT WHEN NEW.parent_place_id is not null;
         --DEBUG: RAISE WARNING 'Checked for street relation in way (%)', NEW.parent_place_id;
 
       END LOOP;
-
     END IF;
 
     -- Still nothing, just use the nearest road
     IF NEW.parent_place_id IS NULL THEN
-      FOR location IN SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) LOOP
-        NEW.parent_place_id := location.place_id;
-      END LOOP;
+      SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) INTO NEW.parent_place_id;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for nearest way (%)', NEW.parent_place_id;
 
@@ -1556,7 +1546,8 @@ BEGIN
     IF NEW.parent_place_id IS NOT NULL THEN
 
       -- Get the details of the parent road
-      select * from search_name where place_id = NEW.parent_place_id INTO location;
+      select s.country_code, s.name_vector, s.nameaddress_vector from search_name s
+       where s.place_id = NEW.parent_place_id INTO location;
       NEW.country_code := location.country_code;
       --DEBUG: RAISE WARNING 'Got parent details from search name';
 

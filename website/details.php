@@ -18,11 +18,11 @@ $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osmid', -1);
 
-$bIncludeKeywords = $oParams->getBool('keywords');
+$bIncludeKeywords = $oParams->getBool('keywords', false);
 $bIncludeAddressDetails = $oParams->getBool('addressdetails', $sOutputFormat == 'html');
-$bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', $sOutputFormat == 'html');
-$bIncludeChildPlaces = $oParams->getBool('childplaces', $sOutputFormat == 'html');
-$bGroupChildPlaces = $oParams->getBool('group_childplaces', false);
+$bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', true);
+$bIncludeHierarchy = $oParams->getBool('hierarchy', $sOutputFormat == 'html');
+$bGroupHierarchy = $oParams->getBool('group_hierarchy', false);
 $bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson', $sOutputFormat == 'html');
 
 $oDB =& getDB();
@@ -96,7 +96,7 @@ $hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 $sSQL = 'SELECT place_id, osm_type, osm_id, class, type, name, admin_level,';
 $sSQL .= '    housenumber, postcode, country_code,';
 $sSQL .= '    importance, wikipedia,';
-$sSQL .= "    to_char(indexed_date, 'YYYY-MM-DD HH24:MI') AS indexed_date,";
+$sSQL .= '    ROUND(EXTRACT(epoch FROM indexed_date)) AS indexed_epoch,';
 $sSQL .= '    parent_place_id, ';
 $sSQL .= '    rank_address, ';
 $sSQL .= '    rank_search, ';
@@ -144,7 +144,7 @@ $sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';
 $sSQL .= "WHERE place_id = $iPlaceID ORDER BY (each(name)).key";
 $aPointDetails['aNames'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aNames'])) { // possible timeout
-    $aPointDetails['aNames'] = [];
+    $aPointDetails['aNames'] = array();
 }
 
 // Address tags
@@ -152,7 +152,7 @@ $sSQL = 'SELECT (each(address)).key as key,(each(address)).value FROM placex ';
 $sSQL .= "WHERE place_id = $iPlaceID ORDER BY key";
 $aPointDetails['aAddressTags'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aAddressTags'])) { // possible timeout
-    $aPointDetails['aAddressTags'] = [];
+    $aPointDetails['aAddressTags'] = array();
 }
 
 // Extra tags
@@ -160,7 +160,7 @@ $sSQL = 'SELECT (each(extratags)).key,(each(extratags)).value FROM placex ';
 $sSQL .= "WHERE place_id = $iPlaceID ORDER BY (each(extratags)).key";
 $aPointDetails['aExtraTags'] = $oDB->getAssoc($sSQL);
 if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
-    $aPointDetails['aExtraTags'] = [];
+    $aPointDetails['aExtraTags'] = array();
 }
 
 // Address
@@ -200,13 +200,13 @@ if ($bIncludeLinkedPlaces) {
     $sSQL .= '   housenumber';
     $aLinkedLines = $oDB->getAll($sSQL);
     if (PEAR::isError($aLinkedLines)) { // possible timeout
-        $aLinkedLines = [];
+        $aLinkedLines = array();
     }
 }
 
 // All places this is an imediate parent of
-$aParentOfLines = false;
-if ($bIncludeChildPlaces) {
+$aHierarchyLines = false;
+if ($bIncludeHierarchy) {
     $sSQL = 'SELECT obj.place_id, osm_type, osm_id, class, type, housenumber,';
     $sSQL .= " admin_level, rank_address, ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea,";
     $sSQL .= " ST_DistanceSpheroid(geometry, placegeometry, 'SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]]') AS distance, ";
@@ -232,9 +232,9 @@ if ($bIncludeChildPlaces) {
     $sSQL .= '    rank_search ASC, ';
     $sSQL .= '    localname, ';
     $sSQL .= '    housenumber';
-    $aParentOfLines = $oDB->getAll($sSQL);
-    if (PEAR::isError($aParentOfLines)) { // possible timeout
-        $aParentOfLines = [];
+    $aHierarchyLines = $oDB->getAll($sSQL);
+    if (PEAR::isError($aHierarchyLines)) { // possible timeout
+        $aHierarchyLines = array();
     }
 }
 
@@ -244,19 +244,19 @@ if ($bIncludeKeywords) {
     $sSQL = "SELECT * FROM search_name WHERE place_id = $iPlaceID";
     $aPlaceSearchName = $oDB->getRow($sSQL);
     if (PEAR::isError($aPlaceSearchName)) { // possible timeout
-        $aPlaceSearchName = [];
+        $aPlaceSearchName = array();
     }
 
     $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['name_vector'], 1, -1).')';
     $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
-        $aPlaceSearchNameKeywords = [];
+        $aPlaceSearchNameKeywords = array();
     }
 
     $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['nameaddress_vector'], 1, -1).')';
     $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
     if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
-        $aPlaceSearchAddressKeywords = [];
+        $aPlaceSearchAddressKeywords = array();
     }
 }
 

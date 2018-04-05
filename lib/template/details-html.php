@@ -111,7 +111,7 @@
 
                     kv('Name'            , hash_to_subtable($aPointDetails['aNames']) );
                     kv('Type'            , $aPointDetails['class'].':'.$aPointDetails['type'] );
-                    kv('Last Updated'    , $aPointDetails['indexed_date'] );
+                    kv('Last Updated'    , (new DateTime('@'.$aPointDetails['indexed_epoch']))->format(DateTime::RFC822) );
                     kv('Admin Level'     , $aPointDetails['admin_level'] );
                     kv('Rank'            , $aPointDetails['rank_search_label'] );
                     if ($aPointDetails['calculated_importance']) {
@@ -196,12 +196,12 @@
         }
     }
     
-    if (sizeof($aParentOfLines))
+    if (sizeof($aHierarchyLines))
     {
         headline('Parent Of');
 
         $aGroupedAddressLines = array();
-        foreach($aParentOfLines as $aAddressLine)
+        foreach($aHierarchyLines as $aAddressLine)
         {
             if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];
             else $sType = $aAddressLine['type'];
@@ -210,17 +210,17 @@
                 $aGroupedAddressLines[$sType] = array();
             $aGroupedAddressLines[$sType][] = $aAddressLine;
         }
-        foreach($aGroupedAddressLines as $sGroupHeading => $aParentOfLines)
+        foreach($aGroupedAddressLines as $sGroupHeading => $aHierarchyLines)
         {
             $sGroupHeading = ucwords($sGroupHeading);
             headline3($sGroupHeading);
 
-            foreach($aParentOfLines as $aAddressLine)
+            foreach($aHierarchyLines as $aAddressLine)
             {
                 _one_row($aAddressLine);
             }
         }
-        if (sizeof($aParentOfLines) >= 500) {
+        if (sizeof($aHierarchyLines) >= 500) {
             echo '<p>There are more child objects which are not shown.</p>';
         }
     }

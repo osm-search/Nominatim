@@ -210,21 +210,23 @@ $aPlaceSearchNameKeywords = false;
 $aPlaceSearchAddressKeywords = false;
 if ($oParams->getBool('keywords')) {
     $sSQL = "SELECT * FROM search_name WHERE place_id = $iPlaceID";
-    $aPlaceSearchName = $oDB->getRow($sSQL);
-    if (PEAR::isError($aPlaceSearchName)) { // possible timeout
+    $aPlaceSearchName = $oDB->getRow($sSQL); // can be null
+    if (!$aPlaceSearchName || PEAR::isError($aPlaceSearchName)) { // possible timeout
         $aPlaceSearchName = [];
     }
 
-    $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['name_vector'], 1, -1).')';
-    $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
-    if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
-        $aPlaceSearchNameKeywords = [];
-    }
+    if (!empty($aPlaceSearchName)) {
+        $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['name_vector'], 1, -1).')';
+        $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
+        if (PEAR::isError($aPlaceSearchNameKeywords)) { // possible timeout
+            $aPlaceSearchNameKeywords = [];
+        }
 
-    $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['nameaddress_vector'], 1, -1).')';
-    $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
-    if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
-        $aPlaceSearchAddressKeywords = [];
+        $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['nameaddress_vector'], 1, -1).')';
+        $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
+        if (PEAR::isError($aPlaceSearchAddressKeywords)) { // possible timeout
+            $aPlaceSearchAddressKeywords = [];
+        }
     }
 }
 

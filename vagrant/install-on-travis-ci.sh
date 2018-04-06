@@ -32,6 +32,7 @@ pip3 install --quiet behave nose pytidylib psycopg2
 sudo pear install PHP_CodeSniffer
 sudo pear install pear/PEAR-1.10.0
 sudo pear install pear/DB
+sudo find / | grep DB | grep -i pear
 
 sudo -u postgres createuser -S www-data
 

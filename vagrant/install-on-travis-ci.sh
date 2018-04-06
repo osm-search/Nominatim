@@ -16,20 +16,20 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
                             libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
                             postgresql-server-dev-9.6 postgresql-9.6-postgis-2.3 postgresql-contrib-9.6 \
-                            apache2 php5 php5-pgsql php-pear php-db php5-intl
+                            apache2 php5 php5-pgsql php-pear php5-intl
 
 sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 phpunit php5-cgi
 
 # Travis uses phpenv to support multiple PHP versions. This is work-around to
 # get apt-get installed php-db into one of the phpenv load paths
-phpenv rehash
-sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/5.6.*/share/pear/
-sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.0.*/share/pear/
-sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.1.*/share/pear/
+# phpenv rehash
+# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/5.6.*/share/pear/
+# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.0.*/share/pear/
+# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.1.*/share/pear/
 
 
 pip3 install --quiet behave nose pytidylib psycopg2
-sudo pear -q install PHP_CodeSniffer
+sudo pear -q install PHP_CodeSniffer DB
 
 sudo -u postgres createuser -S www-data
 

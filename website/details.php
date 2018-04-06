@@ -16,15 +16,21 @@ $sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefO
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osmid', -1);
+$sClass = $oParams->getString('class');
 
 $oDB =& getDB();
 
 if ($sOsmType && $iOsmId > 0) {
     $sSQL = sprintf(
-        "SELECT place_id FROM placex WHERE osm_type='%s' AND osm_id=%d ORDER BY type='postcode' ASC",
+        "SELECT place_id FROM placex WHERE osm_type='%s' AND osm_id=%d",
         $sOsmType,
         $iOsmId
     );
+    // osm_type and osm_id are not unique enough
+    if ($sClass) {
+        $sSQL .= " AND class='".$sClass."'";
+    }
+    $sSQL .= " ORDER BY type='postcode', class ASC";
     $sPlaceId = chksql($oDB->getOne($sSQL));
 
     // Be nice about our error messages for broken geometry

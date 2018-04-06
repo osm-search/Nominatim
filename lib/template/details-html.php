@@ -119,7 +119,7 @@
                     }
                     kv('Coverage'        , ($aPointDetails['isarea']=='t'?'Polygon':'Point') );
                     kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
-                    kv('OSM'             , osmLink($aPointDetails) );
+                    kv('OSM'             , osmLink($aPointDetails) . ' ('.detailsPermaLink($aPointDetails, 'this page').')' );
                     if ($aPointDetails['wikipedia'])
                     {
                         kv('Wikipedia Calculated' , wikipediaLink($aPointDetails) );

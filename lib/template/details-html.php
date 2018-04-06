@@ -97,7 +97,10 @@
     <div class="container">
         <div class="row">
             <div class="col-sm-10">
-                <h1><?php echo $aPointDetails['localname'] ?></h1>
+                <h1>
+                    <?php echo $aPointDetails['localname'] ?>
+                    <small><?php echo detailsPermaLink($aPointDetails, 'link to this page') ?></small>
+                </h1>
             </div>
             <div class="col-sm-2 text-right">
                 <?php map_icon($aPointDetails['icon']) ?>
@@ -119,7 +122,7 @@
                     }
                     kv('Coverage'        , ($aPointDetails['isarea']=='t'?'Polygon':'Point') );
                     kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
-                    kv('OSM'             , osmLink($aPointDetails) . ' ('.detailsPermaLink($aPointDetails, 'this page').')' );
+                    kv('OSM'             , osmLink($aPointDetails) );
                     if ($aPointDetails['wikipedia'])
                     {
                         kv('Wikipedia Calculated' , wikipediaLink($aPointDetails) );

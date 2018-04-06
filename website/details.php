@@ -30,7 +30,7 @@ if ($sOsmType && $iOsmId > 0) {
     if ($sClass) {
         $sSQL .= " AND class='".$sClass."'";
     }
-    $sSQL .= " ORDER BY type='postcode', class ASC";
+    $sSQL .= ' ORDER BY class ASC';
     $sPlaceId = chksql($oDB->getOne($sSQL));
 
     // Be nice about our error messages for broken geometry

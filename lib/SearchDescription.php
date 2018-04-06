@@ -436,7 +436,7 @@ class SearchDescription
             //now search for housenumber, if housenumber provided
             if ($this->sHouseNumber && !empty($aResults)) {
                 $aNamedPlaceIDs = $aResults;
-                $aResults = $this->queryHouseNumber($oDB, $aNamedPlaceIDs, $iLimit);
+                $aResults = $this->queryHouseNumber($oDB, $aNamedPlaceIDs);
 
                 if (empty($aResults) && $this->looksLikeFullAddress()) {
                     $aResults = $aNamedPlaceIDs;
@@ -717,7 +717,7 @@ class SearchDescription
         return $aResults;
     }
 
-    private function queryHouseNumber(&$oDB, $aRoadPlaceIDs, $iLimit)
+    private function queryHouseNumber(&$oDB, $aRoadPlaceIDs)
     {
         $aResults = array();
         $sPlaceIDs = Result::joinIdsByTable($aRoadPlaceIDs, Result::TABLE_PLACEX);
@@ -731,7 +731,6 @@ class SearchDescription
         $sSQL .= 'WHERE parent_place_id in ('.$sPlaceIDs.')';
         $sSQL .= "  AND transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
         $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-        $sSQL .= " LIMIT $iLimit";
 
         Debug::printSQL($sSQL);
 
@@ -759,7 +758,6 @@ class SearchDescription
             $sSQL .= $iHousenumber.'>=startnumber and ';
             $sSQL .= $iHousenumber.'<=endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-            $sSQL .= " limit $iLimit";
 
             Debug::printSQL($sSQL);
 
@@ -776,7 +774,6 @@ class SearchDescription
             $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.')';
             $sSQL .= " AND housenumber = '".$this->sHouseNumber."'";
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-            $sSQL .= " limit $iLimit";
 
             Debug::printSQL($sSQL);
 
@@ -798,7 +795,6 @@ class SearchDescription
             $sSQL .= $iHousenumber.'>=startnumber and ';
             $sSQL .= $iHousenumber.'<=endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-            $sSQL .= " limit $iLimit";
 
             Debug::printSQL($sSQL);
 

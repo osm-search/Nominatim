@@ -31,8 +31,8 @@ sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 phpunit php
 pip3 install --quiet behave nose pytidylib psycopg2
 sudo pear install PHP_CodeSniffer
 sudo pear install pear/PEAR-1.10.0
-sudo pear install pear/DB
-sudo find / | grep DB | grep -i pear
+sudo pear install DB
+sudo pear list-files DB
 
 sudo -u postgres createuser -S www-data
 

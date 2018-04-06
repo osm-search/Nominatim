@@ -2,6 +2,7 @@
 
 require_once('init.php');
 require_once('cmd.php');
+require_once('DebugNone.php');
 
 // handle http proxy when using file_get_contents
 if (CONST_HTTP_Proxy) {

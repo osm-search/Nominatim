@@ -37,7 +37,7 @@ $sTestPageText = <<<EOD
 | coasters = 12
 | water_rides = 2
 | owner = [[Six Flags]]
-| general_manager = 
+| general_manager =
 | homepage = [http://www.sixflags.com/parks/greatadventure/ Six Flags Great Adventure]
 }}
 EOD;
@@ -241,7 +241,7 @@ function _templatesToProperties($aTemplates)
         }
 
         // Assume the first template with lots of params is the type (fallback for infobox)
-        if (!isset($aPageProperties['sPossibleInfoboxType']) && sizeof($aParams) > 10) {
+        if (!isset($aPageProperties['sPossibleInfoboxType']) && count($aParams) > 10) {
             $aPageProperties['sPossibleInfoboxType'] = trim($aTemplate[0]);
             // $aPageProperties['aInfoboxParams'] = $aParams;
         }
@@ -495,7 +495,7 @@ if (isset($aCMDResult['link'])) {
 
         if (!isset($aNominatRecords[0])) {
             $aNameParts = preg_split('#[(,]#', $aRecord['name']);
-            if (sizeof($aNameParts) > 1) {
+            if (count($aNameParts) > 1) {
                 $sNameURL = $sURL.'&q='.urlencode(trim($aNameParts[0]));
                 var_Dump($sNameURL);
                 $sXML = file_get_contents($sNameURL);
@@ -509,7 +509,7 @@ if (isset($aCMDResult['link'])) {
         }
 
         // assume first is best/right
-        for ($i = 0; $i < sizeof($aNominatRecords); $i++) {
+        for ($i = 0; $i < count($aNominatRecords); $i++) {
             $fDiff = ($aRecord['lat']-$aNominatRecords[$i]['LAT']) * ($aRecord['lat']-$aNominatRecords[$i]['LAT']);
             $fDiff += ($aRecord['lon']-$aNominatRecords[$i]['LON']) * ($aRecord['lon']-$aNominatRecords[$i]['LON']);
             $fDiff = sqrt($fDiff);

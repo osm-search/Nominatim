@@ -14,7 +14,7 @@ function getProcessorCount()
 {
     $sCPU = file_get_contents('/proc/cpuinfo');
     preg_match_all('#processor\s+: [0-9]+#', $sCPU, $aMatches);
-    return sizeof($aMatches[0]);
+    return count($aMatches[0]);
 }
 
 

@@ -32,6 +32,13 @@
 
 
 
+  <!-- eval, system, etc -->
+  <rule ref="Generic.PHP.ForbiddenFunctions">
+    <properties>
+      <property name="forbiddenFunctions" type="array" value="sizeof=>count,delete=>unset,print=>echo,create_function=>null,eval=>null"/>
+    </properties>
+  </rule>
+
   <!-- **************************************************************
        DOCUMENTATION
        ************************************************************** -->

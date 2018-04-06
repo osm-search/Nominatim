@@ -66,9 +66,9 @@ $hLog = logStart($oDB, 'search', $oGeocode->getQueryString(), $aLangPrefOrder);
 $aSearchResults = $oGeocode->lookup();
 
 if ($sOutputFormat=='html') {
-    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
+    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
 }
-logEnd($oDB, $hLog, sizeof($aSearchResults));
+logEnd($oDB, $hLog, count($aSearchResults));
 
 $sQuery = $oGeocode->getQueryString();
 
@@ -81,4 +81,5 @@ $sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
 
 if (CONST_Debug) exit;
 
-include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');
+$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');

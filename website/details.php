@@ -231,7 +231,7 @@ if ($oParams->getBool('keywords')) {
 logEnd($oDB, $hLog, 1);
 
 if ($sOutputFormat=='html') {
-    $sSQL = "SELECT TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' FROM import_status LIMIT 1";
+    $sSQL = "SELECT TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' FROM import_status LIMIT 1";
     $sDataDate = chksql($oDB->getOne($sSQL));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;

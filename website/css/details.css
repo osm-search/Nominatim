@@ -2,6 +2,10 @@ h1 {
   margin: 10px 0;
   padding-left: 8px;
 }
+h1 small a {
+  font-size: 0.5em;
+  white-space: nowrap;
+}
 h2 {
   font-size: 2em;
   padding-left: 8px;

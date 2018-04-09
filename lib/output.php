@@ -39,3 +39,14 @@ function detailsLink($aFeature, $sTitle = false)
 
     return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle?$sTitle:$aFeature['place_id']).'</a>';
 }
+
+function detailsPermaLink($aFeature, $sRefText = false)
+{
+    $sOSMType = formatOSMType($aFeature['osm_type'], false);
+
+    if ($sOSMType) {
+        $sLabel = $sRefText ? $sRefText : $sOSMType.' '.$aFeature['osm_id'];
+        return '<a href="details.php?osmtype='.$aFeature['osm_type'].'&osmid='.$aFeature['osm_id'].'&class='.$aFeature['class'].'">'.$sLabel.'</a>';
+    }
+    return '';
+}

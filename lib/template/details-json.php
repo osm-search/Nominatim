@@ -30,7 +30,6 @@ $aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails
 
 $aPlaceDetails['rank_address'] = (int) $aPointDetails['rank_address'];
 $aPlaceDetails['rank_search'] = (int) $aPointDetails['rank_search'];
-$aPlaceDetails['rank_search_label'] = $aPointDetails['rank_search_label'];
 
 $aPlaceDetails['isarea'] = ($aPointDetails['isarea'] == 't');
 $aPlaceDetails['lat'] = (float) $aPointDetails['lat'];

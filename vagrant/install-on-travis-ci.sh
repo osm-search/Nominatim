@@ -36,11 +36,11 @@ pip3 install --quiet behave nose pytidylib psycopg2
 # echo $TRAVIS_PHP_VERSION
 # echo $PHPENV_VERSION
 cat /home/travis/.phpenv/version
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
+sudo pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
-sudo PHP_PEAR_PHP_BIN=`which php` pear list PHP_CodeSniffer
+# sudo PHP_PEAR_PHP_BIN=`which php` pear list PHP_CodeSniffer
 # php -r 'print get_include_path();'
 
 sudo -u postgres createuser -S www-data

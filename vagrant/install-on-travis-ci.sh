@@ -35,6 +35,7 @@ echo `which php`
 php --version
 echo $TRAVIS_PHP_VERSION
 echo $PHPENV_VERSION
+cat /home/travis/.phpenv/version
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB

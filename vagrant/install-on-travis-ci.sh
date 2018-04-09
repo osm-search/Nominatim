@@ -18,7 +18,7 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             postgresql-server-dev-9.6 postgresql-9.6-postgis-2.3 postgresql-contrib-9.6 \
                             apache2 php5 php5-pgsql php5-intl
 
-sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 phpunit php5-cgi
+sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
 
 # Travis uses phpenv to support multiple PHP versions. This is work-around to
 # get apt-get installed php-db into one of the phpenv load paths
@@ -35,6 +35,7 @@ echo `which php`
 php --version
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
+sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
 sudo PHP_PEAR_PHP_BIN=`which php` pear list DB

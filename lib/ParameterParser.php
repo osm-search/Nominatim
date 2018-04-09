@@ -99,7 +99,7 @@ class ParameterParser
                 arsort($aLanguages);
             }
         }
-        if (!sizeof($aLanguages) && CONST_Default_Language) {
+        if (empty($aLanguages) && CONST_Default_Language) {
             $aLanguages[CONST_Default_Language] = 1;
         }
 

@@ -129,7 +129,7 @@ BEGIN
           ST_Distance(centroid, point) as distance, null as isguess
           FROM search_name_-partition-
           WHERE name_vector @> isin_token
-          AND ST_DWithin(centroid, point, 0.01) 
+          AND ST_DWithin(centroid, point, 0.015)
           AND search_rank between 26 and 27
       ORDER BY distance ASC limit 1
     LOOP

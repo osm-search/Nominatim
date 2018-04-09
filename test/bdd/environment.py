@@ -86,33 +86,38 @@ class NominatimEnvironment(object):
             # just in case... make sure a previous table has been dropped
             self.db_drop_database(self.template_db)
 
-        # call the first part of database setup
-        self.write_nominatim_config(self.template_db)
-        self.run_setup_script('create-db', 'setup-db')
-        # remove external data to speed up indexing for tests
-        conn = psycopg2.connect(database=self.template_db)
-        cur = conn.cursor()
-        cur.execute("""select tablename from pg_tables
-                       where tablename in ('gb_postcode', 'us_postcode')""")
-        for t in cur:
-            conn.cursor().execute('TRUNCATE TABLE %s' % (t[0],))
-        conn.commit()
-        conn.close()
+        try:
+            # call the first part of database setup
+            self.write_nominatim_config(self.template_db)
+            self.run_setup_script('create-db', 'setup-db')
+            # remove external data to speed up indexing for tests
+            conn = psycopg2.connect(database=self.template_db)
+            cur = conn.cursor()
+            cur.execute("""select tablename from pg_tables
+                           where tablename in ('gb_postcode', 'us_postcode')""")
+            for t in cur:
+                conn.cursor().execute('TRUNCATE TABLE %s' % (t[0],))
+            conn.commit()
+            conn.close()
 
-        # execute osm2pgsql import on an empty file to get the right tables
-        with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
-            fd.write(b'<osm version="0.6"></osm>')
-            fd.flush()
-            self.run_setup_script('import-data',
-                                  'ignore-errors',
-                                  'create-functions',
-                                  'create-tables',
-                                  'create-partition-tables',
-                                  'create-partition-functions',
-                                  'load-data',
-                                  'create-search-indices',
-                                  osm_file=fd.name,
-                                  osm2pgsql_cache='200')
+            # execute osm2pgsql import on an empty file to get the right tables
+            with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
+                fd.write(b'<osm version="0.6"></osm>')
+                fd.flush()
+                self.run_setup_script('import-data',
+                                      'ignore-errors',
+                                      'create-functions',
+                                      'create-tables',
+                                      'create-partition-tables',
+                                      'create-partition-functions',
+                                      'load-data',
+                                      'create-search-indices',
+                                      osm_file=fd.name,
+                                      osm2pgsql_cache='200')
+        except:
+            self.db_drop_database(self.template_db)
+            raise
+
 
     def setup_api_db(self, context):
         self.write_nominatim_config(self.api_test_db)

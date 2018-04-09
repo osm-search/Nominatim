@@ -9,7 +9,7 @@ $aTagsBlacklist
     'place' => array('house', 'houses'),
    );
 
-// If a class is in the white list then all types will 
+// If a class is in the white list then all types will
 // be ignored except the ones given in the list.
 // Also use this list to exclude an entire class from
 // special phrases.

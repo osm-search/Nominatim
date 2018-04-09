@@ -97,7 +97,10 @@
     <div class="container">
         <div class="row">
             <div class="col-sm-10">
-                <h1><?php echo $aPointDetails['localname'] ?></h1>
+                <h1>
+                    <?php echo $aPointDetails['localname'] ?>
+                    <small><?php echo detailsPermaLink($aPointDetails, 'link to this page') ?></small>
+                </h1>
             </div>
             <div class="col-sm-2 text-right">
                 <?php map_icon($aPointDetails['icon']) ?>
@@ -199,7 +202,7 @@
         }
     }
     
-    if (sizeof($aParentOfLines))
+    if (!empty($aParentOfLines))
     {
         headline('Parent Of');
 
@@ -223,7 +226,7 @@
                 _one_row($aAddressLine);
             }
         }
-        if (sizeof($aParentOfLines) >= 500) {
+        if (count($aParentOfLines) >= 500) {
             echo '<p>There are more child objects which are not shown.</p>';
         }
     }

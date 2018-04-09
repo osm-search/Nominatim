@@ -41,7 +41,7 @@ if ($sOsmType && $iOsmId > 0) {
 
     if ($oLookup) {
         $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
-        if (sizeof($aPlaces)) {
+        if (!empty($aPlaces)) {
             $aPlace = reset($aPlaces);
         }
     }
@@ -72,7 +72,7 @@ if (CONST_Debug) {
 }
 
 if ($sOutputFormat == 'html') {
-    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
+    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;
 }

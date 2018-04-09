@@ -18,7 +18,7 @@ $oDB =& getDB();
 $iTotalBroken = (int) chksql($oDB->getOne('select count(*) from import_polygon_error'));
 
 $aPolygons = array();
-while ($iTotalBroken && !sizeof($aPolygons)) {
+while ($iTotalBroken && empty($aPolygons)) {
     $sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
     $sSQL .= 'country_code as "country",errormessage as "error message",updated';
     $sSQL .= ' from import_polygon_error';
@@ -32,7 +32,7 @@ while ($iTotalBroken && !sizeof($aPolygons)) {
     if ($bReduced) $aWhere[] = "errormessage like 'Area reduced%'";
     if ($sClass) $sWhere[] = "class = '".pg_escape_string($sClass)."'";
 
-    if (sizeof($aWhere)) {
+    if (!empty($aWhere)) {
         $sSQL .= ' where '.join(' and ', $aWhere);
     }
 

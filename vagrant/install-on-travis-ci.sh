@@ -29,6 +29,10 @@ sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 phpunit php
 
 
 pip3 install --quiet behave nose pytidylib psycopg2
+
+phpenv global system
+phpenv version
+echo `which php`
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB

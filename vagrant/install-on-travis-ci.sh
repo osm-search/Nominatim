@@ -40,7 +40,7 @@ sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
-# sudo PHP_PEAR_PHP_BIN=`which php` pear list DB
+sudo PHP_PEAR_PHP_BIN=`which php` pear list PHP_CodeSniffer
 php -r 'print get_include_path();'
 
 sudo -u postgres createuser -S www-data

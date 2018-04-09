@@ -11,6 +11,9 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testNoDatabaseConnectionFail()
     {
+
+        print get_include_path();
+
         // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
         // failure on travis
         // $oDB = \DB::connect('', false); // returns a DB_Error instance

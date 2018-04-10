@@ -40,6 +40,12 @@ sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
+
+ls -la /home/travis/.phpenv/shims/
+/home/travis/.phpenv/shims/php-cgi --version
+/usr/bin/php-cgi --version
+/home/travis/.phpenv/shims/phpcs --version
+
 php -r 'print get_include_path()."\n";'
 
 export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)

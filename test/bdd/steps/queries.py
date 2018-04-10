@@ -295,7 +295,7 @@ def send_api_query(endpoint, params, fmt, context):
     if hasattr(context, 'http_headers'):
         env.update(context.http_headers)
 
-    cmd = ['/usr/bin/php-cgi', '-f']
+    cmd = ['php-cgi', '-f']
     if context.nominatim.code_coverage_path:
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = os.path.join(context.nominatim.src_dir, "lib")

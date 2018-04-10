@@ -1,37 +1,57 @@
 <?php
+
 @define('CONST_ConnectionBucket_PageType', 'Status');
 
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-website.php');
+require_once(CONST_BasePath.'/lib/ParameterParser.php');
+require_once(CONST_BasePath.'/lib/Status.php');
 
-
-function statusError($sMsg)
-{
-    header('HTTP/1.0 500 Internal Server Error');
-    echo 'ERROR: '.$sMsg;
-    exit;
-}
+$oParams = new Nominatim\ParameterParser();
+$sOutputFormat = $oParams->getSet('format', array('text', 'json'), 'text');
 
 $oDB =& DB::connect(CONST_Database_DSN, false);
-if (!$oDB || PEAR::isError($oDB)) {
-    statusError('No database');
+$oStatus = new Nominatim\Status($oDB);
+
+$aResponse = [
+              'status' => 'ok',
+              'code' => 200,
+              'message' => 'OK'
+             ];
+
+$sErrorMsg = $oStatus->status(); // can be nil
+
+
+if ($sOutputFormat == 'json' && !$sErrorMsg) {
+    try {
+        $aResponse['data_updated'] = $oStatus->dataDate();
+    } catch (Exception $oErr) {
+        $sErrorMsg = $oErr->getMessage();
+    }
 }
 
-$sStandardWord = $oDB->getOne("select make_standard_name('a')");
-if (PEAR::isError($sStandardWord)) {
-    statusError('Module failed');
-}
-if ($sStandardWord != 'a') {
-    statusError('Module call failed');
+
+
+if ($sErrorMsg) {
+    $aResponse = [
+                  'status' => 'error',
+                  'code' => 500,
+                  'message' => $sErrorMsg
+                 ];
 }
 
-$iWordID = $oDB->getOne("select word_id,word_token, word, class, type, country_code, operator, search_name_count from word where word_token in (' a')");
-if (PEAR::isError($iWordID)) {
-    statusError('Query failed');
-}
-if (!$iWordID) {
-    statusError('No value');
+
+if ($sErrorMsg) {
+    header('HTTP/1.0 500 Internal Server Error');
 }
 
-echo 'OK';
+if ($sOutputFormat == 'json') {
+    header('content-type: application/json; charset=UTF-8');
+    javascript_renderData($aResponse);
+} else {
+    header('content-type: text/plain; charset=UTF-8');
+    if ($sErrorMsg) echo 'ERROR: ';
+    echo $aResponse['message'];
+}
+
 exit;

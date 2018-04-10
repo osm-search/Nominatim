@@ -232,6 +232,19 @@ class DetailsResponse(GenericResponse):
                                         options={'char-encoding' : 'utf8'})
         self.result = {}
 
+class StatusResponse(GenericResponse):
+
+    def __init__(self, page, fmt='text', errorcode=200):
+        self.page = page
+        self.format = fmt
+        self.errorcode = errorcode
+
+        if errorcode == 200 and fmt!='text':
+            getattr(self, 'parse_' + fmt)()
+
+    def parse_json(self):
+        self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(self.page)]
+
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
 def query_cmd(context, query, dups):
     """ Query directly via PHP script.
@@ -282,7 +295,7 @@ def send_api_query(endpoint, params, fmt, context):
     if hasattr(context, 'http_headers'):
         env.update(context.http_headers)
 
-    cmd = ['/usr/bin/php-cgi', '-f']
+    cmd = ['php-cgi', '-f']
     if context.nominatim.code_coverage_path:
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = os.path.join(context.nominatim.src_dir, "lib")
@@ -392,6 +405,17 @@ def website_lookup_request(context, fmt, query):
 
     context.response = SearchResponse(outp, outfmt, status)
 
+@when(u'sending (?P<fmt>\S+ )?status query')
+def website_status_request(context, fmt):
+    params = {}
+    outp, status = send_api_query('status', params, fmt, context)
+
+    if fmt is None:
+        outfmt = 'text'
+    else:
+        outfmt = fmt.strip()
+
+    context.response = StatusResponse(outp, outfmt, status)
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
 def validate_result_number(context, operator, number):
@@ -403,6 +427,10 @@ def validate_result_number(context, operator, number):
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
     eq_(context.response.errorcode, int(status))
+
+@then(u'the page contents equals "(?P<text>.+)"')
+def check_page_content_equals(context, text):
+    eq_(context.response.page, text)
 
 @then(u'the result is valid (?P<fmt>\w+)')
 def step_impl(context, fmt):

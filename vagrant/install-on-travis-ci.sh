@@ -16,12 +16,49 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
                             libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
                             postgresql-server-dev-9.6 postgresql-9.6-postgis-2.3 postgresql-contrib-9.6 \
-                            apache2 php5 php5-pgsql php-pear php-db php5-intl
+                            apache2 php5 php5-pgsql php5-intl php-pear
 
-sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 phpunit php5-cgi
+sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
+
+# Travis uses phpenv to support multiple PHP versions. This is work-around to
+# get apt-get installed php-db into one of the phpenv load paths
 
 pip3 install --quiet behave nose pytidylib psycopg2
-sudo pear -q install PHP_CodeSniffer
+
+# phpenv version
+# echo `which php`
+# php --version
+# echo $TRAVIS_PHP_VERSION
+# echo $PHPENV_VERSION
+sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
+sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
+sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
+sudo PHP_PEAR_PHP_BIN=`which php` pear list
+phpenv rehash
+
+ls -la /home/travis/.phpenv/shims/
+/home/travis/.phpenv/shims/php-cgi --version
+/usr/bin/php-cgi --version
+/home/travis/.phpenv/shims/phpcs --version
+
+which phpcs
+phpcs --version
+
+php -r 'print get_include_path()."\n";'
+
+export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)
+# sudo find /etc/php | grep php.ini
+
+sudo tee /tmp/travis.php.ini << EOF > /dev/null
+include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.phpenv/versions/$PHPENV_VERSION/lib/php/pear
+EOF
+phpenv config-add /tmp/travis.php.ini
+
+php -r 'print get_include_path()."\n";'
+
+which php-cgi
+php-cgi --version
+sudo find / | grep php-cgi
 
 sudo -u postgres createuser -S www-data
 

@@ -46,7 +46,7 @@ php -r 'print get_include_path();'
 # sudo find /etc/php | grep php.ini
 
 sudo tee /tmp/travis.php.ini << EOF
-echo "include_path = .:/home/travis/.phpenv/versions/5.6.32/share/pear:/home/travis/.phpenv/versions/5.6.32/lib/php/pear"
+include_path = .:/home/travis/.phpenv/versions/5.6.32/share/pear:/home/travis/.phpenv/versions/5.6.32/lib/php/pear
 EOF
 phpenv config-add /tmp/travis.php.ini
 

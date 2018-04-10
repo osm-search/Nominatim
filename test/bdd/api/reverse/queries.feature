@@ -50,4 +50,4 @@ Feature: Reverse geocoding
         When sending jsonv2 reverse coordinates 54.046489113,8.5546870529
         Then results contain
          | display_name |
-         | Freie und Hansestadt Hamburg, Deutschland |
+         | ^.*Hamburg, Deutschland |

@@ -53,6 +53,10 @@ phpenv config-add /tmp/travis.php.ini
 
 php -r 'print get_include_path()."\n";'
 
+which phpcs
+phpcs --version
+sudo find / | grep bin/phpcs
+
 sudo -u postgres createuser -S www-data
 
 # Make sure that system servers can read from the home directory:

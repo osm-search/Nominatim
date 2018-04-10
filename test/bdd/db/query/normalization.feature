@@ -136,3 +136,13 @@ Feature: Import and search of names
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | R        | 1 |
+
+     Scenario: Unprintable characters in postcodes are ignored
+        Given the named places
+            | osm  | class   | type   | address |
+            | N234 | amenity | prison | 'postcode' : u'1234\u200e' |
+        When importing
+        And searching for "1234"
+        Then results contain
+         | ID | osm_type |
+         | 0  | P        |

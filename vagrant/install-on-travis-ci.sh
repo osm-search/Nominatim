@@ -22,11 +22,6 @@ sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
 
 # Travis uses phpenv to support multiple PHP versions. This is work-around to
 # get apt-get installed php-db into one of the phpenv load paths
-# phpenv rehash
-# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/5.6.*/share/pear/
-# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.0.*/share/pear/
-# sudo cp /usr/share/php/DB.php /home/travis/.phpenv/versions/7.1.*/share/pear/
-
 
 pip3 install --quiet behave nose pytidylib psycopg2
 
@@ -35,16 +30,19 @@ pip3 install --quiet behave nose pytidylib psycopg2
 # php --version
 # echo $TRAVIS_PHP_VERSION
 # echo $PHPENV_VERSION
-cat /home/travis/.phpenv/version
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
+phpenv rehash
 
 ls -la /home/travis/.phpenv/shims/
 /home/travis/.phpenv/shims/php-cgi --version
 /usr/bin/php-cgi --version
 /home/travis/.phpenv/shims/phpcs --version
+
+which phpcs
+phpcs --version
 
 php -r 'print get_include_path()."\n";'
 

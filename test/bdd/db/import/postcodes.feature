@@ -95,7 +95,6 @@ Feature: Import of postcodes
             | object | postcode |
             | W93    | 445023   |
 
-    @wip
     Scenario: Postcodes from admin boundaries are preferred over estimated postcodes
         Given the scene admin-areas
         And the named places

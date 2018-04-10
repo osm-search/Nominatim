@@ -20,7 +20,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 // Rules for normalizing terms for comparison before doing comparisons.
 // The default is to remove accents and punctuation and to lower-case the
 // term. Spaces are kept but collapsed to one standard space.
-@define('CONST_Term_Normalization_Rules', ":: NFD (); [:Nonspacing Mark:] >;  :: lower (); [[:Punctuation:][:Space:]]+ > ' '; :: NFC ();");
+@define('CONST_Term_Normalization_Rules', ":: NFD (); [[:Nonspacing Mark:] [:Cf:]] >;  :: lower (); [[:Punctuation:][:Space:]]+ > ' '; :: NFC ();");
 
 // Set to false to avoid importing extra postcodes for the US.
 @define('CONST_Use_Extra_US_Postcodes', true);

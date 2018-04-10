@@ -41,16 +41,17 @@ sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
 sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
 sudo PHP_PEAR_PHP_BIN=`which php` pear list
 # sudo PHP_PEAR_PHP_BIN=`which php` pear list PHP_CodeSniffer
-php -r 'print get_include_path();'
+php -r 'print get_include_path()."\n";'
 
+export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)
 # sudo find /etc/php | grep php.ini
 
-sudo tee /tmp/travis.php.ini << EOF
-include_path = .:/home/travis/.phpenv/versions/5.6.32/share/pear:/home/travis/.phpenv/versions/5.6.32/lib/php/pear
+sudo tee /tmp/travis.php.ini << EOF > /dev/null
+include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.phpenv/versions/$PHPENV_VERSION/lib/php/pear
 EOF
 phpenv config-add /tmp/travis.php.ini
 
-php -r 'print get_include_path();'
+php -r 'print get_include_path()."\n";'
 
 sudo -u postgres createuser -S www-data
 

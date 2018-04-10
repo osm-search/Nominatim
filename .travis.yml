@@ -21,7 +21,7 @@ script:
   - if [[ $TEST_SUITE == "monaco" ]]; then ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | grep -v 'ETA (seconds)'; fi
   - if [[ $TEST_SUITE == "monaco" ]]; then ./utils/specialphrases.php --wiki-import | psql -d test_api_nominatim >/dev/null; fi
   - cd $TRAVIS_BUILD_DIR/test/php
-  - if [[ $TEST_SUITE == "tests" ]]; then phpunit --include-path /home/travis/.phpenv/versions/$(cat /home/travis/.phpenv/version)/lib/php/pear ./ ; fi
+  - if [[ $TEST_SUITE == "tests" ]]; then phpunit ./ ; fi
   - if [[ $TEST_SUITE == "tests" ]]; then /home/travis/.phpenv/versions/$(cat /home/travis/.phpenv/version)/bin/phpcs --report-width=120 . ; fi
   - cd $TRAVIS_BUILD_DIR/test/bdd
   - # behave --format=progress3 api

@@ -236,8 +236,9 @@ class DetailsResponse(GenericResponse):
 def query_cmd(context, query, dups):
     """ Query directly via PHP script.
     """
-    cmd = [os.path.join(context.nominatim.build_dir, 'utils', 'query.php'),
-           '--search', query]
+    cmd = ['/usr/bin/env', 'php']
+    cmd.append(os.path.join(context.nominatim.build_dir, 'utils', 'query.php'))
+    cmd.extend(['--search', query])
     # add more parameters in table form
     if context.table:
         for h in context.table.headings:
@@ -282,7 +283,7 @@ def send_api_query(endpoint, params, fmt, context):
     if hasattr(context, 'http_headers'):
         env.update(context.http_headers)
 
-    cmd = ['/usr/bin/php-cgi', '-f']
+    cmd = ['/usr/bin/env', 'php-cgi', '-f']
     if context.nominatim.code_coverage_path:
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = os.path.join(context.nominatim.src_dir, "lib")
@@ -307,7 +308,7 @@ def send_api_query(endpoint, params, fmt, context):
                  + outp + "\n===============================\n")
 
     assert_equals(0, proc.returncode,
-                  "query.php failed with message: %s\noutput: %s" % (err, outp))
+                  "%s failed with message: %s\noutput: %s" % (env['SCRIPT_FILENAME'], err, outp))
 
     assert_equals(0, len(err), "Unexpected PHP error: %s" % (err))
 
@@ -391,7 +392,6 @@ def website_lookup_request(context, fmt, query):
         outfmt = 'xml'
 
     context.response = SearchResponse(outp, outfmt, status)
-
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
 def validate_result_number(context, operator, number):

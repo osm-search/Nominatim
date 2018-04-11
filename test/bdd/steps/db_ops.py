@@ -22,6 +22,8 @@ class PlaceColumn:
             self.add_hstore('extratags', key[6:], value)
         elif key.startswith('addr+'):
             self.add_hstore('address', key[5:], value)
+        elif key in ('name', 'address', 'extratags'):
+            self.columns[key] = eval('{' + value + '}')
         else:
             assert_in(key, ('class', 'type'))
             self.columns[key] = None if value == '' else value

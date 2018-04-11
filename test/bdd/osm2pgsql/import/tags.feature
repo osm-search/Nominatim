@@ -96,6 +96,15 @@ Feature: Tag evaluation
          | N3     | 'name: de' : 'Foo', 'name:\\\\' : 'real3' |
          | N4     | 'name: de' : 'Foo', 'name' : 'rea\\l3' |
 
+    Scenario: Unprintable character in address tag are maintained
+        When loading osm data
+         """
+         n23 Tamenity=yes,name=foo,addr:postcode=1234%200e%
+         """
+        Then place contains
+         | object | address |
+         | N23    | 'postcode' : u'1234\u200e' |
+
     Scenario Outline: Included places
         When loading osm data
          """

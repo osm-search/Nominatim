@@ -151,7 +151,8 @@ class NominatimEnvironment(object):
         self.run_nominatim_script('update', *args, **kwargs)
 
     def run_nominatim_script(self, script, *args, **kwargs):
-        cmd = [os.path.join(self.build_dir, 'utils', '%s.php' % script)]
+        cmd = ['/usr/bin/env', 'php', '-Cq']
+        cmd.append(os.path.join(self.build_dir, 'utils', '%s.php' % script))
         cmd.extend(['--%s' % x for x in args])
         for k, v in kwargs.items():
             cmd.extend(('--' + k.replace('_', '-'), str(v)))

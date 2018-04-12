@@ -9,53 +9,47 @@ require_once(CONST_BasePath.'/lib/Status.php');
 
 $oParams = new Nominatim\ParameterParser();
 $sOutputFormat = $oParams->getSet('format', array('text', 'json'), 'text');
-$bForceError = $oParams->getBool('force_error', false);
+$bForceError = $oParams->getInt('force_error', false);
 
 $oDB =& DB::connect(CONST_Database_DSN, false);
 $oStatus = new Nominatim\Status($oDB);
 
 
-$sErrorMsg = $oStatus->status(); // can be nil
-if ($bForceError) $sErrorMsg = 'An Error';
+if ($sOutputFormat == 'json') {
+    header('content-type: application/json; charset=UTF-8');
+}
 
 
-if ($sOutputFormat == 'text') {
-    if ($sErrorMsg) {
-        header('HTTP/1.0 500 Internal Server Error');
-        echo 'ERROR: '.$sErrorMsg;
+try {
+    if ($bForceError) {
+        throw new Exception('An Error', 799);
+    }
+    $oStatus->status();
+} catch (Exception $oErr) {
+    if ($sOutputFormat == 'json') {
+        $aResponse = array(
+                  'status' => $oErr->getCode(),
+                  'message' => $oErr->getMessage()
+                 );
+        javascript_renderData($aResponse);
     } else {
-        echo 'OK';
+        header('HTTP/1.0 500 Internal Server Error');
+        echo 'ERROR: '.$oErr->getMessage();
     }
     exit;
 }
 
-// JSON output
 
-$aResponse = array(
-              'status' => 0,
-              'message' => 'OK'
-             );
-
-if (!$sErrorMsg) {
-    try {
-        $aResponse['data_updated'] = (new DateTime('@'.$oStatus->dataDate()))->format(DateTime::RFC3339);
-    } catch (Exception $oErr) {
-        $sErrorMsg = $oErr->getMessage();
-    }
-}
-
-
-
-
-if ($sErrorMsg) {
+if ($sOutputFormat == 'json') {
+    $epoch = $oStatus->dataDate();
     $aResponse = array(
-                  'status' => 777,
-                  'message' => $sErrorMsg
-                 );
-// } else {
+              'status' => 0,
+              'message' => 'OK',
+              'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339)
+             );
+    javascript_renderData($aResponse);
+} else {
+    echo 'OK';
 }
-
-header('content-type: application/json; charset=UTF-8');
-javascript_renderData($aResponse);
 
 exit;

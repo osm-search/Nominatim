@@ -5,12 +5,16 @@ namespace Nominatim;
 require_once('../../lib/Status.php');
 require_once('DB.php');
 
+use Exception;
+
 class StatusTest extends \PHPUnit_Framework_TestCase
 {
 
 
     public function testNoDatabaseConnectionFail()
     {
+        $this->setExpectedException(Exception::class, 'No database', 700);
+
         // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
         // failure on travis
         // $oDB = \DB::connect('', false); // returns a DB_Error instance
@@ -27,16 +31,20 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testModuleFail()
     {
+        $this->setExpectedException(Exception::class, 'Module call failed', 702);
+
         // stub has getOne method but doesn't return anything
         $oDbStub = $this->getMock(\DB::class, ['getOne']);
 
         $oStatus = new Status($oDbStub);
-        $this->assertEquals('Module call failed', $oStatus->status());
+        $this->assertNull($oStatus->status());
     }
 
 
     public function testWordIdQueryFail()
     {
+        $this->setExpectedException(Exception::class, 'No value', 704);
+
         $oDbStub = $this->getMock(\DB::class, ['getOne']);
 
         // return no word_id
@@ -47,7 +55,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
                 }));
 
         $oStatus = new Status($oDbStub);
-        $this->assertEquals('No value', $oStatus->status());
+        $this->assertNull($oStatus->status());
     }
 
 

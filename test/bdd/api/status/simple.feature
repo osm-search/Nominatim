@@ -27,5 +27,5 @@ Feature: Status queries
         And the result is valid json
         And results contain
           | status | message |
-          | 777    | An Error |
+          | 799    | An Error |
         And result has not attributes data_updated

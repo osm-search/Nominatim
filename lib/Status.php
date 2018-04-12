@@ -9,39 +9,35 @@ class Status
 {
     protected $oDB;
 
-
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
     }
 
-    // return null on success
     public function status()
     {
         if (!$this->oDB || PEAR::isError($this->oDB)) {
-            return 'No database';
+            throw new Exception('No database', 700);
         }
 
         $sStandardWord = $this->oDB->getOne("SELECT make_standard_name('a')");
         if (PEAR::isError($sStandardWord)) {
-            return 'Module failed';
+            throw new Exception('Module failed', 701);
         }
 
         if ($sStandardWord != 'a') {
-            return 'Module call failed';
+            throw new Exception('Module call failed', 702);
         }
 
         $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, ';
         $sSQL .= "operator, search_name_count FROM word WHERE word_token IN (' a')";
         $iWordID = $this->oDB->getOne($sSQL);
         if (PEAR::isError($iWordID)) {
-            return 'Query failed';
+            throw new Exception('Query failed', 703);
         }
         if (!$iWordID) {
-            return 'No value';
+            throw new Exception('No value', 704);
         }
-
-        return;
     }
 
     public function dataDate()
@@ -50,7 +46,7 @@ class Status
         $iDataDateEpoch = $this->oDB->getOne($sSQL);
 
         if (PEAR::isError($iDataDateEpoch)) {
-            throw Exception('Data date query failed '.$iDataDateEpoch->getMessage());
+            throw Exception('Data date query failed '.$iDataDateEpoch->getMessage(), 705);
         }
 
         return $iDataDateEpoch;

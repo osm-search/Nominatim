@@ -70,9 +70,9 @@ class LibTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertEquals(
             array(
-             ['', 0, 2],
-             ['', 0.12558103905863, 1.9960534568565],
-             ['', 0.25066646712861, 1.984229402629]
+             array('', 0, 2),
+             array('', 0.12558103905863, 1.9960534568565),
+             array('', 0.25066646712861, 1.984229402629)
             ),
             array_splice($aPoints, 0, 3)
         );
@@ -96,9 +96,9 @@ class LibTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertEquals(
             array(
-             [10, 21],
-             [10.062790519529, 20.998026728428],
-             [10.125333233564, 20.992114701314]
+             array(10, 21),
+             array(10.062790519529, 20.998026728428),
+             array(10.125333233564, 20.992114701314)
             ),
             array_splice($aPoints, 0, 3)
         );
@@ -106,11 +106,11 @@ class LibTest extends \PHPUnit_Framework_TestCase
         // POLYGON
         $this->assertEquals(
             array(
-             ['30', '10'],
-             ['40', '40'],
-             ['20', '40'],
-             ['10', '20'],
-             ['30', '10']
+             array('30', '10'),
+             array('40', '40'),
+             array('20', '40'),
+             array('10', '20'),
+             array('30', '10')
             ),
             geometryText2Points('POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))', $fRadius)
         );
@@ -118,10 +118,10 @@ class LibTest extends \PHPUnit_Framework_TestCase
         // MULTIPOLYGON
         $this->assertEquals(
             array(
-             ['30', '20'], // first polygon only
-             ['45', '40'],
-             ['10', '40'],
-             ['30', '20'],
+             array('30', '20'), // first polygon only
+             array('45', '40'),
+             array('10', '40'),
+             array('30', '20'),
             ),
             geometryText2Points('MULTIPOLYGON(((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', $fRadius)
         );
@@ -190,15 +190,15 @@ class LibTest extends \PHPUnit_Framework_TestCase
 
     private function closestHouseNumberEvenOddOther($startnumber, $endnumber, $fraction, $aExpected)
     {
-        foreach (['even', 'odd', 'other'] as $itype) {
+        foreach (array('even', 'odd', 'other') as $itype) {
             $this->assertEquals(
                 $aExpected[$itype],
-                closestHouseNumber([
+                closestHouseNumber(array(
                                     'startnumber' => $startnumber,
                                     'endnumber' => $endnumber,
                                     'fraction' => $fraction,
                                     'interpolationtype' => $itype
-                                   ]),
+                                   )),
                 "$startnumber => $endnumber, $fraction, $itype"
             );
         }
@@ -206,14 +206,14 @@ class LibTest extends \PHPUnit_Framework_TestCase
 
     public function testClosestHouseNumber()
     {
-        $this->closestHouseNumberEvenOddOther(50, 100, 0.5, ['even' => 76, 'odd' => 75, 'other' => 75]);
+        $this->closestHouseNumberEvenOddOther(50, 100, 0.5, array('even' => 76, 'odd' => 75, 'other' => 75));
         // upper bound
-        $this->closestHouseNumberEvenOddOther(50, 100, 1.5, ['even' => 100, 'odd' => 100, 'other' => 100]);
+        $this->closestHouseNumberEvenOddOther(50, 100, 1.5, array('even' => 100, 'odd' => 100, 'other' => 100));
         // lower bound
-        $this->closestHouseNumberEvenOddOther(50, 100, -0.5, ['even' => 50, 'odd' => 50, 'other' => 50]);
+        $this->closestHouseNumberEvenOddOther(50, 100, -0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
         // fraction 0
-        $this->closestHouseNumberEvenOddOther(50, 100, 0, ['even' => 50, 'odd' => 51, 'other' => 50]);
+        $this->closestHouseNumberEvenOddOther(50, 100, 0, array('even' => 50, 'odd' => 51, 'other' => 50));
         // start == end
-        $this->closestHouseNumberEvenOddOther(50, 50, 0.5, ['even' => 50, 'odd' => 50, 'other' => 50]);
+        $this->closestHouseNumberEvenOddOther(50, 50, 0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
     }
 }

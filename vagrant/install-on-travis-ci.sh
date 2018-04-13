@@ -20,7 +20,7 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
 
 sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
 
-pip3 install --quiet behave nose pytidylib psycopg2
+pip3 install --quiet behave nose pytidylib psycopg2-binary
 
 # Travis uses phpenv to support multiple PHP versions. We need to make sure
 # these packages get installed to the phpenv-set PHP (below /home/travis/.phpenv/),

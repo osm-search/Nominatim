@@ -11,6 +11,15 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 {
 
 
+    public function testNoDatabaseGiven()
+    {
+        $this->setExpectedException(Exception::class, 'No database', 700);
+
+        $oDB = null;
+        $oStatus = new Status($oDB);
+        $this->assertEquals('No database', $oStatus->status());
+    }
+
     public function testNoDatabaseConnectionFail()
     {
         $this->setExpectedException(Exception::class, 'No database', 700);

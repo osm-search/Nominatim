@@ -134,7 +134,7 @@ function info($sMsg)
     echo date('Y-m-d H:i:s == ').$sMsg."\n";
 }
 
-$aWarnings = [];
+$aWarnings = array();
 
 
 function warn($sMsg)

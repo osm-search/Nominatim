@@ -126,6 +126,8 @@
     <severity>0</severity>
   </rule>
 
+  <!-- array() instead of [] for initialisation -->
+  <rule ref="Generic.Arrays.DisallowShortArraySyntax.Found" />
 
 
 

@@ -62,7 +62,7 @@ if (isset($aPlace)) {
         $aPlace = array_merge($aPlace, $aOutlineResult);
     }
 } else {
-    $aPlace = [];
+    $aPlace = array();
 }
 
 

@@ -63,7 +63,7 @@ $sQuery = join(',', $aCleanedQueryParts);
 // we initialize these to avoid warnings in our logfile
 $sViewBox = '';
 $bShowPolygons = '';
-$aExcludePlaceIDs = [];
+$aExcludePlaceIDs = array();
 $sMoreURL = '';
 
 include(CONST_BasePath.'/lib/template/search-'.$sOutputFormat.'.php');

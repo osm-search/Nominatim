@@ -1786,7 +1786,7 @@ RAISE WARNING 'Address found % -> %', addr_item.key, addr_item.value;
       END IF;
       IF addr_item.key = 'is_in' THEN
         -- is_in items need splitting
-        isin := regexp_split_to_array(NEW.isin, E'[;,]');
+        isin := regexp_split_to_array(addr_item.value, E'[;,]');
         IF array_upper(isin, 1) IS NOT NULL THEN
           FOR i IN 1..array_upper(isin, 1) LOOP
             address_street_word_id := get_name_id(make_standard_name(isin[i]));

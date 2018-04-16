@@ -1774,7 +1774,6 @@ BEGIN
     FOR addr_item IN SELECT * FROM each(NEW.address)
     LOOP
       IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province', 'district', 'region', 'county', 'municipality', 'hamlet', 'village', 'subdistrict', 'town', 'neighbourhood', 'quarter', 'parish') THEN
-RAISE WARNING 'Address found % -> %', addr_item.key, addr_item.value;
         address_street_word_id := get_name_id(make_standard_name(addr_item.value));
         IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
           isin_tokens := isin_tokens || address_street_word_id;

@@ -153,15 +153,6 @@ BEGIN
   INSERT INTO search_name (place_id, search_rank, address_rank, importance, country_code, name_vector, nameaddress_vector, centroid)
     values (in_place_id, in_rank_search, in_rank_address, in_importance, in_country_code, in_name_vector, in_nameaddress_vector, in_centroid);
 
-  IF in_rank_search <= 4 THEN
-    DELETE FROM search_name_country WHERE place_id = in_place_id;
-    IF in_rank_address > 0 THEN
-      INSERT INTO search_name_country (place_id, search_rank, address_rank, name_vector, centroid)
-        values (in_place_id, in_rank_search, in_rank_address, in_name_vector, in_geometry);
-    END IF;
-    RETURN TRUE;
-  END IF;
-
 -- start
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
@@ -184,7 +175,6 @@ DECLARE
 BEGIN
 
   DELETE from search_name WHERE place_id = in_place_id;
-  DELETE from search_name_country WHERE place_id = in_place_id;
 
 -- start
   IF in_partition = -partition- THEN

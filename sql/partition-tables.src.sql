@@ -38,10 +38,6 @@ CREATE TABLE search_name_blank (
 CREATE TABLE location_area_country () INHERITS (location_area_large) {ts:address-data};
 CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry) {ts:address-index};
 
-CREATE TABLE search_name_country () INHERITS (search_name_blank) {ts:address-data};
-CREATE INDEX idx_search_name_country_place_id ON search_name_country USING BTREE (place_id) {ts:address-index};
-CREATE INDEX idx_search_name_country_name_vector ON search_name_country USING GIN (name_vector) WITH (fastupdate = off) {ts:address-index};
-
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large) {ts:address-data};
 CREATE INDEX idx_location_area_large_-partition-_place_id ON location_area_large_-partition- USING BTREE (place_id) {ts:address-index};

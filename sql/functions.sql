@@ -1885,40 +1885,6 @@ RAISE WARNING 'Address found % -> %', addr_item.key, addr_item.value;
   END LOOP;
   --DEBUG: RAISE WARNING 'address computed';
 
-  -- try using the isin value to find parent places
-  IF array_upper(isin_tokens, 1) IS NOT NULL THEN
-    FOR i IN 1..array_upper(isin_tokens, 1) LOOP
---RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
-      IF NOT ARRAY[isin_tokens[i]] <@ nameaddress_vector THEN
-
-        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
-
---RAISE WARNING '  ISIN: %',location;
-
-          IF location.rank_search > 4 THEN
-              nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-              INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
-                VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
-              IF NEW.postcode is null AND location.postcode is not null
-                 AND NOT address_havelevel[location.rank_address] THEN
-                NEW.postcode := location.postcode;
-              END IF;
-
-              address_havelevel[location.rank_address] := true;
-
-              IF location.rank_address > parent_place_id_rank THEN
-                NEW.parent_place_id = location.place_id;
-                parent_place_id_rank = location.rank_address;
-              END IF;
-          END IF;
-        END LOOP;
-
-      END IF;
-
-    END LOOP;
-  END IF;
-  --DEBUG: RAISE WARNING 'isin tokens processed';
-
   -- for long ways we should add search terms for the entire length
   IF st_length(NEW.geometry) > 0.05 THEN
 

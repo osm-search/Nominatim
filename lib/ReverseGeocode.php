@@ -89,7 +89,7 @@ class ReverseGeocode
             $iRankSearch = $aPoly['rank_search'];
             $iGeometry = $aPoly['geometry'];
             
-            $sSQL = 'select place_id,parent_place_id,rank_search,country_code,';
+            $sSQL = 'select place_id,parent_place_id,rank_search,country_code, linked_place_id,';
             $sSQL .='  ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
@@ -194,17 +194,26 @@ class ReverseGeocode
                 }else{
                     $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                     if ($aPlace) {
-                        $oResult = new Result($aPlace['place_id']);
+                        // if place node is found adress goes over linked_place_id
+                        if (!empty($aPlace['linked_place_id'])) {
+                            $oResult = new Result($aPlace['linked_place_id']);
+                        }else{
+                            $oResult = new Result($aPlace['place_id']);
+                        }
                     }
                 }
             // lower than street level ($iMaxRank < 26 )
             }else{
                 $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                 if ($aPlace) {
-                    $oResult = new Result($aPlace['place_id']);
+                // if place node is found adress goes over linked_place_id
+                    if (!empty($aPlace['linked_place_id'])) {
+                        $oResult = new Result($aPlace['linked_place_id']);
+                    }else{
+                        $oResult = new Result($aPlace['place_id']);
+                    }
+                }
             }
-            
-        }  
         return $oResult;
     }
 

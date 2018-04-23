@@ -87,7 +87,7 @@ class ReverseGeocode
         if ($aPoly) {
             $iParentPlaceID = $aPoly['parent_place_id'];
             $iRankSearch = $aPoly['rank_search'];
-            $iGeometry = $aPoly['geometry'];
+            $iPlaceID = $aPoly['place_id'];
             
             $sSQL = 'select place_id,parent_place_id,rank_search,country_code, linked_place_id,';
             $sSQL .='  ST_distance('.$sPointSQL.', geometry) as distance';
@@ -95,9 +95,10 @@ class ReverseGeocode
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND rank_search >= '.$iRankSearch;
             $sSQL .= ' AND rank_search <= LEAST(25, '.$iMaxRank.')';
-            $sSQL .= ' AND ST_CONTAINS(\''.$iGeometry.'\'::geometry, geometry )';
+            $sSQL .= ' AND ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
+            $sSQL .= ' AND class not in ( \'waterway\')';
             $sSQL .= ' ORDER BY distance ASC,';
             $sSQL .= ' rank_search DESC';
             $sSQL .= ' limit 1';

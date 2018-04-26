@@ -1234,6 +1234,7 @@ DECLARE
   relation_members TEXT[];
   relMember RECORD;
   linkedplacex RECORD;
+  addr_item RECORD;
   search_diameter FLOAT;
   search_prevdiameter FLOAT;
   search_maxrank INTEGER;
@@ -1766,44 +1767,43 @@ BEGIN
   parent_place_id_rank = 0;
 
 
-  -- convert isin to array of tokenids
+  -- convert address store to array of tokenids
   --DEBUG: RAISE WARNING 'Starting address search';
   isin_tokens := '{}'::int[];
   IF NEW.address IS NOT NULL THEN
-    isin := avals(NEW.address);
-    IF array_upper(isin, 1) IS NOT NULL THEN
-      FOR i IN 1..array_upper(isin, 1) LOOP
-        -- TODO further split terms with comma and semicolon
-        address_street_word_id := get_name_id(make_standard_name(isin[i]));
+    FOR addr_item IN SELECT * FROM each(NEW.address)
+    LOOP
+      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province', 'district', 'region', 'county', 'municipality', 'hamlet', 'village', 'subdistrict', 'town', 'neighbourhood', 'quarter', 'parish') THEN
+        address_street_word_id := get_name_id(make_standard_name(addr_item.value));
         IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
           isin_tokens := isin_tokens || address_street_word_id;
         END IF;
-
-        -- merge word into address vector
-        address_street_word_id := get_word_id(make_standard_name(isin[i]));
+        address_street_word_id := get_word_id(make_standard_name(addr_item.value));
         IF address_street_word_id IS NOT NULL THEN
           nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
         END IF;
-      END LOOP;
-    END IF;
-  END IF;
+      END IF;
+      IF addr_item.key = 'is_in' THEN
+        -- is_in items need splitting
+        isin := regexp_split_to_array(addr_item.value, E'[;,]');
+        IF array_upper(isin, 1) IS NOT NULL THEN
+          FOR i IN 1..array_upper(isin, 1) LOOP
+            address_street_word_id := get_name_id(make_standard_name(isin[i]));
+            IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
+              isin_tokens := isin_tokens || address_street_word_id;
+            END IF;
 
-  -- %NOTIGERDATA% IF 0 THEN
-  -- for the USA we have an additional address table.  Merge in zip codes from there too
-  IF NEW.rank_search = 26 AND NEW.country_code = 'us' THEN
-    FOR location IN SELECT distinct postcode from location_property_tiger where parent_place_id = NEW.place_id LOOP
-      address_street_word_id := get_name_id(make_standard_name(location.postcode));
-      nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
-      isin_tokens := isin_tokens || address_street_word_id;
-
-      -- also merge in the single word version
-      address_street_word_id := get_word_id(make_standard_name(location.postcode));
-      nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+            -- merge word into address vector
+            address_street_word_id := get_word_id(make_standard_name(isin[i]));
+            IF address_street_word_id IS NOT NULL THEN
+              nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+            END IF;
+          END LOOP;
+        END IF;
+      END IF;
     END LOOP;
   END IF;
-  --DEBUG: RAISE WARNING 'Tiger postcodes collected';
-  -- %NOTIGERDATA% END IF;
+  nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
 
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
@@ -1883,40 +1883,6 @@ BEGIN
 
   END LOOP;
   --DEBUG: RAISE WARNING 'address computed';
-
-  -- try using the isin value to find parent places
-  IF array_upper(isin_tokens, 1) IS NOT NULL THEN
-    FOR i IN 1..array_upper(isin_tokens, 1) LOOP
---RAISE WARNING '  getNearestNamedFeature: % % % %',NEW.partition, place_centroid, search_maxrank, isin_tokens[i];
-      IF NOT ARRAY[isin_tokens[i]] <@ nameaddress_vector THEN
-
-        FOR location IN SELECT * from getNearestNamedFeature(NEW.partition, place_centroid, search_maxrank, isin_tokens[i]) LOOP
-
---RAISE WARNING '  ISIN: %',location;
-
-          IF location.rank_search > 4 THEN
-              nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-              INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
-                VALUES (NEW.place_id, location.place_id, false, NOT address_havelevel[location.rank_address], location.distance, location.rank_address);
-              IF NEW.postcode is null AND location.postcode is not null
-                 AND NOT address_havelevel[location.rank_address] THEN
-                NEW.postcode := location.postcode;
-              END IF;
-
-              address_havelevel[location.rank_address] := true;
-
-              IF location.rank_address > parent_place_id_rank THEN
-                NEW.parent_place_id = location.place_id;
-                parent_place_id_rank = location.rank_address;
-              END IF;
-          END IF;
-        END LOOP;
-
-      END IF;
-
-    END LOOP;
-  END IF;
-  --DEBUG: RAISE WARNING 'isin tokens processed';
 
   -- for long ways we should add search terms for the entire length
   IF st_length(NEW.geometry) > 0.05 THEN

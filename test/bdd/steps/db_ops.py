@@ -427,8 +427,8 @@ def check_placex_contents(context, exact):
 
     context.db.commit()
 
-@then("search_name contains")
-def check_search_name_contents(context):
+@then("search_name contains(?P<exclude> not)?")
+def check_search_name_contents(context, exclude):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     for row in context.table:
@@ -446,11 +446,16 @@ def check_search_name_contents(context):
                                       FROM word, (SELECT unnest(%s) as term) t
                                       WHERE word_token = make_standard_name(t.term)""",
                                    (terms,))
-                    ok_(subcur.rowcount >= len(terms),
-                        "No word entry found for " + row[h])
+                    if not exclude:
+                        ok_(subcur.rowcount >= len(terms),
+                            "No word entry found for " + row[h])
                     for wid in subcur:
-                        assert_in(wid[0], res[h],
-                                  "Missing term for %s/%s: %s" % (pid, h, wid[1]))
+                        if exclude:
+                            assert_not_in(wid[0], res[h],
+                                          "Found term for %s/%s: %s" % (pid, h, wid[1]))
+                        else:
+                            assert_in(wid[0], res[h],
+                                      "Missing term for %s/%s: %s" % (pid, h, wid[1]))
                 else:
                     assert_db_column(res, h, row[h], context)
 

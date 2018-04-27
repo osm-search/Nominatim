@@ -9,9 +9,8 @@ require_once(CONST_BasePath.'/lib/Status.php');
 
 $oParams = new Nominatim\ParameterParser();
 $sOutputFormat = $oParams->getSet('format', array('text', 'json'), 'text');
-$bForceError = $oParams->getInt('force_error', false);
 
-$oDB =& DB::connect(CONST_Database_DSN, false);
+$oDB = DB::connect(CONST_Database_DSN, false);
 $oStatus = new Nominatim\Status($oDB);
 
 
@@ -21,9 +20,6 @@ if ($sOutputFormat == 'json') {
 
 
 try {
-    if ($bForceError) {
-        throw new Exception('An Error', 799);
-    }
     $oStatus->status();
 } catch (Exception $oErr) {
     if ($sOutputFormat == 'json') {

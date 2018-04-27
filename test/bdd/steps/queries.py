@@ -416,12 +416,9 @@ def website_lookup_request(context, fmt, query):
 
     context.response = SearchResponse(outp, outfmt, status)
 
-@when(u'sending (?P<fmt>\S+ )?status query\s*(?P<failing>demanding error)?')
-def website_status_request(context, fmt, failing):
+@when(u'sending (?P<fmt>\S+ )?status query')
+def website_status_request(context, fmt):
     params = {}
-    if failing is not None:
-        params['force_error'] = 1
-
     outp, status = send_api_query('status', params, fmt, context)
 
     if fmt is None:

@@ -43,7 +43,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException(Exception::class, 'Module call failed', 702);
 
         // stub has getOne method but doesn't return anything
-        $oDbStub = $this->getMock(\DB::class, ['getOne']);
+        $oDbStub = $this->getMock(\DB::class, array('getOne'));
 
         $oStatus = new Status($oDbStub);
         $this->assertNull($oStatus->status());
@@ -54,7 +54,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException(Exception::class, 'No value', 704);
 
-        $oDbStub = $this->getMock(\DB::class, ['getOne']);
+        $oDbStub = $this->getMock(\DB::class, array('getOne'));
 
         // return no word_id
         $oDbStub->method('getOne')
@@ -70,7 +70,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testOK()
     {
-        $oDbStub = $this->getMock(\DB::class, ['getOne']);
+        $oDbStub = $this->getMock(\DB::class, array('getOne'));
 
         $oDbStub->method('getOne')
                 ->will($this->returnCallback(function ($sql) {
@@ -84,7 +84,7 @@ class StatusTest extends \PHPUnit_Framework_TestCase
 
     public function testDataDate()
     {
-        $oDbStub = $this->getMock(\DB::class, ['getOne']);
+        $oDbStub = $this->getMock(\DB::class, array('getOne'));
      
         $oDbStub->method('getOne')
                 ->willReturn(1519430221);

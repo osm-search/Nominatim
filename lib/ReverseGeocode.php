@@ -103,6 +103,8 @@ class ReverseGeocode
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+            // preselection through bbox
+            $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
             $sSQL .= ' ORDER BY distance ASC,';
             $sSQL .= ' rank_address DESC';
             $sSQL .= ' limit 500) as a';

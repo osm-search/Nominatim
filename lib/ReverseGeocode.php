@@ -71,14 +71,17 @@ class ReverseGeocode
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
-        $sSQL = 'select place_id,parent_place_id,rank_search,country_code, geometry';
+        $sSQL = 'select place_id,parent_place_id,rank_address,country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_search <= LEAST(25, '.$iMaxRank.')';
+        $sSQL .= ' AND rank_address <= LEAST(25, '.$iMaxRank.')';
         $sSQL .= ' AND ST_CONTAINS(geometry, '.$sPointSQL.' )';
         $sSQL .= ' AND type != \'postcode\' ';
-        $sSQL .= ' AND name IS NOT NULL ';
-        $sSQL .= ' ORDER BY rank_search DESC LIMIT 1';
+        $sSQL .= ' and rank_address != 28';
+        $sSQL .= ' and (name is not null or housenumber is not null';
+        $sSQL .= ' or rank_address between 26 and 27)';
+        $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+        $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
 
         $aPoly = chksql(
             $this->oDB->getRow($sSQL),
@@ -86,21 +89,21 @@ class ReverseGeocode
         );
         if ($aPoly) {
             $iParentPlaceID = $aPoly['parent_place_id'];
-            $iRankSearch = $aPoly['rank_search'];
+            $iRankAddress = $aPoly['rank_address'];
             $iPlaceID = $aPoly['place_id'];
             
-            $sSQL = 'select place_id,parent_place_id,rank_search,country_code, linked_place_id,';
+            $sSQL = 'select place_id,parent_place_id,rank_address,country_code, linked_place_id,';
             $sSQL .='  ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
-            $sSQL .= ' AND rank_search >= '.$iRankSearch;
-            $sSQL .= ' AND rank_search <= LEAST(25, '.$iMaxRank.')';
+            $sSQL .= ' AND rank_address >= '.$iRankAddress;
+            $sSQL .= ' AND rank_address <= LEAST(25, '.$iMaxRank.')';
             $sSQL .= ' AND ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
-            $sSQL .= ' AND class not in ( \'waterway\')';
-            $sSQL .= ' ORDER BY distance ASC,';
-            $sSQL .= ' rank_search DESC';
+            $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+            $sSQL .= ' ORDER BY rank_address DESC,';
+            $sSQL .= ' distance ASC';
             $sSQL .= ' limit 1';
             if (CONST_Debug) var_dump($sSQL);
             $aPlacNode = chksql(
@@ -137,7 +140,7 @@ class ReverseGeocode
         // for POI or street level
         if ( $iMaxRank >= 26 ) {
             
-            $sSQL = 'select place_id,parent_place_id,rank_search,country_code,';
+            $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
             $sSQL .= 'CASE WHEN ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\') THEN ST_distance('.$sPointSQL.', centroid)';
             $sSQL .= ' ELSE ST_distance('.$sPointSQL.', geometry) ';
             $sSQL .= ' END as distance';
@@ -147,13 +150,13 @@ class ReverseGeocode
             $sSQL .= '   AND';
             // only streets
             if ($iMaxRank == 26) {
-                $sSQL .= ' rank_search != 28 and rank_search = 26';
+                $sSQL .= ' rank_address != 28 and rank_address = 26';
             } else {
-                $sSQL .= ' rank_search != 28 and rank_search >= 26';
+                $sSQL .= ' rank_address != 28 and rank_address >= 26';
             }
             $sSQL .= ' and (name is not null or housenumber is not null';
-            $sSQL .= '      or rank_search between 26 and 27)';
-            $sSQL .= ' and type not in (\'proposed\')';
+            $sSQL .= ' or rank_address between 26 and 27)';
+            //$sSQL .= ' and type not in (\'proposed\')';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
@@ -170,16 +173,20 @@ class ReverseGeocode
                     $oResult = new Result($iPlaceID);
                     $iParentPlaceID = $aPlace['parent_place_id'];
                     // if street and maxrank > streetlevel
-                    if (($aPlace['rank_search'] == 26 || $aPlace['rank_search'] == 27)&& $iMaxRank > 27 ) {
+                    if (($aPlace['rank_address'] == 26 || $aPlace['rank_address'] == 27)&& $iMaxRank > 27 ) {
                         // find the closest object (up to a certain radius) of which the street is a parent of
-                        $sSQL = ' select place_id,parent_place_id,rank_search,country_code,';
+                        $sSQL = ' select place_id,parent_place_id,rank_address,country_code,';
                         $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
                         $sSQL .= ' FROM ';
                         $sSQL .= ' placex';
                         // radius ?
-                        $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.003)';
+                        $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
                         $sSQL .= ' AND parent_place_id = '.$iPlaceID;
-                        $sSQL .= ' and (name is not null or housenumber is not null)';
+                        $sSQL .= ' and rank_address != 28';
+                        $sSQL .= ' and (name is not null or housenumber is not null';
+                        $sSQL .= ' or rank_address between 26 and 27)';
+                        $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                        $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                         $sSQL .= ' ORDER BY distance ASC limit 1';
                         if (CONST_Debug) var_dump($sSQL);
                         $aStreet = chksql(

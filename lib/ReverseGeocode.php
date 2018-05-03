@@ -92,19 +92,24 @@ class ReverseGeocode
             $iRankAddress = $aPoly['rank_address'];
             $iPlaceID = $aPoly['place_id'];
             
-            $sSQL = 'select place_id,parent_place_id,rank_address,country_code, linked_place_id,';
-            $sSQL .='  ST_distance('.$sPointSQL.', geometry) as distance';
+            $sSQL = 'SELECT *';
+            $sSQL .= ' FROM (';
+            $sSQL .= ' SELECT place_id, rank_address,country_code, linked_place_id, geometry,';
+            $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND rank_address >= '.$iRankAddress;
             $sSQL .= ' AND rank_address <= LEAST(25, '.$iMaxRank.')';
-            $sSQL .= ' AND ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
-            $sSQL .= ' ORDER BY rank_address DESC,';
-            $sSQL .= ' distance ASC';
-            $sSQL .= ' limit 1';
+            $sSQL .= ' ORDER BY distance ASC,';
+            $sSQL .= ' rank_address DESC';
+            $sSQL .= ' limit 500) as a';
+            $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
+            $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
+            $sSQL .= ' LIMIT 1';
+            
             if (CONST_Debug) var_dump($sSQL);
             $aPlacNode = chksql(
                 $this->oDB->getRow($sSQL),

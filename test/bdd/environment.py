@@ -122,6 +122,9 @@ class NominatimEnvironment(object):
     def setup_api_db(self, context):
         self.write_nominatim_config(self.api_test_db)
 
+    def setup_unknown_db(self, context):
+        self.write_nominatim_config('UNKNOWN_DATABASE_NAME')
+
     def setup_db(self, context):
         self.setup_template_db()
         self.write_nominatim_config(self.test_db)
@@ -261,6 +264,8 @@ def before_scenario(context, scenario):
         context.nominatim.setup_db(context)
     elif 'APIDB' in context.tags:
         context.nominatim.setup_api_db(context)
+    elif 'UNKNOWNDB' in context.tags:
+        context.nominatim.setup_unknown_db(context)
     context.scene = None
 
 def after_scenario(context, scenario):

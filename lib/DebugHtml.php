@@ -39,73 +39,75 @@ class Debug
     public static function printDebugTable($sHeading, $aVar)
     {
         echo '<b>'.$sHeading.":</b>\n";
-        echo '<table border="1">';
+        echo "<table border='1'>\n";
         if (!empty($aVar)) {
-            echo '<tr>';
+            echo "  <tr>\n";
             $aKeys = array();
             $aInfo = reset($aVar);
             if (!is_array($aInfo)) {
                 $aInfo = $aInfo->debugInfo();
             }
             foreach ($aInfo as $sKey => $mVal) {
-                echo '<th><small>'.$sKey.'</small></th>';
+                echo '    <th><small>'.$sKey.'</small></th>'."\n";
                 $aKeys[] = $sKey;
             }
-            echo '</tr>';
+            echo "  </tr>\n";
             foreach ($aVar as $oRow) {
                 $aInfo = $oRow;
                 if (!is_array($oRow)) {
                     $aInfo = $oRow->debugInfo();
                 }
-                echo '<tr>';
+                echo "  <tr>\n";
                 foreach ($aKeys as $sKey) {
-                    echo '<td><pre>';
+                    echo '    <td><pre>';
                     if (isset($aInfo[$sKey])) {
                         Debug::outputVar($aInfo[$sKey], '');
                     }
-                    echo '</pre></td>';
+                    echo '</pre></td>'."\n";
                 }
-                echo '<tr>';
+                echo "  </tr>\n";
             }
         }
-        echo '</table>';
+        echo "</table>\n";
     }
 
     public static function printGroupTable($sHeading, $aVar)
     {
         echo '<b>'.$sHeading.":</b>\n";
-        echo '<table border="1">';
+        echo "<table border='1'>\n";
         if (!empty($aVar)) {
-            echo '<tr><th><small>Group</small></th>';
+            echo "  <tr>\n";
+            echo '    <th><small>Group</small></th>'."\n";
             $aKeys = array();
-            $aInfo = reset(reset($aVar));
+            $aInfo = reset($aVar)[0];
             if (!is_array($aInfo)) {
                 $aInfo = $aInfo->debugInfo();
             }
             foreach ($aInfo as $sKey => $mVal) {
-                echo '<th><small>'.$sKey.'</small></th>';
+                echo '    <th><small>'.$sKey.'</small></th>'."\n";
                 $aKeys[] = $sKey;
             }
-            echo '</tr>';
+            echo "  </tr>\n";
             foreach ($aVar as $sGrpKey => $aGroup) {
                 foreach ($aGroup as $oRow) {
                     $aInfo = $oRow;
                     if (!is_array($oRow)) {
                         $aInfo = $oRow->debugInfo();
                     }
-                    echo '<tr><td><pre>'.$sGrpKey.'</pre></td>';
+                    echo "  <tr>\n";
+                    echo '    <td><pre>'.$sGrpKey.'</pre></td>'."\n";
                     foreach ($aKeys as $sKey) {
-                        echo '<td><pre>';
+                        echo '    <td><pre>';
                         if (!empty($aInfo[$sKey])) {
                             Debug::outputVar($aInfo[$sKey], '');
                         }
-                        echo '</pre></td>';
+                        echo '</pre></td>'."\n";
                     }
-                    echo '<tr>';
+                    echo "  </tr>\n";
                 }
             }
         }
-        echo '</table>';
+        echo "</table>\n";
     }
 
     public static function printSQL($sSQL)
@@ -128,9 +130,9 @@ class Debug
                 $sPre = "\n".$sPreNL;
             }
         } elseif (is_array($mVar) && isset($mVar['__debug_format'])) {
-            if (!empty($mVar[data])) {
+            if (!empty($mVar['data'])) {
                 $sPre = '';
-                foreach ($mVar[data] as $mValue) {
+                foreach ($mVar['data'] as $mValue) {
                     echo $sPre;
                     Debug::outputSimpleVar($mValue);
                     $sPre = ', ';

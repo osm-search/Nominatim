@@ -17,6 +17,8 @@ class SearchDescription
     private $sCountryCode = '';
     /// List of word ids making up the name of the object.
     private $aName = array();
+    /// True if the name is rare enough to force index use on name.
+    private $bRareName = false;
     /// List of word ids making up the address of the object.
     private $aAddress = array();
     /// Subset of word ids of full words making up the address.
@@ -292,6 +294,11 @@ class SearchDescription
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aName = array($iWordID => $iWordID);
+                if (CONST_Search_NameOnlySearchFrequencyThreshold) {
+                    $oSearch->bRareName =
+                        $aSearchTerm['search_name_count'] + 1
+                          < CONST_Search_NameOnlySearchFrequencyThreshold;
+                }
                 $aNewSearches[] = $oSearch;
             }
         }
@@ -368,6 +375,13 @@ class SearchDescription
                 $oSearch->iSearchRank += 2;
             }
             if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
+                if (empty($this->aName) && CONST_Search_NameOnlySearchFrequencyThreshold) {
+                    $oSearch->bRareName =
+                        $aSearchTerm['search_name_count'] + 1
+                          < CONST_Search_NameOnlySearchFrequencyThreshold;
+                } else {
+                    $oSearch->bRareName = false;
+                }
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;
@@ -385,20 +399,16 @@ class SearchDescription
     /**
      * Query database for places that match this search.
      *
-     * @param object  $oDB                  Database connection to use.
-     * @param mixed[] $aWordFrequencyScores Number of times tokens appears
-     *                                      overall in a planet database.
-     * @param integer $iMinRank             Minimum address rank to restrict
-     *                                      search to.
-     * @param integer $iMaxRank             Maximum address rank to restrict
-     *                                      search to.
-     * @param integer $iLimit               Maximum number of results.
+     * @param object  $oDB      Database connection to use.
+     * @param integer $iMinRank Minimum address rank to restrict search to.
+     * @param integer $iMaxRank Maximum address rank to restrict search to.
+     * @param integer $iLimit   Maximum number of results.
      *
      * @return mixed[] An array with two fields: IDs contains the list of
      *                 matching place IDs and houseNumber the houseNumber
      *                 if appicable or -1 if not.
      */
-    public function query(&$oDB, &$aWordFrequencyScores, $iMinRank, $iMaxRank, $iLimit)
+    public function query(&$oDB, $iMinRank, $iMaxRank, $iLimit)
     {
         $aResults = array();
         $iHousenumber = -1;
@@ -427,7 +437,6 @@ class SearchDescription
             // First search for places according to name and address.
             $aResults = $this->queryNamedPlace(
                 $oDB,
-                $aWordFrequencyScores,
                 $iMinRank,
                 $iMaxRank,
                 $iLimit
@@ -579,7 +588,7 @@ class SearchDescription
         return $aResults;
     }
 
-    private function queryNamedPlace(&$oDB, $aWordFrequencyScores, $iMinAddressRank, $iMaxAddressRank, $iLimit)
+    private function queryNamedPlace(&$oDB, $iMinAddressRank, $iMaxAddressRank, $iLimit)
     {
         $aTerms = array();
         $aOrder = array();
@@ -615,11 +624,7 @@ class SearchDescription
         }
         if (!empty($this->aAddress)) {
             // For infrequent name terms disable index usage for address
-            if (CONST_Search_NameOnlySearchFrequencyThreshold
-                && count($this->aName) == 1
-                && $aWordFrequencyScores[$this->aName[reset($this->aName)]]
-                     < CONST_Search_NameOnlySearchFrequencyThreshold
-            ) {
+            if ($this->bRareName) {
                 $aTerms[] = 'array_cat(nameaddress_vector,ARRAY[]::integer[]) @> '.getArraySQL($this->aAddress);
             } else {
                 $aTerms[] = 'nameaddress_vector @> '.getArraySQL($this->aAddress);

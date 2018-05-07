@@ -658,7 +658,6 @@ class Geocode
                     $this->oDB->getAll($sSQL),
                     'Could not get word tokens.'
                 );
-                $aWordFrequencyScores = array();
                 foreach ($aDatabaseWords as $aToken) {
                     // Filter country tokens that do not match restricted countries.
                     if ($this->aCountryCodes
@@ -681,7 +680,6 @@ class Geocode
                     } else {
                         $aValidTokens[$aToken['word_token']] = array($aToken);
                     }
-                    $aWordFrequencyScores[$aToken['word_id']] = $aToken['search_name_count'] + 1;
                 }
 
                 // US ZIP+4 codes - if there is no token, merge in the 5-digit ZIP code
@@ -781,7 +779,6 @@ class Geocode
 
                     $aResults += $oSearch->query(
                         $this->oDB,
-                        $aWordFrequencyScores,
                         $this->iMinAddressRank,
                         $this->iMaxAddressRank,
                         $this->iLimit

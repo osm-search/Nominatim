@@ -93,11 +93,12 @@
        INDENTATION, SPACING
        ************************************************************** -->
 
+  <rule ref="Squiz.Arrays.ArrayDeclaration.KeyNotAligned" />
+
   <!-- Aligned looks nicer, but causes too many warnings currently -->
   <rule ref="Squiz.Arrays.ArrayDeclaration.DoubleArrowNotAligned">
     <severity>0</severity>
   </rule>
-
 
 
 

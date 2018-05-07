@@ -33,33 +33,33 @@ $aPlaceDetails['rank_search'] = (int) $aPointDetails['rank_search'];
 
 $aPlaceDetails['isarea'] = ($aPointDetails['isarea'] == 't');
 $aPlaceDetails['centroid'] = array(
-    'type' => 'Point',
-    'coordinates' => array( (float) $aPointDetails['lon'], (float) $aPointDetails['lat'] )
-);
+                              'type' => 'Point',
+                              'coordinates' => array( (float) $aPointDetails['lon'], (float) $aPointDetails['lat'] )
+                             );
 
 $aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
 
 $funcMapAddressLine = function ($aFull) {
     $aMapped = array(
-        'localname' => $aFull['localname'],
-        'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
-        'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
-        'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
-        'class' => $aFull['class'],
-        'type' => $aFull['type'],
-        'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
-        'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
-        'distance' => (float) $aFull['distance']
-    );
+                'localname' => $aFull['localname'],
+                'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
+                'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
+                'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
+                'class' => $aFull['class'],
+                'type' => $aFull['type'],
+                'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
+                'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
+                'distance' => (float) $aFull['distance']
+               );
 
     return $aMapped;
 };
 
 $funcMapKeyword = function ($aFull) {
     $aMapped = array(
-        'id' => (int) $aFull['word_id'],
-        'token' => $aFull['word_token']
-    );
+                'id' => (int) $aFull['word_id'],
+                'token' => $aFull['word_token']
+               );
     return $aMapped;
 };
 

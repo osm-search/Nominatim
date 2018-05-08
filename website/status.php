@@ -24,9 +24,9 @@ try {
 } catch (Exception $oErr) {
     if ($sOutputFormat == 'json') {
         $aResponse = array(
-                  'status' => $oErr->getCode(),
-                  'message' => $oErr->getMessage()
-                 );
+                      'status' => $oErr->getCode(),
+                      'message' => $oErr->getMessage()
+                     );
         javascript_renderData($aResponse);
     } else {
         header('HTTP/1.0 500 Internal Server Error');
@@ -39,10 +39,10 @@ try {
 if ($sOutputFormat == 'json') {
     $epoch = $oStatus->dataDate();
     $aResponse = array(
-              'status' => 0,
-              'message' => 'OK',
-              'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339)
-             );
+                  'status' => 0,
+                  'message' => 'OK',
+                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339)
+                 );
     javascript_renderData($aResponse);
 } else {
     echo 'OK';

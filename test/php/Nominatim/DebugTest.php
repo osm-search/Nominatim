@@ -179,19 +179,19 @@ EOT
 
         // header are taken from first group item, thus no key3 gets printed
         $aGroups = array(
-            'group1' => array(
-                array('key1' => 'val1', 'key2' => 'val2'),
-                array('key1' => 'one', 'key2' => 'two', 'unknown' => 1),
-            ),
-            'group2' => array(
-                array('key1' => 'val1', 'key2' => 'val2', 'key3' => 'val3'),
-            )
-        );
+                    'group1' => array(
+                                 array('key1' => 'val1', 'key2' => 'val2'),
+                                 array('key1' => 'one', 'key2' => 'two', 'unknown' => 1),
+                                ),
+                    'group2' => array(
+                                 array('key1' => 'val1', 'key2' => 'val2', 'key3' => 'val3'),
+                                )
+                   );
         Debug::printGroupTable('Table3', $aGroups);
 
         $aGroups = array(
-            'group1' => array($this->oWithDebuginfo, $this->oWithDebuginfo),
-        );
+                    'group1' => array($this->oWithDebuginfo, $this->oWithDebuginfo),
+                   );
         Debug::printGroupTable('Table4', $aGroups);
     }
 }

@@ -70,12 +70,12 @@ class ReverseGeocode
     }
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
-    {   
+    {
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address,country_code, geometry';
         $sSQL .= ' FROM placex';
-        $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_address <= '.Min(25,$iMaxRank);
+        $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
+        $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
         $sSQL .= ' AND name is not null';
@@ -102,7 +102,7 @@ class ReverseGeocode
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
                 $sSQL .= ' AND rank_address > '.$iRankAddress;
-                $sSQL .= ' AND rank_address <= '.Min(25,$iMaxRank);
+                $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
@@ -150,8 +150,7 @@ class ReverseGeocode
         $bIsTigerStreet = false;
         
         // for POI or street level
-        if ( $iMaxRank >= 26 ) {
-            
+        if ($iMaxRank >= 26) {
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
             $sSQL .= 'CASE WHEN ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\') THEN ST_distance('.$sPointSQL.', centroid)';
             $sSQL .= ' ELSE ST_distance('.$sPointSQL.', geometry) ';
@@ -185,46 +184,45 @@ class ReverseGeocode
                     $oResult = new Result($iPlaceID);
                     $iParentPlaceID = $aPlace['parent_place_id'];
                     // if street and maxrank > streetlevel
-                    if (($aPlace['rank_address'] == 26 || $aPlace['rank_address'] == 27)&& $iMaxRank > 27 ) {
-                        // find the closest object (up to a certain radius) of which the street is a parent of
-                        $sSQL = ' select place_id,parent_place_id,rank_address,country_code,';
-                        $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
-                        $sSQL .= ' FROM ';
-                        $sSQL .= ' placex';
-                        // radius ?
-                        $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
-                        $sSQL .= ' AND parent_place_id = '.$iPlaceID;
-                        $sSQL .= ' and rank_address != 28';
-                        $sSQL .= ' and (name is not null or housenumber is not null';
-                        $sSQL .= ' or rank_address between 26 and 27)';
-                        $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
-                        $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-                        $sSQL .= ' ORDER BY distance ASC limit 1';
-                        if (CONST_Debug) var_dump($sSQL);
-                        $aStreet = chksql(
-                            $this->oDB->getRow($sSQL),
-                            'Could not determine closest place.'
-                        );
-                        if ($aStreet) {
-                            $iPlaceID = $aStreet['place_id'];
-                            $oResult = new Result($iPlaceID);
-                            $iParentPlaceID = $aStreet['parent_place_id'];
-                        }
-                    } 
-                }else{
-                    $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
-                    if ($aPlace) {
-                        $oResult = new Result($aPlace['place_id']);
+                if (($aPlace['rank_address'] == 26 || $aPlace['rank_address'] == 27)&& $iMaxRank > 27) {
+                    // find the closest object (up to a certain radius) of which the street is a parent of
+                    $sSQL = ' select place_id,parent_place_id,rank_address,country_code,';
+                    $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
+                    $sSQL .= ' FROM ';
+                    $sSQL .= ' placex';
+                    // radius ?
+                    $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
+                    $sSQL .= ' AND parent_place_id = '.$iPlaceID;
+                    $sSQL .= ' and rank_address != 28';
+                    $sSQL .= ' and (name is not null or housenumber is not null';
+                    $sSQL .= ' or rank_address between 26 and 27)';
+                    $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                    $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+                    $sSQL .= ' ORDER BY distance ASC limit 1';
+                    if (CONST_Debug) var_dump($sSQL);
+                    $aStreet = chksql(
+                        $this->oDB->getRow($sSQL),
+                        'Could not determine closest place.'
+                    );
+                    if ($aStreet) {
+                        $iPlaceID = $aStreet['place_id'];
+                        $oResult = new Result($iPlaceID);
+                        $iParentPlaceID = $aStreet['parent_place_id'];
                     }
                 }
-            // lower than street level ($iMaxRank < 26 )
-            }else{
+            } else {
                 $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                 if ($aPlace) {
-                        $oResult = new Result($aPlace['place_id']);
+                    $oResult = new Result($aPlace['place_id']);
                 }
             }
+            // lower than street level ($iMaxRank < 26 )
+        } else {
+            $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
+            if ($aPlace) {
+                    $oResult = new Result($aPlace['place_id']);
+            }
+        }
         return $oResult;
     }
-
 }

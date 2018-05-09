@@ -70,17 +70,19 @@ class ReverseGeocode
     }
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
-    {
-        $sSQL = 'select place_id,parent_place_id,rank_address,country_code, geometry';
+    {   
+        $sSQL = 'SELECT * FROM';
+        $sSQL .= '(select place_id,parent_place_id,rank_address,country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_address <= LEAST(25, '.$iMaxRank.')';
-        $sSQL .= ' AND ST_CONTAINS(geometry, '.$sPointSQL.' )';
+        $sSQL .= ' AND rank_address <= '.Min(25,$iMaxRank);
+        $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
-        $sSQL .= ' and rank_address != 28';
-        $sSQL .= ' and (name is not null or housenumber is not null';
-        $sSQL .= ' or rank_address between 26 and 27)';
-        $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+        $sSQL .= ' AND name is not null';
+        $sSQL .= ' AND class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+        $sSQL .= ' AND indexed_status = 0 and linked_place_id is null';
+        $sSQL .= ' ORDER BY rank_address DESC LIMIT 50 ) as a';
+        $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.' )';
         $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
 
         $aPoly = chksql(
@@ -92,33 +94,36 @@ class ReverseGeocode
             $iRankAddress = $aPoly['rank_address'];
             $iPlaceID = $aPoly['place_id'];
             
-            $sSQL = 'SELECT *';
-            $sSQL .= ' FROM (';
-            $sSQL .= ' SELECT place_id, rank_address,country_code, linked_place_id, geometry,';
-            $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
-            $sSQL .= ' FROM placex';
-            $sSQL .= ' WHERE osm_type = \'N\'';
-            $sSQL .= ' AND rank_address >= '.$iRankAddress;
-            $sSQL .= ' AND rank_address <= LEAST(25, '.$iMaxRank.')';
-            $sSQL .= ' AND type != \'postcode\'';
-            $sSQL .= ' AND name IS NOT NULL ';
-            $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
-            // preselection through bbox
-            $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
-            $sSQL .= ' ORDER BY distance ASC,';
-            $sSQL .= ' rank_address DESC';
-            $sSQL .= ' limit 500) as a';
-            $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
-            $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
-            $sSQL .= ' LIMIT 1';
-            
-            if (CONST_Debug) var_dump($sSQL);
-            $aPlacNode = chksql(
-                $this->oDB->getRow($sSQL),
-                'Could not determine place node.'
-            );
-            if ($aPlacNode) {
-                return $aPlacNode;
+            if ($iRankAddress != $iMaxRank) {
+                $sSQL = 'SELECT *';
+                $sSQL .= ' FROM (';
+                $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
+                $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
+                $sSQL .= ' FROM placex';
+                $sSQL .= ' WHERE osm_type = \'N\'';
+                $sSQL .= ' AND rank_address > '.$iRankAddress;
+                $sSQL .= ' AND rank_address <= '.Min(25,$iMaxRank);
+                $sSQL .= ' AND type != \'postcode\'';
+                $sSQL .= ' AND name IS NOT NULL ';
+                $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+                // preselection through bbox
+                $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
+                $sSQL .= ' ORDER BY distance ASC,';
+                $sSQL .= ' rank_address DESC';
+                $sSQL .= ' limit 500) as a';
+                $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
+                $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
+                $sSQL .= ' LIMIT 1';
+                
+                if (CONST_Debug) var_dump($sSQL);
+                $aPlacNode = chksql(
+                    $this->oDB->getRow($sSQL),
+                    'Could not determine place node.'
+                );
+                if ($aPlacNode) {
+                    return $aPlacNode;
+                }
             }
         }
         return $aPoly;
@@ -209,24 +214,14 @@ class ReverseGeocode
                 }else{
                     $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                     if ($aPlace) {
-                        // if place node is found adress goes over linked_place_id
-                        if (!empty($aPlace['linked_place_id'])) {
-                            $oResult = new Result($aPlace['linked_place_id']);
-                        }else{
-                            $oResult = new Result($aPlace['place_id']);
-                        }
+                        $oResult = new Result($aPlace['place_id']);
                     }
                 }
             // lower than street level ($iMaxRank < 26 )
             }else{
                 $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                 if ($aPlace) {
-                // if place node is found adress goes over linked_place_id
-                    if (!empty($aPlace['linked_place_id'])) {
-                        $oResult = new Result($aPlace['linked_place_id']);
-                    }else{
                         $oResult = new Result($aPlace['place_id']);
-                    }
                 }
             }
         return $oResult;

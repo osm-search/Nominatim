@@ -321,12 +321,15 @@ def send_api_query(endpoint, params, fmt, context):
 
     (outp, err) = proc.communicate()
     outp = outp.decode('utf-8')
+    err = err.decode("utf-8")
 
     logger.debug("Result: \n===============================\n"
                  + outp + "\n===============================\n")
 
     assert_equals(0, proc.returncode,
-                  "%s failed with message: %s\noutput: %s" % (env['SCRIPT_FILENAME'], err, outp))
+                  "%s failed with message: %s" % (
+                      os.path.basename(env['SCRIPT_FILENAME']),
+                      err))
 
     assert_equals(0, len(err), "Unexpected PHP error: %s" % (err))
 

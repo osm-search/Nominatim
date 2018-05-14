@@ -166,30 +166,29 @@ class SearchDescription
     /**
      * Derive new searches by adding a full term to the existing search.
      *
-     * @param mixed[] $aSearchTerm  Description of the token.
-     * @param bool    $bHasPartial  True if there are also tokens of partial terms
-     *                              with the same name.
-     * @param string  $sPhraseType  Type of phrase the token is contained in.
-     * @param bool    $bFirstToken  True if the token is at the beginning of the
-     *                              query.
-     * @param bool    $bFirstPhrase True if the token is in the first phrase of
-     *                              the query.
-     * @param bool    $bLastToken   True if the token is at the end of the query.
+     * @param object $oSearchTerm  Description of the token.
+     * @param bool   $bHasPartial  True if there are also tokens of partial terms
+     *                             with the same name.
+     * @param string $sPhraseType  Type of phrase the token is contained in.
+     * @param bool   $bFirstToken  True if the token is at the beginning of the
+     *                             query.
+     * @param bool   $bFirstPhrase True if the token is in the first phrase of
+     *                             the query.
+     * @param bool   $bLastToken   True if the token is at the end of the query.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($aSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
+    public function extendWithFullTerm($oSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
     {
         $aNewSearches = array();
 
         if (($sPhraseType == '' || $sPhraseType == 'country')
-            && !empty($aSearchTerm['country_code'])
-            && $aSearchTerm['country_code'] != '0'
+            && is_a($oSearchTerm, '\Nominatim\Token\Country')
         ) {
             if (!$this->sCountryCode) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
-                $oSearch->sCountryCode = $aSearchTerm['country_code'];
+                $oSearch->sCountryCode = $oSearchTerm->sCountryCode;
                 // Country is almost always at the end of the string
                 // - increase score for finding it anywhere else (optimisation)
                 if (!$bLastToken) {
@@ -198,15 +197,12 @@ class SearchDescription
                 $aNewSearches[] = $oSearch;
             }
         } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
-                  && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'postcode'
+                  && is_a($oSearchTerm, '\Nominatim\Token\Postcode')
         ) {
             // We need to try the case where the postal code is the primary element
             // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
             // so try both.
-            if (!$this->sPostcode
-                && $aSearchTerm['word']
-                && pg_escape_string($aSearchTerm['word']) == $aSearchTerm['word']
-            ) {
+            if (!$this->sPostcode) {
                 // If we have structured search or this is the first term,
                 // make the postcode the primary search element.
                 if ($this->iOperator == Operator::NONE
@@ -217,7 +213,7 @@ class SearchDescription
                     $oSearch->iOperator = Operator::POSTCODE;
                     $oSearch->aAddress = array_merge($this->aAddress, $this->aName);
                     $oSearch->aName =
-                        array($aSearchTerm['word_id'] => $aSearchTerm['word']);
+                        array($oSearchTerm->iId => $oSearchTerm->sPostcode);
                     $aNewSearches[] = $oSearch;
                 }
 
@@ -228,23 +224,23 @@ class SearchDescription
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
-                    $oSearch->sPostcode = $aSearchTerm['word'];
+                    $oSearch->sPostcode = $oSearchTerm->sPostcode;
                     $aNewSearches[] = $oSearch;
                 }
             }
         } elseif (($sPhraseType == '' || $sPhraseType == 'street')
-                 && $aSearchTerm['class'] == 'place' && $aSearchTerm['type'] == 'house'
+                 && is_a($oSearchTerm, '\Nominatim\Token\HouseNumber')
         ) {
             if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
-                $oSearch->sHouseNumber = trim($aSearchTerm['word_token']);
+                $oSearch->sHouseNumber = $oSearchTerm->sToken;
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
                 if (preg_match_all('/[^0-9]/', $oSearch->sHouseNumber, $aMatches) > 2) {
                     $oSearch->iSearchRank++;
                 }
-                if (!isset($aSearchTerm['word_id'])) {
+                if (empty($oSearchTerm->iId)) {
                     $oSearch->iSearchRank++;
                 }
                 // also must not appear in the middle of the address
@@ -256,27 +252,34 @@ class SearchDescription
                 }
                 $aNewSearches[] = $oSearch;
             }
-        } elseif ($sPhraseType == '' && $aSearchTerm['class']) {
+        } elseif ($sPhraseType == ''
+                  && is_a($oSearchTerm, '\Nominatim\Token\SpecialTerm')
+        ) {
             if ($this->iOperator == Operator::NONE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
 
-                $iOp = Operator::NEAR; // near == in for the moment
-                if ($aSearchTerm['operator'] == '') {
+                $iOp = $oSearchTerm->iOperator;
+                if ($iOp == Operator::NONE) {
                     if (!empty($this->aName) || $this->oContext->isBoundedSearch()) {
                         $iOp = Operator::NAME;
+                    } else {
+                        $iOp = Operator::NEAR;
                     }
                     $oSearch->iSearchRank += 2;
                 }
 
-                $oSearch->setPoiSearch($iOp, $aSearchTerm['class'], $aSearchTerm['type']);
+                $oSearch->setPoiSearch(
+                    $iOp,
+                    $oSearchTerm->sClass,
+                    $oSearchTerm->sType
+                );
                 $aNewSearches[] = $oSearch;
             }
-        } elseif (isset($aSearchTerm['word_id'])
-                  && $aSearchTerm['word_id']
-                  && $sPhraseType != 'country'
+        } elseif ($sPhraseType != 'country'
+                  && is_a($oSearchTerm, '\Nominatim\Token\Word')
         ) {
-            $iWordID = $aSearchTerm['word_id'];
+            $iWordID = $oSearchTerm->iId;
             // Full words can only be a name if they appear at the beginning
             // of the phrase. In structured search the name must forcably in
             // the first phrase. In unstructured search it may be in a later
@@ -296,7 +299,7 @@ class SearchDescription
                 $oSearch->aName = array($iWordID => $iWordID);
                 if (CONST_Search_NameOnlySearchFrequencyThreshold) {
                     $oSearch->bRareName =
-                        $aSearchTerm['search_name_count'] + 1
+                        $oSearchTerm->iSearchNameCount
                           < CONST_Search_NameOnlySearchFrequencyThreshold;
                 }
                 $aNewSearches[] = $oSearch;
@@ -309,7 +312,8 @@ class SearchDescription
     /**
      * Derive new searches by adding a partial term to the existing search.
      *
-     * @param mixed[] $aSearchTerm        Description of the token.
+     * @param string  $sToken             Term for the token.
+     * @param object  $oSearchTerm        Description of the token.
      * @param bool    $bStructuredPhrases True if the search is structured.
      * @param integer $iPhrase            Number of the phrase the token is in.
      * @param array[] $aFullTokens        List of full term tokens with the
@@ -317,21 +321,21 @@ class SearchDescription
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithPartialTerm($aSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
+    public function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
     {
         // Only allow name terms.
-        if (!(isset($aSearchTerm['word_id']) && $aSearchTerm['word_id'])) {
+        if (!(is_a($oSearchTerm, '\Nominatim\Token\Word'))) {
             return array();
         }
 
         $aNewSearches = array();
-        $iWordID = $aSearchTerm['word_id'];
+        $iWordID = $oSearchTerm->iId;
 
         if ((!$bStructuredPhrases || $iPhrase > 0)
             && (!empty($this->aName))
-            && strpos($aSearchTerm['word_token'], ' ') === false
+            && strpos($sToken, ' ') === false
         ) {
-            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
+            if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank += 2;
                 $oSearch->aAddress[$iWordID] = $iWordID;
@@ -340,7 +344,7 @@ class SearchDescription
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
-                if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
+                if (preg_match('#^[0-9]+$#', $sToken)) {
                     $oSearch->iSearchRank += 2;
                 }
                 if (!empty($aFullTokens)) {
@@ -349,14 +353,12 @@ class SearchDescription
                 $aNewSearches[] = $oSearch;
 
                 // revert to the token version?
-                foreach ($aFullTokens as $aSearchTermToken) {
-                    if (empty($aSearchTermToken['country_code'])
-                        && empty($aSearchTermToken['lat'])
-                        && empty($aSearchTermToken['class'])
-                    ) {
+                foreach ($aFullTokens as $oSearchTermToken) {
+                    if (is_a($oSearchTermToken, '\Nominatim\Token\Word')) {
                         $oSearch = clone $this;
                         $oSearch->iSearchRank++;
-                        $oSearch->aAddress[$aSearchTermToken['word_id']] = $aSearchTermToken['word_id'];
+                        $oSearch->aAddress[$oSearchTermToken->iId]
+                            = $oSearchTermToken->iId;
                         $aNewSearches[] = $oSearch;
                     }
                 }
@@ -371,13 +373,15 @@ class SearchDescription
             if (empty($this->aName)) {
                 $oSearch->iSearchRank += 1;
             }
-            if (preg_match('#^[0-9]+$#', $aSearchTerm['word_token'])) {
+            if (preg_match('#^[0-9]+$#', $sToken)) {
                 $oSearch->iSearchRank += 2;
             }
-            if ($aSearchTerm['search_name_count'] + 1 < CONST_Max_Word_Frequency) {
-                if (empty($this->aName) && CONST_Search_NameOnlySearchFrequencyThreshold) {
+            if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
+                if (empty($this->aName)
+                    && CONST_Search_NameOnlySearchFrequencyThreshold
+                ) {
                     $oSearch->bRareName =
-                        $aSearchTerm['search_name_count'] + 1
+                        $oSearchTerm->iSearchNameCount
                           < CONST_Search_NameOnlySearchFrequencyThreshold;
                 } else {
                     $oSearch->bRareName = false;

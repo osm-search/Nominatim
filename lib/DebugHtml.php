@@ -71,6 +71,21 @@ class Debug
         echo "</table>\n";
     }
 
+    public static function printGroupedSearch($aSearches, $aWordsIDs)
+    {
+        echo '<table border="1">';
+        echo '<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>';
+        echo '<th>Address Tokens</th><th>Address Not</th>';
+        echo '<th>country</th><th>operator</th>';
+        echo '<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>';
+        foreach ($aSearches as $iRank => $aRankedSet) {
+            foreach ($aRankedSet as $aRow) {
+                $aRow->dumpAsHtmlTableRow($aWordsIDs);
+            }
+        }
+        echo '</table>';
+    }
+
     public static function printGroupTable($sHeading, $aVar)
     {
         echo '<b>'.$sHeading.":</b>\n";

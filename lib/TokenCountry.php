@@ -7,7 +7,9 @@ namespace Nominatim\Token;
  */
 class Country
 {
+    /// Database word id, if available.
     public $iId;
+    /// Two-letter country code (lower-cased).
     public $sCountryCode;
 
     public function __construct($iId, $sCountryCode)

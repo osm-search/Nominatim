@@ -7,10 +7,11 @@ namespace Nominatim\Token;
  */
 class Postcode
 {
+    /// Database word id, if available.
     public $iId;
-    // full postcode
+    /// Full nomralized postcode (upper cased).
     public $sPostcode;
-    // optional restriction to a given country
+    // Optional country code the postcode belongs to (currently unused).
     public $sCountryCode;
 
     public function __construct($iId, $sPostcode, $sCountryCode = '')

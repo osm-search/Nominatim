@@ -9,9 +9,13 @@ require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
  */
 class SpecialTerm
 {
+    /// Database word id, if applicable.
     public $iId;
+    /// Class (or OSM tag key) of the place to look for.
     public $sClass;
+    /// Type (or OSM tag value) of the place to look for.
     public $sType;
+    /// Relationship of the operator to the object (see Operator class).
     public $iOperator;
 
     public function __construct($iID, $sClass, $sType, $iOperator)

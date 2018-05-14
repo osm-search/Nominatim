@@ -7,7 +7,9 @@ namespace Nominatim\Token;
  */
 class HouseNumber
 {
+    /// Database word id, if available.
     public $iId;
+    /// Normalized house number.
     public $sToken;
 
     public function __construct($iId, $sToken)

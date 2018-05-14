@@ -7,10 +7,11 @@ namespace Nominatim\Token;
  */
 class Word
 {
+    /// Database word id, if applicable.
     public $iId;
-    // If true, the word may represent only part of a place name.
+    /// If true, the word may represent only part of a place name.
     public $bPartial;
-    // Number of appearances in the database.
+    /// Number of appearances in the database.
     public $iSearchNameCount;
 
     public function __construct($iId, $bPartial, $iSearchNameCount)

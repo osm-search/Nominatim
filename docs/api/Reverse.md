@@ -57,6 +57,12 @@ https://nominatim.openstreetmap.org/reverse?<query>
 * `polygon_text=1`
     * Output geometry of results as a WKT.
 
+* `polygon_threshold=0.0`
+    * defaults to 0.0
+    * Simplify the output geometry before returning. The parameter is the
+      tolerance in degrees with which the geometry may differ from the original
+      geometry. Topology is preserved in the result.
+
 * `extratags=1`
     * Include additional information in the result if available, e.g. wikipedia link, opening hours.
 

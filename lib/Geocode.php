@@ -7,6 +7,7 @@ require_once(CONST_BasePath.'/lib/Phrase.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 require_once(CONST_BasePath.'/lib/SearchDescription.php');
 require_once(CONST_BasePath.'/lib/SearchContext.php');
+require_once(CONST_BasePath.'/lib/TokenList.php');
 
 class Geocode
 {
@@ -332,10 +333,10 @@ class Geocode
         return false;
     }
 
-    public function getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bIsStructured)
+    public function getGroupedSearches($aSearches, $aPhrases, $oValidTokens, $bIsStructured)
     {
         /*
-             Calculate all searches using aValidTokens i.e.
+             Calculate all searches using oValidTokens i.e.
              'Wodsworth Road, Sheffield' =>
 
              Phrase Wordset
@@ -365,38 +366,37 @@ class Geocode
                         //var_dump($oCurrentSearch);
                         //echo "</i>";
 
-                        // If the token is valid
-                        if (isset($aValidTokens[' '.$sToken])) {
-                            foreach ($aValidTokens[' '.$sToken] as $aSearchTerm) {
-                                $aNewSearches = $oCurrentSearch->extendWithFullTerm(
-                                    $aSearchTerm,
-                                    isset($aValidTokens[$sToken])
-                                      && strpos($sToken, ' ') === false,
-                                    $sPhraseType,
-                                    $iToken == 0 && $iPhrase == 0,
-                                    $iPhrase == 0,
-                                    $iToken + 1 == count($aWordset)
-                                      && $iPhrase + 1 == count($aPhrases)
-                                );
+                        // Tokens with full name matches.
+                        foreach ($oValidTokens->get(' '.$sToken) as $oSearchTerm) {
+                            $aNewSearches = $oCurrentSearch->extendWithFullTerm(
+                                $oSearchTerm,
+                                $oValidTokens->contains($sToken)
+                                  && strpos($sToken, ' ') === false,
+                                $sPhraseType,
+                                $iToken == 0 && $iPhrase == 0,
+                                $iPhrase == 0,
+                                $iToken + 1 == count($aWordset)
+                                  && $iPhrase + 1 == count($aPhrases)
+                            );
 
-                                foreach ($aNewSearches as $oSearch) {
-                                    if ($oSearch->getRank() < $this->iMaxRank) {
-                                        $aNewWordsetSearches[] = $oSearch;
-                                    }
+                            foreach ($aNewSearches as $oSearch) {
+                                if ($oSearch->getRank() < $this->iMaxRank) {
+                                    $aNewWordsetSearches[] = $oSearch;
                                 }
                             }
                         }
                         // Look for partial matches.
                         // Note that there is no point in adding country terms here
                         // because country is omitted in the address.
-                        if (isset($aValidTokens[$sToken]) && $sPhraseType != 'country') {
+                        if ($sPhraseType != 'country') {
                             // Allow searching for a word - but at extra cost
-                            foreach ($aValidTokens[$sToken] as $aSearchTerm) {
+                            foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
                                 $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
-                                    $aSearchTerm,
+                                    $sToken,
+                                    $oSearchTerm,
                                     $bIsStructured,
                                     $iPhrase,
-                                    isset($aValidTokens[' '.$sToken]) ? $aValidTokens[' '.$sToken] : array()
+                                    $oValidTokens->get(' '.$sToken)
                                 );
 
                                 foreach ($aNewSearches as $oSearch) {
@@ -645,73 +645,51 @@ class Geocode
             Debug::printDebugTable('Phrases', $aPhrases);
             Debug::printVar('Tokens', $aTokens);
 
+            $oValidTokens = new TokenList();
+
             if (!empty($aTokens)) {
-                // Check which tokens we have, get the ID numbers
                 $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' FROM word ';
                 $sSQL .= ' WHERE word_token in ('.join(',', array_map('getDBQuoted', $aTokens)).')';
 
                 Debug::printSQL($sSQL);
 
-                $aValidTokens = array();
-                $aDatabaseWords = chksql(
-                    $this->oDB->getAll($sSQL),
-                    'Could not get word tokens.'
+                $oValidTokens->addTokensFromDB(
+                    $this->oDB,
+                    $aTokens,
+                    $this->aCountryCodes,
+                    $sNormQuery,
+                    $this->oNormalizer
                 );
-                foreach ($aDatabaseWords as $aToken) {
-                    // Filter country tokens that do not match restricted countries.
-                    if ($this->aCountryCodes
-                        && $aToken['country_code']
-                        && !in_array($aToken['country_code'], $this->aCountryCodes)
-                    ) {
-                        continue;
-                    }
 
-                    // Special terms need to appear in their normalized form.
-                    if ($aToken['word'] && $aToken['class']) {
-                        $sNormWord = $this->normTerm($aToken['word']);
-                        if (strpos($sNormQuery, $sNormWord) === false) {
-                            continue;
-                        }
-                    }
-
-                    if (isset($aValidTokens[$aToken['word_token']])) {
-                        $aValidTokens[$aToken['word_token']][] = $aToken;
-                    } else {
-                        $aValidTokens[$aToken['word_token']] = array($aToken);
-                    }
-                }
-
-                // US ZIP+4 codes - if there is no token, merge in the 5-digit ZIP code
+                // Try more interpretations for Tokens that could not be matched.
                 foreach ($aTokens as $sToken) {
-                    if (!isset($aValidTokens[$sToken]) && preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
-                        if (isset($aValidTokens[$aData[1]])) {
-                            foreach ($aValidTokens[$aData[1]] as $aToken) {
-                                if (!$aToken['class']) {
-                                    if (isset($aValidTokens[$sToken])) {
-                                        $aValidTokens[$sToken][] = $aToken;
-                                    } else {
-                                        $aValidTokens[$sToken] = array($aToken);
-                                    }
-                                }
-                            }
+                    if ($sToken[0] == ' ' && !$oValidTokens->contains($sToken)) {
+                        if (preg_match('/^ ([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
+                            // US ZIP+4 codes - merge in the 5-digit ZIP code
+                            $oValidTokens->addToken(
+                                $sToken,
+                                new Token\Postcode(null, $aData[1], 'us')
+                            );
+                        } elseif (preg_match('/^ [0-9]+$/', $sToken)) {
+                            // Unknown single word token with a number.
+                            // Assume it is a house number.
+                            $oValidTokens->addToken(
+                                $sToken,
+                                new Token\HouseNumber(null, trim($sToken))
+                            );
                         }
                     }
                 }
-
-                foreach ($aTokens as $sToken) {
-                    // Unknown single word token with a number - assume it is a house number
-                    if (!isset($aValidTokens[' '.$sToken]) && strpos($sToken, ' ') === false && preg_match('/^[0-9]+$/', $sToken)) {
-                        $aValidTokens[' '.$sToken] = array(array('class' => 'place', 'type' => 'house', 'word_token' => ' '.$sToken));
-                    }
-                }
-                Debug::printGroupTable('Valid Tokens', $aValidTokens);
 
                 // Any words that have failed completely?
                 // TODO: suggestions
+
+                Debug::printGroupTable('Valid Tokens', $oValidTokens->debugInfo());
+
                 Debug::newSection('Search candidates');
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, $bStructuredPhrases);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens, $bStructuredPhrases);
 
                 if ($this->bReverseInPlan) {
                     // Reverse phrase array and also reverse the order of the wordsets in
@@ -722,7 +700,7 @@ class Geocode
                     if (count($aPhrases) > 1) {
                         $aPhrases[count($aPhrases)-1]->invertWordSets();
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $aValidTokens, false);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens, false);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
@@ -762,7 +740,10 @@ class Geocode
                 }
             }
 
-            if (CONST_Debug) _debugDumpGroupedSearches($aGroupedSearches, $aValidTokens);
+            Debug::printGroupedSearch(
+                $aGroupedSearches,
+                $oValidTokens->debugTokenByWordIdList()
+            );
 
             // Start the search process
             $iGroupLoop = 0;
@@ -772,10 +753,11 @@ class Geocode
                 foreach ($aSearches as $oSearch) {
                     $iQueryLoop++;
 
-                    if (CONST_Debug) {
-                        echo "<hr><b>Search Loop, group $iGroupLoop, loop $iQueryLoop</b>";
-                        _debugDumpGroupedSearches(array($iGroupedRank => array($oSearch)), $aValidTokens);
-                    }
+                    Debug::newSection("Search Loop, group $iGroupLoop, loop $iQueryLoop");
+                    Debug::printGroupedSearch(
+                        array($iGroupedRank => array($oSearch)),
+                        $oValidTokens->debugTokenByWordIdList()
+                    );
 
                     $aResults += $oSearch->query(
                         $this->oDB,

@@ -426,32 +426,6 @@ function javascript_renderData($xVal, $iOptions = 0)
 }
 
 
-function _debugDumpGroupedSearches($aData, $aTokens)
-{
-    $aWordsIDs = array();
-    if ($aTokens) {
-        foreach ($aTokens as $sToken => $aWords) {
-            if ($aWords) {
-                foreach ($aWords as $aToken) {
-                    $aWordsIDs[$aToken['word_id']] =
-                        '#'.$sToken.'('.$aToken['word_id'].')#';
-                }
-            }
-        }
-    }
-    echo '<table border="1">';
-    echo '<tr><th>rank</th><th>Name Tokens</th><th>Name Not</th>';
-    echo '<th>Address Tokens</th><th>Address Not</th><th>country</th><th>operator</th>';
-    echo '<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>';
-    foreach ($aData as $iRank => $aRankedSet) {
-        foreach ($aRankedSet as $aRow) {
-            $aRow->dumpAsHtmlTableRow($aWordsIDs);
-        }
-    }
-    echo '</table>';
-}
-
-
 function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $housenumber = -1, $bRaw = false)
 {
     $sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID, $housenumber)";

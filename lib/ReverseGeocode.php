@@ -69,8 +69,56 @@ class ReverseGeocode
         );
     }
     
+    protected function noPolygonfound($sPointSQL, $iMaxRank)
+    {
+        // search_rank => search diameter
+        $aRankDiam = array(
+            18 => 0.2,
+            17 => 0.6,
+            12 => 0.8,
+            10 => 1,
+            8 => 2,
+            4 => 3,
+        );
+        
+        foreach ($aRankDiam as $key => $value) {
+            if ($key > $iMaxRank) continue;
+    
+            $sSQL = 'SELECT *';
+            $sSQL .= ' FROM (';
+            $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
+            $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
+            $sSQL .= ' FROM placex';
+            $sSQL .= ' WHERE osm_type = \'N\'';
+            $sSQL .= ' AND rank_address > 0';
+            $sSQL .= ' AND rank_address <= ' .$key;
+            $sSQL .= ' AND type != \'postcode\'';
+            $sSQL .= ' AND name IS NOT NULL ';
+            $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+            $sSQL .= ' ORDER BY rank_address DESC, distance ASC';
+            $sSQL .= ' limit 500) as a';
+            $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$value.')';
+            $sSQL .= ' ORDER BY rank_address DESC, distance ASC';
+            $sSQL .= ' LIMIT 1';
+            
+            if (CONST_Debug) var_dump($sSQL);
+            $aPlacNode = chksql(
+                $this->oDB->getRow($sSQL),
+                'Could not determine place node.'
+            );
+            if ($aPlacNode) {
+                return $aPlacNode;
+                break;
+            }
+        }
+    }
+    
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
+    
+        $oResult = null;
+        $aPlace = null;
+        
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address,country_code, geometry';
         $sSQL .= ' FROM placex';
@@ -79,7 +127,6 @@ class ReverseGeocode
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
         $sSQL .= ' AND name is not null';
-        $sSQL .= ' AND class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
         $sSQL .= ' AND indexed_status = 0 and linked_place_id is null';
         $sSQL .= ' ORDER BY rank_address DESC LIMIT 50 ) as a';
         $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.' )';
@@ -105,7 +152,6 @@ class ReverseGeocode
                 $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
-                $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                 // preselection through bbox
                 $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
@@ -125,6 +171,8 @@ class ReverseGeocode
                     return $aPlacNode;
                 }
             }
+        }else{
+            return $this->noPolygonfound ($sPointSQL, $iMaxRank);
         }
         return $aPoly;
     }
@@ -161,13 +209,12 @@ class ReverseGeocode
             $sSQL .= '   AND';
             // only streets
             if ($iMaxRank == 26) {
-                $sSQL .= ' rank_address != 28 and rank_address = 26';
+                $sSQL .= ' rank_address = 26';
             } else {
-                $sSQL .= ' rank_address != 28 and rank_address >= 26';
+                $sSQL .= ' rank_address >= 26';
             }
             $sSQL .= ' and (name is not null or housenumber is not null';
             $sSQL .= ' or rank_address between 26 and 27)';
-            //$sSQL .= ' and type not in (\'proposed\')';
             $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
@@ -220,7 +267,7 @@ class ReverseGeocode
         } else {
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
-                    $oResult = new Result($aPlace['place_id']);
+                $oResult = new Result($aPlace['place_id']);
             }
         }
         return $oResult;

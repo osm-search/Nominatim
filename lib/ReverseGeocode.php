@@ -68,51 +68,7 @@ class ReverseGeocode
             'Could not determine closest housenumber on an osm interpolation line.'
         );
     }
-    
-    protected function noPolygonfound($sPointSQL, $iMaxRank)
-    {
-        // search_rank => search diameter
-        $aRankDiam = array(
-            18 => 0.2,
-            17 => 0.6,
-            12 => 0.8,
-            10 => 1,
-            8 => 2,
-            4 => 3,
-        );
-        
-        foreach ($aRankDiam as $key => $value) {
-            if ($key > $iMaxRank) continue;
-    
-            $sSQL = 'SELECT *';
-            $sSQL .= ' FROM (';
-            $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
-            $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
-            $sSQL .= ' FROM placex';
-            $sSQL .= ' WHERE osm_type = \'N\'';
-            $sSQL .= ' AND rank_address > 0';
-            $sSQL .= ' AND rank_address <= ' .$key;
-            $sSQL .= ' AND type != \'postcode\'';
-            $sSQL .= ' AND name IS NOT NULL ';
-            $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-            $sSQL .= ' ORDER BY rank_address DESC, distance ASC';
-            $sSQL .= ' limit 500) as a';
-            $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, '.$value.')';
-            $sSQL .= ' ORDER BY rank_address DESC, distance ASC';
-            $sSQL .= ' LIMIT 1';
-            
-            if (CONST_Debug) var_dump($sSQL);
-            $aPlacNode = chksql(
-                $this->oDB->getRow($sSQL),
-                'Could not determine place node.'
-            );
-            if ($aPlacNode) {
-                return $aPlacNode;
-                break;
-            }
-        }
-    }
-    
+
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
     
@@ -171,8 +127,6 @@ class ReverseGeocode
                     return $aPlacNode;
                 }
             }
-        }else{
-            return $this->noPolygonfound ($sPointSQL, $iMaxRank);
         }
         return $aPoly;
     }
@@ -196,6 +150,22 @@ class ReverseGeocode
         $aPlace = null;
         $fMaxAreaDistance = 1;
         $bIsTigerStreet = false;
+        
+        // try with interpolations before continuing
+        if ($bDoInterpolation && $iMaxRank >= 30 ) {
+            $aHouse = $this->lookupInterpolation($sPointSQL, $fSearchDiam/3);
+
+            if ($aHouse) {
+                $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
+                $oResult->iHouseNumber = closestHouseNumber($aHouse);
+
+                $aPlace = $aHouse;
+                $iParentPlaceID = $aHouse['parent_place_id']; // the street
+                $iMaxRank = 30;
+                
+                return $oResult;
+            }
+        }// no interpolation found, continue search
         
         // for POI or street level
         if ($iMaxRank >= 26) {

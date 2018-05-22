@@ -41,7 +41,7 @@ if ($sOsmType && $iOsmId > 0) {
 
     if ($oLookup) {
         $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
-        if (sizeof($aPlaces)) {
+        if (!empty($aPlaces)) {
             $aPlace = reset($aPlaces);
         }
     }
@@ -55,16 +55,14 @@ if (isset($aPlace)) {
         $aPlace['place_id'],
         $aPlace['lon'],
         $aPlace['lat'],
-        $fRadius,
-        $fLat,
-        $fLon
+        $fRadius
     );
 
     if ($aOutlineResult) {
         $aPlace = array_merge($aPlace, $aOutlineResult);
     }
 } else {
-    $aPlace = [];
+    $aPlace = array();
 }
 
 
@@ -74,8 +72,10 @@ if (CONST_Debug) {
 }
 
 if ($sOutputFormat == 'html') {
-    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate - '2 minutes'::interval,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
+    $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;
 }
-include(CONST_BasePath.'/lib/template/address-'.$sOutputFormat.'.php');
+
+$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+include(CONST_BasePath.'/lib/template/address-'.$sOutputTemplate.'.php');

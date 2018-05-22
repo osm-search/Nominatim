@@ -164,19 +164,21 @@ class PlaceLookup
 
         $aResults = $this->lookup(array($iPlaceID => new Result($iPlaceID)));
 
-        return sizeof($aResults) ? reset($aResults) : null;
+        return empty($aResults) ? null : reset($aResults);
     }
 
     public function lookup($aResults, $iMinRank = 0, $iMaxRank = 30)
     {
-        if (!sizeof($aResults)) {
+        Debug::newFunction('Place lookup');
+
+        if (empty($aResults)) {
             return array();
         }
         $aSubSelects = array();
 
         $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_PLACEX);
-        if (CONST_Debug) var_dump('PLACEX', $sPlaceIDs);
         if ($sPlaceIDs) {
+            Debug::printVar('Ids from placex', $sPlaceIDs);
             $sSQL  = 'SELECT ';
             $sSQL .= '    osm_type,';
             $sSQL .= '    osm_id,';
@@ -246,6 +248,7 @@ class PlaceLookup
         // postcode table
         $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_POSTCODE);
         if ($sPlaceIDs) {
+            Debug::printVar('Ids from location_postcode', $sPlaceIDs);
             $sSQL = 'SELECT';
             $sSQL .= "  'P' as osm_type,";
             $sSQL .= '  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,';
@@ -276,6 +279,7 @@ class PlaceLookup
             if (CONST_Use_US_Tiger_Data) {
                 $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_TIGER);
                 if ($sPlaceIDs) {
+                    Debug::printVar('Ids from Tiger table', $sPlaceIDs);
                     $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_TIGER);
                     // Tiger search only if a housenumber was searched and if it was found
                     // (realized through a join)
@@ -321,6 +325,7 @@ class PlaceLookup
             // osmline - interpolated housenumbers
             $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_OSMLINE);
             if ($sPlaceIDs) {
+                Debug::printVar('Ids from interpolation', $sPlaceIDs);
                 $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_OSMLINE);
                 // interpolation line search only if a housenumber was searched
                 // (realized through a join)
@@ -406,16 +411,13 @@ class PlaceLookup
             }
         }
 
-        if (CONST_Debug) var_dump($aSubSelects);
-
-        if (!sizeof($aSubSelects)) {
+        if (empty($aSubSelects)) {
             return array();
         }
 
-        $aPlaces = chksql(
-            $this->oDB->getAll(join(' UNION ', $aSubSelects)),
-            'Could not lookup place'
-        );
+        $sSQL = join(' UNION ', $aSubSelects);
+        Debug::printSQL($sSQL);
+        $aPlaces = chksql($this->oDB->getAll($sSQL), 'Could not lookup place');
 
         $aClassType = getClassTypes();
         foreach ($aPlaces as &$aPlace) {
@@ -457,12 +459,12 @@ class PlaceLookup
             $aPlace['addresstype'] = $sAddressType;
         }
 
-        if (CONST_Debug) var_dump($aPlaces);
+        Debug::printVar('Places', $aPlaces);
 
         return $aPlaces;
     }
 
-    private function getAddressDetails($iPlaceID, $bAll, $sHousenumber)
+    public function getAddressDetails($iPlaceID, $bAll = false, $sHousenumber = -1)
     {
         $sSQL = 'SELECT *,';
         $sSQL .= '  get_name_by_language(name,'.$this->aLangPrefOrderSql.') as localname';
@@ -534,23 +536,23 @@ class PlaceLookup
 
         if (CONST_Search_AreaPolygons) {
             // Get the bounding box and outline polygon
-            $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
-            if ($fLonReverse != null && $fLatReverse != null) {
-                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN';
-                $sSQL .= ' ST_Y(ST_LineInterpolatePoint(geometry,';
-                $sSQL .= ' ST_LineLocatePoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))))';
-                $sSQL .= ' ELSE ST_Y(centroid) ';
-                $sSQL .= ' END as centrelat, ';
-                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN';
-                $sSQL .= ' ST_X(ST_LineInterpolatePoint(geometry,';
-                $sSQL .= ' ST_LineLocatePoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))))';
-                $sSQL .= ' ELSE ST_X(centroid) ';
-                $sSQL .= ' END as centrelon, ';
-            } else {
-                $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
-            }
-            $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
-            $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
+            $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,'; 
+            if ($fLonReverse != null && $fLatReverse != null) { 
+                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN'; 
+                $sSQL .= ' ST_Y(ST_LineInterpolatePoint(geometry,'; 
+                $sSQL .= ' ST_LineLocatePoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))))'; 
+                $sSQL .= ' ELSE ST_Y(centroid) '; 
+                $sSQL .= ' END as centrelat, '; 
+                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN'; 
+                $sSQL .= ' ST_X(ST_LineInterpolatePoint(geometry,'; 
+                $sSQL .= ' ST_LineLocatePoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))))'; 
+                $sSQL .= ' ELSE ST_X(centroid) '; 
+                $sSQL .= ' END as centrelon, '; 
+            } else { 
+                $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,'; 
+            } 
+            $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,'; 
+            $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon'; 
             if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
             if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
             if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';

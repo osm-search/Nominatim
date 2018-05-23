@@ -68,7 +68,42 @@ class ReverseGeocode
             'Could not determine closest housenumber on an osm interpolation line.'
         );
     }
-
+    
+    protected function noPolygonFound($sPointSQL, $iMaxRank)
+    {
+        $sSQL = 'SELECT * FROM country_osm_grid';
+        $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.' )';
+        
+        $aPoly = chksql(
+            $this->oDB->getRow($sSQL),
+            'Could not determine polygon containing the point.'
+        );
+        if ($aPoly) {
+            $sCountryCode = $aPoly['country_code'];
+            
+            $sSQL = 'SELECT *, ST_distance('.$sPointSQL.', geometry) as distance';
+            $sSQL .= ' FROM placex';
+            $sSQL .= ' WHERE osm_type = \'N\'';
+            $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
+            $sSQL .= ' AND rank_address > 0';
+            $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+            $sSQL .= ' AND type != \'postcode\'';
+            $sSQL .= ' AND name IS NOT NULL ';
+            $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+            $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
+            $sSQL .= ' LIMIT 1';
+            
+            if (CONST_Debug) var_dump($sSQL);
+            $aPlacNode = chksql(
+                $this->oDB->getRow($sSQL),
+                'Could not determine place node.'
+            );
+            if ($aPlacNode) {
+                return $aPlacNode;
+            }
+        }
+    }
+    
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
     
@@ -152,7 +187,7 @@ class ReverseGeocode
         $bIsTigerStreet = false;
         
         // try with interpolations before continuing
-        if ($bDoInterpolation && $iMaxRank >= 30 ) {
+        if ($bDoInterpolation && $iMaxRank >= 30) {
             $aHouse = $this->lookupInterpolation($sPointSQL, $fSearchDiam/3);
 
             if ($aHouse) {
@@ -231,6 +266,11 @@ class ReverseGeocode
                 $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                 if ($aPlace) {
                     $oResult = new Result($aPlace['place_id']);
+                } else {
+                    $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
+                    if ($aPlace) {
+                        $oResult = new Result($aPlace['place_id']);
+                    }
                 }
             }
             // lower than street level ($iMaxRank < 26 )
@@ -238,6 +278,11 @@ class ReverseGeocode
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
                 $oResult = new Result($aPlace['place_id']);
+            } else {
+                $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
+                if ($aPlace) {
+                    $oResult = new Result($aPlace['place_id']);
+                }
             }
         }
         return $oResult;

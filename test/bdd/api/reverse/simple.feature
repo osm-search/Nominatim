@@ -70,7 +70,7 @@ Feature: Simple Reverse Tests
     Scenario Outline: Boundingbox is returned
         When sending <format> reverse coordinates 14.62,108.1
           | zoom |
-          | 4 |
+          | 8 |
         Then result has bounding box in 9,20,102,113
 
     Examples:

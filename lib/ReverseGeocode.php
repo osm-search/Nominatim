@@ -266,7 +266,7 @@ class ReverseGeocode
                 $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
                 if ($aPlace) {
                     $oResult = new Result($aPlace['place_id']);
-                } else {
+                } elseif(!$aPlace && $iMaxRank > 4)  {
                     $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
                     if ($aPlace) {
                         $oResult = new Result($aPlace['place_id']);
@@ -278,7 +278,7 @@ class ReverseGeocode
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
                 $oResult = new Result($aPlace['place_id']);
-            } else {
+            } elseif(!$aPlace && $iMaxRank > 4) {
                 $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
                 if ($aPlace) {
                     $oResult = new Result($aPlace['place_id']);

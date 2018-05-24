@@ -70,7 +70,8 @@ class ReverseGeocode
     }
     
     protected function noPolygonFound($sPointSQL, $iMaxRank)
-    {
+    {   
+        // searches for polygon in table country_osm_grid which contains the searchpoint
         $sSQL = 'SELECT * FROM country_osm_grid';
         $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.' )';
         
@@ -111,7 +112,7 @@ class ReverseGeocode
         $aPlace = null;
         
         $sSQL = 'SELECT * FROM';
-        $sSQL .= '(select place_id,parent_place_id,rank_address,country_code, geometry';
+        $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
         $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
@@ -130,6 +131,7 @@ class ReverseGeocode
         if ($aPoly) {
             $iParentPlaceID = $aPoly['parent_place_id'];
             $iRankAddress = $aPoly['rank_address'];
+            $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
             
             if ($iRankAddress != $iMaxRank) {
@@ -139,8 +141,15 @@ class ReverseGeocode
                 $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
-                $sSQL .= ' AND rank_address > '.$iRankAddress;
-                $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+                if ($iRankAddress = 16){
+                //  using rank_search beacause of a better differentiation for place nodes at rank_address 16
+                    $sSQL .= ' AND rank_search > '.$iRankSearch;
+                    $sSQL .= ' AND rank_search <= ' .Min(25, $iMaxRank);
+                    $sSQL .= ' AND class = \'place\'';
+                }else{
+                    $sSQL .= ' AND rank_address > '.$iRankAddress;
+                    $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+                }
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';

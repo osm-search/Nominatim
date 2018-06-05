@@ -142,7 +142,7 @@ class ReverseGeocode
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
                 if ($iRankAddress = 16){
-                //  using rank_search beacause of a better differentiation for place nodes at rank_address 16
+                //  using rank_search because of a better differentiation for place nodes at rank_address 16
                     $sSQL .= ' AND rank_search > '.$iRankSearch;
                     $sSQL .= ' AND rank_search <= ' .Min(25, $iMaxRank);
                     $sSQL .= ' AND class = \'place\'';

@@ -108,7 +108,7 @@ instance by following these steps:
        * Ubuntu: `sudo apt-get install python-gdal unzip`
        * CentOS: `sudo yum install gdal-python unzip`
 
-  2. Get preprocessed TIGER 2015 data and unpack it into the
+  2. Get preprocessed TIGER 2017 data and unpack it into the
      data directory in your Nominatim sources:
 
         cd Nominatim/data
@@ -135,13 +135,9 @@ You can also process the data from the original TIGER data to create the
 SQL files, Nominatim needs for the import:
 
   1. Get the TIGER 2017 data. You will need the EDGES files
-     (3,234 zip files, 11GB total). Choose one of the two sources:
+     (3,234 zip files, 11GB total).
 
          wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2017/EDGES/
-         wget -r ftp://mirror1.shellbot.com/census/geo/tiger/TIGER2017/EDGES/
-
-     The first one is the original source, the second a considerably faster
-     mirror.
 
   2. Convert the data into SQL statements: 
 

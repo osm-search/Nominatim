@@ -441,3 +441,22 @@ Feature: Parenting of objects
          | object | parent_place_id |
          | N1     | W2 |
 
+    # github #1056
+    Scenario: Full names should be preferably matched for nearest road
+        Given the grid
+            | 1 |   | 2 | 5 |
+            |   |   |   |   |
+            | 3 |   |   | 4 |
+            |   | 10|   |   |
+        And the places
+            | osm | class   | type    | name+name               | geometry |
+            | W1  | highway | residential | Via Cavassico superiore | 1, 2 |
+            | W3  | highway | residential | Via Cavassico superiore | 2, 5 |
+            | W2  | highway | primary | Via Frazione Cavassico  | 3, 4     |
+        And the named places
+            | osm | class   | type    | addr+street             |
+            | N10 | shop    | yes     | Via Cavassico superiore |
+        When importing
+        Then placex contains
+          | object | parent_place_id |
+          | N10    | W1 |

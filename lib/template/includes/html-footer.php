@@ -11,4 +11,5 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/leaflet.min.js"></script>
 <script src="js/Control.Minimap.min.js"></script>
+<script src="js/url-search-params.js"></script>
 <script src="js/nominatim-ui.js"></script>

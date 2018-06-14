@@ -555,7 +555,11 @@ class PlaceLookup
             if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
             if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
             if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
-            $sFrom = ' from (SELECT * , ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) AS closest_point';
+            if ($fLonReverse != null && $fLatReverse != null) {
+                $sFrom = ' from (SELECT * , ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) AS closest_point';
+            } else {
+                $sFrom = $sFrom = ' from placex where place_id = '.$iPlaceID;
+            }
             $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             if ($this->fPolygonSimplificationThreshold > 0) {
                 $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';

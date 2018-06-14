@@ -249,6 +249,14 @@ jQuery(document).ready(function(){
             $('form input[name=lon]').val(lat);
             $('form').submit();
         });
+    } else {
+        var search_params = new URLSearchParams(location.search);
+        var viewbox = search_params.get('viewbox');
+        if (viewbox) {
+            var coords = viewbox.split(','); // <x1>,<y1>,<x2>,<y2>
+            var bounds = L.latLngBounds([coords[1], coords[0]], [coords[3], coords[2]]);
+            L.rectangle(bounds, {color: "#69d53e", weight: 3, dashArray: '5 5', opacity: 0.8, fill: false}).addTo(map);
+        }
     }
 
     highlight_result(0, false);

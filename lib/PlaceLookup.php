@@ -558,7 +558,7 @@ class PlaceLookup
             if ($fLonReverse != null && $fLatReverse != null) {
                 $sFrom = ' from (SELECT * , ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) AS closest_point';
             } else {
-                $sFrom = $sFrom = ' from placex where place_id = '.$iPlaceID;
+                $sFrom = ' from placex where place_id = '.$iPlaceID;
             }
             $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             if ($this->fPolygonSimplificationThreshold > 0) {

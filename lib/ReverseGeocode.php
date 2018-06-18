@@ -47,8 +47,9 @@ class ReverseGeocode
     /**
      * Find the closest interpolation with the given search diameter.
      *
-     * @param string $sPointSQL   Reverse geocoding point as SQL
-     * @param float  $fSearchDiam Search diameter
+     * @param string  $sPointSQL      Reverse geocoding point as SQL
+     * @param float   $fSearchDiam    Search diameter
+     * @param integer $iParentPlaceID Id of parent object
      *
      * @return Record of the interpolation or null.
      */
@@ -70,6 +71,22 @@ class ReverseGeocode
             $this->oDB->getRow($sSQL),
             'Could not determine closest housenumber on an osm interpolation line.'
         );
+    }
+    
+    protected function polygonFunctions($sPointSQL, $iMaxRank)
+    {
+        $oResult = null;
+        
+        $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
+        if ($aPlace) {
+            $oResult = new Result($aPlace['place_id']);
+        } elseif (!$aPlace && $iMaxRank > 4) {
+            $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
+            if ($aPlace) {
+                $oResult = new Result($aPlace['place_id']);
+            }
+        }
+        return $oResult;
     }
     
     protected function noPolygonFound($sPointSQL, $iMaxRank)
@@ -177,6 +194,7 @@ class ReverseGeocode
         }
         return $aPoly;
     }
+    
 
     public function lookup($fLat, $fLon, $bDoInterpolation = true)
     {
@@ -212,11 +230,11 @@ class ReverseGeocode
             if ($iMaxRank == 26) {
                 $sSQL .= ' rank_address = 26';
             } else {
-                $sSQL .= ' rank_address >= 26';
+                $sSQL .= ' rank_address between 26 and '.$iMaxRank;
             }
             $sSQL .= ' and (name is not null or housenumber is not null';
             $sSQL .= ' or rank_address between 26 and 27)';
-            $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+            $sSQL .= ' and class not in (\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
             $sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
@@ -242,8 +260,9 @@ class ReverseGeocode
                         $oResult->iHouseNumber = closestHouseNumber($aHouse);
                     }
                 }
+                
                 // if street and maxrank > streetlevel
-                if (($aPlace['rank_address'] == 26 || $aPlace['rank_address'] == 27)&& $iMaxRank > 27) {
+                if (($aPlace['rank_address'] <=27)&& $iMaxRank > 27) {
                     // find the closest object (up to a certain radius) of which the street is a parent of
                     $sSQL = ' select place_id,parent_place_id,rank_address,country_code,';
                     $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
@@ -253,9 +272,8 @@ class ReverseGeocode
                     $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
                     $sSQL .= ' AND parent_place_id = '.$iPlaceID;
                     $sSQL .= ' and rank_address != 28';
-                    $sSQL .= ' and (name is not null or housenumber is not null';
-                    $sSQL .= ' or rank_address between 26 and 27)';
-                    $sSQL .= ' and class not in (\'waterway\',\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                    $sSQL .= ' and (name is not null or housenumber is not null)';
+                    $sSQL .= ' and class not in (\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
                     $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
                     if (CONST_Debug) var_dump($sSQL);
@@ -279,29 +297,36 @@ class ReverseGeocode
                         }
                     }
                 }
-            // if no POI or street is found ...
-            } else {
-                $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
-                if ($aPlace) {
-                    $oResult = new Result($aPlace['place_id']);
-                } elseif (!$aPlace && $iMaxRank > 4) {
-                    $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
-                    if ($aPlace) {
-                        $oResult = new Result($aPlace['place_id']);
+                
+                  // In the US we can check TIGER data for nearest housenumber
+                if (CONST_Use_US_Tiger_Data && $aPlace['country_code'] == 'us' && $this->iMaxRank >= 28) {
+                    $fSearchDiam = $aPlace['rank_search'] > 28 ? $aPlace['distance'] : 0.001;
+                    $sSQL = 'SELECT place_id,parent_place_id,30 as rank_search,';
+                    $sSQL .= 'ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
+                    $sSQL .= 'ST_distance('.$sPointSQL.', linegeo) as distance,';
+                    $sSQL .= 'startnumber,endnumber,interpolationtype';
+                    $sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$oResult->iId;
+                    $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
+                    $sSQL .= ' ORDER BY distance ASC limit 1';
+                    if (CONST_Debug) var_dump($sSQL);
+                    $aPlaceTiger = chksql(
+                        $this->oDB->getRow($sSQL),
+                        'Could not determine closest Tiger place.'
+                    );
+                    if ($aPlaceTiger) {
+                        if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
+                        $aPlace = $aPlaceTiger;
+                        $oResult = new Result($aPlace['place_id'], Result::TABLE_TIGER);
+                        $oResult->iHouseNumber = closestHouseNumber($aPlaceTiger);
                     }
                 }
+            // if no POI or street is found ...
+            } else {
+                $oResult = $this->PolygonFunctions($sPointSQL, $iMaxRank);
             }
             // lower than street level ($iMaxRank < 26 )
         } else {
-            $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
-            if ($aPlace) {
-                $oResult = new Result($aPlace['place_id']);
-            } elseif (!$aPlace && $iMaxRank > 4) {
-                $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
-                if ($aPlace) {
-                    $oResult = new Result($aPlace['place_id']);
-                }
-            }
+            $oResult = $this->PolygonFunctions($sPointSQL, $iMaxRank);
         }
         return $oResult;
     }

@@ -21,6 +21,7 @@ CREATE INDEX idx_placex_geometry_reverse_placeNode_rank_search ON placex USING g
 osm_type = 'N' and rank_search > 0 and rank_search <= 25 and class = 'place' and type != 'postcode' and name is not null and indexed_status = 0 and linked_place_id is null;
 CREATE INDEX idx_placex_geometry_reverse_placeNode_rank_address ON placex USING gist (geometry) {ts:search-index} where
 osm_type = 'N' and rank_address > 0 and rank_address <= 25 and type != 'postcode' and name is not null and indexed_status = 0 and linked_place_id is null;
+GRANT SELECT ON Table country_osm_grid to "www-data";
 
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 

@@ -557,10 +557,10 @@ class PlaceLookup
             if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
             if ($fLonReverse != null && $fLatReverse != null) {
                 $sFrom = ' from (SELECT * , ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) AS closest_point';
+                $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             } else {
                 $sFrom = ' from placex where place_id = '.$iPlaceID;
             }
-            $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             if ($this->fPolygonSimplificationThreshold > 0) {
                 $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
             } else {

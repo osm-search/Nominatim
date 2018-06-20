@@ -127,10 +127,6 @@ class ReverseGeocode
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
-    
-        $oResult = null;
-        $aPlace = null;
-        
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
@@ -253,6 +249,9 @@ class ReverseGeocode
                 $iParentPlaceID = $aPlace['parent_place_id'];
                 
                 if ($bDoInterpolation && $iMaxRank >= 30) {
+                    if ($aPlace['rank_address'] <=27) {
+                        $iDistance = 0.001;
+                    }
                     $aHouse = $this->lookupInterpolation($sPointSQL, $iDistance);
 
                     if ($aHouse) {
@@ -282,7 +281,7 @@ class ReverseGeocode
                         'Could not determine closest place.'
                     );
                     if ($aStreet) {
-                        $iDistance = $aPlace['distance'];
+                        $iDistance = $aStreet['distance'];
                         $iPlaceID = $aStreet['place_id'];
                         $oResult = new Result($iPlaceID);
                         $iParentPlaceID = $aStreet['parent_place_id'];

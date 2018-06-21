@@ -150,6 +150,15 @@ class ReverseGeocode
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
             
+            //search diameter for the place node search
+            if ($iMaxRank <= 30) $fSearchDiam = 0.1;
+            if ($iMaxRank <= 18) $fSearchDiam = 0.2;
+            if ($iMaxRank <= 17) $fSearchDiam = 0.6;
+            if ($iMaxRank <= 12) $fSearchDiam = 0.8;
+            if ($iMaxRank <= 10) $fSearchDiam = 1;
+            if ($iMaxRank <= 8) $fSearchDiam = 2;
+            if ($iMaxRank <= 4) $fSearchDiam = 4;
+            
             if ($iRankAddress != $iMaxRank) {
                 $sSQL = 'SELECT *';
                 $sSQL .= ' FROM (';
@@ -166,6 +175,7 @@ class ReverseGeocode
                     $sSQL .= ' AND rank_address > '.$iRankAddress;
                     $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
                 }
+                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' and indexed_status = 0 and linked_place_id is null';

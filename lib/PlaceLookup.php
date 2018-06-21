@@ -556,7 +556,8 @@ class PlaceLookup
             if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
             if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
             if ($fLonReverse != null && $fLatReverse != null) {
-                $sFrom = ' from (SELECT * , ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) AS closest_point';
+                $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
+                $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) END AS closest_point';
                 $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             } else {
                 $sFrom = ' from placex where place_id = '.$iPlaceID;

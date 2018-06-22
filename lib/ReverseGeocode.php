@@ -127,8 +127,10 @@ class ReverseGeocode
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
-        
+        // polygon search begins at suburb-level
         if ($iMaxRank > 25) $iMaxRank = 25;
+        // no polygon search over country-level
+        if ($iMaxRank < 4) $iMaxRank = 4;
         
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';

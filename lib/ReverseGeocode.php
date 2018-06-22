@@ -107,7 +107,7 @@ class ReverseGeocode
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
             $sSQL .= ' AND rank_address > 0';
-            $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+            $sSQL .= ' AND rank_address <= ' .$iMaxRank;
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
@@ -127,11 +127,14 @@ class ReverseGeocode
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
+        
+        if ($iMaxRank > 25) $iMaxRank = 25;
+        
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+        $sSQL .= ' AND rank_address Between 4 AND ' .$iMaxRank;
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
         $sSQL .= ' AND name is not null';
@@ -150,16 +153,24 @@ class ReverseGeocode
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
             
-            //search diameter for the place node search
-            if ($iMaxRank <= 30) $fSearchDiam = 0.1;
-            if ($iMaxRank <= 18) $fSearchDiam = 0.2;
-            if ($iMaxRank <= 17) $fSearchDiam = 0.6;
-            if ($iMaxRank <= 12) $fSearchDiam = 0.8;
-            if ($iMaxRank <= 10) $fSearchDiam = 1;
-            if ($iMaxRank <= 8) $fSearchDiam = 2;
-            if ($iMaxRank <= 4) $fSearchDiam = 4;
-            
             if ($iRankAddress != $iMaxRank) {
+            //search diameter for the place node search
+                if ($iMaxRank <= 4) {
+                    $fSearchDiam = 4;
+                } elseif ($iMaxRank <= 8) {
+                    $fSearchDiam = 2;
+                } elseif ($iMaxRank <= 10) {
+                    $fSearchDiam = 1;
+                } elseif ($iMaxRank <= 12) {
+                    $fSearchDiam = 0.8;
+                } elseif ($iMaxRank <= 17) {
+                    $fSearchDiam = 0.6;
+                } elseif ($iMaxRank <= 18) {
+                    $fSearchDiam = 0.2;
+                } elseif ($iMaxRank <= 25) {
+                    $fSearchDiam = 0.1;
+                }
+                
                 $sSQL = 'SELECT *';
                 $sSQL .= ' FROM (';
                 $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
@@ -169,11 +180,11 @@ class ReverseGeocode
                 if ($iRankAddress = 16) {
                 // using rank_search because of a better differentiation for place nodes at rank_address 16
                     $sSQL .= ' AND rank_search > '.$iRankSearch;
-                    $sSQL .= ' AND rank_search <= ' .Min(25, $iMaxRank);
+                    $sSQL .= ' AND rank_search <= ' .$iMaxRank;
                     $sSQL .= ' AND class = \'place\'';
                 } else {
                     $sSQL .= ' AND rank_address > '.$iRankAddress;
-                    $sSQL .= ' AND rank_address <= ' .Min(25, $iMaxRank);
+                    $sSQL .= ' AND rank_address <= ' .$iMaxRank;
                 }
                 $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
                 $sSQL .= ' AND type != \'postcode\'';

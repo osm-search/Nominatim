@@ -75,11 +75,14 @@ class ReverseGeocode
     
     protected function polygonFunctions($sPointSQL, $iMaxRank)
     {
+        // starts the nopolygonFound function if no polygon is found with the lookupPolygon function
         $oResult = null;
         
         $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
         if ($aPlace) {
             $oResult = new Result($aPlace['place_id']);
+        // if no polygon which contains the searchpoint is found,
+        // the noPolygonFound function searches in the country_osm_grid table for a polygon
         } elseif (!$aPlace && $iMaxRank > 4) {
             $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
             if ($aPlace) {
@@ -92,6 +95,7 @@ class ReverseGeocode
     protected function noPolygonFound($sPointSQL, $iMaxRank)
     {
         // searches for polygon in table country_osm_grid which contains the searchpoint
+        // and searches for the nearest place node to the searchpoint in this polygon
         $sSQL = 'SELECT * FROM country_osm_grid';
         $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.' )';
         
@@ -127,11 +131,14 @@ class ReverseGeocode
     
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
+        // searches for polygon where the searchpoint is within
+        // if a polygon is found, placenodes with a higher rank are searched inside the polygon
+    
         // polygon search begins at suburb-level
         if ($iMaxRank > 25) $iMaxRank = 25;
         // no polygon search over country-level
         if ($iMaxRank < 4) $iMaxRank = 4;
-        
+        // search for polygon
         $sSQL = 'SELECT * FROM';
         $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
@@ -150,6 +157,7 @@ class ReverseGeocode
             'Could not determine polygon containing the point.'
         );
         if ($aPoly) {
+        // if a polygon is found, search for placenodes begins ...
             $iParentPlaceID = $aPoly['parent_place_id'];
             $iRankAddress = $aPoly['rank_address'];
             $iRankSearch = $aPoly['rank_search'];
@@ -225,7 +233,10 @@ class ReverseGeocode
 
     public function lookupPoint($sPointSQL, $bDoInterpolation = true)
     {
-        
+        // starts if the search is on POI or street level,
+        // searches for the nearest POI or street,
+        // if a street is found and a POI is searched for,
+        // the nearest POI which the found street is a parent of is choosen.
         $iMaxRank = $this->iMaxRank;
 
         // Find the nearest point
@@ -322,7 +333,7 @@ class ReverseGeocode
                 
                   // In the US we can check TIGER data for nearest housenumber
                 if (CONST_Use_US_Tiger_Data && $aPlace['country_code'] == 'us' && $this->iMaxRank >= 28) {
-                    $fSearchDiam = $aPlace['rank_search'] > 28 ? $aPlace['distance'] : 0.001;
+                    $fSearchDiam = $aPlace['rank_address'] > 28 ? $aPlace['distance'] : 0.001;
                     $sSQL = 'SELECT place_id,parent_place_id,30 as rank_search,';
                     $sSQL .= 'ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
                     $sSQL .= 'ST_distance('.$sPointSQL.', linegeo) as distance,';

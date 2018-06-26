@@ -538,14 +538,8 @@ class PlaceLookup
             // Get the bounding box and outline polygon
             $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
             if ($fLonReverse != null && $fLatReverse != null) {
-                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN';
-                $sSQL .= ' ST_Y(closest_point)';
-                $sSQL .= ' ELSE ST_Y(centroid) ';
-                $sSQL .= ' END as centrelat, ';
-                $sSQL .= ' CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN';
-                $sSQL .= ' ST_X(closest_point)';
-                $sSQL .= ' ELSE ST_X(centroid) ';
-                $sSQL .= ' END as centrelon, ';
+                $sSQL .= ' ST_Y(closest_point) as centrelat,';
+                $sSQL .= ' ST_X(closest_point) as centrelon,';
             } else {
                 $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
             }
@@ -557,7 +551,8 @@ class PlaceLookup
             if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
             if ($fLonReverse != null && $fLatReverse != null) {
                 $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
-                $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326)) END AS closest_point';
+                $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
+                $sFrom .=' ELSE centroid END AS closest_point';
                 $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
             } else {
                 $sFrom = ' from placex where place_id = '.$iPlaceID;

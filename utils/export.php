@@ -84,8 +84,14 @@
     $sPlacexSQL = 'select min(place_id) as place_id, ';
     $sPlacexSQL .= 'array_agg(place_id) as place_ids, ';
     $sPlacexSQL .= 'country_code as cc, ';
+    $sPlacexSQL .= 'postcode, ';
     // get the address places excluding postcodes
-    $sPlacexSQL .= 'array(select address_place_id from place_addressline a where a.place_id = placex.place_id and isaddress and address_place_id != placex.place_id and not cached_rank_address in (5,11) and cached_rank_address > 2 order by cached_rank_address) as address';
+    $sPlacexSQL .= 'array(select address_place_id from place_addressline a';
+    $sPlacexSQL .= ' where a.place_id = placex.place_id and isaddress';
+    $sPlacexSQL .= '  and address_place_id != placex.place_id';
+    $sPlacexSQL .= '  and not cached_rank_address in (5,11)';
+    $sPlacexSQL .= '  and cached_rank_address > 2 order by cached_rank_address)';
+    $sPlacexSQL .= ' as address';
     $sPlacexSQL .= ' from placex where name is not null and linked_place_id is null';
 
     $sPlacexSQL .= ' and rank_address = '.$iOutputRank;
@@ -122,7 +128,7 @@
         $sPlacexSQL .= ' and place_id in (select place_id from place_addressline where address_place_id = '.$sParentId.' and isaddress)';
     }
 
-    $sPlacexSQL .= " group by name->'name', address, country_code, placex.place_id";
+    $sPlacexSQL .= " group by name->'name', address, postcode, country_code, placex.place_id";
 
     // Iterate over placeids
     // to get further hierarchical information
@@ -151,25 +157,20 @@
         if (isset($aColumnMapping['postcode'])) {
             if ($aCMDResult['output-all-postcodes']) {
                 $sSQL = 'select array_agg(px.postcode) from placex px join place_addressline pa ';
-            } else {
-                $sSQL = 'select px.postcode from placex px join place_addressline pa ';
-            }
-            $sSQL .= 'on px.place_id = pa.address_place_id ';
-            $sSQL .= 'where pa.cached_rank_address in (5,11) ';
-            $sSQL .= 'and pa.place_id in (select place_id from place_addressline where address_place_id in ('.substr($aRow['place_ids'], 1, -1).')) ';
-            $sSQL .= 'group by postcode order by count(*) desc limit 1';
-            $sRes = $oDB->getOne($sSQL);
-            if (PEAR::IsError($sRes)) fail(pg_last_error($oDB->connection));
-            if ($aCMDResult['output-all-postcodes']) {
+                $sSQL .= 'on px.place_id = pa.address_place_id ';
+                $sSQL .= 'where pa.cached_rank_address in (5,11) ';
+                $sSQL .= 'and pa.place_id in (select place_id from place_addressline where address_place_id in ('.substr($aRow['place_ids'], 1, -1).')) ';
+                $sSQL .= 'group by postcode order by count(*) desc limit 1';
+                $sRes = $oDB->getOne($sSQL);
+                if (PEAR::IsError($sRes)) fail(pg_last_error($oDB->connection));
                 $aOutput[$aColumnMapping['postcode']] = substr($sRes, 1, -1);
             } else {
-                $aOutput[$aColumnMapping['postcode']] = $sRes;
+                $aOutput[$aColumnMapping['postcode']] = $aRow['postcode'];
             }
         }
         if (isset($aColumnMapping['placeid'])) {
             $aOutput[$aColumnMapping['placeid']] = substr($aRow['place_ids'], 1, -1);
         }
         fputcsv($fOutstream, $aOutput);
-
     }
     fclose($fOutstream);

@@ -528,7 +528,7 @@ class PlaceLookup
      */
 
 
-    public function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null)
+    public function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null, $fLonReverse = null, $fLatReverse = null)
     {
 
         $aOutlineResult = array();
@@ -536,15 +536,27 @@ class PlaceLookup
 
         if (CONST_Search_AreaPolygons) {
             // Get the bounding box and outline polygon
-            $sSQL  = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
-            $sSQL .= 'ST_Y(centroid) as centrelat,ST_X(centroid) as centrelon,';
-            $sSQL .= 'ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
-            $sSQL .= 'ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
+            $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
+            if ($fLonReverse != null && $fLatReverse != null) {
+                $sSQL .= ' ST_Y(closest_point) as centrelat,';
+                $sSQL .= ' ST_X(closest_point) as centrelon,';
+            } else {
+                $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
+            }
+            $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
+            $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
             if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
             if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
             if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
             if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) $sSQL .= ',ST_AsText(geometry) as astext';
-            $sFrom = ' from placex where place_id = '.$iPlaceID;
+            if ($fLonReverse != null && $fLatReverse != null) {
+                $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
+                $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
+                $sFrom .=' ELSE centroid END AS closest_point';
+                $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
+            } else {
+                $sFrom = ' from placex where place_id = '.$iPlaceID;
+            }
             if ($this->fPolygonSimplificationThreshold > 0) {
                 $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
             } else {

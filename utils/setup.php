@@ -596,6 +596,7 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     $bDidSomething = true;
 
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
+    $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
     $sTemplate = replace_tablespace(
         '{ts:address-index}',
         CONST_Tablespace_Address_Index,

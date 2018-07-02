@@ -55,7 +55,9 @@ if (isset($aPlace)) {
         $aPlace['place_id'],
         $aPlace['lon'],
         $aPlace['lat'],
-        $fRadius
+        $fRadius, 
+        $fLat, 
+        $fLon 
     );
 
     if ($aOutlineResult) {

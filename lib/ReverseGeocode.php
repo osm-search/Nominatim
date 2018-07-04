@@ -111,10 +111,11 @@ class ReverseGeocode
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
             $sSQL .= ' AND rank_address > 0';
-            $sSQL .= ' AND rank_address <= ' .$iMaxRank;
+            $sSQL .= ' AND rank_address <= ' .min(25, $iMaxRank);
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.0)';
             $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
             $sSQL .= ' LIMIT 1';
             

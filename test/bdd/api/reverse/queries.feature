@@ -48,8 +48,8 @@ Feature: Reverse geocoding
 
     Scenario: Location off the coast
         When sending jsonv2 reverse coordinates 54.046489113,8.5546870529
-	 | zoom |
+         | zoom |
          | 5 |
         Then results contain
-         | display_name |
-         | ^.*Hamburg, Deutschland |
+         | error |
+         | Unable to geocode |

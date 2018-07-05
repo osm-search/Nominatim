@@ -96,8 +96,8 @@ class ReverseGeocode
     {
         // searches for polygon in table country_osm_grid which contains the searchpoint
         // and searches for the nearest place node to the searchpoint in this polygon
-        $sSQL = 'SELECT * FROM country_osm_grid';
-        $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.' )';
+        $sSQL = 'SELECT country_code FROM country_osm_grid';
+        $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.') limit 1';
         
         $aPoly = chksql(
             $this->oDB->getRow($sSQL),
@@ -106,7 +106,7 @@ class ReverseGeocode
         if ($aPoly) {
             $sCountryCode = $aPoly['country_code'];
             
-            $sSQL = 'SELECT *, ST_distance('.$sPointSQL.', geometry) as distance';
+            $sSQL = 'SELECT place_id, ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
@@ -140,8 +140,8 @@ class ReverseGeocode
         // no polygon search over country-level
         if ($iMaxRank < 4) $iMaxRank = 4;
         // search for polygon
-        $sSQL = 'SELECT * FROM';
-        $sSQL .= '(select place_id,parent_place_id,rank_address, rank_search, country_code, geometry';
+        $sSQL = 'SELECT place_id, parent_place_id, rank_address, rank_search FROM';
+        $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
         $sSQL .= ' AND rank_address Between 4 AND ' .$iMaxRank;
@@ -181,8 +181,8 @@ class ReverseGeocode
                 } elseif ($iMaxRank <= 25) {
                     $fSearchDiam = 0.1;
                 }
-                
-                $sSQL = 'SELECT *';
+
+                $sSQL = 'SELECT place_id';
                 $sSQL .= ' FROM (';
                 $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
                 $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';

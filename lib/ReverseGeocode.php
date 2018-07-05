@@ -72,12 +72,12 @@ class ReverseGeocode
             'Could not determine closest housenumber on an osm interpolation line.'
         );
     }
-    
+
     protected function polygonFunctions($sPointSQL, $iMaxRank)
     {
         // starts the nopolygonFound function if no polygon is found with the lookupPolygon function
         $oResult = null;
-        
+
         $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
         if ($aPlace) {
             $oResult = new Result($aPlace['place_id']);
@@ -91,21 +91,21 @@ class ReverseGeocode
         }
         return $oResult;
     }
-    
+
     protected function noPolygonFound($sPointSQL, $iMaxRank)
     {
         // searches for polygon in table country_osm_grid which contains the searchpoint
         // and searches for the nearest place node to the searchpoint in this polygon
         $sSQL = 'SELECT country_code FROM country_osm_grid';
         $sSQL .= ' WHERE ST_CONTAINS (geometry, '.$sPointSQL.') limit 1';
-        
+
         $aPoly = chksql(
             $this->oDB->getRow($sSQL),
             'Could not determine polygon containing the point.'
         );
         if ($aPoly) {
             $sCountryCode = $aPoly['country_code'];
-            
+
             $sSQL = 'SELECT place_id, ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
@@ -118,7 +118,7 @@ class ReverseGeocode
             $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.0)';
             $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
             $sSQL .= ' LIMIT 1';
-            
+
             if (CONST_Debug) var_dump($sSQL);
             $aPlacNode = chksql(
                 $this->oDB->getRow($sSQL),
@@ -129,12 +129,12 @@ class ReverseGeocode
             }
         }
     }
-    
+
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
         // searches for polygon where the searchpoint is within
         // if a polygon is found, placenodes with a higher rank are searched inside the polygon
-    
+
         // polygon search begins at suburb-level
         if ($iMaxRank > 25) $iMaxRank = 25;
         // no polygon search over country-level
@@ -163,7 +163,7 @@ class ReverseGeocode
             $iRankAddress = $aPoly['rank_address'];
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
-            
+
             if ($iRankAddress != $iMaxRank) {
             //search diameter for the place node search
                 if ($iMaxRank <= 4) {
@@ -209,7 +209,7 @@ class ReverseGeocode
                 $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
                 $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
                 $sSQL .= ' LIMIT 1';
-                
+
                 if (CONST_Debug) var_dump($sSQL);
                 $aPlacNode = chksql(
                     $this->oDB->getRow($sSQL),
@@ -222,7 +222,7 @@ class ReverseGeocode
         }
         return $aPoly;
     }
-    
+
 
     public function lookup($fLat, $fLon, $bDoInterpolation = true)
     {
@@ -246,7 +246,7 @@ class ReverseGeocode
         $aPlace = null;
         $fMaxAreaDistance = 1;
         $bIsTigerStreet = false;
-       
+
         // for POI or street level
         if ($iMaxRank >= 26) {
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
@@ -275,14 +275,14 @@ class ReverseGeocode
                 $this->oDB->getRow($sSQL),
                 'Could not determine closest place.'
             );
-            
+
             if ($aPlace) {
-                    
+
                 $iDistance = $aPlace['distance'];
                 $iPlaceID = $aPlace['place_id'];
                 $oResult = new Result($iPlaceID);
                 $iParentPlaceID = $aPlace['parent_place_id'];
-                
+
                 if ($bDoInterpolation && $iMaxRank >= 30) {
                     if ($aPlace['rank_address'] <=27) {
                         $iDistance = 0.001;
@@ -294,7 +294,7 @@ class ReverseGeocode
                         $oResult->iHouseNumber = closestHouseNumber($aHouse);
                     }
                 }
-                
+
                 // if street and maxrank > streetlevel
                 if (($aPlace['rank_address'] <=27)&& $iMaxRank > 27) {
                     // find the closest object (up to a certain radius) of which the street is a parent of
@@ -320,7 +320,7 @@ class ReverseGeocode
                         $iPlaceID = $aStreet['place_id'];
                         $oResult = new Result($iPlaceID);
                         $iParentPlaceID = $aStreet['parent_place_id'];
-                            
+
                         if ($bDoInterpolation && $iMaxRank >= 30) {
                             $aHouse = $this->lookupInterpolation($sPointSQL, $iDistance, $iParentPlaceID);
 
@@ -331,7 +331,7 @@ class ReverseGeocode
                         }
                     }
                 }
-                
+
                   // In the US we can check TIGER data for nearest housenumber
                 if (CONST_Use_US_Tiger_Data && $aPlace['country_code'] == 'us' && $this->iMaxRank >= 28) {
                     $fSearchDiam = $aPlace['rank_address'] > 28 ? $aPlace['distance'] : 0.001;

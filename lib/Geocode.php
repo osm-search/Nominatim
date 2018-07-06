@@ -255,7 +255,6 @@ class Geocode
            ) {
             $this->oPlaceLookup->setAddressAdminLevels(true);
         }
-
     }
 
     public function setQueryFromParams($oParams)

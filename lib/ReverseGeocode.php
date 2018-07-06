@@ -277,7 +277,6 @@ class ReverseGeocode
             );
 
             if ($aPlace) {
-
                 $iDistance = $aPlace['distance'];
                 $iPlaceID = $aPlace['place_id'];
                 $oResult = new Result($iPlaceID);

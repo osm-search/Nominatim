@@ -546,13 +546,15 @@ class PlaceLookup
     {
         $aAddressLines = $this->getAddressDetails(
             $iPlaceID,
-            false,
+            true,
             $sHousenumber === null ? -1 : $sHousenumber
         );
 
         $aAddress = array();
         foreach ($aAddressLines as $aLine) {
-            if (isset($aLine['admin_level'])) {
+            if (isset($aLine['admin_level'])
+                && $aLine['admin_level'] < 15
+                && !isset($aAddress['level'.$aLine['admin_level']])) {
                 $aAddress['level'.$aLine['admin_level']] = $aLine['localname'];
             }
         }

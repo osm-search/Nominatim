@@ -110,6 +110,10 @@ class SearchResponse(GenericResponse):
             self.header['json_func'] = m.group(1)
         self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)
 
+    def parse_geojson(self):
+        self.parse_json()
+        self.result = geojson_results_to_json_results(self.result)
+
     def parse_html(self):
         content, errors = tidy_document(self.page,
                                         options={'char-encoding' : 'utf8'})
@@ -185,6 +189,12 @@ class ReverseResponse(GenericResponse):
             self.header['json_func'] = m.group(1)
         self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)]
 
+    def parse_geojson(self):
+        self.parse_json()
+        if 'error' in self.result:
+            return
+        self.result = geojson_results_to_json_results(self.result[0])
+
     def parse_xml(self):
         et = ET.fromstring(self.page)
 
@@ -248,6 +258,27 @@ class StatusResponse(GenericResponse):
 
     def parse_json(self):
         self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(self.page)]
+
+
+def geojson_result_to_json_result(geojson_result):
+    result = geojson_result['properties']
+    result['geojson'] = geojson_result['geometry']
+    if 'bbox' in geojson_result:
+        # bbox is  minlon, minlat, maxlon, maxlat
+        # boundingbox is minlat, maxlat, minlon, maxlon
+        result['boundingbox'] = [
+                                    geojson_result['bbox'][1],
+                                    geojson_result['bbox'][3],
+                                    geojson_result['bbox'][0],
+                                    geojson_result['bbox'][2]
+                                ]
+    return result
+
+
+def geojson_results_to_json_results(geojson_results):
+    if 'error' in geojson_results:
+        return
+    return list(map(geojson_result_to_json_result, geojson_results['features']))
 
 
 @when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
@@ -414,6 +445,8 @@ def website_lookup_request(context, fmt, query):
 
     if fmt == 'json ':
         outfmt = 'json'
+    elif fmt == 'geojson ':
+        outfmt = 'geojson'
     else:
         outfmt = 'xml'
 

@@ -23,6 +23,10 @@ Feature: Simple Tests
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
+        When sending geojson search query "Hamburg"
+          | param       | value   |
+          | <parameter> | <value> |
+        Then at least 1 result is returned
 
     Examples:
      | parameter        | value |
@@ -68,6 +72,8 @@ Feature: Simple Tests
         Then the result is valid json
         When sending jsonv2 search query "<query>"
         Then the result is valid json
+        When sending geojson search query "<query>"
+        Then the result is valid geojson
 
     Examples:
      | query |

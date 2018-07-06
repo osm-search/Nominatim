@@ -27,9 +27,10 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
 
     $aPlace['lat'] = $aPointDetails['lat'];
     $aPlace['lon'] = $aPointDetails['lon'];
+
     $aPlace['display_name'] = $aPointDetails['name'];
 
-    if ($sOutputFormat == 'jsonv2') {
+    if ($sOutputFormat == 'jsonv2' || $sOutputFormat == 'geojson') {
         $aPlace['place_rank'] = $aPointDetails['rank_search'];
         $aPlace['category'] = $aPointDetails['class'];
     } else {

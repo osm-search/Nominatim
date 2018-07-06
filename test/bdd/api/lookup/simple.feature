@@ -8,9 +8,10 @@ Feature: Places by osm_type and osm_id Tests
         And exactly 3 results are returned
 
     Examples:
-        | format |
-        | xml    |
-        | json   |
+        | format  |
+        | xml     |
+        | json    |
+        | geojson |
 
     Scenario: address lookup for non-existing or invalid node, way, relation
         When sending xml lookup query for X99,,N0,nN158845944,ABC,,W9

@@ -13,6 +13,7 @@ Feature: Parameters for Reverse API
       | format |
       | json |
       | jsonv2 |
+      | geojson |
       | xml |
 
     Scenario Outline: Coordinates must be floating-point numbers
@@ -35,6 +36,7 @@ Feature: Parameters for Reverse API
         | xml |
         | json |
         | jsonv2 |
+        | geojson |
 
     Scenario Outline: Reverse Geocoding with namedetails
         When sending <format> reverse coordinates 10.776455623137625,106.70175343751907
@@ -47,6 +49,7 @@ Feature: Parameters for Reverse API
         | xml |
         | json |
         | jsonv2 |
+        | geojson |
 
     Scenario Outline: Reverse Geocoding contains TEXT geometry
         When sending <format> reverse coordinates 47.165989816710066,9.515774846076965
@@ -107,5 +110,18 @@ Feature: Parameters for Reverse API
         | xml      | geojson |
         | json     | geojson |
         | jsonv2   | geojson |
+        | geojson  | geojson |
 
+    Scenario Outline: Reverse Geocoding in geojson format contains no non-geojson geometry
+        When sending geojson reverse coordinates 47.165989816710066,9.515774846076965
+          | polygon_text | polygon | polygon_svg | polygon_geokml |
+          | 1            | 1       | 1           | 1              |
+        Then result 0 has not attributes <response_attribute>
+
+    Examples:
+        | response_attribute |
+        | geotext            |
+        | polygonpoints      |
+        | svg                |
+        | geokml             |
 

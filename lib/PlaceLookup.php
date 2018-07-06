@@ -11,6 +11,7 @@ class PlaceLookup
     protected $aLangPrefOrderSql = "''";
 
     protected $bAddressDetails = false;
+    protected $bAddressAdminLevels = false;
     protected $bExtraTags = false;
     protected $bNameDetails = false;
 
@@ -42,6 +43,16 @@ class PlaceLookup
         $this->bIncludePolygonAsPoints = $b;
     }
 
+    public function setAddressDetails($b = true)
+    {
+        $this->bAddressDetails = $b;
+    }
+
+    public function setAddressAdminLevels($b = true)
+    {
+        $this->bAddressAdminLevels = $b;
+    }
+
     public function loadParamArray($oParams, $sGeomType = null)
     {
         $aLangs = $oParams->getPreferredLanguages();
@@ -54,17 +65,21 @@ class PlaceLookup
 
         $this->bDeDupe = $oParams->getBool('dedupe', $this->bDeDupe);
 
-        if ($sGeomType === null || $sGeomType == 'text') {
-            $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
-        }
         if ($sGeomType === null || $sGeomType == 'geojson') {
             $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
+            $this->bIncludePolygonAsPoints = false;
         }
-        if ($sGeomType === null || $sGeomType == 'kml') {
-            $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
-        }
-        if ($sGeomType === null || $sGeomType == 'svg') {
-            $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+
+        if ($oParams->getString('format', '') !== 'geojson') {
+            if ($sGeomType === null || $sGeomType == 'text') {
+                $this->bIncludePolygonAsText = $oParams->getBool('polygon_text');
+            }
+            if ($sGeomType === null || $sGeomType == 'kml') {
+                $this->bIncludePolygonAsKML = $oParams->getBool('polygon_kml');
+            }
+            if ($sGeomType === null || $sGeomType == 'svg') {
+                $this->bIncludePolygonAsSVG = $oParams->getBool('polygon_svg');
+            }
         }
         $this->fPolygonSimplificationThreshold
             = $oParams->getFloat('polygon_threshold', 0.0);
@@ -429,6 +444,13 @@ class PlaceLookup
                 );
             }
 
+            if ($this->bAddressAdminLevels) {
+                $aPlace['aAddressAdminLevels'] = $this->getAddressAdminLevels(
+                    $aPlace['place_id'],
+                    $aPlace['housenumber']
+                );
+            }
+
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
@@ -514,6 +536,33 @@ class PlaceLookup
         return $aAddress;
     }
 
+    /* "Downing Street, London"
+     * [
+     *   "level15" => "Covent Garden",
+     *   "level8" => "Westminster",
+     *   "level6" => "London",
+     *   "level5" => "Greater London",
+     *   "level4" => "England",
+     *   "level2" => "United Kingdom"
+     * ]
+     */
+
+    public function getAddressAdminLevels($iPlaceID, $sHousenumber = null)
+    {
+        $aAddressLines = $this->getAddressDetails(
+            $iPlaceID,
+            false,
+            $sHousenumber === null ? -1 : $sHousenumber
+        );
+
+        $aAddress = array();
+        foreach ($aAddressLines as $aLine) {
+            if (isset($aLine['admin_level'])) {
+                $aAddress['level'.$aLine['admin_level']] = $aLine['localname'];
+            }
+        }
+        return $aAddress;
+    }
 
 
     /* returns an array which will contain the keys

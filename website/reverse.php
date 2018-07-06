@@ -12,7 +12,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2'), 'xml');
+$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'xml');
 
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();
@@ -23,6 +23,10 @@ $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
+if ($sOutputFormat == 'geocodejson') {
+    $oPlaceLookup->setAddressDetails(true);
+    $oPlaceLookup->setAddressAdminLevels(true);
+}
 
 $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);
@@ -77,7 +81,12 @@ if ($sOutputFormat == 'html') {
     $sDataDate = chksql($oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1"));
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;
+} elseif ($sOutputFormat == 'geocodejson') {
+    $sQuery = $fLat.','.$fLon;
+    if (isset($aPlace['place_id'])) {
+        $fDistance = chksql($oDB->getOne('SELECT ST_Distance(ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326), centroid) FROM placex where place_id='.$aPlace['place_id']));
+    }
 }
 
-$sOutputTemplate = ($sOutputFormat=='jsonv2' ? 'json' : $sOutputFormat);
+$sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
 include(CONST_BasePath.'/lib/template/address-'.$sOutputTemplate.'.php');

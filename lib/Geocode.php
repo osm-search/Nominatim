@@ -249,6 +249,11 @@ class Geocode
         $this->oPlaceLookup->loadParamArray($oParams, $sForceGeometryType);
         $this->oPlaceLookup->setIncludeAddressDetails(false);
         $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
+
+        if ($oParams->getString('format', '') == 'geocodejson') {
+            $this->oPlaceLookup->setAddressDetails(true);
+            $this->oPlaceLookup->setAddressAdminLevels(true);
+        }
     }
 
     public function setQueryFromParams($oParams)

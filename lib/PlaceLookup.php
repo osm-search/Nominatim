@@ -43,11 +43,6 @@ class PlaceLookup
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    public function setAddressDetails($b = true)
-    {
-        $this->bAddressDetails = $b;
-    }
-
     public function setAddressAdminLevels($b = true)
     {
         $this->bAddressAdminLevels = $b;

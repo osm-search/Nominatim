@@ -24,7 +24,7 @@ $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
 if ($sOutputFormat == 'geocodejson') {
-    $oPlaceLookup->setAddressDetails(true);
+    $oPlaceLookup->setIncludeAddressDetails(true);
     $oPlaceLookup->setAddressAdminLevels(true);
 }
 

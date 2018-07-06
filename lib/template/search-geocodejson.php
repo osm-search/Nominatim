@@ -35,8 +35,8 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
                       );
 
     foreach ($aFieldMappings as $sFrom => $sTo) {
-        if (isset($aPointDetails['aAddress'][$sFrom])) {
-            $aPlace['properties']['geocoding'][$sTo] = $aPointDetails['aAddress'][$sFrom];
+        if (isset($aPointDetails['address'][$sFrom])) {
+            $aPlace['properties']['geocoding'][$sTo] = $aPointDetails['address'][$sFrom];
         }
     }
 

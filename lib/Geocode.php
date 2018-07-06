@@ -250,10 +250,12 @@ class Geocode
         $this->oPlaceLookup->setIncludeAddressDetails(false);
         $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
 
-        if ($oParams->getString('format', '') == 'geocodejson') {
-            $this->oPlaceLookup->setAddressDetails(true);
+        if ($this->bIncludeAddressDetails
+            && $oParams->getString('format', '') == 'geocodejson'
+           ) {
             $this->oPlaceLookup->setAddressAdminLevels(true);
         }
+
     }
 
     public function setQueryFromParams($oParams)

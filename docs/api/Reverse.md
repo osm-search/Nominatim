@@ -7,9 +7,10 @@ Reverse geocoding generates an address from a latitude and longitude.  The optio
 https://nominatim.openstreetmap.org/reverse?<query>
 ```
 
-* `format=[xml|json|jsonv2]`
+* `format=[xml|json|jsonv2|geojson|geocodejson]`
 
-    * Output format.
+    * Output format
+    * defaults to `xml`
     * `jsonv2` adds the next fields to response:
         * `place_rank`
         * `category`
@@ -122,6 +123,105 @@ https://nominatim.openstreetmap.org/reverse?<query>
     "country_code":"ar"
   },
   "boundingbox":["-34.44159","-34.4370994","-58.7086067","-58.7044712"]
+}
+```
+
+##### Example with `format=geojson`
+
+* [https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989](https://nominatim.openstreetmap.org/reverse?format=geojson&lat=44.50155&lon=11.33989)
+
+```json
+{
+  "type": "FeatureCollection",
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "place_id": "18512203",
+        "osm_type": "node",
+        "osm_id": "1704756187",
+        "place_rank": "30",
+        "category": "place",
+        "type": "house",
+        "importance": "0",
+        "addresstype": "place",
+        "name": null,
+        "display_name": "71, Via Guglielmo Marconi, Saragozza-Porto, Bologna, BO, Emilia-Romagna, 40122, Italy",
+        "address": {
+          "house_number": "71",
+          "road": "Via Guglielmo Marconi",
+          "suburb": "Saragozza-Porto",
+          "city": "Bologna",
+          "county": "BO",
+          "state": "Emilia-Romagna",
+          "postcode": "40122",
+          "country": "Italy",
+          "country_code": "it"
+        }
+      },
+      "bbox": [
+        11.3397676,
+        44.5014307,
+        11.3399676,
+        44.5016307
+      ],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.3398676,
+          44.5015307
+        ]
+      }
+    }
+  ]
+}
+```
+
+##### Example with `format=geocodejson`
+
+[https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663](https://nominatim.openstreetmap.org/reverse?format=geocodejson&lat=60.2299&lon=11.1663)
+
+```json
+{
+  "type": "FeatureCollection",
+  "geocoding": {
+    "version": "0.1.0",
+    "attribution": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+    "licence": "ODbL",
+    "query": "60.229917843587,11.16630979382"
+  },
+  "features": {
+    "type": "Feature",
+    "properties": {
+      "geocoding": {
+        "place_id": "42700574",
+        "osm_type": "node",
+        "osm_id": "3110596255",
+        "type": "house",
+        "accuracy": 0,
+        "label": "1, Løvenbergvegen, Mogreina, Ullensaker, Akershus, 2054, Norway",
+        "name": null,
+        "housenumber": "1",
+        "street": "Løvenbergvegen",
+        "postcode": "2054",
+        "county": "Akershus",
+        "country": "Norway",
+        "admin": {
+          "level7": "Ullensaker",
+          "level4": "Akershus",
+          "level2": "Norway"
+        }
+      }
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        11.1658572,
+        60.2301296
+      ]
+    }
+  }
 }
 ```
 

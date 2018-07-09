@@ -20,7 +20,7 @@ Various keywords are translated into searches for specific osm tags (e.g. Pub =>
    https://nominatim.openstreetmap.org/search/<query>?<params>
 ```
 
-* `format=[html|xml|json|jsonv2]`
+* `format=[html|xml|json|jsonv2|geojson|geocodejson]`
 
     * Output format
     * defaults to `html`
@@ -121,9 +121,12 @@ Structured requests are faster and require fewer server resources. **Do not comb
 
 ### Examples
 
+
+##### XML with polygon points
+
 * [https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon=1&addressdetails=1)
-* [https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1)
 * [https://nominatim.openstreetmap.org/search/gb/birmingham/pilkington%20avenue/135?format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search/gb/birmingham/pilkington%20avenue/135?format=xml&polygon=1&addressdetails=1)
+* [https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1)
 
 ```xml
   <searchresults timestamp="Sat, 07 Nov 09 14:42:10 +0000" querystring="135 pilkington, avenue birmingham" polygon="true">
@@ -147,7 +150,9 @@ Structured requests are faster and require fewer server resources. **Do not comb
   </searchresults>
 ```
 
-* [https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1](https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1)
+##### JSON with SVG polygon
+
+[https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1](https://nominatim.openstreetmap.org/search/Unter%20den%20Linden%201%20Berlin?format=json&addressdetails=1&limit=1&polygon_svg=1)
 
 ```json
     {
@@ -185,7 +190,9 @@ Structured requests are faster and require fewer server resources. **Do not comb
     }
 ```
 
-* [https://nominatim.openstreetmap.org/?format=json&addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1](https://nominatim.openstreetmap.org/?format=json&addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1)
+##### JSON with address details
+
+[https://nominatim.openstreetmap.org/?format=json&addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1](https://nominatim.openstreetmap.org/?format=json&addressdetails=1&q=bakery+in+berlin+wedding&format=json&limit=1)
 
 ```json
     {
@@ -219,4 +226,79 @@ Structured requests are faster and require fewer server resources. **Do not comb
         "place_id": "1453068",
         "type": "bakery"
     }
+```
+
+##### GeoJSON
+
+[https://nominatim.openstreetmap.org/search?q=17+Strada+Pictor+Alexandru+Romano%2C+Bukarest&format=geojson](https://nominatim.openstreetmap.org/search?q=17+Strada+Pictor+Alexandru+Romano%2C+Bukarest&format=geojson)
+
+```json
+{
+  "type": "FeatureCollection",
+  "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "place_id": "35811445",
+        "osm_type": "node",
+        "osm_id": "2846295644",
+        "display_name": "17, Strada Pictor Alexandru Romano, Bukarest, Bucharest, Sector 2, Bucharest, 023964, Romania",
+        "place_rank": "30",
+        "category": "place",
+        "type": "house",
+        "importance": 0.62025
+      },
+      "bbox": [
+        26.1156689,
+        44.4354754,
+        26.1157689,
+        44.4355754
+      ],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.1157189,
+          44.4355254
+        ]
+      }
+    }
+  ]
+}
+```
+
+##### GeocodeJSON
+
+[https://nominatim.openstreetmap.org/search?q=%CE%91%CE%B3%CE%AF%CE%B1+%CE%A4%CF%81%CE%B9%CE%AC%CE%B4%CE%B1%2C+%CE%91%CE%B4%CF%89%CE%BD%CE%B9%CE%B4%CE%BF%CF%82%2C+Athens%2C+Greece&format=geocodejson](https://nominatim.openstreetmap.org/search?q=%CE%91%CE%B3%CE%AF%CE%B1+%CE%A4%CF%81%CE%B9%CE%AC%CE%B4%CE%B1%2C+%CE%91%CE%B4%CF%89%CE%BD%CE%B9%CE%B4%CE%BF%CF%82%2C+Athens%2C+Greece&format=geocodejson)
+
+```json
+{
+  "type": "FeatureCollection",
+  "geocoding": {
+    "version": "0.1.0",
+    "attribution": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+    "licence": "ODbL",
+    "query": "Αγία Τριάδα, Αδωνιδος, Athens, Greece"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "geocoding": {
+          "type": "place_of_worship",
+          "label": "Αγία Τριάδα, Αδωνιδος, Άγιος Νικόλαος, 5º Δημοτικό Διαμέρισμα Αθηνών, Athens, Municipality of Athens, Regional Unit of Central Athens, Region of Attica, Attica, 11472, Greece",
+          "name": "Αγία Τριάδα",
+          "admin": null
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.72949633941,
+          38.0051697
+        ]
+      }
+    }
+  ]
+}
 ```

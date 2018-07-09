@@ -7,9 +7,10 @@ Lookup the address of one or multiple OSM objects like node, way or relation.
   https://nominatim.openstreetmap.org/lookup?<query>
 ```
 
-* `format=[xml|json]`
+* `format=[xml|json|geojson]`
 
     * Output format
+    * Defaults to `xml`
 
 * `json_callback=<string>`
 
@@ -41,7 +42,9 @@ Lookup the address of one or multiple OSM objects like node, way or relation.
 
 ### Example
 
-* [https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189](https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189)
+##### XML
+
+[https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189](https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189)
 
 ```xml
   <lookupresults timestamp="Mon, 29 Jun 15 18:01:33 +0000" attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright" querystring="R146656,W104393803,N240109189" polygon="false">
@@ -72,4 +75,42 @@ Lookup the address of one or multiple OSM objects like node, way or relation.
       <country_code>de</country_code>
     </place>
   </lookupresults>
+```
+
+##### JSON with extratags
+
+[https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json](https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json)
+
+```json
+[
+  {
+    "place_id": "84271358",
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+    "osm_type": "way",
+    "osm_id": "50637691",
+    "lat": "52.39955055",
+    "lon": "13.04806574678",
+    "display_name": "Brandenburger Tor, Brandenburger Straße, Nördliche Innenstadt, Innenstadt, Potsdam, Brandenburg, 14467, Germany",
+    "class": "historic",
+    "type": "city_gate",
+    "importance": "0.221233780277011",
+    "address": {
+      "address29": "Brandenburger Tor",
+      "pedestrian": "Brandenburger Straße",
+      "suburb": "Nördliche Innenstadt",
+      "city": "Potsdam",
+      "state": "Brandenburg",
+      "postcode": "14467",
+      "country": "Germany",
+      "country_code": "de"
+    },
+    "extratags": {
+      "image": "http://commons.wikimedia.org/wiki/File:Potsdam_brandenburger_tor.jpg",
+      "wikidata": "Q695045",
+      "wikipedia": "de:Brandenburger Tor (Potsdam)",
+      "wheelchair": "yes",
+      "description": "Kleines Brandenburger Tor in Potsdam"
+    }
+  }
+]
 ```

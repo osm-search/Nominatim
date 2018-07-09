@@ -102,18 +102,12 @@ $aParentOfLines = chksql($oDB->getAll($sSQL));
 
 if (!empty($aParentOfLines)) {
     echo '<h2>Parent Of:</h2>';
-    $aClassType = getClassTypesWithImportance();
     $aGroupedAddressLines = array();
     foreach ($aParentOfLines as $aAddressLine) {
-        if (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label']
-        ) {
-            $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
-        } elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label']
-        ) {
-            $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
-        } else $aAddressLine['label'] = ucwords($aAddressLine['type']);
+        $aAddressLine['label'] = Nominatim\ClassTypes\getProperty($aAddressLine, 'label');
+        if (!$aAddressLine['label']) {
+           $aAddressLine['label'] = ucwords($aAddressLine['type']);
+        }
 
         if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
             $aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;

@@ -868,7 +868,7 @@ class Geocode
 
         $aSearchResults = $this->oPlaceLookup->lookup($aResults);
 
-        $aClassType = getClassTypesWithImportance();
+        $aClassType = ClassTypes\getListWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
         foreach ($aRecheckWords as $i => $sWord) {
             if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
@@ -878,7 +878,7 @@ class Geocode
 
         foreach ($aSearchResults as $iIdx => $aResult) {
             // Default
-            $fDiameter = getResultDiameter($aResult);
+            $fDiameter = ClassTypes\getProperty($aResult, 'defdiameter', 0.0001);
 
             $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
             if ($aOutlineResult) {
@@ -892,20 +892,16 @@ class Geocode
             }
 
             // Is there an icon set for this type of result?
-            if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['icon']
-            ) {
-                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
-            }
+            $aClassInfo = ClassTypes\getInfo($aResult);
 
-            if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
-                && $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label']
-            ) {
-                $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'];
-            } elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['label']
-            ) {
-                $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
+            if ($aClassInfo) {
+                if (isset($aClassInfo['icon'])) {
+                    $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassInfo['icon'].'.p.20.png';
+                }
+
+                if (isset($aClassInfo['label'])) {
+                    $aResult['label'] = $aClassInfo['label'];
+                }
             }
             // if tag '&addressdetails=1' is set in query
             if ($this->bIncludeAddressDetails) {

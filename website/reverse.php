@@ -54,12 +54,11 @@ if ($sOsmType && $iOsmId > 0) {
 }
 
 if (isset($aPlace)) {
-    $fRadius = $fDiameter = getResultDiameter($aPlace);
     $aOutlineResult = $oPlaceLookup->getOutlines(
         $aPlace['place_id'],
         $aPlace['lon'],
         $aPlace['lat'],
-        $fRadius,
+        Nominatim\ClassTypes\getProperty($aPlace, 'defdiameter', 0.0001),
         $fLat,
         $fLon
     );

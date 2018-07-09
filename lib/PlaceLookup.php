@@ -429,7 +429,6 @@ class PlaceLookup
         Debug::printSQL($sSQL);
         $aPlaces = chksql($this->oDB->getAll($sSQL), 'Could not lookup place');
 
-        $aClassType = getClassTypes();
         foreach ($aPlaces as &$aPlace) {
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
@@ -462,18 +461,11 @@ class PlaceLookup
                 }
             }
 
-            $sAddressType = '';
-            $sClassType = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
-            if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel'])) {
-                $sAddressType = $aClassType[$aClassType]['simplelabel'];
-            } else {
-                $sClassType = $aPlace['class'].':'.$aPlace['type'];
-                if (isset($aClassType[$sClassType]) && isset($aClassType[$sClassType]['simplelabel']))
-                    $sAddressType = $aClassType[$sClassType]['simplelabel'];
-                else $sAddressType = $aPlace['class'];
-            }
-
-            $aPlace['addresstype'] = $sAddressType;
+            $aPlace['addresstype'] = ClassTypes\getProperty(
+                $aPlace,
+                'simplelabel',
+                $aPlace['class']
+            );
         }
 
         Debug::printVar('Places', $aPlaces);
@@ -504,22 +496,16 @@ class PlaceLookup
 
         $aAddress = array();
         $aFallback = array();
-        $aClassType = getClassTypes();
         foreach ($aAddressLines as $aLine) {
             $bFallback = false;
-            $aTypeLabel = false;
-            if (isset($aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']])) {
-                $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type'].':'.$aLine['admin_level']];
-            } elseif (isset($aClassType[$aLine['class'].':'.$aLine['type']])) {
-                $aTypeLabel = $aClassType[$aLine['class'].':'.$aLine['type']];
-            } elseif (isset($aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))])) {
-                $aTypeLabel = $aClassType['boundary:administrative:'.((int)($aLine['rank_address']/2))];
-                $bFallback = true;
-            } else {
-                $aTypeLabel = array('simplelabel' => 'address'.$aLine['rank_address']);
+            $aTypeLabel = ClassTypes\getInfo($aLine);
+
+            if ($aTypeLabel === false) {
+                $aTypeLabel = ClassTypes\getFallbackInfo($aLine);
                 $bFallback = true;
             }
-            if ($aTypeLabel && ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber']))) {
+
+            if ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber'])) {
                 $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
                 $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
                 if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {

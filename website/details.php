@@ -135,15 +135,7 @@ if (!$aPointDetails) {
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
-
-$aClassType = getClassTypesWithImportance();
-
-$sPointClassType = $aPointDetails['class'].':'.$aPointDetails['type'];
-if (isset($aClassType[$sPointClassType]) && $aClassType[$sPointClassType]['icon']) {
-    $aPointDetails['icon'] = $aClassType[$sPointClassType]['icon'];
-} else {
-    $aPointDetails['icon'] = false;
-}
+$aPointDetails['icon'] = Nominatim\ClassTypes\getProperty($aPointDetails, 'icon', false);
 
 // Get all alternative names (languages, etc)
 $sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';

@@ -5,6 +5,7 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-website.php');
 require_once(CONST_BasePath.'/lib/log.php');
 require_once(CONST_BasePath.'/lib/output.php');
+require_once(CONST_BasePath.'/lib/AddressDetails.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
@@ -164,14 +165,8 @@ if (PEAR::isError($aPointDetails['aExtraTags'])) { // possible timeout
 // Address
 $aAddressLines = false;
 if ($bIncludeAddressDetails) {
-    $aAddressLines = getAddressDetails(
-        $oDB,
-        $sLanguagePrefArraySQL,
-        $iPlaceID,
-        $aPointDetails['country_code'],
-        -1,
-        true
-    );
+    $oDetails = new Nominatim\AddressDetails($oDB, $iPlaceID, -1, $sLanguagePrefArraySQL);
+    $aAddressLines = $oDetails->getAddressDetails(true);
 }
 
 // Linked places

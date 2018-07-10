@@ -48,9 +48,9 @@ if (empty($aPlace)) {
     }
     echo '>'.htmlspecialchars($aPlace['langaddress']).'</result>';
 
-    if (isset($aPlace['aAddress'])) {
+    if (isset($aPlace['address'])) {
         echo '<addressparts>';
-        foreach ($aPlace['aAddress'] as $sKey => $sValue) {
+        foreach ($aPlace['address']->getAddressNames() as $sKey => $sValue) {
             $sKey = str_replace(' ', '_', $sKey);
             echo "<$sKey>";
             echo htmlspecialchars($sValue);

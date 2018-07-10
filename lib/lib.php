@@ -83,41 +83,6 @@ function javascript_renderData($xVal, $iOptions = 0)
     }
 }
 
-
-function getAddressDetails(&$oDB, $sLanguagePrefArraySQL, $iPlaceID, $sCountryCode = false, $housenumber = -1, $bRaw = false)
-{
-    $sSQL = "select *,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID, $housenumber)";
-    if (!$bRaw) $sSQL .= " WHERE isaddress OR type = 'country_code'";
-    $sSQL .= ' order by rank_address desc,isaddress desc';
-
-    $aAddressLines = chksql($oDB->getAll($sSQL));
-    if ($bRaw) return $aAddressLines;
-    //echo "<pre>";
-    //var_dump($aAddressLines);
-    $aAddress = array();
-    $aFallback = array();
-    foreach ($aAddressLines as $aLine) {
-        $bFallback = false;
-        $aTypeLabel = Nominatim\ClassTypes\getInfo($aLine);
-
-        if ($aTypeLabel === false) {
-            $aTypeLabel = Nominatim\ClassTypes\getFallbackInfo($aLine);
-            $bFallback = true;
-        }
-
-        if ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber'])) {
-            $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-            $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
-            if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
-                $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
-            }
-            $aFallback[$sTypeLabel] = $bFallback;
-        }
-    }
-    return $aAddress;
-}
-
-
 function addQuotes($s)
 {
     return "'".$s."'";

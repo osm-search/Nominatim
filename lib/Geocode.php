@@ -17,8 +17,6 @@ class Geocode
 
     protected $aLangPrefOrder = array();
 
-    protected $bIncludeAddressDetails = false;
-
     protected $aExcludePlaceIDs = array();
     protected $bReverseInPlan = false;
 
@@ -87,7 +85,6 @@ class Geocode
             $aParams['exclude_place_ids'] = implode(',', $this->aExcludePlaceIDs);
         }
 
-        if ($this->bIncludeAddressDetails) $aParams['addressdetails'] = '1';
         if ($this->bBoundedSearch) $aParams['bounded'] = '1';
 
         if ($this->aCountryCodes) {
@@ -183,9 +180,6 @@ class Geocode
 
     public function loadParamArray($oParams, $sForceGeometryType = null)
     {
-        $this->bIncludeAddressDetails
-         = $oParams->getBool('addressdetails', $this->bIncludeAddressDetails);
-
         $this->bBoundedSearch = $oParams->getBool('bounded', $this->bBoundedSearch);
 
         $this->setLimit($oParams->getInt('limit', $this->iFinalLimit));
@@ -247,14 +241,8 @@ class Geocode
         }
 
         $this->oPlaceLookup->loadParamArray($oParams, $sForceGeometryType);
-        $this->oPlaceLookup->setIncludeAddressDetails(false);
         $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
-
-        if ($this->bIncludeAddressDetails
-            && $oParams->getString('format', '') == 'geocodejson'
-           ) {
-            $this->oPlaceLookup->setAddressAdminLevels(true);
-        }
+        $this->oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', false));
     }
 
     public function setQueryFromParams($oParams)
@@ -903,14 +891,6 @@ class Geocode
                     $aResult['label'] = $aClassInfo['label'];
                 }
             }
-            // if tag '&addressdetails=1' is set in query
-            if ($this->bIncludeAddressDetails) {
-                // getAddressDetails() is defined in lib.php and uses the SQL function get_addressdata in functions.sql
-                $aResult['address'] = getAddressDetails($this->oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code'], $aResults[$aResult['place_id']]->iHouseNumber);
-                if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city'])) {
-                    $aResult['address'] = array_merge(array('city' => array_values($aResult['address'])[0]), $aResult['address']);
-                }
-            }
 
             $aResult['name'] = $aResult['langaddress'];
 
@@ -990,7 +970,6 @@ class Geocode
                 'Query' => $this->sQuery,
                 'Structured query' => $this->aStructuredQuery,
                 'Name keys' => Debug::fmtArrayVals($this->aLangPrefOrder),
-                'Include address' => $this->bIncludeAddressDetails,
                 'Excluded place IDs' => Debug::fmtArrayVals($this->aExcludePlaceIDs),
                 'Try reversed query'=> $this->bReverseInPlan,
                 'Limit (for searches)' => $this->iLimit,

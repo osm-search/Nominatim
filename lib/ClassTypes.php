@@ -28,7 +28,7 @@ function getFallbackInfo($aPlace)
     $sFallback = 'boundary:administrative:'.((int)($aPlace['rank_address']/2));
     if (isset($aClassType[$sFallback])) {
         return $aClassType[$sFallback];
-}
+    }
 
     return array('simplelabel' => 'address'.$aPlace['rank_address']);
 }

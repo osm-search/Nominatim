@@ -25,6 +25,7 @@ $aCleanedQueryParts = array();
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
+$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
 
 $aOsmIds = explode(',', $oParams->getString('osm_ids', ''));
 

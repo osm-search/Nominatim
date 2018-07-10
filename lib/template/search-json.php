@@ -44,8 +44,8 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
         $aPlace['icon'] = $aPointDetails['icon'];
     }
 
-    if (isset($aPointDetails['address']) && !empty($aPointDetails['address'])) {
-        $aPlace['address'] = $aPointDetails['address'];
+    if (isset($aPointDetails['address'])) {
+        $aPlace['address'] = $aPointDetails['address']->getAddressNames();
     }
 
     if (isset($aPointDetails['asgeojson'])) {

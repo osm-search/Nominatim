@@ -2,6 +2,7 @@
 
 namespace Nominatim;
 
+require_once(CONST_BasePath.'/lib/AddressDetails.php');
 require_once(CONST_BasePath.'/lib/Result.php');
 
 class PlaceLookup
@@ -11,7 +12,6 @@ class PlaceLookup
     protected $aLangPrefOrderSql = "''";
 
     protected $bAddressDetails = false;
-    protected $bAddressAdminLevels = false;
     protected $bExtraTags = false;
     protected $bNameDetails = false;
 
@@ -43,9 +43,9 @@ class PlaceLookup
         $this->bIncludePolygonAsPoints = $b;
     }
 
-    public function setAddressAdminLevels($b = true)
+    public function setIncludeAddressDetails($b)
     {
-        $this->bAddressAdminLevels = $b;
+        $this->bAddressDetails = $b;
     }
 
     public function loadParamArray($oParams, $sGeomType = null)
@@ -54,7 +54,6 @@ class PlaceLookup
         $this->aLangPrefOrderSql =
             'ARRAY['.join(',', array_map('getDBQuoted', $aLangs)).']';
 
-        $this->bAddressDetails = $oParams->getBool('addressdetails', true);
         $this->bExtraTags = $oParams->getBool('extratags', false);
         $this->bNameDetails = $oParams->getBool('namedetails', false);
 
@@ -137,11 +136,6 @@ class PlaceLookup
             'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
     }
 
-    public function setIncludeAddressDetails($bAddressDetails = true)
-    {
-        $this->bAddressDetails = $bAddressDetails;
-    }
-
     private function addressImportanceSql($sGeometry, $sPlaceId)
     {
         if ($this->sAnchorSql) {
@@ -160,6 +154,9 @@ class PlaceLookup
 
     private function langAddressSql($sHousenumber)
     {
+        if ($this->bAddressDetails)
+            return ''; // langaddress will be computed from address details
+
         return 'get_address_by_language(place_id,'.$sHousenumber.','.$this->aLangPrefOrderSql.') AS langaddress,';
     }
 
@@ -245,7 +242,7 @@ class PlaceLookup
             $sSQL .= '     country_code, ';
             $sSQL .= '     importance, ';
             if (!$this->bDeDupe) $sSQL .= 'place_id,';
-            $sSQL .= '     langaddress, ';
+            if (!$this->bAddressDetails) $sSQL .= 'langaddress, ';
             $sSQL .= '     placename, ';
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
@@ -432,17 +429,13 @@ class PlaceLookup
         foreach ($aPlaces as &$aPlace) {
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
-                $aPlace['aAddress'] = $this->getAddressNames(
+                $aPlace['address'] = new AddressDetails(
+                    $this->oDB,
                     $aPlace['place_id'],
-                    $aPlace['housenumber']
+                    $aPlace['housenumber'],
+                    $this->aLangPrefOrderSql
                 );
-            }
-
-            if ($this->bAddressAdminLevels) {
-                $aPlace['aAddressAdminLevels'] = $this->getAddressAdminLevels(
-                    $aPlace['place_id'],
-                    $aPlace['housenumber']
-                );
+                $aPlace['langaddress'] = $aPlace['address']->getLocaleAddress();
             }
 
             if ($this->bExtraTags) {
@@ -472,81 +465,6 @@ class PlaceLookup
 
         return $aPlaces;
     }
-
-    public function getAddressDetails($iPlaceID, $bAll = false, $sHousenumber = -1)
-    {
-        $sSQL = 'SELECT *,';
-        $sSQL .= '  get_name_by_language(name,'.$this->aLangPrefOrderSql.') as localname';
-        $sSQL .= ' FROM get_addressdata('.$iPlaceID.','.$sHousenumber.')';
-        if (!$bAll) {
-            $sSQL .= " WHERE isaddress OR type = 'country_code'";
-        }
-        $sSQL .= ' ORDER BY rank_address desc,isaddress DESC';
-
-        return chksql($this->oDB->getAll($sSQL));
-    }
-
-    public function getAddressNames($iPlaceID, $sHousenumber = null)
-    {
-        $aAddressLines = $this->getAddressDetails(
-            $iPlaceID,
-            false,
-            $sHousenumber === null ? -1 : $sHousenumber
-        );
-
-        $aAddress = array();
-        $aFallback = array();
-        foreach ($aAddressLines as $aLine) {
-            $bFallback = false;
-            $aTypeLabel = ClassTypes\getInfo($aLine);
-
-            if ($aTypeLabel === false) {
-                $aTypeLabel = ClassTypes\getFallbackInfo($aLine);
-                $bFallback = true;
-            }
-
-            if ((isset($aLine['localname']) && $aLine['localname']) || (isset($aLine['housenumber']) && $aLine['housenumber'])) {
-                $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel'])?$aTypeLabel['simplelabel']:$aTypeLabel['label']);
-                $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
-                if (!isset($aAddress[$sTypeLabel]) || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel]) || $aLine['class'] == 'place') {
-                    $aAddress[$sTypeLabel] = $aLine['localname']?$aLine['localname']:$aLine['housenumber'];
-                }
-                $aFallback[$sTypeLabel] = $bFallback;
-            }
-        }
-        return $aAddress;
-    }
-
-    /* "Downing Street, London"
-     * [
-     *   "level15" => "Covent Garden",
-     *   "level8" => "Westminster",
-     *   "level6" => "London",
-     *   "level5" => "Greater London",
-     *   "level4" => "England",
-     *   "level2" => "United Kingdom"
-     * ]
-     */
-
-    public function getAddressAdminLevels($iPlaceID, $sHousenumber = null)
-    {
-        $aAddressLines = $this->getAddressDetails(
-            $iPlaceID,
-            true,
-            $sHousenumber === null ? -1 : $sHousenumber
-        );
-
-        $aAddress = array();
-        foreach ($aAddressLines as $aLine) {
-            if (isset($aLine['admin_level'])
-                && $aLine['admin_level'] < 15
-                && !isset($aAddress['level'.$aLine['admin_level']])) {
-                $aAddress['level'.$aLine['admin_level']] = $aLine['localname'];
-            }
-        }
-        return $aAddress;
-    }
-
 
     /* returns an array which will contain the keys
      *   aBoundingBox

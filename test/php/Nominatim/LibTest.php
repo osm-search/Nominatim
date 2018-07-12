@@ -3,12 +3,13 @@
 namespace Nominatim;
 
 require_once '../../lib/lib.php';
+require_once '../../lib/ClassTypes.php';
 
 class LibTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetClassTypesWithImportance()
     {
-        $aClasses = getClassTypesWithImportance();
+        $aClasses = ClassTypes\getListWithImportance();
 
         $this->assertGreaterThan(
             200,
@@ -31,22 +32,22 @@ class LibTest extends \PHPUnit_Framework_TestCase
 
     public function testGetResultDiameter()
     {
-        $aResult = array();
+        $aResult = array('class' => '', 'type' => '');
         $this->assertEquals(
             0.0001,
-            getResultDiameter($aResult)
+            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
         );
 
         $aResult = array('class' => 'place', 'type' => 'country');
         $this->assertEquals(
             15,
-            getResultDiameter($aResult)
+            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
         );
 
         $aResult = array('class' => 'boundary', 'type' => 'administrative', 'admin_level' => 6);
         $this->assertEquals(
             0.32,
-            getResultDiameter($aResult)
+            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
         );
     }
 

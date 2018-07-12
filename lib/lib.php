@@ -1,7 +1,5 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/ClassTypes.php');
-
 function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;

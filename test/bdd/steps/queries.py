@@ -114,6 +114,9 @@ class SearchResponse(GenericResponse):
         self.parse_json()
         self.result = geojson_results_to_json_results(self.result)
 
+    def parse_geocodejson(self):
+        return self.parse_geojson()
+
     def parse_html(self):
         content, errors = tidy_document(self.page,
                                         options={'char-encoding' : 'utf8'})
@@ -194,6 +197,9 @@ class ReverseResponse(GenericResponse):
         if 'error' in self.result:
             return
         self.result = geojson_results_to_json_results(self.result[0])
+
+    def parse_geocodejson(self):
+        return self.parse_geojson()
 
     def parse_xml(self):
         et = ET.fromstring(self.page)

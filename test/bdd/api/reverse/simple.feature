@@ -48,6 +48,10 @@ Feature: Simple Reverse Tests
           | param       | value   |
           | <parameter> | <value> |
         Then the result is valid geojson
+        When sending geocodejson reverse coordinates 53.603,10.041
+          | param       | value   |
+          | <parameter> | <value> |
+        Then the result is valid geocodejson
 
     Examples:
      | parameter        | value |

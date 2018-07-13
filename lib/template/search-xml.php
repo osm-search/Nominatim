@@ -116,7 +116,7 @@ foreach ($aSearchResults as $iResNum => $aResult) {
             echo '>';
         }
         echo "\n";
-        foreach ($aResult['address'] as $sKey => $sValue) {
+        foreach ($aResult['address']->getAddressNames() as $sKey => $sValue) {
             $sKey = str_replace(' ', '_', $sKey);
             echo "<$sKey>";
             echo htmlspecialchars($sValue);

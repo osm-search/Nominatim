@@ -23,10 +23,7 @@ $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
-if ($sOutputFormat == 'geocodejson') {
-    $oPlaceLookup->setIncludeAddressDetails(true);
-    $oPlaceLookup->setAddressAdminLevels(true);
-}
+$oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', true));
 
 $sOsmType = $oParams->getSet('osm_type', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osm_id', -1);
@@ -54,12 +51,11 @@ if ($sOsmType && $iOsmId > 0) {
 }
 
 if (isset($aPlace)) {
-    $fRadius = $fDiameter = getResultDiameter($aPlace);
     $aOutlineResult = $oPlaceLookup->getOutlines(
         $aPlace['place_id'],
         $aPlace['lon'],
         $aPlace['lat'],
-        $fRadius,
+        Nominatim\ClassTypes\getProperty($aPlace, 'defdiameter', 0.0001),
         $fLat,
         $fLon
     );

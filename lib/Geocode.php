@@ -17,8 +17,6 @@ class Geocode
 
     protected $aLangPrefOrder = array();
 
-    protected $bIncludeAddressDetails = false;
-
     protected $aExcludePlaceIDs = array();
     protected $bReverseInPlan = false;
 
@@ -87,7 +85,6 @@ class Geocode
             $aParams['exclude_place_ids'] = implode(',', $this->aExcludePlaceIDs);
         }
 
-        if ($this->bIncludeAddressDetails) $aParams['addressdetails'] = '1';
         if ($this->bBoundedSearch) $aParams['bounded'] = '1';
 
         if ($this->aCountryCodes) {
@@ -183,9 +180,6 @@ class Geocode
 
     public function loadParamArray($oParams, $sForceGeometryType = null)
     {
-        $this->bIncludeAddressDetails
-         = $oParams->getBool('addressdetails', $this->bIncludeAddressDetails);
-
         $this->bBoundedSearch = $oParams->getBool('bounded', $this->bBoundedSearch);
 
         $this->setLimit($oParams->getInt('limit', $this->iFinalLimit));
@@ -247,14 +241,8 @@ class Geocode
         }
 
         $this->oPlaceLookup->loadParamArray($oParams, $sForceGeometryType);
-        $this->oPlaceLookup->setIncludeAddressDetails(false);
         $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
-
-        if ($this->bIncludeAddressDetails
-            && $oParams->getString('format', '') == 'geocodejson'
-           ) {
-            $this->oPlaceLookup->setAddressAdminLevels(true);
-        }
+        $this->oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', false));
     }
 
     public function setQueryFromParams($oParams)
@@ -868,7 +856,7 @@ class Geocode
 
         $aSearchResults = $this->oPlaceLookup->lookup($aResults);
 
-        $aClassType = getClassTypesWithImportance();
+        $aClassType = ClassTypes\getListWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
         foreach ($aRecheckWords as $i => $sWord) {
             if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
@@ -878,7 +866,7 @@ class Geocode
 
         foreach ($aSearchResults as $iIdx => $aResult) {
             // Default
-            $fDiameter = getResultDiameter($aResult);
+            $fDiameter = ClassTypes\getProperty($aResult, 'defdiameter', 0.0001);
 
             $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
             if ($aOutlineResult) {
@@ -892,27 +880,15 @@ class Geocode
             }
 
             // Is there an icon set for this type of result?
-            if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['icon'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['icon']
-            ) {
-                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassType[$aResult['class'].':'.$aResult['type']]['icon'].'.p.20.png';
-            }
+            $aClassInfo = ClassTypes\getInfo($aResult);
 
-            if (isset($aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'])
-                && $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label']
-            ) {
-                $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type'].':'.$aResult['admin_level']]['label'];
-            } elseif (isset($aClassType[$aResult['class'].':'.$aResult['type']]['label'])
-                && $aClassType[$aResult['class'].':'.$aResult['type']]['label']
-            ) {
-                $aResult['label'] = $aClassType[$aResult['class'].':'.$aResult['type']]['label'];
-            }
-            // if tag '&addressdetails=1' is set in query
-            if ($this->bIncludeAddressDetails) {
-                // getAddressDetails() is defined in lib.php and uses the SQL function get_addressdata in functions.sql
-                $aResult['address'] = getAddressDetails($this->oDB, $sLanguagePrefArraySQL, $aResult['place_id'], $aResult['country_code'], $aResults[$aResult['place_id']]->iHouseNumber);
-                if ($aResult['extra_place'] == 'city' && !isset($aResult['address']['city'])) {
-                    $aResult['address'] = array_merge(array('city' => array_values($aResult['address'])[0]), $aResult['address']);
+            if ($aClassInfo) {
+                if (isset($aClassInfo['icon'])) {
+                    $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassInfo['icon'].'.p.20.png';
+                }
+
+                if (isset($aClassInfo['label'])) {
+                    $aResult['label'] = $aClassInfo['label'];
                 }
             }
 
@@ -994,7 +970,6 @@ class Geocode
                 'Query' => $this->sQuery,
                 'Structured query' => $this->aStructuredQuery,
                 'Name keys' => Debug::fmtArrayVals($this->aLangPrefOrder),
-                'Include address' => $this->bIncludeAddressDetails,
                 'Excluded place IDs' => Debug::fmtArrayVals($this->aExcludePlaceIDs),
                 'Try reversed query'=> $this->bReverseInPlan,
                 'Limit (for searches)' => $this->iLimit,

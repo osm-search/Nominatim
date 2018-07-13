@@ -4,7 +4,7 @@
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-website.php');
 require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/PlaceLookup.php');
+require_once(CONST_BasePath.'/lib/AddressDetails.php');
 require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
@@ -56,11 +56,9 @@ if (CONST_Use_Aux_Location_data) {
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
-$oPlaceLookup = new Nominatim\PlaceLookup($oDB);
-$oPlaceLookup->setLanguagePreference($aLangPrefOrder);
-$oPlaceLookup->setIncludeAddressDetails(true);
 
-$aPlaceAddress = array_reverse($oPlaceLookup->getAddressDetails($iPlaceID));
+$oAddressLookup = new AddressDetails($oDB, $iPlaceID, -1, $aLangPrefOrder);
+$aPlaceAddress = array_reverse($oAddressLookup->getAddressDetails());
 
 if (empty($aPlaceAddress)) userError('Unknown place id.');
 
@@ -102,18 +100,12 @@ $aParentOfLines = chksql($oDB->getAll($sSQL));
 
 if (!empty($aParentOfLines)) {
     echo '<h2>Parent Of:</h2>';
-    $aClassType = getClassTypesWithImportance();
     $aGroupedAddressLines = array();
     foreach ($aParentOfLines as $aAddressLine) {
-        if (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'])
-            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label']
-        ) {
-            $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type'].':'.$aAddressLine['admin_level']]['label'];
-        } elseif (isset($aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'])
-            && $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label']
-        ) {
-            $aAddressLine['label'] = $aClassType[$aAddressLine['class'].':'.$aAddressLine['type']]['label'];
-        } else $aAddressLine['label'] = ucwords($aAddressLine['type']);
+        $aAddressLine['label'] = Nominatim\ClassTypes\getProperty($aAddressLine, 'label');
+        if (!$aAddressLine['label']) {
+            $aAddressLine['label'] = ucwords($aAddressLine['type']);
+        }
 
         if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
             $aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;

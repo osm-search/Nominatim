@@ -1,6 +1,6 @@
 # Running Your Own Instance
 
-### Can I import only a few countries and also keep them up to date?
+### Can I import multiple countries and keep them up to date?
 
 You should use the extracts and updates from https://download.geofabrik.de.
 For the initial import, download the countries you need and merge them.
@@ -16,14 +16,22 @@ once per day and apply them **separately** using
 See [this issue](https://github.com/openstreetmap/Nominatim/issues/60#issuecomment-18679446)
 for a script that runs the updates using osmosis.
 
-### My website shows: `XML Parsing Error: XML or text declaration not at start of entity Location</code>.`
+### Can I import negative OSM ids into Nominatim?
+
+See [https://help.openstreetmap.org/questions/64662/nominatim-flatnode-with-negative-id]()
+
+### Missing XML or text declaration
+
+The website might show: `XML Parsing Error: XML or text declaration not at start of entity Location.`
 
 Make sure there are no spaces at the beginning of your `settings/local.php` file.
 
 
 # Installation
 
-### I accidentally killed the import process after it has been running for many hours. Can it be resumed?
+### Can a stopped/killed import process be resumed?
+
+"I accidentally killed the import process after it has been running for many hours. Can it be resumed?"
 
 It is possible if the import already got to the indexing stage.
 Check the last line of output that was logged before the process
@@ -41,11 +49,12 @@ then you can resume with the following command:
 If the reported rank is 26 or higher, you can also safely add `--index-noanalyse`.
 
 
-### When running the setup.php script I get a warning:
+### PHP "open_basedir restriction in effect" warnings
+
     `PHP Warning:  file_get_contents(): open_basedir restriction in effect.`
 
 You need to adjust the [open_basedir](http://www.php.net/manual/en/ini.core.php#ini.open-basedir) setting
-in your PHP configuration (php.ini file). By default this setting may look like this:
+in your PHP configuration (`php.ini file`). By default this setting may look like this:
 
     open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/
 
@@ -54,7 +63,9 @@ dding ";" at the beginning of the line. Don't forget to enable this setting agai
 once you are done with the PHP command line operations.
 
 
-### The Apache log contains lots of PHP warnings like this:
+### PHP timzeone warnings
+
+The Apache log may contain lots of PHP warnings like this:
     `PHP Warning:  date_default_timezone_set() function.`
 
 You should set the default time zone as instructed in the warning in
@@ -71,28 +82,32 @@ Or
 echo "date.timezone = 'America/Denver'" > /etc/php.d/timezone.ini
 ```
 
-### When running the import I get a version mismatch:
-    `COPY_END for place failed: ERROR: incompatible library "/opt/Nominatim/module/nominatim.so": version mismatch`
+### nominatim.so version mismatch
+
+When running the import you may get a version mismatch:
+`COPY_END for place failed: ERROR: incompatible library "/srv/Nominatim/nominatim/build/module/nominatim.so": version mismatch`
 
 pg_config seems to use bad includes sometimes when multiple versions
 of PostgreSQL are available in the system. Make sure you remove the
-server development libraries (`postgresql-server-dev-9.1` on Ubuntu)
+server development libraries (`postgresql-server-dev-9.5` on Ubuntu)
 and recompile (`cmake .. && make`).
 
 
-### I see the error: `function transliteration(text) does not exist`
+### I see the error: "function transliteration(text) does not exist"
 
 Reinstall the nominatim functions with `setup.php --create--functions`
 and check for any errors, e.g. a missing `nominatim.so` file.
 
 
-### The website shows: `Could not get word tokens`
+### The website shows: "Could not get word tokens"
 
 The server cannot access your database. Add `&debug=1` to your URL
 to get the full error message.
 
 
-### On CentOS the website shows `could not connect to server: No such file or directory`
+### On CentOS the website shows "Could not connect to server"
+
+`could not connect to server: No such file or directory`
 
 On CentOS v7 the PostgreSQL server is started with `systemd`.
 Check if `/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`.
@@ -105,22 +120,60 @@ However, you can solve this the quick and dirty way by commenting out that line 
     sudo systemctl restart httpd
 
 
-### Setup.php fails with the message: `DB Error: extension not found`
+### Website reports "DB Error: insufficient permissions"
+
+The user the webserver, e.g. Apache, runs under needs to have access to the Nominatim database. You can find the user like [this](https://serverfault.com/questions/125865/finding-out-what-user-apache-is-running-as), for default Ubuntu operating system for example it's `www-data`.
+
+1. Repeat the `createuser` step of the installation instructions.
+
+2. Give the user permission to existing tables
+
+```
+   GRANT usage ON SCHEMA public TO "www-data";
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO "www-data";
+```
+
+### Website reports "Could not load library "nominatim.so"
+
+Example error message
+
+```
+   SELECT make_standard_name('3039 E MEADOWLARK LN') [nativecode=ERROR: could not
+   load library "/srv/nominatim/Nominatim-3.1.0/build/module/nominatim.so":
+   /srv/nominatim/Nominatim-3.1.0/build/module/nominatim.so: cannot open shared
+   object file: Permission denied
+   CONTEXT: PL/pgSQL function make_standard_name(text) line 5 at assignment]
+```
+
+The user the webserver, e.g. Apache, runs under needs to have access to that file. Same for the user the Postgres runs as. You can find the user like [this](https://serverfault.com/questions/125865/finding-out-what-user-apache-is-running-as), for default Ubuntu operating system for example it's `www-data`.
+
+The permission need to be read&executable by everybody, e.g.
+
+```
+   -rwxr-xr-x 1 nominatim nominatim 297984 build/module/nominatim.so
+```
+
+Try `chmod a+r nominatim.so; chmod a+x nominatim.so`.
+
+### Setup.php fails with "DB Error: extension not found"
 
 Make sure you have the Postgres extensions hstore and postgis installed.
 See the installation instruction for a full list of required packages.
 
-### When running the setup.php script I get a error:
-    `Cannot redeclare getDB() (previously declared in /your/path/Nominatim/lib/db.php:4)`
+
+### Setup.php reports "Cannot redeclare getDB()"
+
+`Cannot redeclare getDB() (previously declared in /your/path/Nominatim/lib/db.php:4)`
 
 The message is a bit misleading as PHP needs to load the file `DB.php` and
 instead re-loads Nominatim's `db.php`. To solve this make sure you
-have the [http://pear.php.net/package/DB/ Pear module 'DB'] installed.
+have the [Pear module 'DB'](http://pear.php.net/package/DB/) installed.
 
     sudo pear install DB
 
 ### I forgot to delete the flatnodes file before starting an import.
 
 That's fine. For each import the flatnodes file get overwritten.
-See https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage
+See [https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage]()
 for more information.
+

@@ -53,7 +53,7 @@ link_directories(${PostgreSQL_LIBRARY_DIRS})
 
 find_program(PYOSMIUM pyosmium-get-changes)
 if (NOT EXISTS "${PYOSMIUM}")
-    set(PYOSMIUM_PATH "/nonexistent")
+    set(PYOSMIUM_PATH "")
         message(WARNING "pyosmium-get-changes not found (required for updates)")
 else()
     set(PYOSMIUM_PATH "${PYOSMIUM}")

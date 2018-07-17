@@ -112,7 +112,7 @@ to get the full error message.
 On CentOS v7 the PostgreSQL server is started with `systemd`.
 Check if `/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`.
 If so then Apache cannot see the `/tmp/.s.PGSQL.5432` file. It's a good security feature,
-so use the [preferred solution](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
+so use the [[#PostgreSQL_UNIX_Socket_Location_on_CentOS|preferred solution]]
 
 However, you can solve this the quick and dirty way by commenting out that line and then run
 

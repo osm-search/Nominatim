@@ -14,10 +14,14 @@ userconfig = {
     'BUILDDIR' : os.path.join(os.path.split(__file__)[0], "../../build"),
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,
+    'DB_HOST' : None,
+    'DB_USER' : None,
+    'DB_PASS' : None,
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
     'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php',
+    'SERVER_MODULE_PATH' : None,
     'PHPCOV' : False, # set to output directory to enable code coverage
 }
 
@@ -30,9 +34,13 @@ class NominatimEnvironment(object):
     def __init__(self, config):
         self.build_dir = os.path.abspath(config['BUILDDIR'])
         self.src_dir = os.path.abspath(os.path.join(os.path.split(__file__)[0], "../.."))
+        self.db_host = config['DB_HOST']
+        self.db_user = config['DB_USER']
+        self.db_pass = config['DB_PASS']
         self.template_db = config['TEMPLATE_DB']
         self.test_db = config['TEST_DB']
         self.api_test_db = config['API_TEST_DB']
+        self.server_module_path = config['SERVER_MODULE_PATH']
         self.local_settings_file = config['TEST_SETTINGS_FILE']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
@@ -42,6 +50,17 @@ class NominatimEnvironment(object):
 
         self.template_db_done = False
 
+    def connect_database(self, dbname):
+        dbargs = {'database': dbname}
+        if self.db_host:
+            dbargs['host'] = self.db_host
+        if self.db_user:
+            dbargs['user'] = self.db_user
+        if self.db_pass:
+            dbargs['password'] = self.db_pass
+        conn = psycopg2.connect(**dbargs)
+        return conn
+
     def next_code_coverage_file(self):
         fn = os.path.join(self.code_coverage_path, "%06d.cov" % self.code_coverage_id)
         self.code_coverage_id += 1
@@ -50,7 +69,11 @@ class NominatimEnvironment(object):
 
     def write_nominatim_config(self, dbname):
         f = open(self.local_settings_file, 'w')
-        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://@/%s');\n" % dbname)
+        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://%s:%s@%s/%s');\n" %
+                (self.db_user if self.db_user else '',
+                 self.db_pass if self.db_pass else '',
+                 self.db_host if self.db_host else '',
+                 dbname))
         f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
         f.close()
 
@@ -61,7 +84,7 @@ class NominatimEnvironment(object):
             pass # ignore missing file
 
     def db_drop_database(self, name):
-        conn = psycopg2.connect(database='postgres')
+        conn = self.connect_database('postgres')
         conn.set_isolation_level(0)
         cur = conn.cursor()
         cur.execute('DROP DATABASE IF EXISTS %s' % (name, ))
@@ -75,7 +98,7 @@ class NominatimEnvironment(object):
 
         if self.reuse_template:
             # check that the template is there
-            conn = psycopg2.connect(database='postgres')
+            conn = self.connect_database('postgres')
             cur = conn.cursor()
             cur.execute('select count(*) from pg_database where datname = %s',
                         (self.template_db,))
@@ -91,7 +114,7 @@ class NominatimEnvironment(object):
             self.write_nominatim_config(self.template_db)
             self.run_setup_script('create-db', 'setup-db')
             # remove external data to speed up indexing for tests
-            conn = psycopg2.connect(database=self.template_db)
+            conn = self.connect_database(self.template_db)
             cur = conn.cursor()
             cur.execute("""select tablename from pg_tables
                            where tablename in ('gb_postcode', 'us_postcode')""")
@@ -128,13 +151,13 @@ class NominatimEnvironment(object):
     def setup_db(self, context):
         self.setup_template_db()
         self.write_nominatim_config(self.test_db)
-        conn = psycopg2.connect(database=self.template_db)
+        conn = self.connect_database(self.template_db)
         conn.set_isolation_level(0)
         cur = conn.cursor()
         cur.execute('DROP DATABASE IF EXISTS %s' % (self.test_db, ))
         cur.execute('CREATE DATABASE %s TEMPLATE = %s' % (self.test_db, self.template_db))
         conn.close()
-        context.db = psycopg2.connect(database=self.test_db)
+        context.db = self.connect_database(self.test_db)
         if python_version[0] < 3:
             psycopg2.extras.register_hstore(context.db, globally=False, unicode=True)
         else:
@@ -148,6 +171,9 @@ class NominatimEnvironment(object):
             self.db_drop_database(self.test_db)
 
     def run_setup_script(self, *args, **kwargs):
+        if self.server_module_path:
+            kwargs = dict(kwargs)
+            kwargs['module_path'] = self.server_module_path
         self.run_nominatim_script('setup', *args, **kwargs)
 
     def run_update_script(self, *args, **kwargs):
@@ -271,4 +297,3 @@ def before_scenario(context, scenario):
 def after_scenario(context, scenario):
     if 'DB' in context.tags:
         context.nominatim.teardown_db(context)
-

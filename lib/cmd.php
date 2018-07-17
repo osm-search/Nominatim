@@ -158,6 +158,16 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCMD .= ' -h ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCMD .= ' -U ' . $aDSNInfo['username'];
+    }
+    $procenv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
     if (!$bVerbose) {
         $sCMD .= ' -q';
     }
@@ -170,7 +180,7 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
                      2 => STDERR
                     );
     $ahPipes = null;
-    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
+    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes, null, $procenv);
     if (!is_resource($hProcess)) {
         fail('unable to start pgsql');
     }

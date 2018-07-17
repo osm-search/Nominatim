@@ -34,7 +34,7 @@ class SpecialTerm
                 'Info' => array(
                            'class' => $this->sClass,
                            'type' => $this->sType,
-                           'operator' => Operator::toString($this->iOperator)
+                           'operator' => \Nominatim\Operator::toString($this->iOperator)
                           )
                );
     }

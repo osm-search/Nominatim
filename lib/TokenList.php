@@ -32,6 +32,17 @@ class TokenList
     // List of list of tokens indexed by their word_token.
     private $aTokens = array();
 
+
+    /**
+     * Return total number of tokens.
+     *
+     * @return Integer
+     */
+    public function count()
+    {
+        return count($this->aTokens);
+    }
+
     /**
      * Check if there are tokens for the given token word.
      *

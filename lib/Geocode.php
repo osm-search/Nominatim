@@ -149,6 +149,10 @@ class Geocode
 
     private function viewboxImportanceFactor($fX, $fY)
     {
+        if (!$this->aViewBox) {
+            return 1;
+        }
+
         $fWidth = ($this->aViewBox[2] - $this->aViewBox[0])/2;
         $fHeight = ($this->aViewBox[3] - $this->aViewBox[1])/2;
 

@@ -125,7 +125,7 @@ class TokenList
                         $iId,
                         $aWord['class'],
                         $aWord['type'],
-                        $aWord['operator'] ? Operator::NONE : Operator::NEAR
+                        $aWord['operator'] ? Operator::NEAR : Operator::NONE
                     );
                 }
             } elseif ($aWord['country_code']) {

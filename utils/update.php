@@ -68,6 +68,22 @@ if ($aResult['init-updates']) {
         echo "Does the URL point to a directory containing OSM update data?\n\n";
         fail('replication URL not reachable.');
     }
+    // sanity check for pyosmium-get-changes
+    if (!CONST_Pyosmium_Binary) {
+        echo "\nCONST_Pyosmium_Binary not configured.\n";
+        echo "You need to install pyosmium and set up the path to pyosmium-get-changes\n";
+        echo "in your local settings file.\n\n";
+        fail('CONST_Pyosmium_Binary not configured');
+    }
+    $aOutput = 0;
+    $sCmd = CONST_Pyosmium_Binary.' --help';
+    exec($sCmd, $aOutput, $iRet);
+    if ($iRet != 0) {
+        echo "Cannot execute pyosmium-get-changes.\n";
+        echo "Make sure you have pyosmium installed correctly\n";
+        echo "and have set up CONST_Pyosmium_Binary to point to pyosmium-get-changes.\n";
+        fail('pyosmium-get-changes not found or not usable');
+    }
     $sSetup = CONST_InstallPath.'/utils/setup.php';
     $iRet = -1;
     passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);

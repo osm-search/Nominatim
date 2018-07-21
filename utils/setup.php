@@ -80,10 +80,10 @@ if (isset($aCMDResult['osm2pgsql-cache'])) {
     $iCacheMemory = getCacheMemoryMB();
 }
 
-$modulePath = CONST_InstallPath . '/module';
+$sModulePath = CONST_InstallPath . '/module';
 if (isset($aCMDResult['module-path'])) {
-    $modulePath = $aCMDResult['module-path'];
-    echo 'module path: ' . $modulePath . '\n';
+    $sModulePath = $aCMDResult['module-path'];
+    echo 'module path: ' . $sModulePath . '\n';
 }
 
 $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
@@ -97,21 +97,21 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
         fail('database already exists ('.CONST_Database_DSN.')');
     }
 
-    $createdbCmd = 'createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+    $sCreateDBCmd = 'createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $createdbCmd .= ' -U ' . $aDSNInfo['username'];
+        $sCreateDBCmd .= ' -U ' . $aDSNInfo['username'];
     }
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $createdbCmd .= ' -h ' . $aDSNInfo['hostspec'];
+        $sCreateDBCmd .= ' -h ' . $aDSNInfo['hostspec'];
     }
 
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
 
-    $result = runWithEnv($createdbCmd, $procenv);
-    if ($result != 0) fail('Error executing external command: '.$createdbCmd);
+    $result = runWithEnv($sCreateDBCmd, $aProcEnv);
+    if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
@@ -162,7 +162,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     // Try accessing the C module, so we know early if something is wrong
     // and can simply error out.
     $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-    $sSQL .= $modulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+    $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
     $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
     $oResult = $oDB->query($sSQL);
 
@@ -235,13 +235,13 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
         $osm2pgsql .= ' -H ' . $aDSNInfo['hostspec'];
     }
 
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
 
     $osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
-    runWithEnv($osm2pgsql, $procenv);
+    runWithEnv($osm2pgsql, $aProcEnv);
 
     $oDB =& getDB();
     if (!$aCMDResult['ignore-errors'] && !chksql($oDB->getRow('select * from place limit 1'))) {
@@ -441,22 +441,22 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
         fail(pg_last_error($aDBInstances[$iLoadThreads]->connection));
     }
 
-    $failed = false;
+    $bFailed = false;
     for ($i = 0; $i <= $iLoadThreads; $i++) {
-        while (($pgresult = pg_get_result($aDBInstances[$i]->connection)) !== false) {
-            $resultStatus = pg_result_status($pgresult);
+        while (($hPGresult = pg_get_result($aDBInstances[$i]->connection)) !== false) {
+            $resultStatus = pg_result_status($hPGresult);
             // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
             // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
             // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
             echo 'Query result ' . $i . ' is: ' . $resultStatus . '\n';
             if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
-                $resultError = pg_result_error($pgresult);
+                $resultError = pg_result_error($hPGresult);
                 echo '-- error text ' . $i . ': ' . $resultError . '\n';
-                $failed = true;
+                $bFailed = true;
             }
         }
     }
-    if ($failed) {
+    if ($bFailed) {
         fail('SQL errors loading placex and/or location_property_osmline tables');
     }
     echo "\n";
@@ -622,27 +622,27 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
         $sBaseCmd .= ' -U ' . $aDSNInfo['username'];
     }
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
 
     info('Index ranks 0 - 4');
-    $status = runWithEnv($sBaseCmd.' -R 4', $procenv);
-    if ($status != 0) {
-        fail('error status ' . $status . ' running nominatim!');
+    $iStatus = runWithEnv($sBaseCmd.' -R 4', $aProcEnv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
     }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 5 - 25');
-    $status = runWithEnv($sBaseCmd.' -r 5 -R 25', $procenv);
-    if ($status != 0) {
-        fail('error status ' . $status . ' running nominatim!');
+    $iStatus = runWithEnv($sBaseCmd.' -r 5 -R 25', $procenv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
     }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 26 - 30');
-    $status = runWithEnv($sBaseCmd.' -r 26', $procenv);
-    if ($status != 0) {
-        fail('error status ' . $status . ' running nominatim!');
+    $iStatus = runWithEnv($sBaseCmd.' -r 26', $procenv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
     }
 
     info('Index postcodes');
@@ -785,9 +785,9 @@ function pgsqlRunScriptFile($sFilename)
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
         $sCMD .= ' -U ' . $aDSNInfo['username'];
     }
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
 
     $ahGzipPipes = null;
@@ -812,7 +812,7 @@ function pgsqlRunScriptFile($sFilename)
                      2 => array('file', '/dev/null', 'a')
                     );
     $ahPipes = null;
-    $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes, null, $procenv);
+    $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
     if (!is_resource($hProcess)) fail('unable to start pgsql');
 
     // TODO: error checking
@@ -902,18 +902,18 @@ function pgsqlRunDropAndRestore($sDumpFile)
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
         $sCMD .= ' -U ' . $aDSNInfo['username'];
     }
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
 
-    $iReturn = runWithEnv($sCMD, $procenv);
+    $iReturn = runWithEnv($sCMD, $aProcEnv);
 }
 
-function passthruCheckReturn($cmd)
+function passthruCheckReturn($sCmd)
 {
-    $result = -1;
-    passthru($cmd, $result);
+    $iResult = -1;
+    passthru($sCmd, $iResult);
 }
 
 function replace_tablespace($sTemplate, $sTablespace, $sSql)
@@ -929,9 +929,9 @@ function replace_tablespace($sTemplate, $sTablespace, $sSql)
 
 function create_sql_functions($aCMDResult)
 {
-    global $modulePath;
+    global $sModulePath;
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-    $sTemplate = str_replace('{modulepath}', $modulePath, $sTemplate);
+    $sTemplate = str_replace('{modulepath}', $sModulePath, $sTemplate);
     if ($aCMDResult['enable-diff-updates']) {
         $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
     }

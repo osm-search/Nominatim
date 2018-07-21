@@ -65,9 +65,9 @@ if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
 if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
     $sOsm2pgsqlCmd .= ' -H ' . $aDSNInfo['hostspec'];
 }
-$procenv = null;
+$aProcEnv = null;
 if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-    $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
 }
 
 if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
@@ -153,7 +153,7 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     // Import the file
     $sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
     echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $procenv);
+    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
 
     if ($iErrorLevel) {
         fail("Error from osm2pgsql, $iErrorLevel\n");
@@ -205,7 +205,7 @@ if ($bHaveDiff) {
     // import generated change file
     $sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
     echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $procenv);
+    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
     if ($iErrorLevel) {
         fail("osm2pgsql exited with error level $iErrorLevel\n");
     }
@@ -289,15 +289,15 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    $cmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank'];
+    $sCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank'];
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $cmd .= ' -H ' . $aDSNInfo['hostspec'];
+        $sCmd .= ' -H ' . $aDSNInfo['hostspec'];
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $cmd .= ' -U ' . $aDSNInfo['username'];
+        $sCmd .= ' -U ' . $aDSNInfo['username'];
     }
 
-    runWithEnv($cmd, $procenv);
+    runWithEnv($sCmd, $aProcEnv);
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
@@ -384,7 +384,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $fCMDStartTime = time();
             echo $sCMDImport."\n";
             unset($sJunk);
-            $iErrorLevel = runWithEnv($sCMDImport, $procenv);
+            $iErrorLevel = runWithEnv($sCMDImport, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error executing osm2pgsql: $iErrorLevel\n";
                 exit($iErrorLevel);
@@ -413,7 +413,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $fCMDStartTime = time();
 
             echo "$sThisIndexCmd\n";
-            $iErrorLevel = runWithEnv($sThisIndexCmd, $procenv);
+            $iErrorLevel = runWithEnv($sThisIndexCmd, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);

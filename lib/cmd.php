@@ -164,9 +164,9 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
         $sCMD .= ' -U ' . $aDSNInfo['username'];
     }
-    $procenv = null;
+    $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $procenv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
     if (!$bVerbose) {
         $sCMD .= ' -q';
@@ -180,15 +180,15 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
                      2 => STDERR
                     );
     $ahPipes = null;
-    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes, null, $procenv);
+    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
     if (!is_resource($hProcess)) {
         fail('unable to start pgsql');
     }
 
     while (strlen($sScript)) {
-        $written = fwrite($ahPipes[0], $sScript);
-        if ($written <= 0) break;
-        $sScript = substr($sScript, $written);
+        $iWritten = fwrite($ahPipes[0], $sScript);
+        if ($iWritten <= 0) break;
+        $sScript = substr($sScript, $iWritten);
     }
     fclose($ahPipes[0]);
     $iReturn = proc_close($hProcess);
@@ -198,19 +198,19 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
 }
 
 
-function runWithEnv($cmd, $env)
+function runWithEnv($sCmd, $aEnv)
 {
-    $fds = array(0 => array('pipe', 'r'),
-                 1 => STDOUT,
-                 2 => STDERR);
-    $pipes = null;
-    $proc = @proc_open($cmd, $fds, $pipes, null, $env);
-    if (!is_resource($proc)) {
-        fail('unable to run command:' . $cmd);
+    $aFDs = array(0 => array('pipe', 'r'),
+                  1 => STDOUT,
+                  2 => STDERR);
+    $aPipes = null;
+    $hProc = @proc_open($sCmd, $aFDs, $aPipes, null, $aEnv);
+    if (!is_resource($hProc)) {
+        fail('unable to run command:' . $sCmd);
     }
 
-    fclose($pipes[0]); // no stdin
+    fclose($aPipes[0]); // no stdin
 
-    $stat = proc_close($proc);
-    return $stat;
+    $iStat = proc_close($hProc);
+    return $iStat;
 }

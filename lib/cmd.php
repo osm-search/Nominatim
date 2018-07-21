@@ -196,3 +196,21 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
         fail("pgsql returned with error code ($iReturn)");
     }
 }
+
+
+function runWithEnv($cmd, $env)
+{
+    $fds = array(0 => array('pipe', 'r'),
+                 1 => STDOUT,
+                 2 => STDERR);
+    $pipes = null;
+    $proc = @proc_open($cmd, $fds, $pipes, null, $env);
+    if (!is_resource($proc)) {
+        fail('unable to run command:' . $cmd);
+    }
+
+    fclose($pipes[0]); // no stdin
+
+    $stat = proc_close($proc);
+    return $stat;
+}

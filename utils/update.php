@@ -122,8 +122,8 @@ if ($aResult['init-updates']) {
     }
 
     pg_query($oDB->connection, 'TRUNCATE import_status');
-    $sSQL = 'INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES(';
-    $sSQL .= "'".$sDatabaseDate."',".$aOutput[0].', true)';
+    $sSQL = "INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES('";
+    $sSQL .= $sDatabaseDate."',".$aOutput[0].', true)';
     if (!pg_query($oDB->connection, $sSQL)) {
         fail('Could not enter sequence into database.');
     }
@@ -428,7 +428,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $oDB->query($sSQL);
             echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
 
-            $sSQL = 'UPDATE import_status SET indexed = true';
+            $sSQL = 'update import_status set indexed = true';
             $oDB->query($sSQL);
         }
 
@@ -436,21 +436,4 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60, 2)." minutes\n";
         if (!$aResult['import-osmosis-all']) exit(0);
     }
-}
-
-function runWithEnv($cmd, $env)
-{
-    $fds = array(0 => array('pipe', 'r'),
-                 1 => STDOUT,
-                 2 => STDERR);
-    $pipes = null;
-    $proc = @proc_open($cmd, $fds, $pipes, null, $env);
-    if (!is_resource($proc)) {
-        fail('unable to run command:' . $cmd);
-    }
-
-    fclose($pipes[0]); // no stdin
-
-    $stat = proc_close($proc);
-    return $stat;
 }

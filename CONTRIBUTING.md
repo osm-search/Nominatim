@@ -78,6 +78,8 @@ are in process of consolidating the style. The following rules apply:
    * no spaces after opening and before closing bracket
    * leave out space between a function name and bracket
      but add one between control statement(if, while, etc.) and bracket
+ * for PHP variables use CamelCase with a prefixing letter indicating the type
+   (i - integer, f - float, a - array, s - string, o - object)
 
 The coding style is enforced with PHPCS and can be tested with:
 

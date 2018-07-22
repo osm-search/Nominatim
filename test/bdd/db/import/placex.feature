@@ -70,9 +70,9 @@ Feature: Import into placex
         When importing
         Then placex contains
          | object | postcode | country_code | rank_search | rank_address |
-         | N1     | E45 2CD  | gb           | 25          | 5 |
-         | N2     | E45 2    | gb           | 23          | 5 |
-         | N3     | Y45      | gb           | 21          | 5 |
+         | N1     | E45 2CD  | gb           | 25          | 0 |
+         | N2     | E45 2    | gb           | 23          | 0 |
+         | N3     | Y45      | gb           | 21          | 0 |
 
     Scenario: wrongly formatted GB postcodes are down-ranked
         Given the places
@@ -82,8 +82,8 @@ Feature: Import into placex
         When importing
         Then placex contains
          | object | country_code | rank_search | rank_address |
-         | N1     | gb           | 30          | 30 |
-         | N2     | gb           | 30          | 30 |
+         | N1     | gb           | 30          | 0 |
+         | N2     | gb           | 30          | 0 |
 
     Scenario: search and address rank for DE postcodes correctly assigned
         Given the places
@@ -95,10 +95,10 @@ Feature: Import into placex
         When importing
         Then placex contains
          | object | country_code | rank_search | rank_address |
-         | N1     | de           | 21          | 11 |
-         | N2     | de           | 30          | 30 |
-         | N3     | de           | 30          | 30 |
-         | N4     | de           | 30          | 30 |
+         | N1     | de           | 21          | 0 |
+         | N2     | de           | 30          | 0 |
+         | N3     | de           | 30          | 0 |
+         | N4     | de           | 30          | 0 |
 
     Scenario: search and address rank for other postcodes are correctly assigned
         Given the places
@@ -115,15 +115,15 @@ Feature: Import into placex
         When importing
         Then placex contains
          | object | country_code | rank_search | rank_address |
-         | N1     | ca           | 21          | 11 |
-         | N2     | ca           | 21          | 11 |
-         | N3     | ca           | 21          | 11 |
-         | N4     | ca           | 21          | 11 |
-         | N5     | ca           | 21          | 11 |
-         | N6     | ca           | 21          | 11 |
-         | N7     | ca           | 25          | 11 |
-         | N8     | ca           | 25          | 11 |
-         | N9     | ca           | 25          | 11 |
+         | N1     | ca           | 21          | 0 |
+         | N2     | ca           | 21          | 0 |
+         | N3     | ca           | 21          | 0 |
+         | N4     | ca           | 21          | 0 |
+         | N5     | ca           | 21          | 0 |
+         | N6     | ca           | 21          | 0 |
+         | N7     | ca           | 25          | 0 |
+         | N8     | ca           | 25          | 0 |
+         | N9     | ca           | 25          | 0 |
 
     Scenario: search and address ranks for places are correctly assigned
         Given the named places

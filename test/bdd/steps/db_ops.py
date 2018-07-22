@@ -498,6 +498,21 @@ def check_place_addressline(context):
 
     context.db.commit()
 
+@then("place_addressline doesn't contain")
+def check_place_addressline_exclude(context):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    for row in context.table:
+        pid = NominatimID(row['object']).get_place_id(cur)
+        apid = NominatimID(row['address']).get_place_id(cur)
+        cur.execute(""" SELECT * FROM place_addressline
+                        WHERE place_id = %s AND address_place_id = %s""",
+                    (pid, apid))
+        eq_(0, cur.rowcount,
+            "Row found for place %s and address %s" % (row['object'], row['address']))
+
+    context.db.commit()
+
 @then("(?P<oid>\w+) expands to(?P<neg> no)? interpolation")
 def check_location_property_osmline(context, oid, neg):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)

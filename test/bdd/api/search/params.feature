@@ -51,7 +51,7 @@ Feature: Search queries
           | en |
         Then results contain
           | display_name |
-          | Plei Ya Rê, Kon Tum province, Vietnam |
+          | Plei Ya Rê, Vietnam |
 
     Scenario: Address details with unknown class types
         When sending json search query "Hundeauslauf, Hamburg" with address

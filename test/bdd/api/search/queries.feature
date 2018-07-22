@@ -26,7 +26,6 @@ Feature: Search queries
           | suburb        | Eilbek |
           | postcode      | 22089 |
           | city_district | Wandsbek |
-          | state         | Hamburg |
           | country       | Deutschland |
           | country_code  | de |
 
@@ -42,7 +41,6 @@ Feature: Search queries
           | suburb        | Eilbek |
           | postcode      | 22089 |
           | city_district | Wandsbek |
-          | state         | Hamburg |
           | country       | Deutschland |
           | country_code  | de |
 

@@ -871,7 +871,11 @@ BEGIN
     ELSEIF NEW.class = 'place' THEN
       IF NEW.type in ('continent') THEN
         NEW.rank_search := 2;
-        NEW.rank_address := NEW.rank_search;
+        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
+            NEW.rank_address := NEW.rank_search;
+        ELSE
+            NEW.rank_address := 0;
+        END IF;
         NEW.country_code := NULL;
       ELSEIF NEW.type in ('sea') THEN
         NEW.rank_search := 2;
@@ -879,10 +883,18 @@ BEGIN
         NEW.country_code := NULL;
       ELSEIF NEW.type in ('country') THEN
         NEW.rank_search := 4;
-        NEW.rank_address := NEW.rank_search;
+        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
+            NEW.rank_address := NEW.rank_search;
+        ELSE
+            NEW.rank_address := 0;
+        END IF;
       ELSEIF NEW.type in ('state') THEN
         NEW.rank_search := 8;
-        NEW.rank_address := NEW.rank_search;
+        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
+            NEW.rank_address := NEW.rank_search;
+        ELSE
+            NEW.rank_address := 0;
+        END IF;
       ELSEIF NEW.type in ('region') THEN
         NEW.rank_search := 18; -- dropped from previous value of 10
         NEW.rank_address := 0; -- So badly miss-used that better to just drop it!

@@ -132,6 +132,18 @@ def compare_place_id(expected, result, column, context):
             LazyFmt("Bad place id in column %s. Expected: %s, got: %s.",
                     column, expected, PlaceObjName(result, context.db)))
 
+def check_database_integrity(context):
+    """ Check some generic constraints on the tables.
+    """
+    # place_addressline should not have duplicate (place_id, address_place_id)
+    cur = context.db.cursor()
+    cur.execute("""SELECT count(*) FROM
+                    (SELECT place_id, address_place_id, count(*) as c
+                     FROM place_addressline GROUP BY place_id, address_place_id) x
+                   WHERE c > 1""")
+    eq_(0, cur.fetchone()[0], "Duplicates found in place_addressline")
+
+
 class NominatimID:
     """ Splits a unique identifier for places into its components.
         As place_ids cannot be used for testing, we use a unique
@@ -290,6 +302,7 @@ def import_and_index_data_from_place_table(context):
                     and ST_GeometryType(geometry) = 'ST_LineString'""")
     context.db.commit()
     context.nominatim.run_setup_script('calculate-postcodes', 'index', 'index-noanalyse')
+    check_database_integrity(context)
 
 @when("updating places")
 def update_place_table(context):
@@ -313,6 +326,8 @@ def update_place_table(context):
         cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
         if cur.rowcount == 0:
             break
+
+    check_database_integrity(context)
 
 @when("marking for delete (?P<oids>.*)")
 def delete_places(context, oids):

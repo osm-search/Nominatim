@@ -1875,33 +1875,6 @@ BEGIN
   END LOOP;
   --DEBUG: RAISE WARNING 'address computed';
 
-  -- for long ways we should add search terms for the entire length
-  IF st_length(NEW.geometry) > 0.05 THEN
-
-    location_rank_search := 0;
-    location_distance := 0;
-
-    FOR location IN SELECT * from getNearFeatures(NEW.partition, NEW.geometry, search_maxrank, isin_tokens) LOOP
-
-      IF location.rank_address != location_rank_search THEN
-        location_rank_search := location.rank_address;
-        location_distance := location.distance * 1.5;
-      END IF;
-
-      IF location.rank_search > 4 AND location.distance < location_distance THEN
-
-        -- Add it to the list of search terms
-        nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-        INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
-          VALUES (NEW.place_id, location.place_id, true, false, location.distance, location.rank_address); 
-
-      END IF;
-
-    END LOOP;
-
-  END IF;
-  --DEBUG: RAISE WARNING 'search terms for long ways added';
-
   IF NEW.address is not null AND NEW.address ? 'postcode' 
      AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
     NEW.postcode := upper(trim(NEW.address->'postcode'));

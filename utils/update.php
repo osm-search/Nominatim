@@ -16,7 +16,7 @@ $aCMDOptions
 
    array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
    array('check-for-updates', '', 0, 1, 0, 0, 'bool', 'Check if new updates are available'),
-   array('update-functions', '', 0, 1, 0, 0, 'bool', 'Update trigger functions to support differential updates'),
+   array('no-update-functions', '', 0, 1, 0, 0, 'bool', 'Do not update trigger functions to support differential updates (assuming the diff update logic is already present)'),
    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
@@ -98,10 +98,10 @@ if ($aResult['init-updates']) {
         echo "and have set up CONST_Pyosmium_Binary to point to pyosmium-get-changes.\n";
         fail('pyosmium-get-changes not found or not usable');
     }
-    if ($aResult['update-functions']) {
+    if (!$aResult['no-update-functions']) {
         $sSetup = CONST_InstallPath.'/utils/setup.php';
         $iRet = -1;
-        passthru($argv[0].' '.$sSetup.' --create-functions --enable-diff-updates', $iRet);
+        passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
         if ($iRet != 0) {
             fail('Error running setup script');
         }

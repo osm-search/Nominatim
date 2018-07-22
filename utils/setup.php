@@ -159,17 +159,8 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
         exit(1);
     }
 
-    // Try accessing the C module, so we know early if something is wrong
-    // and can simply error out.
-    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-    $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
-    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
-    $oResult = $oDB->query($sSQL);
-
-    if (PEAR::isError($oResult)) {
-        echo "\nERROR: Failed to load nominatim module. Reason:\n";
-        echo $oResult->userinfo."\n\n";
-        exit(1);
+    if (!checkModulePresence()) {
+        fail('error loading nominatim.so module');
     }
 
     if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
@@ -252,6 +243,11 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     info('Create Functions');
     $bDidSomething = true;
+
+    if (!checkModulePresence()) {
+        fail('error loading nominatim.so module');
+    }
+
     create_sql_functions($aCMDResult);
 }
 
@@ -948,4 +944,24 @@ function create_sql_functions($aCMDResult)
         $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
     }
     pgsqlRunScript($sTemplate);
+}
+
+function checkModulePresence()
+{
+    // Try accessing the C module, so we know early if something is wrong
+    // and can simply error out.
+    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
+    $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+    $oResult = $oDB->query($sSQL);
+
+    $bResult = true;
+
+    if (PEAR::isError($oResult)) {
+        echo "\nERROR: Failed to load nominatim module. Reason:\n";
+        echo $oResult->userinfo."\n\n";
+        $bResult = false;
+    }
+
+    return $bResult;
 }

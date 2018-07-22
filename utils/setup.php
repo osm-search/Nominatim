@@ -950,6 +950,7 @@ function checkModulePresence()
 {
     // Try accessing the C module, so we know early if something is wrong
     // and can simply error out.
+    global $sModulePath;
     $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
     $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
     $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';

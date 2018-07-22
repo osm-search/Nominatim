@@ -953,6 +953,8 @@ function checkModulePresence()
     $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
     $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
     $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+
+    $oDB =& getDB();
     $oResult = $oDB->query($sSQL);
 
     $bResult = true;

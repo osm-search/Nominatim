@@ -168,10 +168,10 @@ Feature: Import into placex
           | object | rank_search | rank_address |
           | N1     | 30          | 30 |
           | N11    | 30          | 30 |
-          | N12    | 2           | 2 |
+          | N12    | 2           | 0 |
           | N13    | 2           | 0 |
-          | N14    | 4           | 4 |
-          | N15    | 8           | 8 |
+          | N14    | 4           | 0 |
+          | N15    | 8           | 0 |
           | N16    | 18          | 0 |
           | N17    | 12          | 12 |
           | N18    | 16          | 16 |
@@ -211,6 +211,10 @@ Feature: Import into placex
           | R21 | boundary | administrative | 32    | (3 3, 4 4, 3 4, 3 3) |
           | R22 | boundary | nature_park    | 6     | (0 0, 1 0, 0 1, 0 0) |
           | R23 | boundary | natural_reserve| 10    | (0 0, 1 1, 1 0, 0 0) |
+        And the named places
+          | osm | class | type    | geometry |
+          | R40 | place | country | (1 1, 2 2, 1 2, 1 1) |
+          | R41 | place | state   | (3 3, 4 4, 3 4, 3 3) |
         When importing
         Then placex has no entry for N1
         And placex has no entry for W10
@@ -220,6 +224,8 @@ Feature: Import into placex
           | R21    | 30          | 30 |
           | R22    | 12          | 0 |
           | R23    | 20          | 0 |
+          | R40    | 4           | 4 |
+          | R41    | 8           | 8 |
 
     Scenario: search and address ranks for highways correctly assigned
         Given the scene roads-with-pois

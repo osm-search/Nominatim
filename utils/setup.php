@@ -448,10 +448,10 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
             // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
             // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
             // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
-            echo 'Query result ' . $i . ' is: ' . $resultStatus . '\n';
+            echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
             if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
                 $resultError = pg_result_error($hPGresult);
-                echo '-- error text ' . $i . ': ' . $resultError . '\n';
+                echo '-- error text ' . $i . ': ' . $resultError . "\n";
                 $bFailed = true;
             }
         }
@@ -634,13 +634,13 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 5 - 25');
-    $iStatus = runWithEnv($sBaseCmd.' -r 5 -R 25', $procenv);
+    $iStatus = runWithEnv($sBaseCmd.' -r 5 -R 25', $aProcEnv);
     if ($iStatus != 0) {
         fail('error status ' . $iStatus . ' running nominatim!');
     }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 26 - 30');
-    $iStatus = runWithEnv($sBaseCmd.' -r 26', $procenv);
+    $iStatus = runWithEnv($sBaseCmd.' -r 26', $aProcEnv);
     if ($iStatus != 0) {
         fail('error status ' . $iStatus . ' running nominatim!');
     }

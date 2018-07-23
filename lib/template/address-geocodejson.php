@@ -76,6 +76,6 @@ if (empty($aPlace)) {
                                            'licence' => 'ODbL',
                                            'query' => $sQuery
                                           ),
-                           'features' => [$aFilteredPlaces]
+                           'features' => array($aFilteredPlaces)
                           ));
 }

@@ -9,6 +9,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Debug', false);
 @define('CONST_Database_DSN', 'pgsql://@/nominatim'); // <driver>://<username>:<password>@<host>:<port>/<database>
 @define('CONST_Database_Web_User', 'www-data');
+@define('CONST_Database_Module_Path', CONST_InstallPath.'/module');
 @define('CONST_Max_Word_Frequency', '50000');
 @define('CONST_Limit_Reindexing', true);
 // Restrict search languages.

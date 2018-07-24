@@ -16,7 +16,6 @@ $aCMDOptions
 
    array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
    array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
-   array('module-path', '', 0, 1, 1, 1, 'string', 'Directory on Postgres server containing Nominatim module'),
 
    array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
@@ -80,11 +79,8 @@ if (isset($aCMDResult['osm2pgsql-cache'])) {
     $iCacheMemory = getCacheMemoryMB();
 }
 
-$sModulePath = CONST_InstallPath . '/module';
-if (isset($aCMDResult['module-path'])) {
-    $sModulePath = $aCMDResult['module-path'];
-    echo 'module path: ' . $sModulePath . '\n';
-}
+$sModulePath = CONST_Database_Module_Path;
+info('module path: ' . $sModulePath);
 
 $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;

@@ -200,9 +200,10 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
 
 function runWithEnv($sCmd, $aEnv)
 {
-    $aFDs = array(0 => array('pipe', 'r'),
-                  1 => STDOUT,
-                  2 => STDERR);
+    $aFDs = array(
+             0 => array('pipe', 'r'),
+             1 => STDOUT,
+             2 => STDERR);
     $aPipes = null;
     $hProc = @proc_open($sCmd, $aFDs, $aPipes, null, $aEnv);
     if (!is_resource($hProc)) {

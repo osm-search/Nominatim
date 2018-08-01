@@ -35,7 +35,7 @@ CREATE OR REPLACE FUNCTION make_standard_name(name TEXT) RETURNS TEXT
 DECLARE
   o TEXT;
 BEGIN
-  o := gettokenstring(transliteration(name));
+  o := public.gettokenstring(public.transliteration(name));
   RETURN trim(substr(o,1,length(o)));
 END;
 $$

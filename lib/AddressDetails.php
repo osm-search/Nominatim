@@ -114,4 +114,9 @@ class AddressDetails
         }
         return $aAddress;
     }
+
+    public function debugInfo()
+    {
+        return $this->aAddressLines;
+    }
 }

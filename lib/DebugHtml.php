@@ -153,6 +153,8 @@ class Debug
                     $sPre = ', ';
                 }
             }
+        } elseif (is_object($mVar) && method_exists($mVar, 'debugInfo')) {
+            Debug::outputVar($mVar->debugInfo(), $sPreNL);
         } else {
             Debug::outputSimpleVar($mVar);
         }

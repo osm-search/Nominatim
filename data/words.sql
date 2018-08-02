@@ -18,11 +18,12 @@ SET default_with_oids = false;
 -- Name: word_frequencies; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
+DROP TABLE IF EXISTS word_frequencies;
+
 CREATE TABLE word_frequencies (
     word_token text,
     count bigint
 );
-
 
 --
 -- Data for Name: word_frequencies; Type: TABLE DATA; Schema: public; Owner: -

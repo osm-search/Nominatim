@@ -262,13 +262,16 @@ struct index_thread_data * thread_data, const char *structuredoutputfile)
 
 void nominatim_index(int rank_min, int rank_max, int num_threads, const char *conninfo, const char *structuredoutputfile)
 {
-    struct index_thread_data * thread_data;
+    struct index_thread_data *thread_data;
 
     PGconn *conn;
-    PGresult * res;
+    PGresult *res;
+    int num_rows = 0, status_code = 0;
+    int db_has_locale = 0;
+    char *result_string = NULL;
 
     int rank;
-    
+
     int i;
 
     xmlTextWriterPtr writer;
@@ -281,6 +284,23 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
     {
         fprintf(stderr, "Connection to database failed: %s\n", PQerrorMessage(conn));
         exit(EXIT_FAILURE);
+    }
+
+    res = PQexec(conn, "SHOW lc_messages");
+    status_code = PQresultStatus(res);
+    if (status_code != PGRES_TUPLES_OK && status_code != PGRES_SINGLE_TUPLE) {
+        fprintf(stderr, "Failed determining database locale: %s\n", PQerrorMessage(conn));
+        exit(EXIT_FAILURE);
+    }
+    num_rows = PQntuples(res);
+    if (num_rows > 0)
+    {
+        result_string = PQgetvalue(res, 0, 0);
+        if (result_string && (strlen(result_string) > 0) && (strcasecmp(result_string, "C") != 0))
+        {
+            // non-default locale if the result exists, is non-empty, and is not "C"
+            db_has_locale = 1;
+        }
     }
 
     pg_prepare_params[0] = PG_OID_INT4;
@@ -392,18 +412,19 @@ void nominatim_index(int rank_min, int rank_max, int num_threads, const char *co
         }
         PQclear(res);
 
-        // Make sure the error message is not localized as we parse it later.
-        res = PQexec(thread_data[i].conn, "SET lc_messages TO 'C'");
-        if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        if (db_has_locale)
         {
-            fprintf(stderr, "Failed to set langauge: %s\n", PQerrorMessage(thread_data[i].conn));
-            exit(EXIT_FAILURE);
+            // Make sure the error message is not localized as we parse it later.
+            res = PQexec(thread_data[i].conn, "SET lc_messages TO 'C'");
+            if (PQresultStatus(res) != PGRES_COMMAND_OK)
+            {
+                fprintf(stderr, "Failed to set langauge: %s\n", PQerrorMessage(thread_data[i].conn));
+                exit(EXIT_FAILURE);
+            }
+            PQclear(res);
         }
-        PQclear(res);
-
         nominatim_exportCreatePreparedQueries(thread_data[i].conn);
     }
-
 
     fprintf(stderr, "Starting indexing rank (%i to %i) using %i threads\n", rank_min, rank_max, num_threads);
 

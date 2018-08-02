@@ -48,6 +48,7 @@ CREATE INDEX idx_search_name_-partition-_place_id ON search_name_-partition- USI
 CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USING GIST (centroid) {ts:address-index};
 CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector) WITH (fastupdate = off) {ts:address-index};
 
+DROP TABLE IF EXISTS location_road_-partition-;
 CREATE TABLE location_road_-partition- (
   place_id BIGINT,
   partition SMALLINT,

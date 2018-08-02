@@ -5,6 +5,8 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
+# (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
+
 $aCMDOptions
 = array(
    'Import / update / index osm data',
@@ -14,6 +16,7 @@ $aCMDOptions
 
    array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
    array('check-for-updates', '', 0, 1, 0, 0, 'bool', 'Check if new updates are available'),
+   array('no-update-functions', '', 0, 1, 0, 0, 'bool', 'Do not update trigger functions to support differential updates (assuming the diff update logic is already present)'),
    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
@@ -56,6 +59,17 @@ if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
 $sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
+if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+    $sOsm2pgsqlCmd .= ' -U ' . $aDSNInfo['username'];
+}
+if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+    $sOsm2pgsqlCmd .= ' -H ' . $aDSNInfo['hostspec'];
+}
+$aProcEnv = null;
+if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+    $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+}
+
 if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
     $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
 }
@@ -84,11 +98,13 @@ if ($aResult['init-updates']) {
         echo "and have set up CONST_Pyosmium_Binary to point to pyosmium-get-changes.\n";
         fail('pyosmium-get-changes not found or not usable');
     }
-    $sSetup = CONST_InstallPath.'/utils/setup.php';
-    $iRet = -1;
-    passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
-    if ($iRet != 0) {
-        fail('Error running setup script');
+    if (!$aResult['no-update-functions']) {
+        $sSetup = CONST_InstallPath.'/utils/setup.php';
+        $iRet = -1;
+        passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
+        if ($iRet != 0) {
+            fail('Error running setup script');
+        }
     }
 
     $sDatabaseDate = getDatabaseDate($oDB);
@@ -137,7 +153,7 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     // Import the file
     $sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
     echo $sCMD."\n";
-    exec($sCMD, $sJunk, $iErrorLevel);
+    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
 
     if ($iErrorLevel) {
         fail("Error from osm2pgsql, $iErrorLevel\n");
@@ -189,7 +205,7 @@ if ($bHaveDiff) {
     // import generated change file
     $sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
     echo $sCMD."\n";
-    exec($sCMD, $sJunk, $iErrorLevel);
+    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
     if ($iErrorLevel) {
         fail("osm2pgsql exited with error level $iErrorLevel\n");
     }
@@ -273,7 +289,15 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    passthru(CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank']);
+    $sCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank'];
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCmd .= ' -H ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCmd .= ' -U ' . $aDSNInfo['username'];
+    }
+
+    runWithEnv($sCmd, $aProcEnv);
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
@@ -287,6 +311,12 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
     $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
     $sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCMDIndex .= ' -H ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCMDIndex .= ' -U ' . $aDSNInfo['username'];
+    }
 
     while (true) {
         $fStartTime = time();
@@ -354,7 +384,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $fCMDStartTime = time();
             echo $sCMDImport."\n";
             unset($sJunk);
-            exec($sCMDImport, $sJunk, $iErrorLevel);
+            $iErrorLevel = runWithEnv($sCMDImport, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error executing osm2pgsql: $iErrorLevel\n";
                 exit($iErrorLevel);
@@ -383,7 +413,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $fCMDStartTime = time();
 
             echo "$sThisIndexCmd\n";
-            exec($sThisIndexCmd, $sJunk, $iErrorLevel);
+            $iErrorLevel = runWithEnv($sThisIndexCmd, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);

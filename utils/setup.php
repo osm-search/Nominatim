@@ -5,6 +5,8 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 ini_set('memory_limit', '800M');
 
+# (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
+
 $aCMDOptions
 = array(
    'Create and setup nominatim search system',
@@ -60,7 +62,6 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     }
 }
 
-
 // by default, use all but one processor, but never more than 15.
 $iInstances = isset($aCMDResult['threads'])
               ? $aCMDResult['threads']
@@ -70,10 +71,6 @@ if ($iInstances < 1) {
     $iInstances = 1;
     warn("resetting threads to $iInstances");
 }
-if ($iInstances > getProcessorCount()) {
-    $iInstances = getProcessorCount();
-    warn("resetting threads to $iInstances");
-}
 
 // Assume we can steal all the cache memory in the box (unless told otherwise)
 if (isset($aCMDResult['osm2pgsql-cache'])) {
@@ -81,6 +78,9 @@ if (isset($aCMDResult['osm2pgsql-cache'])) {
 } else {
     $iCacheMemory = getCacheMemoryMB();
 }
+
+$sModulePath = CONST_Database_Module_Path;
+info('module path: ' . $sModulePath);
 
 $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
@@ -92,7 +92,22 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     if (!PEAR::isError($oDB)) {
         fail('database already exists ('.CONST_Database_DSN.')');
     }
-    passthruCheckReturn('createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database']);
+
+    $sCreateDBCmd = 'createdb -E UTF-8 -p '.$aDSNInfo['port'].' '.$aDSNInfo['database'];
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCreateDBCmd .= ' -U ' . $aDSNInfo['username'];
+    }
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCreateDBCmd .= ' -h ' . $aDSNInfo['hostspec'];
+    }
+
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
+
+    $result = runWithEnv($sCreateDBCmd, $aProcEnv);
+    if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
@@ -140,17 +155,8 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
         exit(1);
     }
 
-    // Try accessing the C module, so we know early if something is wrong
-    // and can simply error out.
-    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-    $sSQL .= CONST_InstallPath."/module/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
-    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
-    $oResult = $oDB->query($sSQL);
-
-    if (PEAR::isError($oResult)) {
-        echo "\nERROR: Failed to load nominatim module. Reason:\n";
-        echo $oResult->userinfo."\n\n";
-        exit(1);
+    if (!checkModulePresence()) {
+        fail('error loading nominatim.so module');
     }
 
     if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
@@ -180,8 +186,8 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     // is only defined in the subsequently called create_tables.
     // Create dummies here that will be overwritten by the proper
     // versions in create-tables.
-    pgsqlRunScript('CREATE TABLE place_boundingbox ()');
-    pgsqlRunScript('create type wikipedia_article_match as ()');
+    pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');
+    pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()', false);
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
@@ -209,8 +215,20 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $osm2pgsql .= ' -lsc -O gazetteer --hstore --number-processes 1';
     $osm2pgsql .= ' -C '.$iCacheMemory;
     $osm2pgsql .= ' -P '.$aDSNInfo['port'];
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $osm2pgsql .= ' -U ' . $aDSNInfo['username'];
+    }
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $osm2pgsql .= ' -H ' . $aDSNInfo['hostspec'];
+    }
+
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
+
     $osm2pgsql .= ' -d '.$aDSNInfo['database'].' '.$aCMDResult['osm-file'];
-    passthruCheckReturn($osm2pgsql);
+    runWithEnv($osm2pgsql, $aProcEnv);
 
     $oDB =& getDB();
     if (!$aCMDResult['ignore-errors'] && !chksql($oDB->getRow('select * from place limit 1'))) {
@@ -221,9 +239,11 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     info('Create Functions');
     $bDidSomething = true;
-    if (!file_exists(CONST_InstallPath.'/module/nominatim.so')) {
-        fail('nominatim module not built');
+
+    if (!checkModulePresence()) {
+        fail('error loading nominatim.so module');
     }
+
     create_sql_functions($aCMDResult);
 }
 
@@ -413,14 +433,23 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
         fail(pg_last_error($aDBInstances[$iLoadThreads]->connection));
     }
 
-    $bAnyBusy = true;
-    while ($bAnyBusy) {
-        $bAnyBusy = false;
-        for ($i = 0; $i <= $iLoadThreads; $i++) {
-            if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+    $bFailed = false;
+    for ($i = 0; $i <= $iLoadThreads; $i++) {
+        while (($hPGresult = pg_get_result($aDBInstances[$i]->connection)) !== false) {
+            $resultStatus = pg_result_status($hPGresult);
+            // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
+            // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
+            // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
+            echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
+            if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
+                $resultError = pg_result_error($hPGresult);
+                echo '-- error text ' . $i . ': ' . $resultError . "\n";
+                $bFailed = true;
+            }
         }
-        sleep(1);
-        echo '.';
+    }
+    if ($bFailed) {
+        fail('SQL errors loading placex and/or location_property_osmline tables');
     }
     echo "\n";
     info('Reanalysing database');
@@ -579,14 +608,34 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $sOutputFile = '';
     $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$iInstances.$sOutputFile;
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sBaseCmd .= ' -H ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sBaseCmd .= ' -U ' . $aDSNInfo['username'];
+    }
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
+
     info('Index ranks 0 - 4');
-    passthruCheckReturn($sBaseCmd.' -R 4');
+    $iStatus = runWithEnv($sBaseCmd.' -R 4', $aProcEnv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
+    }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 5 - 25');
-    passthruCheckReturn($sBaseCmd.' -r 5 -R 25');
+    $iStatus = runWithEnv($sBaseCmd.' -r 5 -R 25', $aProcEnv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
+    }
     if (!$aCMDResult['index-noanalyse']) pgsqlRunScript('ANALYSE');
     info('Index ranks 26 - 30');
-    passthruCheckReturn($sBaseCmd.' -r 26');
+    $iStatus = runWithEnv($sBaseCmd.' -r 26', $aProcEnv);
+    if ($iStatus != 0) {
+        fail('error status ' . $iStatus . ' running nominatim!');
+    }
 
     info('Index postcodes');
     $oDB =& getDB();
@@ -722,6 +771,16 @@ function pgsqlRunScriptFile($sFilename)
     if (!$aCMDResult['verbose']) {
         $sCMD .= ' -q';
     }
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCMD .= ' -h ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCMD .= ' -U ' . $aDSNInfo['username'];
+    }
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
 
     $ahGzipPipes = null;
     if (preg_match('/\\.gz$/', $sFilename)) {
@@ -745,9 +804,8 @@ function pgsqlRunScriptFile($sFilename)
                      2 => array('file', '/dev/null', 'a')
                     );
     $ahPipes = null;
-    $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
+    $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
     if (!is_resource($hProcess)) fail('unable to start pgsql');
-
 
     // TODO: error checking
     while (!feof($ahPipes[1])) {
@@ -830,32 +888,24 @@ function pgsqlRunDropAndRestore($sDumpFile)
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'pg_restore -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
-
-    $aDescriptors = array(
-                     0 => array('pipe', 'r'),
-                     1 => array('pipe', 'w'),
-                     2 => array('file', '/dev/null', 'a')
-                    );
-    $ahPipes = null;
-    $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes);
-    if (!is_resource($hProcess)) fail('unable to start pg_restore');
-
-    fclose($ahPipes[0]);
-
-    // TODO: error checking
-    while (!feof($ahPipes[1])) {
-        echo fread($ahPipes[1], 4096);
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCMD .= ' -h ' . $aDSNInfo['hostspec'];
     }
-    fclose($ahPipes[1]);
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCMD .= ' -U ' . $aDSNInfo['username'];
+    }
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
 
-    $iReturn = proc_close($hProcess);
+    $iReturn = runWithEnv($sCMD, $aProcEnv);
 }
 
-function passthruCheckReturn($cmd)
+function passthruCheckReturn($sCmd)
 {
-    $result = -1;
-    passthru($cmd, $result);
-    if ($result != 0) fail('Error executing external command: '.$cmd);
+    $iResult = -1;
+    passthru($sCmd, $iResult);
 }
 
 function replace_tablespace($sTemplate, $sTablespace, $sSql)
@@ -871,8 +921,9 @@ function replace_tablespace($sTemplate, $sTablespace, $sSql)
 
 function create_sql_functions($aCMDResult)
 {
+    global $sModulePath;
     $sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
-    $sTemplate = str_replace('{modulepath}', CONST_InstallPath.'/module', $sTemplate);
+    $sTemplate = str_replace('{modulepath}', $sModulePath, $sTemplate);
     if ($aCMDResult['enable-diff-updates']) {
         $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
     }
@@ -889,4 +940,27 @@ function create_sql_functions($aCMDResult)
         $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
     }
     pgsqlRunScript($sTemplate);
+}
+
+function checkModulePresence()
+{
+    // Try accessing the C module, so we know early if something is wrong
+    // and can simply error out.
+    global $sModulePath;
+    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
+    $sSQL .= $sModulePath."/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+
+    $oDB =& getDB();
+    $oResult = $oDB->query($sSQL);
+
+    $bResult = true;
+
+    if (PEAR::isError($oResult)) {
+        echo "\nERROR: Failed to load nominatim module. Reason:\n";
+        echo $oResult->userinfo."\n\n";
+        $bResult = false;
+    }
+
+    return $bResult;
 }

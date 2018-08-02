@@ -73,6 +73,11 @@ The tests can be configured with a set of environment variables:
                    the test databases (db tests)
  * `TEST_DB` - name of test database (db tests)
  * `ABI_TEST_DB` - name of the database containing the API test data (api tests)
+ * `DB_HOST` - (optional) hostname of database host
+ * `DB_USER` - (optional) username of database login
+ * `DB_PASS` - (optional) password for database login
+ * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim
+ *                        module shared library file
  * `TEST_SETTINGS_TEMPLATE` - file to write temporary Nominatim settings to
  * `REMOVE_TEMPLATE` - if true, the template database will not be reused during
                        the next run. Reusing the base templates speeds up tests

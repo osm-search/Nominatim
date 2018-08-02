@@ -158,6 +158,16 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+        $sCMD .= ' -h ' . $aDSNInfo['hostspec'];
+    }
+    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+        $sCMD .= ' -U ' . $aDSNInfo['username'];
+    }
+    $aProcEnv = null;
+    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    }
     if (!$bVerbose) {
         $sCMD .= ' -q';
     }
@@ -170,19 +180,38 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
                      2 => STDERR
                     );
     $ahPipes = null;
-    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes);
+    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
     if (!is_resource($hProcess)) {
         fail('unable to start pgsql');
     }
 
     while (strlen($sScript)) {
-        $written = fwrite($ahPipes[0], $sScript);
-        if ($written <= 0) break;
-        $sScript = substr($sScript, $written);
+        $iWritten = fwrite($ahPipes[0], $sScript);
+        if ($iWritten <= 0) break;
+        $sScript = substr($sScript, $iWritten);
     }
     fclose($ahPipes[0]);
     $iReturn = proc_close($hProcess);
     if ($bfatal && $iReturn > 0) {
         fail("pgsql returned with error code ($iReturn)");
     }
+}
+
+
+function runWithEnv($sCmd, $aEnv)
+{
+    $aFDs = array(
+             0 => array('pipe', 'r'),
+             1 => STDOUT,
+             2 => STDERR);
+    $aPipes = null;
+    $hProc = @proc_open($sCmd, $aFDs, $aPipes, null, $aEnv);
+    if (!is_resource($hProc)) {
+        fail('unable to run command:' . $sCmd);
+    }
+
+    fclose($aPipes[0]); // no stdin
+
+    $iStat = proc_close($hProc);
+    return $iStat;
 }

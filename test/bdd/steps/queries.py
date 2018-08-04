@@ -593,6 +593,27 @@ def step_impl(context, lid, coords):
         assert_greater_equal(bbox[2], coord[2])
         assert_less_equal(bbox[3], coord[3])
 
+@then(u'result (?P<lid>\d+ )?has centroid in (?P<coords>[\d,.-]+)')
+def step_impl(context, lid, coords):
+    if lid is None:
+        context.execute_steps("then at least 1 result is returned")
+        bboxes = zip(context.response.property_list('lat'),
+                     context.response.property_list('lon'))
+    else:
+        context.execute_steps("then more than %sresults are returned" % lid)
+        res = context.response.result[int(lid)]
+        bboxes = [ (res['lat'], res['lon']) ]
+
+    coord = [ float(x) for x in coords.split(',') ]
+
+    for lat, lon in bboxes:
+        lat = float(lat)
+        lon = float(lon)
+        assert_greater_equal(lat, coord[0])
+        assert_less_equal(lat, coord[1])
+        assert_greater_equal(lon, coord[2])
+        assert_less_equal(lon, coord[3])
+
 @then(u'there are(?P<neg> no)? duplicates')
 def check_for_duplicates(context, neg):
     context.execute_steps("then at least 1 result is returned")

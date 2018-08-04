@@ -111,7 +111,7 @@ Feature: Search queries
         When sending json search query "restaurant"
          | bounded | viewbox |
          | 1       | 9.93027,53.61634,10.10073,53.54500 |
-        Then result has bounding box in 53.54500,53.61634,9.93027,10.10073
+        Then result has centroid in 53.54500,53.61634,9.93027,10.10073
 
     Scenario: Prefer results within viewbox
         When sending json search query "25 de Mayo" with address

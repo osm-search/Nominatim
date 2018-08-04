@@ -106,18 +106,39 @@ class ReverseGeocode
         if ($aPoly) {
             $sCountryCode = $aPoly['country_code'];
 
-            $sSQL = 'SELECT place_id, ST_distance('.$sPointSQL.', geometry) as distance';
+            // look for place nodes with the given country code
+            $sSQL = 'SELECT place_id FROM';
+            $sSQL .= ' (SELECT place_id, rank_search,';
+            $sSQL .= '         ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
-            $sSQL .= ' AND rank_address > 0';
-            $sSQL .= ' AND rank_address <= ' .min(25, $iMaxRank);
+            $sSQL .= ' AND rank_search > 4';
+            $sSQL .= ' AND rank_search <= ' .min(25, $iMaxRank);
             $sSQL .= ' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.0)';
-            $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
+            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 5.0)) p ';
+            $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
+            $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
             $sSQL .= ' LIMIT 1';
+
+            if (CONST_Debug) var_dump($sSQL);
+            $aPlacNode = chksql(
+                $this->oDB->getRow($sSQL),
+                'Could not determine place node.'
+            );
+            if ($aPlacNode) {
+                return $aPlacNode;
+            }
+
+            // still nothing, then return the country object
+            $sSQL = 'SELECT place_id, ST_distance('.$sPointSQL.', centroid) as distance';
+            $sSQL .= ' FROM placex';
+            $sSQL .= ' WHERE country_code = \''.$sCountryCode.'\'';
+            $sSQL .= ' AND rank_search = 4 AND rank_address = 4';
+            $sSQL .= ' AND class in (\'boundary\',  \'place\')';
+            $sSQL .= ' ORDER BY distance ASC';
 
             if (CONST_Debug) var_dump($sSQL);
             $aPlacNode = chksql(
@@ -138,13 +159,13 @@ class ReverseGeocode
         // polygon search begins at suburb-level
         if ($iMaxRank > 25) $iMaxRank = 25;
         // no polygon search over country-level
-        if ($iMaxRank < 4) $iMaxRank = 4;
+        if ($iMaxRank < 5) $iMaxRank = 5;
         // search for polygon
         $sSQL = 'SELECT place_id, parent_place_id, rank_address, rank_search FROM';
         $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
         $sSQL .= ' FROM placex';
         $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
-        $sSQL .= ' AND rank_address Between 4 AND ' .$iMaxRank;
+        $sSQL .= ' AND rank_address Between 5 AND ' .$iMaxRank;
         $sSQL .= ' AND geometry && '.$sPointSQL;
         $sSQL .= ' AND type != \'postcode\' ';
         $sSQL .= ' AND name is not null';
@@ -165,49 +186,27 @@ class ReverseGeocode
             $iPlaceID = $aPoly['place_id'];
 
             if ($iRankAddress != $iMaxRank) {
-            //search diameter for the place node search
-                if ($iMaxRank <= 4) {
-                    $fSearchDiam = 4;
-                } elseif ($iMaxRank <= 8) {
-                    $fSearchDiam = 2;
-                } elseif ($iMaxRank <= 10) {
-                    $fSearchDiam = 1;
-                } elseif ($iMaxRank <= 12) {
-                    $fSearchDiam = 0.8;
-                } elseif ($iMaxRank <= 17) {
-                    $fSearchDiam = 0.6;
-                } elseif ($iMaxRank <= 18) {
-                    $fSearchDiam = 0.2;
-                } elseif ($iMaxRank <= 25) {
-                    $fSearchDiam = 0.1;
-                }
-
-                $sSQL = 'SELECT place_id';
-                $sSQL .= ' FROM (';
-                $sSQL .= ' SELECT place_id, rank_address,country_code, geometry,';
+                $sSQL = 'SELECT place_id FROM ';
+                $sSQL .= '(SELECT place_id, rank_search, country_code, geometry,';
                 $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
                 $sSQL .= ' FROM placex';
                 $sSQL .= ' WHERE osm_type = \'N\'';
-                if ($iRankAddress = 16) {
-                // using rank_search because of a better differentiation for place nodes at rank_address 16
-                    $sSQL .= ' AND rank_search > '.$iRankSearch;
-                    $sSQL .= ' AND rank_search <= ' .$iMaxRank;
-                    $sSQL .= ' AND class = \'place\'';
-                } else {
-                    $sSQL .= ' AND rank_address > '.$iRankAddress;
-                    $sSQL .= ' AND rank_address <= ' .$iMaxRank;
-                }
-                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
+                // using rank_search because of a better differentiation
+                // for place nodes at rank_address 16
+                $sSQL .= ' AND rank_search > '.$iRankSearch;
+                $sSQL .= ' AND rank_search <= ' .$iMaxRank;
+                $sSQL .= ' AND class = \'place\'';
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
-                $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+                $sSQL .= ' AND indexed_status = 0 AND linked_place_id is null';
                 // preselection through bbox
                 $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
                 $sSQL .= ' ORDER BY distance ASC,';
                 $sSQL .= ' rank_address DESC';
                 $sSQL .= ' limit 500) as a';
                 $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
-                $sSQL .= ' ORDER BY distance ASC, rank_address DESC';
+                $sSQL .= ' AND distance <= reverse_place_diameter(rank_search)';
+                $sSQL .= ' ORDER BY distance ASC, rank_search DESC';
                 $sSQL .= ' LIMIT 1';
 
                 if (CONST_Debug) var_dump($sSQL);

@@ -256,6 +256,28 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)
+  RETURNS FLOAT
+  AS $$
+BEGIN
+  IF rank_search <= 4 THEN
+    RETURN 5.0;
+  ELSIF rank_search <= 8 THEN
+    RETURN 1.8;
+  ELSIF rank_search <= 12 THEN
+    RETURN 0.6;
+  ELSIF rank_search <= 17 THEN
+    RETURN 0.16;
+  ELSIF rank_search <= 18 THEN
+    RETURN 0.08;
+  ELSIF rank_search <= 19 THEN
+    RETURN 0.04;
+  END IF;
+
+  RETURN 0.02;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
                                       OUT rank_search SMALLINT, OUT rank_address SMALLINT)

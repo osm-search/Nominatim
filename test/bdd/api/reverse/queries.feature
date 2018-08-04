@@ -48,8 +48,14 @@ Feature: Reverse geocoding
 
     Scenario: Location off the coast
         When sending jsonv2 reverse coordinates 54.046489113,8.5546870529
-         | zoom |
-         | 5 |
         Then results contain
-         | error |
-         | Unable to geocode |
+         | display_name |
+         | Freie und Hansestadt Hamburg, Deutschland |
+
+    Scenario: When slightly outside town, the town is not shown
+        When sending jsonv2 reverse coordinates -32.122,-56.114
+         | zoom |
+         | 15 |
+        Then results contain
+         | display_name |
+         | Tacuarembó, Uruguay |

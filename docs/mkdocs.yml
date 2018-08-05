@@ -6,6 +6,7 @@ repo_url: https://github.com/openstreetmap/Nominatim
 pages:
     - 'Introduction' : 'index.md'
     - 'API Reference':
+        - 'Overview': 'api/Overview.md'
         - 'Search': 'api/Search.md'
         - 'Reverse': 'api/Reverse.md'
         - 'Address Lookup': 'api/Lookup.md'

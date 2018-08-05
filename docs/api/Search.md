@@ -1,125 +1,173 @@
+# Search queries
 
-## Search
-Nominatim indexes named (or numbered) features with the OSM data set and a subset of other unnamed features (pubs, hotels, churches, etc)
+The search API allows to look up a location from a textual description.
+Nominatim supports structured as well as free-form search queries.
 
-Search terms are processed first left to right and then right to left if that fails.
+The search query may also contain
+[special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
+which are tranlated into specific OpenStreetMap(OSM) tags (e.g. Pub => amenity=pub).
+Note that this only limits the items to be found. It is not suited to return complete
+lists of OSM objects of a specific type.
+Use [Overpass API](https://overpass-api.de/) for that.
 
-Both searches will work: [pilkington avenue, birmingham](//nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham), [birmingham, pilkington avenue](//nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue)
+## Parameters
 
-(Commas are optional, but improve performance by reducing the complexity of the search.)
-
-Where house numbers have been defined for an area they should be used: [135 pilkington avenue, birmingham](//nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham)
-
-### Special Keywords
-Various keywords are translated into searches for specific osm tags (e.g. Pub => amenity=pub).  A current list of [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases) processed is available.
-
-### Parameters
+The search API has the following two formats:
 
 ```
-   https://nominatim.openstreetmap.org/search?<params>
    https://nominatim.openstreetmap.org/search/<query>?<params>
 ```
 
-* `format=[html|xml|json|jsonv2|geojson|geocodejson]`
+This format only accepts a free-form query string where the
+parts of the query are separated by slashes.
 
-    * Output format
-    * defaults to `html`
+```
+   https://nominatim.openstreetmap.org/search?<params>
+```
 
-
-* `json_callback=<string>`
-
-    * Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)` 
-
-* `accept-language=<browser language string>`
-
-    * Preferred language order for showing search results, overrides the value specified in the "Accept-Language" HTTP header.
-    * Either uses standard rfc2616 accept-language string or a simple comma separated list of language codes.
+In this form, the query may be given through two different sets of parameters:
 
 * `q=<query>`
 
-    * Query string to search for.
-    * Alternatively can be entered as:
+    Free-form query string to search for.
+    Free-form queries are processed first left to right and then right to
+    left if that fails. So you may search for
+    [pilkington avenue, birmingham](//nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
+    [birmingham, pilkington avenue](//nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
+    Commas are optional, but improve performance by reducing the complexity
+    of the search.
 
-        * `street=<housenumber> <streetname>`
-        * `city=<city>`
-        * `county=<county>`
-        * `state=<state>`
-        * `country=<country>`
-        * `postalcode=<postalcode>`
-        
-      **(experimental)** Alternative query string format for structured requests. 
-Structured requests are faster and require fewer server resources. **Do not combine with `q=<query>` parameter**.
+
+* `street=<housenumber> <streetname>`
+  `city=<city>`
+  `county=<county>`
+  `state=<state>`
+  `country=<country>`
+  `postalcode=<postalcode>`
+
+    Alternative query string format for structured requests.
+    Structured requests are faster but are less robust against alternative
+    OSM tagging schemas. **Do not combine with** `q=<query>` **parameter**.
+
+All three query forms accept the additional paramters listed below.
+
+### Output format
+
+* `format=[html|xml|json|jsonv2|geojson|geocodejson]`
+
+See below for details on each format. (Default: html)
+
+* `json_callback=<string>`
+
+Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Only has an effect for JSON output formats.
+
+### Output details
+
+* `addressdetails=[0|1]`
+
+Include a breakdown of the address into elements. (Default: 0)
+
+
+* `extratags=[0|1]`
+
+Include additional information in the result if available,
+e.g. wikipedia link, opening hours. (Default: 0)
+
+
+* `namedetails=[0|1]`
+
+Include a list of alternative names in the results. These may include
+language variants, references, operator and brand. (Default: 0)
+
+
+### Language of results
+
+* `accept-language=<browser language string>`
+
+Preferred language order for showing search results, overrides the value
+specified in the "Accept-Language" HTTP header.
+Either use a standard RFC2616 accept-language string or a simple
+comma-separated list of language codes.
+
+### Result limitation
 
 * `countrycodes=<countrycode>[,<countrycode>][,<countrycode>]...`
 
-    * Limit search results to a specific country (or a list of countries).  
-    * `<countrycode>` should be the ISO 3166-1alpha2 code, e.g. `gb` for the United Kingdom, `de` for Germany, etc.
+Limit search results to one or more countries. `<countrycode>` must be the
+ISO 3166-1alpha2 code, e.g. `gb` for the United Kingdom, `de` for Germany.
 
-* `viewbox=<x1>,<y1>,<x2>,<y2>`
-    * The preferred area to find search results. Any two corner points of the box are accepted in any order as long as they span a real box.
-
-* `bounded=[0|1]`
-    * defaults to 0
-    * Restrict the results to only items contained with the viewbox (see above). 
-    * Restricting the results to the bounding box also enables searching by amenity only. 
-    * For example a search query of just `"[pub]"` would normally be rejected but with `bounded=1` will result in a list of items matching within the bounding box.
-
-* `polygon=[0|1]`
-    * defaults to 0
-    * Output polygon outlines for items found **(deprecated, use one of the polygon_* parameters instead)**
-
-* `addressdetails=[0|1]`
-    * defaults to 0
-    * Include a breakdown of the address into elements
-
-* `email=<valid email address>`
-
-    * If you are making large numbers of request please include a valid email address or alternatively include your email address as part of the User-Agent string.
-    * This information will be kept confidential and only used to contact you in the event of a problem, see [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
 * `exclude_place_ids=<place_id,[place_id],[place_id]`
 
-    * If you do not want certain openstreetmap objects to appear in the search result, give a comma separated list of the place_id's you want to skip. This can be used to broaden search results. For example, if a previous query only returned a few results, then including those here would cause the search to return other, less accurate, matches (if possible)
+If you do not want certain OSM objects to appear in the search
+result, give a comma separated list of the `place_id`s you want to skip.
+This can be used to broaden search results. For example, if a previous
+query only returned a few results, then including those here would cause
+the search to return other, less accurate, matches (if possible).
+
 
 * `limit=<integer>`
-    * defaults to 10
-    * Limit the number of returned results.
 
-* `dedupe=[0|1]`
-    * defaults to 1
-    * Sometimes you have several objects in OSM identifying the same place or object in reality. The simplest case is a street being split in many different OSM ways due to different characteristics. 
-    * Nominatim will attempt to detect such duplicates and only return one match; this is controlled by the dedupe parameter which defaults to 1. Since the limit is, for reasons of efficiency, enforced before and not after de-duplicating, it is possible that de-duplicating leaves you with less results than requested.
+Limit the number of returned results. (Default: 10)
 
-* `debug=[0|1]`
-    * defaults to 0
-    * Output assorted developer debug information. Data on internals of nominatim "Search Loop" logic, and SQL queries. The output is (rough) HTML format. This overrides the specified machine readable format.
+
+* `viewbox=<x1>,<y1>,<x2>,<y2>`
+
+The preferred area to find search results. Any two corner points of the box
+are accepted in any order as long as they span a real box.
+
+
+* `bounded=[0|1]`
+
+When a viewbox is given, restrict the result to items contained with that
+viewbox (see above). When `viewbox` and `bounded` are given, an amenity
+only search is allowed. In this case, give the special keyword for the
+amenity in squaer brackets, e.g. `[pub]`. (Default: 0)
+
+
+### Polygon output
 
 * `polygon_geojson=1`
-    * Output geometry of results in geojson format.
-
 * `polygon_kml=1`
-    * Output geometry of results in kml format.
-
 * `polygon_svg=1`
-    * Output geometry of results in svg format.
-
 * `polygon_text=1`
-    * Output geometry of results as a WKT.
+
+Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
+options can be used at a time. (Default: 0)
 
 * `polygon_threshold=0.0`
-    * defaults to 0.0
-    * Simplify the output geometry before returning. The parameter is the
-      tolerance in degrees with which the geometry may differ from the original
-      geometry. Topology is preserved in the result.
 
-* `extratags=1`
-    * Include additional information in the result if available, e.g. wikipedia link, opening hours.
+Simplify the output geometry before returning. The parameter is the
+tolerance in degrees with which the geometry may differ from the original
+geometry. Topology is preserved in the result. (Default: 0.0)
 
-* `namedetails=1`
-    * Include a list of alternative names in the results.
-    * These may include language variants, references, operator and brand.
+### Other
 
-### Examples
+* `email=<valid email address>`
+
+If you are making large numbers of request please include an appropriate email
+address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+
+* `dedupe=[0|1]`
+
+Sometimes you have several objects in OSM identifying the same place or
+object in reality. The simplest case is a street being split in many
+different OSM ways due to different characteristics. Nominatim will
+attempt to detect such duplicates and only return one match unless
+this parameter is set to 0. (Default: 1)
+
+
+
+* `debug=[0|1]`
+
+Output assorted developer debug information. Data on internals of Nominatim's
+"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
+This overrides the specified machine readable format. (Default: 0)
+
+
+
+## Examples
 
 
 ##### XML with polygon points

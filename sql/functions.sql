@@ -864,6 +864,10 @@ BEGIN
         SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
           INTO NEW.rank_search, NEW.rank_address;
 
+        IF NOT ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
+            NEW.rank_address := 0;
+        END IF;
+
     ELSEIF NEW.class = 'place' THEN
       IF NEW.type in ('continent') THEN
         NEW.rank_search := 2;

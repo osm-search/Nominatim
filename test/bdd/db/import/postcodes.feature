@@ -82,7 +82,7 @@ Feature: Import of postcodes
             | object | postcode  |
             | W22    | 112 DE 34 |
 
-    Scenario: Roads get postcodes from nearby buildings without other info
+    Scenario: Roads get postcodes from nearby named buildings without other info
         Given the scene admin-areas
         And the named places
             | osm | class    | type           | geometry |
@@ -90,6 +90,19 @@ Feature: Import of postcodes
         And the named places
             | osm | class    | type        | addr+postcode | geometry |
             | W22 | building | yes         | 445023        | :building:w2N |
+        When importing
+        Then placex contains
+            | object | postcode |
+            | W93    | 445023   |
+
+    Scenario: Roads get postcodes from nearby unnamed buildings without other info
+        Given the scene admin-areas
+        And the named places
+            | osm | class    | type           | geometry |
+            | W93 | highway  | residential    | :w2N     |
+        And the named places
+            | osm | class    | type        | addr+postcode | geometry |
+            | W22 | place    | postcode    | 445023        | :building:w2N |
         When importing
         Then placex contains
             | object | postcode |

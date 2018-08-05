@@ -260,19 +260,19 @@ class PlaceLookup
             $sSQL .= "  'P' as osm_type,";
             $sSQL .= '  (SELECT osm_id from placex p WHERE p.place_id = lp.parent_place_id) as osm_id,';
             $sSQL .= "  'place' as class, 'postcode' as type,";
-            $sSQL .= '  null as admin_level, rank_search, rank_address,';
+            $sSQL .= '  null::smallint as admin_level, rank_search, rank_address,';
             $sSQL .= '  place_id, parent_place_id,';
-            $sSQL .= '  null as housenumber,';
+            $sSQL .= '  -1 as housenumber,';
             $sSQL .= '  country_code,';
             $sSQL .= $this->langAddressSql('-1');
             $sSQL .= '  postcode as placename,';
             $sSQL .= '  postcode as ref,';
-            if ($this->bExtraTags) $sSQL .= 'null AS extra,';
-            if ($this->bNameDetails) $sSQL .= 'null AS names,';
+            if ($this->bExtraTags) $sSQL .= 'null::text AS extra,';
+            if ($this->bNameDetails) $sSQL .= 'null::text AS names,';
             $sSQL .= '  ST_x(geometry) AS lon, ST_y(geometry) AS lat,';
             $sSQL .= '  (0.75-(rank_search::float/40)) AS importance, ';
             $sSQL .= $this->addressImportanceSql('geometry', 'lp.parent_place_id');
-            $sSQL .= '  null AS extra_place ';
+            $sSQL .= '  null::text AS extra_place ';
             $sSQL .= 'FROM location_postcode lp';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= "   AND lp.rank_address between $iMinRank and $iMaxRank";
@@ -295,7 +295,7 @@ class PlaceLookup
                     $sSQL .= '     (SELECT osm_id from placex p WHERE p.place_id=blub.parent_place_id) as osm_id, ';
                     $sSQL .= "     'place' AS class, ";
                     $sSQL .= "     'house' AS type, ";
-                    $sSQL .= '     null AS admin_level, ';
+                    $sSQL .= '     null::smallint AS admin_level, ';
                     $sSQL .= '     30 AS rank_search, ';
                     $sSQL .= '     30 AS rank_address, ';
                     $sSQL .= '     place_id, ';
@@ -303,15 +303,15 @@ class PlaceLookup
                     $sSQL .= '     housenumber_for_place as housenumber,';
                     $sSQL .= "     'us' AS country_code, ";
                     $sSQL .= $this->langAddressSql('housenumber_for_place');
-                    $sSQL .= '     null AS placename, ';
-                    $sSQL .= '     null AS ref, ';
-                    if ($this->bExtraTags) $sSQL .= 'null AS extra,';
-                    if ($this->bNameDetails) $sSQL .= 'null AS names,';
+                    $sSQL .= '     null::text AS placename, ';
+                    $sSQL .= '     null::text AS ref, ';
+                    if ($this->bExtraTags) $sSQL .= 'null::text AS extra,';
+                    if ($this->bNameDetails) $sSQL .= 'null::text AS names,';
                     $sSQL .= '     st_x(centroid) AS lon, ';
                     $sSQL .= '     st_y(centroid) AS lat,';
                     $sSQL .= '     -1.15 AS importance, ';
                     $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
-                    $sSQL .= '     null AS extra_place ';
+                    $sSQL .= '     null::text AS extra_place ';
                     $sSQL .= ' FROM (';
                     $sSQL .= '     SELECT place_id, ';    // interpolate the Tiger housenumbers here
                     $sSQL .= '         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ';
@@ -341,7 +341,7 @@ class PlaceLookup
                 $sSQL .= '  osm_id, ';
                 $sSQL .= "  'place' AS class, ";
                 $sSQL .= "  'house' AS type, ";
-                $sSQL .= '  15 AS admin_level, ';
+                $sSQL .= '  null::smallint AS admin_level, ';
                 $sSQL .= '  30 AS rank_search, ';
                 $sSQL .= '  30 AS rank_address, ';
                 $sSQL .= '  place_id, ';
@@ -349,16 +349,16 @@ class PlaceLookup
                 $sSQL .= '  housenumber_for_place as housenumber,';
                 $sSQL .= '  country_code, ';
                 $sSQL .= $this->langAddressSql('housenumber_for_place');
-                $sSQL .= '  null AS placename, ';
-                $sSQL .= '  null AS ref, ';
-                if ($this->bExtraTags) $sSQL .= 'null AS extra, ';
-                if ($this->bNameDetails) $sSQL .= 'null AS names, ';
+                $sSQL .= '  null::text AS placename, ';
+                $sSQL .= '  null::text AS ref, ';
+                if ($this->bExtraTags) $sSQL .= 'null::text AS extra, ';
+                if ($this->bNameDetails) $sSQL .= 'null::text AS names, ';
                 $sSQL .= '  st_x(centroid) AS lon, ';
                 $sSQL .= '  st_y(centroid) AS lat, ';
                 // slightly smaller than the importance for normal houses
                 $sSQL .= '  -0.1 AS importance, ';
                 $sSQL .= $this->addressImportanceSql('centroid', 'blub.parent_place_id');
-                $sSQL .= '  null AS extra_place ';
+                $sSQL .= '  null::text AS extra_place ';
                 $sSQL .= '  FROM (';
                 $sSQL .= '     SELECT ';
                 $sSQL .= '         osm_id, ';
@@ -390,7 +390,7 @@ class PlaceLookup
                     $sSQL .= '     place_id AS osm_id, ';
                     $sSQL .= "     'place' AS class,";
                     $sSQL .= "     'house' AS type, ";
-                    $sSQL .= '     null AS admin_level, ';
+                    $sSQL .= '     null::smallint AS admin_level, ';
                     $sSQL .= '     30 AS rank_search,';
                     $sSQL .= '     30 AS rank_address, ';
                     $sSQL .= '     place_id,';
@@ -398,10 +398,10 @@ class PlaceLookup
                     $sSQL .= '     housenumber,';
                     $sSQL .= "     'us' AS country_code, ";
                     $sSQL .= $this->langAddressSql('-1');
-                    $sSQL .= '     null AS placename, ';
-                    $sSQL .= '     null AS ref, ';
-                    if ($this->bExtraTags) $sSQL .= 'null AS extra, ';
-                    if ($this->bNameDetails) $sSQL .= 'null AS names, ';
+                    $sSQL .= '     null::text AS placename, ';
+                    $sSQL .= '     null::text AS ref, ';
+                    if ($this->bExtraTags) $sSQL .= 'null::text AS extra, ';
+                    if ($this->bNameDetails) $sSQL .= 'null::text AS names, ';
                     $sSQL .= '     ST_X(centroid) AS lon, ';
                     $sSQL .= '     ST_Y(centroid) AS lat, ';
                     $sSQL .= '     -1.10 AS importance, ';
@@ -409,7 +409,7 @@ class PlaceLookup
                         'centroid',
                         'location_property_aux.parent_place_id'
                     );
-                    $sSQL .= '     null AS extra_place ';
+                    $sSQL .= '     null::text AS extra_place ';
                     $sSQL .= '  FROM location_property_aux ';
                     $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
 

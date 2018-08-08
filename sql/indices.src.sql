@@ -14,14 +14,24 @@ CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search) {ts:sear
 CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address) {ts:search-index};
 CREATE INDEX idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) {ts:address-index} where indexed_status > 0;
 CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) {ts:search-index} where parent_place_id IS NOT NULL;
-CREATE INDEX idx_placex_geometry_reverse_lookupPoint ON placex USING gist (geometry) {ts:search-index}
-where (name is not null or housenumber is not null or rank_address between 26 and 27) and class not in ('railway','tunnel','bridge','man_made') and rank_address >= 26 and indexed_status = 0 and linked_place_id is null;
-CREATE INDEX idx_placex_geometry_reverse_lookupPolygon ON placex USING gist (geometry) {ts:search-index} where St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon') and rank_address between 4 and 25 and type != 'postcode' and name is not null and indexed_status = 0 and linked_place_id is null;
-CREATE INDEX idx_placex_geometry_reverse_placeNode_rank_search ON placex USING gist (geometry) {ts:search-index} where
-osm_type = 'N' and rank_search > 0 and rank_search <= 25 and class = 'place' and type != 'postcode' and name is not null and indexed_status = 0 and linked_place_id is null;
-CREATE INDEX idx_placex_geometry_reverse_placeNode_rank_address ON placex USING gist (geometry) {ts:search-index} where
-osm_type = 'N' and rank_address > 0 and rank_address <= 25 and type != 'postcode' and name is not null and indexed_status = 0 and linked_place_id is null;
-GRANT SELECT ON Table country_osm_grid to "{www-user}";
+
+CREATE INDEX idx_placex_geometry_reverse_lookupPoint
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE (name is not null or housenumber is not null or rank_address between 26 and 27)
+    AND class not in ('railway','tunnel','bridge','man_made')
+    AND rank_address >= 26 AND indexed_status = 0 AND linked_place_id is null;
+CREATE INDEX idx_placex_geometry_reverse_lookupPolygon
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
+    AND rank_address between 4 and 25 AND type != 'postcode'
+    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+CREATE INDEX idx_placex_geometry_reverse_placeNode
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE osm_type = 'N' AND rank_search between 5 and 25
+    AND class = 'place' AND type != 'postcode'
+    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+
+GRANT SELECT ON table country_osm_grid to "{www-user}";
 
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 

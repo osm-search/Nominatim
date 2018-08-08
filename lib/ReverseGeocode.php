@@ -113,9 +113,8 @@ class ReverseGeocode
             $sSQL .= ' FROM placex';
             $sSQL .= ' WHERE osm_type = \'N\'';
             $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
-            $sSQL .= ' AND rank_search > 4';
-            $sSQL .= ' AND rank_search <= ' .min(25, $iMaxRank);
-            $sSQL .= ' AND type != \'postcode\'';
+            $sSQL .= ' AND rank_search between 5 and ' .min(25, $iMaxRank);
+            $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 5.0)) p ';
@@ -194,13 +193,12 @@ class ReverseGeocode
                 // using rank_search because of a better differentiation
                 // for place nodes at rank_address 16
                 $sSQL .= ' AND rank_search > '.$iRankSearch;
-                $sSQL .= ' AND rank_search <= ' .$iMaxRank;
+                $sSQL .= ' AND rank_search <= '.$iMaxRank;
                 $sSQL .= ' AND class = \'place\'';
                 $sSQL .= ' AND type != \'postcode\'';
                 $sSQL .= ' AND name IS NOT NULL ';
                 $sSQL .= ' AND indexed_status = 0 AND linked_place_id is null';
-                // preselection through bbox
-                $sSQL .= ' AND (SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.') && geometry';
+                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, reverse_place_diameter('.$iRankSearch.'::smallint))';
                 $sSQL .= ' ORDER BY distance ASC,';
                 $sSQL .= ' rank_address DESC';
                 $sSQL .= ' limit 500) as a';

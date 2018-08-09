@@ -1,77 +1,121 @@
-## Reverse Geocoding
+# Reverse Geocoding
 
-Reverse geocoding generates an address from a latitude and longitude.  The optional `zoom` parameter specifies the level of detail required in terms of something suitable for a Leaflet.js/OpenLayers/etc. zoom level. 
+Reverse geocoding generates an address from a latitude and longitude or from
+an OSM object.
 
-### Parameters
+## Parameters
+
+The main format of the reverse API is
+
 ```
 https://nominatim.openstreetmap.org/reverse?<query>
 ```
 
+There are two ways how the requested location can be specified:
+
+* `lat=<value>` `lon=<value>`
+
+    A geographic location to generate an address for. The coordiantes must be
+    in WGS84 format.
+
+* `osm_type=[N|W|R]` `osm_id=<value>`
+
+    A specific OSM node(N), way(W) or relation(R) to return an address for.
+
+In both cases exactly one object is returned. The two input paramters cannot
+be used at the same time. Both accept the additional optional parameters listed
+below.
+
+### Output format
+
 * `format=[xml|json|jsonv2|geojson|geocodejson]`
 
-    * Output format
-    * defaults to `xml`
-    * `jsonv2` adds the next fields to response:
-        * `place_rank`
-        * `category`
-        * `type`
-        * `importance`
-        * `addresstype`
+See below for details on each format. (Default: html)
 
 * `json_callback=<string>`
 
-    * Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)` 
+Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Only has an effect for JSON output formats.
+
+### Output details
+
+* `addressdetails=[0|1]`
+
+Include a breakdown of the address into elements. (Default: 1)
+
+
+* `extratags=[0|1]`
+
+Include additional information in the result if available,
+e.g. wikipedia link, opening hours. (Default: 0)
+
+
+* `namedetails=[0|1]`
+
+Include a list of alternative names in the results. These may include
+language variants, references, operator and brand. (Default: 0)
+
+
+### Language of results
 
 * `accept-language=<browser language string>`
 
-    * Preferred language order for showing search results, overrides the value specified in the "Accept-Language" HTTP header.
-    * Either uses standard rfc2616 accept-language string or a simple comma separated list of language codes.
+Preferred language order for showing search results, overrides the value
+specified in the "Accept-Language" HTTP header.
+Either use a standard RFC2616 accept-language string or a simple
+comma-separated list of language codes.
 
-* `osm_type=[N|W|R]` `osm_id=<value>`
-    * A specific osm node / way / relation to return an address for
-    * **Please use this in preference to lat/lon where possible**
-
-* `lat=<value>` `lon=<value>`
-    * The location to generate an address for
+### Result limitation
 
 * `zoom=[0-18]`
-    * Level of detail required where `0` is country and `18` is house/building
 
-* `addressdetails=[0|1]`
-    * defaults to 0
-    * Include a breakdown of the address into elements
+Level of detail required for the address. This is a number that corresponds
+roughly to the zoom level used in map frameworks like Leaflet.js, Openlayers etc.
+In terms of address details the zoom levels are as follows:
+
+ zoom | address detail
+ -----|---------------
+  3   | country
+  5   | state
+  8   | county
+  10  | city
+  14  | suburb
+  16  | street
+  18  | building
+
+
+### Polygon output
+
+* `polygon_geojson=1`
+* `polygon_kml=1`
+* `polygon_svg=1`
+* `polygon_text=1`
+
+Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
+options can be used at a time. (Default: 0)
+
+* `polygon_threshold=0.0`
+
+Simplify the output geometry before returning. The parameter is the
+tolerance in degrees with which the geometry may differ from the original
+geometry. Topology is preserved in the result. (Default: 0.0)
+
+### Other
 
 * `email=<valid email address>`
 
-    * If you are making large numbers of request please include a valid email address or alternatively include your email address as part of the User-Agent string.
-    * This information will be kept confidential and only used to contact you in the event of a problem, see [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+If you are making large numbers of request please include an appropriate email
+address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
-* `polygon_geojson=1`
-    * Output geometry of results in geojson format.
 
-* `polygon_kml=1`
-    * Output geometry of results in kml format.
+* `debug=[0|1]`
 
-* `polygon_svg=1`
-    * Output geometry of results in svg format.
+Output assorted developer debug information. Data on internals of Nominatim's
+"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
+This overrides the specified machine readable format. (Default: 0)
 
-* `polygon_text=1`
-    * Output geometry of results as a WKT.
 
-* `polygon_threshold=0.0`
-    * defaults to 0.0
-    * Simplify the output geometry before returning. The parameter is the
-      tolerance in degrees with which the geometry may differ from the original
-      geometry. Topology is preserved in the result.
-
-* `extratags=1`
-    * Include additional information in the result if available, e.g. wikipedia link, opening hours.
-
-* `namedetails=1`
-    * Include a list of alternative names in the results.
-    * These may include language variants, references, operator and brand.
-
-### Example
+## Examples
 
 * [https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1](https://nominatim.openstreetmap.org/reverse?format=xml&lat=52.5487429714954&lon=-1.81602098644987&zoom=18&addressdetails=1)
 
@@ -225,14 +269,3 @@ https://nominatim.openstreetmap.org/reverse?<query>
 }
 ```
 
-### Hierarchy
-
-* Admin level => XML entity
-    * 2 => `<country>`
-    * 4 => `<state>`
-    * 5 => `<state_district>`
-    * 6
-    * 7 => `<county>`
-    * 8 => `<village>`
-    * 9 => `<city_district>`
-    * 10 => `<suburb>`

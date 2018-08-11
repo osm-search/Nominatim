@@ -30,7 +30,7 @@ below.
 
 * `format=[xml|json|jsonv2|geojson|geocodejson]`
 
-See below for details on each format. (Default: html)
+See [Place Output Formats](Output.md) for details on each format. (Default: html)
 
 * `json_callback=<string>`
 

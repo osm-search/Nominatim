@@ -21,7 +21,7 @@ Additional optional parameters are explained below.
 
 * `format=[html|xml|json|jsonv2|geojson|geocodejson]`
 
-See below for details on each format. (Default: xml)
+See [Place Output Formats](Output.md) for details on each format. (Default: xml)
 
 * `json_callback=<string>`
 

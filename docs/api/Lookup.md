@@ -1,46 +1,77 @@
-## Address lookup
+# Address lookup
 
-Lookup the address of one or multiple OSM objects like node, way or relation.
+The lookup API allows to query the address and other details of one or
+multiple OSM objects like node, way or relation.
 
-### Parameters
+## Parameters
+
+The lookup API has the following format:
+
 ```
-  https://nominatim.openstreetmap.org/lookup?<query>
+  https://nominatim.openstreetmap.org/lookup?osm_ids=[N|W|R]<value>,…,…,&<params>
 ```
 
-* `format=[xml|json|geojson]`
+`osm_ids` is mandatory and must contain a comma-separated list of OSM ids each
+prefixed with its type, one of node(N), way(W) or relation(R). Up to 50 ids
+can be queried at the same time.
 
-    * Output format
-    * Defaults to `xml`
+Additional optional parameters are explained below.
+
+### Output format
+
+* `format=[html|xml|json|jsonv2|geojson|geocodejson]`
+
+See below for details on each format. (Default: xml)
 
 * `json_callback=<string>`
 
-    * Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)` 
+Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Only has an effect for JSON output formats.
+
+### Output details
+
+* `addressdetails=[0|1]`
+
+Include a breakdown of the address into elements. (Default: 0)
+
+
+* `extratags=[0|1]`
+
+Include additional information in the result if available,
+e.g. wikipedia link, opening hours. (Default: 0)
+
+
+* `namedetails=[0|1]`
+
+Include a list of alternative names in the results. These may include
+language variants, references, operator and brand. (Default: 0)
+
+
+### Language of results
 
 * `accept-language=<browser language string>`
 
-    * Preferred language order for showing search results, overrides the value specified in the "Accept-Language" HTTP header.
-    * Either uses standard rfc2616 accept-language string or a simple comma separated list of language codes.
+Preferred language order for showing search results, overrides the value
+specified in the "Accept-Language" HTTP header.
+Either use a standard RFC2616 accept-language string or a simple
+comma-separated list of language codes.
 
-* `osm_ids=[N|W|R]<value>,…,[N|W|R]<value`
-    * A list of up to 50 specific osm node, way or relations ids to return the addresses for
 
-* `addressdetails=[0|1]`
-    * defaults to 0
-    * Include a breakdown of the address into elements
+### Other
 
 * `email=<valid email address>`
 
-    * If you are making large numbers of request please include a valid email address or alternatively include your email address as part of the User-Agent string.
-    * This information will be kept confidential and only used to contact you in the event of a problem, see [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
+If you are making large numbers of request please include an appropriate email
+address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
-* `extratags=1`
-    * Include additional information in the result if available, e.g. wikipedia link, opening hours.
+* `debug=[0|1]`
 
-* `namedetails=1`
-    * Include a list of alternative names in the results.
-    * These may include language variants, references, operator and brand.
+Output assorted developer debug information. Data on internals of Nominatim's
+"Search Loop" logic, and SQL queries. The output is (rough) HTML format.
+This overrides the specified machine readable format. (Default: 0)
 
-### Example
+
+## Examples
 
 ##### XML
 

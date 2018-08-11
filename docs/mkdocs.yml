@@ -11,6 +11,7 @@ pages:
         - 'Reverse': 'api/Reverse.md'
         - 'Address Lookup': 'api/Lookup.md'
         - 'Place Output Formats': 'api/Output.md'
+        - 'FAQ': 'api/Faq.md'
     - 'Administration Guide':
         - 'Basic Installation': 'admin/Installation.md'
         - 'Importing and Updating' : 'admin/Import-and-Update.md'

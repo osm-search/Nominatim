@@ -108,8 +108,8 @@ class SearchContext
             $aViewBox[3]
         );
 
-        $fHeight = $aViewBox[0] - $aViewBox[2];
-        $fWidth = $aViewBox[1] - $aViewBox[3];
+        $fHeight = abs($aViewBox[0] - $aViewBox[2]);
+        $fWidth = abs($aViewBox[1] - $aViewBox[3]);
 
         $this->sqlViewboxLarge = sprintf(
             'ST_SetSRID(ST_MakeBox2D(ST_Point(%F,%F),ST_Point(%F,%F)),4326)',

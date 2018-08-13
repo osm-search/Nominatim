@@ -247,9 +247,7 @@ class ReverseGeocode
         // for POI or street level
         if ($iMaxRank >= 26) {
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
-            $sSQL .= 'CASE WHEN ST_GeometryType(geometry) in (\'ST_Polygon\',\'ST_MultiPolygon\') THEN ST_distance('.$sPointSQL.', centroid)';
-            $sSQL .= ' ELSE ST_distance('.$sPointSQL.', geometry) ';
-            $sSQL .= ' END as distance';
+            $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM ';
             $sSQL .= ' placex';
             $sSQL .= '   WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';

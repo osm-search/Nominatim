@@ -138,7 +138,7 @@ class TokenList
             } else {
                 $oToken = new Token\Word(
                     $iId,
-                    $aWord['word'][0] != ' ',
+                    $aWord['word_token'][0] != ' ',
                     (int) $aWord['count']
                 );
             }

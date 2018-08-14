@@ -50,4 +50,34 @@ class SearchContextTest extends \PHPUnit_Framework_TestCase
             $this->oCtx->distanceSQL('foo')
         );
     }
+
+    public function testSetViewboxFromBox()
+    {
+        $viewbox = array(30, 20, 40, 50);
+        $this->oCtx->setViewboxFromBox($viewbox, true);
+        $this->assertEquals(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(30.000000,20.000000),ST_Point(40.000000,50.000000)),4326)',
+            $this->oCtx->sqlViewboxSmall
+        );
+        // height: 10
+        // width: 30
+        $this->assertEquals(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(50.000000,80.000000),ST_Point(20.000000,-10.000000)),4326)',
+            $this->oCtx->sqlViewboxLarge
+        );
+
+
+        $viewbox = array(-1.5, -2, 1.5, 2);
+        $this->oCtx->setViewboxFromBox($viewbox, true);
+        $this->assertEquals(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(-1.500000,-2.000000),ST_Point(1.500000,2.000000)),4326)',
+            $this->oCtx->sqlViewboxSmall
+        );
+        // height: 3
+        // width: 4
+        $this->assertEquals(
+            'ST_SetSRID(ST_MakeBox2D(ST_Point(4.500000,6.000000),ST_Point(-4.500000,-6.000000)),4326)',
+            $this->oCtx->sqlViewboxLarge
+        );
+    }
 }

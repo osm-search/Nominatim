@@ -117,7 +117,7 @@ class ReverseGeocode
             $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
             $sSQL .= ' AND name IS NOT NULL ';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 5.0)) p ';
+            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.8)) p ';
             $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
             $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
             $sSQL .= ' LIMIT 1';

@@ -59,3 +59,19 @@ Feature: Reverse geocoding
         Then results contain
          | display_name |
          | Tacuarembó, Uruguay |
+
+    Scenario Outline: Zoom levels below 5 result in country
+        When sending jsonv2 reverse coordinates -33.28,-56.29
+         | zoom |
+         | <zoom> |
+        Then results contain
+         | display_name |
+         | Uruguay |
+
+    Examples:
+         | zoom |
+         | 0    |
+         | 1    |
+         | 2    |
+         | 3    |
+         | 4    |

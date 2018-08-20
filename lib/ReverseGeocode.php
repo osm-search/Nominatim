@@ -78,12 +78,15 @@ class ReverseGeocode
         // starts the nopolygonFound function if no polygon is found with the lookupPolygon function
         $oResult = null;
 
-        $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
-        if ($aPlace) {
-            $oResult = new Result($aPlace['place_id']);
+        if ($iMaxRank > 4) {
+            $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
+            if ($aPlace) {
+                $oResult = new Result($aPlace['place_id']);
+            }
+        }
         // if no polygon which contains the searchpoint is found,
         // the noPolygonFound function searches in the country_osm_grid table for a polygon
-        } elseif (!$aPlace && $iMaxRank > 4) {
+        if (!$oResult) {
             $aPlace = $this->noPolygonFound($sPointSQL, $iMaxRank);
             if ($aPlace) {
                 $oResult = new Result($aPlace['place_id']);
@@ -101,34 +104,36 @@ class ReverseGeocode
 
         $aPoly = chksql(
             $this->oDB->getRow($sSQL),
-            'Could not determine polygon containing the point.'
+            'Could not determine country polygon containing the point.'
         );
         if ($aPoly) {
             $sCountryCode = $aPoly['country_code'];
 
-            // look for place nodes with the given country code
-            $sSQL = 'SELECT place_id FROM';
-            $sSQL .= ' (SELECT place_id, rank_search,';
-            $sSQL .= '         ST_distance('.$sPointSQL.', geometry) as distance';
-            $sSQL .= ' FROM placex';
-            $sSQL .= ' WHERE osm_type = \'N\'';
-            $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
-            $sSQL .= ' AND rank_search between 5 and ' .min(25, $iMaxRank);
-            $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
-            $sSQL .= ' AND name IS NOT NULL ';
-            $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
-            $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.8)) p ';
-            $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
-            $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
-            $sSQL .= ' LIMIT 1';
+            if ($iMaxRank > 4) {
+                // look for place nodes with the given country code
+                $sSQL = 'SELECT place_id FROM';
+                $sSQL .= ' (SELECT place_id, rank_search,';
+                $sSQL .= '         ST_distance('.$sPointSQL.', geometry) as distance';
+                $sSQL .= ' FROM placex';
+                $sSQL .= ' WHERE osm_type = \'N\'';
+                $sSQL .= ' AND country_code = \''.$sCountryCode.'\'';
+                $sSQL .= ' AND rank_search between 5 and ' .min(25, $iMaxRank);
+                $sSQL .= ' AND class = \'place\' AND type != \'postcode\'';
+                $sSQL .= ' AND name IS NOT NULL ';
+                $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
+                $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, 1.8)) p ';
+                $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
+                $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
+                $sSQL .= ' LIMIT 1';
 
-            if (CONST_Debug) var_dump($sSQL);
-            $aPlacNode = chksql(
-                $this->oDB->getRow($sSQL),
-                'Could not determine place node.'
-            );
-            if ($aPlacNode) {
-                return $aPlacNode;
+                if (CONST_Debug) var_dump($sSQL);
+                $aPlacNode = chksql(
+                    $this->oDB->getRow($sSQL),
+                    'Could not determine place node.'
+                );
+                if ($aPlacNode) {
+                    return $aPlacNode;
+                }
             }
 
             // still nothing, then return the country object

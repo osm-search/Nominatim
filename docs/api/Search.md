@@ -5,10 +5,9 @@ Nominatim supports structured as well as free-form search queries.
 
 The search query may also contain
 [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
-which are tranlated into specific OpenStreetMap(OSM) tags (e.g. Pub => amenity=pub).
-Note that this only limits the items to be found. It is not suited to return complete
-lists of OSM objects of a specific type.
-Use [Overpass API](https://overpass-api.de/) for that.
+which are translated into specific OpenStreetMap (OSM) tags (e.g. Pub => `amenity=pub`).
+Note that this only limits the items to be found, it's not suited to return complete
+lists of OSM objects of a specific type. For those use [Overpass API](https://overpass-api.de/).
 
 ## Parameters
 
@@ -30,22 +29,20 @@ In this form, the query may be given through two different sets of parameters:
 * `q=<query>`
 
     Free-form query string to search for.
-    Free-form queries are processed first left to right and then right to
-    left if that fails. So you may search for
+    Free-form queries are processed first left-to-right and then right-to-left if that fails. So you may search for
     [pilkington avenue, birmingham](//nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
     [birmingham, pilkington avenue](//nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
-    Commas are optional, but improve performance by reducing the complexity
-    of the search.
+    Commas are optional, but improve performance by reducing the complexity of the search.
 
 
 * `street=<housenumber> <streetname>`
-  `city=<city>`
-  `county=<county>`
-  `state=<state>`
-  `country=<country>`
-  `postalcode=<postalcode>`
+* `city=<city>`
+* `county=<county>`
+* `state=<state>`
+* `country=<country>`
+* `postalcode=<postalcode>`
 
-    Alternative query string format for structured requests.
+    Alternative query string format split into several parameters for structured requests.
     Structured requests are faster but are less robust against alternative
     OSM tagging schemas. **Do not combine with** `q=<query>` **parameter**.
 
@@ -59,7 +56,7 @@ See [Place Output Formats](Output.md) for details on each format. (Default: html
 
 * `json_callback=<string>`
 
-Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Wrap json output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
 Only has an effect for JSON output formats.
 
 ### Output details
@@ -86,7 +83,7 @@ language variants, references, operator and brand. (Default: 0)
 * `accept-language=<browser language string>`
 
 Preferred language order for showing search results, overrides the value
-specified in the "Accept-Language" HTTP header.
+specified in the ["Accept-Language" HTTP header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
 Either use a standard RFC2616 accept-language string or a simple
 comma-separated list of language codes.
 
@@ -109,7 +106,7 @@ the search to return other, less accurate, matches (if possible).
 
 * `limit=<integer>`
 
-Limit the number of returned results. (Default: 10)
+Limit the number of returned results. (Default: 10, Maximum: 50)
 
 
 * `viewbox=<x1>,<y1>,<x2>,<y2>`
@@ -121,9 +118,9 @@ are accepted in any order as long as they span a real box.
 * `bounded=[0|1]`
 
 When a viewbox is given, restrict the result to items contained with that
-viewbox (see above). When `viewbox` and `bounded` are given, an amenity
+viewbox (see above). When `viewbox` and `bounded=1` are given, an amenity
 only search is allowed. In this case, give the special keyword for the
-amenity in squaer brackets, e.g. `[pub]`. (Default: 0)
+amenity in square brackets, e.g. `[pub]`. (Default: 0)
 
 
 ### Polygon output

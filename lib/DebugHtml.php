@@ -155,6 +155,8 @@ class Debug
             }
         } elseif (is_object($mVar) && method_exists($mVar, 'debugInfo')) {
             Debug::outputVar($mVar->debugInfo(), $sPreNL);
+        } elseif (is_a($mVar, 'stdClass')) {
+            Debug::outputVar(json_decode(json_encode($mVar), true), $sPreNL);
         } else {
             Debug::outputSimpleVar($mVar);
         }

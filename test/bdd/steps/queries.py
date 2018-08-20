@@ -122,13 +122,17 @@ class SearchResponse(GenericResponse):
                                         options={'char-encoding' : 'utf8'})
         #eq_(len(errors), 0 , "Errors found in HTML document:\n%s" % errors)
 
+        self.result = []
         b = content.find('nominatim_results =')
         e = content.find('</script>')
-        content = content[b:e]
-        b = content.find('[')
-        e = content.rfind(']')
+        if b >= 0 and e >= 0:
+            content = content[b:e]
 
-        self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(content[b:e+1])
+            b = content.find('[')
+            e = content.rfind(']')
+            if b >= 0 and e >= 0:
+                self.result = json.JSONDecoder(object_pairs_hook=OrderedDict)\
+                                  .decode(content[b:e+1])
 
     def parse_xml(self):
         et = ET.fromstring(self.page)

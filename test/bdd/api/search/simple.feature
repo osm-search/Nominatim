@@ -233,6 +233,17 @@ Feature: Simple Tests
         When sending xml search query "Vaduz"
           | countrycodes |
           | pl,1,,invalid,undefined,%3Cb%3E,bo,, |
-       Then result header contains
+        Then result header contains
           | attr     | value |
           | more_url | .*&countrycodes=pl%2Cbo&.* |
+
+    Scenario Outline: Search with debug prints valid HTML
+        When sending html search query "<query>"
+          | extratags | addressdetails | namedetails | debug |
+          | 1         | 1              | 1           | 1     |
+        Then the result is valid html
+
+        Examples:
+          | query |
+          | 10, Alvierweg, 9490, Vaduz |
+          | Hamburg |

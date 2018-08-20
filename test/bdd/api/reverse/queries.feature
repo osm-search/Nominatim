@@ -75,3 +75,19 @@ Feature: Reverse geocoding
          | 2    |
          | 3    |
          | 4    |
+
+    Scenario: When on a street, the closest interpolation is shown
+        When sending jsonv2 reverse coordinates -33.2309430210215,-54.38126470020989
+         | zoom |
+         | 18 |
+        Then results contain
+         | display_name |
+         | 1429, Andrés Areguati, Treinta y Tres, 33000, Uruguay |
+
+    Scenario: When on a street with zoom 18, the closest housenumber is returned
+        When sending jsonv2 reverse coordinates 53.551826690895226,9.885258475318201
+         | zoom |
+         | 18 |
+        Then result addresses contain
+         | house_number |
+         | 33 |

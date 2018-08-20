@@ -34,7 +34,7 @@ See [Place Output Formats](Output.md) for details on each format. (Default: html
 
 * `json_callback=<string>`
 
-Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Wrap json output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
 Only has an effect for JSON output formats.
 
 ### Output details
@@ -69,7 +69,7 @@ comma-separated list of language codes.
 
 * `zoom=[0-18]`
 
-Level of detail required for the address. This is a number that corresponds
+Level of detail required for the address. Default: 18. This is a number that corresponds
 roughly to the zoom level used in map frameworks like Leaflet.js, Openlayers etc.
 In terms of address details the zoom levels are as follows:
 

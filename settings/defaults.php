@@ -47,6 +47,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_ExtraDataPath', CONST_BasePath.'/data');
 @define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
 @define('CONST_Pyosmium_Binary', '@PYOSMIUM_PATH@');
+@define('CONST_PHP_Binary', '@PHP_BIN@');
 @define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/tiger');
 @define('CONST_Wikipedia_Data_Path', CONST_ExtraDataPath);
 

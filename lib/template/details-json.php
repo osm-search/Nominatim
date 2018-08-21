@@ -26,7 +26,9 @@ $aPlaceDetails['calculated_importance'] = (float) $aPointDetails['calculated_imp
 
 $aPlaceDetails['extratags'] = $aPointDetails['aExtraTags'];
 $aPlaceDetails['calculated_wikipedia'] = $aPointDetails['wikipedia'];
-$aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png';
+if ($aPointDetails['icon']) {
+    $aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png';
+}
 
 $aPlaceDetails['rank_address'] = (int) $aPointDetails['rank_address'];
 $aPlaceDetails['rank_search'] = (int) $aPointDetails['rank_search'];

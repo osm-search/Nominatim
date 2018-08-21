@@ -1,4 +1,4 @@
-#!/usr/bin/php -Cq
+#!@PHP_BIN@ -Cq
 <?php
     // Script to extract structured city and street data
     // from a running nominatim instance as CSV data

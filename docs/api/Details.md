@@ -2,19 +2,18 @@
 
 Lookup details about a single place by id. The default output is HTML for debugging search logic and results.
 
-**The details page (including JSON output) is there for debugging only and may not be downloaded automatically**, see [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
+**The details page (including JSON output) exists for debugging only and must not be downloaded automatically**, see [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
 
 
 ## Parameters
 
-The details API has the following two formats:
+The details API supports the following two request formats:
 
 ```
   https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>
 ```
 
-Both parameters are mandatory, the type is one of node(N), way(W) or relation(R). Up to 50 ids
-can be queried at the same time.
+Both parameters are required, the type is one of node(N), way(W) or relation(R).
 
 Or
 
@@ -22,7 +21,7 @@ Or
   https://nominatim.openstreetmap.org/details?placeid=<value>
 ```
 
-The placeid created assigned sequentially during Nominatim data import. It is different between servers and changes when data gets reimported. Therefore it can't be used as permanent id and shouldn't be used in bug reports.
+Placeids are assigned sequentially during Nominatim data import. The id for a place is different between Nominatim installation (servers) and changes when data gets reimported. Therefore it can't be used as permanent id and shouldn't be used in bug reports.
 
 
 Additional optional parameters are explained below.
@@ -38,9 +37,9 @@ See [Place Output Formats](Output.md) for details on each format. (Default: html
 Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
 Only has an effect for JSON output formats.
 
-* `pretty=[0,1]`
+* `pretty=[0|1]`
 
-Add indentation to JSON output to make it the output more human-readable. (Default: 0)
+For JSON output will add indentation to make it more human-readable. (Default: 0)
 
 
 ### Output details
@@ -55,11 +54,11 @@ Include a list of name keywords and address keywords (word ids). (Default: 0)
 
 * `linkedplaces=[0|1]`
 
-Include details of places which are higher in the address hierarchy. E.g. for a street this is usually the city, state, postal code, country. (Default: 1)
+Include details of places higher in the address hierarchy. E.g. for a street this is usually the city, state, postal code, country. (Default: 1)
 
 * `hierarchy=[0|1]`
 
-Include details of places which are lower in the address hierarchy. E.g. for a city this usually a list of suburbs, rivers, streets. (Default for JSON: 0, for HTML: 1)
+Include details of places lower in the address hierarchy. E.g. for a city this usually a list of streets, suburbs, rivers. (Default for JSON: 0, for HTML: 1)
 
 * `group_hierarchy=[0|1]`
 
@@ -73,7 +72,7 @@ Include geometry of result. (Default for JSON: 0, for HTML: 1)
 
 * `accept-language=<browser language string>`
 
-Preferred language order for showing search results, overrides the value
+Preferred language order for showing result, overrides the value
 specified in the "Accept-Language" HTTP header.
 Either use a standard RFC2616 accept-language string or a simple
 comma-separated list of language codes.

@@ -133,7 +133,7 @@ function prepDB($aCMDResult)
         pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
 
 
-           if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
+        if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
             pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
         } else {
             warn('external UK postcode table not found.');
@@ -153,11 +153,11 @@ function prepDB($aCMDResult)
         // versions in create-tables.
         pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');
         pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()', false);
-    }  
-    return $aDSNInfo;      
+    }
+    return $aDSNInfo;
 }
 
-function import_data($aCMDResult, $iCacheMemory,$aDSNInfo)
+function import_data($aCMDResult, $iCacheMemory, $aDSNInfo)
 {
     info('Import data');
 
@@ -929,5 +929,3 @@ function checkModulePresence()
 
     return $bResult;
 }
-
-?>

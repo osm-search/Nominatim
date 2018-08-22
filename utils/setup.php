@@ -66,7 +66,7 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    create_functions ($aCMDResult);
+    create_functions($aCMDResult);
 }
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
@@ -131,5 +131,3 @@ if ($aCMDResult['drop']) {
 }
 
 didsomething($bDidSomething);
-
-

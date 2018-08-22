@@ -46,8 +46,7 @@
     function hash_to_subtable($aAssociatedList)
     {
         $sHTML = '';
-        foreach($aAssociatedList as $sKey => $sValue)
-        {
+        foreach ($aAssociatedList as $sKey => $sValue) {
             $sHTML = $sHTML.' <div class="line"><span class="name">'.$sValue.'</span> ('.$sKey.')</div>'."\n";
         }
         return $sHTML;
@@ -162,13 +161,10 @@
                 <tbody>
 
                 <?php
-
-                    foreach($aAddressLines as $aAddressLine)
-                    {   
+                    foreach ($aAddressLines as $aAddressLine) {
                         _one_row($aAddressLine);
                     }
                 ?>
-    
 
 
 <?php
@@ -176,8 +172,7 @@
     if ($aLinkedLines)
     {
         headline('Linked Places');
-        foreach($aLinkedLines as $aAddressLine)
-        {   
+        foreach ($aLinkedLines as $aAddressLine) {
             _one_row($aAddressLine);
         }
     }
@@ -187,25 +182,22 @@
     if ($bIncludeKeywords)
     {
         headline('Name Keywords');
-        foreach($aPlaceSearchNameKeywords as $aRow)
-        {
+        foreach ($aPlaceSearchNameKeywords as $aRow) {
             _one_keyword_row($aRow['word_token'], $aRow['word_id']);
         }
 
         headline('Address Keywords');
-        foreach($aPlaceSearchAddressKeywords as $aRow)
-        {
+        foreach ($aPlaceSearchAddressKeywords as $aRow) {
             _one_keyword_row($aRow['word_token'], $aRow['word_id']);
         }
     }
-    
+
     if (!empty($aHierarchyLines))
     {
         headline('Parent Of');
 
         $aGroupedAddressLines = array();
-        foreach($aHierarchyLines as $aAddressLine)
-        {
+        foreach ($aHierarchyLines as $aAddressLine) {
             if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];
             else $sType = $aAddressLine['type'];
 
@@ -213,13 +205,11 @@
                 $aGroupedAddressLines[$sType] = array();
             $aGroupedAddressLines[$sType][] = $aAddressLine;
         }
-        foreach($aGroupedAddressLines as $sGroupHeading => $aHierarchyLines)
-        {
+        foreach ($aGroupedAddressLines as $sGroupHeading => $aHierarchyLines) {
             $sGroupHeading = ucwords($sGroupHeading);
             headline3($sGroupHeading);
 
-            foreach($aHierarchyLines as $aAddressLine)
-            {
+            foreach ($aHierarchyLines as $aAddressLine) {
                 _one_row($aAddressLine);
             }
         }
@@ -249,7 +239,7 @@
                 'lon' => $aPointDetails['lon'],
                 'lat' => $aPointDetails['lat'],
         );
-        echo 'var nominatim_result = ' . json_encode($aPlace, JSON_PRETTY_PRINT) . ';'; 
+        echo 'var nominatim_result = ' . json_encode($aPlace, JSON_PRETTY_PRINT) . ';';
 
 
     ?>

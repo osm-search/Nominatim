@@ -177,18 +177,20 @@
         }
     }
 
-
-
     if ($bIncludeKeywords)
     {
         headline('Name Keywords');
-        foreach ($aPlaceSearchNameKeywords as $aRow) {
-            _one_keyword_row($aRow['word_token'], $aRow['word_id']);
+        if ($aPlaceSearchNameKeywords) {
+            foreach ($aPlaceSearchNameKeywords as $aRow) {
+                _one_keyword_row($aRow['word_token'], $aRow['word_id']);
+            }
         }
 
         headline('Address Keywords');
-        foreach ($aPlaceSearchAddressKeywords as $aRow) {
-            _one_keyword_row($aRow['word_token'], $aRow['word_id']);
+        if ($aPlaceSearchAddressKeywords) {
+            foreach ($aPlaceSearchAddressKeywords as $aRow) {
+                _one_keyword_row($aRow['word_token'], $aRow['word_id']);
+            }
         }
     }
 

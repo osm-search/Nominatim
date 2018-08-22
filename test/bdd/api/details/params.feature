@@ -41,3 +41,16 @@ Feature: Object details
             | linkedplaces |
             | 1 |
         Then the result is valid json
+
+    Scenario Outline: HTML Details with keywords
+        When sending html details query for <osmid>
+            | keywords |
+            | 1 |
+        Then the result is valid html
+
+    Examples:
+            | osmid |
+            | W78099902 |
+            | N3121929846 |
+
+

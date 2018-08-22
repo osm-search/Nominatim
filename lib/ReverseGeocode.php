@@ -130,6 +130,7 @@ class ReverseGeocode
             $sSQL .= ' WHERE country_code = \''.$sCountryCode.'\'';
             $sSQL .= ' AND rank_search = 4 AND rank_address = 4';
             $sSQL .= ' AND class in (\'boundary\',  \'place\')';
+            $sSQL .= ' AND linked_place_id is null';
             $sSQL .= ' ORDER BY distance ASC';
 
             if (CONST_Debug) var_dump($sSQL);

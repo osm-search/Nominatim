@@ -111,6 +111,7 @@ set(CUSTOMFILES
     utils/query.php
     utils/server_compare.php
     utils/setup.php
+    utils/setup_functions.php
     utils/specialphrases.php
     utils/update.php
     utils/warm.php

@@ -3,6 +3,7 @@
 
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
+include_once(CONST_InstallPath.'/utils/setup_functions.php');
 ini_set('memory_limit', '800M');
 
 # (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
@@ -101,7 +102,11 @@ if ($aResult['init-updates']) {
     if (!$aResult['no-update-functions']) {
         $sSetup = CONST_InstallPath.'/utils/setup.php';
         $iRet = -1;
-        passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
+        $aCMDResult['create-functions'] = true;
+        $aCMDResult['enable-diff-updates'] = true;
+        # passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
+        create_functions($aCMDResult);
+
         if ($iRet != 0) {
             fail('Error running setup script');
         }

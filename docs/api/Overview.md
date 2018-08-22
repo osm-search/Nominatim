@@ -11,4 +11,4 @@ Its API has the following endpoints for querying the data:
  * __/deletable__ - list objects that have been deleted in OSM but are held
                     back in Nominatim in case the deletion was accidental
  * __/polygons__ - list of broken polygons detected by Nominatim
- * __/details__ - show internal details for an object (for debugging only)
+ * __[/details](Details.md)__ - show internal details for an object (for debugging only)

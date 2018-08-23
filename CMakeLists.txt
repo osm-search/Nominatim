@@ -83,9 +83,9 @@ if (NOT PHP_BIN)
 endif()
 # sanity check if PHP binary exists
 if (NOT EXISTS ${PHP_BIN})
-    message(FATAL_ERROR "PHP binary not found install php or provide location by -DPHP_BIN=/path/php ")
+    message(FATAL_ERROR "PHP binary not found. Install php or provide location with -DPHP_BIN=/path/php ")
 endif()
-message (STATUS "Setting PHP_BIN= " ${PHP_BIN})
+message (STATUS "Using PHP binary " ${PHP_BIN})
 
 #-----------------------------------------------------------------------------
 #

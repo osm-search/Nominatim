@@ -1,5 +1,4 @@
-Database Migrations
-===================
+# Database Migrations
 
 This page describes database migrations necessary to update existing databases
 to newer versions of Nominatim.
@@ -7,7 +6,7 @@ to newer versions of Nominatim.
 SQL statements should be executed from the postgres commandline. Execute
 `psql nominiatim` to enter command line mode.
 
-# 3.0.0 -> 3.1.0
+## 3.0.0 -> 3.1.0
 
 ### Postcode Table
 
@@ -26,6 +25,17 @@ CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry);
 CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id);
 CREATE INDEX idx_postcode_postcode ON location_postcode USING BTREE (postcode);
 GRANT SELECT ON location_postcode TO "www-data";
+drop type if exists nearfeaturecentr cascade;
+create type nearfeaturecentr as (
+  place_id BIGINT,
+  keywords int[],
+  rank_address smallint,
+  rank_search smallint,
+  distance float,
+  isguess boolean,
+  postcode TEXT,
+  centroid GEOMETRY
+);
 ```
 
 Add postcode column to `location_area` tables with SQL statement:

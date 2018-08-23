@@ -1,9 +1,11 @@
+# Importing and Updating the Database
+
 The following instructions explain how to create a Nominatim database
 from an OSM planet file and how to keep the database up to date. It
 is assumed that you have already successfully installed the Nominatim
 software itself, if not return to the [installation page](Installation.md).
 
-# Configuration setup in settings/local.php
+## Configuration setup in settings/local.php
 
 The Nominatim server can be customized via the file `settings/local.php`
 in the build directory. Note that this is a PHP file, so it must always
@@ -16,7 +18,7 @@ without any leading spaces.
 There are lots of configuration settings you can tweak. Have a look
 at `settings/default.php` for a full list. Most should have a sensible default.
 
-### Flatnode files
+#### Flatnode files
 
 If you plan to import a large dataset (e.g. Europe, North America, planet),
 you should also enable flatnode storage of node locations. With this
@@ -29,9 +31,9 @@ Add to your `settings/local.php`:
 Replace the second part with a suitable path on your system and make sure
 the directory exists. There should be at least 40GB of free space.
 
-# Downloading additional data
+## Downloading additional data
 
-## Wikipedia rankings
+### Wikipedia rankings
 
 Wikipedia can be used as an optional auxiliary data source to help indicate
 the importance of osm features. Nominatim will work without this information
@@ -49,7 +51,7 @@ size of nominatim. They also increase the install time by an hour or so.
 the initial import of the data if you want the rankings applied to the
 loaded data.
 
-## UK postcodes
+### UK postcodes
 
 Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded: 
 
@@ -57,7 +59,7 @@ Nominatim can use postcodes from an external source to improve searches that inv
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
 
 
-# Initial import of the data
+## Initial import of the data
 
 **Important:** first try the import with a small excerpt, for example from
 [Geofabrik](https://download.geofabrik.de).
@@ -97,7 +99,7 @@ you also need to enable these key phrases like this:
 Note that this command downloads the phrases from the wiki link above.
 
 
-# Installing Tiger housenumber data for the US
+## Installing Tiger housenumber data for the US
 
 Nominatim is able to use the official TIGER address set to complement the
 OSM house number data in the US. You can add TIGER data to your own Nominatim
@@ -146,13 +148,13 @@ SQL files, Nominatim needs for the import:
 Be warned that this can take quite a long time. After this process is finished,
 the same preprocessed files as above are available in `data/tiger`.
 
-# Updates
+## Updates
 
 There are many different possibilities to update your Nominatim database.
 The following section describes how to keep it up-to-date with Pyosmium.
 For a list of other methods see the output of `./utils/update.php --help`.
 
-### Installing the newest version of Pyosmium
+#### Installing the newest version of Pyosmium
 
 It is recommended to install Pyosmium via pip. Run (as the same user who
 will later run the updates):
@@ -161,7 +163,7 @@ will later run the updates):
 pip install --user osmium
 ```
 
-Nominatim needs a tool called `pyosmium-get-updates` that comes with
+Nominatim needs a tool called `pyosmium-get-updates`, which comes with
 Pyosmium. You need to tell Nominatim where to find it. Add the
 following line to your `settings/local.php`:
 
@@ -170,7 +172,7 @@ following line to your `settings/local.php`:
 The path above is fine if you used the `--user` parameter with pip.
 Replace `user` with your user name.
 
-### Setting up the update process
+#### Setting up the update process
 
 Next the update needs to be initialised. By default Nominatim is configured
 to update using the global minutely diffs.
@@ -196,7 +198,7 @@ what you expect.
 The --init-updates command needs to be rerun whenever the replication service
 is changed.
 
-### Updating Nominatim
+#### Updating Nominatim
 
 The following command will keep your database constantly up to date:
 

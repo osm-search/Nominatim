@@ -26,3 +26,6 @@ pages:
 markdown_extensions:
     - codehilite:
         use_pygments: False
+    - toc:
+        permalink: 
+extra_css: [extra.css]

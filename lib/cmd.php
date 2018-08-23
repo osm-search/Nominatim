@@ -185,6 +185,10 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
         fail('unable to start pgsql');
     }
 
+    if (!$bVerbose) {
+        fwrite($ahPipes[0], "set client_min_messages to WARNING;");
+    }
+
     while (strlen($sScript)) {
         $iWritten = fwrite($ahPipes[0], $sScript);
         if ($iWritten <= 0) break;

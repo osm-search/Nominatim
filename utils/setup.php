@@ -440,7 +440,6 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
             // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
             // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
             // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
-            echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
             if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
                 $resultError = pg_result_error($hPGresult);
                 echo '-- error text ' . $i . ': ' . $resultError . "\n";

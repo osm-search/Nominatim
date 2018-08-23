@@ -309,7 +309,7 @@ if (isset($aCMDResult['parse-wikipedia'])) {
     $oDB =& getDB();
     $sSQL = 'select page_title from content where page_namespace = 0 and page_id %10 = ';
     $sSQL .= $aCMDResult['parse-wikipedia'];
-    $sSQL .= ' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))'
+    $sSQL .= ' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))';
     $aArticleNames = $oDB->getCol($sSQL);
     /* $aArticleNames = $oDB->getCol($sSQL = 'select page_title from content where page_namespace = 0
         and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\'

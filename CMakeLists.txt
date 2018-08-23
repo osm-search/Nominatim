@@ -77,6 +77,16 @@ find_package(BZip2 REQUIRED)
 find_package(LibXml2 REQUIRED)
 include_directories(${LIBXML2_INCLUDE_DIR})
 
+# Setting PHP binary variable as to command line (prevailing) or auto detect
+if (NOT PHP_BIN)
+     find_program (PHP_BIN php)
+endif()
+# sanity check if PHP binary exists
+if (NOT EXISTS ${PHP_BIN})
+    message(FATAL_ERROR "PHP binary not found install php or provide location by -DPHP_BIN=/path/php ")
+endif()
+message (STATUS "Setting PHP_BIN= " ${PHP_BIN})
+
 #-----------------------------------------------------------------------------
 #
 # Setup settings and paths

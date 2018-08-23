@@ -1,4 +1,4 @@
-#!/usr/bin/php -Cq
+#!@PHP_BIN@ -Cq
 <?php
 
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
@@ -99,7 +99,7 @@ if ($aResult['init-updates']) {
         fail('pyosmium-get-changes not found or not usable');
     }
     if (!$aResult['no-update-functions']) {
-        $sSetup = CONST_InstallPath.'/utils/setup.php';
+        $sSetup ='@PHP_BIN@ '. CONST_InstallPath.'/utils/setup.php';
         $iRet = -1;
         passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
         if ($iRet != 0) {

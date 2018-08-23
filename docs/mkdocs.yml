@@ -10,6 +10,7 @@ pages:
         - 'Search': 'api/Search.md'
         - 'Reverse': 'api/Reverse.md'
         - 'Address Lookup': 'api/Lookup.md'
+        - 'Details' : 'api/Details.md'
         - 'Place Output Formats': 'api/Output.md'
         - 'FAQ': 'api/Faq.md'
     - 'Administration Guide':

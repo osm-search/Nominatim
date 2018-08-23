@@ -82,11 +82,11 @@ comma-separated list of language codes.
 
 ##### HTML
 
-[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407]()
+[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407](https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407)
 
 ##### JSON
 
-[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407&format=json]()
+[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407&format=json](https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407&format=json)
 
 
 ```json

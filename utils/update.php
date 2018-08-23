@@ -101,7 +101,7 @@ if ($aResult['init-updates']) {
     if (!$aResult['no-update-functions']) {
         $sSetup = CONST_InstallPath.'/utils/setup.php';
         $iRet = -1;
-        passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
+        passthru(@PHP_BIN@.' --create-functions --enable-diff-updates', $iRet);
         if ($iRet != 0) {
             fail('Error running setup script');
         }

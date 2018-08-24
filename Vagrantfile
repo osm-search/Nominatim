@@ -15,6 +15,15 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "ubuntu", primary: true do |sub|
+      sub.vm.box = "bento/ubuntu-18.04"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-18.sh"
+        s.privileged = false
+        s.args = [checkout]
+      end
+  end
+
+  config.vm.define "ubuntu16" do |sub|
       sub.vm.box = "bento/ubuntu-16.04"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-16.sh"

@@ -3,7 +3,9 @@
 
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
+include_once(CONST_BasePath.'/lib/setup_functions.php');
 ini_set('memory_limit', '800M');
+
 
 # (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
 
@@ -99,12 +101,7 @@ if ($aResult['init-updates']) {
         fail('pyosmium-get-changes not found or not usable');
     }
     if (!$aResult['no-update-functions']) {
-        $sSetup ='@PHP_BIN@ '. CONST_InstallPath.'/utils/setup.php';
-        $iRet = -1;
-        passthru($sSetup.' --create-functions --enable-diff-updates', $iRet);
-        if ($iRet != 0) {
-            fail('Error running setup script');
-        }
+        createFunctions($aCMDResult);
     }
 
     $sDatabaseDate = getDatabaseDate($oDB);

@@ -186,7 +186,7 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     }
 
     if (!$bVerbose) {
-        fwrite($ahPipes[0], "set client_min_messages to WARNING;");
+        fwrite($ahPipes[0], 'set client_min_messages to WARNING;');
     }
 
     while (strlen($sScript)) {

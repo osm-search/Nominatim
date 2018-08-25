@@ -4,7 +4,7 @@ namespace Nominatim;
 
 require_once '../../lib/Phrase.php';
 
-class PhraseTest extends \PHPUnit_Framework_TestCase
+class PhraseTest extends \PHPUnit\Framework\TestCase
 {
 
 

@@ -6,7 +6,7 @@ namespace Nominatim;
 
 require_once '../../lib/SearchContext.php';
 
-class SearchContextTest extends \PHPUnit_Framework_TestCase
+class SearchContextTest extends \PHPUnit\Framework\TestCase
 {
     private $oCtx;
 

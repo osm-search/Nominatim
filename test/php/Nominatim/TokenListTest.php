@@ -8,7 +8,7 @@ require_once '../../lib/db.php';
 require_once '../../lib/cmd.php';
 require_once '../../lib/TokenList.php';
 
-class TokenTest extends \PHPUnit_Framework_TestCase
+class TokenTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp()
     {

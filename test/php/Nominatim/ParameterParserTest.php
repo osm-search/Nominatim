@@ -12,7 +12,7 @@ function userError($sError)
     throw new Exception($sError);
 }
 
-class ParameterParserTest extends \PHPUnit_Framework_TestCase
+class ParameterParserTest extends \PHPUnit\Framework\TestCase
 {
 
 

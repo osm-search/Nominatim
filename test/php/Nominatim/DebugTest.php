@@ -6,7 +6,7 @@ use Exception;
 
 require_once('../../lib/DebugHtml.php');
 
-class DebugTest extends \PHPUnit_Framework_TestCase
+class DebugTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp()
     {

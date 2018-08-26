@@ -1,3 +1,29 @@
+3.2.0
+
+ * complete rewrite of reverse search algorithm
+ * add new geojson and geocodejson output formats
+ * add simple export script to exprot addresses to CSV
+ * remove is_in terms from address computation
+ * remove unused search_name_country tables
+ * various smaller fixes to query parsing
+ * convert Tokens and token types to class types
+ * correctly handle update when boundary object type is changed
+ * improve debug output for /search endpoint
+ * update to latest osm2pgsql and leaflet.js
+ * overhaul of /details endpoint:
+     * new class parameter when using osmtype/osmid parameters
+     * permalink to instance-independent osmtype/osmid parameter format
+     * new json output format
+ * update CentOS vagrant machine to use SELinux
+ * add vagrant scripts for Ubuntu 18.04
+ * fix build process for BSD
+ * enable running the database on a different host than the setup scripts
+ * allow to configure use of custom PHP binaries (PHP_BIN)
+ * extensive coding style improvements to PHP code
+ * more PHP unit tests for new classes
+ * increase coverage for API tests
+ * add documentation for API
+
 3.1.0
 
  * rework postcode handling and introduce location_postcode table

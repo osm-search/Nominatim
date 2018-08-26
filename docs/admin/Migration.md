@@ -6,6 +6,45 @@ to newer versions of Nominatim.
 SQL statements should be executed from the postgres commandline. Execute
 `psql nominiatim` to enter command line mode.
 
+## 3.1.0 -> 3.2.0
+
+### New reverse algorithm
+
+The reverse algorithm has changed and requires new indexes. Run the following
+SQL statements to create the indexes:
+
+```
+CREATE INDEX idx_placex_geometry_reverse_lookupPoint
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE (name is not null or housenumber is not null or rank_address between 26 and 27)
+    AND class not in ('railway','tunnel','bridge','man_made')
+    AND rank_address >= 26 AND indexed_status = 0 AND linked_place_id is null;
+CREATE INDEX idx_placex_geometry_reverse_lookupPolygon
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
+    AND rank_address between 4 and 25 AND type != 'postcode'
+    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+CREATE INDEX idx_placex_geometry_reverse_placeNode
+  ON placex USING gist (geometry) {ts:search-index}
+  WHERE osm_type = 'N' AND rank_search between 5 and 25
+    AND class = 'place' AND type != 'postcode'
+    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+```
+
+You also need to grant the website user access to the `country_osm_grid` table:
+
+```
+GRANT SELECT ON table country_osm_grid to "www-user";
+```
+
+Replace the `www-user` with the user name of your website server if necessary.
+
+Finally, you can drop the now unused indexes:
+
+```
+DROP INDEX idx_placex_reverse_geometry;
+```
+
 ## 3.0.0 -> 3.1.0
 
 ### Postcode Table

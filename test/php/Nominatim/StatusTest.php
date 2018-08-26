@@ -7,7 +7,7 @@ require_once('DB.php');
 
 use Exception;
 
-class StatusTest extends \PHPUnit_Framework_TestCase
+class StatusTest extends \PHPUnit\Framework\TestCase
 {
 
 

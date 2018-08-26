@@ -10,12 +10,18 @@ Lookup details about a single place by id. The default output is HTML for debugg
 The details API supports the following two request formats:
 
 ```
-  https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>
+  https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>&class=<value>
 ```
 
-Both parameters are required, the type is one of node(N), way(W) or relation(R).
-
-Or
+`osmtype` and `osmid` are required parameter. The type is one of node (N), way (W)
+or relation (R). The id must be a number. The `class` parameter is optional and
+allows to distinguish between entries, when the corresponding OSM object has more
+than one main tag. For example, when a place is tagged with `tourism=hotel` and
+`amenity=restaurant`, there will be two place entries in Nominatim, one for a
+restaurant, one for a hotel. You need to specify `class=tourism` or `class=amentity`
+to get exactly the one you want. If there are multiple places in the database
+but the `class` parameter is left out, then one of the places will be chosen
+at random and displayed.
 
 ```
   https://nominatim.openstreetmap.org/details?placeid=<value>

@@ -1,9 +1,6 @@
 <?php
 
-
-
 class SetupFunctions
-
 {
     protected $iCacheMemory;            // set in constructor
     protected $iInstances;              // set in constructor
@@ -16,7 +13,6 @@ class SetupFunctions
     protected $bNoPartitions;           // set in constructor
     protected $oDB = null;              // set in setupDB (earliest) or later in loadData, importData, drop, createSqlFunctions, importTigerData
                                                 // pgsqlRunPartitionScript, calculatePostcodes, ..if no already set 
-
 
     public function __construct($aCMDResult) {
         // by default, use all but one processor, but never more than 15.
@@ -50,10 +46,10 @@ class SetupFunctions
         $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
         $this->bEnableDebugStatements = $aCMDResult['enable-debug-statements'];
         $this->bNoPartitions = $aCMDResult['no-partitions'];
- 
     }
 
-    public function createDB(){
+    public function createDB()
+    {
         info('Create DB');
         $sDB = DB::connect(CONST_Database_DSN, false);
         if (!PEAR::isError($sDB)) {
@@ -78,7 +74,8 @@ class SetupFunctions
         if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
     }
 
-    public function setupDB() {
+    public function setupDB()
+    {
         info('Setup DB');
         $this->oDB =& getDB();
 
@@ -155,7 +152,8 @@ class SetupFunctions
         $this->pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()', false);
     }
 
-    public function importData($sOSMFile) {
+    public function importData($sOSMFile)
+    {
         info('Import data');
 
         $osm2pgsql = CONST_Osm2pgsql_Binary;
@@ -200,13 +198,15 @@ class SetupFunctions
         }
     }
 
-    public function createFunctions() {
+    public function createFunctions()
+    {
         info('Create Functions');
 
         $this->createSqlFunctions();
     }
 
-    public function createTables() {
+    public function createTables()
+    {
         info('Create Tables');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tables.sql');
@@ -243,13 +243,17 @@ class SetupFunctions
         );
 
         $this->pgsqlRunScript($sTemplate, false);
+    }
 
+    public function recreateFunction()
+    {
         // re-run the functions
         info('Recreate Functions');
         $this->createSqlFunctions();
     }
 
-    public function createPartitionTables() {
+    public function createPartitionTables()
+    {
         info('Create Partition Tables');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
@@ -292,14 +296,16 @@ class SetupFunctions
         $this->pgsqlRunPartitionScript($sTemplate);
     }
 
-    public function createPartitionFunctions() {
+    public function createPartitionFunctions()
+    {
         info('Create Partition Functions');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
         $this->pgsqlRunPartitionScript($sTemplate);
     }
 
-    public function importWikipediaArticles() {
+    public function importWikipediaArticles()
+    {
         $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikipedia_article.sql.bin';
         $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
         if (file_exists($sWikiArticlesFile)) {
@@ -315,9 +321,10 @@ class SetupFunctions
             warn('wikipedia redirect dump file not found - some place importance values may be missing');
         }
         echo ' finish wikipedia';
-    }    
+    }
 
-    public function loadData($bDisableTokenPrecalc) {
+    public function loadData($bDisableTokenPrecalc)
+    {
         info('Drop old Data');
 
         if ($this->oDB == null) $this->oDB =& getDB();
@@ -382,7 +389,6 @@ class SetupFunctions
         }
 
         // last thread for interpolation lines
-
         $aDBInstances[$iLoadThreads] =& getDB(true);
         $sSQL = 'insert into location_property_osmline';
         $sSQL .= ' (osm_id, address, linegeo)';
@@ -426,7 +432,8 @@ class SetupFunctions
         }
     }
 
-    public function importTigerData() {
+    public function importTigerData()
+    {
         info('Import Tiger data');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
@@ -498,7 +505,8 @@ class SetupFunctions
         $this->pgsqlRunScript($sTemplate, false);
     }
 
-    public function calculatePostcodes($bCMDResultAll) {
+    public function calculatePostcodes($bCMDResultAll)
+    {
         info('Calculate Postcodes');
         if ($this->oDB == null) $this->oDB =& getDB();
         if (!pg_query($this->oDB->connection, 'TRUNCATE location_postcode')) {
@@ -556,9 +564,11 @@ class SetupFunctions
         }
     }
 
-    public function index($bIndexNoanalyse) {
+    public function index($bIndexNoanalyse)
+    {
         $sOutputFile = '';
-        $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$this->aDSNInfo['database'].' -P '.$this->aDSNInfo['port'].' -t '.$this->iInstances.$sOutputFile;
+        $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$this->aDSNInfo['database'].' -P '
+            .$this->aDSNInfo['port'].' -t '.$this->iInstances.$sOutputFile;
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
             $sBaseCmd .= ' -H ' . $this->aDSNInfo['hostspec'];
         }
@@ -591,9 +601,10 @@ class SetupFunctions
         if ($this->oDB == null) $this->oDB =& getDB();
         $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
         if (!pg_query($this->oDB->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
-    }    
+    }
 
-    public function createSearchIndices() {
+    public function createSearchIndices()
+    {
         info('Create Search indices');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
@@ -616,14 +627,16 @@ class SetupFunctions
         $this->pgsqlRunScript($sTemplate);
     }
 
-    public function createCountryNames() {
+    public function createCountryNames()
+    {
         info('Create search index for default country names');
 
         $this->pgsqlRunScript("select getorcreate_country(make_standard_name('uk'), 'gb')");
         $this->pgsqlRunScript("select getorcreate_country(make_standard_name('united states'), 'us')");
         $this->pgsqlRunScript('select count(*) from (select getorcreate_country(make_standard_name(country_code), country_code) from country_name where country_code is not null) as x');
         $this->pgsqlRunScript("select count(*) from (select getorcreate_country(make_standard_name(name->'name'), country_code) from country_name where name ? 'name') as x");
-        $sSQL = 'select count(*) from (select getorcreate_country(make_standard_name(v), country_code) from (select country_code, skeys(name) as k, svals(name) as v from country_name) x where k ';
+        $sSQL = 'select count(*) from (select getorcreate_country(make_standard_name(v),'
+            .'country_code) from (select country_code, skeys(name) as k, svals(name) as v from country_name) x where k ';
         if (CONST_Languages) {
             $sSQL .= 'in ';
             $sDelim = '(';
@@ -640,7 +653,8 @@ class SetupFunctions
         $this->pgsqlRunScript($sSQL);
     }
 
-    public function drop() {
+    public function drop()
+    {
         info('Drop tables only required for updates');
 
         // The implementation is potentially a bit dangerous because it uses
@@ -693,7 +707,8 @@ class SetupFunctions
         }
     }
 
-    private function pgsqlRunDropAndRestore($sDumpFile) {
+    private function pgsqlRunDropAndRestore($sDumpFile)
+    {
         if (!isset($this->aDSNInfo['port']) || !$this->aDSNInfo['port']) $this->aDSNInfo['port'] = 5432;
         $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
@@ -709,7 +724,8 @@ class SetupFunctions
         $iReturn = runWithEnv($sCMD, $aProcEnv);    // /lib/cmd.php "function runWithEnv($sCmd, $aEnv)"
     }
                      
-    private function pgsqlRunScript($sScript, $bfatal = true) {
+    private function pgsqlRunScript($sScript, $bfatal = true)
+    {
         runSQLScript(
             $sScript,
             $bfatal,
@@ -718,7 +734,8 @@ class SetupFunctions
         );
     }
 
-    private function createSqlFunctions() {        
+    private function createSqlFunctions()
+    {
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
         $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
         if ($this->bEnableDiffUpdates) {
@@ -739,7 +756,8 @@ class SetupFunctions
         $this->pgsqlRunScript($sTemplate);
     }
 
-    private function pgsqlRunPartitionScript($sTemplate) {
+    private function pgsqlRunPartitionScript($sTemplate)
+    {
         if ($this->oDB == null) $this->oDB =& getDB();
 
         $sSQL = 'select distinct partition from country_name';
@@ -756,9 +774,10 @@ class SetupFunctions
         }
 
         $this->pgsqlRunScript($sTemplate);
-    }  
+    }
 
-    private function pgsqlRunScriptFile($sFilename) {
+    private function pgsqlRunScriptFile($sFilename)
+    {
         if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
         $sCMD = 'psql -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'];
@@ -812,7 +831,9 @@ class SetupFunctions
             proc_close($hGzipProcess);
         }
     }
-    private function replaceTablespace($sTemplate, $sTablespace, $sSql) {
+
+    private function replaceTablespace($sTemplate, $sTablespace, $sSql)
+    {
         if ($sTablespace) {
             $sSql = str_replace($sTemplate, 'TABLESPACE "'.$sTablespace.'"', $sSql);
         } else {

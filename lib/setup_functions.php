@@ -1,6 +1,7 @@
 <?php
 
-function checkInFile($sOSMFile) {
+function checkInFile($sOSMFile) 
+{
     if (!isset($sOSMFile)) {
         fail('missing --osm-file for data import');
     }
@@ -14,7 +15,8 @@ function checkInFile($sOSMFile) {
     }
 }
 
-function checkModulePresence() {
+function checkModulePresence() 
+{
     // Try accessing the C module, so we know early if something is wrong
     // and can simply error out.
     $sModulePath = CONST_Database_Module_Path;
@@ -36,7 +38,8 @@ function checkModulePresence() {
     return $bResult;
 }
 
-function createSetupArgvArray() {
+function createSetupArgvArray() 
+{
     $aCMDOptions
     = array(
     'Create and setup nominatim search system',

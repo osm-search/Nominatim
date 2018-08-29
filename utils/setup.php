@@ -25,7 +25,7 @@ $bDidSomething = false;
 // Check if osm-file is set and points to a valid file
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     // to remain in /lib/setup_functions.php function
-    checkInFile($aCMDResult['osm-file']);  
+    checkInFile($aCMDResult['osm-file']);
     echo $aCMDResult['osm-file'];
 }
 
@@ -37,7 +37,7 @@ if ($aCMDResult['osmosis-init']) {
 
 // ******************************************************
 // instantiate Setup class
-$cSetup = new SetupFunctions ($aCMDResult); 
+$cSetup = new SetupFunctions($aCMDResult);
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $cSetup -> createDB();
@@ -68,6 +68,7 @@ if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $cSetup -> createTables();
+    $cSetup -> recreateFunction();
 }
 
 if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
@@ -79,12 +80,12 @@ if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $cSetup -> createPartitionFunctions();
 }
-/*
+
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $cSetup -> importWikipediaArticles();
 }
-*/
+
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $cSetup -> loadData($aCMDResult['disable-token-precalc']);
@@ -130,6 +131,3 @@ if (!$bDidSomething) {
     echo "\n";
     info('Setup finished.');
 }
-
-
-

@@ -417,6 +417,5 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         if (!$aResult['import-osmosis-all']) {
             exit(0);
         }
-
     }
 }

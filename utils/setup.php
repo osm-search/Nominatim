@@ -1,13 +1,12 @@
 #!@PHP_BIN@ -Cq
 <?php
 
-require_once dirname(dirname(__FILE__)) . '/settings/settings.php';
-require_once CONST_BasePath . '/lib/init-cmd.php';
-require_once CONST_BasePath . '/lib/SetupClass.php';
+require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
+require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_BasePath.'/lib/classes/SetupClass.php');
 // ->indirect via init-cmd.php->/lib/cmd.php                  for runWithEnv, getCmdOpt
 // ->indirect via init-cmd.php->/lib/init.php->db.php       for &getDB()
-
-require_once CONST_BasePath . '/lib/setup_functions.php';
+require_once(CONST_BasePath.'/lib/setup_functions.php');
 ini_set('memory_limit', '800M');
 
 use Nominatim\Setup\SetupFunctions as SetupFunctions;
@@ -25,7 +24,6 @@ $bDidSomething = false;
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     // to remain in /lib/setup_functions.php function
     checkInFile($aCMDResult['osm-file']);
-    echo $aCMDResult['osm-file'];
 }
 
 // osmosis init is no longer supported

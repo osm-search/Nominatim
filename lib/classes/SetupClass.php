@@ -45,10 +45,24 @@ class SetupFunctions
  
         // setting member variables based on command line options stored in $aCMDResult
         $this->sVerbose = $aCMDResult['verbose'];
-        $this->sIgnoreErrors = $aCMDResult['ignore-errors'];
         $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
-        $this->bEnableDebugStatements = $aCMDResult['enable-debug-statements'];
-        $this->bNoPartitions = $aCMDResult['no-partitions'];
+
+        //setting default values which are not set by the update.php array
+        if (isset($aCMDResult['ignore-errors'])) {
+            $this->sIgnoreErrors = $aCMDResult['ignore-errors'];
+        } else {
+            $this->sIgnoreErrors = false;
+        }
+        if (isset($aCMDResult['enable-debug-statements'])) {
+            $this->bEnableDebugStatements = $aCMDResult['enable-debug-statements'];
+        } else {
+            $this->bEnableDebugStatements = false;
+        }
+        if (isset($aCMDResult['no-partitions'])) {
+            $this->bNoPartitions = $aCMDResult['no-partitions'];
+        } else {
+            $this->bNoPartitions = false;
+        }
     }
 
     public function createDB()
@@ -61,11 +75,11 @@ class SetupFunctions
 
         $sCreateDBCmd = 'createdb -E UTF-8 -p '.$this->aDSNInfo['port'].' '.$this->aDSNInfo['database'];
         if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
-            $sCreateDBCmd .= ' -U ' . $this->aDSNInfo['username'];
+            $sCreateDBCmd .= ' -U '.$this->aDSNInfo['username'];
         }
 
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
-            $sCreateDBCmd .= ' -h ' . $this->aDSNInfo['hostspec'];
+            $sCreateDBCmd .= ' -h '.$this->aDSNInfo['hostspec'];
         }
 
         $aProcEnv = null;
@@ -184,10 +198,10 @@ class SetupFunctions
         $osm2pgsql .= ' -C '.$this->iCacheMemory;
         $osm2pgsql .= ' -P '.$this->aDSNInfo['port'];
         if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
-            $osm2pgsql .= ' -U ' . $this->aDSNInfo['username'];
+            $osm2pgsql .= ' -U '.$this->aDSNInfo['username'];
         }
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
-            $osm2pgsql .= ' -H ' . $this->aDSNInfo['hostspec'];
+            $osm2pgsql .= ' -H '.$this->aDSNInfo['hostspec'];
         }
         $aProcEnv = null;
         if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
@@ -402,7 +416,7 @@ class SetupFunctions
                 // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
                 // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
                 // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
-                echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
+                // echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
                 if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
                     $resultError = pg_result_error($hPGresult);
                     echo '-- error text ' . $i . ': ' . $resultError . "\n";
@@ -566,10 +580,10 @@ class SetupFunctions
         $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$this->aDSNInfo['database'].' -P '
             .$this->aDSNInfo['port'].' -t '.$this->iInstances.$sOutputFile;
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
-            $sBaseCmd .= ' -H ' . $this->aDSNInfo['hostspec'];
+            $sBaseCmd .= ' -H '.$this->aDSNInfo['hostspec'];
         }
         if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
-            $sBaseCmd .= ' -U ' . $this->aDSNInfo['username'];
+            $sBaseCmd .= ' -U '.$this->aDSNInfo['username'];
         }
         $aProcEnv = null;
         if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
@@ -708,10 +722,10 @@ class SetupFunctions
         if (!isset($this->aDSNInfo['port']) || !$this->aDSNInfo['port']) $this->aDSNInfo['port'] = 5432;
         $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
-            $sCMD .= ' -h ' . $this->aDSNInfo['hostspec'];
+            $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }
         if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
-            $sCMD .= ' -U ' . $this->aDSNInfo['username'];
+            $sCMD .= ' -U '.$this->aDSNInfo['username'];
         }
         $aProcEnv = null;
         if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
@@ -781,10 +795,10 @@ class SetupFunctions
             $sCMD .= ' -q';
         }
         if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
-            $sCMD .= ' -h ' . $this->aDSNInfo['hostspec'];
+            $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }
         if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
-            $sCMD .= ' -U ' . $this->aDSNInfo['username'];
+            $sCMD .= ' -U '.$this->aDSNInfo['username'];
         }
         $aProcEnv = null;
         if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {

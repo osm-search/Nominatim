@@ -118,9 +118,6 @@ function createUpdateArgvArray()
 
         array('create-functions', '', 0, 1, 1, 1, 'bool', 'Create functions'),
         array('enable-diff-updates', '', 0, 1, 1, 1, 'bool', 'Turn on the code required to make diff updates work'),
-        array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
-        array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
-        array('no-partitions', '', 0, 1, 0, 0, 'bool', 'Do not partition search indices (speeds up import of single country extracts)'),
     );
     return $aCMDOptions;
 }

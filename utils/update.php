@@ -71,10 +71,6 @@ if ($aResult['init-updates']) {
     }
 
     if (!$aResult['no-update-functions']) {
-        // Try accessing the C module,
-        if (!checkModulePresence()) {
-            fail('error loading nominatim.so module');
-        }
         // instantiate setupClass to use the function therein
         $cSetup = new SetupFunctions($aResult);
         $cSetup->createFunctions();

@@ -136,6 +136,11 @@ class SetupFunctions
             exit(1);
         }
 
+        // Try accessing the C module, so we know early if something is wrong
+        if (!checkModulePresence()) {
+            fail('error loading nominatim.so module');
+        }
+
         if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
             echo 'Error: you need to download the country_osm_grid first:';
             echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
@@ -219,6 +224,11 @@ class SetupFunctions
     {
         info('Create Functions');
 
+        // Try accessing the C module, so we know eif something is wrong
+        // update.php calls this function
+        if (!checkModulePresence()) {
+            fail('error loading nominatim.so module');
+        }
         $this->createSqlFunctions();
     }
 
@@ -330,7 +340,6 @@ class SetupFunctions
         } else {
             warn('wikipedia redirect dump file not found - some place importance values may be missing');
         }
-        echo ' finish wikipedia';
     }
 
     public function loadData($bDisableTokenPrecalc)

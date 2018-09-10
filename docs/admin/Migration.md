@@ -15,17 +15,17 @@ SQL statements to create the indexes:
 
 ```
 CREATE INDEX idx_placex_geometry_reverse_lookupPoint
-  ON placex USING gist (geometry) {ts:search-index}
+  ON placex USING gist (geometry)
   WHERE (name is not null or housenumber is not null or rank_address between 26 and 27)
     AND class not in ('railway','tunnel','bridge','man_made')
     AND rank_address >= 26 AND indexed_status = 0 AND linked_place_id is null;
 CREATE INDEX idx_placex_geometry_reverse_lookupPolygon
-  ON placex USING gist (geometry) {ts:search-index}
+  ON placex USING gist (geometry)
   WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
     AND rank_address between 4 and 25 AND type != 'postcode'
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 CREATE INDEX idx_placex_geometry_reverse_placeNode
-  ON placex USING gist (geometry) {ts:search-index}
+  ON placex USING gist (geometry)
   WHERE osm_type = 'N' AND rank_search between 5 and 25
     AND class = 'place' AND type != 'postcode'
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;

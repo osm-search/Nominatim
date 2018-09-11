@@ -47,11 +47,14 @@ License
 
 The source code is available under a GPLv2 license.
 
-Contact and Bug reports
+Contributing
+======================
+Contribution are welcomed. For details see [CONTRIBUTING.md](contributing guide).
+
+Both bug reports and pull requests are welcomed.
+
+Mailing list
 ======================
 
 For questions you can join the geocoding mailinglist, see
 https://lists.openstreetmap.org/listinfo/geocoding
-
-Bugs may be reported on the github project site:
-https://github.com/openstreetmap/Nominatim

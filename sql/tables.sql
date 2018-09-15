@@ -10,7 +10,7 @@ drop table if exists import_osmosis_log;
 CREATE TABLE import_osmosis_log (
   batchend timestamp,
   batchseq integer,
-  batchsize integer,
+  batchsize bigint,
   starttime timestamp,
   endtime timestamp,
   event text

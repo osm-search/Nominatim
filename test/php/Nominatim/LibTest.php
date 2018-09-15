@@ -2,8 +2,7 @@
 
 namespace Nominatim;
 
-require_once '../../lib/lib.php';
-require_once '../../lib/ClassTypes.php';
+require_once(CONST_BasePath.'/lib/ClassTypes.php');
 
 class LibTest extends \PHPUnit\Framework\TestCase
 {

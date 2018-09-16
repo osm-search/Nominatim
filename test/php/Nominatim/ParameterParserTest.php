@@ -2,14 +2,12 @@
 
 namespace Nominatim;
 
-use Exception;
-
-require_once('../../lib/ParameterParser.php');
+require_once(CONST_BasePath.'/lib/ParameterParser.php');
 
 
 function userError($sError)
 {
-    throw new Exception($sError);
+    throw new \Exception($sError);
 }
 
 class ParameterParserTest extends \PHPUnit\Framework\TestCase
@@ -55,14 +53,18 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
     public function testGetIntWithNonNumber()
     {
-        $this->setExpectedException(Exception::class, "Integer number expected for parameter 'int4'");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Integer number expected for parameter 'int4'");
+
         (new ParameterParser(array('int4' => 'a')))->getInt('int4');
     }
 
 
     public function testGetIntWithEmpytString()
     {
-        $this->setExpectedException(Exception::class, "Integer number expected for parameter 'int5'");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Integer number expected for parameter 'int5'");
+
         (new ParameterParser(array('int5' => '')))->getInt('int5');
     }
 
@@ -85,20 +87,26 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
     public function testGetFloatWithEmptyString()
     {
-        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float4'");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Floating-point number expected for parameter 'float4'");
+
         (new ParameterParser(array('float4' => '')))->getFloat('float4');
     }
 
     public function testGetFloatWithTextString()
     {
-        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float5'");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Floating-point number expected for parameter 'float5'");
+
         (new ParameterParser(array('float5' => 'a')))->getFloat('float5');
     }
 
 
     public function testGetFloatWithInvalidNumber()
     {
-        $this->setExpectedException(Exception::class, "Floating-point number expected for parameter 'float6'");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Floating-point number expected for parameter 'float6'");
+
         (new ParameterParser(array('float6' => '-55.')))->getFloat('float6');
     }
 
@@ -138,7 +146,9 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
     public function testGetSetWithValueNotInSet()
     {
-        $this->setExpectedException(Exception::class, "Parameter 'val4' must be one of: foo, bar");
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Parameter 'val4' must be one of: foo, bar");
+
         (new ParameterParser(array('val4' => 'faz')))->getSet('val4', array('foo', 'bar'));
     }
 

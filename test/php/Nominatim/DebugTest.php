@@ -2,19 +2,23 @@
 
 namespace Nominatim;
 
-use Exception;
-
-require_once('../../lib/DebugHtml.php');
+require_once(CONST_BasePath.'/lib/DebugHtml.php');
 
 class DebugTest extends \PHPUnit\Framework\TestCase
 {
+
     protected function setUp()
     {
-        $this->oWithDebuginfo = $this->getMock(Geocode::class, array('debugInfo'));
+        $this->oWithDebuginfo = $this->getMockBuilder(\GeococdeMock::class)
+                                    ->setMethods(array('debugInfo'))
+                                    ->getMock();
         $this->oWithDebuginfo->method('debugInfo')
                   ->willReturn(array('key1' => 'val1', 'key2' => 'val2', 'key3' => 'val3'));
 
-        $this->oWithToString = $this->getMock(Geocode::class, array('__toString'));
+
+        $this->oWithToString = $this->getMockBuilder(\SomeMock::class)
+                                    ->setMethods(array('__toString'))
+                                    ->getMock();
         $this->oWithToString->method('__toString')->willReturn('me as string');
     }
 

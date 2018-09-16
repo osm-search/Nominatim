@@ -2,17 +2,18 @@
 
 namespace Nominatim;
 
-@define('CONST_BasePath', '../../');
+require_once(CONST_BasePath.'/lib/db.php');
+require_once(CONST_BasePath.'/lib/cmd.php');
+require_once(CONST_BasePath.'/lib/TokenList.php');
 
-require_once '../../lib/db.php';
-require_once '../../lib/cmd.php';
-require_once '../../lib/TokenList.php';
 
 class TokenTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp()
     {
-        $this->oNormalizer = $this->getMock(\MockNormalizer::class, array('transliterate'));
+        $this->oNormalizer = $this->getMockBuilder(\MockNormalizer::class)
+                                  ->setMethods(array('transliterate'))
+                                  ->getMock();
         $this->oNormalizer->method('transliterate')
                           ->will($this->returnCallback(function ($text) {
                               return strtolower($text);
@@ -55,7 +56,9 @@ class TokenTest extends \PHPUnit\Framework\TestCase
     {
         $this->expectOutputRegex('/<p><tt>/');
 
-        $oDbStub = $this->getMock(\DB::class, array('getAll'));
+        $oDbStub = $this->getMockBuilder(\DB::class)
+                        ->setMethods(array('getAll'))
+                        ->getMock();
         $oDbStub->method('getAll')
                 ->will($this->returnCallback(function ($sql) {
                     $aResults = array();

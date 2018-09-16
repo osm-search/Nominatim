@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once '../../lib/Phrase.php';
+require_once(CONST_BasePath.'/lib/Phrase.php');
 
 class PhraseTest extends \PHPUnit\Framework\TestCase
 {

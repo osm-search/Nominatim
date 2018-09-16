@@ -2,18 +2,17 @@
 
 namespace Nominatim;
 
-require_once('../../lib/Status.php');
-require_once('DB.php');
+require_once(CONST_BasePath.'/lib/Status.php');
 
-use Exception;
 
 class StatusTest extends \PHPUnit\Framework\TestCase
 {
 
-
     public function testNoDatabaseGiven()
     {
-        $this->setExpectedException(Exception::class, 'No database', 700);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('No database');
+        $this->expectExceptionCode(700);
 
         $oDB = null;
         $oStatus = new Status($oDB);
@@ -22,7 +21,9 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testNoDatabaseConnectionFail()
     {
-        $this->setExpectedException(Exception::class, 'No database', 700);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('No database');
+        $this->expectExceptionCode(700);
 
         // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
         // failure on travis
@@ -40,10 +41,14 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testModuleFail()
     {
-        $this->setExpectedException(Exception::class, 'Module call failed', 702);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Module call failed');
+        $this->expectExceptionCode(702);
 
         // stub has getOne method but doesn't return anything
-        $oDbStub = $this->getMock(\DB::class, array('getOne'));
+        $oDbStub = $this->getMockBuilder(\DB::class)
+                        ->setMethods(array('getOne'))
+                        ->getMock();
 
         $oStatus = new Status($oDbStub);
         $this->assertNull($oStatus->status());
@@ -52,9 +57,13 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testWordIdQueryFail()
     {
-        $this->setExpectedException(Exception::class, 'No value', 704);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('No value');
+        $this->expectExceptionCode(704);
 
-        $oDbStub = $this->getMock(\DB::class, array('getOne'));
+        $oDbStub = $this->getMockBuilder(\DB::class)
+                        ->setMethods(array('getOne'))
+                        ->getMock();
 
         // return no word_id
         $oDbStub->method('getOne')
@@ -70,7 +79,9 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testOK()
     {
-        $oDbStub = $this->getMock(\DB::class, array('getOne'));
+        $oDbStub = $this->getMockBuilder(\DB::class)
+                        ->setMethods(array('getOne'))
+                        ->getMock();
 
         $oDbStub->method('getOne')
                 ->will($this->returnCallback(function ($sql) {
@@ -84,7 +95,9 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testDataDate()
     {
-        $oDbStub = $this->getMock(\DB::class, array('getOne'));
+        $oDbStub = $this->getMockBuilder(\DB::class)
+                        ->setMethods(array('getOne'))
+                        ->getMock();
      
         $oDbStub->method('getOne')
                 ->willReturn(1519430221);

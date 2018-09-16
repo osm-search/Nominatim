@@ -11,6 +11,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
+set_exception_handler_by_format($sOutputFormat);
 
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 $sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';

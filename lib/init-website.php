@@ -2,6 +2,7 @@
 
 require_once('init.php');
 require_once('ParameterParser.php');
+require_once('DatabaseError.php');
 require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
 
 /***************************************************************************
@@ -15,74 +16,51 @@ function chksql($oSql, $sMsg = 'Database request failed')
 {
     if (!PEAR::isError($oSql)) return $oSql;
 
-    header('HTTP/1.0 500 Internal Server Error');
-    header('Content-type: text/html; charset=utf-8');
+    throw new Nominatim\DatabaseError($sMsg, 500, null, $oSql);
+}
 
-    $sSqlError = $oSql->getMessage();
 
-    echo <<<INTERNALFAIL
-<html>
-  <head><title>Internal Server Error</title></head>
-  <body>
-    <h1>Internal Server Error</h1>
-    <p>Nominatim has encountered an internal error while accessing the database.
-       This may happen because the database is broken or because of a bug in
-       the software. If you think it is a bug, feel free to report
-       it over on <a href="https://github.com/openstreetmap/Nominatim/issues">
-       Github</a>. Please include the URL that caused the problem and the
-       complete error details below.</p>
-    <p><b>Message:</b> $sMsg</p>
-    <p><b>SQL Error:</b> $sSqlError</p>
-    <p><b>Details:</b> <pre>
-INTERNALFAIL;
+function userError($sMsg)
+{
+    throw new Exception($sMsg, 400);
+}
 
-    if (CONST_Debug) {
-        var_dump($oSql);
+
+function exception_handler_html($exception)
+{
+    http_response_code($exception->getCode());
+    header('Content-type: text/html; charset=UTF-8');
+    include(CONST_BasePath.'/lib/template/error-html.php');
+}
+
+function exception_handler_json($exception)
+{
+    http_response_code($exception->getCode());
+    header('Content-type: application/json; charset=utf-8');
+    include(CONST_BasePath.'/lib/template/error-json.php');
+}
+
+function exception_handler_xml($exception)
+{
+    http_response_code($exception->getCode());
+    header('Content-type: text/xml; charset=utf-8');
+    echo '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
+    include(CONST_BasePath.'/lib/template/error-xml.php');
+}
+
+
+function set_exception_handler_by_format($sFormat = 'html')
+{
+    if ($sFormat == 'html') {
+        set_exception_handler('exception_handler_html');
+    } elseif ($sFormat == 'xml') {
+        set_exception_handler('exception_handler_xml');
     } else {
-        echo "<pre>\n".$oSql->getUserInfo().'</pre>';
+        set_exception_handler('exception_handler_json');
     }
-
-    echo '</pre></p></body></html>';
-    exit;
 }
-
-function failInternalError($sError, $sSQL = false, $vDumpVar = false)
-{
-    header('HTTP/1.0 500 Internal Server Error');
-    header('Content-type: text/html; charset=utf-8');
-    echo '<html><body><h1>Internal Server Error</h1>';
-    echo '<p>Nominatim has encountered an internal error while processing your request. This is most likely because of a bug in the software.</p>';
-    echo '<p><b>Details:</b> '.$sError,'</p>';
-    echo '<p>Feel free to file an issue on <a href="https://github.com/openstreetmap/Nominatim/issues">Github</a>. ';
-    echo 'Please include the error message above and the URL you used.</p>';
-    if (CONST_Debug) {
-        echo '<hr><h2>Debugging Information</h2><br>';
-        if ($sSQL) {
-            echo '<h3>SQL query</h3><code>'.$sSQL.'</code>';
-        }
-        if ($vDumpVar) {
-            echo '<h3>Result</h3> <code>';
-            var_dump($vDumpVar);
-            echo '</code>';
-        }
-    }
-    echo "\n</body></html>\n";
-    exit;
-}
-
-
-function userError($sError)
-{
-    header('HTTP/1.0 400 Bad Request');
-    header('Content-type: text/html; charset=utf-8');
-    echo '<html><body><h1>Bad Request</h1>';
-    echo '<p>Nominatim has encountered an error with your request.</p>';
-    echo '<p><b>Details:</b> '.$sError.'</p>';
-    echo '<p>If you feel this error is incorrect feel file an issue on <a href="https://github.com/openstreetmap/Nominatim/issues">Github</a>. ';
-    echo 'Please include the error message above and the URL you used.</p>';
-    echo "\n</body></html>\n";
-    exit;
-}
+// set a default
+set_exception_handler_by_format();
 
 
 /***************************************************************************
@@ -96,6 +74,6 @@ if (CONST_NoAccessControl) {
         header('Access-Control-Allow-Headers: '.$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
     }
 }
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
 
 if (CONST_Debug) header('Content-type: text/html; charset=utf-8');

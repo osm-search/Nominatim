@@ -494,6 +494,18 @@ def step_impl(context, fmt):
     context.execute_steps("Then a HTTP 200 is returned")
     eq_(context.response.format, fmt)
 
+@then(u'a (?P<fmt>\w+) user error is returned')
+def check_page_error(context, fmt):
+    context.execute_steps("Then a HTTP 400 is returned")
+    eq_(context.response.format, fmt)
+
+    if fmt == 'html':
+        assert_is_not_none(re.search(r'<html( |>).+</html>', context.response.page, re.DOTALL))
+    elif fmt == 'xml':
+        assert_is_not_none(re.search(r'<error>.+</error>', context.response.page, re.DOTALL))
+    else:
+        assert_is_not_none(re.search(r'({"error":)', context.response.page, re.DOTALL))
+
 @then(u'result header contains')
 def check_header_attr(context):
     for line in context.table:

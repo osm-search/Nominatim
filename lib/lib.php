@@ -61,6 +61,13 @@ function byImportance($a, $b)
 
 function javascript_renderData($xVal, $iOptions = 0)
 {
+    $sCallback = isset($_GET['json_callback']) ? $_GET['json_callback'] : '';
+    if ($sCallback && !preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u', $sCallback)) {
+        // Unset, we call javascript_renderData again during exception handling
+        unset($_GET['json_callback']);
+        throw new Exception('Invalid json_callback value', 400);
+    }
+
     $iOptions |= JSON_UNESCAPED_UNICODE;
     if (isset($_GET['pretty']) && in_array(strtolower($_GET['pretty']), array('1', 'true'))) {
         $iOptions |= JSON_PRETTY_PRINT;
@@ -68,16 +75,12 @@ function javascript_renderData($xVal, $iOptions = 0)
 
     $jsonout = json_encode($xVal, $iOptions);
 
-    if (!isset($_GET['json_callback'])) {
+    if ($sCallback) {
+        header('Content-Type: application/javascript; charset=UTF-8');
+        echo $_GET['json_callback'].'('.$jsonout.')';
+    } else {
         header('Content-Type: application/json; charset=UTF-8');
         echo $jsonout;
-    } else {
-        if (preg_match('/^[$_\p{L}][$_\p{L}\p{Nd}.[\]]*$/u', $_GET['json_callback'])) {
-            header('Content-Type: application/javascript; charset=UTF-8');
-            echo $_GET['json_callback'].'('.$jsonout.')';
-        } else {
-            header('HTTP/1.0 400 Bad Request');
-        }
     }
 }
 

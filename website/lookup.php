@@ -12,6 +12,7 @@ $oParams = new Nominatim\ParameterParser();
 
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'geojson'), 'xml');
+set_exception_handler_by_format($sOutputFormat);
 
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();

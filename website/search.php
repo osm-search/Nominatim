@@ -27,6 +27,7 @@ if (CONST_Search_ReversePlanForAll
 
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'html');
+set_exception_handler_by_format($sOutputFormat);
 
 $sForcedGeometry = ($sOutputFormat == 'html') ? 'geojson' : null;
 $oGeocode->loadParamArray($oParams, $sForcedGeometry);

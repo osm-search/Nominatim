@@ -4,13 +4,47 @@
 require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 require_once(CONST_BasePath.'/lib/setup_functions.php');
-require_once(CONST_BasePath.'/lib/classes/SetupClass.php');
+require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
 
 ini_set('memory_limit', '800M');
 
 use Nominatim\Setup\SetupFunctions as SetupFunctions;
 
-$aCMDOptions = createUpdateArgvArray();
+// (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
+$aCMDOptions
+= array(
+    'Import / update / index osm data',
+    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+
+    array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
+    array('check-for-updates', '', 0, 1, 0, 0, 'bool', 'Check if new updates are available'),
+    array('no-update-functions', '', 0, 1, 0, 0, 'bool', 'Do not update trigger functions to support differential updates (assuming the diff update logic is already present)'),
+    array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
+    array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
+    array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
+
+    array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Update postcode centroid table'),
+
+    array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
+    array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
+    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+
+    array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
+    array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
+    array('import-relation', '', 0, 1, 1, 1, 'int', 'Re-import relation'),
+    array('import-from-main-api', '', 0, 1, 0, 0, 'bool', 'Use OSM API instead of Overpass to download objects'),
+
+    array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
+    array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
+    array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
+
+    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
+    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
+    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
+);
+
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
 if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
@@ -72,7 +106,7 @@ if ($aResult['init-updates']) {
 
     if (!$aResult['no-update-functions']) {
         // instantiate setupClass to use the function therein
-        $cSetup = new SetupFunctions($aResult);
+        $cSetup = new SetupFunctions($aResult, 'update');
         $cSetup->createFunctions();
     }
 

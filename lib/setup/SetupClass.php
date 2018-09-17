@@ -16,7 +16,7 @@ class SetupFunctions
     protected $oDB = null;              // set in setupDB (earliest) or later in loadData, importData, drop, createSqlFunctions, importTigerData
                                                 // pgsqlRunPartitionScript, calculatePostcodes, ..if no already set
 
-    public function __construct($aCMDResult)
+    public function __construct($aCMDResult, $callingFunction = 'setup')
     {
         // by default, use all but one processor, but never more than 15.
         $this->iInstances = isset($aCMDResult['threads'])
@@ -45,7 +45,6 @@ class SetupFunctions
  
         // setting member variables based on command line options stored in $aCMDResult
         $this->sVerbose = $aCMDResult['verbose'];
-        $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
 
         //setting default values which are not set by the update.php array
         if (isset($aCMDResult['ignore-errors'])) {
@@ -62,6 +61,14 @@ class SetupFunctions
             $this->bNoPartitions = $aCMDResult['no-partitions'];
         } else {
             $this->bNoPartitions = false;
+        }
+
+        // if class is instantiated by update.php, we have to set EnableDiffUpdates to true
+        // otherwise set to value provided comand line to setup.php
+        if ($callingFunction == 'update') {
+            $this->bEnableDiffUpdates = true;
+        } elseif ($callingFunction == 'setup') {
+            $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
         }
     }
 
@@ -166,8 +173,8 @@ class SetupFunctions
             $this->pgsqlRunScript('update country_name set partition = 0');
         }
 
-        // the following will be needed by create_functions later but
-        // is only defined in the subsequently called T
+        // the following will be needed by createFunctions later but
+        // is only defined in the subsequently called createTables
         // Create dummies here that will be overwritten by the proper
         // versions in create-tables.
         $this->pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');

@@ -64,7 +64,7 @@ class SetupFunctions
         }
 
         // if class is instantiated by update.php, we have to set EnableDiffUpdates to true
-        // otherwise set to value provided comand line to setup.php
+        // otherwise set to value provided by setup.php's command line arg array
         if ($callingFunction == 'update') {
             $this->bEnableDiffUpdates = true;
         } elseif ($callingFunction == 'setup') {

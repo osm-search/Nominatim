@@ -287,7 +287,7 @@ class SearchDescription
             if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
                 if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
-                    $oSearch->iSearchRank++;
+                    $oSearch->iSearchRank += 2;
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
                 } else {

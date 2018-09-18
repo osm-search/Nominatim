@@ -106,7 +106,7 @@ if ($aResult['init-updates']) {
 
     if (!$aResult['no-update-functions']) {
         // instantiate setupClass to use the function therein
-        $cSetup = new SetupFunctions($aResult, 'update');
+        $cSetup = new SetupFunctions('update');
         $cSetup->createFunctions();
     }
 

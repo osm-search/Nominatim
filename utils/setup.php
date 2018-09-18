@@ -71,7 +71,7 @@ if ($aCMDResult['osmosis-init']) {
 
 // ******************************************************
 // instantiate Setup class
-$cSetup = new SetupFunctions($aCMDResult);
+$cSetup = new SetupFunctions('setup', $aCMDResult);
 
 // *******************************************************
 // go through complete process if 'all' is selected or start selected functions

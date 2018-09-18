@@ -16,7 +16,7 @@ class SetupFunctions
     protected $oDB = null;              // set in setupDB (earliest) or later in loadData, importData, drop, createSqlFunctions, importTigerData
                                                 // pgsqlRunPartitionScript, calculatePostcodes, ..if no already set
 
-    public function __construct($aCMDResult, $callingFunction = 'setup')
+    public function __construct($callingFunction, array $aCMDResult = array())
     {
         // by default, use all but one processor, but never more than 15.
         $this->iInstances = isset($aCMDResult['threads'])

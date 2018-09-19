@@ -41,3 +41,21 @@ border while the closest street is on the other. As the address details contain
 the address of the closest object found, you might sometimes get one result,
 sometimes the other for the closest point.
 
+#### 4. Can you return the continent?
+
+Nominatim assigns each map feature one country. Those outside any administrative
+boundaries are assigned a special no-country. Continents or other super-national
+administrations (e.g. European Union, NATO, Custom unions) are not supported, 
+see also [Administrative Boundary](https://wiki.openstreetmap.org/wiki/Tag:boundary%3Dadministrative#Super-national_administrations).
+
+#### 5. Can you return the timezone?
+
+See this separate OpenStreetMap-based project [Timezone Boundary Builder](https://github.com/evansiroky/timezone-boundary-builder)
+
+#### 6. I want to download a list of streets/restaurants of a city/region
+
+The [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) is more
+suited for these kinds of queries.
+
+That said if you installed your own Nominatim instance you can use the
+`/utils/export.php` PHP script as basis to return such lists.

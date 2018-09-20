@@ -2,54 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/ClassTypes.php');
-
 class LibTest extends \PHPUnit\Framework\TestCase
 {
-    public function testGetClassTypesWithImportance()
-    {
-        $aClasses = ClassTypes\getListWithImportance();
-
-        $this->assertGreaterThan(
-            200,
-            count($aClasses)
-        );
-
-        $this->assertEquals(
-            array(
-             'label' => 'Country',
-             'frequency' => 0,
-             'icon' => 'poi_boundary_administrative',
-             'defzoom' => 6,
-             'defdiameter' => 15,
-             'importance' => 3
-            ),
-            $aClasses['place:country']
-        );
-    }
-
-
-    public function testGetResultDiameter()
-    {
-        $aResult = array('class' => '', 'type' => '');
-        $this->assertEquals(
-            0.0001,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
-
-        $aResult = array('class' => 'place', 'type' => 'country');
-        $this->assertEquals(
-            15,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
-
-        $aResult = array('class' => 'boundary', 'type' => 'administrative', 'admin_level' => 6);
-        $this->assertEquals(
-            0.32,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
-    }
-
 
     public function testAddQuotes()
     {

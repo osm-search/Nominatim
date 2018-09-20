@@ -22,9 +22,9 @@ class AddressDetails
         }
 
         $sSQL = 'SELECT *,';
-        $sSQL .= '  get_name_by_language(name,'.$mLangPref.') as localname';
+        $sSQL .= ' get_name_by_language(name,'.$mLangPref.') as localname';
         $sSQL .= ' FROM get_addressdata('.$iPlaceID.','.$sHousenumber.')';
-        $sSQL .= ' ORDER BY rank_address desc,isaddress DESC';
+        $sSQL .= ' ORDER BY rank_address DESC, isaddress DESC';
 
         $this->aAddressLines = chksql($oDB->getAll($sSQL));
     }
@@ -40,7 +40,7 @@ class AddressDetails
             return $this->aAddressLines;
         }
 
-        return array_filter($this->aAddressLines, 'AddressDetails::isAddress');
+        return array_filter($this->aAddressLines, array(__CLASS__, 'isAddress'));
     }
 
     public function getLocaleAddress()

@@ -93,6 +93,14 @@ However, you can solve this the quick and dirty way by commenting out that line 
     sudo systemctl restart httpd
 
 
+### "must be an array or an object that implements Countable" warning in /usr/share/pear/DB.php
+
+As reported starting PHP 7.2. This external DB library is no longer maintained and will be replaced in future Nominatim versions. In the meantime you'd have to manually change the line near 774 from
+`if (!count($dsn)) {` to  `if (!$dsn && !count($dsn))`. [More details](https://github.com/openstreetmap/Nominatim/issues/1184)
+
+
+
+
 ### Website reports "DB Error: insufficient permissions"
 
 The user the webserver, e.g. Apache, runs under needs to have access to the Nominatim database. You can find the user like [this](https://serverfault.com/questions/125865/finding-out-what-user-apache-is-running-as), for default Ubuntu operating system for example it's `www-data`.

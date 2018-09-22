@@ -39,10 +39,16 @@ GRANT SELECT ON table country_osm_grid to "www-user";
 
 Replace the `www-user` with the user name of your website server if necessary.
 
-Finally, you can drop the now unused indexes:
+You can now drop the unused indexes:
 
 ```
 DROP INDEX idx_placex_reverse_geometry;
+```
+
+Finally, update all SQL functions:
+
+```sh
+./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
 ```
 
 ## 3.0.0 -> 3.1.0

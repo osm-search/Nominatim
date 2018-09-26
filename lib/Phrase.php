@@ -10,6 +10,7 @@ namespace Nominatim;
 class Phrase
 {
     const MAX_DEPTH = 7;
+    const MAX_SETS = 100000;
 
     // Complete phrase as a string.
     private $sPhrase;
@@ -23,7 +24,7 @@ class Phrase
 
     public function __construct($sPhrase, $sPhraseType)
     {
-        $this->sPhrase = trim($sPhrase);
+        $this->sPhrase = $sPhrase;
         $this->sPhraseType = $sPhraseType;
         $this->aWords = explode(' ', $this->sPhrase);
         $this->aWordSets = $this->createWordSets($this->aWords, 0);
@@ -83,7 +84,7 @@ class Phrase
         $aResult = array(array(join(' ', $aWords)));
         $sFirstToken = '';
         if ($iDepth < Phrase::MAX_DEPTH) {
-            while (count($aWords) > 1) {
+            while (count($aWords) > 1 && count($aResult) < Phrase::MAX_SETS) {
                 $sWord = array_shift($aWords);
                 $sFirstToken .= ($sFirstToken?' ':'').$sWord;
                 $aRest = $this->createWordSets($aWords, $iDepth + 1);
@@ -101,7 +102,7 @@ class Phrase
         $aResult = array(array(join(' ', $aWords)));
         $sFirstToken = '';
         if ($iDepth < Phrase::MAX_DEPTH) {
-            while (count($aWords) > 1) {
+            while (count($aWords) > 1 && count($aResult) < Phrase::MAX_SETS) {
                 $sWord = array_pop($aWords);
                 $sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
                 $aRest = $this->createInverseWordSets($aWords, $iDepth + 1);

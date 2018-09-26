@@ -23,7 +23,7 @@ class Phrase
 
     public function __construct($sPhrase, $sPhraseType)
     {
-        $this->sPhrase = trim($sPhrase);
+        $this->sPhrase = preg_replace('/  +/', ' ', trim($sPhrase));
         $this->sPhraseType = $sPhraseType;
         $this->aWords = explode(' ', $this->sPhrase);
         $this->aWordSets = $this->createWordSets($this->aWords, 0);

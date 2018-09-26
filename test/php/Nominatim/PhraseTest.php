@@ -48,6 +48,14 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
             $this->serializeSets($oPhrase->getWordSets())
         );
 
+        # trailing and multiple spaces are removed
+        $oPhrase = new Phrase('  a     b  ', '');
+        $this->assertEquals(
+            '(a b),(a|b)',
+            $this->serializeSets($oPhrase->getWordSets())
+        );
+
+
         $oPhrase = new Phrase('a b c', '');
         $this->assertEquals(
             '(a b c),(a|b c),(a|b|c),(a b|c)',

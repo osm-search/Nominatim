@@ -25,10 +25,10 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Now you can install all packages needed for Nominatim:
 
     sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
+                            libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev \
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-10 postgresql-10-postgis-2.4 \
-                            postgresql-contrib-10 \
+                            postgresql-contrib-10 postgresql-10-postgis-scripts \
                             apache2 php php-pgsql libapache2-mod-php php-pear php-db \
                             php-intl git
 
@@ -77,7 +77,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # ---------------------
 #
 # Tune the postgresql configuration, which is located in 
-# `/etc/postgresql/9.5/main/postgresql.conf`. See section *Postgres Tuning* in
+# `/etc/postgresql/10/main/postgresql.conf`. See section *Postgres Tuning* in
 # [the installation page](../admin/Installation.md#postgresql-tuning)
 # for the parameters to change.
 #

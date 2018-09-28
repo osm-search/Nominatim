@@ -20,6 +20,9 @@ pages:
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Developers Guide':
         - 'Overview' : 'develop/overview.md'
+    - 'Data Sources':
+        - 'Overview' : 'data-sources/overview.md'
+        - 'US Census (Tiger)': data-sources/US-Tiger.md'
     - 'Appendix':
         - 'Installation on CentOS 7' : 'appendix/Install-on-Centos-7.md'
         - 'Installation on Ubuntu 16' : 'appendix/Install-on-Ubuntu-16.md'

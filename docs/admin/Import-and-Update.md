@@ -101,52 +101,34 @@ Note that this command downloads the phrases from the wiki link above.
 
 ## Installing Tiger housenumber data for the US
 
-Nominatim is able to use the official TIGER address set to complement the
-OSM house number data in the US. You can add TIGER data to your own Nominatim
-instance by following these steps:
+Nominatim is able to use the official [TIGER](https://www.census.gov/geo/maps-data/data/tiger.html)
+address set to complement the OSM house number data in the US. You can add
+TIGER data to your own Nominatim instance by following these steps. The
+entire US adds about 10GB to your database.
 
-  1. Install the GDAL library and python bindings and the unzip tool
-
-       * Ubuntu: `sudo apt-get install python-gdal unzip`
-       * CentOS: `sudo yum install gdal-python unzip`
-
-  2. Get preprocessed TIGER 2017 data and unpack it into the
+  1. Get preprocessed TIGER 2018 data and unpack it into the
      data directory in your Nominatim sources:
 
         cd Nominatim/data
-        wget https://nominatim.org/data/tiger2017-nominatim-preprocessed.tar.gz
-        tar xf tiger2017-nominatim-preprocessed.tar.gz
+        wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
+        tar xf tiger2018-nominatim-preprocessed.tar.gz
 
-  3. Import the data into your Nominatim database: 
+    `data-source/us-tiger/README.md` explains how the data got preprocessed.
+
+  2. Import the data into your Nominatim database: 
 
         ./utils/setup.php --import-tiger-data
 
-  4. Enable use of the Tiger data in your `settings/local.php` by adding:
+  3. Enable use of the Tiger data in your `settings/local.php` by adding:
 
          @define('CONST_Use_US_Tiger_Data', true);
 
-  5. Apply the new settings:
+  4. Apply the new settings:
 
 ```sh
     ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
 ```
 
-The entire US adds about 10GB to your database.
-
-You can also process the data from the original TIGER data to create the
-SQL files, Nominatim needs for the import:
-
-  1. Get the TIGER 2017 data. You will need the EDGES files
-     (3,234 zip files, 11GB total).
-
-         wget -r ftp://ftp2.census.gov/geo/tiger/TIGER2017/EDGES/
-
-  2. Convert the data into SQL statements: 
-
-         ./utils/imports.php --parse-tiger <tiger edge data directory>
-
-Be warned that this can take quite a long time. After this process is finished,
-the same preprocessed files as above are available in `data/tiger`.
 
 ## Updates
 

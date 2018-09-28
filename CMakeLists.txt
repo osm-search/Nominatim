@@ -105,7 +105,6 @@ set(CUSTOMFILES
     website/status.php
     utils/blocks.php
     utils/country_languages.php
-    utils/imports.php
     utils/importWikipedia.php
     utils/export.php
     utils/query.php

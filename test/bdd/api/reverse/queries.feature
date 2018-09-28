@@ -31,7 +31,7 @@ Feature: Reverse geocoding
           | way      | place    | house |
         And result addresses contain
           | house_number | road |
-          | 1410         | Juan Antonio Lavalleja |
+          | 1416         | Juan Antonio Lavalleja |
 
     Scenario: Address with non-numerical house number
         When sending jsonv2 reverse coordinates 53.579805460944,9.9475670458196
@@ -50,7 +50,7 @@ Feature: Reverse geocoding
         When sending jsonv2 reverse coordinates 54.046489113,8.5546870529
         Then results contain
          | display_name |
-         | Freie und Hansestadt Hamburg, Deutschland |
+         | Hamburg, Deutschland |
 
     Scenario: When slightly outside town, the town is not shown
         When sending jsonv2 reverse coordinates -32.122,-56.114

@@ -72,12 +72,12 @@ The tests can be configured with a set of environment variables:
  * `TEMPLATE_DB` - name of template database used as a skeleton for
                    the test databases (db tests)
  * `TEST_DB` - name of test database (db tests)
- * `ABI_TEST_DB` - name of the database containing the API test data (api tests)
+ * `API_TEST_DB` - name of the database containing the API test data (api tests)
  * `DB_HOST` - (optional) hostname of database host
  * `DB_USER` - (optional) username of database login
  * `DB_PASS` - (optional) password for database login
  * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim
- *                        module shared library file
+                          module shared library file
  * `TEST_SETTINGS_TEMPLATE` - file to write temporary Nominatim settings to
  * `REMOVE_TEMPLATE` - if true, the template database will not be reused during
                        the next run. Reusing the base templates speeds up tests
@@ -117,8 +117,8 @@ planets are likely to work as well but you may see isolated test
 failures where the data has changed. To recreate the input data
 for the test database run:
 
-    wget https://free.nchc.org.tw/osm.planet/pbf/planet-160725.osm.pbf
-    osmconvert planet-160725.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
+    wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
+    osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
 
 Before importing make sure to add the following to your local settings:
 

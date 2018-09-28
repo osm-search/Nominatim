@@ -19,30 +19,32 @@ Feature: Search queries
           | accept-language |
           | de |
         Then address of result 0 is
-          | type         | value |
-          | house_number | 86 |
-          | road         | Schellingstraße |
-          | suburb       | Eilbek |
-          | postcode     | 22089 |
+          | type          | value |
+          | house_number  | 86 |
+          | road          | Schellingstraße |
+          | neighbourhood | Auenviertel |
+          | suburb        | Eilbek |
+          | postcode      | 22089 |
           | city_district | Wandsbek |
-          | state        | Hamburg |
-          | country      | Deutschland |
-          | country_code | de |
+          | state         | Hamburg |
+          | country       | Deutschland |
+          | country_code  | de |
 
     Scenario: House number interpolation odd
         When sending json search query "Schellingstr 73, Hamburg" with address
           | accept-language |
           | de |
         Then address of result 0 is
-          | type         | value |
-          | house_number | 73 |
-          | road         | Schellingstraße |
-          | suburb       | Eilbek |
-          | postcode     | 22089 |
+          | type          | value |
+          | house_number  | 73 |
+          | road          | Schellingstraße |
+          | neighbourhood | Auenviertel |
+          | suburb        | Eilbek |
+          | postcode      | 22089 |
           | city_district | Wandsbek |
-          | state        | Hamburg |
-          | country      | Deutschland |
-          | country_code | de |
+          | state         | Hamburg |
+          | country       | Deutschland |
+          | country_code  | de |
 
     Scenario: With missing housenumber search falls back to road
         When sending json search query "342 rocha, santa lucia" with address

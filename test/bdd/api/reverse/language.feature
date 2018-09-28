@@ -5,7 +5,7 @@ Feature: Localization of reverse search results
         When sending json reverse coordinates 18.1147,-15.95
         Then result addresses contain
           | ID | country |
-          | 0  | Mauritanie موريتانيا |
+          | 0  | موريتانيا |
 
     Scenario: accept-language parameter
         When sending json reverse coordinates 18.1147,-15.95

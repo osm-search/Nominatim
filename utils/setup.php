@@ -15,40 +15,40 @@ use Nominatim\Setup\SetupFunctions as SetupFunctions;
 // (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
 $aCMDOptions
 = array(
-    'Create and setup nominatim search system',
-    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
-    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
-    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+   'Create and setup nominatim search system',
+   array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
+   array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
+   array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
-    array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
-    array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
+   array('osm-file', '', 0, 1, 1, 1, 'realpath', 'File to import'),
+   array('threads', '', 0, 1, 1, 1, 'int', 'Number of threads (where possible)'),
 
-    array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
+   array('all', '', 0, 1, 0, 0, 'bool', 'Do the complete process'),
 
-    array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
-    array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
-    array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
-    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
-    array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
-    array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
-    array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
-    array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
-    array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
-    array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
-    array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
-    array('no-partitions', '', 0, 1, 0, 0, 'bool', 'Do not partition search indices (speeds up import of single country extracts)'),
-    array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
-    array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
-    array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
-    array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
-    array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
-    array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
-    array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
-    array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
-    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
-    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
-    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
-);
+   array('create-db', '', 0, 1, 0, 0, 'bool', 'Create nominatim db'),
+   array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
+   array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
+   array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+   array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
+   array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
+   array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
+   array('ignore-errors', '', 0, 1, 0, 0, 'bool', 'Continue import even when errors in SQL are present (EXPERT)'),
+   array('create-tables', '', 0, 1, 0, 0, 'bool', 'Create main tables'),
+   array('create-partition-tables', '', 0, 1, 0, 0, 'bool', 'Create required partition tables'),
+   array('create-partition-functions', '', 0, 1, 0, 0, 'bool', 'Create required partition triggers'),
+   array('no-partitions', '', 0, 1, 0, 0, 'bool', 'Do not partition search indices (speeds up import of single country extracts)'),
+   array('import-wikipedia-articles', '', 0, 1, 0, 0, 'bool', 'Import wikipedia article dump'),
+   array('load-data', '', 0, 1, 0, 0, 'bool', 'Copy data to live tables from import table'),
+   array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
+   array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
+   array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
+   array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
+   array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
+   array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
+   array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
+   array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
+   array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
+  );
 
 // $aCMDOptions passed to getCmdOpt by reference
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
@@ -71,7 +71,7 @@ if ($aCMDResult['osmosis-init']) {
 
 // ******************************************************
 // instantiate Setup class
-$cSetup = new SetupFunctions('setup', $aCMDResult);
+$cSetup = new SetupFunctions($aCMDResult);
 
 // *******************************************************
 // go through complete process if 'all' is selected or start selected functions

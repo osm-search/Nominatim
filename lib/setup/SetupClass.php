@@ -16,13 +16,12 @@ class SetupFunctions
     protected $oDB = null;              // set in setupDB (earliest) or later in loadData, importData, drop, createSqlFunctions, importTigerData
                                                 // pgsqlRunPartitionScript, calculatePostcodes, ..if no already set
 
-    public function __construct($callingFunction, array $aCMDResult = array())
+    public function __construct(array $aCMDResult)
     {
         // by default, use all but one processor, but never more than 15.
         $this->iInstances = isset($aCMDResult['threads'])
             ? $aCMDResult['threads']
             : (min(16, getProcessorCount()) - 1);
-
 
         if ($this->iInstances < 1) {
             $this->iInstances = 1;
@@ -38,11 +37,11 @@ class SetupFunctions
 
         $this->sModulePath = CONST_Database_Module_Path;
         info('module path: ' . $this->sModulePath);
-       
+
         // prepares DB for import or update, sets the Data Source Name
         $this->aDSNInfo = \DB::parseDSN(CONST_Database_DSN);
         if (!isset($this->aDSNInfo['port']) || !$this->aDSNInfo['port']) $this->aDSNInfo['port'] = 5432;
- 
+
         // setting member variables based on command line options stored in $aCMDResult
         $this->sVerbose = $aCMDResult['verbose'];
 
@@ -62,13 +61,10 @@ class SetupFunctions
         } else {
             $this->bNoPartitions = false;
         }
-
-        // if class is instantiated by update.php, we have to set EnableDiffUpdates to true
-        // otherwise set to value provided by setup.php's command line arg array
-        if ($callingFunction == 'update') {
-            $this->bEnableDiffUpdates = true;
-        } elseif ($callingFunction == 'setup') {
+        if (isset($aCMDResult['enable-diff-updates'])) {
             $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
+        } else {
+            $this->bEnableDiffUpdates = false;
         }
     }
 
@@ -158,7 +154,6 @@ class SetupFunctions
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql.gz');
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
 
-
         if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
             $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
         } else {
@@ -191,8 +186,6 @@ class SetupFunctions
             echo "Normally you should not need to set this manually.\n";
             fail("osm2pgsql not found in '$osm2pgsql'");
         }
-
-
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
             $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
@@ -749,7 +742,7 @@ class SetupFunctions
         }
         $iReturn = runWithEnv($sCMD, $aProcEnv);    // /lib/cmd.php "function runWithEnv($sCmd, $aEnv)"
     }
-                     
+
     private function pgsqlRunScript($sScript, $bfatal = true)
     {
         runSQLScript(

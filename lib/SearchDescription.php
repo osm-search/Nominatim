@@ -701,7 +701,7 @@ class SearchDescription
         }
 
         if ($this->sHouseNumber || $this->sClass) {
-            $iLimit = 20;
+            $iLimit = 40;
         }
 
         $aResults = array();

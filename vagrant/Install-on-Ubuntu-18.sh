@@ -19,6 +19,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 
 #DOCS:    :::sh
+    sudo add-apt-repository universe
     sudo apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" --force-yes -fuy install grub-pc #DOCS:
     sudo apt-get update -qq
 

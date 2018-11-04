@@ -19,8 +19,7 @@ SET default_with_oids = false;
 CREATE TABLE gb_postcode (
     id integer,
     postcode character varying(9),
-    geometry geometry,
-    CONSTRAINT enforce_dims_geometry CHECK ((st_ndims(geometry) = 2)),
-    CONSTRAINT enforce_srid_geometry CHECK ((st_srid(geometry) = 4326))
+    x double precision,
+    y double precision
 );
 

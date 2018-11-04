@@ -21,7 +21,7 @@ INSERT INTO tmp_new_postcode_locations (country_code, pc, centroid)
                          WHERE new.country_code = 'us' AND new.pc = u.postcode);
 -- add extra UK postcodes
 INSERT INTO tmp_new_postcode_locations (country_code, pc, centroid)
-    SELECT 'gb', postcode, geometry FROM gb_postcode g
+    SELECT 'gb', postcode, ST_SetSRID(ST_Point(x,y),4326)
      WHERE NOT EXISTS (SELECT 0 FROM tmp_new_postcode_locations new
                              WHERE new.country_code = 'gb' and new.pc = g.postcode);
 

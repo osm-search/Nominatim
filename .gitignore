@@ -8,4 +8,6 @@ data/wiki_import.sql
 data/wiki_specialphrases.sql
 data/osmosischange.osc
 
+data-sources/gb-postcodes/vendor
+
 .vagrant

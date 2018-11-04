@@ -10,6 +10,7 @@
 
   <exclude-pattern>./lib/template/*html*</exclude-pattern>
   <exclude-pattern>./lib/template/includes/</exclude-pattern>
+  <exclude-pattern>./**/vendor/</exclude-pattern>
   <exclude-pattern>./module/</exclude-pattern>
   <exclude-pattern>./website/css</exclude-pattern>
   <exclude-pattern>./website/js</exclude-pattern>

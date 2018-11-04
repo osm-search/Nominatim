@@ -1,0 +1,5 @@
+{
+    "require": {
+        "proj4php/proj4php": "^2.0"
+    }
+}

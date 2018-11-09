@@ -154,10 +154,11 @@ class SetupFunctions
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql.gz');
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
 
-        if (file_exists(CONST_BasePath.'/data/gb_postcode_data.sql.gz')) {
-            $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_data.sql.gz');
+        $sPostcodeFilename = CONST_BasePath.'/data/gb_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
-            warn('external UK postcode table not found.');
+            warn('optional external UK postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
         }
 
         if (CONST_Use_Extra_US_Postcodes) {

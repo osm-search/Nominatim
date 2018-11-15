@@ -30,12 +30,11 @@
 
     <h3>Details</h3>
 
-    Uncaught exception <em><?php echo get_class($exception) ?></em>
-    with message <em><?php echo $exception->getMessage() ?></em>
+    <?php echo $exception->getMessage() ?>
 
     <?php if (CONST_Debug) { ?>
-        <br>
-        thrown in <em><?php $exception->getFile() . '('. $exception->getLine() . ')' ?></em>.
+        <p>
+        Exception <em><?php echo get_class($exception) ?></em> thrown in <em><?php echo $exception->getFile() . '('. $exception->getLine() . ')' ?></em>.
 
         <?php if (get_class($exception) == 'Nominatim\DatabaseError') { ?>
 

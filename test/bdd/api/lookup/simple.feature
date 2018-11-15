@@ -1,6 +1,6 @@
 @APIDB
 Feature: Places by osm_type and osm_id Tests
-    Simple tests for internal server errors and response format.
+    Simple tests for response format.
 
     Scenario Outline: address lookup for existing node, way, relation
         When sending <format> lookup query for N3284625766,W6065798,,R123924,X99,N0

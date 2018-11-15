@@ -194,7 +194,7 @@ Feature: Simple Tests
         When sending json search query "Tokyo"
             | param        | value |
             |json_callback | <data> |
-        Then a HTTP 400 is returned
+        Then a json user error is returned
 
     Examples:
       | data |

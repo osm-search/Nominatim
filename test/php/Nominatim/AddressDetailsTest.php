@@ -2,13 +2,9 @@
 
 namespace Nominatim;
 
+require_once(CONST_BasePath.'/lib/init-website.php');
 require_once(CONST_BasePath.'/lib/AddressDetails.php');
 
-
-function chksql($oSql, $sMsg = 'Database request failed')
-{
-    return $oSql;
-}
 
 class AddressDetailsTest extends \PHPUnit\Framework\TestCase
 {

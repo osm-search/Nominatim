@@ -448,13 +448,17 @@ class SearchDescription
 
             //now search for housenumber, if housenumber provided
             if ($this->sHouseNumber && !empty($aResults)) {
-                $aNamedPlaceIDs = $aResults;
-                $aResults = $this->queryHouseNumber($oDB, $aNamedPlaceIDs);
+                // Downgrade the rank of the street results, they are missing
+                // the housenumber.
+                foreach ($aResults as $oRes) {
+                    $oRes->iResultRank++;
+                }
 
-                if (empty($aResults) && $this->looksLikeFullAddress()) {
-                    $aResults = $aNamedPlaceIDs;
-                    foreach ($aResults as $oRes) {
-                        $oRes->iResultRank++;
+                $aHnResults = $this->queryHouseNumber($oDB, $aResults);
+
+                if (!empty($aHnResults)) {
+                    foreach ($aHnResults as $oRes) {
+                        $aResults[$oRes->iId] = $oRes;
                     }
                 }
             }

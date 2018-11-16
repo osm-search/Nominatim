@@ -68,4 +68,32 @@ class Result
 
         return $sHousenumbers;
     }
+
+    /**
+     * Split a result array into highest ranked result and the rest
+     *
+     * @param object[] $aResults  List of results to split.
+     *
+     * @return array[]
+     */
+    public static function splitResults($aResults)
+    {
+        $aHead = array();
+        $aTail = array();
+        $iMinRank = 10000;
+
+        foreach ($aResults as $oRes) {
+            if ($oRes->iResultRank < $iMinRank) {
+                $aTail = array_merge($aTail, $aHead);
+                $aHead = array($oRes->iId => $oRes);
+                $iMinRank = $oRes->iResultRank;
+            } elseif ($oRes->iResultRank == $iMinRank) {
+                $aHead[$oRes->iId] = $oRes;
+            } else {
+                $aTail[$oRes->iId] = $oRes;
+            }
+        }
+
+        return array('head' => $aHead, 'tail' => $aTail);
+    }
 }

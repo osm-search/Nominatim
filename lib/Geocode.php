@@ -546,7 +546,6 @@ class Geocode
         // Do we have anything that looks like a lat/lon pair?
         $sQuery = $oCtx->setNearPointFromQuery($sQuery);
 
-        $aResults = array();
         if ($sQuery || $this->aStructuredQuery) {
             // Start with a single blank search
             $aSearches = array(new SearchDescription($oCtx));
@@ -746,8 +745,10 @@ class Geocode
             // Start the search process
             $iGroupLoop = 0;
             $iQueryLoop = 0;
+            $aNextResults = array();
             foreach ($aGroupedSearches as $iGroupedRank => $aSearches) {
                 $iGroupLoop++;
+                $aResults = $aNextResults;
                 foreach ($aSearches as $oSearch) {
                     $iQueryLoop++;
 
@@ -765,6 +766,23 @@ class Geocode
                     );
 
                     if ($iQueryLoop > 20) break;
+                }
+
+                if (!empty($aResults)) {
+                    $aSplitResults = Result::splitResults($aResults);
+                    Debug::printVar('Split results', $aSplitResults);
+                    if ($iGroupLoop <= 4 && empty($aSplitResults['tail'])
+                        && reset($aSplitResults['head'])->iResultRank > 0) {
+                        // Haven't found an exact match for the query yet.
+                        // Therefore add result from the next group level.
+                        $aNextResults = $aSplitResults['head'];
+                        foreach ($aNextResults as $oRes) {
+                            $oRes->iResultRank--;
+                        }
+                        $aResults = array();
+                    } else {
+                        $aResults = $aSplitResults['head'];
+                    }
                 }
 
                 if (!empty($aResults) && ($this->iMinAddressRank != 0 || $this->iMaxAddressRank != 30)) {

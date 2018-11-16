@@ -453,6 +453,9 @@ class SearchDescription
 
                 if (empty($aResults) && $this->looksLikeFullAddress()) {
                     $aResults = $aNamedPlaceIDs;
+                    foreach ($aResults as $oRes) {
+                        $oRes->iResultRank++;
+                    }
                 }
             }
 
@@ -469,16 +472,13 @@ class SearchDescription
             if ($sPlaceIds) {
                 $sSQL = 'SELECT place_id FROM placex';
                 $sSQL .= ' WHERE place_id in ('.$sPlaceIds.')';
-                $sSQL .= " AND postcode = '".$this->sPostcode."'";
+                $sSQL .= " AND postcode != '".$this->sPostcode."'";
                 Debug::printSQL($sSQL);
                 $aFilteredPlaceIDs = chksql($oDB->getCol($sSQL));
                 if ($aFilteredPlaceIDs) {
-                    $aNewResults = array();
                     foreach ($aFilteredPlaceIDs as $iPlaceId) {
-                        $aNewResults[$iPlaceId] = $aResults[$iPlaceId];
+                        $aResults[$iPlaceId]->iResultRank++;
                     }
-                    $aResults = $aNewResults;
-                    Debug::printVar('Place IDs after postcode filtering', $aResults);
                 }
             }
         }

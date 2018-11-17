@@ -51,8 +51,10 @@ Feature: Tag evaluation
          """
          n1 Thighway=yes,operator=Foo,name=null
          n2 Tshop=grocery,operator=Foo
-         n3 Tamenity=hospital,operator=Foo
+         n3 Tamenity=restaurant,operator=Foo
          n4 Ttourism=hotel,operator=Foo
+         n5 Tamenity=hospital,operator=Foo,name=Meme
+         n6 Tamenity=fuel,operator=Foo
          """
         Then place contains
          | object | name |
@@ -60,6 +62,8 @@ Feature: Tag evaluation
          | N2     | 'operator' : 'Foo' |
          | N3     | 'operator' : 'Foo' |
          | N4     | 'operator' : 'Foo' |
+         | N5     | 'name' : 'Meme' |
+         | N6     | 'operator' : 'Foo' |
 
     Scenario Outline: Ignored name tags
         When loading osm data

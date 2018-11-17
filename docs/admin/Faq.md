@@ -71,6 +71,15 @@ and recompile (`cmake .. && make`).
 Reinstall the nominatim functions with `setup.php --create--functions`
 and check for any errors, e.g. a missing `nominatim.so` file.
 
+### I see the error: "ERROR: mmap (remap) failed"
+
+This may be a simple out-of-memory error. Try reducing the memory used
+for `--osm2pgsql-cache`. Also make sure that overcommitting memory is
+allowed: `cat /proc/sys/vm/overcommit_memory` should print 0 or 1.
+
+If you are using a flatnode file, then it may also be that the underlying
+filesystem does not fully support 'mmap'. A notable candidate is virtualbox's
+vboxfs.
 
 ### The website shows: "Could not get word tokens"
 

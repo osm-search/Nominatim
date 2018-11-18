@@ -30,14 +30,14 @@ function getArraySQL($a)
 
 function getPostgresVersion(&$oDB)
 {
-    $sVersionString = $oDB->getOne('select version()');
-    preg_match('#PostgreSQL ([0-9]+)[.]([0-9]+)[^0-9]#', $sVersionString, $aMatches);
+    $sVersionString = $oDB->getOne('SHOW server_version_num');
+    preg_match('#([0-9]?[0-9])([0-9][0-9])[0-9][0-9]#', $sVersionString, $aMatches);
     return (float) ($aMatches[1].'.'.$aMatches[2]);
 }
 
 function getPostgisVersion(&$oDB)
 {
-    $sVersionString = $oDB->getOne('select postgis_full_version()');
-    preg_match('#POSTGIS="([0-9]+)[.]([0-9]+)[.]([0-9]+)( r([0-9]+))?"#', $sVersionString, $aMatches);
+    $sVersionString = $oDB->getOne('select postgis_lib_version()');
+    preg_match('#^([0-9]+)[.]([0-9]+)[.]#', $sVersionString, $aMatches);
     return (float) ($aMatches[1].'.'.$aMatches[2]);
 }

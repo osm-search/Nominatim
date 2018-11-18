@@ -102,7 +102,7 @@ class SetupFunctions
         $fPostgresVersion = getPostgresVersion($this->oDB);
         echo 'Postgres version found: '.$fPostgresVersion."\n";
 
-        if ($fPostgresVersion < 9.1) {
+        if ($fPostgresVersion < 9.01) {
             fail('Minimum supported version of Postgresql is 9.1.');
         }
 

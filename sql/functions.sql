@@ -869,15 +869,7 @@ BEGIN
         END IF;
 
     ELSEIF NEW.class = 'place' THEN
-      IF NEW.type in ('continent') THEN
-        NEW.rank_search := 2;
-        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
-            NEW.rank_address := NEW.rank_search;
-        ELSE
-            NEW.rank_address := 0;
-        END IF;
-        NEW.country_code := NULL;
-      ELSEIF NEW.type in ('sea') THEN
+      IF NEW.type in ('continent', 'sea') THEN
         NEW.rank_search := 2;
         NEW.rank_address := 0;
         NEW.country_code := NULL;

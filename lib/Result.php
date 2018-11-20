@@ -72,7 +72,7 @@ class Result
     /**
      * Split a result array into highest ranked result and the rest
      *
-     * @param object[] $aResults  List of results to split.
+     * @param object[] $aResults List of results to split.
      *
      * @return array[]
      */

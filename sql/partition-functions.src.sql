@@ -142,17 +142,11 @@ LANGUAGE plpgsql;
 
 
 create or replace function insertSearchName(
-  in_partition INTEGER, in_place_id BIGINT, in_country_code VARCHAR(2), 
-  in_name_vector INTEGER[], in_nameaddress_vector INTEGER[],
-  in_rank_search INTEGER, in_rank_address INTEGER, in_importance FLOAT,
-  in_centroid GEOMETRY, in_geometry GEOMETRY) RETURNS BOOLEAN AS $$
+  in_partition INTEGER, in_place_id BIGINT, in_name_vector INTEGER[],
+  in_rank_search INTEGER, in_rank_address INTEGER, in_geometry GEOMETRY)
+RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
-
-  DELETE FROM search_name WHERE place_id = in_place_id;
-  INSERT INTO search_name (place_id, search_rank, address_rank, importance, country_code, name_vector, nameaddress_vector, centroid)
-    values (in_place_id, in_rank_search, in_rank_address, in_importance, in_country_code, in_name_vector, in_nameaddress_vector, in_centroid);
-
 -- start
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
@@ -173,9 +167,6 @@ LANGUAGE plpgsql;
 create or replace function deleteSearchName(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
-
-  DELETE from search_name WHERE place_id = in_place_id;
-
 -- start
   IF in_partition = -partition- THEN
     DELETE from search_name_-partition- WHERE place_id = in_place_id;

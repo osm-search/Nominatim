@@ -230,7 +230,7 @@ class SetupFunctions
         $this->createSqlFunctions();
     }
 
-    public function createTables()
+    public function createTables($bReverseOnly = false)
     {
         info('Create Tables');
 
@@ -268,6 +268,10 @@ class SetupFunctions
         );
 
         $this->pgsqlRunScript($sTemplate, false);
+
+        if ($bReverseOnly) {
+            $this->pgExec('DROP TABLE search_name');
+        }
     }
 
     public function createPartitionTables()
@@ -356,8 +360,10 @@ class SetupFunctions
         echo '.';
         $this->pgExec('TRUNCATE location_area');
         echo '.';
-        $this->pgExec('TRUNCATE search_name');
-        echo '.';
+        if (!$this->dbReverseOnly()) {
+            $this->pgExec('TRUNCATE search_name');
+            echo '.';
+        }
         $this->pgExec('TRUNCATE search_name_blank');
         echo '.';
         $this->pgExec('DROP SEQUENCE seq_place');
@@ -608,6 +614,9 @@ class SetupFunctions
         info('Create Search indices');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
+        if (!$this->dbReverseOnly()) {
+            $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_search.src.sql');
+        }
         $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
         $sTemplate = $this->replaceTablespace(
             '{ts:address-index}',
@@ -748,6 +757,10 @@ class SetupFunctions
         if (!CONST_Use_Aux_Location_data) {
             $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
         }
+
+        $sReverseOnly = $this->dbReverseOnly() ? 'true' : 'false';
+        $sTemplate = str_replace('%REVERSE-ONLY%', $sReverseOnly, $sTemplate);
+
         $this->pgsqlRunScript($sTemplate);
     }
 
@@ -860,5 +873,16 @@ class SetupFunctions
         if (!pg_query($this->oDB->connection, $sSQL)) {
             fail(pg_last_error($this->oDB->connection));
         }
+    }
+
+    /**
+     * Check if the database is in reverse-only mode.
+     *
+     * @return True if there is no search_name table and infrastructure.
+     */
+    private function dbReverseOnly()
+    {
+        $sSQL = "SELECT count(*) FROM pg_tables WHERE tablename = 'search_name'";
+        return !(chksql($this->oDB->getOne($sSQL)));
     }
 }

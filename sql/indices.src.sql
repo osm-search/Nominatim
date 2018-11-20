@@ -3,10 +3,6 @@
 
 CREATE INDEX idx_word_word_id on word USING BTREE (word_id) {ts:search-index};
 
-CREATE INDEX idx_search_name_nameaddress_vector ON search_name USING GIN (nameaddress_vector) WITH (fastupdate = off) {ts:search-index};
-CREATE INDEX idx_search_name_name_vector ON search_name USING GIN (name_vector) WITH (fastupdate = off) {ts:search-index};
-CREATE INDEX idx_search_name_centroid ON search_name USING GIST (centroid) {ts:search-index};
-
 CREATE INDEX idx_place_addressline_address_place_id on place_addressline USING BTREE (address_place_id) {ts:search-index};
 
 DROP INDEX IF EXISTS idx_placex_rank_search;

@@ -1310,6 +1310,9 @@ BEGIN
 
   NEW.indexed_date = now();
 
+  IF NOT %REVERSE-ONLY% THEN
+    DELETE from search_name WHERE place_id = NEW.place_id;
+  END IF;
   result := deleteSearchName(NEW.partition, NEW.place_id);
   DELETE FROM place_addressline WHERE place_id = NEW.place_id;
   result := deleteRoad(NEW.partition, NEW.place_id);
@@ -1576,8 +1579,9 @@ BEGIN
     IF NEW.parent_place_id IS NOT NULL THEN
 
       -- Get the details of the parent road
-      select s.country_code, s.name_vector, s.nameaddress_vector from search_name s
-       where s.place_id = NEW.parent_place_id INTO location;
+      SELECT p.country_code, p.postcode FROM placex p
+       WHERE p.place_id = NEW.parent_place_id INTO location;
+
       NEW.country_code := location.country_code;
       --DEBUG: RAISE WARNING 'Got parent details from search name';
 
@@ -1586,7 +1590,7 @@ BEGIN
           IF NEW.address is not null AND NEW.address ? 'postcode' THEN
               NEW.postcode = upper(trim(NEW.address->'postcode'));
           ELSE
-             SELECT postcode FROM placex WHERE place_id = NEW.parent_place_id INTO NEW.postcode;
+             NEW.postcode := location.postcode;
           END IF;
           IF NEW.postcode is null THEN
             NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
@@ -1599,21 +1603,34 @@ BEGIN
         return NEW;
       END IF;
 
-      -- Merge address from parent
-      nameaddress_vector := array_merge(nameaddress_vector, location.nameaddress_vector);
-      nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
-
       -- Performance, it would be more acurate to do all the rest of the import
       -- process but it takes too long
       -- Just be happy with inheriting from parent road only
-
       IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
         result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
         --DEBUG: RAISE WARNING 'Place added to location table';
       END IF;
 
-      result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
-      --DEBUG: RAISE WARNING 'Place added to search table';
+      result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
+                                 NEW.rank_search, NEW.rank_address, NEW.geometry);
+
+      IF NOT %REVERSE-ONLY% THEN
+          -- Merge address from parent
+          SELECT s.name_vector, s.nameaddress_vector FROM search_name s
+           WHERE s.place_id = NEW.parent_place_id INTO location;
+
+          nameaddress_vector := array_merge(nameaddress_vector,
+                                            location.nameaddress_vector);
+          nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
+
+          INSERT INTO search_name (place_id, search_rank, address_rank,
+                                   importance, country_code, name_vector,
+                                   nameaddress_vector, centroid)
+                 VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+                         NEW.importance, NEW.country_code, name_vector,
+                         nameaddress_vector, place_centroid);
+          --DEBUG: RAISE WARNING 'Place added to search table';
+        END IF;
 
       return NEW;
     END IF;
@@ -1799,9 +1816,11 @@ BEGIN
         IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
           isin_tokens := isin_tokens || address_street_word_id;
         END IF;
-        address_street_word_id := get_word_id(make_standard_name(addr_item.value));
-        IF address_street_word_id IS NOT NULL THEN
-          nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+        IF NOT %REVERSE-ONLY% THEN
+          address_street_word_id := get_word_id(make_standard_name(addr_item.value));
+          IF address_street_word_id IS NOT NULL THEN
+            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+          END IF;
         END IF;
       END IF;
       IF addr_item.key = 'is_in' THEN
@@ -1815,16 +1834,20 @@ BEGIN
             END IF;
 
             -- merge word into address vector
-            address_street_word_id := get_word_id(make_standard_name(isin[i]));
-            IF address_street_word_id IS NOT NULL THEN
-              nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+            IF NOT %REVERSE-ONLY% THEN
+              address_street_word_id := get_word_id(make_standard_name(isin[i]));
+              IF address_street_word_id IS NOT NULL THEN
+                nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+              END IF;
             END IF;
           END LOOP;
         END IF;
       END IF;
     END LOOP;
   END IF;
-  nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
+  IF NOT %REVERSE-ONLY% THEN
+    nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
+  END IF;
 
 -- RAISE WARNING 'ISIN: %', isin_tokens;
 
@@ -1873,7 +1896,7 @@ BEGIN
 
       -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
       -- Add it to the list of search terms
-      IF location.rank_search > 4 THEN
+      IF NOT %REVERSE-ONLY% AND location.rank_search > 4 THEN
           nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
       END IF;
       INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
@@ -1927,8 +1950,18 @@ BEGIN
       --DEBUG: RAISE WARNING 'insert into road location table (full)';
     END IF;
 
-    result := insertSearchName(NEW.partition, NEW.place_id, NEW.country_code, name_vector, nameaddress_vector, NEW.rank_search, NEW.rank_address, NEW.importance, place_centroid, NEW.geometry);
-    --DEBUG: RAISE WARNING 'added to serach name (full)';
+    result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
+                               NEW.rank_search, NEW.rank_address, NEW.geometry);
+    --DEBUG: RAISE WARNING 'added to search name (full)';
+
+    IF NOT %REVERSE-ONLY% THEN
+        INSERT INTO search_name (place_id, search_rank, address_rank,
+                                 importance, country_code, name_vector,
+                                 nameaddress_vector, centroid)
+               VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
+                       NEW.importance, NEW.country_code, name_vector,
+                       nameaddress_vector, place_centroid);
+    END IF;
 
   END IF;
 
@@ -1987,6 +2020,9 @@ BEGIN
   --DEBUG: RAISE WARNING 'placex_delete:09 % %',OLD.osm_type,OLD.osm_id;
 
   IF OLD.name is not null THEN
+    IF NOT %REVERSE-ONLY% THEN
+      DELETE from search_name WHERE place_id = OLD.place_id;
+    END IF;
     b := deleteSearchName(OLD.partition, OLD.place_id);
   END IF;
 

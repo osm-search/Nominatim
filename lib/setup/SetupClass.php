@@ -4,17 +4,16 @@ namespace Nominatim\Setup;
 
 class SetupFunctions
 {
-    protected $iCacheMemory;            // set in constructor
-    protected $iInstances;              // set in constructor
-    protected $sModulePath;             // set in constructor
-    protected $aDSNInfo;                // set in constructor = DB::parseDSN(CONST_Database_DSN);
-    protected $sVerbose;                // set in constructor
-    protected $sIgnoreErrors;           // set in constructor
-    protected $bEnableDiffUpdates;      // set in constructor
-    protected $bEnableDebugStatements;  // set in constructor
-    protected $bNoPartitions;           // set in constructor
-    protected $oDB = null;              // set in setupDB (earliest) or later in loadData, importData, drop, createSqlFunctions, importTigerData
-                                                // pgsqlRunPartitionScript, calculatePostcodes, ..if no already set
+    protected $iCacheMemory;
+    protected $iInstances;
+    protected $sModulePath;
+    protected $aDSNInfo;
+    protected $sVerbose;
+    protected $sIgnoreErrors;
+    protected $bEnableDiffUpdates;
+    protected $bEnableDebugStatements;
+    protected $bNoPartitions;
+    protected $oDB = null;
 
     public function __construct(array $aCMDResult)
     {
@@ -38,9 +37,11 @@ class SetupFunctions
         $this->sModulePath = CONST_Database_Module_Path;
         info('module path: ' . $this->sModulePath);
 
-        // prepares DB for import or update, sets the Data Source Name
-        $this->aDSNInfo = \DB::parseDSN(CONST_Database_DSN);
-        if (!isset($this->aDSNInfo['port']) || !$this->aDSNInfo['port']) $this->aDSNInfo['port'] = 5432;
+        // parse database string
+        $this->aDSNInfo = array_filter(\DB::parseDSN(CONST_Database_DSN));
+        if (!isset($this->aDSNInfo['port'])) {
+            $this->aDSNInfo['port'] = 5432;
+        }
 
         // setting member variables based on command line options stored in $aCMDResult
         $this->sVerbose = $aCMDResult['verbose'];
@@ -77,27 +78,26 @@ class SetupFunctions
         }
 
         $sCreateDBCmd = 'createdb -E UTF-8 -p '.$this->aDSNInfo['port'].' '.$this->aDSNInfo['database'];
-        if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
+        if (isset($this->aDSNInfo['username'])) {
             $sCreateDBCmd .= ' -U '.$this->aDSNInfo['username'];
         }
 
-        if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
+        if (isset($this->aDSNInfo['hostspec'])) {
             $sCreateDBCmd .= ' -h '.$this->aDSNInfo['hostspec'];
         }
 
-        $aProcEnv = null;
-        if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
-        }
-
-        $result = runWithEnv($sCreateDBCmd, $aProcEnv);
+        $result = $this->runWithPgEnv($sCreateDBCmd);
         if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
+    }
+
+    public function connect($sDatabaseDSN)
+    {
+        $this->oDB =& getDB();
     }
 
     public function setupDB()
     {
         info('Setup DB');
-        $this->oDB =& getDB();
 
         $fPostgresVersion = getPostgresVersion($this->oDB);
         echo 'Postgres version found: '.$fPostgresVersion."\n";
@@ -203,19 +203,16 @@ class SetupFunctions
         $osm2pgsql .= ' -lsc -O gazetteer --hstore --number-processes 1';
         $osm2pgsql .= ' -C '.$this->iCacheMemory;
         $osm2pgsql .= ' -P '.$this->aDSNInfo['port'];
-        if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
+        if (isset($this->aDSNInfo['username'])) {
             $osm2pgsql .= ' -U '.$this->aDSNInfo['username'];
         }
-        if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
+        if (isset($this->aDSNInfo['hostspec'])) {
             $osm2pgsql .= ' -H '.$this->aDSNInfo['hostspec'];
         }
-        $aProcEnv = null;
-        if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
-        }
         $osm2pgsql .= ' -d '.$this->aDSNInfo['database'].' '.$sOSMFile;
-        runWithEnv($osm2pgsql, $aProcEnv);
-        if ($this->oDB == null) $this->oDB =& getDB();
+
+        $this->runWithPgEnv($osm2pgsql);
+
         if (!$this->sIgnoreErrors && !chksql($this->oDB->getRow('select * from place limit 1'))) {
             fail('No Data');
         }
@@ -346,8 +343,6 @@ class SetupFunctions
     public function loadData($bDisableTokenPrecalc)
     {
         info('Drop old Data');
-
-        if ($this->oDB == null) $this->oDB =& getDB();
 
         if (!pg_query($this->oDB->connection, 'TRUNCATE word')) fail(pg_last_error($this->oDB->connection));
         echo '.';
@@ -528,7 +523,6 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
-        if ($this->oDB == null) $this->oDB =& getDB();
         if (!pg_query($this->oDB->connection, 'TRUNCATE location_postcode')) {
             fail(pg_last_error($this->oDB->connection));
         }
@@ -589,36 +583,31 @@ class SetupFunctions
         $sOutputFile = '';
         $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$this->aDSNInfo['database'].' -P '
             .$this->aDSNInfo['port'].' -t '.$this->iInstances.$sOutputFile;
-        if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
+        if (isset($this->aDSNInfo['hostspec'])) {
             $sBaseCmd .= ' -H '.$this->aDSNInfo['hostspec'];
         }
-        if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
+        if (isset($this->aDSNInfo['username'])) {
             $sBaseCmd .= ' -U '.$this->aDSNInfo['username'];
-        }
-        $aProcEnv = null;
-        if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
         }
 
         info('Index ranks 0 - 4');
-        $iStatus = runWithEnv($sBaseCmd.' -R 4', $aProcEnv);
+        $iStatus = $this->runWithPgEnv($sBaseCmd.' -R 4');
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
         info('Index ranks 5 - 25');
-        $iStatus = runWithEnv($sBaseCmd.' -r 5 -R 25', $aProcEnv);
+        $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 5 -R 25');
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
         info('Index ranks 26 - 30');
-        $iStatus = runWithEnv($sBaseCmd.' -r 26', $aProcEnv);
+        $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 26');
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         info('Index postcodes');
-        if ($this->oDB == null) $this->oDB =& getDB();
         $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
         if (!pg_query($this->oDB->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
     }
@@ -700,7 +689,6 @@ class SetupFunctions
                         'place_classtype_*'
                        );
 
-        if ($this->oDB = null) $this->oDB =& getDB();
         $aDropTables = array();
         $aHaveTables = chksql($this->oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'"));
 
@@ -729,19 +717,15 @@ class SetupFunctions
 
     private function pgsqlRunDropAndRestore($sDumpFile)
     {
-        if (!isset($this->aDSNInfo['port']) || !$this->aDSNInfo['port']) $this->aDSNInfo['port'] = 5432;
         $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
-        if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
+        if (isset($this->aDSNInfo['hostspec'])) {
             $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }
-        if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
+        if (isset($this->aDSNInfo['username'])) {
             $sCMD .= ' -U '.$this->aDSNInfo['username'];
         }
-        $aProcEnv = null;
-        if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
-        }
-        $iReturn = runWithEnv($sCMD, $aProcEnv);    // /lib/cmd.php "function runWithEnv($sCmd, $aEnv)"
+
+        $this->runWithPgEnv($sCMD);
     }
 
     private function pgsqlRunScript($sScript, $bfatal = true)
@@ -778,8 +762,6 @@ class SetupFunctions
 
     private function pgsqlRunPartitionScript($sTemplate)
     {
-        if ($this->oDB == null) $this->oDB =& getDB();
-
         $sSQL = 'select distinct partition from country_name';
         $aPartitions = chksql($this->oDB->getCol($sSQL));
         if (!$this->bNoPartitions) $aPartitions[] = 0;
@@ -804,14 +786,14 @@ class SetupFunctions
         if (!$this->sVerbose) {
             $sCMD .= ' -q';
         }
-        if (isset($this->aDSNInfo['hostspec']) && $this->aDSNInfo['hostspec']) {
+        if (isset($this->aDSNInfo['hostspec'])) {
             $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }
-        if (isset($this->aDSNInfo['username']) && $this->aDSNInfo['username']) {
+        if (isset($this->aDSNInfo['username'])) {
             $sCMD .= ' -U '.$this->aDSNInfo['username'];
         }
         $aProcEnv = null;
-        if (isset($this->aDSNInfo['password']) && $this->aDSNInfo['password']) {
+        if (isset($this->aDSNInfo['password'])) {
             $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
         }
         $ahGzipPipes = null;
@@ -860,5 +842,16 @@ class SetupFunctions
             $sSql = str_replace($sTemplate, '', $sSql);
         }
         return $sSql;
+    }
+
+    private function runWithPgEnv($sCmd)
+    {
+        $aProcEnv = null;
+
+        if (isset($this->aDSNInfo['password'])) {
+            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
+        }
+
+        return runWithEnv($sCmd, $aProcEnv);
     }
 }

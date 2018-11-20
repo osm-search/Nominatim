@@ -80,6 +80,8 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $oSetup->createDB();
 }
 
+$oSetup->connect();
+
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->setupDB();

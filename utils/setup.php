@@ -71,18 +71,18 @@ if ($aCMDResult['osmosis-init']) {
 
 // ******************************************************
 // instantiate Setup class
-$cSetup = new SetupFunctions($aCMDResult);
+$oSetup = new SetupFunctions($aCMDResult);
 
 // *******************************************************
 // go through complete process if 'all' is selected or start selected functions
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createDB();
+    $oSetup->createDB();
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->setupDB();
+    $oSetup->setupDB();
 }
 
 // Try accessing the C module, so we know early if something is wrong
@@ -92,68 +92,68 @@ if (!checkModulePresence()) {
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->importData($aCMDResult['osm-file']);
+    $oSetup->importData($aCMDResult['osm-file']);
 }
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createFunctions();
+    $oSetup->createFunctions();
 }
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createTables();
-    $cSetup->createFunctions();
+    $oSetup->createTables();
+    $oSetup->createFunctions();
 }
 
 if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createPartitionTables();
+    $oSetup->createPartitionTables();
 }
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createPartitionFunctions();
+    $oSetup->createPartitionFunctions();
 }
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->importWikipediaArticles();
+    $oSetup->importWikipediaArticles();
 }
 
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->loadData($aCMDResult['disable-token-precalc']);
+    $oSetup->loadData($aCMDResult['disable-token-precalc']);
 }
 
 if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
-    $cSetup->importTigerData();
+    $oSetup->importTigerData();
 }
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->calculatePostcodes($aCMDResult['all']);
+    $oSetup->calculatePostcodes($aCMDResult['all']);
 }
 
 if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->index($aCMDResult['index-noanalyse']);
+    $oSetup->index($aCMDResult['index-noanalyse']);
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createSearchIndices();
+    $oSetup->createSearchIndices();
 }
 
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $cSetup->createCountryNames($aCMDResult);
+    $oSetup->createCountryNames($aCMDResult);
 }
 
 if ($aCMDResult['drop']) {
     $bDidSomething = true;
-    $cSetup->drop($aCMDResult);
+    $oSetup->drop($aCMDResult);
 }
 
 // ******************************************************

@@ -29,6 +29,7 @@ $aCMDOptions
    array('setup-db', '', 0, 1, 0, 0, 'bool', 'Build a blank nominatim db'),
    array('import-data', '', 0, 1, 0, 0, 'bool', 'Import a osm file'),
    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+   array('reverse-only', '', 0, 1, 0, 0, 'bool', 'Do not create search tables and indexes'),
    array('create-functions', '', 0, 1, 0, 0, 'bool', 'Create functions'),
    array('enable-diff-updates', '', 0, 1, 0, 0, 'bool', 'Turn on the code required to make diff updates work'),
    array('enable-debug-statements', '', 0, 1, 0, 0, 'bool', 'Include debug warning statements in pgsql commands'),
@@ -104,7 +105,7 @@ if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createTables();
+    $oSetup->createTables($aCMDResult['reverse-only']);
     $oSetup->createFunctions();
 }
 

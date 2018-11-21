@@ -98,6 +98,15 @@ you also need to enable these key phrases like this:
 
 Note that this command downloads the phrases from the wiki link above.
 
+### Reverse-only Imports
+
+If you only want to use the Nominatim database for reverse lookups or
+if you plan to use the installation only for exports to a
+[photon](http://photon.komoot.de/) database, then you can set up a database
+without search indexes. Add `--reverse-only` to your setup command above.
+
+This saves about 5% of disk space.
+
 
 ## Installing Tiger housenumber data for the US
 

@@ -90,7 +90,7 @@ class SetupFunctions
         if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
     }
 
-    public function connect($sDatabaseDSN)
+    public function connect()
     {
         $this->oDB =& getDB();
     }
@@ -344,41 +344,39 @@ class SetupFunctions
     {
         info('Drop old Data');
 
-        if (!pg_query($this->oDB->connection, 'TRUNCATE word')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE word');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE placex')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE placex');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE location_property_osmline')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE location_property_osmline');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE place_addressline')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE place_addressline');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE place_boundingbox')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE place_boundingbox');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE location_area')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE location_area');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE search_name')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE search_name');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'TRUNCATE search_name_blank')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('TRUNCATE search_name_blank');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'DROP SEQUENCE seq_place')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('DROP SEQUENCE seq_place');
         echo '.';
-        if (!pg_query($this->oDB->connection, 'CREATE SEQUENCE seq_place start 100000')) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec('CREATE SEQUENCE seq_place start 100000');
         echo '.';
 
         $sSQL = 'select distinct partition from country_name';
         $aPartitions = chksql($this->oDB->getCol($sSQL));
         if (!$this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
-            if (!pg_query($this->oDB->connection, 'TRUNCATE location_road_'.$sPartition)) fail(pg_last_error($this->oDB->connection));
+            $this->pgExec('TRUNCATE location_road_'.$sPartition);
             echo '.';
         }
 
         // used by getorcreate_word_id to ignore frequent partial words
         $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
         $sSQL .= '$$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
-        if (!pg_query($this->oDB->connection, $sSQL)) {
-            fail(pg_last_error($this->oDB->connection));
-        }
+        $this->pgExec($sSQL);
         echo ".\n";
 
         // pre-create the word list
@@ -523,10 +521,7 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
-        if (!pg_query($this->oDB->connection, 'TRUNCATE location_postcode')) {
-            fail(pg_last_error($this->oDB->connection));
-        }
-
+        $this->pgExec('TRUNCATE location_postcode');
 
         $sSQL  = 'INSERT INTO location_postcode';
         $sSQL .= ' (place_id, indexed_status, country_code, postcode, geometry) ';
@@ -537,10 +532,7 @@ class SetupFunctions
         $sSQL .= " WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'";
         $sSQL .= '       AND geometry IS NOT null';
         $sSQL .= ' GROUP BY country_code, pc';
-
-        if (!pg_query($this->oDB->connection, $sSQL)) {
-            fail(pg_last_error($this->oDB->connection));
-        }
+        $this->pgExec($sSQL);
 
         if (CONST_Use_Extra_US_Postcodes) {
             // only add postcodes that are not yet available in OSM
@@ -551,7 +543,7 @@ class SetupFunctions
             $sSQL .= '  FROM us_postcode WHERE postcode NOT IN';
             $sSQL .= '        (SELECT postcode FROM location_postcode';
             $sSQL .= "          WHERE country_code = 'us')";
-            if (!pg_query($this->oDB->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
+            $this->pgExec($sSQL);
         }
 
         // add missing postcodes for GB (if available)
@@ -561,21 +553,17 @@ class SetupFunctions
         $sSQL .= '  FROM gb_postcode WHERE postcode NOT IN';
         $sSQL .= '           (SELECT postcode FROM location_postcode';
         $sSQL .= "             WHERE country_code = 'gb')";
-        if (!pg_query($this->oDB->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec($sSQL);
 
         if (!$bCMDResultAll) {
             $sSQL = "DELETE FROM word WHERE class='place' and type='postcode'";
             $sSQL .= 'and word NOT IN (SELECT postcode FROM location_postcode)';
-            if (!pg_query($this->oDB->connection, $sSQL)) {
-                fail(pg_last_error($this->oDB->connection));
-            }
+            $this->pgExec($sSQL);
         }
+
         $sSQL = 'SELECT count(getorcreate_postcode_id(v)) FROM ';
         $sSQL .= '(SELECT distinct(postcode) as v FROM location_postcode) p';
-
-        if (!pg_query($this->oDB->connection, $sSQL)) {
-            fail(pg_last_error($this->oDB->connection));
-        }
+        $this->pgExec($sSQL);
     }
 
     public function index($bIndexNoanalyse)
@@ -596,20 +584,23 @@ class SetupFunctions
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
+
         info('Index ranks 5 - 25');
         $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 5 -R 25');
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
+
         info('Index ranks 26 - 30');
         $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 26');
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
+
         info('Index postcodes');
         $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
-        if (!pg_query($this->oDB->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
+        $this->pgExec($sSQL);
     }
 
     public function createSearchIndices()
@@ -853,5 +844,21 @@ class SetupFunctions
         }
 
         return runWithEnv($sCmd, $aProcEnv);
+    }
+
+    /**
+     * Execute the SQL command on the open database.
+     *
+     * @param string $sSQL SQL command to execute.
+     *
+     * @return null
+     *
+     * @pre connect() must have been called.
+     */
+    private function pgExec($sSQL)
+    {
+        if (!pg_query($this->oDB->connection, $sSQL)) {
+            fail(pg_last_error($this->oDB->connection));
+        }
     }
 }

@@ -34,7 +34,7 @@ Feature: Update of simple objects
         When importing
         Then placex contains
           | object | rank_address |
-          | R1     | 0 |
+          | R1     | 30 |
           | W1     | 30 |
         When marking for delete R1,W1
         Then placex has no entry for W1
@@ -103,4 +103,4 @@ Feature: Update of simple objects
           | W1  | boundary | historic       | Haha | 5     | (1, 2, 4, 3, 1) |
         Then placex contains
           | object | rank_address |
-          | W1     | 0            |
+          | W1     | 30            |

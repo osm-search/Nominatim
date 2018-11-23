@@ -817,11 +817,12 @@ DECLARE
   i INTEGER;
   postcode TEXT;
   result BOOLEAN;
+  is_area BOOLEAN;
   country_code VARCHAR(2);
   default_language VARCHAR(10);
   diameter FLOAT;
   classtable TEXT;
-  line RECORD;
+  classtype TEXT;
 BEGIN
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
@@ -848,148 +849,71 @@ BEGIN
   IF NEW.osm_type = 'X' THEN
     -- E'X'ternal records should already be in the right format so do nothing
   ELSE
-    NEW.rank_search := 30;
-    NEW.rank_address := NEW.rank_search;
+    is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
-    -- By doing in postgres we have the country available to us - currently only used for postcode
-    IF NEW.class in ('place','boundary') AND NEW.type in ('postcode','postal_code') THEN
+    IF NEW.class in ('place','boundary')
+       AND NEW.type in ('postcode','postal_code') THEN
 
-        IF NEW.address IS NULL OR NOT NEW.address ? 'postcode' THEN
-            -- most likely just a part of a multipolygon postcode boundary, throw it away
-            RETURN NULL;
-        END IF;
-
-        NEW.name := hstore('ref', NEW.address->'postcode');
-
-        SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
-          INTO NEW.rank_search, NEW.rank_address;
-
-        IF NOT ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
-            NEW.rank_address := 0;
-        END IF;
-
-    ELSEIF NEW.class = 'place' THEN
-      IF NEW.type in ('continent', 'sea') THEN
-        NEW.rank_search := 2;
-        NEW.rank_address := 0;
-        NEW.country_code := NULL;
-      ELSEIF NEW.type in ('country') THEN
-        NEW.rank_search := 4;
-        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
-            NEW.rank_address := NEW.rank_search;
-        ELSE
-            NEW.rank_address := 0;
-        END IF;
-      ELSEIF NEW.type in ('state') THEN
-        NEW.rank_search := 8;
-        IF ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon') THEN
-            NEW.rank_address := NEW.rank_search;
-        ELSE
-            NEW.rank_address := 0;
-        END IF;
-      ELSEIF NEW.type in ('region') THEN
-        NEW.rank_search := 18; -- dropped from previous value of 10
-        NEW.rank_address := 0; -- So badly miss-used that better to just drop it!
-      ELSEIF NEW.type in ('county') THEN
-        NEW.rank_search := 12;
-        NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('city') THEN
-        NEW.rank_search := 16;
-        NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('island') THEN
-        NEW.rank_search := 17;
-        NEW.rank_address := 0;
-      ELSEIF NEW.type in ('town') THEN
-        NEW.rank_search := 18;
-        NEW.rank_address := 16;
-      ELSEIF NEW.type in ('village','hamlet','municipality','district','unincorporated_area','borough') THEN
-        NEW.rank_search := 19;
-        NEW.rank_address := 16;
-      ELSEIF NEW.type in ('suburb','croft','subdivision','isolated_dwelling') THEN
-        NEW.rank_search := 20;
-        NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('farm','locality','islet','mountain_pass') THEN
-        NEW.rank_search := 20;
-        NEW.rank_address := 0;
-        -- Irish townlands, tagged as place=locality and locality=townland
-        IF (NEW.extratags -> 'locality') = 'townland' THEN
-          NEW.rank_address := 20;
-        END IF;
-      ELSEIF NEW.type in ('neighbourhood') THEN
-        NEW.rank_search := 22;
-        NEW.rank_address := 22;
-      ELSEIF NEW.type in ('house','building') THEN
-        NEW.rank_search := 30;
-        NEW.rank_address := NEW.rank_search;
-      ELSEIF NEW.type in ('houses') THEN
-        -- can't guarantee all required nodes loaded yet due to caching in osm2pgsql
-        NEW.rank_search := 28;
-        NEW.rank_address := 0;
+      IF NEW.address IS NULL OR NOT NEW.address ? 'postcode' THEN
+          -- most likely just a part of a multipolygon postcode boundary, throw it away
+          RETURN NULL;
       END IF;
 
-    ELSEIF NEW.class = 'boundary' THEN
-      IF ST_GeometryType(NEW.geometry) NOT IN ('ST_Polygon','ST_MultiPolygon') THEN
---        RAISE WARNING 'invalid boundary %',NEW.osm_id;
+      NEW.name := hstore('ref', NEW.address->'postcode');
+
+      SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
+        INTO NEW.rank_search, NEW.rank_address;
+
+      IF NOT is_area THEN
+          NEW.rank_address := 0;
+      END IF;
+    ELSEIF NEW.class = 'boundary' AND NOT is_area THEN
         return NULL;
-      END IF;
-      NEW.rank_search := NEW.admin_level * 2;
-      IF NEW.type = 'administrative' THEN
-        NEW.rank_address := NEW.rank_search;
-      ELSE
-        NEW.rank_address := 0;
-      END IF;
-    ELSEIF NEW.class = 'landuse' AND ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
-      NEW.rank_search := 22;
-      IF NEW.type in ('residential', 'farm', 'farmyard', 'industrial', 'commercial', 'allotments', 'retail') THEN
-        NEW.rank_address := NEW.rank_search;
-      ELSE
-        NEW.rank_address := 0;
-      END IF;
-    ELSEIF NEW.class = 'leisure' and NEW.type in ('park') THEN
-      NEW.rank_search := 24;
-      NEW.rank_address := 0;
-    ELSEIF NEW.class = 'natural' and NEW.type in ('peak','volcano','mountain_range') THEN
-      NEW.rank_search := 18;
-      NEW.rank_address := 0;
-    ELSEIF NEW.class = 'natural' and NEW.type = 'sea' THEN
-      NEW.rank_search := 4;
-      NEW.rank_address := NEW.rank_search;
-    -- any feature more than 5 square miles is probably worth indexing
-    ELSEIF ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_Area(NEW.geometry) > 0.1 THEN
-      NEW.rank_search := 22;
-      NEW.rank_address := 0;
     ELSEIF NEW.class = 'railway' AND NEW.type in ('rail') THEN
-      RETURN NULL;
-    ELSEIF NEW.class = 'waterway' THEN
-      IF NEW.osm_type = 'R' THEN
-        NEW.rank_search := 16;
+        return NULL;
+    ELSEIF NEW.osm_type = 'N' AND NEW.class = 'highway' THEN
+        NEW.rank_search = 30;
+        NEW.rank_address = 0;
+    ELSEIF NEW.class = 'landuse' AND NOT is_area THEN
+        NEW.rank_search = 30;
+        NEW.rank_address = 0;
+    ELSE
+      -- do table lookup stuff
+      IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
+        classtype = NEW.type || NEW.admin_level::TEXT;
       ELSE
-        NEW.rank_search := 17;
+        classtype = NEW.type;
       END IF;
-      NEW.rank_address := 0;
-    ELSEIF NEW.class = 'highway' AND NEW.osm_type != 'N' AND NEW.type in ('service','cycleway','path','footway','steps','bridleway','motorway_link','primary_link','trunk_link','secondary_link','tertiary_link') THEN
-      NEW.rank_search := 27;
-      NEW.rank_address := NEW.rank_search;
-    ELSEIF NEW.class = 'highway' AND NEW.osm_type != 'N' THEN
-      NEW.rank_search := 26;
-      NEW.rank_address := NEW.rank_search;
-    ELSEIF NEW.class = 'mountain_pass' THEN
-        NEW.rank_search := 20;
-        NEW.rank_address := 0;
+      SELECT l.rank_search, l.rank_address FROM address_levels l
+       WHERE (l.country_code = NEW.country_code or l.country_code is NULL)
+             AND l.class = NEW.class AND (l.type = classtype or l.type is NULL)
+       ORDER BY l.country_code, l.class, l.type LIMIT 1
+        INTO NEW.rank_search, NEW.rank_address;
+
+      IF NEW.rank_search is NULL THEN
+        NEW.rank_search := 30;
+      END IF;
+
+      IF NEW.rank_address is NULL THEN
+        NEW.rank_address := 30;
+      END IF;
     END IF;
 
-  END IF;
+    -- some postcorrections
+    IF NEW.class = 'place' THEN
+      IF NEW.type in ('continent', 'sea', 'country', 'state') AND NEW.osm_type = 'N' THEN
+        NEW.rank_address := 0;
+      END IF;
+    ELSEIF NEW.class = 'waterway' AND NEW.osm_type = 'R' THEN
+        -- Slightly promote waterway relations so that they are processed
+        -- before their members.
+        NEW.rank_search := NEW.rank_search - 1;
+    END IF;
 
-  IF NEW.rank_search > 30 THEN
-    NEW.rank_search := 30;
-  END IF;
+    IF (NEW.extratags -> 'capital') = 'yes' THEN
+      NEW.rank_search := NEW.rank_search - 1;
+    END IF;
 
-  IF NEW.rank_address > 30 THEN
-    NEW.rank_address := 30;
-  END IF;
-
-  IF (NEW.extratags -> 'capital') = 'yes' THEN
-    NEW.rank_search := NEW.rank_search - 1;
   END IF;
 
   -- a country code make no sense below rank 4 (country)

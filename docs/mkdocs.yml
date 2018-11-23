@@ -20,6 +20,7 @@ pages:
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Developers Guide':
         - 'Overview' : 'develop/overview.md'
+        - 'Place Ranking' : 'develop/ranking.md'
     - 'External Data Sources':
         - 'Overview' : 'data-sources/overview.md'
         - 'US Census (Tiger)': 'data-sources/US-Tiger.md'

@@ -703,15 +703,17 @@ class SetupFunctions
             if (!$bFound) array_push($aDropTables, $sTable);
         }
         foreach ($aDropTables as $sDrop) {
-            if ($this->sVerbose) echo "dropping table $sDrop\n";
+            if ($this->sVerbose) echo "Dropping table $sDrop\n";
             @pg_query($this->oDB->connection, "DROP TABLE $sDrop CASCADE");
             // ignore warnings/errors as they might be caused by a table having
             // been deleted already by CASCADE
         }
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-            if ($sVerbose) echo 'deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
-            unlink(CONST_Osm2pgsql_Flatnode_File);
+            if (file_exists(CONST_Osm2pgsql_Flatnode_File)) {
+                if ($this->sVerbose) echo 'Deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
+                unlink(CONST_Osm2pgsql_Flatnode_File);
+            }
         }
     }
 

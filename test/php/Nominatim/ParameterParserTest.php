@@ -223,5 +223,27 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
                            'ref' => 'ref',
                            'type' => 'type',
                           ), $oParams->getPreferredLanguages('default'));
+
+        $oParams = new ParameterParser(array('accept-language' => 'ja_rm,zh_pinyin'));
+        $this->assertSame(array(
+                           'short_name:ja_rm' => 'short_name:ja_rm',
+                           'name:ja_rm' => 'name:ja_rm',
+                           'short_name:zh_pinyin' => 'short_name:zh_pinyin',
+                           'name:zh_pinyin' => 'name:zh_pinyin',
+                           'short_name:ja' => 'short_name:ja',
+                           'name:ja' => 'name:ja',
+                           'short_name:zh' => 'short_name:zh',
+                           'name:zh' => 'name:zh',
+                           'short_name' => 'short_name',
+                           'name' => 'name',
+                           'brand' => 'brand',
+                           'official_name:ja_rm' => 'official_name:ja_rm',
+                           'official_name:zh_pinyin' => 'official_name:zh_pinyin',
+                           'official_name:ja' => 'official_name:ja',
+                           'official_name:zh' => 'official_name:zh',
+                           'official_name' => 'official_name',
+                           'ref' => 'ref',
+                           'type' => 'type',
+                          ), $oParams->getPreferredLanguages('default'));
     }
 }

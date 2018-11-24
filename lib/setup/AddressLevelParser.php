@@ -9,7 +9,7 @@ class AddressLevelParser
 {
     private $aLevels;
 
-    public function __construct(string $sDescriptionFile)
+    public function __construct($sDescriptionFile)
     {
         $sJson = file_get_contents($sDescriptionFile);
         $this->aLevels = json_decode($sJson, true);

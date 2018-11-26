@@ -332,12 +332,14 @@ class SetupFunctions
         $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles');
+            echo "You can ignore public.idx_osm_id and pagelinks_pkey related errors below.\n";
             $this->pgsqlRunDropAndRestore($sWikiArticlesFile);
         } else {
             warn('wikipedia article dump file not found - places will have default importance');
         }
         if (file_exists($sWikiRedirectsFile)) {
             info('Importing wikipedia redirects');
+            echo "You can ignore public.idx_wikipedia_redirect_from_title related errors below.\n";
             $this->pgsqlRunDropAndRestore($sWikiRedirectsFile);
         } else {
             warn('wikipedia redirect dump file not found - some place importance values may be missing');
@@ -719,7 +721,7 @@ class SetupFunctions
 
     private function pgsqlRunDropAndRestore($sDumpFile)
     {
-        $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
+        $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean --no-owner '.$sDumpFile;
         if (isset($this->aDSNInfo['hostspec'])) {
             $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }

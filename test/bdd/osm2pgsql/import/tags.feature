@@ -231,14 +231,6 @@ Feature: Tag evaluation
       | boundary | administrative |
       | waterway | stream |
 
-    Scenario: Footways are not included if they are sidewalks
-        When loading osm data
-          """
-          n2 Thighway=footway,name=To%20%Hell,footway=sidewalk
-          n23 Thighway=footway,name=x
-          """
-        Then place has no entry for N2
-
     Scenario: named junctions are included if there is no other tag
         When loading osm data
           """
@@ -538,9 +530,9 @@ Feature: Tag evaluation
         Then place contains
           | object | class   | type |
           | N10    | tourism | hotel |
-          | N12    | building| yes |
+          | N12    | building| shed |
           | N13    | building| yes |
-          | N14    | building| yes |
+          | N14    | place   | postcode |
         And place has no entry for N10:building
         And place has no entry for N11
 

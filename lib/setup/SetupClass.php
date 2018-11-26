@@ -10,7 +10,7 @@ class SetupFunctions
     protected $iInstances;
     protected $sModulePath;
     protected $aDSNInfo;
-    protected $sVerbose;
+    protected $bVerbose;
     protected $sIgnoreErrors;
     protected $bEnableDiffUpdates;
     protected $bEnableDebugStatements;
@@ -46,7 +46,7 @@ class SetupFunctions
         }
 
         // setting member variables based on command line options stored in $aCMDResult
-        $this->sVerbose = $aCMDResult['verbose'];
+        $this->bVerbose = $aCMDResult['verbose'];
 
         //setting default values which are not set by the update.php array
         if (isset($aCMDResult['ignore-errors'])) {
@@ -188,6 +188,8 @@ class SetupFunctions
             echo "Normally you should not need to set this manually.\n";
             fail("osm2pgsql not found in '$osm2pgsql'");
         }
+
+        $osm2pgsql .= ' -S '.CONST_Import_Style;
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
             $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
@@ -405,7 +407,7 @@ class SetupFunctions
             $sSQL .= " and not (class='place' and type='houses' and osm_type='W'";
             $sSQL .= "          and ST_GeometryType(geometry) = 'ST_LineString')";
             $sSQL .= ' and ST_IsValid(geometry)';
-            if ($this->sVerbose) echo "$sSQL\n";
+            if ($this->bVerbose) echo "$sSQL\n";
             if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) {
                 fail(pg_last_error($aDBInstances[$i]->connection));
             }
@@ -417,7 +419,7 @@ class SetupFunctions
         $sSQL .= ' (osm_id, address, linegeo)';
         $sSQL .= ' SELECT osm_id, address, geometry from place where ';
         $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
-        if ($this->sVerbose) echo "$sSQL\n";
+        if ($this->bVerbose) echo "$sSQL\n";
         if (!pg_send_query($aDBInstances[$iLoadThreads]->connection, $sSQL)) {
             fail(pg_last_error($aDBInstances[$iLoadThreads]->connection));
         }
@@ -708,7 +710,7 @@ class SetupFunctions
             if (!$bFound) array_push($aDropTables, $sTable);
         }
         foreach ($aDropTables as $sDrop) {
-            if ($this->sVerbose) echo "Dropping table $sDrop\n";
+            if ($this->bVerbose) echo "Dropping table $sDrop\n";
             @pg_query($this->oDB->connection, "DROP TABLE $sDrop CASCADE");
             // ignore warnings/errors as they might be caused by a table having
             // been deleted already by CASCADE
@@ -716,7 +718,7 @@ class SetupFunctions
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
             if (file_exists(CONST_Osm2pgsql_Flatnode_File)) {
-                if ($this->sVerbose) echo 'Deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
+                if ($this->bVerbose) echo 'Deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
                 unlink(CONST_Osm2pgsql_Flatnode_File);
             }
         }
@@ -740,7 +742,7 @@ class SetupFunctions
         runSQLScript(
             $sScript,
             $bfatal,
-            $this->sVerbose,
+            $this->bVerbose,
             $this->sIgnoreErrors
         );
     }
@@ -794,7 +796,7 @@ class SetupFunctions
         if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
         $sCMD = 'psql -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'];
-        if (!$this->sVerbose) {
+        if (!$this->bVerbose) {
             $sCMD .= ' -q';
         }
         if (isset($this->aDSNInfo['hostspec'])) {
@@ -857,6 +859,10 @@ class SetupFunctions
 
     private function runWithPgEnv($sCmd)
     {
+        if ($this->bVerbose) {
+            echo "Execute: $sCmd\n";
+        }
+
         $aProcEnv = null;
 
         if (isset($this->aDSNInfo['password'])) {

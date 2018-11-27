@@ -68,7 +68,7 @@ To run the functional tests, do
 
 The tests can be configured with a set of environment variables:
 
- * `BUILD_DIR` - build directory of Nominatim installation to test
+ * `BUILDDIR` - build directory of Nominatim installation to test
  * `TEMPLATE_DB` - name of template database used as a skeleton for
                    the test databases (db tests)
  * `TEST_DB` - name of test database (db tests)

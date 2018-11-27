@@ -6,6 +6,22 @@ to newer versions of Nominatim.
 SQL statements should be executed from the postgres commandline. Execute
 `psql nominiatim` to enter command line mode.
 
+
+## 3.2.0 -> master
+
+### Natural Earth country boundaries no longer needed as fallback
+
+```
+DROP TABLE country_naturalearthdata;
+```
+
+Finally, update all SQL functions:
+
+```sh
+./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
+```
+
+
 ## 3.1.0 -> 3.2.0
 
 ### New reverse algorithm

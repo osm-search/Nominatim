@@ -561,26 +561,10 @@ BEGIN
     RETURN nearcountry.country_code;
   END LOOP;
 
--- RAISE WARNING 'natural earth: %', ST_AsText(place_centre);
-
-  -- Natural earth data
-  FOR nearcountry IN select country_code from country_naturalearthdata where st_covers(geometry, place_centre) limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-
 -- RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
 
   -- 
   FOR nearcountry IN select country_code from country_osm_grid where st_dwithin(geometry, place_centre, 0.5) order by st_distance(geometry, place_centre) asc, area asc limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-
--- RAISE WARNING 'near natural earth: %', ST_AsText(place_centre);
-
-  -- Natural earth data 
-  FOR nearcountry IN select country_code from country_naturalearthdata where st_dwithin(geometry, place_centre, 0.5) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;

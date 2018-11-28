@@ -14,6 +14,8 @@ ADD_CUSTOM_TARGET(doc
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/index.md ${CMAKE_CURRENT_BINARY_DIR}/index.md
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/extra.css ${CMAKE_CURRENT_BINARY_DIR}/extra.css
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/data-sources/us-tiger/README.md ${CMAKE_CURRENT_BINARY_DIR}/data-sources/US-Tiger.md
+   COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/data-sources/country-grid/README.md ${CMAKE_CURRENT_BINARY_DIR}/data-sources/Country-Grid.md
+   COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/data-sources/country-grid/mexico.grid.png ${CMAKE_CURRENT_BINARY_DIR}/data-sources/mexico.grid.png
    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Centos-7.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Centos-7.md
    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Ubuntu-16.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Ubuntu-16.md
    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bash2md.sh ${PROJECT_SOURCE_DIR}/vagrant/Install-on-Ubuntu-18.sh ${CMAKE_CURRENT_BINARY_DIR}/appendix/Install-on-Ubuntu-18.md

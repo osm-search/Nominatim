@@ -23,6 +23,7 @@ pages:
     - 'External Data Sources':
         - 'Overview' : 'data-sources/overview.md'
         - 'US Census (Tiger)': 'data-sources/US-Tiger.md'
+        - 'Country Grid': 'data-sources/Country-Grid.md'
     - 'Appendix':
         - 'Installation on CentOS 7' : 'appendix/Install-on-Centos-7.md'
         - 'Installation on Ubuntu 16' : 'appendix/Install-on-Ubuntu-16.md'

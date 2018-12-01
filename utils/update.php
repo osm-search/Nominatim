@@ -5,6 +5,7 @@ require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 require_once(CONST_BasePath.'/lib/setup_functions.php');
 require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
+require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
 
 ini_set('memory_limit', '800M');
 
@@ -42,6 +43,7 @@ $aCMDOptions
 
    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
+   array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
   );
 
@@ -305,6 +307,12 @@ if ($aResult['index']) {
     }
 
     runWithEnv($sCmd, $aProcEnv);
+}
+
+if ($aResult['update-address-levels']) {
+    echo 'Updating address levels from '.CONST_Address_Level_Config.".\n";
+    $oAlParser = new \Nominatim\Setup\AddressLevelParser(CONST_Address_Level_Config);
+    $oAlParser->createTable($oDB, 'address_levels');
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {

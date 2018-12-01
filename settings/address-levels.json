@@ -1,0 +1,85 @@
+[
+{ "tags" : {
+      "place" : {
+          "sea" : [2, 0],
+          "continent" : [2, 0],
+          "country" : [4, 4],
+          "state" : [8, 8],
+          "region" : [18, 0],
+          "county" : 12,
+          "city" : 16,
+          "island" : [17, 0],
+          "town" : [18, 16],
+          "village" : [19, 16],
+          "hamlet" : [19, 16],
+          "municipality" : [19, 16],
+          "district" : [19, 16],
+          "unincorporated_area" : [19, 16],
+          "borough" : [19, 16],
+          "suburb" : 20,
+          "croft" : 20,
+          "subdivision" : 20,
+          "isolated_dwelling" : 20,
+          "farm" : [20, 0],
+          "locality" : [20, 0],
+          "islet" : [20, 0],
+          "mountain_pass" : [20, 0],
+          "neighbourhood" : 22,
+          "houses" : [28, 0]
+      },
+      "boundary" : {
+          "administrative2" : 4,
+          "administrative3" : 6,
+          "administrative4" : 8,
+          "administrative5" : 10,
+          "administrative6" : 12,
+          "administrative7" : 14,
+          "administrative8" : 16,
+          "administrative9" : 18,
+          "administrative10" : 20,
+          "administrative11" : 22,
+          "administrative12" : 24
+      },
+      "landuse" : {
+          "residential" : 22,
+          "farm" : 22,
+          "farmyard" : 22,
+          "industrial" : 22,
+          "commercial" : 22,
+          "allotments" : 22,
+          "retail" : 22,
+          "" : [22, 0]
+      },
+      "leisure" : {
+          "park" : [24, 0]
+      },
+      "natural" : {
+          "peak" : [18, 0],
+          "volcano" : [18, 0],
+          "mountain_range" : [18, 0],
+          "sea" : [4, 0]
+      },
+      "waterway" : {
+          "" : [17, 0]
+      },
+      "highway" : {
+          "" : 26,
+          "service" : 27,
+          "cycleway" : 27,
+          "path" : 27,
+          "footway" : 27,
+          "steps" : 27,
+          "bridleway" : 27,
+          "motorway_link" : 27,
+          "primary_link" : 27,
+          "trunk_link" : 27,
+          "secondary_link" : 27,
+          "tertiary_link" : 27
+      },
+      "mountain_pass" : {
+          "" : [20, 0]
+      }
+  }
+}
+]
+

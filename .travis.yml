@@ -22,7 +22,7 @@ script:
   - if [[ $TEST_SUITE == "tests" ]]; then phpunit ./ ; fi
   - cd $TRAVIS_BUILD_DIR/test/bdd
   - # behave --format=progress3 api
-  - if [[ $TEST_SUITE == "tests" ]]; then behave --format=progress3 db ; fi
+  - if [[ $TEST_SUITE == "tests" ]]; then behave -DREMOVE_TEMPLATE=1 --format=progress3 db ; fi
   - if [[ $TEST_SUITE == "tests" ]]; then behave --format=progress3 osm2pgsql ; fi
   - cd $TRAVIS_BUILD_DIR/build
   - if [[ $TEST_SUITE == "monaco" ]]; then wget --no-verbose --output-document=../data/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf; fi

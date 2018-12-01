@@ -26,8 +26,8 @@ Feature: Import into placex
           | R1  | boundary | administrative  | 2     | de      | (-100 40, -101 40, -101 41, -100 41, -100 40) |
         When importing
         Then placex contains
-          | object | addr+country | country_code |
-          | R1     | de           | de           |
+          | object | rank_search| addr+country | country_code |
+          | R1     | 4          | de           | de           |
 
     Scenario: Illegal country code tag for countries is ignored
         Given the named places
@@ -158,9 +158,6 @@ Feature: Import into placex
           | N37  | place     | building            |
           | N38  | place     | houses              |
         And the named places
-          | osm  | class     | type      | extra+locality |
-          | N100 | place     | locality  | townland |
-        And the named places
           | osm  | class     | type      | extra+capital |
           | N101 | place     | city      | yes |
         When importing
@@ -191,7 +188,6 @@ Feature: Import into placex
           | N32    | 20          | 0 |
           | N33    | 20          | 0 |
           | N34    | 20          | 0 |
-          | N100   | 20          | 20 |
           | N101   | 15          | 16 |
           | N35    | 22          | 22 |
           | N36    | 30          | 30 |
@@ -222,8 +218,8 @@ Feature: Import into placex
           | object | rank_search | rank_address |
           | R20    | 4           | 4 |
           | R21    | 30          | 30 |
-          | R22    | 12          | 0 |
-          | R23    | 20          | 0 |
+          | R22    | 30          | 30 |
+          | R23    | 30          | 30 |
           | R40    | 4           | 4 |
           | R41    | 8           | 8 |
 
@@ -243,7 +239,7 @@ Feature: Import into placex
         When importing
         Then placex contains
           | object | rank_search | rank_address |
-          | N1     | 30          | 30 |
+          | N1     | 30          |  0 |
           | W1     | 26          | 26 |
           | W2     | 26          | 26 |
           | W3     | 26          | 26 |
@@ -264,11 +260,11 @@ Feature: Import into placex
         When importing
         Then placex contains
           | object | rank_search | rank_address |
-          | N2     | 30          | 30 |
-          | W2     | 30          | 30 |
+          | N2     | 30          |  0 |
+          | W2     | 30          |  0 |
           | W4     | 22          | 22 |
           | R2     | 22          | 22 |
-          | R3     | 22          | 0 |
+          | R3     | 22          |  0 |
 
     Scenario: rank and inclusion of naturals
        Given the named places
@@ -292,8 +288,8 @@ Feature: Import into placex
           | N5     | 30          | 30 |
           | W2     | 18          | 0 |
           | R3     | 18          | 0 |
-          | R4     | 22          | 0 |
-          | R5     | 4           | 4 |
-          | R6     | 4           | 4 |
+          | R4     | 30          | 30 |
+          | R5     | 4           | 0 |
+          | R6     | 4           | 0 |
           | W3     | 30          | 30 |
 

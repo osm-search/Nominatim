@@ -2,6 +2,8 @@
 
 namespace Nominatim\Setup;
 
+require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
+
 class SetupFunctions
 {
     protected $iCacheMemory;
@@ -271,6 +273,9 @@ class SetupFunctions
         if ($bReverseOnly) {
             $this->pgExec('DROP TABLE search_name');
         }
+
+        $oAlParser = new AddressLevelParser(CONST_Address_Level_Config);
+        $oAlParser->createTable($this->oDB, 'address_levels');
     }
 
     public function createPartitionTables()

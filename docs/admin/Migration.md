@@ -21,6 +21,14 @@ Finally, update all SQL functions:
 ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
 ```
 
+### Configurable Address Levels
+
+The new configurable address levels require a new table. Create it with the
+following command:
+
+```sh
+./utils/update.php --update-address-levels
+```
 
 ## 3.1.0 -> 3.2.0
 

@@ -31,7 +31,7 @@ Each place is assigned partition, which is a number 0..250. 0 is fallback/other.
 
 During place indexing (`sql/functions.sql: placex_insert()`) a place is assigned the partition based on its country code (`sql/functions.sql: get_partition(country_code)`). It checks in the `country_name` table.
 
-Most countries have their own parition, some share a partition. Thus partition counts vary greatly.
+Most countries have their own partition, some share a partition. Thus partition counts vary greatly.
 
 Several database tables are split by partition to allow queries to run against less indices and improve caching.
 
@@ -45,13 +45,13 @@ Several database tables are split by partition to allow queries to run against l
 
 ## Data files
 
-### `data/country_name.sql`
+### data/country_name.sql
 
 Export from existing database table plus manual changes. `country_default_language_code` most taken from [https://wiki.openstreetmap.org/wiki/Nominatim/Country_Codes](), see `utils/country_languages.php`.
 
 
 
-### `data/country_osm_grid.sql`
+### data/country_osm_grid.sql
 
 `country_grid.sql` merges territories by country. Then uses `function.sql: quad_split_geometry` to split each country into multiple [Quadtree](https://en.wikipedia.org/wiki/Quadtree) polygons for faster point-in-polygon lookups.
 

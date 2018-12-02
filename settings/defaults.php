@@ -49,6 +49,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Pyosmium_Binary', '@PYOSMIUM_PATH@');
 @define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/tiger');
 @define('CONST_Wikipedia_Data_Path', CONST_ExtraDataPath);
+@define('CONST_Phrase_Config', CONST_BasePath.'/settings/phrase_settings.php');
 @define('CONST_Address_Level_Config', CONST_BasePath.'/settings/address-levels.json');
 
 // osm2pgsql settings

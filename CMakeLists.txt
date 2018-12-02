@@ -125,14 +125,8 @@ foreach (script_source ${WEBSITESCRIPTS})
                    ${PROJECT_BINARY_DIR}/${script_source})
 endforeach()
 
-set(CONFIGUREFILES
-    settings/phrase_settings.php
-    settings/defaults.php
-   )
-
-foreach (cfile ${CONFIGUREFILES})
-    configure_file(${PROJECT_SOURCE_DIR}/${cfile} ${PROJECT_BINARY_DIR}/${cfile})
-endforeach()
+configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php
+               ${PROJECT_BINARY_DIR}/settings/settings.php)
 
 set(WEBPATHS css images js)
 

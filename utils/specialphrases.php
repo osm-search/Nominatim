@@ -14,7 +14,7 @@ $aCMDOptions
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-include(CONST_InstallPath.'/settings/phrase_settings.php');
+include(CONST_Phrase_Config);
 
 if ($aCMDResult['wiki-import']) {
     $oNormalizer = Transliterator::createFromRules(CONST_Term_Normalization_Rules);

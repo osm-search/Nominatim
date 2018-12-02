@@ -14,7 +14,7 @@ $aCMDOptions
    );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-include(CONST_InstallPath.'/settings/phrase_settings.php');
+include(CONST_Phrase_Config);
 
 if (true) {
     $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';

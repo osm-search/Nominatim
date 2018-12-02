@@ -109,7 +109,6 @@ set(CUSTOMSCRIPTS
     utils/importWikipedia.php
     utils/export.php
     utils/query.php
-    utils/server_compare.php
     utils/setup.php
     utils/specialphrases.php
     utils/update.php

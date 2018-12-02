@@ -1,4 +1,3 @@
-#!@PHP_BIN@ -Cq
 <?php
 
 $sFile = 'sample.log.txt'; // Apache log file

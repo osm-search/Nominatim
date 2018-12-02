@@ -1,11 +1,6 @@
-#!@PHP_BIN@ -Cq
 <?php
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
-// ->indirect via init-cmd.php->/lib/cmd.php                for runWithEnv, getCmdOpt
-// ->indirect via init-cmd.php->/lib/init.php->db.php       for &getDB()
-
 require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
 require_once(CONST_BasePath.'/lib/setup_functions.php');
 ini_set('memory_limit', '800M');

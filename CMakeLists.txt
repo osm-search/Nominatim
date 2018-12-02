@@ -103,7 +103,6 @@ set(CUSTOMFILES
     website/reverse.php
     website/search.php
     website/status.php
-    utils/blocks.php
     utils/country_languages.php
     utils/importWikipedia.php
     utils/export.php

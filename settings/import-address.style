@@ -32,7 +32,7 @@
     "keys" : ["landuse"],
     "values" : {
         "cemetry" : "skip",
-        "" : "fallback,with-name"
+        "" : "fallback,with_name"
     }
 },
 {

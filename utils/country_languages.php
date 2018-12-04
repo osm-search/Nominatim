@@ -1,7 +1,5 @@
-#!@PHP_BIN@ -Cq
 <?php
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 
 ini_set('memory_limit', '800M');
@@ -16,7 +14,7 @@ $aCMDOptions
    );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-include(CONST_InstallPath.'/settings/phrase_settings.php');
+include(CONST_Phrase_Config);
 
 if (true) {
     $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';

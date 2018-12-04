@@ -1,10 +1,8 @@
-#!@PHP_BIN@ -Cq
 <?php
     // Script to extract structured city and street data
     // from a running nominatim instance as CSV data
 
 
-    require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
     require_once(CONST_BasePath.'/lib/init-cmd.php');
     require_once(CONST_BasePath.'/lib/ParameterParser.php');
     ini_set('memory_limit', '800M');

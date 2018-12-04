@@ -1,7 +1,5 @@
-#!@PHP_BIN@ -Cq
 <?php
 
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
 require_once(CONST_BasePath.'/lib/init-cmd.php');
 require_once(CONST_BasePath.'/lib/setup_functions.php');
 require_once(CONST_BasePath.'/lib/setup/SetupClass.php');

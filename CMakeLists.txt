@@ -93,8 +93,7 @@ message (STATUS "Using PHP binary " ${PHP_BIN})
 #
 #-----------------------------------------------------------------------------
 
-set(CUSTOMFILES
-    settings/phrase_settings.php
+set(WEBSITESCRIPTS
     website/deletable.php
     website/details.php
     website/hierarchy.php
@@ -103,23 +102,31 @@ set(CUSTOMFILES
     website/reverse.php
     website/search.php
     website/status.php
-    utils/blocks.php
+)
+
+set(CUSTOMSCRIPTS
     utils/country_languages.php
     utils/importWikipedia.php
     utils/export.php
     utils/query.php
-    utils/server_compare.php
     utils/setup.php
     utils/specialphrases.php
     utils/update.php
     utils/warm.php
    )
 
-foreach (cfile ${CUSTOMFILES})
-    configure_file(${PROJECT_SOURCE_DIR}/${cfile} ${PROJECT_BINARY_DIR}/${cfile})
+foreach (script_source ${CUSTOMSCRIPTS})
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
+                   ${PROJECT_BINARY_DIR}/${script_source})
 endforeach()
 
-configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php ${PROJECT_BINARY_DIR}/settings/settings.php)
+foreach (script_source ${WEBSITESCRIPTS})
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/website.tmpl
+                   ${PROJECT_BINARY_DIR}/${script_source})
+endforeach()
+
+configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php
+               ${PROJECT_BINARY_DIR}/settings/settings.php)
 
 set(WEBPATHS css images js)
 

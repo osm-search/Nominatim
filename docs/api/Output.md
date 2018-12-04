@@ -46,7 +46,7 @@ a single place (for reverse) of the following format:
 
 The possible fields are:
 
- * `place_id` - reference to the Nominatim internal database ID
+ * `place_id` - reference to the Nominatim internal database ID (see notes below)
  * `osm_type`, `osm_id` - reference to the OSM object
  * `boundingbox` - area of corner coordinates
  * `lat`, `lon` - latitude and longitude of the centroid of the object
@@ -75,7 +75,7 @@ a bounding box (`bbox`).
 
 The feature list has the following fields:
 
- * `place_id` - reference to the Nominatim internal database ID
+ * `place_id` - reference to the Nominatim internal database ID (see notes below)
  * `osm_type`, `osm_id` - reference to the OSM object
  * `category`, `type` - key and value of the main OSM tag
  * `display_name` - full comma-separated address
@@ -148,7 +148,7 @@ attribution to OSM and the original querystring.
 
 The place information can be found in the `result` element. The attributes of that element contain:
 
- * `place_id` - reference to the Nominatim internal database ID
+ * `place_id` - reference to the Nominatim internal database ID (see notes below)
  * `osm_type`, `osm_id` - reference to the OSM object
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
@@ -203,7 +203,7 @@ generic information about the query:
 The place information can be found in the `place` elements, of which there may
 be more than one. The attributes of that element contain:
 
- * `place_id` - reference to the Nominatim internal database ID
+ * `place_id` - reference to the Nominatim internal database ID (see notes below)
  * `osm_type`, `osm_id` - reference to the OSM object
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
@@ -220,3 +220,27 @@ as subelements with the type of the address part.
 Additional information requested with `extratags=1` and `namedetails=1` can
 be found in extra elements as sub-element of each place.
 
+
+## Notes on field values
+
+### place_id is not a persistent id
+
+The `place_id` is created when a Nominatim database gets installed. A
+single place will have a different value on another server or even when
+the same data gets re-imported. It's thus not useful to treat it as
+permanent for later use.
+
+The combination `osm_type`+`osm_id` is slighly better but remember in
+OpenStreetMap mappers can delete, split, recreate places (and those
+get a new `osm_id`), there is no link between those old and new id.
+Places can also change their meaning without changing their `osm_id`,
+e.g. when a restaurant is retagged as supermarket. For a more in-depth
+discussion see [Permanent ID](https://wiki.openstreetmap.org/wiki/Permanent_ID).
+
+Nominatim merges some places (e.g. center node of a city with the boundary
+relation) so `osm_type`+`osm_id`+`class_name` would be more unique.
+
+### boundingbox
+
+Comma separated list of min latitude, max latitude, min longitude, max longitude.
+The whole planet would be `-90,90,-180,180`.

@@ -58,10 +58,56 @@ Nominatim can use postcodes from an external source to improve searches that inv
     cd $NOMINATIM_SOURCE_DIR/data
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
 
+## Choosing the Data to Import
+
+In its default setup, Nominatim is configured to import the full OSM data
+set for the entire planet. Such a setup requires a powerful machine with
+at least 32GB of RAM and around 800GB of SSD hard disks. Depending on your
+use case there are various ways to reduce the amount of data imported. This
+section discusses these methods. They can also be combined.
+
+### Using an extract
+
+If you only need geocoding for a smaller region, then precomputed extracts
+are a good way to reduce the database size.
+[Geofabrik](https://download.geofabrik.de) offers extracts for most countries
+and also daily updates which can be used with the update process described
+below. There are also
+[other providers for extracts](https://wiki.openstreetmap.org/wiki/Planet.osm#Downloading)
+
+Please be aware that some extracts are not exactly cut along the country
+boundaries. As a result some parts of the boundary may be missing and
+Nominatim cannot compute the areas as a result.
+
+### Reverse-only Imports
+
+If you only want to use the Nominatim database for reverse lookups or
+if you plan to use the installation only for exports to a
+[photon](http://photon.komoot.de/) database, then you can set up a database
+without search indexes. Add `--reverse-only` to your setup command above.
+
+This saves about 5% of disk space.
+
+### Filtering Imported Data
+
+Nominatim normally sets up a full search database containing administrative
+boundaries, places, streets, addresses and POI data. There are also other
+import styles available which only read selected data:
+
+
+
+style      Import time    DB size     after drop
+admin         5h          189 GB       20 GB
+street
+address
+full
+
+You can also customize the styles further. For an description of the
+style format see [the developement section](../develop/Import.md).
 
 ## Initial import of the data
 
-**Important:** first try the import with a small excerpt, for example from
+**Important:** first try the import with a small extract, for example from
 [Geofabrik](https://download.geofabrik.de).
 
 Download the data to import and load the data with the following command:
@@ -97,15 +143,6 @@ you also need to enable these key phrases like this:
     psql -d nominatim -f specialphrases.sql
 
 Note that this command downloads the phrases from the wiki link above.
-
-### Reverse-only Imports
-
-If you only want to use the Nominatim database for reverse lookups or
-if you plan to use the installation only for exports to a
-[photon](http://photon.komoot.de/) database, then you can set up a database
-without search indexes. Add `--reverse-only` to your setup command above.
-
-This saves about 5% of disk space.
 
 
 ## Installing Tiger housenumber data for the US

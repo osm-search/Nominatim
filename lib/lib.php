@@ -68,7 +68,7 @@ function javascript_renderData($xVal, $iOptions = 0)
         throw new Exception('Invalid json_callback value', 400);
     }
 
-    $iOptions |= JSON_UNESCAPED_UNICODE;
+    $iOptions |= JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     if (isset($_GET['pretty']) && in_array(strtolower($_GET['pretty']), array('1', 'true'))) {
         $iOptions |= JSON_PRETTY_PRINT;
     }

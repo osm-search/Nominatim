@@ -103,7 +103,7 @@ class AddressDetails
     public function getAdminLevels()
     {
         $aAddress = array();
-        foreach ($this->aAddressLines as $aLine) {
+        foreach (array_reverse($this->aAddressLines) as $aLine) {
             if (self::isAddress($aLine)
                 && isset($aLine['admin_level'])
                 && $aLine['admin_level'] < 15

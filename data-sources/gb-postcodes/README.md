@@ -13,7 +13,9 @@ If you forgot to download the file, or have a new version, you can import it sep
 
 1. Import the downloaded `gb_postcode_data.sql.gz` file.
 
-2. Run `utils/setup.php --calculate-postcodes` from the build directory. This will copy data form the `gb_postcode` table to the `location_postcodes` table.
+2. Run the SQL query `SELECT count(getorcreate_postcode_id(postcode)) FROM gb_postcode;`. This will update the search index.
+
+3. Run `utils/setup.php --calculate-postcodes` from the build directory. This will copy data form the `gb_postcode` table to the `location_postcodes` table.
 
 
 

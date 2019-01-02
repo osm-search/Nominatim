@@ -53,5 +53,18 @@
     "values" : {
         "" : "address"
     }
+},
+{
+    "keys" : ["postal_code", "postcode", "addr:postcode",
+              "tiger:zip_left", "tiger:zip_right"],
+    "values" : {
+        "" : "postcode"
+    }
+},
+{
+    "keys" : ["capital"],
+    "values" : {
+        "" : "extra"
+    }
 }
 ]

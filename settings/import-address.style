@@ -60,9 +60,9 @@
     }
 },
 {
-    "keys" : ["addr:*", "is_in:*", "tiger:county", "is_in"],
+    "keys" : ["addr:interpolation"],
     "values" : {
-        "" : "address"
+        "" : "interpolation,address"
     }
 },
 {

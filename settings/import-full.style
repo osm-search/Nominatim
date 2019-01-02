@@ -199,6 +199,12 @@
     }
 },
 {
+    "keys" : ["addr:interpolation"],
+    "values" : {
+        "" : "interpolation,address"
+    }
+},
+{
     "keys" : ["addr:*", "is_in:*", "tiger:county", "is_in"],
     "values" : {
         "" : "address"

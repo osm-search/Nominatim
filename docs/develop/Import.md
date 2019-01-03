@@ -22,7 +22,7 @@ The gazetteer style produces a single table `place` with the following rows:
 A single OSM object may appear multiple times in this table when it is tagged
 with multiple tags that may constitute a principal tag. Take for example a
 motorway bridge. In OSM, this would be a way which is tagged with
-`highway=motoway` and `bridge=yes`. This way would appear in the `place` table
+`highway=motorway` and `bridge=yes`. This way would appear in the `place` table
 once with `class` of `highway` and once with a `class` of `bridge`. Thus the
 *uique key* for `place` is (`osm_type`, `osm_id`, `class`).
 

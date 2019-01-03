@@ -758,12 +758,21 @@ class Geocode
                         $oValidTokens->debugTokenByWordIdList()
                     );
 
-                    $aResults += $oSearch->query(
+                    $aNewResults = $oSearch->query(
                         $this->oDB,
                         $this->iMinAddressRank,
                         $this->iMaxAddressRank,
                         $this->iLimit
                     );
+
+                    // The same result may appear in different rounds, only
+                    // use the one with minimal rank.
+                    foreach ($aNewResults as $iPlace => $oRes) {
+                        if (!isset($aResults[$iPlace])
+                            || $aResults[$iPlace]->iResultRank > $oRes->iResultRank) {
+                            $aResults[$iPlace] = $oRes;
+                        }
+                    }
 
                     if ($iQueryLoop > 20) break;
                 }

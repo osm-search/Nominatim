@@ -434,7 +434,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             $sSQL = 'INSERT INTO import_osmosis_log';
             $sSQL .= '(batchend, batchseq, batchsize, starttime, endtime, event)';
-            $sSQL .= " values ('$sBatchEnd',$iEndSequence,$iFileSize,'";
+            $sSQL .= " values ('$sBatchEnd',$iEndSequence,NULL,'";
             $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
             $sSQL .= date('Y-m-d H:i:s')."','index')";
             var_Dump($sSQL);

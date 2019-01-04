@@ -48,5 +48,11 @@ INSERT INTO location_postcode
   SELECT nextval('seq_place'), 1, country_code, pc, centroid
     FROM tmp_new_postcode_locations new;
 
+-- Remove unused word entries
+DELETE FROM word
+    WHERE class = 'place' AND type = 'postcode'
+          AND NOT EXISTS (SELECT 0 FROM location_postcode p
+                          WHERE p.postcode = word.word);
+
 -- Finally index the newly inserted postcodes
 UPDATE location_postcode SET indexed_status = 0 WHERE indexed_status > 0;

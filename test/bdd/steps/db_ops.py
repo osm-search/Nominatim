@@ -329,6 +329,10 @@ def update_place_table(context):
 
     check_database_integrity(context)
 
+@when("updating postcodes")
+def update_postcodes(context):
+    context.nominatim.run_update_script('calculate-postcodes')
+
 @when("marking for delete (?P<oids>.*)")
 def delete_places(context, oids):
     context.nominatim.run_setup_script(
@@ -476,6 +480,43 @@ def check_search_name_contents(context, exclude):
 
 
     context.db.commit()
+
+@then("location_postcode contains exactly")
+def check_location_postcode(context):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT *, ST_AsText(geometry) as geomtxt FROM location_postcode")
+    eq_(cur.rowcount, len(list(context.table)),
+        "Postcode table has %d rows, expected %d rows."
+          % (cur.rowcount, len(list(context.table))))
+
+    table = list(cur)
+    for row in context.table:
+        for i in range(len(table)):
+            if table[i]['country_code'] != row['country'] \
+                    or table[i]['postcode'] != row['postcode']:
+                continue
+            for h in row.headings:
+                if h not in ('country', 'postcode'):
+                    assert_db_column(table[i], h, row[h], context)
+
+@then("word contains(?P<exclude> not)?")
+def check_word_table(context, exclude):
+    cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    for row in context.table:
+        wheres = []
+        values = []
+        for h in row.headings:
+            wheres.append("%s = %%s" % h)
+            values.append(row[h])
+        cur.execute("SELECT * from word WHERE %s" % ' AND '.join(wheres), values)
+        if exclude:
+            eq_(0, cur.rowcount,
+                "Row still in word table: %s" % '/'.join(values))
+        else:
+            assert_greater(cur.rowcount, 0,
+                           "Row not in word table: %s" % '/'.join(values))
 
 @then("place_addressline contains")
 def check_place_addressline(context):

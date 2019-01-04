@@ -125,3 +125,15 @@ Feature: Import of postcodes
         Then placex contains
             | object | postcode  |
             | W93    | 112 DE 34 |
+
+    Scenario: Postcodes are added to the postcode and word table
+        Given the places
+           | osm | class | type  | addr+postcode | addr+housenumber | geometry |
+           | N34 | place | house | 01982         | 111              |country:de |
+        When importing
+        Then location_postcode contains exactly
+           | country | postcode | geometry |
+           | de      | 01982    | country:de |
+        And word contains
+           | word  | class | type |
+           | 01982 | place | postcode |

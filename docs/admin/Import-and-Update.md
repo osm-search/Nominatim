@@ -124,14 +124,16 @@ The style can be changed with the configuration `CONST_Import_Style`.
 To give you an idea of the impact of using the different style, the table
 below gives rough estimates of the final database size after import of a
 2018 planet and after using the `--drop` option. It also shows the time
-needed for the import on a machine with 32GB RAM, 4 CPUS and SSDs.
+needed for the import on a machine with 32GB RAM, 4 CPUS and SSDs. Note that
+the given sizes are just an estimate meant for comparison of style requirements.
+Your planet import is likely to be larger as the OSM data grows with time.
 
 style     | Import time  |  DB size   |  after drop
 ----------|--------------|------------|------------
-admin     |    5h        |  189 GB    |   20 GB
-street    |   42h        |  396 GB    |  174 GB
-address   |   59h        |  497 GB    |  251 GB
-full      |   80h        |  GB        | GB
+admin     |    5h        |  190 GB    |   20 GB
+street    |   42h        |  400 GB    |  180 GB
+address   |   59h        |  500 GB    |  260 GB
+full      |   80h        |  590 GB    |  320 GB
 
 You can also customize the styles further. For an description of the
 style format see [the developement section](../develop/Import.md).

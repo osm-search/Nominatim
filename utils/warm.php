@@ -35,13 +35,9 @@ if (!$aResult['search-only']) {
         $fLat = rand(-9000, 9000) / 100;
         $fLon = rand(-18000, 18000) / 100;
         if ($bVerbose) echo "$fLat, $fLon = ";
-        $aLookup = $oReverseGeocode->lookup($fLat, $fLon);
-        if ($aLookup && $aLookup['place_id']) {
-            $aDetails = $oPlaceLookup->lookup(
-                (int)$aLookup['place_id'],
-                $aLookup['type'],
-                $aLookup['fraction']
-            );
+        $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
+        if ($oLookup) {
+            $aDetails = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
             if ($bVerbose) echo $aDetails['langaddress']."\n";
         } else {
             echo '.';

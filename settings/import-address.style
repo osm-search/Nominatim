@@ -69,7 +69,7 @@
     "keys" : ["postal_code", "postcode", "addr:postcode",
               "tiger:zip_left", "tiger:zip_right"],
     "values" : {
-        "" : "postcode"
+        "" : "postcode,fallback"
     }
 },
 {

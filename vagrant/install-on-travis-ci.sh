@@ -2,7 +2,7 @@
 
 # This script runs in a travis-ci.org virtual machine
 # https://docs.travis-ci.com/user/trusty-ci-environment/
-# Ubuntu 14 (trusty)
+# Ubuntu 16 (xenial)
 # user 'travis'
 # $TRAVIS_BUILD_DIR is /home/travis/build/openstreetmap/Nominatim/, for others see
 #   https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
@@ -11,36 +11,50 @@
 # Travis has a 4 MB, 10000 line output limit, so where possible we run script --quiet
 
 
+sudo apt-get clean
 sudo apt-get update -qq
 sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
-                            libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
-                            postgresql-server-dev-9.6 postgresql-9.6-postgis-2.3 postgresql-contrib-9.6 \
-                            apache2 php5 php5-pgsql php5-intl php-pear
+                            libbz2-dev libpq-dev libproj-dev \
+                            postgresql-server-dev-9.6 postgresql-9.6-postgis-2.4 postgresql-contrib-9.6 \
+                            apache2 php php-pgsql php-intl php-pear php-db php-cgi
 
-sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
+sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 
 
 pip3 install --quiet behave nose pytidylib psycopg2-binary
 
+
 # Travis uses phpenv to support multiple PHP versions. We need to make sure
-# these packages get installed to the phpenv-set PHP (below /home/travis/.phpenv/),
-# not the system PHP (/usr/bin/php)
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
-sudo PHP_PEAR_PHP_BIN=`which php` pear list
-# re-populate the shims/ directory, e.g. adds phpcs
-phpenv rehash
-ls -la /home/travis/.phpenv/shims/
+# any packages we install via PEAR or manual end up in the phpenv-set PHP (below
+# /home/travis/.phpenv/) and not the system PHP (/usr/bin/php)
 
 # $PHPENV_VERSION and $TRAVIS_PHP_VERSION are unset.
 export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)
+echo $PHPENV_VERSION
+
+# pear.php.net is offline so we need to stall DB.php manual
+wget --quiet https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/php-db/1.9.2-2/php-db_1.9.2.orig.tar.gz
+tar -xzf php-db_1.9.2.orig.tar.gz
+rm php-db_1.9.2.orig.tar.gz
+# ... and patch one line that causes warnings starting PHP 7.2
+patch DB-1.9.2/DB.php vagrant/db_php_patch.txt
+sudo mv DB-1.9.2/DB* /home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear/
+rm -r DB-1.9.2
+
+# We place phpcs in /usr/bin
+wget --quiet -O phpcs https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+chmod +x phpcs
+sudo mv phpcs /usr/bin/
+phpcs --version
 
 # add lib/php/pear to the PHP include path
 tee /tmp/travis.php.ini << EOF
 include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.phpenv/versions/$PHPENV_VERSION/lib/php/pear
 EOF
 phpenv config-add /tmp/travis.php.ini
+
+
+
 
 
 sudo -u postgres createuser -S www-data

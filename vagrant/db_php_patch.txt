@@ -1,0 +1,10 @@
+--- DB.php 2015-11-24 15:09:14.000000000 +0100
++++ DB_new.php 2019-02-07 17:02:25.000000000 +0100
+@@ -772,7 +772,7 @@
+             $parsed['dbsyntax'] = $str;
+         }
+
+-        if (!count($dsn)) {
++        if (!$dsn || !count($dsn)) {
+             return $parsed;
+         }

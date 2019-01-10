@@ -231,14 +231,6 @@ Feature: Tag evaluation
       | boundary | administrative |
       | waterway | stream |
 
-    Scenario: Footways are not included if they are sidewalks
-        When loading osm data
-          """
-          n2 Thighway=footway,name=To%20%Hell,footway=sidewalk
-          n23 Thighway=footway,name=x
-          """
-        Then place has no entry for N2
-
     Scenario: named junctions are included if there is no other tag
         When loading osm data
           """
@@ -538,9 +530,9 @@ Feature: Tag evaluation
         Then place contains
           | object | class   | type |
           | N10    | tourism | hotel |
-          | N12    | building| yes |
+          | N12    | building| shed |
           | N13    | building| yes |
-          | N14    | building| yes |
+          | N14    | place   | postcode |
         And place has no entry for N10:building
         And place has no entry for N11
 
@@ -552,3 +544,20 @@ Feature: Tag evaluation
         Then place contains
          | object     | class   | type | address |
          | N290393920 | place   | house| 'city' : 'Perpignan', 'country' : 'FR', 'housenumber' : '43\\', 'postcode' : '66000', 'street' : 'Rue Pierre Constant d`Ivry' |
+
+    Scenario: odd interpolation
+        When loading osm data
+          """
+          n4 Taddr:housenumber=3 x0 y0
+          n5 Taddr:housenumber=15 x0 y0.00001
+          w12 Taddr:interpolation=odd Nn4,n5
+          w13 Taddr:interpolation=even Nn4,n5
+          w14 Taddr:interpolation=-3 Nn4,n5
+          """
+        Then place contains
+            | object | class | type | address |
+            | N4     | place | house | 'housenumber' : '3' |
+            | N5     | place | house | 'housenumber' : '15' |
+            | W12    | place | houses | 'interpolation' : 'odd' |
+            | W13    | place | houses | 'interpolation' : 'even' |
+            | W14    | place | houses | 'interpolation' : '-3' |

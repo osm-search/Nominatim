@@ -1,0 +1,85 @@
+[
+{
+    "keys" : ["name:prefix", "name:suffix", "name:botanical", "*wikidata"],
+    "values" : {
+        "" : "skip"
+    }
+},
+{
+    "keys" : ["ref", "int_ref", "nat_ref", "reg_ref", "loc_ref", "old_ref",
+              "iata", "icao", "pcode"],
+    "values" : {
+        "" : "ref"
+    }
+},
+{
+    "keys" : ["name", "name:*", "int_name", "int_name:*", "nat_name", "nat_name:*",
+              "reg_name", "reg_name:*", "loc_name", "loc_name:*",
+              "old_name", "old_name:*", "alt_name", "alt_name:*", "alt_name_*",
+              "official_name", "official_name:*", "place_name", "place_name:*",
+              "short_name", "short_name:*", "brand"],
+    "values" : {
+        "" : "name"
+    }
+},
+{
+    "keys" : ["landuse"],
+    "values" : {
+        "cemetry" : "skip",
+        "" : "fallback,with_name"
+    }
+},
+{
+    "keys" : ["boundary"],
+    "values" : {
+        "administrative" : "main"
+    }
+},
+{
+    "keys" : ["place"],
+    "values" : {
+        "" : "main"
+    }
+},
+{
+    "keys" : ["country_code", "ISO3166-1", "is_in:country_code", "is_in_country",
+              "addr:country", "addr:country", "addr:country_code"],
+    "values" : {
+        "" : "country"
+    }
+},
+{
+    "keys" : ["addr:*", "is_in:*", "tiger:county"],
+    "values" : {
+        "" : "address"
+    }
+},
+{
+    "keys" : ["highway"],
+    "values" : {
+        "motorway" : "main",
+        "trunk" : "main",
+        "primary" : "main",
+        "secondary" : "main",
+        "tertiary" : "main",
+        "unclassified" : "main",
+        "residential" : "main",
+        "living_street" : "main",
+        "pedestrian" : "main",
+        "road" : "main",
+        "service" : "main,with_name",
+        "cycleway" : "main,with_name",
+        "path" : "main,with_name",
+        "footway" : "main,with_name",
+        "steps" : "main,with_name",
+        "bridleway" : "main,with_name",
+        "track" : "main,with_name",
+        "byway": "main,with_name",
+        "motorway_link" : "main,with_name",
+        "trunk_link" : "main,with_name",
+        "primary_link" : "main,with_name",
+        "secondary_link" : "main,with_name",
+        "tertiary_link" : "main,with_name"
+    }
+}
+]

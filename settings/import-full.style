@@ -1,0 +1,239 @@
+[
+{
+    "keys" : ["*source"],
+    "values" : {
+        "" : "skip"
+    }
+},
+{
+    "keys" : ["name:prefix", "name:suffix", "name:botanical", "wikidata",
+              "*:wikidata"],
+    "values" : {
+        "" : "extra"
+    }
+},
+{
+    "keys" : ["ref", "int_ref", "nat_ref", "reg_ref", "loc_ref", "old_ref",
+              "iata", "icao", "pcode", "pcode:*"],
+    "values" : {
+        "" : "ref"
+    }
+},
+{
+    "keys" : ["name", "name:*", "int_name", "int_name:*", "nat_name", "nat_name:*",
+              "reg_name", "reg_name:*", "loc_name", "loc_name:*",
+              "old_name", "old_name:*", "alt_name", "alt_name:*", "alt_name_*",
+              "official_name", "official_name:*", "place_name", "place_name:*",
+              "short_name", "short_name:*", "brand"],
+    "values" : {
+        "" : "name"
+    }
+},
+{
+    "keys" : ["addr:housename"],
+    "values" : {
+        "" : "name,house"
+    }
+},
+{
+    "keys" : ["emergency"],
+    "values" : {
+        "fire_hydrant" : "skip",
+        "yes" : "skip",
+        "no" : "skip",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["historic", "military"],
+    "values" : {
+        "no" : "skip",
+        "yes" : "skip",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["natural"],
+    "values" : {
+        "yes" : "skip",
+        "no" : "skip",
+        "coastline" : "skip",
+        "" : "main,with_name"
+    }
+},
+{
+    "keys" : ["landuse"],
+    "values" : {
+        "cemetry" : "main,with_name",
+        "" : "main,fallback,with_name"
+    }
+},
+{
+    "keys" : ["highway"],
+    "values" : {
+        "no" : "skip",
+        "turning_circle" : "skip",
+        "mini_roundabout" : "skip",
+        "noexit" : "skip",
+        "crossing" : "skip",
+        "traffic_signals" : "main,with_name",
+        "service" : "main,with_name",
+        "cycleway" : "main,with_name",
+        "path" : "main,with_name",
+        "footway" : "main,with_name",
+        "steps" : "main,with_name",
+        "bridleway" : "main,with_name",
+        "track" : "main,with_name",
+        "byway": "main,with_name",
+        "motorway_link" : "main,with_name",
+        "trunk_link" : "main,with_name",
+        "primary_link" : "main,with_name",
+        "secondary_link" : "main,with_name",
+        "tertiary_link" : "main,with_name",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["railway"],
+    "values" : {
+        "level_crossing" : "skip",
+        "no" : "skip",
+        "" : "main,with_name"
+    }
+},
+{
+    "keys" : ["man_made"],
+    "values" : {
+        "survey_point" : "skip",
+        "cutline" : "skip",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["aerialway"],
+    "values" : {
+        "pylon" : "skip",
+        "no" : "skip",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["boundary"],
+    "values" : {
+        "" : "main,with_name"
+    }
+},
+{
+    "keys" : ["amenity"],
+    "values" : {
+        "restaurant" : "main,operator",
+        "fuel" : "main,operator"
+    }
+},
+{
+    "keys" : ["aeroway", "amenity", "club", "craft", "leisure",
+              "office", "mountain_pass"],
+    "values" : {
+        "no" : "skip",
+        "" : "main"
+    }
+},
+{
+    "keys" : ["shop"],
+    "values" : {
+        "no" : "skip",
+        "" : "main,operator"
+    }
+},
+{
+    "keys" : ["tourism"],
+    "values" : {
+        "yes" : "skip",
+        "no" : "skip",
+        "" : "main,operator"
+    }
+},
+{
+    "keys" : ["bridge", "tunnel"],
+    "values" : {
+        "" : "main,with_name_key"
+    }
+},
+{
+    "keys" : ["waterway"],
+    "values" : {
+        "riverbank" : "skip",
+        "" : "main,with_name"
+    }
+},
+{
+    "keys" : ["place"],
+    "values" : {
+        "" : "main"
+    }
+},
+{
+    "keys" : ["junction"],
+    "values" : {
+        "" : "main,fallback,with_name"
+    }
+},
+{
+    "keys" : ["postal_code", "postcode", "addr:postcode",
+              "tiger:zip_left", "tiger:zip_right"],
+    "values" : {
+        "" : "postcode,fallback"
+    }
+},
+{
+    "keys" : ["country_code", "ISO3166-1", "is_in:country_code", "is_in_country",
+              "addr:country", "addr:country", "addr:country_code"],
+    "values" : {
+        "" : "country"
+    }
+},
+{
+    "keys" : ["addr:housenumber", "addr:conscriptionnumber", "addr:streetnumber"],
+    "values" : {
+        "" : "address,house"
+    }
+},
+{
+    "keys" : ["addr:interpolation"],
+    "values" : {
+        "" : "interpolation,address"
+    }
+},
+{
+    "keys" : ["addr:*", "is_in:*", "tiger:county", "is_in"],
+    "values" : {
+        "" : "address"
+    }
+},
+{
+    "keys" : ["building"],
+    "values" : {
+        "no" : "skip",
+        "" : "main,fallback,with_name"
+    }
+},
+{
+    "keys" : ["tracktype", "traffic_calming", "service", "cuisine", "capital",
+              "dispensing", "religion", "denomination", "sport",
+              "internet_access", "lanes", "surface", "smoothness", "width",
+              "est_width", "incline", "opening_hours", "collection_times",
+              "service_times", "disused", "wheelchair", "sac_scale",
+              "trail_visibility", "mtb:scale", "mtb:description", "wood",
+              "drive_through", "drive_in", "access", "vehicle", "bicyle",
+              "foot", "goods", "hgv", "motor_vehicle", "motor_car", "oneway",
+              "date_on", "date_off", "day_on", "day_off", "hour_on", "hour_off",
+              "maxweight", "maxheight", "maxspeed", "fee", "toll", "charge",
+              "population", "description", "image", "attribution", "fax",
+              "email", "url", "website", "phone", "real_ale", "smoking",
+              "food", "camera", "brewery", "locality", "wikipedia",
+              "wikipedia:*", "access:*", "contact:*", "drink:*", "toll:*"],
+    "values" : {
+        "" : "extra"
+    }
+}
+]

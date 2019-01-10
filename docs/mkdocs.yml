@@ -20,6 +20,7 @@ pages:
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Developers Guide':
         - 'Overview' : 'develop/overview.md'
+        - 'OSM Data Import' : 'develop/Import.md'
         - 'Place Ranking' : 'develop/Ranking.md'
     - 'External Data Sources':
         - 'Overview' : 'data-sources/overview.md'

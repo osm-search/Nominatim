@@ -445,6 +445,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             $sSQL = 'update import_status set indexed = true';
             $oDB->query($sSQL);
+        } else {
+            if ($aResult['import-osmosis-all']) {
+                echo "Error: --no-index cannot be used with continuous imports (--import-osmosis-all).\n";
+                exit(1);
+            }
         }
 
         $fDuration = time() - $fStartTime;

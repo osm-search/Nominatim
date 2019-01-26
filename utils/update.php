@@ -305,6 +305,8 @@ if ($aResult['index']) {
     }
 
     runWithEnv($sCmd, $aProcEnv);
+
+    $oDB->query('update import_status set indexed = true');
 }
 
 if ($aResult['update-address-levels']) {

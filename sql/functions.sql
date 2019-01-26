@@ -853,6 +853,9 @@ BEGIN
       END IF;
     ELSEIF NEW.class = 'boundary' AND NOT is_area THEN
         return NULL;
+    ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
+           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W' THEN
+        return NULL;
     ELSEIF NEW.class = 'railway' AND NEW.type in ('rail') THEN
         return NULL;
     ELSEIF NEW.osm_type = 'N' AND NEW.class = 'highway' THEN

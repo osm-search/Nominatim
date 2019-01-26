@@ -293,3 +293,22 @@ Feature: Import into placex
           | R6     | 4           | 0 |
           | W3     | 30          | 30 |
 
+    Scenario: boundary ways for countries and states are ignored
+        Given the named places
+          | osm | class    | type           | admin | geometry |
+          | W4  | boundary | administrative | 2     | poly-area:0.1 |
+          | R4  | boundary | administrative | 2     | poly-area:0.1 |
+          | W5  | boundary | administrative | 3     | poly-area:0.1 |
+          | R5  | boundary | administrative | 3     | poly-area:0.1 |
+          | W6  | boundary | administrative | 4     | poly-area:0.1 |
+          | R6  | boundary | administrative | 4     | poly-area:0.1 |
+          | W7  | boundary | administrative | 5     | poly-area:0.1 |
+          | R7  | boundary | administrative | 5     | poly-area:0.1 |
+       When importing
+       Then placex contains exactly
+           | object |
+           | R4     |
+           | R5     |
+           | R6     |
+           | W7     |
+           | R7     |

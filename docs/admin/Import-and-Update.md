@@ -271,3 +271,13 @@ If you have imported multiple country extracts and want to keep them
 up-to-date, have a look at the script in
 [issue #60](https://github.com/openstreetmap/Nominatim/issues/60).
 
+
+#### checking that all is well 
+
+To make sure your server is serving your pages, you can do a local test lookup as follows:
+
+    curl -i -H   GET http://localhost/nominatim/lookup.php?osm_ids=N12345
+    
+or
+
+    curl -i -H  GET http://localhost/lookup.php?osm_ids=N12345

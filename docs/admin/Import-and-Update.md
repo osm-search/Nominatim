@@ -274,7 +274,7 @@ up-to-date, have a look at the script in
 
 #### checking that all is well 
 
-To make sure your server is serving your pages, you can do a local test lookup as follows:
+To make sure your server is serving nominatim requests, you can do a local test lookup as follows:
 
     curl -i -H   GET http://localhost/nominatim/lookup.php?osm_ids=N12345
     

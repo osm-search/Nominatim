@@ -15,6 +15,7 @@ userconfig = {
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,
     'DB_HOST' : None,
+    'DB_PORT' : None,
     'DB_USER' : None,
     'DB_PASS' : None,
     'TEMPLATE_DB' : 'test_template_nominatim',
@@ -35,6 +36,7 @@ class NominatimEnvironment(object):
         self.build_dir = os.path.abspath(config['BUILDDIR'])
         self.src_dir = os.path.abspath(os.path.join(os.path.split(__file__)[0], "../.."))
         self.db_host = config['DB_HOST']
+        self.db_port = config['DB_PORT']
         self.db_user = config['DB_USER']
         self.db_pass = config['DB_PASS']
         self.template_db = config['TEMPLATE_DB']
@@ -54,6 +56,8 @@ class NominatimEnvironment(object):
         dbargs = {'database': dbname}
         if self.db_host:
             dbargs['host'] = self.db_host
+        if self.db_port:
+            dbargs['port'] = self.db_port
         if self.db_user:
             dbargs['user'] = self.db_user
         if self.db_pass:
@@ -69,10 +73,11 @@ class NominatimEnvironment(object):
 
     def write_nominatim_config(self, dbname):
         f = open(self.local_settings_file, 'w')
-        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://%s:%s@%s/%s');\n" %
+        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://%s:%s@%s%s/%s');\n" %
                 (self.db_user if self.db_user else '',
                  self.db_pass if self.db_pass else '',
                  self.db_host if self.db_host else '',
+                 (':' + self.db_port) if self.db_port else '',
                  dbname))
         f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
         f.close()

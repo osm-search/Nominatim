@@ -51,7 +51,7 @@ The source code is available under a GPLv2 license.
 Contributing
 ============
 
-Contributions are welcome. For details see [CONTRIBUTING.md](contribution guide).
+Contributions are welcome. For details see [contribution guide](CONTRIBUTING.md).
 
 Both bug reports and pull requests are welcome.
 

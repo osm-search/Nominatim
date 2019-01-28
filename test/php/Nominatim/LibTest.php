@@ -173,4 +173,12 @@ class LibTest extends \PHPUnit\Framework\TestCase
         // start == end
         $this->closestHouseNumberEvenOddOther(50, 50, 0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
     }
+
+    public function testGetSearchRankLabel()
+    {
+        $this->assertEquals('unknown', getSearchRankLabel(null));
+        $this->assertEquals('continent', getSearchRankLabel(0));
+        $this->assertEquals('continent', getSearchRankLabel(1));
+        $this->assertEquals('other: 30', getSearchRankLabel(30));
+    }
 }

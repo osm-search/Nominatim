@@ -228,3 +228,25 @@ function closestHouseNumber($aRow)
 
     return max(min($aRow['endnumber'], $iHn), $aRow['startnumber']);
 }
+
+function getSearchRankLabel($iRank)
+{
+    if (!isset($iRank)) return 'unknown';
+    if ($iRank < 2) return 'continent';
+    if ($iRank < 4) return 'sea';
+    if ($iRank < 8) return 'country';
+    if ($iRank < 12) return 'state';
+    if ($iRank < 16) return 'county';
+    if ($iRank == 16) return 'city';
+    if ($iRank == 17) return 'town / island';
+    if ($iRank == 18) return 'village / hamlet';
+    if ($iRank == 20) return 'suburb';
+    if ($iRank == 21) return 'postcode area';
+    if ($iRank == 22) return 'croft / farm / locality / islet';
+    if ($iRank == 23) return 'postcode area';
+    if ($iRank == 25) return 'postcode point';
+    if ($iRank == 26) return 'street / major landmark';
+    if ($iRank == 27) return 'minory street / path';
+    if ($iRank == 28) return 'house / building';
+    return 'other: ' . $iRank;
+}

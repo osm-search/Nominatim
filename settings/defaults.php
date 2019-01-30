@@ -63,6 +63,8 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 // osm2pgsql output tables (aka main table) - update only
 @define('CONST_Tablespace_Place_Data', false);
 @define('CONST_Tablespace_Place_Index', false);
+// osm2pgsql additional commandline arguments
+@define('CONST_Osm2pgsql_Additional_Cmd_Args', '');
 // address computation tables - update only
 @define('CONST_Tablespace_Address_Data', false);
 @define('CONST_Tablespace_Address_Index', false);

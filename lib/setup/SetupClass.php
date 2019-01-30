@@ -189,6 +189,7 @@ class SetupFunctions
             fail("osm2pgsql not found in '$osm2pgsql'");
         }
 
+        $osm2pgsql .= ' '.CONST_Osm2pgsql_Additional_Cmd_Args;
         $osm2pgsql .= ' -S '.CONST_Import_Style;
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {

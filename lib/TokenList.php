@@ -162,6 +162,114 @@ class TokenList
     }
 
     /**
+     * Inspecting unmatched tokens check if another variation of postcod exist. A
+     * variation might be another normalization (e.g. needs space) or looking for
+     * the broader/shortened postcode.
+     *
+     * @param string[] $aTokens       List of tokens to look up in the database.
+     * @param string[] $aCountryCodes List of country restrictions.
+     *
+     * @return void
+     */
+    public function addAdditionalPostcodeTokens(&$aTokens, &$aCountryCodes)
+    {
+        foreach ($aTokens as $sToken) {
+            if ($sToken[0] == ' ' && !$this->contains($sToken)) {
+                if (!$aCountryCodes || in_array('us', $aCountryCodes)) {
+                    // US, ZIP+4 codes. 49418-3076 => 49418
+                    if (preg_match('/^ ([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1], 'us')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('br', $aCountryCodes)) {
+                    // Brazil, 97043-105 => 97043
+                    if (preg_match('/^ ([0-9]{5}) [0-9]{3}$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1], 'br')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('ar', $aCountryCodes)) {
+                    // Argentina, X5108DQG => X5108
+                    if (preg_match('/^ ([A-Z]{4})[A-Z]{3}$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1], 'ar')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('pt', $aCountryCodes)) {
+                    // Argentina, 1200-095 => 1200
+                    if (preg_match('/^ ([0-9]{4}) [0-9]{3}$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1], 'pt')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('se', $aCountryCodes)) {
+                    // Sweden, 761 60 => 76160 also 76160 => 761 60
+                    // data is OSM is about 50:50 mix of 5 digit vs 3+2
+                    if (preg_match('/^ ([1-9]{3}) ([0-9]{2})$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].$aData[2], 'se')
+                        );
+                    }
+                    if (preg_match('/^ ([1-9]{3})([0-9]{2})$/', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].' '.$aData[2], 'se')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('nl', $aCountryCodes)) {
+                    // Nederlands, 1000 AP => 1000AP
+                    if (preg_match('/^ ([0-9]{4}) ([A-Z]{2})$/i', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].$aData[2], 'nl')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('gb', $aCountryCodes)) {
+                    // United Kingdom, TQ122DB => TQ12 2DB
+                    if (preg_match('/^ ([A-PR-UWYZ0-9][A-HK-Y0-9][AEHMNPRTVXY0-9]?[ABEHMNPRVWXY0-9]?)([0-9][ABD-HJLN-UW-Z]{2})$/i', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].' '.$aData[2], 'gb')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('ca', $aCountryCodes)) {
+                    // Canada, K7A 4R8 => K7A4R8
+                    if (preg_match('/^ ([[ABCEGHJKLMNPRSTVXY][0-9][ABCEGHJKLMNPRSTVWXYZ])([0-9][ABCEGHJKLMNPRSTVWXYZ][0-9])$/i', $sToken, $aData)) {
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].' '.$aData[2], 'ca')
+                        );
+                    }
+                }
+                if (!$aCountryCodes || in_array('pl', $aCountryCodes)) {
+                    if (preg_match('/^ ([0-9]{2}) ?([0-9]{3})$/', $sToken, $aData)) {
+                        // Poland, 12345 => 12-345, also 12 345 => 12-345 because postcodes
+                        // in location_postcode table have those dashes
+                        // https://en.wikipedia.org/wiki/List_of_postal_codes_in_Poland
+                        $this->addToken(
+                            $sToken,
+                            new Token\Postcode(null, $aData[1].'-'.$aData[2], 'pl')
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Add a new token for the given word.
      *
      * @param string $sWord  Word the token describes.

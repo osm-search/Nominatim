@@ -657,16 +657,11 @@ class Geocode
                     $this->oNormalizer
                 );
 
-                // Try more interpretations for Tokens that could not be matched.
+                $oValidTokens->addAdditionalPostcodeTokens($aTokens, $this->aCountryCodes);
+
                 foreach ($aTokens as $sToken) {
                     if ($sToken[0] == ' ' && !$oValidTokens->contains($sToken)) {
-                        if (preg_match('/^ ([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
-                            // US ZIP+4 codes - merge in the 5-digit ZIP code
-                            $oValidTokens->addToken(
-                                $sToken,
-                                new Token\Postcode(null, $aData[1], 'us')
-                            );
-                        } elseif (preg_match('/^ [0-9]+$/', $sToken)) {
+                        if (preg_match('/^ [0-9]+$/', $sToken)) {
                             // Unknown single word token with a number.
                             // Assume it is a house number.
                             $oValidTokens->addToken(

@@ -123,4 +123,43 @@ class TokenTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(array(new Token\Postcode(999, '64286')), $TL->get('64286'));
         $this->assertEquals(array(new Token\Word(999, true, 533)), $TL->get('darmstadt'));
     }
+
+    private function findAdditionalPostcodes($sNormQuery, $aCountryCodes)
+    {
+        $aTokens = array();
+        $oPhrase = new Phrase($sNormQuery, ''); // we assume query is only one phrase
+        $oPhrase->addTokens($aTokens);
+
+        $TL = new TokenList;
+        $TL->addAdditionalPostcodeTokens($aTokens, $aCountryCodes);
+
+        // Check that tokens aren't added twice
+        $TL->addAdditionalPostcodeTokens($aTokens, $aCountryCodes);
+
+        $aFound = array();
+        foreach ($TL->debugInfo() as $sWord => $aTokens) {
+            $aFound[$sWord] = array_map(function ($oToken) {
+                return $oToken->sPostcode;
+            }, $aTokens);
+        }
+        return $aFound;
+    }
+
+    public function testAddAdditionalPostcodeTokens()
+    {
+        $aFound = $this->findAdditionalPostcodes('ul wiejska 4 00 902 warszawa', false);
+        $this->assertEquals(array(' 00 902' => array('00-902')), $aFound);
+
+        $aFound = $this->findAdditionalPostcodes('ul wiejska 4 00 902 warszawa', array('pl'));
+        $this->assertEquals(array(' 00 902' => array('00-902')), $aFound);
+
+        $aFound = $this->findAdditionalPostcodes('10 downing street westminster london sw1a2aa', array('gb'));
+        $this->assertEquals(array(' sw1a2aa' => array('sw1a 2aa')), $aFound);
+
+        $aFound = $this->findAdditionalPostcodes('rua da liberdade 34 4000 000 porto portugal', array('pt'));
+        $this->assertEquals(array(' 4000 000' => array('4000')), $aFound);
+
+        $aFound = $this->findAdditionalPostcodes('storgatan 1 11201 stockholm', array('se'));
+        $this->assertEquals(array(' 11201' => array('112 01')), $aFound);
+    }
 }

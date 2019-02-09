@@ -23,22 +23,23 @@ sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
 pip3 install --quiet behave nose pytidylib psycopg2-binary
 
 # Travis uses phpenv to support multiple PHP versions. We need to make sure
-# these packages get installed to the phpenv-set PHP (below /home/travis/.phpenv/),
-# not the system PHP (/usr/bin/php)
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install pear/PEAR-1.10.0
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install DB
-sudo PHP_PEAR_PHP_BIN=`which php` pear -q install PHP_CodeSniffer
-sudo PHP_PEAR_PHP_BIN=`which php` pear list
-# re-populate the shims/ directory, e.g. adds phpcs
-phpenv rehash
-ls -la /home/travis/.phpenv/shims/
+# these packages get installed to the phpenv-set PHP (inside /home/travis/.phpenv/),
+# not the system PHP (/usr/bin/php, /usr/share/php/ etc)
 
 # $PHPENV_VERSION and $TRAVIS_PHP_VERSION are unset.
 export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)
+echo $PHPENV_VERSION
 
-# add lib/php/pear to the PHP include path
+# https://github.com/pear/DB
+composer global require "pear/db=1.9.3"
+# https://github.com/squizlabs/PHP_CodeSniffer
+composer global require "squizlabs/php_codesniffer=*"
+sudo ln -s /home/travis/.config/composer/vendor/bin/phpcs /usr/bin/
+
+
+# make sure PEAR.php and DB.php are in the include path
 tee /tmp/travis.php.ini << EOF
-include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.phpenv/versions/$PHPENV_VERSION/lib/php/pear
+include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.config/composer/vendor/pear/db
 EOF
 phpenv config-add /tmp/travis.php.ini
 

@@ -133,7 +133,7 @@ style     | Import time  |  DB size   |  after drop
 admin     |    5h        |  190 GB    |   20 GB
 street    |   42h        |  400 GB    |  180 GB
 address   |   59h        |  500 GB    |  260 GB
-full      |   80h        |  590 GB    |  320 GB
+full      |   80h        |  575 GB    |  300 GB
 
 You can also customize the styles further. For an description of the
 style format see [the developement section](../develop/Import.md).

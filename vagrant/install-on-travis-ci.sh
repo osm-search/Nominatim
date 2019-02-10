@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # This script runs in a travis-ci.org virtual machine
-# https://docs.travis-ci.com/user/trusty-ci-environment/
-# Ubuntu 14 (trusty)
+# https://docs.travis-ci.com/user/reference/xenial/
+# Ubuntu 16 (xenial)
 # user 'travis'
 # $TRAVIS_BUILD_DIR is /home/travis/build/openstreetmap/Nominatim/, for others see
 #   https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
@@ -14,11 +14,11 @@
 sudo apt-get update -qq
 sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
-                            libbz2-dev libpq-dev libgeos-c1 libgeos++-dev libproj-dev \
-                            postgresql-server-dev-9.6 postgresql-9.6-postgis-2.3 postgresql-contrib-9.6 \
-                            apache2 php5 php5-pgsql php5-intl php-pear
+                            libbz2-dev libpq-dev libproj-dev \
+                            postgresql-server-dev-9.6 postgresql-9.6-postgis-2.4 postgresql-contrib-9.6 \
+                            apache2 php php-pgsql php-intl php-pear
 
-sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php5-cgi
+sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php-cgi
 
 pip3 install --quiet behave nose pytidylib psycopg2-binary
 

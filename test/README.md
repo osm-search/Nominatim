@@ -66,7 +66,7 @@ To run the functional tests, do
     cd test/bdd
     behave
 
-The tests can be configured with a set of environment variables:
+The tests can be configured with a set of environment variables (`behave -D key=val`):
 
  * `BUILDDIR` - build directory of Nominatim installation to test
  * `TEMPLATE_DB` - name of template database used as a skeleton for
@@ -74,6 +74,7 @@ The tests can be configured with a set of environment variables:
  * `TEST_DB` - name of test database (db tests)
  * `API_TEST_DB` - name of the database containing the API test data (api tests)
  * `DB_HOST` - (optional) hostname of database host
+ * `DB_PORT` - (optional) port of database on host
  * `DB_USER` - (optional) username of database login
  * `DB_PASS` - (optional) password for database login
  * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim

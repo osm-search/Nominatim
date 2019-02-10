@@ -106,7 +106,6 @@ $sSQL .= '    ROUND(EXTRACT(epoch FROM indexed_date)) AS indexed_epoch,';
 $sSQL .= '    parent_place_id, ';
 $sSQL .= '    rank_address, ';
 $sSQL .= '    rank_search, ';
-$sSQL .= '    get_searchrank_label(rank_search) AS rank_search_label,'; // only used in HTML output
 $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
 $sSQL .= "    ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea, ";
 $sSQL .= '    ST_y(centroid) AS lat, ';
@@ -136,6 +135,7 @@ if (!$aPointDetails) {
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
 $aPointDetails['icon'] = Nominatim\ClassTypes\getProperty($aPointDetails, 'icon', false);
+$aPointDetails['rank_search_label'] = getSearchRankLabel($aPointDetails['rank_search']); // only used in HTML format
 
 // Get all alternative names (languages, etc)
 $sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';

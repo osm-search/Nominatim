@@ -143,7 +143,8 @@ style format see [the developement section](../develop/Import.md).
 **Important:** first try the import with a small extract, for example from
 [Geofabrik](https://download.geofabrik.de).
 
-Download the data to import and load the data with the following command:
+Download the data to import and load the data with the following command
+from the build directory:
 
 ```sh
 ./utils/setup.php --osm-file <data file> --all [--osm2pgsql-cache 28000] 2>&1 | tee setup.log

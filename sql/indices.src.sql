@@ -32,6 +32,7 @@ GRANT SELECT ON table country_osm_grid to "{www-user}";
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 
 CREATE INDEX idx_osmline_parent_place_id ON location_property_osmline USING BTREE (parent_place_id) {ts:search-index};
+CREATE INDEX idx_osmline_parent_osm_id ON location_property_osmline USING BTREE (osm_id) {ts:search-index};
 
 DROP INDEX IF EXISTS place_id_idx;
 CREATE UNIQUE INDEX idx_place_osm_unique on place using btree(osm_id,osm_type,class,type) {ts:address-index};

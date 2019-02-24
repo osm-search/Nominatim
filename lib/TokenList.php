@@ -85,7 +85,7 @@ class TokenList
         $sSQL = 'SELECT word_id, word_token, word, class, type, country_code,';
         $sSQL .= ' operator, coalesce(search_name_count, 0) as count';
         $sSQL .= ' FROM word WHERE word_token in (';
-        $sSQL .= join(',', array_map('getDBQuoted', $aTokens)).')';
+        $sSQL .= join(',', $oDB->getDBQuotedList($aTokens)).')';
 
         Debug::printSQL($sSQL);
 

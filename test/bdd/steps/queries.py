@@ -71,7 +71,7 @@ class GenericResponse(object):
                     pass
                 elif h == 'osm':
                     assert_equal(res['osm_type'], row[h][0])
-                    assert_equal(res['osm_id'], row[h][1:])
+                    assert_equal(res['osm_id'], int(row[h][1:]))
                 elif h == 'centroid':
                     x, y = row[h].split(' ')
                     assert_almost_equal(float(y), float(res['lat']))

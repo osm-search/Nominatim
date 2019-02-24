@@ -36,8 +36,18 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
             $sUserAgent = $_SERVER['HTTP_USER_AGENT'];
         else $sUserAgent = '';
         $sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format,searchterm)';
-        $sSQL .= ' values ('.getDBQuoted($sType).','.getDBQuoted($hLog[0]).','.getDBQuoted($hLog[2]);
-        $sSQL .= ','.getDBQuoted($hLog[1]).','.getDBQuoted($sUserAgent).','.getDBQuoted(join(',', $aLanguageList)).','.getDBQuoted($sOutputFormat).','.getDBQuoted($hLog[3]).')';
+        $sSQL .= ' values ('.
+        $sSQL .= join(',', $oDB->getDBQuotedList(array(
+            $sType,
+            $hLog[0],
+            $hLog[2],
+            $hLog[1],
+            $sUserAgent,
+            join(',', $aLanguageList),
+            $sOutputFormat,
+            $hLog[3]
+        )));
+        $sSQL .= ')';
         $oDB->query($sSQL);
     }
 
@@ -53,10 +63,10 @@ function logEnd(&$oDB, $hLog, $iNumResults)
         if (!$aEndTime[1]) $aEndTime[1] = '0';
         $sEndTime = date('Y-m-d H:i:s', $aEndTime[0]).'.'.$aEndTime[1];
 
-        $sSQL = 'update new_query_log set endtime = '.getDBQuoted($sEndTime).', results = '.$iNumResults;
-        $sSQL .= ' where starttime = '.getDBQuoted($hLog[0]);
-        $sSQL .= ' and ipaddress = '.getDBQuoted($hLog[1]);
-        $sSQL .= ' and query = '.getDBQuoted($hLog[2]);
+        $sSQL = 'update new_query_log set endtime = '.$oDB->getDBQuoted($sEndTime).', results = '.$iNumResults;
+        $sSQL .= ' where starttime = '.$oDB->getDBQuoted($hLog[0]);
+        $sSQL .= ' and ipaddress = '.$oDB->getDBQuoted($hLog[1]);
+        $sSQL .= ' and query = '.$oDB->getDBQuoted($hLog[2]);
         $oDB->query($sSQL);
     }
 

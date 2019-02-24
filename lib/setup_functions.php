@@ -24,15 +24,17 @@ function checkModulePresence()
     $sSQL .= $sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
     $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
 
-    $oDB = &getDB();
-    $oResult = $oDB->query($sSQL);
+    $oDB = new \Nominatim\DB();
+    $oDB->connect();
 
     $bResult = true;
-
-    if (PEAR::isError($oResult)) {
+    try {
+        $oDB->exec($sSQL);
+    } catch (\Nominatim\DatabaseError $e) {
         echo "\nERROR: Failed to load nominatim module. Reason:\n";
-        echo $oResult->userinfo . "\n\n";
+        echo $oDB->getLastError()[2] . "\n\n";
         $bResult = false;
     }
+
     return $bResult;
 }

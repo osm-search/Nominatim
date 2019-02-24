@@ -171,7 +171,7 @@ If the Postgres installation is behind a firewall, you can try
 inside the virtual machine. It will map the port to `localhost:9999` and then
 you edit `settings/local.php` with
 
-    @define('CONST_Database_DSN', 'pgsql://postgres@localhost:9999/nominatim_it');
+    @define('CONST_Database_DSN', 'pgsql:host=localhost;port=9999;user=postgres;dbname=nominatim_it');
 
 To access postgres directly remember to specify the hostname, e.g. `psql --host localhost --port 9999 nominatim_it`
 

@@ -73,12 +73,14 @@ class NominatimEnvironment(object):
 
     def write_nominatim_config(self, dbname):
         f = open(self.local_settings_file, 'w')
-        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql://%s:%s@%s%s/%s');\n" %
-                (self.db_user if self.db_user else '',
-                 self.db_pass if self.db_pass else '',
-                 self.db_host if self.db_host else '',
-                 (':' + self.db_port) if self.db_port else '',
-                 dbname))
+        # https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
+        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql:dbname=%s%s%s%s%s');\n" %
+                (dbname,
+                 (';host=' + self.db_host) if self.db_host else '',
+                 (';port=' + self.db_port) if self.db_port else '',
+                 (';user=' + self.db_user) if self.db_user else '',
+                 (';password=' + self.db_pass) if self.db_pass else ''
+                 ))
         f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
         f.close()
 

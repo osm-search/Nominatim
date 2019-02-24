@@ -4,7 +4,7 @@ function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;
     error_log('ERROR: '.$sError);
-    echo $sUserError."\n";
+    var_dump($sUserError)."\n";
     exit(-1);
 }
 

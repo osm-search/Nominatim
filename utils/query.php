@@ -25,7 +25,9 @@ $aCMDOptions
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB;
+$oDB->connect();
+
 $oParams = new Nominatim\ParameterParser($aCMDResult);
 
 if ($oParams->getBool('search')) {

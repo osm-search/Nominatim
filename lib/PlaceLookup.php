@@ -52,7 +52,7 @@ class PlaceLookup
     {
         $aLangs = $oParams->getPreferredLanguages();
         $this->aLangPrefOrderSql =
-            'ARRAY['.join(',', array_map('getDBQuoted', $aLangs)).']';
+            'ARRAY['.join(',', $this->oDB->getDBQuotedList($aLangs)).']';
 
         $this->bExtraTags = $oParams->getBool('extratags', false);
         $this->bNameDetails = $oParams->getBool('namedetails', false);
@@ -132,8 +132,9 @@ class PlaceLookup
 
     public function setLanguagePreference($aLangPrefOrder)
     {
-        $this->aLangPrefOrderSql =
-            'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
+        $this->aLangPrefOrderSql = $this->oDB->getArraySQL(
+            $this->oDB->getDBQuotedList($aLangPrefOrder)
+        );
     }
 
     private function addressImportanceSql($sGeometry, $sPlaceId)
@@ -515,7 +516,7 @@ class PlaceLookup
 
             $aPointPolygon = chksql($this->oDB->getRow($sSQL), 'Could not get outline');
 
-            if ($aPointPolygon['place_id']) {
+            if ($aPointPolygon && $aPointPolygon['place_id']) {
                 if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {
                     $aOutlineResult['lat'] = $aPointPolygon['centrelat'];
                     $aOutlineResult['lon'] = $aPointPolygon['centrelon'];

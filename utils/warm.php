@@ -18,7 +18,8 @@ require_once(CONST_BasePath.'/lib/Geocode.php');
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB();
+$oDB->connect();
 
 $bVerbose = $aResult['verbose'];
 

@@ -16,33 +16,15 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
                             libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-9.6 postgresql-9.6-postgis-2.4 postgresql-contrib-9.6 \
-                            apache2 php php-pgsql php-intl php-pear
+                            apache2 php php-pgsql php-intl
 
 sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php-cgi
 
 pip3 install --quiet behave nose pytidylib psycopg2-binary
 
-# Travis uses phpenv to support multiple PHP versions. We need to make sure
-# these packages get installed to the phpenv-set PHP (inside /home/travis/.phpenv/),
-# not the system PHP (/usr/bin/php, /usr/share/php/ etc)
-
-# $PHPENV_VERSION and $TRAVIS_PHP_VERSION are unset.
-export PHPENV_VERSION=$(cat /home/travis/.phpenv/version)
-echo $PHPENV_VERSION
-
-# https://github.com/pear/DB
-composer global require "pear/db=1.9.3"
 # https://github.com/squizlabs/PHP_CodeSniffer
 composer global require "squizlabs/php_codesniffer=*"
 sudo ln -s /home/travis/.config/composer/vendor/bin/phpcs /usr/bin/
-
-
-# make sure PEAR.php and DB.php are in the include path
-tee /tmp/travis.php.ini << EOF
-include_path = .:/home/travis/.phpenv/versions/$PHPENV_VERSION/share/pear:/home/travis/.config/composer/vendor/pear/db
-EOF
-phpenv config-add /tmp/travis.php.ini
-
 
 sudo -u postgres createuser -S www-data
 
@@ -77,7 +59,7 @@ make
 tee settings/local.php << EOF
 <?php
  @define('CONST_Website_BaseURL', '/nominatim/');
- @define('CONST_Database_DSN', 'pgsql://@/test_api_nominatim');
+ @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
  @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
 EOF
 

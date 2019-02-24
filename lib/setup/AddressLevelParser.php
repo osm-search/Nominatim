@@ -53,21 +53,21 @@ class AddressLevelParser
      */
     public function createTable($oDB, $sTable)
     {
-        chksql($oDB->query('DROP TABLE IF EXISTS '.$sTable));
+        chksql($oDB->exec('DROP TABLE IF EXISTS '.$sTable));
         $sSql = 'CREATE TABLE '.$sTable;
         $sSql .= '(country_code varchar(2), class TEXT, type TEXT,';
         $sSql .= ' rank_search SMALLINT, rank_address SMALLINT)';
-        chksql($oDB->query($sSql));
+        chksql($oDB->exec($sSql));
 
         $sSql = 'CREATE UNIQUE INDEX ON '.$sTable.'(country_code, class, type)';
-        chksql($oDB->query($sSql));
+        chksql($oDB->exec($sSql));
 
         $sSql = 'INSERT INTO '.$sTable.' VALUES ';
         foreach ($this->aLevels as $aLevel) {
             $aCountries = array();
             if (isset($aLevel['countries'])) {
                 foreach ($aLevel['countries'] as $sCountry) {
-                    $aCountries[$sCountry] = getDBQuoted($sCountry);
+                    $aCountries[$sCountry] = $oDB->getDBQuoted($sCountry);
                 }
             } else {
                 $aCountries['NULL'] = 'NULL';
@@ -75,8 +75,8 @@ class AddressLevelParser
             foreach ($aLevel['tags'] as $sKey => $aValues) {
                 foreach ($aValues as $sValue => $mRanks) {
                     $aFields = array(
-                        getDBQuoted($sKey),
-                        $sValue ? getDBQuoted($sValue) : 'NULL'
+                        $oDB->getDBQuoted($sKey),
+                        $sValue ? $oDB->getDBQuoted($sValue) : 'NULL'
                     );
                     if (is_array($mRanks)) {
                         $aFields[] = (string) $mRanks[0];
@@ -93,6 +93,6 @@ class AddressLevelParser
                 }
             }
         }
-        chksql($oDB->query(rtrim($sSql, ',')));
+        chksql($oDB->exec(rtrim($sSql, ',')));
     }
 }

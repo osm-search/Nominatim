@@ -22,7 +22,7 @@ export DEBIAN_FRONTEND=noninteractive
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                             postgresql-contrib-10 \
-                            nginx php-fpm php php-pgsql php-pear php-db \
+                            nginx php-fpm php php-pgsql \
                             php-intl git
 
     export USERNAME=vagrant

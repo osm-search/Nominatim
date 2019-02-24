@@ -263,7 +263,9 @@ class ReverseGeocode
             }
             $sSQL .= ' and (name is not null or housenumber is not null';
             $sSQL .= ' or rank_address between 26 and 27)';
-            $sSQL .= ' and class not in (\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+            $sSQL .= ' and (rank_address between 26 and 27';
+            $sSQL .= '      or ST_GeometryType(geometry) != \'ST_LineString\')';
+            $sSQL .= ' and class not in (\'boundary\')';
             $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
             $sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
@@ -315,8 +317,9 @@ class ReverseGeocode
                     $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
                     $sSQL .= ' AND parent_place_id = '.$iPlaceID;
                     $sSQL .= ' and rank_address != 28';
+                    $sSQL .= ' and ST_GeometryType(geometry) != \'ST_LineString\'';
                     $sSQL .= ' and (name is not null or housenumber is not null)';
-                    $sSQL .= ' and class not in (\'railway\',\'tunnel\',\'bridge\',\'man_made\')';
+                    $sSQL .= ' and class not in (\'boundary\')';
                     $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
                     if (CONST_Debug) var_dump($sSQL);

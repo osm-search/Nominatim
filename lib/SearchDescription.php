@@ -237,7 +237,8 @@ class SearchDescription
                 $oSearch->sHouseNumber = $oSearchTerm->sToken;
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
-                if (preg_match_all('/[^0-9]/', $oSearch->sHouseNumber, $aMatches) > 2) {
+                if (preg_match('/\\d/', $oSearch->sHouseNumber) === 0
+                    || preg_match_all('/[^0-9]/', $oSearch->sHouseNumber, $aMatches) > 2) {
                     $oSearch->iSearchRank++;
                 }
                 if (empty($oSearchTerm->iId)) {

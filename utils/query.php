@@ -39,11 +39,7 @@ if ($oParams->getBool('search')) {
 
     $aSearchResults = $oGeocode->lookup();
 
-    if (version_compare(phpversion(), '5.4.0', '<')) {
-        echo json_encode($aSearchResults);
-    } else {
-        echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
-    }
+    echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
 } else {
     showUsage($aCMDOptions, true);
 }

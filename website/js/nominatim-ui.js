@@ -93,9 +93,9 @@ jQuery(document).ready(function(){
         $('#map-position-inner').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 
         var reverse_params = {
-            // lat: map.getCenter().lat.toFixed(5),
-            // lon: map.getCenter().lng.toFixed(5),
-            // zoom: 2,
+            lat: map.getCenter().lat.toFixed(5),
+            lon: map.getCenter().lng.toFixed(5),
+            zoom: map.getZoom(),
             format: 'html'
         }
         $('#switch-to-reverse').attr('href', 'reverse.php?' + $.param(reverse_params));

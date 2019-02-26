@@ -66,6 +66,7 @@ if (isset($aPlace)) {
     $aPlace = array();
 }
 
+logEnd($oDB, $hLog, count($aPlace));
 
 if (CONST_Debug) {
     var_dump($aPlace);

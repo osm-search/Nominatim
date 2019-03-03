@@ -344,3 +344,23 @@ Feature: Import of address interpolations
         When importing
         Then W1 expands to no interpolation
 
+    Scenario: Two point interpolation starting at 0
+        Given the places
+          | osm | class | type   | housenr | geometry |
+          | N1  | place | house  | 0       | 1 1 |
+          | N2  | place | house  | 2       | 1 1.001 |
+        And the places
+          | osm | class | type   | addr+interpolation | geometry |
+          | W1  | place | houses | even     | 1 1, 1 1.001 |
+        And the ways
+          | id | nodes |
+          | 1  | 1,2 |
+        When importing
+        Then W1 expands to interpolation
+          | start | end | geometry |
+          | 0     | 2   | 1 1, 1 1.001 |
+        When sending jsonv2 reverse coordinates 1,1
+        Then results contain
+          | ID | osm_type | osm_id | type  | display_name |
+          | 0  | way      | 1      | house | 0 |
+

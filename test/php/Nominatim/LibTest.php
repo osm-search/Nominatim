@@ -35,55 +35,6 @@ class LibTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-
-    public function testGeometryText2Points()
-    {
-        $fRadius = 1;
-        // invalid value
-        $this->assertEquals(
-            null,
-            geometryText2Points('', $fRadius)
-        );
-
-        // POINT
-        $aPoints = geometryText2Points('POINT(10 20)', $fRadius);
-        $this->assertEquals(
-            101,
-            count($aPoints)
-        );
-        $this->assertEquals(
-            array(
-             array(10, 21),
-             array(10.062790519529, 20.998026728428),
-             array(10.125333233564, 20.992114701314)
-            ),
-            array_splice($aPoints, 0, 3)
-        );
-
-        // POLYGON
-        $this->assertEquals(
-            array(
-             array('30', '10'),
-             array('40', '40'),
-             array('20', '40'),
-             array('10', '20'),
-             array('30', '10')
-            ),
-            geometryText2Points('POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))', $fRadius)
-        );
-
-        // MULTIPOLYGON
-        $this->assertEquals(
-            array(
-             array('30', '20'), // first polygon only
-             array('45', '40'),
-             array('10', '40'),
-             array('30', '20'),
-            ),
-            geometryText2Points('MULTIPOLYGON(((30 20, 45 40, 10 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))', $fRadius)
-        );
-    }
-
     public function testParseLatLon()
     {
         // no coordinates expected

@@ -165,39 +165,6 @@ function parseLatLon($sQuery)
     return array($sFound, $fQueryLat, $fQueryLon);
 }
 
-
-function geometryText2Points($geometry_as_text, $fRadius)
-{
-    $aPolyPoints = null;
-    if (preg_match('#POLYGON\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
-        //
-        preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-        //
-    } elseif (preg_match('#LINESTRING\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
-        //
-        preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-        //
-    } elseif (preg_match('#MULTIPOLYGON\\(\\(\\(([- 0-9.,]+)#', $geometry_as_text, $aMatch)) {
-        //
-        preg_match_all('/(-?[0-9.]+) (-?[0-9.]+)/', $aMatch[1], $aPolyPoints, PREG_SET_ORDER);
-        //
-    } elseif (preg_match('#POINT\\((-?[0-9.]+) (-?[0-9.]+)\\)#', $geometry_as_text, $aMatch)) {
-        //
-        $aPolyPoints = createPointsAroundCenter($aMatch[1], $aMatch[2], $fRadius);
-        //
-    }
-
-    if (isset($aPolyPoints)) {
-        $aResultPoints = array();
-        foreach ($aPolyPoints as $aPoint) {
-            $aResultPoints[] = array($aPoint[1], $aPoint[2]);
-        }
-        return $aResultPoints;
-    }
-
-    return;
-}
-
 function createPointsAroundCenter($fLon, $fLat, $fRadius)
 {
     $iSteps = max(8, min(100, ($fRadius * 40000)^2));

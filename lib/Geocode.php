@@ -245,7 +245,6 @@ class Geocode
         }
 
         $this->oPlaceLookup->loadParamArray($oParams, $sForceGeometryType);
-        $this->oPlaceLookup->setIncludePolygonAsPoints($oParams->getBool('polygon'));
         $this->oPlaceLookup->setIncludeAddressDetails($oParams->getBool('addressdetails', false));
     }
 

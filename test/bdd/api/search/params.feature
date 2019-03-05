@@ -303,18 +303,6 @@ Feature: Search queries
         | json     | geotext |
         | jsonv2   | geotext |
 
-    Scenario Outline: Search result contains polygon-as-points geometry
-        When sending <format> search query "Highmore"
-          | polygon |
-          | 1 |
-        Then result has attributes <response_attribute>
-
-    Examples:
-        | format   | response_attribute |
-        | xml      | polygonpoints |
-        | json     | polygonpoints |
-        | jsonv2   | polygonpoints |
-
     Scenario Outline: Search result contains SVG geometry
         When sending <format> search query "Highmore"
           | polygon_svg |
@@ -354,8 +342,8 @@ Feature: Search queries
 
     Scenario Outline: Search result in geojson format contains no non-geojson geometry
         When sending geojson search query "Highmore"
-          | polygon_text | polygon | polygon_svg | polygon_geokml |
-          | 1            | 1       | 1           | 1              |
+          | polygon_text | polygon_svg | polygon_geokml |
+          | 1            | 1           | 1              |
         Then result 0 has not attributes <response_attribute>
 
     Examples:
@@ -364,6 +352,19 @@ Feature: Search queries
         | polygonpoints      |
         | svg                |
         | geokml             |
+
+    Scenario Outline: Search with old deprecated polygon type
+        When sending <format> search query "Highmore"
+          | polygon |
+          | 1       |
+        Then a HTTP 400 is returned
+
+    Examples:
+        | format   |
+        | xml      |
+        | json     |
+        | jsonv2   |
+        | geojson  |
 
     Scenario: Search along a route
         When sending json search query "restaurant" with address

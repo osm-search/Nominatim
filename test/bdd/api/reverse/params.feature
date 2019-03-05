@@ -63,18 +63,6 @@ Feature: Parameters for Reverse API
         | json     | geotext |
         | jsonv2   | geotext |
 
-    Scenario Outline: Reverse Geocoding contains polygon-as-points geometry
-        When sending <format> reverse coordinates 47.165989816710066,9.515774846076965
-          | polygon |
-          | 1 |
-        Then result 0 has not attributes <response_attribute>
-
-    Examples:
-        | format   | response_attribute |
-        | xml      | polygonpoints |
-        | json     | polygonpoints |
-        | jsonv2   | polygonpoints |
-
     Scenario Outline: Reverse Geocoding contains SVG geometry
         When sending <format> reverse coordinates 47.165989816710066,9.515774846076965
           | polygon_svg |
@@ -114,8 +102,8 @@ Feature: Parameters for Reverse API
 
     Scenario Outline: Reverse Geocoding in geojson format contains no non-geojson geometry
         When sending geojson reverse coordinates 47.165989816710066,9.515774846076965
-          | polygon_text | polygon | polygon_svg | polygon_geokml |
-          | 1            | 1       | 1           | 1              |
+          | polygon_text | polygon_svg | polygon_geokml |
+          | 1            | 1           | 1              |
         Then result 0 has not attributes <response_attribute>
 
     Examples:
@@ -125,3 +113,15 @@ Feature: Parameters for Reverse API
         | svg                |
         | geokml             |
 
+    Scenario Outline: Reverse Geocoding with old deprecated polygon type
+        When sending <format> reverse coordinates 47.165989816710066,9.515774846076965
+          | polygon |
+          | 1       |
+        Then a HTTP 400 is returned
+
+    Examples:
+        | format   |
+        | xml      |
+        | json     |
+        | jsonv2   |
+        | geojson  |

@@ -12,6 +12,10 @@ $oParams = new Nominatim\ParameterParser();
 
 $oGeocode = new Nominatim\Geocode($oDB);
 
+if ($oParams->getBool('polygon') === true) {
+    throw new Exception('Polygon parameter no longer supported.', 400);
+}
+
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 $oGeocode->setLanguagePreference($aLangPrefOrder);
 

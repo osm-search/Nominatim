@@ -55,8 +55,6 @@ Feature: Simple Reverse Tests
 
     Examples:
      | parameter        | value |
-     | polygon          | 1 |
-     | polygon          | 0 |
      | polygon_text     | 1 |
      | polygon_text     | 0 |
      | polygon_kml      | 1 |

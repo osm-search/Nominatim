@@ -16,6 +16,10 @@ set_exception_handler_by_format($sOutputFormat);
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 
+if ($oParams->getBool('polygon') === true) {
+    throw new Exception('Polygon parameter no longer supported.', 400);
+}
+
 $oDB = new Nominatim\DB();
 $oDB->connect();
 

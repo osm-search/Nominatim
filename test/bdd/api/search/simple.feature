@@ -36,8 +36,6 @@ Feature: Simple Tests
      | parameter        | value |
      | addressdetails   | 1 |
      | addressdetails   | 0 |
-     | polygon          | 1 |
-     | polygon          | 0 |
      | polygon_text     | 1 |
      | polygon_text     | 0 |
      | polygon_kml      | 1 |
@@ -98,7 +96,6 @@ Feature: Simple Tests
         Then result header contains
           | attr        | value |
           | querystring | xnznxvcx |
-          | polygon     | false |
           | more_url    | .*q=xnznxvcx.*format=xml |
 
     Scenario: Empty XML search with special XML characters
@@ -106,7 +103,6 @@ Feature: Simple Tests
         Then result header contains
           | attr        | value |
           | querystring | xfdghn&zxn"xvbyx<vxx>cssdex |
-          | polygon     | false |
           | more_url    | .*q=xfdghn%26zxn%22xvbyx%3Cvxx%3Ecssdex.*format=xml |
 
     Scenario: Empty XML search with viewbox
@@ -116,7 +112,6 @@ Feature: Simple Tests
         Then result header contains
           | attr        | value |
           | querystring | xnznxvcx |
-          | polygon     | false |
           | viewbox     | 12,33,77,45.13 |
 
     Scenario: Empty XML search with viewboxlbrt
@@ -126,7 +121,6 @@ Feature: Simple Tests
         Then result header contains
           | attr        | value |
           | querystring | xnznxvcx |
-          | polygon     | false |
           | viewbox     | 12,34.13,77,45 |
 
     Scenario: Empty XML search with viewboxlbrt and viewbox
@@ -136,28 +130,7 @@ Feature: Simple Tests
         Then result header contains
           | attr        | value |
           | querystring | pub |
-          | polygon     | false |
           | viewbox     | 12,33,77,45.13 |
-
-    Scenario Outline: Empty XML search with polygon values
-        When sending xml search query "xnznxvcx"
-          | param   | value |
-          | polygon | <polyval> |
-        Then result header contains
-          | attr        | value |
-          | polygon     | <result> |
-
-    Examples:
-     | result | polyval |
-     | false  | 0 |
-     | true   | 1 |
-     | true   | True |
-     | true   | true |
-     | true   | false |
-     | true   | FALSE |
-     | true   | yes |
-     | true   | no |
-     | true   | '; delete from foobar; select ' |
 
     Scenario: Empty XML search with exluded place ids
         When sending xml search query "jghrleoxsbwjer"

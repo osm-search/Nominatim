@@ -25,10 +25,6 @@ foreach ($aBatchResults as $aSearchResults) {
                                       $aPointDetails['aBoundingBox'][2],
                 $aPointDetails['aBoundingBox'][3]
                                      );
-
-            if (isset($aPointDetails['aPolyPoints']) && $bShowPolygons) {
-                $aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
-            }
         }
 
         if (isset($aPointDetails['zoom'])) {

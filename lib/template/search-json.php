@@ -15,10 +15,6 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
 
     if (isset($aPointDetails['aBoundingBox'])) {
         $aPlace['boundingbox'] = $aPointDetails['aBoundingBox'];
-
-        if (isset($aPointDetails['aPolyPoints'])) {
-            $aPlace['polygonpoints'] = $aPointDetails['aPolyPoints'];
-        }
     }
 
     if (isset($aPointDetails['zoom'])) {

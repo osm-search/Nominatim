@@ -29,7 +29,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 \
                             postgresql-contrib-9.5 \
-                            apache2 php php-pgsql libapache2-mod-php php-pear php-db \
+                            apache2 php php-pgsql libapache2-mod-php \
                             php-intl git
 
 # If you want to run the test suite, you need to install the following
@@ -39,7 +39,9 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             python3-psycopg2 python3-tidylib phpunit php-cgi
 
     pip3 install --user behave nose
-    sudo pear install PHP_CodeSniffer
+
+    composer global require "squizlabs/php_codesniffer=*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 
 #
 # System Configuration

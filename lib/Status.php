@@ -3,7 +3,6 @@
 namespace Nominatim;
 
 use Exception;
-use PEAR;
 
 class Status
 {
@@ -16,12 +15,18 @@ class Status
 
     public function status()
     {
-        if (!$this->oDB || PEAR::isError($this->oDB)) {
+        if (!$this->oDB) {
             throw new Exception('No database', 700);
         }
 
+        try {
+            $this->oDB->connect();
+        } catch (\Nominatim\DatabaseError $e) {
+            throw new Exception('Database connection failed', 700);
+        }
+
         $sStandardWord = $this->oDB->getOne("SELECT make_standard_name('a')");
-        if (PEAR::isError($sStandardWord)) {
+        if ($sStandardWord === false) {
             throw new Exception('Module failed', 701);
         }
 
@@ -32,7 +37,7 @@ class Status
         $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, ';
         $sSQL .= "operator, search_name_count FROM word WHERE word_token IN (' a')";
         $iWordID = $this->oDB->getOne($sSQL);
-        if (PEAR::isError($iWordID)) {
+        if ($iWordID === false) {
             throw new Exception('Query failed', 703);
         }
         if (!$iWordID) {
@@ -45,7 +50,7 @@ class Status
         $sSQL = 'SELECT EXTRACT(EPOCH FROM lastimportdate) FROM import_status LIMIT 1';
         $iDataDateEpoch = $this->oDB->getOne($sSQL);
 
-        if (PEAR::isError($iDataDateEpoch)) {
+        if ($iDataDateEpoch === false) {
             throw Exception('Data date query failed '.$iDataDateEpoch->getMessage(), 705);
         }
 

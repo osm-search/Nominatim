@@ -504,8 +504,10 @@ class SearchDescription
 
         Debug::printSQL($sSQL);
 
+        $iPlaceId = $oDB->getOne($sSQL);
+
         $aResults = array();
-        foreach (chksql($oDB->getCol($sSQL)) as $iPlaceId) {
+        if ($iPlaceId) {
             $aResults[$iPlaceId] = new Result($iPlaceId);
         }
 
@@ -577,7 +579,7 @@ class SearchDescription
             $sSQL .= ', search_name s ';
             $sSQL .= 'WHERE s.place_id = p.parent_place_id ';
             $sSQL .= 'AND array_cat(s.nameaddress_vector, s.name_vector)';
-            $sSQL .= '      @> '.getArraySQL($this->aAddress).' AND ';
+            $sSQL .= '      @> '.$oDB->getArraySQL($this->aAddress).' AND ';
         } else {
             $sSQL .= 'WHERE ';
         }
@@ -633,14 +635,14 @@ class SearchDescription
         }
 
         if (!empty($this->aName)) {
-            $aTerms[] = 'name_vector @> '.getArraySQL($this->aName);
+            $aTerms[] = 'name_vector @> '.$oDB->getArraySQL($this->aName);
         }
         if (!empty($this->aAddress)) {
             // For infrequent name terms disable index usage for address
             if ($this->bRareName) {
-                $aTerms[] = 'array_cat(nameaddress_vector,ARRAY[]::integer[]) @> '.getArraySQL($this->aAddress);
+                $aTerms[] = 'array_cat(nameaddress_vector,ARRAY[]::integer[]) @> '.$oDB->getArraySQL($this->aAddress);
             } else {
-                $aTerms[] = 'nameaddress_vector @> '.getArraySQL($this->aAddress);
+                $aTerms[] = 'nameaddress_vector @> '.$oDB->getArraySQL($this->aAddress);
             }
         }
 
@@ -695,7 +697,7 @@ class SearchDescription
         if (!empty($this->aFullNameAddress)) {
             $sExactMatchSQL = ' ( ';
             $sExactMatchSQL .= ' SELECT count(*) FROM ( ';
-            $sExactMatchSQL .= '  SELECT unnest('.getArraySQL($this->aFullNameAddress).')';
+            $sExactMatchSQL .= '  SELECT unnest('.$oDB->getArraySQL($this->aFullNameAddress).')';
             $sExactMatchSQL .= '    INTERSECT ';
             $sExactMatchSQL .= '  SELECT unnest(nameaddress_vector)';
             $sExactMatchSQL .= ' ) s';

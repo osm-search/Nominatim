@@ -41,7 +41,8 @@
                  'path' => 27
                 );
 
-    $oDB =& getDB();
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
 
     if (isset($aCMDResult['output-type'])) {
         if (!isset($aRankmap[$aCMDResult['output-type']])) fail('unknown output-type: '.$aCMDResult['output-type']);
@@ -55,7 +56,7 @@
     $oParams = new Nominatim\ParameterParser();
     if (!isset($aCMDResult['language'])) $aCMDResult['language'] = 'xx';
     $aLangPrefOrder = $oParams->getPreferredLanguages($aCMDResult['language']);
-    $sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
+    $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
     // output formatting: build up a lookup table that maps address ranks to columns
     $aColumnMapping = array();
@@ -95,7 +96,7 @@
     $sPlacexSQL .= ' and rank_address = '.$iOutputRank;
 
     if (isset($aCMDResult['restrict-to-country'])) {
-        $sPlacexSQL .= ' and country_code = '.getDBQuoted($aCMDResult['restrict-to-country']);
+        $sPlacexSQL .= ' and country_code = '.$oDB->getDBQuoted($aCMDResult['restrict-to-country']);
     }
 
     // restriction to parent place id
@@ -116,10 +117,9 @@
     }
     if ($sOsmType) {
         $sSQL = 'select place_id from placex where';
-        $sSQL .= ' osm_type = '.getDBQuoted($sOsmType);
+        $sSQL .= ' osm_type = '.$oDB->getDBQuoted($sOsmType);
         $sSQL .= ' and osm_id = '.$sOsmId;
         $sParentId = $oDB->getOne($sSQL);
-        if (PEAR::isError($sParentId)) fail(pg_last_error($oDB->connection));
         if (!$sParentId) fail('Could not find place '.$sOsmType.' '.$sOsmId);
     }
     if ($sParentId) {
@@ -132,7 +132,6 @@
     // to get further hierarchical information
     //var_dump($sPlacexSQL);
     $aRes =& $oDB->query($sPlacexSQL);
-    if (PEAR::isError($aRes)) fail(pg_last_error($oDB->connection));
     $fOutstream = fopen('php://output', 'w');
     while ($aRes->fetchInto($aRow)) {
     //var_dump($aRow);
@@ -141,8 +140,6 @@
         $sSQL .= ' WHERE isaddress';
         $sSQL .= ' order by rank_address desc,isaddress desc';
         $aAddressLines = $oDB->getAll($sSQL);
-        if (PEAR::IsError($aAddressLines)) fail(pg_last_error($oDB->connection));
-
 
         $aOutput = array_fill(0, $iNumCol, '');
         // output address parts
@@ -160,7 +157,7 @@
                 $sSQL .= 'and pa.place_id in (select place_id from place_addressline where address_place_id in ('.substr($aRow['place_ids'], 1, -1).')) ';
                 $sSQL .= 'group by postcode order by count(*) desc limit 1';
                 $sRes = $oDB->getOne($sSQL);
-                if (PEAR::IsError($sRes)) fail(pg_last_error($oDB->connection));
+
                 $aOutput[$aColumnMapping['postcode']] = substr($sRes, 1, -1);
             } else {
                 $aOutput[$aColumnMapping['postcode']] = $aRow['postcode'];

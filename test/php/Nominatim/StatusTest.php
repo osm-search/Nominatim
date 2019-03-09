@@ -23,19 +23,20 @@ class StatusTest extends \PHPUnit\Framework\TestCase
     public function testNoDatabaseConnectionFail()
     {
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('No database');
+        $this->expectExceptionMessage('Database connection failed');
         $this->expectExceptionCode(700);
 
-        // causes 'Non-static method should not be called statically, assuming $this from incompatible context'
-        // failure on travis
-        // $oDB = \DB::connect('', false); // returns a DB_Error instance
+        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
+                        ->setMethods(array('connect'))
+                        ->getMock();
 
-        $oDB = new \DB_Error;
-        $oStatus = new Status($oDB);
-        $this->assertEquals('No database', $oStatus->status());
+        $oDbStub->method('connect')
+                ->will($this->returnCallback(function () {
+                    throw new \Nominatim\DatabaseError('psql connection problem', 500, null, 'unknown database');
+                }));
 
-        $oDB = null;
-        $oStatus = new Status($oDB);
+
+        $oStatus = new Status($oDbStub);
         $this->assertEquals('No database', $oStatus->status());
     }
 
@@ -47,8 +48,8 @@ class StatusTest extends \PHPUnit\Framework\TestCase
         $this->expectExceptionCode(702);
 
         // stub has getOne method but doesn't return anything
-        $oDbStub = $this->getMockBuilder(\DB::class)
-                        ->setMethods(array('getOne'))
+        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
+                        ->setMethods(array('connect', 'getOne'))
                         ->getMock();
 
         $oStatus = new Status($oDbStub);
@@ -62,8 +63,8 @@ class StatusTest extends \PHPUnit\Framework\TestCase
         $this->expectExceptionMessage('No value');
         $this->expectExceptionCode(704);
 
-        $oDbStub = $this->getMockBuilder(\DB::class)
-                        ->setMethods(array('getOne'))
+        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
+                        ->setMethods(array('connect', 'getOne'))
                         ->getMock();
 
         // return no word_id
@@ -80,8 +81,8 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testOK()
     {
-        $oDbStub = $this->getMockBuilder(\DB::class)
-                        ->setMethods(array('getOne'))
+        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
+                        ->setMethods(array('connect', 'getOne'))
                         ->getMock();
 
         $oDbStub->method('getOne')
@@ -96,7 +97,7 @@ class StatusTest extends \PHPUnit\Framework\TestCase
 
     public function testDataDate()
     {
-        $oDbStub = $this->getMockBuilder(\DB::class)
+        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
                         ->setMethods(array('getOne'))
                         ->getMock();
      

@@ -52,9 +52,10 @@ if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
 
 date_default_timezone_set('Etc/UTC');
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB();
+$oDB->connect();
 
-$aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+$aDSNInfo = Nominatim\DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 // cache memory to be used by osm2pgsql, should not be more than the available memory
@@ -115,7 +116,7 @@ if ($aResult['init-updates']) {
     }
 
     $sDatabaseDate = getDatabaseDate($oDB);
-    if ($sDatabaseDate === false) {
+    if (!$sDatabaseDate) {
         fail('Cannot determine date of database.');
     }
     $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ', strtotime($sDatabaseDate) - (3*60*60));
@@ -128,10 +129,13 @@ if ($aResult['init-updates']) {
         fail('Error running pyosmium tools');
     }
 
-    pg_query($oDB->connection, 'TRUNCATE import_status');
+    $oDB->exec('TRUNCATE import_status');
     $sSQL = "INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES('";
     $sSQL .= $sDatabaseDate."',".$aOutput[0].', true)';
-    if (!pg_query($oDB->connection, $sSQL)) {
+
+    try {
+        $oDB->exec($sSQL);
+    } catch (\Nominatim\DatabaseError $e) {
         fail('Could not enter sequence into database.');
     }
 
@@ -219,9 +223,10 @@ if ($bHaveDiff) {
 }
 
 if ($aResult['deduplicate']) {
-    $oDB =& getDB();
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
 
-    if (getPostgresVersion($oDB) < 9.3) {
+    if ($oDB->getPostgresVersion() < 9.3) {
         fail('ERROR: deduplicate is only currently supported in postgresql 9.3');
     }
 
@@ -259,32 +264,32 @@ if ($aResult['deduplicate']) {
             $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.'),';
             $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
 
             $sSQL = 'update search_name set';
             $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where nameaddress_vector @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
 
             $sSQL = 'update location_area_country set';
             $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
 
             foreach ($aPartitions as $sPartition) {
                 $sSQL = 'update search_name_'.$sPartition.' set';
                 $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.')';
                 $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-                chksql($oDB->query($sSQL));
+                chksql($oDB->exec($sSQL));
 
                 $sSQL = 'update location_area_country set';
                 $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
                 $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-                chksql($oDB->query($sSQL));
+                chksql($oDB->exec($sSQL));
             }
 
             $sSQL = 'delete from word where word_id = '.$aRemove['word_id'];
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
         }
     }
 }
@@ -306,7 +311,7 @@ if ($aResult['index']) {
 
     runWithEnv($sCmd, $aProcEnv);
 
-    $oDB->query('update import_status set indexed = true');
+    $oDB->exec('update import_status set indexed = true');
 }
 
 if ($aResult['update-address-levels']) {
@@ -413,12 +418,12 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
             $sSQL .= date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
 
             // update the status
             $sSQL = "UPDATE import_status SET lastimportdate = '$sBatchEnd', indexed=false, sequence_id = $iEndSequence";
             var_Dump($sSQL);
-            chksql($oDB->query($sSQL));
+            chksql($oDB->exec($sSQL));
             echo date('Y-m-d H:i:s')." Completed download step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
         }
 
@@ -440,11 +445,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
             $sSQL .= date('Y-m-d H:i:s')."','index')";
             var_Dump($sSQL);
-            $oDB->query($sSQL);
+            $oDB->exec($sSQL);
             echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
 
             $sSQL = 'update import_status set indexed = true';
-            $oDB->query($sSQL);
+            $oDB->exec($sSQL);
         } else {
             if ($aResult['import-osmosis-all']) {
                 echo "Error: --no-index cannot be used with continuous imports (--import-osmosis-all).\n";

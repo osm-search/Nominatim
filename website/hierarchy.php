@@ -10,13 +10,16 @@ $oParams = new Nominatim\ParameterParser();
 
 $sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
 $aLangPrefOrder = $oParams->getPreferredLanguages();
-$sLanguagePrefArraySQL = 'ARRAY['.join(',', array_map('getDBQuoted', $aLangPrefOrder)).']';
+
 
 $sPlaceId = $oParams->getString('place_id');
 $sOsmType = $oParams->getSet('osmtype', array('N', 'W', 'R'));
 $iOsmId = $oParams->getInt('osmid', -1);
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB();
+$oDB->connect();
+
+$sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
 if ($sOsmType && $iOsmId > 0) {
     $sPlaceId = chksql($oDB->getOne("select place_id from placex where osm_type = '".$sOsmType."' and osm_id = ".$iOsmId." order by type = 'postcode' asc"));

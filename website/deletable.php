@@ -7,7 +7,8 @@ ini_set('memory_limit', '200M');
 
 $sOutputFormat = 'html';
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB();
+$oDB->connect();
 
 $sSQL = 'select placex.place_id, country_code,';
 $sSQL .= " name->'name' as name, i.* from placex, import_polygon_delete i";

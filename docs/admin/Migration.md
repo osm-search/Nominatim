@@ -9,6 +9,18 @@ SQL statements should be executed from the postgres commandline. Execute
 
 ## 3.2.0 -> master
 
+### New database connection string (DSN) format
+
+Previously database connection setting (`CONST_Database_DSN` in `settings/*.php`) had the format
+
+   * (simple) `pgsql://@/nominatim`
+   * (complex) `pgsql://johndoe:secret@machine1.domain.com:1234/db1`
+
+The new format is
+
+   * (simple) `pgsql:dbname=nominatim`
+   * (complex) `pgsql:dbname=db1;host=machine1.domain.com;port=1234;user=johndoe;password=secret`
+
 ### Natural Earth country boundaries no longer needed as fallback
 
 ```

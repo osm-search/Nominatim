@@ -5,7 +5,7 @@ Feature: Status queries against unknown database
     Scenario: Failed status as text
         When sending text status query
         Then a HTTP 500 is returned
-        And the page contents equals "ERROR: No database"
+        And the page contents equals "ERROR: Database connection failed"
 
     Scenario: Failed status as json
         When sending json status query
@@ -13,5 +13,5 @@ Feature: Status queries against unknown database
         And the result is valid json
         And results contain
           | status | message |
-          | 700    | No database |
+          | 700    | Database connection failed |
         And result has not attributes data_updated

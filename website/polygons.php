@@ -12,7 +12,8 @@ $iDays = $oParams->getInt('days', false);
 $bReduced = $oParams->getBool('reduced', false);
 $sClass = $oParams->getString('class', false);
 
-$oDB =& getDB();
+$oDB = new Nominatim\DB();
+$oDB->connect();
 
 $iTotalBroken = (int) chksql($oDB->getOne('select count(*) from import_polygon_error'));
 

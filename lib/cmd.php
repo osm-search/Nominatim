@@ -122,10 +122,6 @@ function showUsage($aSpec, $bExit = false, $sError = false)
 
 function chksql($oSql, $sMsg = false)
 {
-    if (PEAR::isError($oSql)) {
-        fail($sMsg || $oSql->getMessage(), $oSql->userinfo);
-    }
-
     return $oSql;
 }
 
@@ -155,7 +151,7 @@ function repeatWarnings()
 function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreErrors = false)
 {
     // Convert database DSN to psql parameters
-    $aDSNInfo = DB::parseDSN(CONST_Database_DSN);
+    $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
     $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {

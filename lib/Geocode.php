@@ -527,8 +527,8 @@ class Geocode
         $sNormQuery = $this->normTerm($this->sQuery);
         Debug::printVar('Normalized query', $sNormQuery);
 
-        $sLanguagePrefArraySQL = getArraySQL(
-            array_map('getDBQuoted', $this->aLangPrefOrder)
+        $sLanguagePrefArraySQL = $this->oDB->getArraySQL(
+            $this->oDB->getDBQuotedList($this->aLangPrefOrder)
         );
 
         $sQuery = $this->sQuery;
@@ -629,7 +629,7 @@ class Geocode
             $aPhrases = array();
             foreach ($aInPhrases as $iPhrase => $sPhrase) {
                 $sPhrase = chksql(
-                    $this->oDB->getOne('SELECT make_standard_name('.getDBQuoted($sPhrase).')'),
+                    $this->oDB->getOne('SELECT make_standard_name('.$this->oDB->getDBQuoted($sPhrase).')'),
                     'Cannot normalize query string (is it a UTF-8 string?)'
                 );
                 if (trim($sPhrase)) {
@@ -647,7 +647,7 @@ class Geocode
             if (!empty($aTokens)) {
                 $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
                 $sSQL .= ' FROM word ';
-                $sSQL .= ' WHERE word_token in ('.join(',', array_map('getDBQuoted', $aTokens)).')';
+                $sSQL .= ' WHERE word_token in ('.join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
                 Debug::printSQL($sSQL);
 

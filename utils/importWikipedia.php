@@ -48,7 +48,8 @@ exit;
     $a = array();
     $a[] = 'test';
 
-    $oDB &= getDB();
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
 
     if ($aCMDResult['drop-tables'])
     {
@@ -304,7 +305,9 @@ function _templatesToProperties($aTemplates)
 }
 
 if (isset($aCMDResult['parse-wikipedia'])) {
-    $oDB =& getDB();
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
+
     $sSQL = 'select page_title from content where page_namespace = 0 and page_id %10 = ';
     $sSQL .= $aCMDResult['parse-wikipedia'];
     $sSQL .= ' and (page_content ilike \'%{{Coord%\' or (page_content ilike \'%lat%\' and page_content ilike \'%lon%\'))';
@@ -366,7 +369,9 @@ function nominatimXMLEnd($hParser, $sName)
 
 
 if (isset($aCMDResult['link'])) {
-    $oDB =& getDB();
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
+
     $aWikiArticles = $oDB->getAll("select * from wikipedia_article where language = 'en' and lat is not null and osm_type is null and totalcount < 31 order by importance desc limit 200000");
 
     // If you point this script at production OSM you will be blocked

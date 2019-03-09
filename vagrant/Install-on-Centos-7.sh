@@ -23,7 +23,7 @@
     sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
                         postgis postgis-utils \
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
-                        php-pgsql php php-pear php-pear-DB php-intl libpqxx-devel \
+                        php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
                         expat-devel zlib-devel
 
@@ -34,7 +34,9 @@
     sudo yum install -y python34-pip python34-setuptools python34-devel \
                         php-phpunit-PHPUnit
     pip3 install --user behave nose pytidylib psycopg2
-    sudo pear install PHP_CodeSniffer
+
+    composer global require "squizlabs/php_codesniffer=*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 
 #
 # System Configuration

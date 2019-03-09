@@ -40,7 +40,7 @@ class SetupFunctions
         info('module path: ' . $this->sModulePath);
 
         // parse database string
-        $this->aDSNInfo = array_filter(\DB::parseDSN(CONST_Database_DSN));
+        $this->aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
         if (!isset($this->aDSNInfo['port'])) {
             $this->aDSNInfo['port'] = 5432;
         }
@@ -74,8 +74,15 @@ class SetupFunctions
     public function createDB()
     {
         info('Create DB');
-        $sDB = \DB::connect(CONST_Database_DSN, false);
-        if (!\PEAR::isError($sDB)) {
+        $bExists = true;
+        try {
+            $oDB = new \Nominatim\DB;
+            $oDB->connect();
+        } catch (\Nominatim\DatabaseError $e) {
+            $bExists = false;
+        }
+
+        if ($bExists) {
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
@@ -94,14 +101,15 @@ class SetupFunctions
 
     public function connect()
     {
-        $this->oDB =& getDB();
+        $this->oDB = new \Nominatim\DB();
+        $this->oDB->connect();
     }
 
     public function setupDB()
     {
         info('Setup DB');
 
-        $fPostgresVersion = getPostgresVersion($this->oDB);
+        $fPostgresVersion = $this->oDB->getPostgresVersion();
         echo 'Postgres version found: '.$fPostgresVersion."\n";
 
         if ($fPostgresVersion < 9.01) {
@@ -122,7 +130,7 @@ class SetupFunctions
         }
 
 
-        $fPostgisVersion = getPostgisVersion($this->oDB);
+        $fPostgisVersion = $this->oDB->getPostgisVersion();
         echo 'Postgis version found: '.$fPostgisVersion."\n";
 
         if ($fPostgisVersion < 2.1) {
@@ -379,6 +387,7 @@ class SetupFunctions
 
         $sSQL = 'select distinct partition from country_name';
         $aPartitions = chksql($this->oDB->getCol($sSQL));
+
         if (!$this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
             $this->pgExec('TRUNCATE location_road_'.$sPartition);
@@ -399,34 +408,48 @@ class SetupFunctions
 
         info('Load Data');
         $sColumns = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry';
+
         $aDBInstances = array();
         $iLoadThreads = max(1, $this->iInstances - 1);
         for ($i = 0; $i < $iLoadThreads; $i++) {
-            $aDBInstances[$i] =& getDB(true);
+            // https://secure.php.net/manual/en/function.pg-connect.php
+            $DSN = CONST_Database_DSN;
+            $DSN = preg_replace('/^pgsql:/', '', $DSN);
+            $DSN = preg_replace('/;/', ' ', $DSN);
+            $aDBInstances[$i] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
+            pg_ping($aDBInstances[$i]);
+        }
+
+        for ($i = 0; $i < $iLoadThreads; $i++) {
             $sSQL = "INSERT INTO placex ($sColumns) SELECT $sColumns FROM place WHERE osm_id % $iLoadThreads = $i";
             $sSQL .= " and not (class='place' and type='houses' and osm_type='W'";
             $sSQL .= "          and ST_GeometryType(geometry) = 'ST_LineString')";
             $sSQL .= ' and ST_IsValid(geometry)';
             if ($this->bVerbose) echo "$sSQL\n";
-            if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) {
-                fail(pg_last_error($aDBInstances[$i]->connection));
+            if (!pg_send_query($aDBInstances[$i], $sSQL)) {
+                fail(pg_last_error($aDBInstances[$i]));
             }
         }
 
         // last thread for interpolation lines
-        $aDBInstances[$iLoadThreads] =& getDB(true);
+        // https://secure.php.net/manual/en/function.pg-connect.php
+        $DSN = CONST_Database_DSN;
+        $DSN = preg_replace('/^pgsql:/', '', $DSN);
+        $DSN = preg_replace('/;/', ' ', $DSN);
+        $aDBInstances[$iLoadThreads] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
+        pg_ping($aDBInstances[$iLoadThreads]);
         $sSQL = 'insert into location_property_osmline';
         $sSQL .= ' (osm_id, address, linegeo)';
         $sSQL .= ' SELECT osm_id, address, geometry from place where ';
         $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
         if ($this->bVerbose) echo "$sSQL\n";
-        if (!pg_send_query($aDBInstances[$iLoadThreads]->connection, $sSQL)) {
-            fail(pg_last_error($aDBInstances[$iLoadThreads]->connection));
+        if (!pg_send_query($aDBInstances[$iLoadThreads], $sSQL)) {
+            fail(pg_last_error($aDBInstances[$iLoadThreads]));
         }
 
         $bFailed = false;
         for ($i = 0; $i <= $iLoadThreads; $i++) {
-            while (($hPGresult = pg_get_result($aDBInstances[$i]->connection)) !== false) {
+            while (($hPGresult = pg_get_result($aDBInstances[$i])) !== false) {
                 $resultStatus = pg_result_status($hPGresult);
                 // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
                 // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
@@ -442,17 +465,22 @@ class SetupFunctions
         if ($bFailed) {
             fail('SQL errors loading placex and/or location_property_osmline tables');
         }
+
+        for ($i = 0; $i < $this->iInstances; $i++) {
+            pg_close($aDBInstances[$i]);
+        }
+
         echo "\n";
         info('Reanalysing database');
         $this->pgsqlRunScript('ANALYSE');
 
         $sDatabaseDate = getDatabaseDate($this->oDB);
-        pg_query($this->oDB->connection, 'TRUNCATE import_status');
-        if ($sDatabaseDate === false) {
+        $this->oDB->exec('TRUNCATE import_status');
+        if (!$sDatabaseDate) {
             warn('could not determine database date.');
         } else {
             $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
-            pg_query($this->oDB->connection, $sSQL);
+            $this->oDB->exec($sSQL);
             echo "Latest data imported from $sDatabaseDate.\n";
         }
     }
@@ -477,7 +505,12 @@ class SetupFunctions
 
         $aDBInstances = array();
         for ($i = 0; $i < $this->iInstances; $i++) {
-            $aDBInstances[$i] =& getDB(true);
+            // https://secure.php.net/manual/en/function.pg-connect.php
+            $DSN = CONST_Database_DSN;
+            $DSN = preg_replace('/^pgsql:/', '', $DSN);
+            $DSN = preg_replace('/;/', ' ', $DSN);
+            $aDBInstances[$i] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW | PGSQL_CONNECT_ASYNC);
+            pg_ping($aDBInstances[$i]);
         }
 
         foreach (glob(CONST_Tiger_Data_Path.'/*.sql') as $sFile) {
@@ -487,11 +520,11 @@ class SetupFunctions
             $iLines = 0;
             while (true) {
                 for ($i = 0; $i < $this->iInstances; $i++) {
-                    if (!pg_connection_busy($aDBInstances[$i]->connection)) {
-                        while (pg_get_result($aDBInstances[$i]->connection));
+                    if (!pg_connection_busy($aDBInstances[$i])) {
+                        while (pg_get_result($aDBInstances[$i]));
                         $sSQL = fgets($hFile, 100000);
                         if (!$sSQL) break 2;
-                        if (!pg_send_query($aDBInstances[$i]->connection, $sSQL)) fail(pg_last_error($this->oDB->connection));
+                        if (!pg_send_query($aDBInstances[$i], $sSQL)) fail(pg_last_error($aDBInstances[$i]));
                         $iLines++;
                         if ($iLines == 1000) {
                             echo '.';
@@ -507,11 +540,15 @@ class SetupFunctions
             while ($bAnyBusy) {
                 $bAnyBusy = false;
                 for ($i = 0; $i < $this->iInstances; $i++) {
-                    if (pg_connection_busy($aDBInstances[$i]->connection)) $bAnyBusy = true;
+                    if (pg_connection_busy($aDBInstances[$i])) $bAnyBusy = true;
                 }
                 usleep(10);
             }
             echo "\n";
+        }
+
+        for ($i = 0; $i < $this->iInstances; $i++) {
+            pg_close($aDBInstances[$i]);
         }
 
         info('Creating indexes on Tiger data');
@@ -711,7 +748,7 @@ class SetupFunctions
         }
         foreach ($aDropTables as $sDrop) {
             if ($this->bVerbose) echo "Dropping table $sDrop\n";
-            @pg_query($this->oDB->connection, "DROP TABLE $sDrop CASCADE");
+            $this->oDB->exec("DROP TABLE $sDrop CASCADE");
             // ignore warnings/errors as they might be caused by a table having
             // been deleted already by CASCADE
         }
@@ -776,7 +813,7 @@ class SetupFunctions
     private function pgsqlRunPartitionScript($sTemplate)
     {
         $sSQL = 'select distinct partition from country_name';
-        $aPartitions = chksql($this->oDB->getCol($sSQL));
+        $aPartitions = $this->oDB->getCol($sSQL);
         if (!$this->bNoPartitions) $aPartitions[] = 0;
 
         preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
@@ -883,9 +920,7 @@ class SetupFunctions
      */
     private function pgExec($sSQL)
     {
-        if (!pg_query($this->oDB->connection, $sSQL)) {
-            fail(pg_last_error($this->oDB->connection));
-        }
+        $this->oDB->exec($sSQL);
     }
 
     /**
@@ -895,7 +930,6 @@ class SetupFunctions
      */
     private function dbReverseOnly()
     {
-        $sSQL = "SELECT count(*) FROM pg_tables WHERE tablename = 'search_name'";
-        return !(chksql($this->oDB->getOne($sSQL)));
+        return !($this->oDB->tableExists('search_name'));
     }
 }

@@ -2,7 +2,6 @@
 
 require_once('init.php');
 require_once('ParameterParser.php');
-require_once('DatabaseError.php');
 require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
 
 /***************************************************************************
@@ -14,9 +13,7 @@ require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
 
 function chksql($oSql, $sMsg = 'Database request failed')
 {
-    if (!PEAR::isError($oSql)) return $oSql;
-
-    throw new Nominatim\DatabaseError($sMsg, 500, null, $oSql);
+    return $oSql;
 }
 
 

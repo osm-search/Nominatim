@@ -163,8 +163,8 @@ class PlaceLookup
 
     public function lookupOSMID($sType, $iID)
     {
-        $sSQL = "select place_id from placex where osm_type = '".$sType."' and osm_id = ".$iID;
-        $iPlaceID = chksql($this->oDB->getOne($sSQL));
+        $sSQL = 'select place_id from placex where osm_type = :type and osm_id = :id';
+        $iPlaceID = $this->oDB->getOne($sSQL, array(':type' => $sType, ':id' => $iID));
 
         if (!$iPlaceID) {
             return null;
@@ -425,7 +425,7 @@ class PlaceLookup
 
         $sSQL = join(' UNION ', $aSubSelects);
         Debug::printSQL($sSQL);
-        $aPlaces = chksql($this->oDB->getAll($sSQL), 'Could not lookup place');
+        $aPlaces = $this->oDB->getAll($sSQL, null, 'Could not lookup place');
 
         foreach ($aPlaces as &$aPlace) {
             if ($this->bAddressDetails) {
@@ -514,7 +514,7 @@ class PlaceLookup
                 $sSQL .= $sFrom;
             }
 
-            $aPointPolygon = chksql($this->oDB->getRow($sSQL), 'Could not get outline');
+            $aPointPolygon = $this->oDB->getRow($sSQL, null, 'Could not get outline');
 
             if ($aPointPolygon && $aPointPolygon['place_id']) {
                 if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {

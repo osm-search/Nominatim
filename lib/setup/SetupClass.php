@@ -74,15 +74,9 @@ class SetupFunctions
     public function createDB()
     {
         info('Create DB');
-        $bExists = true;
-        try {
-            $oDB = new \Nominatim\DB;
-            $oDB->connect();
-        } catch (\Nominatim\DatabaseError $e) {
-            $bExists = false;
-        }
+        $oDB = new \Nominatim\DB;
 
-        if ($bExists) {
+        if ($oDB->databaseExists()) {
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
@@ -122,7 +116,7 @@ class SetupFunctions
         // For extratags and namedetails the hstore_to_json converter is
         // needed which is only available from Postgresql 9.3+. For older
         // versions add a dummy function that returns nothing.
-        $iNumFunc = chksql($this->oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'"));
+        $iNumFunc = $this->oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'");
 
         if ($iNumFunc == 0) {
             $this->pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
@@ -142,7 +136,7 @@ class SetupFunctions
             $this->pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, geometry, spheroid) RENAME TO ST_DistanceSpheroid');
         }
 
-        $i = chksql($this->oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'"));
+        $i = $this->oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'");
         if ($i == 0) {
             echo "\nERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
             echo "\n          createuser ".CONST_Database_Web_User."\n\n";
@@ -224,7 +218,7 @@ class SetupFunctions
 
         $this->runWithPgEnv($osm2pgsql);
 
-        if (!$this->sIgnoreErrors && !chksql($this->oDB->getRow('select * from place limit 1'))) {
+        if (!$this->sIgnoreErrors && !$this->oDB->getRow('select * from place limit 1')) {
             fail('No Data');
         }
     }
@@ -386,7 +380,7 @@ class SetupFunctions
         echo '.';
 
         $sSQL = 'select distinct partition from country_name';
-        $aPartitions = chksql($this->oDB->getCol($sSQL));
+        $aPartitions = $this->oDB->getCol($sSQL);
 
         if (!$this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
@@ -734,7 +728,7 @@ class SetupFunctions
                        );
 
         $aDropTables = array();
-        $aHaveTables = chksql($this->oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'"));
+        $aHaveTables = $this->oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
 
         foreach ($aHaveTables as $sTable) {
             $bFound = false;

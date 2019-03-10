@@ -10,13 +10,6 @@ require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
  *
  */
 
-
-function chksql($oSql, $sMsg = 'Database request failed')
-{
-    return $oSql;
-}
-
-
 function userError($sMsg)
 {
     throw new Exception($sMsg, 400);

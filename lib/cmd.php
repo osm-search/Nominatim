@@ -120,11 +120,6 @@ function showUsage($aSpec, $bExit = false, $sError = false)
     exit;
 }
 
-function chksql($oSql, $sMsg = false)
-{
-    return $oSql;
-}
-
 function info($sMsg)
 {
     echo date('Y-m-d H:i:s == ').$sMsg."\n";

@@ -63,8 +63,9 @@ class ReverseGeocode
         $sSQL .= ' and indexed_status = 0 and startnumber is not NULL ';
         $sSQL .= ' ORDER BY distance ASC limit 1';
 
-        return chksql(
-            $this->oDB->getRow($sSQL),
+        return $this->oDB->getRow(
+            $sSQL,
+            null,
             'Could not determine closest housenumber on an osm interpolation line.'
         );
     }
@@ -92,8 +93,9 @@ class ReverseGeocode
         $sSQL = 'SELECT country_code FROM country_osm_grid';
         $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.') LIMIT 1';
 
-        $sCountryCode = chksql(
-            $this->oDB->getOne($sSQL),
+        $sCountryCode = $this->oDB->getOne(
+            $sSQL,
+            null,
             'Could not determine country polygon containing the point.'
         );
         if ($sCountryCode) {
@@ -115,10 +117,7 @@ class ReverseGeocode
                 $sSQL .= ' LIMIT 1';
 
                 if (CONST_Debug) var_dump($sSQL);
-                $aPlace = chksql(
-                    $this->oDB->getRow($sSQL),
-                    'Could not determine place node.'
-                );
+                $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
                 if ($aPlace) {
                     return new Result($aPlace['place_id']);
                 }
@@ -134,10 +133,7 @@ class ReverseGeocode
             $sSQL .= ' ORDER BY distance ASC';
 
             if (CONST_Debug) var_dump($sSQL);
-            $aPlace = chksql(
-                $this->oDB->getRow($sSQL),
-                'Could not determine place node.'
-            );
+            $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
             if ($aPlace) {
                 return new Result($aPlace['place_id']);
             }
@@ -178,10 +174,8 @@ class ReverseGeocode
         $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.' )';
         $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
 
-        $aPoly = chksql(
-            $this->oDB->getRow($sSQL),
-            'Could not determine polygon containing the point.'
-        );
+        $aPoly = $this->oDB->getRow($sSQL, null, 'Could not determine polygon containing the point.');
+
         if ($aPoly) {
         // if a polygon is found, search for placenodes begins ...
             $iParentPlaceID = $aPoly['parent_place_id'];
@@ -213,10 +207,7 @@ class ReverseGeocode
                 $sSQL .= ' LIMIT 1';
 
                 if (CONST_Debug) var_dump($sSQL);
-                $aPlacNode = chksql(
-                    $this->oDB->getRow($sSQL),
-                    'Could not determine place node.'
-                );
+                $aPlacNode = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
                 if ($aPlacNode) {
                     return $aPlacNode;
                 }
@@ -271,10 +262,7 @@ class ReverseGeocode
             $sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
             $sSQL .= ' ORDER BY distance ASC limit 1';
             if (CONST_Debug) var_dump($sSQL);
-            $aPlace = chksql(
-                $this->oDB->getRow($sSQL),
-                'Could not determine closest place.'
-            );
+            $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine closest place.');
 
             if (CONST_Debug) var_dump($aPlace);
             if ($aPlace) {
@@ -323,10 +311,7 @@ class ReverseGeocode
                     $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
                     if (CONST_Debug) var_dump($sSQL);
-                    $aStreet = chksql(
-                        $this->oDB->getRow($sSQL),
-                        'Could not determine closest place.'
-                    );
+                    $aStreet = $this->oDB->getRow($sSQL, null, 'Could not determine closest place.');
                     if ($aStreet) {
                         if (CONST_Debug) var_dump($aStreet);
                         $oResult = new Result($aStreet['place_id']);
@@ -347,10 +332,7 @@ class ReverseGeocode
                     $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, 0.001)';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
                     if (CONST_Debug) var_dump($sSQL);
-                    $aPlaceTiger = chksql(
-                        $this->oDB->getRow($sSQL),
-                        'Could not determine closest Tiger place.'
-                    );
+                    $aPlaceTiger = $this->oDB->getRow($sSQL, null, 'Could not determine closest Tiger place.');
                     if ($aPlaceTiger) {
                         if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
                         $oResult = new Result($aPlaceTiger['place_id'], Result::TABLE_TIGER);

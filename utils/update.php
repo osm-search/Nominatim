@@ -143,7 +143,7 @@ if ($aResult['init-updates']) {
 }
 
 if ($aResult['check-for-updates']) {
-    $aLastState = chksql($oDB->getRow('SELECT sequence_id FROM import_status'));
+    $aLastState = $oDB->getRow('SELECT sequence_id FROM import_status');
 
     if (!$aLastState['sequence_id']) {
         fail('Updates not set up. Please run ./utils/update.php --init-updates.');
@@ -231,13 +231,13 @@ if ($aResult['deduplicate']) {
     }
 
     $sSQL = 'select partition from country_name order by country_code';
-    $aPartitions = chksql($oDB->getCol($sSQL));
+    $aPartitions = $oDB->getCol($sSQL);
     $aPartitions[] = 0;
 
     // we don't care about empty search_name_* partitions, they can't contain mentions of duplicates
     foreach ($aPartitions as $i => $sPartition) {
         $sSQL = 'select count(*) from search_name_'.$sPartition;
-        $nEntries = chksql($oDB->getOne($sSQL));
+        $nEntries = $oDB->getOne($sSQL);
         if ($nEntries == 0) {
             unset($aPartitions[$i]);
         }
@@ -246,7 +246,7 @@ if ($aResult['deduplicate']) {
     $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' '";
     $sSQL .= ' and class is null and type is null and country_code is null';
     $sSQL .= ' group by word_token having count(*) > 1 order by word_token';
-    $aDuplicateTokens = chksql($oDB->getAll($sSQL));
+    $aDuplicateTokens = $oDB->getAll($sSQL);
     foreach ($aDuplicateTokens as $aToken) {
         if (trim($aToken['word_token']) == '' || trim($aToken['word_token']) == '-') continue;
         echo 'Deduping '.$aToken['word_token']."\n";
@@ -254,7 +254,7 @@ if ($aResult['deduplicate']) {
         $sSQL .= ' (select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num';
         $sSQL .= " from word where word_token = '".$aToken['word_token'];
         $sSQL .= "' and class is null and type is null and country_code is null order by num desc";
-        $aTokenSet = chksql($oDB->getAll($sSQL));
+        $aTokenSet = $oDB->getAll($sSQL);
 
         $aKeep = array_shift($aTokenSet);
         $iKeepID = $aKeep['word_id'];
@@ -264,32 +264,32 @@ if ($aResult['deduplicate']) {
             $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.'),';
             $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
 
             $sSQL = 'update search_name set';
             $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where nameaddress_vector @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
 
             $sSQL = 'update location_area_country set';
             $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
             $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
 
             foreach ($aPartitions as $sPartition) {
                 $sSQL = 'update search_name_'.$sPartition.' set';
                 $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.')';
                 $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-                chksql($oDB->exec($sSQL));
+                $oDB->exec($sSQL);
 
                 $sSQL = 'update location_area_country set';
                 $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
                 $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-                chksql($oDB->exec($sSQL));
+                $oDB->exec($sSQL);
             }
 
             $sSQL = 'delete from word where word_id = '.$aRemove['word_id'];
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
         }
     }
 }
@@ -340,7 +340,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
     while (true) {
         $fStartTime = time();
-        $aLastState = chksql($oDB->getRow('SELECT *, EXTRACT (EPOCH FROM lastimportdate) as unix_ts FROM import_status'));
+        $aLastState = $oDB->getRow('SELECT *, EXTRACT (EPOCH FROM lastimportdate) as unix_ts FROM import_status');
 
         if (!$aLastState['sequence_id']) {
             echo "Updates not set up. Please run ./utils/update.php --init-updates.\n";
@@ -418,12 +418,12 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
             $sSQL .= date('Y-m-d H:i:s')."','import')";
             var_Dump($sSQL);
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
 
             // update the status
             $sSQL = "UPDATE import_status SET lastimportdate = '$sBatchEnd', indexed=false, sequence_id = $iEndSequence";
             var_Dump($sSQL);
-            chksql($oDB->exec($sSQL));
+            $oDB->exec($sSQL);
             echo date('Y-m-d H:i:s')." Completed download step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
         }
 

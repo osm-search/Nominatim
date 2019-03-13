@@ -53,14 +53,14 @@ class AddressLevelParser
      */
     public function createTable($oDB, $sTable)
     {
-        chksql($oDB->exec('DROP TABLE IF EXISTS '.$sTable));
+        $oDB->exec('DROP TABLE IF EXISTS '.$sTable);
         $sSql = 'CREATE TABLE '.$sTable;
         $sSql .= '(country_code varchar(2), class TEXT, type TEXT,';
         $sSql .= ' rank_search SMALLINT, rank_address SMALLINT)';
-        chksql($oDB->exec($sSql));
+        $oDB->exec($sSql);
 
-        $sSql = 'CREATE UNIQUE INDEX ON '.$sTable.'(country_code, class, type)';
-        chksql($oDB->exec($sSql));
+        $sSql = 'CREATE UNIQUE INDEX ON '.$sTable.' (country_code, class, type)';
+        $oDB->exec($sSql);
 
         $sSql = 'INSERT INTO '.$sTable.' VALUES ';
         foreach ($this->aLevels as $aLevel) {
@@ -93,6 +93,6 @@ class AddressLevelParser
                 }
             }
         }
-        chksql($oDB->exec(rtrim($sSql, ',')));
+        $oDB->exec(rtrim($sSql, ','));
     }
 }

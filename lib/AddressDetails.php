@@ -26,7 +26,7 @@ class AddressDetails
         $sSQL .= ' FROM get_addressdata('.$iPlaceID.','.$sHousenumber.')';
         $sSQL .= ' ORDER BY rank_address DESC, isaddress DESC';
 
-        $this->aAddressLines = chksql($oDB->getAll($sSQL));
+        $this->aAddressLines = $oDB->getAll($sSQL);
     }
 
     private static function isAddress($aLine)

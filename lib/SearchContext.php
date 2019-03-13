@@ -126,7 +126,7 @@ class SearchContext
      * The viewbox may be bounded which means that no search results
      * must be outside the viewbox.
      *
-     * @param object   $oDB          DB connection to use for computing the box.
+     * @param object   $oDB          Nominatim::DB instance to use for computing the box.
      * @param string[] $aRoutePoints List of x,y coordinates along a route.
      * @param float    $fRouteWidth  Buffer around the route to use.
      * @param bool     $bBounded     True if the viewbox bounded.
@@ -146,11 +146,11 @@ class SearchContext
         $this->sqlViewboxCentre .= ")'::geometry,4326)";
 
         $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/69).')';
-        $sGeom = chksql($oDB->getOne('select '.$sSQL), 'Could not get small viewbox');
+        $sGeom = $oDB->getOne('select '.$sSQL, null, 'Could not get small viewbox');
         $this->sqlViewboxSmall = "'".$sGeom."'::geometry";
 
         $sSQL = 'ST_BUFFER('.$this->sqlViewboxCentre.','.($fRouteWidth/30).')';
-        $sGeom = chksql($oDB->getOne('select '.$sSQL), 'Could not get large viewbox');
+        $sGeom = $oDB->getOne('select '.$sSQL, null, 'Could not get large viewbox');
         $this->sqlViewboxLarge = "'".$sGeom."'::geometry";
     }
 

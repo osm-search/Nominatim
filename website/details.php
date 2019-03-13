@@ -31,17 +31,13 @@ $oDB->connect();
 $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
 if ($sOsmType && $iOsmId > 0) {
-    $sSQL = sprintf(
-        "SELECT place_id FROM placex WHERE osm_type='%s' AND osm_id=%d",
-        $sOsmType,
-        $iOsmId
-    );
+    $sSQL = 'SELECT place_id FROM placex WHERE osm_type = :type AND osm_id = :id';
     // osm_type and osm_id are not unique enough
     if ($sClass) {
         $sSQL .= " AND class='".$sClass."'";
     }
     $sSQL .= ' ORDER BY class ASC';
-    $sPlaceId = chksql($oDB->getOne($sSQL));
+    $sPlaceId = $oDB->getOne($sSQL, array(':type' => $sOsmType, ':id' => $iOsmId));
 
     // Be nice about our error messages for broken geometry
 
@@ -56,11 +52,11 @@ if ($sOsmType && $iOsmId > 0) {
         $sSQL .= '    ST_AsText(prevgeometry) AS prevgeom, ';
         $sSQL .= '    ST_AsText(newgeometry) AS newgeom';
         $sSQL .= ' FROM import_polygon_error ';
-        $sSQL .= " WHERE osm_type = '".$sOsmType."'";
-        $sSQL .= '  AND osm_id = '.$iOsmId;
+        $sSQL .= ' WHERE osm_type = :type';
+        $sSQL .= '   AND osm_id = :id';
         $sSQL .= ' ORDER BY updated DESC';
         $sSQL .= ' LIMIT 1';
-        $aPointDetails = chksql($oDB->getRow($sSQL));
+        $aPointDetails = $oDB->getRow($sSQL, array(':type' => $sOsmType, ':id' => $iOsmId));
         if ($aPointDetails) {
             if (preg_match('/\[(-?\d+\.\d+) (-?\d+\.\d+)\]/', $aPointDetails['errormessage'], $aMatches)) {
                 $aPointDetails['error_x'] = $aMatches[1];
@@ -81,20 +77,20 @@ if ($sPlaceId === false) userError('Please select a place id');
 $iPlaceID = (int)$sPlaceId;
 
 if (CONST_Use_US_Tiger_Data) {
-    $iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_tiger WHERE place_id = '.$iPlaceID));
+    $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_tiger WHERE place_id = '.$iPlaceID);
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
 // interpolated house numbers
-$iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_osmline WHERE place_id = '.$iPlaceID));
+$iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_osmline WHERE place_id = '.$iPlaceID);
 if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
 // artificial postcodes
-$iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_postcode WHERE place_id = '.$iPlaceID));
+$iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_postcode WHERE place_id = '.$iPlaceID);
 if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
 if (CONST_Use_Aux_Location_data) {
-    $iParentPlaceID = chksql($oDB->getOne('SELECT parent_place_id FROM location_property_aux WHERE place_id = '.$iPlaceID));
+    $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_aux WHERE place_id = '.$iPlaceID);
     if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 }
 
@@ -129,7 +125,7 @@ if ($bIncludePolygonAsGeoJSON) {
 $sSQL .= ' FROM placex ';
 $sSQL .= " WHERE place_id = $iPlaceID";
 
-$aPointDetails = chksql($oDB->getRow($sSQL), 'Could not get details of place object.');
+$aPointDetails = $oDB->getRow($sSQL, null, 'Could not get details of place object.');
 
 if (!$aPointDetails) {
     userError('Unknown place id.');
@@ -236,7 +232,7 @@ logEnd($oDB, $hLog, 1);
 
 if ($sOutputFormat=='html') {
     $sSQL = "SELECT TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' FROM import_status LIMIT 1";
-    $sDataDate = chksql($oDB->getOne($sSQL));
+    $sDataDate = $oDB->getOne($sSQL);
     $sTileURL = CONST_Map_Tile_URL;
     $sTileAttribution = CONST_Map_Tile_Attribution;
 }

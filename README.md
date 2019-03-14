@@ -59,5 +59,5 @@ Both bug reports and pull requests are welcome.
 Mailing list
 ============
 
-For questions you can join the geocoding mailinglist, see
+For questions you can join the geocoding mailing list, see
 https://lists.openstreetmap.org/listinfo/geocoding

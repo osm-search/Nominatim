@@ -58,7 +58,6 @@ class DB
                 $val = $this->connection->exec($sSQL);
             }
         } catch (\PDOException $e) {
-            $sErrMessage = $e->message();
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
         }
         return $val;

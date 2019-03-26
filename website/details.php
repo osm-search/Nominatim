@@ -220,11 +220,17 @@ if ($bIncludeKeywords) {
     $aPlaceSearchName = $oDB->getRow($sSQL);
 
     if (!empty($aPlaceSearchName)) {
-        $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['name_vector'], 1, -1).')';
-        $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
+        $sWordIds = substr($aPlaceSearchName['name_vector'], 1, -1);
+        if (!empty($sWordIds)) {
+            $sSQL = 'SELECT * FROM word WHERE word_id in ('.$sWordIds.')';
+            $aPlaceSearchNameKeywords = $oDB->getAll($sSQL);
+        }
 
-        $sSQL = 'SELECT * FROM word WHERE word_id in ('.substr($aPlaceSearchName['nameaddress_vector'], 1, -1).')';
-        $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
+        $sWordIds = substr($aPlaceSearchName['nameaddress_vector'], 1, -1);
+        if (!empty($sWordIds)) {
+            $sSQL = 'SELECT * FROM word WHERE word_id in ('.$sWordIds.')';
+            $aPlaceSearchAddressKeywords = $oDB->getAll($sSQL);
+        }
     }
 }
 

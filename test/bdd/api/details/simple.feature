@@ -34,3 +34,10 @@ Feature: Object details
             | 1 |
         Then the result is valid html
 
+    # ticket #1343
+    Scenario: Details of a country with keywords
+        When sending details query for R287072
+            | keywords |
+            | 1 |
+        Then the result is valid html
+

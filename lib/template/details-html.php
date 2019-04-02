@@ -61,7 +61,7 @@
 
 
     function _one_row($aAddressLine){
-        $bNotUsed = (isset($aAddressLine['isaddress']) && $aAddressLine['isaddress'] == 'f');
+        $bNotUsed = !$aAddressLine['isaddress'];
 
         echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
         echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
@@ -119,7 +119,7 @@
                     if ($aPointDetails['calculated_importance']) {
                         kv('Importance'    , $aPointDetails['calculated_importance'].($aPointDetails['importance']?'':' (estimated)') );
                     }
-                    kv('Coverage'        , ($aPointDetails['isarea']=='t'?'Polygon':'Point') );
+                    kv('Coverage'        , ($aPointDetails['isarea']?'Polygon':'Point') );
                     kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
                     kv('OSM'             , osmLink($aPointDetails) );
                     if ($aPointDetails['wikipedia'])

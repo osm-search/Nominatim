@@ -31,7 +31,7 @@ class AddressDetails
 
     private static function isAddress($aLine)
     {
-        return $aLine['isaddress'] == 't' || $aLine['type'] == 'country_code';
+        return $aLine['isaddress'] || $aLine['type'] == 'country_code';
     }
 
     public function getAddressDetails($bAll = false)
@@ -49,7 +49,7 @@ class AddressDetails
         $sPrevResult = '';
 
         foreach ($this->aAddressLines as $aLine) {
-            if ($aLine['isaddress'] == 't' && $sPrevResult != $aLine['localname']) {
+            if ($aLine['isaddress'] && $sPrevResult != $aLine['localname']) {
                 $sPrevResult = $aLine['localname'];
                 $aParts[] = $sPrevResult;
             }

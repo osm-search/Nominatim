@@ -17,8 +17,9 @@ function checkInFile($sOSMFile)
 
 function checkModulePresence()
 {
-    // Try accessing the C module, so we know early if something is wrong
-    // and can simply error out.
+    // Try accessing the C module, so we know early if something is wrong.
+    // Raises Nominatim\DatabaseError on failure
+
     $sModulePath = CONST_Database_Module_Path;
     $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
     $sSQL .= $sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
@@ -26,15 +27,5 @@ function checkModulePresence()
 
     $oDB = new \Nominatim\DB();
     $oDB->connect();
-
-    $bResult = true;
-    try {
-        $oDB->exec($sSQL);
-    } catch (\Nominatim\DatabaseError $e) {
-        echo "\nERROR: Failed to load nominatim module. Reason:\n";
-        echo $oDB->getLastError()[2] . "\n\n";
-        $bResult = false;
-    }
-
-    return $bResult;
+    $oDB->exec($sSQL, null, 'Database server failed to load '.$sModulePath.'/nominatim.so module');
 }

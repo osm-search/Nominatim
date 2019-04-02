@@ -229,12 +229,6 @@ class DB
         return 'ARRAY['.join(',', $a).']';
     }
 
-    public function getLastError()
-    {
-        // https://secure.php.net/manual/en/pdo.errorinfo.php
-        return $this->connection->errorInfo();
-    }
-
     /**
      * Check if a table exists in the database. Returns true if it does.
      *

@@ -2318,12 +2318,15 @@ DECLARE
   searchhousename HSTORE;
   searchrankaddress INTEGER;
   searchpostcode TEXT;
+  postcode_isaddress BOOL;
   searchclass TEXT;
   searchtype TEXT;
   countryname HSTORE;
 BEGIN
   -- The place ein question might not have a direct entry in place_addressline.
   -- Look for the parent of such places then and save if in for_place_id.
+
+  postcode_isaddress := true;
 
   -- first query osmline (interpolation lines)
   IF in_housenumber >= 0 THEN
@@ -2441,7 +2444,10 @@ BEGIN
       searchcountrycode := location.country_code;
     END IF;
     IF location.type in ('postcode', 'postal_code') THEN
-      location.isaddress := FALSE;
+      postcode_isaddress := false;
+      IF location.osm_type != 'R' THEN
+        location.isaddress := FALSE;
+      END IF;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id,
                            location.name, location.class, location.type,
@@ -2485,7 +2491,7 @@ BEGIN
 
   IF searchpostcode IS NOT NULL THEN
     location := ROW(null, null, null, hstore('ref', searchpostcode), 'place',
-                    'postcode', null, true, true, 5, 0)::addressline;
+                    'postcode', null, false, postcode_isaddress, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

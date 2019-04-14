@@ -81,6 +81,14 @@ If you are using a flatnode file, then it may also be that the underlying
 filesystem does not fully support 'mmap'. A notable candidate is virtualbox's
 vboxfs.
 
+### nominatim UPDATE failed: ERROR: buffer 179261 is not owned by resource owner Portal
+
+Several users [reported this](https://github.com/openstreetmap/Nominatim/issues/1168) during the initial import of the database. It's 
+something Postgresql internal Nominatim doesn't control. And Postgresql forums
+suggest it's threading related but definitely some kind of crash of a process.
+Users reported either rebooting the server, different hardware or just trying
+the import again worked. 
+
 ### The website shows: "Could not get word tokens"
 
 The server cannot access your database. Add `&debug=1` to your URL
@@ -104,11 +112,8 @@ However, you can solve this the quick and dirty way by commenting out that line 
 
 ### "must be an array or an object that implements Countable" warning in /usr/share/pear/DB.php
 
-As reported starting PHP 7.2. This external DB library is no longer maintained and will be replaced in future Nominatim versions. In the meantime you'd have to manually change the line near 774 from
-`if (!count($dsn)) {` to  `if (!$dsn && !count($dsn))`. [More details](https://github.com/openstreetmap/Nominatim/issues/1184)
-
-
-
+The warning started with PHP 7.2. Make sure you have at least [version 1.9.3 of PEAR DB](https://github.com/pear/DB/releases)
+installed.
 
 ### Website reports "DB Error: insufficient permissions"
 

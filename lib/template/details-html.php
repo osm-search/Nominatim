@@ -61,7 +61,7 @@
 
 
     function _one_row($aAddressLine){
-        $bNotUsed = !$aAddressLine['isaddress'];
+        $bNotUsed = isset($aAddressLine['isaddress']) && !$aAddressLine['isaddress'];
 
         echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
         echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";

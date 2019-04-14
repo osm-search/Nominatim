@@ -588,6 +588,9 @@ class SearchDescription
 
         $sSQL .= "p.postcode = '".reset($this->aName)."'";
         $sSQL .= $this->countryCodeSQL(' AND p.country_code');
+        if ($this->oContext->bViewboxBounded) {
+            $sSQL .= ' AND ST_Intersects('.$this->oContext->sqlViewboxSmall.', geometry)';
+        }
         $sSQL .= $this->oContext->excludeSQL(' AND p.place_id');
         $sSQL .= " LIMIT $iLimit";
 

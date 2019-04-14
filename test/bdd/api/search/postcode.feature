@@ -26,6 +26,18 @@ Feature: Searches with postcodes
             | country_code |
             | li           |
 
+    Scenario: Postcode search with bounded viewbox restriction
+        When sending json search query "9486" with address
+          | bounded | viewbox |
+          | 1       | 9.55,47.20,9.58,47.22 |
+        Then result addresses contain
+            | postcode |
+            | 9486     |
+        When sending json search query "9486" with address
+          | bounded | viewbox                 |
+          | 1       | 5.00,20.00,6.00,21.00 |
+        Then exactly 0 results are returned
+
     Scenario: Postcode search with structured query
         When sending json search query "" with address
             | postalcode | country |

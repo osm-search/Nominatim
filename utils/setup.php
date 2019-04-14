@@ -84,9 +84,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
 }
 
 // Try accessing the C module, so we know early if something is wrong
-if (!checkModulePresence()) {
-    fail('error loading nominatim.so module');
-}
+checkModulePresence(); // raises exception on failure
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;

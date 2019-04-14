@@ -144,9 +144,7 @@ class SetupFunctions
         }
 
         // Try accessing the C module, so we know early if something is wrong
-        if (!checkModulePresence()) {
-            fail('error loading nominatim.so module');
-        }
+        checkModulePresence(); // raises exception on failure
 
         if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
             echo 'Error: you need to download the country_osm_grid first:';
@@ -227,11 +225,9 @@ class SetupFunctions
     {
         info('Create Functions');
 
-        // Try accessing the C module, so we know eif something is wrong
-        // update.php calls this function
-        if (!checkModulePresence()) {
-            fail('error loading nominatim.so module');
-        }
+        // Try accessing the C module, so we know early if something is wrong
+        checkModulePresence(); // raises exception on failure
+
         $this->createSqlFunctions();
     }
 

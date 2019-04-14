@@ -352,7 +352,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         $sBatchEnd = $aLastState['lastimportdate'];
         $iEndSequence = $aLastState['sequence_id'];
 
-        if ($aLastState['indexed'] == 't') {
+        if ($aLastState['indexed']) {
             // Sleep if the update interval has not yet been reached.
             $fNextUpdate = $aLastState['unix_ts'] + CONST_Replication_Update_Interval;
             if ($fNextUpdate > $fStartTime) {

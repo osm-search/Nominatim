@@ -121,7 +121,7 @@ if (!empty($aParentOfLines)) {
             echo '<div class="line">';
             echo '<span class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>').'</span>';
             echo ' (';
-            echo '<span class="area">'.($aAddressLine['isarea']=='t'?'Polygon':'Point').'</span>';
+            echo '<span class="area">'.($aAddressLine['isarea']?'Polygon':'Point').'</span>';
             if ($sOSMType) echo ', <span class="osm"><span class="label"></span>'.$sOSMType.' '.osmLink($aAddressLine).'</span>';
             echo ', <a href="hierarchy.php?place_id='.$aAddressLine['place_id'].'">GOTO</a>';
             echo ', '.$aAddressLine['area'];

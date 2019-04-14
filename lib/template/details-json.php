@@ -33,7 +33,7 @@ if ($aPointDetails['icon']) {
 $aPlaceDetails['rank_address'] = (int) $aPointDetails['rank_address'];
 $aPlaceDetails['rank_search'] = (int) $aPointDetails['rank_search'];
 
-$aPlaceDetails['isarea'] = ($aPointDetails['isarea'] == 't');
+$aPlaceDetails['isarea'] = $aPointDetails['isarea'];
 $aPlaceDetails['centroid'] = array(
                               'type' => 'Point',
                               'coordinates' => array( (float) $aPointDetails['lon'], (float) $aPointDetails['lat'] )

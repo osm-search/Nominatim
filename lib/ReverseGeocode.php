@@ -299,7 +299,7 @@ class ReverseGeocode
                     // radius ?
                     $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', geometry, 0.001)';
                     $sSQL .= ' AND parent_place_id = '.$iPlaceID;
-                    $sSQL .= ' and rank_address != 28';
+                    $sSQL .= ' and rank_address > 28';
                     $sSQL .= ' and ST_GeometryType(geometry) != \'ST_LineString\'';
                     $sSQL .= ' and (name is not null or housenumber is not null)';
                     $sSQL .= ' and class not in (\'boundary\')';

@@ -11,6 +11,8 @@ git:
 env:
   - TEST_SUITE=tests
   - TEST_SUITE=monaco
+before_install:
+  - phpenv global 7.1
 install:
   - vagrant/install-on-travis-ci.sh
 before_script:
@@ -19,7 +21,7 @@ script:
   - cd $TRAVIS_BUILD_DIR/
   - if [[ $TEST_SUITE == "tests" ]]; then phpcs --report-width=120 . ; fi
   - cd $TRAVIS_BUILD_DIR/test/php
-  - if [[ $TEST_SUITE == "tests" ]]; then phpunit ./ ; fi
+  - if [[ $TEST_SUITE == "tests" ]]; then /usr/bin/phpunit ./ ; fi
   - cd $TRAVIS_BUILD_DIR/test/bdd
   - # behave --format=progress3 api
   - if [[ $TEST_SUITE == "tests" ]]; then behave -DREMOVE_TEMPLATE=1 --format=progress3 db ; fi

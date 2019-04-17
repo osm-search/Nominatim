@@ -116,10 +116,8 @@
         $sOsmId = $aCMDResult['restrict-to-osm-relation'];
     }
     if ($sOsmType) {
-        $sSQL = 'select place_id from placex where';
-        $sSQL .= ' osm_type = '.$oDB->getDBQuoted($sOsmType);
-        $sSQL .= ' and osm_id = '.$sOsmId;
-        $sParentId = $oDB->getOne($sSQL);
+        $sSQL = 'select place_id from placex where osm_type = :osm_type and osm_id = :osm_id';
+        $sParentId = $oDB->getOne($sSQL, array('osm_type' => $sOsmType, 'osm_id' => $sOsmId));
         if (!$sParentId) fail('Could not find place '.$sOsmType.' '.$sOsmId);
     }
     if ($sParentId) {
@@ -131,15 +129,15 @@
     // Iterate over placeids
     // to get further hierarchical information
     //var_dump($sPlacexSQL);
-    $aRes =& $oDB->query($sPlacexSQL);
+    $oResults = $oDB->getQueryStatement($sPlacexSQL);
     $fOutstream = fopen('php://output', 'w');
-    while ($aRes->fetchInto($aRow)) {
-    //var_dump($aRow);
+    while ($aRow = $oResults->fetch()) {
+        //var_dump($aRow);
         $iPlaceID = $aRow['place_id'];
-        $sSQL = "select rank_address,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata($iPlaceID, -1)";
+        $sSQL = "select rank_address,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(:place_id, -1)";
         $sSQL .= ' WHERE isaddress';
         $sSQL .= ' order by rank_address desc,isaddress desc';
-        $aAddressLines = $oDB->getAll($sSQL);
+        $aAddressLines = $oDB->getAll($sSQL, array('place_id' => $iPlaceID));
 
         $aOutput = array_fill(0, $iNumCol, '');
         // output address parts
@@ -154,9 +152,9 @@
                 $sSQL = 'select array_agg(px.postcode) from placex px join place_addressline pa ';
                 $sSQL .= 'on px.place_id = pa.address_place_id ';
                 $sSQL .= 'where pa.cached_rank_address in (5,11) ';
-                $sSQL .= 'and pa.place_id in (select place_id from place_addressline where address_place_id in ('.substr($aRow['place_ids'], 1, -1).')) ';
+                $sSQL .= 'and pa.place_id in (select place_id from place_addressline where address_place_id in (:first_place_id)) ';
                 $sSQL .= 'group by postcode order by count(*) desc limit 1';
-                $sRes = $oDB->getOne($sSQL);
+                $sRes = $oDB->getOne($sSQL, array('first_place_id' => substr($aRow['place_ids'], 1, -1)));
 
                 $aOutput[$aColumnMapping['postcode']] = substr($sRes, 1, -1);
             } else {

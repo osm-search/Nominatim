@@ -74,12 +74,7 @@ class DB
     public function getRow($sSQL, $aInputVars = null, $sErrMessage = 'Database query failed')
     {
         try {
-            if (isset($aInputVars)) {
-                $stmt = $this->connection->prepare($sSQL);
-                $stmt->execute($aInputVars);
-            } else {
-                $stmt = $this->connection->query($sSQL);
-            }
+            $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
             $row = $stmt->fetch();
         } catch (\PDOException $e) {
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
@@ -98,12 +93,7 @@ class DB
     public function getOne($sSQL, $aInputVars = null, $sErrMessage = 'Database query failed')
     {
         try {
-            if (isset($aInputVars)) {
-                $stmt = $this->connection->prepare($sSQL);
-                $stmt->execute($aInputVars);
-            } else {
-                $stmt = $this->connection->query($sSQL);
-            }
+            $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
             $row = $stmt->fetch(\PDO::FETCH_NUM);
             if ($row === false) return false;
         } catch (\PDOException $e) {
@@ -123,12 +113,7 @@ class DB
     public function getAll($sSQL, $aInputVars = null, $sErrMessage = 'Database query failed')
     {
         try {
-            if (isset($aInputVars)) {
-                $stmt = $this->connection->prepare($sSQL);
-                $stmt->execute($aInputVars);
-            } else {
-                $stmt = $this->connection->query($sSQL);
-            }
+            $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
             $rows = $stmt->fetchAll();
         } catch (\PDOException $e) {
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
@@ -148,12 +133,8 @@ class DB
     {
         $aVals = array();
         try {
-            if (isset($aInputVars)) {
-                $stmt = $this->connection->prepare($sSQL);
-                $stmt->execute($aInputVars);
-            } else {
-                $stmt = $this->connection->query($sSQL);
-            }
+            $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
+
             while ($val = $stmt->fetchColumn(0)) { // returns first column or false
                 $aVals[] = $val;
             }
@@ -174,12 +155,8 @@ class DB
     public function getAssoc($sSQL, $aInputVars = null, $sErrMessage = 'Database query failed')
     {
         try {
-            if (isset($aInputVars)) {
-                $stmt = $this->connection->prepare($sSQL);
-                $stmt->execute($aInputVars);
-            } else {
-                $stmt = $this->connection->query($sSQL);
-            }
+            $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
+
             $aList = array();
             while ($aRow = $stmt->fetch(\PDO::FETCH_NUM)) {
                 $aList[$aRow[0]] = $aRow[1];
@@ -190,6 +167,27 @@ class DB
         return $aList;
     }
 
+    /**
+     * Executes query. Returns a PDO statement to iterate over.
+     *
+     * @param string  $sSQL
+     *
+     * @return PDOStatement
+     */
+    public function getQueryStatement($sSQL, $aInputVars = null, $sErrMessage = 'Database query failed')
+    {
+        try {
+            if (isset($aInputVars)) {
+                $stmt = $this->connection->prepare($sSQL);
+                $stmt->execute($aInputVars);
+            } else {
+                $stmt = $this->connection->query($sSQL);
+            }
+        } catch (\PDOException $e) {
+            throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
+        }
+        return $stmt;
+    }
 
     /**
      * St. John's Way => 'St. John\'s Way'

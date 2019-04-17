@@ -26,6 +26,9 @@ pip3 install --quiet behave nose pytidylib psycopg2-binary
 composer global require "squizlabs/php_codesniffer=*"
 sudo ln -s /home/travis/.config/composer/vendor/bin/phpcs /usr/bin/
 
+composer global require "phpunit/phpunit=7.*"
+sudo ln -s /home/travis/.config/composer/vendor/bin/phpunit /usr/bin/
+
 sudo -u postgres createuser -S www-data
 
 # Make sure that system servers can read from the home directory:

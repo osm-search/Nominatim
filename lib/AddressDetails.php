@@ -17,7 +17,7 @@ class AddressDetails
             $mLangPref = 'ARRAY['.join(',', array_map('getDBQuoted', $mLangPref)).']';
         }
 
-        if (!$sHousenumber) {
+        if (!isset($sHousenumber)) {
             $sHousenumber = -1;
         }
 

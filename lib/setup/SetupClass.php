@@ -753,7 +753,10 @@ class SetupFunctions
 
     private function pgsqlRunDropAndRestore($sDumpFile)
     {
-        $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' -Fc --clean '.$sDumpFile;
+        $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' --no-owner -Fc --clean '.$sDumpFile;
+        if ($this->oDB->getPostgresVersion() >= 9.04) {
+            $sCMD .= ' --if-exists';
+        }
         if (isset($this->aDSNInfo['hostspec'])) {
             $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
         }

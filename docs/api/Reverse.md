@@ -80,7 +80,8 @@ In terms of address details the zoom levels are as follows:
   8   | county
   10  | city
   14  | suburb
-  16  | street
+  16  | major streets
+  17  | major and minor streets
   18  | building
 
 

@@ -428,6 +428,7 @@ class PlaceLookup
         $aPlaces = $this->oDB->getAll($sSQL, null, 'Could not lookup place');
 
         foreach ($aPlaces as &$aPlace) {
+            $aPlace['importance'] = (float) $aPlace['importance'];
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
                 $aPlace['address'] = new AddressDetails(

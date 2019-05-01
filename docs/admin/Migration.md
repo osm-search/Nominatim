@@ -7,7 +7,7 @@ SQL statements should be executed from the postgres commandline. Execute
 `psql nominatim` to enter command line mode.
 
 
-## 3.2.0 -> master
+## 3.2.0 -> 3.3.0
 
 ### New database connection string (DSN) format
 

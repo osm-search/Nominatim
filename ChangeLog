@@ -1,3 +1,27 @@
+3.3.0
+
+ * zoom 17 in reverse now zooms in on minor streets
+ * fix use of postcode relations in address
+ * support for housenumber 0 on interpolations
+ * replace database abstraction DB with PDO and switch to using exceptions
+ * exclude line features at rank 30 from reverse geocoding
+ * remove self-reference and country from place_addressline
+ * make json output more readable (less escaping)
+ * update conversion scripts for postcodes
+ * scripts in utils/ are no longer executable (always use scripts in build dir)
+ * remove Natural Earth country fallback (OSM is complete enough)
+ * make rank assignments configurable
+ * allow accept languages with underscore
+ * new reverse-only import mode (without search index table)
+ * rely on boundaries only for states and countries
+ * update osm2pgsql, now using a configurable style
+ * provide multiple import styles
+ * improve search when house number and postcodes are dropped
+ * overhaul of setup code
+ * add support for PHPUnit 6
+ * update test database
+ * various documentation improvements
+
 3.2.0
 
  * complete rewrite of reverse search algorithm

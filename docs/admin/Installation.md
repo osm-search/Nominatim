@@ -40,9 +40,9 @@ For running tests:
 
 For running Nominatim:
 
-  * [PostgreSQL](http://www.postgresql.org) (9.1 or later)
-  * [PostGIS](http://postgis.refractions.net) (2.0 or later)
-  * [PHP](http://php.net) (5.4 or later)
+  * [PostgreSQL](http://www.postgresql.org) (9.3 or later)
+  * [PostGIS](http://postgis.refractions.net) (2.2 or later)
+  * [PHP](http://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
   * [PEAR::DB](http://pear.php.net/package/DB)

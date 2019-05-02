@@ -106,34 +106,19 @@ class SetupFunctions
         $fPostgresVersion = $this->oDB->getPostgresVersion();
         echo 'Postgres version found: '.$fPostgresVersion."\n";
 
-        if ($fPostgresVersion < 9.01) {
-            fail('Minimum supported version of Postgresql is 9.1.');
+        if ($fPostgresVersion < 9.03) {
+            fail('Minimum supported version of Postgresql is 9.3.');
         }
 
         $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS hstore');
         $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
 
-        // For extratags and namedetails the hstore_to_json converter is
-        // needed which is only available from Postgresql 9.3+. For older
-        // versions add a dummy function that returns nothing.
-        $iNumFunc = $this->oDB->getOne("select count(*) from pg_proc where proname = 'hstore_to_json'");
-
-        if ($iNumFunc == 0) {
-            $this->pgsqlRunScript("create function hstore_to_json(dummy hstore) returns text AS 'select null::text' language sql immutable");
-            warn('Postgresql is too old. extratags and namedetails API not available.');
-        }
-
-
         $fPostgisVersion = $this->oDB->getPostgisVersion();
         echo 'Postgis version found: '.$fPostgisVersion."\n";
 
-        if ($fPostgisVersion < 2.1) {
-            // Functions were renamed in 2.1 and throw an annoying deprecation warning
-            $this->pgsqlRunScript('ALTER FUNCTION st_line_interpolate_point(geometry, double precision) RENAME TO ST_LineInterpolatePoint');
-            $this->pgsqlRunScript('ALTER FUNCTION ST_Line_Locate_Point(geometry, geometry) RENAME TO ST_LineLocatePoint');
-        }
         if ($fPostgisVersion < 2.2) {
-            $this->pgsqlRunScript('ALTER FUNCTION ST_Distance_Spheroid(geometry, geometry, spheroid) RENAME TO ST_DistanceSpheroid');
+            echo "Minimum required Postgis version 2.2\n";
+            exit(1);
         }
 
         $i = $this->oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'");

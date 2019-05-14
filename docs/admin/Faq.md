@@ -66,6 +66,14 @@ server development libraries (`postgresql-server-dev-9.5` on Ubuntu)
 and recompile (`cmake .. && make`).
 
 
+## I see the error "ERROR: permission denied for language c"
+
+`nominatim.so`, written in C, is required to be installed on the database
+server. Some managed database (cloud) services like Amazon RDS do not allow
+this. There is currently no work-around other than installing a database
+on a non-managed machine.
+
+
 ### I see the error: "function transliteration(text) does not exist"
 
 Reinstall the nominatim functions with `setup.php --create--functions`

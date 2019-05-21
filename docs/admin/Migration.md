@@ -3,7 +3,7 @@
 This page describes database migrations necessary to update existing databases
 to newer versions of Nominatim.
 
-SQL statements should be executed from the postgres commandline. Execute
+SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
 

@@ -24,14 +24,14 @@ If the reported rank is 26 or higher, you can also safely add `--index-noanalyse
 
 ### PHP "open_basedir restriction in effect" warnings
 
-    `PHP Warning:  file_get_contents(): open_basedir restriction in effect.`
+    PHP Warning:  file_get_contents(): open_basedir restriction in effect.
 
-You need to adjust the [open_basedir](http://www.php.net/manual/en/ini.core.php#ini.open-basedir) setting
+You need to adjust the [open_basedir](https://www.php.net/manual/en/ini.core.php#ini.open-basedir) setting
 in your PHP configuration (`php.ini file`). By default this setting may look like this:
 
     open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/
 
-Either add reported directories to the list or disable this setting temporarily by 
+Either add reported directories to the list or disable this setting temporarily by
 dding ";" at the beginning of the line. Don't forget to enable this setting again
 once you are done with the PHP command line operations.
 
@@ -44,9 +44,9 @@ The Apache log may contain lots of PHP warnings like this:
 You should set the default time zone as instructed in the warning in
 your `php.ini` file. Find the entry about timezone and set it to
 something like this:
-  
+
     ; Defines the default timezone used by the date functions
-    ; http://php.net/date.timezone
+    ; https://php.net/date.timezone
     date.timezone = 'America/Denver'
 
 Or
@@ -83,11 +83,11 @@ vboxfs.
 
 ### nominatim UPDATE failed: ERROR: buffer 179261 is not owned by resource owner Portal
 
-Several users [reported this](https://github.com/openstreetmap/Nominatim/issues/1168) during the initial import of the database. It's 
-something Postgresql internal Nominatim doesn't control. And Postgresql forums
+Several users [reported this](https://github.com/openstreetmap/Nominatim/issues/1168) during the initial import of the database. It's
+something PostgreSQL internal Nominatim doesn't control. And PostgreSQL forums
 suggest it's threading related but definitely some kind of crash of a process.
 Users reported either rebooting the server, different hardware or just trying
-the import again worked. 
+the import again worked.
 
 ### The website shows: "Could not get word tokens"
 
@@ -140,7 +140,7 @@ Example error message
    CONTEXT: PL/pgSQL function make_standard_name(text) line 5 at assignment]
 ```
 
-The Postgresql database, i.e. user postgres, needs to have access to that file.
+The PostgreSQL database, i.e. user `postgres`, needs to have access to that file.
 
 The permission need to be read & executable by everybody, e.g.
 
@@ -155,7 +155,7 @@ When running SELinux, make sure that the
 
 ### Setup.php fails with "DB Error: extension not found"
 
-Make sure you have the Postgres extensions hstore and postgis installed.
+Make sure you have the PostgreSQL extensions "hstore" and "postgis" installed.
 See the installation instruction for a full list of required packages.
 
 
@@ -165,7 +165,7 @@ See the installation instruction for a full list of required packages.
 
 The message is a bit misleading as PHP needs to load the file `DB.php` and
 instead re-loads Nominatim's `db.php`. To solve this make sure you
-have the [Pear module 'DB'](http://pear.php.net/package/DB/) installed.
+have the [Pear module 'DB'](https://pear.php.net/package/DB/) installed.
 
     sudo pear install DB
 
@@ -190,7 +190,7 @@ For updates you need to download the change files for each country
 once per day and apply them **separately** using
 
     ./utils/update.php --import-diff <filename> --index
-    
+
 See [this issue](https://github.com/openstreetmap/Nominatim/issues/60#issuecomment-18679446)
 for a script that runs the updates using osmosis.
 

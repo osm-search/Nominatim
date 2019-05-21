@@ -24,7 +24,7 @@ with multiple tags that may constitute a principal tag. Take for example a
 motorway bridge. In OSM, this would be a way which is tagged with
 `highway=motorway` and `bridge=yes`. This way would appear in the `place` table
 once with `class` of `highway` and once with a `class` of `bridge`. Thus the
-*uique key* for `place` is (`osm_type`, `osm_id`, `class`).
+*unique key* for `place` is (`osm_type`, `osm_id`, `class`).
 
 ## Configuring the Import
 
@@ -55,8 +55,8 @@ suffix match can be defined similarly with a string that starts with a `*`. Any
 other string constitutes an exact match.
 
 The second part of the rules defines a list of values and the properties that
-apply to a successful match. Value strings may be either empty, which again
-means that thy match against any value, or describe an exact match. Prefix
+apply to a successful match. Value strings may be either empty, which
+means that they match any value, or describe an exact match. Prefix
 or suffix matching of values is not possible.
 
 For a rule to match, it has to find a valid combination of keys and values. The
@@ -66,7 +66,7 @@ The rules in a configuration file are processed sequentially and the first
 match for each tag wins.
 
 A rule where key and value are the empty string is special. This defines the
-fallback when none of the rules matches. The fallback is always used as a last
+fallback when none of the rules match. The fallback is always used as a last
 resort when nothing else matches, no matter where the rule appears in the file.
 Defining multiple fallback rules is not allowed. What happens in this case,
 is undefined.
@@ -121,17 +121,17 @@ One or more of the following properties may be given for each tag:
 
 * `address`
 
-    At tag to the list of address tags. If the tag starts with `addr:` or
+    Add tag to the list of address tags. If the tag starts with `addr:` or
     `is_in:`, then this prefix is cut off before adding it to the list.
 
 * `postcode`
 
-    At the value as a postcode to the address tags. If multiple tags are
+    Add the value as a postcode to the address tags. If multiple tags are
     candidate for postcodes, one wins out and the others are dropped.
 
 * `country`
 
-    At the value as a country code to the address tags. The value must be a
+    Add the value as a country code to the address tags. The value must be a
     two letter country code, otherwise it is ignored. If there are multiple
     tags that match, then one wins out and the others are dropped.
 

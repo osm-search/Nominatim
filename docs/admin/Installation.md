@@ -34,28 +34,28 @@ osm2pgsql README for additional dependencies required for compiling osm2pgsql.
 For running tests:
 
   * [behave](http://pythonhosted.org/behave/)
-  * [Psycopg2](http://initd.org/psycopg)
+  * [Psycopg2](https://initd.org/psycopg)
   * [nose](https://nose.readthedocs.io)
   * [phpunit](https://phpunit.de)
 
 For running Nominatim:
 
-  * [PostgreSQL](http://www.postgresql.org) (9.3 or later)
-  * [PostGIS](http://postgis.refractions.net) (2.2 or later)
-  * [PHP](http://php.net) (7.0 or later)
+  * [PostgreSQL](https://www.postgresql.org) (9.3 or later)
+  * [PostGIS](https://postgis.org) (2.2 or later)
+  * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * [PEAR::DB](http://pear.php.net/package/DB)
+  * [PEAR::DB](https://pear.php.net/package/DB)
   * a webserver (apache or nginx are recommended)
 
 For running continuous updates:
 
-  * [pyosmium](http://osmcode.org/pyosmium/)
+  * [pyosmium](https://osmcode.org/pyosmium/)
 
 ### Hardware
 
 A minimum of 2GB of RAM is required or installation will fail. For a full
-planet import 32GB of RAM or more strongly are recommended.
+planet import 32GB of RAM or more are strongly recommended.
 
 For a full planet install you will need at least 700GB of hard disk space
 (take into account that the OSM database is growing fast). SSD disks

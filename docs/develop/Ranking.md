@@ -21,7 +21,7 @@ Usually only administrative boundaries and place nodes and areas are
 eligible to be part of an address. All other objects have an address rank
 of 0.
 
-Note that the search rank of a place place a role in the address computation
+Note that the search rank of a place plays a role in the address computation
 as well. When collecting the places that should make up the address parts
 then only places are taken into account that have a lower address rank than
 the search rank of the base object.
@@ -37,7 +37,7 @@ into the database. There are a few hard-coded rules for the assignment:
     * highway nodes
     * landuse that is not an area
 
-Other than that, the ranks can be freely assigned via the json file
+Other than that, the ranks can be freely assigned via the JSON file
 defined with `CONST_Address_Level_Config` according to their type and
 the country they are in.
 
@@ -78,12 +78,13 @@ definition is used as a fallback, when nothing more specific for a given
 country exists.
 
 `tags` contains the ranks for key/value pairs. The ranks can be either a
-single number, in which case they are to search and address rank, or a tuple
+single number, in which case they are the search and address rank, or an array
 of search and address rank (in that order). The value may be left empty.
 Then the rank is used when no more specific value is found for the given
 key.
 
-Countries and key/value combination may appear in multiple defintions. Just
+Countries and key/value combination may appear in multiple definitions. Just
 make sure that each combination of counrty/key/value appears only once per
 file. Otherwise the import will fail with a UNIQUE INDEX constraint violation
 on import.
+

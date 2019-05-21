@@ -25,7 +25,7 @@ See [Place Output Formats](Output.md) for details on each format. (Default: xml)
 
 * `json_callback=<string>`
 
-Wrap json output in a callback function (JSONP) i.e. `<string>(<json>)`.
+Wrap JSON output in a callback function (JSONP) i.e. `<string>(<json>)`.
 Only has an effect for JSON output formats.
 
 ### Output details

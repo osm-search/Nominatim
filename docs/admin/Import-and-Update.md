@@ -189,25 +189,19 @@ entire US adds about 10GB to your database.
   1. Get preprocessed TIGER 2018 data and unpack it into the
      data directory in your Nominatim sources:
 
-```sh
-    cd Nominatim/data
-    wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
-    tar xf tiger2018-nominatim-preprocessed.tar.gz
-```
+        cd Nominatim/data
+        wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
+        tar xf tiger2018-nominatim-preprocessed.tar.gz
 
     `data-source/us-tiger/README.md` explains how the data got preprocessed.
 
   2. Import the data into your Nominatim database:
 
-```sh
-    ./utils/setup.php --import-tiger-data
-```
+        ./utils/setup.php --import-tiger-data
 
   3. Enable use of the Tiger data in your `settings/local.php` by adding:
 
-```
          @define('CONST_Use_US_Tiger_Data', true);
-```
 
   4. Apply the new settings:
 

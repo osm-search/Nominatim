@@ -1,6 +1,6 @@
 # Place Output
 
-The [\reverse](Reverse.md), [\search](Search.md) and [\lookup](Lookup.md)
+The [/reverse](Reverse.md), [/search](Search.md) and [/lookup](Lookup.md)
 API calls produce very similar output which is explained in this section.
 There is one section for each format which is selectable via the `format`
 parameter.
@@ -70,7 +70,7 @@ This is the same as the JSON format with two changes:
 
 ### GeoJSON
 
-This format follows the [RFC7946](http://geojson.org). Every feature includes
+This format follows the [RFC7946](https://geojson.org). Every feature includes
 a bounding box (`bbox`).
 
 The feature list has the following fields:
@@ -83,7 +83,7 @@ The feature list has the following fields:
  * `importance` - computed importance rank
  * `icon` - link to class icon (if available)
  * `address` - dictionary of address details (only with `addressdetails=1`)
- * `extratags` - dictionary with additional useful tags like website or maxspeed
+ * `extratags` - dictionary with additional useful tags like `website` or `maxspeed`
    (only with `extratags=1`)
  * `namedetails` - dictionary with full list of available names including ref etc.
 
@@ -120,7 +120,7 @@ formats depending on the API call.
 
 ```
 <reversegeocode timestamp="Sat, 11 Aug 18 11:53:21 +0000"
-                attribution="Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright"
+                attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright"
                 querystring="lat=48.400381&lon=11.745876&zoom=5&format=xml">
   <result place_id="179509537" osm_type="relation" osm_id="2145268" ref="BY"
           lat="48.9467562" lon="11.4038717"
@@ -154,7 +154,7 @@ The place information can be found in the `result` element. The attributes of th
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `boundingbox` - comma-separated list of corner coordinates
 
-The full address address of the result can be found in the content of the
+The full address of the result can be found in the content of the
 `result` element as a comma-separated list.
 
 Additional information requested with `addressdetails=1`, `extratags=1` and
@@ -164,12 +164,12 @@ Additional information requested with `addressdetails=1`, `extratags=1` and
 
 ```
 <searchresults timestamp="Sat, 11 Aug 18 11:55:35 +0000"
-               attribution="Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright"
+               attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright"
                querystring="london" polygon="false" exclude_place_ids="100149"
                more_url="https://nominatim.openstreetmap.org/search.php?q=london&addressdetails=1&extratags=1&exclude_place_ids=100149&format=xml&accept-language=en-US%2Cen%3Bq%3D0.7%2Cde%3Bq%3D0.3">
   <place place_id="100149" osm_type="node" osm_id="107775" place_rank="15"
          boundingbox="51.3473219,51.6673219,-0.2876474,0.0323526" lat="51.5073219" lon="-0.1276474"
-         display_name="London, Greater London, England, SW1A 2DU, United Kingdom" 
+         display_name="London, Greater London, England, SW1A 2DU, United Kingdom"
          class="place" type="city" importance="0.9654895765402"
          icon="https://nominatim.openstreetmap.org/images/mapicons/poi_place_city.p.20.png">
     <extratags>
@@ -232,7 +232,7 @@ permanent for later use.
 
 The combination `osm_type`+`osm_id` is slighly better but remember in
 OpenStreetMap mappers can delete, split, recreate places (and those
-get a new `osm_id`), there is no link between those old and new id.
+get a new `osm_id`), there is no link between those old and new ids.
 Places can also change their meaning without changing their `osm_id`,
 e.g. when a restaurant is retagged as supermarket. For a more in-depth
 discussion see [Permanent ID](https://wiki.openstreetmap.org/wiki/Permanent_ID).

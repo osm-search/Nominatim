@@ -36,7 +36,7 @@ the directory exists. There should be at least 40GB of free space.
 ### Wikipedia rankings
 
 Wikipedia can be used as an optional auxiliary data source to help indicate
-the importance of osm features. Nominatim will work without this information
+the importance of OSM features. Nominatim will work without this information
 but it will improve the quality of the results if this is installed.
 This data is available as a binary download:
 
@@ -45,7 +45,7 @@ This data is available as a binary download:
     wget https://www.nominatim.org/data/wikipedia_redirect.sql.bin
 
 Combined the 2 files are around 1.5GB and add around 30GB to the install
-size of nominatim. They also increase the install time by an hour or so.
+size of Nominatim. They also increase the install time by an hour or so.
 
 *NOTE:* you'll need to download the Wikipedia rankings before performing
 the initial import of the data if you want the rankings applied to the
@@ -53,7 +53,7 @@ loaded data.
 
 ### UK postcodes
 
-Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded: 
+Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded:
 
     cd $NOMINATIM_SOURCE_DIR/data
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
@@ -77,7 +77,7 @@ below. There are also
 
 Please be aware that some extracts are not cut exactly along the country
 boundaries. As a result some parts of the boundary may be missing which means
-that cannot compute the areas for some administrative areas.
+that Nominatim cannot compute the areas for some administrative areas.
 
 ### Dropping Data Required for Dynamic Updates
 
@@ -99,7 +99,7 @@ database or reuse the space later.
 
 If you only want to use the Nominatim database for reverse lookups or
 if you plan to use the installation only for exports to a
-[photon](http://photon.komoot.de/) database, then you can set up a database
+[photon](https://photon.komoot.de/) database, then you can set up a database
 without search indexes. Add `--reverse-only` to your setup command above.
 
 This saves about 5% of disk space.
@@ -121,7 +121,7 @@ import styles available which only read selected data:
 
 The style can be changed with the configuration `CONST_Import_Style`.
 
-To give you an idea of the impact of using the different style, the table
+To give you an idea of the impact of using the different styles, the table
 below gives rough estimates of the final database size after import of a
 2018 planet and after using the `--drop` option. It also shows the time
 needed for the import on a machine with 32GB RAM, 4 CPUS and SSDs. Note that
@@ -136,7 +136,7 @@ address   |   59h        |  500 GB    |  260 GB
 full      |   80h        |  575 GB    |  300 GB
 
 You can also customize the styles further. For an description of the
-style format see [the developement section](../develop/Import.md).
+style format see [the development section](../develop/Import.md).
 
 ## Initial import of the data
 
@@ -157,7 +157,7 @@ about the same size as the file you are importing but never more than
 2/3 of RAM available. If your machine starts swapping reduce the size.
 
 Computing word frequency for search terms can improve the performance of
-forward geocoding in particular under high load as it helps Postgres' query
+forward geocoding in particular under high load as it helps PostgreSQL's query
 planner to make the right decisions. To recompute word counts run:
 
 ```sh
@@ -195,7 +195,7 @@ entire US adds about 10GB to your database.
 
     `data-source/us-tiger/README.md` explains how the data got preprocessed.
 
-  2. Import the data into your Nominatim database: 
+  2. Import the data into your Nominatim database:
 
         ./utils/setup.php --import-tiger-data
 
@@ -212,7 +212,7 @@ entire US adds about 10GB to your database.
 
 ## Updates
 
-There are many different possibilities to update your Nominatim database.
+There are many different ways to update your Nominatim database.
 The following section describes how to keep it up-to-date with Pyosmium.
 For a list of other methods see the output of `./utils/update.php --help`.
 
@@ -241,7 +241,7 @@ to update using the global minutely diffs.
 
 If you want a different update source you will need to add some settings
 to `settings/local.php`. For example, to use the daily country extracts
-diffs for Ireland from geofabrik add the following:
+diffs for Ireland from Geofabrik add the following:
 
     // base URL of the replication service
     @define('CONST_Replication_Url', 'https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
@@ -257,7 +257,7 @@ To set up the update process now run the following command:
 It outputs the date where updates will start. Recheck that this date is
 what you expect.
 
-The --init-updates command needs to be rerun whenever the replication service
+The `--init-updates` command needs to be rerun whenever the replication service
 is changed.
 
 #### Updating Nominatim

@@ -7,11 +7,11 @@
 Nominatim computes the address from two sources in the OpenStreetMap data:
 from administrative boundaries and from place nodes. Boundaries are the more
 useful source. They precisely describe an area. So it is very clear for
-Nominatim if a point belongs to an area of not. Place nodes are more complicated.
-These are only points without any precise extend. So Nominatim has to take a
-guess and assume that an address belongs to the closest place nose it can find.
+Nominatim if a point belongs to an area or not. Place nodes are more complicated.
+These are only points without any precise extent. So Nominatim has to take a
+guess and assume that an address belongs to the closest place node it can find.
 In an ideal world, Nominatim would not need the place nodes but there are
-many places on earth where there are not precise boundaries available for
+many places on earth where there are no precise boundaries available for
 all parts that make up an address. This is in particular true for the more
 local address parts, like villages and suburbs. Therefore it is not possible
 to completely dismiss place nodes. And sometimes they sneak in where they
@@ -21,7 +21,7 @@ As a OpenStreetMap mapper, you can improve the situation in two ways: if you
 see a place node for which already an administrative area exists, then you
 should _link_ the two by adding the node with a 'label' role to the boundary
 relation. If there is no administrative area, you can add the approximate
-extend of the place and tag it place=<something> as well.
+extent of the place and tag it place=<something> as well.
 
 #### 2. When doing reverse search, the address details have parts that don't contain the point I was looking up.
 
@@ -30,7 +30,7 @@ Reverse does not give you the address of the point you asked for. Reverse
 returns the closest object to the point you asked for and then returns the
 address of that object. Now, if you are close to a border, then the closest
 object may be across that border. When Nominatim then returns the address,
-contains the county/state/country across the border.
+it contains the county/state/country across the border.
 
 #### 3. I get different counties/states/countries when I change the zoom parameter in the reverse query. How is that possible?
 
@@ -45,12 +45,12 @@ sometimes the other for the closest point.
 
 Nominatim assigns each map feature one country. Those outside any administrative
 boundaries are assigned a special no-country. Continents or other super-national
-administrations (e.g. European Union, NATO, Custom unions) are not supported, 
+administrations (e.g. European Union, NATO, Custom unions) are not supported,
 see also [Administrative Boundary](https://wiki.openstreetmap.org/wiki/Tag:boundary%3Dadministrative#Super-national_administrations).
 
 #### 5. Can you return the timezone?
 
-See this separate OpenStreetMap-based project [Timezone Boundary Builder](https://github.com/evansiroky/timezone-boundary-builder)
+See this separate OpenStreetMap-based project [Timezone Boundary Builder](https://github.com/evansiroky/timezone-boundary-builder).
 
 #### 6. I want to download a list of streets/restaurants of a city/region
 

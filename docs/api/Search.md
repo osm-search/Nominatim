@@ -1,6 +1,6 @@
 # Search queries
 
-The search API allows to look up a location from a textual description.
+The search API allows you to look up a location from a textual description.
 Nominatim supports structured as well as free-form search queries.
 
 The search query may also contain
@@ -46,7 +46,7 @@ In this form, the query may be given through two different sets of parameters:
     Structured requests are faster but are less robust against alternative
     OSM tagging schemas. **Do not combine with** `q=<query>` **parameter**.
 
-All three query forms accept the additional paramters listed below.
+All three query forms accept the additional parameters listed below.
 
 ### Output format
 
@@ -56,7 +56,7 @@ See [Place Output Formats](Output.md) for details on each format. (Default: html
 
 * `json_callback=<string>`
 
-Wrap json output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
+Wrap JSON output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.
 Only has an effect for JSON output formats.
 
 ### Output details
@@ -175,12 +175,12 @@ This overrides the specified machine readable format. (Default: 0)
 
 ```xml
   <searchresults timestamp="Sat, 07 Nov 09 14:42:10 +0000" querystring="135 pilkington, avenue birmingham" polygon="true">
-    <place 
-      place_id="1620612" osm_type="node" osm_id="452010817" 
-      boundingbox="52.548641204834,52.5488433837891,-1.81612110137939,-1.81592094898224" 
-      polygonpoints="[['-1.81592098644987','52.5487429714954'],['-1.81592290792183','52.5487234624632'],...]" 
-      lat="52.5487429714954" lon="-1.81602098644987" 
-      display_name="135, Pilkington Avenue, Wylde Green, City of Birmingham, West Midlands (county), B72, United Kingdom" 
+    <place
+      place_id="1620612" osm_type="node" osm_id="452010817"
+      boundingbox="52.548641204834,52.5488433837891,-1.81612110137939,-1.81592094898224"
+      polygonpoints="[['-1.81592098644987','52.5487429714954'],['-1.81592290792183','52.5487234624632'],...]"
+      lat="52.5487429714954" lon="-1.81602098644987"
+      display_name="135, Pilkington Avenue, Wylde Green, City of Birmingham, West Midlands (county), B72, United Kingdom"
       class="place" type="house">
       <house_number>135</house_number>
       <road>Pilkington Avenue</road>

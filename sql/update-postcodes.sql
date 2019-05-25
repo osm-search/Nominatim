@@ -6,7 +6,7 @@ SELECT country_code,
        ST_Centroid(ST_Collect(ST_Centroid(geometry))) as centroid
   FROM placex
  WHERE address ? 'postcode'
-       AND address->'postcode' NOT SIMILAR TO '%(,|;)%'
+       AND address->'postcode' NOT SIMILAR TO '%(,|;|:)%'
        AND geometry IS NOT null
 GROUP BY country_code, pc;
 

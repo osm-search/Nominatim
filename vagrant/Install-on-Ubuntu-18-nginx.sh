@@ -97,7 +97,7 @@ server {
         if (!-f \$document_root\$fastcgi_script_name) {
             return 404;
         }
-        fastcgi_pass unix:/var/run/php7.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
         fastcgi_index search.php;
         include fastcgi.conf;
     }

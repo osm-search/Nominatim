@@ -80,7 +80,7 @@ class SetupFunctions
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
-        $sCreateDBCmd = 'createdb -E UTF-8 -p '.$this->aDSNInfo['port'].' '.$this->aDSNInfo['database'];
+        $sCreateDBCmd = 'createdb -E UTF-8 -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'];
         if (isset($this->aDSNInfo['username'])) {
             $sCreateDBCmd .= ' -U '.$this->aDSNInfo['username'];
         }

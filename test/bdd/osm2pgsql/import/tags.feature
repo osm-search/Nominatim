@@ -96,9 +96,9 @@ Feature: Tag evaluation
         Then place contains
          | object | name |
          | N1     | 'name: de' : 'Foo', 'name' : 'real1' |
-         | N2     | 'name: de' : 'Foo', 'name' : 'real2' |
-         | N3     | 'name: de' : 'Foo', 'name:\\\\' : 'real3' |
-         | N4     | 'name: de' : 'Foo', 'name' : 'rea\\l3' |
+         | N2     | 'name:\nde' : 'Foo', 'name' : 'real2' |
+         | N3     | 'name:\tde' : 'Foo', 'name:\\\\' : 'real3' |
+         | N4     | 'name:\tde' : 'Foo', 'name' : 'rea\\l3' |
 
     Scenario: Unprintable character in address tag are maintained
         When loading osm data

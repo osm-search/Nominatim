@@ -1162,6 +1162,7 @@ TRIGGER
 DECLARE
 
   place_centroid GEOMETRY;
+  near_centroid GEOMETRY;
 
   search_maxdistance FLOAT[];
   search_mindistance FLOAT[];
@@ -1266,6 +1267,8 @@ BEGIN
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   place_centroid := ST_PointOnSurface(NEW.geometry);
+  -- For searching near features rather use the centroid
+  near_centroid := ST_Centroid(NEW.geometry);
   NEW.centroid := null;
   NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(place_centroid);
@@ -1396,7 +1399,7 @@ BEGIN
     IF NEW.parent_place_id IS NULL AND addr_street IS NOT NULL THEN
       address_street_word_ids := get_name_ids(make_standard_name(addr_street));
       IF address_street_word_ids IS NOT NULL THEN
-        SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+        SELECT place_id from getNearestNamedRoadFeature(NEW.partition, near_centroid, address_street_word_ids) INTO NEW.parent_place_id;
       END IF;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for addr:street (%)', NEW.parent_place_id;
@@ -1404,7 +1407,7 @@ BEGIN
     IF NEW.parent_place_id IS NULL AND addr_place IS NOT NULL THEN
       address_street_word_ids := get_name_ids(make_standard_name(addr_place));
       IF address_street_word_ids IS NOT NULL THEN
-        SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+        SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, near_centroid, address_street_word_ids) INTO NEW.parent_place_id;
       END IF;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for addr:place (%)', NEW.parent_place_id;
@@ -1439,7 +1442,7 @@ BEGIN
           IF location.address ? 'street' THEN
             address_street_word_ids := get_name_ids(make_standard_name(location.address->'street'));
             IF address_street_word_ids IS NOT NULL THEN
-              SELECT place_id from getNearestNamedRoadFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+              SELECT place_id from getNearestNamedRoadFeature(NEW.partition, near_centroid, address_street_word_ids) INTO NEW.parent_place_id;
               EXIT WHEN NEW.parent_place_id is not NULL;
             END IF;
           END IF;
@@ -1448,7 +1451,7 @@ BEGIN
           IF location.address ? 'place' THEN
             address_street_word_ids := get_name_ids(make_standard_name(location.address->'place'));
             IF address_street_word_ids IS NOT NULL THEN
-              SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, place_centroid, address_street_word_ids) INTO NEW.parent_place_id;
+              SELECT place_id from getNearestNamedPlaceFeature(NEW.partition, near_centroid, address_street_word_ids) INTO NEW.parent_place_id;
               EXIT WHEN NEW.parent_place_id is not NULL;
             END IF;
           END IF;
@@ -1477,7 +1480,7 @@ BEGIN
 
     -- Still nothing, just use the nearest road
     IF NEW.parent_place_id IS NULL THEN
-      SELECT place_id FROM getNearestRoadFeature(NEW.partition, place_centroid) INTO NEW.parent_place_id;
+      SELECT place_id FROM getNearestRoadFeature(NEW.partition, near_centroid) INTO NEW.parent_place_id;
     END IF;
     --DEBUG: RAISE WARNING 'Checked for nearest way (%)', NEW.parent_place_id;
 
@@ -1500,7 +1503,7 @@ BEGIN
              NEW.postcode := location.postcode;
           END IF;
           IF NEW.postcode is null THEN
-            NEW.postcode := get_nearest_postcode(NEW.country_code, place_centroid);
+            NEW.postcode := get_nearest_postcode(NEW.country_code, near_centroid);
           END IF;
       END IF;
 
@@ -1770,7 +1773,7 @@ BEGIN
                                   CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
                                        THEN NEW.geometry
-                                       ELSE place_centroid END,
+                                       ELSE near_centroid END,
                                   search_maxrank, isin_tokens)
   LOOP
     IF location.rank_address != location_rank_search THEN

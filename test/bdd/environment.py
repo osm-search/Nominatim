@@ -195,6 +195,7 @@ class NominatimEnvironment(object):
         proc = subprocess.Popen(cmd, cwd=self.build_dir,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outp, outerr) = proc.communicate()
+        outerr = outerr.decode('utf-8').replace('\\n', '\n')
         logger.debug("run_nominatim_script: %s\n%s\n%s" % (cmd, outp, outerr))
         assert (proc.returncode == 0), "Script '%s' failed:\n%s\n%s\n" % (script, outp, outerr)
 

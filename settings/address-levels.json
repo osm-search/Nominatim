@@ -78,6 +78,9 @@
       },
       "mountain_pass" : {
           "" : [20, 0]
+      },
+      "historic" : {
+          "neighbourhood" : [30, 0]
       }
   }
 }

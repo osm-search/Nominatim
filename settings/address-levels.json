@@ -83,6 +83,16 @@
           "neighbourhood" : [30, 0]
       }
   }
+},
+{ "countries" : [ "de" ],
+  "tags" : {
+      "place" : {
+          "county" : [12, 0]
+      },
+      "boundary" : {
+          "administrative5" : [10, 0]
+      }
+  }
 }
 ]
 

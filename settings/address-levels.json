@@ -3,8 +3,8 @@
       "place" : {
           "sea" : [2, 0],
           "continent" : [2, 0],
-          "country" : [4, 4],
-          "state" : [8, 8],
+          "country" : [4, 0],
+          "state" : [8, 0],
           "region" : [18, 0],
           "county" : 12,
           "city" : 16,

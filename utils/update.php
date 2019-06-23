@@ -29,6 +29,7 @@ $aCMDOptions
    array('import-file', '', 0, 1, 1, 1, 'realpath', 'Re-import data from an OSM file'),
    array('import-diff', '', 0, 1, 1, 1, 'realpath', 'Import a diff (osc) file from local file system'),
    array('osm2pgsql-cache', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
+   array('osm2pgsql-processes', '', 0, 1, 1, 1, 'int', 'Cache size used by osm2pgsql'),
 
    array('import-node', '', 0, 1, 1, 1, 'int', 'Re-import node'),
    array('import-way', '', 0, 1, 1, 1, 'int', 'Re-import way'),
@@ -58,13 +59,19 @@ $oDB->connect();
 $aDSNInfo = Nominatim\DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
+// number of processes to be used by osm2pgsql
+$iProcessNumber = (isset($aResult['osm2pgsql-processes'])?$aResult['osm2pgsql-processes']:1);
+if ($iProcessNumber > 8) {
+    $iProcessNumber = 8;
+    echo "WARNING: resetting process count to $iProcessNumber\n";
+}
 // cache memory to be used by osm2pgsql, should not be more than the available memory
 $iCacheMemory = (isset($aResult['osm2pgsql-cache'])?$aResult['osm2pgsql-cache']:2000);
 if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     $iCacheMemory = getCacheMemoryMB();
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
-$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -S '.CONST_Import_Style.' -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
+$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes '.$iProcessNumber.' -C '.$iCacheMemory.' -O gazetteer -S '.CONST_Import_Style.' -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
 if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
     $sOsm2pgsqlCmd .= ' -U ' . $aDSNInfo['username'];
 }

@@ -48,7 +48,7 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
             $hLog[3]
         )));
         $sSQL .= ')';
-        $oDB->query($sSQL);
+        $oDB->exec($sSQL);
     }
 
     return $hLog;
@@ -67,7 +67,7 @@ function logEnd(&$oDB, $hLog, $iNumResults)
         $sSQL .= ' where starttime = '.$oDB->getDBQuoted($hLog[0]);
         $sSQL .= ' and ipaddress = '.$oDB->getDBQuoted($hLog[1]);
         $sSQL .= ' and query = '.$oDB->getDBQuoted($hLog[2]);
-        $oDB->query($sSQL);
+        $oDB->exec($sSQL);
     }
 
     if (CONST_Log_File) {

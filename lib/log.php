@@ -36,7 +36,7 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
             $sUserAgent = $_SERVER['HTTP_USER_AGENT'];
         else $sUserAgent = '';
         $sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format,searchterm)';
-        $sSQL .= ' values ('.
+        $sSQL .= ' values (';
         $sSQL .= join(',', $oDB->getDBQuotedList(array(
             $sType,
             $hLog[0],

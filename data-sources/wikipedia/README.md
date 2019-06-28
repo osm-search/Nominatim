@@ -11,8 +11,9 @@ Replace '2019' with the current year throughout.
 ```
 
 2. Download, convert, and import the data, then process summary statistics and compute importance scores
-``` cd data-sources/wikipedia 
-./wikipedia_import.sh```
+```cd data-sources/wikipedia 
+./wikipedia_import.sh
+```
 
 3. Dump the two tables needed by nominatim database (will prompt for user password):
 ``` pg_dump -t wikipedia_article wikipedia2019 -U username -h localhost -W > wikipedia_article.sql

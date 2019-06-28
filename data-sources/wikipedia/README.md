@@ -7,7 +7,8 @@ Processes data from whatever set of Wikipedia languages are specified. Processin
 Replace '2019' with the current year throughout.
 
 1. Create a new DB for processing
-```CREATE DATABASE wikipedia2019```
+```CREATE DATABASE wikipedia2019
+```
 
 2. Download, convert, and import the data, then process summary statistics and compute importance scores
 ``` cd data-sources/wikipedia 
@@ -20,6 +21,7 @@ pg_dump -t wikipedia_redirect wikipedia2019 -U postgres -h localhost -W > wikipe
 
 4. Import the two tables dumped above into nominatim DB. **Note:** If you have previous wikipedia tables make sure to first rename them.
 ``` cat wikipedia_article.sql | psql nominatim
-cat wikipedia_redirect.sql | psql nominatim```
+cat wikipedia_redirect.sql | psql nominatim
+```
 
 

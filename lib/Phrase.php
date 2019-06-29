@@ -9,7 +9,8 @@ namespace Nominatim;
  */
 class Phrase
 {
-    const MAX_DEPTH = 7;
+    public const MAX_WORDSET_LEN = 20;
+    public const MAX_WORDSETS = 100;
 
     // Complete phrase as a string.
     private $sPhrase;
@@ -20,13 +21,24 @@ class Phrase
     // Possible segmentations of the phrase.
     private $aWordSets;
 
+    public static function cmpByArraylen($aA, $aB)
+    {
+        $iALen = count($aA);
+        $iBLen = count($aB);
+
+        if ($iALen == $iBLen) {
+            return 0;
+        }
+
+        return ($iALen < $iBLen) ? -1 : 1;
+    }
+
 
     public function __construct($sPhrase, $sPhraseType)
     {
         $this->sPhrase = trim($sPhrase);
         $this->sPhraseType = $sPhraseType;
         $this->aWords = explode(' ', $this->sPhrase);
-        $this->aWordSets = $this->createWordSets($this->aWords, 0);
     }
 
     /**
@@ -60,10 +72,17 @@ class Phrase
      */
     public function addTokens(&$aTokens)
     {
-        foreach ($this->aWordSets as $aSet) {
-            foreach ($aSet as $sWord) {
-                $aTokens[' '.$sWord] = ' '.$sWord;
-                $aTokens[$sWord] = $sWord;
+        $iNumWords = count($this->aWords);
+
+        for ($i = 0; $i < $iNumWords; $i++) {
+            $sPhrase = $this->aWords[$i];
+            $aTokens[' '.$sPhrase] = ' '.$sPhrase;
+            $aTokens[$sPhrase] = $sPhrase;
+
+            for ($j = $i + 1; $j < $iNumWords; $j++) {
+                $sPhrase .= ' '.$this->aWords[$j];
+                $aTokens[' '.$sPhrase] = ' '.$sPhrase;
+                $aTokens[$sPhrase] = $sPhrase;
             }
         }
     }
@@ -75,44 +94,59 @@ class Phrase
      */
     public function invertWordSets()
     {
-        $this->aWordSets = $this->createInverseWordSets($this->aWords, 0);
+        foreach ($this->aWordSets as $i => $aSet) {
+            $this->aWordSets[$i] = array_reverse($aSet);
+        }
     }
 
-    private function createWordSets($aWords, $iDepth)
+    public function computeWordSets($oTokens)
     {
-        $aResult = array(array(join(' ', $aWords)));
-        $sFirstToken = '';
-        if ($iDepth < Phrase::MAX_DEPTH) {
-            while (count($aWords) > 1) {
-                $sWord = array_shift($aWords);
-                $sFirstToken .= ($sFirstToken?' ':'').$sWord;
-                $aRest = $this->createWordSets($aWords, $iDepth + 1);
-                foreach ($aRest as $aSet) {
-                    $aResult[] = array_merge(array($sFirstToken), $aSet);
+        $iNumWords = count($this->aWords);
+        // Caches the word set for the partial phrase up to word i.
+        $aSetCache = array_fill(0, $iNumWords, array());
+
+        // Initialise first element of cache. There can only be the word.
+        if ($oTokens->containsAny($this->aWords[0])) {
+            $aSetCache[0][] = array($this->aWords[0]);
+        }
+
+        // Now do the next elements using what we already have.
+        for ($i = 1; $i < $iNumWords; $i++) {
+            for ($j = $i; $j > 0; $j--) {
+                $sPartial = $j == $i ? $this->aWords[$j] : $this->aWords[$j].' '.$sPartial;
+                if (!empty($aSetCache[$j - 1]) && $oTokens->containsAny($sPartial)) {
+                    $aPartial = array($sPartial);
+                    foreach ($aSetCache[$j - 1] as $aSet) {
+                        if (count($aSet) < Phrase::MAX_WORDSET_LEN) {
+                            $aSetCache[$i][] = array_merge($aSet, $aPartial);
+                        }
+                    }
+                    if (count($aSetCache[$i]) > 2 * Phrase::MAX_WORDSETS) {
+                        usort(
+                            $aSetCache[$i],
+                            array('\Nominatim\Phrase', 'cmpByArraylen')
+                        );
+                        $aSetCache[$i] = array_slice(
+                            $aSetCache[$i],
+                            0,
+                            Phrase::MAX_WORDSETS
+                        );
+                    }
                 }
+            }
+
+            // finally the current full phrase
+            $sPartial = $this->aWords[0].' '.$sPartial;
+            if ($oTokens->containsAny($sPartial)) {
+                $aSetCache[$i][] = array($sPartial);
             }
         }
 
-        return $aResult;
+        $this->aWordSets = $aSetCache[$iNumWords - 1];
+        usort($this->aWordSets, array('\Nominatim\Phrase', 'cmpByArraylen'));
+        $this->aWordSets = array_slice($this->aWordSets, 0, Phrase::MAX_WORDSETS);
     }
 
-    private function createInverseWordSets($aWords, $iDepth)
-    {
-        $aResult = array(array(join(' ', $aWords)));
-        $sFirstToken = '';
-        if ($iDepth < Phrase::MAX_DEPTH) {
-            while (count($aWords) > 1) {
-                $sWord = array_pop($aWords);
-                $sFirstToken = $sWord.($sFirstToken?' ':'').$sFirstToken;
-                $aRest = $this->createInverseWordSets($aWords, $iDepth + 1);
-                foreach ($aRest as $aSet) {
-                    $aResult[] = array_merge(array($sFirstToken), $aSet);
-                }
-            }
-        }
-
-        return $aResult;
-    }
 
     public function debugInfo()
     {

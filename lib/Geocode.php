@@ -348,10 +348,7 @@ class Geocode
             $aNewPhraseSearches = array();
             $sPhraseType = $bIsStructured ? $oPhrase->getPhraseType() : '';
 
-            foreach ($oPhrase->getWordSets() as $iWordSet => $aWordset) {
-                // Too many permutations - too expensive
-                if ($iWordSet > 120) break;
-
+            foreach ($oPhrase->getWordSets() as $aWordset) {
                 $aWordsetSearches = $aSearches;
 
                 // Add all words from this wordset
@@ -641,7 +638,6 @@ class Geocode
                 }
             }
 
-            Debug::printDebugTable('Phrases', $aPhrases);
             Debug::printVar('Tokens', $aTokens);
 
             $oValidTokens = new TokenList();
@@ -685,6 +681,11 @@ class Geocode
                 // TODO: suggestions
 
                 Debug::printGroupTable('Valid Tokens', $oValidTokens->debugInfo());
+
+                foreach ($aPhrases as $oPhrase) {
+                    $oPhrase->computeWordSets($oValidTokens);
+                }
+                Debug::printDebugTable('Phrases', $aPhrases);
 
                 Debug::newSection('Search candidates');
 

@@ -56,6 +56,18 @@ class TokenList
     }
 
     /**
+     * Check if there are partial or full tokens for the given word.
+     *
+     * @param string $sWord Token word to look for.
+     *
+     * @return bool True if there is one or more token for the token word.
+     */
+    public function containsAny($sWord)
+    {
+        return isset($this->aTokens[$sWord]) || isset($this->aTokens[' '.$sWord]);
+    }
+
+    /**
      * Get the list of tokens for the given token word.
      *
      * @param string $sWord Token word to look for.

@@ -220,8 +220,8 @@ Feature: Import into placex
           | R21    | 30          | 30 |
           | R22    | 30          | 30 |
           | R23    | 30          | 30 |
-          | R40    | 4           | 4 |
-          | R41    | 8           | 8 |
+          | R40    | 4           | 0 |
+          | R41    | 8           | 0 |
 
     Scenario: search and address ranks for highways correctly assigned
         Given the scene roads-with-pois

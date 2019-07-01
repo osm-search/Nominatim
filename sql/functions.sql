@@ -887,11 +887,7 @@ BEGIN
     END IF;
 
     -- some postcorrections
-    IF NEW.class = 'place' THEN
-      IF NEW.type in ('continent', 'sea', 'country', 'state') AND NEW.osm_type = 'N' THEN
-        NEW.rank_address := 0;
-      END IF;
-    ELSEIF NEW.class = 'waterway' AND NEW.osm_type = 'R' THEN
+    IF NEW.class = 'waterway' AND NEW.osm_type = 'R' THEN
         -- Slightly promote waterway relations so that they are processed
         -- before their members.
         NEW.rank_search := NEW.rank_search - 1;
@@ -907,11 +903,6 @@ BEGIN
   IF NEW.rank_search < 4 THEN
     NEW.country_code := NULL;
   END IF;
-
--- Block import below rank 22
---  IF NEW.rank_search > 22 THEN
---    RETURN NULL;
---  END IF;
 
   --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 

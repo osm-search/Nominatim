@@ -113,9 +113,9 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
 
         $oPhrase = new Phrase(join(' ', array_fill(0, 18, 'a')), '');
         $oPhrase->computeWordSets(new TokensFullSet());
-        $this->assertEquals(Phrase::MAX_WORDSETS, count($oPhrase->getWordSets()));
+        $this->assertEquals(100, count($oPhrase->getWordSets()));
         $oPhrase->invertWordSets();
-        $this->assertEquals(Phrase::MAX_WORDSETS, count($oPhrase->getWordSets()));
+        $this->assertEquals(100, count($oPhrase->getWordSets()));
     }
 
 

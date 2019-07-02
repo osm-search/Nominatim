@@ -9,8 +9,8 @@ namespace Nominatim;
  */
 class Phrase
 {
-    public const MAX_WORDSET_LEN = 20;
-    public const MAX_WORDSETS = 100;
+    const MAX_WORDSET_LEN = 20;
+    const MAX_WORDSETS = 100;
 
     // Complete phrase as a string.
     private $sPhrase;

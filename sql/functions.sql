@@ -1230,6 +1230,8 @@ BEGIN
   END IF;
 
   --DEBUG: RAISE WARNING 'Copy over address tags';
+  -- housenumber is a computed field, so start with an empty value
+  NEW.housenumber := NULL;
   IF NEW.address is not NULL THEN
       IF NEW.address ? 'conscriptionnumber' THEN
         i := getorcreate_housenumber_id(make_standard_name(NEW.address->'conscriptionnumber'));

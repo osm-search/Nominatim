@@ -768,6 +768,28 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION osmline_reinsert(node_id BIGINT, geom GEOMETRY)
+  RETURNS BOOLEAN
+  AS $$
+DECLARE
+  existingline RECORD;
+BEGIN
+   SELECT w.id FROM planet_osm_ways w, location_property_osmline p
+     WHERE p.linegeo && geom and p.osm_id = w.id and p.indexed_status = 0
+           and node_id = any(w.nodes) INTO existingline;
+
+   IF existingline.id is not NULL THEN
+       DELETE FROM location_property_osmline WHERE osm_id = existingline.id;
+       INSERT INTO location_property_osmline (osm_id, address, linegeo)
+         SELECT osm_id, address, geometry FROM place
+           WHERE osm_type = 'W' and osm_id = existingline.id;
+   END IF;
+
+   RETURN true;
+END;
+$$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION osmline_insert() RETURNS TRIGGER
   AS $$
@@ -908,7 +930,10 @@ BEGIN
 
   RETURN NEW; -- %DIFFUPDATES% The following is not needed until doing diff updates, and slows the main index process down
 
-  IF NEW.rank_address > 0 THEN
+  IF NEW.osm_type = 'N' and NEW.rank_search > 28 THEN
+      -- might be part of an interpolation
+      result := osmline_reinsert(NEW.osm_id, NEW.geometry);
+  ELSEIF NEW.rank_address > 0 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
       -- Performance: We just can't handle re-indexing for country level changes
       IF st_area(NEW.geometry) < 1 THEN
@@ -2200,12 +2225,13 @@ BEGIN
         indexed_status = 2,
         geometry = NEW.geometry
         where place_id = existingplacex.place_id;
-
       -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
       -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
-      IF NEW.osm_type='N' and NEW.class='place' and NEW.type='house' THEN
-          -- Is this node part of an interpolation line? search for it in location_property_osmline and mark the interpolation line for reparenting
-          update location_property_osmline p set indexed_status = 2 from planet_osm_ways w where p.linegeo && NEW.geometry and p.osm_id = w.id and NEW.osm_id = any(w.nodes);
+      IF NEW.osm_type='N'
+         and (coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+             or existing.geometry::text != NEW.geometry::text)
+      THEN
+          result:= osmline_reinsert(NEW.osm_id, NEW.geometry);
       END IF;
 
       -- linked places should get potential new naming and addresses

@@ -275,7 +275,6 @@ Feature: Update of address interpolations
           | parent_place_id | start | end |
           | W2              | 2     | 6 |
 
-    @Fail
     Scenario: housenumber added in middle of interpolation
       Given the grid
           | 1 |  |  |   |  | 2 |
@@ -334,7 +333,6 @@ Feature: Update of address interpolations
           | parent_place_id | start | end | geometry |
           | W1              | 2     | 10  | 3,4,5    |
 
-    @Fail
     Scenario: Change the start housenumber
       Given the grid
           | 1 |  | 2 |

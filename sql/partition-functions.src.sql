@@ -6,11 +6,9 @@ BEGIN
 -- start
   IF in_partition = -partition- THEN
     FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid FROM (
-        SELECT * FROM location_area_large_-partition- WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
-        UNION ALL
-        SELECT * FROM location_area_country WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
-      ) as location_area
+      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid
+      FROM location_area_large_-partition-
+      WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
         ST_Distance(feature, centroid) *
@@ -64,9 +62,9 @@ BEGIN
     RETURN TRUE;
   END IF;
 
-  IF in_rank_search <= 4 THEN
-    INSERT INTO location_area_country (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, centroid, geometry)
-      values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, in_centroid, in_geometry);
+  IF in_rank_search <= 4 and not in_estimate THEN
+    INSERT INTO location_area_country (place_id, country_code, geometry)
+      values (in_place_id, in_country_code, in_geometry);
     RETURN TRUE;
   END IF;
 

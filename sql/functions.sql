@@ -547,7 +547,7 @@ BEGIN
 -- RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
   -- Try for a OSM polygon
-  FOR nearcountry IN select country_code from location_area_country where country_code is not null and not isguess and st_covers(geometry, place_centre) limit 1
+  FOR nearcountry IN select country_code from location_area_country where country_code is not null and st_covers(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
@@ -1824,7 +1824,7 @@ BEGIN
 
       -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
       -- Add it to the list of search terms
-      IF NOT %REVERSE-ONLY% AND location.rank_search > 4 THEN
+      IF NOT %REVERSE-ONLY% THEN
           nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
       END IF;
       INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)

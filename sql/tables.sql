@@ -69,6 +69,15 @@ CREATE TABLE location_area (
 
 CREATE TABLE location_area_large () INHERITS (location_area);
 
+DROP TABLE IF EXISTS location_area_country;
+CREATE TABLE location_area_country (
+  place_id BIGINT,
+  country_code varchar(2),
+  geometry GEOMETRY(Geometry, 4326)
+  ) {ts:address-data};
+CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry) {ts:address-index};
+
+
 drop table IF EXISTS location_property CASCADE;
 CREATE TABLE location_property (
   place_id BIGINT,

@@ -6,6 +6,22 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
+## 3.3.0 -> master
+
+### Reorganisation of location_area_country table
+
+The table `location_area_country` has been optimized. You need to switch to the
+new format when you run updates. While updates are disabled, run the following
+SQL commands:
+
+```sql
+CREATE TABLE location_area_country_new AS
+  SELECT place_id, country_code, geometry FROM location_area_country;
+DROP TABLE location_area_country;
+ALTER TABLE location_area_country_new RENAME TO location_area_country;
+CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);
+CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id);
+```
 
 ## 3.2.0 -> 3.3.0
 

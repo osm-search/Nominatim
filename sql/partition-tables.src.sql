@@ -35,9 +35,6 @@ CREATE TABLE search_name_blank (
   );
 
 
-CREATE TABLE location_area_country () INHERITS (location_area_large) {ts:address-data};
-CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry) {ts:address-index};
-
 -- start
 CREATE TABLE location_area_large_-partition- () INHERITS (location_area_large) {ts:address-data};
 CREATE INDEX idx_location_area_large_-partition-_place_id ON location_area_large_-partition- USING BTREE (place_id) {ts:address-index};

@@ -27,14 +27,19 @@
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
                         expat-devel zlib-devel
 
-# If you want to run the test suite, you need to install the following
-# additional packages:
+
+# Optional Software
+# --------------------------------
+#
+# If you want to help with the development of Nominatim and run the
+# test suite, you need to install the following additional packages:
 
 #DOCS:    :::sh
     sudo yum install -y python34-pip python34-setuptools python34-devel \
                         php-phpunit-PHPUnit
     pip3 install --user behave nose pytidylib psycopg2
 
+    # Requires Composer package manager https://getcomposer.org/download/
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 

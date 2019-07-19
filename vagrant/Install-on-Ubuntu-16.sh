@@ -32,14 +32,18 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             apache2 php php-pgsql libapache2-mod-php \
                             php-intl git
 
-# If you want to run the test suite, you need to install the following
-# additional packages:
+# Optional Software
+# --------------------------------
+#
+# If you want to help with the development of Nominatim and run the
+# test suite, you need to install the following additional packages:
 
     sudo apt-get install -y python3-setuptools python3-dev python3-pip \
                             python3-psycopg2 python3-tidylib phpunit php-cgi
 
     pip3 install --user behave nose
 
+    # Requires Composer package manager https://getcomposer.org/download/
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 

@@ -9,7 +9,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'geojson'), 'xml');
+$sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'xml');
 set_exception_handler_by_format($sOutputFormat);
 
 // Preferred language
@@ -49,8 +49,10 @@ foreach ($aOsmIds as $sItem) {
             $oResult = $oPlace;
             unset($oResult['aAddress']);
             if (isset($oPlace['aAddress'])) $oResult['address'] = $oPlace['aAddress'];
-            unset($oResult['langaddress']);
-            $oResult['name'] = $oPlace['langaddress'];
+            if ($sOutputFormat != 'geocodejson') {
+                unset($oResult['langaddress']);
+                $oResult['name'] = $oPlace['langaddress'];
+            }
             $aSearchResults[] = $oResult;
         }
     }

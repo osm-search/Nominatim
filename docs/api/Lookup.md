@@ -19,7 +19,7 @@ Additional optional parameters are explained below.
 
 ### Output format
 
-* `format=[xml|json|geojson]`
+* `format=[xml|json|jsonv2|geojson|geocodejson]`
 
 See [Place Output Formats](Output.md) for details on each format. (Default: xml)
 

@@ -455,8 +455,12 @@ def website_lookup_request(context, fmt, query):
 
     if fmt == 'json ':
         outfmt = 'json'
+    elif fmt == 'jsonv2 ':
+        outfmt = 'json'
     elif fmt == 'geojson ':
         outfmt = 'geojson'
+    elif fmt == 'geocodejson ':
+        outfmt = 'geocodejson'
     else:
         outfmt = 'xml'
 

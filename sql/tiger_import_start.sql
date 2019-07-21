@@ -26,6 +26,11 @@ BEGIN
     endnumber = in_startnumber;
   END IF;
 
+  IF startnumber < 0 THEN
+    RAISE WARNING 'Negative house number range (% to %) on %, %', startnumber, endnumber, in_street, in_isin;
+    RETURN 0;
+  END IF;
+
   numberrange := endnumber - startnumber;
 
   IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN

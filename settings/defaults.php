@@ -23,8 +23,6 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 // term. Spaces are kept but collapsed to one standard space.
 @define('CONST_Term_Normalization_Rules', ":: NFD (); [[:Nonspacing Mark:] [:Cf:]] >;  :: lower (); [[:Punctuation:][:Space:]]+ > ' '; :: NFC ();");
 
-// Set to false to avoid importing extra postcodes for the US.
-@define('CONST_Use_Extra_US_Postcodes', true);
 /* Set to true after importing Tiger house number data for the US.
    Note: The tables must already exist or queries will throw errors.
          After changing this setting run ./utils/setup --create-functions

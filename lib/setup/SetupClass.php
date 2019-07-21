@@ -139,16 +139,20 @@ class SetupFunctions
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/country_osm_grid.sql.gz');
         $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
+        $this->pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode_table.sql');
 
         $sPostcodeFilename = CONST_BasePath.'/data/gb_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
             $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
-            warn('optional external UK postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
+            warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
         }
 
-        if (CONST_Use_Extra_US_Postcodes) {
-            $this->pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode.sql');
+        $sPostcodeFilename = CONST_BasePath.'/data/us_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
+        } else {
+            warn('optional external US postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
         }
 
         if ($this->bNoPartitions) {
@@ -558,17 +562,15 @@ class SetupFunctions
         $sSQL .= ' GROUP BY country_code, pc';
         $this->pgExec($sSQL);
 
-        if (CONST_Use_Extra_US_Postcodes) {
-            // only add postcodes that are not yet available in OSM
-            $sSQL  = 'INSERT INTO location_postcode';
-            $sSQL .= ' (place_id, indexed_status, country_code, postcode, geometry) ';
-            $sSQL .= "SELECT nextval('seq_place'), 1, 'us', postcode,";
-            $sSQL .= '       ST_SetSRID(ST_Point(x,y),4326)';
-            $sSQL .= '  FROM us_postcode WHERE postcode NOT IN';
-            $sSQL .= '        (SELECT postcode FROM location_postcode';
-            $sSQL .= "          WHERE country_code = 'us')";
-            $this->pgExec($sSQL);
-        }
+        // only add postcodes that are not yet available in OSM
+        $sSQL  = 'INSERT INTO location_postcode';
+        $sSQL .= ' (place_id, indexed_status, country_code, postcode, geometry) ';
+        $sSQL .= "SELECT nextval('seq_place'), 1, 'us', postcode,";
+        $sSQL .= '       ST_SetSRID(ST_Point(x,y),4326)';
+        $sSQL .= '  FROM us_postcode WHERE postcode NOT IN';
+        $sSQL .= '        (SELECT postcode FROM location_postcode';
+        $sSQL .= "          WHERE country_code = 'us')";
+        $this->pgExec($sSQL);
 
         // add missing postcodes for GB (if available)
         $sSQL  = 'INSERT INTO location_postcode';

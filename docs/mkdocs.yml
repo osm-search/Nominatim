@@ -22,6 +22,7 @@ pages:
         - 'Overview' : 'develop/overview.md'
         - 'OSM Data Import' : 'develop/Import.md'
         - 'Place Ranking' : 'develop/Ranking.md'
+        - 'Documentation' : 'develop/Documentation.md'
     - 'External Data Sources':
         - 'Overview' : 'data-sources/overview.md'
         - 'US Census (Tiger)': 'data-sources/US-Tiger.md'

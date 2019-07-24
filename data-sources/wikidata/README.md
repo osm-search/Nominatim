@@ -11,15 +11,17 @@ Replace '2019' with the current year throughout.
 
 2. Download, convert, and import the data, then process required items
 ``` cd data-sources/wikidata
-./wikidata_import.sh```
+./wikidata_import.sh
+```
 
 3. Dump the table needed by nominatim database (will prompt for user password):
 ``` pg_dump -t wikidata_places wikidata2019 -U username -h localhost -W > wikidata_places.sql
 ```
 
-4. Import the two tables dumped above into nominatim DB. **Note:** If you have previous wikidata tables make sure to first rename them.
+4. Import the table dumped above into nominatim DB. **Note:** If you have a previous wikidata table make sure to first rename it.
 ``` cat wikidata_places.sql | psql nominatim
-cat wikidata_places.sql | psql nominatim```
+cat wikidata_places.sql | psql nominatim
+```
 
 
 

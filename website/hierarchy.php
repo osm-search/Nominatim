@@ -58,7 +58,7 @@ if (CONST_Use_Aux_Location_data) {
 }
 
 
-$oAddressLookup = new AddressDetails($oDB, $iPlaceID, -1, $aLangPrefOrder);
+$oAddressLookup = new Nominatim\AddressDetails($oDB, $iPlaceID, -1, $aLangPrefOrder);
 $aPlaceAddress = array_reverse($oAddressLookup->getAddressDetails());
 
 if (empty($aPlaceAddress)) userError('Unknown place id.');

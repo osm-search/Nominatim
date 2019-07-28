@@ -51,12 +51,14 @@ size of Nominatim. They also increase the install time by an hour or so.
 the initial import of the data if you want the rankings applied to the
 loaded data.
 
-### UK postcodes
+### Great Britain, USA postcodes
 
-Nominatim can use postcodes from an external source to improve searches that involve a UK postcode. This data can be optionally downloaded:
+Nominatim can use postcodes from an external source to improve searches that
+involve a GB or US postcode. This data can be optionally downloaded:
 
     cd $NOMINATIM_SOURCE_DIR/data
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
+    wget https://www.nominatim.org/data/us_postcode_data.sql.gz
 
 ## Choosing the Data to Import
 

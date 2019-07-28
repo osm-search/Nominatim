@@ -14,7 +14,7 @@ class AddressDetails
     public function __construct(&$oDB, $iPlaceID, $sHousenumber, $mLangPref)
     {
         if (is_array($mLangPref)) {
-            $mLangPref = 'ARRAY['.join(',', array_map('getDBQuoted', $mLangPref)).']';
+            $mLangPref = $oDB->getArraySQL($oDB->getDBQuotedList($mLangPref));
         }
 
         if (!isset($sHousenumber)) {

@@ -220,14 +220,14 @@ For a list of other methods see the output of `./utils/update.php --help`.
 
 #### Installing the newest version of Pyosmium
 
-It is recommended to install Pyosmium via pip. Run (as the same user who
-will later run the updates):
+It is recommended to install Pyosmium via pip. Make sure to use python3.
+Run (as the same user who will later run the updates):
 
 ```sh
-pip install --user osmium
+pip3 install --user osmium
 ```
 
-Nominatim needs a tool called `pyosmium-get-updates`, which comes with
+Nominatim needs a tool called `pyosmium-get-updates` which comes with
 Pyosmium. You need to tell Nominatim where to find it. Add the
 following line to your `settings/local.php`:
 

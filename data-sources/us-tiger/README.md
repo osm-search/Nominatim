@@ -9,9 +9,7 @@ Replace '2018' with the current year throughout.
   1. Install the GDAL library and python bindings and the unzip tool
 
         # Ubuntu:
-        sudo apt-get install python-gdal unzip
-        # CentOS:
-        sudo yum install gdal-python unzip
+        sudo apt-get install python3-gdal unzip
 
   2. Get the TIGER 2018 data. You will need the EDGES files
      (3,233 zip files, 11GB total).
@@ -22,8 +20,7 @@ Replace '2018' with the current year throughout.
 
         cd data-sources/us-tiger
         ./convert.sh <input-path> <output-path>
-        
+
   4. Maybe: package the created files
-  
+
         tar -czf tiger2018-nominatim-preprocessed.tar.gz tiger
-        

@@ -42,8 +42,8 @@ CREATE INDEX idx_location_area_large_-partition-_geometry ON location_area_large
 
 CREATE TABLE search_name_-partition- () INHERITS (search_name_blank) {ts:address-data};
 CREATE INDEX idx_search_name_-partition-_place_id ON search_name_-partition- USING BTREE (place_id) {ts:address-index};
-CREATE INDEX idx_search_name_-partition-_centroid ON search_name_-partition- USING GIST (centroid) {ts:address-index};
-CREATE INDEX idx_search_name_-partition-_name_vector ON search_name_-partition- USING GIN (name_vector) WITH (fastupdate = off) {ts:address-index};
+CREATE INDEX idx_search_name_-partition-_centroid_street ON search_name_-partition- USING GIST (centroid) {ts:address-index} where search_rank between 26 and 27;
+CREATE INDEX idx_search_name_-partition-_centroid_place ON search_name_-partition- USING GIST (centroid) {ts:address-index} where search_rank between 2 and 25;
 
 DROP TABLE IF EXISTS location_road_-partition-;
 CREATE TABLE location_road_-partition- (

@@ -1286,7 +1286,7 @@ BEGIN
   -- cheaper but less acurate
   place_centroid := ST_PointOnSurface(NEW.geometry);
   -- For searching near features rather use the centroid
-  near_centroid := ST_Centroid(NEW.geometry);
+  near_centroid := ST_Envelope(NEW.geometry);
   NEW.centroid := null;
   NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(place_centroid);
@@ -1521,7 +1521,7 @@ BEGIN
              NEW.postcode := location.postcode;
           END IF;
           IF NEW.postcode is null THEN
-            NEW.postcode := get_nearest_postcode(NEW.country_code, near_centroid);
+            NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
           END IF;
       END IF;
 
@@ -1791,7 +1791,7 @@ BEGIN
                                   CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
                                        THEN NEW.geometry
-                                       ELSE near_centroid END,
+                                       ELSE place_centroid END,
                                   search_maxrank, isin_tokens)
   LOOP
     IF location.rank_address != location_rank_search THEN

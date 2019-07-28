@@ -224,7 +224,7 @@ Feature: Parenting of objects
         When importing
         Then placex contains
          | object | parent_place_id |
-         | W1     | W3 |
+         | W1     | W2 |
 
     Scenario: Building with addr:street tags
         Given the scene building-on-street-corner

@@ -53,6 +53,18 @@ foreach ($aOsmIds as $sItem) {
                 unset($oResult['langaddress']);
                 $oResult['name'] = $oPlace['langaddress'];
             }
+
+            $aOutlineResult = $oPlaceLookup->getOutlines(
+                $oPlace['place_id'],
+                $oPlace['lon'],
+                $oPlace['lat'],
+                Nominatim\ClassTypes\getProperty($oPlace, 'defdiameter', 0.0001)
+            );
+
+            if ($aOutlineResult) {
+                $oResult = array_merge($oResult, $aOutlineResult);
+            }
+
             $aSearchResults[] = $oResult;
         }
     }

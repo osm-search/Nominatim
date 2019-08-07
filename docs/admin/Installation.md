@@ -50,7 +50,7 @@ For running Nominatim:
 
 For running continuous updates:
 
-  * [pyosmium](https://osmcode.org/pyosmium/)
+  * [pyosmium](https://osmcode.org/pyosmium/) (with Python 3)
 
 ### Hardware
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # Tiger road data to OSM conversion script
 # Creates Karlsruhe-style address ways beside the main way
 # based on the Massachusetts GIS script by christopher schmidt
@@ -164,7 +164,7 @@ def parse_shp_for_geom_and_tags( filename ):
         if (statefp != None) and (countyfp != None):
             county_name = county_fips_data.get(statefp + '' + countyfp)
             if county_name:
-                tags["tiger:county"] = county_name.encode("utf-8")
+                tags["tiger:county"] = county_name
 
         # tlid = poFeature.GetField("TLID")
         # if tlid != None:

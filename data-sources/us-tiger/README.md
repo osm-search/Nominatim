@@ -2,7 +2,7 @@
 
 Convert [TIGER](https://www.census.gov/geo/maps-data/data/tiger.html)/Line dataset of the US Census Bureau to SQL files which can be imported by Nominatim. The created tables in the Nominatim database are separate from OpenStreetMap tables and get queried at search time separately.
 
-The dataset gets updated once per year. Downloading is prone to be slow (can take a full day) and converting them can take hours as well.
+The dataset gets updated once per year. Downloading is prown to be slow (can take a full day) and converting them can take hours as well.
 
 Replace '2018' with the current year throughout.
 

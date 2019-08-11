@@ -20,7 +20,7 @@ cd data-sources/wikipedia
 3. Dump the two tables needed by nominatim database (will prompt for user password):
 ```
 pg_dump -t wikipedia_article wikipedia2019 -U username -h localhost -W > wikipedia_article.sql
-pg_dump -t wikipedia_redirect wikipedia2019 -U postgres -h localhost -W > wikipedia_redirect.sql
+pg_dump -t wikipedia_redirect wikipedia2019 -U username -h localhost -W > wikipedia_redirect.sql
 ```
 
 4. Import the two tables dumped above into nominatim DB. **Note: If you have previous wikipedia tables make sure to first rename them**

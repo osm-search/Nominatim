@@ -11,24 +11,24 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q2870166](https://www.wikidata.org/entity/Q2870166)   | Water ride |
 [Q641226](https://www.wikidata.org/entity/Q641226)    | Arena | [amenity=events_centre](https://wiki.openstreetmap.org/wiki/Tag:amenity=events_centre)
 [Q41176](https://www.wikidata.org/entity/Q41176)     | Building | [building=yes](https://wiki.openstreetmap.org/wiki/Key:building)
-[Q1303167](https://www.wikidata.org/entity/Q1303167)   | Barn |
-[Q655686](https://www.wikidata.org/entity/Q655686)   | Commercial building |
+[Q1303167](https://www.wikidata.org/entity/Q1303167)   | Barn | [building=barn](https://wiki.openstreetmap.org/wiki/Tag:building=barn)
+[Q655686](https://www.wikidata.org/entity/Q655686)   | Commercial building | [building=commercial](https://wiki.openstreetmap.org/wiki/Tag:building=commercial)
 [Q4830453](https://www.wikidata.org/entity/Q4830453)   | Business |
-[Q7075](https://www.wikidata.org/entity/Q7075)     | Library |
-[Q133215](https://www.wikidata.org/entity/Q133215)   | Casino |
-[Q23413](https://www.wikidata.org/entity/Q23413)     | Castle |
-[Q83405](https://www.wikidata.org/entity/Q83405)     | Factory  |
-[Q53060](https://www.wikidata.org/entity/Q53060)     | Gate  |
-[Q11755880](https://www.wikidata.org/entity/Q11755880)           | Residential Building  |
-[Q3947](https://www.wikidata.org/entity/Q3947)      | House  |
+[Q7075](https://www.wikidata.org/entity/Q7075)     | Library | [amenity=library](https://wiki.openstreetmap.org/wiki/Tag:amenity=library)
+[Q133215](https://www.wikidata.org/entity/Q133215)   | Casino | [amenity=casino](https://wiki.openstreetmap.org/wiki/Tag:amenity=casino)
+[Q23413](https://www.wikidata.org/entity/Q23413)     | Castle | [historic=castle](https://wiki.openstreetmap.org/wiki/Tag:historic=castle)
+[Q83405](https://www.wikidata.org/entity/Q83405)     | Factory | 
+[Q53060](https://www.wikidata.org/entity/Q53060)     | Gate  | [barrier=gate](https://wiki.openstreetmap.org/wiki/Tag:barrier=gate)
+[Q11755880](https://www.wikidata.org/entity/Q11755880)           | Residential Building  | [building=residential](https://wiki.openstreetmap.org/wiki/Tag:building=residential)
+[Q3947](https://www.wikidata.org/entity/Q3947)      | House  | [building=house](https://wiki.openstreetmap.org/wiki/Tag:building=house)
 [Q35112127](https://www.wikidata.org/entity/Q35112127)           | Historic Building  |
 [Q5773747](https://www.wikidata.org/entity/Q5773747)   | Historic house  |
 [Q38723](https://www.wikidata.org/entity/Q38723)           | Higher Education Institution  |
-[Q3914](https://www.wikidata.org/entity/Q3914)      | School  |
+[Q3914](https://www.wikidata.org/entity/Q3914)      | School  | [amenity=school](https://wiki.openstreetmap.org/wiki/Tag:amenity=school)
 [Q9842](https://www.wikidata.org/entity/Q9842)      | Primary school  |
 [Q159334](https://www.wikidata.org/entity/Q159334)    | Secondary school  |
-[Q16917](https://www.wikidata.org/entity/Q16917)     | Hospital  |
-[Q27686](https://www.wikidata.org/entity/Q27686)     | Hotel  |
+[Q16917](https://www.wikidata.org/entity/Q16917)     | Hospital  | [amenity=hospital](https://wiki.openstreetmap.org/wiki/Tag:amenity=hospital), [healthcare=hospital](https://wiki.openstreetmap.org/wiki/Tag:healthcare=hospital), [building=hospital](https://wiki.openstreetmap.org/wiki/Tag:building=hospital)
+[Q27686](https://www.wikidata.org/entity/Q27686)     | Hotel  | [tourism=hotel](https://wiki.openstreetmap.org/wiki/Tag:tourism=hotel), [building=hotel](https://wiki.openstreetmap.org/wiki/Tag:building=hotel)
 [Q33506](https://www.wikidata.org/entity/Q33506)     | Museum  |
 [Q40357](https://www.wikidata.org/entity/Q40357)     | Prison  |
 [Q24398318](https://www.wikidata.org/entity/Q24398318)           | Religious Building  |

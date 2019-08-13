@@ -4,8 +4,8 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 
    title   |             concept                   |       OSM Tag     
 -----------|---------------------------------------|------------------
-           | Place |
-           | Architectural Structure |
+[Q17334923](https://www.wikidata.org/entity/Q17334923)           | Location |
+[Q811979](https://www.wikidata.org/entity/Q811979)           | Architectural Structure |
 [Q194195](https://www.wikidata.org/entity/Q194195)   | Amusement park |
 [Q204832](https://www.wikidata.org/entity/Q204832)   | Roller coaster |
 [Q2870166](https://www.wikidata.org/entity/Q2870166)   | Water ride |
@@ -19,11 +19,11 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q23413](https://www.wikidata.org/entity/Q23413)     | Castle |
 [Q83405](https://www.wikidata.org/entity/Q83405)     | Factory  |
 [Q53060](https://www.wikidata.org/entity/Q53060)     | Gate  |
-           | Residential Building  |
+[Q11755880](https://www.wikidata.org/entity/Q11755880)           | Residential Building  |
 [Q3947](https://www.wikidata.org/entity/Q3947)      | House  |
-           | Historic Building  |
+[Q35112127](https://www.wikidata.org/entity/Q35112127)           | Historic Building  |
 [Q5773747](https://www.wikidata.org/entity/Q5773747)   | Historic house  |
-           | Higher Education Institution  |
+[Q38723](https://www.wikidata.org/entity/Q38723)           | Higher Education Institution  |
 [Q3914](https://www.wikidata.org/entity/Q3914)      | School  |
 [Q9842](https://www.wikidata.org/entity/Q9842)      | Primary school  |
 [Q159334](https://www.wikidata.org/entity/Q159334)    | Secondary school  |
@@ -31,7 +31,7 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q27686](https://www.wikidata.org/entity/Q27686)     | Hotel  |
 [Q33506](https://www.wikidata.org/entity/Q33506)     | Museum  |
 [Q40357](https://www.wikidata.org/entity/Q40357)     | Prison  |
-           | Religious Building  |
+[Q24398318](https://www.wikidata.org/entity/Q24398318)           | Religious Building  |
 [Q160742](https://www.wikidata.org/entity/Q160742)    | Abbey  |
 [Q16970](https://www.wikidata.org/Q16970)     | Church (building)  |
 [Q44613](https://www.wikidata.org/entity/Q44613)     | Monastery  |
@@ -42,8 +42,8 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q11707](https://www.wikidata.org/entity/Q11707)     | Restaurant  |
 [Q11315](https://www.wikidata.org/entity/Q11315)     | Shopping mall  |
 [Q11303](https://www.wikidata.org/entity/Q11303)     | Skyscraper  |
-           | Venue  |
-           | Cinema  |
+[Q17350442](https://www.wikidata.org/entity/Q17350442)           | Venue  |
+[Q41253](https://www.wikidata.org/entity/Q41253)           | Movie Theater  |
 [Q483110](https://www.wikidata.org/entity/Q483110)    | Stadium  |
 [Q24354](https://www.wikidata.org/entity/Q24354)     | Theater (structure)  |
 [Q121359](https://www.wikidata.org/entity/Q121359)    | Infrastructure  |
@@ -57,15 +57,14 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q174814](https://www.wikidata.org/entity/Q174814)    | Electrical substation   |
 [Q134447](https://www.wikidata.org/entity/Q134447)    | Nuclear power plant  |
 [Q786014](https://www.wikidata.org/entity/Q786014)   | Rest area  |
-           | Route of Transportation  |
 [Q12280](https://www.wikidata.org/entity/Q12280)     | Bridge  |
-           | Railway Line  |
-           | Railway Tunnel  |
+[Q728937](https://www.wikidata.org/entity/Q728937)           | Railroad Line  |
+[Q1311958](https://www.wikidata.org/entity/Q1311958)           | Railway Tunnel  |
 [Q34442](https://www.wikidata.org/entity/Q34442)     | Road  |
 [Q1788454](https://www.wikidata.org/entity/Q1788454)   | Road junction  |
 [Q44377](https://www.wikidata.org/entity/Q44377)     | Tunnel  |
 [Q5031071](https://www.wikidata.org/entity/Q5031071)  | Canal tunnel  |
-           | Station  |
+[Q719456](https://www.wikidata.org/entity/Q719456)           | Station  |
 [Q205495](https://www.wikidata.org/entity/Q205495)    | Filling station  |
 [Q928830](https://www.wikidata.org/entity/Q928830)    | Metro station  |
 [Q55488](https://www.wikidata.org/entity/Q55488)     | Train station  |
@@ -104,19 +103,6 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q152081](https://www.wikidata.org/entity/Q152081)   | Concentration camp  |
 [Q1107656](https://www.wikidata.org/entity/Q1107656)  | Garden  |
 [Q820477](https://www.wikidata.org/entity/Q820477)   | Mine   |
-           | Natural Place  |
-[Q33837](https://www.wikidata.org/entity/Q33837)    | Archipelago  |
-[Q40080](https://www.wikidata.org/entity/Q40080)    | Beach  |
-[Q15324](https://www.wikidata.org/entity/Q15324)    | Body of water  |
-[Q23397](https://www.wikidata.org/entity/Q23397)    | Lake  |
-[Q9430](https://www.wikidata.org/entity/Q9430)     | Ocean  |
-[Q165](https://www.wikidata.org/entity/Q165)    | Sea  |
-[Q47521](https://www.wikidata.org/entity/Q47521)    | Stream  |
-[Q39614](https://www.wikidata.org/entity/Q39614)    | Cemetery  |
-[Q152081](https://www.wikidata.org/entity/Q152081)   | Concentration camp  |
-[Q1107656](https://www.wikidata.org/entity/Q1107656)  | Garden  |
-[Q820477](https://www.wikidata.org/entity/Q820477)   | Mine   |
-           | Natural Place  |
 [Q33837](https://www.wikidata.org/entity/Q33837)    | Archipelago  |
 [Q40080](https://www.wikidata.org/entity/Q40080)    | Beach  |
 [Q15324](https://www.wikidata.org/entity/Q15324)    | Body of water  |
@@ -140,16 +126,14 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q43229](https://www.wikidata.org/entity/Q43229)    | Organization  |
 [Q327333](https://www.wikidata.org/entity/Q327333)   | Government agency  |
 [Q22698](https://www.wikidata.org/entity/Q22698)    | Park  |
-           | Populated Place  |
 [Q159313](https://www.wikidata.org/entity/Q159313)   | Urban agglomeration  |
 [Q177634](https://www.wikidata.org/entity/Q177634)   | Community  |
 [Q5107](https://www.wikidata.org/entity/Q5107)     | Continent  |
 [Q6256](https://www.wikidata.org/entity/Q6256)     | Country  |
 [Q75848](https://www.wikidata.org/entity/Q75848)    | Gated community  |
-           | Intercommunality  |
+[Q3153117](https://www.wikidata.org/entity/Q3153117)           | Intercommunality  |
 [Q82794](https://www.wikidata.org/entity/Q82794)    | Region  |
 [Q56061](https://www.wikidata.org/entity/Q56061)    | Administrative division  |
-           | Clerical Administrative Region  |
 [Q665487](https://www.wikidata.org/entity/Q665487)   | Diocese  |
 [Q4976993](https://www.wikidata.org/entity/Q4976993)  | Parish   |
 [Q194203](https://www.wikidata.org/entity/Q194203)   | Arrondissements of France  |
@@ -175,7 +159,7 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q5153984](https://www.wikidata.org/entity/Q5153984)  | Commune-level subdivisions  |
 [Q123705](https://www.wikidata.org/entity/Q123705)   | Neighbourhood  |
 [Q1500350](https://www.wikidata.org/entity/Q1500350)  | Townships of China  |
-           | Unincorporated Community  |
+[Q17343829](https://www.wikidata.org/entity/Q17343829)           | Unincorporated Community  |
 [Q3957](https://www.wikidata.org/entity/Q3957)     | Town  |
 [Q532](https://www.wikidata.org/entity/Q532)      | Village  |
 [Q5084](https://www.wikidata.org/entity/Q5084)     | Hamlet   |

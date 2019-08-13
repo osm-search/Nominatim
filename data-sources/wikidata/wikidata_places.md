@@ -1,6 +1,9 @@
-##Wikidata place types and related OSM Tags
+## Wikidata place types and related OSM Tags
 
 Wikidata does not have any official ontologies, however the [DBpedia project](https://wiki.dbpedia.org/) has created an [ontology](https://wiki.dbpedia.org/services-resources/ontology) that covered [place types](http://mappings.dbpedia.org/server/ontology/classes/#Place). The table below used the DBpedia place ontology as a starting point, and is provided as a cross-reference to the relevant OSM tags.
+
+**NOTE** the OSM tags listed are those listed in the wikidata entries, and not all the possible matches for tags within OSM.
+
 
    title   |             concept                   |       OSM Tag     
 -----------|---------------------------------------|------------------
@@ -29,73 +32,73 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 [Q159334](https://www.wikidata.org/entity/Q159334)    | Secondary school  |
 [Q16917](https://www.wikidata.org/entity/Q16917)     | Hospital  | [amenity=hospital](https://wiki.openstreetmap.org/wiki/Tag:amenity=hospital), [healthcare=hospital](https://wiki.openstreetmap.org/wiki/Tag:healthcare=hospital), [building=hospital](https://wiki.openstreetmap.org/wiki/Tag:building=hospital)
 [Q27686](https://www.wikidata.org/entity/Q27686)     | Hotel  | [tourism=hotel](https://wiki.openstreetmap.org/wiki/Tag:tourism=hotel), [building=hotel](https://wiki.openstreetmap.org/wiki/Tag:building=hotel)
-[Q33506](https://www.wikidata.org/entity/Q33506)     | Museum  |
-[Q40357](https://www.wikidata.org/entity/Q40357)     | Prison  |
+[Q33506](https://www.wikidata.org/entity/Q33506)     | Museum  | [tourism=museum](https://wiki.openstreetmap.org/wiki/Tag:tourism=museum)
+[Q40357](https://www.wikidata.org/entity/Q40357)     | Prison  | [amenity=prison](https://wiki.openstreetmap.org/wiki/Tag:amenity=prison)
 [Q24398318](https://www.wikidata.org/entity/Q24398318)           | Religious Building  |
 [Q160742](https://www.wikidata.org/entity/Q160742)    | Abbey  |
-[Q16970](https://www.wikidata.org/Q16970)     | Church (building)  |
-[Q44613](https://www.wikidata.org/entity/Q44613)     | Monastery  |
-[Q32815](https://www.wikidata.org/entity/Q32815)     | Mosque  |
-[Q697295](https://www.wikidata.org/entity/Q697295)    | Shrine  |
-[Q34627](https://www.wikidata.org/entity/Q34627)     | Synagogue  |
-[Q44539](https://www.wikidata.org/entity/Q44539)     | Temple  |
-[Q11707](https://www.wikidata.org/entity/Q11707)     | Restaurant  |
-[Q11315](https://www.wikidata.org/entity/Q11315)     | Shopping mall  |
-[Q11303](https://www.wikidata.org/entity/Q11303)     | Skyscraper  |
+[Q16970](https://www.wikidata.org/entity/Q16970)     | Church (building)  | [building=church](https://wiki.openstreetmap.org/wiki/Tag:building=church)
+[Q44613](https://www.wikidata.org/entity/Q44613)     | Monastery  | [amenity=monastery](https://wiki.openstreetmap.org/wiki/Tag:amenity=monastery)
+[Q32815](https://www.wikidata.org/entity/Q32815)     | Mosque  | [building=mosque](https://wiki.openstreetmap.org/wiki/Tag:building=mosque)
+[Q697295](https://www.wikidata.org/entity/Q697295)    | Shrine  | [building=shrine](https://wiki.openstreetmap.org/wiki/Tag:building=shrine)
+[Q34627](https://www.wikidata.org/entity/Q34627)     | Synagogue  | [building=synagogue](https://wiki.openstreetmap.org/wiki/Tag:building=synagogue)
+[Q44539](https://www.wikidata.org/entity/Q44539)     | Temple  | [building=temple](https://wiki.openstreetmap.org/wiki/Tag:building=temple)
+[Q11707](https://www.wikidata.org/entity/Q11707)     | Restaurant  | [amenity=restaurant](https://wiki.openstreetmap.org/wiki/Tag:amenity=restaurant)
+[Q11315](https://www.wikidata.org/entity/Q11315)     | Shopping mall  | [shop=mall](https://wiki.openstreetmap.org/wiki/Tag:shop=mall), [shop=shopping_centre](https://wiki.openstreetmap.org/wiki/Tag:shop=shopping_centre)
+[Q11303](https://www.wikidata.org/entity/Q11303)     | Skyscraper  | 
 [Q17350442](https://www.wikidata.org/entity/Q17350442)           | Venue  |
-[Q41253](https://www.wikidata.org/entity/Q41253)           | Movie Theater  |
-[Q483110](https://www.wikidata.org/entity/Q483110)    | Stadium  |
-[Q24354](https://www.wikidata.org/entity/Q24354)     | Theater (structure)  |
-[Q121359](https://www.wikidata.org/entity/Q121359)    | Infrastructure  |
+[Q41253](https://www.wikidata.org/entity/Q41253)           | Movie Theater  | [amenity=cinema](https://wiki.openstreetmap.org/wiki/Tag:amenity=cinema)
+[Q483110](https://www.wikidata.org/entity/Q483110)    | Stadium  | [leisure=stadium](https://wiki.openstreetmap.org/wiki/Tag:leisure=stadium), [building=stadium](https://wiki.openstreetmap.org/wiki/Tag:building=stadium)
+[Q24354](https://www.wikidata.org/entity/Q24354)     | Theater (structure)  | [amenity=theatre](https://wiki.openstreetmap.org/wiki/Tag:amenity=theatre)
+[Q121359](https://www.wikidata.org/entity/Q121359)    | Infrastructure  | 
 [Q1248784](https://www.wikidata.org/entity/Q1248784)   | Airport  |
-[Q12323](https://www.wikidata.org/entity/Q12323)     | Dam  |
+[Q12323](https://www.wikidata.org/entity/Q12323)     | Dam  | [waterway=dam](https://wiki.openstreetmap.org/wiki/Tag:waterway=dam)
 [Q1353183](https://www.wikidata.org/entity/Q1353183)   | Launch pad  |
-[Q105190](https://www.wikidata.org/entity/Q105190)   | Levee  |
-[Q105731](https://www.wikidata.org/entity/Q105731)    | Lock (water navigation)   |
-[Q44782](https://www.wikidata.org/entity/Q44782)     | Port  |
-[Q159719](https://www.wikidata.org/entity/Q159719)    | Power station  |
-[Q174814](https://www.wikidata.org/entity/Q174814)    | Electrical substation   |
-[Q134447](https://www.wikidata.org/entity/Q134447)    | Nuclear power plant  |
-[Q786014](https://www.wikidata.org/entity/Q786014)   | Rest area  |
-[Q12280](https://www.wikidata.org/entity/Q12280)     | Bridge  |
-[Q728937](https://www.wikidata.org/entity/Q728937)           | Railroad Line  |
+[Q105190](https://www.wikidata.org/entity/Q105190)   | Levee  | [man_made=dyke](https://wiki.openstreetmap.org/wiki/Tag:man_made=dyke)
+[Q105731](https://www.wikidata.org/entity/Q105731)    | Lock (water navigation)   | [lock=yes](https://wiki.openstreetmap.org/wiki/Key:lock)
+[Q44782](https://www.wikidata.org/entity/Q44782)     | Port  | 
+[Q159719](https://www.wikidata.org/entity/Q159719)    | Power station  | [power=plant](https://wiki.openstreetmap.org/wiki/Tag:power=plant)
+[Q174814](https://www.wikidata.org/entity/Q174814)    | Electrical substation   | 
+[Q134447](https://www.wikidata.org/entity/Q134447)    | Nuclear power plant  | [plant:source=nuclear](https://wiki.openstreetmap.org/wiki/Tag:plant:source=nuclear)
+[Q786014](https://www.wikidata.org/entity/Q786014)   | Rest area  | [highway=rest_area](https://wiki.openstreetmap.org/wiki/Tag:highway=rest_area), [highway=services](https://wiki.openstreetmap.org/wiki/Tag:highway=services)
+[Q12280](https://www.wikidata.org/entity/Q12280)     | Bridge  | [bridge=* ](https://wiki.openstreetmap.org/wiki/Key:bridge), [man_made=bridge](https://wiki.openstreetmap.org/wiki/Tag:man_made=bridge)
+[Q728937](https://www.wikidata.org/entity/Q728937)           | Railroad Line  | [railway=rail](https://wiki.openstreetmap.org/wiki/Tag:railway=rail)
 [Q1311958](https://www.wikidata.org/entity/Q1311958)           | Railway Tunnel  |
-[Q34442](https://www.wikidata.org/entity/Q34442)     | Road  |
-[Q1788454](https://www.wikidata.org/entity/Q1788454)   | Road junction  |
-[Q44377](https://www.wikidata.org/entity/Q44377)     | Tunnel  |
+[Q34442](https://www.wikidata.org/entity/Q34442)     | Road  | [highway=* ](https://wiki.openstreetmap.org/wiki/Key:highway), [route=road](https://wiki.openstreetmap.org/wiki/Tag:route=road)
+[Q1788454](https://www.wikidata.org/entity/Q1788454)   | Road junction  | 
+[Q44377](https://www.wikidata.org/entity/Q44377)     | Tunnel  | [tunnel=* ](https://wiki.openstreetmap.org/wiki/Key:tunnel)
 [Q5031071](https://www.wikidata.org/entity/Q5031071)  | Canal tunnel  |
-[Q719456](https://www.wikidata.org/entity/Q719456)           | Station  |
-[Q205495](https://www.wikidata.org/entity/Q205495)    | Filling station  |
-[Q928830](https://www.wikidata.org/entity/Q928830)    | Metro station  |
-[Q55488](https://www.wikidata.org/entity/Q55488)     | Train station  |
-[Q2175765](https://www.wikidata.org/entity/Q2175765)   | Tram stop  |
-[Q6852233](https://www.wikidata.org/entity/Q6852233)   | Military building  |
-[Q44494](https://www.wikidata.org/entity/Q44494)     | Mill (grinding)  |
-[Q185187](https://www.wikidata.org/entity/Q185187)    | Watermill  |
-[Q38720](https://www.wikidata.org/entity/Q38720)     | Windmill  |
-[Q4989906](https://www.wikidata.org/entity/Q4989906)   | Monument  |
-[Q5003624](https://www.wikidata.org/entity/Q5003624)   | Memorial  |
-[Q271669](https://www.wikidata.org/entity/Q271669)   | Landform  |
+[Q719456](https://www.wikidata.org/entity/Q719456)           | Station  | [public_transport=station](https://wiki.openstreetmap.org/wiki/Tag:public_transport=station)
+[Q205495](https://www.wikidata.org/entity/Q205495)    | Filling station  | [amenity=fuel](https://wiki.openstreetmap.org/wiki/Tag:amenity=fuel)
+[Q928830](https://www.wikidata.org/entity/Q928830)    | Metro station  | [station=subway](https://wiki.openstreetmap.org/wiki/Tag:station=subway)
+[Q55488](https://www.wikidata.org/entity/Q55488)     | Train station  | [railway=station](https://wiki.openstreetmap.org/wiki/Tag:railway=station)
+[Q2175765](https://www.wikidata.org/entity/Q2175765)   | Tram stop  | [railway=tram_stop](https://wiki.openstreetmap.org/wiki/Tag:railway=tram_stop), [public_transport=stop_position](https://wiki.openstreetmap.org/wiki/Tag:public_transport=stop_position)
+[Q6852233](https://www.wikidata.org/entity/Q6852233)   | Military building  | 
+[Q44494](https://www.wikidata.org/entity/Q44494)     | Mill (grinding)  | 
+[Q185187](https://www.wikidata.org/entity/Q185187)    | Watermill  | [man_made=watermill](https://wiki.openstreetmap.org/wiki/Tag:man_made=watermill)
+[Q38720](https://www.wikidata.org/entity/Q38720)     | Windmill  | [man_made=windmill](https://wiki.openstreetmap.org/wiki/Tag:man_made=windmill)
+[Q4989906](https://www.wikidata.org/entity/Q4989906)   | Monument  | [historic=monument](https://wiki.openstreetmap.org/wiki/Tag:historic=monument)
+[Q5003624](https://www.wikidata.org/entity/Q5003624)   | Memorial  | [historic=memorial](https://wiki.openstreetmap.org/wiki/Tag:historic=memorial)
+[Q271669](https://www.wikidata.org/entity/Q271669)   | Landform  | []()
 [Q190429](https://www.wikidata.org/entity/Q190429)    | Depression (geology)  |
 [Q17018380](https://www.wikidata.org/entity/Q17018380)  | Bight (geography)  |
 [Q54050](https://www.wikidata.org/entity/Q54050)     | Hill  |
 [Q1210950](https://www.wikidata.org/entity/Q1210950)   | Channel (geography)  |
-[Q23442](https://www.wikidata.org/entity/Q23442)    | Island  |
-[Q42523](https://www.wikidata.org/entity/Q42523)    | Atoll  |
+[Q23442](https://www.wikidata.org/entity/Q23442)    | Island  | [place=island](https://wiki.openstreetmap.org/wiki/Tag:place=island)
+[Q42523](https://www.wikidata.org/entity/Q42523)    | Atoll  | []()
 [Q34763](https://www.wikidata.org/entity/Q34763)    | Peninsula  |
 [Q355304](https://www.wikidata.org/entity/Q355304)   | Watercourse  |
-[Q30198](https://www.wikidata.org/entity/Q30198)    | Marsh  |
+[Q30198](https://www.wikidata.org/entity/Q30198)    | Marsh  | [wetland=marsh](https://wiki.openstreetmap.org/wiki/Tag:wetland=marsh)
 [Q75520](https://www.wikidata.org/entity/Q75520)    | Plateau  |
 [Q2042028](https://www.wikidata.org/entity/Q2042028)  | Ravine  |
 [Q631305](https://www.wikidata.org/entity/Q631305)   | Rock formation  |
 [Q12516](https://www.wikidata.org/entity/Q12516)    | Pyramid  |
-[Q1076486](https://www.wikidata.org/entity/Q1076486) | Sports venue  |
-[Q682943](https://www.wikidata.org/entity/Q682943)   | Cricket field  |
-[Q1048525](https://www.wikidata.org/entity/Q1048525)  | Golf course  |
-[Q1777138](https://www.wikidata.org/entity/Q1777138)  | Race track  |
-[Q130003](https://www.wikidata.org/entity/Q130003)   | Ski resort  |
-[Q174782](https://www.wikidata.org/entity/Q174782)   | Town square  |
-[Q12518](https://www.wikidata.org/entity/Q12518)    | Tower  |
+[Q1076486](https://www.wikidata.org/entity/Q1076486) | Sports venue  | 
+[Q682943](https://www.wikidata.org/entity/Q682943)   | Cricket field  | [sport=cricket](https://wiki.openstreetmap.org/wiki/Tag:sport=cricket)
+[Q1048525](https://www.wikidata.org/entity/Q1048525)  | Golf course  | [leisure=golf_course](https://wiki.openstreetmap.org/wiki/Tag:leisure=golf_course)
+[Q1777138](https://www.wikidata.org/entity/Q1777138)  | Race track  | [highway=raceway](https://wiki.openstreetmap.org/wiki/Tag:highway=raceway)
+[Q130003](https://www.wikidata.org/entity/Q130003)   | Ski resort  | 
+[Q174782](https://www.wikidata.org/entity/Q174782)   | Town square  | [place=square](https://wiki.openstreetmap.org/wiki/Tag:place=square)
+[Q12518](https://www.wikidata.org/entity/Q12518)    | Tower  | [building=tower](https://wiki.openstreetmap.org/wiki/Tag:building=tower), [man_made=tower](https://wiki.openstreetmap.org/wiki/Tag:man_made=tower)
 [Q39715](https://www.wikidata.org/entity/Q39715)    | Lighthouse  |
 [Q274153](https://www.wikidata.org/entity/Q274153)   | Water tower  |
 [Q43501](https://www.wikidata.org/entity/Q43501)    | Zoo  |

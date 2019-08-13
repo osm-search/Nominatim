@@ -6,11 +6,11 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 -----------|---------------------------------------|------------------
 [Q17334923](https://www.wikidata.org/entity/Q17334923)           | Location |
 [Q811979](https://www.wikidata.org/entity/Q811979)           | Architectural Structure |
-[Q194195](https://www.wikidata.org/entity/Q194195)   | Amusement park |
-[Q204832](https://www.wikidata.org/entity/Q204832)   | Roller coaster |
+[Q194195](https://www.wikidata.org/entity/Q194195)   | Amusement park | [tourism=theme_park](https://wiki.openstreetmap.org/wiki/Tag:tourism=theme_park)
+[Q204832](https://www.wikidata.org/entity/Q204832)   | Roller coaster | [attraction=roller_coaster](https://wiki.openstreetmap.org/wiki/Tag:attraction=roller_coaster)
 [Q2870166](https://www.wikidata.org/entity/Q2870166)   | Water ride |
-[Q641226](https://www.wikidata.org/entity/Q641226)    | Arena |
-[Q41176](https://www.wikidata.org/entity/Q41176)     | Building |
+[Q641226](https://www.wikidata.org/entity/Q641226)    | Arena | [amenity=events_centre](https://wiki.openstreetmap.org/wiki/Tag:amenity=events_centre)
+[Q41176](https://www.wikidata.org/entity/Q41176)     | Building | [building=yes](https://wiki.openstreetmap.org/wiki/Key:building)
 [Q1303167](https://www.wikidata.org/entity/Q1303167)   | Barn |
 [Q655686](https://www.wikidata.org/entity/Q655686)   | Commercial building |
 [Q4830453](https://www.wikidata.org/entity/Q4830453)   | Business |

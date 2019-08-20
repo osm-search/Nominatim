@@ -5,11 +5,11 @@ Wikidata does not have any official ontologies, however the [DBpedia project](ht
 **NOTE** the OSM tags listed are those listed in the wikidata entries, and not all the possible matches for tags within OSM.
 
 
-   title   |             concept                   |       OSM Tag     |  Query   |
+   title   |             concept                   |       OSM Tag     |  Download   |
 -----------|---------------------------------------|------------------|--------|
-[Q17334923](https://www.wikidata.org/entity/Q17334923)           | Location ||
-[Q811979](https://www.wikidata.org/entity/Q811979)           | Architectural Structure ||
-[Q194195](https://www.wikidata.org/entity/Q194195)   | Amusement park | [tourism=theme_park](https://wiki.openstreetmap.org/wiki/Tag:tourism=theme_park) |
+[Q17334923](https://www.wikidata.org/entity/Q17334923)  | Location | | [json](https://query.wikidata.org/bigdata/namespace/wdq/sparql?format=json&query=SELECT?item?lat?lon%20WHERE{?item%20wdt:P31*/wdt:P279*wd:Q17334923;wdt:P625?pt.?item%20p:P625?loc.?loc%20psv:P625?cnode.?cnode%20wikibase:geoLatitude?lat.?cnode%20wikibase:geoLongitude?lon.})
+[Q811979](https://www.wikidata.org/entity/Q811979)           | Architectural Structure | | 
+[Q194195](https://www.wikidata.org/entity/Q194195)   | Amusement park | [tourism=theme_park](https://wiki.openstreetmap.org/wiki/Tag:tourism=theme_park) | 
 [Q204832](https://www.wikidata.org/entity/Q204832)   | Roller coaster | [attraction=roller_coaster](https://wiki.openstreetmap.org/wiki/Tag:attraction=roller_coaster) |
 [Q2870166](https://www.wikidata.org/entity/Q2870166)   | Water ride | |
 [Q641226](https://www.wikidata.org/entity/Q641226)    | Arena | [amenity=events_centre](https://wiki.openstreetmap.org/wiki/Tag:amenity=events_centre) |

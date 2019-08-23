@@ -4,5 +4,25 @@ OSM contributors frequently tag items with links to Wikipedia and Wikidata. Nomi
 
 These scripts extract and prepare both Wikipedia page rank and Wikidata links for use in Nominatim. Processing these data requires a large amount of disk space (~1TB) and considerable time (>24 hours).
 
-Please note that if you have previous Wikipedia or Wikidata tables you should rename them before running these scripts.
+---
   
+### Step 1 - Create a new postgres DB for Processing
+
+Due to the size of initial and intermediate tables, processing can be done in an external database: 
+```
+CREATE DATABASE wikiprocessingdb
+```
+
+### Step 2 - Import & Process Wikipedia data
+
+This step downloads and converts [Wikipedia](https://dumps.wikimedia.org/) page data SQL dumps to postgreSQL files which can be imported and processed with pagelink information from Wikipedia language sites to calculate importance scores.
+
+- The script will processes data from whatever set of Wikipedia languages are specified in the initial languages array. 
+
+- Note that processing the top 40 Wikipedia languages can take over a day, and will add nearly 1TB to the processing database. The final output tables will be approximately 11GB and 2GB in size.
+
+To download, convert, and import the data, then process summary statistics and compute importance scores, run:
+```
+./wikipedia_import.sh
+```
+

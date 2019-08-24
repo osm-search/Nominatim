@@ -8,7 +8,7 @@ These scripts extract and prepare both Wikipedia page rank and Wikidata links fo
 
 Due to the size of initial and intermediate tables, processing can be done in an external database:
 ```
-CREATE DATABASE wikiprocessingdb
+CREATE DATABASE wikiprocessingdb;
 ```
 ---
 Wikipedia
@@ -34,19 +34,23 @@ Wikidata
 
 This script downloads and processes Wikidata to enrich the previously created Wekipedia tables for use in Nominatim.
 
-#### Import & Process Wikidata tables
+#### Import & Process Wikidata
 
 This step downloads and converts [Wikidata](https://dumps.wikimedia.org/wikidatawiki/) page data SQL dumps to postgreSQL files which can be processed and imported into Nominatim database.
 
-- Script processes data from whatever set of Wikipedia languages are specified in the initial languages array
-
 - Script presumes that the user has already processed Wikipedia tables as specified above
 
-Wikidata processed here can then be used to enrich the wikipedia-articles table for improved Nominatim search results.
+- Script requires wikidata_place_types.txt and wikidata_place_type_levles.csv
+
+- Script processes data from whatever set of Wikipedia languages are specified in the initial languages array
+
+- Script queries Wikidata Query Service API and imports all instances of place types listed in wikidata_place_types.txt
+
+- Script updates wikipedia_articles table with extracted wikidata 
+
+By including Wikidata in the wikipedia_articles table, new connections can be made on the fly from the Nominatim placex table to wikipedia_article importance scores. 
 
 To download, convert, and import the data, then process required items, run:
 ``` 
 ./wikidata_import.sh
 ```
-
-#### Place Types

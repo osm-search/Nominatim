@@ -36,7 +36,7 @@ This script downloads and processes Wikidata to enrich the previously created We
 
 #### Import & Process Wikidata
 
-This step downloads and converts [Wikidata](https://dumps.wikimedia.org/wikidatawiki/) page data SQL dumps to postgreSQL files which can be processed and imported into Nominatim database.
+This step downloads and converts [Wikidata](https://dumps.wikimedia.org/wikidatawiki/) page data SQL dumps to postgreSQL files which can be processed and imported into Nominatim database. Also utilizes Wikidata Query Service API to discover and include place types.
 
 - Script presumes that the user has already processed Wikipedia tables as specified above
 

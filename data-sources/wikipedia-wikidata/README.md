@@ -20,9 +20,9 @@ Processing these data requires a large amount of disk space (~1TB) and considera
 
 This step downloads and converts [Wikipedia](https://dumps.wikimedia.org/) page data SQL dumps to postgreSQL files which can be imported and processed with pagelink information from Wikipedia language sites to calculate importance scores.
 
-- The script will processes data from whatever set of Wikipedia languages are specified in the initial languages array. 
+- The script will processes data from whatever set of Wikipedia languages are specified in the initial languages array
 
-- Note that processing the top 40 Wikipedia languages can take over a day, and will add nearly 1TB to the processing database. The final output tables will be approximately 11GB and 2GB in size.
+- Note that processing the top 40 Wikipedia languages can take over a day, and will add nearly 1TB to the processing database. The final output tables will be approximately 11GB and 2GB in size
 
 To download, convert, and import the data, then process summary statistics and compute importance scores, run:
 ```
@@ -38,15 +38,14 @@ This script downloads and processes Wikidata to enrich the previously created We
 
 This step downloads and converts [Wikidata](https://dumps.wikimedia.org/wikidatawiki/) page data SQL dumps to postgreSQL files which can be processed and imported into Nominatim database.
 
-- Script processes data from whatever set of Wikipedia languages are specified. 
+- Script processes data from whatever set of Wikipedia languages are specified in the initial languages array
 
-- Script presumes that the user has already processed Wikipedia tables as specified above. 
+- Script presumes that the user has already processed Wikipedia tables as specified above
 
 Wikidata processed here can then be used to enrich the wikipedia-articles table for improved Nominatim search results.
 
 To download, convert, and import the data, then process required items, run:
 ``` 
-cd data-sources/wikidata
 ./wikidata_import.sh
 ```
 

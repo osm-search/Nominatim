@@ -188,3 +188,13 @@ An example json return for all instances of the Wikidata item "Q9430" (Ocean) ca
 [Q1377575](https://www.wikidata.org/entity/Q1377575)  | Wildlife refuge  | | 
 [Q1410668](https://www.wikidata.org/entity/Q1410668)  | National Wildlife Refuge  | [protection_title=National Wildlife Refuge](ownership=national), [ownership=national](https://wiki.openstreetmap.org/wiki/Tag:ownership=national)|
 [Q9259](https://www.wikidata.org/entity/Q9259)     | World Heritage Site  | |
+
+---
+
+### Future Work
+
+The Wikidata improvements to Nominatim can be further enhanced by:
+
+- continuing to add new Wikidata links to OSM objects
+- increasing the number of place types accounted for in the wikipedia_articles table
+- working to use place types in the wikipedia_article matching process

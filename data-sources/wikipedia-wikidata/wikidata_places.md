@@ -3,7 +3,18 @@
 
 Wikidata does not have any official ontologies, however the [DBpedia project](https://wiki.dbpedia.org/) has created an [ontology](https://wiki.dbpedia.org/services-resources/ontology) that covered [place types](http://mappings.dbpedia.org/server/ontology/classes/#Place). The table below used the DBpedia place ontology as a starting point, and is provided as a cross-reference to the relevant OSM tags.
 
-The Wikidata place types listed in the table below can be used in conjunction with the [Wikidata Query Service]() to retrieve instances of those place types from the Wikidata knowledgebase. 
+The Wikidata place types listed in the table below can be used in conjunction with the [Wikidata Query Service](https://query.wikidata.org/) to retrieve instances of those place types from the Wikidata knowledgebase. 
+
+```
+SELECT ?item ?lat ?lon
+WHERE {
+  ?item wdt:P31*/wdt:P279*wd:Q9430; wdt:P625 ?pt.
+  ?item p:P625?loc.
+  ?loc psv:P625?cnode.
+  ?cnode wikibase:geoLatitude?lat.
+  ?cnode wikibase:geoLongitude?lon.
+}
+```
 
 An example json return for all instances of the Wikidata item "Q9430" (Ocean) can be seen at [json](https://query.wikidata.org/bigdata/namespace/wdq/sparql?format=json&query=SELECT?item?lat?lon%20WHERE{?item%20wdt:P31*/wdt:P279*wd:Q9430;wdt:P625?pt.?item%20p:P625?loc.?loc%20psv:P625?cnode.?cnode%20wikibase:geoLatitude?lat.?cnode%20wikibase:geoLongitude?lon.})
 

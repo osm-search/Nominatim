@@ -313,6 +313,12 @@ BEGIN
             rank_address := 11;
         END IF;
 
+    ELSEIF country_code = 'be' THEN
+        IF postcode ~ '^([0-9]{4})$' THEN
+            rank_search := 21;
+            rank_address := 17;
+        END IF;
+
     ELSE
         -- Guess at the postcode format and coverage (!)
         IF postcode ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local

@@ -42,6 +42,8 @@ This step downloads and converts [Wikidata](https://dumps.wikimedia.org/wikidata
 
 - Script requires wikidata_place_types.txt and wikidata_place_type_levles.csv
 
+- script requires the [jq json parser](https://stedolan.github.io/jq/)
+
 - Script processes data from whatever set of Wikipedia languages are specified in the initial languages array
 
 - Script queries Wikidata Query Service API and imports all instances of place types listed in wikidata_place_types.txt

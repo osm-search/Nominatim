@@ -70,7 +70,7 @@ echo "UPDATE geo_earth_wikidata_pages SET wp_page_title = REPLACE(ips_site_page,
 
 # add wikidata to wikipedia_article table
 
-echo "UPDATE wikipedia_article SET lat = geo_earth_wikidata_pages.gt_lat, lon = geo_earth_wikidata_pages.gt_lon, wd_page_title = geo_earth_wikidata_pages.page_title, instance_of = geo_earth_wikidata_pages.instance_of FROM geo_earth_wikidata_pages WHERE wikipedia_article_2019.language = geo_earth_wikidata_pages.language AND wikipedia_article_2019.title  = geo_earth_wikidata_pages.wp_page_title AND geo_earth_wikidata_pages.gt_lat IS NOT NULL;" | psqlcmd
+echo "UPDATE wikipedia_article SET lat = geo_earth_wikidata_pages.gt_lat, lon = geo_earth_wikidata_pages.gt_lon, wd_page_title = geo_earth_wikidata_pages.page_title, instance_of = geo_earth_wikidata_pages.instance_of FROM geo_earth_wikidata_pages WHERE wikipedia_article.language = geo_earth_wikidata_pages.language AND wikipedia_article.title  = geo_earth_wikidata_pages.wp_page_title AND geo_earth_wikidata_pages.gt_lat IS NOT NULL;" | psqlcmd
 
 
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 psqlcmd() {
-     psql wikiprocessing_db
+     psql wikiprocessingdb
 }
 
 mysql2pgsqlcmd() {
@@ -80,6 +80,7 @@ echo "ALTER TABLE wikidata_pages DROP COLUMN ips_site_page;" | psqlcmd
 # add wikidata to wikipedia_article table
 
 echo "UPDATE wikipedia_article SET lat = wikidata_pages.lat, lon = wikidata_pages.lon, wd_page_title = wikidata_pages.item, instance_of = wikidata_pages.instance_of FROM wikidata_pages WHERE wikipedia_article.language = wikidata_pages.language AND wikipedia_article.title  = wikidata_pages.wp_page_title;" | psqlcmd
+echo "CREATE TABLE wikipedia_article_slim AS SELECT * FROM wikipedia_article WHERE wikidata_id IS NOT NULL;" | psqlcmd
 echo "ALTER TABLE wikipedia_article RENAME TO wikipedia_article_full;" | psqlcmd
 echo "ALTER TABLE wikipedia_article_slim RENAME TO wikipedia_article;" | psqlcmd
 

@@ -93,6 +93,13 @@
           "administrative5" : [10, 0]
       }
   }
+},
+{ "countries" : [ "be" ],
+  "tags" : {
+      "boundary" : {
+          "administrative7" : [14, 0]
+      }
+  }
 }
 ]
 

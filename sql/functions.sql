@@ -291,7 +291,7 @@ BEGIN
 
     IF country_code = 'gb' THEN
         IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            rank_search := 25;
+            rank_search := 28;
             rank_address := 5;
         ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
             rank_search := 23;

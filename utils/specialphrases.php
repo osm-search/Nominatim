@@ -39,7 +39,7 @@ if ($aCMDResult['wiki-import']) {
                 $sType = trim($aMatch[3]);
                 // hack around a bug where building=yes was imported with
                 // quotes into the wiki
-                $sType = preg_replace('/&quot;/', '', $sType);
+                $sType = preg_replace('/(&quot;|")/', '', $sType);
                 // sanity check, in case somebody added garbage in the wiki
                 if (preg_match('/^\\w+$/', $sClass) < 1
                     || preg_match('/^\\w+$/', $sType) < 1

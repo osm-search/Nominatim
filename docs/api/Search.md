@@ -109,7 +109,7 @@ the search to return other, less accurate, matches (if possible).
 Limit the number of returned results. (Default: 10, Maximum: 50)
 
 
-* `viewbox=<x1>,<y1>,<x2>,<y2>`
+* `viewbox=<lon1>,<lat1>,<lon2>,<lat2>`
 
 The preferred area to find search results. Any two corner points of the box
 are accepted in any order as long as they span a real box.

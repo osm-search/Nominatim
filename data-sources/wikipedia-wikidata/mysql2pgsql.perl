@@ -341,7 +341,7 @@ if (/(create\s+table\s+)([-_\w]+)\s/i) { #  example: CREATE TABLE `english_engli
         #  in the foreign-key case it will only remove the foreign-key constraint, not the other table entirely.)
         #  (source: 8.1.3 docs, section "drop table")
         warn "table $table will be dropped CASCADE\n";
-        $pre_create_sql .= "DROP TABLE $table CASCADE\\g\n";    # custom dumps may be missing the 'dump' commands
+        $pre_create_sql .= "DROP TABLE $table CASCADE;\n";    # custom dumps may be missing the 'dump' commands
     }
 
     s/(create\s+table\s+)([-_\w]+)\s/$1 $table /i;
@@ -367,6 +367,7 @@ if ($create_sql ne "") {         # we are inside create table statement so lets 
         s/INSERT METHOD[=\s+][^;\s]+//i;
         s/PASSWORD=[^;\s]+//i;
         s/ROW_FORMAT=(?:DEFAULT|DYNAMIC|FIXED|COMPRESSED|REDUNDANT|COMPACT)+//i;
+        s/KEY_BLOCK_SIZE=8//i;
         s/DELAY KEY WRITE=[^;\s]+//i;
         s/INDEX DIRECTORY[=\s+][^;\s]+//i;
         s/DATA DIRECTORY=[^;\s]+//i;
@@ -389,6 +390,7 @@ if ($create_sql ne "") {         # we are inside create table statement so lets 
         s/DEFAULT CHARSET=[^;\s]+//i; #  my mysql version is 4.1.11
         s/ENGINE\s*=\s*[^;\s]+//i;   #  my mysql version is 4.1.11
         s/ROW_FORMAT=[^;\s]+//i;   #  my mysql version is 5.0.22
+        s/KEY_BLOCK_SIZE=8//i; 
         s/MIN_ROWS=[^;\s]+//i;
         s/MAX_ROWS=[^;\s]+//i;
         s/AVG_ROW_LENGTH=[^;\s]+//i;

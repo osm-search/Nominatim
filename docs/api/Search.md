@@ -112,7 +112,8 @@ Limit the number of returned results. (Default: 10, Maximum: 50)
 * `viewbox=<x1>,<y1>,<x2>,<y2>`
 
 The preferred area to find search results. Any two corner points of the box
-are accepted in any order as long as they span a real box.
+are accepted in any order as long as they span a real box. `x` is longitude,
+`y` is latitude.
 
 
 * `bounded=[0|1]`

@@ -25,6 +25,8 @@
           "islet" : [20, 0],
           "mountain_pass" : [20, 0],
           "neighbourhood" : 22,
+          "quarter" : 22,
+          "city_block" : 22,
           "houses" : [28, 0]
       },
       "boundary" : {

@@ -50,6 +50,7 @@ $oGeocode->setQueryFromParams($oParams);
 
 if (!$oGeocode->getQueryString()
     && isset($_SERVER['PATH_INFO'])
+    && strlen($_SERVER['PATH_INFO']) > 0
     && $_SERVER['PATH_INFO'][0] == '/'
 ) {
     $sQuery = substr(rawurldecode($_SERVER['PATH_INFO']), 1);

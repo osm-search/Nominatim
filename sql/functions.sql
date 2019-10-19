@@ -2386,7 +2386,7 @@ BEGIN
 
   -- postcode table
   IF for_place_id IS NULL THEN
-    SELECT parent_place_id, country_code, rank_address, postcode, 'place', 'postcode'
+    SELECT parent_place_id, country_code, rank_search, postcode, 'place', 'postcode'
       FROM location_postcode
       WHERE place_id = in_place_id
       INTO for_place_id, searchcountrycode, searchrankaddress, searchpostcode,

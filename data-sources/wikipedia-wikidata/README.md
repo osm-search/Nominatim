@@ -32,7 +32,7 @@ To download, convert, and import the data, then process summary statistics and c
 Wikidata
 ---
 
-This script downloads and processes Wikidata to enrich the previously created Wekipedia tables for use in Nominatim.
+This script downloads and processes Wikidata to enrich the previously created Wikipedia tables for use in Nominatim.
 
 #### Import & Process Wikidata
 

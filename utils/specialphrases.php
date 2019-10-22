@@ -27,77 +27,127 @@ if ($aCMDResult['wiki-import']) {
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
         $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
         $sWikiPageXML = file_get_contents($sURL);
-        if (preg_match_all('#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN])#', $sWikiPageXML, $aMatches, PREG_SET_ORDER)) {
-            foreach ($aMatches as $aMatch) {
-                $sLabel = trim($aMatch[1]);
-                if ($oNormalizer !== null) {
-                    $sTrans = pg_escape_string($oNormalizer->transliterate($sLabel));
-                } else {
-                    $sTrans = null;
-                }
-                $sClass = trim($aMatch[2]);
-                $sType = trim($aMatch[3]);
-                // hack around a bug where building=yes was imported with
-                // quotes into the wiki
-                $sType = preg_replace('/&quot;/', '', $sType);
-                // sanity check, in case somebody added garbage in the wiki
-                if (preg_match('/^\\w+$/', $sClass) < 1
-                    || preg_match('/^\\w+$/', $sType) < 1
-                ) {
-                    trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
-                    exit;
-                }
-                // blacklisting: disallow certain class/type combinations
-                if (isset($aTagsBlacklist[$sClass]) && in_array($sType, $aTagsBlacklist[$sClass])) {
-                    // fwrite(STDERR, "Blacklisted: ".$sClass."/".$sType."\n");
-                    continue;
-                }
-                // whitelisting: if class is in whitelist, allow only tags in the list
-                if (isset($aTagsWhitelist[$sClass]) && !in_array($sType, $aTagsWhitelist[$sClass])) {
-                    // fwrite(STDERR, "Non-Whitelisted: ".$sClass."/".$sType."\n");
-                    continue;
-                }
-                $aPairs[$sClass.'|'.$sType] = array($sClass, $sType);
 
-                switch (trim($aMatch[4])) {
-                    case 'near':
-                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType', 'near');\n";
-                        break;
-                    case 'in':
-                        echo "select getorcreate_amenityoperator(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType', 'in');\n";
-                        break;
-                    default:
-                        echo "select getorcreate_amenity(make_standard_name('".pg_escape_string($sLabel)."'), '$sTrans', '$sClass', '$sType');\n";
-                        break;
-                }
+        if (!preg_match_all(
+            '#\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([^|]+) \\|\\| ([\\-YN])#',
+            $sWikiPageXML,
+            $aMatches,
+            PREG_SET_ORDER
+        )) {
+            continue;
+        }
+
+        foreach ($aMatches as $aMatch) {
+            $sLabel = trim($aMatch[1]);
+            if ($oNormalizer !== null) {
+                $sTrans = pg_escape_string($oNormalizer->transliterate($sLabel));
+            } else {
+                $sTrans = null;
+            }
+            $sClass = trim($aMatch[2]);
+            $sType = trim($aMatch[3]);
+            // hack around a bug where building=yes was imported with
+            // quotes into the wiki
+            $sType = preg_replace('/(&quot;|")/', '', $sType);
+            // sanity check, in case somebody added garbage in the wiki
+            if (preg_match('/^\\w+$/', $sClass) < 1
+                || preg_match('/^\\w+$/', $sType) < 1
+            ) {
+                trigger_error("Bad class/type for language $sLanguage: $sClass=$sType");
+                exit;
+            }
+            // blacklisting: disallow certain class/type combinations
+            if (isset($aTagsBlacklist[$sClass]) && in_array($sType, $aTagsBlacklist[$sClass])) {
+                // fwrite(STDERR, "Blacklisted: ".$sClass."/".$sType."\n");
+                continue;
+            }
+            // whitelisting: if class is in whitelist, allow only tags in the list
+            if (isset($aTagsWhitelist[$sClass]) && !in_array($sType, $aTagsWhitelist[$sClass])) {
+                // fwrite(STDERR, "Non-Whitelisted: ".$sClass."/".$sType."\n");
+                continue;
+            }
+            $aPairs[$sClass.'|'.$sType] = array($sClass, $sType);
+
+            switch (trim($aMatch[4])) {
+                case 'near':
+                    printf(
+                        "SELECT getorcreate_amenityoperator(make_standard_name('%s'), '%s', '%s', '%s', 'near');\n",
+                        pg_escape_string($sLabel),
+                        $sTrans,
+                        $sClass,
+                        $sType
+                    );
+                    break;
+                case 'in':
+                    printf(
+                        "SELECT getorcreate_amenityoperator(make_standard_name('%s'), '%s', '%s', '%s', 'in');\n",
+                        pg_escape_string($sLabel),
+                        $sTrans,
+                        $sClass,
+                        $sType
+                    );
+                    break;
+                default:
+                    printf(
+                        "SELECT getorcreate_amenity(make_standard_name('%s'), '%s', '%s', '%s');\n",
+                        pg_escape_string($sLabel),
+                        $sTrans,
+                        $sClass,
+                        $sType
+                    );
+                    break;
             }
         }
     }
 
-    echo 'create index idx_placex_classtype on placex (class, type);';
+    echo 'CREATE INDEX idx_placex_classtype ON placex (class, type);';
 
     foreach ($aPairs as $aPair) {
-        echo 'create table place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]);
-        if (CONST_Tablespace_Aux_Data)
-            echo ' tablespace '.CONST_Tablespace_Aux_Data;
-        echo ' as select place_id as place_id,st_centroid(geometry) as centroid from placex where ';
-        echo "class = '".pg_escape_string($aPair[0])."' and type = '".pg_escape_string($aPair[1])."'";
-        echo ";\n";
+        $sql_tablespace = CONST_Tablespace_Aux_Data ? ' TABLESPACE '.CONST_Tablespace_Aux_Data : '';
 
-        echo 'CREATE INDEX idx_place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]).'_centroid ';
-        echo 'ON place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]).' USING GIST (centroid)';
-        if (CONST_Tablespace_Aux_Index)
-            echo ' tablespace '.CONST_Tablespace_Aux_Index;
-        echo ";\n";
+        printf(
+            'CREATE TABLE place_classtype_%s_%s'
+            . $sql_tablespace
+            . ' AS'
+            . ' SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex'
+            . " WHERE class = '%s' AND type = '%s'"
+            . ";\n",
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1]),
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1])
+        );
 
-        echo 'CREATE INDEX idx_place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]).'_place_id ';
-        echo 'ON place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]).' USING btree(place_id)';
-        if (CONST_Tablespace_Aux_Index)
-            echo ' tablespace '.CONST_Tablespace_Aux_Index;
-        echo ";\n";
+        printf(
+            'CREATE INDEX idx_place_classtype_%s_%s_centroid'
+            . ' ON place_classtype_%s_%s USING GIST (centroid)'
+            . $sql_tablespace
+            . ";\n",
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1]),
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1])
+        );
 
-        echo 'GRANT SELECT ON place_classtype_'.pg_escape_string($aPair[0]).'_'.pg_escape_string($aPair[1]).' TO "'.CONST_Database_Web_User."\";\n";
+        printf(
+            'CREATE INDEX idx_place_classtype_%s_%s_place_id'
+            . ' ON place_classtype_%s_%s USING btree(place_id)'
+            . $sql_tablespace
+            . ";\n",
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1]),
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1])
+        );
+
+        printf(
+            'GRANT SELECT ON place_classtype_%s_%s TO "%s"'
+            . ";\n",
+            pg_escape_string($aPair[0]),
+            pg_escape_string($aPair[1]),
+            CONST_Database_Web_User
+        );
     }
 
-    echo 'drop index idx_placex_classtype;';
+    echo 'DROP INDEX idx_placex_classtype;';
 }

@@ -7,13 +7,13 @@ CHECK_SYMBOL_EXISTS(bswap32 "sys/endian.h" HAVE_SYS_ENDIAN)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(Threads REQUIRED)
 
 unset(PostgreSQL_TYPE_INCLUDE_DIR CACHE)
 set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/")
 find_package(PostgreSQL REQUIRED)
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 link_directories(${PostgreSQL_LIBRARY_DIRS})
-
 
 include_directories(${LIBXML2_INCLUDE_DIR})
 

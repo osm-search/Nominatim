@@ -4,6 +4,12 @@ include(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(bswap_32 "byteswap.h" HAVE_BYTESWAP)
 CHECK_SYMBOL_EXISTS(bswap32 "sys/endian.h" HAVE_SYS_ENDIAN)
 
+find_package(ZLIB REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(LibXml2 REQUIRED)
+
+include_directories(${LIBXML2_INCLUDE_DIR})
+
 target_compile_definitions(nominatim
     PRIVATE HAVE_BYTESWAP=$<BOOL:${HAVE_BYTESWAP}>
     PRIVATE HAVE_SYS_ENDIAN=$<BOOL:${HAVE_SYS_ENDIAN}>

@@ -39,14 +39,17 @@ set(BUILD_DOCS on CACHE BOOL "Build documentation")
 set(BUILD_SERVER on CACHE BOOL "Build API server")
 set(BUILD_MODULE on CACHE BOOL "Build PostgreSQL module")
 set(BUILD_NOMINATIM on CACHE BOOL "Build Nominatim executable")
+set(BUILD_OSM2PGSQL on CACHE BOOL "Build osm2pgsql")
 
 if (BUILD_SERVER)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/osm2pgsql/CMakeLists.txt")
-        message(FATAL_ERROR "The osm2pgsql directory is empty.\
-        Did you forget to check out Nominatim recursively?\
-        \nTry updating submodules with: git submodule update --init")
+    if (BUILD_OSM2PGSQL)
+       if (NOT EXISTS "${CMAKE_SOURCE_DIR}/osm2pgsql/CMakeLists.txt")
+           message(FATAL_ERROR "The osm2pgsql directory is empty.\
+           Did you forget to check out Nominatim recursively?\
+           \nTry updating submodules with: git submodule update --init")
+       endif()
+       add_subdirectory(osm2pgsql)
     endif()
-    add_subdirectory(osm2pgsql)
 
     find_program(PYOSMIUM pyosmium-get-changes)
     if (NOT EXISTS "${PYOSMIUM}")

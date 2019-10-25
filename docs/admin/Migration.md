@@ -6,7 +6,7 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
-## 3.3.0 -> master
+## 3.3.0 -> 3.4.0
 
 ### Reorganisation of location_area_country table
 

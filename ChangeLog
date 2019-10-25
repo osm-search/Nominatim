@@ -1,3 +1,21 @@
+3.4.0
+
+ * increase required version for PostgreSQL(9.3), PostGIS(2.2) and PHP(7.0)
+ * better error reporting for out-of-memory errors
+ * exclude postcode ranges separated by colon from centre point calculation
+ * update osm2pgsql, better handling of imports without flatnode file
+ * switch to more efficient algorithm for word set computation
+ * use only boundries for country and state parts of addresses
+ * improve updates of addresses with housenumbers and interpolations
+ * remove country from place_addressline table and use country_code instead
+ * optimise indexes on search_name partition tables
+ * improve searching of attached streets for large objects like airports
+ * drop support for python 2
+ * new scripts for importing Wikidata for importance
+ * create and drop indexes concurrently to not clash with auto vacuum
+ * various documentation improvements
+
+
 3.3.0
 
  * zoom 17 in reverse now zooms in on minor streets

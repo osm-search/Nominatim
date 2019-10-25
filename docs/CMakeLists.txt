@@ -13,6 +13,7 @@ ADD_CUSTOM_TARGET(doc
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/api ${CMAKE_CURRENT_BINARY_DIR}/api
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/index.md ${CMAKE_CURRENT_BINARY_DIR}/index.md
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/extra.css ${CMAKE_CURRENT_BINARY_DIR}/extra.css
+   COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/styles.css ${CMAKE_CURRENT_BINARY_DIR}/styles.css
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/data-sources/overview.md ${CMAKE_CURRENT_BINARY_DIR}/data-sources/overview.md
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/data-sources/us-tiger/README.md ${CMAKE_CURRENT_BINARY_DIR}/data-sources/US-Tiger.md
    COMMAND ${CMAKE_COMMAND} -E create_symlink ${PROJECT_SOURCE_DIR}/data-sources/gb-postcodes/README.md ${CMAKE_CURRENT_BINARY_DIR}/data-sources/GB-Postcodes.md

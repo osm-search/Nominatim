@@ -34,8 +34,7 @@ pages:
         - 'Installation on Ubuntu 16' : 'appendix/Install-on-Ubuntu-16.md'
         - 'Installation on Ubuntu 18' : 'appendix/Install-on-Ubuntu-18.md'
 markdown_extensions:
-    - codehilite:
-        use_pygments: False
+    - codehilite
     - toc:
         permalink: 
-extra_css: [extra.css]
+extra_css: [extra.css, styles.css]

@@ -367,7 +367,7 @@ class SetupFunctions
         $sSQL = 'select distinct partition from country_name';
         $aPartitions = $this->oDB->getCol($sSQL);
 
-        if (!$this->bNoPartitions) $aPartitions[] = 0;
+        if ($this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
             $this->pgExec('TRUNCATE location_road_'.$sPartition);
             echo '.';
@@ -792,7 +792,7 @@ class SetupFunctions
     {
         $sSQL = 'select distinct partition from country_name';
         $aPartitions = $this->oDB->getCol($sSQL);
-        if (!$this->bNoPartitions) $aPartitions[] = 0;
+        if ($this->bNoPartitions) $aPartitions[] = 0;
 
         preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
         foreach ($aMatches as $aMatch) {

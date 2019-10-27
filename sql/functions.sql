@@ -1358,10 +1358,9 @@ BEGIN
   END LOOP;
 
   NEW.importance := null;
-  select language||':'||title,importance from get_wikipedia_match(NEW.extratags, NEW.country_code) INTO NEW.wikipedia,NEW.importance;
-  IF NEW.importance IS NULL THEN
-    select language||':'||title,importance from wikipedia_article where osm_type = NEW.osm_type and osm_id = NEW.osm_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
-  END IF;
+  SELECT importance, wikipedia
+    FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id)
+    INTO NEW.wikipedia,NEW.importance;
 
 --DEBUG: RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;
 
@@ -1600,9 +1599,10 @@ BEGIN
           -- mark the linked place (excludes from search results)
           UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
-          -- keep a note of the node id in case we need it for wikipedia in a bit
-          linked_node_id := linkedPlacex.osm_id;
-          select language||':'||title,importance from get_wikipedia_match(linkedPlacex.extratags, NEW.country_code) INTO linked_wikipedia,linked_importance;
+          select wikipedia, importance
+            FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
+                                    'N', linkedPlacex.osm_id)
+            INTO linked_wikipedia,linked_importance;
           --DEBUG: RAISE WARNING 'Linked label member';
         END LOOP;
 
@@ -1639,9 +1639,10 @@ BEGIN
               -- mark the linked place (excludes from search results)
               UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
-              -- keep a note of the node id in case we need it for wikipedia in a bit
-              linked_node_id := linkedPlacex.osm_id;
-              select language||':'||title,importance from get_wikipedia_match(linkedPlacex.extratags, NEW.country_code) INTO linked_wikipedia,linked_importance;
+              select wikipedia, importance
+                FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
+                                        'N', linkedPlacex.osm_id)
+                INTO linked_wikipedia,linked_importance;
               --DEBUG: RAISE WARNING 'Linked admin_center';
             END IF;
 
@@ -1684,9 +1685,10 @@ BEGIN
         -- mark the linked place (excludes from search results)
         UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
 
-        -- keep a note of the node id in case we need it for wikipedia in a bit
-        linked_node_id := linkedPlacex.osm_id;
-        select language||':'||title,importance from get_wikipedia_match(linkedPlacex.extratags, NEW.country_code) INTO linked_wikipedia,linked_importance;
+        select wikipedia, importance
+          FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
+                                  'N', linkedPlacex.osm_id)
+          INTO linked_wikipedia,linked_importance;
         --DEBUG: RAISE WARNING 'Linked named place';
       END LOOP;
     END IF;
@@ -1714,13 +1716,6 @@ BEGIN
         (NEW.importance is null or NEW.importance < linked_importance) THEN
         NEW.importance = linked_importance;
     END IF;
-
-    -- Still null? how about looking it up by the node id
-    IF NEW.importance IS NULL THEN
-      --DEBUG: RAISE WARNING 'Looking up importance by linked node id';
-      select language||':'||title,importance from wikipedia_article where osm_type = 'N'::char(1) and osm_id = linked_node_id order by importance desc limit 1 INTO NEW.wikipedia,NEW.importance;
-    END IF;
-
   END IF;
 
   -- make sure all names are in the word table
@@ -2680,6 +2675,38 @@ BEGIN
     i := i + 1;
   END LOOP;
   RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+DROP TYPE IF EXISTS place_importance CASCADE;
+create type place_importance as (
+  importance FLOAT,
+  wikipedia TEXT
+);
+
+CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE, country_code varchar(2), osm_type varchar(1), osm_id BIGINT)
+  RETURNS place_importance
+  AS $$
+DECLARE
+  match RECORD;
+  result place_importance;
+BEGIN
+  FOR match IN SELECT * FROM get_wikipedia_match(extratags, country_code) LOOP
+    result.importance := match.importance;
+    result.wikipedia := match.language || ':' || match.title;
+    RETURN result;
+  END LOOP;
+
+  FOR match IN SELECT * FROM wikipedia_article
+                WHERE osm_type = osm_type and osm_id = osm_id
+                ORDER BY importance DESC limit 1 LOOP
+    result.importance := match.importance;
+    result.wikipedia := match.language || ':' || match.title;
+    RETURN result;
+  END LOOP;
+
+  RETURN null;
 END;
 $$
 LANGUAGE plpgsql;

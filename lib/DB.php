@@ -135,7 +135,7 @@ class DB
         try {
             $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
 
-            while ($val = $stmt->fetchColumn(0)) { // returns first column or false
+            while (($val = $stmt->fetchColumn(0)) !== false) { // returns first column or false
                 $aVals[] = $val;
             }
         } catch (\PDOException $e) {

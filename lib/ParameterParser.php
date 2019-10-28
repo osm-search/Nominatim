@@ -104,16 +104,16 @@ class ParameterParser
         }
 
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $aLangPrefOrder['short_name:'.$sLanguage] = 'short_name:'.$sLanguage;
             $aLangPrefOrder['name:'.$sLanguage] = 'name:'.$sLanguage;
         }
-        $aLangPrefOrder['short_name'] = 'short_name';
         $aLangPrefOrder['name'] = 'name';
         $aLangPrefOrder['brand'] = 'brand';
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
             $aLangPrefOrder['official_name:'.$sLanguage] = 'official_name:'.$sLanguage;
+            $aLangPrefOrder['short_name:'.$sLanguage] = 'short_name:'.$sLanguage;
         }
         $aLangPrefOrder['official_name'] = 'official_name';
+        $aLangPrefOrder['short_name'] = 'short_name';
         $aLangPrefOrder['ref'] = 'ref';
         $aLangPrefOrder['type'] = 'type';
         return $aLangPrefOrder;

@@ -468,6 +468,10 @@ class SetupFunctions
     {
         info('Import Tiger data');
 
+        $aFilenames = glob(CONST_Tiger_Data_Path.'/*.sql');
+        info('Found '.count($aFilenames).' SQL files in path '.CONST_Tiger_Data_Path);
+        if (empty($aFilenames)) return;
+
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
         $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
         $sTemplate = $this->replaceTablespace(
@@ -492,7 +496,7 @@ class SetupFunctions
             pg_ping($aDBInstances[$i]);
         }
 
-        foreach (glob(CONST_Tiger_Data_Path.'/*.sql') as $sFile) {
+        foreach ($aFilenames as $sFile) {
             echo $sFile.': ';
             $hFile = fopen($sFile, 'r');
             $sSQL = fgets($hFile, 100000);

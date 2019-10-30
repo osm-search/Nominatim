@@ -76,14 +76,14 @@ class AddressDetails
                 $bFallback = true;
             }
 
-            $sName = false;
-            if (isset($aLine['localname']) && $aLine['localname']) {
+            $sName = null;
+            if (isset($aLine['localname']) && $aLine['localname']!=='') {
                 $sName = $aLine['localname'];
-            } elseif (isset($aLine['housenumber']) && $aLine['housenumber']) {
+            } elseif (isset($aLine['housenumber']) && $aLine['housenumber']!=='') {
                 $sName = $aLine['housenumber'];
             }
 
-            if ($sName) {
+            if (isset($sName)) {
                 $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel']) ? $aTypeLabel['simplelabel'] : $aTypeLabel['label']);
                 $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
                 if (!isset($aAddress[$sTypeLabel])
@@ -97,6 +97,7 @@ class AddressDetails
                 }
             }
         }
+
         return $aAddress;
     }
 

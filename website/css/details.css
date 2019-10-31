@@ -52,6 +52,17 @@ tr.all-columns td {
   margin: 10px 0;
 }
 
+#details-index-page .search-form {
+  padding: 20px 10px;
+  margin: 2em 0;
+}
+#details-index-page .search-form h4 {
+  margin-top: 0;
+}
+#details-index-page .search-form .form-control{
+  width: 30em;
+}
+
 footer {
   text-align: center;  
   padding: 2em 0;

@@ -30,6 +30,11 @@ $oDB->connect();
 
 $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
+if ($sOutputFormat == 'html' && !$sPlaceId && !$sOsmType) {
+    include(CONST_BasePath.'/lib/template/details-index-html.php');
+    exit;
+}
+
 if ($sOsmType && $iOsmId > 0) {
     $sSQL = 'SELECT place_id FROM placex WHERE osm_type = :type AND osm_id = :id';
     // osm_type and osm_id are not unique enough

@@ -2698,13 +2698,15 @@ BEGIN
     RETURN result;
   END LOOP;
 
-  FOR match IN SELECT * FROM wikipedia_article
-                WHERE osm_type = osm_type and osm_id = osm_id
-                ORDER BY importance DESC limit 1 LOOP
-    result.importance := match.importance;
-    result.wikipedia := match.language || ':' || match.title;
-    RETURN result;
-  END LOOP;
+  IF extratags ? 'wikidata' THEN
+    FOR match IN SELECT * FROM wikipedia_article
+                  WHERE wd_page_title = extratags->'wikidata'
+                  ORDER BY importance DESC limit 1 LOOP
+      result.importance := match.importance;
+      result.wikipedia := match.language || ':' || match.title;
+      RETURN result;
+    END LOOP;
+  END IF;
 
   RETURN null;
 END;

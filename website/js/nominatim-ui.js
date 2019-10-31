@@ -275,6 +275,30 @@ jQuery(document).ready(function(){
 
 jQuery(document).ready(function(){
 
+    if ( !$('#details-index-page').length ){ return; }
+
+    $('#form-by-type-and-id,#form-by-osm-url').on('submit', function(e){
+        e.preventDefault();
+
+        var val = $(this).find('input[type=edit]').val();
+        var matches = val.match(/^\s*([NWR])(\d+)\s*$/i);
+
+        if (!matches) {
+            matches = val.match(/\/(relation|way|node)\/(\d+)\s*$/);
+        }
+
+        if (matches) {
+            $(this).find('input[name=osmtype]').val(matches[1].charAt(0).toUpperCase());
+            $(this).find('input[name=osmid]').val(matches[2]);
+            $(this).get(0).submit();
+        } else {
+            alert('invalid input');
+        }
+    });
+});
+
+jQuery(document).ready(function(){
+
     if ( !$('#details-page').length ){ return; }
 
 

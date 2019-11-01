@@ -322,7 +322,7 @@ if ($aResult['update-address-levels']) {
 }
 
 if ($aResult['recompute-importance']) {
-    echo 'Updating importance values for database.\n';
+    echo "Updating importance values for database.\n";
     $oDB = new Nominatim\DB();
     $oDB->connect();
 

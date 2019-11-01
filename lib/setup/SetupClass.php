@@ -323,19 +323,12 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikipedia_article.sql.bin';
-        $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
+        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia_importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
-            info('Importing wikipedia articles');
+            info('Importing wikipedia articles and redirects');
             $this->pgsqlRunDropAndRestore($sWikiArticlesFile);
         } else {
-            warn('wikipedia article dump file not found - places will have default importance');
-        }
-        if (file_exists($sWikiRedirectsFile)) {
-            info('Importing wikipedia redirects');
-            $this->pgsqlRunDropAndRestore($sWikiRedirectsFile);
-        } else {
-            warn('wikipedia redirect dump file not found - some place importance values may be missing');
+            warn('wikipedia importance dump file not found - places will have default importance');
         }
     }
 

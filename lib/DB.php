@@ -284,7 +284,7 @@ class DB
     {
         // https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
         $aInfo = array();
-        if (preg_match('/^pgsql:(.+)/', $sDSN, $aMatches)) {
+        if (preg_match('/^pgsql:(.+)$/', $sDSN, $aMatches)) {
             foreach (explode(';', $aMatches[1]) as $sKeyVal) {
                 list($sKey, $sVal) = explode('=', $sKeyVal, 2);
                 if ($sKey == 'host') $sKey = 'hostspec';

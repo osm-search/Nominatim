@@ -17,12 +17,20 @@
 
     sudo yum install -y epel-release
 
+# More repositories for postgresql 11 (CentOS default 'postgresql' is 9.2), postgis
+# and llvm-toolset (https://github.com/theory/pg-semver/issues/35)
+
+    sudo yum install -y https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    sudo yum install -y centos-release-scl-rh
+
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo yum install -y postgresql-server postgresql-contrib postgresql-devel \
-                        postgis postgis-utils \
+
+    sudo yum install -y postgresql11-server postgresql11-contrib postgresql11-devel \
+                        postgis25_11 postgis25_11-utils \
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        devtoolset-7 llvm-toolset-7 \
                         php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
                         expat-devel zlib-devel
@@ -77,8 +85,11 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # CentOS does not automatically create a database cluster. Therefore, start
 # with initializing the database, then enable the server to start at boot:
 
-    sudo postgresql-setup initdb
-    sudo systemctl enable postgresql
+    echo 'PATH=$PATH:/usr/pgsql-11/bin' > .bash_profile
+    source .bash_profile
+
+    sudo /usr/pgsql-11/bin/postgresql-11-setup initdb
+    sudo systemctl enable postgresql-11
 
 #
 # Next tune the postgresql configuration, which is located in 
@@ -88,7 +99,7 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # Now start the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql
+    sudo systemctl restart postgresql-11
 
 #
 # Finally, we need to add two postgres users: one for the user that does
@@ -150,7 +161,7 @@ fi                                 #DOCS:
 # download the country grid:
 
 if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+    wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,

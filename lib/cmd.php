@@ -148,12 +148,14 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     // Convert database DSN to psql parameters
     $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql -p '.$aDSNInfo['port'].' -d '.$aDSNInfo['database'];
+    $sCMD = 'psql'
+        .' -p '.escapeshellarg($aDSNInfo['port'])
+        .' -d '.escapeshellarg($aDSNInfo['database']);
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCMD .= ' -h ' . $aDSNInfo['hostspec'];
+        $sCMD .= ' -h ' . escapeshellarg($aDSNInfo['hostspec']);
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCMD .= ' -U ' . $aDSNInfo['username'];
+        $sCMD .= ' -U ' . escapeshellarg($aDSNInfo['username']);
     }
     $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {

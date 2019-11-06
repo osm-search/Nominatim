@@ -80,13 +80,15 @@ class SetupFunctions
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
-        $sCreateDBCmd = 'createdb -E UTF-8 -p '.$this->aDSNInfo['port'].' '.$this->aDSNInfo['database'];
+        $sCreateDBCmd = 'createdb -E UTF-8'
+            .' -p '.escapeshellarg($this->aDSNInfo['port'])
+            .' '.escapeshellarg($this->aDSNInfo['database']);
         if (isset($this->aDSNInfo['username'])) {
-            $sCreateDBCmd .= ' -U '.$this->aDSNInfo['username'];
+            $sCreateDBCmd .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
         }
 
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sCreateDBCmd .= ' -h '.$this->aDSNInfo['hostspec'];
+            $sCreateDBCmd .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
         }
 
         $result = $this->runWithPgEnv($sCreateDBCmd);
@@ -178,30 +180,30 @@ class SetupFunctions
             fail("osm2pgsql not found in '$osm2pgsql'");
         }
 
-        $osm2pgsql .= ' -S '.CONST_Import_Style;
+        $osm2pgsql .= ' -S '.escapeshellarg(CONST_Import_Style);
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-            $osm2pgsql .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+            $osm2pgsql .= ' --flat-nodes '.escapeshellarg(CONST_Osm2pgsql_Flatnode_File);
         }
 
         if (CONST_Tablespace_Osm2pgsql_Data)
-            $osm2pgsql .= ' --tablespace-slim-data '.CONST_Tablespace_Osm2pgsql_Data;
+            $osm2pgsql .= ' --tablespace-slim-data '.escapeshellarg(CONST_Tablespace_Osm2pgsql_Data);
         if (CONST_Tablespace_Osm2pgsql_Index)
-            $osm2pgsql .= ' --tablespace-slim-index '.CONST_Tablespace_Osm2pgsql_Index;
+            $osm2pgsql .= ' --tablespace-slim-index '.escapeshellarg(CONST_Tablespace_Osm2pgsql_Index);
         if (CONST_Tablespace_Place_Data)
-            $osm2pgsql .= ' --tablespace-main-data '.CONST_Tablespace_Place_Data;
+            $osm2pgsql .= ' --tablespace-main-data '.escapeshellarg(CONST_Tablespace_Place_Data);
         if (CONST_Tablespace_Place_Index)
-            $osm2pgsql .= ' --tablespace-main-index '.CONST_Tablespace_Place_Index;
+            $osm2pgsql .= ' --tablespace-main-index '.escapeshellarg(CONST_Tablespace_Place_Index);
         $osm2pgsql .= ' -lsc -O gazetteer --hstore --number-processes 1';
-        $osm2pgsql .= ' -C '.$this->iCacheMemory;
-        $osm2pgsql .= ' -P '.$this->aDSNInfo['port'];
+        $osm2pgsql .= ' -C '.escapeshellarg($this->iCacheMemory);
+        $osm2pgsql .= ' -P '.escapeshellarg($this->aDSNInfo['port']);
         if (isset($this->aDSNInfo['username'])) {
-            $osm2pgsql .= ' -U '.$this->aDSNInfo['username'];
+            $osm2pgsql .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $osm2pgsql .= ' -H '.$this->aDSNInfo['hostspec'];
+            $osm2pgsql .= ' -H '.escapeshellarg($this->aDSNInfo['hostspec']);
         }
-        $osm2pgsql .= ' -d '.$this->aDSNInfo['database'].' '.$sOSMFile;
+        $osm2pgsql .= ' -d '.escapeshellarg($this->aDSNInfo['database']).' '.escapeshellarg($sOSMFile);
 
         $this->runWithPgEnv($osm2pgsql);
 
@@ -599,13 +601,15 @@ class SetupFunctions
     public function index($bIndexNoanalyse)
     {
         $sOutputFile = '';
-        $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$this->aDSNInfo['database'].' -P '
-            .$this->aDSNInfo['port'].' -t '.$this->iInstances.$sOutputFile;
+        $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i'
+            .' -d '.escapeshellarg($this->aDSNInfo['database'])
+            .' -P '.escapeshellarg($this->aDSNInfo['port'])
+            .' -t '.escapeshellarg($this->iInstances.$sOutputFile);
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sBaseCmd .= ' -H '.$this->aDSNInfo['hostspec'];
+            $sBaseCmd .= ' -H '.escapeshellarg($this->aDSNInfo['hostspec']);
         }
         if (isset($this->aDSNInfo['username'])) {
-            $sBaseCmd .= ' -U '.$this->aDSNInfo['username'];
+            $sBaseCmd .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
         }
 
         info('Index ranks 0 - 4');
@@ -742,15 +746,18 @@ class SetupFunctions
 
     private function pgsqlRunDropAndRestore($sDumpFile)
     {
-        $sCMD = 'pg_restore -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'].' --no-owner -Fc --clean '.$sDumpFile;
+        $sCMD = 'pg_restore'
+            .' -p '.escapeshellarg($this->aDSNInfo['port'])
+            .' -d '.escapeshellarg($this->aDSNInfo['database'])
+            .' --no-owner -Fc --clean '.escapeshellarg($sDumpFile);
         if ($this->oDB->getPostgresVersion() >= 9.04) {
             $sCMD .= ' --if-exists';
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
+            $sCMD .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
         }
         if (isset($this->aDSNInfo['username'])) {
-            $sCMD .= ' -U '.$this->aDSNInfo['username'];
+            $sCMD .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
         }
 
         $this->runWithPgEnv($sCMD);
@@ -814,15 +821,17 @@ class SetupFunctions
     {
         if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
-        $sCMD = 'psql -p '.$this->aDSNInfo['port'].' -d '.$this->aDSNInfo['database'];
+        $sCMD = 'psql'
+            .' -p '.escapeshellarg($this->aDSNInfo['port'])
+            .' -d '.escapeshellarg($this->aDSNInfo['database']);
         if (!$this->bVerbose) {
             $sCMD .= ' -q';
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sCMD .= ' -h '.$this->aDSNInfo['hostspec'];
+            $sCMD .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
         }
         if (isset($this->aDSNInfo['username'])) {
-            $sCMD .= ' -U '.$this->aDSNInfo['username'];
+            $sCMD .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
         }
         $aProcEnv = null;
         if (isset($this->aDSNInfo['password'])) {
@@ -835,12 +844,12 @@ class SetupFunctions
                              1 => array('pipe', 'w'),
                              2 => array('file', '/dev/null', 'a')
                             );
-            $hGzipProcess = proc_open('zcat '.$sFilename, $aDescriptors, $ahGzipPipes);
+            $hGzipProcess = proc_open('zcat '.escapeshellarg($sFilename), $aDescriptors, $ahGzipPipes);
             if (!is_resource($hGzipProcess)) fail('unable to start zcat');
             $aReadPipe = $ahGzipPipes[1];
             fclose($ahGzipPipes[0]);
         } else {
-            $sCMD .= ' -f '.$sFilename;
+            $sCMD .= ' -f '.escapeshellarg($sFilename);
             $aReadPipe = array('pipe', 'r');
         }
         $aDescriptors = array(

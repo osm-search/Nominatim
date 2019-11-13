@@ -26,14 +26,16 @@ If the reported rank is 26 or higher, you can also safely add `--index-noanalyse
 
     PHP Warning:  file_get_contents(): open_basedir restriction in effect.
 
-You need to adjust the [open_basedir](https://www.php.net/manual/en/ini.core.php#ini.open-basedir) setting
-in your PHP configuration (`php.ini file`). By default this setting may look like this:
+You need to adjust the
+[open_basedir](https://www.php.net/manual/en/ini.core.php#ini.open-basedir)
+setting in your PHP configuration (`php.ini` file). By default this setting may
+look like this:
 
     open_basedir = /srv/http/:/home/:/tmp/:/usr/share/pear/
 
-Either add reported directories to the list or disable this setting temporarily by
-dding ";" at the beginning of the line. Don't forget to enable this setting again
-once you are done with the PHP command line operations.
+Either add reported directories to the list or disable this setting temporarily
+by adding ";" at the beginning of the line. Don't forget to enable this setting
+again once you are done with the PHP command line operations.
 
 
 ### PHP timzeone warnings
@@ -107,10 +109,11 @@ to get the full error message.
 
 `could not connect to server: No such file or directory`
 
-On CentOS v7 the PostgreSQL server is started with `systemd`.
-Check if `/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`.
-If so then Apache cannot see the `/tmp/.s.PGSQL.5432` file. It's a good security feature,
-so use the [preferred solution](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
+On CentOS v7 the PostgreSQL server is started with `systemd`. Check if
+`/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`. If
+so then Apache cannot see the `/tmp/.s.PGSQL.5432` file. It's a good security
+feature, so use the
+[preferred solution](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
 
 However, you can solve this the quick and dirty way by commenting out that line and then run
 
@@ -118,14 +121,12 @@ However, you can solve this the quick and dirty way by commenting out that line 
     sudo systemctl restart httpd
 
 
-### "must be an array or an object that implements Countable" warning in /usr/share/pear/DB.php
-
-The warning started with PHP 7.2. Make sure you have at least [version 1.9.3 of PEAR DB](https://github.com/pear/DB/releases)
-installed.
-
 ### Website reports "DB Error: insufficient permissions"
 
-The user the webserver, e.g. Apache, runs under needs to have access to the Nominatim database. You can find the user like [this](https://serverfault.com/questions/125865/finding-out-what-user-apache-is-running-as), for default Ubuntu operating system for example it's `www-data`.
+The user the webserver, e.g. Apache, runs under needs to have access to the
+Nominatim database. You can find the user like
+[this](https://serverfault.com/questions/125865/finding-out-what-user-apache-is-running-as),
+for default Ubuntu operating system for example it's `www-data`.
 
 1. Repeat the `createuser` step of the installation instructions.
 
@@ -164,18 +165,8 @@ When running SELinux, make sure that the
 ### Setup.php fails with "DB Error: extension not found"
 
 Make sure you have the PostgreSQL extensions "hstore" and "postgis" installed.
-See the installation instruction for a full list of required packages.
+See the installation instructions for a full list of required packages.
 
-
-### Setup.php reports "Cannot redeclare getDB()"
-
-`Cannot redeclare getDB() (previously declared in /your/path/Nominatim/lib/db.php:4)`
-
-The message is a bit misleading as PHP needs to load the file `DB.php` and
-instead re-loads Nominatim's `db.php`. To solve this make sure you
-have the [Pear module 'DB'](https://pear.php.net/package/DB/) installed.
-
-    sudo pear install DB
 
 ### I forgot to delete the flatnodes file before starting an import.
 

@@ -46,9 +46,9 @@ a single place (for reverse) of the following format:
 
 The possible fields are:
 
- * `place_id` - reference to the Nominatim internal database ID (see notes below)
+ * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
  * `osm_type`, `osm_id` - reference to the OSM object
- * `boundingbox` - area of corner coordinates
+ * `boundingbox` - area of corner coordinates ([see notes](#boundingbox))
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `display_name` - full comma-separated address
  * `class`, `type` - key and value of the main OSM tag
@@ -75,7 +75,7 @@ a bounding box (`bbox`).
 
 The feature list has the following fields:
 
- * `place_id` - reference to the Nominatim internal database ID (see notes below)
+ * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
  * `osm_type`, `osm_id` - reference to the OSM object
  * `category`, `type` - key and value of the main OSM tag
  * `display_name` - full comma-separated address
@@ -148,11 +148,11 @@ attribution to OSM and the original querystring.
 
 The place information can be found in the `result` element. The attributes of that element contain:
 
- * `place_id` - reference to the Nominatim internal database ID (see notes below)
+ * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
  * `osm_type`, `osm_id` - reference to the OSM object
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
- * `boundingbox` - comma-separated list of corner coordinates
+ * `boundingbox` - comma-separated list of corner coordinates ([see notes](#boundingbox))
 
 The full address of the result can be found in the content of the
 `result` element as a comma-separated list.
@@ -203,11 +203,11 @@ generic information about the query:
 The place information can be found in the `place` elements, of which there may
 be more than one. The attributes of that element contain:
 
- * `place_id` - reference to the Nominatim internal database ID (see notes below)
+ * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
  * `osm_type`, `osm_id` - reference to the OSM object
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
- * `boundingbox` - comma-separated list of corner coordinates
+ * `boundingbox` - comma-separated list of corner coordinates ([see notes](#boundingbox))
  * `place_rank` - class search rank
  * `display_name` - full comma-separated address
  * `class`, `type` - key and value of the main OSM tag
@@ -244,3 +244,10 @@ relation) so `osm_type`+`osm_id`+`class_name` would be more unique.
 
 Comma separated list of min latitude, max latitude, min longitude, max longitude.
 The whole planet would be `-90,90,-180,180`.
+
+Can we used to pan and center the map on the result, for example with leafletjs
+mapping library
+`map.fitBounds([[bbox[0],bbox[2]],[bbox[1],bbox[3]]], {padding: [20, 20], maxzoom: 16});`
+
+Bounds crossing the antimeridian have a min latitude -180 and max latitude 180,
+essentially covering the planet (See [issue 184](https://github.com/openstreetmap/Nominatim/issues/184)).

@@ -2622,7 +2622,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-DROP TYPE wikipedia_article_match CASCADE;
+DROP TYPE IF EXISTS wikipedia_article_match CASCADE;
 create type wikipedia_article_match as (
   language TEXT,
   title TEXT,

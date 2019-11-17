@@ -160,13 +160,6 @@ class SetupFunctions
         if ($this->bNoPartitions) {
             $this->pgsqlRunScript('update country_name set partition = 0');
         }
-
-        // the following will be needed by createFunctions later but
-        // is only defined in the subsequently called createTables
-        // Create dummies here that will be overwritten by the proper
-        // versions in create-tables.
-        $this->pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');
-        $this->pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()', false);
     }
 
     public function importData($sOSMFile)
@@ -323,11 +316,11 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $this->pgExec('DROP TABLE wikipedia_article');
-        $this->pgExec('DROP TABLE wikipedia_redirect');
         $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');
+            $this->pgExec('DROP TABLE IF EXISTS wikipedia_article');
+            $this->pgExec('DROP TABLE IF EXISTS wikipedia_redirect');
             $this->pgsqlRunScriptFile($sWikiArticlesFile);
         } else {
             warn('wikipedia importance dump file not found - places will have default importance');
@@ -345,8 +338,6 @@ class SetupFunctions
         $this->pgExec('TRUNCATE location_property_osmline');
         echo '.';
         $this->pgExec('TRUNCATE place_addressline');
-        echo '.';
-        $this->pgExec('TRUNCATE place_boundingbox');
         echo '.';
         $this->pgExec('TRUNCATE location_area');
         echo '.';

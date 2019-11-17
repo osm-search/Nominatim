@@ -1358,7 +1358,7 @@ BEGIN
   END LOOP;
 
   NEW.importance := null;
-  SELECT importance, wikipedia
+  SELECT wikipedia, importance
     FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id)
     INTO NEW.wikipedia,NEW.importance;
 
@@ -2692,7 +2692,9 @@ DECLARE
   match RECORD;
   result place_importance;
 BEGIN
-  FOR match IN SELECT * FROM get_wikipedia_match(extratags, country_code) LOOP
+  FOR match IN SELECT * FROM get_wikipedia_match(extratags, country_code)
+               WHERE language is not NULL
+  LOOP
     result.importance := match.importance;
     result.wikipedia := match.language || ':' || match.title;
     RETURN result;

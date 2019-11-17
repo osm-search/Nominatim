@@ -41,10 +41,9 @@ but it will improve the quality of the results if this is installed.
 This data is available as a binary download:
 
     cd $NOMINATIM_SOURCE_DIR/data
-    wget https://www.nominatim.org/data/wikimedia_importance.sql.gz
+    wget https://www.nominatim.org/data/wikimedia-importance.sql.gz
 
-The file is about 1GB and it adds around 10GB to the install
-size of Nominatim. They also increase the install time by an hour or so.
+The file is about 400MB and adds around 4GB to Nominatim database.
 
 *NOTE:* if you forgot to download the wikipedia rankings, you can also add
 them after the import by running `./utils/setup.php --import-wikipedia-articles`

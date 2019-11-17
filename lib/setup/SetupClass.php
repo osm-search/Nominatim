@@ -323,10 +323,12 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia_importance.sql.gz';
+        $this->pgExec('DROP TABLE wikipedia_article');
+        $this->pgExec('DROP TABLE wikipedia_redirect');
+        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');
-            $this->pgsqlRunDropAndRestore($sWikiArticlesFile);
+            $this->pgsqlRunScriptFile($sWikiArticlesFile);
         } else {
             warn('wikipedia importance dump file not found - places will have default importance');
         }
@@ -735,25 +737,6 @@ class SetupFunctions
                 unlink(CONST_Osm2pgsql_Flatnode_File);
             }
         }
-    }
-
-    private function pgsqlRunDropAndRestore($sDumpFile)
-    {
-        $sCMD = 'pg_restore'
-            .' -p '.escapeshellarg($this->aDSNInfo['port'])
-            .' -d '.escapeshellarg($this->aDSNInfo['database'])
-            .' --no-owner -Fc --clean '.escapeshellarg($sDumpFile);
-        if ($this->oDB->getPostgresVersion() >= 9.04) {
-            $sCMD .= ' --if-exists';
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $sCMD .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
-        }
-        if (isset($this->aDSNInfo['username'])) {
-            $sCMD .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
-        }
-
-        $this->runWithPgEnv($sCMD);
     }
 
     private function pgsqlRunScript($sScript, $bfatal = true)

@@ -2703,7 +2703,7 @@ BEGIN
   IF extratags ? 'wikidata' THEN
     FOR match IN SELECT * FROM wikipedia_article
                   WHERE wd_page_title = extratags->'wikidata'
-                  ORDER BY importance DESC limit 1 LOOP
+                  ORDER BY language = 'en' DESC, langcount DESC LIMIT 1 LOOP
       result.importance := match.importance;
       result.wikipedia := match.language || ':' || match.title;
       RETURN result;

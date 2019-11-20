@@ -160,13 +160,6 @@ class SetupFunctions
         if ($this->bNoPartitions) {
             $this->pgsqlRunScript('update country_name set partition = 0');
         }
-
-        // the following will be needed by createFunctions later but
-        // is only defined in the subsequently called createTables
-        // Create dummies here that will be overwritten by the proper
-        // versions in create-tables.
-        $this->pgsqlRunScript('CREATE TABLE IF NOT EXISTS place_boundingbox ()');
-        $this->pgsqlRunScript('CREATE TYPE wikipedia_article_match AS ()', false);
     }
 
     public function importData($sOSMFile)
@@ -323,19 +316,14 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikipedia_article.sql.bin';
-        $sWikiRedirectsFile = CONST_Wikipedia_Data_Path.'/wikipedia_redirect.sql.bin';
+        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
-            info('Importing wikipedia articles');
-            $this->pgsqlRunDropAndRestore($sWikiArticlesFile);
+            info('Importing wikipedia articles and redirects');
+            $this->pgExec('DROP TABLE IF EXISTS wikipedia_article');
+            $this->pgExec('DROP TABLE IF EXISTS wikipedia_redirect');
+            $this->pgsqlRunScriptFile($sWikiArticlesFile);
         } else {
-            warn('wikipedia article dump file not found - places will have default importance');
-        }
-        if (file_exists($sWikiRedirectsFile)) {
-            info('Importing wikipedia redirects');
-            $this->pgsqlRunDropAndRestore($sWikiRedirectsFile);
-        } else {
-            warn('wikipedia redirect dump file not found - some place importance values may be missing');
+            warn('wikipedia importance dump file not found - places will have default importance');
         }
     }
 
@@ -350,8 +338,6 @@ class SetupFunctions
         $this->pgExec('TRUNCATE location_property_osmline');
         echo '.';
         $this->pgExec('TRUNCATE place_addressline');
-        echo '.';
-        $this->pgExec('TRUNCATE place_boundingbox');
         echo '.';
         $this->pgExec('TRUNCATE location_area');
         echo '.';
@@ -742,25 +728,6 @@ class SetupFunctions
                 unlink(CONST_Osm2pgsql_Flatnode_File);
             }
         }
-    }
-
-    private function pgsqlRunDropAndRestore($sDumpFile)
-    {
-        $sCMD = 'pg_restore'
-            .' -p '.escapeshellarg($this->aDSNInfo['port'])
-            .' -d '.escapeshellarg($this->aDSNInfo['database'])
-            .' --no-owner -Fc --clean '.escapeshellarg($sDumpFile);
-        if ($this->oDB->getPostgresVersion() >= 9.04) {
-            $sCMD .= ' --if-exists';
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $sCMD .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
-        }
-        if (isset($this->aDSNInfo['username'])) {
-            $sCMD .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
-        }
-
-        $this->runWithPgEnv($sCMD);
     }
 
     private function pgsqlRunScript($sScript, $bfatal = true)

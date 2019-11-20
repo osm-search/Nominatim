@@ -42,6 +42,7 @@ $aCMDOptions
    array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
    array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
+   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances'),
    array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
   );
 
@@ -318,6 +319,23 @@ if ($aResult['update-address-levels']) {
     echo 'Updating address levels from '.CONST_Address_Level_Config.".\n";
     $oAlParser = new \Nominatim\Setup\AddressLevelParser(CONST_Address_Level_Config);
     $oAlParser->createTable($oDB, 'address_levels');
+}
+
+if ($aResult['recompute-importance']) {
+    echo "Updating importance values for database.\n";
+    $oDB = new Nominatim\DB();
+    $oDB->connect();
+
+    $sSQL = 'ALTER TABLE placex DISABLE TRIGGER ALL;';
+    $sSQL .= 'UPDATE placex SET (wikipedia, importance) =';
+    $sSQL .= '   (SELECT wikipedia, importance';
+    $sSQL .= '    FROM compute_importance(extratags, country_code, osm_type, osm_id));';
+    $sSQL .= 'UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance';
+    $sSQL .= ' FROM placex d';
+    $sSQL .= ' WHERE s.place_id = d.linked_place_id and d.wikipedia is not null';
+    $sSQL .= '       and (s.wikipedia is null or s.importance < d.importance);';
+    $sSQL .= 'ALTER TABLE placex ENABLE TRIGGER ALL;';
+    $oDB->exec($sSQL);
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {

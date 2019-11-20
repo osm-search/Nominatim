@@ -268,7 +268,9 @@ CREATE TABLE wikipedia_article (
     lon double precision,
     importance double precision,
     osm_type character(1),
-    osm_id bigint
+    osm_id bigint,
+    wd_page_title text,
+    instance_of text
 );
 ALTER TABLE ONLY wikipedia_article ADD CONSTRAINT wikipedia_article_pkey PRIMARY KEY (language, title);
 CREATE INDEX idx_wikipedia_article_osm_id ON wikipedia_article USING btree (osm_type, osm_id);

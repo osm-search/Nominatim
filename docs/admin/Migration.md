@@ -6,6 +6,21 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
+## 3.4.0 -> master
+
+### New Wikipedia/Wikidata importance tables
+
+The `wikipedia_*` tables have a new format that also includes references to
+Wikidata. You need to update the computation functions and the tables as
+follows:
+
+  * download the new Wikipedia tables as described in the import section
+  * reimport the tables: `./utils/setup.php --import-wikipedia-articles`
+  * update the functions: `./utils/setup.php --create-functions --enable-diff-updates`
+  * compute importance: `./utils/update.php --recompute-importance`
+
+The last step takes about 10 hours on the full planet.
+
 ## 3.3.0 -> 3.4.0
 
 ### Reorganisation of location_area_country table

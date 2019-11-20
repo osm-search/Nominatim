@@ -33,7 +33,7 @@ the directory exists. There should be at least 40GB of free space.
 
 ## Downloading additional data
 
-### Wikipedia rankings
+### Wikipedia/Wikidata rankings
 
 Wikipedia can be used as an optional auxiliary data source to help indicate
 the importance of OSM features. Nominatim will work without this information
@@ -41,15 +41,13 @@ but it will improve the quality of the results if this is installed.
 This data is available as a binary download:
 
     cd $NOMINATIM_SOURCE_DIR/data
-    wget https://www.nominatim.org/data/wikipedia_article.sql.bin
-    wget https://www.nominatim.org/data/wikipedia_redirect.sql.bin
+    wget https://www.nominatim.org/data/wikimedia-importance.sql.gz
 
-Combined the 2 files are around 1.5GB and add around 30GB to the install
-size of Nominatim. They also increase the install time by an hour or so.
+The file is about 400MB and adds around 4GB to Nominatim database.
 
-*NOTE:* you'll need to download the Wikipedia rankings before performing
-the initial import of the data if you want the rankings applied to the
-loaded data.
+*NOTE:* if you forgot to download the wikipedia rankings, you can also add
+them after the import by running `./utils/setup.php --import-wikipedia-articles`
+and then `./utils/update.php --recompute-importance`.
 
 ### Great Britain, USA postcodes
 

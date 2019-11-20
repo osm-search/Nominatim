@@ -119,13 +119,13 @@ Feature: Search queries
           | en |
         Then result addresses contain
           | ID | state |
-          | 0  | Salto |
+          | 0  | Florida |
         When sending json search query "25 de Mayo" with address
           | accept-language | viewbox |
-          | en              | -56.35879,-34.18330,-56.31618,-34.20815 |
+          | en              | -57.95468,-31.39261,-57.94741,-31.39490 |
         Then result addresses contain
           | ID | state |
-          | 0  | Florida |
+          | 0  | Salto |
 
     Scenario: viewboxes cannot be points
         When sending json search query "foo"

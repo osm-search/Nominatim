@@ -55,15 +55,15 @@ For running continuous updates:
 ### Hardware
 
 A minimum of 2GB of RAM is required or installation will fail. For a full
-planet import 32GB of RAM or more are strongly recommended.
+planet import 64GB of RAM or more are strongly recommended. Do not report
+out of memory problems if you have less than 64GB RAM.
 
-For a full planet install you will need at least 700GB of hard disk space
+For a full planet install you will need at least 800GB of hard disk space
 (take into account that the OSM database is growing fast). SSD disks
 will help considerably to speed up import and queries.
 
-On a 6-core machine with 32GB RAM and SSDs the import of a full planet takes
-a bit more than 2 days. Without SSDs 7-8 days are more realistic.
-
+Even on a well configured machine the import of a full planet takes
+at least 2 days. Without SSDs 7-8 days are more realistic.
 
 ## Setup of the server
 
@@ -73,17 +73,21 @@ You might want to tune your PostgreSQL installation so that the later steps
 make best use of your hardware. You should tune the following parameters in
 your `postgresql.conf` file.
 
-    shared_buffers (2GB)
-    maintenance_work_mem (10GB)
-    work_mem (50MB)
-    effective_cache_size (24GB)
+    shared_buffers = 2GB
+    maintenance_work_mem = (10GB)
+    autovacuum_work_mem = 2GB
+    work_mem = (50MB)
+    effective_cache_size = (24GB)
     synchronous_commit = off
     checkpoint_segments = 100 # only for postgresql <= 9.4
+    max_wal_size = 1GB # postgresql > 9.4
     checkpoint_timeout = 10min
     checkpoint_completion_target = 0.9
 
 The numbers in brackets behind some parameters seem to work fine for
-32GB RAM machine. Adjust to your setup.
+64GB RAM machine. Adjust to your setup. A higher number for `max_wal_size`
+means that PostgreSQL needs to run checkpoints less often but it does require
+the additional space on your disk.
 
 For the initial import, you should also set:
 

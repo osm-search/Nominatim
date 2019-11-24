@@ -29,7 +29,7 @@ Add to your `settings/local.php`:
     @define('CONST_Osm2pgsql_Flatnode_File', '/path/to/flatnode.file');
 
 Replace the second part with a suitable path on your system and make sure
-the directory exists. There should be at least 40GB of free space.
+the directory exists. There should be at least 64GB of free space.
 
 ## Downloading additional data
 
@@ -62,7 +62,7 @@ involve a GB or US postcode. This data can be optionally downloaded:
 
 In its default setup Nominatim is configured to import the full OSM data
 set for the entire planet. Such a setup requires a powerful machine with
-at least 32GB of RAM and around 800GB of SSD hard disks. Depending on your
+at least 64GB of RAM and around 800GB of SSD hard disks. Depending on your
 use case there are various ways to reduce the amount of data imported. This
 section discusses these methods. They can also be combined.
 
@@ -124,7 +124,7 @@ The style can be changed with the configuration `CONST_Import_Style`.
 To give you an idea of the impact of using the different styles, the table
 below gives rough estimates of the final database size after import of a
 2018 planet and after using the `--drop` option. It also shows the time
-needed for the import on a machine with 32GB RAM, 4 CPUS and SSDs. Note that
+needed for the import on a machine with 64GB RAM, 4 CPUS and SSDs. Note that
 the given sizes are just an estimate meant for comparison of style requirements.
 Your planet import is likely to be larger as the OSM data grows with time.
 
@@ -135,7 +135,7 @@ street    |   42h        |  400 GB    |  180 GB
 address   |   59h        |  500 GB    |  260 GB
 full      |   80h        |  575 GB    |  300 GB
 
-You can also customize the styles further. For an description of the
+You can also customize the styles further. For a description of the
 style format see [the development section](../develop/Import.md).
 
 ## Initial import of the data
@@ -147,18 +147,44 @@ Download the data to import and load the data with the following command
 from the build directory:
 
 ```sh
-./utils/setup.php --osm-file <data file> --all [--osm2pgsql-cache 28000] 2>&1 | tee setup.log
+./utils/setup.php --osm-file <data file> --all 2>&1 | tee setup.log
 ```
 
-The `--osm2pgsql-cache` parameter is optional but strongly recommended for
-planet imports. It sets the node cache size for the osm2pgsql import part
-(see `-C` parameter in osm2pgsql help). As a rule of thumb, this should be
-about the same size as the file you are importing but never more than
-2/3 of RAM available. If your machine starts swapping reduce the size.
+***Note for full planet imports:*** Even on a perfectly configured machine
+the import of a full planet takes at least 2 days. Once you see messages
+with `Rank .. ETA` appear, the indexing process has started. This part takes
+the most time. There are 30 ranks to process. Rank 26 and 30 are the most complex.
+They take each about a third of the total import time. If you have not reached
+rank 26 after two days of import, it is worth revisiting your system
+configuration as it may not be optimal for the import.
 
-Computing word frequency for search terms can improve the performance of
-forward geocoding in particular under high load as it helps PostgreSQL's query
-planner to make the right decisions. To recompute word counts run:
+### Notes on memory usage
+
+In the first step of the import Nominatim uses osm2pgsql to load the OSM data
+into the PostgreSQL database. This step is very demanding in terms of RAM usage.
+osm2pgsql and PostgreSQL are running in parallel at this point. PostgreSQL
+blockes at least the part of RAM that has been configured with the
+`shared_buffers` parameter during [PostgreSQL tuning](Installation#PostgreSQL_tuning)
+and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
+its internal data structures, potentially more when it has to process very large
+relations. In addition it needs to maintain a cache for node locations. The size
+of this cache can be configured with the parameter `--osm2pgsql-cache`.
+
+When importing with a flatnode file, it is best to disable the node cache
+completely and leave the memory for the flatnode file. Nominatim will do this
+by default, so you do not need to configure anything in this case.
+
+For imports without a flatnode file, set `--osm2pgsql-cache` approximately to
+the size of the OSM pbf file (in MB) you are importing. Make sure you leave
+enough RAM for PostgreSQL and osm2pgsql as mentioned above. If the system starts
+swapping or you are getting out-of-memory errors, reduce the cache size or
+even consider using a flatnode file.
+
+## Tuning the database
+
+Accurate word frequency information for search terms helps PostgreSQL's query
+planner to make the right decisions. Recomputing them can improve the performance
+of forward geocoding in particular under high load. To recompute word counts run:
 
 ```sh
 ./utils/update.php --recompute-word-counts
@@ -176,7 +202,8 @@ you also need to enable these key phrases like this:
     ./utils/specialphrases.php --wiki-import > specialphrases.sql
     psql -d nominatim -f specialphrases.sql
 
-Note that this command downloads the phrases from the wiki link above.
+Note that this command downloads the phrases from the wiki link above. You
+need internet access for the step.
 
 
 ## Installing Tiger housenumber data for the US

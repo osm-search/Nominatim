@@ -45,7 +45,6 @@ For running Nominatim:
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * [PEAR::DB](https://pear.php.net/package/DB)
   * a webserver (apache or nginx are recommended)
 
 For running continuous updates:

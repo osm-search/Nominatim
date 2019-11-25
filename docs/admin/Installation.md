@@ -29,7 +29,8 @@ For compiling:
   * a recent C++ compiler
 
 Nominatim comes with its own version of osm2pgsql. See the
-osm2pgsql README for additional dependencies required for compiling osm2pgsql.
+[osm2pgsql README](https://github.com/openstreetmap/osm2pgsql/blob/master/README.md#building)
+for additional dependencies required for compiling osm2pgsql.
 
 For running tests:
 

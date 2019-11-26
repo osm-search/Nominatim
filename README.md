@@ -28,7 +28,7 @@ our bug tracker if you need help. You can ask questions on the mailing list
 (see below) or on [help.openstreetmap.org](https://help.openstreetmap.org/).**
 
 The latest stable release can be downloaded from https://nominatim.org.
-There you can also find [installation instructions for the release](https://nominatim.org/release-docs/latest/admin/Installation).
+There you can also find [installation instructions for the release](https://nominatim.org/release-docs/latest/admin/Installation), as well as an extensive [Troubleshooting/FAQ section](https://nominatim.org/release-docs/latest/admin/Faq/).
 
 Detailed installation instructions for the development version can be
 found at [nominatim.org](https://nominatim.org/release-docs/develop/admin/Installation)

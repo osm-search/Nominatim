@@ -29,10 +29,13 @@ class SetupFunctions
             warn('resetting threads to '.$this->iInstances);
         }
 
-        // Assume we can steal all the cache memory in the box (unless told otherwise)
         if (isset($aCMDResult['osm2pgsql-cache'])) {
             $this->iCacheMemory = $aCMDResult['osm2pgsql-cache'];
+        } elseif (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
+            // When flatnode files are enabled then disable cache per default.
+            $this->iCacheMemory = 0;
         } else {
+            // Otherwise: Assume we can steal all the cache memory in the box.
             $this->iCacheMemory = getCacheMemoryMB();
         }
 

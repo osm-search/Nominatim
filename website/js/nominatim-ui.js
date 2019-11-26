@@ -32,7 +32,6 @@ jQuery(document).ready(function(){
             });
 
     L.tileLayer(nominatim_map_init.tile_url, {
-        noWrap: true, // otherwise we end up with click coordinates like latitude -728
         // moved to footer
         attribution: (nominatim_map_init.tile_attribution || null ) //'&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
@@ -78,6 +77,9 @@ jQuery(document).ready(function(){
 
     function display_map_position(mouse_lat_lng){
 
+        if (mouse_lat_lng) {
+            mouse_lat_lng = map.wrapLatLng(mouse_lat_lng);
+        }
         html_mouse = "mouse position " + (mouse_lat_lng ? [mouse_lat_lng.lat.toFixed(5), mouse_lat_lng.lng.toFixed(5)].join(',') : '-');
         html_click = "last click: " + (last_click_latlng ? [last_click_latlng.lat.toFixed(5),last_click_latlng.lng.toFixed(5)].join(',') : '-');
 
@@ -92,9 +94,10 @@ jQuery(document).ready(function(){
 
         $('#map-position-inner').html([html_center,html_zoom,html_viewbox,html_click,html_mouse].join('<br/>'));
 
+        var center_lat_lng = map.wrapLatLng(map.getCenter());
         var reverse_params = {
-            lat: map.getCenter().lat.toFixed(5),
-            lon: map.getCenter().lng.toFixed(5),
+            lat: center_lat_lng.lat.toFixed(5),
+            lon: center_lat_lng.lng.toFixed(5),
             zoom: map.getZoom(),
             format: 'html'
         }
@@ -134,12 +137,22 @@ jQuery(document).ready(function(){
 
 
     function map_viewbox_as_string() {
-        // since .toBBoxString() doesn't round numbers
+        var bounds = map.getBounds();
+        var west = bounds.getWest();
+        var east = bounds.getEast();
+
+        if ((east - west) >= 360) { // covers more than whole planet
+            west = map.getCenter().lng-179.999;
+            east = map.getCenter().lng+179.999;
+        }
+        east = L.latLng(77, east).wrap().lng;
+        west = L.latLng(77, west).wrap().lng;
+
         return [
-            map.getBounds().getSouthWest().lng.toFixed(5), // left
-            map.getBounds().getNorthEast().lat.toFixed(5), // top
-            map.getBounds().getNorthEast().lng.toFixed(5), // right
-            map.getBounds().getSouthWest().lat.toFixed(5)  // bottom
+            west.toFixed(5), // left
+            bounds.getNorth().toFixed(5), // top
+            east.toFixed(5), // right
+            bounds.getSouth().toFixed(5) // bottom
         ].join(',');
     }
     function map_link_to_osm(){
@@ -236,7 +249,7 @@ jQuery(document).ready(function(){
     if ( is_reverse_search ){
         map.on('click', function(e){
             $('form input[name=lat]').val( e.latlng.lat);
-            $('form input[name=lon]').val( e.latlng.lng);
+            $('form input[name=lon]').val( e.latlng.wrap().lng);
             $('form').submit();
         });
 

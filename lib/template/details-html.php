@@ -64,7 +64,7 @@
         $bNotUsed = isset($aAddressLine['isaddress']) && !$aAddressLine['isaddress'];
 
         echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
-        echo '  <td class="name">'.(trim($aAddressLine['localname'])?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
+        echo '  <td class="name">'.(trim($aAddressLine['localname'])!==null?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
         echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
         echo '  <td>' . osmLink($aAddressLine) . "</td>\n";
         echo '  <td>' . (isset($aAddressLine['rank_address']) ? $aAddressLine['rank_address'] : '') . "</td>\n";

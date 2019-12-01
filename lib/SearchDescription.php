@@ -447,8 +447,8 @@ class SearchDescription
                 $iLimit
             );
 
-            //now search for housenumber, if housenumber provided
-            if ($this->sHouseNumber && !empty($aResults)) {
+            // Now search for housenumber, if housenumber provided. Can be zero.
+            if (($this->sHouseNumber || $this->sHouseNumber === '0') && !empty($aResults)) {
                 // Downgrade the rank of the street results, they are missing
                 // the housenumber.
                 foreach ($aResults as $oRes) {

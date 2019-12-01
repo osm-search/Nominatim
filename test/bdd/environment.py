@@ -82,6 +82,7 @@ class NominatimEnvironment(object):
                  (';password=' + self.db_pass) if self.db_pass else ''
                  ))
         f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
+        f.write("@define('CONST_Import_Style', CONST_BasePath.'/settings/import-full.style');\n")
         f.close()
 
     def cleanup(self):

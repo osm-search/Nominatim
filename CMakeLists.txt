@@ -109,7 +109,6 @@ set(WEBSITESCRIPTS
 
 set(CUSTOMSCRIPTS
     utils/country_languages.php
-    utils/importWikipedia.php
     utils/export.php
     utils/query.php
     utils/setup.php

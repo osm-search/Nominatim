@@ -55,6 +55,22 @@ Feature: Search queries
           | country      | Uruguay |
           | country_code | uy |
 
+    Scenario Outline: Housenumber 0 can be found
+        When sending <format> search query "Pham Hung Road 0" with address
+        Then results contain
+          | display_name |
+          | ^.*, 0,.* |
+        And result addresses contain
+          | house_number |
+          | 0     |
+
+    Examples:
+        | format |
+        | xml |
+        | json |
+        | jsonv2 |
+        | geojson |
+
     @Tiger
     Scenario: TIGER house number
         When sending json search query "323 22nd Street Southwest, Huron"

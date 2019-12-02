@@ -101,6 +101,7 @@ set(WEBSITESCRIPTS
     website/details.php
     website/hierarchy.php
     website/lookup.php
+    website/nearby.php
     website/polygons.php
     website/reverse.php
     website/search.php
@@ -108,6 +109,7 @@ set(WEBSITESCRIPTS
 )
 
 set(CUSTOMSCRIPTS
+    utils/check_import_finished.php
     utils/country_languages.php
     utils/export.php
     utils/query.php

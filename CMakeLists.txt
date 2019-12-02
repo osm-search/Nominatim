@@ -108,6 +108,7 @@ set(WEBSITESCRIPTS
 )
 
 set(CUSTOMSCRIPTS
+    utils/check_import_finished.php
     utils/country_languages.php
     utils/export.php
     utils/query.php

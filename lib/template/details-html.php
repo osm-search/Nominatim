@@ -20,20 +20,25 @@
     }
 
 
-    function format_distance($fDistance)
+    function format_distance($fDistance, $bInMeters = false)
     {
-        // $fDistance is in meters
-        if ($fDistance < 1)
-        {
-            return '0';
-        }
-        elseif ($fDistance < 1000)
-        {
-            return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance,0)).' m</abbr>';
-        }
-        else
-        {
-            return'<abbr class="distance" title="'.$fDistance.'">~'.(round($fDistance/1000,1)).' km</abbr>';
+        if ($bInMeters) {
+            // $fDistance is in meters
+            if ($fDistance < 1) {
+                return '0';
+            }
+            elseif ($fDistance < 1000) {
+                return '<abbr class="distance" title="'.$fDistance.' meters">~'.(round($fDistance,0)).' m</abbr>';
+            }
+            else {
+                return '<abbr class="distance" title="'.$fDistance.' meters">~'.(round($fDistance/1000,1)).' km</abbr>';
+            }
+        } else {
+            if ($fDistance == 0) {
+                return '0';
+            } else {
+                return '<abbr class="distance" title="spheric distance '.$fDistance.'">'.(round($fDistance,4)).'</abbr>';
+            }
         }
     }
 
@@ -60,7 +65,7 @@
     }
 
 
-    function _one_row($aAddressLine){
+    function _one_row($aAddressLine, $bDistanceInMeters = false){
         $bNotUsed = isset($aAddressLine['isaddress']) && !$aAddressLine['isaddress'];
 
         echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
@@ -69,7 +74,7 @@
         echo '  <td>' . osmLink($aAddressLine) . "</td>\n";
         echo '  <td>' . (isset($aAddressLine['rank_address']) ? $aAddressLine['rank_address'] : '') . "</td>\n";
         echo '  <td>' . ($aAddressLine['admin_level'] < 15 ? $aAddressLine['admin_level'] : '') . "</td>\n";
-        echo '  <td>' . format_distance($aAddressLine['distance'])."</td>\n";
+        echo '  <td>' . format_distance($aAddressLine['distance'], $bDistanceInMeters)."</td>\n";
         echo '  <td>' . detailsLink($aAddressLine,'details &gt;') . "</td>\n";
         echo "</tr>\n";
     }
@@ -173,7 +178,7 @@
     {
         headline('Linked Places');
         foreach ($aLinkedLines as $aAddressLine) {
-            _one_row($aAddressLine);
+            _one_row($aAddressLine, true);
         }
     }
 
@@ -212,7 +217,7 @@
             headline3($sGroupHeading);
 
             foreach ($aHierarchyLines as $aAddressLine) {
-                _one_row($aAddressLine);
+                _one_row($aAddressLine, true);
             }
         }
         if (count($aHierarchyLines) >= 500) {

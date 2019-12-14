@@ -52,6 +52,10 @@ do
     echo "insert into wikipedia_redirect select '${i}',page_title,rd_title from ${i}redirect join ${i}page on (rd_from = page_id) where page_namespace = 0 and rd_namespace = 0;" | psqlcmd
     echo "alter table ${i}pagelinkcount add column othercount integer;" | psqlcmd
     echo "update ${i}pagelinkcount set othercount = 0;" | psqlcmd
+done
+
+for i in "${language[@]}"
+do
     for j in "${language[@]}"
     do
         echo "update ${i}pagelinkcount set othercount = ${i}pagelinkcount.othercount + x.count from (select page_title as title,count from ${i}langlinks join ${i}page on (ll_from = page_id) join ${j}pagelinkcount on (ll_lang = '${j}' and ll_title = title)) as x where x.title = ${i}pagelinkcount.title;" | psqlcmd

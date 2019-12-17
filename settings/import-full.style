@@ -186,7 +186,7 @@
     }
 },
 {
-    "keys" : ["country_code", "ISO3166-1", "is_in:country_code", "is_in_country",
+    "keys" : ["country_code", "ISO3166-1", "is_in:country_code", "is_in:country",
               "addr:country", "addr:country", "addr:country_code"],
     "values" : {
         "" : "country"

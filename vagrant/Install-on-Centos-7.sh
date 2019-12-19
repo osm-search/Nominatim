@@ -172,7 +172,7 @@ fi                                 #DOCS:
     mkdir build
     cd build
     cmake $USERHOME/Nominatim
-    make
+    make CLANG=true
 
 #
 # Adding SELinux Security Settings

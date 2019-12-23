@@ -180,6 +180,15 @@ enough RAM for PostgreSQL and osm2pgsql as mentioned above. If the system starts
 swapping or you are getting out-of-memory errors, reduce the cache size or
 even consider using a flatnode file.
 
+### Verify import finished
+
+Run this script to verify all required tables and indices got created successfully.
+
+```sh
+./utils/check_import_finished.php
+```
+
+
 ## Tuning the database
 
 Accurate word frequency information for search terms helps PostgreSQL's query
@@ -293,7 +302,9 @@ The following command will keep your database constantly up to date:
 
     ./utils/update.php --import-osmosis-all
 
-(Note that even though the old name "import-osmosis-all" has been kept for compatibility reasons, Osmosis is not required to run this - it uses pyosmium behind the scenes.)
+(Note that even though the old name "import-osmosis-all" has been kept for
+compatibility reasons, Osmosis is not required to run this - it uses pyosmium
+behind the scenes.)
 
 If you have imported multiple country extracts and want to keep them
 up-to-date, have a look at the script in

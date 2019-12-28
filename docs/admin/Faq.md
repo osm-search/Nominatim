@@ -68,7 +68,7 @@ server development libraries (`postgresql-server-dev-9.5` on Ubuntu)
 and recompile (`cmake .. && make`).
 
 
-## I see the error "ERROR: permission denied for language c"
+### I see the error "ERROR: permission denied for language c"
 
 `nominatim.so`, written in C, is required to be installed on the database
 server. Some managed database (cloud) services like Amazon RDS do not allow
@@ -90,6 +90,11 @@ allowed: `cat /proc/sys/vm/overcommit_memory` should print 0 or 1.
 If you are using a flatnode file, then it may also be that the underlying
 filesystem does not fully support 'mmap'. A notable candidate is virtualbox's
 vboxfs.
+
+### I see the error: "clang: Command not found" on CentOS
+
+On CentOS 7 users reported `/opt/rh/llvm-toolset-7/root/usr/bin/clang: Command not found`.
+Double-check clang is installed. Instead of `make` try running `make CLANG=true`.
 
 ### nominatim UPDATE failed: ERROR: buffer 179261 is not owned by resource owner Portal
 

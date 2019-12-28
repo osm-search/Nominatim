@@ -1,3 +1,9 @@
+3.4.1
+ * update osm2pgsql
+    * move deletion to copy thread (fixes deadlock in updates)
+    * fix filtering where valid address objects got dropped
+ * fix typo in import styles
+
 3.4.0
 
  * increase required version for PostgreSQL(9.3), PostGIS(2.2) and PHP(7.0)

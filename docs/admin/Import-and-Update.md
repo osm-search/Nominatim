@@ -118,6 +118,9 @@ import styles available which only read selected data:
   Import all data necessary to compute addresses down to house number level.
 * **settings/import-full.style**
   Default style that also includes points of interest.
+* **settings/import-extratags.style**
+  Like the full style but also adds most of the OSM tags into the extratags
+  column.
 
 The style can be changed with the configuration `CONST_Import_Style`.
 
@@ -134,6 +137,7 @@ admin     |    5h        |  190 GB    |   20 GB
 street    |   42h        |  400 GB    |  180 GB
 address   |   59h        |  500 GB    |  260 GB
 full      |   80h        |  575 GB    |  300 GB
+extratags |   80h        |  585 GB    |  310 GB
 
 You can also customize the styles further. For a description of the
 style format see [the development section](../develop/Import.md).

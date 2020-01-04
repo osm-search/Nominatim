@@ -41,19 +41,3 @@ Feature: Import of simple objects by osm2pgsql
         Then place contains
           | object | class | type |
           | N1     | place | house |
-
-    Scenario: Landuses are only imported when named
-        When loading osm data
-          """
-          n100 x0 y0
-          n101 x0 y0.1
-          n102 x0.1 y0.1
-          n200 x0 y0
-          n202 x1 y1
-          n203 x1 y0
-          w1 Tlanduse=residential,name=rainbow Nn100,n101,n102,n100
-          w2 Tlanduse=residential              Nn200,n202,n203,n200
-          """
-        Then place contains exactly
-          | object | class   | type |
-          | W1     | landuse | residential |

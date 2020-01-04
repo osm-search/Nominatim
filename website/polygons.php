@@ -120,7 +120,7 @@ foreach ($aPolygons as $aRow) {
                 }
                 break;
             case 'id':
-                echo '<td>'.osmLink($aRow).'</td>';
+                echo '<td>'.osmLink(array('osm_type' => $aRow['type'], 'osm_id' => $aRow['id'])).'</td>';
                 break;
             default:
                 echo '<td>'.($sVal?$sVal:'&nbsp;').'</td>';

@@ -223,42 +223,12 @@ class SetupFunctions
         info('Create Tables');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tables.sql');
-        $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-        $sTemplate = $this->replaceTablespace(
-            '{ts:address-data}',
-            CONST_Tablespace_Address_Data,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:address-index}',
-            CONST_Tablespace_Address_Index,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:search-data}',
-            CONST_Tablespace_Search_Data,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:search-index}',
-            CONST_Tablespace_Search_Index,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-data}',
-            CONST_Tablespace_Aux_Data,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-index}',
-            CONST_Tablespace_Aux_Index,
-            $sTemplate
-        );
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
 
         if ($bReverseOnly) {
-            $this->pgExec('DROP TABLE search_name');
+            $this->dropTable('search_name');
         }
 
         $oAlParser = new AddressLevelParser(CONST_Address_Level_Config);
@@ -270,41 +240,7 @@ class SetupFunctions
         info('Create Partition Tables');
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
-        $sTemplate = $this->replaceTablespace(
-            '{ts:address-data}',
-            CONST_Tablespace_Address_Data,
-            $sTemplate
-        );
-
-        $sTemplate = $this->replaceTablespace(
-            '{ts:address-index}',
-            CONST_Tablespace_Address_Index,
-            $sTemplate
-        );
-
-        $sTemplate = $this->replaceTablespace(
-            '{ts:search-data}',
-            CONST_Tablespace_Search_Data,
-            $sTemplate
-        );
-
-        $sTemplate = $this->replaceTablespace(
-            '{ts:search-index}',
-            CONST_Tablespace_Search_Index,
-            $sTemplate
-        );
-
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-data}',
-            CONST_Tablespace_Aux_Data,
-            $sTemplate
-        );
-
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-index}',
-            CONST_Tablespace_Aux_Index,
-            $sTemplate
-        );
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunPartitionScript($sTemplate);
     }
@@ -322,8 +258,8 @@ class SetupFunctions
         $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');
-            $this->pgExec('DROP TABLE IF EXISTS wikipedia_article');
-            $this->pgExec('DROP TABLE IF EXISTS wikipedia_redirect');
+            $this->dropTable('wikipedia_article');
+            $this->dropTable('wikipedia_redirect');
             $this->pgsqlRunScriptFile($sWikiArticlesFile);
         } else {
             warn('wikipedia importance dump file not found - places will have default importance');
@@ -334,25 +270,25 @@ class SetupFunctions
     {
         info('Drop old Data');
 
-        $this->pgExec('TRUNCATE word');
+        $this->oDB->exec('TRUNCATE word');
         echo '.';
-        $this->pgExec('TRUNCATE placex');
+        $this->oDB->exec('TRUNCATE placex');
         echo '.';
-        $this->pgExec('TRUNCATE location_property_osmline');
+        $this->oDB->exec('TRUNCATE location_property_osmline');
         echo '.';
-        $this->pgExec('TRUNCATE place_addressline');
+        $this->oDB->exec('TRUNCATE place_addressline');
         echo '.';
-        $this->pgExec('TRUNCATE location_area');
+        $this->oDB->exec('TRUNCATE location_area');
         echo '.';
         if (!$this->dbReverseOnly()) {
-            $this->pgExec('TRUNCATE search_name');
+            $this->oDB->exec('TRUNCATE search_name');
             echo '.';
         }
-        $this->pgExec('TRUNCATE search_name_blank');
+        $this->oDB->exec('TRUNCATE search_name_blank');
         echo '.';
-        $this->pgExec('DROP SEQUENCE seq_place');
+        $this->oDB->exec('DROP SEQUENCE seq_place');
         echo '.';
-        $this->pgExec('CREATE SEQUENCE seq_place start 100000');
+        $this->oDB->exec('CREATE SEQUENCE seq_place start 100000');
         echo '.';
 
         $sSQL = 'select distinct partition from country_name';
@@ -360,14 +296,14 @@ class SetupFunctions
 
         if (!$this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
-            $this->pgExec('TRUNCATE location_road_'.$sPartition);
+            $this->oDB->exec('TRUNCATE location_road_'.$sPartition);
             echo '.';
         }
 
         // used by getorcreate_word_id to ignore frequent partial words
         $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
         $sSQL .= '$$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
         echo ".\n";
 
         // pre-create the word list
@@ -464,17 +400,8 @@ class SetupFunctions
         if (empty($aFilenames)) return;
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
-        $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-data}',
-            CONST_Tablespace_Aux_Data,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-index}',
-            CONST_Tablespace_Aux_Index,
-            $sTemplate
-        );
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
+
         $this->pgsqlRunScript($sTemplate, false);
 
         $aDBInstances = array();
@@ -527,24 +454,15 @@ class SetupFunctions
 
         info('Creating indexes on Tiger data');
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_finish.sql');
-        $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-data}',
-            CONST_Tablespace_Aux_Data,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-index}',
-            CONST_Tablespace_Aux_Index,
-            $sTemplate
-        );
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
+
         $this->pgsqlRunScript($sTemplate, false);
     }
 
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
-        $this->pgExec('TRUNCATE location_postcode');
+        $this->oDB->exec('TRUNCATE location_postcode');
 
         $sSQL  = 'INSERT INTO location_postcode';
         $sSQL .= ' (place_id, indexed_status, country_code, postcode, geometry) ';
@@ -555,7 +473,7 @@ class SetupFunctions
         $sSQL .= " WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'";
         $sSQL .= '       AND geometry IS NOT null';
         $sSQL .= ' GROUP BY country_code, pc';
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
 
         // only add postcodes that are not yet available in OSM
         $sSQL  = 'INSERT INTO location_postcode';
@@ -565,7 +483,7 @@ class SetupFunctions
         $sSQL .= '  FROM us_postcode WHERE postcode NOT IN';
         $sSQL .= '        (SELECT postcode FROM location_postcode';
         $sSQL .= "          WHERE country_code = 'us')";
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
 
         // add missing postcodes for GB (if available)
         $sSQL  = 'INSERT INTO location_postcode';
@@ -574,17 +492,17 @@ class SetupFunctions
         $sSQL .= '  FROM gb_postcode WHERE postcode NOT IN';
         $sSQL .= '           (SELECT postcode FROM location_postcode';
         $sSQL .= "             WHERE country_code = 'gb')";
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
 
         if (!$bCMDResultAll) {
             $sSQL = "DELETE FROM word WHERE class='place' and type='postcode'";
             $sSQL .= 'and word NOT IN (SELECT postcode FROM location_postcode)';
-            $this->pgExec($sSQL);
+            $this->oDB->exec($sSQL);
         }
 
         $sSQL = 'SELECT count(getorcreate_postcode_id(v)) FROM ';
         $sSQL .= '(SELECT distinct(postcode) as v FROM location_postcode) p';
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
     }
 
     public function index($bIndexNoanalyse)
@@ -623,7 +541,7 @@ class SetupFunctions
 
         info('Index postcodes');
         $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
-        $this->pgExec($sSQL);
+        $this->oDB->exec($sSQL);
     }
 
     public function createSearchIndices()
@@ -634,22 +552,8 @@ class SetupFunctions
         if (!$this->dbReverseOnly()) {
             $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_search.src.sql');
         }
-        $sTemplate = str_replace('{www-user}', CONST_Database_Web_User, $sTemplate);
-        $sTemplate = $this->replaceTablespace(
-            '{ts:address-index}',
-            CONST_Tablespace_Address_Index,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:search-index}',
-            CONST_Tablespace_Search_Index,
-            $sTemplate
-        );
-        $sTemplate = $this->replaceTablespace(
-            '{ts:aux-index}',
-            CONST_Tablespace_Aux_Index,
-            $sTemplate
-        );
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
+
         $this->pgsqlRunScript($sTemplate);
     }
 
@@ -721,8 +625,7 @@ class SetupFunctions
             if (!$bFound) array_push($aDropTables, $sTable);
         }
         foreach ($aDropTables as $sDrop) {
-            if ($this->bVerbose) echo "Dropping table $sDrop\n";
-            $this->oDB->exec("DROP TABLE IF EXISTS $sDrop CASCADE");
+            $this->dropTable($sDrop);
         }
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
@@ -845,13 +748,27 @@ class SetupFunctions
         }
     }
 
-    private function replaceTablespace($sTemplate, $sTablespace, $sSql)
+    private function replaceSqlPatterns($sSql)
     {
-        if ($sTablespace) {
-            $sSql = str_replace($sTemplate, 'TABLESPACE "'.$sTablespace.'"', $sSql);
-        } else {
-            $sSql = str_replace($sTemplate, '', $sSql);
+        $sSql = str_replace('{www-user}', CONST_Database_Web_User, $sSql);
+
+        $aPatterns = array(
+                      '{ts:address-data}' => CONST_Tablespace_Address_Data,
+                      '{ts:address-index}' => CONST_Tablespace_Address_Index,
+                      '{ts:search-data}' => CONST_Tablespace_Search_Data,
+                      '{ts:search-index}' =>  CONST_Tablespace_Search_Index,
+                      '{ts:aux-data}' =>  CONST_Tablespace_Aux_Data,
+                      '{ts:aux-index}' =>  CONST_Tablespace_Aux_Index,
+        );
+
+        foreach ($aPatterns as $sPattern => $sTablespace) {
+            if ($sTablespace) {
+                $sSql = str_replace($sPattern, 'TABLESPACE "'.$sTablespace.'"', $sSql);
+            } else {
+                $sSql = str_replace($sPattern, '', $sSql);
+            }
         }
+
         return $sSql;
     }
 
@@ -871,17 +788,18 @@ class SetupFunctions
     }
 
     /**
-     * Execute the SQL command on the open database.
+     * Drop table with the given name if it exists.
      *
-     * @param string $sSQL SQL command to execute.
+     * @param string $sName Name of table to remove.
      *
      * @return null
      *
      * @pre connect() must have been called.
      */
-    private function pgExec($sSQL)
+    private function dropTable($sName)
     {
-        $this->oDB->exec($sSQL);
+        if ($this->bVerbose) echo "Dropping table $sName\n";
+        $this->oDB->exec('DROP TABLE IF EXISTS '.$sName.' CASCADE');
     }
 
     /**

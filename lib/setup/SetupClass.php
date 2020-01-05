@@ -653,6 +653,7 @@ class SetupFunctions
         $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
+        $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
         $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
         if ($this->bEnableDiffUpdates) {
             $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);

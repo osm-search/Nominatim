@@ -1,4 +1,7 @@
-CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry) RETURNS INTEGER
+-- Assorted helper functions for the triggers.
+
+CREATE OR REPLACE FUNCTION geometry_sector(partition INTEGER, place geometry)
+  RETURNS INTEGER
   AS $$
 DECLARE
   NEWgeometry geometry;
@@ -35,6 +38,7 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+
 CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)
   RETURNS FLOAT
   AS $$
@@ -58,8 +62,10 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+
 CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
-                                      OUT rank_search SMALLINT, OUT rank_address SMALLINT)
+                                             OUT rank_search SMALLINT,
+                                             OUT rank_address SMALLINT)
 AS $$
 DECLARE
   part TEXT;
@@ -115,9 +121,11 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+
 -- Find the nearest artificial postcode for the given geometry.
 -- TODO For areas there should not be more than two inside the geometry.
-CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY) RETURNS TEXT
+CREATE OR REPLACE FUNCTION get_nearest_postcode(country VARCHAR(2), geom GEOMETRY)
+  RETURNS TEXT
   AS $$
 DECLARE
   outcode TEXT;
@@ -147,10 +155,11 @@ BEGIN
     RETURN outcode;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_code(place geometry) RETURNS TEXT
+CREATE OR REPLACE FUNCTION get_country_code(place geometry)
+  RETURNS TEXT
   AS $$
 DECLARE
   place_centre GEOMETRY;
@@ -161,7 +170,9 @@ BEGIN
 -- RAISE WARNING 'get_country_code, start: %', ST_AsText(place_centre);
 
   -- Try for a OSM polygon
-  FOR nearcountry IN select country_code from location_area_country where country_code is not null and st_covers(geometry, place_centre) limit 1
+  FOR nearcountry IN
+    SELECT country_code from location_area_country
+    WHERE country_code is not null and st_covers(geometry, place_centre) limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
@@ -170,7 +181,9 @@ BEGIN
 
   -- Try for OSM fallback data
   -- The order is to deal with places like HongKong that are 'states' within another polygon
-  FOR nearcountry IN select country_code from country_osm_grid where st_covers(geometry, place_centre) order by area asc limit 1
+  FOR nearcountry IN
+    SELECT country_code from country_osm_grid
+    WHERE st_covers(geometry, place_centre) order by area asc limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
@@ -178,7 +191,10 @@ BEGIN
 -- RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
 
   -- 
-  FOR nearcountry IN select country_code from country_osm_grid where st_dwithin(geometry, place_centre, 0.5) order by st_distance(geometry, place_centre) asc, area asc limit 1
+  FOR nearcountry IN
+    SELECT country_code from country_osm_grid
+    WHERE st_dwithin(geometry, place_centre, 0.5)
+    ORDER BY st_distance(geometry, place_centre) asc, area asc limit 1
   LOOP
     RETURN nearcountry.country_code;
   END LOOP;
@@ -186,51 +202,64 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR(2)) RETURNS TEXT
+
+CREATE OR REPLACE FUNCTION get_country_language_code(search_country_code VARCHAR(2))
+  RETURNS TEXT
   AS $$
 DECLARE
   nearcountry RECORD;
 BEGIN
-  FOR nearcountry IN select distinct country_default_language_code from country_name where country_code = search_country_code limit 1
+  FOR nearcountry IN
+    SELECT distinct country_default_language_code from country_name
+    WHERE country_code = search_country_code limit 1
   LOOP
     RETURN lower(nearcountry.country_default_language_code);
   END LOOP;
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION get_country_language_codes(search_country_code VARCHAR(2)) RETURNS TEXT[]
+
+CREATE OR REPLACE FUNCTION get_country_language_codes(search_country_code VARCHAR(2))
+  RETURNS TEXT[]
   AS $$
 DECLARE
   nearcountry RECORD;
 BEGIN
-  FOR nearcountry IN select country_default_language_codes from country_name where country_code = search_country_code limit 1
+  FOR nearcountry IN
+    SELECT country_default_language_codes from country_name
+    WHERE country_code = search_country_code limit 1
   LOOP
     RETURN lower(nearcountry.country_default_language_codes);
   END LOOP;
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10)) RETURNS INTEGER
+
+CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10))
+  RETURNS INTEGER
   AS $$
 DECLARE
   nearcountry RECORD;
 BEGIN
-  FOR nearcountry IN select partition from country_name where country_code = in_country_code
+  FOR nearcountry IN
+    SELECT partition from country_name where country_code = in_country_code
   LOOP
     RETURN nearcountry.partition;
   END LOOP;
   RETURN 0;
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT) RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT)
+  RETURNS BOOLEAN
   AS $$
 DECLARE
 BEGIN
@@ -241,16 +270,11 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION add_location(
-    place_id BIGINT,
-    country_code varchar(2),
-    partition INTEGER,
-    keywords INTEGER[],
-    rank_search INTEGER,
-    rank_address INTEGER,
-    in_postcode TEXT,
-    geometry GEOMETRY
-  ) 
+
+CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2),
+                                        partition INTEGER, keywords INTEGER[],
+                                        rank_search INTEGER, rank_address INTEGER,
+                                        in_postcode TEXT, geometry GEOMETRY)
   RETURNS BOOLEAN
   AS $$
 DECLARE
@@ -313,7 +337,9 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], member TEXT) RETURNS TEXT[]
+
+CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], member TEXT)
+  RETURNS TEXT[]
   AS $$
 DECLARE
   result TEXT[];
@@ -329,9 +355,11 @@ BEGIN
   return result;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], memberLabels TEXT[]) RETURNS SETOF TEXT
+
+CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], memberLabels TEXT[])
+  RETURNS SETOF TEXT
   AS $$
 DECLARE
   i INTEGER;
@@ -346,9 +374,11 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION quad_split_geometry(geometry GEOMETRY, maxarea FLOAT, maxdepth INTEGER) 
+
+CREATE OR REPLACE FUNCTION quad_split_geometry(geometry GEOMETRY, maxarea FLOAT,
+                                               maxdepth INTEGER)
   RETURNS SETOF GEOMETRY
   AS $$
 DECLARE
@@ -365,7 +395,6 @@ DECLARE
   area FLOAT;
   remainingdepth INTEGER;
   added INTEGER;
-  
 BEGIN
 
 --  RAISE WARNING 'quad_split_geometry: maxarea=%, depth=%',maxarea,maxdepth;
@@ -429,9 +458,10 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION split_geometry(geometry GEOMETRY) 
+
+CREATE OR REPLACE FUNCTION split_geometry(geometry GEOMETRY)
   RETURNS SETOF GEOMETRY
   AS $$
 DECLARE
@@ -444,10 +474,11 @@ BEGIN
   RETURN;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
 
-CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT) RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION place_force_delete(placeid BIGINT)
+  RETURNS BOOLEAN
   AS $$
 DECLARE
     osmid BIGINT;
@@ -467,7 +498,9 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION place_force_update(placeid BIGINT) RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION place_force_update(placeid BIGINT)
+  RETURNS BOOLEAN
   AS $$
 DECLARE
   placegeom GEOMETRY;

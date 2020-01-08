@@ -649,7 +649,7 @@ class SetupFunctions
     private function createSqlFunctions()
     {
         $sBasePath = CONST_BasePath.'/sql/functions/';
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/functions.sql');
+        $sTemplate = file_get_contents($sBasePath.'utils.sql');
         $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');

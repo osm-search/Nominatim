@@ -98,6 +98,7 @@
     "values" : {
         "level_crossing" : "skip",
         "no" : "skip",
+        "rail" : "skip",
         "" : "main,with_name"
     }
 },

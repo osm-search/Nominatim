@@ -21,8 +21,10 @@
                     About &amp; Help <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-right">
-                    <li><a href="https://wiki.openstreetmap.org/wiki/Nominatim" target="_blank">Documentation</a></li>
-                    <li><a href="https://wiki.openstreetmap.org/wiki/Nominatim/FAQ" target="_blank">FAQ</a></li>
+                    <li><a href="https://nominatim.org/release-docs/develop/api/Overview/" target="_blank">API Reference</a></li>
+                    <li><a href="https://nominatim.org/release-docs/develop/api/Faq/" target="_blank">FAQ</a></li>
+                    <li><a href="https://help.openstreetmap.org/tags/nominatim/">OpenStreetMap Help</a></li>
+                    <li><a href="https://github.com/openstreetmap/Nominatim">Nominatim on Github</a></li>
                     <li role="separator" class="divider"></li>
                     <li><a href="#" class="" data-toggle="modal" data-target="#report-modal">Report problem with results</a></li>
                 </ul>

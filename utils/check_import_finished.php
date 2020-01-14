@@ -144,7 +144,8 @@ if (empty($aInvalid)) {
     $print_fail();
     echo <<< END
     At least one index is invalid. That can happen, e.g. when index creation was
-    disrupted and later restarted. You should run the index stage of setup again.
+    disrupted and later restarted. You should delete the affected indices and
+    run the index stage of setup again.
     See the question 'Can a stopped/killed import process be resumed?' in the
     troubleshooting guide.
     Affected indices: 

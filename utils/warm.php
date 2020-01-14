@@ -23,6 +23,19 @@ $oDB->connect();
 
 $bVerbose = $aResult['verbose'];
 
+function print_results($aResults, $bVerbose)
+{
+    if ($bVerbose) {
+        if ($aResults && count($aResults)) {
+            echo $aResults[0]['langaddress']."\n";
+        } else {
+            echo "<not found>\n";
+        }
+    } else {
+        echo '.';
+    }
+}
+
 if (!$aResult['search-only']) {
     $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
     $oReverseGeocode->setZoom(20);
@@ -36,13 +49,10 @@ if (!$aResult['search-only']) {
         $fLat = rand(-9000, 9000) / 100;
         $fLon = rand(-18000, 18000) / 100;
         if ($bVerbose) echo "$fLat, $fLon = ";
+
         $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
-        if ($oLookup) {
-            $aDetails = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
-            if ($bVerbose) echo $aDetails['langaddress']."\n";
-        } else {
-            echo '.';
-        }
+        $aSearchResults = $oLookup ? $oPlaceLookup->lookup(array($oLookup->iId => $oLookup)) : null;
+        print_results($aSearchResults, $bVerbose);
     }
     echo "\n";
 }
@@ -52,13 +62,14 @@ if (!$aResult['reverse-only']) {
 
     echo 'Warm search: ';
     if ($bVerbose) echo "\n";
-    $sSQL = 'select word from word where word is not null order by search_name_count desc limit 1000';
+    $sSQL = 'SELECT word FROM word WHERE word is not null ORDER BY search_name_count DESC LIMIT 1000';
     foreach ($oDB->getCol($sSQL) as $sWord) {
         if ($bVerbose) echo "$sWord = ";
+
         $oGeocode->setLanguagePreference(array('en'));
         $oGeocode->setQuery($sWord);
         $aSearchResults = $oGeocode->lookup();
-        if ($bVerbose) echo $aSearchResults[0]['langaddress']."\n";
-        else echo '.';
+        print_results($aSearchResults, $bVerbose);
     }
+    echo "\n";
 }

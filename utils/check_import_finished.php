@@ -130,6 +130,31 @@ END;
     }
 }
 
+echo 'Checking search indices are valid ... ';
+$sSQL = <<< END
+    SELECT relname
+    FROM pg_class, pg_index
+    WHERE pg_index.indisvalid = false
+      AND pg_index.indexrelid = pg_class.oid;
+END;
+$aInvalid = $oDB->getCol($sSQL);
+if (empty($aInvalid)) {
+    $print_success();
+} else {
+    $print_fail();
+    echo <<< END
+    At least one index is invalid. That can happen, e.g. when index creation was
+    disrupted and later restarted. You should run the index stage of setup again.
+    See the question 'Can a stopped/killed import process be resumed?' in the
+    troubleshooting guide.
+    Affected indices: 
+END;
+    echo join(', ', $aInvalid) . "\n";
+    exit(1);
+}
+
+
+
 if (CONST_Use_US_Tiger_Data) {
     echo 'Checking TIGER table exists ... ';
     if ($oDB->tableExists('location_property_tiger')) {

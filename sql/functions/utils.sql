@@ -338,45 +338,6 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], member TEXT)
-  RETURNS TEXT[]
-  AS $$
-DECLARE
-  result TEXT[];
-  i INTEGER;
-BEGIN
-
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = member THEN
-      result := result || members[i];
-    END IF;
-  END LOOP;
-
-  return result;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], memberLabels TEXT[])
-  RETURNS SETOF TEXT
-  AS $$
-DECLARE
-  i INTEGER;
-BEGIN
-
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = ANY(memberLabels) THEN
-      RETURN NEXT members[i];
-    END IF;
-  END LOOP;
-
-  RETURN;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-
 CREATE OR REPLACE FUNCTION quad_split_geometry(geometry GEOMETRY, maxarea FLOAT,
                                                maxdepth INTEGER)
   RETURNS SETOF GEOMETRY

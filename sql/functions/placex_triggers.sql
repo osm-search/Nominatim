@@ -1,5 +1,119 @@
 -- Trigger functions for the placex table.
 
+CREATE OR REPLACE FUNCTION get_rel_node_members(members TEXT[], memberLabels TEXT[])
+  RETURNS SETOF BIGINT
+  AS $$
+DECLARE
+  i INTEGER;
+BEGIN
+  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
+    IF members[i+1] = ANY(memberLabels)
+       AND upper(substring(members[i], 1, 1))::char(1) = 'N'
+    THEN
+      RETURN NEXT substring(members[i], 2)::bigint;
+    END IF;
+  END LOOP;
+
+  RETURN;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+
+-- Try to find a linked place for the given object.
+CREATE OR REPLACE FUNCTION find_linked_place(bnd placex)
+  RETURNS placex
+  AS $$
+DECLARE
+  relation_members TEXT[];
+  rel_member RECORD;
+  linked_placex placex%ROWTYPE;
+  bnd_name TEXT;
+BEGIN
+  IF bnd.rank_search >= 26 or bnd.rank_address = 0
+     or ST_GeometryType(bnd.geometry) NOT IN ('ST_Polygon','ST_MultiPolygon')
+  THEN
+    RETURN NULL;
+  END IF;
+
+  IF bnd.osm_type = 'R' THEN
+    -- see if we have any special relation members
+    SELECT members FROM planet_osm_rels WHERE id = bnd.osm_id INTO relation_members;
+    --DEBUG: RAISE WARNING 'Got relation members';
+
+    -- Search for relation members with role 'lable'.
+    IF relation_members IS NOT NULL THEN
+      FOR rel_member IN
+        SELECT get_rel_node_members(relation_members, ARRAY['label']) as member
+      LOOP
+        --DEBUG: RAISE WARNING 'Found label member %', rel_member.member;
+
+        FOR linked_placex IN
+          SELECT * from placex
+          WHERE osm_type = 'N' and osm_id = rel_member.member
+            and class = 'place'
+        LOOP
+          --DEBUG: RAISE WARNING 'Linked label member';
+          RETURN linked_placex;
+        END LOOP;
+
+      END LOOP;
+    END IF;
+  END IF;
+
+  IF bnd.name ? 'name' THEN
+    bnd_name := make_standard_name(bnd.name->'name');
+    IF bnd_name = '' THEN
+      bnd_name := NULL;
+    END IF;
+  END IF;
+
+  -- Search for relation members with role admin_center.
+  IF bnd.osm_type = 'R' and bnd_name is not null
+     and relation_members is not null THEN
+    FOR rel_member IN
+      SELECT get_rel_node_members(relation_members,
+                                ARRAY['admin_center','admin_centre']) as member
+    LOOP
+    --DEBUG: RAISE WARNING 'Found admin_center member %', rel_member.member;
+      FOR linked_placex IN
+        SELECT * from placex
+        WHERE osm_type = 'N' and osm_id = rel_member.member
+          and class = 'place'
+      LOOP
+        -- For an admin centre we also want a name match - still not perfect,
+        -- for example 'new york, new york'
+        -- But that can be fixed by explicitly setting the label in the data
+        IF bnd_name = make_standard_name(linked_placex.name->'name')
+           AND bnd.rank_address = linked_placex.rank_address
+        THEN
+          RETURN linked_placex;
+        END IF;
+          --DEBUG: RAISE WARNING 'Linked admin_center';
+      END LOOP;
+    END LOOP;
+  END IF;
+
+  -- Name searches can be done for ways as well as relations
+  IF bnd.osm_type in ('W','R') and bnd_name is not null THEN
+    --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
+    FOR linked_placex IN
+      SELECT placex.* from placex
+      WHERE make_standard_name(name->'name') = bnd_name
+        AND placex.rank_address = bnd.rank_address
+        AND placex.osm_type = 'N'
+        AND st_covers(geometry, placex.geometry)
+    LOOP
+      --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION placex_insert()
   RETURNS TRIGGER
   AS $$
@@ -203,7 +317,6 @@ DECLARE
   way RECORD;
   relation RECORD;
   relation_members TEXT[];
-  relMember RECORD;
   linkedplacex RECORD;
   addr_item RECORD;
   search_diameter FLOAT;
@@ -581,137 +694,24 @@ BEGIN
   -- Full indexing
   --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
 
-  IF NEW.osm_type = 'R' AND NEW.rank_search < 26 THEN
-
-    -- see if we have any special relation members
-    select members from planet_osm_rels where id = NEW.osm_id INTO relation_members;
-    --DEBUG: RAISE WARNING 'Got relation members';
-
-    IF relation_members IS NOT NULL THEN
-      FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['label']) as member LOOP
-        --DEBUG: RAISE WARNING 'Found label member %', relMember.member;
-
-        FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-          and osm_id = substring(relMember.member,2,10000)::bigint
-          and class = 'place' order by rank_search desc limit 1 LOOP
-
-          -- If we don't already have one use this as the centre point of the geometry
-          IF NEW.centroid IS NULL THEN
-            NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-          END IF;
-
-          -- merge in the label name, re-init word vector
-          IF NOT linkedPlacex.name IS NULL THEN
-            NEW.name := linkedPlacex.name || NEW.name;
-            name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
-          END IF;
-
-          -- merge in extra tags
-          NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
-
-          -- mark the linked place (excludes from search results)
-          UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-          select wikipedia, importance
-            FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
-                                    'N', linkedPlacex.osm_id)
-            INTO linked_wikipedia,linked_importance;
-          --DEBUG: RAISE WARNING 'Linked label member';
-        END LOOP;
-
-      END LOOP;
-
-      IF NEW.centroid IS NULL THEN
-
-        FOR relMember IN select get_osm_rel_members(relation_members,ARRAY['admin_center','admin_centre']) as member LOOP
-          --DEBUG: RAISE WARNING 'Found admin_center member %', relMember.member;
-
-          FOR linkedPlacex IN select * from placex where osm_type = upper(substring(relMember.member,1,1))::char(1) 
-            and osm_id = substring(relMember.member,2,10000)::bigint
-            and class = 'place' order by rank_search desc limit 1 LOOP
-
-            -- For an admin centre we also want a name match - still not perfect, for example 'new york, new york'
-            -- But that can be fixed by explicitly setting the label in the data
-            IF make_standard_name(NEW.name->'name') = make_standard_name(linkedPlacex.name->'name') 
-              AND NEW.rank_address = linkedPlacex.rank_address THEN
-
-              -- If we don't already have one use this as the centre point of the geometry
-              IF NEW.centroid IS NULL THEN
-                NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-              END IF;
-
-              -- merge in the name, re-init word vector
-              IF NOT linkedPlacex.name IS NULL THEN
-                NEW.name := linkedPlacex.name || NEW.name;
-                name_vector := make_keywords(NEW.name);
-              END IF;
-
-              -- merge in extra tags
-              NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
-
-              -- mark the linked place (excludes from search results)
-              UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-              select wikipedia, importance
-                FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
-                                        'N', linkedPlacex.osm_id)
-                INTO linked_wikipedia,linked_importance;
-              --DEBUG: RAISE WARNING 'Linked admin_center';
-            END IF;
-
-          END LOOP;
-
-        END LOOP;
-
-      END IF;
+  FOR linkedPlacex IN SELECT * FROM find_linked_place(NEW) LOOP
+    -- If we don't already have one use this as the centre point of the geometry
+    IF NEW.centroid IS NULL THEN
+      --DEBUG: RAISE WARNING 'Linked %', linkedPlacex;
+      NEW.centroid := coalesce(linkedPlacex.centroid,
+                               ST_Centroid(linkedPlacex.geometry));
     END IF;
+    place_centroid := NEW.centroid;
 
-  END IF;
+    -- merge in the label name, re-init word vector
+    IF NOT linkedPlacex.name IS NULL THEN
+      NEW.name := linkedPlacex.name || NEW.name;
+      name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
 
-  -- Name searches can be done for ways as well as relations
-  IF NEW.osm_type in ('W','R') AND NEW.rank_search < 26 AND NEW.rank_address > 0 THEN
-
-    -- not found one yet? how about doing a name search
-    IF NEW.centroid IS NULL AND (NEW.name->'name') is not null and make_standard_name(NEW.name->'name') != '' THEN
-
-      --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
-      FOR linkedPlacex IN select placex.* from placex WHERE
-        make_standard_name(name->'name') = make_standard_name(NEW.name->'name')
-        AND placex.rank_address = NEW.rank_address
-        AND placex.place_id != NEW.place_id
-        AND placex.osm_type = 'N'::char(1) AND placex.rank_search < 26
-        AND st_covers(NEW.geometry, placex.geometry)
-      LOOP
-        --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
-        -- If we don't already have one use this as the centre point of the geometry
-        IF NEW.centroid IS NULL THEN
-          NEW.centroid := coalesce(linkedPlacex.centroid,st_centroid(linkedPlacex.geometry));
-        END IF;
-
-        -- merge in the name, re-init word vector
-        NEW.name := linkedPlacex.name || NEW.name;
-        name_vector := make_keywords(NEW.name);
-
-        -- merge in extra tags
-        NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type) || coalesce(linkedPlacex.extratags, ''::hstore) || coalesce(NEW.extratags, ''::hstore);
-
-        -- mark the linked place (excludes from search results)
-        UPDATE placex set linked_place_id = NEW.place_id where place_id = linkedPlacex.place_id;
-
-        select wikipedia, importance
-          FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
-                                  'N', linkedPlacex.osm_id)
-          INTO linked_wikipedia,linked_importance;
-        --DEBUG: RAISE WARNING 'Linked named place';
-      END LOOP;
-    END IF;
-
-    IF NEW.centroid IS NOT NULL THEN
-      place_centroid := NEW.centroid;
-      -- Place might have had only a name tag before but has now received translations
-      -- from the linked place. Make sure a name tag for the default language exists in
-      -- this case. 
-      IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
+      -- Place might have had only a name tag before but has now received
+      -- translations from the linked place. Make sure a name tag for the
+      -- default language exists in this case.
+      IF array_upper(akeys(NEW.name), 1) > 1 THEN
         default_language := get_country_language_code(NEW.country_code);
         IF default_language IS NOT NULL THEN
           IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
@@ -721,15 +721,30 @@ BEGIN
           END IF;
         END IF;
       END IF;
-      --DEBUG: RAISE WARNING 'Names updated from linked places';
     END IF;
+
+    -- merge in extra tags
+    NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type)
+                     || coalesce(linkedPlacex.extratags, ''::hstore)
+                     || coalesce(NEW.extratags, ''::hstore);
+
+    -- mark the linked place (excludes from search results)
+    UPDATE placex set linked_place_id = NEW.place_id
+      WHERE place_id = linkedPlacex.place_id;
+
+    SELECT wikipedia, importance
+      FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
+                              'N', linkedPlacex.osm_id)
+      INTO linked_wikipedia,linked_importance;
 
     -- Use the maximum importance if a one could be computed from the linked object.
     IF linked_importance is not null AND
-        (NEW.importance is null or NEW.importance < linked_importance) THEN
-        NEW.importance = linked_importance;
+       (NEW.importance is null or NEW.importance < linked_importance)
+    THEN
+      NEW.importance = linked_importance;
     END IF;
-  END IF;
+
+  END LOOP;
 
   -- make sure all names are in the word table
   IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R' THEN

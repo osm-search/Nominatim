@@ -19,6 +19,26 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- copy 'name' to or from the default language (if there is a default language)
+CREATE OR REPLACE FUNCTION add_default_place_name(country_code VARCHAR(2),
+                                                  INOUT name HSTORE)
+  AS $$
+DECLARE
+  default_language VARCHAR(10);
+BEGIN
+  IF name is not null AND array_upper(akeys(name),1) > 1 THEN
+    default_language := get_country_language_code(country_code);
+    IF default_language IS NOT NULL THEN
+      IF name ? 'name' AND NOT name ? ('name:'||default_language) THEN
+        name := name || hstore(('name:'||default_language), (name -> 'name'));
+      ELSEIF name ? ('name:'||default_language) AND NOT name ? 'name' THEN
+        name := name || hstore('name', (name -> ('name:'||default_language)));
+      END IF;
+    END IF;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
 
 -- Try to find a linked place for the given object.
 CREATE OR REPLACE FUNCTION find_linked_place(bnd placex)
@@ -123,7 +143,6 @@ DECLARE
   result BOOLEAN;
   is_area BOOLEAN;
   country_code VARCHAR(2);
-  default_language VARCHAR(10);
   diameter FLOAT;
   classtable TEXT;
   classtype TEXT;
@@ -137,18 +156,6 @@ BEGIN
 
   NEW.partition := get_partition(NEW.country_code);
   NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
-
-  -- copy 'name' to or from the default language (if there is a default language)
-  IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-    default_language := get_country_language_code(NEW.country_code);
-    IF default_language IS NOT NULL THEN
-      IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-        NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
-      ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-        NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
-      END IF;
-    END IF;
-  END IF;
 
   IF NEW.osm_type = 'X' THEN
     -- E'X'ternal records should already be in the right format so do nothing
@@ -304,7 +311,6 @@ CREATE OR REPLACE FUNCTION placex_update()
   AS $$
 DECLARE
 
-  place_centroid GEOMETRY;
   near_centroid GEOMETRY;
 
   search_maxdistance FLOAT[];
@@ -317,7 +323,6 @@ DECLARE
   way RECORD;
   relation RECORD;
   relation_members TEXT[];
-  linkedplacex RECORD;
   addr_item RECORD;
   search_diameter FLOAT;
   search_prevdiameter FLOAT;
@@ -339,7 +344,6 @@ DECLARE
   location_isaddress BOOLEAN;
   location_keywords INTEGER[];
 
-  default_language TEXT;
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
 
@@ -410,12 +414,11 @@ BEGIN
 
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
-  place_centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.centroid := ST_PointOnSurface(NEW.geometry);
   -- For searching near features rather use the centroid
   near_centroid := ST_Envelope(NEW.geometry);
-  NEW.centroid := null;
   NEW.postcode := null;
-  --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(place_centroid);
+  --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
 
   -- recalculate country and partition
   IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN
@@ -425,12 +428,12 @@ BEGIN
     NEW.country_code := lower(NEW.address->'country');
     NEW.partition := get_partition(lower(NEW.country_code));
     IF NEW.partition = 0 THEN
-      NEW.country_code := lower(get_country_code(place_centroid));
+      NEW.country_code := lower(get_country_code(NEW.centroid));
       NEW.partition := get_partition(NEW.country_code);
     END IF;
   ELSE
     IF NEW.rank_search >= 4 THEN
-      NEW.country_code := lower(get_country_code(place_centroid));
+      NEW.country_code := lower(get_country_code(NEW.centroid));
     ELSE
       NEW.country_code := NULL;
     END IF;
@@ -458,31 +461,6 @@ BEGIN
       --DEBUG: RAISE WARNING 'Waterway processed';
   END IF;
 
-  -- What level are we searching from
-  search_maxrank := NEW.rank_search;
-
-  -- Thought this wasn't needed but when we add new languages to the country_name table
-  -- we need to update the existing names
-  IF NEW.name is not null AND array_upper(akeys(NEW.name),1) > 1 THEN
-    default_language := get_country_language_code(NEW.country_code);
-    IF default_language IS NOT NULL THEN
-      IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-        NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
-      ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-        NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
-      END IF;
-    END IF;
-  END IF;
-  --DEBUG: RAISE WARNING 'Local names updated';
-
-  -- Initialise the name vector using our name
-  name_vector := make_keywords(NEW.name);
-  nameaddress_vector := '{}'::int[];
-
-  FOR i IN 1..28 LOOP
-    address_havelevel[i] := false;
-  END LOOP;
-
   NEW.importance := null;
   SELECT wikipedia, importance
     FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id)
@@ -495,17 +473,13 @@ BEGIN
   IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
 
     --DEBUG: RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;
-
-    -- We won't get a better centroid, besides these places are too small to care
-    NEW.centroid := place_centroid;
-
     NEW.parent_place_id := null;
 
     -- if we have a POI and there is no address information,
     -- see if we can get it from a surrounding building
     IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
-      FOR location IN select address from placex where ST_Covers(geometry, place_centroid)
+      FOR location IN select address from placex where ST_Covers(geometry, NEW.centroid)
             and address is not null
             and (address ? 'housenumber' or address ? 'street' or address ? 'place')
             and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
@@ -656,6 +630,9 @@ BEGIN
         return NEW;
       END IF;
 
+      NEW.name := add_default_place_name(NEW.country_code, NEW.name);
+      name_vector := make_keywords(NEW.name);
+
       -- Performance, it would be more acurate to do all the rest of the import
       -- process but it takes too long
       -- Just be happy with inheriting from parent road only
@@ -669,19 +646,17 @@ BEGIN
 
       IF NOT %REVERSE-ONLY% THEN
           -- Merge address from parent
-          SELECT s.name_vector, s.nameaddress_vector FROM search_name s
-           WHERE s.place_id = NEW.parent_place_id INTO location;
-
-          nameaddress_vector := array_merge(nameaddress_vector,
-                                            location.nameaddress_vector);
-          nameaddress_vector := array_merge(nameaddress_vector, location.name_vector);
+          SELECT array_merge(s.name_vector, s.nameaddress_vector)
+            INTO nameaddress_vector
+            FROM search_name s
+           WHERE s.place_id = NEW.parent_place_id;
 
           INSERT INTO search_name (place_id, search_rank, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)
                  VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
                          NEW.importance, NEW.country_code, name_vector,
-                         nameaddress_vector, place_centroid);
+                         nameaddress_vector, NEW.centroid);
           --DEBUG: RAISE WARNING 'Place added to search table';
         END IF;
 
@@ -693,64 +668,61 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Full indexing
   --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
+  SELECT * INTO location FROM find_linked_place(NEW);
+  IF location.place_id is not null THEN
+      --DEBUG: RAISE WARNING 'Linked %', location;
 
-  FOR linkedPlacex IN SELECT * FROM find_linked_place(NEW) LOOP
-    -- If we don't already have one use this as the centre point of the geometry
-    IF NEW.centroid IS NULL THEN
-      --DEBUG: RAISE WARNING 'Linked %', linkedPlacex;
-      NEW.centroid := coalesce(linkedPlacex.centroid,
-                               ST_Centroid(linkedPlacex.geometry));
-    END IF;
-    place_centroid := NEW.centroid;
+    -- Use this as the centre point of the geometry
+    NEW.centroid := coalesce(location.centroid,
+                             ST_Centroid(location.geometry));
 
-    -- merge in the label name, re-init word vector
-    IF NOT linkedPlacex.name IS NULL THEN
-      NEW.name := linkedPlacex.name || NEW.name;
-      name_vector := array_merge(name_vector, make_keywords(linkedPlacex.name));
-
-      -- Place might have had only a name tag before but has now received
-      -- translations from the linked place. Make sure a name tag for the
-      -- default language exists in this case.
-      IF array_upper(akeys(NEW.name), 1) > 1 THEN
-        default_language := get_country_language_code(NEW.country_code);
-        IF default_language IS NOT NULL THEN
-          IF NEW.name ? 'name' AND NOT NEW.name ? ('name:'||default_language) THEN
-            NEW.name := NEW.name || hstore(('name:'||default_language), (NEW.name -> 'name'));
-          ELSEIF NEW.name ? ('name:'||default_language) AND NOT NEW.name ? 'name' THEN
-            NEW.name := NEW.name || hstore('name', (NEW.name -> ('name:'||default_language)));
-          END IF;
-        END IF;
-      END IF;
+    -- merge in the label name
+    IF NOT location.name IS NULL THEN
+      NEW.name := location.name || NEW.name;
     END IF;
 
     -- merge in extra tags
-    NEW.extratags := hstore(linkedPlacex.class, linkedPlacex.type)
-                     || coalesce(linkedPlacex.extratags, ''::hstore)
+    NEW.extratags := hstore(location.class, location.type)
+                     || coalesce(location.extratags, ''::hstore)
                      || coalesce(NEW.extratags, ''::hstore);
 
     -- mark the linked place (excludes from search results)
     UPDATE placex set linked_place_id = NEW.place_id
-      WHERE place_id = linkedPlacex.place_id;
+      WHERE place_id = location.place_id;
 
     SELECT wikipedia, importance
-      FROM compute_importance(linkedPlacex.extratags, NEW.country_code,
-                              'N', linkedPlacex.osm_id)
+      FROM compute_importance(location.extratags, NEW.country_code,
+                              'N', location.osm_id)
       INTO linked_wikipedia,linked_importance;
 
-    -- Use the maximum importance if a one could be computed from the linked object.
+    -- Use the maximum importance if one could be computed from the linked object.
     IF linked_importance is not null AND
        (NEW.importance is null or NEW.importance < linked_importance)
     THEN
       NEW.importance = linked_importance;
     END IF;
+  END IF;
 
-  END LOOP;
+  -- What level are we searching from
+  search_maxrank := NEW.rank_search;
+
+  -- Initialise the name vector using our name
+  NEW.name := add_default_place_name(NEW.country_code, NEW.name);
+  name_vector := make_keywords(NEW.name);
+  nameaddress_vector := '{}'::int[];
 
   -- make sure all names are in the word table
-  IF NEW.admin_level = 2 AND NEW.class = 'boundary' AND NEW.type = 'administrative' AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R' THEN
-    perform create_country(NEW.name, lower(NEW.country_code));
+  IF NEW.admin_level = 2
+     AND NEW.class = 'boundary' AND NEW.type = 'administrative'
+     AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
+  THEN
+    PERFORM create_country(NEW.name, lower(NEW.country_code));
     --DEBUG: RAISE WARNING 'Country names updated';
   END IF;
+
+  FOR i IN 1..28 LOOP
+    address_havelevel[i] := false;
+  END LOOP;
 
   NEW.parent_place_id = 0;
   parent_place_id_rank = 0;
@@ -808,13 +780,13 @@ BEGIN
   location_parent := NULL;
   -- added ourself as address already
   address_havelevel[NEW.rank_address] := true;
-  --DEBUG: RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, place_centroid, search_maxrank, isin_tokens;
+  --DEBUG: RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, NEW.centroid, search_maxrank, isin_tokens;
   FOR location IN
     SELECT * from getNearFeatures(NEW.partition,
                                   CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
                                        THEN NEW.geometry
-                                       ELSE place_centroid END,
+                                       ELSE NEW.centroid END,
                                   search_maxrank, isin_tokens)
   LOOP
     IF location.rank_address != location_rank_search THEN
@@ -911,14 +883,9 @@ BEGIN
                                  nameaddress_vector, centroid)
                VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
                        NEW.importance, NEW.country_code, name_vector,
-                       nameaddress_vector, place_centroid);
+                       nameaddress_vector, NEW.centroid);
     END IF;
 
-  END IF;
-
-  -- If we've not managed to pick up a better one - default centroid
-  IF NEW.centroid IS NULL THEN
-    NEW.centroid := place_centroid;
   END IF;
 
   --DEBUG: RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;

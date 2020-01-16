@@ -100,6 +100,7 @@ if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->createTables($aCMDResult['reverse-only']);
     $oSetup->createFunctions();
+    $oSetup->createTableTriggers();
 }
 
 if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {

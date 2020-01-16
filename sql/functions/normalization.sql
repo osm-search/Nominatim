@@ -201,16 +201,16 @@ END;
 $$
 LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION get_word_id(lookup_word TEXT)
-  RETURNS INTEGER
+-- Normalize a string and lookup its word ids (partial words).
+CREATE OR REPLACE FUNCTION addr_ids_from_name(lookup_word TEXT)
+  RETURNS INTEGER[]
   AS $$
 DECLARE
   lookup_token TEXT;
-  return_word_id INTEGER;
+  return_word_id INTEGER[];
 BEGIN
-  lookup_token := trim(lookup_word);
-  SELECT min(word_id) FROM word
+  lookup_token := make_standard_name(lookup_word);
+  SELECT array_agg(word_id) FROM word
     WHERE word_token = lookup_token and class is null and type is null
     INTO return_word_id;
   RETURN return_word_id;
@@ -219,24 +219,7 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_name_id(lookup_word TEXT)
-  RETURNS INTEGER
-  AS $$
-DECLARE
-  lookup_token TEXT;
-  return_word_id INTEGER;
-BEGIN
-  lookup_token := ' '||trim(lookup_word);
-  SELECT min(word_id) FROM word
-    WHERE word_token = lookup_token and class is null and type is null
-    INTO return_word_id;
-  RETURN return_word_id;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
--- Normalize a string and look up its name ids.
+-- Normalize a string and look up its name ids (full words).
 CREATE OR REPLACE FUNCTION word_ids_from_name(lookup_word TEXT)
   RETURNS INTEGER[]
   AS $$

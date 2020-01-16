@@ -413,7 +413,6 @@ CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
   AS $$
 DECLARE
-
   near_centroid GEOMETRY;
 
   search_maxdistance FLOAT[];
@@ -421,17 +420,13 @@ DECLARE
   address_havelevel BOOLEAN[];
 
   i INTEGER;
-  iMax FLOAT;
   location RECORD;
-  way RECORD;
-  relation RECORD;
   relation_members TEXT[];
   addr_item RECORD;
   search_diameter FLOAT;
   search_prevdiameter FLOAT;
   search_maxrank INTEGER;
   address_maxrank INTEGER;
-  address_street_word_id INTEGER;
   address_street_word_ids INTEGER[];
   parent_place_id_rank BIGINT;
 
@@ -732,15 +727,20 @@ BEGIN
   IF NEW.address IS NOT NULL THEN
     FOR addr_item IN SELECT * FROM each(NEW.address)
     LOOP
-      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province', 'district', 'region', 'county', 'municipality', 'hamlet', 'village', 'subdistrict', 'town', 'neighbourhood', 'quarter', 'parish') THEN
-        address_street_word_id := get_name_id(make_standard_name(addr_item.value));
-        IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-          isin_tokens := isin_tokens || address_street_word_id;
+      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
+                           'district', 'region', 'county', 'municipality',
+                           'hamlet', 'village', 'subdistrict', 'town',
+                           'neighbourhood', 'quarter', 'parish')
+      THEN
+        address_street_word_ids := word_ids_from_name(addr_item.value);
+        IF address_street_word_ids is not null THEN
+          isin_tokens := array_merge(isin_tokens, address_street_word_ids);
         END IF;
         IF NOT %REVERSE-ONLY% THEN
-          address_street_word_id := get_word_id(make_standard_name(addr_item.value));
-          IF address_street_word_id IS NOT NULL THEN
-            nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+          address_street_word_ids := addr_ids_from_name(addr_item.value);
+          IF address_street_word_ids is not null THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              address_street_word_ids);
           END IF;
         END IF;
       END IF;
@@ -749,16 +749,17 @@ BEGIN
         isin := regexp_split_to_array(addr_item.value, E'[;,]');
         IF array_upper(isin, 1) IS NOT NULL THEN
           FOR i IN 1..array_upper(isin, 1) LOOP
-            address_street_word_id := get_name_id(make_standard_name(isin[i]));
-            IF address_street_word_id IS NOT NULL AND NOT(ARRAY[address_street_word_id] <@ isin_tokens) THEN
-              isin_tokens := isin_tokens || address_street_word_id;
+            address_street_word_ids := word_ids_from_name(isin[i]);
+            IF address_street_word_ids is not null THEN
+              isin_tokens := array_merge(isin_tokens, address_street_word_ids);
             END IF;
 
             -- merge word into address vector
             IF NOT %REVERSE-ONLY% THEN
-              address_street_word_id := get_word_id(make_standard_name(isin[i]));
-              IF address_street_word_id IS NOT NULL THEN
-                nameaddress_vector := array_merge(nameaddress_vector, ARRAY[address_street_word_id]);
+              address_street_word_ids := addr_ids_from_name(isin[i]);
+              IF address_street_word_ids is not null THEN
+                nameaddress_vector := array_merge(nameaddress_vector,
+                                                  address_street_word_ids);
               END IF;
             END IF;
           END LOOP;

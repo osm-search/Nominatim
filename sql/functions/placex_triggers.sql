@@ -59,7 +59,6 @@ DECLARE
   parent_place_id BIGINT DEFAULT NULL;
   location RECORD;
   parent RECORD;
-  word_ids INTEGER[];
 BEGIN
     --DEBUG: RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;
 
@@ -85,29 +84,10 @@ BEGIN
       END LOOP;
     END LOOP;
 
-    -- Check for addr:street attributes
-    -- Note that addr:street links can only be indexed, once the street itself is indexed
-    word_ids := word_ids_from_name(addr_street);
-    IF word_ids is not null THEN
-      SELECT place_id
-        FROM getNearestNamedRoadFeature(poi_partition, near_centroid, word_ids)
-        INTO parent_place_id;
-      IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent.place_id;
-        RETURN parent_place_id;
-      END IF;
-    END IF;
-
-    -- Check for addr:place attributes.
-    word_ids := word_ids_from_name(addr_place);
-    IF word_ids is not null THEN
-      SELECT place_id
-        FROM getNearestNamedPlaceFeature(poi_partition, near_centroid, word_ids)
-        INTO parent_place_id;
-      IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent.place_id;
-        RETURN parent_place_id;
-      END IF;
+    parent_place_id := find_parent_for_address(addr_street, addr_place,
+                                               poi_partition, near_centroid);
+    IF parent_place_id is not null THEN
+      RETURN parent_place_id;
     END IF;
 
     IF poi_osm_type = 'N' THEN

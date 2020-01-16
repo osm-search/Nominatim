@@ -240,6 +240,58 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
+-- Find the parent of an address with addr:street/addr:place tag.
+--
+-- \param street     Value of addr:street or NULL if tag is missing.
+-- \param place      Value of addr:place or NULL if tag is missing.
+-- \param partition  Partition where to search the parent.
+-- \param centroid   Location of the address.
+--
+-- \return Place ID of the parent if one was found, NULL otherwise.
+--         The returned parent is always a street (rank 26/27 and a way).
+CREATE OR REPLACE FUNCTION find_parent_for_address(street TEXT, place TEXT,
+                                                   partition SMALLINT,
+                                                   centroid GEOMETRY)
+  RETURNS BIGINT
+  AS $$
+DECLARE
+  parent_place_id BIGINT;
+  word_ids INTEGER[];
+BEGIN
+  IF street is not null THEN
+    -- Check for addr:street attributes
+    -- Note that addr:street links can only be indexed, once the street itself is indexed
+    word_ids := word_ids_from_name(street);
+    IF word_ids is not null THEN
+      SELECT place_id
+        FROM getNearestNamedRoadFeature(partition, centroid, word_ids)
+        INTO parent_place_id;
+      IF parent_place_id is not null THEN
+        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent.place_id;
+        RETURN parent_place_id;
+      END IF;
+    END IF;
+  END IF;
+
+  -- Check for addr:place attributes.
+  IF place is not null THEN
+    word_ids := word_ids_from_name(place);
+    IF word_ids is not null THEN
+      SELECT place_id
+        FROM getNearestNamedPlaceFeature(partition, centroid, word_ids)
+        INTO parent_place_id;
+      IF parent_place_id is not null THEN
+        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent.place_id;
+        RETURN parent_place_id;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT)
   RETURNS BOOLEAN
   AS $$

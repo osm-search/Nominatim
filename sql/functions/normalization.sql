@@ -236,23 +236,7 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_name_ids(lookup_word TEXT)
-  RETURNS INTEGER[]
-  AS $$
-DECLARE
-  lookup_token TEXT;
-  return_word_ids INTEGER[];
-BEGIN
-  lookup_token := ' '||trim(lookup_word);
-  SELECT array_agg(word_id) FROM word
-    WHERE word_token = lookup_token and class is null and type is null
-    INTO return_word_ids;
-  RETURN return_word_ids;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
+-- Normalize a string and look up its name ids.
 CREATE OR REPLACE FUNCTION word_ids_from_name(lookup_word TEXT)
   RETURNS INTEGER[]
   AS $$

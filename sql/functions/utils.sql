@@ -223,24 +223,6 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_language_codes(search_country_code VARCHAR(2))
-  RETURNS TEXT[]
-  AS $$
-DECLARE
-  nearcountry RECORD;
-BEGIN
-  FOR nearcountry IN
-    SELECT country_default_language_codes from country_name
-    WHERE country_code = search_country_code limit 1
-  LOOP
-    RETURN lower(nearcountry.country_default_language_codes);
-  END LOOP;
-  RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
 CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10))
   RETURNS INTEGER
   AS $$

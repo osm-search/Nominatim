@@ -176,7 +176,7 @@ CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {ts:searc
 CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {ts:address-index} WHERE linked_place_id IS NOT NULL;
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {ts:address-index};
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {ts:search-index};
-CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name'),rank_search) {ts:address-index} WHERE osm_type='N' and rank_search < 26;
+CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name')) {ts:address-index} WHERE osm_type='N' and rank_search < 26;
 
 DROP SEQUENCE IF EXISTS seq_place;
 CREATE SEQUENCE seq_place start 1;

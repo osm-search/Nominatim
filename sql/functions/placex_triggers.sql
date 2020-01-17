@@ -225,6 +225,7 @@ BEGIN
       WHERE make_standard_name(name->'name') = bnd_name
         AND placex.rank_address = bnd.rank_address
         AND placex.osm_type = 'N'
+        AND placex.rank_search < 26 -- needed to select the right index
         AND st_covers(geometry, placex.geometry)
     LOOP
       --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
@@ -235,7 +236,7 @@ BEGIN
   RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION placex_insert()
   RETURNS TRIGGER

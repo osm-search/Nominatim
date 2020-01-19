@@ -50,6 +50,10 @@ class IndexingThread(object):
         self.cursor = self.conn.cursor()
         self.perform("SET lc_messages TO 'C'")
         self.wait()
+        self.perform(InterpolationRunner.prepare())
+        self.wait()
+        self.perform(RankRunner.prepare())
+        self.wait()
 
         self.current_query = None
 
@@ -74,7 +78,7 @@ class IndexingThread(object):
                 raise RuntimeError("Postgres exception has no error code")
             if e.pgcode == '40P01':
                 log.info("Deadlock detected, retry.")
-                self.cursor.execute(sql)
+                self.cursor.execute(self.sql)
             else:
                 raise
 
@@ -177,6 +181,12 @@ class RankRunner(object):
     def name(self):
         return "rank {}".format(self.rank)
 
+    @classmethod
+    def prepare(cls):
+        return """PREPARE rnk_index AS
+                  UPDATE placex
+                  SET indexed_status = 0 WHERE place_id = $1"""
+
     def sql_index_sectors(self):
         return """SELECT geometry_sector, count(*) FROM placex
                   WHERE rank_search = {} and indexed_status > 0
@@ -194,13 +204,19 @@ class RankRunner(object):
                   ORDER BY geometry_sector"""
 
     def sql_index_place(self):
-        return "UPDATE placex SET indexed_status = 0 WHERE place_id = %s"
+        return "EXECUTE rnk_index(%s)"
 
 
 class InterpolationRunner(object):
 
     def name(self):
         return "interpolation lines (location_property_osmline)"
+
+    @classmethod
+    def prepare(cls):
+        return """PREPARE ipl_index AS
+                  UPDATE location_property_osmline
+                  SET indexed_status = 0 WHERE place_id = $1"""
 
     def sql_index_sectors(self):
         return """SELECT geometry_sector, count(*) FROM location_property_osmline
@@ -219,8 +235,7 @@ class InterpolationRunner(object):
                   ORDER BY geometry_sector"""
 
     def sql_index_place(self):
-        return """UPDATE location_property_osmline
-                  SET indexed_status = 0 WHERE place_id = %s"""
+        return "EXECUTE ipl_index(%s)"
 
 
 def nominatim_arg_parser():

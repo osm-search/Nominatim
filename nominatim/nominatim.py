@@ -146,7 +146,7 @@ class DBConnection(object):
                 return True
         except psycopg2.extensions.TransactionRollbackError as e:
             if e.pgcode == '40P01':
-                log.info("Deadlock detected, retry.")
+                log.debug("Deadlock detected, retry.")
                 self.cursor.execute(self.current_query, self.current_params)
             else:
                 raise
@@ -167,7 +167,7 @@ class Indexer(object):
     def run(self):
         """ Run indexing over the entire database.
         """
-        log.info("Starting indexing rank ({} to {}) using {} threads".format(
+        log.warning("Starting indexing rank ({} to {}) using {} threads".format(
                  self.minrank, self.maxrank, len(self.threads)))
 
         for rank in range(self.minrank, self.maxrank):
@@ -181,7 +181,7 @@ class Indexer(object):
         """ Index a single rank or table. `obj` describes the SQL to use
             for indexing.
         """
-        log.info("Starting {}".format(obj.name()))
+        log.warning("Starting {}".format(obj.name()))
 
         cur = self.conn.cursor(name='main')
         cur.execute(obj.sql_index_sectors())
@@ -201,7 +201,7 @@ class Indexer(object):
         index_sql = obj.sql_index_place()
         min_grouped_tuples = total_tuples - len(self.threads) * 1000
 
-        next_info = 100
+        next_info = 100 if log.isEnabledFor(logging.INFO) else total_tuples + 1
 
         for r in cur:
             sector = r[0]
@@ -228,7 +228,7 @@ class Indexer(object):
                     now = datetime.now()
                     done_time = (now - rank_start_time).total_seconds()
                     tuples_per_sec = done_tuples / done_time
-                    print("Done {} in {} @ {:.3f} per second - {} ETA (seconds): {:.2f}"
+                    log.info("Done {} in {} @ {:.3f} per second - {} ETA (seconds): {:.2f}"
                            .format(done_tuples, int(done_time),
                                    tuples_per_sec, obj.name(),
                                    (total_tuples - done_tuples)/tuples_per_sec))
@@ -247,7 +247,7 @@ class Indexer(object):
         rank_end_time = datetime.now()
         diff_seconds = (rank_end_time-rank_start_time).total_seconds()
 
-        log.info("Done {}/{} in {} @ {:.3f} per second - FINISHED {}\n".format(
+        log.warning("Done {}/{} in {} @ {:.3f} per second - FINISHED {}\n".format(
                  done_tuples, total_tuples, int(diff_seconds),
                  done_tuples/diff_seconds, obj.name()))
 

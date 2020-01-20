@@ -200,6 +200,9 @@ class Indexer(object):
         sector_sql = obj.sql_sector_places()
         index_sql = obj.sql_index_place()
         min_grouped_tuples = total_tuples - len(self.threads) * 1000
+
+        next_info = 100
+
         for r in cur:
             sector = r[0]
 
@@ -221,6 +224,16 @@ class Indexer(object):
                 thread.perform(index_sql, (place_id,))
                 done_tuples += 1
 
+                if done_tuples >= next_info:
+                    now = datetime.now()
+                    done_time = (now - rank_start_time).total_seconds()
+                    tuples_per_sec = done_tuples / done_time
+                    print("Done {} in {} @ {:.3f} per second - {} ETA (seconds): {:.2f}"
+                           .format(done_tuples, int(done_time),
+                                   tuples_per_sec, obj.name(),
+                                   (total_tuples - done_tuples)/tuples_per_sec))
+                    next_info += int(tuples_per_sec)
+
             pcur.close()
 
             if do_all:
@@ -234,7 +247,7 @@ class Indexer(object):
         rank_end_time = datetime.now()
         diff_seconds = (rank_end_time-rank_start_time).total_seconds()
 
-        log.info("Done {}/{} in {} @ {} per second - FINISHED {}\n".format(
+        log.info("Done {}/{} in {} @ {:.3f} per second - FINISHED {}\n".format(
                  done_tuples, total_tuples, int(diff_seconds),
                  done_tuples/diff_seconds, obj.name()))
 

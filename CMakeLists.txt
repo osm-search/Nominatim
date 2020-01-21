@@ -53,6 +53,8 @@ if (NOT ONLY_DOCS)
     include_directories(${PostgreSQL_INCLUDE_DIRS})
     link_directories(${PostgreSQL_LIBRARY_DIRS})
 
+    find_package(PythonInterp 3)
+
     find_program(PYOSMIUM pyosmium-get-changes)
     if (NOT EXISTS "${PYOSMIUM}")
         set(PYOSMIUM_PATH "")
@@ -168,7 +170,6 @@ endif()
 
 if (NOT ONLY_DOCS)
     add_subdirectory(module)
-    add_subdirectory(nominatim)
 endif()
 add_subdirectory(docs)
 

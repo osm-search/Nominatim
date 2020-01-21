@@ -10,6 +10,7 @@ class SetupFunctions
     protected $iInstances;
     protected $sModulePath;
     protected $aDSNInfo;
+    protected $bQuiet;
     protected $bVerbose;
     protected $sIgnoreErrors;
     protected $bEnableDiffUpdates;
@@ -49,6 +50,7 @@ class SetupFunctions
         }
 
         // setting member variables based on command line options stored in $aCMDResult
+        $this->bQuiet = $aCMDResult['quiet'];
         $this->bVerbose = $aCMDResult['verbose'];
 
         //setting default values which are not set by the update.php array
@@ -518,10 +520,16 @@ class SetupFunctions
     public function index($bIndexNoanalyse)
     {
         $sOutputFile = '';
-        $sBaseCmd = CONST_InstallPath.'/nominatim/nominatim -i'
+        $sBaseCmd = CONST_BasePath.'/nominatim/nominatim.py'
             .' -d '.escapeshellarg($this->aDSNInfo['database'])
             .' -P '.escapeshellarg($this->aDSNInfo['port'])
             .' -t '.escapeshellarg($this->iInstances.$sOutputFile);
+        if (!$this->bQuiet) {
+            $sBaseCmd .= ' -v';
+        }
+        if ($this->bVerbose) {
+            $sBaseCmd .= ' -v';
+        }
         if (isset($this->aDSNInfo['hostspec'])) {
             $sBaseCmd .= ' -H '.escapeshellarg($this->aDSNInfo['hostspec']);
         }

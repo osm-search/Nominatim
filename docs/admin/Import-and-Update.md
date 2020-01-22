@@ -45,9 +45,11 @@ This data is available as a binary download:
 
 The file is about 400MB and adds around 4GB to Nominatim database.
 
-*NOTE:* if you forgot to download the wikipedia rankings, you can also add
-them after the import by running `./utils/setup.php --import-wikipedia-articles`
-and then `./utils/update.php --recompute-importance`.
+!!! tip
+    If you forgot to download the wikipedia rankings, you can also add
+    importances after the import. Download the files, then run
+    `./utils/setup.php --import-wikipedia-articles`
+    and `./utils/update.php --recompute-importance`.
 
 ### Great Britain, USA postcodes
 
@@ -144,8 +146,9 @@ style format see [the development section](../develop/Import.md).
 
 ## Initial import of the data
 
-**Important:** first try the import with a small extract, for example from
-[Geofabrik](https://download.geofabrik.de).
+!!! danger "Important"
+    First try the import with a small extract, for example from
+    [Geofabrik](https://download.geofabrik.de).
 
 Download the data to import and load the data with the following command
 from the build directory:
@@ -255,6 +258,10 @@ entire US adds about 10GB to your database.
 There are many different ways to update your Nominatim database.
 The following section describes how to keep it up-to-date with Pyosmium.
 For a list of other methods see the output of `./utils/update.php --help`.
+
+!!! warning
+    If you have configured a flatnode file for the import, then you
+    need to keep this flatnode file around for updates as well.
 
 #### Installing the newest version of Pyosmium
 

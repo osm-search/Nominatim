@@ -26,7 +26,7 @@ For compiling:
 
   * [cmake](https://cmake.org/)
   * [libxml2](http://xmlsoft.org/)
-  * a recent C++ compiler
+  * a recent C++ compiler (gcc 5+ or Clang 3.8+)
 
 Nominatim comes with its own version of osm2pgsql. See the
 [osm2pgsql README](https://github.com/openstreetmap/osm2pgsql/blob/master/README.md#building)
@@ -89,14 +89,23 @@ The numbers in brackets behind some parameters seem to work fine for
 means that PostgreSQL needs to run checkpoints less often but it does require
 the additional space on your disk.
 
+Autovacuum must not be switched off because it ensures that the
+tables are frequently analysed. If your machine has very little memory,
+you might consider setting:
+
+    autovacuum_max_workers = 1
+
+and even reduce `autovacuum_work_mem` further. This will reduce the amount
+of memory that autovacuum takes away from the import process.
+
 For the initial import, you should also set:
 
     fsync = off
     full_page_writes = off
 
 Don't forget to reenable them after the initial import or you risk database
-corruption. Autovacuum must not be switched off because it ensures that the
-tables are frequently analysed.
+corruption.
+
 
 ### Webserver setup
 

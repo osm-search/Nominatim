@@ -146,7 +146,7 @@ class DBConnection(object):
                 return True
         except psycopg2.extensions.TransactionRollbackError as e:
             if e.pgcode == '40P01':
-                log.debug("Deadlock detected, retry.")
+                log.info("Deadlock detected (params = {}), retry.".format(self.current_params))
                 self.cursor.execute(self.current_query, self.current_params)
             else:
                 raise
@@ -175,7 +175,8 @@ class Indexer(object):
 
         if self.maxrank == 30:
             self.index(InterpolationRunner())
-            self.index(RankRunner(30))
+
+        self.index(RankRunner(self.maxrank))
 
     def index(self, obj):
         """ Index a single rank or table. `obj` describes the SQL to use

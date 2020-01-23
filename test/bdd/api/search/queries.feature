@@ -10,6 +10,7 @@ Feature: Search queries
           | type         | value |
           | house_number | 2 |
           | hamlet       | Steinwald |
+          | village      | Göfis |
           | postcode     | 6811 |
           | country      | Austria |
           | country_code | at |

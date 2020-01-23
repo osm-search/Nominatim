@@ -82,7 +82,7 @@ END
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION getNearestNamedRoadFeature(in_partition INTEGER,
+CREATE OR REPLACE FUNCTION getNearestNamedRoadPlaceId(in_partition INTEGER,
                                                       point GEOMETRY,
                                                       isin_token INTEGER[])
   RETURNS BIGINT
@@ -108,7 +108,7 @@ END
 $$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION getNearestNamedPlaceFeature(in_partition INTEGER,
+CREATE OR REPLACE FUNCTION getNearestNamedPlacePlaceId(in_partition INTEGER,
                                                        point GEOMETRY,
                                                        isin_token INTEGER[])
   RETURNS BIGINT

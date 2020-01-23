@@ -58,7 +58,7 @@ BEGIN
 
   address_street_word_ids := word_ids_from_name(in_street);
   IF address_street_word_ids IS NOT NULL THEN
-    out_parent_place_id := getNearestNamedRoadFeature(out_partition, place_centroid,
+    out_parent_place_id := getNearestNamedRoadPlaceId(out_partition, place_centroid,
                                                       address_street_word_ids);
   END IF;
 

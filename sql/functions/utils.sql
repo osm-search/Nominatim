@@ -262,7 +262,7 @@ BEGIN
     -- Note that addr:street links can only be indexed, once the street itself is indexed
     word_ids := word_ids_from_name(street);
     IF word_ids is not null THEN
-      parent_place_id := getNearestNamedRoadFeature(partition, centroid, word_ids);
+      parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
         --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent.place_id;
         RETURN parent_place_id;
@@ -274,7 +274,7 @@ BEGIN
   IF place is not null THEN
     word_ids := word_ids_from_name(place);
     IF word_ids is not null THEN
-      parent_place_id := getNearestNamedPlaceFeature(partition, centroid, word_ids);
+      parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
         --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent.place_id;
         RETURN parent_place_id;

@@ -14,7 +14,7 @@ LANGUAGE plpgsql IMMUTABLE;
 
 -- find the parent road of the cut road parts
 CREATE OR REPLACE FUNCTION get_interpolation_parent(wayid BIGINT, street TEXT,
-                                                    place TEXT, partition INTEGER,
+                                                    place TEXT, partition SMALLINT,
                                                     centroid GEOMETRY, geom GEOMETRY)
   RETURNS BIGINT
   AS $$
@@ -22,7 +22,6 @@ DECLARE
   addr_street TEXT;
   addr_place TEXT;
   parent_place_id BIGINT;
-  address_street_word_ids INTEGER[];
 
   waynodes BIGINT[];
 
@@ -44,23 +43,8 @@ BEGIN
     END LOOP;
   END IF;
 
-  IF addr_street IS NOT NULL THEN
-    address_street_word_ids := get_name_ids(make_standard_name(addr_street));
-    IF address_street_word_ids IS NOT NULL THEN
-      FOR location IN SELECT place_id from getNearestNamedRoadFeature(partition, centroid, address_street_word_ids) LOOP
-        parent_place_id := location.place_id;
-      END LOOP;
-    END IF;
-  END IF;
-
-  IF parent_place_id IS NULL AND addr_place IS NOT NULL THEN
-    address_street_word_ids := get_name_ids(make_standard_name(addr_place));
-    IF address_street_word_ids IS NOT NULL THEN
-      FOR location IN SELECT place_id from getNearestNamedPlaceFeature(partition, centroid, address_street_word_ids) LOOP
-        parent_place_id := location.place_id;
-      END LOOP;
-    END IF;
-  END IF;
+  parent_place_id := find_parent_for_address(addr_street, addr_place,
+                                             partition, centroid);
 
   IF parent_place_id is null THEN
     FOR location IN SELECT place_id FROM placex

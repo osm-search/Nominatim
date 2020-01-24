@@ -82,54 +82,51 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestNamedRoadFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER[]) 
-  RETURNS setof nearfeature AS $$
+CREATE OR REPLACE FUNCTION getNearestNamedRoadPlaceId(in_partition INTEGER,
+                                                      point GEOMETRY,
+                                                      isin_token INTEGER[])
+  RETURNS BIGINT
+  AS $$
 DECLARE
-  r nearfeature%rowtype;
+  parent BIGINT;
 BEGIN
 
 -- start
   IF in_partition = -partition- THEN
-    FOR r IN 
-      SELECT place_id, name_vector, address_rank, search_rank,
-          ST_Distance(centroid, point) as distance, null as isguess
-          FROM search_name_-partition-
-          WHERE name_vector && isin_token
-          AND centroid && ST_Expand(point, 0.015)
-          AND search_rank between 26 and 27
-      ORDER BY distance ASC limit 1
-    LOOP
-      RETURN NEXT r;
-    END LOOP;
-    RETURN;
+    SELECT place_id FROM search_name_-partition-
+      INTO parent
+      WHERE name_vector && isin_token
+            AND centroid && ST_Expand(point, 0.015)
+            AND search_rank between 26 and 27
+      ORDER BY ST_Distance(centroid, point) ASC limit 1;
+    RETURN parent;
   END IF;
 -- end
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
-create or replace function getNearestNamedPlaceFeature(in_partition INTEGER, point GEOMETRY, isin_token INTEGER[]) 
-  RETURNS setof nearfeature AS $$
+CREATE OR REPLACE FUNCTION getNearestNamedPlacePlaceId(in_partition INTEGER,
+                                                       point GEOMETRY,
+                                                       isin_token INTEGER[])
+  RETURNS BIGINT
+  AS $$
 DECLARE
-  r nearfeature%rowtype;
+  parent BIGINT;
 BEGIN
 
 -- start
   IF in_partition = -partition- THEN
-    FOR r IN 
-      SELECT place_id, name_vector, address_rank, search_rank,
-          ST_Distance(centroid, point) as distance, null as isguess
-          FROM search_name_-partition-
-          WHERE name_vector && isin_token
-          AND centroid && ST_Expand(point, 0.04)
-          AND search_rank between 16 and 22
-      ORDER BY distance ASC limit 1
-    LOOP
-      RETURN NEXT r;
-    END LOOP;
-    RETURN;
+    SELECT place_id
+      INTO parent
+      FROM search_name_-partition-
+      WHERE name_vector && isin_token
+            AND centroid && ST_Expand(point, 0.04)
+            AND search_rank between 16 and 22
+      ORDER BY ST_Distance(centroid, point) ASC limit 1;
+    RETURN parent;
   END IF;
 -- end
 

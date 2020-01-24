@@ -223,24 +223,6 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION get_country_language_codes(search_country_code VARCHAR(2))
-  RETURNS TEXT[]
-  AS $$
-DECLARE
-  nearcountry RECORD;
-BEGIN
-  FOR nearcountry IN
-    SELECT country_default_language_codes from country_name
-    WHERE country_code = search_country_code limit 1
-  LOOP
-    RETURN lower(nearcountry.country_default_language_codes);
-  END LOOP;
-  RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
 CREATE OR REPLACE FUNCTION get_partition(in_country_code VARCHAR(10))
   RETURNS INTEGER
   AS $$
@@ -257,6 +239,53 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+
+-- Find the parent of an address with addr:street/addr:place tag.
+--
+-- \param street     Value of addr:street or NULL if tag is missing.
+-- \param place      Value of addr:place or NULL if tag is missing.
+-- \param partition  Partition where to search the parent.
+-- \param centroid   Location of the address.
+--
+-- \return Place ID of the parent if one was found, NULL otherwise.
+CREATE OR REPLACE FUNCTION find_parent_for_address(street TEXT, place TEXT,
+                                                   partition SMALLINT,
+                                                   centroid GEOMETRY)
+  RETURNS BIGINT
+  AS $$
+DECLARE
+  parent_place_id BIGINT;
+  word_ids INTEGER[];
+BEGIN
+  IF street is not null THEN
+    -- Check for addr:street attributes
+    -- Note that addr:street links can only be indexed, once the street itself is indexed
+    word_ids := word_ids_from_name(street);
+    IF word_ids is not null THEN
+      parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, word_ids);
+      IF parent_place_id is not null THEN
+        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent.place_id;
+        RETURN parent_place_id;
+      END IF;
+    END IF;
+  END IF;
+
+  -- Check for addr:place attributes.
+  IF place is not null THEN
+    word_ids := word_ids_from_name(place);
+    IF word_ids is not null THEN
+      parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, word_ids);
+      IF parent_place_id is not null THEN
+        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent.place_id;
+        RETURN parent_place_id;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT)
   RETURNS BOOLEAN
@@ -336,45 +365,6 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], member TEXT)
-  RETURNS TEXT[]
-  AS $$
-DECLARE
-  result TEXT[];
-  i INTEGER;
-BEGIN
-
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = member THEN
-      result := result || members[i];
-    END IF;
-  END LOOP;
-
-  return result;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
-
-CREATE OR REPLACE FUNCTION get_osm_rel_members(members TEXT[], memberLabels TEXT[])
-  RETURNS SETOF TEXT
-  AS $$
-DECLARE
-  i INTEGER;
-BEGIN
-
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = ANY(memberLabels) THEN
-      RETURN NEXT members[i];
-    END IF;
-  END LOOP;
-
-  RETURN;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION quad_split_geometry(geometry GEOMETRY, maxarea FLOAT,

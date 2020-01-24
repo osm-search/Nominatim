@@ -176,7 +176,7 @@ CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {ts:searc
 CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {ts:address-index} WHERE linked_place_id IS NOT NULL;
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {ts:address-index};
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {ts:search-index};
-CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name'),rank_search) {ts:address-index} WHERE osm_type='N' and rank_search < 26;
+CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name')) {ts:address-index} WHERE osm_type='N' and rank_search < 26;
 
 DROP SEQUENCE IF EXISTS seq_place;
 CREATE SEQUENCE seq_place start 1;
@@ -187,26 +187,6 @@ GRANT SELECT ON seq_word to "{www-user}" ;
 GRANT SELECT ON planet_osm_ways to "{www-user}" ;
 GRANT SELECT ON planet_osm_rels to "{www-user}" ;
 GRANT SELECT on location_area to "{www-user}" ;
-
--- insert creates the location tables, creates location indexes if indexed == true
-CREATE TRIGGER placex_before_insert BEFORE INSERT ON placex
-    FOR EACH ROW EXECUTE PROCEDURE placex_insert();
-CREATE TRIGGER osmline_before_insert BEFORE INSERT ON location_property_osmline
-    FOR EACH ROW EXECUTE PROCEDURE osmline_insert();
-
--- update insert creates the location tables
-CREATE TRIGGER placex_before_update BEFORE UPDATE ON placex
-    FOR EACH ROW EXECUTE PROCEDURE placex_update();
-CREATE TRIGGER osmline_before_update BEFORE UPDATE ON location_property_osmline
-    FOR EACH ROW EXECUTE PROCEDURE osmline_update();
-
--- diff update triggers
-CREATE TRIGGER placex_before_delete AFTER DELETE ON placex
-    FOR EACH ROW EXECUTE PROCEDURE placex_delete();
-CREATE TRIGGER place_before_delete BEFORE DELETE ON place
-    FOR EACH ROW EXECUTE PROCEDURE place_delete();
-CREATE TRIGGER place_before_insert BEFORE INSERT ON place
-    FOR EACH ROW EXECUTE PROCEDURE place_insert();
 
 -- Table for synthetic postcodes.
 DROP TABLE IF EXISTS location_postcode;
@@ -223,9 +203,6 @@ CREATE TABLE location_postcode (
   );
 CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {ts:address-index};
 GRANT SELECT ON location_postcode TO "{www-user}" ;
-
-CREATE TRIGGER location_postcode_before_update BEFORE UPDATE ON location_postcode
-    FOR EACH ROW EXECUTE PROCEDURE postcode_update();
 
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (

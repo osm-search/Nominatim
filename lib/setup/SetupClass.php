@@ -235,6 +235,16 @@ class SetupFunctions
         $oAlParser->createTable($this->oDB, 'address_levels');
     }
 
+    public function createTableTriggers()
+    {
+        info('Create Tables');
+
+        $sTemplate = file_get_contents(CONST_BasePath.'/sql/table-triggers.sql');
+        $sTemplate = $this->replaceSqlPatterns($sTemplate);
+
+        $this->pgsqlRunScript($sTemplate, false);
+    }
+
     public function createPartitionTables()
     {
         info('Create Partition Tables');
@@ -654,9 +664,15 @@ class SetupFunctions
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
         $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
-        $sTemplate .= file_get_contents($sBasePath.'place_triggers.sql');
-        $sTemplate .= file_get_contents($sBasePath.'placex_triggers.sql');
-        $sTemplate .= file_get_contents($sBasePath.'postcode_triggers.sql');
+        if ($this->oDB->tableExists('place')) {
+            $sTemplate .= file_get_contents($sBasePath.'place_triggers.sql');
+        }
+        if ($this->oDB->tableExists('placex')) {
+            $sTemplate .= file_get_contents($sBasePath.'placex_triggers.sql');
+        }
+        if ($this->oDB->tableExists('location_postcode')) {
+            $sTemplate .= file_get_contents($sBasePath.'postcode_triggers.sql');
+        }
         $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
         if ($this->bEnableDiffUpdates) {
             $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);

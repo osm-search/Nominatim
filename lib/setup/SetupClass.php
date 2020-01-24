@@ -245,7 +245,7 @@ class SetupFunctions
         $this->pgsqlRunScript($sTemplate, false);
     }
 
-     public function createPartitionTables()
+    public function createPartitionTables()
     {
         info('Create Partition Tables');
 

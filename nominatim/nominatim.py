@@ -100,7 +100,7 @@ class InterpolationRunner(object):
 
 
 class DBConnection(object):
-    """ A signle non-blocking database connection.
+    """ A single non-blocking database connection.
     """
 
     def __init__(self, options):

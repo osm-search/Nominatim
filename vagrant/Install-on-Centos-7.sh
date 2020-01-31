@@ -32,7 +32,7 @@
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
                         devtoolset-7 llvm-toolset-7 \
                         php-pgsql php php-intl libpqxx-devel \
-                        proj-epsg bzip2-devel proj-devel libxml2-devel boost-devel \
+                        proj-epsg bzip2-devel proj-devel boost-devel \
                         expat-devel zlib-devel
 
 # If you want to run the test suite, you need to install the following

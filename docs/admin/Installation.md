@@ -25,24 +25,20 @@ and can't offer support.
 For compiling:
 
   * [cmake](https://cmake.org/)
-  * [libxml2](http://xmlsoft.org/)
+  * [expat](https://libexpat.github.io/)
+  * [proj](https://proj.org/)
+  * [bzip2](http://www.bzip.org/)
+  * [zlib](https://www.zlib.net/)
+  * [Boost libraries](https://www.boost.org/), including system and filesystem
+  * PostgreSQL client libraries
   * a recent C++ compiler (gcc 5+ or Clang 3.8+)
-
-Nominatim comes with its own version of osm2pgsql. See the
-[osm2pgsql README](https://github.com/openstreetmap/osm2pgsql/blob/master/README.md#building)
-for additional dependencies required for compiling osm2pgsql.
-
-For running tests:
-
-  * [behave](http://pythonhosted.org/behave/)
-  * [Psycopg2](https://initd.org/psycopg)
-  * [nose](https://nose.readthedocs.io)
-  * [phpunit](https://phpunit.de)
 
 For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.3 or later)
   * [PostGIS](https://postgis.org) (2.2 or later)
+  * [Python 3](https://www.python.org/)
+  * [Psycopg2](https://initd.org/psycopg)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
@@ -51,6 +47,12 @@ For running Nominatim:
 For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/) (with Python 3)
+
+For running tests:
+
+  * [behave](http://pythonhosted.org/behave/)
+  * [nose](https://nose.readthedocs.io)
+  * [phpunit](https://phpunit.de)
 
 ### Hardware
 

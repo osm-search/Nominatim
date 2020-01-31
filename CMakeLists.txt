@@ -45,13 +45,13 @@ if (NOT ONLY_DOCS)
     endif()
     add_subdirectory(osm2pgsql)
 
-    find_package(Threads REQUIRED)
-
     unset(PostgreSQL_TYPE_INCLUDE_DIR CACHE)
     set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/")
     find_package(PostgreSQL REQUIRED)
     include_directories(${PostgreSQL_INCLUDE_DIRS})
     link_directories(${PostgreSQL_LIBRARY_DIRS})
+
+    find_package(PythonInterp 3)
 
     find_program(PYOSMIUM pyosmium-get-changes)
     if (NOT EXISTS "${PYOSMIUM}")
@@ -71,13 +71,6 @@ if (NOT ONLY_DOCS)
     if (NOT EXISTS "${PGXS}")
         message(FATAL_ERROR "Postgresql server package not found.")
     endif()
-
-    find_package(ZLIB REQUIRED)
-
-    find_package(BZip2 REQUIRED)
-
-    find_package(LibXml2 REQUIRED)
-    include_directories(${LIBXML2_INCLUDE_DIR})
 
     # Setting PHP binary variable as to command line (prevailing) or auto detect
     if (NOT PHP_BIN)
@@ -168,7 +161,6 @@ endif()
 
 if (NOT ONLY_DOCS)
     add_subdirectory(module)
-    add_subdirectory(nominatim)
 endif()
 add_subdirectory(docs)
 

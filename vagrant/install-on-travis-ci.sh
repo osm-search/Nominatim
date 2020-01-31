@@ -13,12 +13,12 @@
 
 sudo apt-get update -qq
 sudo apt-get install -y -qq libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
+                            libboost-filesystem-dev libexpat1-dev zlib1g-dev\
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-9.6 postgresql-9.6-postgis-2.4 postgresql-contrib-9.6 \
                             apache2 php php-pgsql php-intl
 
-sudo apt-get install -y -qq python3-dev python3-pip python3-psycopg2 php-cgi
+sudo apt-get install -y -qq python3-dev python3-pip php-cgi
 
 pip3 install --quiet behave nose pytidylib psycopg2-binary
 

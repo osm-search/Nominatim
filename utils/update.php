@@ -81,6 +81,8 @@ if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
     $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
 }
 
+$sIndexCmd = CONST_BasePath.'/nominatim/nominatim.py';
+
 if ($aResult['init-updates']) {
     // sanity check that the replication URL is correct
     $sBaseState = file_get_contents(CONST_Replication_Url.'/state.txt');
@@ -302,7 +304,11 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    $sCmd = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'].' -r '.$aResult['index-rank'];
+    $sCmd = $sIndexCmd
+            .' -d '.$aDSNInfo['database']
+            .' -P '.$aDSNInfo['port']
+            .' -t '.$aResult['index-instances']
+            .' -r '.$aResult['index-rank'];
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
         $sCmd .= ' -H ' . $aDSNInfo['hostspec'];
     }
@@ -348,7 +354,10 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';
     $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
     $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-    $sCMDIndex = CONST_InstallPath.'/nominatim/nominatim -i -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'].' -t '.$aResult['index-instances'];
+    $sCMDIndex = $sIndexCmd
+                 .' -d '.$aDSNInfo['database']
+                 .' -P '.$aDSNInfo['port']
+                 .' -t '.$aResult['index-instances'];
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
         $sCMDIndex .= ' -H ' . $aDSNInfo['hostspec'];
     }

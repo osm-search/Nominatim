@@ -25,7 +25,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Now you can install all packages needed for Nominatim:
 
     sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev libxml2-dev\
+                            libboost-filesystem-dev libexpat1-dev zlib1g-dev\
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 \
                             postgresql-contrib-9.5 \

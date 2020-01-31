@@ -82,6 +82,12 @@ if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
 }
 
 $sIndexCmd = CONST_BasePath.'/nominatim/nominatim.py';
+if (!$aResult['quiet']) {
+    $sIndexCmd .= ' -v';
+}
+if ($aResult['verbose']) {
+    $sIndexCmd .= ' -v';
+}
 
 if ($aResult['init-updates']) {
     // sanity check that the replication URL is correct

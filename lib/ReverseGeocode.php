@@ -225,6 +225,85 @@ class ReverseGeocode
         );
     }
 
+    public function getAllZoomLevels($fLat, $fLon)
+    {
+        $sPoint = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
+        $iMinRank = 3; //country rank
+
+        // searches for polygon in table country_osm_grid which contains the searchpoint
+        // and searches for the nearest place node to the searchpoint in this polygon
+        $sSQL = "SELECT country_code FROM country_osm_grid WHERE ST_CONTAINS(geometry, $sPoint) LIMIT 1";
+        $sCountryCode = $this->oDB->getOne($sSQL, null, 'Could not determine country polygon containing the point');
+        if($sCountryCode) {
+            // look for place nodes with the given country code
+            $sSQL = "SELECT place_id, rank_search FROM";
+            $sSQL .= " (SELECT place_id, rank_search, ST_distance($sPoint, geometry) as distance";
+            $sSQL .= " FROM placex";
+            $sSQL .= " WHERE osm_type = 'N'";
+            $sSQL .= " AND country_code = '$sCountryCode'";
+            $sSQL .= " AND rank_search >= 5";
+            $sSQL .= " AND class = 'place' AND type != 'postcode'";
+            $sSQL .= " AND name IS NOT NULL ";
+            $sSQL .= " AND indexed_status = 0 and linked_place_id is null";
+            $sSQL .= " AND ST_DWithin($sPoint, geometry, 1.8)) p ";
+            //$sSQL .= " WHERE distance <= reverse_place_diameter(rank_search)";
+            $sSQL .= " ORDER BY rank_search DESC, distance ASC";
+            //$sSQL .= " LIMIT 1";
+
+            $aPlaces = $this->oDB->getAll($sSQL, null, 'Nothing found');
+           return $aPlaces;
+        }
+        return $sCountryCode;
+
+
+
+//        $sSQL = 'SELECT osm_id, place_id, parent_place_id, rank_address, rank_search FROM placex ';
+//
+//        $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
+//        $sSQL .= ' AND rank_address >= ' .$iMinRank;
+//        $sSQL .= ' AND class = \'place\'';
+//        $sSQL .= ' AND type != \'postcode\' ';
+//        $sSQL .= ' AND name is not null';
+//        $sSQL .= ' AND indexed_status = 0 and linked_place_id is null';
+//       // $sSQL .= ' AND ST_CONTAINS(geometry, '.$sPoint.' )';
+//        $sSQL .= ' ORDER BY rank_address DESC limit 10';
+        $sSQL = 'SELECT place_id, parent_place_id, rank_address, rank_search FROM';
+        $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
+        $sSQL .= ' FROM placex';
+        $sSQL .= ' WHERE ST_GeometryType(geometry) in (\'ST_Polygon\', \'ST_MultiPolygon\')';
+        $sSQL .= ' AND rank_address >= ' .$iMinRank;
+        $sSQL .= ' AND geometry && '.$sPoint;
+        $sSQL .= ' AND type != \'postcode\' ';
+        $sSQL .= ' AND name is not null';
+        $sSQL .= ' AND indexed_status = 0 and linked_place_id is null';
+        $sSQL .= ' ORDER BY rank_address DESC LIMIT 50 ) as a';
+        $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPoint.' )';
+        $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
+//        $sSQL = 'SELECT place_id FROM ';
+//        $sSQL .= '(SELECT place_id, rank_search, country_code, geometry,';
+//        $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
+//        $sSQL .= ' FROM placex';
+//        $sSQL .= ' WHERE osm_type = \'N\'';
+//        // using rank_search because of a better differentiation
+//        // for place nodes at rank_address 16
+//        $sSQL .= ' AND rank_search >= '.$iMinRank;
+//        $sSQL .= ' AND class = \'place\'';
+//        $sSQL .= ' AND type != \'postcode\'';
+//        $sSQL .= ' AND name IS NOT NULL ';
+//        $sSQL .= ' AND indexed_status = 0 AND linked_place_id is null';
+//        $sSQL .= ' AND ST_DWithin('.$sPointSQL.', geometry, reverse_place_diameter('.$iRankSearch.'::smallint))';
+//        $sSQL .= ' ORDER BY distance ASC,';
+//        $sSQL .= ' rank_address DESC';
+//        $sSQL .= ' limit 500) as a';
+//        $sSQL .= ' WHERE ST_CONTAINS((SELECT geometry FROM placex WHERE place_id = '.$iPlaceID.'), geometry )';
+//        $sSQL .= ' AND distance <= reverse_place_diameter(rank_search)';
+//        $sSQL .= ' ORDER BY distance ASC, rank_search DESC';
+//        $sSQL .= ' LIMIT 1';
+
+        $aPlaces = $this->oDB->getAll($sSQL, null, 'Nothing found');
+        return $aPlaces;
+
+    }
     public function lookupPoint($sPointSQL, $bDoInterpolation = true)
     {
         // starts if the search is on POI or street level,

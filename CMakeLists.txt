@@ -103,6 +103,7 @@ set(WEBSITESCRIPTS
     website/lookup.php
     website/polygons.php
     website/reverse.php
+    website/extended-reverse.php
     website/search.php
     website/status.php
 )

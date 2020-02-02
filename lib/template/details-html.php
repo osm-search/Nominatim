@@ -75,7 +75,7 @@
         echo '  <td>' . (isset($aAddressLine['rank_address']) ? $aAddressLine['rank_address'] : '') . "</td>\n";
         echo '  <td>' . ($aAddressLine['admin_level'] < 15 ? $aAddressLine['admin_level'] : '') . "</td>\n";
         echo '  <td>' . format_distance($aAddressLine['distance'], $bDistanceInMeters)."</td>\n";
-        echo '  <td>' . detailsLink($aAddressLine,'details &gt;') . "</td>\n";
+        echo '  <td>' . detailsPermaLink($aAddressLine,'details &gt;') . "</td>\n";
         echo "</tr>\n";
     }
 
@@ -103,7 +103,6 @@
             <div class="col-sm-10">
                 <h1>
                     <?php echo $aPointDetails['localname'] ?>
-                    <small><?php echo detailsPermaLink($aPointDetails, 'link to this page') ?></small>
                 </h1>
             </div>
             <div class="col-sm-2 text-right">
@@ -127,6 +126,8 @@
                     kv('Coverage'        , ($aPointDetails['isarea']?'Polygon':'Point') );
                     kv('Centre Point'    , $aPointDetails['lat'].','.$aPointDetails['lon'] );
                     kv('OSM'             , osmLink($aPointDetails) );
+                    kv('Place Id (<a href="https://nominatim.org/release-docs/develop/api/Output/#place_id-is-not-a-persistent-id">on this server</a>)'
+                                         , $aPointDetails['place_id'] );
                     if ($aPointDetails['wikipedia'])
                     {
                         kv('Wikipedia Calculated' , wikipediaLink($aPointDetails) );

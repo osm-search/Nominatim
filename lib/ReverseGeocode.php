@@ -247,7 +247,7 @@ class ReverseGeocode
     }
 
     /**
-     * find areas containing sent coordinates on all zoom levels
+     * find places containing sent coordinates on all zoom levels
      * @param $fLat
      * @param $fLon
      * @param $sLanguagePrefArraySQL

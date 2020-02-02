@@ -1,7 +1,6 @@
 <?php
 
 require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
 require_once(CONST_BasePath.'/lib/PlaceLookup.php');
 require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
 require_once(CONST_BasePath.'/lib/output.php');
@@ -9,15 +8,13 @@ ini_set('memory_limit', '200M');
 
 
 $oParams = new Nominatim\ParameterParser();
-$sOutputFormat = 'json';
-
-// Preferred language
-$aLangPrefOrder = $oParams->getPreferredLanguages();
-
 $oDB = new Nominatim\DB();
 $oDB->connect();
 
-$hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
+// Preferred language (need it to see readable name of place)
+$aLangPrefOrder = $oParams->getPreferredLanguages();
+$sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
+
 
 $oPlaceLookup = new Nominatim\PlaceLookup($oDB);
 $oPlaceLookup->loadParamArray($oParams);
@@ -31,60 +28,9 @@ $iZoom = $oParams->getInt('zoom', 18);
 
 if ($fLat !== false && $fLon !== false) {
     $oReverseGeocode = new Nominatim\ReverseGeocode($oDB);
-
-
-    $oLookup = $oReverseGeocode->getAllZoomLevels($fLat, $fLon);
-    var_dump($oLookup);die;
-
-    if ($oLookup) {
-        $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
-        if (!empty($aPlaces)) {
-            $aPlace = reset($aPlaces);
-        }
-    }
+    $aPlaces = $oReverseGeocode->getAllZoomLevels($fLat, $fLon, $sLanguagePrefArraySQL);
+    javascript_renderData($aPlaces);
 } else {
     userError('Need coordinates to lookup.');
 }
-
-if (isset($aPlace)) {
-    $aOutlineResult = $oPlaceLookup->getOutlines(
-        $aPlace['place_id'],
-        $aPlace['lon'],
-        $aPlace['lat'],
-        Nominatim\ClassTypes\getProperty($aPlace, 'defdiameter', 0.0001),
-        $fLat,
-        $fLon
-    );
-
-    if ($aOutlineResult) {
-        $aPlace = array_merge($aPlace, $aOutlineResult);
-    }
-} else {
-    $aPlace = array();
-}
-
-logEnd($oDB, $hLog, count($aPlace) ? 1 : 0);
-
-if (CONST_Debug) {
-    var_dump($aPlace);
-    exit;
-}
-
-if ($sOutputFormat == 'html') {
-    $sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
-    $sTileURL = CONST_Map_Tile_URL;
-    $sTileAttribution = CONST_Map_Tile_Attribution;
-} elseif ($sOutputFormat == 'geocodejson') {
-    $sQuery = $fLat.','.$fLon;
-    if (isset($aPlace['place_id'])) {
-        $fDistance = $oDB->getOne(
-            'SELECT ST_Distance(ST_SetSRID(ST_Point(:lon,:lat),4326), centroid) FROM placex where place_id = :placeid',
-            array(':lon' => $fLon, ':lat' => $fLat, ':placeid' => $aPlace['place_id'])
-        );
-    }
-}
-
-$sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
-include(CONST_BasePath.'/lib/template/address-'.$sOutputTemplate.'.php');
-
 

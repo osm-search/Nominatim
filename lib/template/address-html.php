@@ -85,7 +85,7 @@
             else
                 echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
             echo '<p>'.$aResult['lat'].','.$aResult['lon'].'</p>';
-            echo ' <a class="btn btn-default btn-xs details" href="details.php?place_id='.$aResult['place_id'].'">details</a>';
+            echo ' <a class="btn btn-default btn-xs details" href="details.php?osmtype='.$aResult['osm_type'].'&osmid='.$aResult['osm_id'].'&class='.$aResult['class'].'">details</a>';
             echo '</div>';
         ?>
         </div>

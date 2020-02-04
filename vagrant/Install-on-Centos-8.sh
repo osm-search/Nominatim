@@ -12,39 +12,32 @@
     sudo dnf update -y
 
 # The standard CentOS repositories don't contain all the required packages,
-# you need to enable the EPEL repository as well. To enable it on CentOS,
-# install the epel-release RPM by running:
+# you need to enable the EPEL repository as well. For example for SELinux
+# related redhat-hardened-cc1 package. To enable it on CentOS run:
 
-    sudo dnf install -y epel-release
-    # for redhat-hardened-cc1
-    sudo dnf install -y redhat-rpm-config
+    sudo dnf install -y epel-release redhat-rpm-config
 
-
-# More repositories for postgresql 12 (CentOS default 'postgresql' is 9.6 or 10)
-# and postgis
+# More repositories for postgresql 12 and postgis (CentOS default 'postgresql'
+# is either 9.6 or 10)
 
     sudo dnf -qy module disable postgresql
-    sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
     sudo dnf --enablerepo=PowerTools install -y postgresql12-server \
                         postgresql12-contrib postgresql12-devel postgis30_12 \
-                        wget git cmake make gcc gcc-c++ libtool \
-                        policycoreutils-python-utils \
+                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
+                        llvm-toolset ccache \
                         php-pgsql php php-intl php-json libpqxx-devel \
                         proj52-epsg bzip2-devel proj-devel boost-devel \
-                        llvm-toolset ccache \
                         expat-devel zlib-devel
+                        
 
-    echo 'PATH=$PATH:/usr/pgsql-12/bin' > .bash_profile
-    source .bash_profile
-
-    # export PostgreSQL_ROOT=/usr/pgsql-12
-    # export PATH=$PATH:/usr/pgsql-12
-    # export PATH=$PATH:/usr/pgsql-12/bin
-    # source .bash_profile
+    # make sure pg_config gets found
+    echo 'PATH=$PATH:/usr/pgsql-12/bin' > ~/.bash_profile
+    source ~/.bash_profile
 
 # If you want to run the test suite, you need to install the following
 # additional packages:

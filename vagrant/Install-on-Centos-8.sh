@@ -1,60 +1,64 @@
 #!/bin/bash
 #
 # *Note:* these installation instructions are also available in executable
-#         form for use with vagrant under `vagrant/Install-on-Centos-7.sh`.
+#         form for use with vagrant under `vagrant/Install-on-Centos-8.sh`.
 #
 # Installing the Required Software
 # ================================
 #
-# These instructions expect that you have a freshly installed CentOS version 7.
+# These instructions expect that you have a freshly installed CentOS version 8.
 # Make sure all packages are up-to-date by running:
 #
-    sudo yum update -y
+    sudo dnf update -y
 
 # The standard CentOS repositories don't contain all the required packages,
 # you need to enable the EPEL repository as well. To enable it on CentOS,
 # install the epel-release RPM by running:
 
-    sudo yum install -y epel-release
-
-# More repositories for postgresql 11 (CentOS default 'postgresql' is 9.2), postgis
-# and llvm-toolset (https://github.com/theory/pg-semver/issues/35)
-
-    # sudo yum install -y https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    # sudo yum install -y centos-release-scl-rh
+    sudo dnf install -y epel-release
+    # for redhat-hardened-cc1
     sudo dnf install -y redhat-rpm-config
+
+
+# More repositories for postgresql 12 (CentOS default 'postgresql' is 9.6 or 10)
+# and postgis
+
+    sudo dnf -qy module disable postgresql
+    sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    sudo dnf -qy module disable postgresql
-    sudo yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo dnf --enablerepo=PowerTools install -y postgresql12-server postgresql12-contrib postgresql12-devel postgis30_12
-
-
-sudo dnf install -y llvm-toolset ccache
-
-    sudo yum install -y wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
+    sudo dnf --enablerepo=PowerTools install -y postgresql12-server \
+                        postgresql12-contrib postgresql12-devel postgis30_12 \
+                        wget git cmake make gcc gcc-c++ libtool \
+                        policycoreutils-python-utils \
                         php-pgsql php php-intl php-json libpqxx-devel \
                         proj52-epsg bzip2-devel proj-devel boost-devel \
+                        llvm-toolset ccache \
                         expat-devel zlib-devel
 
-# postgresql11-server-debuginfo postgresql11-contrib-debuginfo postgresql-devel \
-#                         postgis25_11 postgis25_11-utils \
+    echo 'PATH=$PATH:/usr/pgsql-12/bin' > .bash_profile
+    source .bash_profile
 
-#                         devtoolset-8 llvm-toolset-8 \
+    # export PostgreSQL_ROOT=/usr/pgsql-12
+    # export PATH=$PATH:/usr/pgsql-12
+    # export PATH=$PATH:/usr/pgsql-12/bin
+    # source .bash_profile
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
 #DOCS:    :::sh
-    sudo yum install -y python36 python3-pip python3-setuptools python36-devel
-     # \
-     #                    php-phpunit-PHPUnit
+    sudo dnf install -y python36 python3-pip python3-setuptools python36-devel \
+                        php-dom php-mbstring
+
     pip3 install --user behave nose pytidylib psycopg2
 
     composer global require "squizlabs/php_codesniffer=*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+
+    composer global require "phpunit/phpunit ^7"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 
 #
@@ -96,8 +100,6 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # CentOS does not automatically create a database cluster. Therefore, start
 # with initializing the database, then enable the server to start at boot:
 
-    echo 'PATH=$PATH:/usr/pgsql-12/bin' > .bash_profile
-    source .bash_profile
 
     sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
     sudo systemctl enable postgresql-12

@@ -46,13 +46,13 @@ LANGUAGE plpgsql IMMUTABLE;
 --
 -- Copy data from linked items (POIs on ways, addr:street links, relations).
 --
-CREATE OR REPLACE FUNCTION find_parent_place_for_poi(poi_osm_type CHAR(1),
-                                                     poi_osm_id BIGINT,
-                                                     poi_partition SMALLINT,
-                                                     near_centroid GEOMETRY,
-                                                     addr_street TEXT,
-                                                     addr_place TEXT,
-                                                     fallback BOOL = true)
+CREATE OR REPLACE FUNCTION find_parent_for_poi(poi_osm_type CHAR(1),
+                                               poi_osm_id BIGINT,
+                                               poi_partition SMALLINT,
+                                               bbox GEOMETRY,
+                                               addr_street TEXT,
+                                               addr_place TEXT,
+                                               fallback BOOL = true)
   RETURNS BIGINT
   AS $$
 DECLARE
@@ -85,7 +85,7 @@ BEGIN
     END LOOP;
 
     parent_place_id := find_parent_for_address(addr_street, addr_place,
-                                               poi_partition, near_centroid);
+                                               poi_partition, bbox);
     IF parent_place_id is not null THEN
       RETURN parent_place_id;
     END IF;
@@ -95,7 +95,7 @@ BEGIN
       FOR parent IN
         SELECT q.parent_place_id
           FROM location_property_osmline q, planet_osm_ways x
-         WHERE q.linegeo && near_centroid and x.id = q.osm_id
+         WHERE q.linegeo && bbox and x.id = q.osm_id
                and poi_osm_id = any(x.nodes)
          LIMIT 1
       LOOP
@@ -109,7 +109,7 @@ BEGIN
                coalesce(p.centroid, ST_Centroid(p.geometry)) as centroid
           FROM placex p, planet_osm_ways w
          WHERE p.osm_type = 'W' and p.rank_search >= 26
-               and p.geometry && near_centroid
+               and p.geometry && bbox
                and w.id = p.osm_id and poi_osm_id = any(w.nodes)
       LOOP
         --DEBUG: RAISE WARNING 'Node is part of way % ', location.osm_id;
@@ -120,11 +120,11 @@ BEGIN
           return location.place_id;
         END IF;
 
-        SELECT find_parent_place_for_poi('W', location.osm_id, poi_partition,
-                                         location.centroid,
-                                         location.address->'street',
-                                         location.address->'place',
-                                         false)
+        SELECT find_parent_for_poi('W', location.osm_id, poi_partition,
+                                   location.centroid,
+                                   location.address->'street',
+                                   location.address->'place',
+                                   false)
           INTO parent_place_id;
         IF parent_place_id is not null THEN
           RETURN parent_place_id;
@@ -132,10 +132,24 @@ BEGIN
       END LOOP;
     END IF;
 
-    -- Still nothing, just use the nearest road
     IF fallback THEN
-      SELECT place_id FROM getNearestRoadFeature(poi_partition, near_centroid) INTO parent_place_id;
-      --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
+      IF ST_Area(bbox) < 0.01 THEN
+        -- for smaller features get the nearest road
+        SELECT place_id FROM getNearestRoadFeature(poi_partition, bbox)
+          INTO parent_place_id;
+        --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
+      ELSE
+        -- for larger features simply find the area with the largest rank that
+        -- contains the bbox
+        FOR location IN
+          SELECT place_id FROM placex
+            WHERE bbox @ geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+                  AND rank_search between 5 and 25
+            ORDER BY rank_search desc
+        LOOP
+            RETURN location.place_id;
+        END LOOP;
+      END IF;
     END IF;
 
     RETURN parent_place_id;
@@ -414,8 +428,6 @@ CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  near_centroid GEOMETRY;
-
   search_maxdistance FLOAT[];
   search_mindistance FLOAT[];
   address_havelevel BOOLEAN[];
@@ -515,7 +527,6 @@ BEGIN
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
   -- For searching near features rather use the centroid
-  near_centroid := ST_Envelope(NEW.geometry);
   NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
 
@@ -595,10 +606,10 @@ BEGIN
     END IF;
 
     -- We have to find our parent road.
-    NEW.parent_place_id := find_parent_place_for_poi(NEW.osm_type, NEW.osm_id,
-                                                     NEW.partition,
-                                                     near_centroid, addr_street,
-                                                     addr_place);
+    NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
+                                               NEW.partition,
+                                               ST_Envelope(NEW.geometry),
+                                               addr_street, addr_place);
 
     -- If we found the road take a shortcut here.
     -- Otherwise fall back to the full address getting method below.

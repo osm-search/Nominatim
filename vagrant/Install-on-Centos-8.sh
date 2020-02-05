@@ -17,8 +17,8 @@
 
     sudo dnf install -y epel-release redhat-rpm-config
 
-# More repositories for postgresql 12 and postgis (CentOS default 'postgresql'
-# is either 9.6 or 10)
+# EPEL contains Postgres 9.6 and 10, but not PostGIS. Postgres 9.4+/10/11/12
+# and PostGIS 2.4/2.5/3.0 are availble from postgresql.org
 
     sudo dnf -qy module disable postgresql
     sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
@@ -26,18 +26,17 @@
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo dnf --enablerepo=PowerTools install -y postgresql12-server \
-                        postgresql12-contrib postgresql12-devel postgis30_12 \
+    sudo dnf --enablerepo=PowerTools install -y postgresql10-server \
+                        postgresql10-contrib postgresql10-devel postgis25_10 \
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
-                        llvm-toolset ccache \
-                        php-pgsql php php-intl php-json libpqxx-devel \
+                        llvm-toolset ccache clang-tools-extra \
+                        php-pgsql php php-intl php-json libpq-devel \
                         proj52-epsg bzip2-devel proj-devel boost-devel \
                         expat-devel zlib-devel
-                        
 
     # make sure pg_config gets found
-    echo 'PATH=$PATH:/usr/pgsql-12/bin' > ~/.bash_profile
-    source ~/.bash_profile
+    # echo 'PATH=$PATH:/usr/pgsql-10/bin' >> ~/.bash_profile
+    # source ~/.bash_profile
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
@@ -51,8 +50,8 @@
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 
-    composer global require "phpunit/phpunit ^7"
-    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+    composer global require "phpunit/phpuni ^7"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration
@@ -94,8 +93,8 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # with initializing the database, then enable the server to start at boot:
 
 
-    sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
-    sudo systemctl enable postgresql-12
+    sudo /usr/pgsql-10/bin/postgresql-10-setup initdb
+    sudo systemctl enable postgresql-10
 
 #
 # Next tune the postgresql configuration, which is located in 
@@ -105,7 +104,7 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # Now start the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql-12
+    sudo systemctl restart postgresql-10
 
 #
 # Finally, we need to add two postgres users: one for the user that does
@@ -177,7 +176,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    PostgreSQL_ROOT=/usr/pgsql-12 cmake $USERHOME/Nominatim
+    PostgreSQL_ROOT=/usr/pgsql-10 cmake $USERHOME/Nominatim
     make
 
 #

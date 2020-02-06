@@ -1,54 +1,57 @@
 #!/bin/bash
 #
 # *Note:* these installation instructions are also available in executable
-#         form for use with vagrant under `vagrant/Install-on-Centos-7.sh`.
+#         form for use with vagrant under `vagrant/Install-on-Centos-8.sh`.
 #
 # Installing the Required Software
 # ================================
 #
-# These instructions expect that you have a freshly installed CentOS version 7.
+# These instructions expect that you have a freshly installed CentOS version 8.
 # Make sure all packages are up-to-date by running:
 #
-    sudo yum update -y
+    sudo dnf update -y
 
 # The standard CentOS repositories don't contain all the required packages,
-# you need to enable the EPEL repository as well. To enable it on CentOS,
-# install the epel-release RPM by running:
+# you need to enable the EPEL repository as well. For example for SELinux
+# related redhat-hardened-cc1 package. To enable it on CentOS run:
 
-    sudo yum install -y epel-release
+    sudo dnf install -y epel-release redhat-rpm-config
 
-# More repositories for postgresql 11 (CentOS default 'postgresql' is 9.2), postgis
-# and llvm-toolset (https://github.com/theory/pg-semver/issues/35)
+# EPEL contains Postgres 9.6 and 10, but not PostGIS. Postgres 9.4+/10/11/12
+# and PostGIS 2.4/2.5/3.0 are availble from postgresql.org
 
-    sudo yum install -y https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    sudo yum install -y centos-release-scl-rh
+    sudo dnf -qy module disable postgresql
+    sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-
-    sudo yum install -y postgresql11-server postgresql11-contrib postgresql11-devel \
-                        postgis25_11 postgis25_11-utils \
-                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
-                        devtoolset-7 llvm-toolset-7 \
-                        php-pgsql php php-intl libpqxx-devel \
-                        proj-epsg bzip2-devel proj-devel boost-devel \
+    sudo dnf --enablerepo=PowerTools install -y postgresql10-server \
+                        postgresql10-contrib postgresql10-devel postgis25_10 \
+                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
+                        llvm-toolset ccache clang-tools-extra \
+                        php-pgsql php php-intl php-json libpq-devel \
+                        proj52-epsg bzip2-devel proj-devel boost-devel \
                         expat-devel zlib-devel
 
     # make sure pg_config gets found
-    echo 'PATH=/usr/pgsql-11/bin/$PATH' >> ~/.bash_profile
+    echo 'PATH=/usr/pgsql-10/bin:$PATH' >> ~/.bash_profile
     source ~/.bash_profile
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
 #DOCS:    :::sh
-    sudo yum install -y python34-pip python34-setuptools python34-devel \
-                        php-phpunit-PHPUnit
+    sudo dnf install -y python36 python3-pip python3-setuptools python36-devel \
+                        php-dom php-mbstring
+
     pip3 install --user behave nose pytidylib psycopg2
 
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+
+    composer global require "phpunit/phpunit=^7"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration
@@ -89,8 +92,9 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # CentOS does not automatically create a database cluster. Therefore, start
 # with initializing the database, then enable the server to start at boot:
 
-    sudo /usr/pgsql-11/bin/postgresql-11-setup initdb
-    sudo systemctl enable postgresql-11
+
+    sudo /usr/pgsql-10/bin/postgresql-10-setup initdb
+    sudo systemctl enable postgresql-10
 
 #
 # Next tune the postgresql configuration, which is located in 
@@ -100,7 +104,7 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # Now start the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql-11
+    sudo systemctl restart postgresql-10
 
 #
 # Finally, we need to add two postgres users: one for the user that does

@@ -61,6 +61,18 @@ Vagrant.configure("2") do |config|
       sub.vm.synced_folder ".", "/vagrant", disabled: true
   end
 
+  config.vm.define "centos8" do |sub|
+      sub.vm.box = "generic/centos8"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Centos-8.sh"
+        s.privileged = false
+        s.args = "yes"
+      end
+      sub.vm.synced_folder ".", "/home/vagrant/Nominatim", disabled: true
+      sub.vm.synced_folder ".", "/vagrant", disabled: true
+  end
+
+
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.memory = 2048

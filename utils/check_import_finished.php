@@ -20,6 +20,13 @@ $print_fail = function ($message = 'Failed') use ($term_colors) {
 $oDB = new Nominatim\DB;
 
 
+function isReverseOnlyInstallation()
+{
+    global $oDB;
+    return !$oDB->tableExists('search_name');
+}
+
+
 echo 'Checking database got created ... ';
 if ($oDB->databaseExists()) {
     $print_success();
@@ -107,13 +114,16 @@ $aExpectedIndices = array(
     'idx_osmline_parent_osm_id',
     'idx_place_osm_unique',
     'idx_postcode_id',
-    'idx_postcode_postcode',
-
-    // sql/indices_search.src.sql
-    'idx_search_name_nameaddress_vector',
-    'idx_search_name_name_vector',
-    'idx_search_name_centroid'
+    'idx_postcode_postcode'
 );
+if (!isReverseOnlyInstallation()) {
+    $aExpectedIndices = array_merge($aExpectedIndices, array(
+        // sql/indices_search.src.sql
+        'idx_search_name_nameaddress_vector',
+        'idx_search_name_name_vector',
+        'idx_search_name_centroid'
+    ));
+}
 
 foreach ($aExpectedIndices as $sExpectedIndex) {
     echo "Checking index $sExpectedIndex ... ";

@@ -23,7 +23,8 @@ export DEBIAN_FRONTEND=noninteractive
                             postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                             postgresql-contrib-10 \
                             nginx php-fpm php php-pgsql \
-                            php-intl git
+                            php-intl python3-setuptools python3-dev python3-pip \
+                            python3-psycopg2 python3-tidylib git
 
     export USERNAME=vagrant
     export USERHOME=/home/vagrant

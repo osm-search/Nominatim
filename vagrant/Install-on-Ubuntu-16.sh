@@ -30,18 +30,24 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             postgresql-server-dev-9.5 postgresql-9.5-postgis-2.2 \
                             postgresql-contrib-9.5 \
                             apache2 php php-pgsql libapache2-mod-php \
-                            php-intl git
+                            php-intl python3-setuptools python3-dev python3-pip \
+                            python3-tidylib git
+
+    # python3-psycopg2 apt package is too old (2.6), we want at least 2.7
+    pip3 install --user psycopg2
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
-    sudo apt-get install -y python3-setuptools python3-dev python3-pip \
-                            python3-psycopg2 python3-tidylib phpunit php-cgi
+    sudo apt-get install -y php-cgi php-mbstring
 
     pip3 install --user behave nose
 
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+
+    composer global require "phpunit/phpunit=6.*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration

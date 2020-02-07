@@ -30,13 +30,13 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                             postgresql-contrib-10 postgresql-10-postgis-scripts \
                             apache2 php php-pgsql libapache2-mod-php \
-                            php-intl git
+                            php-intl python3-setuptools python3-dev python3-pip \
+                            python3-psycopg2 python3-tidylib git
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
-    sudo apt-get install -y python3-setuptools python3-dev python3-pip \
-                            python3-psycopg2 python3-tidylib phpunit php-cgi
+    sudo apt-get install -y phpunit php-cgi
 
     pip3 install --user behave nose
 

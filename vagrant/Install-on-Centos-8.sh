@@ -32,20 +32,21 @@
                         llvm-toolset ccache clang-tools-extra \
                         php-pgsql php php-intl php-json libpq-devel \
                         proj52-epsg bzip2-devel proj-devel boost-devel \
+                        python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
     # make sure pg_config gets found
     echo 'PATH=/usr/pgsql-10/bin:$PATH' >> ~/.bash_profile
     source ~/.bash_profile
 
+    pip3 install --user psycopg2 pytidylib
+
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
 #DOCS:    :::sh
-    sudo dnf install -y python36 python3-pip python3-setuptools python36-devel \
-                        php-dom php-mbstring
-
-    pip3 install --user behave nose pytidylib psycopg2
+    sudo dnf install -y php-dom php-mbstring
+    pip3 install --user behave nose
 
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/

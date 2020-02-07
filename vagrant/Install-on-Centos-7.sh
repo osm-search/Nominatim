@@ -23,6 +23,12 @@
     sudo yum install -y https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
     sudo yum install -y centos-release-scl-rh
 
+# More repositories for PHP 7 (default is PHP 5.4)
+
+    sudo yum install -y http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    sudo yum-config-manager --enable remi-php72
+    sudo yum update -y
+
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
@@ -33,22 +39,27 @@
                         devtoolset-7 llvm-toolset-7 \
                         php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel boost-devel \
+                        python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
     # make sure pg_config gets found
-    echo 'PATH=/usr/pgsql-11/bin/$PATH' >> ~/.bash_profile
+    echo 'PATH=/usr/pgsql-11/bin/:$PATH' >> ~/.bash_profile
     source ~/.bash_profile
+
+    pip3 install --user psycopg2 pytidylib
 
 # If you want to run the test suite, you need to install the following
 # additional packages:
 
 #DOCS:    :::sh
-    sudo yum install -y python34-pip python34-setuptools python34-devel \
-                        php-phpunit-PHPUnit
-    pip3 install --user behave nose pytidylib psycopg2
+    sudo yum install -y php-dom php-mbstring
+    pip3 install --user behave nose
 
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+
+    composer global require "phpunit/phpunit=7.*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration

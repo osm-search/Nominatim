@@ -51,6 +51,25 @@ class OutputTest extends \PHPUnit\Framework\TestCase
                 );
     }
 
+    public function testDetailsPermaLinkWithExtraPropertiesNode()
+    {
+        $aFeature = array('osm_type' => 'N', 'osm_id'=> 2, 'class' => 'amenity');
+        $this->assertSame(
+                detailsPermaLink($aFeature, 'something', 'class="xtype"'),
+                '<a class="xtype" href="details.php?osmtype=N&osmid=2&class=amenity">something</a>'
+                );
+    }
+
+    public function testDetailsPermaLinkWithExtraPropertiesTiger()
+    {
+        $aFeature = array('osm_type' => 'T', 'osm_id'=> 5, 'place_id' => 46);
+        $this->assertSame(
+                detailsPermaLink($aFeature, 'something', 'class="xtype"'),
+                '<a class="xtype" href="details.php?place_id=46">something</a>'
+                );
+    }
+
+
 
 
 

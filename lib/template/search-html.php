@@ -53,7 +53,7 @@
                     echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['class'])).')</span>';
                 else
                     echo ' <span class="type">('.ucwords(str_replace('_',' ',$aResult['type'])).')</span>';
-                echo ' <a class="btn btn-default btn-xs details" href="details.php?osmtype='.$aResult['osm_type'].'&osmid='.$aResult['osm_id'].'&class='.$aResult['class'].'">details</a>';
+                echo detailsPermaLink($aResult, 'details', 'class="btn btn-default btn-xs details"');
                 echo '</div>';
                 $i = $i+1;
             }

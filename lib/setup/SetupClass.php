@@ -566,6 +566,15 @@ class SetupFunctions
     {
         info('Create Search indices');
 
+        $sSQL = 'SELECT relname FROM pg_class, pg_index ';
+        $sSQL .= 'WHERE pg_index.indisvalid = false AND pg_index.indexrelid = pg_class.oid';
+        $aInvalidIndices = $this->oDB->getCol($sSQL);
+
+        foreach ($aInvalidIndices as $sIndexName) {
+            info("Cleaning up invalid index $sIndexName");
+            $this->oDB->exec("DROP INDEX $sIndexName;");
+        }
+
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
         if (!$this->dbReverseOnly()) {
             $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_search.src.sql');

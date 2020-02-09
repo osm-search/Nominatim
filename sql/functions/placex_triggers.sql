@@ -818,7 +818,7 @@ BEGIN
   --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
   SELECT * INTO location FROM find_linked_place(NEW);
   IF location.place_id is not null THEN
-      --DEBUG: RAISE WARNING 'Linked %', location;
+    --DEBUG: RAISE WARNING 'Linked %', location;
 
     -- Use this as the centre point of the geometry
     NEW.centroid := coalesce(location.centroid,
@@ -830,7 +830,7 @@ BEGIN
     END IF;
 
     -- merge in extra tags
-    NEW.extratags := hstore(location.class, location.type)
+    NEW.extratags := hstore('linked_' || location.class, location.type)
                      || coalesce(location.extratags, ''::hstore)
                      || coalesce(NEW.extratags, ''::hstore);
 

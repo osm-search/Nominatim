@@ -12,6 +12,8 @@ function formatOSMType($sType, $bIncludeExternal = true)
     if ($sType == 'T') return 'way';
     if ($sType == 'I') return 'way';
 
+    // not handled: P, L
+
     return '';
 }
 

@@ -907,12 +907,6 @@ class Geocode
                 $aResult = array_merge($aResult, $aOutlineResult);
             }
 
-            if ($aResult['extra_place'] == 'city') {
-                $aResult['class'] = 'place';
-                $aResult['type'] = 'city';
-                $aResult['rank_search'] = 16;
-            }
-
             // Is there an icon set for this type of result?
             $aClassInfo = ClassTypes\getInfo($aResult);
 

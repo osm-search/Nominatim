@@ -48,5 +48,5 @@ function detailsPermaLink($aFeature, $sRefText = false)
         $sLabel = $sRefText ? $sRefText : $sOSMType.' '.$aFeature['osm_id'];
         return '<a href="details.php?osmtype='.$aFeature['osm_type'].'&osmid='.$aFeature['osm_id'].'&class='.$aFeature['class'].'">'.$sLabel.'</a>';
     }
-    return '';
+    return detailsLink($aFeature, $sRefText);
 }

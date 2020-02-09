@@ -44,6 +44,16 @@ if ($sOsmType && $iOsmId > 0) {
     $sSQL .= ' ORDER BY class ASC';
     $sPlaceId = $oDB->getOne($sSQL, array(':type' => $sOsmType, ':id' => $iOsmId));
 
+
+    // Nothing? Maybe it's an interpolation.
+    // XXX Simply returns the first parent street it finds. It should
+    //     get a house number and get the right interpolation.
+    if (!$sPlaceId && $sOsmType == 'W' && (!$sClass || $sClass == 'place')) {
+        $sSQL = 'SELECT place_id FROM location_property_osmline'
+                .' WHERE osm_id = :id LIMIT 1';
+        $sPlaceId = $oDB->getOne($sSQL, array(':id' => $iOsmId));
+    }
+
     // Be nice about our error messages for broken geometry
 
     if (!$sPlaceId) {

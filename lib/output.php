@@ -12,6 +12,8 @@ function formatOSMType($sType, $bIncludeExternal = true)
     if ($sType == 'T') return 'way';
     if ($sType == 'I') return 'way';
 
+    // not handled: P, L
+
     return '';
 }
 
@@ -33,20 +35,39 @@ function wikipediaLink($aFeature)
     return '';
 }
 
-function detailsLink($aFeature, $sTitle = false)
+function detailsLink($aFeature, $sTitle = false, $sExtraProperties = false)
 {
     if (!$aFeature['place_id']) return '';
 
-    return '<a href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle?$sTitle:$aFeature['place_id']).'</a>';
+    $sHtml = '<a ';
+    if ($sExtraProperties) {
+        $sHtml .= $sExtraProperties.' ';
+    }
+
+    $sHtml .= 'href="details.php?place_id='.$aFeature['place_id'].'">'.($sTitle?$sTitle:$aFeature['place_id']).'</a>';
+
+    return $sHtml;
 }
 
-function detailsPermaLink($aFeature, $sRefText = false)
+function detailsPermaLink($aFeature, $sRefText = false, $sExtraProperties = false)
 {
     $sOSMType = formatOSMType($aFeature['osm_type'], false);
 
     if ($sOSMType) {
-        $sLabel = $sRefText ? $sRefText : $sOSMType.' '.$aFeature['osm_id'];
-        return '<a href="details.php?osmtype='.$aFeature['osm_type'].'&osmid='.$aFeature['osm_id'].'&class='.$aFeature['class'].'">'.$sLabel.'</a>';
+        $sHtml = '<a ';
+        if ($sExtraProperties) {
+            $sHtml .= $sExtraProperties.' ';
+        }
+        $sHtml .= 'href="details.php?osmtype='.$aFeature['osm_type']
+                  .'&osmid='.$aFeature['osm_id'].'&class='.$aFeature['class'].'">';
+
+        if ($sRefText) {
+            $sHtml .= $sRefText.'</a>';
+        } else {
+            $sHtml .= $sOSMType.' '.$aFeature['osm_id'].'</a>';
+        }
+
+        return $sHtml;
     }
-    return '';
+    return detailsLink($aFeature, $sRefText, $sExtraProperties);
 }

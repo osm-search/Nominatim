@@ -179,6 +179,11 @@ That's fine. For each import the flatnodes file get overwritten.
 See [https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage]()
 for more information.
 
+### psycopg2 reports "invalid connection option "async_""
+
+Make sure you use at least psycopg2 version 2.7. Try upgrading using
+`pip3 install --user psycopg2`
+
 
 ## Running your own instance
 

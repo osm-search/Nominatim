@@ -10,7 +10,7 @@ mysql2pgsqlcmd() {
 
 download() {
      echo "Downloading $1"
-     wget --quiet --no-clobber --tries 3
+     wget --quiet --no-clobber --tries 3 "$1"
 }
 
 # languages to process (refer to List of Wikipedias here: https://en.wikipedia.org/wiki/List_of_Wikipedias)

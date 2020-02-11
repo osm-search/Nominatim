@@ -1,16 +1,19 @@
 #!/bin/bash
 
 psqlcmd() {
-     psql --quiet wikiprocessingdb
+     psql --quiet wikiprocessingdb |& \
+     grep -v 'does not exist, skipping' |& \
+     grep -v 'violates check constraint' |& \
+     grep -vi 'Failing row contains'
 }
 
 mysql2pgsqlcmd() {
-     ./mysql2pgsql.perl /dev/stdin /dev/stdout
+     ./mysql2pgsql.perl --nodrop /dev/stdin /dev/stdout
 }
 
 download() {
      echo "Downloading $1"
-     wget --quiet --no-clobber --tries 3
+     wget --quiet --no-clobber --tries=3 "$1"
 }
 
 
@@ -96,17 +99,98 @@ for i in "${LANGUAGES[@]}"
 do
     echo "Language: $i"
 
+    # We pre-create the table schema. This allows us to
+    # 1. Skip index creation. Most queries we do are full table scans
+    # 2. Add constrain to only import namespace=0 (wikipedia articles)
+    # Both cuts down data size considerably (50%+)
+
     echo "Importing ${i}wiki-latest-pagelinks"
-    gzip -dc ${i}wiki-latest-pagelinks.sql.gz | sed "s/\`pagelinks\`/\`${i}pagelinks\`/g" | mysql2pgsqlcmd | psqlcmd
+
+    echo "DROP TABLE IF EXISTS ${i}pagelinks;" | psqlcmd
+    echo "CREATE TABLE ${i}pagelinks (
+       pl_from            int  NOT NULL DEFAULT '0',
+       pl_namespace       int  NOT NULL DEFAULT '0',
+       pl_title           text NOT NULL DEFAULT '',
+       pl_from_namespace  int  NOT NULL DEFAULT '0'
+    );" | psqlcmd
+
+    time \
+      gzip -dc ${i}wiki-latest-pagelinks.sql.gz | \
+      sed "s/\`pagelinks\`/\`${i}pagelinks\`/g" | \
+      mysql2pgsqlcmd | \
+      grep -v '^CREATE INDEX ' | \
+      psqlcmd
+
+
+
 
     echo "Importing ${i}wiki-latest-page"
-    gzip -dc ${i}wiki-latest-page.sql.gz      | sed "s/\`page\`/\`${i}page\`/g"           | mysql2pgsqlcmd | psqlcmd
+
+    # autoincrement serial8 4byte
+    echo "DROP TABLE IF EXISTS ${i}page;" | psqlcmd
+    echo "CREATE TABLE ${i}page (
+       page_id             int NOT NULL,
+       page_namespace      int NOT NULL DEFAULT '0',
+       page_title          text NOT NULL DEFAULT '',
+       page_restrictions   text NOT NULL,
+       page_is_redirect    smallint NOT NULL DEFAULT '0',
+       page_is_new         smallint NOT NULL DEFAULT '0',
+       page_random         double precision NOT NULL DEFAULT '0',
+       page_touched        text NOT NULL DEFAULT '',
+       page_links_updated  text DEFAULT NULL,
+       page_latest         int NOT NULL DEFAULT '0',
+       page_len            int NOT NULL DEFAULT '0',
+       page_content_model  text DEFAULT NULL,
+       page_lang           text DEFAULT NULL
+     );" | psqlcmd
+
+    time \
+      gzip -dc ${i}wiki-latest-page.sql.gz | \
+      sed "s/\`page\`/\`${i}page\`/g" | \
+      mysql2pgsqlcmd | \
+      grep -v '^CREATE INDEX ' | \
+      psqlcmd
+
+
+
 
     echo "Importing ${i}wiki-latest-langlinks"
-    gzip -dc ${i}wiki-latest-langlinks.sql.gz | sed "s/\`langlinks\`/\`${i}langlinks\`/g" | mysql2pgsqlcmd | psqlcmd
+
+    echo "DROP TABLE IF EXISTS ${i}langlinks;" | psqlcmd
+    echo "CREATE TABLE ${i}langlinks (
+       ll_from   int  NOT NULL DEFAULT '0',
+       ll_lang   text NOT NULL DEFAULT '',
+       ll_title  text NOT NULL DEFAULT ''
+    );" | psqlcmd
+
+    time \
+      gzip -dc ${i}wiki-latest-langlinks.sql.gz | \
+      sed "s/\`langlinks\`/\`${i}langlinks\`/g" | \
+      mysql2pgsqlcmd | \
+      grep -v '^CREATE INDEX ' | \
+      psqlcmd
+
+
+
+
 
     echo "Importing ${i}wiki-latest-redirect"
-    gzip -dc ${i}wiki-latest-redirect.sql.gz  | sed "s/\`redirect\`/\`${i}redirect\`/g"   | mysql2pgsqlcmd | psqlcmd
+
+    echo "DROP TABLE IF EXISTS ${i}redirect;" | psqlcmd
+    echo "CREATE TABLE ${i}redirect (
+       rd_from       int   NOT NULL DEFAULT '0',
+       rd_namespace  int   NOT NULL DEFAULT '0',
+       rd_title      text  NOT NULL DEFAULT '',
+       rd_interwiki  text  DEFAULT NULL,
+       rd_fragment   text  DEFAULT NULL
+    );" | psqlcmd
+
+    time \
+      gzip -dc ${i}wiki-latest-redirect.sql.gz | \
+      sed "s/\`redirect\`/\`${i}redirect\`/g" | \
+      mysql2pgsqlcmd | \
+      grep -v '^CREATE INDEX ' | \
+      psqlcmd
 done
 
 
@@ -125,7 +209,8 @@ do
     echo "CREATE TABLE ${i}pagelinkcount
           AS
           SELECT pl_title AS title,
-                 COUNT(*) AS count
+                 COUNT(*) AS count,
+                 0::bigint as othercount
           FROM ${i}pagelinks
           WHERE pl_namespace = 0
           GROUP BY pl_title
@@ -150,14 +235,11 @@ do
             AND rd_namespace = 0
           ;" | psqlcmd
 
-    echo "ALTER TABLE ${i}pagelinkcount
-          ADD COLUMN othercount integer
-          ;" | psqlcmd
+done
 
-    echo "UPDATE ${i}pagelinkcount
-          SET othercount = 0
-          ;" | psqlcmd
 
+for i in "${LANGUAGES[@]}"
+do
     for j in "${LANGUAGES[@]}"
     do
         echo "UPDATE ${i}pagelinkcount
@@ -211,3 +293,5 @@ do
     echo "DROP TABLE ${i}redirect;"      | psqlcmd
     echo "DROP TABLE ${i}pagelinkcount;" | psqlcmd
 done
+
+echo "all done."

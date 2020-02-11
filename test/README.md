@@ -108,12 +108,19 @@ They require a preimported test database, which consists of the import of a
 planet extract. A precompiled PBF with the necessary data can be downloaded from
 https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
 
+You need at least 2GB RAM and 10GB discspace.
+
 The polygons defining the extract can be found in the test/testdb
 directory. There is also a reduced set of wikipedia data for this extract,
 which you need to import as well. For Tiger tests the data of South Dakota
 is required. Get the Tiger files `46*`.
 
-The official test dataset is derived from the 160725 planet. Newer
+    cd Nominatim/data
+    wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
+    tar xvf tiger2018-nominatim-preprocessed.tar.gz --wildcards --no-anchored '46*'
+    rm tiger2018-nominatim-preprocessed.tar.gz
+
+The official test dataset is derived from the 180924 planet. Newer
 planets are likely to work as well but you may see isolated test
 failures where the data has changed. To recreate the input data
 for the test database run:

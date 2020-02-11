@@ -123,8 +123,20 @@ class DBConnection(object):
     def wait(self):
         """ Block until any pending operation is done.
         """
-        wait_select(self.conn)
-        self.current_query = None
+        while True:
+            try:
+                wait_select(self.conn)
+                self.current_query = None
+                return
+            except psycopg2.extensions.TransactionRollbackError as e:
+                if e.pgcode == '40P01':
+                    log.info("Deadlock detected (params = {}), retry."
+                              .format(self.current_params))
+                    self.cursor.execute(self.current_query, self.current_params)
+                else:
+                    raise
+            except psycopg2.errors.DeadlockDetected:
+                self.cursor.execute(self.current_query, self.current_params)
 
     def perform(self, sql, args=None):
         """ Send SQL query to the server. Returns immediately without
@@ -158,6 +170,8 @@ class DBConnection(object):
                 self.cursor.execute(self.current_query, self.current_params)
             else:
                 raise
+        except psycopg2.errors.DeadlockDetected:
+            self.cursor.execute(self.current_query, self.current_params)
 
         return False
 

@@ -31,10 +31,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             postgresql-contrib-9.5 \
                             apache2 php php-pgsql libapache2-mod-php \
                             php-intl python3-setuptools python3-dev python3-pip \
-                            python3-tidylib git
-
-    # python3-psycopg2 apt package is too old (2.6), we want at least 2.7
-    pip3 install --user psycopg2
+                            python3-tidylib python3-psycopg2 git
 
 # If you want to run the test suite, you need to install the following
 # additional packages:

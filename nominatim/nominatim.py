@@ -35,9 +35,14 @@ import select
 log = logging.getLogger()
 
 def make_connection(options, asynchronous=False):
-    return psycopg2.connect(dbname=options.dbname, user=options.user,
-                            password=options.password, host=options.host,
-                            port=options.port, async_=asynchronous)
+    params = {'dbname' : options.dbname,
+              'user' : options.user,
+              'password' : options.password,
+              'host' : options.host,
+              'port' : options.port,
+              'async' : asynchronous}
+
+    return psycopg2.connect(**params)
 
 
 class RankRunner(object):

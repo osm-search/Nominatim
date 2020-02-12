@@ -35,9 +35,14 @@ import select
 log = logging.getLogger()
 
 def make_connection(options, asynchronous=False):
-    return psycopg2.connect(dbname=options.dbname, user=options.user,
-                            password=options.password, host=options.host,
-                            port=options.port, async_=asynchronous)
+    params = {'dbname' : options.dbname,
+              'user' : options.user,
+              'password' : options.password,
+              'host' : options.host,
+              'port' : options.port,
+              'async' : asynchronous}
+
+    return psycopg2.connect(**params)
 
 
 class RankRunner(object):
@@ -104,19 +109,39 @@ class DBConnection(object):
     """
 
     def __init__(self, options):
+        self.current_query = None
+        self.current_params = None
+
+        self.conn = None
+        self.connect()
+
+    def connect(self):
+        if self.conn is not None:
+            self.cursor.close()
+            self.conn.close()
+
         self.conn = make_connection(options, asynchronous=True)
         self.wait()
 
         self.cursor = self.conn.cursor()
 
-        self.current_query = None
-        self.current_params = None
-
     def wait(self):
         """ Block until any pending operation is done.
         """
-        wait_select(self.conn)
-        self.current_query = None
+        while True:
+            try:
+                wait_select(self.conn)
+                self.current_query = None
+                return
+            except psycopg2.extensions.TransactionRollbackError as e:
+                if e.pgcode == '40P01':
+                    log.info("Deadlock detected (params = {}), retry."
+                              .format(self.current_params))
+                    self.cursor.execute(self.current_query, self.current_params)
+                else:
+                    raise
+            except psycopg2.errors.DeadlockDetected:
+                self.cursor.execute(self.current_query, self.current_params)
 
     def perform(self, sql, args=None):
         """ Send SQL query to the server. Returns immediately without
@@ -150,6 +175,8 @@ class DBConnection(object):
                 self.cursor.execute(self.current_query, self.current_params)
             else:
                 raise
+        except psycopg2.errors.DeadlockDetected:
+            self.cursor.execute(self.current_query, self.current_params)
 
         return False
 
@@ -257,13 +284,25 @@ class Indexer(object):
             sending a query.
         """
         ready = self.threads
+        command_stat = 0
 
         while True:
             for thread in ready:
                 if thread.is_done():
+                    command_stat += 1
                     yield thread
 
-            ready, _, _ = select.select(self.threads, [], [])
+            # refresh the connections occasionaly to avoid potential
+            # memory leaks in Postgresql.
+            if command_stat > 100000:
+                for t in self.threads:
+                    while not t.is_done():
+                        wait_select(t.conn)
+                    t.connect()
+                command_stat = 0
+                ready = self.threads
+            else:
+                ready, _, _ = select.select(self.threads, [], [])
 
         assert(False, "Unreachable code")
 

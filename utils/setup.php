@@ -138,6 +138,11 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
     $oSetup->index($aCMDResult['index-noanalyse']);
 }
 
+if ($aCMDResult['drop']) {
+    $bDidSomething = true;
+    $oSetup->drop($aCMDResult);
+}
+
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->createSearchIndices();
@@ -146,11 +151,6 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->createCountryNames($aCMDResult);
-}
-
-if ($aCMDResult['drop']) {
-    $bDidSomething = true;
-    $oSetup->drop($aCMDResult);
 }
 
 // ******************************************************

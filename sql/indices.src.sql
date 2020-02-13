@@ -8,7 +8,6 @@ CREATE INDEX CONCURRENTLY idx_place_addressline_address_place_id on place_addres
 DROP INDEX CONCURRENTLY IF EXISTS idx_placex_rank_search;
 CREATE INDEX CONCURRENTLY idx_placex_rank_search ON placex USING BTREE (rank_search) {ts:search-index};
 CREATE INDEX CONCURRENTLY idx_placex_rank_address ON placex USING BTREE (rank_address) {ts:search-index};
-CREATE INDEX CONCURRENTLY idx_placex_pendingsector ON placex USING BTREE (rank_search,geometry_sector) {ts:address-index} where indexed_status > 0;
 CREATE INDEX CONCURRENTLY idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) {ts:search-index} where parent_place_id IS NOT NULL;
 
 CREATE INDEX CONCURRENTLY idx_placex_geometry_reverse_lookupPoint
@@ -29,14 +28,8 @@ CREATE INDEX CONCURRENTLY idx_placex_geometry_reverse_placeNode
 
 GRANT SELECT ON table country_osm_grid to "{www-user}";
 
-CREATE INDEX CONCURRENTLY idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
-
 CREATE INDEX CONCURRENTLY idx_osmline_parent_place_id ON location_property_osmline USING BTREE (parent_place_id) {ts:search-index};
 CREATE INDEX CONCURRENTLY idx_osmline_parent_osm_id ON location_property_osmline USING BTREE (osm_id) {ts:search-index};
-
-DROP INDEX CONCURRENTLY IF EXISTS place_id_idx;
-CREATE UNIQUE INDEX CONCURRENTLY idx_place_osm_unique on place using btree(osm_id,osm_type,class,type) {ts:address-index};
-
 
 CREATE UNIQUE INDEX CONCURRENTLY idx_postcode_id ON location_postcode USING BTREE (place_id) {ts:search-index};
 CREATE INDEX CONCURRENTLY idx_postcode_postcode ON location_postcode USING BTREE (postcode) {ts:search-index};

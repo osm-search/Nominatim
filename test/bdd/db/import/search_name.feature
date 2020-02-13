@@ -29,8 +29,8 @@ Feature: Creation of search terms
         And the places
          | osm | class   | type        | name     | geometry |
          | N1  | place   | state       | new york | 80 80 |
-         | N1  | place   | city        | bonn     | 81 81 |
-         | N1  | place   | suburb      | smalltown| 80 81 |
+         | N2  | place   | city        | bonn     | 81 81 |
+         | N3  | place   | suburb      | smalltown| 80 81 |
         And the named places
          | osm | class   | type    | addr+city | addr+state | addr+suburb | geometry |
          | W1  | highway | service | bonn      | New York   | Smalltown   | :w-north |
@@ -67,8 +67,8 @@ Feature: Creation of search terms
         And the places
          | osm | class   | type        | name     | geometry |
          | N1  | place   | state       | new york | 80 80 |
-         | N1  | place   | city        | bonn     | 81 81 |
-         | N1  | place   | suburb      | smalltown| 80 81 |
+         | N2  | place   | city        | bonn     | 81 81 |
+         | N3  | place   | suburb      | smalltown| 80 81 |
         And the named places
          | osm | class   | type    | addr+is_in                | geometry |
          | W1  | highway | service | bonn, New York, Smalltown | :w-north |

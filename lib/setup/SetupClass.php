@@ -16,6 +16,7 @@ class SetupFunctions
     protected $bEnableDiffUpdates;
     protected $bEnableDebugStatements;
     protected $bNoPartitions;
+    protected $bDrop;
     protected $oDB = null;
 
     public function __construct(array $aCMDResult)
@@ -74,6 +75,8 @@ class SetupFunctions
         } else {
             $this->bEnableDiffUpdates = false;
         }
+
+        $this->bDrop = $aCMDResult['drop'];
     }
 
     public function createDB()
@@ -207,6 +210,11 @@ class SetupFunctions
 
         if (!$this->sIgnoreErrors && !$this->oDB->getRow('select * from place limit 1')) {
             fail('No Data');
+        }
+
+        if ($this->bDrop) {
+            $this->dropTable('planet_osm_nodes');
+            $this->removeFlatnodeFile();
         }
     }
 
@@ -576,6 +584,9 @@ class SetupFunctions
         }
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
+        if (!$this->bDrop) {
+            $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_updates.src.sql');
+        }
         if (!$this->dbReverseOnly()) {
             $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_search.src.sql');
         }
@@ -655,6 +666,11 @@ class SetupFunctions
             $this->dropTable($sDrop);
         }
 
+        $this->removeFlatnodeFile();
+    }
+
+    private function removeFlatnodeFile()
+    {
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
             if (file_exists(CONST_Osm2pgsql_Flatnode_File)) {
                 if ($this->bVerbose) echo 'Deleting '.CONST_Osm2pgsql_Flatnode_File."\n";

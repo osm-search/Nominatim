@@ -532,9 +532,7 @@ class SetupFunctions
             .' -d '.escapeshellarg($this->aDSNInfo['database'])
             .' -P '.escapeshellarg($this->aDSNInfo['port'])
             .' -t '.escapeshellarg($this->iInstances.$sOutputFile);
-        if (!$this->bQuiet) {
-            $sBaseCmd .= ' -v';
-        }
+
         if ($this->bVerbose) {
             $sBaseCmd .= ' -v';
         }

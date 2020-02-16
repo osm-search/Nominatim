@@ -579,7 +579,10 @@ BEGIN
     IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
       FOR location IN
+        -- The additional && condition works around the misguided query
+        -- planner of postgis 3.0.
         SELECT address from placex where ST_Covers(geometry, NEW.centroid)
+            and geometry && NEW.centroid
             and (address ? 'housenumber' or address ? 'street' or address ? 'place')
             and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
             limit 1

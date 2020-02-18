@@ -65,12 +65,22 @@ if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     $iCacheMemory = getCacheMemoryMB();
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
-$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -S '.CONST_Import_Style.' -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
+
+$aOsm2pgsqlCmd = array(
+    CONST_Osm2pgsql_Binary,
+    '-klas',
+    '--number-processes', 1,
+    '-C', $iCacheMemory,
+    '-O', 'gazetteer',
+    '-S', CONST_Import_Style,
+    '-d', $aDSNInfo['database'],
+    '-P', $aDSNInfo['port']
+);
 if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-    $sOsm2pgsqlCmd .= ' -U ' . $aDSNInfo['username'];
+    array_push($aOsm2pgsqlCmd, '-U', $aDSNInfo['username']);
 }
 if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-    $sOsm2pgsqlCmd .= ' -H ' . $aDSNInfo['hostspec'];
+    array_push($aOsm2pgsqlCmd, '-H', $aDSNInfo['hostspec']);
 }
 $aProcEnv = null;
 if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
@@ -78,15 +88,12 @@ if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
 }
 
 if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-    $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
+    array_push($aOsm2pgsqlCmd, '--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
 }
 
-$sIndexCmd = CONST_BasePath.'/nominatim/nominatim.py';
-if (!$aResult['quiet']) {
-    $sIndexCmd .= ' -v';
-}
+$aIndexCmd = array(CONST_BasePath.'/nominatim/nominatim.py');
 if ($aResult['verbose']) {
-    $sIndexCmd .= ' -v';
+    array_push($aIndexCmd, '-v');
 }
 
 if ($aResult['init-updates']) {
@@ -171,9 +178,9 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     }
 
     // Import the file
-    $sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
+    $aCMD = array_push($aOsm2pgsqlCmd, $sNextFile);
     echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
+    $iErrorLevel = runWithEnv($aCMD, $aProcEnv);
 
     if ($iErrorLevel) {
         fail("Error from osm2pgsql, $iErrorLevel\n");
@@ -223,9 +230,9 @@ if ($sContentURL) {
 
 if ($bHaveDiff) {
     // import generated change file
-    $sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
-    echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
+    $aCMD = array_push($aOsm2pgsqlCmd, $sTemporaryFile);
+    echo join(' ', $aCMD)."\n";
+    $iErrorLevel = runWithEnv($aCMD, $aProcEnv);
     if ($iErrorLevel) {
         fail("osm2pgsql exited with error level $iErrorLevel\n");
     }
@@ -310,19 +317,23 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    $sCmd = $sIndexCmd
-            .' -d '.$aDSNInfo['database']
-            .' -P '.$aDSNInfo['port']
-            .' -t '.$aResult['index-instances']
-            .' -r '.$aResult['index-rank'];
+    $aCmd = array_merge(
+        $aIndexCmd,
+        array(
+            '-d', $aDSNInfo['database'],
+            '-P', $aDSNInfo['port'],
+            '-t', $aResult['index-instances'],
+            '-r', $aResult['index-rank']
+        )
+    );
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCmd .= ' -H ' . $aDSNInfo['hostspec'];
+        array_push($aCmd, '-H', $aDSNInfo['hostspec']);
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCmd .= ' -U ' . $aDSNInfo['username'];
+        array_push($aCmd, '-U', $aDSNInfo['username']);
     }
 
-    runWithEnv($sCmd, $aProcEnv);
+    runWithEnv($aCmd, $aProcEnv);
 
     $oDB->exec('update import_status set indexed = true');
 }
@@ -358,17 +369,21 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     }
 
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';
-    $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
-    $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-    $sCMDIndex = $sIndexCmd
-                 .' -d '.$aDSNInfo['database']
-                 .' -P '.$aDSNInfo['port']
-                 .' -t '.$aResult['index-instances'];
+    $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.escapeshellarg($sImportFile).' -s '.CONST_Replication_Max_Diff_size;
+    $aCMDImport = array_merge($aOsm2pgsqlCmd, array($sImportFile));
+    $aCMDIndex = array_merge(
+        $aIndexCmd,
+        array(
+            '-d', $aDSNInfo['database'],
+            '-P', $aDSNInfo['port'],
+            '-t', $aResult['index-instances']
+        )
+    );
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCMDIndex .= ' -H ' . $aDSNInfo['hostspec'];
+        array_push($aCMDIndex, '-H', $aDSNInfo['hostspec']);
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCMDIndex .= ' -U ' . $aDSNInfo['username'];
+        array_push($aCMDIndex, '-U', $aDSNInfo['username']);
     }
 
     while (true) {
@@ -419,7 +434,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             // get the newest object from the diff file
             $sBatchEnd = 0;
             $iRet = 0;
-            exec(CONST_BasePath.'/utils/osm_file_date.py '.$sImportFile, $sBatchEnd, $iRet);
+            exec(CONST_BasePath.'/utils/osm_file_date.py '.escapeshellarg($sImportFile), $sBatchEnd, $iRet);
             if ($iRet == 5) {
                 echo "Diff file is empty. skipping import.\n";
                 if (!$aResult['import-osmosis-all']) {
@@ -435,9 +450,9 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             // Import the file
             $fCMDStartTime = time();
-            echo $sCMDImport."\n";
+            echo join(' ', $aCMDImport)."\n";
             unset($sJunk);
-            $iErrorLevel = runWithEnv($sCMDImport, $aProcEnv);
+            $iErrorLevel = runWithEnv($aCMDImport, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error executing osm2pgsql: $iErrorLevel\n";
                 exit($iErrorLevel);
@@ -462,11 +477,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
         // Index file
         if (!$aResult['no-index']) {
-            $sThisIndexCmd = $sCMDIndex;
+            $aThisIndexCmd = $aCMDIndex;
             $fCMDStartTime = time();
 
-            echo "$sThisIndexCmd\n";
-            $iErrorLevel = runWithEnv($sThisIndexCmd, $aProcEnv);
+            echo join(' ', $aThisIndexCmd)."\n";
+            $iErrorLevel = runWithEnv($aThisIndexCmd, $aProcEnv);
             if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);

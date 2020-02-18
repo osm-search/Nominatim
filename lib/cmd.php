@@ -1,5 +1,6 @@
 <?php
 
+require_once(CONST_BasePath.'/lib/Shell.php');
 
 function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnknown = false)
 {
@@ -148,25 +149,30 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     // Convert database DSN to psql parameters
     $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql'
-        .' -p '.escapeshellarg($aDSNInfo['port'])
-        .' -d '.escapeshellarg($aDSNInfo['database']);
+
+    $aCmd = array(
+                'psql',
+                '-p', $aDSNInfo['port'],
+                '-d', $aDSNInfo['database']);
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCMD .= ' -h ' . escapeshellarg($aDSNInfo['hostspec']);
+        array_push($aCmd, '-h', $aDSNInfo['hostspec']);
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCMD .= ' -U ' . escapeshellarg($aDSNInfo['username']);
+        array_push($aCmd, '-U', $aDSNInfo['username']);
     }
     $aProcEnv = null;
     if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
         $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
     }
     if (!$bVerbose) {
-        $sCMD .= ' -q';
+        array_push($aCmd, '-q');
     }
     if ($bfatal && !$bIgnoreErrors) {
-        $sCMD .= ' -v ON_ERROR_STOP=1';
+        array_push($aCmd, '-v', 'ON_ERROR_STOP=1');
     }
+    $oShell = new \Nominatim\Shell;
+    $sCMD = $oShell->escapeFromArray($aCmd);
+
     $aDescriptors = array(
                      0 => array('pipe', 'r'),
                      1 => STDOUT,
@@ -195,8 +201,12 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
 }
 
 
-function runWithEnv($sCmd, $aEnv)
+function runWithEnv(&$aCmd, &$aEnv)
 {
+    $oShell = new \Nominatim\Shell;
+    $sCmd = $oShell->escapeFromArray($aCmd);
+    // $aEnv does not need escaping, proc_open seems to handle it fine
+
     $aFDs = array(
              0 => array('pipe', 'r'),
              1 => STDOUT,
@@ -205,7 +215,7 @@ function runWithEnv($sCmd, $aEnv)
     $aPipes = null;
     $hProc = @proc_open($sCmd, $aFDs, $aPipes, null, $aEnv);
     if (!is_resource($hProc)) {
-        fail('unable to run command:' . $sCmd);
+        fail('unable to run command: ' . $sCmd);
     }
 
     fclose($aPipes[0]); // no stdin

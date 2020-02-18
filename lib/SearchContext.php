@@ -203,7 +203,7 @@ class SearchContext
     }
 
     /**
-     * Get an SQL snipped for computing the distance from the reference point.
+     * Get an SQL snippet for computing the distance from the reference point.
      *
      * @param string $sObj SQL variable name to compute the distance from.
      *
@@ -215,7 +215,7 @@ class SearchContext
     }
 
     /**
-     * Get an SQL snipped for checking if something is within range of the
+     * Get an SQL snippet for checking if something is within range of the
      * reference point.
      *
      * @param string $sObj SQL variable name to compute if it is within range.
@@ -228,14 +228,14 @@ class SearchContext
     }
 
     /**
-     * Get an SQL snipped of the importance factor of the viewbox.
+     * Get an SQL snippet of the importance factor of the viewbox.
      *
      * The importance factor is computed by checking if an object is within
      * the viewbox and/or the extended version of the viewbox.
      *
      * @param string $sObj SQL variable name of object to weight the importance
      *
-     * @return string SQL snipped of the factor with a leading multiply sign.
+     * @return string SQL snippet of the factor with a leading multiply sign.
      */
     public function viewboxImportanceSQL($sObj)
     {
@@ -252,7 +252,7 @@ class SearchContext
     }
 
     /**
-     * SQL snipped checking if a place ID should be excluded.
+     * SQL snippet checking if a place ID should be excluded.
      *
      * @param string $sVariable SQL variable name of place ID to check,
      *                          potentially prefixed with more SQL.

@@ -226,7 +226,7 @@ BEGIN
         AND placex.rank_address = bnd.rank_address
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index
-        AND st_covers(geometry, placex.geometry)
+        AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
       --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
       RETURN linked_placex;

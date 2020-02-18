@@ -1,5 +1,6 @@
 <?php
 
+require_once(CONST_BasePath.'/lib/Shell.php');
 
 function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnknown = false)
 {
@@ -148,32 +149,33 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     // Convert database DSN to psql parameters
     $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-    $sCMD = 'psql'
-        .' -p '.escapeshellarg($aDSNInfo['port'])
-        .' -d '.escapeshellarg($aDSNInfo['database']);
+
+    $oCmd = new \Nominatim\Shell('psql');
+    $oCmd->addParams('--port', $aDSNInfo['port']);
+    $oCmd->addParams('--dbname', $aDSNInfo['database']);
     if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCMD .= ' -h ' . escapeshellarg($aDSNInfo['hostspec']);
+        $oCmd->addParams('--host', $aDSNInfo['hostspec']);
     }
     if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCMD .= ' -U ' . escapeshellarg($aDSNInfo['username']);
+        $oCmd->addParams('--username', $aDSNInfo['username']);
     }
-    $aProcEnv = null;
-    if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-        $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    if (isset($aDSNInfo['password'])) {
+        $oCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
     }
     if (!$bVerbose) {
-        $sCMD .= ' -q';
+        $oCmd->addParams('--quiet');
     }
     if ($bfatal && !$bIgnoreErrors) {
-        $sCMD .= ' -v ON_ERROR_STOP=1';
+        $oCmd->addParams('-v', 'ON_ERROR_STOP=1');
     }
+
     $aDescriptors = array(
                      0 => array('pipe', 'r'),
                      1 => STDOUT,
                      2 => STDERR
                     );
     $ahPipes = null;
-    $hProcess = @proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
+    $hProcess = @proc_open($oCmd->escapedCmd(), $aDescriptors, $ahPipes, null, $oCmd->aEnv);
     if (!is_resource($hProcess)) {
         fail('unable to start pgsql');
     }
@@ -192,24 +194,4 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     if ($bfatal && $iReturn > 0) {
         fail("pgsql returned with error code ($iReturn)");
     }
-}
-
-
-function runWithEnv($sCmd, $aEnv)
-{
-    $aFDs = array(
-             0 => array('pipe', 'r'),
-             1 => STDOUT,
-             2 => STDERR
-            );
-    $aPipes = null;
-    $hProc = @proc_open($sCmd, $aFDs, $aPipes, null, $aEnv);
-    if (!is_resource($hProc)) {
-        fail('unable to run command:' . $sCmd);
-    }
-
-    fclose($aPipes[0]); // no stdin
-
-    $iStat = proc_close($hProc);
-    return $iStat;
 }

@@ -119,10 +119,10 @@ class ParameterParser
         return $aLangPrefOrder;
     }
 
-    public function hasSetAny($aParams)
+    public function hasSetAny($aParamNames)
     {
-        foreach ($aParams as $sParam) {
-            if ($this->getBool($sParam)) {
+        foreach ($aParamNames as $sName) {
+            if ($this->getBool($sName)) {
                 return true;
             }
         }

@@ -246,4 +246,22 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
                            'type' => 'type',
                           ), $oParams->getPreferredLanguages('default'));
     }
+
+    public function testHasSetAny()
+    {
+        $oParams = new ParameterParser(array(
+                                        'one' => '',
+                                        'two' => 0,
+                                        'three' => '0',
+                                        'four' => '1',
+                                        'five' => 'anystring'
+        ));
+        $this->assertFalse($oParams->hasSetAny(array()));
+        $this->assertFalse($oParams->hasSetAny(array('')));
+        $this->assertFalse($oParams->hasSetAny(array('unknown')));
+        $this->assertFalse($oParams->hasSetAny(array('one', 'two', 'three')));
+        $this->assertTrue($oParams->hasSetAny(array('one', 'four')));
+        $this->assertTrue($oParams->hasSetAny(array('four')));
+        $this->assertTrue($oParams->hasSetAny(array('five')));
+    }
 }

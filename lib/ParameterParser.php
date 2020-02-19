@@ -118,4 +118,15 @@ class ParameterParser
         $aLangPrefOrder['type'] = 'type';
         return $aLangPrefOrder;
     }
+
+    public function hasSetAny($aParams)
+    {
+        foreach ($aParams as $sParam) {
+            if ($this->getBool($sParam)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

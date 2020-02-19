@@ -13,6 +13,13 @@ $aCMDOptions
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
 
    array('search', '', 0, 1, 1, 1, 'string', 'Search for given term or coordinate'),
+   array('country', '', 0, 1, 1, 1, 'string', 'Structured search: country'),
+   array('state', '', 0, 1, 1, 1, 'string', 'Structured search: state'),
+   array('county', '', 0, 1, 1, 1, 'string', 'Structured search: county'),
+   array('city', '', 0, 1, 1, 1, 'string', 'Structured search: city'),
+   array('street', '', 0, 1, 1, 1, 'string', 'Structured search: street'),
+   array('amenity', '', 0, 1, 1, 1, 'string', 'Structured search: amenity'),
+   array('postalcode', '', 0, 1, 1, 1, 'string', 'Structured search: postal code'),
 
    array('accept-language', '', 0, 1, 1, 1, 'string', 'Preferred language order for showing search results'),
    array('bounded', '', 0, 1, 0, 0, 'bool', 'Restrict results to given viewbox'),
@@ -28,20 +35,37 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 $oDB = new Nominatim\DB;
 $oDB->connect();
 
+if (isset($aCMDResult['nodedupe'])) $aCMDResult['dedupe'] = 'false';
+
 $oParams = new Nominatim\ParameterParser($aCMDResult);
 
-if ($oParams->getBool('search')) {
-    if (isset($aCMDResult['nodedupe'])) $aCMDResult['dedupe'] = 'false';
+$aSearchParams = array(
+                     'search',
+                     'amenity',
+                     'street',
+                     'city',
+                     'county',
+                     'state',
+                     'country',
+                     'postalcode'
+                 );
 
-    $oGeocode = new Nominatim\Geocode($oDB);
-
-    $oGeocode->setLanguagePreference($oParams->getPreferredLanguages(false));
-    $oGeocode->loadParamArray($oParams);
-    $oGeocode->setQuery($aCMDResult['search']);
-
-    $aSearchResults = $oGeocode->lookup();
-
-    echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";
-} else {
+if (!$oParams->hasSetAny($aSearchParams)) {
     showUsage($aCMDOptions, true);
+    return 1;
 }
+
+$oGeocode = new Nominatim\Geocode($oDB);
+
+$oGeocode->setLanguagePreference($oParams->getPreferredLanguages(false));
+$oGeocode->loadParamArray($oParams);
+
+if ($oParams->getBool('search')) {
+    $oGeocode->setQuery($aCMDResult['search']);
+} else {
+    $oGeocode->setQueryFromParams($oParams);
+}
+
+$aSearchResults = $oGeocode->lookup();
+
+echo json_encode($aSearchResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n";

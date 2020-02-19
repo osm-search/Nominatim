@@ -6,6 +6,10 @@ python:
   - "3.6"
 addons:
   postgresql: "9.6"
+  apt:
+    packages:
+      postgresql-server-dev-9.6
+      postgresql-client-9.6
 git:
   depth: 3
 env:

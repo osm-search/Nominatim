@@ -841,8 +841,10 @@ BEGIN
     NEW.centroid := coalesce(location.centroid,
                              ST_Centroid(location.geometry));
 
-    -- Use the address rank of the linked place
-    NEW.rank_address := location.rank_address;
+    -- Use the address rank of the linked place, if it has one
+    IF location.rank_address between 5 and 25 THEN
+      NEW.rank_address := location.rank_address;
+    END IF;
 
     -- merge in the label name
     IF NOT location.name IS NULL THEN

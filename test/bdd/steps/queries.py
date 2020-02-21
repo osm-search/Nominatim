@@ -297,7 +297,8 @@ def query_cmd(context, query, dups):
     """
     cmd = ['/usr/bin/env', 'php']
     cmd.append(os.path.join(context.nominatim.build_dir, 'utils', 'query.php'))
-    cmd.extend(['--search', query])
+    if query:
+        cmd.extend(['--search', query])
     # add more parameters in table form
     if context.table:
         for h in context.table.headings:

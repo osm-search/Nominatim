@@ -146,7 +146,7 @@ Feature: Linking of places
     Scenario: Boundaries with place tags are linked against places with same type
         Given the places
          | osm  | class    | type           | admin | name   | extra+place | geometry |
-         | R13  | boundary | administrative | 5     | Berlin | city        |poly-area:0.1 |
+         | R13  | boundary | administrative | 4     | Berlin | city        |poly-area:0.1 |
         And the places
          | osm  | class    | type           | name   | geometry |
          | N2   | place    | city           | Berlin | 0.006 0.00001 |
@@ -157,11 +157,24 @@ Feature: Linking of places
         And placex contains
          | object | rank_address |
          | R13    | 16 |
+        When searching for ""
+         | city |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+        When searching for ""
+         | state |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+
 
     Scenario: Boundaries without place tags only link against same admin level
         Given the places
          | osm  | class    | type           | admin | name   | geometry |
-         | R13  | boundary | administrative | 5     | Berlin |poly-area:0.1 |
+         | R13  | boundary | administrative | 4     | Berlin |poly-area:0.1 |
         And the places
          | osm  | class    | type           | name   | geometry |
          | N2   | place    | city           | Berlin | 0.006 0.00001 |
@@ -171,5 +184,17 @@ Feature: Linking of places
          | N2      | -               |
         And placex contains
          | object | rank_address |
-         | R13    | 10 |
+         | R13    | 8 |
+        When searching for ""
+         | state |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+        When searching for ""
+         | city |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | N | 2 |
 

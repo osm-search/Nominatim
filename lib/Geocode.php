@@ -808,9 +808,7 @@ class Geocode
                         $sSQL .= 'WHERE place_id in ('.$sPlaceIds.') ';
                         $sSQL .= '  AND (';
                         $sSQL .= "         placex.rank_address between $this->iMinAddressRank and $this->iMaxAddressRank ";
-                        if (14 >= $this->iMinAddressRank && 14 <= $this->iMaxAddressRank) {
-                            $sSQL .= "     OR (extratags->'place') = 'city'";
-                        }
+                        $sSQL .= "         OR placex.rank_search between $this->iMinAddressRank and $this->iMaxAddressRank ";
                         if ($this->aAddressRankList) {
                             $sSQL .= '     OR placex.rank_address in ('.join(',', $this->aAddressRankList).')';
                         }

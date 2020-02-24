@@ -6,4 +6,4 @@ CREATE INDEX CONCURRENTLY idx_placex_pendingsector ON placex USING BTREE (rank_s
 CREATE INDEX CONCURRENTLY idx_location_area_country_place_id ON location_area_country USING BTREE (place_id) {ts:address-index};
 
 DROP INDEX CONCURRENTLY IF EXISTS place_id_idx;
-CREATE UNIQUE INDEX CONCURRENTLY idx_place_osm_unique on place using btree(osm_id,osm_type,class) {ts:address-index};
+CREATE UNIQUE INDEX CONCURRENTLY idx_place_osm_unique on place using btree(osm_id,osm_type,class,type) {ts:address-index};

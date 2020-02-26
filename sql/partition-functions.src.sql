@@ -1,3 +1,15 @@
+DROP TYPE IF EXISTS nearfeaturecentr CASCADE;
+CREATE TYPE nearfeaturecentr AS (
+  place_id BIGINT,
+  keywords int[],
+  rank_address smallint,
+  rank_search smallint,
+  distance float,
+  isguess boolean,
+  postcode TEXT,
+  centroid GEOMETRY
+);
+
 create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;

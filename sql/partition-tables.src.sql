@@ -1,30 +1,3 @@
-drop type if exists nearplace cascade;
-create type nearplace as (
-  place_id BIGINT
-);
-
-drop type if exists nearfeature cascade;
-create type nearfeature as (
-  place_id BIGINT,
-  keywords int[],
-  rank_address smallint,
-  rank_search smallint,
-  distance float,
-  isguess boolean
-);
-
-drop type if exists nearfeaturecentr cascade;
-create type nearfeaturecentr as (
-  place_id BIGINT,
-  keywords int[],
-  rank_address smallint,
-  rank_search smallint,
-  distance float,
-  isguess boolean,
-  postcode TEXT,
-  centroid GEOMETRY
-);
-
 drop table IF EXISTS search_name_blank CASCADE;
 CREATE TABLE search_name_blank (
   place_id BIGINT,

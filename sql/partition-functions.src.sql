@@ -39,7 +39,7 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT, in_rank_search INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
@@ -145,7 +145,7 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
 create or replace function insertSearchName(
@@ -254,7 +254,7 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION getNearestParallelRoadFeature(in_partition INTEGER,
                                                          line GEOMETRY)
@@ -298,4 +298,4 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql STABLE;

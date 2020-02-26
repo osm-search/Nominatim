@@ -135,8 +135,7 @@ BEGIN
     IF fallback THEN
       IF ST_Area(bbox) < 0.01 THEN
         -- for smaller features get the nearest road
-        SELECT place_id FROM getNearestRoadFeature(poi_partition, bbox)
-          INTO parent_place_id;
+        SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
       ELSE
         -- for larger features simply find the area with the largest rank that

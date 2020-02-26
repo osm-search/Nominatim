@@ -214,29 +214,28 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestRoadFeature(in_partition INTEGER, point GEOMETRY) RETURNS setof nearfeature AS $$
+CREATE OR REPLACE FUNCTION getNearestRoadPlaceId(in_partition INTEGER, point GEOMETRY)
+  RETURNS BIGINT
+  AS $$
 DECLARE
-  r nearfeature%rowtype;
-  search_diameter FLOAT;  
+  r RECORD;
+  search_diameter FLOAT;
 BEGIN
 
 -- start
   IF in_partition = -partition- THEN
     search_diameter := 0.00005;
     WHILE search_diameter < 0.1 LOOP
-      FOR r IN 
-        SELECT place_id, null, null, null,
-            ST_Distance(geometry, point) as distance, null as isguess
-            FROM location_road_-partition-
-            WHERE ST_DWithin(geometry, point, search_diameter) 
-        ORDER BY distance ASC limit 1
+      FOR r IN
+        SELECT place_id FROM location_road_-partition-
+          WHERE ST_DWithin(geometry, point, search_diameter)
+          ORDER BY ST_Distance(geometry, point) ASC limit 1
       LOOP
-        RETURN NEXT r;
-        RETURN;
+        RETURN r.place_id;
       END LOOP;
       search_diameter := search_diameter * 2;
     END LOOP;
-    RETURN;
+    RETURN NULL;
   END IF;
 -- end
 

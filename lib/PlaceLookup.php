@@ -27,6 +27,9 @@ class PlaceLookup
     protected $sAllowedTypesSQLList = null;
     protected $bDeDupe = true;
 
+    protected $aLicence = 'Data © OpenStreetMap contributors, ODbL 1.0.';
+    protected $aCopyright = 'https://osm.org/copyright';
+
 
     public function __construct(&$oDB)
     {
@@ -429,6 +432,28 @@ class PlaceLookup
 
         foreach ($aPlaces as &$aPlace) {
             $aPlace['importance'] = (float) $aPlace['importance'];
+
+            $licence_content = $this->oDB->getOne(
+                'SELECT licence_content FROM placex LEFT JOIN licence ON placex.licence_id = licence.licence_id where place_id = :placeid',
+                array(':placeid' => $aPlace['place_id'])
+            );
+            if (!$licence_content || !isset($licence_content)) {
+                // $aPlace['licence'] = $aPlace['licence_content'];
+                $aPlace['licence'] = ($this->aLicence);
+            } else {
+                $aPlace['licence'] = $licence_content;
+            }
+
+            $copyright_content = $this->oDB->getOne(
+                'SELECT copyright_content FROM placex LEFT JOIN copyright ON placex.copyright_id = copyright.copyright_id where place_id = :placeid',
+                array(':placeid' => $aPlace['place_id'])
+            );
+            if (!$copyright_content || !isset($copyright_content)) {
+                $aPlace['copyright'] = ($this->aCopyright);
+            } else {
+                $aPlace['copyright'] = $copyright_content;
+            }
+
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
                 $aPlace['address'] = new AddressDetails(

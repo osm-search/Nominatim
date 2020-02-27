@@ -169,6 +169,8 @@ CREATE TABLE placex (
   country_code varchar(2),
   housenumber TEXT,
   postcode TEXT,
+  licence_id bigint,
+  copyright_id bigint,
   centroid GEOMETRY(Geometry, 4326)
   ) {ts:search-data};
 CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id) {ts:search-index};
@@ -259,3 +261,16 @@ CREATE TABLE wikipedia_redirect (
 );
 ALTER TABLE ONLY wikipedia_redirect ADD CONSTRAINT wikipedia_redirect_pkey PRIMARY KEY (language, from_title);
 
+DROP TABLE IF EXISTS licence;
+CREATE TABLE licence (
+    licence_id bigint,
+    licence_content text    
+);
+GRANT SELECT ON licence TO "{www-user}";
+
+DROP TABLE IF EXISTS copyright;
+CREATE TABLE copyright (
+    copyright_id bigint,
+    copyright_content text    
+);
+GRANT SELECT ON copyright TO "{www-user}";

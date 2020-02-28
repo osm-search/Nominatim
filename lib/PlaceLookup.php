@@ -248,7 +248,7 @@ class PlaceLookup
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
-            $sSQL .= "     extratags->'place' ";
+            $sSQL .= "     extra_place ";
 
             $aSubSelects[] = $sSQL;
         }

@@ -437,7 +437,7 @@ class PlaceLookup
                 'SELECT licence_content FROM placex LEFT JOIN licence ON placex.licence_id = licence.licence_id where place_id = :placeid',
                 array(':placeid' => $aPlace['place_id'])
             );
-            if (!$licence_content || !isset($licence_content)) {               
+            if (!$licence_content || !isset($licence_content)) {
                 $aPlace['licence'] = ($this->aLicence);
             } else {
                 $aPlace['licence'] = $licence_content;

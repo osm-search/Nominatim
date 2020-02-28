@@ -6,6 +6,8 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
                'type' => 'Feature',
                'properties' => array(
                                 'place_id'=>$aPointDetails['place_id'],
+                                'licence'=>$aPointDetails['licence'],
+                                'copyright'=>$aPointDetails['copyright'],
                                )
               );
     
@@ -58,14 +60,19 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
     }
 
 
-    if (isset($aPointDetails['sExtraTags'])) $aPlace['properties']['extratags'] = $aPointDetails['sExtraTags'];
-    if (isset($aPointDetails['sNameDetails'])) $aPlace['properties']['namedetails'] = $aPointDetails['sNameDetails'];
-
+    if (isset($aPointDetails['sExtraTags'])) {
+        $aPlace['properties']['extratags'] = $aPointDetails['sExtraTags'];
+    }
+    if (isset($aPointDetails['sNameDetails'])) {
+        $aPlace['properties']['namedetails'] = $aPointDetails['sNameDetails'];
+    }
     $aFilteredPlaces[] = $aPlace;
 }
 
-javascript_renderData(array(
-                       'type' => 'FeatureCollection',
-                       'licence' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
-                       'features' => $aFilteredPlaces
-                      ));
+javascript_renderData(
+    array(
+     'type' => 'FeatureCollection',
+                    //    'licence' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
+     'features' => $aFilteredPlaces
+    )
+);

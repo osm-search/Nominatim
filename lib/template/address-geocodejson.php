@@ -5,9 +5,11 @@
 $aFilteredPlaces = array();
 
 if (empty($aPlace)) {
-    if (isset($sError))
+    if (isset($sError)) {
         $aFilteredPlaces['error'] = $sError;
-    else $aFilteredPlaces['error'] = 'Unable to geocode';
+    } else {
+        $aFilteredPlaces['error'] = 'Unable to geocode';
+    }
     javascript_renderData($aFilteredPlaces);
 } else {
     $aFilteredPlaces = array(
@@ -17,7 +19,14 @@ if (empty($aPlace)) {
                                         )
                        );
 
-    if (isset($aPlace['place_id'])) $aFilteredPlaces['properties']['geocoding']['place_id'] = $aPlace['place_id'];
+    if (isset($aPlace['place_id'])) {
+        $aFilteredPlaces['properties']['geocoding']['place_id'] = $aPlace['place_id'];
+    }
+
+    $aFilteredPlaces['properties']['geocoding']['licence'] = $aPlace['licence'];
+
+    $aFilteredPlaces['properties']['geocoding']['copyright'] = $aPlace['copyright'];
+                                 
     $sOSMType = formatOSMType($aPlace['osm_type']);
     if ($sOSMType) {
         $aFilteredPlaces['properties']['geocoding']['osm_type'] = $sOSMType;
@@ -68,14 +77,16 @@ if (empty($aPlace)) {
                                        );
     }
 
-    javascript_renderData(array(
-                           'type' => 'FeatureCollection',
-                           'geocoding' => array(
-                                           'version' => '0.1.0',
-                                           'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
-                                           'licence' => 'ODbL',
-                                           'query' => $sQuery
+    javascript_renderData(
+        array(
+         'type' => 'FeatureCollection',
+         'geocoding' => array(
+                         'version' => '0.1.0',
+                         'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
+                                        //    'licence' => 'ODbL',
+                         'query' => $sQuery
                                           ),
-                           'features' => array($aFilteredPlaces)
-                          ));
+         'features' => array($aFilteredPlaces)
+        )
+    );
 }

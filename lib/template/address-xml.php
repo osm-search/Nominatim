@@ -12,17 +12,31 @@ echo " querystring='".htmlspecialchars($_SERVER['QUERY_STRING'], ENT_QUOTES)."'"
 echo ">\n";
 
 if (empty($aPlace)) {
-    if (isset($sError))
+    if (isset($sError)) {
         echo "<error>$sError</error>";
-    else echo '<error>Unable to geocode</error>';
+    } else {
+        echo '<error>Unable to geocode</error>';
+    }
 } else {
     echo '<result';
-    if ($aPlace['place_id']) echo ' place_id="'.$aPlace['place_id'].'"';
+    if ($aPlace['place_id']) {
+        echo ' place_id="'.$aPlace['place_id'].'"';
+    }
+    echo ' licence="'.$aPlace['licence'].'"';
+    echo ' copyright="'.$aPlace['copyright'].'"';
     $sOSMType = formatOSMType($aPlace['osm_type']);
-    if ($sOSMType) echo ' osm_type="'.$sOSMType.'"'.' osm_id="'.$aPlace['osm_id'].'"';
-    if ($aPlace['ref']) echo ' ref="'.htmlspecialchars($aPlace['ref']).'"';
-    if (isset($aPlace['lat'])) echo ' lat="'.htmlspecialchars($aPlace['lat']).'"';
-    if (isset($aPlace['lon'])) echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
+    if ($sOSMType) {
+        echo ' osm_type="'.$sOSMType.'"'.' osm_id="'.$aPlace['osm_id'].'"';
+    }
+    if ($aPlace['ref']) {
+        echo ' ref="'.htmlspecialchars($aPlace['ref']).'"';
+    }
+    if (isset($aPlace['lat'])) {
+        echo ' lat="'.htmlspecialchars($aPlace['lat']).'"';
+    }
+    if (isset($aPlace['lon'])) {
+        echo ' lon="'.htmlspecialchars($aPlace['lon']).'"';
+    }
     if (isset($aPlace['aBoundingBox'])) {
         echo ' boundingbox="';
         echo join(',', $aPlace['aBoundingBox']);

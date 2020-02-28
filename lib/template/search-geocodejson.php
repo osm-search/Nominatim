@@ -9,7 +9,14 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
                                )
               );
 
-    if (isset($aPointDetails['place_id'])) $aPlace['properties']['geocoding']['place_id'] = $aPointDetails['place_id'];
+    if (isset($aPointDetails['place_id'])) {
+        $aPlace['properties']['geocoding']['place_id'] = $aPointDetails['place_id'];
+    }
+
+    $aPlace['properties']['geocoding']['licence'] = $aPointDetails['licence'];
+
+    $aPlace['properties']['geocoding']['copyright'] = $aPointDetails['copyright'];
+    
     $sOSMType = formatOSMType($aPointDetails['osm_type']);
     if ($sOSMType) {
         $aPlace['properties']['geocoding']['osm_type'] = $sOSMType;
@@ -61,13 +68,15 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
 }
 
 
-javascript_renderData(array(
-                       'type' => 'FeatureCollection',
-                       'geocoding' => array(
-                                       'version' => '0.1.0',
-                                       'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
-                                       'licence' => 'ODbL',
-                                       'query' => $sQuery
+javascript_renderData(
+    array(
+     'type' => 'FeatureCollection',
+     'geocoding' => array(
+                     'version' => '0.1.0',
+                     'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
+                                    //    'licence' => 'ODbL',
+                     'query' => $sQuery
                                       ),
-                       'features' => $aFilteredPlaces
-                      ));
+     'features' => $aFilteredPlaces
+    )
+);

@@ -1,15 +1,19 @@
 <?php
 
 $aOutput = array();
-$aOutput['licence'] = 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright';
+// $aOutput['licence'] = 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright';
 $aOutput['batch'] = array();
 
 foreach ($aBatchResults as $aSearchResults) {
-    if (!$aSearchResults) $aSearchResults = array();
+    if (!$aSearchResults) {
+        $aSearchResults = array();
+    }
     $aFilteredPlaces = array();
     foreach ($aSearchResults as $iResNum => $aPointDetails) {
         $aPlace = array(
                    'place_id'=>$aPointDetails['place_id'],
+                   'licence'=>$aPointDetails['licence'],
+                   'copyright'=>$aPointDetails['copyright'],
                   );
 
         $sOSMType = formatOSMType($aPointDetails['osm_type']);

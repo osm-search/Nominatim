@@ -3,9 +3,11 @@
 $aFilteredPlaces = array();
 
 if (empty($aPlace)) {
-    if (isset($sError))
+    if (isset($sError)) {
         $aFilteredPlaces['error'] = $sError;
-    else $aFilteredPlaces['error'] = 'Unable to geocode';
+    } else {
+        $aFilteredPlaces['error'] = 'Unable to geocode';
+    }
     javascript_renderData($aFilteredPlaces);
 } else {
     $aFilteredPlaces = array(
@@ -13,7 +15,14 @@ if (empty($aPlace)) {
                         'properties' => array()
                        );
 
-    if (isset($aPlace['place_id'])) $aFilteredPlaces['properties']['place_id'] = $aPlace['place_id'];
+    if (isset($aPlace['place_id'])) {
+        $aFilteredPlaces['properties']['place_id'] = $aPlace['place_id'];
+    }
+
+    $aFilteredPlaces['properties']['licence'] = $aPlace['licence'];
+
+    $aFilteredPlaces['properties']['copyright'] = $aPlace['copyright'];
+ 
     $sOSMType = formatOSMType($aPlace['osm_type']);
     if ($sOSMType) {
         $aFilteredPlaces['properties']['osm_type'] = $sOSMType;
@@ -36,8 +45,12 @@ if (empty($aPlace)) {
     if (isset($aPlace['address'])) {
         $aFilteredPlaces['properties']['address'] = $aPlace['address']->getAddressNames();
     }
-    if (isset($aPlace['sExtraTags'])) $aFilteredPlaces['properties']['extratags'] = $aPlace['sExtraTags'];
-    if (isset($aPlace['sNameDetails'])) $aFilteredPlaces['properties']['namedetails'] = $aPlace['sNameDetails'];
+    if (isset($aPlace['sExtraTags'])) {
+        $aFilteredPlaces['properties']['extratags'] = $aPlace['sExtraTags'];
+    }
+    if (isset($aPlace['sNameDetails'])) {
+        $aFilteredPlaces['properties']['namedetails'] = $aPlace['sNameDetails'];
+    }
 
     if (isset($aPlace['aBoundingBox'])) {
         $aFilteredPlaces['bbox'] = array(
@@ -61,9 +74,11 @@ if (empty($aPlace)) {
     }
 
 
-    javascript_renderData(array(
-                           'type' => 'FeatureCollection',
-                           'licence' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
-                           'features' => array($aFilteredPlaces)
-                          ));
+    javascript_renderData(
+        array(
+         'type' => 'FeatureCollection',
+                        //    'licence' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
+         'features' => array($aFilteredPlaces)
+        )
+    );
 }

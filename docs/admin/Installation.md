@@ -35,14 +35,18 @@ For compiling:
 
 For running Nominatim:
 
-  * [PostgreSQL](https://www.postgresql.org) (9.3 or later)
-  * [PostGIS](https://postgis.org) (2.2 or later)
+  * [PostgreSQL](https://www.postgresql.org) (9.3 - 11)
+  * [PostGIS](https://postgis.org) (2.2 - 2.5)
   * [Python 3](https://www.python.org/)
   * [Psycopg2](https://initd.org/psycopg)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
   * a webserver (apache or nginx are recommended)
+
+!!! danger "Important"
+    Postgresql 12+ and Postgis 3.0+ are known to cause performance issues. They are
+    not recommended for a production installation at the moment.
 
 For running continuous updates:
 

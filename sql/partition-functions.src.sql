@@ -1,3 +1,15 @@
+DROP TYPE IF EXISTS nearfeaturecentr CASCADE;
+CREATE TYPE nearfeaturecentr AS (
+  place_id BIGINT,
+  keywords int[],
+  rank_address smallint,
+  rank_search smallint,
+  distance float,
+  isguess boolean,
+  postcode TEXT,
+  centroid GEOMETRY
+);
+
 create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
@@ -27,7 +39,7 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT, in_rank_search INTEGER) RETURNS BOOLEAN AS $$
 DECLARE
@@ -133,7 +145,7 @@ BEGIN
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
 create or replace function insertSearchName(
@@ -214,48 +226,50 @@ END
 $$
 LANGUAGE plpgsql;
 
-create or replace function getNearestRoadFeature(in_partition INTEGER, point GEOMETRY) RETURNS setof nearfeature AS $$
+CREATE OR REPLACE FUNCTION getNearestRoadPlaceId(in_partition INTEGER, point GEOMETRY)
+  RETURNS BIGINT
+  AS $$
 DECLARE
-  r nearfeature%rowtype;
-  search_diameter FLOAT;  
+  r RECORD;
+  search_diameter FLOAT;
 BEGIN
 
 -- start
   IF in_partition = -partition- THEN
     search_diameter := 0.00005;
     WHILE search_diameter < 0.1 LOOP
-      FOR r IN 
-        SELECT place_id, null, null, null,
-            ST_Distance(geometry, point) as distance, null as isguess
-            FROM location_road_-partition-
-            WHERE ST_DWithin(geometry, point, search_diameter) 
-        ORDER BY distance ASC limit 1
+      FOR r IN
+        SELECT place_id FROM location_road_-partition-
+          WHERE ST_DWithin(geometry, point, search_diameter)
+          ORDER BY ST_Distance(geometry, point) ASC limit 1
       LOOP
-        RETURN NEXT r;
-        RETURN;
+        RETURN r.place_id;
       END LOOP;
       search_diameter := search_diameter * 2;
     END LOOP;
-    RETURN;
+    RETURN NULL;
   END IF;
 -- end
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
-create or replace function getNearestParellelRoadFeature(in_partition INTEGER, line GEOMETRY) RETURNS setof nearfeature AS $$
+CREATE OR REPLACE FUNCTION getNearestParallelRoadFeature(in_partition INTEGER,
+                                                         line GEOMETRY)
+  RETURNS BIGINT
+  AS $$
 DECLARE
-  r nearfeature%rowtype;
-  search_diameter FLOAT;  
+  r RECORD;
+  search_diameter FLOAT;
   p1 GEOMETRY;
   p2 GEOMETRY;
   p3 GEOMETRY;
 BEGIN
 
-  IF st_geometrytype(line) not in ('ST_LineString') THEN
-    RETURN;
+  IF ST_GeometryType(line) not in ('ST_LineString') THEN
+    RETURN NULL;
   END IF;
 
   p1 := ST_LineInterpolatePoint(line,0);
@@ -266,25 +280,22 @@ BEGIN
   IF in_partition = -partition- THEN
     search_diameter := 0.0005;
     WHILE search_diameter < 0.01 LOOP
-      FOR r IN 
-        SELECT place_id, null, null, null,
-            ST_Distance(geometry, line) as distance, null as isguess
-            FROM location_road_-partition-
-            WHERE ST_DWithin(line, geometry, search_diameter)
-            ORDER BY (ST_distance(geometry, p1)+
-                      ST_distance(geometry, p2)+
-                      ST_distance(geometry, p3)) ASC limit 1
+      FOR r IN
+        SELECT place_id FROM location_road_-partition-
+          WHERE ST_DWithin(line, geometry, search_diameter)
+          ORDER BY (ST_distance(geometry, p1)+
+                    ST_distance(geometry, p2)+
+                    ST_distance(geometry, p3)) ASC limit 1
       LOOP
-        RETURN NEXT r;
-        RETURN;
+        RETURN r.place_id;
       END LOOP;
       search_diameter := search_diameter * 2;
     END LOOP;
-    RETURN;
+    RETURN NULL;
   END IF;
 -- end
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;

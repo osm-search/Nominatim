@@ -28,8 +28,8 @@ BEGIN
   END IF;
 
   IF out_parent_place_id IS NULL THEN
-    FOR location IN SELECT place_id FROM getNearestRoadFeature(out_partition, place_centroid) LOOP
-      out_parent_place_id := location.place_id;
+    SELECT getNearestRoadPlaceId(out_partition, place_centroid)
+      INTO out_parent_place_id;
     END LOOP;
   END IF;
 

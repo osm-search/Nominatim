@@ -135,8 +135,7 @@ BEGIN
     IF fallback THEN
       IF ST_Area(bbox) < 0.01 THEN
         -- for smaller features get the nearest road
-        SELECT place_id FROM getNearestRoadFeature(poi_partition, bbox)
-          INTO parent_place_id;
+        SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
       ELSE
         -- for larger features simply find the area with the largest rank that
@@ -252,11 +251,172 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+
+-- Insert address of a place into the place_addressline table.
+--
+-- \param obj_place_id  Place_id of the place to compute the address for.
+-- \param partition     Partition number where the place is in.
+-- \param maxrank       Rank of the place. All address features must have
+--                      a search rank lower than the given rank.
+-- \param address       Address terms for the place.
+-- \param geoemtry      Geometry to which the address objects should be close.
+--
+-- \retval parent_place_id  Place_id of the address object that is the direct
+--                          ancestor.
+-- \retval postcode         Postcode computed from the address. This is the
+--                          addr:postcode of one of the address objects. If
+--                          more than one of has a postcode, the highest ranking
+--                          one is used. May be NULL.
+-- \retval nameaddress_vector  Search terms for the address. This is the sum
+--                             of name terms of all address objects.
+CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
+                                               partition SMALLINT,
+                                               maxrank SMALLINT,
+                                               address HSTORE,
+                                               geometry GEOMETRY,
+                                               OUT parent_place_id BIGINT,
+                                               OUT postcode TEXT,
+                                               OUT nameaddress_vector INT[])
+  AS $$
+DECLARE
+  current_rank_address INTEGER := 0;
+  location_distance FLOAT := 0;
+  location_parent GEOMETRY := NULL;
+  parent_place_id_rank SMALLINT := 0;
+
+  location_isaddress BOOLEAN;
+
+  address_havelevel BOOLEAN[];
+  location_keywords INT[];
+
+  location RECORD;
+  addr_item RECORD;
+
+  isin_tokens INT[];
+  isin TEXT[];
+BEGIN
+  parent_place_id := 0;
+  nameaddress_vector := '{}'::int[];
+  isin_tokens := '{}'::int[];
+
+  ---- convert address store to array of tokenids
+  IF address IS NOT NULL THEN
+    FOR addr_item IN SELECT * FROM each(address)
+    LOOP
+      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
+                           'district', 'region', 'county', 'municipality',
+                           'hamlet', 'village', 'subdistrict', 'town',
+                           'neighbourhood', 'quarter', 'parish')
+      THEN
+        isin_tokens := array_merge(isin_tokens,
+                                   word_ids_from_name(addr_item.value));
+        IF NOT %REVERSE-ONLY% THEN
+          nameaddress_vector := array_merge(nameaddress_vector,
+                                            addr_ids_from_name(addr_item.value));
+        END IF;
+      END IF;
+    END LOOP;
+
+    IF address ? 'is_in' THEN
+      -- is_in items need splitting
+      isin := regexp_split_to_array(address->'is_in', E'[;,]');
+      IF array_upper(isin, 1) IS NOT NULL THEN
+        FOR i IN 1..array_upper(isin, 1) LOOP
+          isin_tokens := array_merge(isin_tokens,
+                                     word_ids_from_name(isin[i]));
+
+          -- merge word into address vector
+          IF NOT %REVERSE-ONLY% THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              addr_ids_from_name(isin[i]));
+          END IF;
+        END LOOP;
+      END IF;
+    END IF;
+  END IF;
+  IF NOT %REVERSE-ONLY% THEN
+    nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
+  END IF;
+
+  ---- now compute the address terms
+  FOR i IN 1..28 LOOP
+    address_havelevel[i] := false;
+  END LOOP;
+
+  FOR location IN
+    SELECT * FROM getNearFeatures(partition, geometry, maxrank, isin_tokens)
+  LOOP
+    IF location.rank_address != current_rank_address THEN
+      current_rank_address := location.rank_address;
+      IF location.isguess THEN
+        location_distance := location.distance * 1.5;
+      ELSE
+        IF location.rank_address <= 12 THEN
+          -- for county and above, if we have an area consider that exact
+          -- (It would be nice to relax the constraint for places close to
+          --  the boundary but we'd need the exact geometry for that. Too
+          --  expensive.)
+          location_distance = 0;
+        ELSE
+          -- Below county level remain slightly fuzzy.
+          location_distance := location.distance * 0.5;
+        END IF;
+      END IF;
+    ELSE
+      CONTINUE WHEN location.keywords <@ location_keywords;
+    END IF;
+
+    IF location.distance < location_distance OR NOT location.isguess THEN
+      location_keywords := location.keywords;
+
+      location_isaddress := NOT address_havelevel[location.rank_address];
+      IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
+          location_isaddress := ST_Contains(location_parent, location.centroid);
+      END IF;
+
+      -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
+      -- Add it to the list of search terms
+      IF NOT %REVERSE-ONLY% THEN
+          nameaddress_vector := array_merge(nameaddress_vector,
+                                            location.keywords::integer[]);
+      END IF;
+
+      INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                     isaddress, distance, cached_rank_address)
+        VALUES (obj_place_id, location.place_id, true,
+                location_isaddress, location.distance, location.rank_address);
+
+      IF location_isaddress THEN
+        -- add postcode if we have one
+        -- (If multiple postcodes are available, we end up with the highest ranking one.)
+        IF location.postcode is not null THEN
+            postcode = location.postcode;
+        END IF;
+
+        address_havelevel[location.rank_address] := true;
+        IF NOT location.isguess THEN
+          SELECT placex.geometry FROM placex
+            WHERE obj_place_id = location.place_id INTO location_parent;
+        END IF;
+
+        IF location.rank_address > parent_place_id_rank THEN
+          parent_place_id = location.place_id;
+          parent_place_id_rank = location.rank_address;
+        END IF;
+      END IF;
+    --DEBUG: RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
+    END IF;
+
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
+
 CREATE OR REPLACE FUNCTION placex_insert()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  i INTEGER;
   postcode TEXT;
   result BOOLEAN;
   is_area BOOLEAN;
@@ -428,32 +588,12 @@ CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
   AS $$
 DECLARE
-  search_maxdistance FLOAT[];
-  search_mindistance FLOAT[];
-  address_havelevel BOOLEAN[];
-
   i INTEGER;
   location RECORD;
   relation_members TEXT[];
-  addr_item RECORD;
-  search_diameter FLOAT;
-  search_prevdiameter FLOAT;
-  search_maxrank INTEGER;
-  address_maxrank INTEGER;
-  address_street_word_ids INTEGER[];
-  parent_place_id_rank BIGINT;
 
   addr_street TEXT;
   addr_place TEXT;
-
-  isin TEXT[];
-  isin_tokens INT[];
-
-  location_rank_search INTEGER;
-  location_distance FLOAT;
-  location_parent GEOMETRY;
-  location_isaddress BOOLEAN;
-  location_keywords INTEGER[];
 
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
@@ -711,13 +851,9 @@ BEGIN
     END IF;
   END IF;
 
-  -- What level are we searching from
-  search_maxrank := NEW.rank_search;
-
   -- Initialise the name vector using our name
   NEW.name := add_default_place_name(NEW.country_code, NEW.name);
   name_vector := make_keywords(NEW.name);
-  nameaddress_vector := '{}'::int[];
 
   -- make sure all names are in the word table
   IF NEW.admin_level = 2
@@ -728,142 +864,14 @@ BEGIN
     --DEBUG: RAISE WARNING 'Country names updated';
   END IF;
 
-  FOR i IN 1..28 LOOP
-    address_havelevel[i] := false;
-  END LOOP;
-
-  NEW.parent_place_id = 0;
-  parent_place_id_rank = 0;
-
-
-  -- convert address store to array of tokenids
-  --DEBUG: RAISE WARNING 'Starting address search';
-  isin_tokens := '{}'::int[];
-  IF NEW.address IS NOT NULL THEN
-    FOR addr_item IN SELECT * FROM each(NEW.address)
-    LOOP
-      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
-                           'district', 'region', 'county', 'municipality',
-                           'hamlet', 'village', 'subdistrict', 'town',
-                           'neighbourhood', 'quarter', 'parish')
-      THEN
-        address_street_word_ids := word_ids_from_name(addr_item.value);
-        IF address_street_word_ids is not null THEN
-          isin_tokens := array_merge(isin_tokens, address_street_word_ids);
-        END IF;
-        IF NOT %REVERSE-ONLY% THEN
-          address_street_word_ids := addr_ids_from_name(addr_item.value);
-          IF address_street_word_ids is not null THEN
-            nameaddress_vector := array_merge(nameaddress_vector,
-                                              address_street_word_ids);
-          END IF;
-        END IF;
-      END IF;
-      IF addr_item.key = 'is_in' THEN
-        -- is_in items need splitting
-        isin := regexp_split_to_array(addr_item.value, E'[;,]');
-        IF array_upper(isin, 1) IS NOT NULL THEN
-          FOR i IN 1..array_upper(isin, 1) LOOP
-            address_street_word_ids := word_ids_from_name(isin[i]);
-            IF address_street_word_ids is not null THEN
-              isin_tokens := array_merge(isin_tokens, address_street_word_ids);
-            END IF;
-
-            -- merge word into address vector
-            IF NOT %REVERSE-ONLY% THEN
-              address_street_word_ids := addr_ids_from_name(isin[i]);
-              IF address_street_word_ids is not null THEN
-                nameaddress_vector := array_merge(nameaddress_vector,
-                                                  address_street_word_ids);
-              END IF;
-            END IF;
-          END LOOP;
-        END IF;
-      END IF;
-    END LOOP;
-  END IF;
-  IF NOT %REVERSE-ONLY% THEN
-    nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
-  END IF;
-
--- RAISE WARNING 'ISIN: %', isin_tokens;
-
-  -- Process area matches
-  location_rank_search := 0;
-  location_distance := 0;
-  location_parent := NULL;
-  -- added ourself as address already
-  address_havelevel[NEW.rank_address] := true;
-  --DEBUG: RAISE WARNING '  getNearFeatures(%,''%'',%,''%'')',NEW.partition, NEW.centroid, search_maxrank, isin_tokens;
-  FOR location IN
-    SELECT * from getNearFeatures(NEW.partition,
-                                  CASE WHEN NEW.rank_search >= 26
+  SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
+                                    NEW.rank_search, NEW.address,
+                                    CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
-                                       THEN NEW.geometry
-                                       ELSE NEW.centroid END,
-                                  search_maxrank, isin_tokens)
-  LOOP
-    IF location.rank_address != location_rank_search THEN
-      location_rank_search := location.rank_address;
-      IF location.isguess THEN
-        location_distance := location.distance * 1.5;
-      ELSE
-        IF location.rank_address <= 12 THEN
-          -- for county and above, if we have an area consider that exact
-          -- (It would be nice to relax the constraint for places close to
-          --  the boundary but we'd need the exact geometry for that. Too
-          --  expensive.)
-          location_distance = 0;
-        ELSE
-          -- Below county level remain slightly fuzzy.
-          location_distance := location.distance * 0.5;
-        END IF;
-      END IF;
-    ELSE
-      CONTINUE WHEN location.keywords <@ location_keywords;
-    END IF;
+                                      THEN NEW.geometry ELSE NEW.centroid END)
+    INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
-    IF location.distance < location_distance OR NOT location.isguess THEN
-      location_keywords := location.keywords;
-
-      location_isaddress := NOT address_havelevel[location.rank_address];
-      IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
-          location_isaddress := ST_Contains(location_parent,location.centroid);
-      END IF;
-
-      -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
-      -- Add it to the list of search terms
-      IF NOT %REVERSE-ONLY% THEN
-          nameaddress_vector := array_merge(nameaddress_vector, location.keywords::integer[]);
-      END IF;
-      INSERT INTO place_addressline (place_id, address_place_id, fromarea, isaddress, distance, cached_rank_address)
-        VALUES (NEW.place_id, location.place_id, true, location_isaddress, location.distance, location.rank_address);
-
-      IF location_isaddress THEN
-        -- add postcode if we have one
-        -- (If multiple postcodes are available, we end up with the highest ranking one.)
-        IF location.postcode is not null THEN
-            NEW.postcode = location.postcode;
-        END IF;
-
-        address_havelevel[location.rank_address] := true;
-        IF NOT location.isguess THEN
-          SELECT geometry FROM placex WHERE place_id = location.place_id INTO location_parent;
-        END IF;
-
-        IF location.rank_address > parent_place_id_rank THEN
-          NEW.parent_place_id = location.place_id;
-          parent_place_id_rank = location.rank_address;
-        END IF;
-
-      END IF;
-
-    --DEBUG: RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
-
-    END IF;
-
-  END LOOP;
-  --DEBUG: RAISE WARNING 'address computed';
+  --DEBUG: RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   IF NEW.address is not null AND NEW.address ? 'postcode' 
      AND NEW.address->'postcode' not similar to '%(,|;)%' THEN

@@ -197,10 +197,18 @@ def assert_db_column(row, column, value, context):
         return
 
     if column.startswith('centroid'):
-        fac = float(column[9:]) if column.startswith('centroid*') else 1.0
-        x, y = value.split(' ')
-        assert_almost_equal(float(x) * fac, row['cx'], "Bad x coordinate")
-        assert_almost_equal(float(y) * fac, row['cy'], "Bad y coordinate")
+        if value == 'in geometry':
+            query = """SELECT ST_Within(ST_SetSRID(ST_Point({}, {}), 4326),
+                                        ST_SetSRID('{}'::geometry, 4326))""".format(
+                      row['cx'], row['cy'], row['geomtxt'])
+            cur = context.db.cursor()
+            cur.execute(query)
+            eq_(cur.fetchone()[0], True, "(Row %s failed: %s)" % (column, query))
+        else:
+            fac = float(column[9:]) if column.startswith('centroid*') else 1.0
+            x, y = value.split(' ')
+            assert_almost_equal(float(x) * fac, row['cx'], msg="Bad x coordinate")
+            assert_almost_equal(float(y) * fac, row['cy'], msg="Bad y coordinate")
     elif column == 'geometry':
         geom = context.osm.parse_geometry(value, context.scene)
         cur = context.db.cursor()

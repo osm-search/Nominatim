@@ -198,3 +198,21 @@ Feature: Linking of places
           | ID | osm_type | osm_id |
           |  0 | N | 2 |
 
+    # github #1352
+    Scenario: Do not use linked centroid when it is outside the area
+        Given the named places
+         | osm  | class    | type           | admin | geometry |
+         | R13  | boundary | administrative | 4     | poly-area:0.01 |
+        And the named places
+         | osm  | class    | type           | geometry |
+         | N2   | place    | city           | 0.1 0.1 |
+        And the relations
+         | id | members       | tags+type |
+         | 13 | N2:label      | boundary |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | N2     | R13             |
+        And placex contains
+         | object | centroid |
+         | R13    | in geometry  |

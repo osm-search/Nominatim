@@ -77,3 +77,36 @@ Feature: Creation of search terms
          | object | nameaddress_vector |
          | W1     | bonn, new york, smalltown |
 
+    Scenario: a linked place does not show up in search name
+        Given the named places
+         | osm  | class    | type           | admin | geometry |
+         | R13  | boundary | administrative | 9     | poly-area:0.01 |
+        And the named places
+         | osm  | class    | type           | geometry |
+         | N2   | place    | city           | 0.1 0.1 |
+        And the relations
+         | id | members       | tags+type |
+         | 13 | N2:label      | boundary |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | N2     | R13             |
+        And search_name has no entry for N2
+
+    Scenario: a linked waterway does not show up in search name
+        Given the scene split-road
+        And the places
+         | osm | class    | type  | name  | geometry |
+         | W1  | waterway | river | Rhein | :w-2 |
+         | W2  | waterway | river | Rhein | :w-3 |
+         | R13 | waterway | river | Rhein | :w-1 + :w-2 + :w-3 |
+        And the relations
+         | id | members            | tags+type |
+         | 13 | W1,W2:main_stream  | waterway |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | W1     | R13 |
+         | W2     | R13 |
+        And search_name has no entry for W1
+        And search_name has no entry for W2

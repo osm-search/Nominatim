@@ -723,6 +723,7 @@ BEGIN
                   and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
+                  DELETE FROM search_name WHERE place_id = linked_node_id;
                 END LOOP;
               END IF;
           END LOOP;
@@ -864,6 +865,8 @@ BEGIN
     -- mark the linked place (excludes from search results)
     UPDATE placex set linked_place_id = NEW.place_id
       WHERE place_id = location.place_id;
+    -- ensure that those places are not found anymore
+    DELETE FROM search_name WHERE place_id = location.place_id;
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,

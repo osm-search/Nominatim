@@ -609,6 +609,8 @@ DECLARE
   location RECORD;
   relation_members TEXT[];
 
+  centroid GEOMETRY;
+
   addr_street TEXT;
   addr_place TEXT;
 
@@ -683,9 +685,9 @@ BEGIN
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
-  -- For searching near features rather use the centroid
-  NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
+
+  NEW.postcode := null;
 
   -- recalculate country and partition
   IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN
@@ -837,9 +839,12 @@ BEGIN
   IF location.place_id is not null THEN
     --DEBUG: RAISE WARNING 'Linked %', location;
 
-    -- Use this as the centre point of the geometry
-    NEW.centroid := coalesce(location.centroid,
-                             ST_Centroid(location.geometry));
+    -- Use the linked point as the centre point of the geometry,
+    -- but only if it is within the area of the boundary.
+    centroid := coalesce(location.centroid, ST_Centroid(location.geometry));
+    IF centroid is not NULL AND ST_Within(centroid, NEW.geometry) THEN
+        NEW.centroid := centroid;
+    END IF;
 
     -- Use the address rank of the linked place, if it has one
     IF location.rank_address between 5 and 25 THEN

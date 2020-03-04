@@ -125,11 +125,11 @@ Feature: Updates of linked places
         When importing
         Then placex contains
          | object | extratags |
-         | R1     | 'wikidata' : '34', 'place' : 'city' |
+         | R1     | 'wikidata' : '34', 'linked_place' : 'city' |
         When updating places
          | osm | class    | type        | name    | extra+oneway | admin | geometry |
          | N3  | place    | city        | newname | yes          | 30    | 0.00001 0 |
         Then placex contains
          | object | extratags |
-         | R1     | 'wikidata' : '34', 'oneway' : 'yes', 'place' : 'city' |
+         | R1     | 'wikidata' : '34', 'oneway' : 'yes', 'linked_place' : 'city' |
 

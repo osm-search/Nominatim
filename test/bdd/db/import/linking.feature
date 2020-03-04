@@ -127,3 +127,74 @@ Feature: Linking of places
          | N3:natural | -               |
          | N3:place   | R1              |
 
+    Scenario: Nodes with 'role' label are always linked
+        Given the places
+         | osm  | class    | type           | admin | name  | geometry |
+         | R13  | boundary | administrative | 6     | Garbo | poly-area:0.1 |
+         | N2   | place    | hamlet         | 15    | Vario | 0.006 0.00001 |
+        And the relations
+         | id | members       | tags+type |
+         | 13 | N2:label      | boundary |
+        When importing
+        Then placex contains
+         | object  | linked_place_id |
+         | N2      | R13 |
+        And placex contains
+         | object | centroid      | name+name | extratags+linked_place |
+         | R13    | 0.006 0.00001 | Garbo     | hamlet |
+
+    Scenario: Boundaries with place tags are linked against places with same type
+        Given the places
+         | osm  | class    | type           | admin | name   | extra+place | geometry |
+         | R13  | boundary | administrative | 4     | Berlin | city        |poly-area:0.1 |
+        And the places
+         | osm  | class    | type           | name   | geometry |
+         | N2   | place    | city           | Berlin | 0.006 0.00001 |
+        When importing
+        Then placex contains
+         | object  | linked_place_id |
+         | N2      | R13             |
+        And placex contains
+         | object | rank_address |
+         | R13    | 16 |
+        When searching for ""
+         | city |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+        When searching for ""
+         | state |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+
+
+    Scenario: Boundaries without place tags only link against same admin level
+        Given the places
+         | osm  | class    | type           | admin | name   | geometry |
+         | R13  | boundary | administrative | 4     | Berlin |poly-area:0.1 |
+        And the places
+         | osm  | class    | type           | name   | geometry |
+         | N2   | place    | city           | Berlin | 0.006 0.00001 |
+        When importing
+        Then placex contains
+         | object  | linked_place_id |
+         | N2      | -               |
+        And placex contains
+         | object | rank_address |
+         | R13    | 8 |
+        When searching for ""
+         | state |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | R | 13 |
+        When searching for ""
+         | city |
+         | Berlin |
+        Then results contain
+          | ID | osm_type | osm_id |
+          |  0 | N | 2 |
+

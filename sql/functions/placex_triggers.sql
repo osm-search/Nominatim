@@ -204,9 +204,26 @@ BEGIN
     END IF;
   END IF;
 
+  -- If extratags has a place tag, look for linked nodes by their place type.
+  -- Area and node still have to have the same name.
+  IF bnd.extratags ? 'place' and bnd_name is not null THEN
+    FOR linked_placex IN
+      SELECT * FROM placex
+      WHERE make_standard_name(name->'name') = bnd_name
+        AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
+        AND placex.osm_type = 'N'
+        AND placex.rank_search < 26 -- needed to select the right index
+        AND _st_covers(bnd.geometry, placex.geometry)
+    LOOP
+      --DEBUG: RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
   -- Search for relation members with role admin_center.
   IF bnd.osm_type = 'R' and bnd_name is not null
-     and relation_members is not null THEN
+     and relation_members is not null
+  THEN
     FOR rel_member IN
       SELECT get_rel_node_members(relation_members,
                                 ARRAY['admin_center','admin_centre']) as member
@@ -231,7 +248,7 @@ BEGIN
   END IF;
 
   -- Name searches can be done for ways as well as relations
-  IF bnd.osm_type in ('W','R') and bnd_name is not null THEN
+  IF bnd_name is not null THEN
     --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
     FOR linked_placex IN
       SELECT placex.* from placex
@@ -241,7 +258,7 @@ BEGIN
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
-      --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
+      --DEBUG: RAISE WARNING 'Found matching place node %', linked_placex.osm_id;
       RETURN linked_placex;
     END LOOP;
   END IF;
@@ -818,11 +835,16 @@ BEGIN
   --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
   SELECT * INTO location FROM find_linked_place(NEW);
   IF location.place_id is not null THEN
-      --DEBUG: RAISE WARNING 'Linked %', location;
+    --DEBUG: RAISE WARNING 'Linked %', location;
 
     -- Use this as the centre point of the geometry
     NEW.centroid := coalesce(location.centroid,
                              ST_Centroid(location.geometry));
+
+    -- Use the address rank of the linked place, if it has one
+    IF location.rank_address between 5 and 25 THEN
+      NEW.rank_address := location.rank_address;
+    END IF;
 
     -- merge in the label name
     IF NOT location.name IS NULL THEN
@@ -830,7 +852,7 @@ BEGIN
     END IF;
 
     -- merge in extra tags
-    NEW.extratags := hstore(location.class, location.type)
+    NEW.extratags := hstore('linked_' || location.class, location.type)
                      || coalesce(location.extratags, ''::hstore)
                      || coalesce(NEW.extratags, ''::hstore);
 

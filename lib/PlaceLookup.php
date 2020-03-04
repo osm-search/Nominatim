@@ -215,7 +215,7 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    (extratags->'place') AS extra_place ";
+            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -248,7 +248,7 @@ class PlaceLookup
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
-            $sSQL .= "     extratags->'place' ";
+            $sSQL .= '     extra_place ';
 
             $aSubSelects[] = $sSQL;
         }

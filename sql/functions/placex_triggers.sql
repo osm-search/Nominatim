@@ -387,11 +387,12 @@ BEGIN
       location_keywords := location.keywords;
 
       location_isaddress := NOT address_havelevel[location.rank_address];
+      --DEBUG: RAISE WARNING 'should be address: %, is guess: %, rank: %', location_isaddress, location.isguess, location.rank_address;
       IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
           location_isaddress := ST_Contains(location_parent, location.centroid);
       END IF;
 
-      -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
+      --DEBUG: RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
       -- Add it to the list of search terms
       IF NOT %REVERSE-ONLY% THEN
           nameaddress_vector := array_merge(nameaddress_vector,
@@ -411,9 +412,12 @@ BEGIN
         END IF;
 
         address_havelevel[location.rank_address] := true;
-        IF NOT location.isguess THEN
-          SELECT placex.geometry FROM placex
-            WHERE obj_place_id = location.place_id INTO location_parent;
+        -- add a hack against postcode ranks
+        IF NOT location.isguess
+           AND location.rank_address != 11 AND location.rank_address != 5
+        THEN
+          SELECT p.geometry FROM placex p
+            WHERE p.place_id = location.place_id INTO location_parent;
         END IF;
 
         IF location.rank_address > parent_place_id_rank THEN
@@ -421,7 +425,6 @@ BEGIN
           parent_place_id_rank = location.rank_address;
         END IF;
       END IF;
-    --DEBUG: RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
     END IF;
 
   END LOOP;

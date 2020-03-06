@@ -417,8 +417,10 @@ class SetupFunctions
 
         $aFilenames = glob(CONST_Tiger_Data_Path.'/*.sql');
         info('Found '.count($aFilenames).' SQL files in path '.CONST_Tiger_Data_Path);
-        if (empty($aFilenames)) return;
-
+        if (empty($aFilenames)) {
+            warn('Tiger data import selected but no files found in path '.CONST_Tiger_Data_Path);
+            return;
+        }
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 

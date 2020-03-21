@@ -220,33 +220,6 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- Search for relation members with role admin_center.
-  IF bnd.osm_type = 'R' and bnd_name is not null
-     and relation_members is not null
-  THEN
-    FOR rel_member IN
-      SELECT get_rel_node_members(relation_members,
-                                ARRAY['admin_center','admin_centre']) as member
-    LOOP
-    --DEBUG: RAISE WARNING 'Found admin_center member %', rel_member.member;
-      FOR linked_placex IN
-        SELECT * from placex
-        WHERE osm_type = 'N' and osm_id = rel_member.member
-          and class = 'place'
-      LOOP
-        -- For an admin centre we also want a name match - still not perfect,
-        -- for example 'new york, new york'
-        -- But that can be fixed by explicitly setting the label in the data
-        IF bnd_name = make_standard_name(linked_placex.name->'name')
-           AND bnd.rank_address = linked_placex.rank_address
-        THEN
-          RETURN linked_placex;
-        END IF;
-          --DEBUG: RAISE WARNING 'Linked admin_center';
-      END LOOP;
-    END LOOP;
-  END IF;
-
   -- Name searches can be done for ways as well as relations
   IF bnd_name is not null THEN
     --DEBUG: RAISE WARNING 'Looking for nodes with matching names';

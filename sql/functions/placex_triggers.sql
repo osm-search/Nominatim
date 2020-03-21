@@ -253,7 +253,8 @@ BEGIN
     FOR linked_placex IN
       SELECT placex.* from placex
       WHERE make_standard_name(name->'name') = bnd_name
-        AND placex.rank_address = bnd.rank_address
+        AND ((bnd.rank_address > 0 and placex.rank_address = bnd.rank_address)
+             OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)

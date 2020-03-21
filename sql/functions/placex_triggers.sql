@@ -220,6 +220,21 @@ BEGIN
     END LOOP;
   END IF;
 
+  IF bnd.extratags ? 'wikidata' THEN
+    FOR linked_placex IN
+      SELECT * FROM placex
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
+        AND placex.extratags ? 'wikidata' -- needed to select right index
+        AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
+        AND placex.rank_search < 26
+        AND _st_covers(bnd.geometry, placex.geometry)
+      ORDER BY make_standard_name(name->'name') = bnd_name desc
+    LOOP
+      --DEBUG: RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
   -- Name searches can be done for ways as well as relations
   IF bnd_name is not null THEN
     --DEBUG: RAISE WARNING 'Looking for nodes with matching names';

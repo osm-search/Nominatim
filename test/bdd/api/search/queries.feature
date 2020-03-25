@@ -26,7 +26,6 @@ Feature: Search queries
           | neighbourhood | Auenviertel |
           | suburb        | Eilbek |
           | postcode      | 22089 |
-          | city_district | Wandsbek |
           | city          | Hamburg |
           | country       | Deutschland |
           | country_code  | de |
@@ -42,7 +41,6 @@ Feature: Search queries
           | neighbourhood | Auenviertel |
           | suburb        | Eilbek |
           | postcode      | 22089 |
-          | city_district | Wandsbek |
           | city          | Hamburg |
           | country       | Deutschland |
           | country_code  | de |

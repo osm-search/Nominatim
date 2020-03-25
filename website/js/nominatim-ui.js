@@ -20,10 +20,26 @@ function parse_and_normalize_geojson_string(raw_string){
 jQuery(document).ready(function(){
 
     if ( !$('#search-page,#reverse-page').length ){ return; }
-    
+
     var is_reverse_search = !!( $('#reverse-page').length );
 
     $('#q').focus();
+
+        $(document).ready(function() {
+                $("input[name='query-selector']").click(function(){
+                var query_val = $("input[name='query-selector']:checked").val() ;
+                if (query_val == "simple") {
+                    $("div.form-group-structured").hide();
+                    $("div.form-group-simple").show();
+                    $('.form-group-structured').find('input:text').val('');
+                }
+                else if (query_val == "structured") {
+                    $("div.form-group-simple").hide();
+                    $("div.form-group-structured").show();
+                    $('.form-group-simple').find('input:text').val('');
+                }
+           });
+    });
 
     map = new L.map('map', {
                 attributionControl: (nominatim_map_init.tile_attribution && nominatim_map_init.tile_attribution.length),
@@ -185,7 +201,7 @@ jQuery(document).ready(function(){
             circle.on('click', function(){
                 highlight_result(position);
             });
-            layerGroup.addLayer(circle);            
+            layerGroup.addLayer(circle);
         }
         if (result.aBoundingBox){
 

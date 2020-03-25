@@ -1,11 +1,11 @@
 
-
-form {
+.top-bar {
   width: 100%;
   padding: 1em 15px;
 }
-form #q {
-  min-width: 500px;
+
+.top-bar #q {
+  max-width: 500px;
 }
 @media (max-width: 850px) {
   form #q {
@@ -147,6 +147,17 @@ footer p {
     width: 100%;
   }
   .search-button-group {
-    display: inline
+    display: inline;
   }
 }
+
+.search-button-group {
+  margin-top: 3px;
+  box-sizing: content-box;
+  margin-bottom: 3px;
+}
+
+label {
+  font-weight: normal;
+}
+

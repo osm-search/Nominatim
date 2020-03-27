@@ -220,30 +220,18 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- Search for relation members with role admin_center.
-  IF bnd.osm_type = 'R' and bnd_name is not null
-     and relation_members is not null
-  THEN
-    FOR rel_member IN
-      SELECT get_rel_node_members(relation_members,
-                                ARRAY['admin_center','admin_centre']) as member
+  IF bnd.extratags ? 'wikidata' THEN
+    FOR linked_placex IN
+      SELECT * FROM placex
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
+        AND placex.extratags ? 'wikidata' -- needed to select right index
+        AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
+        AND placex.rank_search < 26
+        AND _st_covers(bnd.geometry, placex.geometry)
+      ORDER BY make_standard_name(name->'name') = bnd_name desc
     LOOP
-    --DEBUG: RAISE WARNING 'Found admin_center member %', rel_member.member;
-      FOR linked_placex IN
-        SELECT * from placex
-        WHERE osm_type = 'N' and osm_id = rel_member.member
-          and class = 'place'
-      LOOP
-        -- For an admin centre we also want a name match - still not perfect,
-        -- for example 'new york, new york'
-        -- But that can be fixed by explicitly setting the label in the data
-        IF bnd_name = make_standard_name(linked_placex.name->'name')
-           AND bnd.rank_address = linked_placex.rank_address
-        THEN
-          RETURN linked_placex;
-        END IF;
-          --DEBUG: RAISE WARNING 'Linked admin_center';
-      END LOOP;
+      --DEBUG: RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;
+      RETURN linked_placex;
     END LOOP;
   END IF;
 
@@ -253,7 +241,8 @@ BEGIN
     FOR linked_placex IN
       SELECT placex.* from placex
       WHERE make_standard_name(name->'name') = bnd_name
-        AND placex.rank_address = bnd.rank_address
+        AND ((bnd.rank_address > 0 and placex.rank_address = bnd.rank_address)
+             OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)

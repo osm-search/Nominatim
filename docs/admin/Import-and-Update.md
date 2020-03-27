@@ -224,7 +224,7 @@ need internet access for the step.
 
 ## Installing Tiger housenumber data for the US
 
-Nominatim is able to use the official [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-geodatabase-file.html)
+Nominatim is able to use the official [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
 address set to complement the OSM house number data in the US. You can add
 TIGER data to your own Nominatim instance by following these steps. The
 entire US adds about 10GB to your database.

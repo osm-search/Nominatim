@@ -6,6 +6,13 @@ function getInfo($aPlace)
 {
     $aClassType = getList();
 
+    if ($aPlace['type'] == 'administrative' && isset($aPlace['place_type'])) {
+        $sName = 'place:'.$aPlace['place_type'];
+        if (isset($aClassType[$sName])) {
+            return $aClassType[$sName];
+        }
+    }
+
     if (isset($aPlace['admin_level'])) {
         $sName = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
         if (isset($aClassType[$sName])) {

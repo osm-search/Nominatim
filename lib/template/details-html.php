@@ -70,7 +70,13 @@
 
         echo '<tr class="' . ($bNotUsed?'notused':'') . '">'."\n";
         echo '  <td class="name">'.(trim($aAddressLine['localname'])!==null?$aAddressLine['localname']:'<span class="noname">No Name</span>')."</td>\n";
-        echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'] . "</td>\n";
+        echo '  <td>' . $aAddressLine['class'].':'.$aAddressLine['type'];
+        if ($aAddressLine['type'] == 'administrative'
+            && isset($aAddressLine['place_type']))
+        {
+            echo '('.$aAddressLine['place_type'].')';
+        }
+        echo "</td>\n";
         echo '  <td>' . osmLink($aAddressLine) . "</td>\n";
         echo '  <td>' . (isset($aAddressLine['rank_address']) ? $aAddressLine['rank_address'] : '') . "</td>\n";
         echo '  <td>' . ($aAddressLine['admin_level'] < 15 ? $aAddressLine['admin_level'] : '') . "</td>\n";

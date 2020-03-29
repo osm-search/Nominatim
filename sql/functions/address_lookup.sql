@@ -8,6 +8,7 @@ CREATE TYPE addressline as (
   name HSTORE,
   class TEXT,
   type TEXT,
+  place_type TEXT,
   admin_level INTEGER,
   fromarea BOOLEAN,
   isaddress BOOLEAN,
@@ -193,7 +194,7 @@ BEGIN
       searchcountrycode := NULL;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id,
-                           location.name, location.class, location.type,
+                           location.name, location.class, location.type, NULL,
                            location.admin_level, true, location.isaddress,
                            location.rank_address, location.distance)::addressline;
     RETURN NEXT countrylocation;
@@ -201,10 +202,8 @@ BEGIN
   END LOOP;
 
   FOR location IN
-    SELECT placex.place_id, osm_type, osm_id, name,
-           CASE WHEN extratags ? 'place' or extratags ? 'linked_place'
-                THEN 'place' ELSE class END as class,
-           coalesce(extratags->'place', extratags->'linked_place', type) as type,
+    SELECT placex.place_id, osm_type, osm_id, name, class, type,
+           coalesce(extratags->'place', extratags->'linked_place') as place_type,
            admin_level, fromarea, isaddress,
            CASE WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
            distance, country_code, postcode
@@ -229,6 +228,7 @@ BEGIN
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id,
                            location.name, location.class, location.type,
+                           location.place_type,
                            location.admin_level, location.fromarea,
                            location.isaddress, location.rank_address,
                            location.distance)::addressline;
@@ -242,7 +242,7 @@ BEGIN
       WHERE country_code = searchcountrycode LIMIT 1 INTO countryname;
 --RAISE WARNING '% % %',found,searchcountrycode,countryname;
     IF countryname IS NOT NULL THEN
-      location := ROW(null, null, null, countryname, 'place', 'country',
+      location := ROW(null, null, null, countryname, 'place', 'country', NULL,
                       null, true, true, 4, 0)::addressline;
       RETURN NEXT location;
     END IF;
@@ -251,25 +251,25 @@ BEGIN
   -- Finally add some artificial rows.
   IF searchcountrycode IS NOT NULL THEN
     location := ROW(null, null, null, hstore('ref', searchcountrycode),
-                    'place', 'country_code', null, true, false, 4, 0)::addressline;
+                    'place', 'country_code', null, null, true, false, 4, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchhousename IS NOT NULL THEN
     location := ROW(in_place_id, null, null, searchhousename, searchclass,
-                    searchtype, null, true, true, 29, 0)::addressline;
+                    searchtype, null, null, true, true, 29, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchhousenumber IS NOT NULL THEN
     location := ROW(in_place_id, null, null, hstore('ref', searchhousenumber),
-                    'place', 'house_number', null, true, true, 28, 0)::addressline;
+                    'place', 'house_number', null, null, true, true, 28, 0)::addressline;
     RETURN NEXT location;
   END IF;
 
   IF searchpostcode IS NOT NULL THEN
     location := ROW(null, null, null, hstore('ref', searchpostcode), 'place',
-                    'postcode', null, false, postcode_isaddress, 5, 0)::addressline;
+                    'postcode', null, null, false, postcode_isaddress, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

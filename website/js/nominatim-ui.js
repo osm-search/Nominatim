@@ -38,7 +38,7 @@ jQuery(document).ready(function(){
                     $("div.form-group-structured").show();
                     $('.form-group-simple').find('input:text').val('');
                 }
-           });
+        });
     });
 
     map = new L.map('map', {

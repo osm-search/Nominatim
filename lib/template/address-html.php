@@ -9,7 +9,7 @@
 <body id="reverse-page">
 
     <?php include(CONST_BasePath.'/lib/template/includes/html-top-navigation.php'); ?>
-<div class="top-bar">
+    <div class="top-bar">
     <form class="form-inline" role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>reverse.php">
         <div class="form-group">
             <input name="format" type="hidden" value="html">

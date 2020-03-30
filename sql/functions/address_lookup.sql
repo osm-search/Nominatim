@@ -96,7 +96,7 @@ DECLARE
   searchhousename HSTORE;
   searchrankaddress INTEGER;
   searchpostcode TEXT;
-  postcode_isaddress BOOL;
+  postcode_isexact BOOL;
   searchclass TEXT;
   searchtype TEXT;
   countryname HSTORE;
@@ -104,7 +104,7 @@ BEGIN
   -- The place ein question might not have a direct entry in place_addressline.
   -- Look for the parent of such places then and save if in for_place_id.
 
-  postcode_isaddress := true;
+  postcode_isexact := false;
 
   -- first query osmline (interpolation lines)
   IF in_housenumber >= 0 THEN
@@ -151,12 +151,13 @@ BEGIN
 
   -- POI objects in the placex table
   IF for_place_id IS NULL THEN
-    SELECT parent_place_id, country_code, housenumber, rank_search, postcode,
+    SELECT parent_place_id, country_code, housenumber, rank_search,
+           postcode, address is not null and address ? 'postcode',
            name, class, type
       FROM placex
       WHERE place_id = in_place_id and rank_search > 27
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress,
-           searchpostcode, searchhousename, searchclass, searchtype;
+           searchpostcode, postcode_isexact, searchhousename, searchclass, searchtype;
   END IF;
 
   -- If for_place_id is still NULL at this point then the object has its own
@@ -164,9 +165,10 @@ BEGIN
   -- place we should be using instead.
   IF for_place_id IS NULL THEN
     select coalesce(linked_place_id, place_id),  country_code,
-           housenumber, rank_search, postcode, null
+           housenumber, rank_search, postcode,
+           address is not null and address ? 'postcode', null
       from placex where place_id = in_place_id
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, searchhousename;
+      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, postcode_isexact, searchhousename;
   END IF;
 
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;
@@ -220,10 +222,16 @@ BEGIN
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
-    IF location.type in ('postcode', 'postal_code') THEN
-      postcode_isaddress := false;
-      IF location.osm_type != 'R' THEN
-        location.isaddress := FALSE;
+    IF location.type in ('postcode', 'postal_code')
+       AND searchpostcode is not null
+    THEN
+      -- If the place had a postcode assigned, take this one only
+      -- into consideration when it is an area and the place does not have
+      -- a postcode itself.
+      IF location.fromarea AND not postcode_isexact AND location.isaddress THEN
+        searchpostcode := null; -- remove the less exact postcode
+      ELSE
+        location.isaddress := false;
       END IF;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id,
@@ -269,7 +277,7 @@ BEGIN
 
   IF searchpostcode IS NOT NULL THEN
     location := ROW(null, null, null, hstore('ref', searchpostcode), 'place',
-                    'postcode', null, null, false, postcode_isaddress, 5, 0)::addressline;
+                    'postcodes', null, null, false, true, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

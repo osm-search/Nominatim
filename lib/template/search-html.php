@@ -10,10 +10,10 @@
 
     <?php include(CONST_BasePath.'/lib/template/includes/html-top-navigation.php'); ?>
 
-    <div class="top-bar" id="structured-query-selector">
-        <div class="search-type-link">
-            <a id="switch-to-reverse" href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
-        </div>
+        <div class="top-bar" id="structured-query-selector">
+            <div class="search-type-link">
+                <a id="switch-to-reverse" href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
+            </div>
         <?php
         if (empty($aMoreParams['q']) and empty($aMoreParams['street']) and empty($aMoreParams['city']) and empty($aMoreParams['county']) and empty($aMoreParams['state']) and empty($aMoreParams['country']) and empty($aMoreParams['postalcode'])) {
             echo '<div class="radio-inline"><input type="radio" name="query-selector" id="simple" value="simple" checked="checked">';

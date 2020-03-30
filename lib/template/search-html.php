@@ -45,7 +45,7 @@
             echo "style='display:none;'";
         }
         ?>>
-            <input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo $aMoreParams['q']; ?>" >
+            <input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo htmlspecialchars($aMoreParams['q']); ?>" >
         </div>
         <div class="form-group-structured"
         <?php
@@ -57,12 +57,12 @@
         }
         ?>>
 <div class="form-inline">
-            <input id="street" name="street" type="text" class="form-control input-sm" placeholder="House number/Street" value="<?php echo $aMoreParams['street']; ?>" >
-            <input id="city" name="city" type="text" class="form-control input-sm" placeholder="City" value="<?php echo $aMoreParams['city']; ?>" >
-            <input id="county" name="county" type="text" class="form-control input-sm" placeholder="County" value="<?php echo $aMoreParams['county']; ?>" >
-            <input id="state" name="state" type="text" class="form-control input-sm" placeholder="State" value="<?php echo $aMoreParams['state']; ?>" >
-            <input id="country" name="country" type="text" class="form-control input-sm" placeholder="Country" value="<?php echo $aMoreParams['country']; ?>" >
-            <input id="postalcode" name="postalcode" type="text" class="form-control input-sm" placeholder="Postal Code" value="<?php echo $aMoreParams['postalcode']; ?>" >
+            <input id="street" name="street" type="text" class="form-control input-sm" placeholder="House number/Street" value="<?php echo htmlspecialchars($aMoreParams['street']); ?>" >
+            <input id="city" name="city" type="text" class="form-control input-sm" placeholder="City" value="<?php echo htmlspecialchars($aMoreParams['city']); ?>" >
+            <input id="county" name="county" type="text" class="form-control input-sm" placeholder="County" value="<?php echo htmlspecialchars($aMoreParams['county']); ?>" >
+            <input id="state" name="state" type="text" class="form-control input-sm" placeholder="State" value="<?php echo htmlspecialchars($aMoreParams['state']); ?>" >
+            <input id="country" name="country" type="text" class="form-control input-sm" placeholder="Country" value="<?php echo htmlspecialchars($aMoreParams['country']); ?>" >
+            <input id="postalcode" name="postalcode" type="text" class="form-control input-sm" placeholder="Postal Code" value="<?php echo htmlspecialchars($aMoreParams['postalcode']); ?>" >
         </div></div>
         <div class="form-group search-button-group">
             <button type="submit" class="btn btn-primary btn-sm">Search</button>

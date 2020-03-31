@@ -277,7 +277,7 @@ BEGIN
 
   IF searchpostcode IS NOT NULL THEN
     location := ROW(null, null, null, hstore('ref', searchpostcode), 'place',
-                    'postcodes', null, null, false, true, 5, 0)::addressline;
+                    'postcode', null, null, false, true, 5, 0)::addressline;
     RETURN NEXT location;
   END IF;
 

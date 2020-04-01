@@ -101,6 +101,28 @@ class AddressDetails
         return $aAddress;
     }
 
+    public function addGeocodeJsonAddressParts(&$aJson)
+    {
+        $aFieldMappings = array(
+                           'house_number' => 'housenumber',
+                           'road' => 'street',
+                           'locality' => 'locality',
+                           'postcode' => 'postcode',
+                           'city' => 'city',
+                           'district' => 'district',
+                           'county' => 'county',
+                           'state' => 'state',
+                           'country' => 'country'
+                          );
+
+        $aAddrNames = $this->getAddressNames();
+        foreach ($aFieldMappings as $sFrom => $sTo) {
+            if (isset($aAddrNames[$sFrom])) {
+                $aJson[$sTo] = $aAddrNames[$sFrom];
+            }
+        }
+    }
+
     public function getAdminLevels()
     {
         $aAddress = array();

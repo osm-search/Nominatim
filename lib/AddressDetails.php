@@ -132,8 +132,10 @@ class AddressDetails
                 $aJson['housenumber'] = $aLine['localname'];
             } else if ($iRank > 25 && $iRank < 28) {
                 $aJson['street'] = $aLine['localname'];
-            } else if ($iRank >= 17 && $iRank <= 25) {
+            } else if ($iRank >= 22 && $iRank <= 25) {
                 $aJson['locality'] = $aLine['localname'];
+            } else if ($iRank >= 17 && $iRank <= 21) {
+                $aJson['district'] = $aLine['localname'];
             } else if ($iRank >= 13 && $iRank <= 16) {
                 $aJson['city'] = $aLine['localname'];
             } else if ($iRank >= 10 && $iRank <= 12) {

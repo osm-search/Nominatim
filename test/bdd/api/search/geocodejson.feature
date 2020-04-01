@@ -23,5 +23,5 @@ Feature: Parameters for Search API
     Scenario: City address with suburb
         When sending geocodejson search query "hinschenfelder str 64, wandsbek" with address
         Then results contain
-          | housenumber | street                | locality  | city    | postcode | country |
-          | 64          | Hinschenfelder Straße | Wandsbek  | Hamburg | 22047    | Deutschland |
+          | housenumber | street                | district | city    | postcode | country |
+          | 64          | Hinschenfelder Straße | Wandsbek | Hamburg | 22047    | Deutschland |

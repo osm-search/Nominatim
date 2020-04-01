@@ -100,7 +100,7 @@ The following feature attributes are implemented:
  * `type` - value of the main tag of the object (e.g. residential, restaurant, ...)
  * `label` - full comma-separated address
  * `name` - localised name of the place
- * `housenumber`, `street`, `locality`, `postcode`, `city`,
+ * `housenumber`, `street`, `locality`, `district`, `postcode`, `city`,
    `county`, `state`, `country` -
    provided when it can be determined from the address
  * `admin` - list of localised names of administrative boundaries (only with `addressdetails=1`)

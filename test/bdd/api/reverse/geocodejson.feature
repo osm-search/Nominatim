@@ -23,5 +23,5 @@ Feature: Parameters for Reverse API
     Scenario: City address with suburb
         When sending geocodejson reverse coordinates 53.5822,10.0805
         Then results contain
-          | housenumber | street                | locality  | city    | postcode | country |
-          | 64          | Hinschenfelder Straße | Wandsbek  | Hamburg | 22047    | Deutschland |
+          | housenumber | street                | district | city    | postcode | country |
+          | 64          | Hinschenfelder Straße | Wandsbek | Hamburg | 22047    | Deutschland |

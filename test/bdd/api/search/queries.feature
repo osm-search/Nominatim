@@ -166,3 +166,23 @@ Feature: Search queries
           | 0  | 6395 |
           | 1  | 6395 BIS |
 
+    Scenario Outline: Same Searches with white spaces 
+        When sending json search query "<data>"
+        Then exactly 1 result is returned
+        And results contain
+          | class   |
+          | building |
+
+    Examples:
+      | data |
+      | amerlugalpe, N 47.15739° E 9.61264° |
+      | amerlugalpe,	N 47.15739° E 9.61264° |
+      | 	amerlugalpe	, 	N 47.15739° E 9.61264° |
+      | amerlugalpe, N 47.15739° 		E 9.61264° |
+      | amerlugalpe, N 47.15739° E	9.61264° |
+
+    Scenario: Searched with white spaces
+        When sending json search query "22nd	Street Southwest,Huron"
+        Then results contain
+          | class   | type |
+          | highway | residential |

@@ -168,21 +168,27 @@ This overrides the specified machine readable format. (Default: 0)
 ## Examples
 
 
-##### XML with polygon points
+##### XML with kml polygon
 
-* [https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon=1&addressdetails=1)
-* [https://nominatim.openstreetmap.org/search/gb/birmingham/pilkington%20avenue/135?format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search/gb/birmingham/pilkington%20avenue/135?format=xml&polygon=1&addressdetails=1)
-* [https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1](https://nominatim.openstreetmap.org/search/135%20pilkington%20avenue,%20birmingham?format=xml&polygon=1&addressdetails=1)
+* [https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_geojson=1&addressdetails=1](https://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&format=xml&polygon_geojson=1&addressdetails=1)
 
 ```xml
   <searchresults timestamp="Sat, 07 Nov 09 14:42:10 +0000" querystring="135 pilkington, avenue birmingham" polygon="true">
     <place
       place_id="1620612" osm_type="node" osm_id="452010817"
       boundingbox="52.548641204834,52.5488433837891,-1.81612110137939,-1.81592094898224"
-      polygonpoints="[['-1.81592098644987','52.5487429714954'],['-1.81592290792183','52.5487234624632'],...]"
       lat="52.5487429714954" lon="-1.81602098644987"
       display_name="135, Pilkington Avenue, Wylde Green, City of Birmingham, West Midlands (county), B72, United Kingdom"
       class="place" type="house">
+      <geokml>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>-1.816513,52.548756599999997 -1.816434,52.548747300000002 -1.816429,52.5487629 -1.8163717,52.548756099999999 -1.8163464,52.548834599999999 -1.8164599,52.548848100000001 -1.8164685,52.5488213 -1.8164913,52.548824000000003 -1.816513,52.548756599999997</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </geokml>
       <house_number>135</house_number>
       <road>Pilkington Avenue</road>
       <village>Wylde Green</village>

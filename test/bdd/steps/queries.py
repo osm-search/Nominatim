@@ -115,7 +115,9 @@ class SearchResponse(GenericResponse):
         self.result = geojson_results_to_json_results(self.result)
 
     def parse_geocodejson(self):
-        return self.parse_geojson()
+        self.parse_geojson()
+        if self.result is not None:
+            self.result = [r['geocoding'] for r in self.result]
 
     def parse_html(self):
         content, errors = tidy_document(self.page,
@@ -203,7 +205,9 @@ class ReverseResponse(GenericResponse):
         self.result = geojson_results_to_json_results(self.result[0])
 
     def parse_geocodejson(self):
-        return self.parse_geojson()
+        self.parse_geojson()
+        if self.result is not None:
+            self.result = [r['geocoding'] for r in self.result]
 
     def parse_xml(self):
         et = ET.fromstring(self.page)

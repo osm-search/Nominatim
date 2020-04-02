@@ -33,24 +33,9 @@ if (empty($aPlace)) {
     $aFilteredPlaces['properties']['geocoding']['name'] = $aPlace['placename'];
 
     if (isset($aPlace['address'])) {
-        $aFieldMappings = array(
-                           'house_number' => 'housenumber',
-                           'road' => 'street',
-                           'locality' => 'locality',
-                           'postcode' => 'postcode',
-                           'city' => 'city',
-                           'district' => 'district',
-                           'county' => 'county',
-                           'state' => 'state',
-                           'country' => 'country'
-                          );
-
-        $aAddressNames = $aPlace['address']->getAddressNames();
-        foreach ($aFieldMappings as $sFrom => $sTo) {
-            if (isset($aAddressNames[$sFrom])) {
-                $aFilteredPlaces['properties']['geocoding'][$sTo] = $aAddressNames[$sFrom];
-            }
-        }
+        $aPlace['address']->addGeocodeJsonAddressParts(
+          $aFilteredPlaces['properties']['geocoding']
+        );
 
         $aFilteredPlaces['properties']['geocoding']['admin']
             = $aPlace['address']->getAdminLevels();

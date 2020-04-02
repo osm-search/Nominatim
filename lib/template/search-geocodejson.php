@@ -23,24 +23,9 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
     $aPlace['properties']['geocoding']['name'] = $aPointDetails['placename'];
 
     if (isset($aPointDetails['address'])) {
-        $aFieldMappings = array(
-                           'house_number' => 'housenumber',
-                           'road' => 'street',
-                           'locality' => 'locality',
-                           'postcode' => 'postcode',
-                           'city' => 'city',
-                           'district' => 'district',
-                           'county' => 'county',
-                           'state' => 'state',
-                           'country' => 'country'
-                          );
-
-        $aAddrNames = $aPointDetails['address']->getAddressNames();
-        foreach ($aFieldMappings as $sFrom => $sTo) {
-            if (isset($aAddrNames[$sFrom])) {
-                $aPlace['properties']['geocoding'][$sTo] = $aAddrNames[$sFrom];
-            }
-        }
+        $aPointDetails['address']->addGeocodeJsonAddressParts(
+          $aPlace['properties']['geocoding']
+        );
 
         $aPlace['properties']['geocoding']['admin']
             = $aPointDetails['address']->getAdminLevels();

@@ -34,7 +34,7 @@ if (empty($aPlace)) {
 
     if (isset($aPlace['address'])) {
         $aPlace['address']->addGeocodeJsonAddressParts(
-          $aFilteredPlaces['properties']['geocoding']
+            $aFilteredPlaces['properties']['geocoding']
         );
 
         $aFilteredPlaces['properties']['geocoding']['admin']

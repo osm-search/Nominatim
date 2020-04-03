@@ -128,21 +128,21 @@ class AddressDetails
 
             if ($aLine['type'] == 'postcode' || $aLine['type'] == 'postal_code') {
                 $aJson['postcode'] = $aLine['localname'];
-            } else if ($aLine['type'] == 'house_number') {
+            } elseif ($aLine['type'] == 'house_number') {
                 $aJson['housenumber'] = $aLine['localname'];
-            } else if ($iRank > 25 && $iRank < 28) {
+            } elseif ($iRank > 25 && $iRank < 28) {
                 $aJson['street'] = $aLine['localname'];
-            } else if ($iRank >= 22 && $iRank <= 25) {
+            } elseif ($iRank >= 22 && $iRank <= 25) {
                 $aJson['locality'] = $aLine['localname'];
-            } else if ($iRank >= 17 && $iRank <= 21) {
+            } elseif ($iRank >= 17 && $iRank <= 21) {
                 $aJson['district'] = $aLine['localname'];
-            } else if ($iRank >= 13 && $iRank <= 16) {
+            } elseif ($iRank >= 13 && $iRank <= 16) {
                 $aJson['city'] = $aLine['localname'];
-            } else if ($iRank >= 10 && $iRank <= 12) {
+            } elseif ($iRank >= 10 && $iRank <= 12) {
                 $aJson['county'] = $aLine['localname'];
-            } else if ($iRank >= 5 && $iRank <= 9) {
+            } elseif ($iRank >= 5 && $iRank <= 9) {
                 $aJson['state'] = $aLine['localname'];
-            } else if ($iRank == 4) {
+            } elseif ($iRank == 4) {
                 $aJson['country'] = $aLine['localname'];
             }
         }

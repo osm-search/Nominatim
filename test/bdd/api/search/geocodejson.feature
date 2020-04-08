@@ -11,7 +11,7 @@ Feature: Parameters for Search API
     Scenario: Town street-level address with street
         When sending geocodejson search query "Gnetsch, Balzers" with address
         Then results contain
-          | street  | city    | postcode | country |
+          | name    | city    | postcode | country |
           | Gnetsch | Balzers | 9496     | Liechtenstein |
 
     Scenario: Town street-level address with footway

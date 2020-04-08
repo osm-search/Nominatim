@@ -11,10 +11,10 @@ Feature: Parameters for Reverse API
     Scenario: Town street-level address with street
         When sending geocodejson reverse coordinates 47.066,9.504
         Then results contain
-          | street  | city    | postcode | country |
+          | name    | city    | postcode | country |
           | Gnetsch | Balzers | 9496     | Liechtenstein |
 
-    Scenario: Town street-level address with footway
+    Scenario: Poi street-level address with footway
         When sending geocodejson reverse coordinates 47.0653,9.5007
         Then results contain
           | street  | city    | postcode | country |

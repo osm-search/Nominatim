@@ -30,7 +30,9 @@ if (empty($aPlace)) {
 
     $aFilteredPlaces['properties']['geocoding']['label'] = $aPlace['langaddress'];
 
-    $aFilteredPlaces['properties']['geocoding']['name'] = $aPlace['placename'];
+    if ($aPlace['placename'] !== null) {
+        $aFilteredPlaces['properties']['geocoding']['name'] = $aPlace['placename'];
+    }
 
     if (isset($aPlace['address'])) {
         $aPlace['address']->addGeocodeJsonAddressParts(

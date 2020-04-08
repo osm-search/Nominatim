@@ -20,7 +20,9 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
 
     $aPlace['properties']['geocoding']['label'] = $aPointDetails['langaddress'];
 
-    $aPlace['properties']['geocoding']['name'] = $aPointDetails['placename'];
+    if ($aPointDetails['placename'] !== null) {
+        $aPlace['properties']['geocoding']['name'] = $aPointDetails['placename'];
+    }
 
     if (isset($aPointDetails['address'])) {
         $aPointDetails['address']->addGeocodeJsonAddressParts(

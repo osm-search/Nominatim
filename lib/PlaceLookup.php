@@ -433,24 +433,19 @@ class PlaceLookup
         foreach ($aPlaces as &$aPlace) {
             $aPlace['importance'] = (float) $aPlace['importance'];
 
-            $licence_content = $this->oDB->getOne(
-                'SELECT licence_content FROM placex LEFT JOIN licence ON placex.licence_id = licence.licence_id where place_id = :placeid',
+            $licence_copyright_content = $this->oDB->getRow(
+                "SELECT extratags -> 'data_licence' AS licence, extratags -> 'data_copyright' AS copyright FROM placex where place_id = :placeid",
                 array(':placeid' => $aPlace['place_id'])
             );
-            if (!$licence_content || !isset($licence_content)) {
+            if (!$licence_copyright_content['licence'] || !isset($licence_copyright_content['licence'])) {
                 $aPlace['licence'] = ($this->aLicence);
             } else {
-                $aPlace['licence'] = $licence_content;
+                $aPlace['licence'] = $licence_copyright_content['licence'];
             }
-
-            $copyright_content = $this->oDB->getOne(
-                'SELECT copyright_content FROM placex LEFT JOIN copyright ON placex.copyright_id = copyright.copyright_id where place_id = :placeid',
-                array(':placeid' => $aPlace['place_id'])
-            );
-            if (!$copyright_content || !isset($copyright_content)) {
+            if (!$licence_copyright_content['copyright'] || !isset($licence_copyright_content['copyright'])) {
                 $aPlace['copyright'] = ($this->aCopyright);
             } else {
-                $aPlace['copyright'] = $copyright_content;
+                $aPlace['copyright'] = $licence_copyright_content['copyright'];
             }
 
             if ($this->bAddressDetails) {

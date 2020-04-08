@@ -498,6 +498,32 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION get_parent_address_level(geom GEOMETRY, in_level SMALLINT)
+  RETURNS SMALLINT
+  AS $$
+DECLARE
+  address_rank SMALLINT;
+BEGIN
+  IF in_level <= 3 or in_level > 15 THEN
+    address_rank := 3;
+  ELSE
+    SELECT rank_address INTO address_rank
+      FROM placex
+      WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+            and admin_level < in_level
+            and geometry && geom and ST_Covers(geometry, geom)
+      ORDER BY admin_level desc LIMIT 1;
+  END IF;
+
+  IF address_rank is NULL or address_rank <= 3 THEN
+    RETURN 3;
+  END IF;
+
+  RETURN address_rank;
+END;
+$$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
@@ -508,6 +534,7 @@ DECLARE
   relation_members TEXT[];
 
   centroid GEOMETRY;
+  parent_address_level SMALLINT;
 
   addr_street TEXT;
   addr_place TEXT;
@@ -759,7 +786,11 @@ BEGIN
     END IF;
 
     -- Use the address rank of the linked place, if it has one
-    IF location.rank_address between 5 and 25 THEN
+    parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
+    --DEBUG: RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;
+    IF location.rank_address > parent_address_level
+       and location.rank_address < 26
+    THEN
       NEW.rank_address := location.rank_address;
     END IF;
 

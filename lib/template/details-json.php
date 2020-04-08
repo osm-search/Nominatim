@@ -53,7 +53,7 @@ $funcMapAddressLine = function ($aFull) {
                 'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
                 'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
                 'distance' => (float) $aFull['distance'],
-                'isaddress' => (bool) $aFull['isaddress']
+                'isaddress' => isset($aFull['isaddress']) ? (bool) $aFull['isaddress'] : null
                );
 
     return $aMapped;

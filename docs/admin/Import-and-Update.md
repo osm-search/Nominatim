@@ -171,7 +171,7 @@ In the first step of the import Nominatim uses osm2pgsql to load the OSM data
 into the PostgreSQL database. This step is very demanding in terms of RAM usage.
 osm2pgsql and PostgreSQL are running in parallel at this point. PostgreSQL
 blocks at least the part of RAM that has been configured with the
-`shared_buffers` parameter during [PostgreSQL tuning](Installation#PostgreSQL_tuning)
+`shared_buffers` parameter during [PostgreSQL tuning](Installation#postgresql-tuning)
 and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
 its internal data structures, potentially more when it has to process very large
 relations. In addition it needs to maintain a cache for node locations. The size

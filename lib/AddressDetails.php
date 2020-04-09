@@ -9,10 +9,13 @@ require_once(CONST_BasePath.'/lib/ClassTypes.php');
  */
 class AddressDetails
 {
+    private $iPlaceID;
     private $aAddressLines;
 
     public function __construct(&$oDB, $iPlaceID, $sHousenumber, $mLangPref)
     {
+        $this->iPlaceID = $iPlaceID;
+
         if (is_array($mLangPref)) {
             $mLangPref = $oDB->getArraySQL($oDB->getDBQuotedList($mLangPref));
         }
@@ -115,7 +118,7 @@ class AddressDetails
      */
     public function addGeocodeJsonAddressParts(&$aJson)
     {
-        foreach ($this->aAddressLines as $aLine) {
+        foreach (array_reverse($this->aAddressLines) as $aLine) {
             if (!$aLine['isaddress']) {
                 continue;
             }
@@ -124,13 +127,19 @@ class AddressDetails
                 continue;
             }
 
-            $iRank = (int)$aLine['rank_address'];
-
             if ($aLine['type'] == 'postcode' || $aLine['type'] == 'postal_code') {
                 $aJson['postcode'] = $aLine['localname'];
             } elseif ($aLine['type'] == 'house_number') {
                 $aJson['housenumber'] = $aLine['localname'];
-            } elseif ($iRank > 25 && $iRank < 28) {
+            }
+
+            if ($this->iPlaceID == $aLine['place_id']) {
+                continue;
+            }
+
+            $iRank = (int)$aLine['rank_address'];
+
+            if ($iRank > 25 && $iRank < 28) {
                 $aJson['street'] = $aLine['localname'];
             } elseif ($iRank >= 22 && $iRank <= 25) {
                 $aJson['locality'] = $aLine['localname'];

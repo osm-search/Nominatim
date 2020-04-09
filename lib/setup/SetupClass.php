@@ -529,11 +529,10 @@ class SetupFunctions
 
     public function index($bIndexNoanalyse)
     {
-        $sOutputFile = '';
         $sBaseCmd = CONST_BasePath.'/nominatim/nominatim.py'
             .' -d '.escapeshellarg($this->aDSNInfo['database'])
             .' -P '.escapeshellarg($this->aDSNInfo['port'])
-            .' -t '.escapeshellarg($this->iInstances.$sOutputFile);
+            .' -t '.escapeshellarg($this->iInstances);
         if (!$this->bQuiet) {
             $sBaseCmd .= ' -v';
         }

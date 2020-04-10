@@ -695,6 +695,7 @@ class SetupFunctions
         $sBasePath = CONST_BasePath.'/sql/functions/';
         $sTemplate = file_get_contents($sBasePath.'utils.sql');
         $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
+        $sTemplate .= file_get_contents($sBasePath.'ranking.sql');
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
         $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');

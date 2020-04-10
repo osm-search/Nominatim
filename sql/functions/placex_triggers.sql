@@ -498,25 +498,7 @@ BEGIN
       END IF;
     ELSE
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-      diameter := 0;
-      -- 16 = city, anything higher than city is effectively ignored (polygon required!)
-      IF NEW.type='postcode' THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search < 16 THEN
-        diameter := 0;
-      ELSEIF NEW.rank_search < 18 THEN
-        diameter := 0.1;
-      ELSEIF NEW.rank_search < 20 THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search = 21 THEN
-        diameter := 0.001;
-      ELSEIF NEW.rank_search < 24 THEN
-        diameter := 0.02;
-      ELSEIF NEW.rank_search < 26 THEN
-        diameter := 0.002; -- 100 to 200 meters
-      ELSEIF NEW.rank_search < 28 THEN
-        diameter := 0.001; -- 50 to 100 meters
-      END IF;
+      diameter := update_place_diameter(NEW.rank_search);
       IF diameter > 0 THEN
   --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
         IF NEW.rank_search >= 26 THEN

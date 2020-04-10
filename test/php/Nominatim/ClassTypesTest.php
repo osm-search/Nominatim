@@ -18,9 +18,9 @@ class ClassTypesTest extends \PHPUnit\Framework\TestCase
                    'rank_address' => 14
         );
 
-        $this->assertEquals('County', ClassTypes\getInfo($aPlace)['label']);
-        $this->assertEquals('County', ClassTypes\getFallbackInfo($aPlace)['label']);
-        $this->assertEquals('County', ClassTypes\getProperty($aPlace, 'label'));
+        $this->assertEquals('Municipality', ClassTypes\getInfo($aPlace)['label']);
+        $this->assertEquals('Municipality', ClassTypes\getFallbackInfo($aPlace)['label']);
+        $this->assertEquals('Municipality', ClassTypes\getProperty($aPlace, 'label'));
 
         // 2) No admin level
         // Eiffel Tower

@@ -114,3 +114,68 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+
+-- Get standard search and address rank for an object
+CREATE OR REPLACE FUNCTION compute_place_rank(country VARCHAR(2),
+                                              osm_type VARCHAR(1),
+                                              place_class TEXT, place_type TEXT,
+                                              admin_level SMALLINT,
+                                              is_area BOOLEAN, is_major BOOLEAN,
+                                              postcode TEXT,
+                                              OUT search_rank SMALLINT,
+                                              OUT address_rank SMALLINT)
+AS $$
+DECLARE
+  classtype TEXT;
+BEGIN
+  IF place_class in ('place','boundary')
+     and place_type in ('postcode','postal_code')
+  THEN
+    SELECT * INTO search_rank, address_rank
+      FROM get_postcode_rank(country, postcode);
+
+    IF NOT is_area THEN
+      address_rank := 0;
+    END IF;
+  ELSEIF osm_type = 'N' AND place_class = 'highway' THEN
+    search_rank = 30;
+    address_rank = 0;
+  ELSEIF place_class = 'landuse' AND NOT is_area THEN
+    search_rank = 30;
+    address_rank = 0;
+  ELSE
+    IF place_class = 'boundary' and place_type = 'administrative' THEN
+      classtype = place_type || admin_level::TEXT;
+    ELSE
+      classtype = place_type;
+    END IF;
+
+    SELECT l.rank_search, l.rank_address INTO search_rank, address_rank
+      FROM address_levels l
+     WHERE (l.country_code = country or l.country_code is NULL)
+           AND l.class = place_class AND (l.type = classtype or l.type is NULL)
+     ORDER BY l.country_code, l.class, l.type LIMIT 1;
+
+    IF search_rank is NULL THEN
+      search_rank := 30;
+    END IF;
+
+    IF address_rank is NULL THEN
+      address_rank := 30;
+    END IF;
+
+    -- some postcorrections
+    IF place_class = 'waterway' AND osm_type = 'R' THEN
+        -- Slightly promote waterway relations so that they are processed
+        -- before their members.
+        search_rank := search_rank - 1;
+    END IF;
+
+    IF is_major THEN
+      search_rank := search_rank - 1;
+    END IF;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;

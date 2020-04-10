@@ -38,85 +38,58 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-
-CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)
-  RETURNS FLOAT
+-- Return the node members with a given label from a relation member list
+-- as a set.
+--
+-- \param members      Member list in osm2pgsql middle format.
+-- \param memberLabels Array of labels to accept.
+--
+-- \returns Set of OSM ids of nodes that are found.
+--
+CREATE OR REPLACE FUNCTION get_rel_node_members(members TEXT[],
+                                                memberLabels TEXT[])
+  RETURNS SETOF BIGINT
   AS $$
+DECLARE
+  i INTEGER;
 BEGIN
-  IF rank_search <= 4 THEN
-    RETURN 5.0;
-  ELSIF rank_search <= 8 THEN
-    RETURN 1.8;
-  ELSIF rank_search <= 12 THEN
-    RETURN 0.6;
-  ELSIF rank_search <= 17 THEN
-    RETURN 0.16;
-  ELSIF rank_search <= 18 THEN
-    RETURN 0.08;
-  ELSIF rank_search <= 19 THEN
-    RETURN 0.04;
-  END IF;
+  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
+    IF members[i+1] = ANY(memberLabels)
+       AND upper(substring(members[i], 1, 1))::char(1) = 'N'
+    THEN
+      RETURN NEXT substring(members[i], 2)::bigint;
+    END IF;
+  END LOOP;
 
-  RETURN 0.02;
+  RETURN;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-
-CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,
-                                             OUT rank_search SMALLINT,
-                                             OUT rank_address SMALLINT)
-AS $$
+-- Copy 'name' to or from the default language.
+--
+-- \param country_code     Country code of the object being named.
+-- \param[inout] name      List of names of the object.
+--
+-- If the country named by country_code has a single default language,
+-- then a `name` tag is copied to `name:<country_code>` if this tag does
+-- not yet exist and vice versa.
+CREATE OR REPLACE FUNCTION add_default_place_name(country_code VARCHAR(2),
+                                                  INOUT name HSTORE)
+  AS $$
 DECLARE
-  part TEXT;
+  default_language VARCHAR(10);
 BEGIN
-    rank_search := 30;
-    rank_address := 30;
-    postcode := upper(postcode);
-
-    IF country_code = 'gb' THEN
-        IF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9][A-Z][A-Z])$' THEN
-            rank_search := 25;
-            rank_address := 5;
-        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z]? [0-9])$' THEN
-            rank_search := 23;
-            rank_address := 5;
-        ELSEIF postcode ~ '^([A-Z][A-Z]?[0-9][0-9A-Z])$' THEN
-            rank_search := 21;
-            rank_address := 5;
-        END IF;
-
-    ELSEIF country_code = 'sg' THEN
-        IF postcode ~ '^([0-9]{6})$' THEN
-            rank_search := 25;
-            rank_address := 11;
-        END IF;
-
-    ELSEIF country_code = 'de' THEN
-        IF postcode ~ '^([0-9]{5})$' THEN
-            rank_search := 21;
-            rank_address := 11;
-        END IF;
-
-    ELSE
-        -- Guess at the postcode format and coverage (!)
-        IF postcode ~ '^[A-Z0-9]{1,5}$' THEN -- Probably too short to be very local
-            rank_search := 21;
-            rank_address := 11;
-        ELSE
-            -- Does it look splitable into and area and local code?
-            part := substring(postcode from '^([- :A-Z0-9]+)([- :][A-Z0-9]+)$');
-
-            IF part IS NOT NULL THEN
-                rank_search := 25;
-                rank_address := 11;
-            ELSEIF postcode ~ '^[- :A-Z0-9]{6,}$' THEN
-                rank_search := 21;
-                rank_address := 11;
-            END IF;
-        END IF;
+  IF name is not null AND array_upper(akeys(name),1) > 1 THEN
+    default_language := get_country_language_code(country_code);
+    IF default_language IS NOT NULL THEN
+      IF name ? 'name' AND NOT name ? ('name:'||default_language) THEN
+        name := name || hstore(('name:'||default_language), (name -> 'name'));
+      ELSEIF name ? ('name:'||default_language) AND NOT name ? 'name' THEN
+        name := name || hstore('name', (name -> ('name:'||default_language)));
+      END IF;
     END IF;
-
+  END IF;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -509,22 +482,7 @@ BEGIN
         AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
       END LOOP;
     ELSE
-        diameter := 0;
-        IF rank = 11 THEN
-          diameter := 0.05;
-        ELSEIF rank < 18 THEN
-          diameter := 0.1;
-        ELSEIF rank < 20 THEN
-          diameter := 0.05;
-        ELSEIF rank = 21 THEN
-          diameter := 0.001;
-        ELSEIF rank < 24 THEN
-          diameter := 0.02;
-        ELSEIF rank < 26 THEN
-          diameter := 0.002; -- 100 to 200 meters
-        ELSEIF rank < 28 THEN
-          diameter := 0.001; -- 50 to 100 meters
-        END IF;
+        diameter := update_place_diameter(rank);
         IF diameter > 0 THEN
           IF rank >= 26 THEN
             -- roads may cause reparenting for >27 rank places

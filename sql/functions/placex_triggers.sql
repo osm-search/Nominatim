@@ -1,45 +1,5 @@
 -- Trigger functions for the placex table.
 
-CREATE OR REPLACE FUNCTION get_rel_node_members(members TEXT[], memberLabels TEXT[])
-  RETURNS SETOF BIGINT
-  AS $$
-DECLARE
-  i INTEGER;
-BEGIN
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = ANY(memberLabels)
-       AND upper(substring(members[i], 1, 1))::char(1) = 'N'
-    THEN
-      RETURN NEXT substring(members[i], 2)::bigint;
-    END IF;
-  END LOOP;
-
-  RETURN;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
--- copy 'name' to or from the default language (if there is a default language)
-CREATE OR REPLACE FUNCTION add_default_place_name(country_code VARCHAR(2),
-                                                  INOUT name HSTORE)
-  AS $$
-DECLARE
-  default_language VARCHAR(10);
-BEGIN
-  IF name is not null AND array_upper(akeys(name),1) > 1 THEN
-    default_language := get_country_language_code(country_code);
-    IF default_language IS NOT NULL THEN
-      IF name ? 'name' AND NOT name ? ('name:'||default_language) THEN
-        name := name || hstore(('name:'||default_language), (name -> 'name'));
-      ELSEIF name ? ('name:'||default_language) AND NOT name ? 'name' THEN
-        name := name || hstore('name', (name -> ('name:'||default_language)));
-      END IF;
-    END IF;
-  END IF;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
 -- Find the parent road of a POI.
 --
 -- \returns Place ID of parent object or NULL if none
@@ -538,25 +498,7 @@ BEGIN
       END IF;
     ELSE
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-      diameter := 0;
-      -- 16 = city, anything higher than city is effectively ignored (polygon required!)
-      IF NEW.type='postcode' THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search < 16 THEN
-        diameter := 0;
-      ELSEIF NEW.rank_search < 18 THEN
-        diameter := 0.1;
-      ELSEIF NEW.rank_search < 20 THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search = 21 THEN
-        diameter := 0.001;
-      ELSEIF NEW.rank_search < 24 THEN
-        diameter := 0.02;
-      ELSEIF NEW.rank_search < 26 THEN
-        diameter := 0.002; -- 100 to 200 meters
-      ELSEIF NEW.rank_search < 28 THEN
-        diameter := 0.001; -- 50 to 100 meters
-      END IF;
+      diameter := update_place_diameter(NEW.rank_search);
       IF diameter > 0 THEN
   --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
         IF NEW.rank_search >= 26 THEN

@@ -6,8 +6,9 @@ require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
+$sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
+set_exception_handler_by_format($sOutputFormat);
 
-$sOutputFormat = 'html';
 $iDays = $oParams->getInt('days', false);
 $bReduced = $oParams->getBool('reduced', false);
 $sClass = $oParams->getString('class', false);
@@ -15,13 +16,13 @@ $sClass = $oParams->getString('class', false);
 $oDB = new Nominatim\DB();
 $oDB->connect();
 
-$iTotalBroken = (int) $oDB->getOne('select count(*) from import_polygon_error');
+$iTotalBroken = (int) $oDB->getOne('SELECT count(*) FROM import_polygon_error');
 
 $aPolygons = array();
 while ($iTotalBroken && empty($aPolygons)) {
-    $sSQL = 'select osm_type as "type",osm_id as "id",class as "key",type as "value",name->\'name\' as "name",';
-    $sSQL .= 'country_code as "country",errormessage as "error message",updated';
-    $sSQL .= ' from import_polygon_error';
+    $sSQL = 'SELECT osm_type, osm_id, class, type, name->\'name\' as "name",';
+    $sSQL .= 'country_code, errormessage, updated';
+    $sSQL .= ' FROM import_polygon_error';
 
     $aWhere = array();
     if ($iDays) {
@@ -33,10 +34,10 @@ while ($iTotalBroken && empty($aPolygons)) {
     if ($sClass) $sWhere[] = "class = '".pg_escape_string($sClass)."'";
 
     if (!empty($aWhere)) {
-        $sSQL .= ' where '.join(' and ', $aWhere);
+        $sSQL .= ' WHERE '.join(' and ', $aWhere);
     }
 
-    $sSQL .= ' order by updated desc limit 1000';
+    $sSQL .= ' ORDER BY updated desc LIMIT 1000';
     $aPolygons = $oDB->getAll($sSQL);
 }
 
@@ -45,93 +46,8 @@ if (CONST_Debug) {
     exit;
 }
 
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-    
-    <title>Nominatim Broken Polygon Data</title>
-    
-    <meta name="description" content="List of broken OSM polygon data by date" lang="en-US" />
-
-</head>
-
-<body>
-<style type="text/css">
-table {
-    border-width: 1px;
-    border-spacing: 0px;
-    border-style: solid;
-    border-color: gray;
-    border-collapse: collapse;
-    background-color: white;
-    margin: 10px;
+if ($sOutputFormat == 'json') {
+    echo javascript_renderData($aPolygons);
+} else {
+    include(CONST_BasePath.'/lib/template/polygons-html.php');
 }
-table th {
-    border-width: 1px;
-    padding: 2px;
-    border-style: inset;
-    border-color: gray;
-    border-left-color: #ddd;
-    border-right-color: #ddd;
-    background-color: #eee;
-    -moz-border-radius: 0px 0px 0px 0px;
-}
-table td {
-    border-width: 1px;
-    padding: 2px;
-    border-style: inset;
-    border-color: gray;
-    border-left-color: #ddd;
-    border-right-color: #ddd;
-    background-color: white;
-    -moz-border-radius: 0px 0px 0px 0px;
-}
-</style>
-
-<?php
-
-echo "<p>Total number of broken polygons: $iTotalBroken</p>";
-if (!$aPolygons) exit;
-echo '<table>';
-echo '<tr>';
-//var_dump($aPolygons[0]);
-foreach ($aPolygons[0] as $sCol => $sVal) {
-    echo '<th>'.$sCol.'</th>';
-}
-echo '<th>&nbsp;</th>';
-echo '</tr>';
-$aSeen = array();
-foreach ($aPolygons as $aRow) {
-    if (isset($aSeen[$aRow['type'].$aRow['id']])) continue;
-    $aSeen[$aRow['type'].$aRow['id']] = 1;
-    echo '<tr>';
-    foreach ($aRow as $sCol => $sVal) {
-        switch ($sCol) {
-            case 'error message':
-                if (preg_match('/Self-intersection\\[([0-9.\\-]+) ([0-9.\\-]+)\\]/', $sVal, $aMatch)) {
-                    $aRow['lat'] = $aMatch[2];
-                    $aRow['lon'] = $aMatch[1];
-                    echo '<td><a href="https://www.openstreetmap.org/?lat='.$aMatch[2].'&lon='.$aMatch[1].'&zoom=18&layers=M&'.$sOSMType.'='.$aRow['id'].'">'.($sVal?$sVal:'&nbsp;').'</a></td>';
-                } else {
-                    echo '<td>'.($sVal?$sVal:'&nbsp;').'</td>';
-                }
-                break;
-            case 'id':
-                echo '<td>'.osmLink(array('osm_type' => $aRow['type'], 'osm_id' => $aRow['id'])).'</td>';
-                break;
-            default:
-                echo '<td>'.($sVal?$sVal:'&nbsp;').'</td>';
-                break;
-        }
-    }
-    echo '<td><a href="http://localhost:8111/import?url=https://www.openstreetmap.org/api/0.6/'.$sOSMType.'/'.$aRow['id'].'/full" target="josm">josm</a></td>';
-    echo '</tr>';
-}
-echo '</table>';
-
-?>
-</body>
-</html>

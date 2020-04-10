@@ -38,6 +38,63 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- Return the node members with a given label from a relation member list
+-- as a set.
+--
+-- \param members      Member list in osm2pgsql middle format.
+-- \param memberLabels Array of labels to accept.
+--
+-- \returns Set of OSM ids of nodes that are found.
+--
+CREATE OR REPLACE FUNCTION get_rel_node_members(members TEXT[],
+                                                memberLabels TEXT[])
+  RETURNS SETOF BIGINT
+  AS $$
+DECLARE
+  i INTEGER;
+BEGIN
+  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
+    IF members[i+1] = ANY(memberLabels)
+       AND upper(substring(members[i], 1, 1))::char(1) = 'N'
+    THEN
+      RETURN NEXT substring(members[i], 2)::bigint;
+    END IF;
+  END LOOP;
+
+  RETURN;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Copy 'name' to or from the default language.
+--
+-- \param country_code     Country code of the object being named.
+-- \param[inout] name      List of names of the object.
+--
+-- If the country named by country_code has a single default language,
+-- then a `name` tag is copied to `name:<country_code>` if this tag does
+-- not yet exist and vice versa.
+CREATE OR REPLACE FUNCTION add_default_place_name(country_code VARCHAR(2),
+                                                  INOUT name HSTORE)
+  AS $$
+DECLARE
+  default_language VARCHAR(10);
+BEGIN
+  IF name is not null AND array_upper(akeys(name),1) > 1 THEN
+    default_language := get_country_language_code(country_code);
+    IF default_language IS NOT NULL THEN
+      IF name ? 'name' AND NOT name ? ('name:'||default_language) THEN
+        name := name || hstore(('name:'||default_language), (name -> 'name'));
+      ELSEIF name ? ('name:'||default_language) AND NOT name ? 'name' THEN
+        name := name || hstore('name', (name -> ('name:'||default_language)));
+      END IF;
+    END IF;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+
 
 CREATE OR REPLACE FUNCTION reverse_place_diameter(rank_search SMALLINT)
   RETURNS FLOAT

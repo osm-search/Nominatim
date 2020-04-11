@@ -392,7 +392,6 @@ DECLARE
   country_code VARCHAR(2);
   diameter FLOAT;
   classtable TEXT;
-  classtype TEXT;
 BEGIN
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
@@ -428,8 +427,9 @@ BEGIN
     END IF;
 
     SELECT * INTO NEW.rank_search, NEW.rank_address
-      FROM compute_place_rank(NEW.country_code, NEW.osm_type, NEW.class,
-                              NEW.type, NEW.admin_level, is_area,
+      FROM compute_place_rank(NEW.country_code,
+                              CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
+                              NEW.class, NEW.type, NEW.admin_level,
                               (NEW.extratags->'capital') = 'yes',
                               NEW.address->'postcode');
 
@@ -551,6 +551,17 @@ BEGIN
     --DEBUG: RAISE WARNING 'place already linked to %', NEW.linked_place_id;
     RETURN NEW;
   END IF;
+
+  -- recompute the ranks, they might change when linking changes
+  SELECT * INTO NEW.rank_search, NEW.rank_address
+    FROM compute_place_rank(NEW.country_code,
+                            CASE WHEN ST_GeometryType(NEW.geometry)
+                                        IN ('ST_Polygon','ST_MultiPolygon')
+                            THEN 'A' ELSE NEW.osm_type END,
+                            NEW.class, NEW.type, NEW.admin_level,
+                            (NEW.extratags->'capital') = 'yes',
+                            NEW.address->'postcode');
+
 
   --DEBUG: RAISE WARNING 'Copy over address tags';
   -- housenumber is a computed field, so start with an empty value

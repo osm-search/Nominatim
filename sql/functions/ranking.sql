@@ -116,12 +116,23 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 
--- Get standard search and address rank for an object
+-- Get standard search and address rank for an object.
+--
+-- \param country        Two-letter country code where the object is in.
+-- \param extended_type  OSM type (N, W, R) or area type (A).
+-- \param place_class    Class (or tag key) of object.
+-- \param place_type     Type (or tag value) of object.
+-- \param admin_level    Value of admin_level tag.
+-- \param is_major       If true, boost search rank by one.
+-- \param postcode       Value of addr:postcode tag.
+-- \param[out] search_rank   Computed search rank.
+-- \param[out] address_rank  Computed address rank.
+--
 CREATE OR REPLACE FUNCTION compute_place_rank(country VARCHAR(2),
-                                              osm_type VARCHAR(1),
+                                              extended_type VARCHAR(1),
                                               place_class TEXT, place_type TEXT,
                                               admin_level SMALLINT,
-                                              is_area BOOLEAN, is_major BOOLEAN,
+                                              is_major BOOLEAN,
                                               postcode TEXT,
                                               OUT search_rank SMALLINT,
                                               OUT address_rank SMALLINT)
@@ -135,13 +146,13 @@ BEGIN
     SELECT * INTO search_rank, address_rank
       FROM get_postcode_rank(country, postcode);
 
-    IF NOT is_area THEN
+    IF NOT extended_type = 'A' THEN
       address_rank := 0;
     END IF;
-  ELSEIF osm_type = 'N' AND place_class = 'highway' THEN
+  ELSEIF extended_type = 'N' AND place_class = 'highway' THEN
     search_rank = 30;
     address_rank = 0;
-  ELSEIF place_class = 'landuse' AND NOT is_area THEN
+  ELSEIF place_class = 'landuse' AND extended_type != 'A' THEN
     search_rank = 30;
     address_rank = 0;
   ELSE
@@ -166,7 +177,7 @@ BEGIN
     END IF;
 
     -- some postcorrections
-    IF place_class = 'waterway' AND osm_type = 'R' THEN
+    IF place_class = 'waterway' AND extended_type = 'R' THEN
         -- Slightly promote waterway relations so that they are processed
         -- before their members.
         search_rank := search_rank - 1;

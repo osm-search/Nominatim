@@ -392,7 +392,6 @@ DECLARE
   country_code VARCHAR(2);
   diameter FLOAT;
   classtable TEXT;
-  classtype TEXT;
 BEGIN
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
@@ -410,8 +409,8 @@ BEGIN
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
     IF NEW.class in ('place','boundary')
-       AND NEW.type in ('postcode','postal_code') THEN
-
+       AND NEW.type in ('postcode','postal_code')
+    THEN
       IF NEW.address IS NULL OR NOT NEW.address ? 'postcode' THEN
           -- most likely just a part of a multipolygon postcode boundary, throw it away
           RETURN NULL;
@@ -419,61 +418,26 @@ BEGIN
 
       NEW.name := hstore('ref', NEW.address->'postcode');
 
-      SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
-        INTO NEW.rank_search, NEW.rank_address;
-
-      IF NOT is_area THEN
-          NEW.rank_address := 0;
-      END IF;
     ELSEIF NEW.class = 'boundary' AND NOT is_area THEN
-        return NULL;
+        RETURN NULL;
     ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
-           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W' THEN
-        return NULL;
-    ELSEIF NEW.osm_type = 'N' AND NEW.class = 'highway' THEN
-        NEW.rank_search = 30;
-        NEW.rank_address = 0;
-    ELSEIF NEW.class = 'landuse' AND NOT is_area THEN
-        NEW.rank_search = 30;
-        NEW.rank_address = 0;
-    ELSE
-      -- do table lookup stuff
-      IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
-        classtype = NEW.type || NEW.admin_level::TEXT;
-      ELSE
-        classtype = NEW.type;
-      END IF;
-      SELECT l.rank_search, l.rank_address FROM address_levels l
-       WHERE (l.country_code = NEW.country_code or l.country_code is NULL)
-             AND l.class = NEW.class AND (l.type = classtype or l.type is NULL)
-       ORDER BY l.country_code, l.class, l.type LIMIT 1
-        INTO NEW.rank_search, NEW.rank_address;
-
-      IF NEW.rank_search is NULL THEN
-        NEW.rank_search := 30;
-      END IF;
-
-      IF NEW.rank_address is NULL THEN
-        NEW.rank_address := 30;
-      END IF;
+           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W'
+    THEN
+        RETURN NULL;
     END IF;
 
-    -- some postcorrections
-    IF NEW.class = 'waterway' AND NEW.osm_type = 'R' THEN
-        -- Slightly promote waterway relations so that they are processed
-        -- before their members.
-        NEW.rank_search := NEW.rank_search - 1;
+    SELECT * INTO NEW.rank_search, NEW.rank_address
+      FROM compute_place_rank(NEW.country_code,
+                              CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
+                              NEW.class, NEW.type, NEW.admin_level,
+                              (NEW.extratags->'capital') = 'yes',
+                              NEW.address->'postcode');
+
+    -- a country code make no sense below rank 4 (country)
+    IF NEW.rank_search < 4 THEN
+      NEW.country_code := NULL;
     END IF;
 
-    IF (NEW.extratags -> 'capital') = 'yes' THEN
-      NEW.rank_search := NEW.rank_search - 1;
-    END IF;
-
-  END IF;
-
-  -- a country code make no sense below rank 4 (country)
-  IF NEW.rank_search < 4 THEN
-    NEW.country_code := NULL;
   END IF;
 
   --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
@@ -587,6 +551,17 @@ BEGIN
     --DEBUG: RAISE WARNING 'place already linked to %', NEW.linked_place_id;
     RETURN NEW;
   END IF;
+
+  -- recompute the ranks, they might change when linking changes
+  SELECT * INTO NEW.rank_search, NEW.rank_address
+    FROM compute_place_rank(NEW.country_code,
+                            CASE WHEN ST_GeometryType(NEW.geometry)
+                                        IN ('ST_Polygon','ST_MultiPolygon')
+                            THEN 'A' ELSE NEW.osm_type END,
+                            NEW.class, NEW.type, NEW.admin_level,
+                            (NEW.extratags->'capital') = 'yes',
+                            NEW.address->'postcode');
+
 
   --DEBUG: RAISE WARNING 'Copy over address tags';
   -- housenumber is a computed field, so start with an empty value

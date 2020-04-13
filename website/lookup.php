@@ -81,5 +81,7 @@ $bShowPolygons = '';
 $aExcludePlaceIDs = array();
 $sMoreURL = '';
 
+logEnd($oDB, $hLog, 1);
+
 $sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
 include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');

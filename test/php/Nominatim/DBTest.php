@@ -24,10 +24,10 @@ class DBTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($oDB->connect());
     }
 
-    public function testDatabaseExists()
+    public function testCheckConnection()
     {
         $oDB = new \Nominatim\DB('');
-        $this->assertFalse($oDB->databaseExists());
+        $this->assertFalse($oDB->checkConnection());
     }
 
     public function testErrorHandling()
@@ -112,5 +112,127 @@ class DBTest extends \PHPUnit\Framework\TestCase
             ),
             \Nominatim\DB::parseDSN('pgsql:dbname=db1;host=machine1;port=1234;user=john;password=secret')
         );
+    }
+
+    public function testGenerateDSN()
+    {
+        $this->assertEquals(
+            'pgsql:',
+            \Nominatim\DB::generateDSN(array())
+        );
+        $this->assertEquals(
+            'pgsql:host=machine1;dbname=db1',
+            \Nominatim\DB::generateDSN(\Nominatim\DB::parseDSN('pgsql:host=machine1;dbname=db1'))
+        );
+    }
+
+    public function testAgainstDatabase()
+    {
+        if (getenv('UNIT_TEST_DSN') == false) $this->markTestSkipped('UNIT_TEST_DSN not set');
+
+        ## Create the database.
+        {
+            $aDSNParsed = \Nominatim\DB::parseDSN(getenv('UNIT_TEST_DSN'));
+            $sDbname = $aDSNParsed['database'];
+            $aDSNParsed['database'] = 'postgres';
+
+            $oDB = new \Nominatim\DB(\Nominatim\DB::generateDSN($aDSNParsed));
+            $oDB->connect();
+            $oDB->exec('DROP DATABASE IF EXISTS ' . $sDbname);
+            $oDB->exec('CREATE DATABASE ' . $sDbname);
+        }
+
+        $oDB = new \Nominatim\DB(getenv('UNIT_TEST_DSN'));
+        $oDB->connect();
+
+        $this->assertTrue(
+            $oDB->checkConnection($sDbname)
+        );
+
+        # Tables, Indices
+        {
+            $this->assertEmpty($oDB->getListOfTables());
+            $oDB->exec('CREATE TABLE table1 (id integer, city varchar, country varchar)');
+            $oDB->exec('CREATE TABLE table2 (id integer, city varchar, country varchar)');
+            $this->assertEquals(
+                array('table1', 'table2'),
+                $oDB->getListOfTables()
+            );
+            $this->assertTrue($oDB->deleteTable('table2'));
+            $this->assertTrue($oDB->deleteTable('table99'));
+            $this->assertEquals(
+                array('table1'),
+                $oDB->getListOfTables()
+            );
+
+            $this->assertTrue($oDB->tableExists('table1'));
+            $this->assertFalse($oDB->tableExists('table99'));
+            $this->assertFalse($oDB->tableExists(null));
+
+            $this->assertEmpty($oDB->getListOfIndices());
+            $oDB->exec('CREATE UNIQUE INDEX table1_index ON table1 (id)');
+            $this->assertEquals(
+                array('table1_index'),
+                $oDB->getListOfIndices()
+            );
+            $this->assertEmpty($oDB->getListOfIndices('table2'));
+        }
+
+        # select queries
+        {
+            $oDB->exec(
+                "INSERT INTO table1 VALUES (1, 'Berlin', 'Germany'), (2, 'Paris', 'France')"
+            );
+
+            $this->assertEquals(
+                array(
+                    array('city' => 'Berlin'),
+                    array('city' => 'Paris')
+                ),
+                $oDB->getAll('SELECT city FROM table1')
+            );
+            $this->assertEquals(
+                array(),
+                $oDB->getAll('SELECT city FROM table1 WHERE id=999')
+            );
+
+
+            $this->assertEquals(
+                array('id' => 1, 'city' => 'Berlin', 'country' => 'Germany'),
+                $oDB->getRow('SELECT * FROM table1 WHERE id=1')
+            );
+            $this->assertEquals(
+                false,
+                $oDB->getRow('SELECT * FROM table1 WHERE id=999')
+            );
+
+
+            $this->assertEquals(
+                array('Berlin', 'Paris'),
+                $oDB->getCol('SELECT city FROM table1')
+            );
+            $this->assertEquals(
+                array(),
+                $oDB->getCol('SELECT city FROM table1 WHERE id=999')
+            );
+
+            $this->assertEquals(
+                'Berlin',
+                $oDB->getOne('SELECT city FROM table1 WHERE id=1')
+            );
+            $this->assertEquals(
+                null,
+                $oDB->getOne('SELECT city FROM table1 WHERE id=999')
+            );
+
+            $this->assertEquals(
+                array('Berlin' => 'Germany', 'Paris' => 'France'),
+                $oDB->getAssoc('SELECT city, country FROM table1')
+            );
+            $this->assertEquals(
+                array(),
+                $oDB->getAssoc('SELECT city, country FROM table1 WHERE id=999')
+            );
+        }
     }
 }

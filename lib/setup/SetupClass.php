@@ -84,7 +84,7 @@ class SetupFunctions
         info('Create DB');
         $oDB = new \Nominatim\DB;
 
-        if ($oDB->databaseExists()) {
+        if ($oDB->checkConnection()) {
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
@@ -651,7 +651,7 @@ class SetupFunctions
                        );
 
         $aDropTables = array();
-        $aHaveTables = $this->oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
+        $aHaveTables = $this->oDB->getListOfTables();
 
         foreach ($aHaveTables as $sTable) {
             $bFound = false;
@@ -858,7 +858,7 @@ class SetupFunctions
     private function dropTable($sName)
     {
         if ($this->bVerbose) echo "Dropping table $sName\n";
-        $this->oDB->exec('DROP TABLE IF EXISTS '.$sName.' CASCADE');
+        $this->oDB->deleteTable($sName);
     }
 
     /**

@@ -16,6 +16,7 @@ pages:
     - 'Administration Guide':
         - 'Basic Installation': 'admin/Installation.md'
         - 'Importing and Updating' : 'admin/Import-and-Update.md'
+        - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Developers Guide':

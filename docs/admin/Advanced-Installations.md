@@ -25,7 +25,7 @@ update
 
 ```
 
-The `sequence.state` files will contain the sequence ID, which will be used be pyosmium to get updates. The tmp folder is used for import dump. 
+The `sequence.state` files will contain the sequence ID, which will be used by pyosmium to get updates. The tmp folder is used for import dump.
 
 ### Configuring multiple regions
 
@@ -58,6 +58,10 @@ The file `import_multiple_regions.sh` needs to be edited as per your requirement
 Run the following command from your Nominatim directory after configuring the file.
 
     bash ./utils/import_multiple_regions.sh
+
+!!! danger "Important"
+        This file uses osmium-tool. It must be installed before executing the import script.
+        Installation instructions can be found [here](https://osmcode.org/osmium-tool/manual.html#installation).
 
 ## Updating multiple regions
 

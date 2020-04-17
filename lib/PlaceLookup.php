@@ -219,6 +219,8 @@ class PlaceLookup
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
             $sSQL .= "    (extratags->'place') AS extra_place ";
+            $sSQL .= "    (extratags->'data_licence') AS licence ";
+            $sSQL .= "    (extratags->'data_copyright') AS copyright ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -433,7 +435,7 @@ class PlaceLookup
         foreach ($aPlaces as &$aPlace) {
             $aPlace['importance'] = (float) $aPlace['importance'];
 
-            $licence_copyright_content = $this->oDB->getRow(
+            /* $licence_copyright_content = $this->oDB->getRow(
                 "SELECT extratags -> 'data_licence' AS licence, extratags -> 'data_copyright' AS copyright FROM placex where place_id = :placeid",
                 array(':placeid' => $aPlace['place_id'])
             );
@@ -446,7 +448,7 @@ class PlaceLookup
                 $aPlace['copyright'] = ($this->aCopyright);
             } else {
                 $aPlace['copyright'] = $licence_copyright_content['copyright'];
-            }
+            } */
 
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
@@ -462,6 +464,14 @@ class PlaceLookup
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
+                    if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
+                        $aPlace['licence'] = ($this->aLicence);
+                    } 
+
+                    if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
+                        $aPlace['copyright'] = ($this->aCopyright);
+                    } 
+                    
                 } else {
                     $aPlace['sExtraTags'] = (object) array();
                 }

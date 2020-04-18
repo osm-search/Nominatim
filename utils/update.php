@@ -354,7 +354,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     //
     if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
         fail('Error: Update interval too low for download.geofabrik.de. ' .
-             "Please check install documentation (http://nominatim.org/release-docs/latest/Import-and-Update#setting-up-the-update-process)\n");
+             "Please check install documentation (https://nominatim.org/release-docs/latest/admin/Import-and-Update#setting-up-the-update-process)\n");
     }
 
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';

@@ -304,7 +304,7 @@ class Indexer(object):
             else:
                 ready, _, _ = select.select(self.threads, [], [])
 
-        assert(False, "Unreachable code")
+        assert False, "Unreachable code"
 
 
 def nominatim_arg_parser():

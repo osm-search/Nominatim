@@ -253,6 +253,8 @@ class PlaceLookup
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
+            $sSQL .= '     licence, ';
+            $sSQL .= '     copyright, ';
             $sSQL .= "     extratags->'place' ";
 
             $aSubSelects[] = $sSQL;
@@ -450,6 +452,14 @@ class PlaceLookup
                 $aPlace['copyright'] = $licence_copyright_content['copyright'];
             } */
 
+            if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
+                $aPlace['licence'] = ($this->aLicence);
+            } 
+
+            if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
+                $aPlace['copyright'] = ($this->aCopyright);
+            } 
+
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
                 $aPlace['address'] = new AddressDetails(
@@ -464,13 +474,13 @@ class PlaceLookup
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
-                    if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
+                    /* if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
                         $aPlace['licence'] = ($this->aLicence);
                     } 
 
                     if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
                         $aPlace['copyright'] = ($this->aCopyright);
-                    } 
+                    }  */
                     
                 } else {
                     $aPlace['sExtraTags'] = (object) array();

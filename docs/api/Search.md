@@ -92,8 +92,12 @@ comma-separated list of language codes.
 * `countrycodes=<countrycode>[,<countrycode>][,<countrycode>]...`
 
 Limit search results to one or more countries. `<countrycode>` must be the
-ISO 3166-1alpha2 code, e.g. `gb` for the United Kingdom, `de` for Germany.
+[ISO 3166-1alpha2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) code,
+e.g. `gb` for the United Kingdom, `de` for Germany.
 
+Each place in Nominatim is assigned to one country code based
+on `admin_level=2` tags, in rare cases to none (for example in
+international waters outside any country).
 
 * `exclude_place_ids=<place_id,[place_id],[place_id]`
 

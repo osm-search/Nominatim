@@ -218,8 +218,8 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    (extratags->'place') AS extra_place ";
-            $sSQL .= "    (extratags->'data_licence') AS licence ";
+            $sSQL .= "    (extratags->'place') AS extra_place, ";
+            $sSQL .= "    (extratags->'data_licence') AS licence, ";
             $sSQL .= "    (extratags->'data_copyright') AS copyright ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";

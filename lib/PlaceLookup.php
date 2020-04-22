@@ -25,7 +25,8 @@ class PlaceLookup
     protected $sAddressRankListSql = null;
     protected $sAllowedTypesSQLList = null;
     protected $bDeDupe = true;
-
+    protected $aLicence = 'Data © OpenStreetMap contributors, ODbL 1.0.';
+    protected $aCopyright = 'https://osm.org/copyright';
 
     public function __construct(&$oDB)
     {
@@ -207,7 +208,9 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place ";
+            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place, ";
+            $sSQL .= "    COALESCE(extratags->'data_licence') AS licence, ";
+            $sSQL .= "    COALESCE(extratags->'data_copyright') AS copyright ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -240,7 +243,9 @@ class PlaceLookup
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
-            $sSQL .= '     extra_place ';
+            $sSQL .= '     extra_place, ';
+            $sSQL .= '     licence, ';
+            $sSQL .= '     copyright ';
 
             $aSubSelects[] = $sSQL;
         }
@@ -430,6 +435,14 @@ class PlaceLookup
                     $this->aLangPrefOrderSql
                 );
                 $aPlace['langaddress'] = $aPlace['address']->getLocaleAddress();
+            }
+
+            if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
+                $aPlace['licence'] = ($this->aLicence);
+            } 
+
+            if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
+                $aPlace['copyright'] = ($this->aCopyright);
             }
 
             if ($this->bExtraTags) {

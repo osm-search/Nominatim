@@ -439,7 +439,7 @@ class PlaceLookup
 
             if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
                 $aPlace['licence'] = ($this->aLicence);
-            } 
+            }
 
             if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
                 $aPlace['copyright'] = ($this->aCopyright);

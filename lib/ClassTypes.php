@@ -268,7 +268,7 @@ function getList()
             'tourism:caravan_site' => array('label' => 'Caravan Site', 'frequency' => 183, 'icon' => 'accommodation_caravan_park'),
             'amenity:bus_station' => array('label' => 'Bus Station', 'frequency' => 181, 'icon' => 'transport_bus_station'),
             'amenity:kindergarten' => array('label' => 'Kindergarten', 'frequency' => 179),
-            'highway:construction' => array('label' => 'Construction', 'frequency' => 176),
+            'highway:construction' => array('label' => 'Construction', 'frequency' => 176, 'simplelabel' => 'road'),
             'amenity:atm' => array('label' => 'Atm', 'frequency' => 172, 'icon' => 'money_atm2'),
             'amenity:emergency_phone' => array('label' => 'Emergency Phone', 'frequency' => 164),
             'waterway:lock' => array('label' => 'Lock', 'frequency' => 146),

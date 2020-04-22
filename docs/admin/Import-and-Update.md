@@ -318,6 +318,5 @@ compatibility reasons, Osmosis is not required to run this - it uses pyosmium
 behind the scenes.)
 
 If you have imported multiple country extracts and want to keep them
-up-to-date, have a look at the script in
-[issue #60](https://github.com/openstreetmap/Nominatim/issues/60).
-
+up-to-date, [Advanced installations section](Advanced-Installations.md) contains instructions 
+to set up and update multiple country extracts.

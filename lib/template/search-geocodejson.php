@@ -73,8 +73,8 @@ javascript_renderData(
      'type' => 'FeatureCollection',
      'geocoding' => array(
                      'version' => '0.1.0',
-                     'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
-                                    //    'licence' => 'ODbL',
+                    //  'attribution' => 'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
+                    //    'licence' => 'ODbL',
                      'query' => $sQuery
                                       ),
      'features' => $aFilteredPlaces

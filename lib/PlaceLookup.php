@@ -99,29 +99,38 @@ class PlaceLookup
     {
         $aParams = array();
 
-        if ($this->bAddressDetails) { $aParams['addressdetails'] = '1';
+        if ($this->bAddressDetails) {
+            $aParams['addressdetails'] = '1';
         }
-        if ($this->bExtraTags) { $aParams['extratags'] = '1';
+        if ($this->bExtraTags) {
+            $aParams['extratags'] = '1';
         }
-        if ($this->bNameDetails) { $aParams['namedetails'] = '1';
+        if ($this->bNameDetails) {
+            $aParams['namedetails'] = '1';
         }
 
-        if ($this->bIncludePolygonAsPoints) { $aParams['polygon'] = '1';
+        if ($this->bIncludePolygonAsPoints) {
+            $aParams['polygon'] = '1';
         }
-        if ($this->bIncludePolygonAsText) { $aParams['polygon_text'] = '1';
+        if ($this->bIncludePolygonAsText) {
+            $aParams['polygon_text'] = '1';
         }
-        if ($this->bIncludePolygonAsGeoJSON) { $aParams['polygon_geojson'] = '1';
+        if ($this->bIncludePolygonAsGeoJSON) {
+            $aParams['polygon_geojson'] = '1';
         }
-        if ($this->bIncludePolygonAsKML) { $aParams['polygon_kml'] = '1';
+        if ($this->bIncludePolygonAsKML) {
+            $aParams['polygon_kml'] = '1';
         }
-        if ($this->bIncludePolygonAsSVG) { $aParams['polygon_svg'] = '1';
+        if ($this->bIncludePolygonAsSVG) {
+            $aParams['polygon_svg'] = '1';
         }
 
         if ($this->fPolygonSimplificationThreshold > 0.0) {
             $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
         }
 
-        if (!$this->bDeDupe) { $aParams['dedupe'] = '0';
+        if (!$this->bDeDupe) {
+            $aParams['dedupe'] = '0';
         }
 
         return $aParams;
@@ -228,9 +237,7 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    (extratags->'place') AS extra_place, ";
-            $sSQL .= "    (extratags->'data_licence') AS licence, ";
-            $sSQL .= "    (extratags->'data_copyright') AS copyright ";
+            $sSQL .= "    (extratags->'place') AS extra_place ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -257,18 +264,20 @@ class PlaceLookup
             $sSQL .= '     housenumber,';
             $sSQL .= '     country_code, ';
             $sSQL .= '     importance, ';
-            if (!$this->bDeDupe) { $sSQL .= 'place_id,';
+            if (!$this->bDeDupe) {
+                $sSQL .= 'place_id,';
             }
-            if (!$this->bAddressDetails) { $sSQL .= 'langaddress, ';
+            if (!$this->bAddressDetails) {
+                $sSQL .= 'langaddress, ';
             }
             $sSQL .= '     placename, ';
             $sSQL .= '     ref, ';
-            if ($this->bExtraTags) { $sSQL .= 'extratags, ';
+            if ($this->bExtraTags) {
+                $sSQL .= 'extratags, ';
             }
-            if ($this->bNameDetails) { $sSQL .= 'name, ';
+            if ($this->bNameDetails) {
+                $sSQL .= 'name, ';
             }
-            $sSQL .= '     licence, ';
-            $sSQL .= '     copyright, ';
             $sSQL .= "     extratags->'place' ";
 
             $aSubSelects[] = $sSQL;
@@ -289,9 +298,11 @@ class PlaceLookup
             $sSQL .= $this->langAddressSql('-1');
             $sSQL .= '  postcode as placename,';
             $sSQL .= '  postcode as ref,';
-            if ($this->bExtraTags) { $sSQL .= 'null::text AS extra,';
+            if ($this->bExtraTags) {
+                $sSQL .= 'null::text AS extra,';
             }
-            if ($this->bNameDetails) { $sSQL .= 'null::text AS names,';
+            if ($this->bNameDetails) {
+                $sSQL .= 'null::text AS names,';
             }
             $sSQL .= '  ST_x(geometry) AS lon, ST_y(geometry) AS lat,';
             $sSQL .= '  (0.75-(rank_search::float/40)) AS importance, ';
@@ -329,9 +340,11 @@ class PlaceLookup
                     $sSQL .= $this->langAddressSql('housenumber_for_place');
                     $sSQL .= '     null::text AS placename, ';
                     $sSQL .= '     null::text AS ref, ';
-                    if ($this->bExtraTags) { $sSQL .= 'null::text AS extra,';
+                    if ($this->bExtraTags) {
+                        $sSQL .= 'null::text AS extra,';
                     }
-                    if ($this->bNameDetails) { $sSQL .= 'null::text AS names,';
+                    if ($this->bNameDetails) {
+                        $sSQL .= 'null::text AS names,';
                     }
                     $sSQL .= '     st_x(centroid) AS lon, ';
                     $sSQL .= '     st_y(centroid) AS lat,';
@@ -377,9 +390,11 @@ class PlaceLookup
                 $sSQL .= $this->langAddressSql('housenumber_for_place');
                 $sSQL .= '  null::text AS placename, ';
                 $sSQL .= '  null::text AS ref, ';
-                if ($this->bExtraTags) { $sSQL .= 'null::text AS extra, ';
+                if ($this->bExtraTags) {
+                    $sSQL .= 'null::text AS extra, ';
                 }
-                if ($this->bNameDetails) { $sSQL .= 'null::text AS names, ';
+                if ($this->bNameDetails) {
+                    $sSQL .= 'null::text AS names, ';
                 }
                 $sSQL .= '  st_x(centroid) AS lon, ';
                 $sSQL .= '  st_y(centroid) AS lat, ';
@@ -428,9 +443,11 @@ class PlaceLookup
                     $sSQL .= $this->langAddressSql('-1');
                     $sSQL .= '     null::text AS placename, ';
                     $sSQL .= '     null::text AS ref, ';
-                    if ($this->bExtraTags) { $sSQL .= 'null::text AS extra, ';
+                    if ($this->bExtraTags) {
+                        $sSQL .= 'null::text AS extra, ';
                     }
-                    if ($this->bNameDetails) { $sSQL .= 'null::text AS names, ';
+                    if ($this->bNameDetails) {
+                        $sSQL .= 'null::text AS names, ';
                     }
                     $sSQL .= '     ST_X(centroid) AS lon, ';
                     $sSQL .= '     ST_Y(centroid) AS lat, ';
@@ -459,29 +476,6 @@ class PlaceLookup
         foreach ($aPlaces as &$aPlace) {
             $aPlace['importance'] = (float) $aPlace['importance'];
 
-            /* $licence_copyright_content = $this->oDB->getRow(
-                "SELECT extratags -> 'data_licence' AS licence, extratags -> 'data_copyright' AS copyright FROM placex where place_id = :placeid",
-                array(':placeid' => $aPlace['place_id'])
-            );
-            if (!$licence_copyright_content['licence'] || !isset($licence_copyright_content['licence'])) {
-                $aPlace['licence'] = ($this->aLicence);
-            } else {
-                $aPlace['licence'] = $licence_copyright_content['licence'];
-            }
-            if (!$licence_copyright_content['copyright'] || !isset($licence_copyright_content['copyright'])) {
-                $aPlace['copyright'] = ($this->aCopyright);
-            } else {
-                $aPlace['copyright'] = $licence_copyright_content['copyright'];
-            } */
-
-            if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
-                $aPlace['licence'] = ($this->aLicence);
-            } 
-
-            if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
-                $aPlace['copyright'] = ($this->aCopyright);
-            } 
-
             if ($this->bAddressDetails) {
                 // to get addressdetails for tiger data, the housenumber is needed
                 $aPlace['address'] = new AddressDetails(
@@ -493,17 +487,19 @@ class PlaceLookup
                 $aPlace['langaddress'] = $aPlace['address']->getLocaleAddress();
             }
 
+            $aPlace['licence'] = ($this->aLicence);
+            $aPlace['copyright'] = ($this->aCopyright);
+
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
-                    /* if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
-                        $aPlace['licence'] = ($this->aLicence);
-                    } 
-
-                    if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
-                        $aPlace['copyright'] = ($this->aCopyright);
-                    }  */
                     
+                    if ($aPlace['sExtraTags']->licence) {
+                        $aPlace['licence'] = $aPlace['sExtraTags']->licence;
+                    }
+                    if ($aPlace['sExtraTags']->copyright) {
+                        $aPlace['copyright'] = $aPlace['sExtraTags']->copyright;
+                    }
                 } else {
                     $aPlace['sExtraTags'] = (object) array();
                 }
@@ -545,7 +541,8 @@ class PlaceLookup
     {
 
         $aOutlineResult = array();
-        if (!$iPlaceID) { return $aOutlineResult;
+        if (!$iPlaceID) {
+            return $aOutlineResult;
         }
 
         if (CONST_Search_AreaPolygons) {
@@ -559,13 +556,17 @@ class PlaceLookup
             }
             $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
             $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
-            if ($this->bIncludePolygonAsGeoJSON) { $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
+            if ($this->bIncludePolygonAsGeoJSON) {
+                $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
             }
-            if ($this->bIncludePolygonAsKML) { $sSQL .= ',ST_AsKML(geometry) as askml';
+            if ($this->bIncludePolygonAsKML) {
+                $sSQL .= ',ST_AsKML(geometry) as askml';
             }
-            if ($this->bIncludePolygonAsSVG) { $sSQL .= ',ST_AsSVG(geometry) as assvg';
+            if ($this->bIncludePolygonAsSVG) {
+                $sSQL .= ',ST_AsSVG(geometry) as assvg';
             }
-            if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) { $sSQL .= ',ST_AsText(geometry) as astext';
+            if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) {
+                $sSQL .= ',ST_AsText(geometry) as astext';
             }
             if ($fLonReverse != null && $fLatReverse != null) {
                 $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
@@ -589,15 +590,20 @@ class PlaceLookup
                     $aOutlineResult['lon'] = $aPointPolygon['centrelon'];
                 }
 
-                if ($this->bIncludePolygonAsGeoJSON) { $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
+                if ($this->bIncludePolygonAsGeoJSON) {
+                    $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
                 }
-                if ($this->bIncludePolygonAsKML) { $aOutlineResult['askml'] = $aPointPolygon['askml'];
+                if ($this->bIncludePolygonAsKML) {
+                    $aOutlineResult['askml'] = $aPointPolygon['askml'];
                 }
-                if ($this->bIncludePolygonAsSVG) { $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
+                if ($this->bIncludePolygonAsSVG) {
+                    $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
                 }
-                if ($this->bIncludePolygonAsText) { $aOutlineResult['astext'] = $aPointPolygon['astext'];
+                if ($this->bIncludePolygonAsText) {
+                    $aOutlineResult['astext'] = $aPointPolygon['astext'];
                 }
-                if ($this->bIncludePolygonAsPoints) { $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
+                if ($this->bIncludePolygonAsPoints) {
+                    $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
                 }
 
 

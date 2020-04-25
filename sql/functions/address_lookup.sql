@@ -69,7 +69,7 @@ BEGIN
     IF currresult != prevresult AND currresult IS NOT NULL
        AND result[(100 - location.rank_address)] IS NULL
     THEN
-      result[(100 - location.rank_address)] := trim(get_name_by_language(location.name, languagepref));
+      result[(100 - location.rank_address)] := currresult;
       prevresult := currresult;
     END IF;
   END LOOP;

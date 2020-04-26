@@ -101,7 +101,7 @@ Run the following command from your Nominatim directory after configuring the fi
 
     bash ./utils/update_database.sh
 
-This will get diffs from the replication server, import diffs and index the database. The default replication server in the script([Geofabric](https://download.geofabrik.de)) provides daily updates.
+This will get diffs from the replication server, import diffs and index the database. The default replication server in the script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
 ## Verification and further setup
 

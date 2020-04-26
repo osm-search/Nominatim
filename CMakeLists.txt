@@ -35,21 +35,21 @@ add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 
 set(BUILD_TESTS off CACHE BOOL "Build test suite" FORCE)
 set(WITH_LUA off CACHE BOOL "Build with lua support" FORCE)
-set(ONLY_DOCS off CACHE BOOL "Build documentation only")
+set(BUILD_DOCS on CACHE BOOL "Build documentation")
+set(BUILD_SERVER on CACHE BOOL "Build API server")
+set(BUILD_MODULE on CACHE BOOL "Build PostgreSQL module")
+set(BUILD_NOMINATIM on CACHE BOOL "Build Nominatim executable")
+set(BUILD_OSM2PGSQL on CACHE BOOL "Build osm2pgsql")
 
-if (NOT ONLY_DOCS)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/osm2pgsql/CMakeLists.txt")
-        message(FATAL_ERROR "The osm2pgsql directory is empty.\
-        Did you forget to check out Nominatim recursively?\
-        \nTry updating submodules with: git submodule update --init")
+if (BUILD_SERVER)
+    if (BUILD_OSM2PGSQL)
+       if (NOT EXISTS "${CMAKE_SOURCE_DIR}/osm2pgsql/CMakeLists.txt")
+           message(FATAL_ERROR "The osm2pgsql directory is empty.\
+           Did you forget to check out Nominatim recursively?\
+           \nTry updating submodules with: git submodule update --init")
+       endif()
+       add_subdirectory(osm2pgsql)
     endif()
-    add_subdirectory(osm2pgsql)
-
-    unset(PostgreSQL_TYPE_INCLUDE_DIR CACHE)
-    set(PostgreSQL_TYPE_INCLUDE_DIR "/usr/include/")
-    find_package(PostgreSQL REQUIRED)
-    include_directories(${PostgreSQL_INCLUDE_DIRS})
-    link_directories(${PostgreSQL_LIBRARY_DIRS})
 
     find_package(PythonInterp 3)
 
@@ -62,15 +62,6 @@ if (NOT ONLY_DOCS)
         message(STATUS "Using pyosmium-get-changes at ${PYOSMIUM_PATH}")
     endif()
 
-
-    find_program(PG_CONFIG pg_config)
-    execute_process(COMMAND ${PG_CONFIG} --pgxs
-                    OUTPUT_VARIABLE PGXS
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    if (NOT EXISTS "${PGXS}")
-        message(FATAL_ERROR "Postgresql server package not found.")
-    endif()
 
     # Setting PHP binary variable as to command line (prevailing) or auto detect
     if (NOT PHP_BIN)
@@ -89,49 +80,50 @@ endif()
 #
 #-----------------------------------------------------------------------------
 
-set(WEBSITESCRIPTS
-    website/deletable.php
-    website/details.php
-    website/hierarchy.php
-    website/lookup.php
-    website/polygons.php
-    website/reverse.php
-    website/search.php
-    website/status.php
-)
-
-set(CUSTOMSCRIPTS
-    utils/check_import_finished.php
-    utils/country_languages.php
-    utils/export.php
-    utils/query.php
-    utils/setup.php
-    utils/specialphrases.php
-    utils/update.php
-    utils/warm.php
+if (BUILD_SERVER)
+   set(WEBSITESCRIPTS
+       website/deletable.php
+       website/details.php
+       website/hierarchy.php
+       website/lookup.php
+       website/polygons.php
+       website/reverse.php
+       website/search.php
+       website/status.php
    )
 
-foreach (script_source ${CUSTOMSCRIPTS})
-    configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
-                   ${PROJECT_BINARY_DIR}/${script_source})
-endforeach()
+   set(CUSTOMSCRIPTS
+       utils/country_languages.php
+       utils/importWikipedia.php
+       utils/export.php
+       utils/query.php
+       utils/setup.php
+       utils/specialphrases.php
+       utils/update.php
+       utils/warm.php
+      )
 
-foreach (script_source ${WEBSITESCRIPTS})
-    configure_file(${PROJECT_SOURCE_DIR}/cmake/website.tmpl
-                   ${PROJECT_BINARY_DIR}/${script_source})
-endforeach()
+   foreach (script_source ${CUSTOMSCRIPTS})
+       configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
+                      ${PROJECT_BINARY_DIR}/${script_source})
+   endforeach()
 
-configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php
-               ${PROJECT_BINARY_DIR}/settings/settings.php)
+   foreach (script_source ${WEBSITESCRIPTS})
+       configure_file(${PROJECT_SOURCE_DIR}/cmake/website.tmpl
+                      ${PROJECT_BINARY_DIR}/${script_source})
+   endforeach()
 
-set(WEBPATHS css images js)
+   configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php
+                  ${PROJECT_BINARY_DIR}/settings/settings.php)
 
-foreach (wp ${WEBPATHS})
-    execute_process(
-        COMMAND ln -sf ${PROJECT_SOURCE_DIR}/website/${wp} ${PROJECT_BINARY_DIR}/website/
-    )
-endforeach()
+   set(WEBPATHS css images js)
 
+   foreach (wp ${WEBPATHS})
+       execute_process(
+           COMMAND ln -sf ${PROJECT_SOURCE_DIR}/website/${wp} ${PROJECT_BINARY_DIR}/website/
+       )
+   endforeach()
+endif()
 
 #-----------------------------------------------------------------------------
 #
@@ -139,7 +131,7 @@ endforeach()
 #
 #-----------------------------------------------------------------------------
 
-if (NOT ONLY_DOCS)
+if (BUILD_TESTS)
     include(CTest)
 
     set(TEST_BDD db osm2pgsql api)
@@ -159,9 +151,14 @@ endif()
 
 #-----------------------------------------------------------------------------
 
-if (NOT ONLY_DOCS)
+if (BUILD_MODULE)
     add_subdirectory(module)
 endif()
-add_subdirectory(docs)
+if (BUILD_NOMINATIM)
+    add_subdirectory(nominatim)
+endif()
+if (BUILD_DOCS)
+   add_subdirectory(docs)
+endif()
 
 #-----------------------------------------------------------------------------

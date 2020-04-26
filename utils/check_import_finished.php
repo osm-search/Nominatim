@@ -28,7 +28,7 @@ function isReverseOnlyInstallation()
 
 
 echo 'Checking database got created ... ';
-if ($oDB->databaseExists()) {
+if ($oDB->checkConnection()) {
     $print_success();
 } else {
     $print_fail();

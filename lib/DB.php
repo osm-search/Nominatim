@@ -241,6 +241,28 @@ class DB
     }
 
     /**
+    * Returns a list of table names in the database
+    *
+    * @return array[]
+    */
+    public function getListOfTables()
+    {
+        return $this->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
+    }
+
+    /**
+     * Deletes a table. Returns true if deleted or didn't exist.
+     *
+     * @param string  $sTableName
+     *
+     * @return boolean
+     */
+    public function deleteTable($sTableName)
+    {
+        return $this->exec('DROP TABLE IF EXISTS '.$sTableName.' CASCADE') == 0;
+    }
+
+    /**
     * Check if an index exists in the database. Optional filtered by tablename
     *
     * @param string  $sTableName
@@ -311,11 +333,11 @@ END;
     }
 
     /**
-     * Since the DSN includes the database name, checks if the connection works.
+     * Tries to connect to the database but on failure doesn't throw an exception.
      *
      * @return boolean
      */
-    public function databaseExists()
+    public function checkConnection()
     {
         $bExists = true;
         try {
@@ -350,6 +372,13 @@ END;
         return (float) ($aMatches[1].'.'.$aMatches[2]);
     }
 
+    /**
+     * Returns an associate array of postgresql database connection settings. Keys can
+     * be 'database', 'hostspec', 'port', 'username', 'password'.
+     * Returns empty array on failure, thus check if at least 'database' is set.
+     *
+     * @return array[]
+     */
     public static function parseDSN($sDSN)
     {
         // https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
@@ -364,5 +393,29 @@ END;
             }
         }
         return $aInfo;
+    }
+
+    /**
+     * Takes an array of settings and return the DNS string. Key names can be
+     * 'database', 'hostspec', 'port', 'username', 'password' but aliases
+     * 'dbname', 'host' and 'user' are also supported.
+     *
+     * @return string
+     *
+     */
+    public static function generateDSN($aInfo)
+    {
+        $sDSN = sprintf(
+            'pgsql:host=%s;port=%s;dbname=%s;user=%s;password=%s;',
+            $aInfo['host'] ?? $aInfo['hostspec'] ?? '',
+            $aInfo['port'] ?? '',
+            $aInfo['dbname'] ?? $aInfo['database'] ?? '',
+            $aInfo['user'] ?? '',
+            $aInfo['password'] ?? ''
+        );
+        $sDSN = preg_replace('/\b\w+=;/', '', $sDSN);
+        $sDSN = preg_replace('/;\Z/', '', $sDSN);
+
+        return $sDSN;
     }
 }

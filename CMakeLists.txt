@@ -94,6 +94,7 @@ message (STATUS "Using PHP binary " ${PHP_BIN})
 
 if (BUILD_IMPORTER)
    set(CUSTOMSCRIPTS
+       utils/check_import_finished.php
        utils/country_languages.php
        utils/importWikipedia.php
        utils/export.php

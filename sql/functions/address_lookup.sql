@@ -60,14 +60,16 @@ BEGIN
   prevresult := '';
 
   FOR location IN
-    SELECT * FROM get_addressdata(for_place_id, housenumber)
+    SELECT name,
+       CASE WHEN place_id = for_place_id THEN 99 ELSE rank_address END as rank_address
+    FROM get_addressdata(for_place_id, housenumber)
     WHERE isaddress order by rank_address desc
   LOOP
     currresult := trim(get_name_by_language(location.name, languagepref));
     IF currresult != prevresult AND currresult IS NOT NULL
        AND result[(100 - location.rank_address)] IS NULL
     THEN
-      result[(100 - location.rank_address)] := trim(get_name_by_language(location.name, languagepref));
+      result[(100 - location.rank_address)] := currresult;
       prevresult := currresult;
     END IF;
   END LOOP;

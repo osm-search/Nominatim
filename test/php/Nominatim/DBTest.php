@@ -128,11 +128,19 @@ class DBTest extends \PHPUnit\Framework\TestCase
 
     public function testAgainstDatabase()
     {
-        if (getenv('UNIT_TEST_DSN') == false) $this->markTestSkipped('UNIT_TEST_DSN not set');
+        $unit_test_dsn = getenv('UNIT_TEST_DSN') != false ?
+                            getenv('UNIT_TEST_DSN') :
+                            'pgsql:dbname=nominatim_unit_tests';
+
+        $this->assertRegExp(
+            '/unit_test/',
+            $unit_test_dsn,
+            'Test database will get destroyed, thus should have a name like unit_test to be safe'
+        );
 
         ## Create the database.
         {
-            $aDSNParsed = \Nominatim\DB::parseDSN(getenv('UNIT_TEST_DSN'));
+            $aDSNParsed = \Nominatim\DB::parseDSN($unit_test_dsn);
             $sDbname = $aDSNParsed['database'];
             $aDSNParsed['database'] = 'postgres';
 
@@ -142,7 +150,7 @@ class DBTest extends \PHPUnit\Framework\TestCase
             $oDB->exec('CREATE DATABASE ' . $sDbname);
         }
 
-        $oDB = new \Nominatim\DB(getenv('UNIT_TEST_DSN'));
+        $oDB = new \Nominatim\DB($unit_test_dsn);
         $oDB->connect();
 
         $this->assertTrue(

@@ -251,7 +251,7 @@ class DB
     }
 
     /**
-     * Deletes a table. Returns true on success. Returns true if the table didn't exist.
+     * Deletes a table. Returns true if deleted or didn't exist.
      *
      * @param string  $sTableName
      *
@@ -405,29 +405,16 @@ END;
      */
     public static function generateDSN($aInfo)
     {
-        $sDSN = 'pgsql:';
-        if (isset($aInfo['host'])) {
-            $sDSN .= 'host=' . $aInfo['host'] . ';';
-        } elseif (isset($aInfo['hostspec'])) {
-            $sDSN .= 'host=' . $aInfo['hostspec'] . ';';
-        }
-        if (isset($aInfo['port'])) {
-            $sDSN .= 'port=' . $aInfo['port'] . ';';
-        }
-        if (isset($aInfo['dbname'])) {
-            $sDSN .= 'dbname=' . $aInfo['dbname'] . ';';
-        } elseif (isset($aInfo['database'])) {
-            $sDSN .= 'dbname=' . $aInfo['database'] . ';';
-        }
-        if (isset($aInfo['user'])) {
-            $sDSN .= 'user=' . $aInfo['user'] . ';';
-        } elseif (isset($aInfo['username'])) {
-            $sDSN .= 'user=' . $aInfo['username'] . ';';
-        }
-        if (isset($aInfo['password'])) {
-            $sDSN .= 'password=' . $aInfo['password'] . ';';
-        }
-        $sDSN = preg_replace('/;$/', '', $sDSN);
+        $sDSN = sprintf(
+            'pgsql:host=%s;port=%s;dbname=%s;user=%s;password=%s;',
+            $aInfo['host'] ?? $aInfo['hostspec'] ?? '',
+            $aInfo['port'] ?? '',
+            $aInfo['dbname'] ?? $aInfo['database'] ?? '',
+            $aInfo['user'] ?? '',
+            $aInfo['password'] ?? ''
+        );
+        $sDSN = preg_replace('/\b\w+=;/', '', $sDSN);
+        $sDSN = preg_replace('/;\Z/', '', $sDSN);
 
         return $sDSN;
     }

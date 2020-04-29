@@ -3,6 +3,7 @@
 namespace Nominatim\Setup;
 
 require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
+require_once(CONST_BasePath.'/lib/Shell.php');
 
 class SetupFunctions
 {
@@ -51,7 +52,7 @@ class SetupFunctions
         }
 
         // setting member variables based on command line options stored in $aCMDResult
-        $this->bQuiet = $aCMDResult['quiet'];
+        $this->bQuiet = isset($aCMDResult['quiet']) && $aCMDResult['quiet'];
         $this->bVerbose = $aCMDResult['verbose'];
 
         //setting default values which are not set by the update.php array
@@ -76,7 +77,7 @@ class SetupFunctions
             $this->bEnableDiffUpdates = false;
         }
 
-        $this->bDrop = $aCMDResult['drop'];
+        $this->bDrop = isset($aCMDResult['drop']) && $aCMDResult['drop'];
     }
 
     public function createDB()
@@ -84,23 +85,27 @@ class SetupFunctions
         info('Create DB');
         $oDB = new \Nominatim\DB;
 
-        if ($oDB->databaseExists()) {
+        if ($oDB->checkConnection()) {
             fail('database already exists ('.CONST_Database_DSN.')');
         }
 
-        $sCreateDBCmd = 'createdb -E UTF-8'
-            .' -p '.escapeshellarg($this->aDSNInfo['port'])
-            .' '.escapeshellarg($this->aDSNInfo['database']);
+        $oCmd = (new \Nominatim\Shell('createdb'))
+                ->addParams('-E', 'UTF-8')
+                ->addParams('-p', $this->aDSNInfo['port']);
+
         if (isset($this->aDSNInfo['username'])) {
-            $sCreateDBCmd .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
+            $oCmd->addParams('-U', $this->aDSNInfo['username']);
         }
-
+        if (isset($this->aDSNInfo['password'])) {
+            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
+        }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sCreateDBCmd .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
+            $oCmd->addParams('-h', $this->aDSNInfo['hostspec']);
         }
+        $oCmd->addParams($this->aDSNInfo['database']);
 
-        $result = $this->runWithPgEnv($sCreateDBCmd);
-        if ($result != 0) fail('Error executing external command: '.$sCreateDBCmd);
+        $result = $oCmd->run();
+        if ($result != 0) fail('Error executing external command: '.$oCmd->escapedCmd());
     }
 
     public function connect()
@@ -174,39 +179,49 @@ class SetupFunctions
     {
         info('Import data');
 
-        $osm2pgsql = CONST_Osm2pgsql_Binary;
-        if (!file_exists($osm2pgsql)) {
+        if (!file_exists(CONST_Osm2pgsql_Binary)) {
             echo "Check CONST_Osm2pgsql_Binary in your local settings file.\n";
             echo "Normally you should not need to set this manually.\n";
-            fail("osm2pgsql not found in '$osm2pgsql'");
+            fail("osm2pgsql not found in '".CONST_Osm2pgsql_Binary."'");
         }
 
-        $osm2pgsql .= ' -S '.escapeshellarg(CONST_Import_Style);
+        $oCmd = new \Nominatim\Shell(CONST_Osm2pgsql_Binary);
+        $oCmd->addParams('--style', CONST_Import_Style);
 
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-            $osm2pgsql .= ' --flat-nodes '.escapeshellarg(CONST_Osm2pgsql_Flatnode_File);
+            $oCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
         }
+        if (CONST_Tablespace_Osm2pgsql_Data) {
+            $oCmd->addParams('--tablespace-slim-data', CONST_Tablespace_Osm2pgsql_Data);
+        }
+        if (CONST_Tablespace_Osm2pgsql_Index) {
+            $oCmd->addParams('--tablespace-slim-index', CONST_Tablespace_Osm2pgsql_Index);
+        }
+        if (CONST_Tablespace_Place_Data) {
+            $oCmd->addParams('--tablespace-main-data', CONST_Tablespace_Place_Data);
+        }
+        if (CONST_Tablespace_Place_Index) {
+            $oCmd->addParams('--tablespace-main-index', CONST_Tablespace_Place_Index);
+        }
+        $oCmd->addParams('--latlong', '--slim', '--create');
+        $oCmd->addParams('--output', 'gazetteer');
+        $oCmd->addParams('--hstore');
+        $oCmd->addParams('--number-processes', 1);
+        $oCmd->addParams('--cache', $this->iCacheMemory);
+        $oCmd->addParams('--port', $this->aDSNInfo['port']);
 
-        if (CONST_Tablespace_Osm2pgsql_Data)
-            $osm2pgsql .= ' --tablespace-slim-data '.escapeshellarg(CONST_Tablespace_Osm2pgsql_Data);
-        if (CONST_Tablespace_Osm2pgsql_Index)
-            $osm2pgsql .= ' --tablespace-slim-index '.escapeshellarg(CONST_Tablespace_Osm2pgsql_Index);
-        if (CONST_Tablespace_Place_Data)
-            $osm2pgsql .= ' --tablespace-main-data '.escapeshellarg(CONST_Tablespace_Place_Data);
-        if (CONST_Tablespace_Place_Index)
-            $osm2pgsql .= ' --tablespace-main-index '.escapeshellarg(CONST_Tablespace_Place_Index);
-        $osm2pgsql .= ' -lsc -O gazetteer --hstore --number-processes 1';
-        $osm2pgsql .= ' -C '.escapeshellarg($this->iCacheMemory);
-        $osm2pgsql .= ' -P '.escapeshellarg($this->aDSNInfo['port']);
         if (isset($this->aDSNInfo['username'])) {
-            $osm2pgsql .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
+            $oCmd->addParams('--username', $this->aDSNInfo['username']);
+        }
+        if (isset($this->aDSNInfo['password'])) {
+            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $osm2pgsql .= ' -H '.escapeshellarg($this->aDSNInfo['hostspec']);
+            $oCmd->addParams('--host', $this->aDSNInfo['hostspec']);
         }
-        $osm2pgsql .= ' -d '.escapeshellarg($this->aDSNInfo['database']).' '.escapeshellarg($sOSMFile);
-
-        $this->runWithPgEnv($osm2pgsql);
+        $oCmd->addParams('--database', $this->aDSNInfo['database']);
+        $oCmd->addParams($sOSMFile);
+        $oCmd->run();
 
         if (!$this->sIgnoreErrors && !$this->oDB->getRow('select * from place limit 1')) {
             fail('No Data');
@@ -417,8 +432,10 @@ class SetupFunctions
 
         $aFilenames = glob(CONST_Tiger_Data_Path.'/*.sql');
         info('Found '.count($aFilenames).' SQL files in path '.CONST_Tiger_Data_Path);
-        if (empty($aFilenames)) return;
-
+        if (empty($aFilenames)) {
+            warn('Tiger data import selected but no files found in path '.CONST_Tiger_Data_Path);
+            return;
+        }
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
@@ -527,40 +544,48 @@ class SetupFunctions
 
     public function index($bIndexNoanalyse)
     {
-        $sOutputFile = '';
-        $sBaseCmd = CONST_BasePath.'/nominatim/nominatim.py'
-            .' -d '.escapeshellarg($this->aDSNInfo['database'])
-            .' -P '.escapeshellarg($this->aDSNInfo['port'])
-            .' -t '.escapeshellarg($this->iInstances.$sOutputFile);
+        $oBaseCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
+                    ->addParams('--database', $this->aDSNInfo['database'])
+                    ->addParams('--port', $this->aDSNInfo['port'])
+                    ->addParams('--threads', $this->iInstances);
+
         if (!$this->bQuiet) {
-            $sBaseCmd .= ' -v';
+            $oBaseCmd->addParams('-v');
         }
         if ($this->bVerbose) {
-            $sBaseCmd .= ' -v';
+            $oBaseCmd->addParams('-v');
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sBaseCmd .= ' -H '.escapeshellarg($this->aDSNInfo['hostspec']);
+            $oBaseCmd->addParams('--host', $this->aDSNInfo['hostspec']);
         }
         if (isset($this->aDSNInfo['username'])) {
-            $sBaseCmd .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
+            $oBaseCmd->addParams('--user', $this->aDSNInfo['username']);
+        }
+        if (isset($this->aDSNInfo['password'])) {
+            $oBaseCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
         }
 
         info('Index ranks 0 - 4');
-        $iStatus = $this->runWithPgEnv($sBaseCmd.' -R 4');
+        $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
+        echo $oCmd->escapedCmd();
+        
+        $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
 
         info('Index ranks 5 - 25');
-        $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 5 -R 25');
+        $oCmd = (clone $oBaseCmd)->addParams('--minrank', 5, '--maxrank', 25);
+        $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
 
         info('Index ranks 26 - 30');
-        $iStatus = $this->runWithPgEnv($sBaseCmd.' -r 26');
+        $oCmd = (clone $oBaseCmd)->addParams('--minrank', 26);
+        $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
@@ -650,7 +675,7 @@ class SetupFunctions
                        );
 
         $aDropTables = array();
-        $aHaveTables = $this->oDB->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
+        $aHaveTables = $this->oDB->getListOfTables();
 
         foreach ($aHaveTables as $sTable) {
             $bFound = false;
@@ -694,6 +719,7 @@ class SetupFunctions
         $sBasePath = CONST_BasePath.'/sql/functions/';
         $sTemplate = file_get_contents($sBasePath.'utils.sql');
         $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
+        $sTemplate .= file_get_contents($sBasePath.'ranking.sql');
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
         $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
@@ -751,21 +777,21 @@ class SetupFunctions
     {
         if (!file_exists($sFilename)) fail('unable to find '.$sFilename);
 
-        $sCMD = 'psql'
-            .' -p '.escapeshellarg($this->aDSNInfo['port'])
-            .' -d '.escapeshellarg($this->aDSNInfo['database']);
+        $oCmd = (new \Nominatim\Shell('psql'))
+                ->addParams('--port', $this->aDSNInfo['port'])
+                ->addParams('--dbname', $this->aDSNInfo['database']);
+
         if (!$this->bVerbose) {
-            $sCMD .= ' -q';
+            $oCmd->addParams('--quiet');
         }
         if (isset($this->aDSNInfo['hostspec'])) {
-            $sCMD .= ' -h '.escapeshellarg($this->aDSNInfo['hostspec']);
+            $oCmd->addParams('--host', $this->aDSNInfo['hostspec']);
         }
         if (isset($this->aDSNInfo['username'])) {
-            $sCMD .= ' -U '.escapeshellarg($this->aDSNInfo['username']);
+            $oCmd->addParams('--username', $this->aDSNInfo['username']);
         }
-        $aProcEnv = null;
         if (isset($this->aDSNInfo['password'])) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
+            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
         }
         $ahGzipPipes = null;
         if (preg_match('/\\.gz$/', $sFilename)) {
@@ -774,12 +800,14 @@ class SetupFunctions
                              1 => array('pipe', 'w'),
                              2 => array('file', '/dev/null', 'a')
                             );
-            $hGzipProcess = proc_open('zcat '.escapeshellarg($sFilename), $aDescriptors, $ahGzipPipes);
+            $oZcatCmd = new \Nominatim\Shell('zcat', $sFilename);
+
+            $hGzipProcess = proc_open($oZcatCmd->escapedCmd(), $aDescriptors, $ahGzipPipes);
             if (!is_resource($hGzipProcess)) fail('unable to start zcat');
             $aReadPipe = $ahGzipPipes[1];
             fclose($ahGzipPipes[0]);
         } else {
-            $sCMD .= ' -f '.escapeshellarg($sFilename);
+            $oCmd->addParams('--file', $sFilename);
             $aReadPipe = array('pipe', 'r');
         }
         $aDescriptors = array(
@@ -788,7 +816,8 @@ class SetupFunctions
                          2 => array('file', '/dev/null', 'a')
                         );
         $ahPipes = null;
-        $hProcess = proc_open($sCMD, $aDescriptors, $ahPipes, null, $aProcEnv);
+
+        $hProcess = proc_open($oCmd->escapedCmd(), $aDescriptors, $ahPipes, null, $oCmd->aEnv);
         if (!is_resource($hProcess)) fail('unable to start pgsql');
         // TODO: error checking
         while (!feof($ahPipes[1])) {
@@ -829,21 +858,6 @@ class SetupFunctions
         return $sSql;
     }
 
-    private function runWithPgEnv($sCmd)
-    {
-        if ($this->bVerbose) {
-            echo "Execute: $sCmd\n";
-        }
-
-        $aProcEnv = null;
-
-        if (isset($this->aDSNInfo['password'])) {
-            $aProcEnv = array_merge(array('PGPASSWORD' => $this->aDSNInfo['password']), $_ENV);
-        }
-
-        return runWithEnv($sCmd, $aProcEnv);
-    }
-
     /**
      * Drop table with the given name if it exists.
      *
@@ -856,7 +870,7 @@ class SetupFunctions
     private function dropTable($sName)
     {
         if ($this->bVerbose) echo "Dropping table $sName\n";
-        $this->oDB->exec('DROP TABLE IF EXISTS '.$sName.' CASCADE');
+        $this->oDB->deleteTable($sName);
     }
 
     /**

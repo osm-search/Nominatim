@@ -15,7 +15,6 @@ class PlaceLookup
     protected $bExtraTags = false;
     protected $bNameDetails = false;
 
-    protected $bIncludePolygonAsPoints = false;
     protected $bIncludePolygonAsText = false;
     protected $bIncludePolygonAsGeoJSON = false;
     protected $bIncludePolygonAsKML = false;
@@ -41,11 +40,6 @@ class PlaceLookup
         return $this->bDeDupe;
     }
 
-    public function setIncludePolygonAsPoints($b = true)
-    {
-        $this->bIncludePolygonAsPoints = $b;
-    }
-
     public function setIncludeAddressDetails($b)
     {
         $this->bAddressDetails = $b;
@@ -64,7 +58,6 @@ class PlaceLookup
 
         if ($sGeomType === null || $sGeomType == 'geojson') {
             $this->bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson');
-            $this->bIncludePolygonAsPoints = false;
         }
 
         if ($oParams->getString('format', '') !== 'geojson') {
@@ -109,21 +102,10 @@ class PlaceLookup
             $aParams['namedetails'] = '1';
         }
 
-        if ($this->bIncludePolygonAsPoints) {
-            $aParams['polygon'] = '1';
-        }
-        if ($this->bIncludePolygonAsText) {
-            $aParams['polygon_text'] = '1';
-        }
-        if ($this->bIncludePolygonAsGeoJSON) {
-            $aParams['polygon_geojson'] = '1';
-        }
-        if ($this->bIncludePolygonAsKML) {
-            $aParams['polygon_kml'] = '1';
-        }
-        if ($this->bIncludePolygonAsSVG) {
-            $aParams['polygon_svg'] = '1';
-        }
+        if ($this->bIncludePolygonAsText) $aParams['polygon_text'] = '1';
+        if ($this->bIncludePolygonAsGeoJSON) $aParams['polygon_geojson'] = '1';
+        if ($this->bIncludePolygonAsKML) $aParams['polygon_kml'] = '1';
+        if ($this->bIncludePolygonAsSVG) $aParams['polygon_svg'] = '1';
 
         if ($this->fPolygonSimplificationThreshold > 0.0) {
             $aParams['polygon_threshold'] = $this->fPolygonSimplificationThreshold;
@@ -237,7 +219,7 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    (extratags->'place') AS extra_place ";
+            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -272,13 +254,10 @@ class PlaceLookup
             }
             $sSQL .= '     placename, ';
             $sSQL .= '     ref, ';
-            if ($this->bExtraTags) {
-                $sSQL .= 'extratags, ';
-            }
-            if ($this->bNameDetails) {
-                $sSQL .= 'name, ';
-            }
-            $sSQL .= "     extratags->'place' ";
+
+            if ($this->bExtraTags) $sSQL .= 'extratags, ';
+            if ($this->bNameDetails) $sSQL .= 'name, ';
+            $sSQL .= '     extra_place ';
 
             $aSubSelects[] = $sSQL;
         }
@@ -556,18 +535,12 @@ class PlaceLookup
             }
             $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
             $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
-            if ($this->bIncludePolygonAsGeoJSON) {
-                $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
-            }
-            if ($this->bIncludePolygonAsKML) {
-                $sSQL .= ',ST_AsKML(geometry) as askml';
-            }
-            if ($this->bIncludePolygonAsSVG) {
-                $sSQL .= ',ST_AsSVG(geometry) as assvg';
-            }
-            if ($this->bIncludePolygonAsText || $this->bIncludePolygonAsPoints) {
-                $sSQL .= ',ST_AsText(geometry) as astext';
-            }
+
+          if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
+            if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
+            if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
+            if ($this->bIncludePolygonAsText) $sSQL .= ',ST_AsText(geometry) as astext';
+
             if ($fLonReverse != null && $fLatReverse != null) {
                 $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
                 $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
@@ -590,22 +563,10 @@ class PlaceLookup
                     $aOutlineResult['lon'] = $aPointPolygon['centrelon'];
                 }
 
-                if ($this->bIncludePolygonAsGeoJSON) {
-                    $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
-                }
-                if ($this->bIncludePolygonAsKML) {
-                    $aOutlineResult['askml'] = $aPointPolygon['askml'];
-                }
-                if ($this->bIncludePolygonAsSVG) {
-                    $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
-                }
-                if ($this->bIncludePolygonAsText) {
-                    $aOutlineResult['astext'] = $aPointPolygon['astext'];
-                }
-                if ($this->bIncludePolygonAsPoints) {
-                    $aOutlineResult['aPolyPoints'] = geometryText2Points($aPointPolygon['astext'], $fRadius);
-                }
-
+                if ($this->bIncludePolygonAsGeoJSON) $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
+                if ($this->bIncludePolygonAsKML) $aOutlineResult['askml'] = $aPointPolygon['askml'];
+                if ($this->bIncludePolygonAsSVG) $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
+                if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
 
                 if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001) {
                     $aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
@@ -628,17 +589,12 @@ class PlaceLookup
 
         // as a fallback we generate a bounding box without knowing the size of the geometry
         if ((!isset($aOutlineResult['aBoundingBox'])) && isset($fLon)) {
-            //
-            if ($this->bIncludePolygonAsPoints) {
-                $sGeometryText = 'POINT('.$fLon.','.$fLat.')';
-                $aOutlineResult['aPolyPoints'] = geometryText2Points($sGeometryText, $fRadius);
-            }
-
-            $aBounds = array();
-            $aBounds['minlat'] = $fLat - $fRadius;
-            $aBounds['maxlat'] = $fLat + $fRadius;
-            $aBounds['minlon'] = $fLon - $fRadius;
-            $aBounds['maxlon'] = $fLon + $fRadius;
+            $aBounds = array(
+                        'minlat' => $fLat - $fRadius,
+                        'maxlat' => $fLat + $fRadius,
+                        'minlon' => $fLon - $fRadius,
+                        'maxlon' => $fLon + $fRadius
+                       );
 
             $aOutlineResult['aBoundingBox'] = array(
                                                (string)$aBounds['minlat'],

@@ -660,10 +660,7 @@ class SearchDescription
             $aTerms[] = 'address_rank between 16 and 27';
         } elseif (!$this->sClass || $this->iOperator == Operator::NAME) {
             if ($iMinAddressRank > 0) {
-                $aTerms[] = 'address_rank >= '.$iMinAddressRank;
-            }
-            if ($iMaxAddressRank < 30) {
-                $aTerms[] = 'address_rank <= '.$iMaxAddressRank;
+                $aTerms[] = "((address_rank between $iMinAddressRank and $iMaxAddressRank) or (search_rank between $iMinAddressRank and $iMaxAddressRank))";
             }
         }
 

@@ -1,7 +1,7 @@
 site_name: Nominatim Documentation
 theme: readthedocs
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
-site_url: http://nominatim.org
+site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
 pages:
     - 'Introduction' : 'index.md'
@@ -16,6 +16,7 @@ pages:
     - 'Administration Guide':
         - 'Basic Installation': 'admin/Installation.md'
         - 'Importing and Updating' : 'admin/Import-and-Update.md'
+        - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Developers Guide':

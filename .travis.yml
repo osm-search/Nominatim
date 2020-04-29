@@ -1,5 +1,5 @@
 ---
-sudo: required
+os: linux
 dist: xenial
 language: python
 python:

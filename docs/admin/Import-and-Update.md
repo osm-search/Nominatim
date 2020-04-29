@@ -171,7 +171,7 @@ In the first step of the import Nominatim uses osm2pgsql to load the OSM data
 into the PostgreSQL database. This step is very demanding in terms of RAM usage.
 osm2pgsql and PostgreSQL are running in parallel at this point. PostgreSQL
 blocks at least the part of RAM that has been configured with the
-`shared_buffers` parameter during [PostgreSQL tuning](Installation#PostgreSQL_tuning)
+`shared_buffers` parameter during [PostgreSQL tuning](Installation#postgresql-tuning)
 and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
 its internal data structures, potentially more when it has to process very large
 relations. In addition it needs to maintain a cache for node locations. The size
@@ -224,7 +224,7 @@ need internet access for the step.
 
 ## Installing Tiger housenumber data for the US
 
-Nominatim is able to use the official [TIGER](https://www.census.gov/geo/maps-data/data/tiger.html)
+Nominatim is able to use the official [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
 address set to complement the OSM house number data in the US. You can add
 TIGER data to your own Nominatim instance by following these steps. The
 entire US adds about 10GB to your database.
@@ -318,6 +318,5 @@ compatibility reasons, Osmosis is not required to run this - it uses pyosmium
 behind the scenes.)
 
 If you have imported multiple country extracts and want to keep them
-up-to-date, have a look at the script in
-[issue #60](https://github.com/openstreetmap/Nominatim/issues/60).
-
+up-to-date, [Advanced installations section](Advanced-Installations.md) contains instructions 
+to set up and update multiple country extracts.

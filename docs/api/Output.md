@@ -100,12 +100,9 @@ The following feature attributes are implemented:
  * `type` - value of the main tag of the object (e.g. residential, restaurant, ...)
  * `label` - full comma-separated address
  * `name` - localised name of the place
- * `housenumber`, `street`, `locality`, `postcode`, `city`,
-   `district`, `county`, `state`, `country` -
+ * `housenumber`, `street`, `locality`, `district`, `postcode`, `city`,
+   `county`, `state`, `country` -
    provided when it can be determined from the address
-   (see [this issue](https://github.com/openstreetmap/Nominatim/issues/1080) for
-   current limitations on the correctness of the address) and `addressdetails=1`
-   was given
  * `admin` - list of localised names of administrative boundaries (only with `addressdetails=1`)
 
 Use `polygon_geojson` to output the full geometry of the object instead

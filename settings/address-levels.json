@@ -14,8 +14,7 @@
           "village" : [19, 16],
           "municipality" : [19, 16],
           "district" : [19, 16],
-          "unincorporated_area" : [19, 16],
-          "borough" : [19, 16],
+          "borough" : [19, 18],
           "hamlet" : 20,
           "suburb" : 20,
           "croft" : 20,
@@ -64,7 +63,11 @@
           "sea" : [4, 0]
       },
       "waterway" : {
-          "" : [17, 0]
+          "river" : [19, 0],
+          "stream" : [22, 0],
+          "ditch" : [22, 0],
+          "drain" : [22, 0],
+          "" : [20, 0]
       },
       "highway" : {
           "" : 26,

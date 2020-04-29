@@ -1,6 +1,6 @@
 # US TIGER address data
 
-Convert [TIGER](https://www.census.gov/geo/maps-data/data/tiger.html)/Line dataset of the US Census Bureau to SQL files which can be imported by Nominatim. The created tables in the Nominatim database are separate from OpenStreetMap tables and get queried at search time separately.
+Convert [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)/Line dataset of the US Census Bureau to SQL files which can be imported by Nominatim. The created tables in the Nominatim database are separate from OpenStreetMap tables and get queried at search time separately.
 
 The dataset gets updated once per year. Downloading is prone to be slow (can take a full day) and converting them can take hours as well.
 

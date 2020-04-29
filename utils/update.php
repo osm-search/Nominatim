@@ -65,29 +65,51 @@ if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     $iCacheMemory = getCacheMemoryMB();
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
-$sOsm2pgsqlCmd = CONST_Osm2pgsql_Binary.' -klas --number-processes 1 -C '.$iCacheMemory.' -O gazetteer -S '.CONST_Import_Style.' -d '.$aDSNInfo['database'].' -P '.$aDSNInfo['port'];
+
+$oOsm2pgsqlCmd = (new \Nominatim\Shell(CONST_Osm2pgsql_Binary))
+                 ->addParams('--hstore')
+                 ->addParams('--latlong')
+                 ->addParams('--append')
+                 ->addParams('--slim')
+                 ->addParams('--number-processes', 1)
+                 ->addParams('--cache', $iCacheMemory)
+                 ->addParams('--output', 'gazetteer')
+                 ->addParams('--style', CONST_Import_Style)
+                 ->addParams('--database', $aDSNInfo['database'])
+                 ->addParams('--port', $aDSNInfo['port']);
+
+if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
+    $oOsm2pgsqlCmd->addParams('--host', $aDSNInfo['hostspec']);
+}
 if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-    $sOsm2pgsqlCmd .= ' -U ' . $aDSNInfo['username'];
+    $oOsm2pgsqlCmd->addParams('--user', $aDSNInfo['username']);
+}
+if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
+    $oOsm2pgsqlCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
+}
+if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
+    $oOsm2pgsqlCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
+}
+
+
+$oIndexCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
+             ->addParams('--database', $aDSNInfo['database'])
+             ->addParams('--port', $aDSNInfo['port'])
+             ->addParams('--threads', $aResult['index-instances']);
+
+if ($aResult['verbose']) {
+    $oIndexCmd->addParams('--verbose');
 }
 if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-    $sOsm2pgsqlCmd .= ' -H ' . $aDSNInfo['hostspec'];
+    $oIndexCmd->addParams('--host', $aDSNInfo['hostspec']);
 }
-$aProcEnv = null;
+if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
+    $oIndexCmd->addParams('--username', $aDSNInfo['username']);
+}
 if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-    $aProcEnv = array_merge(array('PGPASSWORD' => $aDSNInfo['password']), $_ENV);
+    $oIndexCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
 }
 
-if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-    $sOsm2pgsqlCmd .= ' --flat-nodes '.CONST_Osm2pgsql_Flatnode_File;
-}
-
-$sIndexCmd = CONST_BasePath.'/nominatim/nominatim.py';
-if (!$aResult['quiet']) {
-    $sIndexCmd .= ' -v';
-}
-if ($aResult['verbose']) {
-    $sIndexCmd .= ' -v';
-}
 
 if ($aResult['init-updates']) {
     // sanity check that the replication URL is correct
@@ -104,9 +126,11 @@ if ($aResult['init-updates']) {
         echo "in your local settings file.\n\n";
         fail('CONST_Pyosmium_Binary not configured');
     }
+
     $aOutput = 0;
-    $sCmd = CONST_Pyosmium_Binary.' --help';
-    exec($sCmd, $aOutput, $iRet);
+    $oCMD = new \Nominatim\Shell(CONST_Pyosmium_Binary, '--help');
+    exec($oCMD->escapedCmd(), $aOutput, $iRet);
+
     if ($iRet != 0) {
         echo "Cannot execute pyosmium-get-changes.\n";
         echo "Make sure you have pyosmium installed correctly\n";
@@ -132,8 +156,11 @@ if ($aResult['init-updates']) {
 
     // get the appropriate state id
     $aOutput = 0;
-    $sCmd = CONST_Pyosmium_Binary.' -D '.$sWindBack.' --server '.CONST_Replication_Url;
-    exec($sCmd, $aOutput, $iRet);
+    $oCMD = (new \Nominatim\Shell(CONST_Pyosmium_Binary))
+            ->addParams('--start-date', $sWindBack)
+            ->addParams('--server', CONST_Replication_Url);
+
+    exec($oCMD->escapedCmd(), $aOutput, $iRet);
     if ($iRet != 0 || $aOutput[0] == 'None') {
         fail('Error running pyosmium tools');
     }
@@ -158,7 +185,11 @@ if ($aResult['check-for-updates']) {
         fail('Updates not set up. Please run ./utils/update.php --init-updates.');
     }
 
-    system(CONST_BasePath.'/utils/check_server_for_updates.py '.CONST_Replication_Url.' '.$aLastState['sequence_id'], $iRet);
+    $oCmd = (new \Nominatim\Shell(CONST_BasePath.'/utils/check_server_for_updates.py'))
+            ->addParams(CONST_Replication_Url)
+            ->addParams($aLastState['sequence_id']);
+    $iRet = $oCmd->run();
+
     exit($iRet);
 }
 
@@ -171,12 +202,12 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     }
 
     // Import the file
-    $sCMD = $sOsm2pgsqlCmd.' '.$sNextFile;
-    echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
+    $oCMD = (clone $oOsm2pgsqlCmd)->addParams($sNextFile);
+    echo $oCMD->escapedCmd()."\n";
+    $iRet = $oCMD->run();
 
-    if ($iErrorLevel) {
-        fail("Error from osm2pgsql, $iErrorLevel\n");
+    if ($iRet) {
+        fail("Error from osm2pgsql, $iRet\n");
     }
 
     // Don't update the import status - we don't know what this file contains
@@ -223,11 +254,13 @@ if ($sContentURL) {
 
 if ($bHaveDiff) {
     // import generated change file
-    $sCMD = $sOsm2pgsqlCmd.' '.$sTemporaryFile;
-    echo $sCMD."\n";
-    $iErrorLevel = runWithEnv($sCMD, $aProcEnv);
-    if ($iErrorLevel) {
-        fail("osm2pgsql exited with error level $iErrorLevel\n");
+
+    $oCMD = (clone $oOsm2pgsqlCmd)->addParams($sTemporaryFile);
+    echo $oCMD->escapedCmd()."\n";
+
+    $iRet = $oCMD->run();
+    if ($iRet) {
+        fail("osm2pgsql exited with error level $iRet\n");
     }
 }
 
@@ -310,19 +343,11 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    $sCmd = $sIndexCmd
-            .' -d '.$aDSNInfo['database']
-            .' -P '.$aDSNInfo['port']
-            .' -t '.$aResult['index-instances']
-            .' -r '.$aResult['index-rank'];
-    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCmd .= ' -H ' . $aDSNInfo['hostspec'];
-    }
-    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCmd .= ' -U ' . $aDSNInfo['username'];
-    }
+    $oCmd = (clone $oIndexCmd)
+            ->addParams('--minrank', $aResult['index-rank']);
 
-    runWithEnv($sCmd, $aProcEnv);
+    // echo $oCmd->escapedCmd()."\n";
+    $oCmd->run();
 
     $oDB->exec('update import_status set indexed = true');
 }
@@ -354,22 +379,17 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     //
     if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
         fail('Error: Update interval too low for download.geofabrik.de. ' .
-             "Please check install documentation (http://nominatim.org/release-docs/latest/Import-and-Update#setting-up-the-update-process)\n");
+             "Please check install documentation (https://nominatim.org/release-docs/latest/admin/Import-and-Update#setting-up-the-update-process)\n");
     }
 
     $sImportFile = CONST_InstallPath.'/osmosischange.osc';
-    $sCMDDownload = CONST_Pyosmium_Binary.' --server '.CONST_Replication_Url.' -o '.$sImportFile.' -s '.CONST_Replication_Max_Diff_size;
-    $sCMDImport = $sOsm2pgsqlCmd.' '.$sImportFile;
-    $sCMDIndex = $sIndexCmd
-                 .' -d '.$aDSNInfo['database']
-                 .' -P '.$aDSNInfo['port']
-                 .' -t '.$aResult['index-instances'];
-    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $sCMDIndex .= ' -H ' . $aDSNInfo['hostspec'];
-    }
-    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $sCMDIndex .= ' -U ' . $aDSNInfo['username'];
-    }
+
+    $oCMDDownload = (new \Nominatim\Shell(CONST_Pyosmium_Binary))
+                    ->addParams('--server', CONST_Replication_Url)
+                    ->addParams('--outfile', $sImportFile)
+                    ->addParams('--size', CONST_Replication_Max_Diff_size);
+
+    $oCMDImport = (clone $oOsm2pgsqlCmd)->addParams($sImportFile);
 
     while (true) {
         $fStartTime = time();
@@ -399,11 +419,13 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 $fCMDStartTime = time();
                 $iNextSeq = (int) $aLastState['sequence_id'];
                 unset($aOutput);
-                echo "$sCMDDownload -I $iNextSeq\n";
+
+                $oCMD = (clone $oCMDDownload)->addParams('--start-id', $iNextSeq);
+                echo $oCMD->escapedCmd()."\n";
                 if (file_exists($sImportFile)) {
                     unlink($sImportFile);
                 }
-                exec($sCMDDownload.' -I '.$iNextSeq, $aOutput, $iResult);
+                exec($oCMD->escapedCmd(), $aOutput, $iResult);
 
                 if ($iResult == 3) {
                     echo 'No new updates. Sleeping for '.CONST_Replication_Recheck_Interval." sec.\n";
@@ -419,7 +441,8 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             // get the newest object from the diff file
             $sBatchEnd = 0;
             $iRet = 0;
-            exec(CONST_BasePath.'/utils/osm_file_date.py '.$sImportFile, $sBatchEnd, $iRet);
+            $oCMD = new \Nominatim\Shell(CONST_BasePath.'/utils/osm_file_date.py', $sImportFile);
+            exec($oCMD->escapedCmd(), $sBatchEnd, $iRet);
             if ($iRet == 5) {
                 echo "Diff file is empty. skipping import.\n";
                 if (!$aResult['import-osmosis-all']) {
@@ -435,9 +458,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
             // Import the file
             $fCMDStartTime = time();
-            echo $sCMDImport."\n";
+
+
+            echo $oCMDImport->escapedCmd()."\n";
             unset($sJunk);
-            $iErrorLevel = runWithEnv($sCMDImport, $aProcEnv);
+            $iErrorLevel = $oCMDImport->run();
             if ($iErrorLevel) {
                 echo "Error executing osm2pgsql: $iErrorLevel\n";
                 exit($iErrorLevel);
@@ -462,11 +487,11 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
         // Index file
         if (!$aResult['no-index']) {
-            $sThisIndexCmd = $sCMDIndex;
+            $oThisIndexCmd = clone($oIndexCmd);
             $fCMDStartTime = time();
 
-            echo "$sThisIndexCmd\n";
-            $iErrorLevel = runWithEnv($sThisIndexCmd, $aProcEnv);
+            echo $oThisIndexCmd->escapedCmd()."\n";
+            $iErrorLevel = $oThisIndexCmd->run();
             if ($iErrorLevel) {
                 echo "Error: $iErrorLevel\n";
                 exit($iErrorLevel);

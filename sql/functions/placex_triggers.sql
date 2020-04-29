@@ -1,45 +1,5 @@
 -- Trigger functions for the placex table.
 
-CREATE OR REPLACE FUNCTION get_rel_node_members(members TEXT[], memberLabels TEXT[])
-  RETURNS SETOF BIGINT
-  AS $$
-DECLARE
-  i INTEGER;
-BEGIN
-  FOR i IN 1..ARRAY_UPPER(members,1) BY 2 LOOP
-    IF members[i+1] = ANY(memberLabels)
-       AND upper(substring(members[i], 1, 1))::char(1) = 'N'
-    THEN
-      RETURN NEXT substring(members[i], 2)::bigint;
-    END IF;
-  END LOOP;
-
-  RETURN;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
--- copy 'name' to or from the default language (if there is a default language)
-CREATE OR REPLACE FUNCTION add_default_place_name(country_code VARCHAR(2),
-                                                  INOUT name HSTORE)
-  AS $$
-DECLARE
-  default_language VARCHAR(10);
-BEGIN
-  IF name is not null AND array_upper(akeys(name),1) > 1 THEN
-    default_language := get_country_language_code(country_code);
-    IF default_language IS NOT NULL THEN
-      IF name ? 'name' AND NOT name ? ('name:'||default_language) THEN
-        name := name || hstore(('name:'||default_language), (name -> 'name'));
-      ELSEIF name ? ('name:'||default_language) AND NOT name ? 'name' THEN
-        name := name || hstore('name', (name -> ('name:'||default_language)));
-      END IF;
-    END IF;
-  END IF;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
 -- Find the parent road of a POI.
 --
 -- \returns Place ID of parent object or NULL if none
@@ -204,44 +164,50 @@ BEGIN
     END IF;
   END IF;
 
-  -- Search for relation members with role admin_center.
-  IF bnd.osm_type = 'R' and bnd_name is not null
-     and relation_members is not null THEN
-    FOR rel_member IN
-      SELECT get_rel_node_members(relation_members,
-                                ARRAY['admin_center','admin_centre']) as member
-    LOOP
-    --DEBUG: RAISE WARNING 'Found admin_center member %', rel_member.member;
-      FOR linked_placex IN
-        SELECT * from placex
-        WHERE osm_type = 'N' and osm_id = rel_member.member
-          and class = 'place'
-      LOOP
-        -- For an admin centre we also want a name match - still not perfect,
-        -- for example 'new york, new york'
-        -- But that can be fixed by explicitly setting the label in the data
-        IF bnd_name = make_standard_name(linked_placex.name->'name')
-           AND bnd.rank_address = linked_placex.rank_address
-        THEN
-          RETURN linked_placex;
-        END IF;
-          --DEBUG: RAISE WARNING 'Linked admin_center';
-      END LOOP;
-    END LOOP;
-  END IF;
-
-  -- Name searches can be done for ways as well as relations
-  IF bnd.osm_type in ('W','R') and bnd_name is not null THEN
-    --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
+  -- If extratags has a place tag, look for linked nodes by their place type.
+  -- Area and node still have to have the same name.
+  IF bnd.extratags ? 'place' and bnd_name is not null THEN
     FOR linked_placex IN
-      SELECT placex.* from placex
+      SELECT * FROM placex
       WHERE make_standard_name(name->'name') = bnd_name
-        AND placex.rank_address = bnd.rank_address
+        AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
-      --DEBUG: RAISE WARNING 'Found matching place node %', linkedPlacex.osm_id;
+      --DEBUG: RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
+  IF bnd.extratags ? 'wikidata' THEN
+    FOR linked_placex IN
+      SELECT * FROM placex
+      WHERE placex.class = 'place' AND placex.osm_type = 'N'
+        AND placex.extratags ? 'wikidata' -- needed to select right index
+        AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
+        AND placex.rank_search < 26
+        AND _st_covers(bnd.geometry, placex.geometry)
+      ORDER BY make_standard_name(name->'name') = bnd_name desc
+    LOOP
+      --DEBUG: RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;
+      RETURN linked_placex;
+    END LOOP;
+  END IF;
+
+  -- Name searches can be done for ways as well as relations
+  IF bnd_name is not null THEN
+    --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
+    FOR linked_placex IN
+      SELECT placex.* from placex
+      WHERE make_standard_name(name->'name') = bnd_name
+        AND ((bnd.rank_address > 0 and placex.rank_address = bnd.rank_address)
+             OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
+        AND placex.osm_type = 'N'
+        AND placex.rank_search < 26 -- needed to select the right index
+        AND _st_covers(bnd.geometry, placex.geometry)
+    LOOP
+      --DEBUG: RAISE WARNING 'Found matching place node %', linked_placex.osm_id;
       RETURN linked_placex;
     END LOOP;
   END IF;
@@ -370,11 +336,12 @@ BEGIN
       location_keywords := location.keywords;
 
       location_isaddress := NOT address_havelevel[location.rank_address];
+      --DEBUG: RAISE WARNING 'should be address: %, is guess: %, rank: %', location_isaddress, location.isguess, location.rank_address;
       IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
           location_isaddress := ST_Contains(location_parent, location.centroid);
       END IF;
 
-      -- RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
+      --DEBUG: RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
       -- Add it to the list of search terms
       IF NOT %REVERSE-ONLY% THEN
           nameaddress_vector := array_merge(nameaddress_vector,
@@ -394,9 +361,12 @@ BEGIN
         END IF;
 
         address_havelevel[location.rank_address] := true;
-        IF NOT location.isguess THEN
-          SELECT placex.geometry FROM placex
-            WHERE obj_place_id = location.place_id INTO location_parent;
+        -- add a hack against postcode ranks
+        IF NOT location.isguess
+           AND location.rank_address != 11 AND location.rank_address != 5
+        THEN
+          SELECT p.geometry FROM placex p
+            WHERE p.place_id = location.place_id INTO location_parent;
         END IF;
 
         IF location.rank_address > parent_place_id_rank THEN
@@ -404,7 +374,6 @@ BEGIN
           parent_place_id_rank = location.rank_address;
         END IF;
       END IF;
-    --DEBUG: RAISE WARNING '  Terms: (%) %',location, nameaddress_vector;
     END IF;
 
   END LOOP;
@@ -423,7 +392,6 @@ DECLARE
   country_code VARCHAR(2);
   diameter FLOAT;
   classtable TEXT;
-  classtype TEXT;
 BEGIN
   --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
@@ -441,8 +409,8 @@ BEGIN
     is_area := ST_GeometryType(NEW.geometry) IN ('ST_Polygon','ST_MultiPolygon');
 
     IF NEW.class in ('place','boundary')
-       AND NEW.type in ('postcode','postal_code') THEN
-
+       AND NEW.type in ('postcode','postal_code')
+    THEN
       IF NEW.address IS NULL OR NOT NEW.address ? 'postcode' THEN
           -- most likely just a part of a multipolygon postcode boundary, throw it away
           RETURN NULL;
@@ -450,61 +418,26 @@ BEGIN
 
       NEW.name := hstore('ref', NEW.address->'postcode');
 
-      SELECT * FROM get_postcode_rank(NEW.country_code, NEW.address->'postcode')
-        INTO NEW.rank_search, NEW.rank_address;
-
-      IF NOT is_area THEN
-          NEW.rank_address := 0;
-      END IF;
     ELSEIF NEW.class = 'boundary' AND NOT is_area THEN
-        return NULL;
+        RETURN NULL;
     ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
-           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W' THEN
-        return NULL;
-    ELSEIF NEW.osm_type = 'N' AND NEW.class = 'highway' THEN
-        NEW.rank_search = 30;
-        NEW.rank_address = 0;
-    ELSEIF NEW.class = 'landuse' AND NOT is_area THEN
-        NEW.rank_search = 30;
-        NEW.rank_address = 0;
-    ELSE
-      -- do table lookup stuff
-      IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
-        classtype = NEW.type || NEW.admin_level::TEXT;
-      ELSE
-        classtype = NEW.type;
-      END IF;
-      SELECT l.rank_search, l.rank_address FROM address_levels l
-       WHERE (l.country_code = NEW.country_code or l.country_code is NULL)
-             AND l.class = NEW.class AND (l.type = classtype or l.type is NULL)
-       ORDER BY l.country_code, l.class, l.type LIMIT 1
-        INTO NEW.rank_search, NEW.rank_address;
-
-      IF NEW.rank_search is NULL THEN
-        NEW.rank_search := 30;
-      END IF;
-
-      IF NEW.rank_address is NULL THEN
-        NEW.rank_address := 30;
-      END IF;
+           AND NEW.admin_level <= 4 AND NEW.osm_type = 'W'
+    THEN
+        RETURN NULL;
     END IF;
 
-    -- some postcorrections
-    IF NEW.class = 'waterway' AND NEW.osm_type = 'R' THEN
-        -- Slightly promote waterway relations so that they are processed
-        -- before their members.
-        NEW.rank_search := NEW.rank_search - 1;
+    SELECT * INTO NEW.rank_search, NEW.rank_address
+      FROM compute_place_rank(NEW.country_code,
+                              CASE WHEN is_area THEN 'A' ELSE NEW.osm_type END,
+                              NEW.class, NEW.type, NEW.admin_level,
+                              (NEW.extratags->'capital') = 'yes',
+                              NEW.address->'postcode');
+
+    -- a country code make no sense below rank 4 (country)
+    IF NEW.rank_search < 4 THEN
+      NEW.country_code := NULL;
     END IF;
 
-    IF (NEW.extratags -> 'capital') = 'yes' THEN
-      NEW.rank_search := NEW.rank_search - 1;
-    END IF;
-
-  END IF;
-
-  -- a country code make no sense below rank 4 (country)
-  IF NEW.rank_search < 4 THEN
-    NEW.country_code := NULL;
   END IF;
 
   --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
@@ -529,25 +462,7 @@ BEGIN
       END IF;
     ELSE
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(
-      diameter := 0;
-      -- 16 = city, anything higher than city is effectively ignored (polygon required!)
-      IF NEW.type='postcode' THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search < 16 THEN
-        diameter := 0;
-      ELSEIF NEW.rank_search < 18 THEN
-        diameter := 0.1;
-      ELSEIF NEW.rank_search < 20 THEN
-        diameter := 0.05;
-      ELSEIF NEW.rank_search = 21 THEN
-        diameter := 0.001;
-      ELSEIF NEW.rank_search < 24 THEN
-        diameter := 0.02;
-      ELSEIF NEW.rank_search < 26 THEN
-        diameter := 0.002; -- 100 to 200 meters
-      ELSEIF NEW.rank_search < 28 THEN
-        diameter := 0.001; -- 50 to 100 meters
-      END IF;
+      diameter := update_place_diameter(NEW.rank_search);
       IF diameter > 0 THEN
   --      RAISE WARNING 'placex point insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,diameter;
         IF NEW.rank_search >= 26 THEN
@@ -583,6 +498,32 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION get_parent_address_level(geom GEOMETRY, in_level SMALLINT)
+  RETURNS SMALLINT
+  AS $$
+DECLARE
+  address_rank SMALLINT;
+BEGIN
+  IF in_level <= 3 or in_level > 15 THEN
+    address_rank := 3;
+  ELSE
+    SELECT rank_address INTO address_rank
+      FROM placex
+      WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+            and admin_level < in_level
+            and geometry && geom and ST_Covers(geometry, geom)
+      ORDER BY admin_level desc LIMIT 1;
+  END IF;
+
+  IF address_rank is NULL or address_rank <= 3 THEN
+    RETURN 3;
+  END IF;
+
+  RETURN address_rank;
+END;
+$$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
@@ -591,6 +532,9 @@ DECLARE
   i INTEGER;
   location RECORD;
   relation_members TEXT[];
+
+  centroid GEOMETRY;
+  parent_address_level SMALLINT;
 
   addr_street TEXT;
   addr_place TEXT;
@@ -635,6 +579,17 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- recompute the ranks, they might change when linking changes
+  SELECT * INTO NEW.rank_search, NEW.rank_address
+    FROM compute_place_rank(NEW.country_code,
+                            CASE WHEN ST_GeometryType(NEW.geometry)
+                                        IN ('ST_Polygon','ST_MultiPolygon')
+                            THEN 'A' ELSE NEW.osm_type END,
+                            NEW.class, NEW.type, NEW.admin_level,
+                            (NEW.extratags->'capital') = 'yes',
+                            NEW.address->'postcode');
+
+
   --DEBUG: RAISE WARNING 'Copy over address tags';
   -- housenumber is a computed field, so start with an empty value
   NEW.housenumber := NULL;
@@ -666,9 +621,9 @@ BEGIN
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
-  -- For searching near features rather use the centroid
-  NEW.postcode := null;
   --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
+
+  NEW.postcode := null;
 
   -- recalculate country and partition
   IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN
@@ -704,6 +659,9 @@ BEGIN
                   and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
+                  IF NOT %REVERSE-ONLY% THEN
+                    DELETE FROM search_name WHERE place_id = linked_node_id;
+		  END IF;
                 END LOOP;
               END IF;
           END LOOP;
@@ -818,11 +776,23 @@ BEGIN
   --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
   SELECT * INTO location FROM find_linked_place(NEW);
   IF location.place_id is not null THEN
-      --DEBUG: RAISE WARNING 'Linked %', location;
+    --DEBUG: RAISE WARNING 'Linked %', location;
 
-    -- Use this as the centre point of the geometry
-    NEW.centroid := coalesce(location.centroid,
-                             ST_Centroid(location.geometry));
+    -- Use the linked point as the centre point of the geometry,
+    -- but only if it is within the area of the boundary.
+    centroid := coalesce(location.centroid, ST_Centroid(location.geometry));
+    IF centroid is not NULL AND ST_Within(centroid, NEW.geometry) THEN
+        NEW.centroid := centroid;
+    END IF;
+
+    -- Use the address rank of the linked place, if it has one
+    parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
+    --DEBUG: RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;
+    IF location.rank_address > parent_address_level
+       and location.rank_address < 26
+    THEN
+      NEW.rank_address := location.rank_address;
+    END IF;
 
     -- merge in the label name
     IF NOT location.name IS NULL THEN
@@ -830,13 +800,17 @@ BEGIN
     END IF;
 
     -- merge in extra tags
-    NEW.extratags := hstore(location.class, location.type)
+    NEW.extratags := hstore('linked_' || location.class, location.type)
                      || coalesce(location.extratags, ''::hstore)
                      || coalesce(NEW.extratags, ''::hstore);
 
     -- mark the linked place (excludes from search results)
     UPDATE placex set linked_place_id = NEW.place_id
       WHERE place_id = location.place_id;
+    -- ensure that those places are not found anymore
+    IF NOT %REVERSE-ONLY% THEN
+      DELETE FROM search_name WHERE place_id = location.place_id;
+    END IF;
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,

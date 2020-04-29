@@ -143,7 +143,6 @@ Feature: Import into placex
           | N22  | place     | hamlet    |
           | N23  | place     | municipality |
           | N24  | place     | district     |
-          | N25  | place     | unincorporated_area |
           | N26  | place     | borough             |
           | N27  | place     | suburb              |
           | N28  | place     | croft               |
@@ -178,8 +177,7 @@ Feature: Import into placex
           | N22    | 20          | 20 |
           | N23    | 19          | 16 |
           | N24    | 19          | 16 |
-          | N25    | 19          | 16 |
-          | N26    | 19          | 16 |
+          | N26    | 19          | 18 |
           | N27    | 20          | 20 |
           | N28    | 20          | 20 |
           | N29    | 20          | 20 |

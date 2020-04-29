@@ -20,7 +20,8 @@ BEGIN
     FOR r IN 
       SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid
       FROM location_area_large_-partition-
-      WHERE ST_Intersects(geometry, feature) and rank_search < maxrank
+      WHERE ST_Intersects(geometry, feature)
+        AND rank_search < maxrank AND rank_address < maxrank
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
         ST_Distance(feature, centroid) *

@@ -9,10 +9,13 @@ require_once(CONST_BasePath.'/lib/ClassTypes.php');
  */
 class AddressDetails
 {
+    private $iPlaceID;
     private $aAddressLines;
 
     public function __construct(&$oDB, $iPlaceID, $sHousenumber, $mLangPref)
     {
+        $this->iPlaceID = $iPlaceID;
+
         if (is_array($mLangPref)) {
             $mLangPref = $oDB->getArraySQL($oDB->getDBQuotedList($mLangPref));
         }
@@ -99,6 +102,59 @@ class AddressDetails
         }
 
         return $aAddress;
+    }
+
+    /**
+     * Annotates the given json with geocodejson address information fields.
+     *
+     * @param array  $aJson  Json hash to add the fields to.
+     *
+     * Geocodejson has the following fields:
+     *  street, locality, postcode, city, district,
+     *  county, state, country
+     *
+     * Postcode and housenumber are added by type, district is not used.
+     * All other fields are set according to address rank.
+     */
+    public function addGeocodeJsonAddressParts(&$aJson)
+    {
+        foreach (array_reverse($this->aAddressLines) as $aLine) {
+            if (!$aLine['isaddress']) {
+                continue;
+            }
+
+            if (!isset($aLine['localname']) || $aLine['localname'] == '') {
+                continue;
+            }
+
+            if ($aLine['type'] == 'postcode' || $aLine['type'] == 'postal_code') {
+                $aJson['postcode'] = $aLine['localname'];
+            } elseif ($aLine['type'] == 'house_number') {
+                $aJson['housenumber'] = $aLine['localname'];
+            }
+
+            if ($this->iPlaceID == $aLine['place_id']) {
+                continue;
+            }
+
+            $iRank = (int)$aLine['rank_address'];
+
+            if ($iRank > 25 && $iRank < 28) {
+                $aJson['street'] = $aLine['localname'];
+            } elseif ($iRank >= 22 && $iRank <= 25) {
+                $aJson['locality'] = $aLine['localname'];
+            } elseif ($iRank >= 17 && $iRank <= 21) {
+                $aJson['district'] = $aLine['localname'];
+            } elseif ($iRank >= 13 && $iRank <= 16) {
+                $aJson['city'] = $aLine['localname'];
+            } elseif ($iRank >= 10 && $iRank <= 12) {
+                $aJson['county'] = $aLine['localname'];
+            } elseif ($iRank >= 5 && $iRank <= 9) {
+                $aJson['state'] = $aLine['localname'];
+            } elseif ($iRank == 4) {
+                $aJson['country'] = $aLine['localname'];
+            }
+        }
     }
 
     public function getAdminLevels()

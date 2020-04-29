@@ -47,11 +47,13 @@ $funcMapAddressLine = function ($aFull) {
                 'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
                 'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
                 'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
+                'place_type' => isset($aFull['place_type']) ? $aFull['place_type'] : null,
                 'class' => $aFull['class'],
                 'type' => $aFull['type'],
                 'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
                 'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
-                'distance' => (float) $aFull['distance']
+                'distance' => (float) $aFull['distance'],
+                'isaddress' => isset($aFull['isaddress']) ? (bool) $aFull['isaddress'] : null
                );
 
     return $aMapped;

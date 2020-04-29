@@ -46,11 +46,13 @@ Very low coverage.
 To execute the test suite run
 
     cd test/php
-    phpunit ../
+    UNIT_TEST_DSN='pgsql:dbname=nominatim_unit_tests' phpunit ../
 
 It will read phpunit.xml which points to the library, test path, bootstrap
 strip and set other parameters.
 
+It will use (and destroy) a local database 'nominatim_unit_tests'. You can set
+a different connection string with e.g. UNIT_TEST_DSN='pgsql:dbname=foo_unit_tests'.
 
 BDD Functional Tests
 ====================

@@ -141,7 +141,7 @@ No. Long running Nominatim installations will differ once new import features (o
 bug fixes) get added since those usually only get applied to new/changed data.
 
 Also this document skips the optional Wikipedia data import which affects ranking
-of search results. See [Nominatim installation](http://nominatim.org/release-docs/latest/Installation) for details.
+of search results. See [Nominatim installation](https://nominatim.org/release-docs/latest/admin/Installation) for details.
 
 ##### Why Ubuntu? Can I test CentOS/Fedora/CoreOS/FreeBSD?
 

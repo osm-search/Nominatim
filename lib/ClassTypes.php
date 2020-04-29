@@ -6,6 +6,13 @@ function getInfo($aPlace)
 {
     $aClassType = getList();
 
+    if ($aPlace['type'] == 'administrative' && isset($aPlace['place_type'])) {
+        $sName = 'place:'.$aPlace['place_type'];
+        if (isset($aClassType[$sName])) {
+            return $aClassType[$sName];
+        }
+    }
+
     if (isset($aPlace['admin_level'])) {
         $sName = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
         if (isset($aClassType[$sName])) {
@@ -72,12 +79,13 @@ function getList()
             'boundary:administrative:1' => array('label' => 'Continent', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'boundary:administrative:2' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'place:country' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 6, 'defdiameter' => 15),
-            'boundary:administrative:3' => array('label' => 'State', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
+            'boundary:administrative:3' => array('label' => 'Region', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'boundary:administrative:4' => array('label' => 'State', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'place:state' => array('label' => 'State', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 8, 'defdiameter' => 5.12),
+            'place:province' => array('label' => 'Province', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 8, 'defdiameter' => 5.12),
             'boundary:administrative:5' => array('label' => 'State District', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'boundary:administrative:6' => array('label' => 'County', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:7' => array('label' => 'County', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
+            'boundary:administrative:7' => array('label' => 'Municipality', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'place:county' => array('label' => 'County', 'frequency' => 108, 'icon' => 'poi_boundary_administrative', 'defzoom' => 10, 'defdiameter' => 1.28),
             'boundary:administrative:8' => array('label' => 'City', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'place:city' => array('label' => 'City', 'frequency' => 66, 'icon' => 'poi_place_city', 'defzoom' => 12, 'defdiameter' => 0.32),
@@ -260,7 +268,7 @@ function getList()
             'tourism:caravan_site' => array('label' => 'Caravan Site', 'frequency' => 183, 'icon' => 'accommodation_caravan_park'),
             'amenity:bus_station' => array('label' => 'Bus Station', 'frequency' => 181, 'icon' => 'transport_bus_station'),
             'amenity:kindergarten' => array('label' => 'Kindergarten', 'frequency' => 179),
-            'highway:construction' => array('label' => 'Construction', 'frequency' => 176),
+            'highway:construction' => array('label' => 'Construction', 'frequency' => 176, 'simplelabel' => 'road'),
             'amenity:atm' => array('label' => 'Atm', 'frequency' => 172, 'icon' => 'money_atm2'),
             'amenity:emergency_phone' => array('label' => 'Emergency Phone', 'frequency' => 164),
             'waterway:lock' => array('label' => 'Lock', 'frequency' => 146),

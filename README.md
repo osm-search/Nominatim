@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/openstreetmap/Nominatim.svg?branch=master)](https://travis-ci.org/openstreetmap/Nominatim)
+[![Build Status](https://travis-ci.org/osm-search/Nominatim.svg?branch=master)](https://travis-ci.org/osm-search/Nominatim)
 
 Nominatim
 =========

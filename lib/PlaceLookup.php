@@ -209,8 +209,6 @@ class PlaceLookup
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
             $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place, ";
-            $sSQL .= "    COALESCE(extratags->'data_licence') AS licence, ";
-            $sSQL .= "    COALESCE(extratags->'data_copyright') AS copyright ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -243,10 +241,8 @@ class PlaceLookup
             $sSQL .= '     ref, ';
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
-            $sSQL .= '     extra_place, ';
-            $sSQL .= '     licence, ';
-            $sSQL .= '     copyright ';
-
+            $sSQL .= '     extra_place ';
+            
             $aSubSelects[] = $sSQL;
         }
 
@@ -448,6 +444,13 @@ class PlaceLookup
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
+
+                    if ($aPlace['sExtraTags']->licence) {
+                        $aPlace['licence'] = $aPlace['sExtraTags']->data_licence;
+                    }
+                    if ($aPlace['sExtraTags']->copyright) {
+                        $aPlace['copyright'] = $aPlace['sExtraTags']->data_copyright;
+                    }
                 } else {
                     $aPlace['sExtraTags'] = (object) array();
                 }

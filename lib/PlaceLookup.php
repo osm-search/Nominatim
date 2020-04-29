@@ -495,10 +495,10 @@ class PlaceLookup
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
                     
                     if ($aPlace['sExtraTags']->licence) {
-                        $aPlace['licence'] = $aPlace['sExtraTags']->licence;
+                        $aPlace['licence'] = $aPlace['sExtraTags']->data_licence;
                     }
                     if ($aPlace['sExtraTags']->copyright) {
-                        $aPlace['copyright'] = $aPlace['sExtraTags']->copyright;
+                        $aPlace['copyright'] = $aPlace['sExtraTags']->data_copyright;
                     }
                 } else {
                     $aPlace['sExtraTags'] = (object) array();

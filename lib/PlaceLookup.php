@@ -536,7 +536,7 @@ class PlaceLookup
             $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
             $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
 
-          if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
+            if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
             if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
             if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
             if ($this->bIncludePolygonAsText) $sSQL .= ',ST_AsText(geometry) as astext';

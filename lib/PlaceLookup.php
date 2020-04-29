@@ -433,14 +433,6 @@ class PlaceLookup
                 $aPlace['langaddress'] = $aPlace['address']->getLocaleAddress();
             }
 
-            if (!$aPlace['licence'] || !isset($aPlace['licence'])) {
-                $aPlace['licence'] = ($this->aLicence);
-            }
-
-            if (!$aPlace['copyright'] || !isset($aPlace['copyright'])) {
-                $aPlace['copyright'] = ($this->aCopyright);
-            }
-
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);

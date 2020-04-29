@@ -25,8 +25,7 @@ class PlaceLookup
     protected $sAddressRankListSql = null;
     protected $sAllowedTypesSQLList = null;
     protected $bDeDupe = true;
-    protected $aLicence = 'Data © OpenStreetMap contributors, ODbL 1.0.';
-    protected $aCopyright = 'https://osm.org/copyright';
+
 
     public function __construct(&$oDB)
     {
@@ -208,7 +207,7 @@ class PlaceLookup
                 'ST_Collect(centroid)',
                 'min(CASE WHEN placex.rank_search < 28 THEN placex.place_id ELSE placex.parent_place_id END)'
             );
-            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place, ";
+            $sSQL .= "    COALESCE(extratags->'place', extratags->'linked_place') AS extra_place ";
             $sSQL .= ' FROM placex';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= '   AND (';
@@ -242,7 +241,7 @@ class PlaceLookup
             if ($this->bExtraTags) $sSQL .= 'extratags, ';
             if ($this->bNameDetails) $sSQL .= 'name, ';
             $sSQL .= '     extra_place ';
-            
+
             $aSubSelects[] = $sSQL;
         }
 
@@ -436,7 +435,7 @@ class PlaceLookup
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
                     $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
-
+                    
                     if ($aPlace['sExtraTags']->licence) {
                         $aPlace['licence'] = $aPlace['sExtraTags']->data_licence;
                     }

@@ -37,7 +37,7 @@ if ($sOsmType && $iOsmId > 0) {
     );
     // osm_type and osm_id are not unique enough
     if ($sClass) {
-        $sSQL .= " AND class='".$sClass."'";
+        $sSQL .= " AND class='".pg_escape_string($sClass)."'";
     }
     $sSQL .= ' ORDER BY class ASC';
     $sPlaceId = chksql($oDB->getOne($sSQL));

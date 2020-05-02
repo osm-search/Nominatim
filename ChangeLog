@@ -1,3 +1,6 @@
+3.3.1
+ * security fix: fix possible SQL injection via details API
+
 3.3.0
 
  * zoom 17 in reverse now zooms in on minor streets

@@ -32,12 +32,14 @@ $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder
 
 if ($sOsmType && $iOsmId > 0) {
     $sSQL = 'SELECT place_id FROM placex WHERE osm_type = :type AND osm_id = :id';
+    $aSQLParams = array(':type' => $sOsmType, ':id' => $iOsmId);
     // osm_type and osm_id are not unique enough
     if ($sClass) {
-        $sSQL .= " AND class='".$sClass."'";
+        $sSQL .= ' AND class= :class';
+        $aSQLParams[':class'] = $sClass;
     }
     $sSQL .= ' ORDER BY class ASC';
-    $sPlaceId = $oDB->getOne($sSQL, array(':type' => $sOsmType, ':id' => $iOsmId));
+    $sPlaceId = $oDB->getOne($sSQL, $aSQLParams);
 
     // Be nice about our error messages for broken geometry
 

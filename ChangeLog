@@ -1,3 +1,6 @@
+3.2.1
+ * security fix: fix possible SQL injection via details API
+
 3.2.0
 
  * complete rewrite of reverse search algorithm

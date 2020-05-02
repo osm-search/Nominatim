@@ -1,3 +1,6 @@
+3.4.2
+ * security fix: fix possible SQL injection via details API
+
 3.4.1
  * update osm2pgsql
     * move deletion to copy thread (fixes deadlock in updates)

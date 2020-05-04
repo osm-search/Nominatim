@@ -11,6 +11,7 @@ pages:
         - 'Reverse': 'api/Reverse.md'
         - 'Address Lookup': 'api/Lookup.md'
         - 'Details' : 'api/Details.md'
+        - 'Status' : 'api/Status.md'
         - 'Place Output Formats': 'api/Output.md'
         - 'FAQ': 'api/Faq.md'
     - 'Administration Guide':

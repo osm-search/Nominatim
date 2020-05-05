@@ -98,8 +98,8 @@ class LibTest extends \PHPUnit\Framework\TestCase
 
         foreach ($aQueries as $sQuery) {
             $aRes = parseLatLon($sQuery);
-            $this->assertEquals(40.446, $aRes[1], 'degrees decimal ' . $sQuery, 0.01);
-            $this->assertEquals(-79.982, $aRes[2], 'degrees decimal ' . $sQuery, 0.01);
+            $this->assertEqualsWithDelta(40.446, $aRes[1], 0.01, 'degrees decimal ' . $sQuery);
+            $this->assertEqualsWithDelta(-79.982, $aRes[2], 0.01, 'degrees decimal ' . $sQuery);
             $this->assertEquals($sQuery, $aRes[0]);
         }
     }

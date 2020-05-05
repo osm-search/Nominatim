@@ -9,7 +9,7 @@ class SearchContextTest extends \PHPUnit\Framework\TestCase
     private $oCtx;
 
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->oCtx = new SearchContext();
     }

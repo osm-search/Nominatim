@@ -4,6 +4,7 @@ This page contains generic installation instructions for Nominatim and its
 prerequisites. There are also step-by-step instructions available for
 the following operating systems:
 
+  * [Ubuntu 20.04](../appendix/Install-on-Ubuntu-20.md)
   * [Ubuntu 18.04](../appendix/Install-on-Ubuntu-18.md)
   * [Ubuntu 16.04](../appendix/Install-on-Ubuntu-16.md)
   * [CentOS 7.2](../appendix/Install-on-Centos-7.md)

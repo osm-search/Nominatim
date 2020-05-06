@@ -7,6 +7,11 @@ export APT_LISTCHANGES_FRONTEND=none #DOCS:
 export DEBIAN_FRONTEND=noninteractive #DOCS:
 
 #
+# !!! danger "Important"
+#     Ubuntu 20.04 uses Postgresql 12 and Postgis 3, which are known to cause
+#     performance issues. They are not recommended for a production
+#     installation at the moment.
+#
 # *Note:* these installation instructions are also available in executable
 #         form for use with vagrant under vagrant/Install-on-Ubuntu-20.sh.
 #
@@ -19,9 +24,9 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 
 #DOCS:    :::sh
-    sudo apt-get \
-        -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" \
-        --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+    sudo apt-get \ #DOCS:
+        -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" \ #DOCS:
+        --allow-downgrades --allow-remove-essential --allow-change-held-packages \ #DOCS:
         -fuy install grub-pc #DOCS:
     sudo apt-get update -qq
 

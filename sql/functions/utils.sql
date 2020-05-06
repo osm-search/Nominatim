@@ -272,6 +272,25 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION near_feature_rank_distance(rank_search INTEGER)
+  RETURNS FLOAT
+  AS $$
+BEGIN
+  IF rank_search <= 16 THEN -- city
+    RETURN 7500;
+  ELSIF rank_search <= 18 THEN -- town
+    RETURN 4000;
+  ELSIF rank_search <= 19 THEN -- village
+    RETURN 2000;
+  ELSIF rank_search  <= 20 THEN -- hamlet
+    RETURN 1000;
+  END IF;
+
+  RETURN 500;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 
 CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2),
                                         partition INTEGER, keywords INTEGER[],
@@ -282,18 +301,11 @@ CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2)
 DECLARE
   locationid INTEGER;
   centroid GEOMETRY;
-  diameter FLOAT;
-  x BOOLEAN;
-  splitGeom RECORD;
+  radius FLOAT;
   secgeo GEOMETRY;
   postcode TEXT;
 BEGIN
-
-  IF rank_search > 25 THEN
-    RAISE EXCEPTION 'Adding location with rank > 25 (% rank %)', place_id, rank_search;
-  END IF;
-
-  x := deleteLocationArea(partition, place_id, rank_search);
+  PERFORM deleteLocationArea(partition, place_id, rank_search);
 
   -- add postcode only if it contains a single entry, i.e. ignore postcode lists
   postcode := NULL;
@@ -305,32 +317,18 @@ BEGIN
     centroid := ST_Centroid(geometry);
 
     FOR secgeo IN select split_geometry(geometry) AS geom LOOP
-      x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, postcode, centroid, secgeo);
+      PERFORM insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, false, postcode, centroid, secgeo);
     END LOOP;
 
-  ELSE
+  ELSEIF ST_GeometryType(geometry) = 'ST_Point' THEN
+    radius := near_feature_rank_distance(rank_search);
+    --DEBUG: RAISE WARNING 'adding % diameter %', place_id, diameter;
 
-    diameter := 0.02;
-    IF rank_address = 0 THEN
-      diameter := 0.02;
-    ELSEIF rank_search <= 14 THEN
-      diameter := 1.2;
-    ELSEIF rank_search <= 15 THEN
-      diameter := 1;
-    ELSEIF rank_search <= 16 THEN
-      diameter := 0.5;
-    ELSEIF rank_search <= 17 THEN
-      diameter := 0.2;
-    ELSEIF rank_search <= 21 THEN
-      diameter := 0.05;
-    ELSEIF rank_search = 25 THEN
-      diameter := 0.005;
-    END IF;
-
---    RAISE WARNING 'adding % diameter %', place_id, diameter;
-
-    secgeo := ST_Buffer(geometry, diameter);
-    x := insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, ST_Centroid(geometry), secgeo);
+    -- Create a bounding box with an extent computed from the radius (in meters).
+    secgeo := ST_Envelope(ST_Collect(
+                            ST_Project(geometry, radius, 0.785398)::geometry,
+                            ST_Project(geometry, radius, 3.9269908)::geometry));
+    PERFORM insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, geometry, secgeo);
 
   END IF;
 

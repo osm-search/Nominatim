@@ -182,22 +182,6 @@ for more information.
 
 ## Running your own instance
 
-### Can I import multiple countries and keep them up to date?
-
-You should use the extracts and updates from https://download.geofabrik.de.
-For the initial import, download the countries you need and merge them.
-See [OSM Help](https://help.openstreetmap.org/questions/48843/merging-two-or-more-geographical-areas-to-import-two-or-more-osm-files-in-nominatim)
-for examples how to do that. Use the resulting single osm file when
-running `setup.php`.
-
-For updates you need to download the change files for each country
-once per day and apply them **separately** using
-
-    ./utils/update.php --import-diff <filename> --index
-
-See [this issue](https://github.com/openstreetmap/Nominatim/issues/60#issuecomment-18679446)
-for a script that runs the updates using osmosis.
-
 ### Can I import negative OSM ids into Nominatim?
 
 See [this question of Stackoverflow](https://help.openstreetmap.org/questions/64662/nominatim-flatnode-with-negative-id).

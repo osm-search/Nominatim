@@ -9,7 +9,7 @@ require_once(CONST_BasePath.'/lib/AddressDetails.php');
 class AddressDetailsTest extends \PHPUnit\Framework\TestCase
 {
 
-    protected function setUp()
+    protected function setUp(): void
     {
         // How the fixture got created
         //

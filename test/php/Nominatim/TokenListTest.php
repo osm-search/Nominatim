@@ -7,7 +7,7 @@ require_once(CONST_BasePath.'/lib/TokenList.php');
 
 class TokenTest extends \PHPUnit\Framework\TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->oNormalizer = $this->getMockBuilder(\MockNormalizer::class)
                                   ->setMethods(array('transliterate'))

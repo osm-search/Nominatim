@@ -57,7 +57,7 @@ For running tests:
 
   * [behave](http://pythonhosted.org/behave/)
   * [nose](https://nose.readthedocs.io)
-  * [phpunit](https://phpunit.de)
+  * [phpunit](https://phpunit.de) >= 7.3
 
 ### Hardware
 

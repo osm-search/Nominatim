@@ -34,14 +34,17 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             python3-psycopg2 python3-tidylib git
 
 # If you want to run the test suite, you need to install the following
-# additional packages:
-
-    sudo apt-get install -y phpunit php-cgi
+# additional packages including the PHP package manager composer:
 
     pip3 install --user behave nose
 
+    sudo apt-get install -y composer php-cgi php-cli php-mbstring php-xml zip unzip
+
     composer global require "squizlabs/php_codesniffer=*"
     sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
+
+    composer global require "phpunit/phpunit=8.*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration

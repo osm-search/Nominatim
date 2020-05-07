@@ -7,7 +7,7 @@ require_once(CONST_BasePath.'/lib/DebugHtml.php');
 class DebugTest extends \PHPUnit\Framework\TestCase
 {
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->oWithDebuginfo = $this->getMockBuilder(\GeococdeMock::class)
                                     ->setMethods(array('debugInfo'))

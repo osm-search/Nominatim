@@ -38,21 +38,13 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 
     pip3 install --user behave nose
 
-    sudo apt-get install -y php-cgi php-cli php-mbstring php-xml zip unzip
+    sudo apt-get install -y composer php-cgi php-cli php-mbstring php-xml zip unzip
 
-    curl -Ss 'https://raw.githubusercontent.com/composer/getcomposer.org/99312bc6306564ac1f0ad2c6207c129b3aff58d6/web/installer' -o /tmp/composer-setup.php
-    if echo 'e0012edf3e80b6978849f5eff0d4b4e4c79ff1609dd1e613307e16318854d24ae64f26d17af3ef0bf7cfb710ca74755a /tmp/composer-setup.php' | sha384sum --check --strict --status; then
-        mkdir -p ~/.local/bin
-        php /tmp/composer-setup.php --install-dir ~/.local/bin --filename composer
+    composer global require "squizlabs/php_codesniffer=*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
 
-        ~/.local/bin/composer global require "squizlabs/php_codesniffer=*"
-        sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
-
-        ~/.local/bin/composer global require "phpunit/phpunit=8.*"
-        sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
-    else
-        echo 'Installer corrupt. Cannot install composer, php_codesniffer and phpunit.' >&2
-    fi
+    composer global require "phpunit/phpunit=8.*"
+    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration

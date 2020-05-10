@@ -15,63 +15,55 @@
                 <a id="switch-to-reverse" href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
             </div>
         <?php
-        if (empty($aMoreParams['q']) and empty($aMoreParams['street']) and empty($aMoreParams['city']) and empty($aMoreParams['county']) and empty($aMoreParams['state']) and empty($aMoreParams['country']) and empty($aMoreParams['postalcode'])) {
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="simple" value="simple" checked="checked">';
-            echo '<label for="simple">simple</label></div>';
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="structured" value="structured">';
-            echo '<label for="structured">structured</label></div>';
-        }
-        elseif (!empty($aMoreParams['q'])) {
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="simple" value="simple" checked="checked">';
-            echo '<label for="simple">simple</label></div>';
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="structured" value="structured">';
-            echo '<label for="structured">structured</label></div>';
-        }
-        else {
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="simple" value="simple">';
-            echo '<label for="simple">simple</label></div>';
-            echo '<div class="radio-inline"><input type="radio" name="query-selector" id="structured" value="structured" checked="checked">';
-            echo '<label for="structured">structured</label></div>';
-        }
+        $bSimpleQuery = !empty($aMoreParams['q']);
+        $bStructuredQuery = !$bSimpleQuery
+                            && !(empty($aMoreParams['street'])
+                                 && empty($aMoreParams['city'])
+                                 && empty($aMoreParams['county'])
+                                 && empty($aMoreParams['state'])
+                                 && empty($aMoreParams['country'])
+                                 && empty($aMoreParams['postalcode']));
         ?>
+        <div class="radio-inline">
+          <input type="radio" name="query-selector" id="simple" value="simple" <?php if ($bSimpleQuery) { echo 'checked="checked"'; } ?> >
+          <label for="simple">simple</label>
+        </div>
+        <div class="radio-inline">
+          <input type="radio" name="query-selector" id="structured" value="structured" <?php if ($bStructuredQuery) { echo 'checked="checked"'; } ?> >
+          <label for="structured">structured</label>
+        </div>
 
     <form role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>search.php">
         <div class="form-group-simple"
         <?php
-        if (empty($aMoreParams['q']) and empty($aMoreParams['street']) and empty($aMoreParams['city']) and empty($aMoreParams['county']) and empty($aMoreParams['state']) and empty($aMoreParams['country']) and empty($aMoreParams['postalcode'])) {
-            echo "style='display:block;'";
-        }
-        elseif (empty($aMoreParams['q'])) {
-            echo "style='display:none;'";
+        if (!$bSimpleQuery) {
+            echo 'style="display:none;"';
         }
         ?>>
-            <input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo htmlspecialchars($aMoreParams['q']); ?>" >
+            <input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo htmlspecialchars($aMoreParams['q'] ?? ''); ?>" >
         </div>
         <div class="form-group-structured"
         <?php
-        if (empty($aMoreParams['street']) and empty($aMoreParams['city']) and empty($aMoreParams['county']) and empty($aMoreParams['state']) and empty($aMoreParams['country']) and empty($aMoreParams['postalcode'])) {
+        if (!$bStructuredQuery) {
             echo "style='display:none;'";
-        }
-        else {
-            echo "style='display:block;'";
         }
         ?>>
 <div class="form-inline">
-            <input id="street" name="street" type="text" class="form-control input-sm" placeholder="House number/Street" value="<?php echo htmlspecialchars($aMoreParams['street']); ?>" >
-            <input id="city" name="city" type="text" class="form-control input-sm" placeholder="City" value="<?php echo htmlspecialchars($aMoreParams['city']); ?>" >
-            <input id="county" name="county" type="text" class="form-control input-sm" placeholder="County" value="<?php echo htmlspecialchars($aMoreParams['county']); ?>" >
-            <input id="state" name="state" type="text" class="form-control input-sm" placeholder="State" value="<?php echo htmlspecialchars($aMoreParams['state']); ?>" >
-            <input id="country" name="country" type="text" class="form-control input-sm" placeholder="Country" value="<?php echo htmlspecialchars($aMoreParams['country']); ?>" >
-            <input id="postalcode" name="postalcode" type="text" class="form-control input-sm" placeholder="Postal Code" value="<?php echo htmlspecialchars($aMoreParams['postalcode']); ?>" >
+            <input id="street" name="street" type="text" class="form-control input-sm" placeholder="House number/Street" value="<?php echo htmlspecialchars($aMoreParams['street'] ?? ''); ?>" >
+            <input id="city" name="city" type="text" class="form-control input-sm" placeholder="City" value="<?php echo htmlspecialchars($aMoreParams['city'] ?? ''); ?>" >
+            <input id="county" name="county" type="text" class="form-control input-sm" placeholder="County" value="<?php echo htmlspecialchars($aMoreParams['county'] ?? ''); ?>" >
+            <input id="state" name="state" type="text" class="form-control input-sm" placeholder="State" value="<?php echo htmlspecialchars($aMoreParams['state'] ?? ''); ?>" >
+            <input id="country" name="country" type="text" class="form-control input-sm" placeholder="Country" value="<?php echo htmlspecialchars($aMoreParams['country'] ?? ''); ?>" >
+            <input id="postalcode" name="postalcode" type="text" class="form-control input-sm" placeholder="Postal Code" value="<?php echo htmlspecialchars($aMoreParams['postalcode'] ?? ''); ?>" >
         </div></div>
         <div class="form-group search-button-group">
             <button type="submit" class="btn btn-primary btn-sm">Search</button>
             <?php if (CONST_Search_AreaPolygons) { ?>
                 <input type="hidden" value="1" name="polygon_geojson" />
             <?php } ?>
-            <input type="hidden" name="viewbox" value="<?php if (isset($aMoreParams['viewbox'])) echo ($aMoreParams['viewbox']); ?>" />
+            <input type="hidden" name="viewbox" value="<?php echo htmlspecialchars($aMoreParams['viewbox'] ?? ''); ?>" />
             <div class="checkbox-inline">
-                <input type="checkbox" id="use_viewbox" <?php if (isset($aMoreParams['viewbox'])) echo "checked='checked'"; ?>>
+                <input type="checkbox" id="use_viewbox" <?php if (!empty($aMoreParams['viewbox'])) echo "checked='checked'"; ?>>
                 <label for="use_viewbox">apply viewbox</label>
             </div>
         </div>

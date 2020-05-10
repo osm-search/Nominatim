@@ -36,7 +36,7 @@
     <form role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>search.php">
         <div class="form-group-simple"
         <?php
-        if (!$bSimpleQuery) {
+        if ($bStructuredQuery) {
             echo 'style="display:none;"';
         }
         ?>>

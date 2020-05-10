@@ -661,7 +661,7 @@ BEGIN
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
                   IF NOT %REVERSE-ONLY% THEN
                     DELETE FROM search_name WHERE place_id = linked_node_id;
-		  END IF;
+                  END IF;
                 END LOOP;
               END IF;
           END LOOP;
@@ -811,6 +811,7 @@ BEGIN
     IF NOT %REVERSE-ONLY% THEN
       DELETE FROM search_name WHERE place_id = location.place_id;
     END IF;
+    PERFORM deleteLocationArea(NEW.partition, location.place_id, NEW.rank_search);
 
     SELECT wikipedia, importance
       FROM compute_importance(location.extratags, NEW.country_code,

@@ -14,40 +14,21 @@
             <div class="search-type-link">
                 <a id="switch-to-reverse" href="<?php echo CONST_Website_BaseURL; ?>reverse.php?format=html">reverse search</a>
             </div>
-        <?php
-        $bSimpleQuery = !empty($aMoreParams['q']);
-        $bStructuredQuery = !$bSimpleQuery
-                            && !(empty($aMoreParams['street'])
-                                 && empty($aMoreParams['city'])
-                                 && empty($aMoreParams['county'])
-                                 && empty($aMoreParams['state'])
-                                 && empty($aMoreParams['country'])
-                                 && empty($aMoreParams['postalcode']));
-        ?>
+
         <div class="radio-inline">
-          <input type="radio" name="query-selector" id="simple" value="simple" <?php if ($bSimpleQuery) { echo 'checked="checked"'; } ?> >
+          <input type="radio" name="query-selector" id="simple" value="simple">
           <label for="simple">simple</label>
         </div>
         <div class="radio-inline">
-          <input type="radio" name="query-selector" id="structured" value="structured" <?php if ($bStructuredQuery) { echo 'checked="checked"'; } ?> >
+          <input type="radio" name="query-selector" id="structured" value="structured">
           <label for="structured">structured</label>
         </div>
 
     <form role="search" accept-charset="UTF-8" action="<?php echo CONST_Website_BaseURL; ?>search.php">
-        <div class="form-group-simple"
-        <?php
-        if ($bStructuredQuery) {
-            echo 'style="display:none;"';
-        }
-        ?>>
+        <div class="form-group-simple">
             <input id="q" name="q" type="text" class="form-control input-sm" placeholder="Search" value="<?php echo htmlspecialchars($aMoreParams['q'] ?? ''); ?>" >
         </div>
-        <div class="form-group-structured"
-        <?php
-        if (!$bStructuredQuery) {
-            echo "style='display:none;'";
-        }
-        ?>>
+        <div class="form-group-structured">
 <div class="form-inline">
             <input id="street" name="street" type="text" class="form-control input-sm" placeholder="House number/Street" value="<?php echo htmlspecialchars($aMoreParams['street'] ?? ''); ?>" >
             <input id="city" name="city" type="text" class="form-control input-sm" placeholder="City" value="<?php echo htmlspecialchars($aMoreParams['city'] ?? ''); ?>" >
@@ -140,7 +121,16 @@
         );
         echo 'var nominatim_map_init = ' . json_encode($aNominatimMapInit, JSON_PRETTY_PRINT) . ';';
 
-        echo 'var nominatim_results = ' . json_encode($aSearchResults, JSON_PRETTY_PRINT) . ';'; 
+        echo 'var nominatim_results = ' . json_encode($aSearchResults, JSON_PRETTY_PRINT) . ';';
+        $sStructuredQuery = (empty($aMoreParams['q'])
+                             && !(empty($aMoreParams['street'])
+                                  && empty($aMoreParams['city'])
+                                  && empty($aMoreParams['county'])
+                                  && empty($aMoreParams['state'])
+                                  && empty($aMoreParams['country'])
+                                  && empty($aMoreParams['postalcode'])))
+                            ? 'true' : 'false';
+        echo 'var nominatim_structured_query = '.$sStructuredQuery.';';
     ?>
     </script>
     <?php include(CONST_BasePath.'/lib/template/includes/html-footer.php'); ?>

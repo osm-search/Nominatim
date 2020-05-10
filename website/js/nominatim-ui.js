@@ -31,14 +31,24 @@ jQuery(document).ready(function(){
                 if (query_val == "simple") {
                     $("div.form-group-structured").hide();
                     $("div.form-group-simple").show();
+                    $("div.form-group-structured .form-control").prop('disabled', true);
+                    $("div.form-group-simple .form-control").prop('disabled', false);
                     $('.form-group-structured').find('input:text').val('');
                 }
                 else if (query_val == "structured") {
                     $("div.form-group-simple").hide();
                     $("div.form-group-structured").show();
+                    $("div.form-group-structured .form-control").prop('disabled', false);
+                    $("div.form-group-simple .form-control").prop('disabled', true);
                     $('.form-group-simple').find('input:text').val('');
                 }
         });
+
+        if (nominatim_structured_query) {
+            $('input#structured').prop('checked', true).trigger('click');
+        } else {
+            $('input#simple').prop('checked', true).trigger('click');
+        }
     });
 
     map = new L.map('map', {

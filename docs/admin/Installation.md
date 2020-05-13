@@ -125,13 +125,15 @@ from there.
 Make sure your Apache configuration contains the required permissions for the
 directory and create an alias:
 
-    <Directory "/srv/nominatim/build/website">
-      Options FollowSymLinks MultiViews
-      AddType text/html   .php
-      DirectoryIndex search.php
-      Require all granted
-    </Directory>
-    Alias /nominatim /srv/nominatim/build/website
+``` apache
+<Directory "/srv/nominatim/build/website">
+  Options FollowSymLinks MultiViews
+  AddType text/html   .php
+  DirectoryIndex search.php
+  Require all granted
+</Directory>
+Alias /nominatim /srv/nominatim/build/website
+```
 
 `/srv/nominatim/build` should be replaced with the location of your
 build directory.
@@ -159,30 +161,32 @@ follows:
 Tell nginx that php files are special and to fastcgi_pass to the php-fpm
 unix socket by adding the location definition to the default configuration.
 
-    root /srv/nominatim/build/website;
-    index search.php;
-    location / {
-        try_files $uri $uri/ @php;
-    }
+``` nginx
+root /srv/nominatim/build/website;
+index search.php;
+location / {
+    try_files $uri $uri/ @php;
+}
 
-    location @php {
-        fastcgi_param SCRIPT_FILENAME "$document_root$uri.php";
-        fastcgi_param PATH_TRANSLATED "$document_root$uri.php";
-        fastcgi_param QUERY_STRING    $args;
-        fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-    }
+location @php {
+    fastcgi_param SCRIPT_FILENAME "$document_root$uri.php";
+    fastcgi_param PATH_TRANSLATED "$document_root$uri.php";
+    fastcgi_param QUERY_STRING    $args;
+    fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+}
 
-    location ~ [^/]\.php(/|$) {
-        fastcgi_split_path_info ^(.+?\.php)(/.*)$;
-        if (!-f $document_root$fastcgi_script_name) {
-            return 404;
-        }
-        fastcgi_pass unix:/var/run/php7.3-fpm.sock;
-        fastcgi_index search.php;
-        include fastcgi.conf;
+location ~ [^/]\.php(/|$) {
+    fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+    if (!-f $document_root$fastcgi_script_name) {
+        return 404;
     }
+    fastcgi_pass unix:/var/run/php7.3-fpm.sock;
+    fastcgi_index search.php;
+    include fastcgi.conf;
+}
+```
 
 Restart the nginx and php5-fpm services and the website should now be available
 at `http://localhost/`.

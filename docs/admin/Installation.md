@@ -161,12 +161,25 @@ unix socket by adding the location definition to the default configuration.
 
     root /srv/nominatim/build/website;
     index search.php index.html;
+    location / {
+            try_files $uri $uri/ @php;
+    }
+
+    location @php {
+            fastcgi_param SCRIPT_FILENAME "$document_root$uri.php";
+            fastcgi_param PATH_TRANSLATED "$document_root$uri.php";
+            fastcgi_param QUERY_STRING    $args;
+            fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+            fastcgi_index index.php;
+            include fastcgi_params;
+    }
+
     location ~ [^/]\.php(/|$) {
         fastcgi_split_path_info ^(.+?\.php)(/.*)$;
         if (!-f $document_root$fastcgi_script_name) {
             return 404;
         }
-        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_pass unix:/var/run/php7.2-fpm.sock;
         fastcgi_index search.php;
         include fastcgi.conf;
     }

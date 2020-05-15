@@ -3,42 +3,36 @@
 namespace Nominatim\ClassTypes;
 
 /**
- * Create a simplfied label for the given place.
+ * Create a label tag for the given place that can be used as an XML name.
  *
  * @param array[] $aPlace  Information about the place to label.
  *
- * A simplified label groups various object types together under a common
- * label.
+ * A label tag groups various object types together under a common
+ * label. The returned value is lower case and has no spaces
  */
-function getSimpleLabel($aPlace)
+function getLabelTag($aPlace, $sCountry = null)
 {
-    static $aRoadLabels = array (
-                              'motorway_junction' => 'Junction',
-                              'motorway' => 'Road',
-                              'trunk' => 'Road',
-                              'primary' => 'Road',
-                              'secondary' => 'Road',
-                              'tertiary' => 'Road',
-                              'residential' => 'Road',
-                              'unclassified' => 'Road',
-                              'living_street' => 'Road',
-                              'service' => 'Road',
-                              'track' => 'Road',
-                              'byway' => 'Road',
-                              'steps' => 'Footway',
-                              'motorway_link' => 'Road',
-                              'trunk_link' => 'Road',
-                              'primary_link' => 'Road',
-                              'secondary_link' => 'Road',
-                              'tertiary_link' => 'Road',
-                              'construction' => 'Road'
-            );
-
-    if ($aPlace['class'] == 'highway' and isset($aRoadLabels[$aPlace['type']])) {
-        return $aRoadLabels[$aPlace['type']];
+    $iRank = (int) ($aPlace['rank_address'] ?? 30);
+    $sLabel;
+    if (isset($aPlace['place_type'])) {
+        $sLabel = $aPlace['place_type'];
+    } elseif ($aPlace['class'] == 'boundary' && $aPlace['type'] == 'administrative') {
+        $sLabel = getBoundaryLabel($iRank, $sCountry);
+    } elseif ($iRank < 26) {
+        $sLabel = $aPlace['type'];
+    } elseif ($iRank < 28) {
+        $sLabel = 'road';
+    } elseif ($aPlace['class'] == 'place'
+            && ($aPlace['type'] == 'house_number' ||
+                $aPlace['type'] == 'house_name' ||
+                $aPlace['type'] == 'country_code')
+    ) {
+        $sLabel = $aPlace['type'];
+    } else {
+        $sLabel = $aPlace['class'];
     }
 
-    return getLabel($aPlace);
+    return strtolower(str_replace('_', ' ', $sLabel));
 }
 
 /**
@@ -48,33 +42,22 @@ function getSimpleLabel($aPlace)
  */
 function getLabel($aPlace, $sCountry = null)
 {
-    if ($aPlace['class'] == 'boundary'
-        && $aPlace['type'] == 'administrative')
-        && !isset($aPlace['place_type'])
-    ) {
-        return getBoundaryLabel((int)($aPlace['admin_level'] ?? 15,
-                                $aPlace['country_code'] ?? null)
+    if (isset($aPlace['place_type'])) {
+        return ucwords(str_replace('_', ' ', $aPlace['place_type']));
     }
 
-    return ucwords(str_replace('_', ' ', $aPlace['place_type'] ?? $aPlace['type']));
+    if ($aPlace['class'] == 'boundary' && $aPlace['type'] == 'administrative') {
+        return getBoundaryLabel((int)($aPlace['admin_level'] ?? 15, $sCountry ?? null);
+    }
+
+    // Return a label only for 'important' class/type combinations
+    if (isset(getImportance($aPlace)) {
+        return ucwords(str_replace('_', ' ', $aPlace['type']));
+    }
+
+    return null;
 }
 
-/**
- * Return a generic simple label to be used for the given address rank
- * in the given country.
- *
- * @param int    $iRankAddress  Address rank of the object to be labeled.
- * @param string $sCountry      Country code of the country where the object is
- *                              in. May be null, in which case a world-wide
- *                              fallback is used.
- *
- * @return string
- */
-function getFallbackLabel($iRankAddress, $sCountry = null)
-{
-    return getBoundaryLabel((int)($iRankAddress / 2), $sCountry,
-                           'address'.$iRankAddress);
-}
 
 /**
  * Return a simple label for an administrative boundary for the given country.
@@ -114,386 +97,438 @@ function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative'
     return $aBoundaryList['default'][$iAdminLevel] ?? $sFallback;
 }
 
-
-function getInfo($aPlace)
+/**
+ * Return an estimated radius of how far the object node extends.
+ *
+ * @param array[] $aPlace  Information about the place. This must be a node
+ *                         feature.
+ *
+ * @return float  The radius around the feature in degrees.
+ */
+function getDefRadius($aPlace)
 {
-    $aClassType = getList();
-
-    if ($aPlace['type'] == 'administrative' && isset($aPlace['place_type'])) {
-        $sName = 'place:'.$aPlace['place_type'];
-        if (isset($aClassType[$sName])) {
-            return $aClassType[$sName];
-        }
-    }
-
-    if (isset($aPlace['admin_level'])) {
-        $sName = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
-        if (isset($aClassType[$sName])) {
-            return $aClassType[$sName];
-        }
-    }
-
-    $sName = $aPlace['class'].':'.$aPlace['type'];
-    if (isset($aClassType[$sName])) {
-        return $aClassType[$sName];
-    }
-
-    return false;
-}
-
-function getFallbackInfo($aPlace)
-{
-    $aClassType = getList();
-
-    $sFallback = 'boundary:administrative:'.((int)($aPlace['rank_address']/2));
-    if (isset($aClassType[$sFallback])) {
-        return $aClassType[$sFallback];
-    }
-
-    return array('simplelabel' => 'address'.$aPlace['rank_address']);
-}
-
-function getProperty($aPlace, $sProp, $mDefault = false)
-{
-    $aClassType = getList();
-
-    if (isset($aPlace['admin_level'])) {
-        $sName = $aPlace['class'].':'.$aPlace['type'].':'.$aPlace['admin_level'];
-        if (isset($aClassType[$sName]) && isset($aClassType[$sName][$sProp])) {
-            return $aClassType[$sName][$sProp];
-        }
-    }
-
-    $sName = $aPlace['class'].':'.$aPlace['type'];
-    if (isset($aClassType[$sName]) && isset($aClassType[$sName][$sProp])) {
-        return $aClassType[$sName][$sProp];
-    }
-
-    return $mDefault;
-}
-
-function getListWithImportance()
-{
-    static $aOrders = null;
-    if ($aOrders === null) {
-        $aOrders = getList();
-        $i = 1;
-        foreach ($aOrders as $sID => $a) {
-            $aOrders[$sID]['importance'] = $i++;
-        }
-    }
-
-    return $aOrders;
-}
-
-
-
-function getList()
-{
-    static $aPropertyCache = array(
-            'boundary:administrative:1' => array('label' => 'Continent', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:2' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:country' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 6, 'defdiameter' => 15),
-            'boundary:administrative:3' => array('label' => 'Region', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:4' => array('label' => 'State', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:state' => array('label' => 'State', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 8, 'defdiameter' => 5.12),
-            'place:province' => array('label' => 'Province', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 8, 'defdiameter' => 5.12),
-            'boundary:administrative:5' => array('label' => 'State District', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:6' => array('label' => 'County', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:7' => array('label' => 'Municipality', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:county' => array('label' => 'County', 'frequency' => 108, 'icon' => 'poi_boundary_administrative', 'defzoom' => 10, 'defdiameter' => 1.28),
-            'boundary:administrative:8' => array('label' => 'City', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:city' => array('label' => 'City', 'frequency' => 66, 'icon' => 'poi_place_city', 'defzoom' => 12, 'defdiameter' => 0.32),
-            'boundary:administrative:9' => array('label' => 'City District', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:10' => array('label' => 'Suburb', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:administrative:11' => array('label' => 'Neighbourhood', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:region' => array('label' => 'Region', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 8, 'defdiameter' => 0.04),
-            'place:island' => array('label' => 'Island', 'frequency' => 288, 'defzoom' => 11, 'defdiameter' => 0.64),
-            'boundary:administrative' => array('label' => 'Administrative', 'frequency' => 413, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'boundary:postal_code' => array('label' => 'Postcode', 'frequency' => 413, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
-            'place:town' => array('label' => 'Town', 'frequency' => 1497, 'icon' => 'poi_place_town', 'defzoom' => 14, 'defdiameter' => 0.08),
-            'place:village' => array('label' => 'Village', 'frequency' => 11230, 'icon' => 'poi_place_village', 'defzoom' => 15, 'defdiameter' => 0.04),
-            'place:hamlet' => array('label' => 'Hamlet', 'frequency' => 7075, 'icon' => 'poi_place_village', 'defzoom' => 15, 'defdiameter' => 0.04),
-            'place:suburb' => array('label' => 'Suburb', 'frequency' => 2528, 'icon' => 'poi_place_village', 'defdiameter' => 0.04),
-            'place:locality' => array('label' => 'Locality', 'frequency' => 4113, 'icon' => 'poi_place_village', 'defdiameter' => 0.02),
-            'landuse:farm' => array('label' => 'Farm', 'frequency' => 1201, 'defdiameter' => 0.02),
-            'place:farm' => array('label' => 'Farm', 'frequency' => 1162, 'defdiameter' => 0.02),
-
-            'highway:motorway_junction' => array('label' => 'Motorway Junction', 'frequency' => 1126, 'simplelabel' => 'Junction'),
-            'highway:motorway' => array('label' => 'Motorway', 'frequency' => 4627, 'simplelabel' => 'Road'),
-            'highway:trunk' => array('label' => 'Trunk', 'frequency' => 23084, 'simplelabel' => 'Road'),
-            'highway:primary' => array('label' => 'Primary', 'frequency' => 32138, 'simplelabel' => 'Road'),
-            'highway:secondary' => array('label' => 'Secondary', 'frequency' => 25807, 'simplelabel' => 'Road'),
-            'highway:tertiary' => array('label' => 'Tertiary', 'frequency' => 29829, 'simplelabel' => 'Road'),
-            'highway:residential' => array('label' => 'Residential', 'frequency' => 361498, 'simplelabel' => 'Road'),
-            'highway:unclassified' => array('label' => 'Unclassified', 'frequency' => 66441, 'simplelabel' => 'Road'),
-            'highway:living_street' => array('label' => 'Living Street', 'frequency' => 710, 'simplelabel' => 'Road'),
-            'highway:service' => array('label' => 'Service', 'frequency' => 9963, 'simplelabel' => 'Road'),
-            'highway:track' => array('label' => 'Track', 'frequency' => 2565, 'simplelabel' => 'Road'),
-            'highway:road' => array('label' => 'Road', 'frequency' => 591, 'simplelabel' => 'Road'),
-            'highway:byway' => array('label' => 'Byway', 'frequency' => 346, 'simplelabel' => 'Road'),
-            'highway:bridleway' => array('label' => 'Bridleway', 'frequency' => 1556),
-            'highway:cycleway' => array('label' => 'Cycleway', 'frequency' => 2419),
-            'highway:pedestrian' => array('label' => 'Pedestrian', 'frequency' => 2757),
-            'highway:footway' => array('label' => 'Footway', 'frequency' => 15008),
-            'highway:steps' => array('label' => 'Steps', 'frequency' => 444, 'simplelabel' => 'Footway'),
-            'highway:motorway_link' => array('label' => 'Motorway Link', 'frequency' => 795, 'simplelabel' => 'Road'),
-            'highway:trunk_link' => array('label' => 'Trunk Link', 'frequency' => 1258, 'simplelabel' => 'Road'),
-            'highway:primary_link' => array('label' => 'Primary Link', 'frequency' => 313, 'simplelabel' => 'Road'),
-
-            'landuse:industrial' => array('label' => 'Industrial', 'frequency' => 1062),
-            'landuse:residential' => array('label' => 'Residential', 'frequency' => 886),
-            'landuse:retail' => array('label' => 'Retail', 'frequency' => 754),
-            'landuse:commercial' => array('label' => 'Commercial', 'frequency' => 657),
-
-            'place:airport' => array('label' => 'Airport', 'frequency' => 36, 'icon' => 'transport_airport2', 'defdiameter' => 0.03),
-            'aeroway:aerodrome' => array('label' => 'Aerodrome', 'frequency' => 36, 'icon' => 'transport_airport2', 'defdiameter' => 0.03),
-            'aeroway' => array('label' => 'Aeroway', 'frequency' => 36, 'icon' => 'transport_airport2', 'defdiameter' => 0.03),
-            'railway:station' => array('label' => 'Station', 'frequency' => 3431, 'icon' => 'transport_train_station2', 'defdiameter' => 0.01),
-            'amenity:place_of_worship' => array('label' => 'Place Of Worship', 'frequency' => 9049, 'icon' => 'place_of_worship_unknown3'),
-            'amenity:pub' => array('label' => 'Pub', 'frequency' => 18969, 'icon' => 'food_pub'),
-            'amenity:bar' => array('label' => 'Bar', 'frequency' => 164, 'icon' => 'food_bar'),
-            'amenity:university' => array('label' => 'University', 'frequency' => 607, 'icon' => 'education_university'),
-            'tourism:museum' => array('label' => 'Museum', 'frequency' => 543, 'icon' => 'tourist_museum'),
-            'amenity:arts_centre' => array('label' => 'Arts Centre', 'frequency' => 136, 'icon' => 'tourist_art_gallery2'),
-            'tourism:zoo' => array('label' => 'Zoo', 'frequency' => 47, 'icon' => 'tourist_zoo'),
-            'tourism:theme_park' => array('label' => 'Theme Park', 'frequency' => 24, 'icon' => 'poi_point_of_interest'),
-            'tourism:attraction' => array('label' => 'Attraction', 'frequency' => 1463, 'icon' => 'poi_point_of_interest'),
-            'leisure:golf_course' => array('label' => 'Golf Course', 'frequency' => 712, 'icon' => 'sport_golf'),
-            'historic:castle' => array('label' => 'Castle', 'frequency' => 316, 'icon' => 'tourist_castle'),
-            'amenity:hospital' => array('label' => 'Hospital', 'frequency' => 879, 'icon' => 'health_hospital'),
-            'amenity:school' => array('label' => 'School', 'frequency' => 8192, 'icon' => 'education_school'),
-            'amenity:theatre' => array('label' => 'Theatre', 'frequency' => 371, 'icon' => 'tourist_theatre'),
-            'amenity:public_building' => array('label' => 'Public Building', 'frequency' => 985),
-            'amenity:library' => array('label' => 'Library', 'frequency' => 794, 'icon' => 'amenity_library'),
-            'amenity:townhall' => array('label' => 'Townhall', 'frequency' => 242),
-            'amenity:community_centre' => array('label' => 'Community Centre', 'frequency' => 157),
-            'amenity:fire_station' => array('label' => 'Fire Station', 'frequency' => 221, 'icon' => 'amenity_firestation3'),
-            'amenity:police' => array('label' => 'Police', 'frequency' => 334, 'icon' => 'amenity_police2'),
-            'amenity:bank' => array('label' => 'Bank', 'frequency' => 1248, 'icon' => 'money_bank2'),
-            'amenity:post_office' => array('label' => 'Post Office', 'frequency' => 859, 'icon' => 'amenity_post_office'),
-            'leisure:park' => array('label' => 'Park', 'frequency' => 2378),
-            'amenity:park' => array('label' => 'Park', 'frequency' => 53),
-            'landuse:park' => array('label' => 'Park', 'frequency' => 50),
-            'landuse:recreation_ground' => array('label' => 'Recreation Ground', 'frequency' => 517),
-            'tourism:hotel' => array('label' => 'Hotel', 'frequency' => 2150, 'icon' => 'accommodation_hotel2'),
-            'tourism:motel' => array('label' => 'Motel', 'frequency' => 43),
-            'amenity:cinema' => array('label' => 'Cinema', 'frequency' => 277, 'icon' => 'tourist_cinema'),
-            'tourism:artwork' => array('label' => 'Artwork', 'frequency' => 171, 'icon' => 'tourist_art_gallery2'),
-            'historic:archaeological_site' => array('label' => 'Archaeological Site', 'frequency' => 407, 'icon' => 'tourist_archaeological2'),
-            'amenity:doctors' => array('label' => 'Doctors', 'frequency' => 581, 'icon' => 'health_doctors'),
-            'leisure:sports_centre' => array('label' => 'Sports Centre', 'frequency' => 767, 'icon' => 'sport_leisure_centre'),
-            'leisure:swimming_pool' => array('label' => 'Swimming Pool', 'frequency' => 24, 'icon' => 'sport_swimming_outdoor'),
-            'shop:supermarket' => array('label' => 'Supermarket', 'frequency' => 2673, 'icon' => 'shopping_supermarket'),
-            'shop:convenience' => array('label' => 'Convenience', 'frequency' => 1469, 'icon' => 'shopping_convenience'),
-            'amenity:restaurant' => array('label' => 'Restaurant', 'frequency' => 3179, 'icon' => 'food_restaurant'),
-            'amenity:fast_food' => array('label' => 'Fast Food', 'frequency' => 2289, 'icon' => 'food_fastfood'),
-            'amenity:cafe' => array('label' => 'Cafe', 'frequency' => 1780, 'icon' => 'food_cafe'),
-            'tourism:guest_house' => array('label' => 'Guest House', 'frequency' => 223, 'icon' => 'accommodation_bed_and_breakfast'),
-            'amenity:pharmacy' => array('label' => 'Pharmacy', 'frequency' => 733, 'icon' => 'health_pharmacy_dispensing'),
-            'amenity:fuel' => array('label' => 'Fuel', 'frequency' => 1308, 'icon' => 'transport_fuel'),
-            'natural:peak' => array('label' => 'Peak', 'frequency' => 3212, 'icon' => 'poi_peak'),
-            'waterway:waterfall' => array('label' => 'Waterfall', 'frequency' => 24),
-            'natural:wood' => array('label' => 'Wood', 'frequency' => 1845, 'icon' => 'landuse_coniferous_and_deciduous'),
-            'natural:water' => array('label' => 'Water', 'frequency' => 1790),
-            'landuse:forest' => array('label' => 'Forest', 'frequency' => 467),
-            'landuse:cemetery' => array('label' => 'Cemetery', 'frequency' => 463),
-            'landuse:allotments' => array('label' => 'Allotments', 'frequency' => 408),
-            'landuse:farmyard' => array('label' => 'Farmyard', 'frequency' => 397),
-            'railway:rail' => array('label' => 'Rail', 'frequency' => 4894),
-            'waterway:canal' => array('label' => 'Canal', 'frequency' => 1723),
-            'waterway:river' => array('label' => 'River', 'frequency' => 4089),
-            'waterway:stream' => array('label' => 'Stream', 'frequency' => 2684),
-            'shop:bicycle' => array('label' => 'Bicycle', 'frequency' => 349, 'icon' => 'shopping_bicycle'),
-            'shop:clothes' => array('label' => 'Clothes', 'frequency' => 315, 'icon' => 'shopping_clothes'),
-            'shop:hairdresser' => array('label' => 'Hairdresser', 'frequency' => 312, 'icon' => 'shopping_hairdresser'),
-            'shop:doityourself' => array('label' => 'Doityourself', 'frequency' => 247, 'icon' => 'shopping_diy'),
-            'shop:estate_agent' => array('label' => 'Estate Agent', 'frequency' => 162, 'icon' => 'shopping_estateagent2'),
-            'shop:car' => array('label' => 'Car', 'frequency' => 159, 'icon' => 'shopping_car'),
-            'shop:garden_centre' => array('label' => 'Garden Centre', 'frequency' => 143, 'icon' => 'shopping_garden_centre'),
-            'shop:car_repair' => array('label' => 'Car Repair', 'frequency' => 141, 'icon' => 'shopping_car_repair'),
-            'shop:newsagent' => array('label' => 'Newsagent', 'frequency' => 132),
-            'shop:bakery' => array('label' => 'Bakery', 'frequency' => 129, 'icon' => 'shopping_bakery'),
-            'shop:furniture' => array('label' => 'Furniture', 'frequency' => 124),
-            'shop:butcher' => array('label' => 'Butcher', 'frequency' => 105, 'icon' => 'shopping_butcher'),
-            'shop:apparel' => array('label' => 'Apparel', 'frequency' => 98, 'icon' => 'shopping_clothes'),
-            'shop:electronics' => array('label' => 'Electronics', 'frequency' => 96),
-            'shop:department_store' => array('label' => 'Department Store', 'frequency' => 86),
-            'shop:books' => array('label' => 'Books', 'frequency' => 85),
-            'shop:yes' => array('label' => 'Shop', 'frequency' => 68),
-            'shop:outdoor' => array('label' => 'Outdoor', 'frequency' => 67),
-            'shop:mall' => array('label' => 'Mall', 'frequency' => 63),
-            'shop:florist' => array('label' => 'Florist', 'frequency' => 61),
-            'shop:charity' => array('label' => 'Charity', 'frequency' => 60),
-            'shop:hardware' => array('label' => 'Hardware', 'frequency' => 59),
-            'shop:laundry' => array('label' => 'Laundry', 'frequency' => 51, 'icon' => 'shopping_laundrette'),
-            'shop:shoes' => array('label' => 'Shoes', 'frequency' => 49),
-            'shop:beverages' => array('label' => 'Beverages', 'frequency' => 48, 'icon' => 'shopping_alcohol'),
-            'shop:dry_cleaning' => array('label' => 'Dry Cleaning', 'frequency' => 46),
-            'shop:carpet' => array('label' => 'Carpet', 'frequency' => 45),
-            'shop:computer' => array('label' => 'Computer', 'frequency' => 44),
-            'shop:alcohol' => array('label' => 'Alcohol', 'frequency' => 44, 'icon' => 'shopping_alcohol'),
-            'shop:optician' => array('label' => 'Optician', 'frequency' => 55, 'icon' => 'health_opticians'),
-            'shop:chemist' => array('label' => 'Chemist', 'frequency' => 42, 'icon' => 'health_pharmacy'),
-            'shop:gallery' => array('label' => 'Gallery', 'frequency' => 38, 'icon' => 'tourist_art_gallery2'),
-            'shop:mobile_phone' => array('label' => 'Mobile Phone', 'frequency' => 37),
-            'shop:sports' => array('label' => 'Sports', 'frequency' => 37),
-            'shop:jewelry' => array('label' => 'Jewelry', 'frequency' => 32, 'icon' => 'shopping_jewelry'),
-            'shop:pet' => array('label' => 'Pet', 'frequency' => 29),
-            'shop:beauty' => array('label' => 'Beauty', 'frequency' => 28),
-            'shop:stationery' => array('label' => 'Stationery', 'frequency' => 25),
-            'shop:shopping_centre' => array('label' => 'Shopping Centre', 'frequency' => 25),
-            'shop:general' => array('label' => 'General', 'frequency' => 25),
-            'shop:electrical' => array('label' => 'Electrical', 'frequency' => 25),
-            'shop:toys' => array('label' => 'Toys', 'frequency' => 23),
-            'shop:jeweller' => array('label' => 'Jeweller', 'frequency' => 23),
-            'shop:betting' => array('label' => 'Betting', 'frequency' => 23),
-            'shop:household' => array('label' => 'Household', 'frequency' => 21),
-            'shop:travel_agency' => array('label' => 'Travel Agency', 'frequency' => 21),
-            'shop:hifi' => array('label' => 'Hifi', 'frequency' => 21),
-            'amenity:shop' => array('label' => 'Shop', 'frequency' => 61),
-            'tourism:information' => array('label' => 'Information', 'frequency' => 224, 'icon' => 'amenity_information'),
-
-            'place:house' => array('label' => 'House', 'frequency' => 2086, 'defzoom' => 18),
-            'place:house_name' => array('label' => 'House', 'frequency' => 2086, 'defzoom' => 18),
-            'place:house_number' => array('label' => 'House Number', 'frequency' => 2086, 'defzoom' => 18),
-            'place:country_code' => array('label' => 'Country Code', 'frequency' => 2086, 'defzoom' => 18),
-
-            //
-
-            'leisure:pitch' => array('label' => 'Pitch', 'frequency' => 762),
-            'highway:unsurfaced' => array('label' => 'Unsurfaced', 'frequency' => 492),
-            'historic:ruins' => array('label' => 'Ruins', 'frequency' => 483, 'icon' => 'tourist_ruin'),
-            'amenity:college' => array('label' => 'College', 'frequency' => 473, 'icon' => 'education_school'),
-            'historic:monument' => array('label' => 'Monument', 'frequency' => 470, 'icon' => 'tourist_monument'),
-            'railway:subway' => array('label' => 'Subway', 'frequency' => 385),
-            'historic:memorial' => array('label' => 'Memorial', 'frequency' => 382, 'icon' => 'tourist_monument'),
-            'leisure:nature_reserve' => array('label' => 'Nature Reserve', 'frequency' => 342),
-            'leisure:common' => array('label' => 'Common', 'frequency' => 322),
-            'waterway:lock_gate' => array('label' => 'Lock Gate', 'frequency' => 321),
-            'natural:fell' => array('label' => 'Fell', 'frequency' => 308),
-            'amenity:nightclub' => array('label' => 'Nightclub', 'frequency' => 292),
-            'highway:path' => array('label' => 'Path', 'frequency' => 287),
-            'leisure:garden' => array('label' => 'Garden', 'frequency' => 285),
-            'landuse:reservoir' => array('label' => 'Reservoir', 'frequency' => 276),
-            'leisure:playground' => array('label' => 'Playground', 'frequency' => 264),
-            'leisure:stadium' => array('label' => 'Stadium', 'frequency' => 212),
-            'historic:mine' => array('label' => 'Mine', 'frequency' => 193, 'icon' => 'poi_mine'),
-            'natural:cliff' => array('label' => 'Cliff', 'frequency' => 193),
-            'tourism:caravan_site' => array('label' => 'Caravan Site', 'frequency' => 183, 'icon' => 'accommodation_caravan_park'),
-            'amenity:bus_station' => array('label' => 'Bus Station', 'frequency' => 181, 'icon' => 'transport_bus_station'),
-            'amenity:kindergarten' => array('label' => 'Kindergarten', 'frequency' => 179),
-            'highway:construction' => array('label' => 'Construction', 'frequency' => 176, 'simplelabel' => 'road'),
-            'amenity:atm' => array('label' => 'Atm', 'frequency' => 172, 'icon' => 'money_atm2'),
-            'amenity:emergency_phone' => array('label' => 'Emergency Phone', 'frequency' => 164),
-            'waterway:lock' => array('label' => 'Lock', 'frequency' => 146),
-            'waterway:riverbank' => array('label' => 'Riverbank', 'frequency' => 143),
-            'natural:coastline' => array('label' => 'Coastline', 'frequency' => 142),
-            'tourism:viewpoint' => array('label' => 'Viewpoint', 'frequency' => 140, 'icon' => 'tourist_view_point'),
-            'tourism:hostel' => array('label' => 'Hostel', 'frequency' => 140),
-            'tourism:bed_and_breakfast' => array('label' => 'Bed And Breakfast', 'frequency' => 140, 'icon' => 'accommodation_bed_and_breakfast'),
-            'railway:halt' => array('label' => 'Halt', 'frequency' => 135),
-            'railway:platform' => array('label' => 'Platform', 'frequency' => 134),
-            'railway:tram' => array('label' => 'Tram', 'frequency' => 130, 'icon' => 'transport_tram_stop'),
-            'amenity:courthouse' => array('label' => 'Courthouse', 'frequency' => 129, 'icon' => 'amenity_court'),
-            'amenity:recycling' => array('label' => 'Recycling', 'frequency' => 126, 'icon' => 'amenity_recycling'),
-            'amenity:dentist' => array('label' => 'Dentist', 'frequency' => 124, 'icon' => 'health_dentist'),
-            'natural:beach' => array('label' => 'Beach', 'frequency' => 121, 'icon' => 'tourist_beach'),
-            'place:moor' => array('label' => 'Moor', 'frequency' => 118),
-            'amenity:grave_yard' => array('label' => 'Grave Yard', 'frequency' => 110),
-            'waterway:drain' => array('label' => 'Drain', 'frequency' => 108),
-            'landuse:grass' => array('label' => 'Grass', 'frequency' => 106),
-            'landuse:village_green' => array('label' => 'Village Green', 'frequency' => 106),
-            'natural:bay' => array('label' => 'Bay', 'frequency' => 102),
-            'railway:tram_stop' => array('label' => 'Tram Stop', 'frequency' => 101, 'icon' => 'transport_tram_stop'),
-            'leisure:marina' => array('label' => 'Marina', 'frequency' => 98),
-            'highway:stile' => array('label' => 'Stile', 'frequency' => 97),
-            'natural:moor' => array('label' => 'Moor', 'frequency' => 95),
-            'railway:light_rail' => array('label' => 'Light Rail', 'frequency' => 91),
-            'railway:narrow_gauge' => array('label' => 'Narrow Gauge', 'frequency' => 90),
-            'natural:land' => array('label' => 'Land', 'frequency' => 86),
-            'amenity:village_hall' => array('label' => 'Village Hall', 'frequency' => 82),
-            'waterway:dock' => array('label' => 'Dock', 'frequency' => 80),
-            'amenity:veterinary' => array('label' => 'Veterinary', 'frequency' => 79),
-            'landuse:brownfield' => array('label' => 'Brownfield', 'frequency' => 77),
-            'leisure:track' => array('label' => 'Track', 'frequency' => 76),
-            'railway:historic_station' => array('label' => 'Historic Station', 'frequency' => 74),
-            'landuse:construction' => array('label' => 'Construction', 'frequency' => 72),
-            'amenity:prison' => array('label' => 'Prison', 'frequency' => 71, 'icon' => 'amenity_prison'),
-            'landuse:quarry' => array('label' => 'Quarry', 'frequency' => 71),
-            'amenity:telephone' => array('label' => 'Telephone', 'frequency' => 70),
-            'highway:traffic_signals' => array('label' => 'Traffic Signals', 'frequency' => 66),
-            'natural:heath' => array('label' => 'Heath', 'frequency' => 62),
-            'historic:house' => array('label' => 'House', 'frequency' => 61),
-            'amenity:social_club' => array('label' => 'Social Club', 'frequency' => 61),
-            'landuse:military' => array('label' => 'Military', 'frequency' => 61),
-            'amenity:health_centre' => array('label' => 'Health Centre', 'frequency' => 59),
-            'historic:building' => array('label' => 'Building', 'frequency' => 58),
-            'amenity:clinic' => array('label' => 'Clinic', 'frequency' => 57),
-            'highway:services' => array('label' => 'Services', 'frequency' => 56),
-            'amenity:ferry_terminal' => array('label' => 'Ferry Terminal', 'frequency' => 55),
-            'natural:marsh' => array('label' => 'Marsh', 'frequency' => 55),
-            'natural:hill' => array('label' => 'Hill', 'frequency' => 54),
-            'highway:raceway' => array('label' => 'Raceway', 'frequency' => 53),
-            'amenity:taxi' => array('label' => 'Taxi', 'frequency' => 47),
-            'amenity:take_away' => array('label' => 'Take Away', 'frequency' => 45),
-            'amenity:car_rental' => array('label' => 'Car Rental', 'frequency' => 44),
-            'place:islet' => array('label' => 'Islet', 'frequency' => 44),
-            'amenity:nursery' => array('label' => 'Nursery', 'frequency' => 44),
-            'amenity:nursing_home' => array('label' => 'Nursing Home', 'frequency' => 43),
-            'amenity:toilets' => array('label' => 'Toilets', 'frequency' => 38),
-            'amenity:hall' => array('label' => 'Hall', 'frequency' => 38),
-            'waterway:boatyard' => array('label' => 'Boatyard', 'frequency' => 36),
-            'highway:mini_roundabout' => array('label' => 'Mini Roundabout', 'frequency' => 35),
-            'historic:manor' => array('label' => 'Manor', 'frequency' => 35),
-            'tourism:chalet' => array('label' => 'Chalet', 'frequency' => 34),
-            'amenity:bicycle_parking' => array('label' => 'Bicycle Parking', 'frequency' => 34),
-            'amenity:hotel' => array('label' => 'Hotel', 'frequency' => 34),
-            'waterway:weir' => array('label' => 'Weir', 'frequency' => 33),
-            'natural:wetland' => array('label' => 'Wetland', 'frequency' => 33),
-            'natural:cave_entrance' => array('label' => 'Cave Entrance', 'frequency' => 32),
-            'amenity:crematorium' => array('label' => 'Crematorium', 'frequency' => 31),
-            'tourism:picnic_site' => array('label' => 'Picnic Site', 'frequency' => 31),
-            'landuse:wood' => array('label' => 'Wood', 'frequency' => 30),
-            'landuse:basin' => array('label' => 'Basin', 'frequency' => 30),
-            'natural:tree' => array('label' => 'Tree', 'frequency' => 30),
-            'leisure:slipway' => array('label' => 'Slipway', 'frequency' => 29),
-            'landuse:meadow' => array('label' => 'Meadow', 'frequency' => 29),
-            'landuse:piste' => array('label' => 'Piste', 'frequency' => 28),
-            'amenity:care_home' => array('label' => 'Care Home', 'frequency' => 28),
-            'amenity:club' => array('label' => 'Club', 'frequency' => 28),
-            'amenity:medical_centre' => array('label' => 'Medical Centre', 'frequency' => 27),
-            'historic:roman_road' => array('label' => 'Roman Road', 'frequency' => 27),
-            'historic:fort' => array('label' => 'Fort', 'frequency' => 26),
-            'railway:subway_entrance' => array('label' => 'Subway Entrance', 'frequency' => 26),
-            'historic:yes' => array('label' => 'Historic', 'frequency' => 25),
-            'highway:gate' => array('label' => 'Gate', 'frequency' => 25),
-            'leisure:fishing' => array('label' => 'Fishing', 'frequency' => 24),
-            'historic:museum' => array('label' => 'Museum', 'frequency' => 24),
-            'amenity:car_wash' => array('label' => 'Car Wash', 'frequency' => 24),
-            'railway:level_crossing' => array('label' => 'Level Crossing', 'frequency' => 23),
-            'leisure:bird_hide' => array('label' => 'Bird Hide', 'frequency' => 23),
-            'natural:headland' => array('label' => 'Headland', 'frequency' => 21),
-            'tourism:apartments' => array('label' => 'Apartments', 'frequency' => 21),
-            'amenity:shopping' => array('label' => 'Shopping', 'frequency' => 21),
-            'natural:scrub' => array('label' => 'Scrub', 'frequency' => 20),
-            'natural:fen' => array('label' => 'Fen', 'frequency' => 20),
-            'building:yes' => array('label' => 'Building', 'frequency' => 200),
-            'mountain_pass:yes' => array('label' => 'Mountain Pass', 'frequency' => 200),
-
-            'amenity:parking' => array('label' => 'Parking', 'frequency' => 3157),
-            'highway:bus_stop' => array('label' => 'Bus Stop', 'frequency' => 35777, 'icon' => 'transport_bus_stop2'),
-            'place:postcode' => array('label' => 'Postcode', 'frequency' => 27267),
-            'amenity:post_box' => array('label' => 'Post Box', 'frequency' => 9613),
-
-            'place:houses' => array('label' => 'Houses', 'frequency' => 85),
-            'railway:preserved' => array('label' => 'Preserved', 'frequency' => 227),
-            'waterway:derelict_canal' => array('label' => 'Derelict Canal', 'frequency' => 21),
-            'amenity:dead_pub' => array('label' => 'Dead Pub', 'frequency' => 20),
-            'railway:disused_station' => array('label' => 'Disused Station', 'frequency' => 114),
-            'railway:abandoned' => array('label' => 'Abandoned', 'frequency' => 641),
-            'railway:disused' => array('label' => 'Disused', 'frequency' => 72),
+    $aSpecialRadius = array(
+                       'place:continent' => 25
+                       'place:country' => 7,
+                       'place:state' => 2.6,
+                       'place:province' => 2.6,
+                       'place:region' => 1.0,
+                       'place:county' => 0.7,
+                       'place:city' => 0.16,
+                       'place:municipality' => 0.16,
+                       'place:island' => 0.32,
+                       'place:postcode' => 0.16,
+                       'place:town' => 0.04,
+                       'place:village' => 0.02,
+                       'place:hamlet' => 0.02,
+                       'place:district' => 0.02,
+                       'place:borough' => 0.02,
+                       'place:suburb' => 0.02,
+                       'place:locality' => 0.01,
+                       'place:neighbourhood'=> 0.01,
+                       'place:quarter' => 0.01,
+                       'place:city_block' => 0.01,
+                       'landuse:farm' => 0.01,
+                       'place:farm' => 0.01,
+                       'place:airport' => 0.015,
+                       'aeroway:aerodrome' => 0.015,
+                       'railway:station' => 0.005
            );
 
-    return $aPropertyCache;
+    $sClassPlace = $aPlace['class'].':'.$aPlace['type'];
+
+    return $aSpecialRadius[$sClassPlace] ?? 0.00005;
+}
+
+/**
+ * Get the icon to use with the given object.
+ */
+function getIcon($aPlace)
+{
+    $aIcons = array(
+               'boundary:administrative' => 'poi_boundary_administrative',
+               'place:city' => 'poi_place_city',
+               'place:town' => 'poi_place_town',
+               'place:village' => 'poi_place_village',
+               'place:hamlet' => 'poi_place_village',
+               'place:suburb' => 'poi_place_village',
+               'place:locality' => 'poi_place_village',
+               'place:airport' => 'transport_airport2',
+               'aeroway:aerodrome' => 'transport_airport2',
+               'railway:station' => 'transport_train_station2',
+               'amenity:place_of_worship' => 'place_of_worship_unknown3',
+               'amenity:pub' => 'food_pub',
+               'amenity:bar' => 'food_bar',
+               'amenity:university' => 'education_university',
+               'tourism:museum' => 'tourist_museum',
+               'amenity:arts_centre' => 'tourist_art_gallery2',
+               'tourism:zoo' => 'tourist_zoo',
+               'tourism:theme_park' => 'poi_point_of_interest',
+               'tourism:attraction' => 'poi_point_of_interest',
+               'leisure:golf_course' => 'sport_golf',
+               'historic:castle' => 'tourist_castle',
+               'amenity:hospital' => 'health_hospital',
+               'amenity:school' => 'education_school',
+               'amenity:theatre' => 'tourist_theatre',
+               'amenity:library' => 'amenity_library',
+               'amenity:fire_station' => 'amenity_firestation3',
+               'amenity:police' => 'amenity_police2',
+               'amenity:bank' => 'money_bank2',
+               'amenity:post_office' => 'amenity_post_office',
+               'tourism:hotel' => 'accommodation_hotel2',
+               'amenity:cinema' => 'tourist_cinema',
+               'tourism:artwork' => 'tourist_art_gallery2',
+               'historic:archaeological_site' => 'tourist_archaeological2',
+               'amenity:doctors' => 'health_doctors',
+               'leisure:sports_centre' => 'sport_leisure_centre',
+               'leisure:swimming_pool' => 'sport_swimming_outdoor',
+               'shop:supermarket' => 'shopping_supermarket',
+               'shop:convenience' => 'shopping_convenience',
+               'amenity:restaurant' => 'food_restaurant',
+               'amenity:fast_food' => 'food_fastfood',
+               'amenity:cafe' => 'food_cafe',
+               'tourism:guest_house' => 'accommodation_bed_and_breakfast',
+               'amenity:pharmacy' => 'health_pharmacy_dispensing',
+               'amenity:fuel' => 'transport_fuel',
+               'natural:peak' => 'poi_peak',
+               'natural:wood' => 'landuse_coniferous_and_deciduous',
+               'shop:bicycle' => 'shopping_bicycle',
+               'shop:clothes' => 'shopping_clothes',
+               'shop:hairdresser' => 'shopping_hairdresser',
+               'shop:doityourself' => 'shopping_diy',
+               'shop:estate_agent' => 'shopping_estateagent2',
+               'shop:car' => 'shopping_car',
+               'shop:garden_centre' => 'shopping_garden_centre',
+               'shop:car_repair' => 'shopping_car_repair',
+               'shop:bakery' => 'shopping_bakery',
+               'shop:butcher' => 'shopping_butcher',
+               'shop:apparel' => 'shopping_clothes',
+               'shop:laundry' => 'shopping_laundrette',
+               'shop:beverages' => 'shopping_alcohol',
+               'shop:alcohol' => 'shopping_alcohol',
+               'shop:optician' => 'health_opticians',
+               'shop:chemist' => 'health_pharmacy',
+               'shop:gallery' => 'tourist_art_gallery2',
+               'shop:jewelry' => 'shopping_jewelry',
+               'tourism:information' => 'amenity_information',
+               'historic:ruins' => 'tourist_ruin',
+               'amenity:college' => 'education_school',
+               'historic:monument' => 'tourist_monument',
+               'historic:memorial' => 'tourist_monument',
+               'historic:mine' => 'poi_mine',
+               'tourism:caravan_site' => 'accommodation_caravan_park',
+               'amenity:bus_station' => 'transport_bus_station',
+               'amenity:atm' => 'money_atm2',
+               'tourism:viewpoint' => 'tourist_view_point',
+               'tourism:guesthouse' => 'accommodation_bed_and_breakfast',
+               'railway:tram' => 'transport_tram_stop',
+               'amenity:courthouse' => 'amenity_court',
+               'amenity:recycling' => 'amenity_recycling',
+               'amenity:dentist' => 'health_dentist',
+               'natural:beach' => 'tourist_beach',
+               'railway:tram_stop' => 'transport_tram_stop',
+               'amenity:prison' => 'amenity_prison',
+               'highway:bus_stop' => 'transport_bus_stop2'
+    );
+
+    $sClassPlace = $aPlace['class'].':'.$aPlace['type'];
+
+    return $aIcons[$sClassPlace] ?? null;
+}
+
+/**
+ * Return a class importance value for the given place.
+ *
+ * @param array[] $aPlace  Information about the place.
+ *
+ * @return int  An importance value. The lower the value, the more
+ *              important the class.
+ */
+function getImportance($aPlace)
+{
+    static $aWithImportance = array_flip(array(
+                                           'place:country',
+                                           'place:state',
+                                           'place:province',
+                                           'place:county',
+                                           'place:city',
+                                           'place:region',
+                                           'place:island',
+                                           'place:town',
+                                           'place:village',
+                                           'place:hamlet',
+                                           'place:suburb',
+                                           'place:locality',
+                                           'landuse:farm',
+                                           'place:farm',
+                                           'highway:motorway_junction',
+                                           'highway:motorway',
+                                           'highway:trunk',
+                                           'highway:primary',
+                                           'highway:secondary',
+                                           'highway:tertiary',
+                                           'highway:residential',
+                                           'highway:unclassified',
+                                           'highway:living_street',
+                                           'highway:service',
+                                           'highway:track',
+                                           'highway:road',
+                                           'highway:byway',
+                                           'highway:bridleway',
+                                           'highway:cycleway',
+                                           'highway:pedestrian',
+                                           'highway:footway',
+                                           'highway:steps',
+                                           'highway:motorway_link',
+                                           'highway:trunk_link',
+                                           'highway:primary_link',
+                                           'landuse:industrial',
+                                           'landuse:residential',
+                                           'landuse:retail',
+                                           'landuse:commercial',
+                                           'place:airport',
+                                           'aeroway:aerodrome',
+                                           'railway:station',
+                                           'amenity:place_of_worship',
+                                           'amenity:pub',
+                                           'amenity:bar',
+                                           'amenity:university',
+                                           'tourism:museum',
+                                           'amenity:arts_centre',
+                                           'tourism:zoo',
+                                           'tourism:theme_park',
+                                           'tourism:attraction',
+                                           'leisure:golf_course',
+                                           'historic:castle',
+                                           'amenity:hospital',
+                                           'amenity:school',
+                                           'amenity:theatre',
+                                           'amenity:public_building',
+                                           'amenity:library',
+                                           'amenity:townhall',
+                                           'amenity:community_centre',
+                                           'amenity:fire_station',
+                                           'amenity:police',
+                                           'amenity:bank',
+                                           'amenity:post_office',
+                                           'leisure:park',
+                                           'amenity:park',
+                                           'landuse:park',
+                                           'landuse:recreation_ground',
+                                           'tourism:hotel',
+                                           'tourism:motel',
+                                           'amenity:cinema',
+                                           'tourism:artwork',
+                                           'historic:archaeological_site',
+                                           'amenity:doctors',
+                                           'leisure:sports_centre',
+                                           'leisure:swimming_pool',
+                                           'shop:supermarket',
+                                           'shop:convenience',
+                                           'amenity:restaurant',
+                                           'amenity:fast_food',
+                                           'amenity:cafe',
+                                           'tourism:guest_house',
+                                           'amenity:pharmacy',
+                                           'amenity:fuel',
+                                           'natural:peak',
+                                           'waterway:waterfall',
+                                           'natural:wood',
+                                           'natural:water',
+                                           'landuse:forest',
+                                           'landuse:cemetery',
+                                           'landuse:allotments',
+                                           'landuse:farmyard',
+                                           'railway:rail',
+                                           'waterway:canal',
+                                           'waterway:river',
+                                           'waterway:stream',
+                                           'shop:bicycle',
+                                           'shop:clothes',
+                                           'shop:hairdresser',
+                                           'shop:doityourself',
+                                           'shop:estate_agent',
+                                           'shop:car',
+                                           'shop:garden_centre',
+                                           'shop:car_repair',
+                                           'shop:newsagent',
+                                           'shop:bakery',
+                                           'shop:furniture',
+                                           'shop:butcher',
+                                           'shop:apparel',
+                                           'shop:electronics',
+                                           'shop:department_store',
+                                           'shop:books',
+                                           'shop:yes',
+                                           'shop:outdoor',
+                                           'shop:mall',
+                                           'shop:florist',
+                                           'shop:charity',
+                                           'shop:hardware',
+                                           'shop:laundry',
+                                           'shop:shoes',
+                                           'shop:beverages',
+                                           'shop:dry_cleaning',
+                                           'shop:carpet',
+                                           'shop:computer',
+                                           'shop:alcohol',
+                                           'shop:optician',
+                                           'shop:chemist',
+                                           'shop:gallery',
+                                           'shop:mobile_phone',
+                                           'shop:sports',
+                                           'shop:jewelry',
+                                           'shop:pet',
+                                           'shop:beauty',
+                                           'shop:stationery',
+                                           'shop:shopping_centre',
+                                           'shop:general',
+                                           'shop:electrical',
+                                           'shop:toys',
+                                           'shop:jeweller',
+                                           'shop:betting',
+                                           'shop:household',
+                                           'shop:travel_agency',
+                                           'shop:hifi',
+                                           'amenity:shop',
+                                           'tourism:information',
+                                           'place:house',
+                                           'place:house_name',
+                                           'place:house_number',
+                                           'place:country_code',
+                                           'leisure:pitch',
+                                           'highway:unsurfaced',
+                                           'historic:ruins',
+                                           'amenity:college',
+                                           'historic:monument',
+                                           'railway:subway',
+                                           'historic:memorial',
+                                           'leisure:nature_reserve',
+                                           'leisure:common',
+                                           'waterway:lock_gate',
+                                           'natural:fell',
+                                           'amenity:nightclub',
+                                           'highway:path',
+                                           'leisure:garden',
+                                           'landuse:reservoir',
+                                           'leisure:playground',
+                                           'leisure:stadium',
+                                           'historic:mine',
+                                           'natural:cliff',
+                                           'tourism:caravan_site',
+                                           'amenity:bus_station',
+                                           'amenity:kindergarten',
+                                           'highway:construction',
+                                           'amenity:atm',
+                                           'amenity:emergency_phone',
+                                           'waterway:lock',
+                                           'waterway:riverbank',
+                                           'natural:coastline',
+                                           'tourism:viewpoint',
+                                           'tourism:hostel',
+                                           'tourism:bed_and_breakfast',
+                                           'railway:halt',
+                                           'railway:platform',
+                                           'railway:tram',
+                                           'amenity:courthouse',
+                                           'amenity:recycling',
+                                           'amenity:dentist',
+                                           'natural:beach',
+                                           'place:moor',
+                                           'amenity:grave_yard',
+                                           'waterway:drain',
+                                           'landuse:grass',
+                                           'landuse:village_green',
+                                           'natural:bay',
+                                           'railway:tram_stop',
+                                           'leisure:marina',
+                                           'highway:stile',
+                                           'natural:moor',
+                                           'railway:light_rail',
+                                           'railway:narrow_gauge',
+                                           'natural:land',
+                                           'amenity:village_hall',
+                                           'waterway:dock',
+                                           'amenity:veterinary',
+                                           'landuse:brownfield',
+                                           'leisure:track',
+                                           'railway:historic_station',
+                                           'landuse:construction',
+                                           'amenity:prison',
+                                           'landuse:quarry',
+                                           'amenity:telephone',
+                                           'highway:traffic_signals',
+                                           'natural:heath',
+                                           'historic:house',
+                                           'amenity:social_club',
+                                           'landuse:military',
+                                           'amenity:health_centre',
+                                           'historic:building',
+                                           'amenity:clinic',
+                                           'highway:services',
+                                           'amenity:ferry_terminal',
+                                           'natural:marsh',
+                                           'natural:hill',
+                                           'highway:raceway',
+                                           'amenity:taxi',
+                                           'amenity:take_away',
+                                           'amenity:car_rental',
+                                           'place:islet',
+                                           'amenity:nursery',
+                                           'amenity:nursing_home',
+                                           'amenity:toilets',
+                                           'amenity:hall',
+                                           'waterway:boatyard',
+                                           'highway:mini_roundabout',
+                                           'historic:manor',
+                                           'tourism:chalet',
+                                           'amenity:bicycle_parking',
+                                           'amenity:hotel',
+                                           'waterway:weir',
+                                           'natural:wetland',
+                                           'natural:cave_entrance',
+                                           'amenity:crematorium',
+                                           'tourism:picnic_site',
+                                           'landuse:wood',
+                                           'landuse:basin',
+                                           'natural:tree',
+                                           'leisure:slipway',
+                                           'landuse:meadow',
+                                           'landuse:piste',
+                                           'amenity:care_home',
+                                           'amenity:club',
+                                           'amenity:medical_centre',
+                                           'historic:roman_road',
+                                           'historic:fort',
+                                           'railway:subway_entrance',
+                                           'historic:yes',
+                                           'highway:gate',
+                                           'leisure:fishing',
+                                           'historic:museum',
+                                           'amenity:car_wash',
+                                           'railway:level_crossing',
+                                           'leisure:bird_hide',
+                                           'natural:headland',
+                                           'tourism:apartments',
+                                           'amenity:shopping',
+                                           'natural:scrub',
+                                           'natural:fen',
+                                           'building:yes',
+                                           'mountain_pass:yes',
+                                           'amenity:parking',
+                                           'highway:bus_stop',
+                                           'place:postcode',
+                                           'amenity:post_box',
+                                           'place:houses',
+                                           'railway:preserved',
+                                           'waterway:derelict_canal',
+                                           'amenity:dead_pub',
+                                           'railway:disused_station',
+                                           'railway:abandoned',
+                                           'railway:disused'
+                );
+
+    $sClassPlace = $aPlace['class'].':'.$aPlace['type'];
+
+    return $aWithImportance[$sClassPlace] ?? null;
 }

@@ -448,10 +448,9 @@ class PlaceLookup
                 }
             }
 
-            $aPlace['addresstype'] = ClassTypes\getProperty(
-                $aPlace,
-                'simplelabel',
-                $aPlace['class']
+            $aPlace['addresstype'] = ClassTypes\getLabelTag(
+                    $aPlace,
+                    $aPlace['country_code']
             );
         }
 

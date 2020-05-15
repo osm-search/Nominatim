@@ -64,21 +64,13 @@ class AddressDetails
     public function getAddressNames($sCountry = null)
     {
         $aAddress = array();
-        $aFallback = array();
 
         foreach ($this->aAddressLines as $aLine) {
             if (!self::isAddress($aLine)) {
                 continue;
             }
 
-            $bFallback = false;
-            $sTypeLabel = ClassTypes\getSimpleLabel($aLine);
-
-            if ($sTypeLabel === false) {
-                $aTypeLabel = ClassTypes\getFallbackLabel($aLine['rank_address'],
-                                                          $sCountry);
-                $bFallback = true;
-            }
+            $sTypeLabel = ClassTypes\getLabelTag($aLine);
 
             $sName = null;
             if (isset($aLine['localname']) && $aLine['localname']!=='') {
@@ -90,11 +82,9 @@ class AddressDetails
             if (isset($sName)) {
                 $sTypeLabel = strtolower(str_replace(' ', '_', $sTypeLabel));
                 if (!isset($aAddress[$sTypeLabel])
-                    || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel])
                     || $aLine['class'] == 'place'
                 ) {
                     $aAddress[$sTypeLabel] = $sName;
-                    $aFallback[$sTypeLabel] = $bFallback;
                 }
             }
         }

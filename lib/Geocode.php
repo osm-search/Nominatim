@@ -887,7 +887,6 @@ class Geocode
 
         $aSearchResults = $this->oPlaceLookup->lookup($aResults);
 
-        $aClassType = ClassTypes\getListWithImportance();
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
         foreach ($aRecheckWords as $i => $sWord) {
             if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
@@ -896,27 +895,23 @@ class Geocode
         Debug::printVar('Recheck words', $aRecheckWords);
 
         foreach ($aSearchResults as $iIdx => $aResult) {
-            // Default
-            $fDiameter = ClassTypes\getProperty($aResult, 'defdiameter', 0.0001);
+            $fRadius = ClassTypes\getDefRadius($aResult);
 
-            $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter/2);
+            $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter);
             if ($aOutlineResult) {
                 $aResult = array_merge($aResult, $aOutlineResult);
             }
 
             // Is there an icon set for this type of result?
-            $aClassInfo = ClassTypes\getInfo($aResult);
-
-            if ($aClassInfo) {
-                if (isset($aClassInfo['icon'])) {
-                    $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aClassInfo['icon'].'.p.20.png';
-                }
-
-                if (isset($aClassInfo['label'])) {
-                    $aResult['label'] = $aClassInfo['label'];
-                }
+            $sIcon = ClassTypes\getIcon($aResult);
+            if (isset($sIcon)) {
+                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aIcon.'.p.20.png';
             }
 
+            $sLabel = ClassTypes\getLabel($aResult);
+            if (isset($sLabel)) {
+                $aResult['label'] = $sLabel;
+            }
             $aResult['name'] = $aResult['langaddress'];
 
             if ($oCtx->hasNearPoint()) {
@@ -946,10 +941,9 @@ class Geocode
                 // - number of exact matches from the query
                 $aResult['foundorder'] -= $aResults[$aResult['place_id']]->iExactMatches;
                 // - importance of the class/type
-                if (isset($aClassType[$aResult['class'].':'.$aResult['type']]['importance'])
-                    && $aClassType[$aResult['class'].':'.$aResult['type']]['importance']
-                ) {
-                    $aResult['foundorder'] += 0.0001 * $aClassType[$aResult['class'].':'.$aResult['type']]['importance'];
+                $iClassImportance = ClassTypes/getImportance($aResult);
+                if (isset($iClassImportance)) {
+                    $aResult['foundorder'] += 0.0001 * $iClassImportance;
                 } else {
                     $aResult['foundorder'] += 0.01;
                 }

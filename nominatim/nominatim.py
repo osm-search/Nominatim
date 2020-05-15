@@ -297,7 +297,7 @@ class Indexer(object):
             if command_stat > 100000:
                 for t in self.threads:
                     while not t.is_done():
-                        wait_select(t.conn)
+                        t.wait()
                     t.connect()
                 command_stat = 0
                 ready = self.threads

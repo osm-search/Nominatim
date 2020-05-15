@@ -61,7 +61,7 @@ class AddressDetails
         return join(', ', $aParts);
     }
 
-    public function getAddressNames()
+    public function getAddressNames($sCountry = null)
     {
         $aAddress = array();
         $aFallback = array();
@@ -72,10 +72,11 @@ class AddressDetails
             }
 
             $bFallback = false;
-            $aTypeLabel = ClassTypes\getInfo($aLine);
+            $sTypeLabel = ClassTypes\getSimpleLabel($aLine);
 
-            if ($aTypeLabel === false) {
-                $aTypeLabel = ClassTypes\getFallbackInfo($aLine);
+            if ($sTypeLabel === false) {
+                $aTypeLabel = ClassTypes\getFallbackLabel($aLine['rank_address'],
+                                                          $sCountry);
                 $bFallback = true;
             }
 
@@ -87,16 +88,13 @@ class AddressDetails
             }
 
             if (isset($sName)) {
-                $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel']) ? $aTypeLabel['simplelabel'] : $aTypeLabel['label']);
-                $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
+                $sTypeLabel = strtolower(str_replace(' ', '_', $sTypeLabel));
                 if (!isset($aAddress[$sTypeLabel])
-                    || isset($aFallback[$sTypeLabel])
+                    || (isset($aFallback[$sTypeLabel]) && $aFallback[$sTypeLabel])
                     || $aLine['class'] == 'place'
                 ) {
                     $aAddress[$sTypeLabel] = $sName;
-                    if ($bFallback) {
-                        $aFallback[$sTypeLabel] = $bFallback;
-                    }
+                    $aFallback[$sTypeLabel] = $bFallback;
                 }
             }
         }

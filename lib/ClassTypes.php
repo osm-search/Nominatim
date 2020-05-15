@@ -2,6 +2,119 @@
 
 namespace Nominatim\ClassTypes;
 
+/**
+ * Create a simplfied label for the given place.
+ *
+ * @param array[] $aPlace  Information about the place to label.
+ *
+ * A simplified label groups various object types together under a common
+ * label.
+ */
+function getSimpleLabel($aPlace)
+{
+    static $aRoadLabels = array (
+                              'motorway_junction' => 'Junction',
+                              'motorway' => 'Road',
+                              'trunk' => 'Road',
+                              'primary' => 'Road',
+                              'secondary' => 'Road',
+                              'tertiary' => 'Road',
+                              'residential' => 'Road',
+                              'unclassified' => 'Road',
+                              'living_street' => 'Road',
+                              'service' => 'Road',
+                              'track' => 'Road',
+                              'byway' => 'Road',
+                              'steps' => 'Footway',
+                              'motorway_link' => 'Road',
+                              'trunk_link' => 'Road',
+                              'primary_link' => 'Road',
+                              'secondary_link' => 'Road',
+                              'tertiary_link' => 'Road',
+                              'construction' => 'Road'
+            );
+
+    if ($aPlace['class'] == 'highway' and isset($aRoadLabels[$aPlace['type']])) {
+        return $aRoadLabels[$aPlace['type']];
+    }
+
+    return getLabel($aPlace);
+}
+
+/**
+ * Create a label for the given place.
+ *
+ * @param array[] $aPlace  Information about the place to label.
+ */
+function getLabel($aPlace, $sCountry = null)
+{
+    if ($aPlace['class'] == 'boundary'
+        && $aPlace['type'] == 'administrative')
+        && !isset($aPlace['place_type'])
+    ) {
+        return getBoundaryLabel((int)($aPlace['admin_level'] ?? 15,
+                                $aPlace['country_code'] ?? null)
+    }
+
+    return ucwords(str_replace('_', ' ', $aPlace['place_type'] ?? $aPlace['type']));
+}
+
+/**
+ * Return a generic simple label to be used for the given address rank
+ * in the given country.
+ *
+ * @param int    $iRankAddress  Address rank of the object to be labeled.
+ * @param string $sCountry      Country code of the country where the object is
+ *                              in. May be null, in which case a world-wide
+ *                              fallback is used.
+ *
+ * @return string
+ */
+function getFallbackLabel($iRankAddress, $sCountry = null)
+{
+    return getBoundaryLabel((int)($iRankAddress / 2), $sCountry,
+                           'address'.$iRankAddress);
+}
+
+/**
+ * Return a simple label for an administrative boundary for the given country.
+ *
+ * @param int $iAdminLevel   Content of admin_level tag.
+ * @param string $sCountry   Country code of the country where the object is
+ *                           in. May be null, in which case a world-wide
+ *                           fallback is used.
+ * @param string $sFallback  String to return if no explicit string is listed.
+ *
+ * @return string
+ */
+function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative')
+{
+    static $aBoundaryList = array (
+                             'default' => array (
+                                           1 => 'Continent',
+                                           2 => 'Country',
+                                           3 => 'Region',
+                                           4 => 'State',
+                                           5 => 'State District',
+                                           6 => 'County',
+                                           7 => 'Municipality',
+                                           8 => 'City',
+                                           9 => 'City District'
+                                           10 => 'Suburb',
+                                           11 => 'Neighbourhood'
+                                           )
+            );
+
+    if (isset($aBoundaryList[$sCountry])
+        && isset($aBoundaryList[$sCountry][$iAdminLevel])
+    ) {
+        return $aBoundaryList[$sCountry][$iAdminLevel];
+    }
+
+    return $aBoundaryList['default'][$iAdminLevel] ?? $sFallback;
+}
+
+
 function getInfo($aPlace)
 {
     $aClassType = getList();
@@ -73,9 +186,11 @@ function getListWithImportance()
     return $aOrders;
 }
 
+
+
 function getList()
 {
-    return array(
+    static $aPropertyCache = array(
             'boundary:administrative:1' => array('label' => 'Continent', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'boundary:administrative:2' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defdiameter' => 0.32),
             'place:country' => array('label' => 'Country', 'frequency' => 0, 'icon' => 'poi_boundary_administrative', 'defzoom' => 6, 'defdiameter' => 15),
@@ -379,4 +494,6 @@ function getList()
             'railway:abandoned' => array('label' => 'Abandoned', 'frequency' => 641),
             'railway:disused' => array('label' => 'Disused', 'frequency' => 72),
            );
+
+    return $aPropertyCache;
 }

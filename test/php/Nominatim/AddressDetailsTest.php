@@ -70,7 +70,7 @@ class AddressDetailsTest extends \PHPUnit\Framework\TestCase
     {
         $oAD = new AddressDetails($this->oDbStub, 194663412, 10, 'en');
         $expected = array(
-                     'attraction' => '10 Downing Street',
+                     'tourism' => '10 Downing Street',
                      'house_number' => '10',
                      'road' => 'Downing Street',
                      'neighbourhood' => 'St. James\'s',

@@ -17,7 +17,7 @@ function getLabelTag($aPlace, $sCountry = null)
     if (isset($aPlace['place_type'])) {
         $sLabel = $aPlace['place_type'];
     } elseif ($aPlace['class'] == 'boundary' && $aPlace['type'] == 'administrative') {
-        $sLabel = getBoundaryLabel($iRank, $sCountry);
+        $sLabel = getBoundaryLabel($iRank/2, $sCountry);
     } elseif ($iRank < 26) {
         $sLabel = $aPlace['type'];
     } elseif ($iRank < 28) {
@@ -32,7 +32,7 @@ function getLabelTag($aPlace, $sCountry = null)
         $sLabel = $aPlace['class'];
     }
 
-    return strtolower(str_replace('_', ' ', $sLabel));
+    return strtolower(str_replace(' ', '_', $sLabel));
 }
 
 /**
@@ -47,11 +47,11 @@ function getLabel($aPlace, $sCountry = null)
     }
 
     if ($aPlace['class'] == 'boundary' && $aPlace['type'] == 'administrative') {
-        return getBoundaryLabel((int)($aPlace['admin_level'] ?? 15, $sCountry ?? null);
+        return getBoundaryLabel(($aPlace['rank_address'] ?? 30)/2, $sCountry ?? null);
     }
 
     // Return a label only for 'important' class/type combinations
-    if (isset(getImportance($aPlace)) {
+    if (getImportance($aPlace) !== null) {
         return ucwords(str_replace('_', ' ', $aPlace['type']));
     }
 
@@ -82,7 +82,7 @@ function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative'
                                            6 => 'County',
                                            7 => 'Municipality',
                                            8 => 'City',
-                                           9 => 'City District'
+                                           9 => 'City District',
                                            10 => 'Suburb',
                                            11 => 'Neighbourhood'
                                            )
@@ -108,7 +108,7 @@ function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative'
 function getDefRadius($aPlace)
 {
     $aSpecialRadius = array(
-                       'place:continent' => 25
+                       'place:continent' => 25,
                        'place:country' => 7,
                        'place:state' => 2.6,
                        'place:province' => 2.6,
@@ -246,7 +246,10 @@ function getIcon($aPlace)
  */
 function getImportance($aPlace)
 {
-    static $aWithImportance = array_flip(array(
+    static $aWithImportance = null;
+
+    if ($aWithImportance === null) {
+        $aWithImportance = array_flip(array(
                                            'place:country',
                                            'place:state',
                                            'place:province',
@@ -526,7 +529,8 @@ function getImportance($aPlace)
                                            'railway:disused_station',
                                            'railway:abandoned',
                                            'railway:disused'
-                );
+                ));
+    }
 
     $sClassPlace = $aPlace['class'].':'.$aPlace['type'];
 

@@ -237,6 +237,20 @@ function getIcon($aPlace)
 }
 
 /**
+ * Get an icon for the given object with its full URL.
+ */
+function getIconFile($aPlace)
+{
+    $sIcon = getIcon($aPlace);
+
+    if (!isset($sIcon)) {
+        return null;
+    }
+
+    return CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.p.20.png';
+}
+
+/**
  * Return a class importance value for the given place.
  *
  * @param array[] $aPlace  Information about the place.

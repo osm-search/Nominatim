@@ -903,9 +903,9 @@ class Geocode
             }
 
             // Is there an icon set for this type of result?
-            $sIcon = ClassTypes\getIcon($aResult);
+            $sIcon = ClassTypes\getIconFile($aResult);
             if (isset($sIcon)) {
-                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.p.20.png';
+                $aResult['icon'] = $sIcon;
             }
 
             $sLabel = ClassTypes\getLabel($aResult);

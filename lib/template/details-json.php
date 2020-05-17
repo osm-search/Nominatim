@@ -26,8 +26,9 @@ $aPlaceDetails['calculated_importance'] = (float) $aPointDetails['calculated_imp
 
 $aPlaceDetails['extratags'] = $aPointDetails['aExtraTags'];
 $aPlaceDetails['calculated_wikipedia'] = $aPointDetails['wikipedia'];
-if (isset($aPointDetails['icon'])) {
-    $aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png';
+$sIcon = Nominatim\ClassTypes\getIconFile($aPointDetails);
+if (isset($sIcon)) {
+    $aPlaceDetails['icon'] = $sIcon;
 }
 
 $aPlaceDetails['rank_address'] = (int) $aPointDetails['rank_address'];

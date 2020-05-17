@@ -103,10 +103,8 @@ if (!empty($aParentOfLines)) {
     echo '<h2>Parent Of:</h2>';
     $aGroupedAddressLines = array();
     foreach ($aParentOfLines as $aAddressLine) {
-        $aAddressLine['label'] = Nominatim\ClassTypes\getProperty($aAddressLine, 'label');
-        if (!$aAddressLine['label']) {
-            $aAddressLine['label'] = ucwords($aAddressLine['type']);
-        }
+        $aAddressLine['label'] = Nominatim\ClassTypes\getLabel($aAddressLine)
+                                 ?? ucwords($aAddressLine['type']);
 
         if (!isset($aGroupedAddressLines[$aAddressLine['label']])) $aGroupedAddressLines[$aAddressLine['label']] = array();
             $aGroupedAddressLines[$aAddressLine['label']][] = $aAddressLine;

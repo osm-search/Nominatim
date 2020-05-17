@@ -897,7 +897,7 @@ class Geocode
         foreach ($aSearchResults as $iIdx => $aResult) {
             $fRadius = ClassTypes\getDefRadius($aResult);
 
-            $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fDiameter);
+            $aOutlineResult = $this->oPlaceLookup->getOutlines($aResult['place_id'], $aResult['lon'], $aResult['lat'], $fRadius);
             if ($aOutlineResult) {
                 $aResult = array_merge($aResult, $aOutlineResult);
             }
@@ -905,7 +905,7 @@ class Geocode
             // Is there an icon set for this type of result?
             $sIcon = ClassTypes\getIcon($aResult);
             if (isset($sIcon)) {
-                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aIcon.'.p.20.png';
+                $aResult['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.p.20.png';
             }
 
             $sLabel = ClassTypes\getLabel($aResult);
@@ -941,7 +941,7 @@ class Geocode
                 // - number of exact matches from the query
                 $aResult['foundorder'] -= $aResults[$aResult['place_id']]->iExactMatches;
                 // - importance of the class/type
-                $iClassImportance = ClassTypes/getImportance($aResult);
+                $iClassImportance = ClassTypes\getImportance($aResult);
                 if (isset($iClassImportance)) {
                     $aResult['foundorder'] += 0.0001 * $iClassImportance;
                 } else {

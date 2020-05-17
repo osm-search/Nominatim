@@ -59,7 +59,7 @@
 
     function map_icon($sIcon)
     {
-        if ($sIcon){
+        if (isset($sIcon)) {
             echo '<img id="mapicon" src="'.CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.n.32.png'.'" alt="'.$sIcon.'" />';
         }
     }

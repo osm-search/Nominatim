@@ -26,7 +26,7 @@ $aPlaceDetails['calculated_importance'] = (float) $aPointDetails['calculated_imp
 
 $aPlaceDetails['extratags'] = $aPointDetails['aExtraTags'];
 $aPlaceDetails['calculated_wikipedia'] = $aPointDetails['wikipedia'];
-if ($aPointDetails['icon']) {
+if (isset($aPointDetails['icon'])) {
     $aPlaceDetails['icon'] = CONST_Website_BaseURL.'images/mapicons/'.$aPointDetails['icon'].'.n.32.png';
 }
 

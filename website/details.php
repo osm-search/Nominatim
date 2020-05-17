@@ -149,7 +149,7 @@ if (!$aPointDetails) {
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
-$aPointDetails['icon'] = Nominatim\ClassTypes\getProperty($aPointDetails, 'icon', false);
+$aPointDetails['icon'] = Nominatim\ClassTypes\getIcon($aPointDetails);
 $aPointDetails['rank_search_label'] = getSearchRankLabel($aPointDetails['rank_search']); // only used in HTML format
 
 // Get all alternative names (languages, etc)

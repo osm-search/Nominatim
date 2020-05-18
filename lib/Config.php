@@ -9,7 +9,7 @@ use Dotenv\Dotenv;
  */
 class Config
 {
-    static $dotenv;
+    public static $dotenv;
     
     public static function setupEnv($dir = __DIR__, $path = '../.env')
     {

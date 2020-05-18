@@ -697,10 +697,10 @@ class SetupFunctions
     }
 
     /**
-     * Setup settings_test.php in the build/settings directory from build/.env file 
+     * Setup settings_test.php in the build/settings directory from build/.env file
      *
      * @return null
-     */    
+     */
     public function setupWebsite()
     {
         info('Setting up website\n');
@@ -711,7 +711,7 @@ class SetupFunctions
         $contents = file_get_contents($fileName);
         $contents = explode("\n", $contents);
 
-        $op = fopen(CONST_InstallPath.'/settings/settings_test.php', "w");
+        $op = fopen(CONST_InstallPath.'/settings/settings_test.php', 'w');
 
         // Currently using CONST_BasePath and CONST_InstallPath.
         // Once dotenv is setup, getenv() can be used, or another
@@ -725,26 +725,22 @@ if (isset(\$_GET['debug']) && \$_GET['debug']) @define('CONST_Debug', true);");
         
 
         // Array used to store all the env variables in key-value format.
-        $envVariables = [];
+        $envVariables = array();
 
-        foreach ($contents as $data)
-        {
+        foreach ($contents as $data) {
             $arr = explode('=', $data, 2);
             // Avoid empty lines, CONST_BasePath, CONST_InstallPath and comments in .env
-            if ($arr[0] !== '' and $arr[0] !== 'CONST_BasePath' and $arr[0] !== 'CONST_InstallPath' and $data[0] != '#')
-            {
+            if ($arr[0] !== '' and $arr[0] !== 'CONST_BasePath' and $arr[0] !== 'CONST_InstallPath' and $data[0] != '#') {
                 // To handle `${}` type of values in .env
                 // This is not required for current set of env variables, but could be used if required.
                 // NOTE: This works only if the `${}` is in the beginning.
-                if (preg_match("{[$]\{.*\}}", $arr[1], $aMatch))
-                {
-                    $arr[1] = preg_replace("{[$]\{.*\}}", $envVariables[substr($aMatch[0], 2, strlen($aMatch[0]) - 3)], $arr[1]);
+                if (preg_match('{[$]\{.*\}}', $arr[1], $aMatch)) {
+                    $arr[1] = preg_replace('{[$]\{.*\}}', $envVariables[substr($aMatch[0], 2, strlen($aMatch[0]) - 3)], $arr[1]);
                 }
                 $envVariables[$arr[0]] = $arr[1];
 
                 // Add single quotes to strings which require them.
-                if ($arr[1][0] !== "\"" and $arr[1][0] !== "'" and $arr[1] !== 'true' and $arr[1] !== 'false')
-                {
+                if ($arr[1][0] !== '"' and $arr[1][0] !== "'" and $arr[1] !== 'true' and $arr[1] !== 'false') {
                     $arr[1] = "'$arr[1]'";
                 }
                 fwrite($op, "@define('$arr[0]', $arr[1]);\n");

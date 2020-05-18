@@ -9,41 +9,40 @@ class ClassTypesTest extends \PHPUnit\Framework\TestCase
     public function testGetLabelTag()
     {
         $aPlace = array('class' => 'boundary', 'type' => 'administrative',
-                        'rank_address' => '4', 'place_type' => 'city');
+                   'rank_address' => '4', 'place_type' => 'city');
         $this->assertEquals('city', ClassTypes\getLabelTag($aPlace));
 
         $aPlace = array('class' => 'boundary', 'type' => 'administrative',
-                        'rank_address' => '10');
+                   'rank_address' => '10');
         $this->assertEquals('state_district', ClassTypes\getLabelTag($aPlace));
 
         $aPlace = array('class' => 'boundary', 'type' => 'administrative');
         $this->assertEquals('administrative', ClassTypes\getLabelTag($aPlace));
 
-        $aPlace = array('class' => 'place', 'type' => 'hamlet',
-                        'rank_address' => '20');
+        $aPlace = array('class' => 'place', 'type' => 'hamlet', 'rank_address' => '20');
         $this->assertEquals('hamlet', ClassTypes\getLabelTag($aPlace));
 
         $aPlace = array('class' => 'highway', 'type' => 'residential',
-                        'rank_address' => '26');
+                   'rank_address' => '26');
         $this->assertEquals('road', ClassTypes\getLabelTag($aPlace));
 
         $aPlace = array('class' => 'place', 'type' => 'house_number',
-                        'rank_address' => '30');
+                   'rank_address' => '30');
         $this->assertEquals('house_number', ClassTypes\getLabelTag($aPlace));
 
         $aPlace = array('class' => 'amenity', 'type' => 'prison',
-                        'rank_address' => '30');
+                   'rank_address' => '30');
         $this->assertEquals('amenity', ClassTypes\getLabelTag($aPlace));
     }
 
     public function testGetLabel()
     {
         $aPlace = array('class' => 'boundary', 'type' => 'administrative',
-                        'rank_address' => '4', 'place_type' => 'city');
+                   'rank_address' => '4', 'place_type' => 'city');
         $this->assertEquals('City', ClassTypes\getLabel($aPlace));
 
         $aPlace = array('class' => 'boundary', 'type' => 'administrative',
-                        'rank_address' => '10');
+                   'rank_address' => '10');
         $this->assertEquals('State District', ClassTypes\getLabel($aPlace));
 
         $aPlace = array('class' => 'boundary', 'type' => 'administrative');

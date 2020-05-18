@@ -44,6 +44,7 @@ $aCMDOptions
    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
+   array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website (EXPERIMENTAL)'),
   );
 
 // $aCMDOptions passed to getCmdOpt by reference
@@ -151,6 +152,11 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->createCountryNames($aCMDResult);
+}
+
+if ($aCMDResult['setup-website']) {
+    $bDidSomething = true;
+    $oSetup->setupWebsite();
 }
 
 // ******************************************************

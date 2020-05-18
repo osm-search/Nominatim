@@ -2,6 +2,8 @@
 
 namespace Nominatim\Setup;
 
+use Exception;
+
 require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
 require_once(CONST_BasePath.'/lib/Shell.php');
 
@@ -692,6 +694,63 @@ class SetupFunctions
         }
 
         $this->removeFlatnodeFile();
+    }
+
+    /**
+     * Setup settings_test.php in the build/settings directory from build/.env file 
+     *
+     * @return null
+     */    
+    public function setupWebsite()
+    {
+        info('Setting up website\n');
+        $fileName = CONST_InstallPath.'/.env';
+        if (!file_exists($fileName)) {
+            throw new Exception('.env File not found in build. Please copy the contents of .env.example to .env and build Nominatim again.');
+        }
+        $contents = file_get_contents($fileName);
+        $contents = explode("\n", $contents);
+
+        $op = fopen(CONST_InstallPath.'/settings/settings_test.php', "w");
+
+        // Currently using CONST_BasePath and CONST_InstallPath.
+        // Once dotenv is setup, getenv() can be used, or another
+        // alternate option is to build settings_test.php using cmake.
+        fwrite($op, "<?php
+@define('CONST_BasePath', '".CONST_BasePath."');
+@define('CONST_InstallPath', '".CONST_InstallPath."');
+if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
+if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_InstallPath.'/settings/local.php');
+if (isset(\$_GET['debug']) && \$_GET['debug']) @define('CONST_Debug', true);");
+        
+
+        // Array used to store all the env variables in key-value format.
+        $envVariables = [];
+
+        foreach ($contents as $data)
+        {
+            $arr = explode('=', $data, 2);
+            // Avoid empty lines, CONST_BasePath, CONST_InstallPath and comments in .env
+            if ($arr[0] !== '' and $arr[0] !== 'CONST_BasePath' and $arr[0] !== 'CONST_InstallPath' and $data[0] != '#')
+            {
+                // To handle `${}` type of values in .env
+                // This is not required for current set of env variables, but could be used if required.
+                // NOTE: This works only if the `${}` is in the beginning.
+                if (preg_match("{[$]\{.*\}}", $arr[1], $aMatch))
+                {
+                    $arr[1] = preg_replace("{[$]\{.*\}}", $envVariables[substr($aMatch[0], 2, strlen($aMatch[0]) - 3)], $arr[1]);
+                }
+                $envVariables[$arr[0]] = $arr[1];
+
+                // Add single quotes to strings which require them.
+                if ($arr[1][0] !== "\"" and $arr[1][0] !== "'" and $arr[1] !== 'true' and $arr[1] !== 'false')
+                {
+                    $arr[1] = "'$arr[1]'";
+                }
+                fwrite($op, "@define('$arr[0]', $arr[1]);\n");
+            }
+        }
+        info('build/settings_test.php has been set up successfully');
     }
 
     private function removeFlatnodeFile()

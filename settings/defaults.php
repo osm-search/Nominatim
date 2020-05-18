@@ -85,7 +85,7 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 @define('CONST_Replication_Recheck_Interval', '60');
 
 // Website settings
-@define('CONST_NoAccessControl', true);
+// @define('CONST_NoAccessControl', true);
 
 @define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
 // Language to assume when none is supplied with the query.
@@ -93,24 +93,24 @@ if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 // will be used.
 @define('CONST_Default_Language', false);
 // Appearance of the map in the debug interface.
-@define('CONST_Default_Lat', 20.0);
-@define('CONST_Default_Lon', 0.0);
-@define('CONST_Default_Zoom', 2);
-@define('CONST_Map_Tile_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-@define('CONST_Map_Tile_Attribution', ''); // Set if tile source isn't osm.org
+// @define('CONST_Default_Lat', 20.0);
+// @define('CONST_Default_Lon', 0.0);
+// @define('CONST_Default_Zoom', 2);
+// @define('CONST_Map_Tile_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+// @define('CONST_Map_Tile_Attribution', ''); // Set if tile source isn't osm.org
 
 @define('CONST_Search_AreaPolygons', true);
 
-@define('CONST_Search_BatchMode', false);
+// @define('CONST_Search_BatchMode', false);
 
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
 // If set to true, then reverse order of queries will be tried by default.
 // When set to false only selected languages alloow reverse search.
-@define('CONST_Search_ReversePlanForAll', true);
+// @define('CONST_Search_ReversePlanForAll', true);
 
 // Maximum number of OSM ids that may be queried at once
 // for the places endpoint.
-@define('CONST_Places_Max_ID_count', 50);
+// @define('CONST_Places_Max_ID_count', 50);
 
 // Number of different geometry formats that may be queried in parallel.
 // Set to zero to disable polygon output.

@@ -148,6 +148,9 @@ endif()
 configure_file(${PROJECT_SOURCE_DIR}/settings/defaults.php
                ${PROJECT_BINARY_DIR}/settings/settings.php)
 
+configure_file(${PROJECT_SOURCE_DIR}/.env
+               ${PROJECT_BINARY_DIR}/.env @ONLY)
+               
 #-----------------------------------------------------------------------------
 # Tests
 #-----------------------------------------------------------------------------

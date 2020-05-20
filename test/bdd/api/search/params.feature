@@ -59,9 +59,8 @@ Feature: Search queries
           | ID | class   | type |
           | 0  | leisure | dog_park |
         And result addresses contain
-          | ID | address29 |
+          | ID | leisure |
           | 0  | Hundeauslauf |
-        And address of result 0 has no types leisure,dog_park
 
     Scenario: Disabling deduplication
         When sending json search query "Sievekingsallee, Hamburg"

@@ -55,7 +55,7 @@ if (isset($aPlace)) {
         $aPlace['place_id'],
         $aPlace['lon'],
         $aPlace['lat'],
-        Nominatim\ClassTypes\getProperty($aPlace, 'defdiameter', 0.0001),
+        Nominatim\ClassTypes\getDefRadius($aPlace),
         $fLat,
         $fLon
     );

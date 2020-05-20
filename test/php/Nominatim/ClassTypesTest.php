@@ -6,89 +6,87 @@ require_once(CONST_BasePath.'/lib/ClassTypes.php');
 
 class ClassTypesTest extends \PHPUnit\Framework\TestCase
 {
-    public function testGetInfo()
+    public function testGetLabelTag()
     {
-        // 1) Admin level set
-        // city Dublin
-        // https://nominatim.openstreetmap.org/details.php?osmtype=R&osmid=1109531
-        $aPlace = array(
-                   'admin_level' => 7,
-                   'class' => 'boundary',
-                   'type' => 'administrative',
-                   'rank_address' => 14
-        );
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative',
+                   'rank_address' => '4', 'place_type' => 'city');
+        $this->assertEquals('city', ClassTypes\getLabelTag($aPlace));
 
-        $this->assertEquals('Municipality', ClassTypes\getInfo($aPlace)['label']);
-        $this->assertEquals('Municipality', ClassTypes\getFallbackInfo($aPlace)['label']);
-        $this->assertEquals('Municipality', ClassTypes\getProperty($aPlace, 'label'));
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative',
+                   'rank_address' => '10');
+        $this->assertEquals('state_district', ClassTypes\getLabelTag($aPlace));
 
-        // 2) No admin level
-        // Eiffel Tower
-        // https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=5013364
-        $aPlace = array(
-                   'class' => 'tourism',
-                   'type' => 'attraction',
-                   'rank_address' => 29
-        );
-        $this->assertEquals('Attraction', ClassTypes\getInfo($aPlace)['label']);
-        $this->assertEquals(array('simplelabel' => 'address29'), ClassTypes\getFallbackInfo($aPlace));
-        $this->assertEquals('Attraction', ClassTypes\getProperty($aPlace, 'label'));
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative');
+        $this->assertEquals('administrative', ClassTypes\getLabelTag($aPlace));
 
-        // 3) Unknown type
-        // La Maison du Toutou, Paris
-        // https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=164011651
-        $aPlace = array(
-                   'class' => 'shop',
-                   'type' => 'pet_grooming',
-                   'rank_address' => 29
-        );
-        $this->assertEquals(false, ClassTypes\getInfo($aPlace));
-        $this->assertEquals(array('simplelabel' => 'address29'), ClassTypes\getFallbackInfo($aPlace));
-        $this->assertEquals(false, ClassTypes\getProperty($aPlace, 'label'));
-        $this->assertEquals('mydefault', ClassTypes\getProperty($aPlace, 'label', 'mydefault'));
+        $aPlace = array('class' => 'place', 'type' => 'hamlet', 'rank_address' => '20');
+        $this->assertEquals('hamlet', ClassTypes\getLabelTag($aPlace));
+
+        $aPlace = array('class' => 'highway', 'type' => 'residential',
+                   'rank_address' => '26');
+        $this->assertEquals('road', ClassTypes\getLabelTag($aPlace));
+
+        $aPlace = array('class' => 'place', 'type' => 'house_number',
+                   'rank_address' => '30');
+        $this->assertEquals('house_number', ClassTypes\getLabelTag($aPlace));
+
+        $aPlace = array('class' => 'amenity', 'type' => 'prison',
+                   'rank_address' => '30');
+        $this->assertEquals('amenity', ClassTypes\getLabelTag($aPlace));
     }
 
-    public function testGetClassTypesWithImportance()
+    public function testGetLabel()
     {
-        $aClasses = ClassTypes\getListWithImportance();
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative',
+                   'rank_address' => '4', 'place_type' => 'city');
+        $this->assertEquals('City', ClassTypes\getLabel($aPlace));
 
-        $this->assertGreaterThan(
-            200,
-            count($aClasses)
-        );
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative',
+                   'rank_address' => '10');
+        $this->assertEquals('State District', ClassTypes\getLabel($aPlace));
 
-        $this->assertEquals(
-            array(
-             'label' => 'Country',
-             'frequency' => 0,
-             'icon' => 'poi_boundary_administrative',
-             'defzoom' => 6,
-             'defdiameter' => 15,
-             'importance' => 3
-            ),
-            $aClasses['place:country']
-        );
+        $aPlace = array('class' => 'boundary', 'type' => 'administrative');
+        $this->assertEquals('Administrative', ClassTypes\getLabel($aPlace));
+
+        $aPlace = array('class' => 'amenity', 'type' => 'prison');
+        $this->assertEquals('Prison', ClassTypes\getLabel($aPlace));
+
+        $aPlace = array('class' => 'amenity', 'type' => 'foobar');
+        $this->assertNull(ClassTypes\getLabel($aPlace));
     }
 
+    public function testGetBoundaryLabel()
+    {
+        $this->assertEquals('City', ClassTypes\getBoundaryLabel(8, null));
+        $this->assertEquals('Administrative', ClassTypes\getBoundaryLabel(18, null));
+        $this->assertEquals('None', ClassTypes\getBoundaryLabel(18, null, 'None'));
+        $this->assertEquals('State', ClassTypes\getBoundaryLabel(4, 'de', 'None'));
+    }
 
-    public function testGetResultDiameter()
+    public function testGetDefRadius()
     {
         $aResult = array('class' => '', 'type' => '');
-        $this->assertEquals(
-            0.0001,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
+        $this->assertEquals(0.00005, ClassTypes\getDefRadius($aResult));
 
         $aResult = array('class' => 'place', 'type' => 'country');
-        $this->assertEquals(
-            15,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
+        $this->assertEquals(7, ClassTypes\getDefRadius($aResult));
+    }
 
-        $aResult = array('class' => 'boundary', 'type' => 'administrative', 'admin_level' => 6);
-        $this->assertEquals(
-            0.32,
-            ClassTypes\getProperty($aResult, 'defdiameter', 0.0001)
-        );
+    public function testGetIcon()
+    {
+        $aResult = array('class' => '', 'type' => '');
+        $this->assertNull(ClassTypes\getIcon($aResult));
+
+        $aResult = array('class' => 'place', 'type' => 'airport');
+        $this->assertEquals('transport_airport2', ClassTypes\getIcon($aResult));
+    }
+
+    public function testGetImportance()
+    {
+        $aResult = array('class' => '', 'type' => '');
+        $this->assertNull(ClassTypes\getImportance($aResult));
+
+        $aResult = array('class' => 'place', 'type' => 'airport');
+        $this->assertGreaterThan(0, ClassTypes\getImportance($aResult));
     }
 }

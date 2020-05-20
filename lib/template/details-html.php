@@ -57,10 +57,12 @@
         return $sHTML;
     }
 
-    function map_icon($sIcon)
+    function map_icon($aPlace)
     {
-        if ($sIcon){
-            echo '<img id="mapicon" src="'.CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.n.32.png'.'" alt="'.$sIcon.'" />';
+        $sIcon = Nominatim\ClassTypes\getIconFile($aPlace);
+        if (isset($sIcon)) {
+            $sLabel = Nominatim\ClassTypes\getIcon($aPlace);
+            echo '<img id="mapicon" src="'.$sIcon.'" alt="'.$sLabel.'" />';
         }
     }
 
@@ -112,7 +114,7 @@
                 </h1>
             </div>
             <div class="col-sm-2 text-right">
-                <?php map_icon($aPointDetails['icon']) ?>
+                <?php map_icon($aPointDetails) ?>
             </div>
         </div>
         <div class="row">

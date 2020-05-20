@@ -61,23 +61,16 @@ class AddressDetails
         return join(', ', $aParts);
     }
 
-    public function getAddressNames()
+    public function getAddressNames($sCountry = null)
     {
         $aAddress = array();
-        $aFallback = array();
 
         foreach ($this->aAddressLines as $aLine) {
             if (!self::isAddress($aLine)) {
                 continue;
             }
 
-            $bFallback = false;
-            $aTypeLabel = ClassTypes\getInfo($aLine);
-
-            if ($aTypeLabel === false) {
-                $aTypeLabel = ClassTypes\getFallbackInfo($aLine);
-                $bFallback = true;
-            }
+            $sTypeLabel = ClassTypes\getLabelTag($aLine);
 
             $sName = null;
             if (isset($aLine['localname']) && $aLine['localname']!=='') {
@@ -87,16 +80,11 @@ class AddressDetails
             }
 
             if (isset($sName)) {
-                $sTypeLabel = strtolower(isset($aTypeLabel['simplelabel']) ? $aTypeLabel['simplelabel'] : $aTypeLabel['label']);
-                $sTypeLabel = str_replace(' ', '_', $sTypeLabel);
+                $sTypeLabel = strtolower(str_replace(' ', '_', $sTypeLabel));
                 if (!isset($aAddress[$sTypeLabel])
-                    || isset($aFallback[$sTypeLabel])
                     || $aLine['class'] == 'place'
                 ) {
                     $aAddress[$sTypeLabel] = $sName;
-                    if ($bFallback) {
-                        $aFallback[$sTypeLabel] = $bFallback;
-                    }
                 }
             }
         }

@@ -58,7 +58,7 @@ foreach ($aOsmIds as $sItem) {
                 $oPlace['place_id'],
                 $oPlace['lon'],
                 $oPlace['lat'],
-                Nominatim\ClassTypes\getProperty($oPlace, 'defdiameter', 0.0001)
+                Nominatim\ClassTypes\getDefRadius($oPlace)
             );
 
             if ($aOutlineResult) {

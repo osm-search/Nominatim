@@ -61,6 +61,8 @@ class ClassTypesTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('Administrative', ClassTypes\getBoundaryLabel(18, null));
         $this->assertEquals('None', ClassTypes\getBoundaryLabel(18, null, 'None'));
         $this->assertEquals('State', ClassTypes\getBoundaryLabel(4, 'de', 'None'));
+        $this->assertEquals('County', ClassTypes\getBoundaryLabel(4, 'se', 'None'));
+        $this->assertEquals('Municipality', ClassTypes\getBoundaryLabel(7, 'se', 'None'));
     }
 
     public function testGetDefRadius()

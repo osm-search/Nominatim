@@ -26,7 +26,7 @@ This step downloads and converts [Wikipedia](https://dumps.wikimedia.org/) page 
 
 To download, convert, and import the data, then process summary statistics and compute importance scores, run:
 ```
-./wikipedia_import.sh
+./import_wikipedia.sh
 ```
 ---
 Wikidata
@@ -54,5 +54,5 @@ By including Wikidata in the wikipedia_articles table, new connections can be ma
 
 To download, convert, and import the data, then process required items, run:
 ``` 
-./wikidata_import.sh
+./import_wikidata.sh
 ```

@@ -8,11 +8,11 @@
           "province" : [8, 0],
           "region" : [18, 0],
           "county" : 12,
+          "municipality" : [17, 14],
           "city" : 16,
           "island" : [17, 0],
           "town" : [18, 16],
           "village" : [19, 16],
-          "municipality" : [19, 16],
           "district" : [19, 16],
           "borough" : [19, 18],
           "hamlet" : 20,
@@ -94,6 +94,7 @@
 { "countries" : [ "de" ],
   "tags" : {
       "place" : {
+          "region" : [10, 0],
           "county" : [12, 0]
       },
       "boundary" : {
@@ -105,6 +106,16 @@
   "tags" : {
       "boundary" : {
           "administrative7" : [14, 0]
+      }
+  }
+},
+{ "countries" : ["se", "no"],
+  "tags" : {
+      "place" : {
+      },
+      "boundary" : {
+          "administrative3" : 8,
+          "administrative4" : 12
       }
   }
 }

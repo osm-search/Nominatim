@@ -85,7 +85,15 @@ function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative'
                                            9 => 'City District',
                                            10 => 'Suburb',
                                            11 => 'Neighbourhood'
-                                           )
+                                          ),
+                             'no' => array (
+                                      3 => 'State',
+                                      4 => 'County'
+                                     ),
+                             'se' => array (
+                                      3 => 'State',
+                                      4 => 'County'
+                                     )
             );
 
     if (isset($aBoundaryList[$sCountry])

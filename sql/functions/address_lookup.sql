@@ -207,7 +207,7 @@ BEGIN
 
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name, class, type,
-           coalesce(extratags->'place', extratags->'linked_place') as place_type,
+           coalesce(extratags->'linked_place', extratags->'place') as place_type,
            admin_level, fromarea, isaddress,
            CASE WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
            distance, country_code, postcode

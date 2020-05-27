@@ -117,8 +117,12 @@ class AddressDetails
 
             if ($aLine['type'] == 'postcode' || $aLine['type'] == 'postal_code') {
                 $aJson['postcode'] = $aLine['localname'];
-            } elseif ($aLine['type'] == 'house_number') {
+                continue;
+            }
+
+            if ($aLine['type'] == 'house_number') {
                 $aJson['housenumber'] = $aLine['localname'];
+                continue;
             }
 
             if ($this->iPlaceID == $aLine['place_id']) {

@@ -10,7 +10,7 @@
           "province" : [8, 0],
           "region" : [18, 0],
           "county" : 12,
-          "municipality" : [17, 14],
+          "municipality" : 14,
           "city" : 16,
           "town" : [18, 16],
           "borough" : 18,

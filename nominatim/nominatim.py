@@ -124,6 +124,15 @@ class DBConnection(object):
         self.wait()
 
         self.cursor = self.conn.cursor()
+        # Disable JIT and parallel workers as they are known to cause problems.
+        # Update pg_settings instead of using SET because it does not yield
+        # errors on older versions of Postgres where the settings are not
+        # implemented.
+        self.perform(
+            """ UPDATE pg_settings SET setting = -1 WHERE name = 'jit_above_cost';
+                UPDATE pg_settings SET setting = 0 
+                   WHERE name = 'max_parallel_workers_per_gather';""")
+        self.wait()
 
     def wait(self):
         """ Block until any pending operation is done.

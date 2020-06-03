@@ -99,12 +99,12 @@ BEGIN
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
       ELSE
         -- for larger features simply find the area with the largest rank that
-        -- contains the bbox
+        -- contains the bbox, only use addressable features
         FOR location IN
           SELECT place_id FROM placex
             WHERE bbox @ geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
-                  AND rank_search between 5 and 25
-            ORDER BY rank_search desc
+                  AND rank_address between 5 and 25
+            ORDER BY rank_address desc
         LOOP
             RETURN location.place_id;
         END LOOP;

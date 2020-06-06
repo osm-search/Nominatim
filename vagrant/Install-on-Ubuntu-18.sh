@@ -108,14 +108,14 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 
 #DOCS:```sh
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
+<Directory "$USERHOME/build/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/Nominatim/build/website
+Alias /nominatim $USERHOME/build/website
 EOFAPACHECONF
 #DOCS:```
 
@@ -135,21 +135,14 @@ sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf #DOCS:
 # Building and Configuration
 # --------------------------
 #
-# Get the source code from Github and change into the source directory
+# Get the source code for the release and unpack it
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-3.5.0.tar.bz2
+    tar xf Nominatim-3.5.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -158,7 +151,7 @@ fi                                 #DOCS:
     cd $USERHOME                   #DOCS:    :::sh
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-3.5.0
     make
 
 # You need to create a minimal configuration file that tells nominatim

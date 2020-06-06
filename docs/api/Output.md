@@ -54,7 +54,8 @@ The possible fields are:
  * `class`, `type` - key and value of the main OSM tag
  * `importance` - computed importance rank
  * `icon` - link to class icon (if available)
- * `address` - dictionary of address details (only with `addressdetails=1`)
+ * `address` - dictionary of address details (only with `addressdetails=1`,
+   [see notes](#addressdetails))
  * `extratags` - dictionary with additional useful tags like website or maxspeed
    (only with `extratags=1`)
  * `namedetails` - dictionary with full list of available names including ref etc.
@@ -82,7 +83,8 @@ The feature list has the following fields:
  * `place_rank` - class search rank
  * `importance` - computed importance rank
  * `icon` - link to class icon (if available)
- * `address` - dictionary of address details (only with `addressdetails=1`)
+ * `address` - dictionary of address details (only with `addressdetails=1`,
+   [see notes](#addressdetails))
  * `extratags` - dictionary with additional useful tags like `website` or `maxspeed`
    (only with `extratags=1`)
  * `namedetails` - dictionary with full list of available names including ref etc.
@@ -248,3 +250,25 @@ mapping library
 
 Bounds crossing the antimeridian have a min latitude -180 and max latitude 180,
 essentially covering the planet (See [issue 184](https://github.com/openstreetmap/Nominatim/issues/184)).
+
+### addressdetails
+
+Address details in the xml and json formats return a list of names together
+with a designation label. Per default the following labels may appear:
+
+ * continent
+ * country, country_code
+ * region, state, state_district, county
+ * municipality, city, town, village
+ * city_district, district, borough, suburb, subdivision
+ * hamlet, croft, isolated_dwelling
+ * neighbourhood, allotments, quarter
+ * city_block, residental, farm, farmyard, industrial, commercial, retail
+ * road
+ * house_number, house_name
+ * emergency, historic, military, natural, landuse, place, railway,
+   man_made, aerialway, boundary, amenity, aeroway, club, craft, leisure,
+   office, mountain_pass, shop, tourism, bridge, tunnel, waterway
+
+They roughly correspond to the classification of the OpenStreetMap data
+according to either the `place` tag or the main key of the object.

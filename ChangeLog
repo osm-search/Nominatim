@@ -1,3 +1,43 @@
+3.5.0
+
+ * structured select on HTML search page
+ * new PHP Nominatim\Shell class to wrap shell escaping
+ * remove polygon parameter from all API calls
+ * improve handling of postcode areas
+ * reorganise place linking algorithm, now using wikidata tag as well
+ * remove linkees from search_name and larger_area tables
+ * introduce country-specific address ranks
+ * reorganise rank address computation
+ * cleanup of partition function
+ * improve parenting for large POIs
+ * add support for Postgresql 12 and Postgis 3
+ * add earlier cleanup when --drop is given, to reduce meory usage
+ * remove use of place_id in URLs
+ * replace C nominatim indexer with a simpler Python implementation
+ * split up the huge sql/functions.sql file
+ * move osm2pgsql tests to osm2pgsql
+ * add new extratags style which imports all tags from OSM
+ * add new script for checking the import after completion
+ * update osm2pgsql, reducing memory usage
+ * use new wikipedia importance and add processing of wikidata tags
+ * add search form for details page
+ * use ExtraDataPath for country_grid table
+ * remove short_name from list of names to be displayed
+ * split up CMakeFile, so that all parts can be built separately
+ * update installation instructions for CentOS and Ubuntu
+ * add script for importing/updating multiple country extracts
+ * various documentation improvements
+
+3.4.2
+
+ * fix security bug in /details endpoint where user input was not
+   properly sanitized
+
+3.4.1
+
+ * update osm2pgsql to fix hans during updates and lost address numbers
+   during updates
+
 3.4.0
 
  * increase required version for PostgreSQL(9.3), PostGIS(2.2) and PHP(7.0)

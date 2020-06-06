@@ -6,7 +6,7 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
-## 3.4.0 -> master
+## 3.4.0 -> 3.5.0
 
 ### New Wikipedia/Wikidata importance tables
 

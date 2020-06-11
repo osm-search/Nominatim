@@ -26,17 +26,17 @@
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo dnf --enablerepo=PowerTools install -y postgresql10-server \
-                        postgresql10-contrib postgresql10-devel postgis25_10 \
+    sudo dnf --enablerepo=PowerTools install -y postgresql12-server \
+                        postgresql12-contrib postgresql12-devel postgis30_12 \
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
                         llvm-toolset ccache clang-tools-extra \
                         php-pgsql php php-intl php-json libpq-devel \
-                        proj52-epsg bzip2-devel proj-devel boost-devel \
+                        bzip2-devel proj-devel boost-devel \
                         python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
     # make sure pg_config gets found
-    echo 'PATH=/usr/pgsql-10/bin:$PATH' >> ~/.bash_profile
+    echo 'PATH=/usr/pgsql-12/bin:$PATH' >> ~/.bash_profile
     source ~/.bash_profile
 
     pip3 install --user psycopg2 pytidylib
@@ -94,8 +94,8 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # with initializing the database, then enable the server to start at boot:
 
 
-    sudo /usr/pgsql-10/bin/postgresql-10-setup initdb
-    sudo systemctl enable postgresql-10
+    sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
+    sudo systemctl enable postgresql-12
 
 #
 # Next tune the postgresql configuration, which is located in 
@@ -105,7 +105,7 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 #
 # Now start the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql-10
+    sudo systemctl restart postgresql-12
 
 #
 # Finally, we need to add two postgres users: one for the user that does

@@ -79,14 +79,16 @@ endif()
 
 # Setting PHP binary variable as to command line (prevailing) or auto detect
 
-if (NOT PHP_BIN)
-     find_program (PHP_BIN php)
+if (BUILD_API OR BUILD_IMPORTER)
+    if (NOT PHP_BIN)
+         find_program (PHP_BIN php)
+    endif()
+    # sanity check if PHP binary exists
+    if (NOT EXISTS ${PHP_BIN})
+        message(FATAL_ERROR "PHP binary not found. Install php or provide location with -DPHP_BIN=/path/php ")
+    endif()
+    message (STATUS "Using PHP binary " ${PHP_BIN})
 endif()
-# sanity check if PHP binary exists
-if (NOT EXISTS ${PHP_BIN})
-    message(FATAL_ERROR "PHP binary not found. Install php or provide location with -DPHP_BIN=/path/php ")
-endif()
-message (STATUS "Using PHP binary " ${PHP_BIN})
 
 #-----------------------------------------------------------------------------
 # import scripts and utilities (importer only)

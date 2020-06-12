@@ -694,6 +694,49 @@ class SetupFunctions
         $this->removeFlatnodeFile();
     }
 
+    /**
+     * Setup settings_test.php in the build/settings directory from build/.env file
+     *
+     * @return null
+     */
+    public function setupWebsite()
+    {
+        $rOutputFile = fopen(CONST_InstallPath.'/settings/settings-frontend.php', 'w');
+
+        // Currently using CONST_BasePath and CONST_InstallPath.
+        // Once dotenv is setup, getenv() can be used, or another
+        // alternate option is to build settings_test.php using cmake.
+
+        fwrite($rOutputFile, "<?php
+@define('CONST_BasePath', '".CONST_BasePath."');
+if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
+
+@define('CONST_Debug', ". (CONST_Debug? 'true' : 'false').");
+@define('CONST_Database_DSN', '".CONST_Database_DSN."'); // or add ;host=...;port=...;user=...;password=...
+@define('CONST_Default_Language', ".(CONST_Default_Language ? 'true' : 'false').");
+@define('CONST_Default_Lat', ".CONST_Default_Lat.");
+@define('CONST_Default_Lon', ".CONST_Default_Lon.");
+@define('CONST_Default_Zoom', ".CONST_Default_Zoom.");
+@define('CONST_Map_Tile_URL', '".CONST_Map_Tile_URL."');
+@define('CONST_Map_Tile_Attribution', '".CONST_Map_Tile_Attribution."'); // Set if tile source isn't osm.org
+@define('CONST_Log_DB', ".(CONST_Log_DB ? 'true' : 'false').");
+@define('CONST_Log_File', ".(CONST_Log_File ? 'true' : 'false').");
+@define('CONST_Max_Word_Frequency', '".CONST_Max_Word_Frequency."');
+@define('CONST_NoAccessControl', ".CONST_NoAccessControl.");
+@define('CONST_Places_Max_ID_count', ".CONST_Places_Max_ID_count.");
+@define('CONST_PolygonOutput_MaximumTypes', ".CONST_PolygonOutput_MaximumTypes.");
+@define('CONST_Search_AreaPolygons', ".CONST_Search_AreaPolygons.");
+@define('CONST_Search_BatchMode', ".(CONST_Search_BatchMode ? 'true' : 'false').");
+@define('CONST_Search_NameOnlySearchFrequencyThreshold', ".CONST_Search_NameOnlySearchFrequencyThreshold.");
+@define('CONST_Search_ReversePlanForAll', ".CONST_Search_ReversePlanForAll.");
+@define('CONST_Term_Normalization_Rules', \"".CONST_Term_Normalization_Rules."\");
+@define('CONST_Use_Aux_Location_data', ".(CONST_Use_Aux_Location_data ? 'true' : 'false').");
+@define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
+@define('CONST_Website_BaseURL', '".CONST_Website_BaseURL."');
+");
+        info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
+    }
+
     private function removeFlatnodeFile()
     {
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {

@@ -195,6 +195,17 @@ Run this script to verify all required tables and indices got created successful
 ./utils/check_import_finished.php
 ```
 
+### Setting up the website
+
+Run the following command to set up the `settings/settings-frontend.php`.
+These settings are used in website/*.php files. You can use the website only after this 
+step is completed.
+
+```sh
+./utils/setup.php --setup-website
+```
+!!! Note
+    This step is not necessary if you use `--all` option while setting up the DB.
 
 ## Tuning the database
 

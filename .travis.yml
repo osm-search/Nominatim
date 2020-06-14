@@ -26,6 +26,8 @@ script:
   - if [[ $TEST_SUITE == "tests" ]]; then phpcs --report-width=120 . ; fi
   - cd $TRAVIS_BUILD_DIR/test/php
   - if [[ $TEST_SUITE == "tests" ]]; then /usr/bin/phpunit ./ ; fi
+  - cd $TRAVIS_BUILD_DIR/build
+  - /usr/bin/env php ./utils/setup.php --setup-website
   - cd $TRAVIS_BUILD_DIR/test/bdd
   - # behave --format=progress3 api
   - if [[ $TEST_SUITE == "tests" ]]; then behave -DREMOVE_TEMPLATE=1 --format=progress3 db ; fi

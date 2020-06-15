@@ -133,7 +133,8 @@ foreach ($aExpectedIndices as $sExpectedIndex) {
         $print_fail();
         echo <<< END
         Hints:
-        * Rerun the setup.php --create-search-indices step
+        * Run './utils/setup.php --create-search-indices --ignore-errors' to
+          create missing indices.
 
 END;
         exit(1);

@@ -22,6 +22,21 @@ then you can resume with the following command:
 If the reported rank is 26 or higher, you can also safely add `--index-noanalyse`.
 
 
+### PostgreSQL crashed "invalid page in block"
+
+Usually serious problem, can be a hardware issue, not all data written to disc
+for example. Check PostgreSQL log file and search PostgreSQL issues/mailing
+list for hints.
+
+If it happened during index creation you can try rerunning the step with
+
+```sh
+./utils/setup.php --create-search-indices --ignore-errors
+```
+
+Otherwise it's best to start the full setup from the beginning.
+
+
 ### PHP "open_basedir restriction in effect" warnings
 
     PHP Warning:  file_get_contents(): open_basedir restriction in effect.

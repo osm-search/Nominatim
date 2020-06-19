@@ -141,6 +141,11 @@ if (BUILD_API)
            COMMAND ln -sf ${PROJECT_SOURCE_DIR}/website/${wp} ${PROJECT_BINARY_DIR}/website/
        )
    endforeach()
+
+   add_custom_target(serve
+           php -S 127.0.0.1:8088
+           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/website
+   )
 endif()
 
 #-----------------------------------------------------------------------------

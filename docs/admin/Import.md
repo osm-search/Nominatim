@@ -197,7 +197,7 @@ Run this script to verify all required tables and indices got created successful
 
 ### Setting up the website
 
-Run the following command to set up the `settings/settings-frontend.php`.
+Run the following command to set up the `website/settings-frontend.php`.
 These settings are used in website/*.php files. You can use the website only after this 
 step is completed.
 

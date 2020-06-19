@@ -695,17 +695,13 @@ class SetupFunctions
     }
 
     /**
-     * Setup settings_test.php in the build/settings directory from build/.env file
+     * Setup settings-frontend.php in the build/website directory
      *
      * @return null
      */
     public function setupWebsite()
     {
-        $rOutputFile = fopen(CONST_InstallPath.'/settings/settings-frontend.php', 'w');
-
-        // Currently using CONST_BasePath and CONST_InstallPath.
-        // Once dotenv is setup, getenv() can be used, or another
-        // alternate option is to build settings_test.php using cmake.
+        $rOutputFile = fopen(CONST_InstallPath.'/website/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
 @define('CONST_BasePath', '".CONST_BasePath."');
@@ -734,7 +730,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
 @define('CONST_Website_BaseURL', '".CONST_Website_BaseURL."');
 ");
-        info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
+        info(CONST_InstallPath.'/website/settings-frontend.php has been set up successfully');
     }
 
     private function removeFlatnodeFile()

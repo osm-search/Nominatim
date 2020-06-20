@@ -53,7 +53,7 @@ by adding ";" at the beginning of the line. Don't forget to enable this setting
 again once you are done with the PHP command line operations.
 
 
-### PHP timzeone warnings
+### PHP timezeone warnings
 
 The Apache log may contain lots of PHP warnings like this:
     `PHP Warning:  date_default_timezone_set() function.`
@@ -171,7 +171,8 @@ Example error message
 
 The PostgreSQL database, i.e. user `postgres`, needs to have access to that file.
 
-The permission need to be read & executable by everybody, e.g.
+The permission need to be read & executable by everybody, but not writeable
+by everybody, e.g.
 
 ```
    -rwxr-xr-x 1 nominatim nominatim 297984 build/module/nominatim.so
@@ -181,6 +182,16 @@ Try `chmod a+r nominatim.so; chmod a+x nominatim.so`.
 
 When running SELinux, make sure that the
 [context is set up correctly](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
+
+When you recently updated your operating system, updated PostgreSQL to
+a new version or moved files (e.g. the build directory) you should
+recreate `nominatim.so`. Try
+
+```
+   cd build
+   rm -r module/
+   cmake $main_Nominatim_path && make
+```
 
 ### Setup.php fails with "DB Error: extension not found"
 

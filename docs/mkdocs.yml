@@ -16,7 +16,8 @@ pages:
         - 'FAQ': 'api/Faq.md'
     - 'Administration Guide':
         - 'Basic Installation': 'admin/Installation.md'
-        - 'Importing and Updating' : 'admin/Import-and-Update.md'
+        - 'Importing' : 'admin/Import.md'
+        - 'Updating' : 'admin/Update.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
@@ -25,6 +26,7 @@ pages:
         - 'OSM Data Import' : 'develop/Import.md'
         - 'Place Ranking' : 'develop/Ranking.md'
         - 'Postcodes' : 'develop/Postcodes.md'
+        - 'Setup Test Environment' : 'develop/Setup.md'
         - 'Documentation' : 'develop/Documentation.md'
     - 'External Data Sources':
         - 'Overview' : 'data-sources/overview.md'

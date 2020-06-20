@@ -33,18 +33,6 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             php-intl python3-setuptools python3-dev python3-pip \
                             python3-psycopg2 python3-tidylib git
 
-# If you want to run the test suite, you need to install the following
-# additional packages including the PHP package manager composer:
-
-    pip3 install --user behave nose
-
-    sudo apt-get install -y composer php-cgi php-cli php-mbstring php-xml zip unzip
-
-    composer global require "squizlabs/php_codesniffer=*"
-    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
-
-    composer global require "phpunit/phpunit=8.*"
-    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration
@@ -166,4 +154,4 @@ EOF
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](../admin/Import-and-Update.md).
+# [importing a database from OSM data](../admin/Import.md).

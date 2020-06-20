@@ -48,18 +48,6 @@
 
     pip3 install --user psycopg2 pytidylib
 
-# If you want to run the test suite, you need to install the following
-# additional packages:
-
-#DOCS:    :::sh
-    sudo yum install -y php-dom php-mbstring
-    pip3 install --user behave nose
-
-    composer global require "squizlabs/php_codesniffer=*"
-    sudo ln -s ~/.config/composer/vendor/bin/phpcs /usr/bin/
-
-    composer global require "phpunit/phpunit=7.*"
-    sudo ln -s ~/.config/composer/vendor/bin/phpunit /usr/bin/
 
 #
 # System Configuration
@@ -207,4 +195,4 @@ EOF
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](../admin/Import-and-Update.md).
+# [importing a database from OSM data](../admin/Import.md).

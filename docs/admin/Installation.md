@@ -188,4 +188,4 @@ Restart the nginx and php5-fpm services and the website should now be available
 at `http://localhost/`.
 
 
-Now continue with [importing the database](Import-and-Update.md).
+Now continue with [importing the database](Import.md).

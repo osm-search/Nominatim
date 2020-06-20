@@ -35,12 +35,6 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             php-intl python3-setuptools python3-dev python3-pip \
                             python3-psycopg2 python3-tidylib git
 
-# If you want to run the test suite, you need to install the following
-# additional packages:
-
-    sudo apt-get install -y phpunit php-codesniffer php-cgi
-
-    pip3 install --user behave nose
 #
 # System Configuration
 # ====================
@@ -168,4 +162,4 @@ EOF
 
 
 # Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](../admin/Import-and-Update.md).
+# [importing a database from OSM data](../admin/Import.md).

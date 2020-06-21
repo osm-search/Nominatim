@@ -5,6 +5,7 @@ namespace Nominatim;
 require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
 require_once(CONST_BasePath.'/lib/SearchContext.php');
 require_once(CONST_BasePath.'/lib/Result.php');
+require_once(CONST_BasePath.'/lib/names.php');
 
 /**
  * Description of a single interpretation of a search query.
@@ -522,26 +523,30 @@ class SearchDescription
 
         $aDBResults = array();
         $sPoiTable = $this->poiTable();
+        $sIndexName=$this->poiIndex();
+        $bIndex = $oDB->indexExists($sIndexName);
 
-        if ($oDB->tableExists($sPoiTable)) {
-            $sSQL = 'SELECT place_id FROM '.$sPoiTable.' ct';
-            if ($this->oContext->sqlCountryList) {
-                $sSQL .= ' JOIN placex USING (place_id)';
-            }
+	if ($bIndex){
+	    $qstart=false;
+	    $sSQL = 'SELECT place_id FROM placex ';
             if ($this->oContext->hasNearPoint()) {
-                $sSQL .= ' WHERE '.$this->oContext->withinSQL('ct.centroid');
+		$qstart=true;
+                $sSQL .= ' WHERE '.$this->oContext->withinSQL('centroid');
             } elseif ($this->oContext->bViewboxBounded) {
-                $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', ct.centroid)';
+		$qstart=true;
+                $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', centroid)';
             }
+
             if ($this->oContext->sqlCountryList) {
-                $sSQL .= ' AND country_code in '.$this->oContext->sqlCountryList;
+                $sSQL .= ($qstart ? " AND " : "WHERE ").' country_code in '.$this->oContext->sqlCountryList;
             }
-            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
+	    $sSQL .= " AND class = '".$this->sClass."' AND type = '".$this->sType."'";
+
             if ($this->oContext->sqlViewboxCentre) {
                 $sSQL .= ' ORDER BY ST_Distance(';
-                $sSQL .= $this->oContext->sqlViewboxCentre.', ct.centroid) ASC';
+                $sSQL .= $this->oContext->sqlViewboxCentre.', centroid) ASC';
             } elseif ($this->oContext->hasNearPoint()) {
-                $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('ct.centroid').' ASC';
+                $sSQL .= ' ORDER BY '.$this->oContext->distanceSQL('centroid').' ASC';
             }
             $sSQL .= " LIMIT $iLimit";
             Debug::printSQL($sSQL);
@@ -860,6 +865,8 @@ class SearchDescription
         if ($this->iOperator == Operator::TYPE || $this->iOperator == Operator::NEAR) {
             $sClassTable = $this->poiTable();
             $bCacheTable = $oDB->tableExists($sClassTable);
+	    $sIndexName=$this->poiIndex();
+            $bIndex = $oDB->indexExists($sIndexName);
 
             $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
             Debug::printSQL($sSQL);
@@ -867,7 +874,7 @@ class SearchDescription
 
             // For state / country level searches the normal radius search doesn't work very well
             $sPlaceGeom = false;
-            if ($iMaxRank < 9 && $bCacheTable) {
+            if ($iMaxRank < 9 && $bIndex) {
                 // Try and get a polygon to search in instead
                 $sSQL = 'SELECT geometry FROM placex';
                 $sSQL .= " WHERE place_id in ($sPlaceIDs)";
@@ -898,7 +905,7 @@ class SearchDescription
 
                     $sOrderBySQL = '';
                     if ($this->oContext->hasNearPoint()) {
-                        $sOrderBySQL = $this->oContext->distanceSQL('l.centroid');
+                        $sOrderBySQL = $this->oContext->distanceSQL('centroid');
                     } elseif ($sPlaceIDs) {
                         $sOrderBySQL = 'ST_Distance(l.centroid, f.geometry)';
                     } elseif ($sPlaceGeom) {
@@ -913,7 +920,7 @@ class SearchDescription
                     if ($sOrderBySQL) {
                         $sSQL .= ','.$sOrderBySQL.' as order_term';
                     }
-                    $sSQL .= ' from '.$sClassTable.' as l';
+                    $sSQL .= ' from placex as l';
 
                     if ($sPlaceIDs) {
                         $sSQL .= ',placex as f WHERE ';
@@ -923,7 +930,8 @@ class SearchDescription
                         $sSQL .= " WHERE ST_Contains('$sPlaceGeom', l.centroid)";
                     }
 
-                    $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
+//                    $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
+		    $sSQL .= " AND l.class = '".$this->sClass."' AND l.type = '".$this->sType."'";
                     $sSQL .= 'limit 300) i ';
                     if ($sOrderBySQL) {
                         $sSQL .= 'order by order_term asc';
@@ -978,6 +986,11 @@ class SearchDescription
     {
         return 'place_classtype_'.$this->sClass.'_'.$this->sType;
     }
+
+    private function poiIndex() {
+        return indexClassType($this->sClass,$this->sType);
+    }
+    
 
     private function countryCodeSQL($sVar)
     {

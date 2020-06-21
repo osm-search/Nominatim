@@ -1,4 +1,4 @@
-<h2>Welcome to Nominatim</h2>
+<h2>Welcome to Nominatim DEVELOPMENT </h2>
 
 <p>Nominatim is a search engine for <a href="https://www.openstreetmap.org">OpenStreetMap</a>
 data. This is the debugging interface. You may search for a name or address (forward search) or

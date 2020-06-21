@@ -1,6 +1,7 @@
 <?php
 
 require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_BasePath.'/lib/names.php');
 ini_set('memory_limit', '800M');
 ini_set('display_errors', 'stderr');
 
@@ -100,54 +101,19 @@ if ($aCMDResult['wiki-import']) {
         }
     }
 
-    echo 'CREATE INDEX idx_placex_classtype ON placex (class, type);';
 
     foreach ($aPairs as $aPair) {
-        $sql_tablespace = CONST_Tablespace_Aux_Data ? ' TABLESPACE '.CONST_Tablespace_Aux_Data : '';
-
         printf(
-            'CREATE TABLE place_classtype_%s_%s'
-            . $sql_tablespace
-            . ' AS'
-            . ' SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex'
+            'CREATE INDEX %s'
+            . ' ON placex'
             . " WHERE class = '%s' AND type = '%s'"
             . ";\n",
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1]),
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1])
-        );
-
-        printf(
-            'CREATE INDEX idx_place_classtype_%s_%s_centroid'
-            . ' ON place_classtype_%s_%s USING GIST (centroid)'
-            . $sql_tablespace
-            . ";\n",
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1]),
+            pg_escape_string(indexClassType($aPair[0],$aPair[1])),
             pg_escape_string($aPair[0]),
             pg_escape_string($aPair[1])
         );
 
-        printf(
-            'CREATE INDEX idx_place_classtype_%s_%s_place_id'
-            . ' ON place_classtype_%s_%s USING btree(place_id)'
-            . $sql_tablespace
-            . ";\n",
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1]),
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1])
-        );
-
-        printf(
-            'GRANT SELECT ON place_classtype_%s_%s TO "%s"'
-            . ";\n",
-            pg_escape_string($aPair[0]),
-            pg_escape_string($aPair[1]),
-            CONST_Database_Web_User
-        );
     }
 
-    echo 'DROP INDEX idx_placex_classtype;';
 }
+

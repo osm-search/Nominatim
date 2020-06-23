@@ -9,7 +9,7 @@ pip3 install --user mkdocs
 ```
 
 If `mkdocs` can't be found after the installation, the $PATH might have not
-be set correctly yet. Try opening a new terminal session.
+been set correctly yet. Try opening a new terminal session.
 
 
 Then go to the build directory and run

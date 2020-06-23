@@ -105,5 +105,5 @@ This will get diffs from the replication server, import diffs and index the data
 
 ## Verification and further setup
 
-Instructions for import verification and other details like importing Wikidata can be found in [import page](Import.md)
+Instructions for import verification and other details like importing Wikidata can be found in the [import section](Import.md)
 

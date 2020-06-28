@@ -92,8 +92,10 @@ if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
     $oOsm2pgsqlCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
 }
 if ($fPostgresVersion >= 11.0) {
-    $oOsm2pgsqlCmd->addEnvPair('PGOPTIONS',
-                               '-c jit=off -c max_parallel_workers_per_gather=0');
+    $oOsm2pgsqlCmd->addEnvPair(
+        'PGOPTIONS',
+        '-c jit=off -c max_parallel_workers_per_gather=0'
+    );
 }
 
 

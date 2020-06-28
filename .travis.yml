@@ -35,5 +35,7 @@ script:
   - if [[ $TEST_SUITE == "monaco" ]]; then /usr/bin/env php ./utils/setup.php --osm-file ../data/monaco.osm.pbf --osm2pgsql-cache 1000 --all 2>&1 | grep -v 'ETA (seconds)'; fi
   - if [[ $TEST_SUITE == "monaco" ]]; then /usr/bin/env php ./utils/specialphrases.php --wiki-import | psql -d test_api_nominatim >/dev/null; fi
   - if [[ $TEST_SUITE == "monaco" ]]; then /usr/bin/env php ./utils/check_import_finished.php; fi
+  - if [[ $TEST_SUITE == "monaco" ]]; then /usr/bin/env php ./utils/update.php --init-updates; fi
+  - if [[ $TEST_SUITE == "monaco" ]]; then /usr/bin/env php ./utils/update.php --import-osmosis; fi
 notifications:
   email: false

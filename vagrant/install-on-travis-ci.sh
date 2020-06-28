@@ -20,7 +20,7 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
 
 sudo apt-get install -y -qq python3-dev python3-pip php-cgi
 
-pip3 install --quiet behave nose pytidylib psycopg2-binary
+pip3 install --quiet behave nose pytidylib psycopg2-binary osmium
 
 # https://github.com/squizlabs/PHP_CodeSniffer
 composer global require "squizlabs/php_codesniffer=*"

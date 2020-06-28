@@ -64,5 +64,6 @@ tee settings/local.php << EOF
  @define('CONST_Website_BaseURL', '/nominatim/');
  @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
  @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
+ @define('CONST_Replication_Max_Diff_size', '3');
 EOF
 

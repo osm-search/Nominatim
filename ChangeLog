@@ -1,3 +1,9 @@
+3.5.1
+
+ * disable jit and parallel processing in PostgreSQL for osm2pgsql
+ * update libosmium to 2.15.6 (fixes an issue with processing hanging
+   on large multipolygons)
+
 3.5.0
 
  * structured select on HTML search page

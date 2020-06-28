@@ -55,6 +55,7 @@ date_default_timezone_set('Etc/UTC');
 
 $oDB = new Nominatim\DB();
 $oDB->connect();
+$fPostgresVersion = $oDB->getPostgresVersion();
 
 $aDSNInfo = Nominatim\DB::parseDSN(CONST_Database_DSN);
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
@@ -89,6 +90,12 @@ if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
 }
 if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
     $oOsm2pgsqlCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
+}
+if ($fPostgresVersion >= 11.0) {
+    $oOsm2pgsqlCmd->addEnvPair(
+        'PGOPTIONS',
+        '-c jit=off -c max_parallel_workers_per_gather=0'
+    );
 }
 
 

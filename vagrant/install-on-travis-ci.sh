@@ -20,7 +20,7 @@ sudo apt-get install -y -qq libboost-dev libboost-system-dev \
 
 sudo apt-get install -y -qq python3-dev python3-pip php-cgi
 
-pip3 install --quiet behave nose pytidylib psycopg2-binary
+pip3 install --quiet behave nose pytidylib psycopg2-binary osmium
 
 # https://github.com/squizlabs/PHP_CodeSniffer
 composer global require "squizlabs/php_codesniffer=*"
@@ -64,5 +64,6 @@ tee settings/local.php << EOF
  @define('CONST_Website_BaseURL', '/nominatim/');
  @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
  @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
+ @define('CONST_Replication_Max_Diff_size', '3');
 EOF
 

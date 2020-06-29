@@ -134,8 +134,8 @@ sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.5.0.tar.bz2
-    tar xf Nominatim-3.5.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.5.1.tar.bz2
+    tar xf Nominatim-3.5.1.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -153,7 +153,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim-3.5.0
+    cmake $USERHOME/Nominatim-3.5.1
     make
 
 # You need to create a minimal configuration file that tells nominatim

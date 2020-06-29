@@ -163,8 +163,8 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.5.0.tar.bz2
-    tar xf Nominatim-3.5.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.5.1.tar.bz2
+    tar xf Nominatim-3.5.1.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -176,7 +176,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim-3.5.0
+    cmake $USERHOME/Nominatim-3.5.1
     make
 
 #
@@ -187,10 +187,10 @@ fi                                 #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim-3.5.0/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim-3.5.1/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim-3.5.0
+    sudo restorecon -R -v $USERHOME/Nominatim-3.5.1
     sudo restorecon -R -v $USERHOME/build
 
 

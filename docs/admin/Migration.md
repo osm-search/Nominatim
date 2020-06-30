@@ -21,6 +21,18 @@ follows:
 
 The last step takes about 10 hours on the full planet.
 
+Remove one function (it will be recreated in the next step):
+
+```sql
+DROP FUNCTION create_country(hstore,character varying);
+```
+
+Finally, update all SQL functions:
+
+```sh
+./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
+```
+
 ## 3.3.0 -> 3.4.0
 
 ### Reorganisation of location_area_country table
@@ -36,6 +48,12 @@ DROP TABLE location_area_country;
 ALTER TABLE location_area_country_new RENAME TO location_area_country;
 CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry);
 CREATE INDEX idx_location_area_country_place_id ON location_area_country USING BTREE (place_id);
+```
+
+Finally, update all SQL functions:
+
+```sh
+./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
 ```
 
 ## 3.2.0 -> 3.3.0

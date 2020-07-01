@@ -526,21 +526,21 @@ class SearchDescription
         $sIndexName=$this->poiIndex();
         $bIndex = $oDB->indexExists($sIndexName);
 
-	if ($bIndex){
-	    $qstart=false;
-	    $sSQL = 'SELECT place_id FROM placex ';
+        if ($bIndex) {
+            $qstart=false;
+            $sSQL = 'SELECT place_id FROM placex ';
             if ($this->oContext->hasNearPoint()) {
-		$qstart=true;
+                $qstart=true;
                 $sSQL .= ' WHERE '.$this->oContext->withinSQL('centroid');
             } elseif ($this->oContext->bViewboxBounded) {
-		$qstart=true;
+                $qstart=true;
                 $sSQL .= ' WHERE ST_Contains('.$this->oContext->sqlViewboxSmall.', centroid)';
             }
 
             if ($this->oContext->sqlCountryList) {
-                $sSQL .= ($qstart ? " AND " : "WHERE ").' country_code in '.$this->oContext->sqlCountryList;
+                $sSQL .= ($qstart ? ' AND ' : 'WHERE ').' country_code in '.$this->oContext->sqlCountryList;
             }
-	    $sSQL .= " AND class = '".$this->sClass."' AND type = '".$this->sType."'";
+            $sSQL .= " AND class = '".$this->sClass."' AND type = '".$this->sType."'";
 
             if ($this->oContext->sqlViewboxCentre) {
                 $sSQL .= ' ORDER BY ST_Distance(';
@@ -865,7 +865,7 @@ class SearchDescription
         if ($this->iOperator == Operator::TYPE || $this->iOperator == Operator::NEAR) {
             $sClassTable = $this->poiTable();
             $bCacheTable = $oDB->tableExists($sClassTable);
-	    $sIndexName=$this->poiIndex();
+            $sIndexName=$this->poiIndex();
             $bIndex = $oDB->indexExists($sIndexName);
 
             $sSQL = "SELECT min(rank_search) FROM placex WHERE place_id in ($sPlaceIDs)";
@@ -931,7 +931,7 @@ class SearchDescription
                     }
 
 //                    $sSQL .= $this->oContext->excludeSQL(' AND l.place_id');
-		    $sSQL .= " AND l.class = '".$this->sClass."' AND l.type = '".$this->sType."'";
+                    $sSQL .= " AND l.class = '".$this->sClass."' AND l.type = '".$this->sType."'";
                     $sSQL .= 'limit 300) i ';
                     if ($sOrderBySQL) {
                         $sSQL .= 'order by order_term asc';
@@ -987,8 +987,9 @@ class SearchDescription
         return 'place_classtype_'.$this->sClass.'_'.$this->sType;
     }
 
-    private function poiIndex() {
-        return indexClassType($this->sClass,$this->sType);
+    private function poiIndex()
+    {
+        return indexClassType($this->sClass, $this->sType);
     }
     
 

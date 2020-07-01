@@ -12,6 +12,7 @@ $aCMDOptions
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
    array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
+   array('languages', '', 0, 1, 0, 0, 'string', 'list of languages '),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
@@ -21,9 +22,13 @@ if ($aCMDResult['wiki-import']) {
     $oNormalizer = Transliterator::createFromRules(CONST_Term_Normalization_Rules);
     $aPairs = array();
 
-    $sLanguageIn = CONST_Languages ? CONST_Languages :
-        ('af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
-         'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi');
+    $sLanguageIn =
+        $aCMDResult['languages'] ?
+            $aCMDResult['languages'] :
+            CONST_languages ?
+                CONST_languages:
+                ('af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
+                'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi');
 
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
         $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
@@ -108,12 +113,9 @@ if ($aCMDResult['wiki-import']) {
             . ' ON placex'
             . " WHERE class = '%s' AND type = '%s'"
             . ";\n",
-            pg_escape_string(indexClassType($aPair[0],$aPair[1])),
+            pg_escape_string(indexClassType($aPair[0], §$aPair[1])),
             pg_escape_string($aPair[0]),
             pg_escape_string($aPair[1])
         );
-
     }
-
 }
-

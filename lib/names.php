@@ -1,4 +1,5 @@
 <?php
-    function indexClassType($Class,$Type) {
-        return 'idx_place_classtype_'.$Class.'_'.$Type;
-    }
+function indexClassType($Class, $Type)
+{
+    return 'idx_place_classtype_'.$Class.'_'.$Type;
+}

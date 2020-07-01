@@ -44,6 +44,7 @@ $aCMDOptions
    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
+   array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website (EXPERIMENTAL)'),
   );
 
 // $aCMDOptions passed to getCmdOpt by reference
@@ -76,15 +77,17 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $oSetup->createDB();
 }
 
-$oSetup->connect();
+if (!$aCMDResult['setup-website']) {
+    $oSetup->connect();
+    // Try accessing the C module, so we know early if something is wrong
+    checkModulePresence(); // raises exception on failure
+}
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->setupDB();
 }
 
-// Try accessing the C module, so we know early if something is wrong
-checkModulePresence(); // raises exception on failure
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
@@ -151,6 +154,11 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->createCountryNames($aCMDResult);
+}
+
+if ($aCMDResult['setup-website'] || $aCMDResult['all']) {
+    $bDidSomething = true;
+    $oSetup->setupWebsite();
 }
 
 // ******************************************************

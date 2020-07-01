@@ -467,7 +467,7 @@ DECLARE
   placegeom GEOMETRY;
   geom GEOMETRY;
   diameter FLOAT;
-  rank INTEGER;
+  rank SMALLINT;
 BEGIN
   UPDATE placex SET indexed_status = 2 WHERE place_id = placeid;
   SELECT geometry, rank_search FROM placex WHERE place_id = placeid INTO placegeom, rank;

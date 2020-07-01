@@ -3,17 +3,7 @@ This directory contains functional and unit tests for the Nominatim API.
 Prerequisites
 =============
 
- * Python 3 (https://www.python.org/)
- * behave test framework >= 1.2.5 (https://github.com/behave/behave)
- * nose (https://nose.readthedocs.org)
- * pytidylib (http://countergram.com/open-source/pytidylib)
- * psycopg2 (http://initd.org/psycopg/)
-
-To get the prerequisites on a a fresh Ubuntu LTS 16.04 run:
-
-     [sudo] apt-get install python3-dev python3-pip python3-psycopg2 python3-tidylib phpunit php-cgi
-     pip3 install --user behave nose
-
+See `docs/develop/Setup.md`
 
 Overall structure
 =================
@@ -106,34 +96,47 @@ be documented.
 ### API Tests (`test/bdd/api`)
 
 These tests are meant to test the different API endpoints and their parameters.
-They require a preimported test database, which consists of the import of a
-planet extract. A precompiled PBF with the necessary data can be downloaded from
-https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
+They require a to import several datasets into a test database. You need at
+least 2GB RAM and 10GB discspace.
 
-You need at least 2GB RAM and 10GB discspace.
 
-The polygons defining the extract can be found in the test/testdb
-directory. There is also a reduced set of wikipedia data for this extract,
-which you need to import as well. For Tiger tests the data of South Dakota
-is required. Get the Tiger files `46*`.
+1. Fetch the OSM planet extract (200MB). See end of document how it got created.
 
+    ```
     cd Nominatim/data
+    mkdir testdb
+    cd testdb
+    wget https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
+    ```
+
+2. Fetch `46*` (South Dakota) Tiger data
+
+    ```
+    cd Nominatim/data/testdb
     wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
     tar xvf tiger2018-nominatim-preprocessed.tar.gz --wildcards --no-anchored '46*'
     rm tiger2018-nominatim-preprocessed.tar.gz
+    ```
 
-The official test dataset is derived from the 180924 planet. Newer
-planets are likely to work as well but you may see isolated test
-failures where the data has changed. To recreate the input data
-for the test database run:
+3. Adapt build/settings/local.php settings:
 
-    wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
-    osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
-
-Before importing make sure to add the following to your local settings:
-
-    @define('CONST_Database_DSN', 'pgsql://@/test_api_nominatim');
+	```
+    @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
+    @define('CONST_Use_US_Tiger_Data', true);
+    @define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/testdb');
     @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
+    ```
+
+4. Import
+
+    ```
+	LOGFILE=/tmp/nominatim-testdb.$$.log
+    dropdb --if-exists test_api_nominatim
+    ./utils/setup.php --all --osm-file ../Nominatim/data/testdb/nominatim-api-testdb.pbf 2>&1 | tee $LOGFILE
+    ./utils/specialphrases.php --wiki-import > specialphrases.sql
+    psql -d test_api_nominatim -f specialphrases.sql 2>&1 | tee -a $LOGFILE
+    ./utils/setup.php --import-tiger-data 2>&1 | tee -a $LOGFILE
+    ```
 
 #### Code Coverage
 
@@ -168,3 +171,16 @@ needs superuser rights for postgres.
 
 These tests check that data is imported correctly into the place table. They
 use the same template database as the Indexing tests, so the same remarks apply.
+
+
+
+How the test database extract was generated
+-------------------------------------------
+The official test dataset was derived from the 180924 planet (note: such
+file no longer exists at https://planet.openstreetmap.org/planet/2018/).
+Newer planets are likely to work as well but you may see isolated test
+failures where the data has changed. To recreate the input data
+for the test database run:
+
+    wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
+    osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf

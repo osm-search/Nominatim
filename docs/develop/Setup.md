@@ -12,6 +12,12 @@ move fast. We try to test against the newest stable PHP release and
 PHPUnit version even though we expect many Nominatim users will install
 older version on their production servers.
 
+ * Python 3 (https://www.python.org/)
+ * behave test framework >= 1.2.5 (https://github.com/behave/behave)
+ * nose (https://nose.readthedocs.org)
+ * pytidylib (http://countergram.com/open-source/pytidylib)
+ * psycopg2 (http://initd.org/psycopg/)
+
 #### Ubuntu 20
 
     sudo apt-get install -y phpunit php-codesniffer php-cgi

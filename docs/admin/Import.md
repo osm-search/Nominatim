@@ -247,7 +247,7 @@ entire US adds about 10GB to your database.
         wget https://nominatim.org/data/tiger2019-nominatim-preprocessed.tar.gz
         tar xf tiger2019-nominatim-preprocessed.tar.gz
 
-    `data-source/us-tiger/README.md` explains how the data got preprocessed.
+    `data-source/overview.md` explains how the data got preprocessed.
 
   2. Import the data into your Nominatim database:
 

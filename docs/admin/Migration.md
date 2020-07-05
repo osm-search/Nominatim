@@ -6,6 +6,18 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
+## 3.5.0 -> master
+
+### Switching to dotenv
+
+As part of the work changing the configuration format, the configuration for
+the website is now using a separate configuration file. To create the
+configuration file, run the following command after updating:
+
+```sh
+./utils/setup.php --setup-website
+```
+
 ## 3.4.0 -> 3.5.0
 
 ### New Wikipedia/Wikidata importance tables

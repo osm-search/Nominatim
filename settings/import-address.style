@@ -6,7 +6,8 @@
     }
 },
 {
-    "keys" : ["name:prefix", "name:suffix", "name:botanical", "*wikidata"],
+    "keys" : ["name:prefix", "name:suffix", "name:prefix:*", "name:suffix:*",
+              "name:botanical", "*wikidata"],
     "values" : {
         "" : "skip"
     }

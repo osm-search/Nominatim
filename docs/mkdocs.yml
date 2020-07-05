@@ -28,7 +28,7 @@ pages:
         - 'Place Ranking' : 'develop/Ranking.md'
         - 'Postcodes' : 'develop/Postcodes.md'
         - 'Setup Test Environment' : 'develop/Setup.md'
-        - 'Documentation' : 'develop/Documentation.md'
+        - 'Building Documentation' : 'develop/Documentation.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':
         - 'Installation on CentOS 7' : 'appendix/Install-on-Centos-7.md'

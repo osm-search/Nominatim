@@ -5,7 +5,6 @@
 
 configure_file(mkdocs.yml ../mkdocs.yml)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/appendix)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data-sources)
 
 set (DOC_SOURCES
      admin
@@ -14,7 +13,6 @@ set (DOC_SOURCES
      index.md
      extra.css
      styles.css
-     data-sources/overview.md
     )
 
 foreach (src ${DOC_SOURCES})

@@ -707,9 +707,8 @@ class SetupFunctions
 @define('CONST_BasePath', '".CONST_BasePath."');
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 
-@define('CONST_Debug', ". (CONST_Debug? 'true' : 'false').");
 @define('CONST_Database_DSN', '".CONST_Database_DSN."'); // or add ;host=...;port=...;user=...;password=...
-@define('CONST_Default_Language', ".(CONST_Default_Language ? 'true' : 'false').");
+@define('CONST_Default_Language', ".(CONST_Default_Language ? ("'".CONST_Default_Language."'") : 'false').");
 @define('CONST_Default_Lat', ".CONST_Default_Lat.");
 @define('CONST_Default_Lon', ".CONST_Default_Lon.");
 @define('CONST_Default_Zoom', ".CONST_Default_Zoom.");

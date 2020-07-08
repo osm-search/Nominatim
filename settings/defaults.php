@@ -3,10 +3,8 @@
 @define('CONST_InstallPath', '@CMAKE_BINARY_DIR@');
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_InstallPath.'/settings/local.php');
-if (isset($_GET['debug']) && $_GET['debug']) @define('CONST_Debug', true);
 
 // General settings
-@define('CONST_Debug', false);
 @define('CONST_Database_DSN', 'pgsql:dbname=nominatim'); // or add ;host=...;port=...;user=...;password=...
 @define('CONST_Database_Web_User', 'www-data');
 @define('CONST_Database_Module_Path', CONST_InstallPath.'/module');

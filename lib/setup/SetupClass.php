@@ -701,7 +701,7 @@ class SetupFunctions
      */
     public function setupWebsite()
     {
-        $rOutputFile = fopen(CONST_InstallPath.'/website/settings-frontend.php', 'w');
+        $rOutputFile = fopen(CONST_InstallPath.'/settings/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
 @define('CONST_BasePath', '".CONST_BasePath."');

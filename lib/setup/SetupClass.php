@@ -729,7 +729,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
 @define('CONST_Website_BaseURL', '".CONST_Website_BaseURL."');
 ");
-        info(CONST_InstallPath.'/website/settings-frontend.php has been set up successfully');
+        info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
     }
 
     private function removeFlatnodeFile()

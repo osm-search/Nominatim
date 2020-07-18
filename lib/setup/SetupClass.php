@@ -701,7 +701,7 @@ class SetupFunctions
      */
     public function setupWebsite()
     {
-        $rOutputFile = fopen(CONST_InstallPath.'/website/settings-frontend.php', 'w');
+        $rOutputFile = fopen(CONST_InstallPath.'/settings/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
 @define('CONST_BasePath', '".CONST_BasePath."');
@@ -715,7 +715,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Map_Tile_URL', '".CONST_Map_Tile_URL."');
 @define('CONST_Map_Tile_Attribution', '".CONST_Map_Tile_Attribution."'); // Set if tile source isn't osm.org
 @define('CONST_Log_DB', ".(CONST_Log_DB ? 'true' : 'false').");
-@define('CONST_Log_File', ".(CONST_Log_File ? 'true' : 'false').");
+@define('CONST_Log_File', ".(CONST_Log_File ? ("'".CONST_Log_File."'")  : 'false').");
 @define('CONST_Max_Word_Frequency', '".CONST_Max_Word_Frequency."');
 @define('CONST_NoAccessControl', ".CONST_NoAccessControl.");
 @define('CONST_Places_Max_ID_count', ".CONST_Places_Max_ID_count.");

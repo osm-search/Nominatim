@@ -1,4 +1,9 @@
 [
+{   "keys" : ["wikipedia", "wikipedia:*", "wikidata"],
+    "values" : {
+        "" : "extra"
+    }
+},
 {
     "keys" : ["name:prefix", "name:suffix", "name:botanical", "*wikidata"],
     "values" : {

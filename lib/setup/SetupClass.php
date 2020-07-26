@@ -108,17 +108,11 @@ class SetupFunctions
         if ($result != 0) fail('Error executing external command: '.$oCmd->escapedCmd());
     }
 
-    public function connect()
-    {
-        $this->oDB = new \Nominatim\DB();
-        $this->oDB->connect();
-    }
-
     public function setupDB()
     {
         info('Setup DB');
 
-        $fPostgresVersion = $this->oDB->getPostgresVersion();
+        $fPostgresVersion = $this->db()->getPostgresVersion();
         echo 'Postgres version found: '.$fPostgresVersion."\n";
 
         if ($fPostgresVersion < 9.03) {
@@ -128,7 +122,7 @@ class SetupFunctions
         $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS hstore');
         $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
 
-        $fPostgisVersion = $this->oDB->getPostgisVersion();
+        $fPostgisVersion = $this->db()->getPostgisVersion();
         echo 'Postgis version found: '.$fPostgisVersion."\n";
 
         if ($fPostgisVersion < 2.2) {
@@ -136,7 +130,7 @@ class SetupFunctions
             exit(1);
         }
 
-        $i = $this->oDB->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'");
+        $i = $this->db()->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'");
         if ($i == 0) {
             echo "\nERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
             echo "\n          createuser ".CONST_Database_Web_User."\n\n";
@@ -223,7 +217,7 @@ class SetupFunctions
         $oCmd->addParams($sOSMFile);
         $oCmd->run();
 
-        if (!$this->sIgnoreErrors && !$this->oDB->getRow('select * from place limit 1')) {
+        if (!$this->sIgnoreErrors && !$this->db()->getRow('select * from place limit 1')) {
             fail('No Data');
         }
 
@@ -257,7 +251,7 @@ class SetupFunctions
         }
 
         $oAlParser = new AddressLevelParser(CONST_Address_Level_Config);
-        $oAlParser->createTable($this->oDB, 'address_levels');
+        $oAlParser->createTable($this->db(), 'address_levels');
     }
 
     public function createTableTriggers()
@@ -305,40 +299,42 @@ class SetupFunctions
     {
         info('Drop old Data');
 
-        $this->oDB->exec('TRUNCATE word');
+        $oDB = $this->db();
+
+        $oDB->exec('TRUNCATE word');
         echo '.';
-        $this->oDB->exec('TRUNCATE placex');
+        $oDB->exec('TRUNCATE placex');
         echo '.';
-        $this->oDB->exec('TRUNCATE location_property_osmline');
+        $oDB->exec('TRUNCATE location_property_osmline');
         echo '.';
-        $this->oDB->exec('TRUNCATE place_addressline');
+        $oDB->exec('TRUNCATE place_addressline');
         echo '.';
-        $this->oDB->exec('TRUNCATE location_area');
+        $oDB->exec('TRUNCATE location_area');
         echo '.';
         if (!$this->dbReverseOnly()) {
-            $this->oDB->exec('TRUNCATE search_name');
+            $oDB->exec('TRUNCATE search_name');
             echo '.';
         }
-        $this->oDB->exec('TRUNCATE search_name_blank');
+        $oDB->exec('TRUNCATE search_name_blank');
         echo '.';
-        $this->oDB->exec('DROP SEQUENCE seq_place');
+        $oDB->exec('DROP SEQUENCE seq_place');
         echo '.';
-        $this->oDB->exec('CREATE SEQUENCE seq_place start 100000');
+        $oDB->exec('CREATE SEQUENCE seq_place start 100000');
         echo '.';
 
         $sSQL = 'select distinct partition from country_name';
-        $aPartitions = $this->oDB->getCol($sSQL);
+        $aPartitions = $oDB->getCol($sSQL);
 
         if (!$this->bNoPartitions) $aPartitions[] = 0;
         foreach ($aPartitions as $sPartition) {
-            $this->oDB->exec('TRUNCATE location_road_'.$sPartition);
+            $oDB->exec('TRUNCATE location_road_'.$sPartition);
             echo '.';
         }
 
         // used by getorcreate_word_id to ignore frequent partial words
         $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
         $sSQL .= '$$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
-        $this->oDB->exec($sSQL);
+        $oDB->exec($sSQL);
         echo ".\n";
 
         // pre-create the word list
@@ -415,13 +411,13 @@ class SetupFunctions
         info('Reanalysing database');
         $this->pgsqlRunScript('ANALYSE');
 
-        $sDatabaseDate = getDatabaseDate($this->oDB);
-        $this->oDB->exec('TRUNCATE import_status');
+        $sDatabaseDate = getDatabaseDate($oDB);
+        $oDB->exec('TRUNCATE import_status');
         if (!$sDatabaseDate) {
             warn('could not determine database date.');
         } else {
             $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
-            $this->oDB->exec($sSQL);
+            $oDB->exec($sSQL);
             echo "Latest data imported from $sDatabaseDate.\n";
         }
     }
@@ -499,7 +495,7 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
-        $this->oDB->exec('TRUNCATE location_postcode');
+        $this->db()->exec('TRUNCATE location_postcode');
 
         $sSQL  = 'INSERT INTO location_postcode';
         $sSQL .= ' (place_id, indexed_status, country_code, postcode, geometry) ';
@@ -510,7 +506,7 @@ class SetupFunctions
         $sSQL .= " WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'";
         $sSQL .= '       AND geometry IS NOT null';
         $sSQL .= ' GROUP BY country_code, pc';
-        $this->oDB->exec($sSQL);
+        $this->db()->exec($sSQL);
 
         // only add postcodes that are not yet available in OSM
         $sSQL  = 'INSERT INTO location_postcode';
@@ -520,7 +516,7 @@ class SetupFunctions
         $sSQL .= '  FROM us_postcode WHERE postcode NOT IN';
         $sSQL .= '        (SELECT postcode FROM location_postcode';
         $sSQL .= "          WHERE country_code = 'us')";
-        $this->oDB->exec($sSQL);
+        $this->db()->exec($sSQL);
 
         // add missing postcodes for GB (if available)
         $sSQL  = 'INSERT INTO location_postcode';
@@ -529,21 +525,23 @@ class SetupFunctions
         $sSQL .= '  FROM gb_postcode WHERE postcode NOT IN';
         $sSQL .= '           (SELECT postcode FROM location_postcode';
         $sSQL .= "             WHERE country_code = 'gb')";
-        $this->oDB->exec($sSQL);
+        $this->db()->exec($sSQL);
 
         if (!$bCMDResultAll) {
             $sSQL = "DELETE FROM word WHERE class='place' and type='postcode'";
             $sSQL .= 'and word NOT IN (SELECT postcode FROM location_postcode)';
-            $this->oDB->exec($sSQL);
+            $this->db()->exec($sSQL);
         }
 
         $sSQL = 'SELECT count(getorcreate_postcode_id(v)) FROM ';
         $sSQL .= '(SELECT distinct(postcode) as v FROM location_postcode) p';
-        $this->oDB->exec($sSQL);
+        $this->db()->exec($sSQL);
     }
 
     public function index($bIndexNoanalyse)
     {
+        checkModulePresence(); // raises exception on failure
+
         $oBaseCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
                     ->addParams('--database', $this->aDSNInfo['database'])
                     ->addParams('--port', $this->aDSNInfo['port'])
@@ -592,7 +590,7 @@ class SetupFunctions
 
         info('Index postcodes');
         $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
-        $this->oDB->exec($sSQL);
+        $this->db()->exec($sSQL);
     }
 
     public function createSearchIndices()
@@ -601,11 +599,11 @@ class SetupFunctions
 
         $sSQL = 'SELECT relname FROM pg_class, pg_index ';
         $sSQL .= 'WHERE pg_index.indisvalid = false AND pg_index.indexrelid = pg_class.oid';
-        $aInvalidIndices = $this->oDB->getCol($sSQL);
+        $aInvalidIndices = $this->db()->getCol($sSQL);
 
         foreach ($aInvalidIndices as $sIndexName) {
             info("Cleaning up invalid index $sIndexName");
-            $this->oDB->exec("DROP INDEX $sIndexName;");
+            $this->db()->exec("DROP INDEX $sIndexName;");
         }
 
         $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
@@ -675,7 +673,7 @@ class SetupFunctions
                        );
 
         $aDropTables = array();
-        $aHaveTables = $this->oDB->getListOfTables();
+        $aHaveTables = $this->db()->getListOfTables();
 
         foreach ($aHaveTables as $sTable) {
             $bFound = false;
@@ -732,6 +730,24 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
         info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
     }
 
+    /**
+     * Return the connection to the database.
+     *
+     * @return Database object.
+     *
+     * Creates a new connection if none exists yet. Otherwise reuses the
+     * already established connection.
+     */
+    private function db()
+    {
+        if (is_null($this->oDB)) {
+            $this->oDB = new \Nominatim\DB();
+            $this->oDB->connect();
+        }
+
+        return $this->oDB;
+    }
+
     private function removeFlatnodeFile()
     {
         if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
@@ -761,13 +777,13 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
         $sTemplate .= file_get_contents($sBasePath.'importance.sql');
         $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
         $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
-        if ($this->oDB->tableExists('place')) {
+        if ($this->db()->tableExists('place')) {
             $sTemplate .= file_get_contents($sBasePath.'place_triggers.sql');
         }
-        if ($this->oDB->tableExists('placex')) {
+        if ($this->db()->tableExists('placex')) {
             $sTemplate .= file_get_contents($sBasePath.'placex_triggers.sql');
         }
-        if ($this->oDB->tableExists('location_postcode')) {
+        if ($this->db()->tableExists('location_postcode')) {
             $sTemplate .= file_get_contents($sBasePath.'postcode_triggers.sql');
         }
         $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
@@ -796,7 +812,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
     private function pgsqlRunPartitionScript($sTemplate)
     {
         $sSQL = 'select distinct partition from country_name';
-        $aPartitions = $this->oDB->getCol($sSQL);
+        $aPartitions = $this->db()->getCol($sSQL);
         if (!$this->bNoPartitions) $aPartitions[] = 0;
 
         preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
@@ -902,13 +918,11 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
      * @param string $sName Name of table to remove.
      *
      * @return null
-     *
-     * @pre connect() must have been called.
      */
     private function dropTable($sName)
     {
         if ($this->bVerbose) echo "Dropping table $sName\n";
-        $this->oDB->deleteTable($sName);
+        $this->db()->deleteTable($sName);
     }
 
     /**
@@ -918,6 +932,6 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
      */
     private function dbReverseOnly()
     {
-        return !($this->oDB->tableExists('search_name'));
+        return !($this->db()->tableExists('search_name'));
     }
 }

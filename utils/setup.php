@@ -77,17 +77,10 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $oSetup->createDB();
 }
 
-if (!$aCMDResult['setup-website']) {
-    $oSetup->connect();
-    // Try accessing the C module, so we know early if something is wrong
-    checkModulePresence(); // raises exception on failure
-}
-
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
     $oSetup->setupDB();
 }
-
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;

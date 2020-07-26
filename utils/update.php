@@ -151,7 +151,6 @@ if ($aResult['init-updates']) {
                                       'enable-diff-updates' => true,
                                       'verbose' => $aResult['verbose']
                                      ));
-        $cSetup->connect();
         $cSetup->createFunctions();
     }
 

@@ -6,7 +6,7 @@ Feature: Address computation
     Scenario: Roads crossing boundaries should contain both states
         Given the grid
             | 1 |   |   | 2 |   | 3 |
-            |   | 7 |   | 8 |   |   |
+            |   | 7 |   |   | 8 |   |
             | 4 |   |   | 5 |   | 6 |
         And the named places
             | osm | class   | type | geometry |

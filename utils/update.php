@@ -103,7 +103,9 @@ $oIndexCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
              ->addParams('--database', $aDSNInfo['database'])
              ->addParams('--port', $aDSNInfo['port'])
              ->addParams('--threads', $aResult['index-instances']);
-
+if (!$aResult['quiet']) {
+    $oIndexCmd->addParams('--verbose');
+}
 if ($aResult['verbose']) {
     $oIndexCmd->addParams('--verbose');
 }

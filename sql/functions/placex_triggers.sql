@@ -588,7 +588,15 @@ BEGIN
                             NEW.class, NEW.type, NEW.admin_level,
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
-
+  -- We must always increase the address level relative to the admin boundary.
+  IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
+    parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
+    IF parent_address_level >= NEW.rank_address THEN
+      NEW.rank_address := parent_address_level + 2;
+    END IF;
+  ELSE
+    parent_address_level := 3;
+  END IF;
 
   --DEBUG: RAISE WARNING 'Copy over address tags';
   -- housenumber is a computed field, so start with an empty value
@@ -785,8 +793,6 @@ BEGIN
         NEW.centroid := centroid;
     END IF;
 
-    -- Use the address rank of the linked place, if it has one
-    parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
     --DEBUG: RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;
     IF location.rank_address > parent_address_level
        and location.rank_address < 26

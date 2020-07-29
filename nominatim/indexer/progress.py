@@ -21,7 +21,7 @@ class ProgressLogger(object):
         self.total_places = total
         self.done_places = 0
         self.rank_start_time = datetime.now()
-        self.next_info = 50 if log.isEnabledFor(logging.INFO) else total + 1
+        self.next_info = 100 if log.isEnabledFor(logging.INFO) else total + 1
 
     def add(self, num=1):
         """ Mark `num` places as processed. Print a log message if the

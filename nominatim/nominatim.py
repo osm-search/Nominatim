@@ -234,31 +234,22 @@ class Indexer(object):
         done_tuples = 0
         rank_start_time = datetime.now()
 
-        sector_sql = obj.sql_sector_places()
-        index_sql = obj.sql_index_place()
         min_grouped_tuples = total_tuples - len(self.threads) * 1000
 
         next_info = 100 if log.isEnabledFor(logging.INFO) else total_tuples + 1
 
+        pcur = self.conn.cursor()
+
         for r in cur:
             sector = r[0]
-
-            # Should we do the remaining ones together?
-            do_all = done_tuples > min_grouped_tuples
-
-            pcur = self.conn.cursor(name='places')
-
-            if do_all:
-                pcur.execute(obj.sql_nosector_places())
-            else:
-                pcur.execute(sector_sql, (sector, ))
+            pcur.execute(obj.sql_sector_places(), (sector, ))
 
             for place in pcur:
                 place_id = place[0]
                 log.debug("Processing place {}".format(place_id))
                 thread = next(next_thread)
 
-                thread.perform(index_sql, (place_id,))
+                thread.perform(obj.sql_index_place(), (place_id,))
                 done_tuples += 1
 
                 if done_tuples >= next_info:
@@ -271,11 +262,7 @@ class Indexer(object):
                                    (total_tuples - done_tuples)/tuples_per_sec))
                     next_info += int(tuples_per_sec)
 
-            pcur.close()
-
-            if do_all:
-                break
-
+        pcur.close()
         cur.close()
 
         for t in self.threads:

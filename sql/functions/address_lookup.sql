@@ -272,7 +272,7 @@ BEGIN
   END IF;
 
   IF searchhousenumber IS NOT NULL THEN
-    location := ROW(in_place_id, null, null, hstore('ref', searchhousenumber),
+    location := ROW(null, null, null, hstore('ref', searchhousenumber),
                     'place', 'house_number', null, null, true, true, 28, 0)::addressline;
     RETURN NEXT location;
   END IF;

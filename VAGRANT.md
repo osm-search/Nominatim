@@ -160,9 +160,9 @@ You can configure/download other Vagrant boxes from [https://app.vagrantup.com/b
 
 Let's say you have a Postgres database named `nominatim_it` on server `your-server.com` and port `5432`. The Postgres username is `postgres`. You can edit `settings/local.php` and point Nominatim to it.
 
-    pgsql://postgres@your-server.com:5432/nominatim_it
+    pgsql:host=your-server.com;port=5432;user=postgres;dbname=nominatim_it
     
-No data import necessary or restarting necessary.
+No data import or restarting necessary.
 
 If the Postgres installation is behind a firewall, you can try
 

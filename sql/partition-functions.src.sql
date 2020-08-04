@@ -10,6 +10,28 @@ CREATE TYPE nearfeaturecentr AS (
   centroid GEOMETRY
 );
 
+        -- feature intersects geoemtry
+        -- for areas and linestrings they must touch at least along a line
+CREATE OR REPLACE FUNCTION is_relevant_geometry(de9im TEXT, geom_type TEXT)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+  IF substring(de9im from 1 for 2) != 'FF' THEN
+    RETURN TRUE;
+  END IF;
+
+  IF geom_type = 'ST_Point' THEN
+    RETURN substring(de9im from 4 for 1) = '0';
+  END IF;
+
+  IF geom_type in ('ST_LineString', 'ST_MultiLineString') THEN
+    RETURN substring(de9im from 4 for 1) = '1';
+  END IF;
+
+  RETURN substring(de9im from 4 for 1) = '2';
+END
+$$ LANGUAGE plpgsql IMMUTABLE;
+
 create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER, isin_tokens INT[]) RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
@@ -20,7 +42,8 @@ BEGIN
     FOR r IN 
       SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid
       FROM location_area_large_-partition-
-      WHERE ST_Intersects(geometry, feature)
+      WHERE geometry && feature
+        AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
         AND rank_search < maxrank AND rank_address < maxrank
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,

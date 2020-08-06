@@ -534,6 +534,7 @@ DECLARE
 
   centroid GEOMETRY;
   parent_address_level SMALLINT;
+  place_address_level SMALLINT;
 
   addr_street TEXT;
   addr_place TEXT;
@@ -827,6 +828,17 @@ BEGIN
        (NEW.importance is null or NEW.importance < linked_importance)
     THEN
       NEW.importance = linked_importance;
+    END IF;
+  ELSE
+    -- No linked place? As a last resort check if the boundary is tagged with
+    -- a place type and adapt the rank address.
+    IF NEW.rank_address > 0 and NEW.extratags ? 'place' THEN
+      SELECT address_rank INTO place_address_level
+        FROM compute_place_rank(NEW.country_code, 'A', 'place',
+                                NEW.extratags->'place', 0::SMALLINT, False, null);
+      IF place_address_level > parent_address_level THEN
+        NEW.rank_address := place_address_level;
+      END IF;
     END IF;
   END IF;
 

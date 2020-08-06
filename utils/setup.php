@@ -38,13 +38,12 @@ $aCMDOptions
    array('disable-token-precalc', '', 0, 1, 0, 0, 'bool', 'Disable name precalculation (EXPERT)'),
    array('import-tiger-data', '', 0, 1, 0, 0, 'bool', 'Import tiger data (not included in \'all\')'),
    array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Calculate postcode centroids'),
-   array('osmosis-init', '', 0, 1, 0, 0, 'bool', 'Generate default osmosis configuration'),
    array('index', '', 0, 1, 0, 0, 'bool', 'Index the data'),
    array('index-noanalyse', '', 0, 1, 0, 0, 'bool', 'Do not perform analyse operations during index (EXPERT)'),
    array('create-search-indices', '', 0, 1, 0, 0, 'bool', 'Create additional indices required for search and update'),
    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
-   array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website (EXPERIMENTAL)'),
+   array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website'),
   );
 
 // $aCMDOptions passed to getCmdOpt by reference

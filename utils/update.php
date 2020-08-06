@@ -39,11 +39,9 @@ $aCMDOptions
    array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
    array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
 
-   array('deduplicate', '', 0, 1, 0, 0, 'bool', 'Deduplicate tokens'),
    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
    array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
-   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances'),
-   array('no-npi', '', 0, 1, 0, 0, 'bool', '(obsolete)'),
+   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances')
   );
 
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
@@ -269,78 +267,6 @@ if ($bHaveDiff) {
     $iRet = $oCMD->run();
     if ($iRet) {
         fail("osm2pgsql exited with error level $iRet\n");
-    }
-}
-
-if ($aResult['deduplicate']) {
-    $oDB = new Nominatim\DB();
-    $oDB->connect();
-
-    if ($oDB->getPostgresVersion() < 9.3) {
-        fail('ERROR: deduplicate is only currently supported in postgresql 9.3');
-    }
-
-    $sSQL = 'select partition from country_name order by country_code';
-    $aPartitions = $oDB->getCol($sSQL);
-    $aPartitions[] = 0;
-
-    // we don't care about empty search_name_* partitions, they can't contain mentions of duplicates
-    foreach ($aPartitions as $i => $sPartition) {
-        $sSQL = 'select count(*) from search_name_'.$sPartition;
-        $nEntries = $oDB->getOne($sSQL);
-        if ($nEntries == 0) {
-            unset($aPartitions[$i]);
-        }
-    }
-
-    $sSQL = "select word_token,count(*) from word where substr(word_token, 1, 1) = ' '";
-    $sSQL .= ' and class is null and type is null and country_code is null';
-    $sSQL .= ' group by word_token having count(*) > 1 order by word_token';
-    $aDuplicateTokens = $oDB->getAll($sSQL);
-    foreach ($aDuplicateTokens as $aToken) {
-        if (trim($aToken['word_token']) == '' || trim($aToken['word_token']) == '-') continue;
-        echo 'Deduping '.$aToken['word_token']."\n";
-        $sSQL = 'select word_id,';
-        $sSQL .= ' (select count(*) from search_name where nameaddress_vector @> ARRAY[word_id]) as num';
-        $sSQL .= " from word where word_token = '".$aToken['word_token'];
-        $sSQL .= "' and class is null and type is null and country_code is null order by num desc";
-        $aTokenSet = $oDB->getAll($sSQL);
-
-        $aKeep = array_shift($aTokenSet);
-        $iKeepID = $aKeep['word_id'];
-
-        foreach ($aTokenSet as $aRemove) {
-            $sSQL = 'update search_name set';
-            $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.'),';
-            $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
-            $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-            $oDB->exec($sSQL);
-
-            $sSQL = 'update search_name set';
-            $sSQL .= ' nameaddress_vector = array_replace(nameaddress_vector,'.$aRemove['word_id'].','.$iKeepID.')';
-            $sSQL .= ' where nameaddress_vector @> ARRAY['.$aRemove['word_id'].']';
-            $oDB->exec($sSQL);
-
-            $sSQL = 'update location_area_country set';
-            $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
-            $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-            $oDB->exec($sSQL);
-
-            foreach ($aPartitions as $sPartition) {
-                $sSQL = 'update search_name_'.$sPartition.' set';
-                $sSQL .= ' name_vector = array_replace(name_vector,'.$aRemove['word_id'].','.$iKeepID.')';
-                $sSQL .= ' where name_vector @> ARRAY['.$aRemove['word_id'].']';
-                $oDB->exec($sSQL);
-
-                $sSQL = 'update location_area_country set';
-                $sSQL .= ' keywords = array_replace(keywords,'.$aRemove['word_id'].','.$iKeepID.')';
-                $sSQL .= ' where keywords @> ARRAY['.$aRemove['word_id'].']';
-                $oDB->exec($sSQL);
-            }
-
-            $sSQL = 'delete from word where word_id = '.$aRemove['word_id'];
-            $oDB->exec($sSQL);
-        }
     }
 }
 

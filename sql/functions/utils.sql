@@ -237,7 +237,7 @@ BEGIN
     IF word_ids is not null THEN
       parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent.place_id;
+        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent_place_id;
         RETURN parent_place_id;
       END IF;
     END IF;
@@ -249,7 +249,7 @@ BEGIN
     IF word_ids is not null THEN
       parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent.place_id;
+        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent_place_id;
         RETURN parent_place_id;
       END IF;
     END IF;
@@ -322,7 +322,7 @@ BEGIN
 
   ELSEIF ST_GeometryType(geometry) = 'ST_Point' THEN
     radius := near_feature_rank_distance(rank_search);
-    --DEBUG: RAISE WARNING 'adding % diameter %', place_id, diameter;
+    --DEBUG: RAISE WARNING 'adding % radius %', place_id, radius;
 
     -- Create a bounding box with an extent computed from the radius (in meters).
     secgeo := ST_Envelope(ST_Collect(

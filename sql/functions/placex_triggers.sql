@@ -31,7 +31,6 @@ BEGIN
     LOOP
       FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
         IF location.members[i+1] = 'street' THEN
-          --DEBUG: RAISE WARNING 'node in relation %',relation;
           FOR parent IN
             SELECT place_id from placex
              WHERE osm_type = 'W' and osm_id = substring(location.members[i],2)::bigint
@@ -707,7 +706,6 @@ BEGIN
         NEW.housenumber := location.address->'housenumber';
         addr_street := location.address->'street';
         addr_place := location.address->'place';
-        --DEBUG: RAISE WARNING 'Found surrounding building % %', location.osm_type, location.osm_id;
       END LOOP;
     END IF;
 

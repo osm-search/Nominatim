@@ -91,15 +91,15 @@ Feature: Rank assignment
           | R21 | boundary | administrative | 8     |              | (0 0, 0 1, 1 1, 1 0, 0 0) |
           | R22 | boundary | administrative | 8     | suburb       | (0 0, 0 1, 1 1, 1 0, 0 0) |
         When importing
-        Then place_addressline contains
-            | object | address | cached_rank_address |
-            | R21    | R20     | 16                  |
-            | R22    | R20     | 16                  |
         Then placex contains
           | object | rank_search | rank_address |
           | R20    | 12          | 16 |
           | R21    | 16          | 18 |
           | R22    | 16          | 20 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | R21    | R20     | 16                  |
+            | R22    | R20     | 16                  |
 
     Scenario: Admin levels must not be larger than 25
         Given the named places

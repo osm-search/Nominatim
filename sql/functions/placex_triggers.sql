@@ -861,7 +861,9 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
-                                    NEW.rank_search, NEW.address,
+                                    CASE WHEN NEW.rank_address = 0
+                                      THEN NEW.rank_search ELSE NEW.rank_address END,
+                                    NEW.address,
                                     CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
                                       THEN NEW.geometry ELSE NEW.centroid END)

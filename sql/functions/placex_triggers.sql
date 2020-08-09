@@ -592,7 +592,11 @@ BEGIN
   IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
     parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
     IF parent_address_level >= NEW.rank_address THEN
-      NEW.rank_address := parent_address_level + 2;
+      IF parent_address_level >= 24 THEN
+        NEW.rank_address := 25;
+      ELSE
+        NEW.rank_address := parent_address_level + 2;
+      END IF;
     END IF;
   ELSE
     parent_address_level := 3;
@@ -836,7 +840,8 @@ BEGIN
       SELECT address_rank INTO place_address_level
         FROM compute_place_rank(NEW.country_code, 'A', 'place',
                                 NEW.extratags->'place', 0::SMALLINT, False, null);
-      IF place_address_level > parent_address_level THEN
+      IF place_address_level > parent_address_level and
+         place_address_level < 26 THEN
         NEW.rank_address := place_address_level;
       END IF;
     END IF;

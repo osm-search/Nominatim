@@ -14,17 +14,59 @@ search rank will be appear higher in the result list.
 Search ranks are not so important these days because many well-known
 places use the Wikipedia importance ranking instead.
 
+The following table gives an overview of the kind of features that Nominatim
+expects for each rank:
+
+rank   | typical place types             | extent
+-------|---------------------------------|-------
+1-3    | oceans, continents              | -
+4      | countries                       | -
+5-9    | states, regions, provinces      | -
+10-12  | counties                        | -
+13-16  | cities, municipalities, islands | 7.5 km
+17-18  | towns, boroughs                 | 4 km
+19     | villages, suburbs               | 2 km
+20     | hamlets, farms, neighbourhoods  |  1 km
+21-25  | isolated dwellings, city blocks | 500 m
+
+The extent column describes how far a feature is assumed to reach when it
+is mapped only as a point. Larger features like countries and states are usually
+available with their exact area in the OpenStreetMap data. That is why no extent
+is given.
+
 ## Address rank
 
 The address rank describes where a place shows up in an address hierarchy.
 Usually only administrative boundaries and place nodes and areas are
-eligible to be part of an address. All other objects have an address rank
-of 0.
+eligible to be part of an address. Places that should not appear in the
+address must have an address rank of 0.
 
-Note that the search rank of a place plays a role in the address computation
-as well. When collecting the places that should make up the address parts
-then only places are taken into account that have a lower address rank than
-the search rank of the base object.
+The following table gives an overview how ranks are mapped to address parts:
+
+ rank        | address part
+-------------|-------------
+ 1-3         | _unused_
+ 4           | country
+ 5-9         | state
+ 10-12       | county
+ 13-16       | city
+ 17-21       | suburb
+ 22-25       | neighbourhood
+ 26-27       | street
+ 28-30       | POI/house number
+
+The country rank 4 usually doesn't show up in the address parts of an object.
+The country is determined indirectly from the country code.
+
+Ranks 5-25 can be assigned more or less freely. They make up the major part
+of the address.
+
+The street ranks 26 and 27 are handled slightly differently. Only one object
+from these ranks shows up in an address.
+
+For POI level objects like shops, buildings or house numbers always use rank 30.
+Ranks 28 is reserved for house number interpolations. 29 is for internal use
+only.
 
 ## Rank configuration
 
@@ -84,7 +126,7 @@ Then the rank is used when no more specific value is found for the given
 key.
 
 Countries and key/value combination may appear in multiple definitions. Just
-make sure that each combination of counrty/key/value appears only once per
+make sure that each combination of country/key/value appears only once per
 file. Otherwise the import will fail with a UNIQUE INDEX constraint violation
 on import.
 

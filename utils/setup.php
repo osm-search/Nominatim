@@ -59,12 +59,6 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     checkInFile($aCMDResult['osm-file']);
 }
 
-// osmosis init is no longer supported
-if ($aCMDResult['osmosis-init']) {
-    $bDidSomething = true;
-    echo "Command 'osmosis-init' no longer available, please use utils/update.php --init-updates.\n";
-}
-
 // ******************************************************
 // instantiate Setup class
 $oSetup = new SetupFunctions($aCMDResult);

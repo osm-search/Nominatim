@@ -574,6 +574,8 @@ BEGIN
          where linked_place_id = NEW.place_id;
   -- update not necessary for osmline, cause linked_place_id does not exist
 
+  NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
+
   IF NEW.linked_place_id is not null THEN
     --DEBUG: RAISE WARNING 'place already linked to %', NEW.linked_place_id;
     RETURN NEW;
@@ -925,10 +927,14 @@ DECLARE
 BEGIN
   -- RAISE WARNING 'placex_delete % %',OLD.osm_type,OLD.osm_id;
 
-  update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
-  --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;
-  update placex set linked_place_id = null where linked_place_id = OLD.place_id;
-  --DEBUG: RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;
+  IF OLD.linked_place_id is null THEN
+    update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
+    --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;
+    update placex set linked_place_id = null where linked_place_id = OLD.place_id;
+    --DEBUG: RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;
+  ELSE
+    update placex set indexed_status = 2 where place_id = OLD.linked_place_id and indexed_status = 0;
+  END IF;
 
   IF OLD.rank_address < 30 THEN
 

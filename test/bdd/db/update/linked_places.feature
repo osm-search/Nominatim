@@ -133,3 +133,36 @@ Feature: Updates of linked places
          | object | extratags |
          | R1     | 'wikidata' : '34', 'oneway' : 'yes', 'linked_place' : 'city' |
 
+    Scenario: Remove linked_place info when linkee is removed
+        Given the places
+            | osm | class | type | name | geometry |
+            | N1  | place | city | foo  | 0 0 |
+        And the places
+            | osm | class    | type           | name | admin | geometry |
+            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+        When importing
+        Then placex contains
+            | object | extratags |
+            | R1     | 'linked_place' : 'city' |
+        When marking for delete N1
+        Then placex contains
+            | object | extratags |
+            | R1     |  |
+
+    Scenario: Update linked_place info when linkee type changes
+        Given the places
+            | osm | class | type | name | geometry |
+            | N1  | place | city | foo  | 0 0 |
+        And the places
+            | osm | class    | type           | name | admin | geometry |
+            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+        When importing
+        Then placex contains
+            | object | extratags |
+            | R1     | 'linked_place' : 'city' |
+        When updating places
+            | osm | class | type | name | geometry |
+            | N1  | place | town | foo  | 0 0 |
+        Then placex contains
+            | object | extratags |
+            | R1     | 'linked_place' : 'town' |

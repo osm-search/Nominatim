@@ -534,6 +534,7 @@ DECLARE
 
   centroid GEOMETRY;
   parent_address_level SMALLINT;
+  place_address_level SMALLINT;
 
   addr_street TEXT;
   addr_place TEXT;
@@ -591,7 +592,11 @@ BEGIN
   IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
     parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
     IF parent_address_level >= NEW.rank_address THEN
-      NEW.rank_address := parent_address_level + 2;
+      IF parent_address_level >= 24 THEN
+        NEW.rank_address := 25;
+      ELSE
+        NEW.rank_address := parent_address_level + 2;
+      END IF;
     END IF;
   ELSE
     parent_address_level := 3;
@@ -828,6 +833,18 @@ BEGIN
     THEN
       NEW.importance = linked_importance;
     END IF;
+  ELSE
+    -- No linked place? As a last resort check if the boundary is tagged with
+    -- a place type and adapt the rank address.
+    IF NEW.rank_address > 0 and NEW.extratags ? 'place' THEN
+      SELECT address_rank INTO place_address_level
+        FROM compute_place_rank(NEW.country_code, 'A', 'place',
+                                NEW.extratags->'place', 0::SMALLINT, False, null);
+      IF place_address_level > parent_address_level and
+         place_address_level < 26 THEN
+        NEW.rank_address := place_address_level;
+      END IF;
+    END IF;
   END IF;
 
   -- Initialise the name vector using our name
@@ -844,7 +861,9 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
-                                    NEW.rank_search, NEW.address,
+                                    CASE WHEN NEW.rank_address = 0
+                                      THEN NEW.rank_search ELSE NEW.rank_address END,
+                                    NEW.address,
                                     CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
                                       THEN NEW.geometry ELSE NEW.centroid END)

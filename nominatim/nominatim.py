@@ -82,6 +82,29 @@ class InterpolationRunner(object):
                   SET indexed_status = 0 WHERE place_id IN ({})"""\
                .format(','.join((str(i) for i in ids)))
 
+class BoundaryRunner(object):
+    """ Returns SQL commands for indexing the administrative boundaries
+        by partition.
+    """
+
+    def name(self):
+        return "boundaries"
+
+    def sql_count_objects(self):
+        return """SELECT count(*) FROM placex
+                  WHERE indexed_status > 0
+                    AND rank_search < 26
+                    AND class = 'boundary' and type = 'administrative'"""
+
+    def sql_get_objects(self):
+        return """SELECT place_id FROM placex
+                  WHERE indexed_status > 0 and rank_search < 26
+                        and class = 'boundary' and type = 'administrative'
+                  ORDER BY partition, admin_level"""
+
+    def sql_index_place(self, ids):
+        return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
+               .format(','.join((str(i) for i in ids)))
 
 class Indexer(object):
     """ Main indexing routine.
@@ -93,8 +116,14 @@ class Indexer(object):
         self.conn = make_connection(options)
         self.threads = [DBConnection(options) for i in range(options.threads)]
 
-    def run(self):
-        """ Run indexing over the entire database.
+    def index_boundaries(self):
+        log.warning("Starting indexing boundaries using {} threads".format(
+                      len(self.threads)))
+
+        self.index(BoundaryRunner())
+
+    def index_by_rank(self):
+        """ Run classic indexing by rank.
         """
         log.warning("Starting indexing rank ({} to {}) using {} threads".format(
                  self.minrank, self.maxrank, len(self.threads)))
@@ -198,6 +227,9 @@ def nominatim_arg_parser():
     p.add_argument('-P', '--port',
                    dest='port', action='store',
                    help='PostgreSQL server port')
+    p.add_argument('-b', '--boundary-only',
+                   dest='boundary_only', action='store_true',
+                   help='Only index administrative boundaries (ignores min/maxrank).')
     p.add_argument('-r', '--minrank',
                    dest='minrank', type=int, metavar='RANK', default=0,
                    help='Minimum/starting rank.')
@@ -225,4 +257,7 @@ if __name__ == '__main__':
         password = getpass.getpass("Database password: ")
         options.password = password
 
-    Indexer(options).run()
+    if options.boundary_only:
+        Indexer(options).index_boundaries()
+    else:
+        Indexer(options).index_by_rank()

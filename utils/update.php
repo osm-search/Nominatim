@@ -278,9 +278,11 @@ if ($aResult['recompute-word-counts']) {
 
 if ($aResult['index']) {
     $oCmd = (clone $oIndexCmd)
-            ->addParams('--minrank', $aResult['index-rank']);
+            ->addParams('--minrank', $aResult['index-rank'], '-b');
+    $oCmd->run();
 
-    // echo $oCmd->escapedCmd()."\n";
+    $oCmd = (clone $oIndexCmd)
+            ->addParams('--minrank', $aResult['index-rank']);
     $oCmd->run();
 
     $oDB->exec('update import_status set indexed = true');
@@ -421,9 +423,18 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
         // Index file
         if (!$aResult['no-index']) {
-            $oThisIndexCmd = clone($oIndexCmd);
             $fCMDStartTime = time();
 
+            $oThisIndexCmd = clone($oIndexCmd);
+            $oThisIndexCmd->addParams('-b');
+            echo $oThisIndexCmd->escapedCmd()."\n";
+            $iErrorLevel = $oThisIndexCmd->run();
+            if ($iErrorLevel) {
+                echo "Error: $iErrorLevel\n";
+                exit($iErrorLevel);
+            }
+
+            $oThisIndexCmd = clone($oIndexCmd);
             echo $oThisIndexCmd->escapedCmd()."\n";
             $iErrorLevel = $oThisIndexCmd->run();
             if ($iErrorLevel) {

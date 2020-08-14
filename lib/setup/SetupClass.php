@@ -566,12 +566,19 @@ class SetupFunctions
         info('Index ranks 0 - 4');
         $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
         echo $oCmd->escapedCmd();
-        
+
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
+
+        info('Index administrative boundaries');
+        $oCmd = (clone $oBaseCmd)->addParams('-b');
+        $iStatus = $oCmd->run();
+        if ($iStatus != 0) {
+            fail('error status ' . $iStatus . ' running nominatim!');
+        }
 
         info('Index ranks 5 - 25');
         $oCmd = (clone $oBaseCmd)->addParams('--minrank', 5, '--maxrank', 25);
@@ -579,6 +586,7 @@ class SetupFunctions
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
+
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
 
         info('Index ranks 26 - 30');

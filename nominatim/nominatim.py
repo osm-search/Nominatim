@@ -84,23 +84,26 @@ class InterpolationRunner(object):
 
 class BoundaryRunner(object):
     """ Returns SQL commands for indexing the administrative boundaries
-        by partition.
+        of a certain rank.
     """
 
+    def __init__(self, rank):
+        self.rank = rank
+
     def name(self):
-        return "boundaries"
+        return "boundaries rank {}".format(self.rank)
 
     def sql_count_objects(self):
         return """SELECT count(*) FROM placex
                   WHERE indexed_status > 0
-                    AND rank_search < 26
-                    AND class = 'boundary' and type = 'administrative'"""
+                    AND rank_search = {}
+                    AND class = 'boundary' and type = 'administrative'""".format(self.rank)
 
     def sql_get_objects(self):
         return """SELECT place_id FROM placex
-                  WHERE indexed_status > 0 and rank_search < 26
+                  WHERE indexed_status > 0 and rank_search = {}
                         and class = 'boundary' and type = 'administrative'
-                  ORDER BY partition, admin_level"""
+                  ORDER BY partition, admin_level""".format(self.rank)
 
     def sql_index_place(self, ids):
         return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
@@ -120,7 +123,8 @@ class Indexer(object):
         log.warning("Starting indexing boundaries using {} threads".format(
                       len(self.threads)))
 
-        self.index(BoundaryRunner())
+        for rank in range(max(self.minrank, 5), min(self.maxrank, 26)):
+            self.index(BoundaryRunner(rank))
 
     def index_by_rank(self):
         """ Run classic indexing by rank.
@@ -151,27 +155,28 @@ class Indexer(object):
 
         cur.close()
 
-        next_thread = self.find_free_thread()
         progress = ProgressLogger(obj.name(), total_tuples)
 
-        cur = self.conn.cursor(name='places')
-        cur.execute(obj.sql_get_objects())
+        if total_tuples > 0:
+            cur = self.conn.cursor(name='places')
+            cur.execute(obj.sql_get_objects())
 
-        while True:
-            places = [p[0] for p in cur.fetchmany(batch)]
-            if len(places) == 0:
-                break
+            next_thread = self.find_free_thread()
+            while True:
+                places = [p[0] for p in cur.fetchmany(batch)]
+                if len(places) == 0:
+                    break
 
-            log.debug("Processing places: {}".format(places))
-            thread = next(next_thread)
+                log.debug("Processing places: {}".format(places))
+                thread = next(next_thread)
 
-            thread.perform(obj.sql_index_place(places))
-            progress.add(len(places))
+                thread.perform(obj.sql_index_place(places))
+                progress.add(len(places))
 
-        cur.close()
+            cur.close()
 
-        for t in self.threads:
-            t.wait()
+            for t in self.threads:
+                t.wait()
 
         progress.done()
 

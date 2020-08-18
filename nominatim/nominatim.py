@@ -47,12 +47,12 @@ class RankRunner(object):
 
     def sql_count_objects(self):
         return """SELECT count(*) FROM placex
-                  WHERE rank_search = {} and indexed_status > 0
+                  WHERE rank_address = {} and indexed_status > 0
                """.format(self.rank)
 
     def sql_get_objects(self):
         return """SELECT place_id FROM placex
-                  WHERE indexed_status > 0 and rank_search = {}
+                  WHERE indexed_status > 0 and rank_address = {}
                   ORDER BY geometry_sector""".format(self.rank)
 
     def sql_index_place(self, ids):
@@ -114,7 +114,7 @@ class Indexer(object):
     """
 
     def __init__(self, options):
-        self.minrank = max(0, options.minrank)
+        self.minrank = max(1, options.minrank)
         self.maxrank = min(30, options.maxrank)
         self.conn = make_connection(options)
         self.threads = [DBConnection(options) for i in range(options.threads)]
@@ -132,10 +132,12 @@ class Indexer(object):
         log.warning("Starting indexing rank ({} to {}) using {} threads".format(
                  self.minrank, self.maxrank, len(self.threads)))
 
-        for rank in range(self.minrank, self.maxrank):
+        for rank in range(max(1, self.minrank), self.maxrank):
             self.index(RankRunner(rank))
 
+
         if self.maxrank == 30:
+            self.index(RankRunner(0), 20)
             self.index(InterpolationRunner(), 20)
 
         self.index(RankRunner(self.maxrank), 20)

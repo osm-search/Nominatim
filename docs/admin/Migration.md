@@ -8,6 +8,23 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 
 ## 3.5.0 -> master
 
+### Change order during indexing
+
+When reindexing places during updates, there is now a different order used
+which needs a different database index. Create it with the following SQL command:
+
+```sql
+CREATE INDEX idx_placex_pendingsector_rank_address
+  ON placex USING BTREE (rank_address, geometry_sector) where indexed_status > 0;
+```
+
+You can then drop the old index with:
+
+```sql
+DROP INDEX idx_placex_pendingsector
+```
+
+
 ### Switching to dotenv
 
 As part of the work changing the configuration format, the configuration for

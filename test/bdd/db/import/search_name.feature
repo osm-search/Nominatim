@@ -39,13 +39,13 @@ Feature: Creation of search terms
          | object | nameaddress_vector |
          | W1     | bonn, new york, smalltown |
 
-    Scenario: A known addr:* tag is not added if the name is unknown
+    Scenario: A known addr:* tag is added even if the name is unknown
         Given the scene roads-with-pois
         And the places
          | osm | class   | type        | name | addr+city | geometry |
          | W1  | highway | residential | Road | Nandu     | :w-north |
         When importing
-        Then search_name contains not
+        Then search_name contains
          | object | nameaddress_vector |
          | W1     | nandu |
 

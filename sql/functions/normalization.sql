@@ -207,16 +207,22 @@ CREATE OR REPLACE FUNCTION addr_ids_from_name(lookup_word TEXT)
   AS $$
 DECLARE
   lookup_token TEXT;
+  id INTEGER;
   return_word_id INTEGER[];
 BEGIN
   lookup_token := make_standard_name(lookup_word);
   SELECT array_agg(word_id) FROM word
     WHERE word_token = lookup_token and class is null and type is null
     INTO return_word_id;
+  IF return_word_id IS NULL THEN
+    id := nextval('seq_word');
+    INSERT INTO word VALUES (id, lookup_token, null, null, null, null, 0);
+    return_word_id = ARRAY[id];
+  END IF;
   RETURN return_word_id;
 END;
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql;
 
 
 -- Normalize a string and look up its name ids (full words).

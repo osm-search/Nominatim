@@ -63,7 +63,7 @@ Run the following command from your Nominatim directory after configuring the fi
         This file uses osmium-tool. It must be installed before executing the import script.
         Installation instructions can be found [here](https://osmcode.org/osmium-tool/manual.html#installation).
 
-## Updating multiple regions
+### Updating multiple regions
 
 To import multiple regions in your database, you need to configure and run ```utils/update_database.sh```.
 This uses the update directory set up while setting up the DB.   
@@ -103,7 +103,69 @@ Run the following command from your Nominatim directory after configuring the fi
 
 This will get diffs from the replication server, import diffs and index the database. The default replication server in the script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
-## Verification and further setup
+## Importing Nominatim to an external PostgreSQL database
 
-Instructions for import verification and other details like importing Wikidata can be found in the [import section](Import.md)
+You can install Nominatim using a database that runs on a different server when
+you have physical access to the file system on the other server. Nominatim
+uses a custom normalization library that needs to be made accessible to the
+PostgreSQL server. This section explains how to set up the normalization
+library.
 
+### Option 1: Compiling the library on the database server
+
+The most sure way to get a working library is to compile it on the database
+server. From the prerequisites you need at least cmake, gcc and the
+PostgreSQL server package.
+
+Clone or unpack the Nominatim source code, enter the source directory and
+create and enter a build directory.
+
+```sh
+cd Nominatim
+mkdir build
+cd build
+```
+
+Now configure cmake to only build the PostgreSQL module and build it:
+
+```
+cmake -DBUILD_IMPORTER=off -DBUILD_API=off -DBUILD_TESTS=off -DBUILD_DOCS=off -DBUILD_OSM2PGSQL=off ..
+make
+```
+
+When done, you find the normalization library in `build/module/nominatim.so`.
+Copy it to a place where it is readable and executable by the PostgreSQL server
+process.
+
+### Option 2: Compiling the library on the import machine
+
+You can also compile the normalization library on the machine from where you
+run the import.
+
+!!! important
+    You can only do this when the database server and the import machine have
+    the same architecture and run the same version of Linux. Otherwise there is
+    no guarantee that the compiled library is compatible with the PostgreSQL
+    server running on the database server.
+
+Make sure that the PostgreSQL server package is installed on the machine
+**with the same version as on the database server**. You do not need to install
+the PostgreSQL server itself.
+
+Download and compile Nominatim as per standard instructions. Once done, you find
+the nomrmalization library in `build/module/nominatim.so`. Copy the file to
+the database server at a location where it is readable and executable by the
+PostgreSQL server process.
+
+### Running the import
+
+On the client side you now need to configure the import to point to the
+correct location of the library **on the database server**. Add the following
+line to your your `settings/local.php` file:
+
+```php
+@define('CONST_Database_Module_Path', '<directory on the database server where nominatim.so resides>');
+```
+
+Now change the `CONST_Database_DSN` to point to your remote server and continue
+to follow the [standard instructions for importing](/admin/Import).

@@ -28,24 +28,12 @@ import sys
 import re
 import getpass
 from datetime import datetime
-import psycopg2
-from psycopg2.extras import wait_select
 import select
 
 from indexer.progress import ProgressLogger
+from indexer.db import DBConnection, make_connection
 
 log = logging.getLogger()
-
-def make_connection(options, asynchronous=False):
-    params = {'dbname' : options.dbname,
-              'user' : options.user,
-              'password' : options.password,
-              'host' : options.host,
-              'port' : options.port,
-              'async' : asynchronous}
-
-    return psycopg2.connect(**params)
-
 
 class RankRunner(object):
     """ Returns SQL commands for indexing one rank within the placex table.
@@ -59,12 +47,12 @@ class RankRunner(object):
 
     def sql_count_objects(self):
         return """SELECT count(*) FROM placex
-                  WHERE rank_search = {} and indexed_status > 0
+                  WHERE rank_address = {} and indexed_status > 0
                """.format(self.rank)
 
     def sql_get_objects(self):
         return """SELECT place_id FROM placex
-                  WHERE indexed_status > 0 and rank_search = {}
+                  WHERE indexed_status > 0 and rank_address = {}
                   ORDER BY geometry_sector""".format(self.rank)
 
     def sql_index_place(self, ids):
@@ -94,113 +82,62 @@ class InterpolationRunner(object):
                   SET indexed_status = 0 WHERE place_id IN ({})"""\
                .format(','.join((str(i) for i in ids)))
 
-
-class DBConnection(object):
-    """ A single non-blocking database connection.
+class BoundaryRunner(object):
+    """ Returns SQL commands for indexing the administrative boundaries
+        of a certain rank.
     """
 
-    def __init__(self, options):
-        self.current_query = None
-        self.current_params = None
+    def __init__(self, rank):
+        self.rank = rank
 
-        self.conn = None
-        self.connect()
+    def name(self):
+        return "boundaries rank {}".format(self.rank)
 
-    def connect(self):
-        if self.conn is not None:
-            self.cursor.close()
-            self.conn.close()
+    def sql_count_objects(self):
+        return """SELECT count(*) FROM placex
+                  WHERE indexed_status > 0
+                    AND rank_search = {}
+                    AND class = 'boundary' and type = 'administrative'""".format(self.rank)
 
-        self.conn = make_connection(options, asynchronous=True)
-        self.wait()
+    def sql_get_objects(self):
+        return """SELECT place_id FROM placex
+                  WHERE indexed_status > 0 and rank_search = {}
+                        and class = 'boundary' and type = 'administrative'
+                  ORDER BY partition, admin_level""".format(self.rank)
 
-        self.cursor = self.conn.cursor()
-        # Disable JIT and parallel workers as they are known to cause problems.
-        # Update pg_settings instead of using SET because it does not yield
-        # errors on older versions of Postgres where the settings are not
-        # implemented.
-        self.perform(
-            """ UPDATE pg_settings SET setting = -1 WHERE name = 'jit_above_cost';
-                UPDATE pg_settings SET setting = 0 
-                   WHERE name = 'max_parallel_workers_per_gather';""")
-        self.wait()
-
-    def wait(self):
-        """ Block until any pending operation is done.
-        """
-        while True:
-            try:
-                wait_select(self.conn)
-                self.current_query = None
-                return
-            except psycopg2.extensions.TransactionRollbackError as e:
-                if e.pgcode == '40P01':
-                    log.info("Deadlock detected (params = {}), retry."
-                              .format(self.current_params))
-                    self.cursor.execute(self.current_query, self.current_params)
-                else:
-                    raise
-            except psycopg2.errors.DeadlockDetected:
-                self.cursor.execute(self.current_query, self.current_params)
-
-    def perform(self, sql, args=None):
-        """ Send SQL query to the server. Returns immediately without
-            blocking.
-        """
-        self.current_query = sql
-        self.current_params = args
-        self.cursor.execute(sql, args)
-
-    def fileno(self):
-        """ File descriptor to wait for. (Makes this class select()able.)
-        """
-        return self.conn.fileno()
-
-    def is_done(self):
-        """ Check if the connection is available for a new query.
-
-            Also checks if the previous query has run into a deadlock.
-            If so, then the previous query is repeated.
-        """
-        if self.current_query is None:
-            return True
-
-        try:
-            if self.conn.poll() == psycopg2.extensions.POLL_OK:
-                self.current_query = None
-                return True
-        except psycopg2.extensions.TransactionRollbackError as e:
-            if e.pgcode == '40P01':
-                log.info("Deadlock detected (params = {}), retry.".format(self.current_params))
-                self.cursor.execute(self.current_query, self.current_params)
-            else:
-                raise
-        except psycopg2.errors.DeadlockDetected:
-            self.cursor.execute(self.current_query, self.current_params)
-
-        return False
-
+    def sql_index_place(self, ids):
+        return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
+               .format(','.join((str(i) for i in ids)))
 
 class Indexer(object):
     """ Main indexing routine.
     """
 
     def __init__(self, options):
-        self.minrank = max(0, options.minrank)
+        self.minrank = max(1, options.minrank)
         self.maxrank = min(30, options.maxrank)
         self.conn = make_connection(options)
         self.threads = [DBConnection(options) for i in range(options.threads)]
 
-    def run(self):
-        """ Run indexing over the entire database.
+    def index_boundaries(self):
+        log.warning("Starting indexing boundaries using {} threads".format(
+                      len(self.threads)))
+
+        for rank in range(max(self.minrank, 5), min(self.maxrank, 26)):
+            self.index(BoundaryRunner(rank))
+
+    def index_by_rank(self):
+        """ Run classic indexing by rank.
         """
         log.warning("Starting indexing rank ({} to {}) using {} threads".format(
                  self.minrank, self.maxrank, len(self.threads)))
 
-        for rank in range(self.minrank, self.maxrank):
+        for rank in range(max(1, self.minrank), self.maxrank):
             self.index(RankRunner(rank))
 
+
         if self.maxrank == 30:
+            self.index(RankRunner(0), 20)
             self.index(InterpolationRunner(), 20)
 
         self.index(RankRunner(self.maxrank), 20)
@@ -220,27 +157,28 @@ class Indexer(object):
 
         cur.close()
 
-        next_thread = self.find_free_thread()
         progress = ProgressLogger(obj.name(), total_tuples)
 
-        cur = self.conn.cursor(name='places')
-        cur.execute(obj.sql_get_objects())
+        if total_tuples > 0:
+            cur = self.conn.cursor(name='places')
+            cur.execute(obj.sql_get_objects())
 
-        while True:
-            places = [p[0] for p in cur.fetchmany(batch)]
-            if len(places) == 0:
-                break
+            next_thread = self.find_free_thread()
+            while True:
+                places = [p[0] for p in cur.fetchmany(batch)]
+                if len(places) == 0:
+                    break
 
-            log.debug("Processing places: {}".format(places))
-            thread = next(next_thread)
+                log.debug("Processing places: {}".format(places))
+                thread = next(next_thread)
 
-            thread.perform(obj.sql_index_place(places))
-            progress.add(len(places))
+                thread.perform(obj.sql_index_place(places))
+                progress.add(len(places))
 
-        cur.close()
+            cur.close()
 
-        for t in self.threads:
-            t.wait()
+            for t in self.threads:
+                t.wait()
 
         progress.done()
 
@@ -296,6 +234,9 @@ def nominatim_arg_parser():
     p.add_argument('-P', '--port',
                    dest='port', action='store',
                    help='PostgreSQL server port')
+    p.add_argument('-b', '--boundary-only',
+                   dest='boundary_only', action='store_true',
+                   help='Only index administrative boundaries (ignores min/maxrank).')
     p.add_argument('-r', '--minrank',
                    dest='minrank', type=int, metavar='RANK', default=0,
                    help='Minimum/starting rank.')
@@ -323,4 +264,7 @@ if __name__ == '__main__':
         password = getpass.getpass("Database password: ")
         options.password = password
 
-    Indexer(options).run()
+    if options.boundary_only:
+        Indexer(options).index_boundaries()
+    else:
+        Indexer(options).index_by_rank()

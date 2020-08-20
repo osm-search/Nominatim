@@ -581,6 +581,11 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Speed up searches - just use the centroid of the feature
+  -- cheaper but less acurate
+  NEW.centroid := ST_PointOnSurface(NEW.geometry);
+  --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
+
   -- recompute the ranks, they might change when linking changes
   SELECT * INTO NEW.rank_search, NEW.rank_address
     FROM compute_place_rank(NEW.country_code,
@@ -591,8 +596,8 @@ BEGIN
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
   -- We must always increase the address level relative to the admin boundary.
-  IF NEW.class = 'boundary' and NEW.type = 'administrative' THEN
-    parent_address_level := get_parent_address_level(NEW.geometry, NEW.admin_level);
+  IF NEW.class = 'boundary' and NEW.type = 'administrative' and NEW.osm_type = 'R' THEN
+    parent_address_level := get_parent_address_level(NEW.centroid, NEW.admin_level);
     IF parent_address_level >= NEW.rank_address THEN
       IF parent_address_level >= 24 THEN
         NEW.rank_address := 25;
@@ -631,11 +636,6 @@ BEGIN
         i := getorcreate_postcode_id(NEW.address->'postcode');
       END IF;
   END IF;
-
-  -- Speed up searches - just use the centroid of the feature
-  -- cheaper but less acurate
-  NEW.centroid := ST_PointOnSurface(NEW.geometry);
-  --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
 
   NEW.postcode := null;
 

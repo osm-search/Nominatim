@@ -137,7 +137,7 @@ class Indexer(object):
 
 
         if self.maxrank == 30:
-            self.index(RankRunner(0), 20)
+            self.index(RankRunner(0))
             self.index(InterpolationRunner(), 20)
 
         self.index(RankRunner(self.maxrank), 20)

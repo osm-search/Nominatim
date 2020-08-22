@@ -4,13 +4,13 @@ import random
 import os
 from nose.tools import * # for assert functions
 
-@given(u'the (\d+ )?grid')
+@given(u'the ([0-9.]+ )?grid')
 def define_node_grid(context, grid_step):
     """
     Define a grid of node positions.
     """
     if grid_step is not None:
-        grid_step = int(grd_step.strip())
+        grid_step = float(grid_step.strip())
     else:
         grid_step = 0.00001
 

@@ -81,7 +81,7 @@ Feature: Address computation
             | W1     | W11     |
 
     Scenario: Locality points should contain all boundaries they touch
-        Given the grid
+        Given the 0.001 grid
             | 1 |   |   | 2 |   | 3 |
             |   |   |   | 8 |   |   |
             | 4 |   |   | 5 |   | 6 |

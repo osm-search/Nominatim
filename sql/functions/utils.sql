@@ -429,7 +429,7 @@ DECLARE
   geo RECORD;
 BEGIN
   -- 10000000000 is ~~ 1x1 degree
-  FOR geo IN select quad_split_geometry(geometry, 0.25, 20) as geom LOOP
+  FOR geo IN select quad_split_geometry(geometry, 0.01, 20) as geom LOOP
     RETURN NEXT geo.geom;
   END LOOP;
   RETURN;

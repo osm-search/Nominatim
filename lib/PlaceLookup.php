@@ -452,11 +452,13 @@ class PlaceLookup
                 $aPlace,
                 $aPlace['country_code']
             );
+
+            $aResults[$aPlace['place_id']] = $aPlace;
         }
 
-        Debug::printVar('Places', $aPlaces);
+        Debug::printVar('Places', $aResults);
 
-        return $aPlaces;
+        return $aResults;
     }
 
     /* returns an array which will contain the keys

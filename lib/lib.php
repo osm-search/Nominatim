@@ -55,7 +55,7 @@ function byImportance($a, $b)
     if ($a['importance'] != $b['importance'])
         return ($a['importance'] > $b['importance']?-1:1);
 
-    return ($a['foundorder'] < $b['foundorder']?-1:1);
+    return $a['foundorder'] <=> $b['foundorder'];
 }
 
 

@@ -26,6 +26,7 @@
           "isolated_dwelling" : [22, 20],
           "city_block" : 22,
           "mountain_pass" : [20, 0],
+          "square" : 25,
           "houses" : [28, 0],
           "farm" : [20, 0],
           "locality" : [20, 0]

@@ -160,7 +160,7 @@ BEGIN
       FROM search_name_-partition-
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.04)
-            AND search_rank between 16 and 22
+            AND search_rank between 16 and 25
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;

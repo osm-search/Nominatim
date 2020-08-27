@@ -456,6 +456,13 @@ class PlaceLookup
             $aResults[$aPlace['place_id']] = $aPlace;
         }
 
+        $aResults = array_filter(
+            $aResults,
+            function ($v) {
+                return !($v instanceof Result);
+            }
+        );
+
         Debug::printVar('Places', $aResults);
 
         return $aResults;

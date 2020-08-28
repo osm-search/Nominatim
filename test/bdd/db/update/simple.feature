@@ -31,14 +31,17 @@ Feature: Update of simple objects
           | osm | class    | type          | geometry |
           | W1  | place    | house         | poly-area:5.0 |
           | R1  | boundary | national_park | poly-area:5.0 |
+          | R2  | highway  | residential   | poly-area:5.0 |
         When importing
         Then placex contains
           | object | rank_address |
           | R1     | 30 |
+          | R2     | 26 |
           | W1     | 30 |
-        When marking for delete R1,W1
+        When marking for delete R1,R2,W1
         Then placex has no entry for W1
         Then placex has no entry for R1
+        Then placex has no entry for R2
 
     Scenario: type mutation
         Given the places

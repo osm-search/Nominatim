@@ -262,7 +262,7 @@ BEGIN
 
   -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
   IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN
-    SELECT bool_or(not (rank_address = 0 or rank_address > 26)) as ranked FROM placex WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type INTO has_rank;
+    SELECT bool_or(not (rank_address = 0 or rank_address > 25)) as ranked FROM placex WHERE osm_type = OLD.osm_type and osm_id = OLD.osm_id and class = OLD.class and type = OLD.type INTO has_rank;
     IF has_rank THEN
       insert into import_polygon_delete (osm_type, osm_id, class, type) values (OLD.osm_type,OLD.osm_id,OLD.class,OLD.type);
       RETURN NULL;

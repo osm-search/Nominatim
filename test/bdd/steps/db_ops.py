@@ -110,6 +110,9 @@ class PlaceObjName(object):
         if self.pid is None:
             return "<null>"
 
+        if self.pid == 0:
+            return "place ID 0"
+
         cur = self.conn.cursor()
         cur.execute("""SELECT osm_type, osm_id, class
                        FROM placex WHERE place_id = %s""",

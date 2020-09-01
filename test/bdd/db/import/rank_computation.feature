@@ -24,7 +24,7 @@ Feature: Rank assignment
         Then placex contains
           | object | rank_search | rank_address |
           | N1     | 30          | 30 |
-          | N11    | 30          | 30 |
+          | N11    | 22          | 0 |
           | N12    | 2           | 0 |
           | N13    | 2           | 0 |
           | N14    | 4           | 0 |
@@ -48,11 +48,11 @@ Feature: Rank assignment
         Then placex contains
           | object | rank_search | rank_address |
           | R20    | 4           | 4 |
-          | R21    | 30          | 30 |
+          | R21    | 25          | 0 |
           | R22    | 12          | 12 |
           | R23    | 20          | 20 |
 
-    Scenario: Ranks for boundaries with place assignment go with place address ranks if available
+    Scenario: Ranks for addressable boundaries with place assignment go with place address ranks if available
         Given the named places
           | osm | class    | type           | admin | extra+place | geometry |
           | R20 | boundary | administrative | 3     | state       | (1 1, 2 2, 1 2, 1 1) |
@@ -63,7 +63,7 @@ Feature: Rank assignment
         Then placex contains
           | object | rank_search | rank_address |
           | R20    | 6           | 6  |
-          | R21    | 30          | 20 |
+          | R21    | 25          | 0  |
           | R22    | 12          | 16 |
           | R23    | 20          | 16 |
 

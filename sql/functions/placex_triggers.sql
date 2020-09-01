@@ -92,7 +92,7 @@ BEGIN
     END IF;
 
     IF fallback THEN
-      IF ST_Area(bbox) < 0.01 THEN
+      IF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road
         SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
@@ -596,7 +596,9 @@ BEGIN
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
   -- We must always increase the address level relative to the admin boundary.
-  IF NEW.class = 'boundary' and NEW.type = 'administrative' and NEW.osm_type = 'R' THEN
+  IF NEW.class = 'boundary' and NEW.type = 'administrative'
+     and NEW.osm_type = 'R' and NEW.rank_address > 0
+  THEN
     parent_address_level := get_parent_address_level(NEW.centroid, NEW.admin_level);
     IF parent_address_level >= NEW.rank_address THEN
       IF parent_address_level >= 24 THEN

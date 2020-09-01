@@ -92,7 +92,7 @@ BEGIN
     END IF;
 
     IF fallback THEN
-      IF ST_Area(bbox) < 0.01 THEN
+      IF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road
         SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;

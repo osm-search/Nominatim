@@ -29,7 +29,9 @@
           "square" : 25,
           "houses" : [28, 0],
           "farm" : [20, 0],
-          "locality" : [20, 0]
+          "locality" : [20, 0],
+          "house" : 30,
+          "" : [22, 0]
       },
       "boundary" : {
           "administrative2" : 4,
@@ -42,7 +44,8 @@
           "administrative9" : 18,
           "administrative10" : 20,
           "administrative11" : 22,
-          "administrative12" : 24
+          "administrative12" : 24,
+          "" : [25, 0]
       },
       "landuse" : {
           "residential" : 22,
@@ -88,7 +91,7 @@
           "" : [20, 0]
       },
       "historic" : {
-          "neighbourhood" : [30, 0]
+          "neighbourhood" : [22, 0]
       }
   }
 },

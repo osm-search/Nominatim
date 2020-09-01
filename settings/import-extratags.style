@@ -124,6 +124,7 @@
 {
     "keys" : ["boundary"],
     "values" : {
+        "place" : "skip",
         "" : "main,with_name"
     }
 },

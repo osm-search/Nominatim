@@ -28,10 +28,10 @@ Feature: Update of simple objects
 
     Scenario: Do delete large features of low rank
         Given the named places
-          | osm | class    | type          | geometry |
-          | W1  | place    | house         | poly-area:5.0 |
-          | R1  | boundary | national_park | poly-area:5.0 |
-          | R2  | highway  | residential   | poly-area:5.0 |
+          | osm | class    | type        | geometry |
+          | W1  | place    | house       | poly-area:5.0 |
+          | R1  | natural  | wood        | poly-area:5.0 |
+          | R2  | highway  | residential | poly-area:5.0 |
         When importing
         Then placex contains
           | object | rank_address |
@@ -106,4 +106,4 @@ Feature: Update of simple objects
           | W1  | boundary | historic       | Haha | 5     | (1, 2, 4, 3, 1) |
         Then placex contains
           | object | rank_address |
-          | W1     | 30            |
+          | W1     | 0            |

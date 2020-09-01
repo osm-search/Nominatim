@@ -148,9 +148,9 @@ Feature: Import into placex
         And placex contains
           | object | rank_search | rank_address |
           | R20    | 4           | 4 |
-          | R21    | 30          | 30 |
-          | R22    | 30          | 30 |
-          | R23    | 30          | 30 |
+          | R21    | 25          | 0 |
+          | R22    | 25          | 0 |
+          | R23    | 25          | 0 |
           | R40    | 4           | 0 |
           | R41    | 8           | 0 |
 

@@ -2,7 +2,7 @@
 Feature: Creation of search terms
     Tests that search_name table is filled correctly
 
-    Scenario: POIs without a name have no search entry
+    Scenario: Unnamed POIs have no search entry
         Given the scene roads-with-pois
         And the places
          | osm | class   | type        | geometry |
@@ -12,6 +12,152 @@ Feature: Creation of search terms
          | W1  | highway | residential | :w-north |
         When importing
         Then search_name has no entry for N1
+
+    Scenario: Unnamed POI has a search entry when it has unknown addr: tags
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | housenr | addr+city | geometry |
+         | N1  | place   | house       | 23      | Walltown  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #23         | Rose Street, Walltown |
+        When searching for "23 Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id |
+         | N        | 1 |
+
+    Scenario: Unnamed POI has no search entry when it has known addr: tags
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | housenr | addr+city | geometry |
+         | N1  | place   | house       | 23      | Walltown  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | addr+city | geometry |
+         | W1  | highway | residential | Rose Street | Walltown | :w-north |
+        When importing
+        Then search_name has no entry for N1
+        When searching for "23 Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id |
+         | N        | 1 |
+
+    Scenario: Unnamed POI must have a house number to get a search entry
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type   | addr+city | geometry |
+         | N1  | place   | house  | Walltown  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name has no entry for N1
+
+    Scenario: Unnamed POIs doesn't inherit parent name when unknown addr:place is present
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | housenr | addr+place | geometry |
+         | N1  | place   | house       | 23      | Walltown   | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #23         | Walltown |
+        When searching for "23 Rose Street, Walltown"
+        Then exactly 0 results are returned
+
+    # XXX Need to change parenting of POis without addr:street and with addr:place
+    Scenario: Unnamed POIs doesn't inherit parent name when addr:place is present only in parent address
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | housenr | addr+place | geometry |
+         | N1  | place   | house       | 23      | Walltown   | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | addr+city | geometry |
+         | W1  | highway | residential | Rose Street | Walltown  | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #23         | Walltown |
+        When searching for "23 Rose Street, Walltown"
+        Then exactly 1 result is returned
+        And results contain
+         | osm_type | osm_id |
+         | W        | 1 |
+
+    Scenario: Unnamed POIs does inherit parent name when unknown addr:place and addr:street is present
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type   | housenr | addr+place | addr+street | geometry |
+         | N1  | place   | house  | 23      | Walltown   | Lily Street | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name has no entry for N1
+        When searching for "23 Rose Street"
+        Then results contain
+         | osm_type | osm_id |
+         | N        | 1 |
+        When searching for "23 Lily Street"
+        Then exactly 0 results are returned
+
+    Scenario: An unknown addr:street is ignored
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type   | housenr |  addr+street | geometry |
+         | N1  | place   | house  | 23      |  Lily Street | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name has no entry for N1
+        When searching for "23 Rose Street"
+        Then results contain
+         | osm_type | osm_id |
+         | N        | 1 |
+        When searching for "23 Lily Street"
+        Then exactly 0 results are returned
+
+    Scenario: Named POIs have unknown address tags added in the search_name table
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | name+name  | addr+city | geometry |
+         | N1  | place   | house       | Green Moss | Walltown  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #Green Moss | Rose Street, Walltown |
+        When searching for "Green Moss, Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id |
+         | N        | 1 |
+
+    Scenario: Named POI doesn't inherit parent name when addr:place is present only in parent address
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | name+name  | addr+place | geometry |
+         | N1  | place   | house       | Green Moss | Walltown  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #Green Moss | Walltown |
+        When searching for "Green Moss, Rose Street, Walltown"
+        Then exactly 1 result is returned
+        And results contain
+         | osm_type | osm_id |
+         | W        | 1 |
 
     Scenario: Named POIs inherit address from parent
         Given the scene roads-with-pois

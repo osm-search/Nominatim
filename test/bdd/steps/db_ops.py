@@ -470,12 +470,22 @@ def check_search_name_contents(context, exclude):
         for res in cur:
             for h in row.headings:
                 if h in ('name_vector', 'nameaddress_vector'):
-                    terms = [x.strip().replace('#', ' ') for x in row[h].split(',')]
+                    terms = [x.strip() for x in row[h].split(',') if not x.strip().startswith('#')]
+                    words = [x.strip()[1:] for x in row[h].split(',') if x.strip().startswith('#')]
                     subcur = context.db.cursor()
-                    subcur.execute("""SELECT word_id, word_token
-                                      FROM word, (SELECT unnest(%s) as term) t
-                                      WHERE word_token = make_standard_name(t.term)""",
-                                   (terms,))
+                    subcur.execute(""" SELECT word_id, word_token
+                                       FROM word, (SELECT unnest(%s::TEXT[]) as term) t
+                                       WHERE word_token = make_standard_name(t.term)
+                                             and class is null and country_code is null
+                                             and operator is null
+                                      UNION
+                                       SELECT word_id, word_token
+                                       FROM word, (SELECT unnest(%s::TEXT[]) as term) t
+                                       WHERE word_token = ' ' || make_standard_name(t.term)
+                                             and class is null and country_code is null
+                                             and operator is null
+                                   """,
+                                   (terms, words))
                     if not exclude:
                         ok_(subcur.rowcount >= len(terms),
                             "No word entry found for " + row[h])

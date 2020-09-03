@@ -9,8 +9,8 @@ Scenario: POI inside building inherits addr:street change
          | N2  | shop    | bakery     | :n-edge-NS |
          | N3  | shop    | supermarket| :n-edge-WE |
         And the places
-         | osm | class    | type | addr_place | housenr | geometry |
-         | W1  | building | yes  | nowhere    | 3       | :w-building |
+         | osm | class    | type | street  | housenr | geometry |
+         | W1  | building | yes  | nowhere | 3       | :w-building |
         And the places
          | osm | class    | type        | name | geometry |
          | W2  | highway  | primary     | bar  | :w-WE |
@@ -34,5 +34,3 @@ Scenario: POI inside building inherits addr:street change
          | N1     | W3              | 3 |
          | N2     | W3              | 3 |
          | N3     | W3              | 3 |
-
-

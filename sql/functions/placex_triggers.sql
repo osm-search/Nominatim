@@ -92,7 +92,16 @@ BEGIN
     END IF;
 
     IF fallback THEN
-      IF ST_Area(bbox) < 0.005 THEN
+      IF addr_street is null and addr_place is not null THEN
+        -- The address is attached to a place we don't know. Find the
+        -- nearest place instead.
+        FOR location IN
+          SELECT place_id FROM getNearFeatures(poi_partition, bbox, 26, '{}'::INTEGER[])
+            ORDER BY rank_address DESC, isguess asc, distance LIMIT 1
+        LOOP
+          parent_place_id := location.place_id;
+        END LOOP;
+      ELSEIF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road
         SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;

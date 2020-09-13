@@ -290,23 +290,6 @@ BEGIN
         END IF;
       END IF;
     END LOOP;
-
-    IF address ? 'is_in' THEN
-      -- is_in items need splitting
-      isin := regexp_split_to_array(address->'is_in', E'[;,]');
-      IF array_upper(isin, 1) IS NOT NULL THEN
-        FOR i IN 1..array_upper(isin, 1) LOOP
-          isin_tokens := array_merge(isin_tokens,
-                                     word_ids_from_name(isin[i]));
-
-          -- merge word into address vector
-          IF NOT %REVERSE-ONLY% THEN
-            nameaddress_vector := array_merge(nameaddress_vector,
-                                              addr_ids_from_name(isin[i]));
-          END IF;
-        END LOOP;
-      END IF;
-    END IF;
   END IF;
   IF NOT %REVERSE-ONLY% THEN
     nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);

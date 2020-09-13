@@ -211,7 +211,7 @@
     }
 },
 {
-    "keys" : ["addr:*", "is_in:*", "tiger:county", "is_in"],
+    "keys" : ["addr:*", "is_in:*", "tiger:county"],
     "values" : {
         "" : "address"
     }

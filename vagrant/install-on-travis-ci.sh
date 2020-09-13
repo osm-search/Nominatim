@@ -1,26 +1,30 @@
 #!/bin/bash
 
 # This script runs in a travis-ci.org virtual machine
-# https://docs.travis-ci.com/user/reference/xenial/
-# Ubuntu 16 (xenial)
+# https://docs.travis-ci.com/user/reference/focal/
+# Ubuntu 20 (focal)
 # user 'travis'
 # $TRAVIS_BUILD_DIR is /home/travis/build/openstreetmap/Nominatim/, for others see
 #   https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
-# Postgres 9.6 installed and started. role 'travis' already superuser
-# Python 3.6
+# Postgres 12 installed and started. role 'travis' already superuser
+# Python 3.8
 # Travis has a 4 MB, 10000 line output limit, so where possible we run script --quiet
 
 
 sudo apt-get update -qq
-sudo apt-get install -y -qq libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev\
+
+sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-system-dev \
+                            libboost-filesystem-dev libexpat1-dev zlib1g-dev \
                             libbz2-dev libpq-dev libproj-dev \
-                            postgresql-server-dev-9.6 postgresql-9.6-postgis-2.4 postgresql-contrib-9.6 \
-                            apache2 php php-pgsql php-intl
+                            postgresql-server-dev-12 postgresql-12-postgis-3 \
+                            postgresql-contrib postgresql-12-postgis-3-scripts \
+                            apache2 php php-pgsql libapache2-mod-php \
+                            php-intl python3-setuptools python3-dev python3-pip \
+                            python3-psycopg2 python3-tidylib git
 
-sudo apt-get install -y -qq python3-dev python3-pip php-cgi
+sudo apt-get install -y -qq php-cgi
 
-pip3 install --quiet behave nose pytidylib psycopg2-binary osmium
+pip3 install --quiet behave nose osmium
 
 # https://github.com/squizlabs/PHP_CodeSniffer
 composer global require "squizlabs/php_codesniffer=*"

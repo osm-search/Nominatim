@@ -18,6 +18,7 @@ pages:
         - 'Basic Installation': 'admin/Installation.md'
         - 'Importing' : 'admin/Import.md'
         - 'Updating' : 'admin/Update.md'
+        - 'Deploying' : 'admin/Deployment.md'
         - 'Nominatim UI'  : 'admin/Setup-Nominatim-UI.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Migration from older Versions' : 'admin/Migration.md'

@@ -43,7 +43,6 @@ For running Nominatim:
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * a webserver (apache or nginx are recommended)
 
 For running continuous updates:
 
@@ -68,9 +67,7 @@ will help considerably to speed up import and queries.
 Even on a well configured machine the import of a full planet takes
 at least 2 days. Without SSDs 7-8 days are more realistic.
 
-## Setup of the server
-
-### PostgreSQL tuning
+## Tuning the PostgreSQL database
 
 You might want to tune your PostgreSQL installation so that the later steps
 make best use of your hardware. You should tune the following parameters in
@@ -110,82 +107,44 @@ Don't forget to reenable them after the initial import or you risk database
 corruption.
 
 
-### Webserver setup
+## Downloading and building Nominatim
 
-The `website/` directory in the build directory contains the configured
-website. Include the directory into your webbrowser to serve php files
-from there.
+### Downloading the latest release
 
-#### Configure for use with Apache
+You can download the [latest release from nominatim.org](https://nominatim.org/downloads/).
+The release contains all necessary files. Just unpack it.
 
-Make sure your Apache configuration contains the required permissions for the
-directory and create an alias:
+### Downloading the latest development version
 
-``` apache
-<Directory "/srv/nominatim/build/website">
-  Options FollowSymLinks MultiViews
-  AddType text/html   .php
-  DirectoryIndex search.php
-  Require all granted
-</Directory>
-Alias /nominatim /srv/nominatim/build/website
+If you want to install latest development version from github, make sure to
+also check out the osm2pgsql subproject:
+
+```
+git clone --recursive git://github.com/openstreetmap/Nominatim.git
 ```
 
-`/srv/nominatim/build` should be replaced with the location of your
-build directory.
+The development version does not include the country grid. Download it separately:
 
-After making changes in the apache config you need to restart apache.
-The website should now be available on http://localhost/nominatim.
-
-#### Configure for use with Nginx
-
-Use php-fpm as a deamon for serving PHP cgi. Install php-fpm together with nginx.
-
-By default php listens on a network socket. If you want it to listen to a
-Unix socket instead, change the pool configuration (`pool.d/www.conf`) as
-follows:
-
-    ; Comment out the tcp listener and add the unix socket
-    ;listen = 127.0.0.1:9000
-    listen = /var/run/php5-fpm.sock
-
-    ; Ensure that the daemon runs as the correct user
-    listen.owner = www-data
-    listen.group = www-data
-    listen.mode = 0666
-
-Tell nginx that php files are special and to fastcgi_pass to the php-fpm
-unix socket by adding the location definition to the default configuration.
-
-``` nginx
-root /srv/nominatim/build/website;
-index search.php;
-location / {
-    try_files $uri $uri/ @php;
-}
-
-location @php {
-    fastcgi_param SCRIPT_FILENAME "$document_root$uri.php";
-    fastcgi_param PATH_TRANSLATED "$document_root$uri.php";
-    fastcgi_param QUERY_STRING    $args;
-    fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;
-    fastcgi_index index.php;
-    include fastcgi_params;
-}
-
-location ~ [^/]\.php(/|$) {
-    fastcgi_split_path_info ^(.+?\.php)(/.*)$;
-    if (!-f $document_root$fastcgi_script_name) {
-        return 404;
-    }
-    fastcgi_pass unix:/var/run/php7.3-fpm.sock;
-    fastcgi_index search.php;
-    include fastcgi.conf;
-}
+```
+wget -O Nominatim/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 ```
 
-Restart the nginx and php5-fpm services and the website should now be available
-at `http://localhost/`.
+### Building Nominatim
 
+The code must be built in a separate directory. Create the directory and
+change into it.
+
+```
+mkdir build
+cd build
+```
+
+Nominatim uses cmake and make for building. Assuming that you have created the
+build at the same level as the Nominatim source directory run:
+
+```
+cmake ../Nominatim
+make
+```
 
 Now continue with [importing the database](Import.md).

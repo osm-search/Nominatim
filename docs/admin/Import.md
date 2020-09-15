@@ -187,7 +187,7 @@ enough RAM for PostgreSQL and osm2pgsql as mentioned above. If the system starts
 swapping or you are getting out-of-memory errors, reduce the cache size or
 even consider using a flatnode file.
 
-### Verify import finished
+### Verify the import
 
 Run this script to verify all required tables and indices got created successfully.
 
@@ -197,15 +197,28 @@ Run this script to verify all required tables and indices got created successful
 
 ### Setting up the website
 
-Run the following command to set up the `website/settings-frontend.php`.
-These settings are used in website/*.php files. You can use the website only after this 
-step is completed.
+Run the following command to set up the configuration file for the website
+`settings/settings-frontend.php`. These settings are used in website/*.php files.
 
 ```sh
 ./utils/setup.php --setup-website
 ```
 !!! Note
     This step is not necessary if you use `--all` option while setting up the DB.
+
+Now you can try out your installation by running:
+
+```sh
+make serve
+```
+
+This runs a small test server normally used for development. You can use it
+to verify that your installation is working. Go to
+`http://localhost:8088/status.php` and you should see the message `OK`.
+You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`.
+
+To run Nominatim via webservers like Apache or nginx, please read the
+[Deployment chapter](Deployment.md).
 
 ## Tuning the database
 
@@ -247,8 +260,6 @@ entire US adds about 10GB to your database.
         wget https://nominatim.org/data/tiger2019-nominatim-preprocessed.tar.gz
         tar xf tiger2019-nominatim-preprocessed.tar.gz
 
-    `data-source/overview.md` explains how the data got preprocessed.
-
   2. Import the data into your Nominatim database:
 
         ./utils/setup.php --import-tiger-data
@@ -263,4 +274,7 @@ entire US adds about 10GB to your database.
     ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
 ```
 
+
+See the [developer's guide](../develop/data-sources.md#us-census-tiger) for more
+information on how the data got preprocessed.
 

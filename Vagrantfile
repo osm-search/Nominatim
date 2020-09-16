@@ -43,6 +43,24 @@ Vagrant.configure("2") do |config|
       end
   end
 
+  config.vm.define "ubuntu-apache" do |sub|
+      sub.vm.box = "generic/ubuntu2004"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-20.sh"
+        s.privileged = false
+        s.args = [checkout, "install-apache"]
+      end
+  end
+
+  config.vm.define "ubuntu-nginx" do |sub|
+      sub.vm.box = "generic/ubuntu2004"
+      sub.vm.provision :shell do |s|
+        s.path = "vagrant/Install-on-Ubuntu-20.sh"
+        s.privileged = false
+        s.args = [checkout, "install-nginx"]
+      end
+  end
+
   config.vm.define "ubuntu18" do |sub|
       sub.vm.box = "generic/ubuntu1804"
       sub.vm.provision :shell do |s|

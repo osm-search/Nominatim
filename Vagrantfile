@@ -4,18 +4,38 @@
 Vagrant.configure("2") do |config|
   # Apache webserver
   config.vm.network "forwarded_port", guest: 80, host: 8089
+  config.vm.network "forwarded_port", guest: 8088, host: 8088
 
   # If true, then any SSH connections made will enable agent forwarding.
   config.ssh.forward_agent = true
 
+  # Never sync the current directory to /vagrant.
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+
   checkout = "yes"
-  if ENV['CHECKOUT'] != 'y' then
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = false
+    vb.memory = 2048
+    vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate//vagrant","0"]
+    if ENV['CHECKOUT'] != 'y' then
       config.vm.synced_folder ".", "/home/vagrant/Nominatim"
       checkout = "no"
+    end
+  end
+
+  config.vm.provider "libvirt" do |lv|
+    lv.memory = 2048
+    lv.nested = true
+    if ENV['CHECKOUT'] != 'y' then
+      config.vm.synced_folder ".", "/home/vagrant/Nominatim", type: 'nfs'
+      checkout = "no"
+    end
   end
 
   config.vm.define "ubuntu", primary: true do |sub|
-      sub.vm.box = "bento/ubuntu-20.04"
+      sub.vm.box = "generic/ubuntu2004"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-20.sh"
         s.privileged = false
@@ -23,8 +43,8 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "ubuntu18", primary: true do |sub|
-      sub.vm.box = "bento/ubuntu-18.04"
+  config.vm.define "ubuntu18" do |sub|
+      sub.vm.box = "generic/ubuntu1804"
       sub.vm.provision :shell do |s|
         s.path = "vagrant/Install-on-Ubuntu-18.sh"
         s.privileged = false
@@ -32,30 +52,21 @@ Vagrant.configure("2") do |config|
       end
   end
 
-  config.vm.define "ubuntu18nginx" do |sub|
-      sub.vm.box = "bento/ubuntu-18.04"
+  config.vm.define "ubuntu18-apache" do |sub|
+      sub.vm.box = "generic/ubuntu1804"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Ubuntu-18-nginx.sh"
+        s.path = "vagrant/Install-on-Ubuntu-18.sh"
         s.privileged = false
-        s.args = [checkout]
+        s.args = [checkout, "install-apache"]
       end
   end
 
-  config.vm.define "ubuntu16" do |sub|
-      sub.vm.box = "bento/ubuntu-16.04"
+  config.vm.define "ubuntu18-nginx" do |sub|
+      sub.vm.box = "generic/ubuntu1804"
       sub.vm.provision :shell do |s|
-        s.path = "vagrant/Install-on-Ubuntu-16.sh"
+        s.path = "vagrant/Install-on-Ubuntu-18.sh"
         s.privileged = false
-        s.args = [checkout]
-      end
-  end
-
-  config.vm.define "travis" do |sub|
-      sub.vm.box = "bento/ubuntu-14.04"
-      sub.vm.provision :shell do |s|
-        s.path = "vagrant/install-on-travis-ci.sh"
-        s.privileged = false
-        s.args = [checkout]
+        s.args = [checkout, "install-nginx"]
       end
   end
 
@@ -67,7 +78,6 @@ Vagrant.configure("2") do |config|
         s.args = "yes"
       end
       sub.vm.synced_folder ".", "/home/vagrant/Nominatim", disabled: true
-      sub.vm.synced_folder ".", "/vagrant", disabled: true
   end
 
   config.vm.define "centos8" do |sub|
@@ -78,14 +88,7 @@ Vagrant.configure("2") do |config|
         s.args = "yes"
       end
       sub.vm.synced_folder ".", "/home/vagrant/Nominatim", disabled: true
-      sub.vm.synced_folder ".", "/vagrant", disabled: true
   end
 
-
-  config.vm.provider "virtualbox" do |vb|
-    vb.gui = false
-    vb.memory = 2048
-    vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate//vagrant","0"]
-  end
 
 end

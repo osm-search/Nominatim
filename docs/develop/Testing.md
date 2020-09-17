@@ -1,12 +1,10 @@
-This directory contains functional and unit tests for the Nominatim API.
+# Nominatim Test Suite
 
-Prerequisites
-=============
+This chapter describes the tests in the `/test` directory, how they are
+structured and how to extend them. For a quick introduction on how to run
+the tests, see the [Development setup chapter](Development-Environment.md).
 
-See `docs/develop/Setup.md`
-
-Overall structure
-=================
+## Overall structure
 
 There are two kind of tests in this test suite. There are functional tests
 which test the API interface using a BDD test framework and there are unit
@@ -27,8 +25,7 @@ This test directory is sturctured as follows:
   +-   testdb      Base data for generating API test database
 ```
 
-PHP Unit Tests
-==============
+## PHP Unit Tests (`test/php`)
 
 Unit tests can be found in the php/ directory and tests selected php functions.
 Very low coverage.
@@ -44,14 +41,19 @@ strip and set other parameters.
 It will use (and destroy) a local database 'nominatim_unit_tests'. You can set
 a different connection string with e.g. UNIT_TEST_DSN='pgsql:dbname=foo_unit_tests'.
 
-BDD Functional Tests
-====================
+## BDD Functional Tests (`test/bdd`)
 
 Functional tests are written as BDD instructions. For more information on
-the philosophy of BDD testing, see http://pythonhosted.org/behave/philosophy.html
+the philosophy of BDD testing, see the
+[Behave manual](http://pythonhosted.org/behave/philosophy.html).
 
-Usage
------
+The following explanation assume that the reader is familiar with the BDD
+notations of features, scenarios and steps.
+
+All possible steps can be found in the `steps` directory and should ideally
+be documented.
+
+### General Usage
 
 To run the functional tests, do
 
@@ -81,62 +83,29 @@ The tests can be configured with a set of environment variables (`behave -D key=
                     run, otherwise the result is undefined.
 
 Logging can be defined through command line parameters of behave itself. Check
-out `behave --help` for details. Also keep an eye out for the 'work-in-progress'
+out `behave --help` for details. Also have a look at the 'work-in-progress'
 feature of behave which comes in handy when writing new tests.
-
-Writing Tests
--------------
-
-The following explanation assume that the reader is familiar with the BDD
-notations of features, scenarios and steps.
-
-All possible steps can be found in the `steps` directory and should ideally
-be documented.
 
 ### API Tests (`test/bdd/api`)
 
 These tests are meant to test the different API endpoints and their parameters.
-They require a to import several datasets into a test database. You need at
-least 2GB RAM and 10GB discspace.
+They require a to import several datasets into a test database.
+See the [Development Setup chapter](Development-Environment.md#preparing-the-test-database)
+for instructions on how to set up this database.
 
+The official test dataset was derived from the 180924 planet (note: such
+file no longer exists at https://planet.openstreetmap.org/planet/2018/).
+Newer planets are likely to work as well but you may see isolated test
+failures where the data has changed.
 
-1. Fetch the OSM planet extract (200MB). See end of document how it got created.
+The official test dataset can always be downloaded from
+[nominatim.org](https://www.nominatim.org/data/test/nominatim-api-testdata.pbf)
+To recreate the input data for the test database run:
 
-    ```
-    cd Nominatim/data
-    mkdir testdb
-    cd testdb
-    wget https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
-    ```
-
-2. Fetch `46*` (South Dakota) Tiger data
-
-    ```
-    cd Nominatim/data/testdb
-    wget https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz
-    tar xvf tiger2018-nominatim-preprocessed.tar.gz --wildcards --no-anchored '46*'
-    rm tiger2018-nominatim-preprocessed.tar.gz
-    ```
-
-3. Adapt build/settings/local.php settings:
-
-	```
-    @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
-    @define('CONST_Use_US_Tiger_Data', true);
-    @define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/testdb');
-    @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
-    ```
-
-4. Import
-
-    ```
-	LOGFILE=/tmp/nominatim-testdb.$$.log
-    dropdb --if-exists test_api_nominatim
-    ./utils/setup.php --all --osm-file ../Nominatim/data/testdb/nominatim-api-testdb.pbf 2>&1 | tee $LOGFILE
-    ./utils/specialphrases.php --wiki-import > specialphrases.sql
-    psql -d test_api_nominatim -f specialphrases.sql 2>&1 | tee -a $LOGFILE
-    ./utils/setup.php --import-tiger-data 2>&1 | tee -a $LOGFILE
-    ```
+```
+wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
+osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
+```
 
 #### Code Coverage
 
@@ -146,7 +115,7 @@ On Debian/Ubuntu run:
 
     apt-get install php-codecoverage php-xdebug
 
-The run the API tests as follows:
+Then run the API tests as follows:
 
     behave api -DPHPCOV=<coverage output dir>
 
@@ -155,7 +124,7 @@ the [phpcov](https://github.com/sebastianbergmann/phpcov) tool:
 
     phpcov merge --html=<report output dir> <coverage output dir>
 
-### Indexing Tests (`test/bdd/db`)
+### DB Creation Tests (`test/bdd/db`)
 
 These tests check the import and update of the Nominatim database. They do not
 test the correctness of osm2pgsql. Each test will write some data into the `place`
@@ -171,16 +140,3 @@ needs superuser rights for postgres.
 
 These tests check that data is imported correctly into the place table. They
 use the same template database as the Indexing tests, so the same remarks apply.
-
-
-
-How the test database extract was generated
--------------------------------------------
-The official test dataset was derived from the 180924 planet (note: such
-file no longer exists at https://planet.openstreetmap.org/planet/2018/).
-Newer planets are likely to work as well but you may see isolated test
-failures where the data has changed. To recreate the input data
-for the test database run:
-
-    wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
-    osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf

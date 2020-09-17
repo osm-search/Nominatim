@@ -85,7 +85,7 @@ if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_Ins
 // Website settings
 @define('CONST_NoAccessControl', true);
 
-@define('CONST_Website_BaseURL', 'http://'.php_uname('n').'/');
+@define('CONST_Website_BaseURL', '/');
 // Language to assume when none is supplied with the query.
 // When set to false, the local language (i.e. the name tag without suffix)
 // will be used.

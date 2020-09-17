@@ -18,20 +18,19 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Make sure all packages are are up-to-date by running:
 #
 
-#DOCS:    :::sh
     sudo apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" --force-yes -fuy install grub-pc #DOCS:
-    sudo apt-get update -qq
+    sudo apt update -qq
 
 # Now you can install all packages needed for Nominatim:
 
-    sudo apt-get install -y build-essential cmake g++ libboost-dev libboost-system-dev \
-                            libboost-filesystem-dev libexpat1-dev zlib1g-dev\
-                            libbz2-dev libpq-dev libproj-dev \
-                            postgresql-server-dev-10 postgresql-10-postgis-2.4 \
-                            postgresql-contrib-10 postgresql-10-postgis-scripts \
-                            apache2 php php-pgsql libapache2-mod-php \
-                            php-intl python3-setuptools python3-dev python3-pip \
-                            python3-psycopg2 python3-tidylib git
+    sudo apt install -y php-cgi
+    sudo apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
+                        libboost-filesystem-dev libexpat1-dev zlib1g-dev\
+                        libbz2-dev libpq-dev libproj-dev \
+                        postgresql-server-dev-10 postgresql-10-postgis-2.4 \
+                        postgresql-contrib-10 postgresql-10-postgis-scripts \
+                        php php-pgsql php-intl \
+                        python3-psycopg2 git
 
 
 #
@@ -88,35 +87,6 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
     sudo -u postgres createuser www-data
 
 #
-# Setting up the Apache Webserver
-# -------------------------------
-#
-# You need to create an alias to the website directory in your apache
-# configuration. Add a separate nominatim configuration to your webserver:
-
-#DOCS:```sh
-sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website"> #DOCS:<Directory "$USERHOME/Nominatim/build/website">
-  Options FollowSymLinks MultiViews
-  AddType text/html   .php
-  DirectoryIndex search.php
-  Require all granted
-</Directory>
-
-Alias /nominatim $USERHOME/build/website  #DOCS:Alias /nominatim $USERHOME/Nominatim/build/website
-EOFAPACHECONF
-#DOCS:```
-
-sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf #DOCS:
-
-#
-# Then enable the configuration and restart apache
-#
-
-    sudo a2enconf nominatim
-    sudo systemctl restart apache2
-
-#
 # Installing Nominatim
 # ====================
 #
@@ -143,11 +113,52 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME                   #DOCS:    :::sh
+    cd $USERHOME
     mkdir build
     cd build
     cmake $USERHOME/Nominatim
     make
+
+
+# Nominatim is now ready to use. You can continue with
+# [importing a database from OSM data](../admin/Import.md). If you want to set up
+# a webserver first, continue reading.
+#
+# Setting up a webserver
+# ======================
+#
+# Option 1: Using Apache
+# ----------------------
+#
+if [ "x$2" == "xinstall-apache" ]; then #DOCS:
+#
+# Apache has a PHP module that can be used to serve Nominatim. To install them
+# run:
+
+    sudo apt install -y apache2 libapache2-mod-php
+
+# You need to create an alias to the website directory in your apache
+# configuration. Add a separate nominatim configuration to your webserver:
+
+#DOCS:```sh
+sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
+<Directory "$USERHOME/build/website">
+  Options FollowSymLinks MultiViews
+  AddType text/html   .php
+  DirectoryIndex search.php
+  Require all granted
+</Directory>
+
+Alias /nominatim $USERHOME/build/website
+EOFAPACHECONF
+#DOCS:```
+
+#
+# Then enable the configuration and restart apache
+#
+
+    sudo a2enconf nominatim
+    sudo systemctl restart apache2
 
 # You need to create a minimal configuration file that tells nominatim
 # where it is located on the webserver:
@@ -159,6 +170,88 @@ tee settings/local.php << EOF
 EOF
 #DOCS:```
 
+# The Nominatim API is now available at `http://localhost/nominatim/`.
 
-# Nominatim is now ready to use. Continue with
-# [importing a database from OSM data](../admin/Import.md).
+fi   #DOCS:
+
+#
+# Option 2: Using nginx
+# ---------------------
+#
+if [ "x$2" == "xinstall-nginx" ]; then #DOCS:
+
+# Nginx has no native support for php scripts. You need to set up php-fpm for
+# this purpose. First install nginx and php-fpm:
+
+    sudo apt install -y nginx php-fpm
+
+# You need to configure php-fpm to listen on a Unix socket.
+
+#DOCS:```sh
+sudo tee /etc/php/7.2/fpm/pool.d/www.conf << EOF_PHP_FPM_CONF
+[www]
+; Replace the tcp listener and add the unix socket
+listen = /var/run/php7.2-fpm.sock
+
+; Ensure that the daemon runs as the correct user
+listen.owner = www-data
+listen.group = www-data
+listen.mode = 0666
+
+; Unix user of FPM processes
+user = www-data
+group = www-data
+
+; Choose process manager type (static, dynamic, ondemand)
+pm = ondemand
+pm.max_children = 5
+EOF_PHP_FPM_CONF
+#DOCS:```
+
+# Then create a Nginx configuration to forward http requests to that socket.
+
+#DOCS:```sh
+sudo tee /etc/nginx/sites-available/default << EOF_NGINX_CONF
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root $USERHOME/build/website;
+    index search.php index.html;
+    location / {
+        try_files \$uri \$uri/ @php;
+    }
+
+    location @php {
+        fastcgi_param SCRIPT_FILENAME "\$document_root\$uri.php";
+        fastcgi_param PATH_TRANSLATED "\$document_root\$uri.php";
+        fastcgi_param QUERY_STRING    \$args;
+        fastcgi_pass unix:/var/run/php7.2-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+
+    location ~ [^/]\.php(/|$) {
+        fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+        if (!-f \$document_root\$fastcgi_script_name) {
+            return 404;
+        }
+        fastcgi_pass unix:/var/run/php7.2-fpm.sock;
+        fastcgi_index search.php;
+        include fastcgi.conf;
+    }
+}
+EOF_NGINX_CONF
+#DOCS:```
+
+#
+# Enable the configuration and restart Nginx
+#
+
+    sudo systemctl restart php7.2-fpm nginx
+
+# The Nominatim API is now available at `http://localhost/`.
+
+
+
+fi   #DOCS:

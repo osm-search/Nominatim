@@ -146,6 +146,11 @@ if (BUILD_API)
            php -S 127.0.0.1:8088
            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/website
    )
+
+   add_custom_target(serve-global
+           php -S 0.0.0.0:8088
+           WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/website
+   )
 endif()
 
 #-----------------------------------------------------------------------------

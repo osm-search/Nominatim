@@ -81,7 +81,8 @@ BEGIN
   lookup_word := upper(trim(postcode));
   lookup_token := ' ' || make_standard_name(lookup_word);
   SELECT min(word_id) FROM word
-    WHERE word_token = lookup_token and class='place' and type='postcode'
+    WHERE word_token = lookup_token and word = lookup_word
+          and class='place' and type='postcode'
     INTO return_word_id;
   IF return_word_id IS NULL THEN
     return_word_id := nextval('seq_word');

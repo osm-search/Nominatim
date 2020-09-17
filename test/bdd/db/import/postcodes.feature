@@ -137,3 +137,22 @@ Feature: Import of postcodes
         And word contains
            | word  | class | type |
            | 01982 | place | postcode |
+
+    Scenario: Different postcodes with the same normalization can both be found
+        Given the places
+           | osm | class | type  | addr+postcode | addr+housenumber | geometry |
+           | N34 | place | house | EH4 7EA       | 111              | country:gb |
+           | N35 | place | house | E4 7EA        | 111              | country:gb |
+        When importing
+        Then location_postcode contains exactly
+           | country | postcode | geometry |
+           | gb      | EH4 7EA  | country:gb |
+           | gb      | E4 7EA   | country:gb |
+        When searching for "EH4 7EA"
+        Then results contain
+           | type     | placename |
+           | postcode | EH4 7EA      |
+        When searching for "E4 7EA"
+        Then results contain
+           | type     | placename |
+           | postcode | E4 7EA      |

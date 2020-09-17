@@ -37,9 +37,9 @@ For compiling:
 For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.3+)
-  * [PostGIS](https://postgis.org) (2.2+)
+  * [PostGIS](https://postgis.net) (2.2+)
   * [Python 3](https://www.python.org/)
-  * [Psycopg2](https://initd.org/psycopg)
+  * [Psycopg2](https://www.psycopg.org)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
@@ -51,7 +51,7 @@ For running continuous updates:
 
 For running tests:
 
-  * [behave](http://pythonhosted.org/behave/)
+  * [behave](https://behave.readthedocs.io)
   * [nose](https://nose.readthedocs.io)
   * [phpunit](https://phpunit.de) >= 7.3
 

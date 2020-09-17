@@ -180,6 +180,7 @@ BEGIN
   -- Return the record for the base entry.
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name,
+           coalesce(extratags->'linked_place', extratags->'place') as place_type,
            class, type, admin_level,
            type not in ('postcode', 'postal_code') as isaddress,
            CASE WHEN rank_address = 0 THEN 100
@@ -198,7 +199,8 @@ BEGIN
       searchcountrycode := NULL;
     END IF;
     countrylocation := ROW(location.place_id, location.osm_type, location.osm_id,
-                           location.name, location.class, location.type, NULL,
+                           location.name, location.class, location.type,
+                           location.place_type,
                            location.admin_level, true, location.isaddress,
                            location.rank_address, location.distance)::addressline;
     RETURN NEXT countrylocation;

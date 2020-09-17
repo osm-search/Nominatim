@@ -48,11 +48,8 @@ For running continuous updates:
 
   * [pyosmium](https://osmcode.org/pyosmium/) (with Python 3)
 
-For running tests:
-
-  * [behave](http://pythonhosted.org/behave/)
-  * [nose](https://nose.readthedocs.io)
-  * [phpunit](https://phpunit.de) >= 7.3
+For dependencies for running tests and building documentation, see
+the [Development section](../develop/Development-Environment.md).
 
 ### Hardware
 

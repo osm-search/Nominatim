@@ -18,7 +18,7 @@ sudo apt-get install -y -qq build-essential cmake g++ libboost-dev libboost-syst
                             libbz2-dev libpq-dev libproj-dev \
                             postgresql-server-dev-12 postgresql-12-postgis-3 \
                             postgresql-contrib postgresql-12-postgis-3-scripts \
-                            apache2 php php-pgsql libapache2-mod-php \
+                            php php-pgsql \
                             php-intl python3-setuptools python3-dev python3-pip \
                             python3-psycopg2 python3-tidylib git
 
@@ -39,22 +39,6 @@ sudo -u postgres createuser -S www-data
 chmod a+x $HOME
 chmod a+x $TRAVIS_BUILD_DIR
 
-
-sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF > /dev/null
-    <Directory "$TRAVIS_BUILD_DIR/build/website">
-      Options FollowSymLinks MultiViews
-      AddType text/html   .php
-      DirectoryIndex search.php
-      Require all granted
-    </Directory>
-
-    Alias /nominatim $TRAVIS_BUILD_DIR/build/website
-EOFAPACHECONF
-
-
-sudo a2enconf nominatim
-sudo service apache2 restart
-
 wget -O $TRAVIS_BUILD_DIR/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 
 mkdir build
@@ -65,7 +49,6 @@ make
 
 tee settings/local.php << EOF
 <?php
- @define('CONST_Website_BaseURL', '/nominatim/');
  @define('CONST_Database_DSN', 'pgsql:dbname=test_api_nominatim');
  @define('CONST_Wikipedia_Data_Path', CONST_BasePath.'/test/testdb');
  @define('CONST_Replication_Max_Diff_size', '3');

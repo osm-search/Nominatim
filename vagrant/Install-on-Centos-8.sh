@@ -165,6 +165,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
+    export PostgreSQL_ROOT=/usr/pgsql-12/
     cmake $USERHOME/Nominatim
     make
 

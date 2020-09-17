@@ -3,11 +3,11 @@
 This chapter gives an overview how to set up Nominatim for developement
 and how to run tests.
 
-!!!Important
-This guide assumes that you develop under the latest version of Ubuntu. You
-can of course also use your favourite distribution. You just might have to
-adapt the commands below slightly, in particular the commands for installing
-additional software.
+!!! Important
+    This guide assumes that you develop under the latest version of Ubuntu. You
+    can of course also use your favourite distribution. You just might have to
+    adapt the commands below slightly, in particular the commands for installing
+    additional software.
 
 ## Installing Nominatim
 

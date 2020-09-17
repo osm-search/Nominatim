@@ -182,3 +182,11 @@ Feature: Search queries
         Then results contain
           | class   | type |
           | highway | residential |
+
+
+    # github #1949
+    Scenario: Addressdetails always return the place type
+       When sending json search query "Rotherbaum" with address
+       Then result addresses contain
+         | ID | suburb |
+         | 0  | Rotherbaum |

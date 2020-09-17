@@ -15,7 +15,7 @@ env:
 before_install:
   - phpenv global 7.4
 install:
-  - vagrant/install-on-travis-ci.sh
+  - vagrant/Install-on-Travis-CI.sh
 before_script:
   - psql -U postgres -c "create extension postgis"
 script:

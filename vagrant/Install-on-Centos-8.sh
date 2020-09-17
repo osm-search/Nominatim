@@ -39,7 +39,7 @@
     echo 'PATH=/usr/pgsql-12/bin:$PATH' >> ~/.bash_profile
     source ~/.bash_profile
 
-    pip3 install --user psycopg2 pytidylib
+    pip3 install --user psycopg2 pytidylib osmium
 
 
 #

@@ -139,8 +139,8 @@ Feature: Address computation
             | R1  | boundary | administrative | 6     | 112           | :b0      |
             | R34 | boundary | administrative | 8     | 112 DE        | :b1:E    |
         And the places
-            | osm | class    | type      | addr+postcode | geometry |
-            | R4  | place    | postcode  | 112 DE 34     | :b2:N    |
+            | osm | class    | type        | addr+postcode | geometry |
+            | R4  | boundary | postal_code | 112 DE 34     | :b2:N    |
         And the named places
             | osm | class    | type           | geometry |
             | W93 | highway  | residential    | :w2N     |

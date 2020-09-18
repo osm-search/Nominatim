@@ -581,6 +581,15 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Postcodes are just here to compute the centroids. They are not searchable
+  -- unless they are a boundary=postal_code.
+  -- There was an error in the style so that boundary=postal_code used to be
+  -- imported as place=postcode. That's why relations are allowed to pass here.
+  -- This can go away in a couple of versions.
+  IF NEW.class = 'place'  and NEW.type = 'postcode' and NEW.osm_type != 'R' THEN
+    RETURN NEW;
+  END IF;
+
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);

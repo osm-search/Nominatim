@@ -44,7 +44,8 @@
 {
     "keys" : ["boundary"],
     "values" : {
-        "administrative" : "main"
+        "administrative" : "main",
+        "postal_code" : "main"
     }
 },
 {

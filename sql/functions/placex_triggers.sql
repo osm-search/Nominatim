@@ -581,6 +581,15 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- Postcodes are just here to compute the centroids. They are not searchable
+  -- unless they are a boundary=postal_code.
+  -- There was an error in the style so that boundary=postal_code used to be
+  -- imported as place=postcode. That's why relations are allowed to pass here.
+  -- This can go away in a couple of versions.
+  IF NEW.class = 'place'  and NEW.type = 'postcode' and NEW.osm_type != 'R' THEN
+    RETURN NEW;
+  END IF;
+
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
@@ -694,7 +703,7 @@ BEGIN
 
   -- ---------------------------------------------------------------------------
   -- For low level elements we inherit from our parent road
-  IF (NEW.rank_search > 27 OR (NEW.type = 'postcode' AND NEW.rank_search = 25)) THEN
+  IF NEW.rank_search > 27 THEN
 
     --DEBUG: RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;
     NEW.parent_place_id := null;
@@ -757,11 +766,6 @@ BEGIN
       -- Performance, it would be more acurate to do all the rest of the import
       -- process but it takes too long
       -- Just be happy with inheriting from parent road only
-      IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-        result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
-        --DEBUG: RAISE WARNING 'Place added to location table';
-      END IF;
-
       result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
                                  NEW.rank_search, NEW.rank_address, NEW.geometry);
 

@@ -145,10 +145,6 @@ BEGIN
   THEN
     SELECT * INTO search_rank, address_rank
       FROM get_postcode_rank(country, postcode);
-
-    IF NOT extended_type = 'A' THEN
-      address_rank := 0;
-    END IF;
   ELSEIF extended_type = 'N' AND place_class = 'highway' THEN
     search_rank = 30;
     address_rank = 0;

@@ -18,7 +18,7 @@ Feature: Structured search queries
           | 22547 |
         Then results contain
           | type |
-          | postcode |
+          | ^post(al_)?code |
         And result addresses contain
           | postcode |
           | 22547 |

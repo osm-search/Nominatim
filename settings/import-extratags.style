@@ -125,6 +125,7 @@
     "keys" : ["boundary"],
     "values" : {
         "place" : "skip",
+        "postal_code" : "main",
         "" : "main,with_name"
     }
 },

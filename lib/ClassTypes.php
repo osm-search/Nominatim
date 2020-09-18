@@ -18,6 +18,8 @@ function getLabelTag($aPlace, $sCountry = null)
         $sLabel = $aPlace['place_type'];
     } elseif ($aPlace['class'] == 'boundary' && $aPlace['type'] == 'administrative') {
         $sLabel = getBoundaryLabel($iRank/2, $sCountry);
+    } elseif ($aPlace['type'] == 'postal_code') {
+        $sLabel = 'postcode';
     } elseif ($iRank < 26) {
         $sLabel = $aPlace['type'];
     } elseif ($iRank < 28) {

@@ -643,7 +643,7 @@ BEGIN
       addr_street := NEW.address->'street';
       addr_place := NEW.address->'place';
 
-      IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(,|;)%' THEN
+      IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(:|,|;)%' THEN
         i := getorcreate_postcode_id(NEW.address->'postcode');
       END IF;
   END IF;

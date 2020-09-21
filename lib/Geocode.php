@@ -642,12 +642,6 @@ class Geocode
             $oValidTokens = new TokenList();
 
             if (!empty($aTokens)) {
-                $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, operator, search_name_count';
-                $sSQL .= ' FROM word ';
-                $sSQL .= ' WHERE word_token in ('.join(',', $this->oDB->getDBQuotedList($aTokens)).')';
-
-                Debug::printSQL($sSQL);
-
                 $oValidTokens->addTokensFromDB(
                     $this->oDB,
                     $aTokens,

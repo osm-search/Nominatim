@@ -162,14 +162,14 @@ BEGIN
       IF st_area(NEW.geometry) < 0.000000001 AND st_area(existinggeometry) < 1 THEN
 
         -- re-index points that have moved in / out of the polygon, could be done as a single query but postgres gets the index usage wrong
-        update placex set indexed_status = 2 where indexed_status = 0 and 
-            (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
-            AND NOT (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
+        update placex set indexed_status = 2 where indexed_status = 0
+            AND ST_Intersects(NEW.geometry, placex.geometry)
+            AND NOT ST_Intersects(existinggeometry, placex.geometry)
             AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
-        update placex set indexed_status = 2 where indexed_status = 0 and 
-            (st_covers(existinggeometry, placex.geometry) OR ST_Intersects(existinggeometry, placex.geometry))
-            AND NOT (st_covers(NEW.geometry, placex.geometry) OR ST_Intersects(NEW.geometry, placex.geometry))
+        update placex set indexed_status = 2 where indexed_status = 0
+            AND ST_Intersects(existinggeometry, placex.geometry)
+            AND NOT ST_Intersects(NEW.geometry, placex.geometry)
             AND rank_search > existingplacex.rank_search AND (rank_search < 28 or name is not null);
 
       END IF;

@@ -5,7 +5,7 @@
         "no" : "skip"
     }
 },
-{   "keys" : ["wikipedia", "wikipedia:*", "wikidata"],
+{   "keys" : ["wikipedia", "wikipedia:*", "wikidata", "area"],
     "values" : {
         "" : "extra"
     }

@@ -237,7 +237,8 @@
               "population", "description", "image", "attribution", "fax",
               "email", "url", "website", "phone", "real_ale", "smoking",
               "food", "camera", "brewery", "locality", "wikipedia",
-              "wikipedia:*", "access:*", "contact:*", "drink:*", "toll:*"],
+              "wikipedia:*", "access:*", "contact:*", "drink:*", "toll:*",
+              "area"],
     "values" : {
         "" : "extra"
     }

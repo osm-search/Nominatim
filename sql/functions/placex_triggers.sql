@@ -417,7 +417,12 @@ BEGIN
 
       NEW.name := hstore('ref', NEW.address->'postcode');
 
-    ELSEIF NEW.class = 'boundary' AND NOT is_area THEN
+    ELSEIF NEW.class = 'highway' AND is_area AND NEW.name is null
+           AND NEW.extratags ? 'area' AND NEW.extratags->'area' = 'yes'
+    THEN
+        RETURN NULL;
+    ELSEIF NEW.class = 'boundary' AND NOT is_area
+    THEN
         RETURN NULL;
     ELSEIF NEW.class = 'boundary' AND NEW.type = 'administrative'
            AND NEW.admin_level <= 4 AND NEW.osm_type = 'W'

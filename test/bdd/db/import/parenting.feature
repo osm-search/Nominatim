@@ -374,7 +374,7 @@ Feature: Parenting of objects
          | W1     | N4              | 3 |
          | N1     | W2              | None |
          | N2     | W3              | 4 |
-         | N3     | W2              | None |
+         | N3     | N4              | None |
 
     Scenario: POIs parent a road if they are attached to it
         Given the scene points-on-roads

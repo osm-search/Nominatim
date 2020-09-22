@@ -412,3 +412,99 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_poi_search_terms(parent_place_id BIGINT,
+                                                   address HSTORE,
+                                                   housenumber TEXT,
+                                                   initial_name_vector INTEGER[],
+                                                   OUT name_vector INTEGER[],
+                                                   OUT nameaddress_vector INTEGER[])
+  AS $$
+DECLARE
+  parent_name_vector INTEGER[];
+  parent_address_vector INTEGER[];
+  addr_place_ids INTEGER[];
+
+  addr_item RECORD;
+BEGIN
+  -- Compute all search terms from the addr: tags.
+  nameaddress_vector := '{}'::INTEGER[];
+
+  IF address IS NOT NULL THEN
+    FOR addr_item IN SELECT * FROM each(address)
+    LOOP
+      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
+                           'district', 'region', 'county', 'municipality',
+                           'hamlet', 'village', 'subdistrict', 'town',
+                           'neighbourhood', 'quarter', 'parish')
+      THEN
+          nameaddress_vector := array_merge(nameaddress_vector,
+                                            addr_ids_from_name(addr_item.value));
+      END IF;
+    END LOOP;
+  END IF;
+
+  -- If the POI is named, simply mix in all address terms and be done.
+  IF array_length(initial_name_vector, 1) is not NULL THEN
+    -- Cheating here by not recomputing all terms but simply using the ones
+    -- from the parent object.
+    SELECT array_merge(s.name_vector, s.nameaddress_vector)
+      INTO parent_address_vector
+      FROM search_name s
+      WHERE s.place_id = parent_place_id;
+
+    name_vector := initial_name_vector;
+    nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
+
+    IF not address ? 'street' and address ? 'place' THEN
+      -- make sure addr:place terms are always searchable
+      nameaddress_vector := array_merge(nameaddress_vector,
+                                        addr_ids_from_name(address->'place'));
+    END IF;
+
+    RETURN;
+  END IF;
+
+  ----- unnamed POIS
+
+  IF (array_length(nameaddress_vector, 1) is null
+      and (address ? 'street'or not address ? 'place'))
+     or housenumber is null
+  THEN
+    RETURN;
+  END IF;
+
+  SELECT s.name_vector, s.nameaddress_vector
+    INTO parent_name_vector, parent_address_vector
+    FROM search_name s
+    WHERE s.place_id = parent_place_id;
+
+  -- Check if the parent covers all address terms.
+  -- If not, create a search name entry with the house number as the name.
+  -- This is unusual for the search_name table but prevents that the place
+  -- is returned when we only search for the street/place.
+
+  IF not nameaddress_vector <@ parent_address_vector THEN
+    name_vector := ARRAY[getorcreate_name_id(housenumber)];
+  END IF;
+
+  IF not address ? 'street' and address ? 'place' THEN
+    addr_place_ids := addr_ids_from_name(address->'place');
+    IF not addr_place_ids <@ parent_name_vector THEN
+      -- addr:place tag exists without a corresponding place. Mix in addr:place
+      -- in the address and drop the name from the parent. This would only be
+      -- the street name of the nearest street.
+      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+      name_vector := ARRAY[getorcreate_name_id(housenumber)];
+    END IF;
+  ELSE
+    nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
+  END IF;
+
+  -- The address vector always gets merged in.
+  nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
+
+END;
+$$
+LANGUAGE plpgsql;

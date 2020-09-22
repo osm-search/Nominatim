@@ -92,7 +92,16 @@ BEGIN
     END IF;
 
     IF fallback THEN
-      IF ST_Area(bbox) < 0.005 THEN
+      IF addr_street is null and addr_place is not null THEN
+        -- The address is attached to a place we don't know. Find the
+        -- nearest place instead.
+        FOR location IN
+          SELECT place_id FROM getNearFeatures(poi_partition, bbox, 26, '{}'::INTEGER[])
+            ORDER BY rank_address DESC, isguess asc, distance LIMIT 1
+        LOOP
+          parent_place_id := location.place_id;
+        END LOOP;
+      ELSEIF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road
         SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
         --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
@@ -224,7 +233,7 @@ LANGUAGE plpgsql STABLE;
 -- \param maxrank       Rank of the place. All address features must have
 --                      a search rank lower than the given rank.
 -- \param address       Address terms for the place.
--- \param geoemtry      Geometry to which the address objects should be close.
+-- \param geometry      Geometry to which the address objects should be close.
 --
 -- \retval parent_place_id  Place_id of the address object that is the direct
 --                          ancestor.
@@ -541,6 +550,9 @@ DECLARE
 
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
+  addr_nameaddress_vector INTEGER[];
+
+  inherited_address HSTORE;
 
   linked_node_id BIGINT;
   linked_importance FLOAT;
@@ -710,6 +722,7 @@ BEGIN
 
     -- if we have a POI and there is no address information,
     -- see if we can get it from a surrounding building
+    inherited_address := ''::HSTORE;
     IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
       FOR location IN
@@ -724,6 +737,7 @@ BEGIN
         NEW.housenumber := location.address->'housenumber';
         addr_street := location.address->'street';
         addr_place := location.address->'place';
+        inherited_address := location.address;
       END LOOP;
     END IF;
 
@@ -754,28 +768,26 @@ BEGIN
         NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
       END IF;
 
-      -- If there is no name it isn't searchable, don't bother to create a search record
-      IF NEW.name is NULL THEN
-        --DEBUG: RAISE WARNING 'Not a searchable place % %', NEW.osm_type, NEW.osm_id;
-        return NEW;
+      IF NEW.name is not NULL THEN
+          NEW.name := add_default_place_name(NEW.country_code, NEW.name);
+          name_vector := make_keywords(NEW.name);
+
+          IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
+            result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
+                                   name_vector, NEW.rank_search, NEW.rank_address,
+                                   upper(trim(NEW.address->'postcode')), NEW.geometry);
+            --DEBUG: RAISE WARNING 'Place added to location table';
+          END IF;
+
       END IF;
 
-      NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-      name_vector := make_keywords(NEW.name);
-
-      -- Performance, it would be more acurate to do all the rest of the import
-      -- process but it takes too long
-      -- Just be happy with inheriting from parent road only
-      result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
-                                 NEW.rank_search, NEW.rank_address, NEW.geometry);
-
       IF NOT %REVERSE-ONLY% THEN
-          -- Merge address from parent
-          SELECT array_merge(s.name_vector, s.nameaddress_vector)
-            INTO nameaddress_vector
-            FROM search_name s
-            WHERE s.place_id = NEW.parent_place_id;
+        SELECT * INTO name_vector, nameaddress_vector
+          FROM create_poi_search_terms(NEW.parent_place_id,
+                                       inherited_address || NEW.address,
+                                       NEW.housenumber, name_vector);
 
+        IF array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)
@@ -784,8 +796,9 @@ BEGIN
                          nameaddress_vector, NEW.centroid);
           --DEBUG: RAISE WARNING 'Place added to search table';
         END IF;
+      END IF;
 
-      return NEW;
+      RETURN NEW;
     END IF;
 
   END IF;

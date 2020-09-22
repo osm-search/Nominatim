@@ -470,14 +470,20 @@ DECLARE
   rank SMALLINT;
 BEGIN
   UPDATE placex SET indexed_status = 2 WHERE place_id = placeid;
-  SELECT geometry, rank_search FROM placex WHERE place_id = placeid INTO placegeom, rank;
+
+  SELECT geometry, rank_address INTO placegeom, rank
+    FROM placex WHERE place_id = placeid;
+
   IF placegeom IS NOT NULL AND ST_IsValid(placegeom) THEN
-    IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon') THEN
-      FOR geom IN select split_geometry(placegeom) FROM placex WHERE place_id = placeid LOOP
-        update placex set indexed_status = 2 where ST_Intersects(geom, placex.geometry)
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
-        update placex set indexed_status = 2 where ST_Intersects(geom, placex.geometry)
-        AND rank_search > rank and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
+    IF ST_GeometryType(placegeom) in ('ST_Polygon','ST_MultiPolygon')
+       AND rank > 0
+    THEN
+      FOR geom IN SELECT split_geometry(placegeom) LOOP
+        UPDATE placex SET indexed_status = 2
+         WHERE ST_Intersects(geom, placex.geometry)
+               and indexed_status = 0
+               and ((rank_address = 0 and rank_search > rank) or rank_address > rank)
+               and (rank_search < 28 or name is not null or (rank >= 16 and address ? 'place'));
       END LOOP;
     ELSE
         diameter := update_place_diameter(rank);

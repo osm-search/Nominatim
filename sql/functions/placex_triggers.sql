@@ -450,11 +450,16 @@ BEGIN
         -- mark items within the geometry for re-indexing
   --    RAISE WARNING 'placex poly insert: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
 
-        -- work around bug in postgis, this may have been fixed in 2.0.0 (see http://trac.osgeo.org/postgis/ticket/547)
-        update placex set indexed_status = 2 where ST_Intersects(NEW.geometry, placex.geometry)
-         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) = 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and address ? 'place'));
-        update placex set indexed_status = 2 where ST_Intersects(NEW.geometry, placex.geometry)
-         AND rank_search > NEW.rank_search and indexed_status = 0 and ST_geometrytype(placex.geometry) != 'ST_Point' and (rank_search < 28 or name is not null or (NEW.rank_search >= 16 and address ? 'place'));
+        UPDATE placex SET indexed_status = 2
+         WHERE ST_Intersects(NEW.geometry, placex.geometry)
+               and indexed_status = 0
+               and ((rank_address = 0 and rank_search > NEW.rank_address)
+                    or rank_address > NEW.rank_address
+                    or (class = 'place' and osm_type = 'N')
+                   )
+               and (rank_search < 28
+                    or name is not null
+                    or (NEW.rank_address >= 16 and address ? 'place'));
       END IF;
     ELSE
       -- mark nearby items for re-indexing, where 'nearby' depends on the features rank_search and is a complete guess :(

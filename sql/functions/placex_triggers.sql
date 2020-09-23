@@ -93,13 +93,15 @@ BEGIN
 
     IF fallback THEN
       IF addr_street is null and addr_place is not null THEN
-        -- The address is attached to a place we don't know. Find the
-        -- nearest place instead.
+        -- The address is attached to a place we don't know.
+        -- Instead simply use the containing area with the largest rank.
         FOR location IN
-          SELECT place_id FROM getNearFeatures(poi_partition, bbox, 26, '{}'::INTEGER[])
-            ORDER BY rank_address DESC, isguess asc, distance LIMIT 1
+          SELECT place_id FROM placex
+            WHERE bbox @ geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+                  AND rank_address between 5 and 25
+            ORDER BY rank_address desc
         LOOP
-          parent_place_id := location.place_id;
+            RETURN location.place_id;
         END LOOP;
       ELSEIF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road

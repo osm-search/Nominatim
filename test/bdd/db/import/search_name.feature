@@ -223,21 +223,6 @@ Feature: Creation of search terms
          | object | nameaddress_vector |
          | W1     | 12345 |
 
-    Scenario: is_in is split and added to the address search terms
-        Given the scene roads-with-pois
-        And the places
-         | osm | class   | type        | name     | geometry |
-         | N1  | place   | state       | new york | 80 80 |
-         | N2  | place   | city        | bonn     | 81 81 |
-         | N3  | place   | suburb      | smalltown| 80 81 |
-        And the named places
-         | osm | class   | type    | addr+is_in                | geometry |
-         | W1  | highway | service | bonn, New York, Smalltown | :w-north |
-        When importing
-        Then search_name contains
-         | object | nameaddress_vector |
-         | W1     | bonn, new york, smalltown |
-
     Scenario: a linked place does not show up in search name
         Given the named places
          | osm  | class    | type           | admin | geometry |

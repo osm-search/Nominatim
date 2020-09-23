@@ -101,6 +101,7 @@ DECLARE
   postcode_isexact BOOL;
   searchclass TEXT;
   searchtype TEXT;
+  search_unlisted_place TEXT;
   countryname HSTORE;
 BEGIN
   -- The place ein question might not have a direct entry in place_addressline.
@@ -155,11 +156,13 @@ BEGIN
   IF for_place_id IS NULL THEN
     SELECT parent_place_id, country_code, housenumber, rank_search,
            postcode, address is not null and address ? 'postcode',
-           name, class, type
+           name, class, type,
+           address -> '_unlisted_place' as unlisted_place
       FROM placex
       WHERE place_id = in_place_id and rank_search > 27
       INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress,
-           searchpostcode, postcode_isexact, searchhousename, searchclass, searchtype;
+           searchpostcode, postcode_isexact, searchhousename, searchclass,
+           searchtype, search_unlisted_place;
   END IF;
 
   -- If for_place_id is still NULL at this point then the object has its own
@@ -277,6 +280,11 @@ BEGIN
     location := ROW(null, null, null, hstore('ref', searchhousenumber),
                     'place', 'house_number', null, null, true, true, 28, 0)::addressline;
     RETURN NEXT location;
+  END IF;
+
+  IF search_unlisted_place is not null THEN
+    RETURN NEXT ROW(null, null, null, hstore('name', search_unlisted_place),
+                    'place', 'locality', null, null, true, true, 26, 0)::addressline;
   END IF;
 
   IF searchpostcode IS NOT NULL THEN

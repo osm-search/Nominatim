@@ -27,8 +27,8 @@ Feature: Creation of search terms
          | N1     | #23         | Rose Street, Walltown |
         When searching for "23 Rose Street, Walltown"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
 
     Scenario: Unnamed POI has no search entry when it has known addr: tags
         Given the scene roads-with-pois
@@ -42,8 +42,8 @@ Feature: Creation of search terms
         Then search_name has no entry for N1
         When searching for "23 Rose Street, Walltown"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
 
     Scenario: Unnamed POI must have a house number to get a search entry
         Given the scene roads-with-pois
@@ -72,12 +72,12 @@ Feature: Creation of search terms
         When searching for "23 Rose Street"
         Then exactly 1 results are returned
         And results contain
-         | osm_type | osm_id |
-         | W        | 1 |
+         | osm_type | osm_id | name |
+         | W        | 1      | Rose Street, Strange Town |
         When searching for "23 Walltown"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Walltown, Strange Town |
 
     Scenario: Unnamed POIs doesn't inherit parent name when addr:place is present only in parent address
         Given the scene roads-with-pois
@@ -95,13 +95,13 @@ Feature: Creation of search terms
         When searching for "23 Rose Street, Walltown"
         Then exactly 1 result is returned
         And results contain
-         | osm_type | osm_id |
-         | W        | 1 |
+         | osm_type | osm_id | name |
+         | W        | 1      | Rose Street, Strange Town |
         When searching for "23  Walltown"
         Then exactly 1 result is returned
         And results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Walltown, Strange Town |
 
     Scenario: Unnamed POIs does inherit parent name when unknown addr:place and addr:street is present
         Given the scene roads-with-pois
@@ -115,8 +115,8 @@ Feature: Creation of search terms
         Then search_name has no entry for N1
         When searching for "23 Rose Street"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
         When searching for "23 Lily Street"
         Then exactly 0 results are returned
 
@@ -132,8 +132,8 @@ Feature: Creation of search terms
         Then search_name has no entry for N1
         When searching for "23 Rose Street"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
         When searching for "23 Lily Street"
         Then exactly 0 results are returned
 
@@ -151,8 +151,8 @@ Feature: Creation of search terms
          | N1     | #Green Moss | Rose Street, Walltown |
         When searching for "Green Moss, Rose Street, Walltown"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, Rose Street |
 
     Scenario: Named POI doesn't inherit parent name when addr:place is present only in parent address
         Given the scene roads-with-pois
@@ -171,8 +171,8 @@ Feature: Creation of search terms
         Then exactly 0 result is returned
         When searching for "Green Moss, Walltown"
         Then results contain
-         | osm_type | osm_id |
-         | N        | 1 |
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, Walltown, Strange Town |
 
     Scenario: Named POIs inherit address from parent
         Given the scene roads-with-pois

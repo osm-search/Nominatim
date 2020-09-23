@@ -575,6 +575,7 @@ BEGIN
   -- update not necessary for osmline, cause linked_place_id does not exist
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
+  NEW.address := NEW.address - '_unlisted_place'::TEXT;
 
   IF NEW.linked_place_id is not null THEN
     --DEBUG: RAISE WARNING 'place already linked to %', NEW.linked_place_id;
@@ -740,8 +741,17 @@ BEGIN
     IF NEW.parent_place_id is not null THEN
 
       -- Get the details of the parent road
-      SELECT p.country_code, p.postcode FROM placex p
+      SELECT p.country_code, p.postcode, p.name FROM placex p
        WHERE p.place_id = NEW.parent_place_id INTO location;
+
+      IF addr_street is null and addr_place is not null THEN
+        -- Check if the addr:place tag is part of the parent name
+        SELECT count(*) INTO i
+          FROM svals(location.name) AS pname WHERE pname = addr_place;
+        IF i = 0 THEN
+          NEW.address = NEW.address || hstore('_unlisted_place', addr_place);
+        END IF;
+      END IF;
 
       NEW.country_code := location.country_code;
       --DEBUG: RAISE WARNING 'Got parent details from search name';

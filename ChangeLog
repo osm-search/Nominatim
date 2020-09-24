@@ -1,3 +1,16 @@
+3.5.2
+
+ * ensure that wikipedia tags are imported for all styles
+ * reinstate verbosity for indexing during updates
+ * make house number reappear in display name on named POIs
+ * introduce batch processing in indexer to avoid transaction ID overrun
+ * increase splitting for large geometries to improve indexing speed
+ * remove deprecated get_magic_quotes_gpc() function
+ * make sure that all postcodes have an entry in word and are thus searchable
+ * remove use of ST_Covers in conjunction woth ST_Intersects,
+   causes bad query planning and slow updates in Postgis3
+ * update osm2pgsql
+
 3.5.1
 
  * disable jit and parallel processing in PostgreSQL for osm2pgsql

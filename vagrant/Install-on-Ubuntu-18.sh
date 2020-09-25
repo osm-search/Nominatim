@@ -31,7 +31,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                             postgresql-contrib-10 postgresql-10-postgis-scripts \
                             apache2 php php-pgsql libapache2-mod-php \
                             php-intl python3-setuptools python3-dev python3-pip \
-                            python3-psycopg2 python3-tidylib git
+                            python3-psycopg2 python3-tidylib
 
 
 #
@@ -127,8 +127,8 @@ sudo sed -i 's:#.*::' /etc/apache2/conf-available/nominatim.conf #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.5.1.tar.bz2
-    tar xf Nominatim-3.5.1.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.5.2.tar.bz2
+    tar xf Nominatim-3.5.2.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -139,7 +139,7 @@ fi                                 #DOCS:
     cd $USERHOME                   #DOCS:    :::sh
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim-3.5.1
+    cmake $USERHOME/Nominatim-3.5.2
     make
 
 # You need to create a minimal configuration file that tells nominatim

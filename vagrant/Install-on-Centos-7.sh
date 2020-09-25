@@ -35,7 +35,7 @@
 
     sudo yum install -y postgresql11-server postgresql11-contrib postgresql11-devel \
                         postgis25_11 postgis25_11-utils \
-                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        wget cmake make gcc gcc-c++ libtool policycoreutils-python \
                         devtoolset-7 llvm-toolset-7 \
                         php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel boost-devel \
@@ -151,8 +151,8 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.5.1.tar.bz2
-    tar xf Nominatim-3.5.1.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.5.2.tar.bz2
+    tar xf Nominatim-3.5.2.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -164,7 +164,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim-3.5.1
+    cmake $USERHOME/Nominatim-3.5.2
     make
 
 #
@@ -175,10 +175,10 @@ fi                                 #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim-3.5.1/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim-3.5.2/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim-3.5.1
+    sudo restorecon -R -v $USERHOME/Nominatim-3.5.2
     sudo restorecon -R -v $USERHOME/build
 
 

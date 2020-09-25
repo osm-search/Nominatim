@@ -86,7 +86,8 @@ function getBoundaryLabel($iAdminLevel, $sCountry, $sFallback = 'Administrative'
                                            8 => 'City',
                                            9 => 'City District',
                                            10 => 'Suburb',
-                                           11 => 'Neighbourhood'
+                                           11 => 'Neighbourhood',
+                                           12 => 'City Block'
                                           ),
                              'no' => array (
                                       3 => 'State',

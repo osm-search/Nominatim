@@ -96,7 +96,6 @@ DECLARE
   searchcountrycode varchar(2);
   searchhousenumber TEXT;
   searchhousename HSTORE;
-  searchrankaddress INTEGER;
   searchpostcode TEXT;
   postcode_isexact BOOL;
   searchclass TEXT;
@@ -111,56 +110,56 @@ BEGIN
 
   -- first query osmline (interpolation lines)
   IF in_housenumber >= 0 THEN
-    SELECT parent_place_id, country_code, in_housenumber::text, 30, postcode,
+    SELECT parent_place_id, country_code, in_housenumber::text, postcode,
            null, 'place', 'house'
       FROM location_property_osmline
       WHERE place_id = in_place_id AND in_housenumber>=startnumber
             AND in_housenumber <= endnumber
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress,
+      INTO for_place_id, searchcountrycode, searchhousenumber,
            searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
 
   --then query tiger data
   -- %NOTIGERDATA% IF 0 THEN
   IF for_place_id IS NULL AND in_housenumber >= 0 THEN
-    SELECT parent_place_id, 'us', in_housenumber::text, 30, postcode, null,
+    SELECT parent_place_id, 'us', in_housenumber::text, postcode, null,
            'place', 'house'
       FROM location_property_tiger
       WHERE place_id = in_place_id AND in_housenumber >= startnumber
             AND in_housenumber <= endnumber
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress,
+      INTO for_place_id, searchcountrycode, searchhousenumber,
            searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
   -- %NOTIGERDATA% END IF;
 
   -- %NOAUXDATA% IF 0 THEN
   IF for_place_id IS NULL THEN
-    SELECT parent_place_id, 'us', housenumber, 30, postcode, null, 'place', 'house'
+    SELECT parent_place_id, 'us', housenumber, postcode, null, 'place', 'house'
       FROM location_property_aux
       WHERE place_id = in_place_id
-      INTO for_place_id,searchcountrycode, searchhousenumber, searchrankaddress,
+      INTO for_place_id,searchcountrycode, searchhousenumber,
            searchpostcode, searchhousename, searchclass, searchtype;
   END IF;
   -- %NOAUXDATA% END IF;
 
   -- postcode table
   IF for_place_id IS NULL THEN
-    SELECT parent_place_id, country_code, rank_search, postcode, 'place', 'postcode'
+    SELECT parent_place_id, country_code, postcode, 'place', 'postcode'
       FROM location_postcode
       WHERE place_id = in_place_id
-      INTO for_place_id, searchcountrycode, searchrankaddress, searchpostcode,
+      INTO for_place_id, searchcountrycode, searchpostcode,
            searchclass, searchtype;
   END IF;
 
   -- POI objects in the placex table
   IF for_place_id IS NULL THEN
-    SELECT parent_place_id, country_code, housenumber, rank_search,
+    SELECT parent_place_id, country_code, housenumber,
            postcode, address is not null and address ? 'postcode',
            name, class, type,
            address -> '_unlisted_place' as unlisted_place
       FROM placex
       WHERE place_id = in_place_id and rank_search > 27
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress,
+      INTO for_place_id, searchcountrycode, searchhousenumber,
            searchpostcode, postcode_isexact, searchhousename, searchclass,
            searchtype, search_unlisted_place;
   END IF;
@@ -170,13 +169,13 @@ BEGIN
   -- place we should be using instead.
   IF for_place_id IS NULL THEN
     select coalesce(linked_place_id, place_id),  country_code,
-           housenumber, rank_search, postcode,
+           housenumber, postcode,
            address is not null and address ? 'postcode', null
       from placex where place_id = in_place_id
-      INTO for_place_id, searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode, postcode_isexact, searchhousename;
+      INTO for_place_id, searchcountrycode, searchhousenumber, searchpostcode, postcode_isexact, searchhousename;
   END IF;
 
---RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchrankaddress, searchpostcode;
+--RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchpostcode;
 
   found := 1000; -- the lowest rank_address included
 
@@ -218,7 +217,6 @@ BEGIN
            distance, country_code, postcode
       FROM place_addressline join placex on (address_place_id = placex.place_id)
       WHERE place_addressline.place_id = for_place_id
-            AND (cached_rank_address >= 4 AND cached_rank_address < searchrankaddress)
             AND linked_place_id is null
             AND (placex.country_code IS NULL OR searchcountrycode IS NULL
                  OR placex.country_code = searchcountrycode)

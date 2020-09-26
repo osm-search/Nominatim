@@ -44,7 +44,7 @@ BEGIN
       FROM location_area_large_-partition-
       WHERE geometry && feature
         AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
-        AND rank_search < maxrank AND rank_address < maxrank
+        AND rank_address < maxrank
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
       ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
         ST_Distance(feature, centroid) *

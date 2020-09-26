@@ -24,6 +24,7 @@ Feature: Search queries
           | house_number  | 86 |
           | road          | Schellingstraße |
           | suburb        | Eilbek |
+          | neighbourhood | Auenviertel |
           | postcode      | 22089 |
           | city          | Hamburg |
           | country       | Deutschland |
@@ -37,6 +38,7 @@ Feature: Search queries
           | type          | value |
           | house_number  | 73 |
           | road          | Schellingstraße |
+          | neighbourhood | Auenviertel |
           | suburb        | Eilbek |
           | postcode      | 22089 |
           | city          | Hamburg |

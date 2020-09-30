@@ -10,11 +10,6 @@ CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search) {ts:sear
 CREATE INDEX idx_placex_rank_address ON placex USING BTREE (rank_address) {ts:search-index};
 CREATE INDEX idx_placex_parent_place_id ON placex USING BTREE (parent_place_id) {ts:search-index} where parent_place_id IS NOT NULL;
 
-CREATE INDEX idx_placex_geometry_reverse_lookupPoint
-  ON placex USING gist (geometry) {ts:search-index}
-  WHERE (name is not null or housenumber is not null or rank_address between 26 and 27)
-    AND class not in ('railway','tunnel','bridge','man_made')
-    AND rank_address >= 26 AND indexed_status = 0 AND linked_place_id is null;
 CREATE INDEX idx_placex_geometry_reverse_lookupPolygon
   ON placex USING gist (geometry) {ts:search-index}
   WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')

@@ -106,7 +106,6 @@ $aExpectedIndices = array(
     'idx_placex_rank_address',
     'idx_placex_pendingsector',
     'idx_placex_parent_place_id',
-    'idx_placex_geometry_reverse_lookuppoint',
     'idx_placex_geometry_reverse_lookuppolygon',
     'idx_placex_geometry_reverse_placenode',
     'idx_location_area_country_place_id',

@@ -260,3 +260,6 @@ CREATE TABLE wikipedia_redirect (
 );
 ALTER TABLE ONLY wikipedia_redirect ADD CONSTRAINT wikipedia_redirect_pkey PRIMARY KEY (language, from_title);
 
+-- osm2pgsql does not create indexes on the middle tables for Nominatim
+-- Add one for lookup of associated street relations.
+CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts) WHERE tags @> ARRAY['associatedStreet'];

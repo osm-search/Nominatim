@@ -24,6 +24,13 @@ You can then drop the old index with:
 DROP INDEX idx_placex_pendingsector
 ```
 
+### Unused index
+
+This index has been unused ever since the query using it was changed two years ago. Saves about 12GB on a planet installation.
+
+```sql
+DROP INDEX idx_placex_geometry_reverse_lookupPoint
+```
 
 ### Switching to dotenv
 

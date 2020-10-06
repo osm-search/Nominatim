@@ -199,15 +199,10 @@ class SearchDescription
         } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
                   && is_a($oSearchTerm, '\Nominatim\Token\Postcode')
         ) {
-            // We need to try the case where the postal code is the primary element
-            // (i.e. no way to tell if it is (postalcode, city) OR (city, postalcode)
-            // so try both.
             if (!$this->sPostcode) {
                 // If we have structured search or this is the first term,
                 // make the postcode the primary search element.
-                if ($this->iOperator == Operator::NONE
-                    && ($sPhraseType == 'postalcode' || $bFirstToken)
-                ) {
+                if ($this->iOperator == Operator::NONE && $bFirstToken) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->iOperator = Operator::POSTCODE;

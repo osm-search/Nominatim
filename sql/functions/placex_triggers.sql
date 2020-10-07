@@ -624,6 +624,21 @@ BEGIN
         NEW.rank_address := parent_address_level + 2;
       END IF;
     END IF;
+  -- If a place node is contained in a admin boundary with the same address level
+  -- and has not been linked, then make the node a subpart by increasing the
+  -- address rank (city level and above).
+  ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
+     and NEW.rank_address between 16 and 23
+  THEN
+    FOR location IN
+        SELECT rank_address FROM placex
+        WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+              and rank_address = NEW.rank_address
+              and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
+        LIMIT 1
+    LOOP
+      NEW.rank_address = NEW.rank_address + 2;
+    END LOOP;
   ELSE
     parent_address_level := 3;
   END IF;

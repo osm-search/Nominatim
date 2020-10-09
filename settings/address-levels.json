@@ -122,6 +122,21 @@
           "administrative4" : 12
       }
   }
+},
+{ "countries" : ["id"],
+  "tags" : {
+      "place" : {
+          "municipality" : 18
+      },
+      "boundary" : {
+          "administrative5" : 12,
+          "administrative6" : 14,
+          "administrative7" : 16,
+          "administrative8" : 20,
+          "administrative9" : 22,
+          "administrative10" : 24
+      }
+  }
 }
 ]
 

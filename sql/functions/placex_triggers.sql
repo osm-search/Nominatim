@@ -211,7 +211,11 @@ BEGIN
     FOR linked_placex IN
       SELECT placex.* from placex
       WHERE make_standard_name(name->'name') = bnd_name
-        AND ((bnd.rank_address > 0 and placex.rank_address = bnd.rank_address)
+        AND ((bnd.rank_address > 0
+              and bnd.rank_address = (compute_place_rank(placex.country_code,
+                                                         'N', placex.class,
+                                                         placex.type, 15::SMALLINT,
+                                                         false, placex.postcode)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index

@@ -120,3 +120,5 @@ if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_Ins
 @define('CONST_Log_DB', false);
 // Set to a file name to enable logging to a file.
 @define('CONST_Log_File', false);
+// Verbose debugging output, only useful when manual testing
+@define('CONST_Debug', false);

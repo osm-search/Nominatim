@@ -31,7 +31,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libboost-filesystem-dev libexpat1-dev zlib1g-dev \
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-12 postgresql-12-postgis-3 \
-                        postgresql-contrib postgresql-12-postgis-3-scripts \
+                        postgresql-contrib-12 postgresql-12-postgis-3-scripts \
                         php php-pgsql php-intl \
                         python3-psycopg2 git
 

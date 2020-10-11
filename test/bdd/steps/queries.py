@@ -583,8 +583,8 @@ def check_address(context, lid, neg, attrs):
         else:
             assert_in(attr, addr_parts)
 
-@then(u'address of result (?P<lid>\d+) is')
-def check_address(context, lid):
+@then(u'address of result (?P<lid>\d+) (?P<complete>is|contains)')
+def check_address(context, lid, complete):
     context.execute_steps("then more than %s results are returned" % lid)
 
     addr_parts = dict(context.response.result[int(lid)]['address'])
@@ -595,7 +595,8 @@ def check_address(context, lid):
                      "Bad address value for %s" % line['type'])
         del addr_parts[line['type']]
 
-    eq_(0, len(addr_parts), "Additional address parts found: %s" % str(addr_parts))
+    if complete == 'is':
+        eq_(0, len(addr_parts), "Additional address parts found: %s" % str(addr_parts))
 
 @then(u'result (?P<lid>\d+ )?has bounding box in (?P<coords>[\d,.-]+)')
 def step_impl(context, lid, coords):

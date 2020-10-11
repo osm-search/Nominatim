@@ -53,6 +53,12 @@ follows:
   * download the new Wikipedia tables as described in the import section
   * reimport the tables: `./utils/setup.php --import-wikipedia-articles`
   * update the functions: `./utils/setup.php --create-functions --enable-diff-updates`
+  * create a new lookup index:
+```
+CREATE INDEX idx_placex_wikidata on placex
+USING BTREE ((extratags -> 'wikidata'))
+WHERE extratags ? 'wikidata' and class = 'place' and osm_type = 'N' and rank_search < 26
+```
   * compute importance: `./utils/update.php --recompute-importance`
 
 The last step takes about 10 hours on the full planet.

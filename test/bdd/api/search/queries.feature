@@ -19,11 +19,10 @@ Feature: Search queries
         When sending json search query "Schellingstr 86, Hamburg" with address
           | accept-language |
           | de |
-        Then address of result 0 is
+        Then address of result 0 contains
           | type          | value |
           | house_number  | 86 |
           | road          | Schellingstraße |
-          | suburb        | Eilbek |
           | postcode      | 22089 |
           | city          | Hamburg |
           | country       | Deutschland |
@@ -33,11 +32,10 @@ Feature: Search queries
         When sending json search query "Schellingstr 73, Hamburg" with address
           | accept-language |
           | de |
-        Then address of result 0 is
+        Then address of result 0 contains
           | type          | value |
           | house_number  | 73 |
           | road          | Schellingstraße |
-          | suburb        | Eilbek |
           | postcode      | 22089 |
           | city          | Hamburg |
           | country       | Deutschland |

@@ -211,7 +211,11 @@ BEGIN
     FOR linked_placex IN
       SELECT placex.* from placex
       WHERE make_standard_name(name->'name') = bnd_name
-        AND ((bnd.rank_address > 0 and placex.rank_address = bnd.rank_address)
+        AND ((bnd.rank_address > 0
+              and bnd.rank_address = (compute_place_rank(placex.country_code,
+                                                         'N', placex.class,
+                                                         placex.type, 15::SMALLINT,
+                                                         false, placex.postcode)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.rank_search < 26 -- needed to select the right index
@@ -624,6 +628,21 @@ BEGIN
         NEW.rank_address := parent_address_level + 2;
       END IF;
     END IF;
+  -- If a place node is contained in a admin boundary with the same address level
+  -- and has not been linked, then make the node a subpart by increasing the
+  -- address rank (city level and above).
+  ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
+     and NEW.rank_address between 16 and 23
+  THEN
+    FOR location IN
+        SELECT rank_address FROM placex
+        WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+              and rank_address = NEW.rank_address
+              and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
+        LIMIT 1
+    LOOP
+      NEW.rank_address = NEW.rank_address + 2;
+    END LOOP;
   ELSE
     parent_address_level := 3;
   END IF;

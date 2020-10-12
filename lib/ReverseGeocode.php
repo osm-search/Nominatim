@@ -54,6 +54,7 @@ class ReverseGeocode
      */
     protected function lookupInterpolation($sPointSQL, $fSearchDiam)
     {
+        Debug::newFunction('lookupInterpolation');
         $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search,';
         $sSQL .= '  ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
         $sSQL .= '  startnumber, endnumber, interpolationtype,';
@@ -62,6 +63,7 @@ class ReverseGeocode
         $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
         $sSQL .= ' and indexed_status = 0 and startnumber is not NULL ';
         $sSQL .= ' ORDER BY distance ASC limit 1';
+        Debug::printSQL($sSQL);
 
         return $this->oDB->getRow(
             $sSQL,
@@ -88,16 +90,20 @@ class ReverseGeocode
 
     protected function lookupInCountry($sPointSQL, $iMaxRank)
     {
+        Debug::newFunction('lookupInCountry');
         // searches for polygon in table country_osm_grid which contains the searchpoint
         // and searches for the nearest place node to the searchpoint in this polygon
         $sSQL = 'SELECT country_code FROM country_osm_grid';
         $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.') LIMIT 1';
+        Debug::printSQL($sSQL);
 
         $sCountryCode = $this->oDB->getOne(
             $sSQL,
             null,
             'Could not determine country polygon containing the point.'
         );
+        Debug::printVar('Country code', $sCountryCode);
+
         if ($sCountryCode) {
             if ($iMaxRank > 4) {
                 // look for place nodes with the given country code
@@ -115,9 +121,11 @@ class ReverseGeocode
                 $sSQL .= 'WHERE distance <= reverse_place_diameter(rank_search)';
                 $sSQL .= ' ORDER BY rank_search DESC, distance ASC';
                 $sSQL .= ' LIMIT 1';
+                Debug::printSQL($sSQL);
 
-                if (CONST_Debug) var_dump($sSQL);
                 $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
+                Debug::printVar('Country node', $aPlace);
+
                 if ($aPlace) {
                     return new Result($aPlace['place_id']);
                 }
@@ -131,9 +139,10 @@ class ReverseGeocode
             $sSQL .= ' AND class in (\'boundary\',  \'place\')';
             $sSQL .= ' AND linked_place_id is null';
             $sSQL .= ' ORDER BY distance ASC';
+            Debug::printSQL($sSQL);
 
-            if (CONST_Debug) var_dump($sSQL);
             $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
+            Debug::printVar('Country place', $aPlace);
             if ($aPlace) {
                 return new Result($aPlace['place_id']);
             }
@@ -156,6 +165,7 @@ class ReverseGeocode
      */
     protected function lookupPolygon($sPointSQL, $iMaxRank)
     {
+        Debug::newFunction('lookupPolygon');
         // polygon search begins at suburb-level
         if ($iMaxRank > 25) $iMaxRank = 25;
         // no polygon search over country-level
@@ -173,8 +183,10 @@ class ReverseGeocode
         $sSQL .= ' ORDER BY rank_address DESC LIMIT 50 ) as a';
         $sSQL .= ' WHERE ST_CONTAINS(geometry, '.$sPointSQL.' )';
         $sSQL .= ' ORDER BY rank_address DESC LIMIT 1';
+        Debug::printSQL($sSQL);
 
         $aPoly = $this->oDB->getRow($sSQL, null, 'Could not determine polygon containing the point.');
+        Debug::printVar('Polygon result', $aPoly);
 
         if ($aPoly) {
         // if a polygon is found, search for placenodes begins ...
@@ -206,11 +218,12 @@ class ReverseGeocode
                 $sSQL .= ' AND distance <= reverse_place_diameter(rank_search)';
                 $sSQL .= ' ORDER BY distance ASC, rank_search DESC';
                 $sSQL .= ' LIMIT 1';
+                Debug::printSQL($sSQL);
 
-                if (CONST_Debug) var_dump($sSQL);
-                $aPlacNode = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
-                if ($aPlacNode) {
-                    return $aPlacNode;
+                $aPlaceNode = $this->oDB->getRow($sSQL, null, 'Could not determine place node.');
+                Debug::printVar('Nearest place node', $aPlaceNode);
+                if ($aPlaceNode) {
+                    return $aPlaceNode;
                 }
             }
         }
@@ -228,6 +241,7 @@ class ReverseGeocode
 
     public function lookupPoint($sPointSQL, $bDoInterpolation = true)
     {
+        Debug::newFunction('lookupPoint');
         // starts if the search is on POI or street level,
         // searches for the nearest POI or street,
         // if a street is found and a POI is searched for,
@@ -257,10 +271,11 @@ class ReverseGeocode
             $sSQL .= ' and (ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
             $sSQL .= ' OR ST_DWithin('.$sPointSQL.', centroid, '.$fSearchDiam.'))';
             $sSQL .= ' ORDER BY distance ASC limit 1';
-            if (CONST_Debug) var_dump($sSQL);
+            Debug::printSQL($sSQL);
+
             $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine closest place.');
 
-            if (CONST_Debug) var_dump($aPlace);
+            Debug::printVar('POI/street level result', $aPlace);
             if ($aPlace) {
                 $iPlaceID = $aPlace['place_id'];
                 $oResult = new Result($iPlaceID);
@@ -280,6 +295,7 @@ class ReverseGeocode
                 }
 
                 $aHouse = $this->lookupInterpolation($sPointSQL, $fDistance);
+                Debug::printVar('Interpolation result', $aPlace);
 
                 if ($aHouse) {
                     $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
@@ -306,10 +322,12 @@ class ReverseGeocode
                     $sSQL .= ' and class not in (\'boundary\')';
                     $sSQL .= ' and indexed_status = 0 and linked_place_id is null';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
-                    if (CONST_Debug) var_dump($sSQL);
+                    Debug::printSQL($sSQL);
+
                     $aStreet = $this->oDB->getRow($sSQL, null, 'Could not determine closest place.');
+                    Debug::printVar('Closest POI result', $aStreet);
+
                     if ($aStreet) {
-                        if (CONST_Debug) var_dump($aStreet);
                         $oResult = new Result($aStreet['place_id']);
                     }
                 }
@@ -327,10 +345,12 @@ class ReverseGeocode
                     $sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$oResult->iId;
                     $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, 0.001)';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
-                    if (CONST_Debug) var_dump($sSQL);
+                    Debug::printSQL($sSQL);
+
                     $aPlaceTiger = $this->oDB->getRow($sSQL, null, 'Could not determine closest Tiger place.');
+                    Debug::printVar('Tiger house number result', $aPlaceTiger);
+
                     if ($aPlaceTiger) {
-                        if (CONST_Debug) var_dump('found Tiger housenumber', $aPlaceTiger);
                         $oResult = new Result($aPlaceTiger['place_id'], Result::TABLE_TIGER);
                         $oResult->iHouseNumber = closestHouseNumber($aPlaceTiger);
                     }
@@ -343,6 +363,8 @@ class ReverseGeocode
             // lower than street level ($iMaxRank < 26 )
             $oResult = $this->lookupLargeArea($sPointSQL, $iMaxRank);
         }
+
+        Debug::printVar('Final result', $oResult);
         return $oResult;
     }
 }

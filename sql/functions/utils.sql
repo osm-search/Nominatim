@@ -277,7 +277,7 @@ CREATE OR REPLACE FUNCTION near_feature_rank_distance(rank_search INTEGER)
   AS $$
 BEGIN
   IF rank_search <= 16 THEN -- city
-    RETURN 7500;
+    RETURN 15000;
   ELSIF rank_search <= 18 THEN -- town
     RETURN 4000;
   ELSIF rank_search <= 19 THEN -- village

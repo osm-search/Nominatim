@@ -895,8 +895,9 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
-                                    CASE WHEN NEW.rank_address = 0
-                                      THEN NEW.rank_search ELSE NEW.rank_address END,
+                                    CASE WHEN NEW.rank_address = 0 THEN NEW.rank_search
+                                         WHEN NEW.rank_address > 25 THEN 25::smallint
+                                         ELSE NEW.rank_address END,
                                     NEW.address,
                                     CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30

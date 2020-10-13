@@ -38,7 +38,6 @@ if ($sOsmType && $iOsmId > 0) {
     $oReverseGeocode->setZoom($iZoom);
 
     $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
-    if (CONST_Debug) var_dump($oLookup);
 
     if ($oLookup) {
         $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));

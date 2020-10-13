@@ -272,21 +272,27 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION near_feature_rank_distance(rank_search INTEGER)
-  RETURNS FLOAT
+-- Create a bounding box with an extent computed from the radius (in meters)
+-- which in turn is derived from the given search rank.
+CREATE OR REPLACE FUNCTION place_node_fuzzy_area(geom GEOMETRY, rank_search INTEGER)
+  RETURNS GEOMETRY
   AS $$
+DECLARE
+  radius FLOAT := 500;
 BEGIN
   IF rank_search <= 16 THEN -- city
-    RETURN 15000;
+    radius := 15000;
   ELSIF rank_search <= 18 THEN -- town
-    RETURN 4000;
+    radius := 4000;
   ELSIF rank_search <= 19 THEN -- village
-    RETURN 2000;
+    radius := 2000;
   ELSIF rank_search  <= 20 THEN -- hamlet
-    RETURN 1000;
+    radius := 1000;
   END IF;
 
-  RETURN 500;
+  RETURN ST_Envelope(ST_Collect(
+                     ST_Project(geom, radius, 0.785398)::geometry,
+                     ST_Project(geom, radius, 3.9269908)::geometry));
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -301,7 +307,6 @@ CREATE OR REPLACE FUNCTION add_location(place_id BIGINT, country_code varchar(2)
 DECLARE
   locationid INTEGER;
   centroid GEOMETRY;
-  radius FLOAT;
   secgeo GEOMETRY;
   postcode TEXT;
 BEGIN
@@ -321,13 +326,7 @@ BEGIN
     END LOOP;
 
   ELSEIF ST_GeometryType(geometry) = 'ST_Point' THEN
-    radius := near_feature_rank_distance(rank_search);
-    --DEBUG: RAISE WARNING 'adding % radius %', place_id, radius;
-
-    -- Create a bounding box with an extent computed from the radius (in meters).
-    secgeo := ST_Envelope(ST_Collect(
-                            ST_Project(geometry, radius, 0.785398)::geometry,
-                            ST_Project(geometry, radius, 3.9269908)::geometry));
+    secgeo := place_node_fuzzy_area(geometry, rank_search);
     PERFORM insertLocationAreaLarge(partition, place_id, country_code, keywords, rank_search, rank_address, true, postcode, geometry, secgeo);
 
   END IF;

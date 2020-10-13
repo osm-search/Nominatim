@@ -307,7 +307,13 @@ BEGIN
   END LOOP;
 
   FOR location IN
-    SELECT * FROM getNearFeatures(partition, geometry, maxrank, isin_tokens)
+    SELECT * FROM getNearFeatures(partition, geometry, maxrank)
+    ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
+             distance *
+               CASE WHEN rank_address = 16 AND rank_search = 15 THEN 0.2
+                    WHEN rank_address = 16 AND rank_search = 16 THEN 0.25
+                    WHEN rank_address = 16 AND rank_search = 18 THEN 0.5
+                    ELSE 1 END ASC
   LOOP
     IF location.rank_address != current_rank_address THEN
       current_rank_address := location.rank_address;

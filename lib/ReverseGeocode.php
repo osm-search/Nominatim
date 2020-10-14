@@ -345,4 +345,58 @@ class ReverseGeocode
         }
         return $oResult;
     }
+
+    public function lookupWithHousenumber($fLat, $fLon, $street, $maxHousenumberSameStreetDistance, $maxHousenumberDistance) {
+        $result = NULL;
+        if( isset($street) && $maxHousenumberSameStreetDistance > 0 ) {
+            $result = $this->lookupWithHousenumberInternal($fLat, $fLon, $street, $maxHousenumberSameStreetDistance, true);
+        }
+        if( $result == NULL && $maxHousenumberDistance > 0 ) {
+            $result = $this->lookupWithHousenumberInternal($fLat, $fLon, $street, $maxHousenumberDistance, false);
+        }
+        return $result;
+    }
+
+    private function lookupWithHousenumberInternal($fLat, $fLon, $street, $maxDistance, $sameStreet) {
+        $distanceOf4326 = $maxDistance / 50000.0;
+        $sPointSQL = 'ST_SetSRID(ST_Point('.$fLon.','.$fLat.'),4326)';
+        $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
+        $sSQL .= 'ST_distance('.$sPointSQL.'::geography, geometry::geography) as distance ';
+        $sSQL .= 'FROM placex ';
+        $sSQL .= 'WHERE ST_DWithin('.$sPointSQL.', geometry, '.$distanceOf4326.') ';
+        $sSQL .= 'AND rank_address between 26 and 30 ';
+        if( $sameStreet ) {
+            $sSQL .= 'and housenumber is not null and address->\'street\' ilike '.$this->oDB->getDBQuoted('%'.$street.'%').' ';
+        }else {
+            $sSQL .= 'and housenumber is not null ';
+        }
+        $sSQL .= 'and class not in (\'railway\',\'tunnel\',\'bridge\',\'man_made\') ';
+        $sSQL .= 'and indexed_status = 0 ';
+        $sSQL .= 'and linked_place_id is null ';
+        $sSQL .= 'and (';
+        $sSQL .= 'ST_GeometryType(geometry) not in (\'ST_Polygon\',\'ST_MultiPolygon\') ';
+        $sSQL .= 'OR ST_DWithin('.$sPointSQL.', centroid, '.$distanceOf4326.') ';
+        $sSQL .= ') ';
+        $sSQL .= 'ORDER BY distance ASC ';
+        $sSQL .= 'limit 1';
+        if (CONST_Debug) var_dump($sSQL);
+        $aPlace = $this->oDB->getRow($sSQL, null, 'Could not determine closest place with housenumber.');
+
+        if ($aPlace) {
+            $fStartTime = microtime(true);
+            $aStartTime = explode('.', $fStartTime);
+            if (!isset($aStartTime[1])) $aStartTime[1] = '0';
+            $aOutdata = sprintf("[%s] found housenumber %s at distance %3d\n", date('Y-m-d H:i:s', $aStartTime[0]).'.'.$aStartTime[1], $sameStreet ? "in same street" : "in other street" , $aPlace['distance']);
+            file_put_contents(CONST_Log_File, $aOutdata, FILE_APPEND | LOCK_EX);
+        }
+
+        if (CONST_Debug) var_dump($aPlace);
+        if ($aPlace && $aPlace['distance'] <= $maxDistance) {
+            $iPlaceID = $aPlace['place_id'];
+            $oResult = new Result($iPlaceID);
+            return $oResult;
+        }else {
+            return NULL;
+        }
+    }
 }

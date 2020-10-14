@@ -77,6 +77,7 @@ class DB
             $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
             $row = $stmt->fetch();
         } catch (\PDOException $e) {
+            file_put_contents(CONST_Log_File, $e . ": " . $sSQL . "\n", FILE_APPEND | LOCK_EX);
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
         }
         return $row;
@@ -184,6 +185,7 @@ class DB
                 $stmt = $this->connection->query($sSQL);
             }
         } catch (\PDOException $e) {
+            file_put_contents(CONST_Log_File, $e . ": " . $sSQL . "\n", FILE_APPEND | LOCK_EX);
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
         }
         return $stmt;

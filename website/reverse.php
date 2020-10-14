@@ -44,6 +44,30 @@ if ($sOsmType && $iOsmId > 0) {
         $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
         if (!empty($aPlaces)) {
             $aPlace = reset($aPlaces);
+            $maxHousenumberSameStreetDistance = $oParams->getInt('housenumbersamestreetsearchdistance', 0);
+            $maxHousenumberDistance = $oParams->getInt('housenumbersearchdistance', 0);
+            if( ($maxHousenumberSameStreetDistance > 0 || $maxHousenumberDistance > 0) && !isset($aPlace['address']->getAddressNames()['house_number']) ) {
+                if( isset($aPlace['address']->getAddressNames()['road']) ) {
+                    $street = $aPlace['address']->getAddressNames()['road'];
+                }else if( isset($aPlace['address']->getAddressNames()['cycleway']) ) {
+                    $street = $aPlace['address']->getAddressNames()['cycleway'];
+                }else if( isset($aPlace['address']->getAddressNames()['pedestrian']) ) {
+                    $street = $aPlace['address']->getAddressNames()['pedestrian'];
+                }else if( isset($aPlace['address']->getAddressNames()['footway']) ) {
+                    $street = $aPlace['address']->getAddressNames()['footway'];
+                }else if( isset($aPlace['address']->getAddressNames()['construction']) ) {
+                    $street = $aPlace['address']->getAddressNames()['construction'];
+                }
+                $oLookup = $oReverseGeocode->lookupWithHousenumber($fLat, $fLon, $street, $maxHousenumberSameStreetDistance, $maxHousenumberDistance);
+                if (CONST_Debug) var_dump($oLookup);
+
+                if ($oLookup) {
+                    $aPlaces = $oPlaceLookup->lookup(array($oLookup->iId => $oLookup));
+                    if (!empty($aPlaces)) {
+                        $aPlace = reset($aPlaces);
+                    }
+                }
+            }
         }
     }
 } elseif ($sOutputFormat != 'html') {

@@ -101,6 +101,24 @@ Simplify the output geometry before returning. The parameter is the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the result. (Default: 0.0)
 
+### Extended search for housenumber
+
+* `housenumbersamestreetsearchdistance=<value>`
+
+When an address without housenumber is found initially, continue search in the same
+street with a maximum distance of <value> meter to find an address with housenumber.
+This search is only done when initial search returns a street.
+
+* `housenumbersearchdistance=<value>`
+
+When an address without housenumber is found initially, continue search with a
+maximum distance of <value> meter to find an address with housenumber (may be in
+another street).
+
+Above options can be combined, in that case first a search is done in the same street,
+if that does not result in a result with housenumber, search is done also in other
+streets.
+
 ### Other
 
 * `email=<valid email address>`

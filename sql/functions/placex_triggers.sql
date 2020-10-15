@@ -360,7 +360,7 @@ BEGIN
 
     INSERT INTO place_addressline (place_id, address_place_id, fromarea,
                                      isaddress, distance, cached_rank_address)
-        VALUES (obj_place_id, location.place_id, true,
+        VALUES (obj_place_id, location.place_id, not location.isguess,
                 location_isaddress, location.distance, location.rank_address);
   END LOOP;
 END;

@@ -2,6 +2,138 @@
 Feature: Address computation
     Tests for filling of place_addressline
 
+    Scenario: place nodes are added to the address when they are close enough
+        Given the 0.002 grid
+            | 2 |  |  |  |  |  | 1 |  | 3 |
+        And the named places
+            | osm | class | type     | geometry |
+            | N1  | place | square   | 1 |
+            | N2  | place | hamlet   | 2 |
+            | N3  | place | hamlet   | 3 |
+        When importing
+        Then place_addressline contains
+            | object | address | fromarea |
+            | N1     | N3      | False |
+        Then place_addressline doesn't contain
+            | object | address |
+            | N1     | N2      |
+
+    Scenario: given two place nodes, the closer one wins for the address
+        Given the grid
+            | 2 |  |  | 1 |  | 3 |
+        And the named places
+            | osm | class | type     | geometry |
+            | N1  | place | square   | 1 |
+            | N2  | place | hamlet   | 2 |
+            | N3  | place | hamlet   | 3 |
+        When importing
+        Then place_addressline contains
+            | object | address | fromarea | isaddress |
+            | N1     | N3      | False    | True |
+            | N1     | N2      | False    | False |
+
+    Scenario: boundaries around the place are added to the address
+        Given the grid
+            | 1 |    | 4 | | 7 | 10 |
+            | 2 |    | 5 | | 8 | 11 |
+            |   |    |   | |   |    |
+            |   |    |   | |   |    |
+            |   |    | 6 | | 9 |    |
+            |   | 99 |   | |   |    |
+            | 3 |    |   | |   | 12 |
+        And the named places
+            | osm | class    | type           | admin | geometry |
+            | R1  | boundary | administrative | 3     | (1,2,3,12,11,10,7,8,9,6,5,4,1) |
+            | R2  | boundary | administrative | 4     | (2,3,12,11,8,9,6,5,2) |
+            | N1  | place    | square         | 15    | 99 |
+        When importing
+        Then place_addressline contains
+            | object | address | isaddress |
+            | N1     | R1      | True |
+            | N1     | R2      | True |
+
+    Scenario: with boundaries of same rank the one with the closer centroid is prefered
+        Given the grid
+            | 1 |   |   | 3 |  | 5 |
+            |   | 9 |   |   |  |   |
+            | 2 |   |   | 4 |  | 6 |
+        And the named places
+            | osm | class    | type           | admin | geometry |
+            | R1  | boundary | administrative | 8     | (1,2,4,3,1) |
+            | R2  | boundary | administrative | 8     | (1,2,6,5,1) |
+            | N1  | place    | square         | 15    | 9 |
+        When importing
+        Then place_addressline contains
+            | object | address | isaddress |
+            | N1     | R1      | True |
+            | N1     | R2      | False |
+
+    Scenario: boundary areas are preferred over place nodes in the address
+        Given the grid
+            | 1 |   |   |   |   |   | 3 |
+            |   | 5 |   |   |   |   |   |
+            |   | 6 |   |   |   |   |   |
+            | 2 |   |   |   |   |   | 4 |
+        And the named places
+            | osm | class    | type    | admin | geometry |
+            | N1  | place    | square  | 15    | 5 |
+            | N2  | place    | city    | 15    | 6 |
+            | R1  | place    | city    | 8     | (1,2,4,3,1) |
+        When importing
+        Then place_addressline contains
+            | object | address | isaddress | cached_rank_address |
+            | N1     | R1      | True      | 16                  |
+            | N1     | N2      | False     | 16                  |
+
+    Scenario: place nodes outside a smaller ranked area are ignored
+        Given the grid
+            | 1 |   | 2 |   |
+            |   | 7 |   | 9 |
+            | 4 |   | 3 |   |
+        And the named places
+            | osm | class    | type    | admin | geometry |
+            | N1  | place    | square  | 15    | 7 |
+            | N2  | place    | city    | 15    | 9 |
+            | R1  | place    | city    | 8     | (1,2,3,4,1) |
+        When importing
+        Then place_addressline contains
+            | object | address | isaddress | cached_rank_address |
+            | N1     | R1      | True      | 16                  |
+        And place_addressline doesn't contain
+            | object | address |
+            | N1     | N2      |
+
+
+    Scenario: place nodes close enough to smaller ranked place nodes are included
+        Given the 0.002 grid
+            | 2 |   | 3 | 1 |
+        And the named places
+            | osm | class | type     | geometry |
+            | N1  | place | square   | 1 |
+            | N2  | place | hamlet   | 2 |
+            | N3  | place | quarter  | 3 |
+        When importing
+        Then place_addressline contains
+            | object | address | fromarea | isaddress |
+            | N1     | N2      | False    | True      |
+            | N1     | N3      | False    | True      |
+
+
+    Scenario: place nodes too far away from a smaller ranked place nodes are marked non-address
+        Given the 0.002 grid
+            | 2 |  |  | 1 |  | 3 |
+        And the named places
+            | osm | class | type     | geometry |
+            | N1  | place | square   | 1 |
+            | N2  | place | hamlet   | 2 |
+            | N3  | place | quarter  | 3 |
+        When importing
+        Then place_addressline contains
+            | object | address | fromarea | isaddress |
+            | N1     | N2      | False    | True      |
+            | N1     | N3      | False    | False     |
+
+
     # github #121
     Scenario: Roads crossing boundaries should contain both states
         Given the grid
@@ -60,7 +192,7 @@ Feature: Address computation
             | object | address |
             | W1     | W11     |
 
-    Scenario: Roads should not contain boundaries they touch in a end point
+    Scenario: Roads should not contain boundaries they touch in a middle point
         Given the grid
             | 1 |   |   | 2 |   | 3 |
             |   | 7 |   | 8 |   |   |
@@ -151,3 +283,18 @@ Feature: Address computation
         Then place_addressline contains
             | object | address |
             | W93    | R4      |
+
+    Scenario: squares do not appear in the address of a street
+        Given the grid
+            |   | 1 |   | 2 |   |
+            | 8 |   |   |   | 9 |
+            |   | 4 |   | 3 |   |
+        And the named places
+            | osm | class    | type           | geometry |
+            | W1  | highway  | residential    | 8, 9     |
+            | W2  | place    | square         | (1, 2, 3 ,4, 1) |
+        When importing
+        Then place_addressline doesn't contain
+            | object | address |
+            | W1     | W2      |
+

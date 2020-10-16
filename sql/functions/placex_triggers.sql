@@ -624,7 +624,7 @@ BEGIN
       SELECT rank_address FROM placex
       WHERE class = 'place' and rank_address < 24
             and rank_address > NEW.rank_address
-            and geometry ~ NEW.geometry
+            and geometry && NEW.geometry
             and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
       ORDER BY rank_address desc LIMIT 1
     LOOP
@@ -640,7 +640,7 @@ BEGIN
         SELECT rank_address FROM placex
         WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
               and rank_address = NEW.rank_address
-              and geometry ~ NEW.centroid and _ST_Covers(geometry, NEW.centroid)
+              and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
     LOOP
       NEW.rank_address = NEW.rank_address + 2;
@@ -743,10 +743,10 @@ BEGIN
     IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
        AND NEW.housenumber IS NULL THEN
       FOR location IN
-        -- The additional ~ condition works around the misguided query
+        -- The additional && condition works around the misguided query
         -- planner of postgis 3.0.
         SELECT address from placex where ST_Covers(geometry, NEW.centroid)
-            and geometry ~ NEW.centroid
+            and geometry && NEW.centroid
             and (address ? 'housenumber' or address ? 'street' or address ? 'place')
             and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
             limit 1

@@ -137,6 +137,17 @@
           "administrative10" : 24
       }
   }
+},
+{ "countries" : ["ru"],
+  "tags" : {
+      "place" : {
+          "municipality" : 18
+      },
+      "boundary" : {
+          "administrative7" : [13, 0],
+          "administrative8" : 14
+      }
+  }
 }
 ]
 

@@ -259,21 +259,16 @@ CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
                                                OUT nameaddress_vector INT[])
   AS $$
 DECLARE
-  current_rank_address INTEGER := 0;
-  location_distance FLOAT := 0;
-  location_parent GEOMETRY := NULL;
-  parent_place_id_rank SMALLINT := 0;
+  address_havelevel BOOLEAN[];
 
   location_isaddress BOOLEAN;
-
-  address_havelevel BOOLEAN[];
-  location_keywords INT[];
+  current_boundary GEOMETRY := NULL;
+  current_node_area GEOMETRY := NULL;
 
   location RECORD;
   addr_item RECORD;
 
   isin_tokens INT[];
-  isin TEXT[];
 BEGIN
   parent_place_id := 0;
   nameaddress_vector := '{}'::int[];
@@ -302,77 +297,71 @@ BEGIN
   END IF;
 
   ---- now compute the address terms
-  FOR i IN 1..28 LOOP
+  FOR i IN 1..maxrank LOOP
     address_havelevel[i] := false;
   END LOOP;
 
   FOR location IN
-    SELECT * FROM getNearFeatures(partition, geometry, maxrank, isin_tokens)
+    SELECT * FROM getNearFeatures(partition, geometry, maxrank)
+    ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
+             distance *
+               CASE WHEN rank_address = 16 AND rank_search = 15 THEN 0.2
+                    WHEN rank_address = 16 AND rank_search = 16 THEN 0.25
+                    WHEN rank_address = 16 AND rank_search = 18 THEN 0.5
+                    ELSE 1 END ASC
   LOOP
-    IF location.rank_address != current_rank_address THEN
-      current_rank_address := location.rank_address;
-      IF location.isguess THEN
-        location_distance := location.distance * 1.5;
-      ELSE
-        IF location.rank_address <= 12 THEN
-          -- for county and above, if we have an area consider that exact
-          -- (It would be nice to relax the constraint for places close to
-          --  the boundary but we'd need the exact geometry for that. Too
-          --  expensive.)
-          location_distance = 0;
+    -- Ignore all place nodes that do not fit in a lower level boundary.
+    CONTINUE WHEN location.isguess
+                  and current_boundary is not NULL
+                  and not ST_Contains(current_boundary, location.centroid);
+
+    -- If this is the first item in the rank, then assume it is the address.
+    location_isaddress := not address_havelevel[location.rank_address];
+
+    -- Further sanity checks to ensure that the address forms a sane hierarchy.
+    IF location_isaddress THEN
+      IF location.isguess and current_node_area is not NULL THEN
+        location_isaddress := ST_Contains(current_node_area, location.centroid);
+      END IF;
+      IF not location.isguess and current_boundary is not NULL
+         and location.rank_address != 11 AND location.rank_address != 5 THEN
+        location_isaddress := ST_Contains(current_boundary, location.centroid);
+      END IF;
+    END IF;
+
+    IF location_isaddress THEN
+      address_havelevel[location.rank_address] := true;
+      parent_place_id := location.place_id;
+
+      -- Set postcode if we have one.
+      -- (Returned will be the highest ranking one.)
+      IF location.postcode is not NULL THEN
+        postcode = location.postcode;
+      END IF;
+
+      -- Recompute the areas we need for hierarchy sanity checks.
+      IF location.rank_address != 11 AND location.rank_address != 5 THEN
+        IF location.isguess THEN
+          current_node_area := place_node_fuzzy_area(location.centroid,
+                                                     location.rank_search);
         ELSE
-          -- Below county level remain slightly fuzzy.
-          location_distance := location.distance * 0.5;
-        END IF;
-      END IF;
-    ELSE
-      CONTINUE WHEN location.keywords <@ location_keywords;
-    END IF;
-
-    IF location.distance < location_distance OR NOT location.isguess THEN
-      location_keywords := location.keywords;
-
-      location_isaddress := NOT address_havelevel[location.rank_address];
-      --DEBUG: RAISE WARNING 'should be address: %, is guess: %, rank: %', location_isaddress, location.isguess, location.rank_address;
-      IF location_isaddress AND location.isguess AND location_parent IS NOT NULL THEN
-          location_isaddress := ST_Contains(location_parent, location.centroid);
-      END IF;
-
-      --DEBUG: RAISE WARNING '% isaddress: %', location.place_id, location_isaddress;
-      -- Add it to the list of search terms
-      IF NOT %REVERSE-ONLY% THEN
-          nameaddress_vector := array_merge(nameaddress_vector,
-                                            location.keywords::integer[]);
-      END IF;
-
-      INSERT INTO place_addressline (place_id, address_place_id, fromarea,
-                                     isaddress, distance, cached_rank_address)
-        VALUES (obj_place_id, location.place_id, true,
-                location_isaddress, location.distance, location.rank_address);
-
-      IF location_isaddress THEN
-        -- add postcode if we have one
-        -- (If multiple postcodes are available, we end up with the highest ranking one.)
-        IF location.postcode is not null THEN
-            postcode = location.postcode;
-        END IF;
-
-        address_havelevel[location.rank_address] := true;
-        -- add a hack against postcode ranks
-        IF NOT location.isguess
-           AND location.rank_address != 11 AND location.rank_address != 5
-        THEN
+          current_node_area := NULL;
           SELECT p.geometry FROM placex p
-            WHERE p.place_id = location.place_id INTO location_parent;
-        END IF;
-
-        IF location.rank_address > parent_place_id_rank THEN
-          parent_place_id = location.place_id;
-          parent_place_id_rank = location.rank_address;
+              WHERE p.place_id = location.place_id INTO current_boundary;
         END IF;
       END IF;
     END IF;
 
+    -- Add it to the list of search terms
+    IF NOT %REVERSE-ONLY% THEN
+      nameaddress_vector := array_merge(nameaddress_vector,
+                                        location.keywords::integer[]);
+    END IF;
+
+    INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                     isaddress, distance, cached_rank_address)
+        VALUES (obj_place_id, location.place_id, not location.isguess,
+                location_isaddress, location.distance, location.rank_address);
   END LOOP;
 END;
 $$
@@ -518,7 +507,7 @@ BEGIN
       FROM placex
       WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
             and admin_level < in_level
-            and geometry && geom and ST_Covers(geometry, geom)
+            and geometry ~ geom and _ST_Covers(geometry, geom)
       ORDER BY admin_level desc LIMIT 1;
   END IF;
 
@@ -620,6 +609,7 @@ BEGIN
   IF NEW.class = 'boundary' and NEW.type = 'administrative'
      and NEW.osm_type = 'R' and NEW.rank_address > 0
   THEN
+    -- First, check that admin boundaries do not overtake each other rank-wise.
     parent_address_level := get_parent_address_level(NEW.centroid, NEW.admin_level);
     IF parent_address_level >= NEW.rank_address THEN
       IF parent_address_level >= 24 THEN
@@ -628,12 +618,24 @@ BEGIN
         NEW.rank_address := parent_address_level + 2;
       END IF;
     END IF;
-  -- If a place node is contained in a admin boundary with the same address level
-  -- and has not been linked, then make the node a subpart by increasing the
-  -- address rank (city level and above).
+    -- Second check that the boundary is not completely contained in a
+    -- place area with a higher address rank
+    FOR location IN
+      SELECT rank_address FROM placex
+      WHERE class = 'place' and rank_address < 24
+            and rank_address > NEW.rank_address
+            and geometry && NEW.geometry
+            and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
+      ORDER BY rank_address desc LIMIT 1
+    LOOP
+        NEW.rank_address := location.rank_address + 2;
+    END LOOP;
   ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
      and NEW.rank_address between 16 and 23
   THEN
+    -- If a place node is contained in a admin boundary with the same address level
+    -- and has not been linked, then make the node a subpart by increasing the
+    -- address rank (city level and above).
     FOR location IN
         SELECT rank_address FROM placex
         WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
@@ -799,7 +801,8 @@ BEGIN
           IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
             result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
                                    name_vector, NEW.rank_search, NEW.rank_address,
-                                   upper(trim(NEW.address->'postcode')), NEW.geometry);
+                                   upper(trim(NEW.address->'postcode')), NEW.geometry,
+                                   NEW.centroid);
             --DEBUG: RAISE WARNING 'Place added to location table';
           END IF;
 
@@ -906,8 +909,9 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
-                                    CASE WHEN NEW.rank_address = 0
-                                      THEN NEW.rank_search ELSE NEW.rank_address END,
+                                    CASE WHEN NEW.rank_address = 0 THEN NEW.rank_search
+                                         WHEN NEW.rank_address > 25 THEN 25::smallint
+                                         ELSE NEW.rank_address END,
                                     NEW.address,
                                     CASE WHEN NEW.rank_search >= 26
                                              AND NEW.rank_search < 30
@@ -929,7 +933,7 @@ BEGIN
   IF NEW.name IS NOT NULL THEN
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry, NEW.centroid);
       --DEBUG: RAISE WARNING 'added to location (full)';
     END IF;
 

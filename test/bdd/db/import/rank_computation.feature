@@ -2,7 +2,7 @@
 Feature: Rank assignment
     Tests for assignment of search and address ranks.
 
-    Scenario: Ranks for place nodes are assinged according to thier type
+    Scenario: Ranks for place nodes are assigned according to their type
         Given the named places
           | osm  | class     | type      |
           | N1   | foo       | bar       |
@@ -113,3 +113,36 @@ Feature: Rank assignment
           | R20    | 12          | 22 |
           | R21    | 14          | 24 |
           | R22    | 16          | 25 |
+
+    Scenario: admin levels contained in a place area must not overtake address ranks
+        Given the named places
+            | osm | class    | type           | admin | geometry |
+            | R10 | place    | city           | 15    | (0 0, 0 2, 2 0, 0 0) |
+            | R20 | boundary | administrative | 6     | (0 0, 0 1, 1 0, 0 0) |
+        When importing
+        Then placex contains
+            | object | rank_search | rank_address |
+            | R10    | 16          | 16           |
+            | R20    | 12          | 18           |
+
+    Scenario: admin levels overlapping a place area are not demoted
+        Given the named places
+            | osm | class    | type           | admin | geometry |
+            | R10 | place    | city           | 15    | (0 0, 0 2, 2 0, 0 0) |
+            | R20 | boundary | administrative | 6     | (-1 0, 0 1, 1 0, -1 0) |
+        When importing
+        Then placex contains
+            | object | rank_search | rank_address |
+            | R10    | 16          | 16           |
+            | R20    | 12          | 12           |
+
+    Scenario: admin levels with equal area as a place area are not demoted
+        Given the named places
+            | osm | class    | type           | admin | geometry |
+            | R10 | place    | city           | 15    | (0 0, 0 2, 2 0, 0 0) |
+            | R20 | boundary | administrative | 6     | (0 0, 0 2, 2 0, 0 0) |
+        When importing
+        Then placex contains
+            | object | rank_search | rank_address |
+            | R10    | 16          | 16           |
+            | R20    | 12          | 12           |

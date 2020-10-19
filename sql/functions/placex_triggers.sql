@@ -618,18 +618,21 @@ BEGIN
         NEW.rank_address := parent_address_level + 2;
       END IF;
     END IF;
-    -- Second check that the boundary is not completely contained in a
-    -- place area with a higher address rank
-    FOR location IN
-      SELECT rank_address FROM placex
-      WHERE class = 'place' and rank_address < 24
-            and rank_address > NEW.rank_address
-            and geometry && NEW.geometry
-            and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
-      ORDER BY rank_address desc LIMIT 1
-    LOOP
-        NEW.rank_address := location.rank_address + 2;
-    END LOOP;
+    IF NEW.rank_address > 9 THEN
+        -- Second check that the boundary is not completely contained in a
+        -- place area with a higher address rank
+        FOR location IN
+          SELECT rank_address FROM placex
+          WHERE class = 'place' and rank_address < 24
+                and rank_address > NEW.rank_address
+                and geometry && NEW.geometry
+                and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
+                and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
+          ORDER BY rank_address desc LIMIT 1
+        LOOP
+            NEW.rank_address := location.rank_address + 2;
+        END LOOP;
+    END IF;
   ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'
      and NEW.rank_address between 16 and 23
   THEN

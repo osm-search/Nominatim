@@ -494,33 +494,6 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_parent_address_level(geom GEOMETRY, in_level SMALLINT)
-  RETURNS SMALLINT
-  AS $$
-DECLARE
-  address_rank SMALLINT;
-BEGIN
-  IF in_level <= 3 or in_level > 15 THEN
-    address_rank := 3;
-  ELSE
-    SELECT rank_address INTO address_rank
-      FROM placex
-      WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
-            and admin_level < in_level
-            and geometry ~ geom and _ST_Covers(geometry, geom)
-      ORDER BY admin_level desc LIMIT 1;
-  END IF;
-
-  IF address_rank is NULL or address_rank <= 3 THEN
-    RETURN 3;
-  END IF;
-
-  RETURN address_rank;
-END;
-$$
-LANGUAGE plpgsql;
-
-
 CREATE OR REPLACE FUNCTION placex_update()
   RETURNS TRIGGER
   AS $$
@@ -610,14 +583,33 @@ BEGIN
      and NEW.osm_type = 'R' and NEW.rank_address > 0
   THEN
     -- First, check that admin boundaries do not overtake each other rank-wise.
-    parent_address_level := get_parent_address_level(NEW.centroid, NEW.admin_level);
-    IF parent_address_level >= NEW.rank_address THEN
-      IF parent_address_level >= 24 THEN
-        NEW.rank_address := 25;
+    parent_address_level := 3;
+    FOR location IN
+      SELECT rank_address, extratags FROM placex
+      WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
+            and admin_level < NEW.admin_level and admin_level > 3
+            and rank_address > 0
+            and ST_Covers(geometry, NEW.geometry)
+      ORDER BY admin_level desc LIMIT 1
+    LOOP
+      IF location.extratags ? 'wikidata' and NEW.extratags ? 'wikidata'
+         and location.extratags->'wikidata' = NEW.extratags->'wikidata'
+      THEN
+        -- Looks like the same boundary is replicated on multiple admin_levels.
+        -- Usual tagging in Poland. Remove our boundary from addresses.
+        NEW.rank_address := 0;
       ELSE
-        NEW.rank_address := parent_address_level + 2;
+        parent_address_level := location.rank_address;
+        IF location.rank_address >= NEW.rank_address THEN
+          IF location.rank_address >= 24 THEN
+            NEW.rank_address := 25;
+          ELSE
+            NEW.rank_address := location.rank_address + 2;
+          END IF;
+        END IF;
       END IF;
-    END IF;
+    END LOOP;
+
     IF NEW.rank_address > 9 THEN
         -- Second check that the boundary is not completely contained in a
         -- place area with a higher address rank
@@ -630,7 +622,7 @@ BEGIN
                 and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
           ORDER BY rank_address desc LIMIT 1
         LOOP
-            NEW.rank_address := location.rank_address + 2;
+          NEW.rank_address := location.rank_address + 2;
         END LOOP;
     END IF;
   ELSEIF NEW.class = 'place' and NEW.osm_type = 'N'

@@ -152,13 +152,14 @@ else                               #DOCS:
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
-# then configure and build Nominatim in there:
+# then configure and build Nominatim in there. Note that you need to
+# tell cmake about the more recent Postgresql version that you use:
 
 #DOCS:    :::sh
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim-3.5.2
+    cmake -DPostgreSQL_ADDITIONAL_VERSIONS=12 $USERHOME/Nominatim-3.5.2
     make
 
 #

@@ -23,7 +23,7 @@ rank   | typical place types             | extent
 4      | countries                       | -
 5-9    | states, regions, provinces      | -
 10-12  | counties                        | -
-13-16  | cities, municipalities, islands | 7.5 km
+13-16  | cities, municipalities, islands | 15 km
 17-18  | towns, boroughs                 | 4 km
 19     | villages, suburbs               | 2 km
 20     | hamlets, farms, neighbourhoods  |  1 km
@@ -51,15 +51,23 @@ The following table gives an overview how ranks are mapped to address parts:
  10-12       | county
  13-16       | city
  17-21       | suburb
- 22-25       | neighbourhood
+ 22-24       | neighbourhood
+ 25          | squares, farms, localities
  26-27       | street
  28-30       | POI/house number
 
 The country rank 4 usually doesn't show up in the address parts of an object.
 The country is determined indirectly from the country code.
 
-Ranks 5-25 can be assigned more or less freely. They make up the major part
+Ranks 5-24 can be assigned more or less freely. They make up the major part
 of the address.
+
+Rank 25 is also an addressing rank but it is special because while it can be
+the parent to a POI with an addr:place of the same name, it cannot be a parent
+to streets. Use it for place features that are technically on the same level
+as a street (e.g. squares, city blocks) or for places that should not normally
+appear in an address unless explicitly tagged so (e.g place=locality which
+should be uninhabited and as such not addressable).
 
 The street ranks 26 and 27 are handled slightly differently. Only one object
 from these ranks shows up in an address.

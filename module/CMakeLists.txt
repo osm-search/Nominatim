@@ -1,5 +1,14 @@
 # just use the pgxs makefile
-find_program(PG_CONFIG pg_config)
+
+foreach(suffix ${PostgreSQL_ADDITIONAL_VERSIONS} "13" "12" "11" "10" "9.6" "9.5" "9.4" "9.3")
+    list(APPEND PG_CONFIG_HINTS
+         "/usr/pgsql-${suffix}/bin")
+endforeach()
+
+find_program(PG_CONFIG pg_config HINTS ${PG_CONFIG_HINTS})
+
+
+
 execute_process(COMMAND ${PG_CONFIG} --pgxs
             OUTPUT_VARIABLE PGXS
             OUTPUT_STRIP_TRAILING_WHITESPACE)

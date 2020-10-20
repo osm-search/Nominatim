@@ -35,11 +35,7 @@
                         python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
-    # make sure pg_config gets found
-    echo 'PATH=/usr/pgsql-12/bin:$PATH' >> ~/.bash_profile
-    source ~/.bash_profile
-
-    pip3 install --user psycopg2 pytidylib
+    pip3 install --user psycopg2
 
 
 #

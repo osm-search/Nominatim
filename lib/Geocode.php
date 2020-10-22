@@ -917,6 +917,24 @@ class Geocode
                     $aResult['lon'],
                     $aResult['lat']
                 );
+
+                // secondary ordering (for results with same importance (the smaller the better):
+                // - approximate importance of address parts
+                if (isset($aResult['addressimportance']) && $aResult['addressimportance']) {
+                    $aResult['foundorder'] = -$aResult['addressimportance']/10;
+                } else {
+                    $aResult['foundorder'] = -$aResult['importance'];
+                }
+                // - number of exact matches from the query
+                $aResult['foundorder'] -= $aResults[$aResult['place_id']]->iExactMatches;
+                // - importance of the class/type
+                $iClassImportance = ClassTypes\getImportance($aResult);
+                if (isset($iClassImportance)) {
+                    $aResult['foundorder'] += 0.0001 * $iClassImportance;
+                } else {
+                    $aResult['foundorder'] += 0.01;
+                }
+
                 // Adjust importance for the number of exact string matches in the result
                 $iCountWords = 0;
                 $sAddress = $aResult['langaddress'];
@@ -927,20 +945,8 @@ class Geocode
                     }
                 }
 
-                $aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1); // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
-
-                // secondary ordering (for results with same importance (the smaller the better):
-                // - approximate importance of address parts
-                $aResult['foundorder'] = -$aResult['addressimportance']/10;
-                // - number of exact matches from the query
-                $aResult['foundorder'] -= $aResults[$aResult['place_id']]->iExactMatches;
-                // - importance of the class/type
-                $iClassImportance = ClassTypes\getImportance($aResult);
-                if (isset($iClassImportance)) {
-                    $aResult['foundorder'] += 0.0001 * $iClassImportance;
-                } else {
-                    $aResult['foundorder'] += 0.01;
-                }
+                // 0.1 is a completely arbitrary number but something in the range 0.1 to 0.5 would seem right
+                $aResult['importance'] = $aResult['importance'] + ($iCountWords*0.1);
             }
             $aSearchResults[$iIdx] = $aResult;
         }

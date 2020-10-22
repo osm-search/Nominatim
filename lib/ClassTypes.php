@@ -275,6 +275,7 @@ function getImportance($aPlace)
 
     if ($aWithImportance === null) {
         $aWithImportance = array_flip(array(
+                                           'boundary:administrative',
                                            'place:country',
                                            'place:state',
                                            'place:province',

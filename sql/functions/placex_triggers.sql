@@ -585,16 +585,19 @@ BEGIN
     -- First, check that admin boundaries do not overtake each other rank-wise.
     parent_address_level := 3;
     FOR location IN
-      SELECT rank_address, extratags FROM placex
+      SELECT rank_address,
+             (CASE WHEN extratags ? 'wikidata' and NEW.extratags ? 'wikidata'
+                        and extratags->'wikidata' = NEW.extratags->'wikidata'
+                   THEN ST_Equals(geometry, NEW.geometry)
+                   ELSE false END) as is_same
+      FROM placex
       WHERE osm_type = 'R' and class = 'boundary' and type = 'administrative'
             and admin_level < NEW.admin_level and admin_level > 3
             and rank_address > 0
-            and ST_Covers(geometry, NEW.geometry)
+            and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
       ORDER BY admin_level desc LIMIT 1
     LOOP
-      IF location.extratags ? 'wikidata' and NEW.extratags ? 'wikidata'
-         and location.extratags->'wikidata' = NEW.extratags->'wikidata'
-      THEN
+      IF location.is_same THEN
         -- Looks like the same boundary is replicated on multiple admin_levels.
         -- Usual tagging in Poland. Remove our boundary from addresses.
         NEW.rank_address := 0;

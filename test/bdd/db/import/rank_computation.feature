@@ -101,6 +101,20 @@ Feature: Rank assignment
             | R21    | R20     | 16                  |
             | R22    | R20     | 16                  |
 
+    Scenario: Admin levels cannot overtake each other due to place address ranks even when slightly misaligned
+        Given the named places
+          | osm | class    | type           | admin | extra+place  | geometry |
+          | R20 | boundary | administrative | 6     | town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
+          | R21 | boundary | administrative | 8     |              | (0 0, -0.0001 1, 1 1, 1 0, 0 0) |
+        When importing
+        Then placex contains
+          | object | rank_search | rank_address |
+          | R20    | 12          | 16 |
+          | R21    | 16          | 18 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | R21    | R20     | 16                  |
+
     Scenario: Admin levels must not be larger than 25
         Given the named places
           | osm | class    | type           | admin | extra+place   | geometry |

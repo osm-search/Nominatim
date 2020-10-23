@@ -64,7 +64,15 @@
           "peak" : [18, 0],
           "volcano" : [18, 0],
           "mountain_range" : [18, 0],
-          "sea" : [4, 0]
+          "sea" : [4, 0],
+          "tree" : 30,
+          "spring"  : 30,
+          "cave_entrance" : 30,
+          "geyser" : 30,
+          "hot_spring" : 30,
+          "rock" : 30,
+          "stone" : 30,
+          "" : [22, 0]
       },
       "waterway" : {
           "river" : [19, 0],

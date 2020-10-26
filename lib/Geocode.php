@@ -934,6 +934,8 @@ class Geocode
                 } else {
                     $aResult['foundorder'] += 0.01;
                 }
+                // - rank
+                $aResult['foundorder'] -= 0.00001 * (30 - $aResult['rank_search']);
 
                 // Adjust importance for the number of exact string matches in the result
                 $iCountWords = 0;

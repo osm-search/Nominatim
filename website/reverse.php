@@ -10,7 +10,7 @@ ini_set('memory_limit', '200M');
 $oParams = new Nominatim\ParameterParser();
 
 // Format for output
-$sOutputFormat = $oParams->getSet('format', array('html', 'xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'xml');
+$sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'xml');
 set_exception_handler_by_format($sOutputFormat);
 
 // Preferred language
@@ -45,7 +45,7 @@ if ($sOsmType && $iOsmId > 0) {
             $aPlace = reset($aPlaces);
         }
     }
-} elseif ($sOutputFormat != 'html') {
+} else {
     userError('Need coordinates or OSM object to lookup.');
 }
 
@@ -73,11 +73,7 @@ if (CONST_Debug) {
     exit;
 }
 
-if ($sOutputFormat == 'html') {
-    $sDataDate = $oDB->getOne("select TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' from import_status limit 1");
-    $sTileURL = CONST_Map_Tile_URL;
-    $sTileAttribution = CONST_Map_Tile_Attribution;
-} elseif ($sOutputFormat == 'geocodejson') {
+if ($sOutputFormat == 'geocodejson') {
     $sQuery = $fLat.','.$fLon;
     if (isset($aPlace['place_id'])) {
         $fDistance = $oDB->getOne(

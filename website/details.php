@@ -8,7 +8,7 @@ ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
 
-$sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
+$sOutputFormat = $oParams->getSet('format', array('json'), 'json');
 set_exception_handler_by_format($sOutputFormat);
 
 $aLangPrefOrder = $oParams->getPreferredLanguages();
@@ -19,21 +19,16 @@ $iOsmId = $oParams->getInt('osmid', -1);
 $sClass = $oParams->getString('class');
 
 $bIncludeKeywords = $oParams->getBool('keywords', false);
-$bIncludeAddressDetails = $oParams->getBool('addressdetails', $sOutputFormat == 'html');
+$bIncludeAddressDetails = $oParams->getBool('addressdetails', false);
 $bIncludeLinkedPlaces = $oParams->getBool('linkedplaces', true);
-$bIncludeHierarchy = $oParams->getBool('hierarchy', $sOutputFormat == 'html');
+$bIncludeHierarchy = $oParams->getBool('hierarchy', false);
 $bGroupHierarchy = $oParams->getBool('group_hierarchy', false);
-$bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson', $sOutputFormat == 'html');
+$bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson', false);
 
 $oDB = new Nominatim\DB();
 $oDB->connect();
 
 $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
-
-if ($sOutputFormat == 'html' && !$sPlaceId && !$sOsmType) {
-    include(CONST_BasePath.'/lib/template/details-index-html.php');
-    exit;
-}
 
 if ($sOsmType && $iOsmId > 0) {
     $sSQL = 'SELECT place_id FROM placex WHERE osm_type = :type AND osm_id = :id';
@@ -251,12 +246,5 @@ if ($bIncludeKeywords) {
 }
 
 logEnd($oDB, $hLog, 1);
-
-if ($sOutputFormat=='html') {
-    $sSQL = "SELECT TO_CHAR(lastimportdate,'YYYY/MM/DD HH24:MI')||' GMT' FROM import_status LIMIT 1";
-    $sDataDate = $oDB->getOne($sSQL);
-    $sTileURL = CONST_Map_Tile_URL;
-    $sTileAttribution = CONST_Map_Tile_Attribution;
-}
 
 include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');

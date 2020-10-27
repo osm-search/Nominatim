@@ -1,0 +1,25 @@
+name: 'Build Nominatim'
+
+runs:
+    using: "composite"
+
+    steps:
+            - name: Install prerequisits
+              run: sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev postgresql-13-postgis-3 postgresql-13-postgis-3-scripts postgresql-server-dev-13 python3-psycopg2 python3-pyosmium
+              shell: bash
+
+            - name: Configure
+              run: mkdir build && cd build && cmake ..
+              shell: bash
+
+            - name: Build
+              run: |
+                  make -j2 all
+                  ./utils/setup.php --setup-website
+              shell: bash
+              working-directory: build
+
+            - name: Download dependencies
+              run: wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+              shell: bash
+

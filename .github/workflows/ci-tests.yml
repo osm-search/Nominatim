@@ -1,0 +1,81 @@
+name: CI Tests
+
+on: [ push, pull_request ]
+
+jobs:
+    tests:
+        runs-on: ubuntu-20.04
+
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: true
+
+            - uses: ./.github/actions/build-nominatim
+
+            - name: Install test prerequsites
+              run: |
+                   sudo apt-get install -y -qq php-codesniffer python3-tidylib
+                   sudo pip3 install behave nose
+
+            - name: PHP linting
+              run: phpcs --report-width=120 .
+
+            - name: Setup database
+              run: |
+                  sudo systemctl start postgresql
+                  sudo -u postgres createuser -S www-data
+                  sudo -u postgres createuser -s runner
+              shell: bash
+
+            - name: PHP unit tests
+              run: phpunit ./
+              working-directory: test/php
+
+            - name: BDD tests
+              run: behave -DREMOVE_TEMPLATE=1 --format=progress3 db osm2pgsql
+              working-directory: test/bdd
+
+    import:
+        runs-on: ubuntu-20.04
+
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  submodules: true
+
+            - uses: ./.github/actions/build-nominatim
+
+            - name: Download test extract
+              run: wget --no-verbose https://download.geofabrik.de/europe/monaco-latest.osm.pbf
+
+            - name: Setup database
+              run: |
+                  sudo systemctl start postgresql
+                  sudo -u postgres createuser -S www-data
+                  sudo -u postgres createuser -s runner
+              shell: bash
+
+            - name: Create configuartion
+              run: |
+                   echo '<?php' > settings/local.php
+                   echo " @define('CONST_Pyosmium_Binary', '/usr/lib/python3-pyosmium/pyosmium-get-changes');" >> settings/local.php
+              working-directory: build
+
+            - name: Import
+              run: php ./utils/setup.php --osm-file ../monaco-latest.osm.pbf --osm2pgsql-cache 500 --all
+              working-directory: build
+
+            - name: Import special phrases
+              run: php ./utils/specialphrases.php --wiki-import | psql -d nominatim
+              working-directory: build
+
+            - name: Check import
+              run: php ./utils/check_import_finished.php
+              working-directory: build
+
+            - name: Run update
+              run: |
+                   php ./utils/update.php --init-updates
+                   php ./utils/update.php --import-osmosis
+              working-directory: build

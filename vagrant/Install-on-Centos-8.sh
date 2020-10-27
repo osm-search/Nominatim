@@ -180,13 +180,12 @@ fi                                 #DOCS:
 
 
 # You need to create a minimal configuration file that tells nominatim
-# the name of your webserver user and the URL of the website:
+# the name of your webserver user:
 
 #DOCS:```sh
 tee settings/local.php << EOF
 <?php
  @define('CONST_Database_Web_User', 'apache');
- @define('CONST_Website_BaseURL', '/nominatim/');
 EOF
 #DOCS:```
 

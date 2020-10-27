@@ -160,16 +160,6 @@ EOFAPACHECONF
     sudo a2enconf nominatim
     sudo systemctl restart apache2
 
-# You need to create a minimal configuration file that tells nominatim
-# where it is located on the webserver:
-
-#DOCS:```sh
-tee settings/local.php << EOF
-<?php
- @define('CONST_Website_BaseURL', '/nominatim/');
-EOF
-#DOCS:```
-
 # The Nominatim API is now available at `http://localhost/nominatim/`.
 
 fi   #DOCS:

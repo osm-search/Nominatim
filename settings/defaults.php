@@ -82,20 +82,16 @@ if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_Ins
 // How long to sleep when no update could be found
 @define('CONST_Replication_Recheck_Interval', '60');
 
-// Website settings
+// If true, send CORS headers to allow access
 @define('CONST_NoAccessControl', true);
 
-@define('CONST_Website_BaseURL', '/');
+// Set this to the /mapicon directory of your nominatim-ui to enable returning
+// icon URLs with the results.
+@define('CONST_MapIcon_URL', false);
 // Language to assume when none is supplied with the query.
 // When set to false, the local language (i.e. the name tag without suffix)
 // will be used.
 @define('CONST_Default_Language', false);
-// Appearance of the map in the debug interface.
-@define('CONST_Default_Lat', 20.0);
-@define('CONST_Default_Lon', 0.0);
-@define('CONST_Default_Zoom', 2);
-@define('CONST_Map_Tile_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-@define('CONST_Map_Tile_Attribution', ''); // Set if tile source isn't osm.org
 
 @define('CONST_Search_AreaPolygons', true);
 
@@ -103,7 +99,7 @@ if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_Ins
 
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', 500);
 // If set to true, then reverse order of queries will be tried by default.
-// When set to false only selected languages alloow reverse search.
+// When set to false only selected languages allow reverse search.
 @define('CONST_Search_ReversePlanForAll', true);
 
 // Maximum number of OSM ids that may be queried at once

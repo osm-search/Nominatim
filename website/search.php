@@ -74,7 +74,17 @@ $aMoreParams['format'] = $sOutputFormat;
 if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
     $aMoreParams['accept-language'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 }
-$sMoreURL = CONST_Website_BaseURL.'search.php?'.http_build_query($aMoreParams);
+
+if (isset($_SERVER['REQUEST_SCHEME'])
+    && isset($_SERVER['SERVER_NAME'])
+    && isset($_SERVER['DOCUMENT_URI'])
+) {
+    $sMoreURL = $_SERVER['REQUEST_SCHEME'].'://'
+                .$_SERVER['SERVER_NAME'].$_SERVER['DOCUMENT_URI'].'/?'
+                .http_build_query($aMoreParams);
+} else {
+    $sMoreURL = '/search.php'.http_build_query($aMoreParams);
+}
 
 if (CONST_Debug) exit;
 

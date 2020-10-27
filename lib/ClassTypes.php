@@ -252,13 +252,17 @@ function getIcon($aPlace)
  */
 function getIconFile($aPlace)
 {
+    if (CONST_MapIcon_URL === false) {
+        return null;
+    }
+
     $sIcon = getIcon($aPlace);
 
     if (!isset($sIcon)) {
         return null;
     }
 
-    return CONST_Website_BaseURL.'images/mapicons/'.$sIcon.'.p.20.png';
+    return CONST_MapIcon_URL.'/'.$sIcon.'.p.20.png';
 }
 
 /**

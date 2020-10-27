@@ -7,10 +7,6 @@ Feature: Simple Tests
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending html search query "Hamburg"
-          | param       | value   |
-          | <parameter> | <value> |
-        Then at least 1 result is returned
         When sending xml search query "Hamburg"
           | param       | value   |
           | <parameter> | <value> |
@@ -65,9 +61,7 @@ Feature: Simple Tests
 
     Scenario Outline: Simple Searches
         When sending search query "<query>"
-        Then the result is valid html
-        When sending html search query "<query>"
-        Then the result is valid html
+        Then the result is valid json
         When sending xml search query "<query>"
         Then the result is valid xml
         When sending json search query "<query>"
@@ -185,10 +179,6 @@ Feature: Simple Tests
           | json_callback |
           | 234 |
         Then the result is valid xml
-        When sending html search query "Malibu"
-          | json_callback |
-          | 234 |
-        Then the result is valid html
 
     Scenario: Empty JSON search
         When sending json search query "YHlERzzx"
@@ -209,14 +199,3 @@ Feature: Simple Tests
         Then result header contains
           | attr     | value |
           | more_url | .*&countrycodes=pl%2Cbo&.* |
-
-    Scenario Outline: Search with debug prints valid HTML
-        When sending html search query "<query>"
-          | extratags | addressdetails | namedetails | debug |
-          | 1         | 1              | 1           | 1     |
-        Then the result is valid html
-
-        Examples:
-          | query |
-          | 10, Alvierweg, 9490, Vaduz |
-          | Hamburg |

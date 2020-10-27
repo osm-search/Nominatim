@@ -30,7 +30,6 @@ unit tests (using PHPUnit). It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.5
 * [nose](https://nose.readthedocs.io)
-* [pytidylib](http://countergram.com/open-source/pytidylib)
 * [phpunit](https://phpunit.de) >= 7.3
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 

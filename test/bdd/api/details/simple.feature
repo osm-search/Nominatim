@@ -8,13 +8,9 @@ Feature: Object details
 
     Examples:
      | format | object |
-     | html | 492887 |
      | json | 492887 |
-     | html | N4267356889 |
      | json | N4267356889 |
-     | html | W230804120 |
      | json | W230804120 |
-     | html | R123924 |
      | json | R123924 |
 
     Scenario Outline: Details via unknown OSM id
@@ -23,21 +19,19 @@ Feature: Object details
 
     Examples:
       | format | object |
-      | html | 1 |
       | json | 1 |
-      | html | R1 |
       | json | R1 |
 
     Scenario: Details with keywords
         When sending details query for W78099902
             | keywords |
             | 1 |
-        Then the result is valid html
+        Then the result is valid json
 
     # ticket #1343
     Scenario: Details of a country with keywords
         When sending details query for R287072
             | keywords |
             | 1 |
-        Then the result is valid html
+        Then the result is valid json
 

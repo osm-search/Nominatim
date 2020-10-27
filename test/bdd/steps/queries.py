@@ -9,7 +9,6 @@ import os
 import io
 import re
 import logging
-from tidylib import tidy_document
 import xml.etree.ElementTree as ET
 import subprocess
 from urllib.parse import urlencode
@@ -119,23 +118,6 @@ class SearchResponse(GenericResponse):
         if self.result is not None:
             self.result = [r['geocoding'] for r in self.result]
 
-    def parse_html(self):
-        content, errors = tidy_document(self.page,
-                                        options={'char-encoding' : 'utf8'})
-        #eq_(len(errors), 0 , "Errors found in HTML document:\n%s" % errors)
-
-        self.result = []
-        b = content.find('nominatim_results =')
-        e = content.find('</script>')
-        if b >= 0 and e >= 0:
-            content = content[b:e]
-
-            b = content.find('[')
-            e = content.rfind(']')
-            if b >= 0 and e >= 0:
-                self.result = json.JSONDecoder(object_pairs_hook=OrderedDict)\
-                                  .decode(content[b:e+1])
-
     def parse_xml(self):
         et = ET.fromstring(self.page)
 
@@ -175,19 +157,6 @@ class ReverseResponse(GenericResponse):
 
         if errorcode == 200:
             getattr(self, 'parse_' + fmt)()
-
-    def parse_html(self):
-        content, errors = tidy_document(self.page,
-                                        options={'char-encoding' : 'utf8'})
-        #eq_(len(errors), 0 , "Errors found in HTML document:\n%s" % errors)
-
-        b = content.find('nominatim_results =')
-        e = content.find('</script>')
-        content = content[b:e]
-        b = content.find('[')
-        e = content.rfind(']')
-
-        self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(content[b:e+1])
 
     def parse_json(self):
         m = re.fullmatch(r'([\w$][^(]*)\((.*)\)', self.page)
@@ -250,11 +219,6 @@ class DetailsResponse(GenericResponse):
 
         if errorcode == 200:
             getattr(self, 'parse_' + fmt)()
-
-    def parse_html(self):
-        content, errors = tidy_document(self.page,
-                                        options={'char-encoding' : 'utf8'})
-        self.result = {}
 
     def parse_json(self):
         self.result = [json.JSONDecoder(object_pairs_hook=OrderedDict).decode(self.page)]
@@ -408,9 +372,7 @@ def website_search_request(context, fmt, query, addr):
 
     outp, status = send_api_query('search', params, fmt, context)
 
-    if fmt is None:
-        outfmt = 'html'
-    elif fmt == 'jsonv2 ':
+    if fmt is None or fmt == 'jsonv2 ':
         outfmt = 'json'
     else:
         outfmt = fmt.strip()
@@ -447,7 +409,7 @@ def website_details_request(context, fmt, query):
     outp, status = send_api_query('details', params, fmt, context)
 
     if fmt is None:
-        outfmt = 'html'
+        outfmt = 'json'
     else:
         outfmt = fmt.strip()
 
@@ -508,9 +470,7 @@ def check_page_error(context, fmt):
     context.execute_steps("Then a HTTP 400 is returned")
     eq_(context.response.format, fmt)
 
-    if fmt == 'html':
-        assert_is_not_none(re.search(r'<html( |>).+</html>', context.response.page, re.DOTALL))
-    elif fmt == 'xml':
+    if fmt == 'xml':
         assert_is_not_none(re.search(r'<error>.+</error>', context.response.page, re.DOTALL))
     else:
         assert_is_not_none(re.search(r'({"error":)', context.response.page, re.DOTALL))

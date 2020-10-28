@@ -11,6 +11,8 @@ jobs:
               with:
                   submodules: true
 
+            - uses: ./.github/actions/setup-postgresql
+
             - uses: ./.github/actions/build-nominatim
 
             - name: Install test prerequsites
@@ -20,13 +22,6 @@ jobs:
 
             - name: PHP linting
               run: phpcs --report-width=120 .
-
-            - name: Setup database
-              run: |
-                  sudo systemctl start postgresql
-                  sudo -u postgres createuser -S www-data
-                  sudo -u postgres createuser -s runner
-              shell: bash
 
             - name: PHP unit tests
               run: phpunit ./
@@ -44,19 +39,14 @@ jobs:
               with:
                   submodules: true
 
+            - uses: ./.github/actions/setup-postgresql
+
             - uses: ./.github/actions/build-nominatim
 
             - name: Download test extract
               run: wget --no-verbose https://download.geofabrik.de/europe/monaco-latest.osm.pbf
 
-            - name: Setup database
-              run: |
-                  sudo systemctl start postgresql
-                  sudo -u postgres createuser -S www-data
-                  sudo -u postgres createuser -s runner
-              shell: bash
-
-            - name: Create configuartion
+            - name: Create configuration
               run: |
                    echo '<?php' > settings/local.php
                    echo " @define('CONST_Pyosmium_Binary', '/usr/lib/python3-pyosmium/pyosmium-get-changes');" >> settings/local.php

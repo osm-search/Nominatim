@@ -74,15 +74,15 @@ Feature: Rank assignment
           | R21 | boundary | administrative | 9     | municipality | (0 0, 0 1, 1 1, 1 0, 0 0) |
           | R22 | boundary | administrative | 9     | suburb       | (0 0, 0 1, 1 1, 1 0, 0 0) |
         When importing
-        Then place_addressline contains
-            | object | address | cached_rank_address |
-            | R21    | R20     | 16                  |
-            | R22    | R20     | 16                  |
         Then placex contains
           | object | rank_search | rank_address |
           | R20    | 16          | 16 |
           | R21    | 18          | 18 |
           | R22    | 18          | 20 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | R21    | R20     | 16                  |
+            | R22    | R20     | 16                  |
 
     Scenario: Admin levels cannot overtake each other due to place address ranks
         Given the named places
@@ -100,6 +100,20 @@ Feature: Rank assignment
             | object | address | cached_rank_address |
             | R21    | R20     | 16                  |
             | R22    | R20     | 16                  |
+
+    Scenario: Admin levels cannot overtake each other due to place address ranks even when slightly misaligned
+        Given the named places
+          | osm | class    | type           | admin | extra+place  | geometry |
+          | R20 | boundary | administrative | 6     | town         | (0 0, 0 2, 2 2, 2 0, 0 0) |
+          | R21 | boundary | administrative | 8     |              | (0 0, -0.0001 1, 1 1, 1 0, 0 0) |
+        When importing
+        Then placex contains
+          | object | rank_search | rank_address |
+          | R20    | 12          | 16 |
+          | R21    | 16          | 18 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | R21    | R20     | 16                  |
 
     Scenario: Admin levels must not be larger than 25
         Given the named places
@@ -146,3 +160,42 @@ Feature: Rank assignment
             | object | rank_search | rank_address |
             | R10    | 16          | 16           |
             | R20    | 12          | 12           |
+
+
+    Scenario: adjacent admin_levels are considered the same object when they have the same wikidata
+        Given the named places
+          | osm | class    | type           | admin | extra+wikidata | geometry |
+          | N20 | place    | square         | 15    | Q123           | 0.1 0.1  |
+          | R23 | boundary | administrative | 10    | Q444           | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R21 | boundary | administrative | 9     | Q444           | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R22 | boundary | administrative | 8     | Q444           | (0 0, 0 1, 1 1, 1 0, 0 0) |
+        When importing
+        Then placex contains
+          | object | rank_search | rank_address |
+          | R23    | 20          | 0  |
+          | R21    | 18          | 0  |
+          | R22    | 16          | 16 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | N20    | R22     | 16                  |
+        Then place_addressline doesn't contain
+            | object | address |
+            | N20    | R21     |
+            | N20    | R23     |
+
+    Scenario: adjacent admin_levels are considered different objects when they have different wikidata
+        Given the named places
+          | osm | class    | type           | admin | extra+wikidata | geometry |
+          | N20 | place    | square         | 15    | Q123           | 0.1 0.1  |
+          | R21 | boundary | administrative | 9     | Q4441          | (0 0, 0 1, 1 1, 1 0, 0 0) |
+          | R22 | boundary | administrative | 8     | Q444           | (0 0, 0 1, 1 1, 1 0, 0 0) |
+        When importing
+        Then placex contains
+          | object | rank_search | rank_address |
+          | R21    | 18          | 18 |
+          | R22    | 16          | 16 |
+        Then place_addressline contains
+            | object | address | cached_rank_address |
+            | N20    | R22     | 16                  |
+            | N20    | R21     | 18                  |
+

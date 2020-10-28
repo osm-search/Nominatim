@@ -1,0 +1,24 @@
+name: 'Setup Postgresql and Postgis'
+
+runs:
+    using: "composite"
+
+    steps:
+        - name: Install postgis
+          run: sudo apt-get install -y -qq postgresql-13-postgis-3 postgresql-13-postgis-3-scripts postgresql-server-dev-13
+          shell: bash
+
+        - name: Adapt postgresql configuration
+          run: |
+              echo 'fsync = off' | sudo tee /etc/postgresql/13/main/conf.d/local.conf
+              echo 'synchronous_commit = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
+              echo 'full_page_writes = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
+              echo 'shared_buffers = 1GB' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
+          shell: bash
+
+        - name: Setup database
+          run: |
+              sudo systemctl start postgresql
+              sudo -u postgres createuser -S www-data
+              sudo -u postgres createuser -s runner
+          shell: bash

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/osm-search/Nominatim.svg?branch=master)](https://travis-ci.org/osm-search/Nominatim)
+[![Build Status](https://github.com/osm-search/Nominatim/workflows/CI%20Tests/badge.svg)](https://github.com/osm-search/Nominatim/actions?query=workflow%3A%22CI+Tests%22)
 
 Nominatim
 =========

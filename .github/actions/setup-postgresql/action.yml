@@ -13,6 +13,7 @@ runs:
               echo 'fsync = off' | sudo tee /etc/postgresql/13/main/conf.d/local.conf
               echo 'synchronous_commit = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
               echo 'full_page_writes = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
+              echo 'shared_buffers = 1GB' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
           shell: bash
 
         - name: Setup database

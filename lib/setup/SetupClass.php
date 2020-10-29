@@ -728,8 +728,8 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Term_Normalization_Rules', \"".CONST_Term_Normalization_Rules."\");
 @define('CONST_Use_Aux_Location_data', ".(CONST_Use_Aux_Location_data ? 'true' : 'false').");
 @define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
-@define('CONST_MapIcon_URL', ".(CONST_MapIcon_URL ? ("'".CONST_MapIcon_URL."'") : 'false').");
-");
+@define('CONST_MapIcon_URL', ".(CONST_MapIcon_URL ? ("'".CONST_MapIcon_URL."'") : 'false').');
+');
         info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
     }
 

@@ -241,15 +241,15 @@ if (isset($aResult['import-way']) && $aResult['import-way']) {
     if ($bUseOSMApi) {
         $sContentURL = 'https://www.openstreetmap.org/api/0.6/way/'.$aResult['import-way'].'/full';
     } else {
-        $sContentURL = 'https://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');node(w););out%20meta;';
+        $sContentURL = 'https://overpass-api.de/api/interpreter?data=(way('.$aResult['import-way'].');%3E;);out%20meta;';
     }
 }
 
 if (isset($aResult['import-relation']) && $aResult['import-relation']) {
     if ($bUseOSMApi) {
-        $sContentURLsModifyXMLstr = 'https://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
+        $sContentURL = 'https://www.openstreetmap.org/api/0.6/relation/'.$aResult['import-relation'].'/full';
     } else {
-        $sContentURL = 'https://overpass-api.de/api/interpreter?data=((rel('.$aResult['import-relation'].');way(r);node(w));node(r));out%20meta;';
+        $sContentURL = 'https://overpass-api.de/api/interpreter?data=(rel(id:'.$aResult['import-relation'].');%3E;);out%20meta;';
     }
 }
 

@@ -216,13 +216,13 @@ Feature: Import into placex
           | object | rank_search | rank_address |
           | N2     | 18          | 0 |
           | N4     | 18          | 0 |
-          | N5     | 30          | 30 |
+          | N5     | 22          | 0 |
           | W2     | 18          | 0 |
           | R3     | 18          | 0 |
-          | R4     | 30          | 30 |
+          | R4     | 22          | 0 |
           | R5     | 4           | 0 |
           | R6     | 4           | 0 |
-          | W3     | 30          | 30 |
+          | W3     | 22          | 0 |
 
     Scenario: boundary ways for countries and states are ignored
         Given the named places

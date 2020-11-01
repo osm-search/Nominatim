@@ -34,6 +34,7 @@
 	str_replace(buffer, &len, &changes, " qucyng truong ", 15, " qt ", 4, 0);
 	str_replace(buffer, &len, &changes, "strada statale ", 15, " ss ", 4, 0);
 	str_replace(buffer, &len, &changes, " state highway ", 15, " sh ", 4, 0);
+	str_replace(buffer, &len, &changes, " carrer de les ", 15, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, "burgermeister ", 14, " bgm ", 5, 0);
 	str_replace(buffer, &len, &changes, " right of way ", 14, " rowy ", 6, 0);
 	str_replace(buffer, &len, &changes, " hauptbahnhof ", 14, " hbf ", 5, 0);
@@ -52,6 +53,9 @@
 	str_replace(buffer, &len, &changes, " san van dong ", 14, " svd ", 5, 0);
 	str_replace(buffer, &len, &changes, " tong cong ty ", 14, " tct ", 5, 0);
 	str_replace(buffer, &len, &changes, " khu nghi mat ", 14, " knm ", 5, 0);
+	str_replace(buffer, &len, &changes, " carrer de la ", 14, " c ", 3, 0);
+	str_replace(buffer, &len, &changes, " calle de los ", 14, " c ", 3, 0);
+	str_replace(buffer, &len, &changes, " calle de las ", 14, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, " nha thi dzu ", 13, " ntd ", 5, 0);
 	str_replace(buffer, &len, &changes, " khu du lich ", 13, " kdl ", 5, 0);
 	str_replace(buffer, &len, &changes, " demarcacion ", 13, " demar ", 7, 0);
@@ -69,6 +73,8 @@
 	str_replace(buffer, &len, &changes, " residencial ", 13, " resid ", 7, 0);
 	str_replace(buffer, &len, &changes, " cong truong ", 13, " ct ", 4, 0);
 	str_replace(buffer, &len, &changes, " cooperativa ", 13, " coop ", 6, 0);
+	str_replace(buffer, &len, &changes, " carrer dels ", 13, " c ", 3, 0);
+	str_replace(buffer, &len, &changes, " calle de la ", 13, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, " diseminado ", 12, " disem ", 7, 0);
 	str_replace(buffer, &len, &changes, " barranquil ", 12, " bqllo ", 7, 0);
 	str_replace(buffer, &len, &changes, " fire track ", 12, " ftrk ", 6, 0);
@@ -105,6 +111,7 @@
 	str_replace(buffer, &len, &changes, " cul de sac ", 12, " cds ", 5, 0);
 	str_replace(buffer, &len, &changes, " corralillo ", 12, " crrlo ", 7, 0);
 	str_replace(buffer, &len, &changes, " mitropolit ", 12, " mit ", 5, 0);
+	str_replace(buffer, &len, &changes, " carrer del ", 12, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, " etorbidea ", 11, " etorb ", 7, 0);
 	str_replace(buffer, &len, &changes, " ploshchad ", 11, " pl ", 4, 0);
 	str_replace(buffer, &len, &changes, " cobertizo ", 11, " cbtiz ", 7, 0);
@@ -158,6 +165,8 @@
 	str_replace(buffer, &len, &changes, " deviation ", 11, " devn ", 6, 0);
 	str_replace(buffer, &len, &changes, " hipodromo ", 11, " hipod ", 7, 0);
 	str_replace(buffer, &len, &changes, " professor ", 11, " prof ", 6, 0);
+	str_replace(buffer, &len, &changes, " carrer de ", 11, " c ", 3, 0);
+	str_replace(buffer, &len, &changes, " calle del ", 11, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, " triangle ", 10, " tri ", 5, 0);
 	str_replace(buffer, &len, &changes, " dotsient ", 10, " dots ", 6, 0);
 	str_replace(buffer, &len, &changes, " boundary ", 10, " bdy ", 5, 0);
@@ -245,6 +254,7 @@
 	str_replace(buffer, &len, &changes, " piazzale ", 10, " p le ", 6, 0);
 	str_replace(buffer, &len, &changes, " tieu hoc ", 10, " th ", 4, 0);
 	str_replace(buffer, &len, &changes, " bulevard ", 10, " bd ", 4, 0);
+	str_replace(buffer, &len, &changes, " calle de ", 10, " c ", 3, 0);
 	str_replace(buffer, &len, &changes, " sendera ", 9, " sedra ", 7, 0);
 	str_replace(buffer, &len, &changes, " cutting ", 9, " cutt ", 6, 0);
 	str_replace(buffer, &len, &changes, " cantina ", 9, " canti ", 7, 0);

@@ -43,10 +43,10 @@ Feature: Object details
         Then the result is valid json
 
     Scenario Outline: HTML Details with keywords
-        When sending html details query for <osmid>
+        When sending json details query for <osmid>
             | keywords |
             | 1 |
-        Then the result is valid html
+        Then the result is valid json
 
     Examples:
             | osmid |

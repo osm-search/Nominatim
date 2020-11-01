@@ -13,8 +13,6 @@ Feature: Simple Reverse Tests
         Then the result is valid json
         When sending geojson reverse coordinates <lat>,<lon>
         Then the result is valid geojson
-        When sending html reverse coordinates <lat>,<lon>
-        Then the result is valid html
 
     Examples:
      | lat      | lon |
@@ -28,10 +26,6 @@ Feature: Simple Reverse Tests
           | param       | value   |
           | <parameter> | <value> |
         Then the result is valid xml
-        When sending html reverse coordinates 53.603,10.041
-          | param       | value   |
-          | <parameter> | <value> |
-        Then the result is valid html
         When sending xml reverse coordinates 53.603,10.041
           | param       | value   |
           | <parameter> | <value> |
@@ -100,7 +94,6 @@ Feature: Simple Reverse Tests
       | json |
       | jsonv2 |
       | geojson |
-      | html |
       | xml |
 
     Scenario: Missing lon parameter

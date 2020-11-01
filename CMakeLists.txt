@@ -121,7 +121,6 @@ if (BUILD_API)
    set(WEBSITESCRIPTS
        website/deletable.php
        website/details.php
-       website/hierarchy.php
        website/lookup.php
        website/polygons.php
        website/reverse.php

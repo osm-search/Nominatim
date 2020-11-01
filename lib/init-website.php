@@ -16,14 +16,6 @@ function userError($sMsg)
 }
 
 
-function exception_handler_html($exception)
-{
-    http_response_code($exception->getCode());
-    header('Content-type: text/html; charset=UTF-8');
-    include(CONST_BasePath.'/lib/template/error-html.php');
-    exit();
-}
-
 function exception_handler_json($exception)
 {
     http_response_code($exception->getCode());
@@ -39,14 +31,6 @@ function exception_handler_xml($exception)
     echo '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
     include(CONST_BasePath.'/lib/template/error-xml.php');
     exit();
-}
-
-function shutdown_exception_handler_html()
-{
-    $error = error_get_last();
-    if ($error !== null && $error['type'] === E_ERROR) {
-        exception_handler_html(new Exception($error['message'], 500));
-    }
 }
 
 function shutdown_exception_handler_xml()
@@ -73,10 +57,7 @@ function set_exception_handler_by_format($sFormat = null)
     // one by default without an explicit $sFormat set.
 
     if (!isset($sFormat)) {
-        set_exception_handler('exception_handler_html');
-    } elseif ($sFormat == 'html') {
-        set_exception_handler('exception_handler_html');
-        register_shutdown_function('shutdown_exception_handler_html');
+        set_exception_handler('exception_handler_json');
     } elseif ($sFormat == 'xml') {
         set_exception_handler('exception_handler_xml');
         register_shutdown_function('shutdown_exception_handler_xml');

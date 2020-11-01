@@ -6,7 +6,7 @@ require_once(CONST_BasePath.'/lib/output.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
-$sOutputFormat = $oParams->getSet('format', array('html', 'json'), 'html');
+$sOutputFormat = $oParams->getSet('format', array('json'), 'json');
 set_exception_handler_by_format($sOutputFormat);
 
 $iDays = $oParams->getInt('days', false);
@@ -47,7 +47,5 @@ if (CONST_Debug) {
 }
 
 if ($sOutputFormat == 'json') {
-    echo javascript_renderData($aPolygons);
-} else {
-    include(CONST_BasePath.'/lib/template/polygons-html.php');
+    javascript_renderData($aPolygons);
 }

@@ -713,13 +713,8 @@ class SetupFunctions
 @define('CONST_BasePath', '".CONST_BasePath."');
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 
-@define('CONST_Database_DSN', '".CONST_Database_DSN."'); // or add ;host=...;port=...;user=...;password=...
+@define('CONST_Database_DSN', '".CONST_Database_DSN."');
 @define('CONST_Default_Language', ".(CONST_Default_Language ? ("'".CONST_Default_Language."'") : 'false').");
-@define('CONST_Default_Lat', ".CONST_Default_Lat.");
-@define('CONST_Default_Lon', ".CONST_Default_Lon.");
-@define('CONST_Default_Zoom', ".CONST_Default_Zoom.");
-@define('CONST_Map_Tile_URL', '".CONST_Map_Tile_URL."');
-@define('CONST_Map_Tile_Attribution', '".CONST_Map_Tile_Attribution."'); // Set if tile source isn't osm.org
 @define('CONST_Log_DB', ".(CONST_Log_DB ? 'true' : 'false').");
 @define('CONST_Log_File', ".(CONST_Log_File ? ("'".CONST_Log_File."'")  : 'false').");
 @define('CONST_Max_Word_Frequency', '".CONST_Max_Word_Frequency."');
@@ -733,8 +728,8 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Term_Normalization_Rules', \"".CONST_Term_Normalization_Rules."\");
 @define('CONST_Use_Aux_Location_data', ".(CONST_Use_Aux_Location_data ? 'true' : 'false').");
 @define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
-@define('CONST_Website_BaseURL', '".CONST_Website_BaseURL."');
-");
+@define('CONST_MapIcon_URL', ".(CONST_MapIcon_URL ? ("'".CONST_MapIcon_URL."'") : 'false').');
+');
         info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
     }
 

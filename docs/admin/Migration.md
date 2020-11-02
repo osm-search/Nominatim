@@ -8,6 +8,18 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 
 ## 3.5.0 -> master
 
+### Removal of html output
+
+The debugging UI is no longer directly provided with Nominatim. Instead we
+now provide a simple Javascript application. Please refer to
+[Setting up the Nominatim UI](../Setup-Nominatim-UI) for details on how to
+set up the UI.
+
+The icons served together with the API responses have been moved to the
+nominatim-ui project as well. If you want to keep the `icon` field in the
+response, you need to set `CONST_MapIcon_URL` to the URL of the `/mapicon`
+directory of nominatim-ui.
+
 ### Change order during indexing
 
 When reindexing places during updates, there is now a different order used

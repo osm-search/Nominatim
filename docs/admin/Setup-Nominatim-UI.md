@@ -70,7 +70,7 @@ map $args $format {
 map $uri/$format $forward_to_ui {
     default               1;   # The default is to forward.
     ~^/ui                 0;   # If the URI point to the UI already, we are done.
-    ~/other$              0;   # An explicit non-html format paramter. No forwarding.
+    ~/other$              0;   # An explicit non-html format parameter. No forwarding.
     ~/reverse.*/default   0;   # Reverse and lookup assume xml format when
     ~/lookup.*/default    0;   #   no format parameter is given. No forwarding.
 }
@@ -87,14 +87,14 @@ rewrite ^/$ /search;
 location @php {
     # fastcgi stuff..
     if ($forward_to_ui) {
-        rewrite ^(/[^/]*) http://nominatim.loar/ui$1.html redirect;
+        rewrite ^(/[^/]*) https://yourserver.com/ui$1.html redirect;
     }
 }
 
 location ~ [^/]\.php(/|$) {
     # fastcgi stuff..
     if ($forward_to_ui) {
-        rewrite (.*).php http://nominatim.loar/ui$1.html redirect;
+        rewrite (.*).php https://yourserver.com/ui$1.html redirect;
     }
 }
 ```

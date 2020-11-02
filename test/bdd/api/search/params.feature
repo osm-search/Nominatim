@@ -7,13 +7,13 @@ Feature: Search queries
         Then result 0 has attributes place_id,osm_type,osm_id
         And result 0 has attributes place_rank,boundingbox
         And result 0 has attributes lat,lon,display_name
-        And result 0 has attributes class,type,importance,icon
+        And result 0 has attributes class,type,importance
         And result 0 has not attributes address
         And result 0 has bounding box in 46.5,47.5,9,10
 
     Scenario: Simple JSON search
         When sending json search query "Vaduz"
-        Then result 0 has attributes place_id,licence,icon,class,type
+        Then result 0 has attributes place_id,licence,class,type
         And result 0 has attributes osm_type,osm_id,boundingbox
         And result 0 has attributes lat,lon,display_name,importance
         And result 0 has not attributes address

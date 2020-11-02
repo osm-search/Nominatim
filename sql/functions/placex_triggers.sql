@@ -909,7 +909,7 @@ BEGIN
   END IF;
 
   IF NEW.rank_address = 0 THEN
-    max_rank := geometry_to_rank(NEW.rank_search, NEW.geometry);
+    max_rank := geometry_to_rank(NEW.rank_search, NEW.geometry, NEW.country_code);
   ELSEIF NEW.rank_address > 25 THEN
     max_rank := 25;
   ELSE

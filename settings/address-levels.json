@@ -117,7 +117,14 @@
 { "countries" : [ "be" ],
   "tags" : {
       "boundary" : {
-          "administrative7" : [14, 0]
+          "administrative3" : [5, 0],
+          "administrative4" : 6,
+          "administrative5" : [7, 0],
+          "administrative6" : 8,
+          "administrative7" : 12,
+          "administrative8" : 14,
+          "administrative9" : 16,
+          "administrative10" : 18
       }
   }
 },

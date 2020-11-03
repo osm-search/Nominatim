@@ -55,6 +55,53 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- Compute a base address rank from the extent of the given geometry.
+--
+-- This is all simple guess work. We don't need particularly good estimates
+-- here. This just avoids to have very high ranked address parts in features
+-- that span very large areas (or vice versa).
+CREATE OR REPLACE FUNCTION geometry_to_rank(search_rank SMALLINT, geometry GEOMETRY, country_code TEXT)
+  RETURNS SMALLINT
+  AS $$
+DECLARE
+  area FLOAT;
+BEGIN
+  IF ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') THEN
+      area := ST_Area(geometry);
+  ELSIF ST_GeometryType(geometry) in ('ST_LineString','ST_MultiLineString') THEN
+      area := (ST_Length(geometry)^2) * 0.1;
+  ELSE
+    RETURN search_rank;
+  END IF;
+
+  -- adjust for the fact that countries come in different sizes
+  IF country_code IN ('ca', 'au', 'ru') THEN
+    area := area / 5;
+  ELSIF country_code IN ('br', 'kz', 'cn', 'us', 'ne', 'gb', 'za', 'sa', 'id', 'eh', 'ml', 'tm') THEN
+    area := area / 3;
+  ELSIF country_code IN ('bo', 'ar', 'sd', 'mn', 'in', 'et', 'cd', 'mz', 'ly', 'cl', 'zm') THEN
+    area := area / 2;
+  END IF;
+
+  IF area > 1 THEN
+    RETURN 7;
+  ELSIF area > 0.1 THEN
+    RETURN 9;
+  ELSIF area > 0.01 THEN
+    RETURN 13;
+  ELSIF area > 0.001 THEN
+    RETURN 17;
+  ELSIF area > 0.0001 THEN
+    RETURN 19;
+  ELSIF area > 0.000005 THEN
+    RETURN 21;
+  END IF;
+
+   RETURN 23;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 
 -- Guess a ranking for postcodes from country and postcode format.
 CREATE OR REPLACE FUNCTION get_postcode_rank(country_code VARCHAR(2), postcode TEXT,

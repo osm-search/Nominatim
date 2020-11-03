@@ -35,7 +35,7 @@ Feature: Update of simple objects
         When importing
         Then placex contains
           | object | rank_address |
-          | R1     | 30 |
+          | R1     | 0 |
           | R2     | 26 |
           | W1     | 30 |
         When marking for delete R1,R2,W1

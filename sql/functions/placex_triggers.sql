@@ -509,6 +509,8 @@ DECLARE
   addr_street TEXT;
   addr_place TEXT;
 
+  max_rank SMALLINT;
+
   name_vector INTEGER[];
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
@@ -906,14 +908,19 @@ BEGIN
     --DEBUG: RAISE WARNING 'Country names updated';
   END IF;
 
-  SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition,
-                                    CASE WHEN NEW.rank_address = 0 THEN NEW.rank_search
-                                         WHEN NEW.rank_address > 25 THEN 25::smallint
-                                         ELSE NEW.rank_address END,
+  IF NEW.rank_address = 0 THEN
+    max_rank := geometry_to_rank(NEW.rank_search, NEW.geometry, NEW.country_code);
+  ELSEIF NEW.rank_address > 25 THEN
+    max_rank := 25;
+  ELSE
+    max_rank = NEW.rank_address;
+  END IF;
+
+  SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition, max_rank,
                                     NEW.address,
-                                    CASE WHEN NEW.rank_search >= 26
-                                             AND NEW.rank_search < 30
-                                      THEN NEW.geometry ELSE NEW.centroid END)
+                                    CASE WHEN (NEW.rank_address = 0 or
+                                               NEW.rank_search between 26 and 29)
+                                         THEN NEW.geometry ELSE NEW.centroid END)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   --DEBUG: RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;

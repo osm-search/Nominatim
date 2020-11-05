@@ -135,19 +135,19 @@ class Indexer(object):
         for rank in range(max(1, self.minrank), self.maxrank):
             self.index(RankRunner(rank))
 
-
         if self.maxrank == 30:
             self.index(RankRunner(0))
             self.index(InterpolationRunner(), 20)
-
-        self.index(RankRunner(self.maxrank), 20)
+            self.index(RankRunner(self.maxrank), 20)
+        else:
+            self.index(RankRunner(self.maxrank))
 
     def index(self, obj, batch=1):
         """ Index a single rank or table. `obj` describes the SQL to use
             for indexing. `batch` describes the number of objects that
             should be processed with a single SQL statement
         """
-        log.warning("Starting {}".format(obj.name()))
+        log.warning("Starting %s (using batch size %s)", obj.name(), batch)
 
         cur = self.conn.cursor()
         cur.execute(obj.sql_count_objects())

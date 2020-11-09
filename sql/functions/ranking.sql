@@ -233,3 +233,50 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION get_addr_tag_rank(key TEXT, country TEXT,
+                                             OUT from_rank SMALLINT,
+                                             OUT to_rank SMALLINT,
+                                             OUT extent FLOAT)
+  AS $$
+DECLARE
+  ranks RECORD;
+BEGIN
+  from_rank := null;
+
+  FOR ranks IN
+    SELECT * FROM
+      (SELECT l.rank_search, l.rank_address FROM address_levels l
+        WHERE (l.country_code = country or l.country_code is NULL)
+               AND l.class = 'place' AND l.type = key
+        ORDER BY l.country_code LIMIT 1) r
+      WHERE rank_address > 0
+  LOOP
+    extent := reverse_place_diameter(ranks.rank_search);
+
+    IF ranks.rank_address <= 4 THEN
+        from_rank := 4;
+        to_rank := 4;
+    ELSEIF ranks.rank_address <= 9 THEN
+        from_rank := 5;
+        to_rank := 9;
+    ELSEIF ranks.rank_address <= 12 THEN
+        from_rank := 10;
+        to_rank := 12;
+    ELSEIF ranks.rank_address <= 16 THEN
+        from_rank := 13;
+        to_rank := 16;
+    ELSEIF ranks.rank_address <= 21 THEN
+        from_rank := 17;
+        to_rank := 21;
+    ELSEIF ranks.rank_address <= 24 THEN
+        from_rank := 22;
+        to_rank := 24;
+    ELSE
+        from_rank := 25;
+        to_rank := 25;
+    END IF;
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;

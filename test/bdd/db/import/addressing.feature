@@ -298,7 +298,7 @@ Feature: Address computation
             | object | address |
             | W1     | W2      |
 
-    Scenario: addr:* tags are honored even when the place is outside
+    Scenario: addr:* tags are honored even when a street is far away from the place
         Given the grid
             | 1 |   | 2 |   |   | 5 |
             |   |   |   | 8 | 9 |   |
@@ -320,4 +320,27 @@ Feature: Address computation
         And place_addressline doesn't contain
            | object | address |
            | W2     | R1      |
+
+
+    Scenario: addr:* tags are honored even when a POI is far away from the place
+        Given the grid
+            | 1 |   | 2 |   |   | 5 |
+            |   |   |   | 8 | 9 |   |
+            | 4 |   | 3 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the named places
+            | osm | class   | type    | addr+city | geometry |
+            | W1  | highway | primary | Right     | 8,9      |
+            | N1  | amenity | cafe    | Left      | 9        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R2      | True      |
+           | N1     | R1      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | W1     | R1      |
 

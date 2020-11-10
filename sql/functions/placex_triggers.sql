@@ -813,13 +813,17 @@ BEGIN
 
       END IF;
 
-      IF NOT %REVERSE-ONLY% THEN
+      IF array_length(name_vector, 1) is not NULL
+         OR inherited_address is not NULL OR NEW.address is not NULL
+      THEN
         SELECT * INTO name_vector, nameaddress_vector
-          FROM create_poi_search_terms(NEW.parent_place_id,
+          FROM create_poi_search_terms(NEW.place_id,
+                                       NEW.partition, NEW.parent_place_id,
                                        inherited_address || NEW.address,
-                                       NEW.housenumber, name_vector);
+                                       NEW.country_code, NEW.housenumber,
+                                       name_vector, NEW.centroid);
 
-        IF array_length(name_vector, 1) is not NULL THEN
+        IF not %REVERSE-ONLY% AND array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)

@@ -72,8 +72,6 @@ BEGIN
   FOR item IN
     SELECT (get_addr_tag_rank(key, country)).*, key, name FROM
       (SELECT skeys(address) as key, svals(address) as name) x
-        WHERE key not in ('country', 'postcode', 'housenumber',
-                          'conscriptionnumber', 'streetnumber')
   LOOP
    IF item.from_rank is null THEN
      CONTINUE;

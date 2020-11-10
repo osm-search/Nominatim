@@ -298,3 +298,26 @@ Feature: Address computation
             | object | address |
             | W1     | W2      |
 
+    Scenario: addr:* tags are honored even when the place is outside
+        Given the grid
+            | 1 |   | 2 |   |   | 5 |
+            |   |   |   | 8 | 9 |   |
+            | 4 |   | 3 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | addr+city | geometry |
+            | W1  | highway | primary | Left      | 8,9      |
+            | W2  | highway | primary | Right     | 8,9      |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+           | W1     | R2      | False     |
+           | W2     | R2      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | W2     | R1      |
+

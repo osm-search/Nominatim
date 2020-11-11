@@ -331,10 +331,10 @@ Feature: Address computation
             | osm | class    | type           | admin | name  | geometry    |
             | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
             | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
-        And the named places
-            | osm | class   | type    | addr+city | geometry |
-            | W1  | highway | primary | Right     | 8,9      |
-            | N1  | amenity | cafe    | Left      | 9        |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Right     | 8,9      |
+            | N1  | amenity | cafe    | Bolder    | Left      | 9        |
         When importing
         Then place_addressline contains
            | object | address | isaddress |
@@ -343,4 +343,8 @@ Feature: Address computation
         And place_addressline doesn't contain
            | object | address |
            | W1     | R1      |
+        When searching for "Bolder"
+        Then results contain
+           | osm_type | osm_id | name                    |
+           | N        | 1      | Bolder, Wonderway, Left |
 

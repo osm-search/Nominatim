@@ -90,7 +90,7 @@ DECLARE
   for_place_id BIGINT;
   result TEXT[];
   search TEXT[];
-  found INTEGER;
+  current_rank_address INTEGER;
   location RECORD;
   countrylocation RECORD;
   searchcountrycode varchar(2);
@@ -103,7 +103,7 @@ DECLARE
   search_unlisted_place TEXT;
   countryname HSTORE;
 BEGIN
-  -- The place ein question might not have a direct entry in place_addressline.
+  -- The place in question might not have a direct entry in place_addressline.
   -- Look for the parent of such places then and save if in for_place_id.
 
   postcode_isexact := false;
@@ -177,9 +177,8 @@ BEGIN
 
 --RAISE WARNING '% % % %',searchcountrycode, searchhousenumber, searchpostcode;
 
-  found := 1000; -- the lowest rank_address included
+  -- --- Return the record for the base entry.
 
-  -- Return the record for the base entry.
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name,
            coalesce(extratags->'linked_place', extratags->'place') as place_type,
@@ -206,8 +205,11 @@ BEGIN
                            location.admin_level, true, location.isaddress,
                            location.rank_address, location.distance)::addressline;
     RETURN NEXT countrylocation;
-    found := location.rank_address;
+
+    current_rank_address := location.rank_address;
   END LOOP;
+
+  -- --- Return records for address parts.
 
   FOR location IN
     SELECT placex.place_id, osm_type, osm_id, name, class, type,
@@ -216,14 +218,15 @@ BEGIN
            CASE WHEN rank_address = 11 THEN 5 ELSE rank_address END as rank_address,
            distance, country_code, postcode
       FROM place_addressline join placex on (address_place_id = placex.place_id)
-      WHERE place_addressline.place_id = for_place_id
+      WHERE place_addressline.place_id IN (for_place_id, in_place_id)
             AND linked_place_id is null
             AND (placex.country_code IS NULL OR searchcountrycode IS NULL
                  OR placex.country_code = searchcountrycode)
-      ORDER BY rank_address desc, isaddress desc, fromarea desc,
+      ORDER BY rank_address desc, (place_addressline.place_id = in_place_id) desc,
+               isaddress desc, fromarea desc,
                distance asc, rank_search desc
   LOOP
---RAISE WARNING '%',location;
+    -- RAISE WARNING '%',location;
     IF searchcountrycode IS NULL AND location.country_code IS NOT NULL THEN
       searchcountrycode := location.country_code;
     END IF;
@@ -243,17 +246,21 @@ BEGIN
                            location.name, location.class, location.type,
                            location.place_type,
                            location.admin_level, location.fromarea,
-                           location.isaddress, location.rank_address,
+                           location.isaddress and location.rank_address != current_rank_address,
+                           location.rank_address,
                            location.distance)::addressline;
     RETURN NEXT countrylocation;
-    found := location.rank_address;
+
+    IF location.isaddress THEN
+      current_rank_address := location.rank_address;
+    END IF;
   END LOOP;
 
   -- If no country was included yet, add the name information from country_name.
-  IF found > 4 THEN
+  IF current_rank_address > 4 THEN
     SELECT name FROM country_name
       WHERE country_code = searchcountrycode LIMIT 1 INTO countryname;
---RAISE WARNING '% % %',found,searchcountrycode,countryname;
+--RAISE WARNING '% % %',current_rank_address,searchcountrycode,countryname;
     IF countryname IS NOT NULL THEN
       location := ROW(null, null, null, countryname, 'place', 'country', NULL,
                       null, true, true, 4, 0)::addressline;

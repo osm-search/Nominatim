@@ -432,6 +432,7 @@ DECLARE
 
   addr_item RECORD;
   parent_address_place_ids BIGINT[];
+  filtered_address HSTORE;
 BEGIN
   nameaddress_vector := '{}'::INTEGER[];
 
@@ -440,11 +441,18 @@ BEGIN
     FROM search_name s
     WHERE s.place_id = parent_place_id;
 
+  -- Find all address tags that don't appear in the parent search names.
+  SELECT hstore(array_agg(ARRAY[k, v])) INTO filtered_address
+    FROM (SELECT skeys(address) as k, svals(address) as v) a
+   WHERE not addr_ids_from_name(v) && parent_address_vector
+         AND k not in ('country', 'street', 'place', 'postcode',
+                       'housenumber', 'streetnumber', 'consriptionnumber');
+
   -- Compute all search terms from the addr: tags.
-  IF address IS NOT NULL THEN
+  IF filtered_address IS NOT NULL THEN
     FOR addr_item IN
       SELECT * FROM
-        get_places_for_addr_tags(in_partition, geometry, address, country)
+        get_places_for_addr_tags(in_partition, geometry, filtered_address, country)
     LOOP
         IF addr_item.place_id is null THEN
             nameaddress_vector := array_merge(nameaddress_vector,

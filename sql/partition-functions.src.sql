@@ -87,7 +87,7 @@ BEGIN
           AND rank_address between item.from_rank and item.to_rank
           AND word_ids_from_name(item.name) && keywords
         GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
-        ORDER BY ST_Intersects(ST_Collect(geometry), feature), distance LIMIT 1;
+        ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
       IF r.place_id is null THEN
         -- If we cannot find a place for the term, just return the
         -- search term for the given name. That ensures that the address

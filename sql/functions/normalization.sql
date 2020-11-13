@@ -446,7 +446,7 @@ BEGIN
     FROM (SELECT skeys(address) as k, svals(address) as v) a
    WHERE not addr_ids_from_name(v) && parent_address_vector
          AND k not in ('country', 'street', 'place', 'postcode',
-                       'housenumber', 'streetnumber', 'consriptionnumber');
+                       'housenumber', 'streetnumber', 'conscriptionnumber');
 
   -- Compute all search terms from the addr: tags.
   IF filtered_address IS NOT NULL THEN

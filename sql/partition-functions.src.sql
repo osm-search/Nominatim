@@ -176,7 +176,7 @@ BEGIN
       INTO parent
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.015)
-            AND search_rank between 26 and 27
+            AND address_rank between 26 and 27
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;
@@ -224,8 +224,8 @@ BEGIN
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
     IF in_rank_address > 0 THEN
-      INSERT INTO search_name_-partition- (place_id, search_rank, address_rank, name_vector, centroid)
-        values (in_place_id, in_rank_search, in_rank_address, in_name_vector, in_geometry);
+      INSERT INTO search_name_-partition- (place_id, address_rank, name_vector, centroid)
+        values (in_place_id, in_rank_address, in_name_vector, in_geometry);
     END IF;
     RETURN TRUE;
   END IF;

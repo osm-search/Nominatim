@@ -414,10 +414,14 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION create_poi_search_terms(parent_place_id BIGINT,
+CREATE OR REPLACE FUNCTION create_poi_search_terms(obj_place_id BIGINT,
+                                                   in_partition SMALLINT,
+                                                   parent_place_id BIGINT,
                                                    address HSTORE,
+                                                   country TEXT,
                                                    housenumber TEXT,
                                                    initial_name_vector INTEGER[],
+                                                   geometry GEOMETRY,
                                                    OUT name_vector INTEGER[],
                                                    OUT nameaddress_vector INTEGER[])
   AS $$
@@ -427,34 +431,60 @@ DECLARE
   addr_place_ids INTEGER[];
 
   addr_item RECORD;
+  parent_address_place_ids BIGINT[];
+  filtered_address HSTORE;
 BEGIN
-  -- Compute all search terms from the addr: tags.
   nameaddress_vector := '{}'::INTEGER[];
 
-  IF address IS NOT NULL THEN
-    FOR addr_item IN SELECT * FROM each(address)
+  SELECT s.name_vector, s.nameaddress_vector
+    INTO parent_name_vector, parent_address_vector
+    FROM search_name s
+    WHERE s.place_id = parent_place_id;
+
+  -- Find all address tags that don't appear in the parent search names.
+  SELECT hstore(array_agg(ARRAY[k, v])) INTO filtered_address
+    FROM (SELECT skeys(address) as k, svals(address) as v) a
+   WHERE not addr_ids_from_name(v) && parent_address_vector
+         AND k not in ('country', 'street', 'place', 'postcode',
+                       'housenumber', 'streetnumber', 'conscriptionnumber');
+
+  -- Compute all search terms from the addr: tags.
+  IF filtered_address IS NOT NULL THEN
+    FOR addr_item IN
+      SELECT * FROM
+        get_places_for_addr_tags(in_partition, geometry, filtered_address, country)
     LOOP
-      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
-                           'district', 'region', 'county', 'municipality',
-                           'hamlet', 'village', 'subdistrict', 'town',
-                           'neighbourhood', 'quarter', 'parish')
-      THEN
-          nameaddress_vector := array_merge(nameaddress_vector,
-                                            addr_ids_from_name(addr_item.value));
-      END IF;
+        IF addr_item.place_id is null THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              addr_item.keywords);
+            CONTINUE;
+        END IF;
+
+        IF parent_address_place_ids is null THEN
+            SELECT array_agg(parent_place_id) INTO parent_address_place_ids
+              FROM place_addressline
+             WHERE place_id = parent_place_id;
+        END IF;
+
+        IF not parent_address_place_ids @> ARRAY[addr_item.place_id] THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              addr_item.keywords);
+
+            INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                           isaddress, distance, cached_rank_address)
+            VALUES (obj_place_id, addr_item.place_id, not addr_item.isguess,
+                    true, addr_item.distance, addr_item.rank_address);
+        END IF;
     END LOOP;
   END IF;
+
 
   -- If the POI is named, simply mix in all address terms and be done.
   IF array_length(initial_name_vector, 1) is not NULL THEN
     -- Cheating here by not recomputing all terms but simply using the ones
     -- from the parent object.
-    SELECT array_merge(s.name_vector, s.nameaddress_vector)
-      INTO parent_address_vector
-      FROM search_name s
-      WHERE s.place_id = parent_place_id;
-
     name_vector := initial_name_vector;
+    nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
     nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
 
     IF not address ? 'street' and address ? 'place' THEN
@@ -474,11 +504,6 @@ BEGIN
   THEN
     RETURN;
   END IF;
-
-  SELECT s.name_vector, s.nameaddress_vector
-    INTO parent_name_vector, parent_address_vector
-    FROM search_name s
-    WHERE s.place_id = parent_place_id;
 
   -- Check if the parent covers all address terms.
   -- If not, create a search name entry with the house number as the name.

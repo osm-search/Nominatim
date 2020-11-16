@@ -298,3 +298,102 @@ Feature: Address computation
             | object | address |
             | W1     | W2      |
 
+    Scenario: addr:* tags are honored even when a street is far away from the place
+        Given the grid
+            | 1 |   | 2 |   |   | 5 |
+            |   |   |   | 8 | 9 |   |
+            | 4 |   | 3 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | addr+city | geometry |
+            | W1  | highway | primary | Left      | 8,9      |
+            | W2  | highway | primary | Right     | 8,9      |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+           | W1     | R2      | False     |
+           | W2     | R2      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | W2     | R1      |
+
+
+    Scenario: addr:* tags are honored even when a POI is far away from the place
+        Given the grid
+            | 1 |   | 2 |   |   | 5 |
+            |   |   |   | 8 | 9 |   |
+            | 4 |   | 3 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Right     | 8,9      |
+            | N1  | amenity | cafe    | Bolder    | Left      | 9        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R2      | True      |
+           | N1     | R1      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | W1     | R1      |
+        When searching for "Bolder"
+        Then results contain
+           | osm_type | osm_id | name                    |
+           | N        | 1      | Bolder, Wonderway, Left |
+
+    Scenario: addr:* tags do not produce addresslines when the parent has the address part
+        Given the grid
+            | 1 |   |   | 5 |
+            |   | 8 | 9 |   |
+            | 4 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Outer | (1,5,6,4,1) |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Outer     | 8,9      |
+            | N1  | amenity | cafe    | Bolder    | Outer     | 9        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+        When searching for "Bolder"
+        Then results contain
+           | osm_type | osm_id | name                     |
+           | N        | 1      | Bolder, Wonderway, Outer |
+
+    Scenario: addr:* tags on outside do not produce addresslines when the parent has the address part
+        Given the grid
+            | 1 |   | 2 |   |   | 5 |
+            |   |   |   | 8 | 9 |   |
+            | 4 |   | 3 |   |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Left      | 8,9      |
+            | N1  | amenity | cafe    | Bolder    | Left      | 9        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+           | W1     | R2      | False     |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+        When searching for "Bolder"
+        Then results contain
+           | osm_type | osm_id | name                    |
+           | N        | 1      | Bolder, Wonderway, Left |

@@ -10,8 +10,8 @@ CREATE TYPE nearfeaturecentr AS (
   centroid GEOMETRY
 );
 
-        -- feature intersects geoemtry
-        -- for areas and linestrings they must touch at least along a line
+-- feature intersects geoemtry
+-- for areas and linestrings they must touch at least along a line
 CREATE OR REPLACE FUNCTION is_relevant_geometry(de9im TEXT, geom_type TEXT)
 RETURNS BOOLEAN
 AS $$
@@ -39,8 +39,10 @@ BEGIN
 
 -- start
   IF in_partition = -partition- THEN
-    FOR r IN 
-      SELECT place_id, keywords, rank_address, rank_search, min(ST_Distance(feature, centroid)) as distance, isguess, postcode, centroid
+    FOR r IN
+      SELECT place_id, keywords, rank_address, rank_search,
+             min(ST_Distance(feature, centroid)) as distance,
+             isguess, postcode, centroid
       FROM location_area_large_-partition-
       WHERE geometry && feature
         AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
@@ -55,6 +57,54 @@ BEGIN
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION get_places_for_addr_tags(in_partition SMALLINT,
+                                                    feature GEOMETRY,
+                                                    address HSTORE, country TEXT)
+  RETURNS SETOF nearfeaturecentr
+  AS $$
+DECLARE
+  r nearfeaturecentr%rowtype;
+  item RECORD;
+BEGIN
+  FOR item IN
+    SELECT (get_addr_tag_rank(key, country)).*, key, name FROM
+      (SELECT skeys(address) as key, svals(address) as name) x
+  LOOP
+   IF item.from_rank is null THEN
+     CONTINUE;
+   END IF;
+
+-- start
+    IF in_partition = -partition- THEN
+        SELECT place_id, keywords, rank_address, rank_search,
+               min(ST_Distance(feature, centroid)) as distance,
+               isguess, postcode, centroid INTO r
+        FROM location_area_large_-partition-
+        WHERE geometry && ST_Expand(feature, item.extent)
+          AND rank_address between item.from_rank and item.to_rank
+          AND word_ids_from_name(item.name) && keywords
+        GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
+        ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
+      IF r.place_id is null THEN
+        -- If we cannot find a place for the term, just return the
+        -- search term for the given name. That ensures that the address
+        -- element can still be searched for, even though it will not be
+        -- displayed.
+        RETURN NEXT ROW(null, addr_ids_from_name(item.name), null, null,
+                        null, null, null, null)::nearfeaturecentr;
+      ELSE
+        RETURN NEXT r;
+      END IF;
+      CONTINUE;
+    END IF;
+-- end
+
+    RAISE EXCEPTION 'Unknown partition %', in_partition;
+  END LOOP;
+END;
 $$
 LANGUAGE plpgsql STABLE;
 
@@ -126,7 +176,7 @@ BEGIN
       INTO parent
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.015)
-            AND search_rank between 26 and 27
+            AND address_rank between 26 and 27
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;
@@ -153,7 +203,7 @@ BEGIN
       FROM search_name_-partition-
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.04)
-            AND search_rank between 16 and 25
+            AND address_rank between 16 and 25
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;
@@ -163,7 +213,6 @@ BEGIN
 END
 $$
 LANGUAGE plpgsql STABLE;
-
 
 create or replace function insertSearchName(
   in_partition INTEGER, in_place_id BIGINT, in_name_vector INTEGER[],
@@ -175,8 +224,8 @@ BEGIN
   IF in_partition = -partition- THEN
     DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
     IF in_rank_address > 0 THEN
-      INSERT INTO search_name_-partition- (place_id, search_rank, address_rank, name_vector, centroid)
-        values (in_place_id, in_rank_search, in_rank_address, in_name_vector, in_geometry);
+      INSERT INTO search_name_-partition- (place_id, address_rank, name_vector, centroid)
+        values (in_place_id, in_rank_address, in_name_vector, in_geometry);
     END IF;
     RETURN TRUE;
   END IF;

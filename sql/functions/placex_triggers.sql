@@ -254,6 +254,7 @@ CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
                                                maxrank SMALLINT,
                                                address HSTORE,
                                                geometry GEOMETRY,
+                                               country TEXT,
                                                OUT parent_place_id BIGINT,
                                                OUT postcode TEXT,
                                                OUT nameaddress_vector INT[])
@@ -265,45 +266,49 @@ DECLARE
   current_boundary GEOMETRY := NULL;
   current_node_area GEOMETRY := NULL;
 
-  location RECORD;
-  addr_item RECORD;
+  parent_place_rank INT := 0;
+  addr_place_ids BIGINT[];
 
-  isin_tokens INT[];
+  location RECORD;
 BEGIN
   parent_place_id := 0;
   nameaddress_vector := '{}'::int[];
-  isin_tokens := '{}'::int[];
 
-  ---- convert address store to array of tokenids
-  IF address IS NOT NULL THEN
-    FOR addr_item IN SELECT * FROM each(address)
-    LOOP
-      IF addr_item.key IN ('city', 'tiger:county', 'state', 'suburb', 'province',
-                           'district', 'region', 'county', 'municipality',
-                           'hamlet', 'village', 'subdistrict', 'town',
-                           'neighbourhood', 'quarter', 'parish')
-      THEN
-        isin_tokens := array_merge(isin_tokens,
-                                   word_ids_from_name(addr_item.value));
-        IF NOT %REVERSE-ONLY% THEN
-          nameaddress_vector := array_merge(nameaddress_vector,
-                                            addr_ids_from_name(addr_item.value));
+  address_havelevel := array_fill(false, ARRAY[maxrank]);
+
+  FOR location IN
+    SELECT * FROM get_places_for_addr_tags(partition, geometry,
+                                                   address, country)
+    ORDER BY rank_address, distance, isguess desc
+  LOOP
+    IF NOT %REVERSE-ONLY% THEN
+      nameaddress_vector := array_merge(nameaddress_vector,
+                                        location.keywords::int[]);
+    END IF;
+
+    IF location.place_id is not null THEN
+      location_isaddress := not address_havelevel[location.rank_address];
+      IF not address_havelevel[location.rank_address] THEN
+        address_havelevel[location.rank_address] := true;
+        IF parent_place_rank < location.rank_address THEN
+          parent_place_id := location.place_id;
+          parent_place_rank := location.rank_address;
         END IF;
       END IF;
-    END LOOP;
-  END IF;
-  IF NOT %REVERSE-ONLY% THEN
-    nameaddress_vector := array_merge(nameaddress_vector, isin_tokens);
-  END IF;
 
-  ---- now compute the address terms
-  FOR i IN 1..maxrank LOOP
-    address_havelevel[i] := false;
+      INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                     isaddress, distance, cached_rank_address)
+        VALUES (obj_place_id, location.place_id, not location.isguess,
+                true, location.distance, location.rank_address);
+
+      addr_place_ids := array_append(addr_place_ids, location.place_id);
+    END IF;
   END LOOP;
 
   FOR location IN
     SELECT * FROM getNearFeatures(partition, geometry, maxrank)
-    ORDER BY rank_address, isin_tokens && keywords desc, isguess asc,
+    WHERE addr_place_ids is null or not addr_place_ids @> ARRAY[place_id]
+    ORDER BY rank_address, isguess asc,
              distance *
                CASE WHEN rank_address = 16 AND rank_search = 15 THEN 0.2
                     WHEN rank_address = 16 AND rank_search = 16 THEN 0.25
@@ -808,13 +813,17 @@ BEGIN
 
       END IF;
 
-      IF NOT %REVERSE-ONLY% THEN
+      IF array_length(name_vector, 1) is not NULL
+         OR inherited_address is not NULL OR NEW.address is not NULL
+      THEN
         SELECT * INTO name_vector, nameaddress_vector
-          FROM create_poi_search_terms(NEW.parent_place_id,
+          FROM create_poi_search_terms(NEW.place_id,
+                                       NEW.partition, NEW.parent_place_id,
                                        inherited_address || NEW.address,
-                                       NEW.housenumber, name_vector);
+                                       NEW.country_code, NEW.housenumber,
+                                       name_vector, NEW.centroid);
 
-        IF array_length(name_vector, 1) is not NULL THEN
+        IF not %REVERSE-ONLY% AND array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)
@@ -920,7 +929,8 @@ BEGIN
                                     NEW.address,
                                     CASE WHEN (NEW.rank_address = 0 or
                                                NEW.rank_search between 26 and 29)
-                                         THEN NEW.geometry ELSE NEW.centroid END)
+                                         THEN NEW.geometry ELSE NEW.centroid END,
+                                    NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   --DEBUG: RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;

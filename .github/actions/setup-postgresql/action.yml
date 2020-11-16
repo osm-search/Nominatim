@@ -5,7 +5,9 @@ runs:
 
     steps:
         - name: Install postgis
-          run: sudo apt-get install -y -qq postgresql-13-postgis-3 postgresql-13-postgis-3-scripts postgresql-server-dev-13
+          run: |
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-13-postgis-3 postgresql-13-postgis-3-scripts postgresql-server-dev-13
           shell: bash
 
         - name: Adapt postgresql configuration

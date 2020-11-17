@@ -56,7 +56,7 @@ Feature: Creation of search terms
         When importing
         Then search_name has no entry for N1
 
-    Scenario: Unnamed POIs doesn't inherit parent name when unknown addr:place is present
+    Scenario: Unnamed POIs inherit parent name when unknown addr:place is present
         Given the scene roads-with-pois
         And the places
          | osm | class   | type        | housenr | addr+place | geometry |
@@ -66,15 +66,18 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street  | :w-north |
          | N2  | place   | city        | Strange Town | :p-N1 |
         When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | N2              |
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | #23         | Walltown |
+         | N1     | #23         | Walltown, Strange, Town |
         When searching for "23 Rose Street"
         Then exactly 1 results are returned
         And results contain
          | osm_type | osm_id | name |
          | W        | 1      | Rose Street, Strange Town |
-        When searching for "23 Walltown"
+        When searching for "23 Walltown, Strange Town"
         Then results contain
          | osm_type | osm_id | name |
          | N        | 1      | 23, Walltown, Strange Town |

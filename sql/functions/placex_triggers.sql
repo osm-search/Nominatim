@@ -138,6 +138,7 @@ DECLARE
 BEGIN
   IF bnd.rank_search >= 26 or bnd.rank_address = 0
      or ST_GeometryType(bnd.geometry) NOT IN ('ST_Polygon','ST_MultiPolygon')
+     or bnd.type IN ('postcode', 'postal_code')
   THEN
     RETURN NULL;
   END IF;

@@ -14,7 +14,22 @@ Feature: Linking of places
          | R13     | - |
          | N256    | - |
 
-    Scenario: Waterways are linked when in waterway relations
+    Scenario: Postcode areas cannot be linked
+        Given the grid
+         | 1 |   | 2 |
+         |   | 9 |   |
+         | 4 |   | 3 |
+        And the named places
+         | osm | class    | type        | addr+postcode  | extra+wikidata | geometry    |
+         | R13 | boundary | postal_code | 123            | Q87493         | (1,2,3,4,1) |
+         | N25 | place    | suburb      | 123            | Q87493         | 9 |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | R13    | - |
+         | N25    | - |
+
+     Scenario: Waterways are linked when in waterway relations
         Given the scene split-road
         And the places
          | osm | class    | type  | name  | geometry |

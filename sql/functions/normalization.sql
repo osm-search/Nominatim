@@ -518,16 +518,14 @@ BEGIN
     addr_place_ids := addr_ids_from_name(address->'place');
     IF not addr_place_ids <@ parent_name_vector THEN
       -- addr:place tag exists without a corresponding place. Mix in addr:place
-      -- in the address and drop the name from the parent. This would only be
-      -- the street name of the nearest street.
-      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+      -- in the address.
       name_vector := ARRAY[getorcreate_name_id(housenumber)];
+      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
     END IF;
-  ELSE
-    nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
   END IF;
 
-  -- The address vector always gets merged in.
+  -- Merge the parent name and address.
+  nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
   nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
 
 END;

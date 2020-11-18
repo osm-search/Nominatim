@@ -30,7 +30,24 @@ Feature: Creation of search terms
          | osm_type | osm_id | name |
          | N        | 1      | 23, Rose Street |
 
-    Scenario: Unnamed POI has no search entry when it has known addr: tags
+    Scenario: Searching for unknown addr: tags also works for multiple words
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type        | housenr | addr+city        | geometry |
+         | N1  | place   | house       | 23      | Little Big Town  | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name   | geometry |
+         | W1  | highway | residential | Rose Street | :w-north |
+        When importing
+        Then search_name contains
+         | object | name_vector | nameaddress_vector |
+         | N1     | #23         | Rose Street, Little, Big, Town |
+        When searching for "23 Rose Street, Little Big Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
+
+     Scenario: Unnamed POI has no search entry when it has known addr: tags
         Given the scene roads-with-pois
         And the places
          | osm | class   | type        | housenr | addr+city | geometry |
@@ -200,7 +217,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | nameaddress_vector |
-         | W1     | bonn, new york, smalltown |
+         | W1     | bonn, new, york, smalltown |
 
     Scenario: A known addr:* tag is added even if the name is unknown
         Given the scene roads-with-pois

@@ -164,6 +164,14 @@
           "administrative8" : 14
       }
   }
+},
+{ "countries" : [ "nl" ],
+  "tags" : {
+      "boundary" : {
+          "administrative8" : 14,
+          "administrative10" : 16
+      }
+  }
 }
 ]
 

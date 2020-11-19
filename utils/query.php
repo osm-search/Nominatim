@@ -58,6 +58,7 @@ if (!$oParams->hasSetAny($aSearchParams)) {
 $oGeocode = new Nominatim\Geocode($oDB);
 
 $oGeocode->setLanguagePreference($oParams->getPreferredLanguages(false));
+$oGeocode->setReverseInPlan(true);
 $oGeocode->loadParamArray($oParams);
 
 if ($oParams->getBool('search')) {

@@ -168,7 +168,9 @@
 { "countries" : [ "nl" ],
   "tags" : {
       "boundary" : {
+          "administrative7" : [13, 0],
           "administrative8" : 14,
+          "administrative9" : [15, 0],
           "administrative10" : 16
       }
   }

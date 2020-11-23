@@ -97,3 +97,9 @@ jobs:
                    php ./utils/update.php --init-updates
                    php ./utils/update.php --import-osmosis
               working-directory: build
+
+            - name: Run reverse-only import
+              run : |
+                  dropdb nominatim
+                  php ./utils/setup.php --osm-file ../monaco-latest.osm.pbf --reverse-only --all
+              working-directory: build

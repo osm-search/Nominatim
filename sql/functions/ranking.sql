@@ -194,10 +194,10 @@ BEGIN
       FROM get_postcode_rank(country, postcode);
   ELSEIF extended_type = 'N' AND place_class = 'highway' THEN
     search_rank = 30;
-    address_rank = 0;
+    address_rank = 30;
   ELSEIF place_class = 'landuse' AND extended_type != 'A' THEN
     search_rank = 30;
-    address_rank = 0;
+    address_rank = 30;
   ELSE
     IF place_class = 'boundary' and place_type = 'administrative' THEN
       classtype = place_type || admin_level::TEXT;
@@ -211,11 +211,8 @@ BEGIN
            AND l.class = place_class AND (l.type = classtype or l.type is NULL)
      ORDER BY l.country_code, l.class, l.type LIMIT 1;
 
-    IF search_rank is NULL THEN
+    IF search_rank is NULL OR address_rank is NULL THEN
       search_rank := 30;
-    END IF;
-
-    IF address_rank is NULL THEN
       address_rank := 30;
     END IF;
 

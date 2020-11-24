@@ -814,8 +814,8 @@ BEGIN
 
       END IF;
 
-      IF array_length(name_vector, 1) is not NULL
-         OR inherited_address is not NULL OR NEW.address is not NULL
+      IF not %REVERSE-ONLY% AND (array_length(name_vector, 1) is not NULL
+         OR inherited_address is not NULL OR NEW.address is not NULL)
       THEN
         SELECT * INTO name_vector, nameaddress_vector
           FROM create_poi_search_terms(NEW.place_id,
@@ -824,7 +824,7 @@ BEGIN
                                        NEW.country_code, NEW.housenumber,
                                        name_vector, NEW.centroid);
 
-        IF not %REVERSE-ONLY% AND array_length(name_vector, 1) is not NULL THEN
+        IF array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
                                    importance, country_code, name_vector,
                                    nameaddress_vector, centroid)

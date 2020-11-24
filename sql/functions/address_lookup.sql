@@ -289,7 +289,7 @@ BEGIN
 
   IF search_unlisted_place is not null THEN
     RETURN NEXT ROW(null, null, null, hstore('name', search_unlisted_place),
-                    'place', 'locality', null, null, true, true, 26, 0)::addressline;
+                    'place', 'locality', null, null, true, true, 25, 0)::addressline;
   END IF;
 
   IF searchpostcode IS NOT NULL THEN

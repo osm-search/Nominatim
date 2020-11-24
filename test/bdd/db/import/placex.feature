@@ -170,7 +170,7 @@ Feature: Import into placex
         When importing
         Then placex contains
           | object | rank_search | rank_address |
-          | N1     | 30          |  0 |
+          | N1     | 30          | 30 |
           | W1     | 26          | 26 |
           | W2     | 26          | 26 |
           | W3     | 26          | 26 |
@@ -191,8 +191,8 @@ Feature: Import into placex
         When importing
         Then placex contains
           | object | rank_search | rank_address |
-          | N2     | 30          |  0 |
-          | W2     | 30          |  0 |
+          | N2     | 30          | 30 |
+          | W2     | 30          | 30 |
           | W4     | 22          | 22 |
           | R2     | 22          | 22 |
           | R3     | 22          |  0 |

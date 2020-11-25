@@ -23,9 +23,17 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street | :w-north |
         When importing
         Then search_name contains
-         | object | name_vector | nameaddress_vector |
-         | N1     | #23         | Rose Street, Walltown |
+         | object | nameaddress_vector |
+         | N1     | Rose, Street, Walltown |
         When searching for "23 Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
+        When searching for "Walltown, Rose Street 23"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
+        When searching for "Rose Street 23, Walltown"
         Then results contain
          | osm_type | osm_id | name |
          | N        | 1      | 23, Rose Street |
@@ -40,9 +48,17 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street | :w-north |
         When importing
         Then search_name contains
-         | object | name_vector | nameaddress_vector |
-         | N1     | #23         | Rose Street, Little, Big, Town |
+         | object | nameaddress_vector |
+         | N1     | Rose Street, Little, Big, Town |
         When searching for "23 Rose Street, Little Big Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
+        When searching for "Rose Street 23, Little Big Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Rose Street |
+        When searching for "Little big Town, Rose Street 23"
         Then results contain
          | osm_type | osm_id | name |
          | N        | 1      | 23, Rose Street |
@@ -88,7 +104,7 @@ Feature: Creation of search terms
          | N1     | N2              |
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | #23         | Walltown, Strange, Town |
+         | N1     | #Walltown   | Strange, Town |
         When searching for "23 Rose Street"
         Then exactly 1 results are returned
         And results contain
@@ -98,6 +114,70 @@ Feature: Creation of search terms
         Then results contain
          | osm_type | osm_id | name |
          | N        | 1      | 23, Walltown, Strange Town |
+        When searching for "Walltown 23, Strange Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Walltown, Strange Town |
+        When searching for "Strange Town, Walltown 23"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | 23, Walltown, Strange Town |
+
+    Scenario: Named POIs can be searched by housenumber when unknown addr:place is present
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type  | name       | housenr | addr+place | geometry |
+         | N1  | place   | house | Blue house | 23      | Walltown   | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name    | geometry |
+         | W1  | highway | residential | Rose Street  | :w-north |
+         | N2  | place   | city        | Strange Town | :p-N1 |
+        When importing
+        Then search_name contains
+         | object | name_vector      | nameaddress_vector      |
+         | N1     | #Walltown, #Blue house | Walltown, Strange, Town |
+        When searching for "23 Walltown, Strange Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Walltown, Strange Town |
+        When searching for "Walltown 23, Strange Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Walltown, Strange Town |
+        When searching for "Strange Town, Walltown 23"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Walltown, Strange Town |
+        When searching for "Strange Town, Walltown 23, Blue house"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Walltown, Strange Town |
+        When searching for "Strange Town, Walltown, Blue house"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Walltown, Strange Town |
+
+    Scenario: Named POIs can be found when unknown multi-word addr:place is present
+        Given the scene roads-with-pois
+        And the places
+         | osm | class   | type  | name       | housenr | addr+place | geometry |
+         | N1  | place   | house | Blue house | 23      | Moon sun   | :p-N1 |
+        And the places
+         | osm | class   | type        | name+name    | geometry |
+         | W1  | highway | residential | Rose Street  | :w-north |
+         | N2  | place   | city        | Strange Town | :p-N1 |
+        When importing
+        Then search_name contains
+         | object | name_vector      | nameaddress_vector      |
+         | N1     | #Moon sun, #Blue house | Moon, Sun, Strange, Town |
+        When searching for "23 Moon Sun, Strange Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Moon sun, Strange Town |
+        When searching for "Blue house, Moon Sun, Strange Town"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Blue house, 23, Moon sun, Strange Town |
 
     Scenario: Unnamed POIs doesn't inherit parent name when addr:place is present only in parent address
         Given the scene roads-with-pois
@@ -111,7 +191,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | #23         | Walltown |
+         | N1     | #Walltown   | Strange, Town      |
         When searching for "23 Rose Street, Walltown"
         Then exactly 1 result is returned
         And results contain
@@ -157,22 +237,38 @@ Feature: Creation of search terms
         When searching for "23 Lily Street"
         Then exactly 0 results are returned
 
-    Scenario: Named POIs have unknown address tags added in the search_name table
+    Scenario: Named POIs get unknown address tags added in the search_name table
         Given the scene roads-with-pois
         And the places
-         | osm | class   | type        | name+name  | addr+city | geometry |
-         | N1  | place   | house       | Green Moss | Walltown  | :p-N1 |
+         | osm | class   | type        | name+name  | housenr | addr+city | geometry |
+         | N1  | place   | house       | Green Moss | 26      | Walltown  | :p-N1 |
         And the places
          | osm | class   | type        | name+name   | geometry |
          | W1  | highway | residential | Rose Street | :w-north |
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | #Green Moss | Rose Street, Walltown |
+         | N1     | #Green Moss | Rose, Street, Walltown |
         When searching for "Green Moss, Rose Street, Walltown"
         Then results contain
          | osm_type | osm_id | name |
-         | N        | 1      | Green Moss, Rose Street |
+         | N        | 1      | Green Moss, 26, Rose Street |
+        When searching for "Green Moss, 26, Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, 26, Rose Street |
+        When searching for "26, Rose Street, Walltown"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, 26, Rose Street |
+        When searching for "Rose Street 26, Walltown"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, 26, Rose Street |
+        When searching for "Walltown, Rose Street 26"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | Green Moss, 26, Rose Street |
 
     Scenario: Named POI doesn't inherit parent name when addr:place is present only in parent address
         Given the scene roads-with-pois

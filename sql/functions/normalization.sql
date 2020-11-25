@@ -490,53 +490,34 @@ BEGIN
     END LOOP;
   END IF;
 
-
-  -- If the POI is named, simply mix in all address terms and be done.
-  IF array_length(initial_name_vector, 1) is not NULL THEN
-    -- Cheating here by not recomputing all terms but simply using the ones
-    -- from the parent object.
-    name_vector := initial_name_vector;
-    nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
-    nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
-
-    IF not address ? 'street' and address ? 'place' THEN
-      -- make sure addr:place terms are always searchable
-      nameaddress_vector := array_merge(nameaddress_vector,
-                                        addr_ids_from_name(address->'place'));
-    END IF;
-
-    RETURN;
-  END IF;
-
-  ----- unnamed POIS
-
-  IF (array_length(nameaddress_vector, 1) is null
-      and (address ? 'street'or not address ? 'place'))
-     or housenumber is null
-  THEN
-    RETURN;
-  END IF;
+  name_vector := initial_name_vector;
 
   -- Check if the parent covers all address terms.
   -- If not, create a search name entry with the house number as the name.
   -- This is unusual for the search_name table but prevents that the place
   -- is returned when we only search for the street/place.
 
-  IF not nameaddress_vector <@ parent_address_vector THEN
-    name_vector := ARRAY[getorcreate_name_id(housenumber)];
+  IF housenumber is not null and not nameaddress_vector <@ parent_address_vector THEN
+    name_vector := array_merge(name_vector,
+                               ARRAY[getorcreate_housenumber_id(make_standard_name(housenumber))]);
   END IF;
 
   IF not address ? 'street' and address ? 'place' THEN
     addr_place_ids := addr_ids_from_name(address->'place');
     IF not addr_place_ids <@ parent_name_vector THEN
-      -- addr:place tag exists without a corresponding place. Mix in addr:place
-      -- in the address.
-      name_vector := ARRAY[getorcreate_name_id(housenumber)];
+      -- make sure addr:place terms are always searchable
       nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+      -- If there is a housenumber, also add the place name as a name,
+      -- so we can search it by the usual housenumber+place algorithms.
+      IF housenumber is not null THEN
+        name_vector := array_merge(name_vector,
+                                   ARRAY[getorcreate_name_id(make_standard_name(address->'place'))]);
+      END IF;
     END IF;
   END IF;
 
-  -- Merge the parent name and address.
+  -- Cheating here by not recomputing all terms but simply using the ones
+  -- from the parent object.
   nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
   nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
 

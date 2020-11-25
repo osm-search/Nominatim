@@ -248,6 +248,18 @@ class SearchDescription
                     $oSearch->iSearchRank++;
                 }
                 $aNewSearches[] = $oSearch;
+                // Housenumbers may appear in the name when the place has its own
+                // address terms.
+                if ($oSearchTerm->iId !== null
+                    && ($this->iNamePhrase >= 0 || empty($this->aName))
+                    && empty($this->aAddress)
+                   ) {
+                    $oSearch = clone $this;
+                    $oSearch->iSearchRank++;
+                    $oSearch->aAddress = $this->aName;
+                    $oSearch->aName = array($oSearchTerm->iId => $oSearchTerm->iId);
+                    $aNewSearches[] = $oSearch;
+                }
             }
         } elseif ($sPhraseType == ''
                   && is_a($oSearchTerm, '\Nominatim\Token\SpecialTerm')

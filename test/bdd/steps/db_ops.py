@@ -487,8 +487,8 @@ def check_search_name_contents(context, exclude):
                                    """,
                                    (terms, words))
                     if not exclude:
-                        ok_(subcur.rowcount >= len(terms),
-                            "No word entry found for " + row[h])
+                        ok_(subcur.rowcount >= len(terms) + len(words),
+                            "No word entry found for " + row[h] + ". Entries found: " + str(subcur.rowcount))
                     for wid in subcur:
                         if exclude:
                             assert_not_in(wid[0], res[h],

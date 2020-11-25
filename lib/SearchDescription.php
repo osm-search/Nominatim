@@ -21,8 +21,6 @@ class SearchDescription
     private $bRareName = false;
     /// List of word ids making up the address of the object.
     private $aAddress = array();
-    /// Subset of word ids of full words making up the address.
-    private $aFullNameAddress = array();
     /// List of word ids that appear in the name but should be ignored.
     private $aNameNonSearch = array();
     /// List of word ids that appear in the address but should be ignored.
@@ -219,6 +217,9 @@ class SearchDescription
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
+                    if (strlen($oSearchTerm->sPostcode) < 4) {
+                        $oSearch->iSearchRank += 4 - strlen($oSearchTerm->sPostcode);
+                    }
                     $oSearch->sPostcode = $oSearchTerm->sPostcode;
                     $aNewSearches[] = $oSearch;
                 }
@@ -283,11 +284,9 @@ class SearchDescription
             if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
                 if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
-                    $oSearch->iSearchRank += 2;
+                    $oSearch->iSearchRank += 3 * $oSearchTerm->iTermCount;
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
-                } else {
-                    $this->aFullNameAddress[$iWordID] = $iWordID;
                 }
             } else {
                 $oSearch = clone $this;
@@ -333,16 +332,19 @@ class SearchDescription
         ) {
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
-                $oSearch->iSearchRank += 2;
+                $oSearch->iSearchRank += $oSearchTerm->iTermCount;
+                if (empty($this->aName)) {
+                    $oSearch->iSearchRank++;
+                }
+                if (preg_match('#^[0-9]+$#', $sToken)) {
+                    $oSearch->iSearchRank++;
+                }
                 $oSearch->aAddress[$iWordID] = $iWordID;
                 $aNewSearches[] = $oSearch;
             } else {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
-                if (preg_match('#^[0-9]+$#', $sToken)) {
-                    $oSearch->iSearchRank += 2;
-                }
                 if (!empty($aFullTokens)) {
                     $oSearch->iSearchRank++;
                 }
@@ -352,7 +354,7 @@ class SearchDescription
                 foreach ($aFullTokens as $oSearchTermToken) {
                     if (is_a($oSearchTermToken, '\Nominatim\Token\Word')) {
                         $oSearch = clone $this;
-                        $oSearch->iSearchRank++;
+                        $oSearch->iSearchRank += 3;
                         $oSearch->aAddress[$oSearchTermToken->iId]
                             = $oSearchTermToken->iId;
                         $aNewSearches[] = $oSearch;
@@ -691,10 +693,11 @@ class SearchDescription
         $sImportanceSQL .= $this->oContext->viewboxImportanceSQL('centroid');
         $aOrder[] = "$sImportanceSQL DESC";
 
-        if (!empty($this->aFullNameAddress)) {
+        $aFullNameAddress = $this->oContext->getFullNameTerms();
+        if (!empty($aFullNameAddress)) {
             $sExactMatchSQL = ' ( ';
             $sExactMatchSQL .= ' SELECT count(*) FROM ( ';
-            $sExactMatchSQL .= '  SELECT unnest('.$oDB->getArraySQL($this->aFullNameAddress).')';
+            $sExactMatchSQL .= '  SELECT unnest('.$oDB->getArraySQL($aFullNameAddress).')';
             $sExactMatchSQL .= '    INTERSECT ';
             $sExactMatchSQL .= '  SELECT unnest(nameaddress_vector)';
             $sExactMatchSQL .= ' ) s';

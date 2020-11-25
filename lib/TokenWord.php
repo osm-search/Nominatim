@@ -13,12 +13,15 @@ class Word
     public $bPartial;
     /// Number of appearances in the database.
     public $iSearchNameCount;
+    /// Number of terms in the word.
+    public $iTermCount;
 
-    public function __construct($iId, $bPartial, $iSearchNameCount)
+    public function __construct($iId, $bPartial, $iSearchNameCount, $iTermCount)
     {
         $this->iId = $iId;
         $this->bPartial = $bPartial;
         $this->iSearchNameCount = $iSearchNameCount;
+        $this->iTermCount = $iTermCount;
     }
 
     public function debugInfo()

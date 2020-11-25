@@ -650,6 +650,8 @@ class Geocode
                     $this->oNormalizer
                 );
 
+                $oCtx->setFullNameWords($oValidTokens->getFullWordIDs());
+
                 // Try more interpretations for Tokens that could not be matched.
                 foreach ($aTokens as $sToken) {
                     if ($sToken[0] == ' ' && !$oValidTokens->contains($sToken)) {

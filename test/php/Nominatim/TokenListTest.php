@@ -121,6 +121,6 @@ class TokenTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(array(new Token\HouseNumber(999, '1051')), $TL->get('1051'));
         $this->assertEquals(array(new Token\Country(999, 'de')), $TL->get('alemagne'));
         $this->assertEquals(array(new Token\Postcode(999, '64286')), $TL->get('64286'));
-        $this->assertEquals(array(new Token\Word(999, true, 533)), $TL->get('darmstadt'));
+        $this->assertEquals(array(new Token\Word(999, true, 533, 0)), $TL->get('darmstadt'));
     }
 }

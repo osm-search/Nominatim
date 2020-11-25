@@ -32,7 +32,18 @@ class SearchContext
     public $sqlCountryList = '';
     /// List of place IDs to exclude (as SQL).
     private $sqlExcludeList = '';
+    /// Subset of word ids of full words in the query.
+    private $aFullNameWords = array();
 
+    public function setFullNameWords($aWordList)
+    {
+        $this->aFullNameWords = $aWordList;
+    }
+
+    public function getFullNameTerms()
+    {
+        return $this->aFullNameWords;
+    }
 
     /**
      * Check if a reference point is defined.

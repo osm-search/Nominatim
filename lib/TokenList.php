@@ -80,6 +80,21 @@ class TokenList
         return isset($this->aTokens[$sWord]) ? $this->aTokens[$sWord] : array();
     }
 
+    public function getFullWordIDs()
+    {
+        $ids = array();
+
+        foreach ($this->aTokens as $aTokenList) {
+            foreach ($aTokenList as $oToken) {
+                if (is_a($oToken, '\Nominatim\Token\Word') && !$oToken->bPartial) {
+                    $ids[$oToken->iId] = $oToken->iId;
+                }
+            }
+        }
+
+        return $ids;
+    }
+
     /**
      * Add token information from the word table in the database.
      *
@@ -151,7 +166,8 @@ class TokenList
                 $oToken = new Token\Word(
                     $iId,
                     $aWord['word_token'][0] != ' ',
-                    (int) $aWord['count']
+                    (int) $aWord['count'],
+                    substr_count($aWord['word_token'], ' ')
                 );
             }
 

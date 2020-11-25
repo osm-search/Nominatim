@@ -84,8 +84,8 @@ class TokenList
     {
         $ids = array();
 
-        foreach($this->aTokens as $aTokenList) {
-            foreach($aTokenList as $oToken) {
+        foreach ($this->aTokens as $aTokenList) {
+            foreach ($aTokenList as $oToken) {
                 if (is_a($oToken, '\Nominatim\Token\Word') && !$oToken->bPartial) {
                     $ids[$oToken->iId] = $oToken->iId;
                 }

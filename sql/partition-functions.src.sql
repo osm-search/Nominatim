@@ -47,6 +47,9 @@ BEGIN
       WHERE geometry && feature
         AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
         AND rank_address < maxrank
+            -- Postcodes currently still use rank_search to define for which
+            -- features they are relevant.
+        AND not (rank_address in (5, 11) and rank_search > maxrank)
       GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
     LOOP
       RETURN NEXT r;

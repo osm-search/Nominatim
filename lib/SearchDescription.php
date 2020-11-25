@@ -249,7 +249,10 @@ class SearchDescription
                 $aNewSearches[] = $oSearch;
                 // Housenumbers may appear in the name when the place has its own
                 // address terms.
-                if (($this->iNamePhrase >= 0 || empty($this->aName)) && empty($this->aAddress)) {
+                if ($oSearchTerm->iId !== null
+                    && ($this->iNamePhrase >= 0 || empty($this->aName))
+                    && empty($this->aAddress)
+                   ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress = $this->aName;

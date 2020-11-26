@@ -8,6 +8,18 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 
 ## 3.5.0 -> master
 
+### Change of layout of search_name_* tables
+
+The table need a different index for nearest place lookup. Recreate the
+indexs suing the following shell script:
+
+```bash
+for table in `psql -d nominatim -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'search_name_%'" -tA | grep -v search_name_blank`;
+do
+    psql -d nominatim -c "DROP INDEX idx_${table}_centroid_place; CREATE INDEX idx_${table}_centroid_place ON ${table} USING gist (centroid) WHERE ((address_rank >= 2) AND (address_rank <= 25)); DROP INDEX idx_${table}_centroid_street; CREATE INDEX idx_${table}_centroid_street ON ${table} USING gist (centroid) WHERE ((address_rank >= 26) AND (address_rank <= 27))";
+done
+```
+
 ### Removal of html output
 
 The debugging UI is no longer directly provided with Nominatim. Instead we

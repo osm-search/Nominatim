@@ -508,7 +508,7 @@ DECLARE
   location RECORD;
   relation_members TEXT[];
 
-  centroid GEOMETRY;
+  geom GEOMETRY;
   parent_address_level SMALLINT;
   place_address_level SMALLINT;
 
@@ -849,9 +849,9 @@ BEGIN
 
     -- Use the linked point as the centre point of the geometry,
     -- but only if it is within the area of the boundary.
-    centroid := coalesce(location.centroid, ST_Centroid(location.geometry));
-    IF centroid is not NULL AND ST_Within(centroid, NEW.geometry) THEN
-        NEW.centroid := centroid;
+    geom := coalesce(location.centroid, ST_Centroid(location.geometry));
+    IF geom is not NULL AND ST_Within(geom, NEW.geometry) THEN
+        NEW.centroid := geom;
     END IF;
 
     --DEBUG: RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;
@@ -918,8 +918,23 @@ BEGIN
     --DEBUG: RAISE WARNING 'Country names updated';
   END IF;
 
+  -- For linear features we need the full geometry for determining the address
+  -- because they may go through several administrative entities. Otherwise use
+  -- the centroid for performance reasons.
+  IF ST_GeometryType(NEW.geometry) in ('ST_LineString', 'ST_MultiLineString') THEN
+    geom := NEW.geometry;
+  ELSE
+    geom := NEW.centroid;
+  END IF;
+
   IF NEW.rank_address = 0 THEN
     max_rank := geometry_to_rank(NEW.rank_search, NEW.geometry, NEW.country_code);
+    -- Rank 0 features may also span multiple administrative areas (e.g. lakes)
+    -- so use the geometry here too. Just make sure the areas don't become too
+    -- large.
+    IF NEW.class = 'natural' or max_rank > 10 THEN
+      geom := NEW.geometry;
+    END IF;
   ELSEIF NEW.rank_address > 25 THEN
     max_rank := 25;
   ELSE
@@ -927,11 +942,7 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition, max_rank,
-                                    NEW.address,
-                                    CASE WHEN (NEW.rank_address = 0 or
-                                               NEW.rank_search between 26 and 29)
-                                         THEN NEW.geometry ELSE NEW.centroid END,
-                                    NEW.country_code)
+                                    NEW.address, geom, NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   --DEBUG: RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;

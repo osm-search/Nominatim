@@ -11,7 +11,7 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 ### Change of layout of search_name_* tables
 
 The table need a different index for nearest place lookup. Recreate the
-indexs suing the following shell script:
+indexes using the following shell script:
 
 ```bash
 for table in `psql -d nominatim -c "SELECT tablename FROM pg_tables WHERE tablename LIKE 'search_name_%'" -tA | grep -v search_name_blank`;
@@ -39,13 +39,15 @@ which needs a different database index. Create it with the following SQL command
 
 ```sql
 CREATE INDEX idx_placex_pendingsector_rank_address
-  ON placex USING BTREE (rank_address, geometry_sector) where indexed_status > 0;
+  ON placex
+  USING BTREE (rank_address, geometry_sector)
+  WHERE indexed_status > 0;
 ```
 
 You can then drop the old index with:
 
 ```sql
-DROP INDEX idx_placex_pendingsector
+DROP INDEX idx_placex_pendingsector;
 ```
 
 ### Unused index
@@ -53,7 +55,7 @@ DROP INDEX idx_placex_pendingsector
 This index has been unused ever since the query using it was changed two years ago. Saves about 12GB on a planet installation.
 
 ```sql
-DROP INDEX idx_placex_geometry_reverse_lookupPoint
+DROP INDEX idx_placex_geometry_reverse_lookupPoint;
 ```
 
 ### Switching to dotenv
@@ -78,10 +80,14 @@ follows:
   * reimport the tables: `./utils/setup.php --import-wikipedia-articles`
   * update the functions: `./utils/setup.php --create-functions --enable-diff-updates`
   * create a new lookup index:
-```
-CREATE INDEX idx_placex_wikidata on placex
-USING BTREE ((extratags -> 'wikidata'))
-WHERE extratags ? 'wikidata' and class = 'place' and osm_type = 'N' and rank_search < 26
+```sql
+CREATE INDEX idx_placex_wikidata
+  ON placex
+  USING BTREE ((extratags -> 'wikidata'))
+  WHERE extratags ? 'wikidata'
+    AND class = 'place'
+    AND osm_type = 'N'
+    AND rank_search < 26;
 ```
   * compute importance: `./utils/update.php --recompute-importance`
 
@@ -138,7 +144,7 @@ The new format is
 
 ### Natural Earth country boundaries no longer needed as fallback
 
-```
+```sql
 DROP TABLE country_naturalearthdata;
 ```
 
@@ -164,27 +170,37 @@ following command:
 The reverse algorithm has changed and requires new indexes. Run the following
 SQL statements to create the indexes:
 
-```
+```sql
 CREATE INDEX idx_placex_geometry_reverse_lookupPoint
-  ON placex USING gist (geometry)
-  WHERE (name is not null or housenumber is not null or rank_address between 26 and 27)
-    AND class not in ('railway','tunnel','bridge','man_made')
-    AND rank_address >= 26 AND indexed_status = 0 AND linked_place_id is null;
+  ON placex
+  USING gist (geometry)
+  WHERE (name IS NOT null or housenumber IS NOT null or rank_address BETWEEN 26 AND 27)
+    AND class NOT IN ('railway','tunnel','bridge','man_made')
+    AND rank_address >= 26
+    AND indexed_status = 0
+    AND linked_place_id IS null;
 CREATE INDEX idx_placex_geometry_reverse_lookupPolygon
   ON placex USING gist (geometry)
   WHERE St_GeometryType(geometry) in ('ST_Polygon', 'ST_MultiPolygon')
-    AND rank_address between 4 and 25 AND type != 'postcode'
-    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+    AND rank_address between 4 and 25
+    AND type != 'postcode'
+    AND name is not null
+    AND indexed_status = 0
+    AND linked_place_id is null;
 CREATE INDEX idx_placex_geometry_reverse_placeNode
   ON placex USING gist (geometry)
-  WHERE osm_type = 'N' AND rank_search between 5 and 25
-    AND class = 'place' AND type != 'postcode'
-    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
+  WHERE osm_type = 'N'
+    AND rank_search between 5 and 25
+    AND class = 'place'
+    AND type != 'postcode'
+    AND name is not null
+    AND indexed_status = 0
+    AND linked_place_id is null;
 ```
 
 You also need to grant the website user access to the `country_osm_grid` table:
 
-```
+```sql
 GRANT SELECT ON table country_osm_grid to "www-user";
 ```
 
@@ -192,7 +208,7 @@ Replace the `www-user` with the user name of your website server if necessary.
 
 You can now drop the unused indexes:
 
-```
+```sql
 DROP INDEX idx_placex_reverse_geometry;
 ```
 
@@ -221,8 +237,8 @@ CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry);
 CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id);
 CREATE INDEX idx_postcode_postcode ON location_postcode USING BTREE (postcode);
 GRANT SELECT ON location_postcode TO "www-data";
-drop type if exists nearfeaturecentr cascade;
-create type nearfeaturecentr as (
+DROP TYPE IF EXISTS nearfeaturecentr CASCADE;
+CREATE TYPE nearfeaturecentr AS (
   place_id BIGINT,
   keywords int[],
   rank_address smallint,

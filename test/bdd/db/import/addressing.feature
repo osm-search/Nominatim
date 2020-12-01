@@ -5,11 +5,11 @@ Feature: Address computation
     Scenario: place nodes are added to the address when they are close enough
         Given the 0.002 grid
             | 2 |  |  |  |  |  | 1 |  | 3 |
-        And the named places
-            | osm | class | type     | geometry |
-            | N1  | place | square   | 1 |
-            | N2  | place | hamlet   | 2 |
-            | N3  | place | hamlet   | 3 |
+        And the places
+            | osm | class | type     | name      | geometry |
+            | N1  | place | square   | Square    | 1 |
+            | N2  | place | hamlet   | West Farm | 2 |
+            | N3  | place | hamlet   | East Farm | 3 |
         When importing
         Then place_addressline contains
             | object | address | fromarea |
@@ -17,6 +17,10 @@ Feature: Address computation
         Then place_addressline doesn't contain
             | object | address |
             | N1     | N2      |
+        When searching for "Square"
+        Then results contain
+           | osm_type | osm_id | name              |
+           | N        | 1      | Square, East Farm |
 
     Scenario: given two place nodes, the closer one wins for the address
         Given the grid
@@ -397,3 +401,35 @@ Feature: Address computation
         Then results contain
            | osm_type | osm_id | name                    |
            | N        | 1      | Bolder, Wonderway, Left |
+
+    Scenario: POIs can correct address parts on the fly
+        Given the grid
+            | 1 |   |   |   |  2 |   | 5 |
+            |   |   |   | 9 |    | 8 |   |
+            | 4 |   |   |   |  3 |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | geometry |
+            | W1  | highway | primary | Wonderway | 2,3      |
+            | N1  | amenity | cafe    | Bolder    | 9        |
+            | N2  | amenity | cafe    | Leftside  | 8        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | False     |
+           | W1     | R2      | True      |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+           | N2     | R2      |
+        When searching for "Bolder"
+        Then results contain
+           | osm_type | osm_id | name                    |
+           | N        | 1      | Bolder, Wonderway, Left |
+        When searching for "Leftside"
+        Then results contain
+           | osm_type | osm_id | name                       |
+           | N        | 2      | Leftside, Wonderway, Right |

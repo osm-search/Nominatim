@@ -25,6 +25,7 @@ foreach ($aSearchResults as $iResNum => $aResult) {
         echo " osm_id='".$aResult['osm_id']."'";
     }
     echo " place_rank='".$aResult['rank_search']."'";
+    echo " address_rank='".$aResult['rank_address']."'";
 
     if (isset($aResult['aBoundingBox'])) {
         echo ' boundingbox="';

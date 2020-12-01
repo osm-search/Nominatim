@@ -28,6 +28,9 @@ if (empty($aPlace)) {
         echo join(',', $aPlace['aBoundingBox']);
         echo '"';
     }
+    echo " place_rank='".$aPlace['rank_search']."'";
+    echo " address_rank='".$aPlace['rank_address']."'";
+
 
     if (isset($aPlace['asgeojson'])) {
         echo ' geojson=\'';

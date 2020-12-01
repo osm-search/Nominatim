@@ -90,6 +90,7 @@ DECLARE
   place RECORD;
   location RECORD;
   current_rank_address INTEGER;
+  location_isaddress BOOLEAN;
 BEGIN
   -- The place in question might not have a direct entry in place_addressline.
   -- Look for the parent of such places then and save if in for_place_id.
@@ -99,7 +100,8 @@ BEGIN
     SELECT parent_place_id as place_id, country_code,
            in_housenumber::text as housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address
+           null as name, null::hstore as address,
+           centroid
       INTO place
       FROM location_property_osmline
       WHERE place_id = in_place_id
@@ -112,7 +114,8 @@ BEGIN
     SELECT parent_place_id as place_id, 'us' as country_code,
            in_housenumber::text as housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address
+           null as name, null::hstore as address,
+           ST_Centroid(linegeo) as centroid
       INTO place
       FROM location_property_tiger
       WHERE place_id = in_place_id
@@ -125,7 +128,8 @@ BEGIN
     SELECT parent_place_id as place_id, 'us' as country_code,
            housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address
+           null as name, null::hstore as address,
+           centroid
       INTO place
       FROM location_property_aux
       WHERE place_id = in_place_id;
@@ -137,7 +141,8 @@ BEGIN
     SELECT parent_place_id as place_id, country_code,
            null as housenumber, postcode,
            'place' as class, 'postcode' as type,
-           null as name, null::hstore as address
+           null as name, null::hstore as address,
+           null as centroid
       INTO place
       FROM location_postcode
       WHERE place_id = in_place_id;
@@ -148,7 +153,8 @@ BEGIN
     SELECT parent_place_id as place_id, country_code,
            housenumber, postcode,
            class, type,
-           name, address
+           name, address,
+           centroid
       INTO place
       FROM placex
       WHERE place_id = in_place_id and rank_search > 27;
@@ -161,7 +167,8 @@ BEGIN
     select coalesce(linked_place_id, place_id) as place_id,  country_code,
            housenumber, postcode,
            class, type,
-           null as name, address
+           null as name, address,
+           null as centroid
       INTO place
       FROM placex where place_id = in_place_id;
   END IF;
@@ -212,11 +219,17 @@ BEGIN
             AND linked_place_id is null
             AND (placex.country_code IS NULL OR place.country_code IS NULL
                  OR placex.country_code = place.country_code)
-      ORDER BY rank_address desc, (place_addressline.place_id = in_place_id) desc,
+      ORDER BY rank_address desc,
+               (place_addressline.place_id = in_place_id) desc,
+               (fromarea and place.centroid is not null and not isaddress
+                and (place.address is null or avals(name) && avals(place.address))
+                and ST_Contains(geometry, place.centroid)) desc,
                isaddress desc, fromarea desc,
                distance asc, rank_search desc
   LOOP
     -- RAISE WARNING '%',location;
+    location_isaddress := location.rank_address != current_rank_address;
+
     IF place.country_code IS NULL AND location.country_code IS NOT NULL THEN
       place.country_code := location.country_code;
     END IF;
@@ -231,20 +244,18 @@ BEGIN
       THEN
         place.postcode := null; -- remove the less exact postcode
       ELSE
-        location.isaddress := false;
+        location_isaddress := false;
       END IF;
     END IF;
     RETURN NEXT ROW(location.place_id, location.osm_type, location.osm_id,
-                           location.name, location.class, location.type,
-                           location.place_type,
-                           location.admin_level, location.fromarea,
-                           location.isaddress and location.rank_address != current_rank_address,
-                           location.rank_address,
-                           location.distance)::addressline;
+                    location.name, location.class, location.type,
+                    location.place_type,
+                    location.admin_level, location.fromarea,
+                    location_isaddress,
+                    location.rank_address,
+                    location.distance)::addressline;
 
-    IF location.isaddress THEN
-      current_rank_address := location.rank_address;
-    END IF;
+    current_rank_address := location.rank_address;
   END LOOP;
 
   -- If no country was included yet, add the name information from country_name.

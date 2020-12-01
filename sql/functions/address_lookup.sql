@@ -111,7 +111,7 @@ BEGIN
   --then query tiger data
   -- %NOTIGERDATA% IF 0 THEN
   IF place IS NULL AND in_housenumber >= 0 THEN
-    SELECT parent_place_id as place_id, 'us' as country_code,
+    SELECT parent_place_id as place_id, 'us'::varchar(2) as country_code,
            in_housenumber::text as housenumber, postcode,
            'place' as class, 'house' as type,
            null::hstore as name, null::hstore as address,
@@ -125,7 +125,7 @@ BEGIN
 
   -- %NOAUXDATA% IF 0 THEN
   IF place IS NULL THEN
-    SELECT parent_place_id as place_id, 'us' as country_code,
+    SELECT parent_place_id as place_id, 'us'::varchar(2) as country_code,
            housenumber, postcode,
            'place' as class, 'house' as type,
            null::hstore as name, null::hstore as address,
@@ -191,7 +191,7 @@ BEGIN
 --RAISE WARNING '%',location;
     IF location.rank_address < 4 THEN
       -- no country locations for ranks higher than country
-      place.country_code := NULL;
+      place.country_code := NULL::varchar(2);
     ELSEIF place.country_code IS NULL AND location.country_code IS NOT NULL THEN
       place.country_code := location.country_code;
     END IF;

@@ -344,7 +344,7 @@ class SearchDescription
         ) {
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
                 $oSearch = clone $this;
-                $oSearch->iSearchRank += $oSearchTerm->iTermCount;
+                $oSearch->iSearchRank += $oSearchTerm->iTermCount + 1;
                 if (empty($this->aName)) {
                     $oSearch->iSearchRank++;
                 }
@@ -355,7 +355,7 @@ class SearchDescription
                 $aNewSearches[] = $oSearch;
             } else {
                 $oSearch = clone $this;
-                $oSearch->iSearchRank++;
+                $oSearch->iSearchRank += $oSearchTerm->iTermCount + 1;
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
                 if (!empty($aFullTokens)) {
                     $oSearch->iSearchRank++;

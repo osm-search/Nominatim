@@ -93,15 +93,15 @@ DECLARE
   location_isaddress BOOLEAN;
 BEGIN
   -- The place in question might not have a direct entry in place_addressline.
-  -- Look for the parent of such places then and save if in for_place_id.
+  -- Look for the parent of such places then and save it in place.
 
   -- first query osmline (interpolation lines)
   IF in_housenumber >= 0 THEN
     SELECT parent_place_id as place_id, country_code,
            in_housenumber::text as housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address,
-           centroid
+           null::hstore as name, null::hstore as address,
+           ST_Centroid(linegeo) as centroid
       INTO place
       FROM location_property_osmline
       WHERE place_id = in_place_id
@@ -114,7 +114,7 @@ BEGIN
     SELECT parent_place_id as place_id, 'us' as country_code,
            in_housenumber::text as housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address,
+           null::hstore as name, null::hstore as address,
            ST_Centroid(linegeo) as centroid
       INTO place
       FROM location_property_tiger
@@ -128,7 +128,7 @@ BEGIN
     SELECT parent_place_id as place_id, 'us' as country_code,
            housenumber, postcode,
            'place' as class, 'house' as type,
-           null as name, null::hstore as address,
+           null::hstore as name, null::hstore as address,
            centroid
       INTO place
       FROM location_property_aux
@@ -139,10 +139,10 @@ BEGIN
   -- postcode table
   IF place IS NULL THEN
     SELECT parent_place_id as place_id, country_code,
-           null as housenumber, postcode,
+           null::text as housenumber, postcode,
            'place' as class, 'postcode' as type,
-           null as name, null::hstore as address,
-           null as centroid
+           null::hstore as name, null::hstore as address,
+           null::geometry as centroid
       INTO place
       FROM location_postcode
       WHERE place_id = in_place_id;
@@ -160,15 +160,15 @@ BEGIN
       WHERE place_id = in_place_id and rank_search > 27;
   END IF;
 
-  -- If for_place_id is still NULL at this point then the object has its own
+  -- If place is still NULL at this point then the object has its own
   -- entry in place_address line. However, still check if there is not linked
   -- place we should be using instead.
   IF place IS NULL THEN
     select coalesce(linked_place_id, place_id) as place_id,  country_code,
            housenumber, postcode,
            class, type,
-           null as name, address,
-           null as centroid
+           null::hstore as name, address,
+           null::geometry as centroid
       INTO place
       FROM placex where place_id = in_place_id;
   END IF;

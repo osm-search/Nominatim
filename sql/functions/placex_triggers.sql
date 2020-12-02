@@ -183,6 +183,7 @@ BEGIN
       WHERE make_standard_name(name->'name') = bnd_name
         AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
         AND placex.osm_type = 'N'
+        AND placex.linked_place_id is null
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
@@ -197,6 +198,7 @@ BEGIN
       WHERE placex.class = 'place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
+        AND placex.linked_place_id is null
         AND placex.rank_search < 26
         AND _st_covers(bnd.geometry, placex.geometry)
       ORDER BY make_standard_name(name->'name') = bnd_name desc
@@ -219,6 +221,7 @@ BEGIN
                                                          false, placex.postcode)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
+        AND placex.linked_place_id is null
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP

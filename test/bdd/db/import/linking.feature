@@ -231,3 +231,21 @@ Feature: Linking of places
         And placex contains
          | object | centroid |
          | R13    | in geometry  |
+
+    Scenario: Place nodes can only be linked once
+        Given the named places
+         | osm  | class    | type | extra+wikidata | geometry |
+         | N2   | place    | city | Q1234          | 0 0 |
+        And the named places
+         | osm  | class    | type           | extra+wikidata | admin | geometry |
+         | R1   | boundary | administrative | Q1234          | 8     | poly-area:0.1 |
+         | R2   | boundary | administrative | Q1234          | 9     | poly-area:0.01 |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | N2     | R1              |
+        And placex contains
+         | object | extratags                |
+         | R1     | 'linked_place' : 'city', 'wikidata': 'Q1234'  |
+         | R2     | 'wikidata': 'Q1234'                     |
+

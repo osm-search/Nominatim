@@ -97,7 +97,7 @@ BEGIN
         -- Instead simply use the containing area with the largest rank.
         FOR location IN
           SELECT place_id FROM placex
-            WHERE bbox @ geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+            WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
                   AND rank_address between 5 and 25
             ORDER BY rank_address desc
         LOOP
@@ -112,7 +112,7 @@ BEGIN
         -- contains the bbox, only use addressable features
         FOR location IN
           SELECT place_id FROM placex
-            WHERE bbox @ geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+            WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
                   AND rank_address between 5 and 25
             ORDER BY rank_address desc
         LOOP

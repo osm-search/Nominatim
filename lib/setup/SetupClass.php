@@ -201,6 +201,8 @@ class SetupFunctions
         $oCmd->addParams('--output', 'gazetteer');
         $oCmd->addParams('--hstore');
         $oCmd->addParams('--number-processes', 1);
+        $oCmd->addParams('--with-forward-dependencies', 'false');
+        $oCmd->addParams('--log-progress', 'true');
         $oCmd->addParams('--cache', $this->iCacheMemory);
         $oCmd->addParams('--port', $this->aDSNInfo['port']);
 

@@ -56,6 +56,21 @@ specified in the "Accept-Language" HTTP header.
 Either use a standard RFC2616 accept-language string or a simple
 comma-separated list of language codes.
 
+### Polygon output
+
+* `polygon_geojson=1`
+* `polygon_kml=1`
+* `polygon_svg=1`
+* `polygon_text=1`
+
+Output geometry of results as a GeoJSON, KML, SVG or WKT. Only one of these
+options can be used at a time. (Default: 0)
+
+* `polygon_threshold=0.0`
+
+Return a simplified version of the output geometry. The parameter is the
+tolerance in degrees with which the geometry may differ from the original
+geometry. Topology is preserved in the result. (Default: 0.0)
 
 ### Other
 

@@ -1,30 +1,27 @@
 # Search queries
 
-The search API allows you to look up a location from a textual description.
-Nominatim supports structured as well as free-form search queries.
+The search API allows you to look up a location from a textual description
+or address. Nominatim supports structured and free-form search queries.
 
 The search query may also contain
 [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 which are translated into specific OpenStreetMap (OSM) tags (e.g. Pub => `amenity=pub`).
-Note that this only limits the items to be found, it's not suited to return complete
-lists of OSM objects of a specific type. For those use [Overpass API](https://overpass-api.de/).
+This can be used to narrow down the kind of objects to be returned.
+
+!!! warning
+    Special phrases are not suitable to query all objects of a certain type in an
+    area. Nominatim will always just return a collection of the best matches. To
+    download OSM data by object type, use the [Overpass API](https://overpass-api.de/).
 
 ## Parameters
 
-The search API has the following two formats:
-
-```
-   https://nominatim.openstreetmap.org/search/<query>?<params>
-```
-
-This format only accepts a free-form query string where the
-parts of the query are separated by slashes.
+The search API has the following format:
 
 ```
    https://nominatim.openstreetmap.org/search?<params>
 ```
 
-In this form, the query may be given through two different sets of parameters:
+The search term may be specified with two different sets of parameters:
 
 * `q=<query>`
 
@@ -46,13 +43,13 @@ In this form, the query may be given through two different sets of parameters:
     Structured requests are faster but are less robust against alternative
     OSM tagging schemas. **Do not combine with** `q=<query>` **parameter**.
 
-All three query forms accept the additional parameters listed below.
+Both query forms accept the additional parameters listed below.
 
 ### Output format
 
-* `format=[html|xml|json|jsonv2|geojson|geocodejson]`
+* `format=[xml|json|jsonv2|geojson|geocodejson]`
 
-See [Place Output Formats](Output.md) for details on each format. (Default: html)
+See [Place Output Formats](Output.md) for details on each format. (Default: jsonv2)
 
 * `json_callback=<string>`
 
@@ -96,16 +93,16 @@ Limit search results to one or more countries. `<countrycode>` must be the
 e.g. `gb` for the United Kingdom, `de` for Germany.
 
 Each place in Nominatim is assigned to one country code based
-on `admin_level=2` tags, in rare cases to none (for example in
-international waters outside any country).
+on OSM country boundaries. In rare cases a place may not be in any country
+at all, for example, in international waters.
 
 * `exclude_place_ids=<place_id,[place_id],[place_id]`
 
 If you do not want certain OSM objects to appear in the search
 result, give a comma separated list of the `place_id`s you want to skip.
-This can be used to broaden search results. For example, if a previous
-query only returned a few results, then including those here would cause
-the search to return other, less accurate, matches (if possible).
+This can be used to retrieve additional search results. For example, if a
+previous query only returned a few results, then including those here would
+cause the search to return other, less accurate, matches (if possible).
 
 
 * `limit=<integer>`
@@ -122,10 +119,11 @@ are accepted as long as they span a real box. `x` is longitude,
 
 * `bounded=[0|1]`
 
-When a viewbox is given, restrict the result to items contained with that
+When a viewbox is given, restrict the result to items contained within that
 viewbox (see above). When `viewbox` and `bounded=1` are given, an amenity
-only search is allowed. In this case, give the special keyword for the
-amenity in square brackets, e.g. `[pub]`. (Default: 0)
+only search is allowed. Give the special keyword for the amenity in square
+brackets, e.g. `[pub]` and a selection of objects of this type is returned.
+There is no guarantee that the result is complete. (Default: 0)
 
 
 ### Polygon output
@@ -140,7 +138,7 @@ options can be used at a time. (Default: 0)
 
 * `polygon_threshold=0.0`
 
-Simplify the output geometry before returning. The parameter is the
+Return a simplified version of the output geometry. The parameter is the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the result. (Default: 0.0)
 
@@ -154,12 +152,10 @@ address to identify your requests. See Nominatim's [Usage Policy](https://operat
 * `dedupe=[0|1]`
 
 Sometimes you have several objects in OSM identifying the same place or
-object in reality. The simplest case is a street being split in many
+object in reality. The simplest case is a street being split into many
 different OSM ways due to different characteristics. Nominatim will
 attempt to detect such duplicates and only return one match unless
 this parameter is set to 0. (Default: 1)
-
-
 
 * `debug=[0|1]`
 

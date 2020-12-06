@@ -17,7 +17,12 @@ Clone the source from github:
 
     git clone https://github.com/osm-search/nominatim-ui
 
-Adapt the configuration `dist/config.js` to your needs. You need at least
+Copy the example configuration into the right place:
+
+    cd nominatim-ui
+    cp dist/config.example.js dist/config.js
+
+Now adapt the configuration to your needs. You need at least
 to change the `Nominatim_API_Endpoint` to point to your Nominatim installation.
 
 Then you can just test it locally by spinning up a webserver in the `dist`
@@ -66,7 +71,7 @@ map $args $format {
     ~(^|&)format=            other;
 }
 
-# Determine from the URI and the format parameter aboce if forwarding is needed.
+# Determine from the URI and the format parameter above if forwarding is needed.
 map $uri/$format $forward_to_ui {
     default               1;   # The default is to forward.
     ~^/ui                 0;   # If the URI point to the UI already, we are done.

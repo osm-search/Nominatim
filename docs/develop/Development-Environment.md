@@ -25,7 +25,7 @@ following packages should get you started:
 
 ## Prerequisites for testing and documentation
 
-The Nominatim tests suite consists of behavioural tests (using behave) and
+The Nominatim test suite consists of behavioural tests (using behave) and
 unit tests (using PHPUnit). It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.5
@@ -85,7 +85,7 @@ All tests are located in the `\test` directory.
 Some of the behavioural test expect a test database to be present. You need at
 least 2GB RAM and 10GB disk space to create the database.
 
-First create a separate directory for the test DB and Fetch the test planet
+First create a separate directory for the test DB and fetch the test planet
 data and the Tiger data for South Dakota:
 
 ```

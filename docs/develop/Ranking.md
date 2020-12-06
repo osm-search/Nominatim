@@ -7,7 +7,7 @@ different purposes, which are explained in this chapter.
 ## Search rank
 
 The search rank describes the extent and importance of a place. It is used
-when ranking search result. Simply put, if there are two results for a
+when ranking search results. Simply put, if there are two results for a
 search query which are otherwise equal, then the result with the _lower_
 search rank will be appear higher in the result list.
 

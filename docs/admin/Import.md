@@ -64,7 +64,7 @@ involve a GB or US postcode. This data can be optionally downloaded:
 
 In its default setup Nominatim is configured to import the full OSM data
 set for the entire planet. Such a setup requires a powerful machine with
-at least 64GB of RAM and around 800GB of SSD hard disks. Depending on your
+at least 64GB of RAM and around 900GB of SSD hard disks. Depending on your
 use case there are various ways to reduce the amount of data imported. This
 section discusses these methods. They can also be combined.
 
@@ -137,10 +137,10 @@ OSM data grows with time.
 style     | Import time  |  DB size   |  after drop
 ----------|--------------|------------|------------
 admin     |    4h        |  215 GB    |   20 GB
-street    |   42h        |  400 GB    |  180 GB
-address   |   59h        |  500 GB    |  260 GB
-full      |   80h        |  575 GB    |  300 GB
-extratags |   80h        |  585 GB    |  310 GB
+street    |   22h        |  440 GB    |  185 GB
+address   |   36h        |  545 GB    |  260 GB
+full      |   54h        |  640 GB    |  330 GB
+extratags |   54h        |  650 GB    |  340 GB
 
 You can also customize the styles further.
 A [description of the style format](../develop/Import.md#configuring-the-import) 

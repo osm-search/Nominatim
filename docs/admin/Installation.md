@@ -57,12 +57,12 @@ A minimum of 2GB of RAM is required or installation will fail. For a full
 planet import 64GB of RAM or more are strongly recommended. Do not report
 out of memory problems if you have less than 64GB RAM.
 
-For a full planet install you will need at least 800GB of hard disk space
-(take into account that the OSM database is growing fast). SSD disks
-will help considerably to speed up import and queries.
+For a full planet install you will need at least 900GB of hard disk space.
+Rake into account that the OSM database is growing fast.
+Fast disks are essential. Using NVME disks is recommended.
 
 Even on a well configured machine the import of a full planet takes
-at least 2 days. Without SSDs 7-8 days are more realistic.
+around 2 days. On traditional spinning disks, 7-8 days are more realistic.
 
 ## Tuning the PostgreSQL database
 

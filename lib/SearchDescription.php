@@ -257,6 +257,7 @@ class SearchDescription
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->aAddress = $this->aName;
+                    $oSearch->bRareName = false;
                     $oSearch->aName = array($oSearchTerm->iId => $oSearchTerm->iId);
                     $aNewSearches[] = $oSearch;
                 }

@@ -56,7 +56,7 @@ Feature: Localization of search results
         Given the HTTP header
           | accept-language |
           | fr-FR;q=0.8,en-ca;q=0.5 |
-        When sending json search query "Mauretanie"
+        When sending json search query "Mauretanien"
         Then results contain
           | ID | display_name |
           | 0  | Mauritanie |

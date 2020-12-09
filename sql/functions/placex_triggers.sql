@@ -919,6 +919,18 @@ BEGIN
   THEN
     PERFORM create_country(NEW.name, lower(NEW.country_code));
     --DEBUG: RAISE WARNING 'Country names updated';
+
+    -- Also update the list of country names. Adding an additional sanity
+    -- check here: make sure the country does overlap with the area where
+    -- we expect it to be as per static country grid.
+    FOR location IN
+      SELECT country_code FROM country_osm_grid
+       WHERE ST_Covers(geometry, NEW.centroid) and country_code = NEW.country_code
+       LIMIT 1
+    LOOP
+      --DEBUG: RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;
+      UPDATE country_name SET name = name || NEW.name WHERE country_code = NEW.country_code;
+    END LOOP;
   END IF;
 
   -- For linear features we need the full geometry for determining the address

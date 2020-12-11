@@ -4,7 +4,7 @@ Reverse geocoding generates an address from a latitude and longitude.
 
 ## How it works
 
-The reveser geocoding API does not exactly compute the address for the
+The reverse geocoding API does not exactly compute the address for the
 coordinate it receives. It works by finding the closest suitable OSM object
 and returning its address information. This may occasionally lead to
 unexpected results.
@@ -27,7 +27,7 @@ The main format of the reverse API is
 https://nominatim.openstreetmap.org/reverse?lat=<value>&lon=<value>&<params>
 ```
 
-where `lat` and `lon` are latitude and longitutde of a coordinare in WGS84
+where `lat` and `lon` are latitude and longitutde of a coordinate in WGS84
 projection. The API returns exactly one result or an error when the coordinate
 is in an area with no OSM data coverage.
 

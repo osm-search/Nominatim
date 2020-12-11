@@ -1,19 +1,22 @@
 # Place details
 
-Lookup details about a single place by id. The default output is HTML for debugging search logic and results.
+Show all details about a single place saved in the database.
 
-**The details page (including JSON output) exists for debugging only and must not be downloaded automatically**, see [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
+!!! warning
+    The details page exists for debugging only. You may not use it in scripts
+    or to automatically query details about a result.
+    See [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
 
 
 ## Parameters
 
 The details API supports the following two request formats:
 
-```
-  https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>&class=<value>
+``` xml
+https://nominatim.openstreetmap.org/details?osmtype=[N|W|R]&osmid=<value>&class=<value>
 ```
 
-`osmtype` and `osmid` are required parameter. The type is one of node (N), way (W)
+`osmtype` and `osmid` are required parameters. The type is one of node (N), way (W)
 or relation (R). The id must be a number. The `class` parameter is optional and
 allows to distinguish between entries, when the corresponding OSM object has more
 than one main tag. For example, when a place is tagged with `tourism=hotel` and
@@ -23,36 +26,34 @@ to get exactly the one you want. If there are multiple places in the database
 but the `class` parameter is left out, then one of the places will be chosen
 at random and displayed.
 
-```
-  https://nominatim.openstreetmap.org/details?place_id=<value>
+``` xml
+https://nominatim.openstreetmap.org/details?place_id=<value>
 ```
 
-Placeids are assigned sequentially during Nominatim data import. The id for a place is different between Nominatim installation (servers) and changes when data gets reimported. Therefore it can't be used as permanent id and shouldn't be used in bug reports.
+Place IDs are assigned sequentially during Nominatim data import. The ID
+for a place is different between Nominatim installation (servers) and
+changes when data gets reimported. Therefore it cannot be used as
+a permanent id and shouldn't be used in bug reports.
 
 
 Additional optional parameters are explained below.
 
 ### Output format
 
-* `format=[html|json]`
-
-See [Place Output Formats](Output.md) for details on each format. (Default: html)
-
 * `json_callback=<string>`
 
 Wrap JSON output in a callback function (JSONP) i.e. `<string>(<json>)`.
-Only has an effect for JSON output formats.
 
 * `pretty=[0|1]`
 
-For JSON output will add indentation to make it more human-readable. (Default: 0)
+Add indentation to make it more human-readable. (Default: 0)
 
 
 ### Output details
 
 * `addressdetails=[0|1]`
 
-Include a breakdown of the address into elements. (Default for JSON: 0, for HTML: 1)
+Include a breakdown of the address into elements. (Default: 0)
 
 * `keywords=[0|1]`
 
@@ -60,11 +61,16 @@ Include a list of name keywords and address keywords (word ids). (Default: 0)
 
 * `linkedplaces=[0|1]`
 
-Include details of places higher in the address hierarchy. E.g. for a street this is usually the city, state, postal code, country. (Default: 1)
+Include a details of places that are linked with this one. Places get linked
+together when they are different forms of the same physical object. Nominatim
+links two kinds of objects together: place nodes get linked with the
+corresponding administrative boundaries. Waterway relations get linked together with their
+members.
+(Default: 1)
 
 * `hierarchy=[0|1]`
 
-Include details of places lower in the address hierarchy. E.g. for a city this usually a list of streets, suburbs, rivers. (Default for JSON: 0, for HTML: 1)
+Include details of places lower in the address hierarchy. (Default: 0)
 
 * `group_hierarchy=[0|1]`
 
@@ -72,7 +78,7 @@ For JSON output will group the places by type. (Default: 0)
 
 * `polygon_geojson=[0|1]`
 
-Include geometry of result. (Default for JSON: 0, for HTML: 1)
+Include geometry of result. (Default: 0)
 
 ### Language of results
 
@@ -85,10 +91,6 @@ comma-separated list of language codes.
 
 
 ## Examples
-
-##### HTML
-
-[https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407](https://nominatim.openstreetmap.org/details.php?osmtype=W&osmid=38210407)
 
 ##### JSON
 

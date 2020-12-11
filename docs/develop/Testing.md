@@ -27,7 +27,7 @@ This test directory is sturctured as follows:
 
 ## PHP Unit Tests (`test/php`)
 
-Unit tests can be found in the php/ directory and tests selected php functions.
+Unit tests can be found in the php/ directory. They test selected php functions.
 Very low coverage.
 
 To execute the test suite run
@@ -89,7 +89,7 @@ feature of behave which comes in handy when writing new tests.
 ### API Tests (`test/bdd/api`)
 
 These tests are meant to test the different API endpoints and their parameters.
-They require a to import several datasets into a test database.
+They require to import several datasets into a test database.
 See the [Development Setup chapter](Development-Environment.md#preparing-the-test-database)
 for instructions on how to set up this database.
 
@@ -128,7 +128,7 @@ the [phpcov](https://github.com/sebastianbergmann/phpcov) tool:
 
 These tests check the import and update of the Nominatim database. They do not
 test the correctness of osm2pgsql. Each test will write some data into the `place`
-table (and optionally `the planet_osm_*` tables if required) and then run
+table (and optionally the `planet_osm_*` tables if required) and then run
 Nominatim's processing functions on that.
 
 These tests need to create their own test databases. By default they will be
@@ -139,4 +139,4 @@ needs superuser rights for postgres.
 ### Import Tests (`test/bdd/osm2pgsql`)
 
 These tests check that data is imported correctly into the place table. They
-use the same template database as the Indexing tests, so the same remarks apply.
+use the same template database as the DB Creation tests, so the same remarks apply.

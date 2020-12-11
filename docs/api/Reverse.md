@@ -1,36 +1,48 @@
 # Reverse Geocoding
 
-Reverse geocoding generates an address from a latitude and longitude or from
-an OSM object.
+Reverse geocoding generates an address from a latitude and longitude.
+
+## How it works
+
+The reveser geocoding API does not exactly compute the address for the
+coordinate it receives. It works by finding the closest suitable OSM object
+and returning its address information. This may occasionally lead to
+unexpected results.
+
+First of all, Nominatim only includes OSM objects in
+its index that are suitable for searching. Small, unnamed paths for example
+are missing from the database and can therefore not be used for reverse
+geocoding either.
+
+The other issue to be aware of is that the closest OSM object may not always
+have a similar enough address to the coordinate you were requesting. For
+example, in dense city areas it may belong to a completely different street.
+
 
 ## Parameters
 
 The main format of the reverse API is
 
 ```
-https://nominatim.openstreetmap.org/reverse?<query>
+https://nominatim.openstreetmap.org/reverse?lat=<value>&lon=<value>&<params>
 ```
 
-There are two ways how the requested location can be specified:
+where `lat` and `lon` are latitude and longitutde of a coordinare in WGS84
+projection. The API returns exactly one result or an error when the coordinate
+is in an area with no OSM data coverage.
 
-* `lat=<value>` `lon=<value>`
+Additional paramters are accepted as listed below.
 
-    A geographic location to generate an address for. The coordiantes must be
-    in WGS84 format.
-
-* `osm_type=[N|W|R]` `osm_id=<value>`
-
-    A specific OSM node(N), way(W) or relation(R) to return an address for.
-
-In both cases exactly one object is returned. The two input parameters cannot
-be used at the same time. Both accept the additional optional parameters listed
-below.
+!!! warning "Deprecation warning"
+    The reverse API used to allow address lookup for a single OSM object by
+    its OSM id. This use is now deprecated. Use the [Address Lookup API](../Lookup)
+    instead.
 
 ### Output format
 
 * `format=[xml|json|jsonv2|geojson|geocodejson]`
 
-See [Place Output Formats](Output.md) for details on each format. (Default: html)
+See [Place Output Formats](Output.md) for details on each format. (Default: xml)
 
 * `json_callback=<string>`
 
@@ -69,8 +81,9 @@ comma-separated list of language codes.
 
 * `zoom=[0-18]`
 
-Level of detail required for the address. Default: 18. This is a number that corresponds
-roughly to the zoom level used in map frameworks like Leaflet.js, Openlayers etc.
+Level of detail required for the address. Default: 18. This is a number that
+corresponds roughly to the zoom level used in XYZ tile sources in frameworks
+like Leaflet.js, Openlayers etc.
 In terms of address details the zoom levels are as follows:
 
  zoom | address detail
@@ -97,7 +110,7 @@ options can be used at a time. (Default: 0)
 
 * `polygon_threshold=0.0`
 
-Simplify the output geometry before returning. The parameter is the
+Return a simplified version of the output geometry. The parameter is the
 tolerance in degrees with which the geometry may differ from the original
 geometry. Topology is preserved in the result. (Default: 0.0)
 

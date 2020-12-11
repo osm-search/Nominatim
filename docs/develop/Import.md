@@ -1,8 +1,8 @@
 # OSM Data Import
 
-OSM data is initially imported using osm2pgsql. Nominatim uses its own data
-output style 'gazetteer', which differs from the output style created for
-map rendering.
+OSM data is initially imported using [osm2pgsql](https://osm2pgsql.org).
+Nominatim uses its own data output style 'gazetteer', which differs from the
+output style created for map rendering.
 
 ## Database Layout
 

@@ -4,9 +4,9 @@ There are many different ways to update your Nominatim database.
 The following section describes how to keep it up-to-date with Pyosmium.
 For a list of other methods see the output of `./utils/update.php --help`.
 
-!!! warning
+!!! important
     If you have configured a flatnode file for the import, then you
-    need to keep this flatnode file around for updates as well.
+    need to keep this flatnode file around for updates.
 
 #### Installing the newest version of Pyosmium
 

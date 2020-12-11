@@ -29,7 +29,7 @@ Add to your `settings/local.php`:
     @define('CONST_Osm2pgsql_Flatnode_File', '/path/to/flatnode.file');
 
 Replace the second part with a suitable path on your system and make sure
-the directory exists. There should be at least 64GB of free space.
+the directory exists. There should be at least 75GB of free space.
 
 ## Downloading additional data
 
@@ -43,7 +43,7 @@ This data is available as a binary download:
     cd $NOMINATIM_SOURCE_DIR/data
     wget https://www.nominatim.org/data/wikimedia-importance.sql.gz
 
-The file is about 400MB and adds around 4GB to Nominatim database.
+The file is about 400MB and adds around 4GB to the Nominatim database.
 
 !!! tip
     If you forgot to download the wikipedia rankings, you can also add
@@ -60,21 +60,21 @@ involve a GB or US postcode. This data can be optionally downloaded:
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
     wget https://www.nominatim.org/data/us_postcode_data.sql.gz
 
-## Choosing the Data to Import
+## Choosing the data to import
 
 In its default setup Nominatim is configured to import the full OSM data
 set for the entire planet. Such a setup requires a powerful machine with
-at least 64GB of RAM and around 800GB of SSD hard disks. Depending on your
+at least 64GB of RAM and around 900GB of SSD hard disks. Depending on your
 use case there are various ways to reduce the amount of data imported. This
 section discusses these methods. They can also be combined.
 
 ### Using an extract
 
-If you only need geocoding for a smaller region, then precomputed extracts
+If you only need geocoding for a smaller region, then precomputed OSM extracts
 are a good way to reduce the database size and import time.
 [Geofabrik](https://download.geofabrik.de) offers extracts for most countries.
 They even have daily updates which can be used with the update process described
-below. There are also
+[in the next section](../Update). There are also
 [other providers for extracts](https://wiki.openstreetmap.org/wiki/Planet.osm#Downloading).
 
 Please be aware that some extracts are not cut exactly along the country
@@ -128,21 +128,23 @@ The style can be changed with the configuration `CONST_Import_Style`.
 
 To give you an idea of the impact of using the different styles, the table
 below gives rough estimates of the final database size after import of a
-2018 planet and after using the `--drop` option. It also shows the time
-needed for the import on a machine with 64GB RAM, 4 CPUS and SSDs. Note that
-the given sizes are just an estimate meant for comparison of style requirements.
-Your planet import is likely to be larger as the OSM data grows with time.
+2020 planet and after using the `--drop` option. It also shows the time
+needed for the import on a machine with 64GB RAM, 4 CPUS and NVME disks.
+Note that the given sizes are just an estimate meant for comparison of
+style requirements. Your planet import is likely to be larger as the
+OSM data grows with time.
 
 style     | Import time  |  DB size   |  after drop
 ----------|--------------|------------|------------
-admin     |    5h        |  190 GB    |   20 GB
-street    |   42h        |  400 GB    |  180 GB
-address   |   59h        |  500 GB    |  260 GB
-full      |   80h        |  575 GB    |  300 GB
-extratags |   80h        |  585 GB    |  310 GB
+admin     |    4h        |  215 GB    |   20 GB
+street    |   22h        |  440 GB    |  185 GB
+address   |   36h        |  545 GB    |  260 GB
+full      |   54h        |  640 GB    |  330 GB
+extratags |   54h        |  650 GB    |  340 GB
 
-You can also customize the styles further. For a description of the
-style format see [the development section](../develop/Import.md).
+You can also customize the styles further.
+A [description of the style format](../develop/Import.md#configuring-the-import) 
+can be found in the development section.
 
 ## Initial import of the data
 
@@ -150,15 +152,17 @@ style format see [the development section](../develop/Import.md).
     First try the import with a small extract, for example from
     [Geofabrik](https://download.geofabrik.de).
 
-Download the data to import and load the data with the following command
-from the build directory:
+Download the data to import. Then issue the following command
+from the **build directory** to start the import:
 
 ```sh
 ./utils/setup.php --osm-file <data file> --all 2>&1 | tee setup.log
 ```
 
-***Note for full planet imports:*** Even on a perfectly configured machine
-the import of a full planet takes at least 2 days. Once you see messages
+### Notes on full planet imports
+
+Even on a perfectly configured machine
+the import of a full planet takes around 2 days. Once you see messages
 with `Rank .. ETA` appear, the indexing process has started. This part takes
 the most time. There are 30 ranks to process. Rank 26 and 30 are the most complex.
 They take each about a third of the total import time. If you have not reached
@@ -167,11 +171,12 @@ configuration as it may not be optimal for the import.
 
 ### Notes on memory usage
 
-In the first step of the import Nominatim uses osm2pgsql to load the OSM data
-into the PostgreSQL database. This step is very demanding in terms of RAM usage.
-osm2pgsql and PostgreSQL are running in parallel at this point. PostgreSQL
-blocks at least the part of RAM that has been configured with the
-`shared_buffers` parameter during [PostgreSQL tuning](Installation#postgresql-tuning)
+In the first step of the import Nominatim uses [osm2pgsql](https://osm2pgsql.org)
+to load the OSM data into the PostgreSQL database. This step is very demanding
+in terms of RAM usage. osm2pgsql and PostgreSQL are running in parallel at 
+this point. PostgreSQL blocks at least the part of RAM that has been configured
+with the `shared_buffers` parameter during
+[PostgreSQL tuning](Installation#postgresql-tuning)
 and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
 its internal data structures, potentially more when it has to process very large
 relations. In addition it needs to maintain a cache for node locations. The size
@@ -182,10 +187,10 @@ completely and leave the memory for the flatnode file. Nominatim will do this
 by default, so you do not need to configure anything in this case.
 
 For imports without a flatnode file, set `--osm2pgsql-cache` approximately to
-the size of the OSM pbf file (in MB) you are importing. Make sure you leave
-enough RAM for PostgreSQL and osm2pgsql as mentioned above. If the system starts
-swapping or you are getting out-of-memory errors, reduce the cache size or
-even consider using a flatnode file.
+the size of the OSM pbf file you are importing. The size needs to be given in
+MB. Make sure you leave enough RAM for PostgreSQL and osm2pgsql as mentioned
+above. If the system starts swapping or you are getting out-of-memory errors,
+reduce the cache size or even consider using a flatnode file.
 
 ### Verify the import
 
@@ -197,7 +202,7 @@ Run this script to verify all required tables and indices got created successful
 
 ### Setting up the website
 
-Run the following command to set up the configuration file for the website
+Run the following command to set up the configuration file for the API frontend
 `settings/settings-frontend.php`. These settings are used in website/*.php files.
 
 ```sh

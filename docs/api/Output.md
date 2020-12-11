@@ -2,12 +2,10 @@
 
 The [/reverse](Reverse.md), [/search](Search.md) and [/lookup](Lookup.md)
 API calls produce very similar output which is explained in this section.
-There is one section for each format which is selectable via the `format`
-parameter.
+There is one section for each format. The format correspond to what was
+selected via the `format` parameter.
 
-## Formats
-
-### JSON
+## JSON
 
 The JSON format returns an array of places (for search and lookup) or
 a single place (for reverse) of the following format:
@@ -41,13 +39,13 @@ a single place (for reverse) of the following format:
       "wikipedia": "en:London",
       "population": "8416535"
     }
-  },
+  }
 ```
 
 The possible fields are:
 
  * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
- * `osm_type`, `osm_id` - reference to the OSM object
+ * `osm_type`, `osm_id` - reference to the OSM object ([see notes](#osm-reference))
  * `boundingbox` - area of corner coordinates ([see notes](#boundingbox))
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `display_name` - full comma-separated address
@@ -62,22 +60,22 @@ The possible fields are:
  * `geojson`, `svg`, `geotext`, `geokml` - full geometry
    (only with the appropriate `polygon_*` parameter)
 
-### JSONv2
+## JSONv2
 
 This is the same as the JSON format with two changes:
 
  * `class` renamed to `category`
  * additional field `place_rank` with the search rank of the object
 
-### GeoJSON
+## GeoJSON
 
 This format follows the [RFC7946](https://geojson.org). Every feature includes
 a bounding box (`bbox`).
 
-The feature list has the following fields:
+The properties object has the following fields:
 
  * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
- * `osm_type`, `osm_id` - reference to the OSM object
+ * `osm_type`, `osm_id` - reference to the OSM object ([see notes](#osm-reference))
  * `category`, `type` - key and value of the main OSM tag
  * `display_name` - full comma-separated address
  * `place_rank` - class search rank
@@ -92,13 +90,13 @@ The feature list has the following fields:
 Use `polygon_geojson` to output the full geometry of the object instead
 of the centroid.
 
-### GeocodeJSON
+## GeocodeJSON
 
 The GeocodeJSON format follows the
 [GeocodeJSON spec 0.1.0](https://github.com/geocoders/geocodejson-spec).
 The following feature attributes are implemented:
 
- * `osm_type`, `osm_id` - reference to the OSM object (unofficial extension)
+ * `osm_type`, `osm_id` - reference to the OSM object (unofficial extension, [see notes](#osm-reference))
  * `type` - value of the main tag of the object (e.g. residential, restaurant, ...)
  * `label` - full comma-separated address
  * `name` - localised name of the place
@@ -110,18 +108,18 @@ The following feature attributes are implemented:
 Use `polygon_geojson` to output the full geometry of the object instead
 of the centroid.
 
-### XML
+## XML
 
 The XML response returns one or more place objects in slightly different
 formats depending on the API call.
 
-#### Reverse
+### Reverse
 
 ```
 <reversegeocode timestamp="Sat, 11 Aug 18 11:53:21 +0000"
                 attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright"
                 querystring="lat=48.400381&lon=11.745876&zoom=5&format=xml">
-  <result place_id="179509537" osm_type="relation" osm_id="2145268" ref="BY"
+  <result place_id="179509537" osm_type="relation" osm_id="2145268" ref="BY" place_rank="15" address_rank="15"
           lat="48.9467562" lon="11.4038717"
           boundingbox="47.2701114,50.5647142,8.9763497,13.8396373">
        Bavaria, Germany
@@ -148,7 +146,7 @@ attribution to OSM and the original querystring.
 The place information can be found in the `result` element. The attributes of that element contain:
 
  * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
- * `osm_type`, `osm_id` - reference to the OSM object
+ * `osm_type`, `osm_id` - reference to the OSM object ([see notes](#osm-reference))
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `boundingbox` - comma-separated list of corner coordinates ([see notes](#boundingbox))
@@ -159,14 +157,14 @@ The full address of the result can be found in the content of the
 Additional information requested with `addressdetails=1`, `extratags=1` and
 `namedetails=1` can be found in extra elements.
 
-#### Search and Lookup
+### Search and Lookup
 
 ```
 <searchresults timestamp="Sat, 11 Aug 18 11:55:35 +0000"
                attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright"
                querystring="london" polygon="false" exclude_place_ids="100149"
                more_url="https://nominatim.openstreetmap.org/search.php?q=london&addressdetails=1&extratags=1&exclude_place_ids=100149&format=xml&accept-language=en-US%2Cen%3Bq%3D0.7%2Cde%3Bq%3D0.3">
-  <place place_id="100149" osm_type="node" osm_id="107775" place_rank="15"
+  <place place_id="100149" osm_type="node" osm_id="107775" place_rank="15" address_rank="15"
          boundingbox="51.3473219,51.6673219,-0.2876474,0.0323526" lat="51.5073219" lon="-0.1276474"
          display_name="London, Greater London, England, SW1A 2DU, United Kingdom"
          class="place" type="city" importance="0.9654895765402"
@@ -203,11 +201,12 @@ The place information can be found in the `place` elements, of which there may
 be more than one. The attributes of that element contain:
 
  * `place_id` - reference to the Nominatim internal database ID ([see notes](#place_id-is-not-a-persistent-id))
- * `osm_type`, `osm_id` - reference to the OSM object
+ * `osm_type`, `osm_id` - reference to the OSM object ([see notes](#osm-reference))
  * `ref` - content of `ref` tag if it exists
  * `lat`, `lon` - latitude and longitude of the centroid of the object
  * `boundingbox` - comma-separated list of corner coordinates ([see notes](#boundingbox))
- * `place_rank` - class search rank
+ * `place_rank` - class [search rank](../develop/Ranking#search-rank)
+ * `address_rank` - place [address rank](../develop/Ranking#address-rank)
  * `display_name` - full comma-separated address
  * `class`, `type` - key and value of the main OSM tag
  * `importance` - computed importance rank
@@ -217,17 +216,19 @@ When `addressdetails=1` is requested, the localised address parts appear
 as subelements with the type of the address part.
 
 Additional information requested with `extratags=1` and `namedetails=1` can
-be found in extra elements as sub-element of each place.
+be found in extra elements as sub-element of `extratags` and `namedetails`
+respectively.
 
 
 ## Notes on field values
 
 ### place_id is not a persistent id
 
-The `place_id` is created when a Nominatim database gets installed. A
-single place will have a different value on another server or even when
-the same data gets re-imported. It's thus not useful to treat it as
-permanent for later use.
+The `place_id` is an internal identifier that is assigned data is imported
+into a Nominatim database. The same OSM object will have a different value
+on another server. It may even change its ID on the same server when it is
+removed and reimported while updating the database with fresh OSM data.
+It is thus not useful to treat it as permanent for later use.
 
 The combination `osm_type`+`osm_id` is slighly better but remember in
 OpenStreetMap mappers can delete, split, recreate places (and those
@@ -236,20 +237,40 @@ Places can also change their meaning without changing their `osm_id`,
 e.g. when a restaurant is retagged as supermarket. For a more in-depth
 discussion see [Permanent ID](https://wiki.openstreetmap.org/wiki/Permanent_ID).
 
-Nominatim merges some places (e.g. center node of a city with the boundary
-relation) so `osm_type`+`osm_id`+`class_name` would be more unique.
+If you need an ID that is consistent over multiple installations of Nominatim,
+then you should use the combination of `osm_type`+`osm_id`+`class`.
+
+### OSM reference
+
+Nominatim may sometimes return special objects that do not correspond directly
+to an object in OpenStreetMap. These are:
+
+* **Postcodes**. Nominatim returns an postcode point created from all mapped
+  postcodes of the same name. The class and type of these object is `place=postcdode`.
+  No `osm_type` and `osm_id` are included in the result.
+* **Housenumber interpolations**. Nominatim returns a single interpolated
+  housenumber from the interpolation way. The class and type are `place=house`
+  and `osm_type` and `osm_id` correspond to the interpolation way in OSM.
+* **TIGER housenumber.** Nominatim returns a single interpolated housenumber
+  from the TIGER data. The class and type are `place=house`
+  and `osm_type` and `osm_id` correspond to the street mentioned in the result.
+
+Please note that the `osm_type` and `osm_id` returned may be changed in the
+future. You should not expect to only find `node`, `way` and `relation` for
+the type.
 
 ### boundingbox
 
 Comma separated list of min latitude, max latitude, min longitude, max longitude.
 The whole planet would be `-90,90,-180,180`.
 
-Can we used to pan and center the map on the result, for example with leafletjs
+Can be used to pan and center the map on the result, for example with leafletjs
 mapping library
 `map.fitBounds([[bbox[0],bbox[2]],[bbox[1],bbox[3]]], {padding: [20, 20], maxzoom: 16});`
 
 Bounds crossing the antimeridian have a min latitude -180 and max latitude 180,
-essentially covering the planet (See [issue 184](https://github.com/openstreetmap/Nominatim/issues/184)).
+essentially covering the entire planet
+(see [issue 184](https://github.com/openstreetmap/Nominatim/issues/184)).
 
 ### addressdetails
 

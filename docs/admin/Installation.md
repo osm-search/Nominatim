@@ -58,7 +58,7 @@ planet import 64GB of RAM or more are strongly recommended. Do not report
 out of memory problems if you have less than 64GB RAM.
 
 For a full planet install you will need at least 900GB of hard disk space.
-Rake into account that the OSM database is growing fast.
+Take into account that the OSM database is growing fast.
 Fast disks are essential. Using NVME disks is recommended.
 
 Even on a well configured machine the import of a full planet takes

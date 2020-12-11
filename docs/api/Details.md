@@ -70,7 +70,7 @@ members.
 
 * `hierarchy=[0|1]`
 
-Include details of places lower in the address hierarchy. . (Default: 0)
+Include details of places lower in the address hierarchy. (Default: 0)
 
 * `group_hierarchy=[0|1]`
 

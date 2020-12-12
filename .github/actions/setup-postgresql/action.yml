@@ -1,26 +1,45 @@
 name: 'Setup Postgresql and Postgis'
 
+inputs:
+    postgresql-version:
+        description: 'Version of PostgreSQL to install'
+        required: true
+    postgis-version:
+        description: 'Version of Postgis to install'
+        required: true
+
 runs:
     using: "composite"
 
     steps:
-        - name: Install postgis
+        - name: Remove existing PostgreSQL
           run: |
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq postgresql-13-postgis-3 postgresql-13-postgis-3-scripts postgresql-server-dev-13
+              sudo apt-get update -qq
+              sudo apt-get purge -yq postgresql*
           shell: bash
+
+        - name: Install PostgreSQL
+          run: |
+              sudo apt-get install -y -qq --no-install-suggests --no-install-recommends postgresql-client-${PGVER} postgresql-${PGVER}-postgis-${POSTGISVER} postgresql-${PGVER}-postgis-${POSTGISVER}-scripts postgresql-contrib-${PGVER} postgresql-${PGVER} postgresql-server-dev-${PGVER}
+          shell: bash
+          env:
+              PGVER: ${{ inputs.postgresql-version }}
+              POSTGISVER: ${{ inputs.postgis-version }}
 
         - name: Adapt postgresql configuration
           run: |
-              echo 'fsync = off' | sudo tee /etc/postgresql/13/main/conf.d/local.conf
-              echo 'synchronous_commit = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
-              echo 'full_page_writes = off' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
-              echo 'shared_buffers = 1GB' | sudo tee -a /etc/postgresql/13/main/conf.d/local.conf
+              echo 'fsync = off' | sudo tee /etc/postgresql/${PGVER}/main/conf.d/local.conf
+              echo 'synchronous_commit = off' | sudo tee -a /etc/postgresql/${PGVER}/main/conf.d/local.conf
+              echo 'full_page_writes = off' | sudo tee -a /etc/postgresql/${PGVER}/main/conf.d/local.conf
+              echo 'shared_buffers = 1GB' | sudo tee -a /etc/postgresql/${PGVER}/main/conf.d/local.conf
+              echo 'port = 5432' | sudo tee -a /etc/postgresql/${PGVER}/main/conf.d/local.conf
           shell: bash
+          env:
+              PGVER: ${{ inputs.postgresql-version }}
 
         - name: Setup database
           run: |
-              sudo systemctl start postgresql
+              sudo systemctl restart postgresql
               sudo -u postgres createuser -S www-data
               sudo -u postgres createuser -s runner
           shell: bash

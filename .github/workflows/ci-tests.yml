@@ -6,6 +6,15 @@ jobs:
     tests:
         runs-on: ubuntu-20.04
 
+        strategy:
+            matrix:
+                postgresql: [9.5, 13]
+                include:
+                    - postgresql: 9.5
+                      postgis: 2.5
+                    - postgresql: 13
+                      postgis: 3
+
         steps:
             - uses: actions/checkout@v2
               with:
@@ -25,6 +34,9 @@ jobs:
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql
+              with:
+                  postgresql-version: ${{ matrix.postgresql }}
+                  postgis-version: ${{ matrix.postgis }}
             - uses: ./.github/actions/build-nominatim
 
             - name: Install test prerequsites
@@ -65,6 +77,9 @@ jobs:
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql
+              with:
+                  postgresql-version: 13
+                  postgis-version: 3
             - uses: ./.github/actions/build-nominatim
 
             - name: Create configuration

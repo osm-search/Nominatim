@@ -79,6 +79,18 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+DROP TYPE IF EXISTS addressdata_place;
+CREATE TYPE addressdata_place AS (
+  place_id BIGINT,
+  country_code VARCHAR(2),
+  housenumber TEXT,
+  postcode TEXT,
+  class TEXT,
+  type TEXT,
+  name HSTORE,
+  address HSTORE,
+  centroid GEOMETRY
+);
 
 -- Compute the list of address parts for the given place.
 --
@@ -87,7 +99,7 @@ CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT, in_housenumber IN
   RETURNS setof addressline
   AS $$
 DECLARE
-  place RECORD;
+  place addressdata_place;
   location RECORD;
   current_rank_address INTEGER;
   location_isaddress BOOLEAN;
@@ -98,9 +110,9 @@ BEGIN
   -- first query osmline (interpolation lines)
   IF in_housenumber >= 0 THEN
     SELECT parent_place_id as place_id, country_code,
-           in_housenumber::text as housenumber, postcode,
+           in_housenumber as housenumber, postcode,
            'place' as class, 'house' as type,
-           null::hstore as name, null::hstore as address,
+           null as name, null as address,
            ST_Centroid(linegeo) as centroid
       INTO place
       FROM location_property_osmline
@@ -111,10 +123,10 @@ BEGIN
   --then query tiger data
   -- %NOTIGERDATA% IF 0 THEN
   IF place IS NULL AND in_housenumber >= 0 THEN
-    SELECT parent_place_id as place_id, 'us'::varchar(2) as country_code,
-           in_housenumber::text as housenumber, postcode,
+    SELECT parent_place_id as place_id, 'us' as country_code,
+           in_housenumber as housenumber, postcode,
            'place' as class, 'house' as type,
-           null::hstore as name, null::hstore as address,
+           null as name, null as address,
            ST_Centroid(linegeo) as centroid
       INTO place
       FROM location_property_tiger
@@ -125,10 +137,10 @@ BEGIN
 
   -- %NOAUXDATA% IF 0 THEN
   IF place IS NULL THEN
-    SELECT parent_place_id as place_id, 'us'::varchar(2) as country_code,
+    SELECT parent_place_id as place_id, 'us' as country_code,
            housenumber, postcode,
            'place' as class, 'house' as type,
-           null::hstore as name, null::hstore as address,
+           null as name, null as address,
            centroid
       INTO place
       FROM location_property_aux
@@ -141,8 +153,8 @@ BEGIN
     SELECT parent_place_id as place_id, country_code,
            null::text as housenumber, postcode,
            'place' as class, 'postcode' as type,
-           null::hstore as name, null::hstore as address,
-           null::geometry as centroid
+           null as name, null as address,
+           null as centroid
       INTO place
       FROM location_postcode
       WHERE place_id = in_place_id;
@@ -167,8 +179,8 @@ BEGIN
     select coalesce(linked_place_id, place_id) as place_id,  country_code,
            housenumber, postcode,
            class, type,
-           null::hstore as name, address,
-           null::geometry as centroid
+           null as name, address,
+           null as centroid
       INTO place
       FROM placex where place_id = in_place_id;
   END IF;

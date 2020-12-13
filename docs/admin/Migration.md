@@ -6,7 +6,7 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
-## 3.5.0 -> master
+## 3.5.0 -> 3.6.0
 
 ### Change of layout of search_name_* tables
 

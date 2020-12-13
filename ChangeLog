@@ -1,3 +1,50 @@
+3.6.0
+
+ * add full support for searching by and displaying of addr:* tags
+ * improve address output for large-area objects
+ * better use of country names from OSM data for search and display
+ * better debug output for reverse call
+ * add support for addr:place links without an place equivalent in OSM
+ * improve finding postcodes with normalisation artefacts
+ * batch object to index for rank 30, avoiding a wrap-around of transaction
+   IDs in PostgreSQL
+ * introduce dynamic address rank computation for administrative boundaries
+   depending on linked objects and their place in the admin level hierarchy
+ * add country-specific address ranking for Indonesia, Russia, Belgium and
+   the Netherlands (thanks @hendrikmoree)
+ * make sure wikidata/wikipedia tags are imported for all styles
+ * make POIs searchable by name and housenumber (thanks @joy-yyd)
+ * reverse geocoding now ignores places without an address rank (rivers etc.)
+ * installation of a webserver is no longer mandatory, for development
+   use the php internal webserver via 'make serve
+ * reduce the influence of place nodes in addresses
+ * drop support for the unspecific is_in tag
+ * various minor tweaks to supplied styles
+ * move HTML web frontend into its own project
+ * move scripts for processing external data sources into separate directories
+ * introduce separate configuration for website (thanks @krahulreddy)
+ * update documentation, in particular, clean up development docs
+ * update osm2pgsql to 1.4.0
+
+3.5.2
+
+ * ensure that wikipedia tags are imported for all styles
+ * reinstate verbosity for indexing during updates
+ * make house number reappear in display name on named POIs
+ * introduce batch processing in indexer to avoid transaction ID overrun
+ * increase splitting for large geometries to improve indexing speed
+ * remove deprecated get_magic_quotes_gpc() function
+ * make sure that all postcodes have an entry in word and are thus searchable
+ * remove use of ST_Covers in conjunction woth ST_Intersects,
+   causes bad query planning and slow updates in Postgis3
+ * update osm2pgsql
+
+3.5.1
+
+ * disable jit and parallel processing in PostgreSQL for osm2pgsql
+ * update libosmium to 2.15.6 (fixes an issue with processing hanging
+   on large multipolygons)
+
 3.5.0
 
  * structured select on HTML search page
@@ -11,7 +58,7 @@
  * cleanup of partition function
  * improve parenting for large POIs
  * add support for Postgresql 12 and Postgis 3
- * add earlier cleanup when --drop is given, to reduce meory usage
+ * add earlier cleanup when --drop is given, to reduce memory usage
  * remove use of place_id in URLs
  * replace C nominatim indexer with a simpler Python implementation
  * split up the huge sql/functions.sql file

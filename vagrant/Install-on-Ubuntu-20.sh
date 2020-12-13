@@ -99,17 +99,10 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-3.6.0.tar.bz2
+    tar xf Nominatim-3.6.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -118,7 +111,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-3.6.0
     make
 
 # Nominatim is now ready to use. You can continue with

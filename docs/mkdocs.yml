@@ -1,4 +1,4 @@
-site_name: Nominatim Documentation
+site_name: Nominatim 3.6.0
 theme: readthedocs
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org

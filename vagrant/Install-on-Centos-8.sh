@@ -137,21 +137,14 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # Building and Configuration
 # --------------------------
 #
-# Get the source code from Github and change into the source directory
+# Get the source code for the release and unpack it
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-3.6.0.tar.bz2
+    tar xf Nominatim-3.6.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -161,7 +154,7 @@ fi                                 #DOCS:
     cd $USERHOME
     mkdir build
     cd build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-3.6.0
     make
 
 #
@@ -172,10 +165,10 @@ fi                                 #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim-3.6.0/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
     sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim
+    sudo restorecon -R -v $USERHOME/Nominatim-3.6.0
     sudo restorecon -R -v $USERHOME/build
 
 

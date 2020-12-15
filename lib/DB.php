@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/DatabaseError.php');
+require_once(CONST_LibDir.'/DatabaseError.php');
 
 /**
  * Uses PDO to access the database specified in the CONST_Database_DSN

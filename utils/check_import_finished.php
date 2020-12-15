@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_LibDir.'/init-cmd.php');
 
 $term_colors = array(
                 'green' => "\033[92m",

@@ -96,20 +96,20 @@ endif()
 
 if (BUILD_IMPORTER)
    set(CUSTOMSCRIPTS
-       utils/check_import_finished.php
-       utils/country_languages.php
-       utils/importWikipedia.php
-       utils/export.php
-       utils/query.php
-       utils/setup.php
-       utils/specialphrases.php
-       utils/update.php
-       utils/warm.php
+       check_import_finished.php
+       country_languages.php
+       importWikipedia.php
+       export.php
+       query.php
+       setup.php
+       specialphrases.php
+       update.php
+       warm.php
       )
 
    foreach (script_source ${CUSTOMSCRIPTS})
        configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
-                      ${PROJECT_BINARY_DIR}/${script_source})
+                      ${PROJECT_BINARY_DIR}/utils/${script_source})
    endforeach()
 endif()
 
@@ -119,27 +119,20 @@ endif()
 
 if (BUILD_API)
    set(WEBSITESCRIPTS
-       website/deletable.php
-       website/details.php
-       website/lookup.php
-       website/polygons.php
-       website/reverse.php
-       website/search.php
-       website/status.php
+       deletable.php
+       details.php
+       lookup.php
+       polygons.php
+       reverse.php
+       search.php
+       status.php
    )
 
    foreach (script_source ${WEBSITESCRIPTS})
        configure_file(${PROJECT_SOURCE_DIR}/cmake/website.tmpl
-                      ${PROJECT_BINARY_DIR}/${script_source})
+                      ${PROJECT_BINARY_DIR}/website/${script_source})
    endforeach()
 
-   set(WEBPATHS css images js)
-
-   foreach (wp ${WEBPATHS})
-       execute_process(
-           COMMAND ln -sf ${PROJECT_SOURCE_DIR}/website/${wp} ${PROJECT_BINARY_DIR}/website/
-       )
-   endforeach()
 
    add_custom_target(serve
            php -S 127.0.0.1:8088

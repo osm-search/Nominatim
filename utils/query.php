@@ -1,8 +1,8 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
-require_once(CONST_BasePath.'/lib/Geocode.php');
-require_once(CONST_BasePath.'/lib/ParameterParser.php');
+require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/Geocode.php');
+require_once(CONST_LibDir.'/ParameterParser.php');
 ini_set('memory_limit', '800M');
 
 $aCMDOptions

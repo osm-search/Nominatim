@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/Shell.php');
+require_once(CONST_LibDir.'/Shell.php');
 
 function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnknown = false)
 {

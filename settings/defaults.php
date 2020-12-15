@@ -1,13 +1,11 @@
 <?php
-@define('CONST_BasePath', '@CMAKE_SOURCE_DIR@');
-@define('CONST_InstallPath', '@CMAKE_BINARY_DIR@');
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
-if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_InstallPath.'/settings/local.php');
+if (file_exists(CONST_InstallDir.'/settings/local.php')) require_once(CONST_InstallDir.'/settings/local.php');
 
 // General settings
 @define('CONST_Database_DSN', 'pgsql:dbname=nominatim'); // or add ;host=...;port=...;user=...;password=...
 @define('CONST_Database_Web_User', 'www-data');
-@define('CONST_Database_Module_Path', CONST_InstallPath.'/module');
+@define('CONST_Database_Module_Path', CONST_InstallDir.'/module');
 @define('CONST_Max_Word_Frequency', '50000');
 @define('CONST_Limit_Reindexing', true);
 // Restrict search languages.
@@ -40,14 +38,13 @@ if (file_exists(CONST_InstallPath.'/settings/local.php')) require_once(CONST_Ins
 @define('CONST_HTTP_Proxy_Password', '');
 
 // Paths
-@define('CONST_ExtraDataPath', CONST_BasePath.'/data');
-@define('CONST_Osm2pgsql_Binary', CONST_InstallPath.'/osm2pgsql/osm2pgsql');
+@define('CONST_Osm2pgsql_Binary', CONST_InstallDir.'/osm2pgsql/osm2pgsql');
 @define('CONST_Pyosmium_Binary', '@PYOSMIUM_PATH@');
-@define('CONST_Tiger_Data_Path', CONST_ExtraDataPath.'/tiger');
-@define('CONST_Wikipedia_Data_Path', CONST_ExtraDataPath);
-@define('CONST_Phrase_Config', CONST_BasePath.'/settings/phrase_settings.php');
-@define('CONST_Address_Level_Config', CONST_BasePath.'/settings/address-levels.json');
-@define('CONST_Import_Style', CONST_BasePath.'/settings/import-full.style');
+@define('CONST_Tiger_Data_Path', CONST_DataDir.'/data/tiger');
+@define('CONST_Wikipedia_Data_Path', CONST_DataDir);
+@define('CONST_Phrase_Config', CONST_DataDir.'/settings/phrase_settings.php');
+@define('CONST_Address_Level_Config', CONST_DataDir.'/settings/address-levels.json');
+@define('CONST_Import_Style', CONST_DataDir.'/settings/import-full.style');
 
 // osm2pgsql settings
 @define('CONST_Osm2pgsql_Flatnode_File', null);

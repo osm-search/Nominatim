@@ -1,9 +1,9 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
-require_once(CONST_BasePath.'/lib/setup_functions.php');
-require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
-require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
+require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/setup_functions.php');
+require_once(CONST_LibDir.'/setup/SetupClass.php');
+require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
 
 ini_set('memory_limit', '800M');
 
@@ -99,7 +99,7 @@ if ($fPostgresVersion >= 11.0) {
 }
 
 
-$oIndexCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
+$oIndexCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
              ->addParams('--database', $aDSNInfo['database'])
              ->addParams('--port', $aDSNInfo['port'])
              ->addParams('--threads', $aResult['index-instances']);
@@ -193,7 +193,7 @@ if ($aResult['check-for-updates']) {
         fail('Updates not set up. Please run ./utils/update.php --init-updates.');
     }
 
-    $oCmd = (new \Nominatim\Shell(CONST_BasePath.'/utils/check_server_for_updates.py'))
+    $oCmd = (new \Nominatim\Shell(CONST_BinDir.'/check_server_for_updates.py'))
             ->addParams(CONST_Replication_Url)
             ->addParams($aLastState['sequence_id']);
     $iRet = $oCmd->run();
@@ -223,11 +223,11 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
 
 if ($aResult['calculate-postcodes']) {
     info('Update postcodes centroids');
-    $sTemplate = file_get_contents(CONST_BasePath.'/sql/update-postcodes.sql');
+    $sTemplate = file_get_contents(CONST_DataDir.'/sql/update-postcodes.sql');
     runSQLScript($sTemplate, true, true);
 }
 
-$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
+$sTemporaryFile = CONST_InstallDir.'/osmosischange.osc';
 $bHaveDiff = false;
 $bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
 $sContentURL = '';
@@ -274,7 +274,7 @@ if ($bHaveDiff) {
 
 if ($aResult['recompute-word-counts']) {
     info('Recompute frequency of full-word search terms');
-    $sTemplate = file_get_contents(CONST_BasePath.'/sql/words_from_search_name.sql');
+    $sTemplate = file_get_contents(CONST_DataDir.'/sql/words_from_search_name.sql');
     runSQLScript($sTemplate, true, true);
 }
 
@@ -320,7 +320,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
              "Please check install documentation (https://nominatim.org/release-docs/latest/admin/Import-and-Update#setting-up-the-update-process)\n");
     }
 
-    $sImportFile = CONST_InstallPath.'/osmosischange.osc';
+    $sImportFile = CONST_InstallDir.'/osmosischange.osc';
 
     $oCMDDownload = (new \Nominatim\Shell(CONST_Pyosmium_Binary))
                     ->addParams('--server', CONST_Replication_Url)
@@ -379,7 +379,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             // get the newest object from the diff file
             $sBatchEnd = 0;
             $iRet = 0;
-            $oCMD = new \Nominatim\Shell(CONST_BasePath.'/utils/osm_file_date.py', $sImportFile);
+            $oCMD = new \Nominatim\Shell(CONST_BinDir.'/osm_file_date.py', $sImportFile);
             exec($oCMD->escapedCmd(), $sBatchEnd, $iRet);
             if ($iRet == 5) {
                 echo "Diff file is empty. skipping import.\n";

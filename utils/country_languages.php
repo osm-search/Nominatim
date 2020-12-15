@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_LibDir.'/init-cmd.php');
 
 ini_set('memory_limit', '800M');
 ini_set('display_errors', 'stderr');

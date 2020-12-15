@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/AddressDetails.php');
-require_once(CONST_BasePath.'/lib/Result.php');
+require_once(CONST_LibDir.'/AddressDetails.php');
+require_once(CONST_LibDir.'/Result.php');
 
 class PlaceLookup
 {

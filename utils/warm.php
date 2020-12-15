@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_LibDir.'/init-cmd.php');
 ini_set('memory_limit', '800M');
 
 $aCMDOptions = array(
@@ -13,10 +13,10 @@ $aCMDOptions = array(
                );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/Geocode.php');
-require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/Geocode.php');
+require_once(CONST_LibDir.'/PlaceLookup.php');
+require_once(CONST_LibDir.'/ReverseGeocode.php');
 
 $oDB = new Nominatim\DB();
 $oDB->connect();

@@ -1,8 +1,8 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
-require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
-require_once(CONST_BasePath.'/lib/setup_functions.php');
+require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/setup/SetupClass.php');
+require_once(CONST_LibDir.'/setup_functions.php');
 ini_set('memory_limit', '800M');
 
 use Nominatim\Setup\SetupFunctions as SetupFunctions;

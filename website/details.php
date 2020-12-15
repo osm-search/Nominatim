@@ -1,9 +1,9 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/output.php');
-require_once(CONST_BasePath.'/lib/AddressDetails.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/output.php');
+require_once(CONST_LibDir.'/AddressDetails.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
@@ -77,7 +77,7 @@ if ($sOsmType && $iOsmId > 0) {
                 $aPointDetails['error_x'] = 0;
                 $aPointDetails['error_y'] = 0;
             }
-            include(CONST_BasePath.'/lib/template/details-error-'.$sOutputFormat.'.php');
+            include(CONST_LibDir.'/template/details-error-'.$sOutputFormat.'.php');
             exit;
         }
     }
@@ -247,4 +247,4 @@ if ($bIncludeKeywords) {
 
 logEnd($oDB, $hLog, 1);
 
-include(CONST_BasePath.'/lib/template/details-'.$sOutputFormat.'.php');
+include(CONST_LibDir.'/template/details-'.$sOutputFormat.'.php');

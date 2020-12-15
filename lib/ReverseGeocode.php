@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/Result.php');
+require_once(CONST_LibDir.'/Result.php');
 
 class ReverseGeocode
 {

@@ -2,8 +2,8 @@
 
 namespace Nominatim\Setup;
 
-require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
-require_once(CONST_BasePath.'/lib/Shell.php');
+require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
+require_once(CONST_LibDir.'/Shell.php');
 
 class SetupFunctions
 {
@@ -140,24 +140,24 @@ class SetupFunctions
         // Try accessing the C module, so we know early if something is wrong
         checkModulePresence(); // raises exception on failure
 
-        if (!file_exists(CONST_ExtraDataPath.'/country_osm_grid.sql.gz')) {
+        if (!file_exists(CONST_DataDir.'/data/country_osm_grid.sql.gz')) {
             echo 'Error: you need to download the country_osm_grid first:';
-            echo "\n    wget -O ".CONST_ExtraDataPath."/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
+            echo "\n    wget -O ".CONST_DataDir."/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
             exit(1);
         }
-        $this->pgsqlRunScriptFile(CONST_BasePath.'/data/country_name.sql');
-        $this->pgsqlRunScriptFile(CONST_ExtraDataPath.'/country_osm_grid.sql.gz');
-        $this->pgsqlRunScriptFile(CONST_BasePath.'/data/gb_postcode_table.sql');
-        $this->pgsqlRunScriptFile(CONST_BasePath.'/data/us_postcode_table.sql');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_name.sql');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_osm_grid.sql.gz');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/gb_postcode_table.sql');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/us_postcode_table.sql');
 
-        $sPostcodeFilename = CONST_BasePath.'/data/gb_postcode_data.sql.gz';
+        $sPostcodeFilename = CONST_DataDir.'/data/gb_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
             $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
             warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
         }
 
-        $sPostcodeFilename = CONST_BasePath.'/data/us_postcode_data.sql.gz';
+        $sPostcodeFilename = CONST_DataDir.'/data/us_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
             $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
@@ -243,7 +243,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/tables.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tables.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -260,7 +260,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/table-triggers.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/table-triggers.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -270,7 +270,7 @@ class SetupFunctions
     {
         info('Create Partition Tables');
 
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-tables.src.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-tables.src.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunPartitionScript($sTemplate);
@@ -280,7 +280,7 @@ class SetupFunctions
     {
         info('Create Partition Functions');
 
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/partition-functions.src.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-functions.src.sql');
         $this->pgsqlRunPartitionScript($sTemplate);
     }
 
@@ -342,7 +342,7 @@ class SetupFunctions
         // pre-create the word list
         if (!$bDisableTokenPrecalc) {
             info('Loading word list');
-            $this->pgsqlRunScriptFile(CONST_BasePath.'/data/words.sql');
+            $this->pgsqlRunScriptFile(CONST_DataDir.'/data/words.sql');
         }
 
         info('Load Data');
@@ -434,7 +434,7 @@ class SetupFunctions
             warn('Tiger data import selected but no files found in path '.CONST_Tiger_Data_Path);
             return;
         }
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_start.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_start.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -488,7 +488,7 @@ class SetupFunctions
         }
 
         info('Creating indexes on Tiger data');
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/tiger_import_finish.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_finish.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -544,7 +544,7 @@ class SetupFunctions
     {
         checkModulePresence(); // raises exception on failure
 
-        $oBaseCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
+        $oBaseCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
                     ->addParams('--database', $this->aDSNInfo['database'])
                     ->addParams('--port', $this->aDSNInfo['port'])
                     ->addParams('--threads', $this->iInstances);
@@ -616,12 +616,12 @@ class SetupFunctions
             $this->db()->exec("DROP INDEX $sIndexName;");
         }
 
-        $sTemplate = file_get_contents(CONST_BasePath.'/sql/indices.src.sql');
+        $sTemplate = file_get_contents(CONST_DataDir.'/sql/indices.src.sql');
         if (!$this->bDrop) {
-            $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_updates.src.sql');
+            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_updates.src.sql');
         }
         if (!$this->dbReverseOnly()) {
-            $sTemplate .= file_get_contents(CONST_BasePath.'/sql/indices_search.src.sql');
+            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_search.src.sql');
         }
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
@@ -709,10 +709,9 @@ class SetupFunctions
      */
     public function setupWebsite()
     {
-        $rOutputFile = fopen(CONST_InstallPath.'/settings/settings-frontend.php', 'w');
+        $rOutputFile = fopen(CONST_InstallDir.'/settings/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
-@define('CONST_BasePath', '".CONST_BasePath."');
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 
 @define('CONST_Database_DSN', '".CONST_Database_DSN."');
@@ -732,7 +731,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 @define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
 @define('CONST_MapIcon_URL', ".(CONST_MapIcon_URL ? ("'".CONST_MapIcon_URL."'") : 'false').');
 ');
-        info(CONST_InstallPath.'/settings/settings-frontend.php has been set up successfully');
+        info(CONST_InstallDir.'/settings/settings-frontend.php has been set up successfully');
     }
 
     /**
@@ -775,7 +774,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 
     private function createSqlFunctions()
     {
-        $sBasePath = CONST_BasePath.'/sql/functions/';
+        $sBasePath = CONST_DataDir.'/sql/functions/';
         $sTemplate = file_get_contents($sBasePath.'utils.sql');
         $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
         $sTemplate .= file_get_contents($sBasePath.'ranking.sql');

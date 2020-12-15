@@ -1,5 +1,8 @@
 <?php
 @define('CONST_Debug', (isset($_GET['debug']) && $_GET['debug']));
-require_once(dirname(dirname(__FILE__)).'/settings/settings-frontend.php');
+@define('CONST_LibDir', '@CMAKE_SOURCE_DIR@/lib');
+@define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
+@define('CONST_InstallDir', '@CMAKE_BINARY_DIR@');
+require_once(CONST_InstallDir.'/settings/settings-frontend.php');
 
-require_once(CONST_BasePath.'/@script_source@');
+require_once('@CMAKE_SOURCE_DIR@/website/@script_source@');

@@ -1,4 +1,9 @@
 #!@PHP_BIN@ -Cq
 <?php
-require_once(dirname(dirname(__FILE__)).'/settings/settings.php');
-require_once(CONST_BasePath.'/@script_source@');
+@define('CONST_BinDir', '@CMAKE_SOURCE_DIR@/utils');
+@define('CONST_LibDir', '@CMAKE_SOURCE_DIR@/lib');
+@define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
+@define('CONST_InstallDir', '@CMAKE_BINARY_DIR@');
+
+require_once(CONST_InstallDir.'/settings/settings.php');
+require_once(CONST_BinDir.'/@script_source@');

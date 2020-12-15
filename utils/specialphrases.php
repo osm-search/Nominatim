@@ -147,7 +147,7 @@ if ($aCMDResult['wiki-import']) {
             . ";\n",
             pg_escape_string($aPair[0]),
             pg_escape_string($aPair[1]),
-            CONST_Database_Web_User
+            getSetting('DATABASE_WEBUSER');
         );
     }
 

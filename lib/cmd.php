@@ -147,7 +147,7 @@ function repeatWarnings()
 function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreErrors = false)
 {
     // Convert database DSN to psql parameters
-    $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
+    $aDSNInfo = \Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
     $oCmd = new \Nominatim\Shell('psql');

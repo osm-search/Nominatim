@@ -18,6 +18,11 @@ function loadSettings($sProjectDir)
     $dotenv->load(CONST_DataDir.'/settings/env.defaults');
 }
 
+function getSetting($sConfName)
+{
+    return $_ENV['NOMINATIM_'.$sConfName];
+}
+
 function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;

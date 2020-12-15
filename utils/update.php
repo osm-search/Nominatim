@@ -57,7 +57,7 @@ $oDB = new Nominatim\DB();
 $oDB->connect();
 $fPostgresVersion = $oDB->getPostgresVersion();
 
-$aDSNInfo = Nominatim\DB::parseDSN(CONST_Database_DSN);
+$aDSNInfo = Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 // cache memory to be used by osm2pgsql, should not be more than the available memory

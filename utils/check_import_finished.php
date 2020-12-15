@@ -35,7 +35,7 @@ if ($oDB->checkConnection()) {
     echo <<< END
     Hints:
     * Is the database server started?
-    * Check the CONST_Database_DSN variable in build/settings/local.php
+    * Check the NOMINATIM_DATABASE_DSN variable in your local .env
     * Try connecting to the database with the same settings
 
 END;

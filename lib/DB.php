@@ -12,9 +12,9 @@ class DB
 {
     protected $connection;
 
-    public function __construct($sDSN = CONST_Database_DSN)
+    public function __construct($sDSN = null)
     {
-        $this->sDSN = $sDSN;
+        $this->sDSN = $sDSN ?? getSetting('DATABASE_DSN');
     }
 
     public function connect($bNew = false, $bPersistent = true)

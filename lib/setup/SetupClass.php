@@ -42,11 +42,14 @@ class SetupFunctions
             $this->iCacheMemory = getCacheMemoryMB();
         }
 
-        $this->sModulePath = CONST_Database_Module_Path;
+        $this->sModulePath = getSetting('DATABASE_MODULE_PATH');
+        if (strlen($this->sModulePath) == 0 || $this->sModulePath[0] != '/') {
+            $this->sModulePath = CONST_InstallDir.'/'.$this->sModulePath;
+        }
         info('module path: ' . $this->sModulePath);
 
         // parse database string
-        $this->aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
+        $this->aDSNInfo = \Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
         if (!isset($this->aDSNInfo['port'])) {
             $this->aDSNInfo['port'] = 5432;
         }
@@ -86,7 +89,7 @@ class SetupFunctions
         $oDB = new \Nominatim\DB;
 
         if ($oDB->checkConnection()) {
-            fail('database already exists ('.CONST_Database_DSN.')');
+            fail('database already exists ('.getSetting('DATABASE_DSN').')');
         }
 
         $oCmd = (new \Nominatim\Shell('createdb'))
@@ -130,15 +133,16 @@ class SetupFunctions
             exit(1);
         }
 
-        $i = $this->db()->getOne("select count(*) from pg_user where usename = '".CONST_Database_Web_User."'");
+        $sPgUser = getSetting('DATABASE_WEBUSER');
+        $i = $this->db()->getOne("select count(*) from pg_user where usename = '$sPgUser'");
         if ($i == 0) {
-            echo "\nERROR: Web user '".CONST_Database_Web_User."' does not exist. Create it with:\n";
-            echo "\n          createuser ".CONST_Database_Web_User."\n\n";
+            echo "\nERROR: Web user '".$sPgUser."' does not exist. Create it with:\n";
+            echo "\n          createuser ".$sPgUser."\n\n";
             exit(1);
         }
 
         // Try accessing the C module, so we know early if something is wrong
-        checkModulePresence(); // raises exception on failure
+        $this->checkModulePresence(); // raises exception on failure
 
         if (!file_exists(CONST_DataDir.'/data/country_osm_grid.sql.gz')) {
             echo 'Error: you need to download the country_osm_grid first:';
@@ -234,7 +238,7 @@ class SetupFunctions
         info('Create Functions');
 
         // Try accessing the C module, so we know early if something is wrong
-        checkModulePresence(); // raises exception on failure
+        $this->checkModulePresence(); // raises exception on failure
 
         $this->createSqlFunctions();
     }
@@ -352,7 +356,7 @@ class SetupFunctions
         $iLoadThreads = max(1, $this->iInstances - 1);
         for ($i = 0; $i < $iLoadThreads; $i++) {
             // https://secure.php.net/manual/en/function.pg-connect.php
-            $DSN = CONST_Database_DSN;
+            $DSN = getSetting('DATABASE_DSN');
             $DSN = preg_replace('/^pgsql:/', '', $DSN);
             $DSN = preg_replace('/;/', ' ', $DSN);
             $aDBInstances[$i] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
@@ -372,7 +376,7 @@ class SetupFunctions
 
         // last thread for interpolation lines
         // https://secure.php.net/manual/en/function.pg-connect.php
-        $DSN = CONST_Database_DSN;
+        $DSN = getSetting('DATABASE_DSN');
         $DSN = preg_replace('/^pgsql:/', '', $DSN);
         $DSN = preg_replace('/;/', ' ', $DSN);
         $aDBInstances[$iLoadThreads] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
@@ -442,7 +446,7 @@ class SetupFunctions
         $aDBInstances = array();
         for ($i = 0; $i < $this->iInstances; $i++) {
             // https://secure.php.net/manual/en/function.pg-connect.php
-            $DSN = CONST_Database_DSN;
+            $DSN = getSetting('DATABASE_DSN');
             $DSN = preg_replace('/^pgsql:/', '', $DSN);
             $DSN = preg_replace('/;/', ' ', $DSN);
             $aDBInstances[$i] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW | PGSQL_CONNECT_ASYNC);
@@ -542,7 +546,7 @@ class SetupFunctions
 
     public function index($bIndexNoanalyse)
     {
-        checkModulePresence(); // raises exception on failure
+        $this->checkModulePresence(); // raises exception on failure
 
         $oBaseCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
                     ->addParams('--database', $this->aDSNInfo['database'])
@@ -714,7 +718,7 @@ class SetupFunctions
         fwrite($rOutputFile, "<?php
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 
-@define('CONST_Database_DSN', '".CONST_Database_DSN."');
+@define('CONST_Database_DSN', '".getSetting('DATABASE_DSN')."');
 @define('CONST_Default_Language', ".(CONST_Default_Language ? ("'".CONST_Default_Language."'") : 'false').");
 @define('CONST_Log_DB', ".(CONST_Log_DB ? 'true' : 'false').");
 @define('CONST_Log_File', ".(CONST_Log_File ? ("'".CONST_Log_File."'")  : 'false').");
@@ -894,7 +898,7 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 
     private function replaceSqlPatterns($sSql)
     {
-        $sSql = str_replace('{www-user}', CONST_Database_Web_User, $sSql);
+        $sSql = str_replace('{www-user}', getSetting('DATABASE_WEBUSER'), $sSql);
 
         $aPatterns = array(
                       '{ts:address-data}' => CONST_Tablespace_Address_Data,
@@ -937,5 +941,21 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
     private function dbReverseOnly()
     {
         return !($this->db()->tableExists('search_name'));
+    }
+
+    /**
+     * Try accessing the C module, so we know early if something is wrong.
+     *
+     * Raises Nominatim\DatabaseError on failure
+     */
+    private function checkModulePresence()
+    {
+        $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
+        $sSQL .= $this->sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+        $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+
+        $oDB = new \Nominatim\DB();
+        $oDB->connect();
+        $oDB->exec($sSQL, null, 'Database server failed to load '.$this->sModulePath.'/nominatim.so module');
     }
 }

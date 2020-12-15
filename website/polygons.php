@@ -13,7 +13,7 @@ $iDays = $oParams->getInt('days', false);
 $bReduced = $oParams->getBool('reduced', false);
 $sClass = $oParams->getString('class', false);
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $iTotalBroken = (int) $oDB->getOne('SELECT count(*) FROM import_polygon_error');

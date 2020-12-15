@@ -15,7 +15,7 @@ set_exception_handler_by_format($sOutputFormat);
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $hLog = logStart($oDB, 'place', $_SERVER['QUERY_STRING'], $aLangPrefOrder);

@@ -25,7 +25,7 @@ $bIncludeHierarchy = $oParams->getBool('hierarchy', false);
 $bGroupHierarchy = $oParams->getBool('group_hierarchy', false);
 $bIncludePolygonAsGeoJSON = $oParams->getBool('polygon_geojson', false);
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));

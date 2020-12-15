@@ -9,7 +9,7 @@ $oParams = new Nominatim\ParameterParser();
 $sOutputFormat = $oParams->getSet('format', array('json'), 'json');
 set_exception_handler_by_format($sOutputFormat);
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $sSQL = 'select placex.place_id, country_code,';

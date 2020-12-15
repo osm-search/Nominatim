@@ -6,7 +6,7 @@ require_once(CONST_LibDir.'/Geocode.php');
 require_once(CONST_LibDir.'/output.php');
 ini_set('memory_limit', '200M');
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 $oParams = new Nominatim\ParameterParser();
 

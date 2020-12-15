@@ -14,6 +14,8 @@ $aCMDOptions
    );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+setupHTTPProxy();
+
 include(CONST_Phrase_Config);
 
 if (true) {

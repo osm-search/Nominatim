@@ -46,6 +46,8 @@ $aCMDOptions
 
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
+setupHTTPProxy();
+
 if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
 if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
 

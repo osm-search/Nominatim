@@ -49,6 +49,8 @@ $aCMDOptions
 // $aCMDOptions passed to getCmdOpt by reference
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+setupHTTPProxy();
+
 $bDidSomething = false;
 
 //*******************************************************

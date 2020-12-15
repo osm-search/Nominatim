@@ -195,3 +195,31 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
         fail("pgsql returned with error code ($iReturn)");
     }
 }
+
+function setupHTTPProxy()
+{
+    if (!CONST_HTTP_Proxy) {
+        return;
+    }
+
+    $sProxy = 'tcp://'.CONST_HTTP_Proxy_Host.':'.CONST_HTTP_Proxy_Port;
+    $aHeaders = array();
+
+    if (CONST_HTTP_Proxy_Login != null
+        && CONST_HTTP_Proxy_Login != ''
+        && CONST_HTTP_Proxy_Password != null
+        && CONST_HTTP_Proxy_Password != ''
+    ) {
+        $sAuth = base64_encode(CONST_HTTP_Proxy_Login.':'.CONST_HTTP_Proxy_Password);
+        $aHeaders = array('Proxy-Authorization: Basic '.$sAuth);
+    }
+
+    $aProxyHeader = array(
+                     'proxy' => $sProxy,
+                     'request_fulluri' => true,
+                     'header' => $aHeaders
+                    );
+
+    $aContext = array('http' => $aProxyHeader, 'https' => $aProxyHeader);
+    stream_context_set_default($aContext);
+}

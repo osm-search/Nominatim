@@ -1,5 +1,23 @@
 <?php
 
+require('Symfony/Component/Dotenv/autoload.php');
+
+function loadSettings($sProjectDir)
+{
+    if (!$sProjectDir) {
+        $sProjectDir = getcwd();
+    }
+
+    @define('CONST_InstallDir', $sProjectDir);
+
+    $dotenv = new \Symfony\Component\Dotenv\Dotenv();
+
+    if (file_exists($sProjectDir.'/.env')) {
+        $dotenv->load($sProjectDir.'/.env');
+    }
+    $dotenv->load(CONST_DataDir.'/settings/env.defaults');
+}
+
 function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;

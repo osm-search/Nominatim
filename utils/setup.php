@@ -44,11 +44,13 @@ $aCMDOptions
    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
    array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website'),
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory for this Nominatim installation'),
   );
 
 // $aCMDOptions passed to getCmdOpt by reference
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+loadSettings($aCMDResult['project-dir'] ?? false);
 setupHTTPProxy();
 
 $bDidSomething = false;

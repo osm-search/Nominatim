@@ -15,15 +15,6 @@ $oGeocode = new Nominatim\Geocode($oDB);
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 $oGeocode->setLanguagePreference($aLangPrefOrder);
 
-if (CONST_Search_ReversePlanForAll
-    || isset($aLangPrefOrder['name:de'])
-    || isset($aLangPrefOrder['name:ru'])
-    || isset($aLangPrefOrder['name:ja'])
-    || isset($aLangPrefOrder['name:pl'])
-) {
-    $oGeocode->setReverseInPlan(true);
-}
-
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'jsonv2');
 set_exception_handler_by_format($sOutputFormat);

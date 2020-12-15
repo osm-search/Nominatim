@@ -118,7 +118,11 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
-    $oSetup->importTigerData();
+    $sTigerPath = getSetting('TIGER_DATA_PATH');
+    if (!$sTigerPath) {
+        $sTigerPath = CONST_DataDir.'/data/tiger';
+    }
+    $oSetup->importTigerData($sTigerPath);
 }
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {

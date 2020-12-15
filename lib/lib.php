@@ -18,9 +18,35 @@ function loadSettings($sProjectDir)
     $dotenv->load(CONST_DataDir.'/settings/env.defaults');
 }
 
-function getSetting($sConfName)
+function getSetting($sConfName, $sDefault = null)
 {
-    return $_ENV['NOMINATIM_'.$sConfName];
+    $sValue = $_ENV['NOMINATIM_'.$sConfName];
+
+    if ($sDefault !== null && !$sValue) {
+        return $sDefault;
+    }
+
+    return $sValue;
+}
+
+function getSettingBool($sConfName)
+{
+    $sVal = strtolower(getSetting($sConfName));
+
+    return strcmp($sVal, 'yes') == 0
+           || strcmp($sVal, 'true') == 0
+           || strcmp($sVal, '1') == 0;
+}
+
+function getSettingConfig($sConfName, $sSystemConfig)
+{
+    $sValue = $_ENV['NOMINATIM_'.$sConfName];
+
+    if (!$sValue) {
+        return CONST_DataDir.'/settings/'.$sSystemConfig;
+    }
+
+    return $sValue;
 }
 
 function fail($sError, $sUserError = false)

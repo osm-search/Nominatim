@@ -2,6 +2,8 @@
 
 require_once(CONST_LibDir.'/init-cmd.php');
 
+loadSettings(false);
+
 $term_colors = array(
                 'green' => "\033[92m",
                 'red' => "\x1B[31m",
@@ -166,7 +168,7 @@ END;
 
 
 
-if (CONST_Use_US_Tiger_Data) {
+if (getSettingBool('USE_US_TIGER_DATA')) {
     echo 'Checking TIGER table exists ... ';
     if ($oDB->tableExists('location_property_tiger')) {
         $print_success();

@@ -16,8 +16,6 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 setupHTTPProxy();
 
-include(CONST_Phrase_Config);
-
 if (true) {
     $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';
     $sWikiPageXML = file_get_contents($sURL);

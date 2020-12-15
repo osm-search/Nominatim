@@ -16,15 +16,17 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 setupHTTPProxy();
 
-include(CONST_Phrase_Config);
+include(getSettingConfig('PHRASE_CONFIG', 'phrase_settings.php'));
 
 if ($aCMDResult['wiki-import']) {
-    $oNormalizer = Transliterator::createFromRules(CONST_Term_Normalization_Rules);
+    $oNormalizer = Transliterator::createFromRules(getSetting('TERM_NORMALIZATION'));
     $aPairs = array();
 
-    $sLanguageIn = CONST_Languages ? CONST_Languages :
-        ('af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
-         'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi');
+    $sLanguageIn = getSetting(
+        LANGUAGES,
+        'af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
+        'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi';
+    );
 
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
         $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);

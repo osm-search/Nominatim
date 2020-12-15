@@ -2,7 +2,6 @@
 if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
 if (file_exists(CONST_InstallDir.'/settings/local.php')) require_once(CONST_InstallDir.'/settings/local.php');
 
-@define('CONST_Max_Word_Frequency', '50000');
 @define('CONST_Limit_Reindexing', true);
 // Restrict search languages.
 // Normally Nominatim will include all language variants of name:XX

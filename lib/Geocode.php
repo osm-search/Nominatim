@@ -18,7 +18,7 @@ class Geocode
     protected $aLangPrefOrder = array();
 
     protected $aExcludePlaceIDs = array();
-    protected $bReverseInPlan = false;
+    protected $bReverseInPlan = true;
 
     protected $iLimit = 20;
     protected $iFinalLimit = 10;

@@ -14,3 +14,24 @@ function checkInFile($sOSMFile)
         fail('osm-file "' . $aCMDResult['osm-file'] . '" not readable');
     }
 }
+
+function getOsm2pgsqlBinary()
+{
+    $sBinary = getSetting('OSM2PGSQL_BINARY');
+    if (!$sBinary) {
+        $sBinary = CONST_InstallDir.'/osm2pgsql/osm2pgsql';
+    }
+
+    return $sBinary;
+}
+
+function getImportStyle()
+{
+    $sStyle = getSetting('IMPORT_STYLE');
+
+    if (in_array($sStyle, array('admin', 'street', 'address', 'full', 'extratags'))) {
+        return CONST_DataDir.'/settings/import-'.$sStyle.'.style';
+    }
+
+    return $sStyle;
+}

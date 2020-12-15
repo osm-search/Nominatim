@@ -198,19 +198,18 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
 
 function setupHTTPProxy()
 {
-    if (!CONST_HTTP_Proxy) {
+    if (!getSettingBool('HTTP_PROXY')) {
         return;
     }
 
-    $sProxy = 'tcp://'.CONST_HTTP_Proxy_Host.':'.CONST_HTTP_Proxy_Port;
+    $sProxy = 'tcp://'.getSetting('HTTP_PROXY_HOST').':'.getSetting('HTTP_PROXY_PROT');
     $aHeaders = array();
 
-    if (CONST_HTTP_Proxy_Login != null
-        && CONST_HTTP_Proxy_Login != ''
-        && CONST_HTTP_Proxy_Password != null
-        && CONST_HTTP_Proxy_Password != ''
-    ) {
-        $sAuth = base64_encode(CONST_HTTP_Proxy_Login.':'.CONST_HTTP_Proxy_Password);
+    $sLogin = getSetting('HTTP_PROXY_LOGIN');
+    $sPassword = getSetting('HTTP_PROXY_PASSWORD');
+
+    if ($sLogin && $sPassword) {
+        $sAuth = base64_encode($sLogin.':'.$sPassword);
         $aHeaders = array('Proxy-Authorization: Basic '.$sAuth);
     }
 

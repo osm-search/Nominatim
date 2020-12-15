@@ -34,7 +34,7 @@ class SetupFunctions
 
         if (isset($aCMDResult['osm2pgsql-cache'])) {
             $this->iCacheMemory = $aCMDResult['osm2pgsql-cache'];
-        } elseif (!is_null(CONST_Osm2pgsql_Flatnode_File)) {
+        } elseif (getSetting('FLATNODE_FILE')) {
             // When flatnode files are enabled then disable cache per default.
             $this->iCacheMemory = 0;
         } else {
@@ -42,10 +42,7 @@ class SetupFunctions
             $this->iCacheMemory = getCacheMemoryMB();
         }
 
-        $this->sModulePath = getSetting('DATABASE_MODULE_PATH');
-        if (strlen($this->sModulePath) == 0 || $this->sModulePath[0] != '/') {
-            $this->sModulePath = CONST_InstallDir.'/'.$this->sModulePath;
-        }
+        $this->sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_InstallDir.'/module');
         info('module path: ' . $this->sModulePath);
 
         // parse database string
@@ -177,29 +174,29 @@ class SetupFunctions
     {
         info('Import data');
 
-        if (!file_exists(CONST_Osm2pgsql_Binary)) {
-            echo "Check CONST_Osm2pgsql_Binary in your local settings file.\n";
+        if (!file_exists(getOsm2pgsqlBinary())) {
+            echo "Check NOMINATIM_OSM2PGSQL_BINARY in your local .env file.\n";
             echo "Normally you should not need to set this manually.\n";
-            fail("osm2pgsql not found in '".CONST_Osm2pgsql_Binary."'");
+            fail("osm2pgsql not found in '".getOsm2pgsqlBinary()."'");
         }
 
-        $oCmd = new \Nominatim\Shell(CONST_Osm2pgsql_Binary);
-        $oCmd->addParams('--style', CONST_Import_Style);
+        $oCmd = new \Nominatim\Shell(getOsm2pgsqlBinary());
+        $oCmd->addParams('--style', getImportStyle());
 
-        if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-            $oCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
+        if (getSetting('FLATNODE_FILE')) {
+            $oCmd->addParams('--flat-nodes', getSetting('FLATNODE_FILE'));
         }
-        if (CONST_Tablespace_Osm2pgsql_Data) {
-            $oCmd->addParams('--tablespace-slim-data', CONST_Tablespace_Osm2pgsql_Data);
+        if (getSetting('TABLESPACE_OSM_DATA')) {
+            $oCmd->addParams('--tablespace-slim-data', getSetting('TABLESPACE_OSM_DATA'));
         }
-        if (CONST_Tablespace_Osm2pgsql_Index) {
-            $oCmd->addParams('--tablespace-slim-index', CONST_Tablespace_Osm2pgsql_Index);
+        if (getSetting('TABLESPACE_OSM_INDEX')) {
+            $oCmd->addParams('--tablespace-slim-index', getSetting('TABLESPACE_OSM_INDEX'));
         }
-        if (CONST_Tablespace_Place_Data) {
-            $oCmd->addParams('--tablespace-main-data', CONST_Tablespace_Place_Data);
+        if (getSetting('TABLESPACE_PLACE_DATA')) {
+            $oCmd->addParams('--tablespace-main-data', getSetting('TABLESPACE_PLACE_DATA'));
         }
-        if (CONST_Tablespace_Place_Index) {
-            $oCmd->addParams('--tablespace-main-index', CONST_Tablespace_Place_Index);
+        if (getSetting('TABLESPACE_PLACE_INDEX')) {
+            $oCmd->addParams('--tablespace-main-index', getSetting('TABLESPACE_PLACE_INDEX'));
         }
         $oCmd->addParams('--latlong', '--slim', '--create');
         $oCmd->addParams('--output', 'gazetteer');
@@ -256,7 +253,7 @@ class SetupFunctions
             $this->dropTable('search_name');
         }
 
-        $oAlParser = new AddressLevelParser(CONST_Address_Level_Config);
+        $oAlParser = new AddressLevelParser(getSettingConfig('ADDRESS_LEVEL_CONFIG', 'address-levels.json'));
         $oAlParser->createTable($this->db(), 'address_levels');
     }
 
@@ -290,7 +287,8 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlesFile = CONST_Wikipedia_Data_Path.'/wikimedia-importance.sql.gz';
+        $sWikiArticlePath = getSettings('WIKIPEDIA_DATA_PATH', CONST_DataDir.'/data');
+        $sWikiArticlesFile = $sWikiArticlePath.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');
             $this->dropTable('wikipedia_article');
@@ -339,7 +337,7 @@ class SetupFunctions
 
         // used by getorcreate_word_id to ignore frequent partial words
         $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
-        $sSQL .= '$$ SELECT '.CONST_Max_Word_Frequency.' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
+        $sSQL .= '$$ SELECT '.getSetting('MAX_WORD_FREQUENCY').' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
         $oDB->exec($sSQL);
         echo ".\n";
 
@@ -428,14 +426,14 @@ class SetupFunctions
         }
     }
 
-    public function importTigerData()
+    public function importTigerData($sTigerPath)
     {
         info('Import Tiger data');
 
-        $aFilenames = glob(CONST_Tiger_Data_Path.'/*.sql');
-        info('Found '.count($aFilenames).' SQL files in path '.CONST_Tiger_Data_Path);
+        $aFilenames = glob($sTigerPath.'/*.sql');
+        info('Found '.count($aFilenames).' SQL files in path '.$sTigerPath);
         if (empty($aFilenames)) {
-            warn('Tiger data import selected but no files found in path '.CONST_Tiger_Data_Path);
+            warn('Tiger data import selected but no files found in path '.$sTigerPath);
             return;
         }
         $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_start.sql');
@@ -642,10 +640,11 @@ class SetupFunctions
         $this->pgsqlRunScript("select count(*) from (select getorcreate_country(make_standard_name(name->'name'), country_code) from country_name where name ? 'name') as x");
         $sSQL = 'select count(*) from (select getorcreate_country(make_standard_name(v),'
             .'country_code) from (select country_code, skeys(name) as k, svals(name) as v from country_name) x where k ';
-        if (CONST_Languages) {
+        $sLanguages = getSetting('LANGUAGES');
+        if ($sLanguages) {
             $sSQL .= 'in ';
             $sDelim = '(';
-            foreach (explode(',', CONST_Languages) as $sLang) {
+            foreach (explode(',', $sLanguages) as $sLang) {
                 $sSQL .= $sDelim."'name:$sLang'";
                 $sDelim = ',';
             }
@@ -716,24 +715,20 @@ class SetupFunctions
         $rOutputFile = fopen(CONST_InstallDir.'/settings/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
-if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
-
 @define('CONST_Database_DSN', '".getSetting('DATABASE_DSN')."');
-@define('CONST_Default_Language', ".(CONST_Default_Language ? ("'".CONST_Default_Language."'") : 'false').");
-@define('CONST_Log_DB', ".(CONST_Log_DB ? 'true' : 'false').");
-@define('CONST_Log_File', ".(CONST_Log_File ? ("'".CONST_Log_File."'")  : 'false').");
-@define('CONST_Max_Word_Frequency', '".CONST_Max_Word_Frequency."');
-@define('CONST_NoAccessControl', ".CONST_NoAccessControl.");
-@define('CONST_Places_Max_ID_count', ".CONST_Places_Max_ID_count.");
-@define('CONST_PolygonOutput_MaximumTypes', ".CONST_PolygonOutput_MaximumTypes.");
-@define('CONST_Search_AreaPolygons', ".CONST_Search_AreaPolygons.");
-@define('CONST_Search_BatchMode', ".(CONST_Search_BatchMode ? 'true' : 'false').");
-@define('CONST_Search_NameOnlySearchFrequencyThreshold', ".CONST_Search_NameOnlySearchFrequencyThreshold.");
-@define('CONST_Search_ReversePlanForAll', ".CONST_Search_ReversePlanForAll.");
-@define('CONST_Term_Normalization_Rules', \"".CONST_Term_Normalization_Rules."\");
-@define('CONST_Use_Aux_Location_data', ".(CONST_Use_Aux_Location_data ? 'true' : 'false').");
-@define('CONST_Use_US_Tiger_Data', ".(CONST_Use_US_Tiger_Data ? 'true' : 'false').");
-@define('CONST_MapIcon_URL', ".(CONST_MapIcon_URL ? ("'".CONST_MapIcon_URL."'") : 'false').');
+@define('CONST_Default_Language', ".getSetting('DEFAULT_LANGUAGE', 'false').");
+@define('CONST_Log_DB', ".(getSettingBool('LOG_DB') ? 'true' : 'false').");
+@define('CONST_Log_File', ".getSetting('LOG_FILE', 'false').");
+@define('CONST_Max_Word_Frequency', '".getSetting('MAX_WORD_FREQUENCY')."');
+@define('CONST_NoAccessControl', ".(getSettingBool('CORS_NOACCESSCONTROL') ? 'true' : 'false').");
+@define('CONST_Places_Max_ID_count', ".getSetting('LOOKUP_MAX_COUNT').");
+@define('CONST_PolygonOutput_MaximumTypes', ".getSetting('POLYGON_OUTPUT_MAX_TYPES').");
+@define('CONST_Search_BatchMode', ".(getSettingBool('SEARCH_BATCH_MODE' ? 'true' : 'false').");
+@define('CONST_Search_NameOnlySearchFrequencyThreshold', ".getSetting('SEARCH_NAME_ONLY_THRESHOLD').");
+@define('CONST_Term_Normalization_Rules', \"".getSetting('TERM_NORMALIZATION')."\");
+@define('CONST_Use_Aux_Location_data', ".(getSettingBool('USE_AUX_LOCATION_DATA') ? 'true' : 'false').");
+@define('CONST_Use_US_Tiger_Data', ".(getSettingBool('USE_US_TIGER_DATA') ? 'true' : 'false').");
+@define('CONST_MapIcon_URL', ".(getSetting('MAPICON_URL', 'false').');
 ');
         info(CONST_InstallDir.'/settings/settings-frontend.php has been set up successfully');
     }
@@ -758,10 +753,10 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
 
     private function removeFlatnodeFile()
     {
-        if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-            if (file_exists(CONST_Osm2pgsql_Flatnode_File)) {
-                if ($this->bVerbose) echo 'Deleting '.CONST_Osm2pgsql_Flatnode_File."\n";
-                unlink(CONST_Osm2pgsql_Flatnode_File);
+        $sFName = getSetting('FLATNODE_FILE');
+        if ($sFName && file_exists($sFName)) {
+                if ($this->bVerbose) echo 'Deleting '.$sFName."\n";
+                unlink($sFName);
             }
         }
     }
@@ -801,13 +796,13 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
         if ($this->bEnableDebugStatements) {
             $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
         }
-        if (CONST_Limit_Reindexing) {
+        if (getSettingBool('LIMIT_REINDEXING')) {
             $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
         }
-        if (!CONST_Use_US_Tiger_Data) {
+        if (!getSettingBool('USE_US_TIGER_DATA')) {
             $sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
         }
-        if (!CONST_Use_Aux_Location_data) {
+        if (!getSettingBool('USE_AUX_LOCATION_DATA')) {
             $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
         }
 
@@ -901,12 +896,12 @@ if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SE
         $sSql = str_replace('{www-user}', getSetting('DATABASE_WEBUSER'), $sSql);
 
         $aPatterns = array(
-                      '{ts:address-data}' => CONST_Tablespace_Address_Data,
-                      '{ts:address-index}' => CONST_Tablespace_Address_Index,
-                      '{ts:search-data}' => CONST_Tablespace_Search_Data,
-                      '{ts:search-index}' =>  CONST_Tablespace_Search_Index,
-                      '{ts:aux-data}' =>  CONST_Tablespace_Aux_Data,
-                      '{ts:aux-index}' =>  CONST_Tablespace_Aux_Index,
+                      '{ts:address-data}' => getSetting('TABLESPACE_ADDRESS_DATA'),
+                      '{ts:address-index}' => getSetting('TABLESPACE_ADDRESS_INDEX'),
+                      '{ts:search-data}' => getSetting('TABLESPACE_SEARCH_DATA'),
+                      '{ts:search-index}' =>  getSetting('TABLESPACE_SEARCH_INDEX'),
+                      '{ts:aux-data}' =>  getSetting('TABLESPACE_AUX_DATA'),
+                      '{ts:aux-index}' =>  getSetting('TABLESPACE_AUX_INDEX')
         );
 
         foreach ($aPatterns as $sPattern => $sTablespace) {

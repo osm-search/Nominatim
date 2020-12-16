@@ -25,9 +25,9 @@ if ($aCMDResult['wiki-import']) {
     $aPairs = array();
 
     $sLanguageIn = getSetting(
-        LANGUAGES,
+        'LANGUAGES',
         'af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
-        'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi';
+        'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi'
     );
 
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
@@ -109,7 +109,10 @@ if ($aCMDResult['wiki-import']) {
     echo 'CREATE INDEX idx_placex_classtype ON placex (class, type);';
 
     foreach ($aPairs as $aPair) {
-        $sql_tablespace = CONST_Tablespace_Aux_Data ? ' TABLESPACE '.CONST_Tablespace_Aux_Data : '';
+        $sql_tablespace = getSetting('TABLESPACE_AUX_DATA');
+        if ($sql_tablespace) {
+            $sql_tablespace = ' TABLESPACE '.$sql_tablespace;
+        }
 
         printf(
             'CREATE TABLE place_classtype_%s_%s'
@@ -151,7 +154,7 @@ if ($aCMDResult['wiki-import']) {
             . ";\n",
             pg_escape_string($aPair[0]),
             pg_escape_string($aPair[1]),
-            getSetting('DATABASE_WEBUSER');
+            getSetting('DATABASE_WEBUSER')
         );
     }
 

@@ -7,16 +7,16 @@ function loadSettings($sProjectDir)
     @define('CONST_InstallDir', $sProjectDir);
 
     $dotenv = new \Symfony\Component\Dotenv\Dotenv();
+    $dotenv->load(CONST_DataDir.'/settings/env.defaults');
 
     if (file_exists($sProjectDir.'/.env')) {
         $dotenv->load($sProjectDir.'/.env');
     }
-    $dotenv->load(CONST_DataDir.'/settings/env.defaults');
 }
 
 function getSetting($sConfName, $sDefault = null)
 {
-    $sValue = $_ENV['NOMINATIM_'.$sConfName];
+    $sValue = $_SERVER['NOMINATIM_'.$sConfName];
 
     if ($sDefault !== null && !$sValue) {
         return $sDefault;

@@ -287,7 +287,7 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlePath = getSettings('WIKIPEDIA_DATA_PATH', CONST_DataDir.'/data');
+        $sWikiArticlePath = getSetting('WIKIPEDIA_DATA_PATH', CONST_DataDir.'/data');
         $sWikiArticlesFile = $sWikiArticlePath.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');
@@ -723,12 +723,12 @@ class SetupFunctions
 @define('CONST_NoAccessControl', ".(getSettingBool('CORS_NOACCESSCONTROL') ? 'true' : 'false').");
 @define('CONST_Places_Max_ID_count', ".getSetting('LOOKUP_MAX_COUNT').");
 @define('CONST_PolygonOutput_MaximumTypes', ".getSetting('POLYGON_OUTPUT_MAX_TYPES').");
-@define('CONST_Search_BatchMode', ".(getSettingBool('SEARCH_BATCH_MODE' ? 'true' : 'false').");
+@define('CONST_Search_BatchMode', ".(getSettingBool('SEARCH_BATCH_MODE') ? 'true' : 'false').");
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', ".getSetting('SEARCH_NAME_ONLY_THRESHOLD').");
 @define('CONST_Term_Normalization_Rules', \"".getSetting('TERM_NORMALIZATION')."\");
 @define('CONST_Use_Aux_Location_data', ".(getSettingBool('USE_AUX_LOCATION_DATA') ? 'true' : 'false').");
 @define('CONST_Use_US_Tiger_Data', ".(getSettingBool('USE_US_TIGER_DATA') ? 'true' : 'false').");
-@define('CONST_MapIcon_URL', ".(getSetting('MAPICON_URL', 'false').');
+@define('CONST_MapIcon_URL', ".getSetting('MAPICON_URL', 'false').');
 ');
         info(CONST_InstallDir.'/settings/settings-frontend.php has been set up successfully');
     }
@@ -755,9 +755,8 @@ class SetupFunctions
     {
         $sFName = getSetting('FLATNODE_FILE');
         if ($sFName && file_exists($sFName)) {
-                if ($this->bVerbose) echo 'Deleting '.$sFName."\n";
-                unlink($sFName);
-            }
+            if ($this->bVerbose) echo 'Deleting '.$sFName."\n";
+            unlink($sFName);
         }
     }
 

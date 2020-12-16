@@ -41,11 +41,14 @@ $aCMDOptions
 
    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
    array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
-   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances')
+   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances'),
+
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
 setupHTTPProxy();
 
 if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;

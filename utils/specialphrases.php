@@ -11,9 +11,11 @@ $aCMDOptions
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
    array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
 setupHTTPProxy();
 
 include(getSettingConfig('PHRASE_CONFIG', 'phrase_settings.php'));

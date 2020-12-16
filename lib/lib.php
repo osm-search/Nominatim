@@ -4,10 +4,6 @@ require('Symfony/Component/Dotenv/autoload.php');
 
 function loadSettings($sProjectDir)
 {
-    if (!$sProjectDir) {
-        $sProjectDir = getcwd();
-    }
-
     @define('CONST_InstallDir', $sProjectDir);
 
     $dotenv = new \Symfony\Component\Dotenv\Dotenv();

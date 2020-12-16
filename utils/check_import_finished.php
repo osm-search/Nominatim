@@ -2,7 +2,7 @@
 
 require_once(CONST_LibDir.'/init-cmd.php');
 
-loadSettings(false);
+loadSettings(getcwd());
 
 $term_colors = array(
                 'green' => "\033[92m",

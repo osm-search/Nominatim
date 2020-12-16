@@ -28,9 +28,13 @@ $aCMDOptions
    array('exclude_place_ids', '', 0, 1, 1, 1, 'string', 'Comma-separated list of place ids to exclude from results'),
    array('featureType', '', 0, 1, 1, 1, 'string', 'Restrict results to certain features (country, state,city,settlement)'),
    array('countrycodes', '', 0, 1, 1, 1, 'string', 'Comma-separated list of countries to restrict search to'),
-   array('viewbox', '', 0, 1, 1, 1, 'string', 'Prefer results in given view box')
+   array('viewbox', '', 0, 1, 1, 1, 'string', 'Prefer results in given view box'),
+
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
+
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
 
 $oDB = new Nominatim\DB;
 $oDB->connect();

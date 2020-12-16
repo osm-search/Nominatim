@@ -21,6 +21,7 @@
                     array('restrict-to-osm-node', '', 0, 1, 1, 1, 'int', 'Export only objects that are children of this OSM node'),
                     array('restrict-to-osm-way', '', 0, 1, 1, 1, 'int', 'Export only objects that are children of this OSM way'),
                     array('restrict-to-osm-relation', '', 0, 1, 1, 1, 'int', 'Export only objects that are children of this OSM relation'),
+                    array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
                     "\nAddress ranks: continent, country, state, county, city, suburb, street, path",
                     'Additional output types: postcode, placeid (placeid for each object)',
                     "\noutput-format must be a semicolon-separated list of address ranks. Multiple ranks",
@@ -29,6 +30,8 @@
         'Default output format: street;suburb;city;county;state;country'
                    );
     getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
+
+    loadSettings($aCMDResult['project-dir'] ?? getcwd());
 
     $aRankmap = array(
                  'continent' => 1,

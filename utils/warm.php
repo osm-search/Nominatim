@@ -1,6 +1,11 @@
 <?php
 
 require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/Geocode.php');
+require_once(CONST_LibDir.'/PlaceLookup.php');
+require_once(CONST_LibDir.'/ReverseGeocode.php');
+
 ini_set('memory_limit', '800M');
 
 $aCMDOptions = array(
@@ -10,13 +15,11 @@ $aCMDOptions = array(
                 array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
                 array('reverse-only', '', 0, 1, 0, 0, 'bool', 'Warm reverse only'),
                 array('search-only', '', 0, 1, 0, 0, 'bool', 'Warm search only'),
+                array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
                );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
-require_once(CONST_LibDir.'/log.php');
-require_once(CONST_LibDir.'/Geocode.php');
-require_once(CONST_LibDir.'/PlaceLookup.php');
-require_once(CONST_LibDir.'/ReverseGeocode.php');
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
 
 $oDB = new Nominatim\DB();
 $oDB->connect();

@@ -7,13 +7,13 @@ assignees: ''
 
 ---
 
-___Note: if you are installing Nominatim through a docker image, you should report issues with the installation process with the docker repository first.___
+<!-- Note: if you are installing Nominatim through a docker image, you should report issues with the installation process with the docker repository first. -->
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+<!-- A clear and concise description of what the bug is. -->
 
 **To Reproduce**
-Please describe what you did to get to the issue.
+<!-- Please describe what you did to get to the issue. -->
 
 **Software Environment (please complete the following information):**
 - Nominatim version: 
@@ -28,4 +28,5 @@ Please describe what you did to get to the issue.
 - bare metal/AWS/other cloud service: 
 
 **Additional context**
-Add any other context about the problem here.
+
+<!-- Add any other context about the problem here. -->

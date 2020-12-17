@@ -727,7 +727,7 @@ class SetupFunctions
           'status.php'
         );
 
-        foreach($aScripts as $sScript) {
+        foreach ($aScripts as $sScript) {
             $rFile = fopen(CONST_InstallDir.'/website/'.$sScript, 'w');
 
             fwrite($rFile, "<?php\n\n");

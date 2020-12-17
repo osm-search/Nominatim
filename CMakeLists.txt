@@ -114,26 +114,10 @@ if (BUILD_IMPORTER)
 endif()
 
 #-----------------------------------------------------------------------------
-# webserver scripts (API only)
+# Targets for running a development webserver from the build directory.
 #-----------------------------------------------------------------------------
 
 if (BUILD_API)
-   set(WEBSITESCRIPTS
-       deletable.php
-       details.php
-       lookup.php
-       polygons.php
-       reverse.php
-       search.php
-       status.php
-   )
-
-   foreach (script_source ${WEBSITESCRIPTS})
-       configure_file(${PROJECT_SOURCE_DIR}/cmake/website.tmpl
-                      ${PROJECT_BINARY_DIR}/website/${script_source})
-   endforeach()
-
-
    add_custom_target(serve
            php -S 127.0.0.1:8088
            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/website

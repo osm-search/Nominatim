@@ -706,33 +706,60 @@ class SetupFunctions
     }
 
     /**
-     * Setup settings-frontend.php in the build/website directory
+     * Setup the directory for the API scripts.
      *
      * @return null
      */
     public function setupWebsite()
     {
-        $rOutputFile = fopen(CONST_InstallDir.'/settings/settings-frontend.php', 'w');
+        if (!is_dir(CONST_InstallDir.'/website')) {
+            info('Creating directory for website scripts at: '.CONST_InstallDir.'/website');
+            mkdir(CONST_InstallDir.'/website');
+        }
 
-        fwrite($rOutputFile, "<?php
-if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
+        $aScripts = array(
+          'deletable.php',
+          'details.php',
+          'lookup.php',
+          'polygons.php',
+          'reverse.php',
+          'search.php',
+          'status.php'
+        );
 
-@define('CONST_Database_DSN', '".getSetting('DATABASE_DSN')."');
-@define('CONST_Default_Language', ".getSetting('DEFAULT_LANGUAGE', 'false').");
-@define('CONST_Log_DB', ".(getSettingBool('LOG_DB') ? 'true' : 'false').");
-@define('CONST_Log_File', ".getSetting('LOG_FILE', 'false').");
-@define('CONST_Max_Word_Frequency', '".getSetting('MAX_WORD_FREQUENCY')."');
-@define('CONST_NoAccessControl', ".(getSettingBool('CORS_NOACCESSCONTROL') ? 'true' : 'false').");
-@define('CONST_Places_Max_ID_count', ".getSetting('LOOKUP_MAX_COUNT').");
-@define('CONST_PolygonOutput_MaximumTypes', ".getSetting('POLYGON_OUTPUT_MAX_TYPES').");
-@define('CONST_Search_BatchMode', ".(getSettingBool('SEARCH_BATCH_MODE') ? 'true' : 'false').");
-@define('CONST_Search_NameOnlySearchFrequencyThreshold', ".getSetting('SEARCH_NAME_ONLY_THRESHOLD').");
-@define('CONST_Term_Normalization_Rules', \"".getSetting('TERM_NORMALIZATION')."\");
-@define('CONST_Use_Aux_Location_data', ".(getSettingBool('USE_AUX_LOCATION_DATA') ? 'true' : 'false').");
-@define('CONST_Use_US_Tiger_Data', ".(getSettingBool('USE_US_TIGER_DATA') ? 'true' : 'false').");
-@define('CONST_MapIcon_URL', ".getSetting('MAPICON_URL', 'false').');
-');
-        info(CONST_InstallDir.'/settings/settings-frontend.php has been set up successfully');
+        foreach($aScripts as $sScript) {
+            $rFile = fopen(CONST_InstallDir.'/website/'.$sScript, 'w');
+
+            fwrite($rFile, "<?php\n\n");
+            fwrite($rFile, '@define(\'CONST_Debug\', $_GET[\'debug\'] ?? false);'."\n\n");
+
+            fwriteConstDef($rFile, 'LibDir', CONST_LibDir);
+            fwriteConstDef($rFile, 'DataDir', CONST_DataDir);
+            fwriteConstDef($rFile, 'InstallDir', CONST_InstallDir);
+
+            fwrite($rFile, "if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));\n\n");
+
+            fwriteConstDef($rFile, 'Database_DSN', getSetting('DATABASE_DSN'));
+            fwriteConstDef($rFile, 'Default_Language', getSetting('DEFAULT_LANGUAGE'));
+            fwriteConstDef($rFile, 'Log_DB', getSettingBool('LOG_DB'));
+            fwriteConstDef($rFile, 'Log_File', getSetting('LOG_FILE'));
+            fwriteConstDef($rFile, 'Max_Word_Frequency', (int)getSetting('MAX_WORD_FREQUENCY'));
+            fwriteConstDef($rFile, 'NoAccessControl', getSettingBool('CORS_NOACCESSCONTROL'));
+            fwriteConstDef($rFile, 'Places_Max_ID_count', (int)getSetting('LOOKUP_MAX_COUNT'));
+            fwriteConstDef($rFile, 'PolygonOutput_MaximumTypes', getSetting('POLYGON_OUTPUT_MAX_TYPES'));
+            fwriteConstDef($rFile, 'Search_BatchMode', getSettingBool('SEARCH_BATCH_MODE'));
+            fwriteConstDef($rFile, 'Search_NameOnlySearchFrequencyThreshold', getSetting('SEARCH_NAME_ONLY_THRESHOLD'));
+            fwriteConstDef($rFile, 'Term_Normalization_Rules', getSetting('TERM_NORMALIZATION'));
+            fwriteConstDef($rFile, 'Use_Aux_Location_data', getSettingBool('USE_AUX_LOCATION_DATA'));
+            fwriteConstDef($rFile, 'Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
+            fwriteConstDef($rFile, 'MapIcon_URL', getSetting('MAPICON_URL'));
+
+            // XXX scripts should go into the library.
+            fwrite($rFile, 'require_once(\''.CONST_DataDir.'/website/'.$sScript."');\n");
+            fclose($rFile);
+
+            chmod(CONST_InstallDir.'/website/'.$sScript, 0755);
+        }
     }
 
     /**

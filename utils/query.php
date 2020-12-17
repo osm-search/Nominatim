@@ -35,6 +35,7 @@ $aCMDOptions
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
 loadSettings($aCMDResult['project-dir'] ?? getcwd());
+
 @define('CONST_Database_DSN', getSetting('DATABASE_DSN'));
 @define('CONST_Default_Language', getSetting('DEFAULT_LANGUAGE', false));
 @define('CONST_Log_DB', getSettingBool('LOG_DB'));

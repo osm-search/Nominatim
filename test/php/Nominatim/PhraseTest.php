@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/Phrase.php');
+require_once(CONST_LibDir.'/Phrase.php');
 
 class TokensFullSet
 {

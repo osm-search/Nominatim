@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/DatabaseError.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/DatabaseError.php');
 
 class DatabaseErrorTest extends \PHPUnit\Framework\TestCase
 {

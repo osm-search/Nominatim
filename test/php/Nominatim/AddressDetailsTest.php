@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/AddressDetails.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/AddressDetails.php');
 
 
 class AddressDetailsTest extends \PHPUnit\Framework\TestCase
@@ -30,7 +30,7 @@ class AddressDetailsTest extends \PHPUnit\Framework\TestCase
         //
         // 5) copy&paste into file. Add commas between records
         //
-        $json = file_get_contents(CONST_BasePath.'/test/php/fixtures/address_details_10_downing_street.json');
+        $json = file_get_contents(CONST_DataDir.'/test/php/fixtures/address_details_10_downing_street.json');
         $data = json_decode($json, true);
 
         $this->oDbStub = $this->getMockBuilder(\DB::class)

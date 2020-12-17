@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/ClassTypes.php');
+require_once(CONST_LibDir.'/ClassTypes.php');
 
 class ClassTypesTest extends \PHPUnit\Framework\TestCase
 {

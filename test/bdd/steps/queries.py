@@ -282,6 +282,7 @@ def query_cmd(context, query, dups):
     (outp, err) = proc.communicate()
 
     assert_equals (0, proc.returncode, "query.php failed with message: %s\noutput: %s" % (err, outp))
+    logger.debug("run_nominatim_script: %s\n%s\n" % (cmd, outp.decode('utf-8').replace('\\n', '\n')))
 
     context.response = SearchResponse(outp.decode('utf-8'), 'json')
 

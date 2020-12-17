@@ -715,6 +715,8 @@ class SetupFunctions
         $rOutputFile = fopen(CONST_InstallDir.'/settings/settings-frontend.php', 'w');
 
         fwrite($rOutputFile, "<?php
+if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));
+
 @define('CONST_Database_DSN', '".getSetting('DATABASE_DSN')."');
 @define('CONST_Default_Language', ".getSetting('DEFAULT_LANGUAGE', 'false').");
 @define('CONST_Log_DB', ".(getSettingBool('LOG_DB') ? 'true' : 'false').");

@@ -20,6 +20,12 @@ jobs:
               with:
                   submodules: true
 
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '7.4'
+                  tools: phpunit, phpcs
+
             - name: Get Date
               id: get-date
               run: |

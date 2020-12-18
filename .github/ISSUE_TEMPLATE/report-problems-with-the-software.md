@@ -27,6 +27,10 @@ assignees: ''
 - type and size of disks:
 - bare metal/AWS/other cloud service: 
 
+**Postgresql Configuration:**
+
+<!-- List any configuration items you changed in your postgresql configuration. -->
+
 **Additional context**
 
 <!-- Add any other context about the problem here. -->

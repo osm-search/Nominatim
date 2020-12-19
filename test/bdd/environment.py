@@ -73,17 +73,27 @@ class NominatimEnvironment(object):
         return fn
 
     def write_nominatim_config(self, dbname):
-        self.test_env = os.environ
-        self.test_env['NOMINATIM_DATABASE_DSN'] = 'pgsql:dbname={}{}{}{}{}'.format(
+        dsn = 'pgsql:dbname={}{}{}{}{}'.format(
                 dbname,
                  (';host=' + self.db_host) if self.db_host else '',
                  (';port=' + self.db_port) if self.db_port else '',
                  (';user=' + self.db_user) if self.db_user else '',
                  (';password=' + self.db_pass) if self.db_pass else ''
                  )
+        self.test_env = os.environ
+        self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
+
+        f = open(self.local_settings_file, 'w')
+        # https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
+        f.write("<?php\n  @define('CONST_Database_DSN', '{}');\n".format(dsn))
+        f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
+        f.write("@define('CONST_Import_Style', CONST_DataDir.'/settings/import-full.style');\n")
+        f.write("@define('CONST_Use_US_Tiger_Data', true);\n")
+        f.close()
+
 
     def cleanup(self):
         try:
@@ -151,19 +161,7 @@ class NominatimEnvironment(object):
 
 
     def setup_api_db(self, context):
-        f = open(self.local_settings_file, 'w')
-        # https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
-        f.write("<?php\n  @define('CONST_Database_DSN', 'pgsql:dbname=%s%s%s%s%s');\n" %
-                (self.api_test_db,
-                 (';host=' + self.db_host) if self.db_host else '',
-                 (';port=' + self.db_port) if self.db_port else '',
-                 (';user=' + self.db_user) if self.db_user else '',
-                 (';password=' + self.db_pass) if self.db_pass else ''
-                 ))
-        f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
-        f.write("@define('CONST_Import_Style', CONST_DataDir.'/settings/import-full.style');\n")
-        f.write("@define('CONST_Use_US_Tiger_Data', true);\n")
-        f.close()
+        self.write_nominatim_config(self.api_test_db)
 
     def setup_unknown_db(self, context):
         self.write_nominatim_config('UNKNOWN_DATABASE_NAME')

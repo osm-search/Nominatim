@@ -6,6 +6,10 @@
 # Installing the Required Software
 # ================================
 #
+# !!! caution
+#     These instructions are currently broken because they do not
+#     include installation of the required PHP library symfony-dotenv.
+#
 # These instructions expect that you have a freshly installed CentOS version 7.
 # Make sure all packages are up-to-date by running:
 #
@@ -189,10 +193,7 @@ fi                                 #DOCS:
 # the name of your webserver user:
 
 #DOCS:```sh
-tee settings/local.php << EOF
-<?php
- @define('CONST_Database_Web_User', 'apache');
-EOF
+echo NOMINATIM_DATABASE_WEBUSER="apache" | tee .env
 #DOCS:```
 
 

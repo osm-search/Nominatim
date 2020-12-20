@@ -6,6 +6,10 @@
 # Installing the Required Software
 # ================================
 #
+# !!! caution
+#     These instructions are currently broken because they do not
+#     include installation of the required PHP library symfony-dotenv.
+#
 # These instructions expect that you have a freshly installed CentOS version 8.
 # Make sure all packages are up-to-date by running:
 #
@@ -26,7 +30,7 @@
 # Now you can install all packages needed for Nominatim:
 
 #DOCS:    :::sh
-    sudo dnf --enablerepo=PowerTools install -y postgresql12-server \
+    sudo dnf --enablerepo=powertools install -y postgresql12-server \
                         postgresql12-contrib postgresql12-devel postgis30_12 \
                         wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
                         llvm-toolset ccache clang-tools-extra \
@@ -183,10 +187,7 @@ fi                                 #DOCS:
 # the name of your webserver user:
 
 #DOCS:```sh
-tee settings/local.php << EOF
-<?php
- @define('CONST_Database_Web_User', 'apache');
-EOF
+echo NOMINATIM_DATABASE_WEBUSER="apache" | tee .env
 #DOCS:```
 
 

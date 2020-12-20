@@ -102,13 +102,20 @@ cmake $USERNAME/Nominatim
 make
 ```
 
-Copy the test settings:
+Create a minimal test settings file:
 
 ```
-cp $USERNAME/Nominatim/test/testdb/local.php settings/
+tee .env << EOF
+NOMINATIM_DATABASE_DSN="pgsql:dbname=test_api_nominatim"
+NOMINATIM_USE_US_TIGER_DATA=yes
+NOMINATIM_TIGER_DATA_PATH=tiger
+NOMINATIM_WIKIPEDIA_DATA_PATH=$USERNAME/Nominatim/test/testdb
+EOF
 ```
 
 Inspect the file to check that all settings are correct for your local setup.
+In particular, the wikipedia path should point to the test directory in your
+Nominatim source directory.
 
 Now you can import the test database:
 

@@ -29,7 +29,7 @@ once with `class` of `highway` and once with a `class` of `bridge`. Thus the
 ## Configuring the Import
 
 How tags are interpreted and assigned to the different `place` columns can be
-configured via the import style configuration file (`CONST_Import_style`). This
+configured via the import style configuration file (`NOMINATIM_IMPORT_STYLE`). This
 is a JSON file which contains a list of rules which are matched against every
 tag of every object and then assign the tag its specific role.
 

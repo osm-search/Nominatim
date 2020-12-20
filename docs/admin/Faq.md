@@ -211,11 +211,3 @@ for more information.
 ### Can I import negative OSM ids into Nominatim?
 
 See [this question of Stackoverflow](https://help.openstreetmap.org/questions/64662/nominatim-flatnode-with-negative-id).
-
-### Missing XML or text declaration
-
-The website might show: `XML Parsing Error: XML or text declaration not at start of entity Location.`
-
-Make sure there are no spaces at the beginning of your `settings/local.php` file.
-
-

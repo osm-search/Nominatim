@@ -87,9 +87,9 @@ into the database. There are a few hard-coded rules for the assignment:
     * highway nodes
     * landuse that is not an area
 
-Other than that, the ranks can be freely assigned via the JSON file
-defined with `CONST_Address_Level_Config` according to their type and
-the country they are in.
+Other than that, the ranks can be freely assigned via the JSON file according
+to their type and the country they are in. The name of the config file to be
+used can be changed with the setting `NOMINATIM_ADDRESS_LEVEL_CONFIG`.
 
 The address level configuration must consist of an array of configuration
 entries, each containing a tag definition and an optional country array:

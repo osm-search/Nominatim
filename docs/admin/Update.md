@@ -19,9 +19,9 @@ pip3 install --user osmium
 
 Nominatim needs a tool called `pyosmium-get-changes` which comes with
 Pyosmium. You need to tell Nominatim where to find it. Add the
-following line to your `settings/local.php`:
+following line to your `.env`:
 
-    @define('CONST_Pyosmium_Binary', '/home/user/.local/bin/pyosmium-get-changes');
+    NOMINATIM_PYOSMIUM_BINARY=/home/user/.local/bin/pyosmium-get-changes
 
 The path above is fine if you used the `--user` parameter with pip.
 Replace `user` with your user name.
@@ -32,15 +32,15 @@ Next the update needs to be initialised. By default Nominatim is configured
 to update using the global minutely diffs.
 
 If you want a different update source you will need to add some settings
-to `settings/local.php`. For example, to use the daily country extracts
+to `.env`. For example, to use the daily country extracts
 diffs for Ireland from Geofabrik add the following:
 
-    // base URL of the replication service
-    @define('CONST_Replication_Url', 'https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates');
-    // How often upstream publishes diffs
-    @define('CONST_Replication_Update_Interval', '86400');
-    // How long to sleep if no update found yet
-    @define('CONST_Replication_Recheck_Interval', '900');
+    # base URL of the replication service
+    NOMINATIM_REPLICATION_URL="https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates"
+    # How often upstream publishes diffs
+    NOMINATIM_REPLICATION_UPDATE_INTERVAL=86400
+    # How long to sleep if no update found yet
+    NOMINATIM_REPLICATION_RECHECK_INTERVAL=900
 
 To set up the update process now run the following command:
 

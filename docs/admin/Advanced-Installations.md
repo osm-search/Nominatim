@@ -162,11 +162,11 @@ PostgreSQL server process.
 
 On the client side you now need to configure the import to point to the
 correct location of the library **on the database server**. Add the following
-line to your your `settings/local.php` file:
+line to your your `.env` file:
 
 ```php
-@define('CONST_Database_Module_Path', '<directory on the database server where nominatim.so resides>');
+NOMINATIM_DATABASE_MODULE_PATH="<directory on the database server where nominatim.so resides>"
 ```
 
-Now change the `CONST_Database_DSN` to point to your remote server and continue
+Now change the `NOMINATIM_DATABASE_DSN` to point to your remote server and continue
 to follow the [standard instructions for importing](/admin/Import).

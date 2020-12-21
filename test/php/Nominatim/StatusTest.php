@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/DB.php');
-require_once(CONST_BasePath.'/lib/Status.php');
+require_once(CONST_LibDir.'/DB.php');
+require_once(CONST_LibDir.'/Status.php');
 
 
 class StatusTest extends \PHPUnit\Framework\TestCase

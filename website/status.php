@@ -1,13 +1,13 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/ParameterParser.php');
-require_once(CONST_BasePath.'/lib/Status.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/ParameterParser.php');
+require_once(CONST_LibDir.'/Status.php');
 
 $oParams = new Nominatim\ParameterParser();
 $sOutputFormat = $oParams->getSet('format', array('text', 'json'), 'text');
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 
 if ($sOutputFormat == 'json') {
     header('content-type: application/json; charset=UTF-8');

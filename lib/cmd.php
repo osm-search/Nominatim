@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/Shell.php');
+require_once(CONST_LibDir.'/Shell.php');
 
 function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnknown = false)
 {
@@ -147,7 +147,7 @@ function repeatWarnings()
 function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreErrors = false)
 {
     // Convert database DSN to psql parameters
-    $aDSNInfo = \Nominatim\DB::parseDSN(CONST_Database_DSN);
+    $aDSNInfo = \Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
     if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
     $oCmd = new \Nominatim\Shell('psql');
@@ -194,4 +194,31 @@ function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreError
     if ($bfatal && $iReturn > 0) {
         fail("pgsql returned with error code ($iReturn)");
     }
+}
+
+function setupHTTPProxy()
+{
+    if (!getSettingBool('HTTP_PROXY')) {
+        return;
+    }
+
+    $sProxy = 'tcp://'.getSetting('HTTP_PROXY_HOST').':'.getSetting('HTTP_PROXY_PROT');
+    $aHeaders = array();
+
+    $sLogin = getSetting('HTTP_PROXY_LOGIN');
+    $sPassword = getSetting('HTTP_PROXY_PASSWORD');
+
+    if ($sLogin && $sPassword) {
+        $sAuth = base64_encode($sLogin.':'.$sPassword);
+        $aHeaders = array('Proxy-Authorization: Basic '.$sAuth);
+    }
+
+    $aProxyHeader = array(
+                     'proxy' => $sProxy,
+                     'request_fulluri' => true,
+                     'header' => $aHeaders
+                    );
+
+    $aContext = array('http' => $aProxyHeader, 'https' => $aProxyHeader);
+    stream_context_set_default($aContext);
 }

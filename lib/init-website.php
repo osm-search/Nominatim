@@ -20,7 +20,7 @@ function exception_handler_json($exception)
 {
     http_response_code($exception->getCode());
     header('Content-type: application/json; charset=utf-8');
-    include(CONST_BasePath.'/lib/template/error-json.php');
+    include(CONST_LibDir.'/template/error-json.php');
     exit();
 }
 
@@ -29,7 +29,7 @@ function exception_handler_xml($exception)
     http_response_code($exception->getCode());
     header('Content-type: text/xml; charset=utf-8');
     echo '<?xml version="1.0" encoding="UTF-8" ?>'."\n";
-    include(CONST_BasePath.'/lib/template/error-xml.php');
+    include(CONST_LibDir.'/template/error-xml.php');
     exit();
 }
 

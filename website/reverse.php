@@ -1,10 +1,10 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
-require_once(CONST_BasePath.'/lib/output.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/PlaceLookup.php');
+require_once(CONST_LibDir.'/ReverseGeocode.php');
+require_once(CONST_LibDir.'/output.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
@@ -16,7 +16,7 @@ set_exception_handler_by_format($sOutputFormat);
 // Preferred language
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $hLog = logStart($oDB, 'reverse', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
@@ -84,4 +84,4 @@ if ($sOutputFormat == 'geocodejson') {
 }
 
 $sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
-include(CONST_BasePath.'/lib/template/address-'.$sOutputTemplate.'.php');
+include(CONST_LibDir.'/template/address-'.$sOutputTemplate.'.php');

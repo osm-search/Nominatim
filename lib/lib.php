@@ -1,5 +1,50 @@
 <?php
 
+require('Symfony/Component/Dotenv/autoload.php');
+
+function loadSettings($sProjectDir)
+{
+    @define('CONST_InstallDir', $sProjectDir);
+
+    $dotenv = new \Symfony\Component\Dotenv\Dotenv();
+    $dotenv->load(CONST_DataDir.'/settings/env.defaults');
+
+    if (file_exists($sProjectDir.'/.env')) {
+        $dotenv->load($sProjectDir.'/.env');
+    }
+}
+
+function getSetting($sConfName, $sDefault = null)
+{
+    $sValue = $_SERVER['NOMINATIM_'.$sConfName];
+
+    if ($sDefault !== null && !$sValue) {
+        return $sDefault;
+    }
+
+    return $sValue;
+}
+
+function getSettingBool($sConfName)
+{
+    $sVal = strtolower(getSetting($sConfName));
+
+    return strcmp($sVal, 'yes') == 0
+           || strcmp($sVal, 'true') == 0
+           || strcmp($sVal, '1') == 0;
+}
+
+function getSettingConfig($sConfName, $sSystemConfig)
+{
+    $sValue = $_ENV['NOMINATIM_'.$sConfName];
+
+    if (!$sValue) {
+        return CONST_DataDir.'/settings/'.$sSystemConfig;
+    }
+
+    return $sValue;
+}
+
 function fail($sError, $sUserError = false)
 {
     if (!$sUserError) $sUserError = $sError;
@@ -88,6 +133,24 @@ function addQuotes($s)
 {
     return "'".$s."'";
 }
+
+function fwriteConstDef($rFile, $sConstName, $value)
+{
+    $sEscapedValue;
+
+    if (is_bool($value)) {
+        $sEscapedValue = $value ? 'true' : 'false';
+    } elseif (is_numeric($value)) {
+        $sEscapedValue = strval($value);
+    } elseif (!$value) {
+        $sEscapedValue = 'false';
+    } else {
+        $sEscapedValue = addQuotes(str_replace("'", "\\'", (string)$value));
+    }
+
+    fwrite($rFile, "@define('CONST_$sConstName', $sEscapedValue);\n");
+}
+
 
 function parseLatLon($sQuery)
 {

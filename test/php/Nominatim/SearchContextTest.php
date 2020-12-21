@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/SearchContext.php');
+require_once(CONST_LibDir.'/SearchContext.php');
 
 class SearchContextTest extends \PHPUnit\Framework\TestCase
 {

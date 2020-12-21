@@ -5,7 +5,8 @@ runs:
 
     steps:
         - name: Install prerequisits
-          run: sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium
+          run: |
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium php-symfony-dotenv
           shell: bash
 
         - name: Configure

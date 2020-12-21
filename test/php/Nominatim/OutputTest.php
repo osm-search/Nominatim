@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/output.php');
+require_once(CONST_LibDir.'/output.php');
 
 class OutputTest extends \PHPUnit\Framework\TestCase
 {

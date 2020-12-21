@@ -35,8 +35,8 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                      data/country_osm_grid.sql.gz
-                      monaco-latest.osm.pbf
+                     {{ github.workspace }}/data/country_osm_grid.sql.gz
+                     {{ github.workspace }}/monaco-latest.osm.pbf
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql
@@ -78,8 +78,8 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                      data/country_osm_grid.sql.gz
-                      monaco-latest.osm.pbf
+                     {{ github.workspace }}/data/country_osm_grid.sql.gz
+                     {{ github.workspace }}/monaco-latest.osm.pbf
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql
@@ -90,8 +90,7 @@ jobs:
 
             - name: Create configuration
               run: |
-                   echo '<?php' > settings/local.php
-                   echo " @define('CONST_Pyosmium_Binary', '/usr/lib/python3-pyosmium/pyosmium-get-changes');" >> settings/local.php
+                   echo "NOMINATIM_PYOSMIUM_BINARY=/usr/lib/python3-pyosmium/pyosmium-get-changes" >> .env
               working-directory: build
 
             - name: Download import data

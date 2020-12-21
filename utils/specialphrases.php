@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_LibDir.'/init-cmd.php');
 ini_set('memory_limit', '800M');
 ini_set('display_errors', 'stderr');
 
@@ -11,18 +11,24 @@ $aCMDOptions
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
    array('wiki-import', '', 0, 1, 0, 0, 'bool', 'Create import script for search phrases '),
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-include(CONST_Phrase_Config);
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
+setupHTTPProxy();
+
+include(getSettingConfig('PHRASE_CONFIG', 'phrase_settings.php'));
 
 if ($aCMDResult['wiki-import']) {
-    $oNormalizer = Transliterator::createFromRules(CONST_Term_Normalization_Rules);
+    $oNormalizer = Transliterator::createFromRules(getSetting('TERM_NORMALIZATION'));
     $aPairs = array();
 
-    $sLanguageIn = CONST_Languages ? CONST_Languages :
-        ('af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
-         'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi');
+    $sLanguageIn = getSetting(
+        'LANGUAGES',
+        'af,ar,br,ca,cs,de,en,es,et,eu,fa,fi,fr,gl,hr,hu,'.
+        'ia,is,it,ja,mk,nl,no,pl,ps,pt,ru,sk,sl,sv,uk,vi'
+    );
 
     foreach (explode(',', $sLanguageIn) as $sLanguage) {
         $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/'.strtoupper($sLanguage);
@@ -103,7 +109,10 @@ if ($aCMDResult['wiki-import']) {
     echo 'CREATE INDEX idx_placex_classtype ON placex (class, type);';
 
     foreach ($aPairs as $aPair) {
-        $sql_tablespace = CONST_Tablespace_Aux_Data ? ' TABLESPACE '.CONST_Tablespace_Aux_Data : '';
+        $sql_tablespace = getSetting('TABLESPACE_AUX_DATA');
+        if ($sql_tablespace) {
+            $sql_tablespace = ' TABLESPACE '.$sql_tablespace;
+        }
 
         printf(
             'CREATE TABLE place_classtype_%s_%s'
@@ -145,7 +154,7 @@ if ($aCMDResult['wiki-import']) {
             . ";\n",
             pg_escape_string($aPair[0]),
             pg_escape_string($aPair[1]),
-            CONST_Database_Web_User
+            getSetting('DATABASE_WEBUSER')
         );
     }
 

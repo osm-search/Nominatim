@@ -2,9 +2,9 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
-require_once(CONST_BasePath.'/lib/SearchContext.php');
-require_once(CONST_BasePath.'/lib/Result.php');
+require_once(CONST_LibDir.'/SpecialSearchOperator.php');
+require_once(CONST_LibDir.'/SearchContext.php');
+require_once(CONST_LibDir.'/Result.php');
 
 /**
  * Description of a single interpretation of a search query.

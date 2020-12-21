@@ -2,12 +2,12 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/TokenCountry.php');
-require_once(CONST_BasePath.'/lib/TokenHousenumber.php');
-require_once(CONST_BasePath.'/lib/TokenPostcode.php');
-require_once(CONST_BasePath.'/lib/TokenSpecialTerm.php');
-require_once(CONST_BasePath.'/lib/TokenWord.php');
-require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
+require_once(CONST_LibDir.'/TokenCountry.php');
+require_once(CONST_LibDir.'/TokenHousenumber.php');
+require_once(CONST_LibDir.'/TokenPostcode.php');
+require_once(CONST_LibDir.'/TokenSpecialTerm.php');
+require_once(CONST_LibDir.'/TokenWord.php');
+require_once(CONST_LibDir.'/SpecialSearchOperator.php');
 
 /**
  * Saves information about the tokens that appear in a search query.

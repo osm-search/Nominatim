@@ -1,8 +1,8 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/output.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/output.php');
 ini_set('memory_limit', '200M');
 
 $oParams = new Nominatim\ParameterParser();
@@ -13,7 +13,7 @@ $iDays = $oParams->getInt('days', false);
 $bReduced = $oParams->getBool('reduced', false);
 $sClass = $oParams->getString('class', false);
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 
 $iTotalBroken = (int) $oDB->getOne('SELECT count(*) FROM import_polygon_error');

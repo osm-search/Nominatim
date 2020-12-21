@@ -5,18 +5,17 @@ from an OSM planet file and how to keep the database up to date. It
 is assumed that you have already successfully installed the Nominatim
 software itself, if not return to the [installation page](Installation.md).
 
-## Configuration setup in settings/local.php
+## Configuration setup in `.env`
 
-The Nominatim server can be customized via the file `settings/local.php`
-in the build directory. Note that this is a PHP file, so it must always
-start like this:
-
-    <?php
-
-without any leading spaces.
+The Nominatim server can be customized via a `.env` in the build directory.
+This is a file in [dotenv](https://symfony.com/doc/4.3/components/dotenv.html) format
+which looks the same as variable settings in a standard shell environment.
+You can also set the same configuration via environment variables. All
+settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
+variables.
 
 There are lots of configuration settings you can tweak. Have a look
-at `settings/default.php` for a full list. Most should have a sensible default.
+at `settings/env.default` for a full list. Most should have a sensible default.
 
 #### Flatnode files
 
@@ -24,9 +23,9 @@ If you plan to import a large dataset (e.g. Europe, North America, planet),
 you should also enable flatnode storage of node locations. With this
 setting enabled, node coordinates are stored in a simple file instead
 of the database. This will save you import time and disk storage.
-Add to your `settings/local.php`:
+Add to your `.env`:
 
-    @define('CONST_Osm2pgsql_Flatnode_File', '/path/to/flatnode.file');
+    NOMINATIM_FLATNODE_FILE="/path/to/flatnode.file"
 
 Replace the second part with a suitable path on your system and make sure
 the directory exists. There should be at least 75GB of free space.
@@ -124,7 +123,7 @@ import styles available which only read selected data:
   Like the full style but also adds most of the OSM tags into the extratags
   column.
 
-The style can be changed with the configuration `CONST_Import_Style`.
+The style can be changed with the configuration `NOMINATIM_IMPORT_STYLE`.
 
 To give you an idea of the impact of using the different styles, the table
 below gives rough estimates of the final database size after import of a
@@ -269,9 +268,9 @@ entire US adds about 10GB to your database.
 
         ./utils/setup.php --import-tiger-data
 
-  3. Enable use of the Tiger data in your `settings/local.php` by adding:
+  3. Enable use of the Tiger data in your `.env` by adding:
 
-         @define('CONST_Use_US_Tiger_Data', true);
+         NOMINATIM_USE_US_TIGER_DATA=yes
 
   4. Apply the new settings:
 

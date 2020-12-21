@@ -1,9 +1,9 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
-require_once(CONST_BasePath.'/lib/setup_functions.php');
-require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
-require_once(CONST_BasePath.'/lib/setup/AddressLevelParser.php');
+require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/setup_functions.php');
+require_once(CONST_LibDir.'/setup/SetupClass.php');
+require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
 
 ini_set('memory_limit', '800M');
 
@@ -41,10 +41,15 @@ $aCMDOptions
 
    array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
    array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
-   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances')
+   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances'),
+
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
+
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
+setupHTTPProxy();
 
 if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
 if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
@@ -55,7 +60,7 @@ $oDB = new Nominatim\DB();
 $oDB->connect();
 $fPostgresVersion = $oDB->getPostgresVersion();
 
-$aDSNInfo = Nominatim\DB::parseDSN(CONST_Database_DSN);
+$aDSNInfo = Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
 if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
 
 // cache memory to be used by osm2pgsql, should not be more than the available memory
@@ -65,7 +70,7 @@ if ($iCacheMemory + 500 > getTotalMemoryMB()) {
     echo "WARNING: resetting cache memory to $iCacheMemory\n";
 }
 
-$oOsm2pgsqlCmd = (new \Nominatim\Shell(CONST_Osm2pgsql_Binary))
+$oOsm2pgsqlCmd = (new \Nominatim\Shell(getOsm2pgsqlBinary()))
                  ->addParams('--hstore')
                  ->addParams('--latlong')
                  ->addParams('--append')
@@ -75,7 +80,7 @@ $oOsm2pgsqlCmd = (new \Nominatim\Shell(CONST_Osm2pgsql_Binary))
                  ->addParams('--number-processes', 1)
                  ->addParams('--cache', $iCacheMemory)
                  ->addParams('--output', 'gazetteer')
-                 ->addParams('--style', CONST_Import_Style)
+                 ->addParams('--style', getImportStyle())
                  ->addParams('--database', $aDSNInfo['database'])
                  ->addParams('--port', $aDSNInfo['port']);
 
@@ -88,8 +93,8 @@ if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
 if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
     $oOsm2pgsqlCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
 }
-if (!is_null(CONST_Osm2pgsql_Flatnode_File) && CONST_Osm2pgsql_Flatnode_File) {
-    $oOsm2pgsqlCmd->addParams('--flat-nodes', CONST_Osm2pgsql_Flatnode_File);
+if (getSetting('FLATNODE_FILE')) {
+    $oOsm2pgsqlCmd->addParams('--flat-nodes', getSetting('FLATNODE_FILE'));
 }
 if ($fPostgresVersion >= 11.0) {
     $oOsm2pgsqlCmd->addEnvPair(
@@ -99,7 +104,7 @@ if ($fPostgresVersion >= 11.0) {
 }
 
 
-$oIndexCmd = (new \Nominatim\Shell(CONST_BasePath.'/nominatim/nominatim.py'))
+$oIndexCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
              ->addParams('--database', $aDSNInfo['database'])
              ->addParams('--port', $aDSNInfo['port'])
              ->addParams('--threads', $aResult['index-instances']);
@@ -119,31 +124,34 @@ if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
     $oIndexCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
 }
 
+$sPyosmiumBin = getSetting('PYOSMIUM_BINARY');
+$sBaseURL = getSetting('REPLICATION_URL');
+
 
 if ($aResult['init-updates']) {
     // sanity check that the replication URL is correct
-    $sBaseState = file_get_contents(CONST_Replication_Url.'/state.txt');
+    $sBaseState = file_get_contents($sBaseURL.'/state.txt');
     if ($sBaseState === false) {
         echo "\nCannot find state.txt file at the configured replication URL.\n";
         echo "Does the URL point to a directory containing OSM update data?\n\n";
         fail('replication URL not reachable.');
     }
     // sanity check for pyosmium-get-changes
-    if (!CONST_Pyosmium_Binary) {
-        echo "\nCONST_Pyosmium_Binary not configured.\n";
+    if (!$sPyosmiumBin) {
+        echo "\nNOMINATIM_PYOSMIUM_BINARY not configured.\n";
         echo "You need to install pyosmium and set up the path to pyosmium-get-changes\n";
-        echo "in your local settings file.\n\n";
-        fail('CONST_Pyosmium_Binary not configured');
+        echo "in your local .env file.\n\n";
+        fail('NOMINATIM_PYOSMIUM_BINARY not configured');
     }
 
     $aOutput = 0;
-    $oCMD = new \Nominatim\Shell(CONST_Pyosmium_Binary, '--help');
+    $oCMD = new \Nominatim\Shell($sPyosmiumBin, '--help');
     exec($oCMD->escapedCmd(), $aOutput, $iRet);
 
     if ($iRet != 0) {
         echo "Cannot execute pyosmium-get-changes.\n";
         echo "Make sure you have pyosmium installed correctly\n";
-        echo "and have set up CONST_Pyosmium_Binary to point to pyosmium-get-changes.\n";
+        echo "and have set up NOMINATIM_PYOSMIUM_BINARY to point to pyosmium-get-changes.\n";
         fail('pyosmium-get-changes not found or not usable');
     }
 
@@ -164,9 +172,9 @@ if ($aResult['init-updates']) {
 
     // get the appropriate state id
     $aOutput = 0;
-    $oCMD = (new \Nominatim\Shell(CONST_Pyosmium_Binary))
+    $oCMD = (new \Nominatim\Shell($sPyosmiumBin))
             ->addParams('--start-date', $sWindBack)
-            ->addParams('--server', CONST_Replication_Url);
+            ->addParams('--server', $sBaseURL);
 
     exec($oCMD->escapedCmd(), $aOutput, $iRet);
     if ($iRet != 0 || $aOutput[0] == 'None') {
@@ -193,8 +201,8 @@ if ($aResult['check-for-updates']) {
         fail('Updates not set up. Please run ./utils/update.php --init-updates.');
     }
 
-    $oCmd = (new \Nominatim\Shell(CONST_BasePath.'/utils/check_server_for_updates.py'))
-            ->addParams(CONST_Replication_Url)
+    $oCmd = (new \Nominatim\Shell(CONST_BinDir.'/check_server_for_updates.py'))
+            ->addParams($sBaseURL)
             ->addParams($aLastState['sequence_id']);
     $iRet = $oCmd->run();
 
@@ -223,11 +231,11 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
 
 if ($aResult['calculate-postcodes']) {
     info('Update postcodes centroids');
-    $sTemplate = file_get_contents(CONST_BasePath.'/sql/update-postcodes.sql');
+    $sTemplate = file_get_contents(CONST_DataDir.'/sql/update-postcodes.sql');
     runSQLScript($sTemplate, true, true);
 }
 
-$sTemporaryFile = CONST_BasePath.'/data/osmosischange.osc';
+$sTemporaryFile = CONST_InstallDir.'/osmosischange.osc';
 $bHaveDiff = false;
 $bUseOSMApi = isset($aResult['import-from-main-api']) && $aResult['import-from-main-api'];
 $sContentURL = '';
@@ -274,7 +282,7 @@ if ($bHaveDiff) {
 
 if ($aResult['recompute-word-counts']) {
     info('Recompute frequency of full-word search terms');
-    $sTemplate = file_get_contents(CONST_BasePath.'/sql/words_from_search_name.sql');
+    $sTemplate = file_get_contents(CONST_DataDir.'/sql/words_from_search_name.sql');
     runSQLScript($sTemplate, true, true);
 }
 
@@ -291,8 +299,9 @@ if ($aResult['index']) {
 }
 
 if ($aResult['update-address-levels']) {
-    echo 'Updating address levels from '.CONST_Address_Level_Config.".\n";
-    $oAlParser = new \Nominatim\Setup\AddressLevelParser(CONST_Address_Level_Config);
+    $sAddressLevelConfig = getSettingConfig('ADDRESS_LEVEL_CONFIG', 'address-levels.json');
+    echo 'Updating address levels from '.$sAddressLevelConfig.".\n";
+    $oAlParser = new \Nominatim\Setup\AddressLevelParser($sAddressLevelConfig);
     $oAlParser->createTable($oDB, 'address_levels');
 }
 
@@ -315,17 +324,17 @@ if ($aResult['recompute-importance']) {
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
     //
-    if (strpos(CONST_Replication_Url, 'download.geofabrik.de') !== false && CONST_Replication_Update_Interval < 86400) {
+    if (strpos($sBaseURL, 'download.geofabrik.de') !== false && getSetting('REPLICATION_UPDATE_INTERVAL') < 86400) {
         fail('Error: Update interval too low for download.geofabrik.de. ' .
              "Please check install documentation (https://nominatim.org/release-docs/latest/admin/Import-and-Update#setting-up-the-update-process)\n");
     }
 
-    $sImportFile = CONST_InstallPath.'/osmosischange.osc';
+    $sImportFile = CONST_InstallDir.'/osmosischange.osc';
 
-    $oCMDDownload = (new \Nominatim\Shell(CONST_Pyosmium_Binary))
-                    ->addParams('--server', CONST_Replication_Url)
+    $oCMDDownload = (new \Nominatim\Shell($sPyosmiumBin))
+                    ->addParams('--server', $sBaseURL)
                     ->addParams('--outfile', $sImportFile)
-                    ->addParams('--size', CONST_Replication_Max_Diff_size);
+                    ->addParams('--size', getSetting('REPLICATION_MAX_DIFF'));
 
     $oCMDImport = (clone $oOsm2pgsqlCmd)->addParams($sImportFile);
 
@@ -345,7 +354,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
 
         if ($aLastState['indexed']) {
             // Sleep if the update interval has not yet been reached.
-            $fNextUpdate = $aLastState['unix_ts'] + CONST_Replication_Update_Interval;
+            $fNextUpdate = $aLastState['unix_ts'] + getSetting('REPLICATION_UPDATE_INTERVAL');
             if ($fNextUpdate > $fStartTime) {
                 $iSleepTime = $fNextUpdate - $fStartTime;
                 echo "Waiting for next update for $iSleepTime sec.";
@@ -366,8 +375,9 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
                 exec($oCMD->escapedCmd(), $aOutput, $iResult);
 
                 if ($iResult == 3) {
-                    echo 'No new updates. Sleeping for '.CONST_Replication_Recheck_Interval." sec.\n";
-                    sleep(CONST_Replication_Recheck_Interval);
+                    $sSleep = getSetting('REPLICATION_RECHECK_INTERVAL');
+                    echo 'No new updates. Sleeping for '.$sSleep." sec.\n";
+                    sleep($sSleep);
                 } elseif ($iResult != 0) {
                     echo 'ERROR: updates failed.';
                     exit($iResult);
@@ -379,7 +389,7 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             // get the newest object from the diff file
             $sBatchEnd = 0;
             $iRet = 0;
-            $oCMD = new \Nominatim\Shell(CONST_BasePath.'/utils/osm_file_date.py', $sImportFile);
+            $oCMD = new \Nominatim\Shell(CONST_BinDir.'/osm_file_date.py', $sImportFile);
             exec($oCMD->escapedCmd(), $sBatchEnd, $iRet);
             if ($iRet == 5) {
                 echo "Diff file is empty. skipping import.\n";

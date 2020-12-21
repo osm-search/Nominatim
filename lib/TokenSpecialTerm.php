@@ -2,7 +2,7 @@
 
 namespace Nominatim\Token;
 
-require_once(CONST_BasePath.'/lib/SpecialSearchOperator.php');
+require_once(CONST_LibDir.'/SpecialSearchOperator.php');
 
 /**
  * A word token describing a place type.

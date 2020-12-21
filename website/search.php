@@ -1,12 +1,12 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-website.php');
-require_once(CONST_BasePath.'/lib/log.php');
-require_once(CONST_BasePath.'/lib/Geocode.php');
-require_once(CONST_BasePath.'/lib/output.php');
+require_once(CONST_LibDir.'/init-website.php');
+require_once(CONST_LibDir.'/log.php');
+require_once(CONST_LibDir.'/Geocode.php');
+require_once(CONST_LibDir.'/output.php');
 ini_set('memory_limit', '200M');
 
-$oDB = new Nominatim\DB();
+$oDB = new Nominatim\DB(CONST_Database_DSN);
 $oDB->connect();
 $oParams = new Nominatim\ParameterParser();
 
@@ -14,15 +14,6 @@ $oGeocode = new Nominatim\Geocode($oDB);
 
 $aLangPrefOrder = $oParams->getPreferredLanguages();
 $oGeocode->setLanguagePreference($aLangPrefOrder);
-
-if (CONST_Search_ReversePlanForAll
-    || isset($aLangPrefOrder['name:de'])
-    || isset($aLangPrefOrder['name:ru'])
-    || isset($aLangPrefOrder['name:ja'])
-    || isset($aLangPrefOrder['name:pl'])
-) {
-    $oGeocode->setReverseInPlan(true);
-}
 
 // Format for output
 $sOutputFormat = $oParams->getSet('format', array('xml', 'json', 'jsonv2', 'geojson', 'geocodejson'), 'jsonv2');
@@ -41,7 +32,7 @@ if (CONST_Search_BatchMode && isset($_GET['batch'])) {
         $aSearchResults = $oBatchGeocode->lookup();
         $aBatchResults[] = $aSearchResults;
     }
-    include(CONST_BasePath.'/lib/template/search-batch-json.php');
+    include(CONST_LibDir.'/template/search-batch-json.php');
     exit;
 }
 
@@ -89,4 +80,4 @@ if (isset($_SERVER['REQUEST_SCHEME'])
 if (CONST_Debug) exit;
 
 $sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
-include(CONST_BasePath.'/lib/template/search-'.$sOutputTemplate.'.php');
+include(CONST_LibDir.'/template/search-'.$sOutputTemplate.'.php');

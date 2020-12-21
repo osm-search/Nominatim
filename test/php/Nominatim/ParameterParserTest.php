@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/ParameterParser.php');
+require_once(CONST_LibDir.'/ParameterParser.php');
 
 
 function userError($sError)

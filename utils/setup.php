@@ -1,8 +1,8 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
-require_once(CONST_BasePath.'/lib/setup/SetupClass.php');
-require_once(CONST_BasePath.'/lib/setup_functions.php');
+require_once(CONST_LibDir.'/init-cmd.php');
+require_once(CONST_LibDir.'/setup/SetupClass.php');
+require_once(CONST_LibDir.'/setup_functions.php');
 ini_set('memory_limit', '800M');
 
 use Nominatim\Setup\SetupFunctions as SetupFunctions;
@@ -44,10 +44,14 @@ $aCMDOptions
    array('create-country-names', '', 0, 1, 0, 0, 'bool', 'Create default list of searchable country names'),
    array('drop', '', 0, 1, 0, 0, 'bool', 'Drop tables needed for updates, making the database readonly (EXPERIMENTAL)'),
    array('setup-website', '', 0, 1, 0, 0, 'bool', 'Used to compile environment variables for the website'),
+   array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 
 // $aCMDOptions passed to getCmdOpt by reference
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
+
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
+setupHTTPProxy();
 
 $bDidSomething = false;
 
@@ -114,7 +118,11 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
-    $oSetup->importTigerData();
+    $sTigerPath = getSetting('TIGER_DATA_PATH');
+    if (!$sTigerPath) {
+        $sTigerPath = CONST_DataDir.'/data/tiger';
+    }
+    $oSetup->importTigerData($sTigerPath);
 }
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {

@@ -1,4 +1,4 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/lib.php');
-require_once(CONST_BasePath.'/lib/DB.php');
+require_once(CONST_LibDir.'/lib.php');
+require_once(CONST_LibDir.'/DB.php');

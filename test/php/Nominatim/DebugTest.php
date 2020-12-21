@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/DebugHtml.php');
+require_once(CONST_LibDir.'/DebugHtml.php');
 
 class DebugTest extends \PHPUnit\Framework\TestCase
 {

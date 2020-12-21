@@ -1,6 +1,6 @@
 <?php
 
-require_once(CONST_BasePath.'/lib/init-cmd.php');
+require_once(CONST_LibDir.'/init-cmd.php');
 
 ini_set('memory_limit', '800M');
 ini_set('display_errors', 'stderr');
@@ -11,10 +11,12 @@ $aCMDOptions
     array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
     array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
     array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
+    array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
    );
 getCmdOpt($_SERVER['argv'], $aCMDOptions, $aCMDResult, true, true);
 
-include(CONST_Phrase_Config);
+loadSettings($aCMDResult['project-dir'] ?? getcwd());
+setupHTTPProxy();
 
 if (true) {
     $sURL = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Country_Codes';

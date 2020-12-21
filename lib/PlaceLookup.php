@@ -2,8 +2,8 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/AddressDetails.php');
-require_once(CONST_BasePath.'/lib/Result.php');
+require_once(CONST_LibDir.'/AddressDetails.php');
+require_once(CONST_LibDir.'/Result.php');
 
 class PlaceLookup
 {
@@ -486,65 +486,63 @@ class PlaceLookup
         $aOutlineResult = array();
         if (!$iPlaceID) return $aOutlineResult;
 
-        if (CONST_Search_AreaPolygons) {
-            // Get the bounding box and outline polygon
-            $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
-            if ($fLonReverse != null && $fLatReverse != null) {
-                $sSQL .= ' ST_Y(closest_point) as centrelat,';
-                $sSQL .= ' ST_X(closest_point) as centrelon,';
-            } else {
-                $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
+        // Get the bounding box and outline polygon
+        $sSQL = 'select place_id,0 as numfeatures,st_area(geometry) as area,';
+        if ($fLonReverse != null && $fLatReverse != null) {
+            $sSQL .= ' ST_Y(closest_point) as centrelat,';
+            $sSQL .= ' ST_X(closest_point) as centrelon,';
+        } else {
+            $sSQL .= ' ST_Y(centroid) as centrelat, ST_X(centroid) as centrelon,';
+        }
+        $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
+        $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
+        if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
+        if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
+        if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
+        if ($this->bIncludePolygonAsText) $sSQL .= ',ST_AsText(geometry) as astext';
+        if ($fLonReverse != null && $fLatReverse != null) {
+            $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
+            $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
+            $sFrom .=' ELSE centroid END AS closest_point';
+            $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
+        } else {
+            $sFrom = ' from placex where place_id = '.$iPlaceID;
+        }
+        if ($this->fPolygonSimplificationThreshold > 0) {
+            $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
+        } else {
+            $sSQL .= $sFrom;
+        }
+
+        $aPointPolygon = $this->oDB->getRow($sSQL, null, 'Could not get outline');
+
+        if ($aPointPolygon && $aPointPolygon['place_id']) {
+            if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {
+                $aOutlineResult['lat'] = $aPointPolygon['centrelat'];
+                $aOutlineResult['lon'] = $aPointPolygon['centrelon'];
             }
-            $sSQL .= ' ST_YMin(geometry) as minlat,ST_YMax(geometry) as maxlat,';
-            $sSQL .= ' ST_XMin(geometry) as minlon,ST_XMax(geometry) as maxlon';
-            if ($this->bIncludePolygonAsGeoJSON) $sSQL .= ',ST_AsGeoJSON(geometry) as asgeojson';
-            if ($this->bIncludePolygonAsKML) $sSQL .= ',ST_AsKML(geometry) as askml';
-            if ($this->bIncludePolygonAsSVG) $sSQL .= ',ST_AsSVG(geometry) as assvg';
-            if ($this->bIncludePolygonAsText) $sSQL .= ',ST_AsText(geometry) as astext';
-            if ($fLonReverse != null && $fLatReverse != null) {
-                $sFrom = ' from (SELECT * , CASE WHEN (class = \'highway\') AND (ST_GeometryType(geometry) = \'ST_LineString\') THEN ';
-                $sFrom .=' ST_ClosestPoint(geometry, ST_SetSRID(ST_Point('.$fLatReverse.','.$fLonReverse.'),4326))';
-                $sFrom .=' ELSE centroid END AS closest_point';
-                $sFrom .= ' from placex where place_id = '.$iPlaceID.') as plx';
-            } else {
-                $sFrom = ' from placex where place_id = '.$iPlaceID;
-            }
-            if ($this->fPolygonSimplificationThreshold > 0) {
-                $sSQL .= ' from (select place_id,centroid,ST_SimplifyPreserveTopology(geometry,'.$this->fPolygonSimplificationThreshold.') as geometry'.$sFrom.') as plx';
-            } else {
-                $sSQL .= $sFrom;
+
+            if ($this->bIncludePolygonAsGeoJSON) $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
+            if ($this->bIncludePolygonAsKML) $aOutlineResult['askml'] = $aPointPolygon['askml'];
+            if ($this->bIncludePolygonAsSVG) $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
+            if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
+
+            if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001) {
+                $aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
+                $aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
             }
 
-            $aPointPolygon = $this->oDB->getRow($sSQL, null, 'Could not get outline');
-
-            if ($aPointPolygon && $aPointPolygon['place_id']) {
-                if ($aPointPolygon['centrelon'] !== null && $aPointPolygon['centrelat'] !== null) {
-                    $aOutlineResult['lat'] = $aPointPolygon['centrelat'];
-                    $aOutlineResult['lon'] = $aPointPolygon['centrelon'];
-                }
-
-                if ($this->bIncludePolygonAsGeoJSON) $aOutlineResult['asgeojson'] = $aPointPolygon['asgeojson'];
-                if ($this->bIncludePolygonAsKML) $aOutlineResult['askml'] = $aPointPolygon['askml'];
-                if ($this->bIncludePolygonAsSVG) $aOutlineResult['assvg'] = $aPointPolygon['assvg'];
-                if ($this->bIncludePolygonAsText) $aOutlineResult['astext'] = $aPointPolygon['astext'];
-
-                if (abs($aPointPolygon['minlat'] - $aPointPolygon['maxlat']) < 0.0000001) {
-                    $aPointPolygon['minlat'] = $aPointPolygon['minlat'] - $fRadius;
-                    $aPointPolygon['maxlat'] = $aPointPolygon['maxlat'] + $fRadius;
-                }
-
-                if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001) {
-                    $aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
-                    $aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
-                }
-
-                $aOutlineResult['aBoundingBox'] = array(
-                                                   (string)$aPointPolygon['minlat'],
-                                                   (string)$aPointPolygon['maxlat'],
-                                                   (string)$aPointPolygon['minlon'],
-                                                   (string)$aPointPolygon['maxlon']
-                                                  );
+            if (abs($aPointPolygon['minlon'] - $aPointPolygon['maxlon']) < 0.0000001) {
+                $aPointPolygon['minlon'] = $aPointPolygon['minlon'] - $fRadius;
+                $aPointPolygon['maxlon'] = $aPointPolygon['maxlon'] + $fRadius;
             }
+
+            $aOutlineResult['aBoundingBox'] = array(
+                                               (string)$aPointPolygon['minlat'],
+                                               (string)$aPointPolygon['maxlat'],
+                                               (string)$aPointPolygon['minlon'],
+                                               (string)$aPointPolygon['maxlon']
+                                              );
         }
 
         // as a fallback we generate a bounding box without knowing the size of the geometry

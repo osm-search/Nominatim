@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/DatabaseError.php');
+require_once(CONST_LibDir.'/DatabaseError.php');
 
 /**
  * Uses PDO to access the database specified in the CONST_Database_DSN
@@ -12,9 +12,9 @@ class DB
 {
     protected $connection;
 
-    public function __construct($sDSN = CONST_Database_DSN)
+    public function __construct($sDSN = null)
     {
-        $this->sDSN = $sDSN;
+        $this->sDSN = $sDSN ?? getSetting('DATABASE_DSN');
     }
 
     public function connect($bNew = false, $bPersistent = true)

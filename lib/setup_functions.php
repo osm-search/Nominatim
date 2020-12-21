@@ -15,17 +15,23 @@ function checkInFile($sOSMFile)
     }
 }
 
-function checkModulePresence()
+function getOsm2pgsqlBinary()
 {
-    // Try accessing the C module, so we know early if something is wrong.
-    // Raises Nominatim\DatabaseError on failure
+    $sBinary = getSetting('OSM2PGSQL_BINARY');
+    if (!$sBinary) {
+        $sBinary = CONST_InstallDir.'/osm2pgsql/osm2pgsql';
+    }
 
-    $sModulePath = CONST_Database_Module_Path;
-    $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-    $sSQL .= $sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
-    $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
+    return $sBinary;
+}
 
-    $oDB = new \Nominatim\DB();
-    $oDB->connect();
-    $oDB->exec($sSQL, null, 'Database server failed to load '.$sModulePath.'/nominatim.so module');
+function getImportStyle()
+{
+    $sStyle = getSetting('IMPORT_STYLE');
+
+    if (in_array($sStyle, array('admin', 'street', 'address', 'full', 'extratags'))) {
+        return CONST_DataDir.'/settings/import-'.$sStyle.'.style';
+    }
+
+    return $sStyle;
 }

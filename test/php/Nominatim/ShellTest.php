@@ -2,7 +2,7 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/Shell.php');
+require_once(CONST_LibDir.'/Shell.php');
 
 class ShellTest extends \PHPUnit\Framework\TestCase
 {

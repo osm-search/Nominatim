@@ -2,12 +2,12 @@
 
 namespace Nominatim;
 
-require_once(CONST_BasePath.'/lib/PlaceLookup.php');
-require_once(CONST_BasePath.'/lib/Phrase.php');
-require_once(CONST_BasePath.'/lib/ReverseGeocode.php');
-require_once(CONST_BasePath.'/lib/SearchDescription.php');
-require_once(CONST_BasePath.'/lib/SearchContext.php');
-require_once(CONST_BasePath.'/lib/TokenList.php');
+require_once(CONST_LibDir.'/PlaceLookup.php');
+require_once(CONST_LibDir.'/Phrase.php');
+require_once(CONST_LibDir.'/ReverseGeocode.php');
+require_once(CONST_LibDir.'/SearchDescription.php');
+require_once(CONST_LibDir.'/SearchContext.php');
+require_once(CONST_LibDir.'/TokenList.php');
 
 class Geocode
 {
@@ -18,7 +18,7 @@ class Geocode
     protected $aLangPrefOrder = array();
 
     protected $aExcludePlaceIDs = array();
-    protected $bReverseInPlan = false;
+    protected $bReverseInPlan = true;
 
     protected $iLimit = 20;
     protected $iFinalLimit = 10;

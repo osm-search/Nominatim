@@ -32,7 +32,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-12 postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
-                        php php-pgsql php-intl \
+                        php php-pgsql php-intl php-symfony-dotenv \
                         python3-psycopg2 git
 
 #

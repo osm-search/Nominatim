@@ -28,6 +28,13 @@ function isReverseOnlyInstallation()
     return !$oDB->tableExists('search_name');
 }
 
+// Check (guess) if the setup.php included --drop
+function isNoUpdateInstallation()
+{
+    global $oDB;
+    return $oDB->tableExists('placex') && !$oDB->tableExists('planet_osm_rels') ;
+}
+
 
 echo 'Checking database got created ... ';
 if ($oDB->checkConnection()) {
@@ -63,25 +70,26 @@ END;
     exit(1);
 }
 
-echo 'Checking place table ... ';
-if ($oDB->tableExists('place')) {
-    $print_success();
-} else {
-    $print_fail();
-    echo <<< END
-    * The import didn't finish.
-    Hints:
-    * Check the output of the utils/setup.php you ran.
-    Usually the osm2pgsql step failed. Check for errors related to
-    * the file you imported not containing any places
-    * harddrive full
-    * out of memory (RAM)
-    * osm2pgsql killed by other scripts, for consuming to much memory
+if (!isNoUpdateInstallation()) {
+    echo 'Checking place table ... ';
+    if ($oDB->tableExists('place')) {
+        $print_success();
+    } else {
+        $print_fail();
+        echo <<< END
+        * The import didn't finish.
+        Hints:
+        * Check the output of the utils/setup.php you ran.
+        Usually the osm2pgsql step failed. Check for errors related to
+        * the file you imported not containing any places
+        * harddrive full
+        * out of memory (RAM)
+        * osm2pgsql killed by other scripts, for consuming to much memory
 
-END;
-    exit(1);
+    END;
+        exit(1);
+    }
 }
-
 
 
 echo 'Checking indexing status ... ';
@@ -106,14 +114,11 @@ $aExpectedIndices = array(
     'idx_place_addressline_address_place_id',
     'idx_placex_rank_search',
     'idx_placex_rank_address',
-    'idx_placex_pendingsector',
     'idx_placex_parent_place_id',
     'idx_placex_geometry_reverse_lookuppolygon',
     'idx_placex_geometry_reverse_placenode',
-    'idx_location_area_country_place_id',
     'idx_osmline_parent_place_id',
     'idx_osmline_parent_osm_id',
-    'idx_place_osm_unique',
     'idx_postcode_id',
     'idx_postcode_postcode'
 );
@@ -123,6 +128,13 @@ if (!isReverseOnlyInstallation()) {
         'idx_search_name_nameaddress_vector',
         'idx_search_name_name_vector',
         'idx_search_name_centroid'
+    ));
+}
+if (!isNoUpdateInstallation()) {
+    $aExpectedIndices = array_merge($aExpectedIndices, array(
+        'idx_placex_pendingsector',
+        'idx_location_area_country_place_id',
+        'idx_place_osm_unique',
     ));
 }
 

@@ -2,7 +2,6 @@ import subprocess
 import tempfile
 import random
 import os
-from nose.tools import * # for assert functions
 
 @given(u'the ([0-9.]+ )?grid')
 def define_node_grid(context, grid_step):

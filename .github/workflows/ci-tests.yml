@@ -48,7 +48,7 @@ jobs:
             - name: Install test prerequsites
               run: |
                    sudo apt-get install -y -qq php-codesniffer python3-tidylib
-                   sudo pip3 install behave nose
+                   sudo pip3 install behave
 
             - name: PHP linting
               run: phpcs --report-width=120 .

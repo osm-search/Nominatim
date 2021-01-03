@@ -5,7 +5,6 @@ import psycopg2
 import psycopg2.extras
 import subprocess
 import tempfile
-from nose.tools import * # for assert functions
 from sys import version_info as python_version
 
 logger = logging.getLogger(__name__)
@@ -27,6 +26,7 @@ userconfig = {
 }
 
 use_step_matcher("re")
+
 
 class NominatimEnvironment(object):
     """ Collects all functions for the execution of Nominatim functions.
@@ -242,7 +242,7 @@ class OSMDataFactory(object):
             return geom
         else:
             pt = self.grid_node(int(geom))
-            assert_is_not_none(pt, "Point not found in grid")
+            assert pt is not None, "Bad scenario: Point '{}' not found in grid".format(geom)
             return "%f %f" % pt
 
     def get_scene_geometry(self, default_scene, name):
@@ -250,7 +250,7 @@ class OSMDataFactory(object):
         for obj in name.split('+'):
             oname = obj.strip()
             if oname.startswith(':'):
-                assert_is_not_none(default_scene, "You need to set a scene")
+                assert default_scene is not None, "Bad scenario: You need to set a scene"
                 defscene = self.load_scene(default_scene)
                 wkt = defscene[oname[1:]]
             else:

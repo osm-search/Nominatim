@@ -2,8 +2,9 @@ import base64
 import random
 import string
 import re
-from nose.tools import * # for assert functions
 import psycopg2.extras
+
+from check_functions import Almost
 
 class PlaceColumn:
 
@@ -25,15 +26,15 @@ class PlaceColumn:
         elif key in ('name', 'address', 'extratags'):
             self.columns[key] = eval('{' + value + '}')
         else:
-            assert_in(key, ('class', 'type'))
+            assert key in ('class', 'type')
             self.columns[key] = None if value == '' else value
 
     def set_key_name(self, value):
         self.add_hstore('name', 'name', value)
 
     def set_key_osm(self, value):
-        assert_in(value[0], 'NRW')
-        ok_(value[1:].isdigit())
+        assert value[0] in 'NRW'
+        assert value[1:].isdigit()
 
         self.columns['osm_type'] = value[0]
         self.columns['osm_id'] = int(value[1:])
@@ -63,7 +64,7 @@ class PlaceColumn:
 
     def set_key_geometry(self, value):
         self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
-        assert_is_not_none(self.geometry)
+        assert self.geometry is not None
 
     def add_hstore(self, column, key, value):
         if column in self.columns:
@@ -72,7 +73,7 @@ class PlaceColumn:
             self.columns[column] = { key : value }
 
     def db_insert(self, cursor):
-        assert_in('osm_type', self.columns)
+        assert 'osm_type' in self.columns
         if self.force_name and 'name' not in self.columns:
             self.add_hstore('name', 'name', ''.join(random.choice(string.printable)
                                            for _ in range(int(random.random()*30))))
@@ -84,7 +85,7 @@ class PlaceColumn:
 
             self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % pt
         else:
-            assert_is_not_none(self.geometry, "Geometry missing")
+            assert self.geometry is not None, "Geometry missing"
         query = 'INSERT INTO place (%s, geometry) values(%s, %s)' % (
                      ','.join(self.columns.keys()),
                      ','.join(['%s' for x in range(len(self.columns))]),
@@ -117,23 +118,23 @@ class PlaceObjName(object):
         cur.execute("""SELECT osm_type, osm_id, class
                        FROM placex WHERE place_id = %s""",
                     (self.pid, ))
-        eq_(1, cur.rowcount, "No entry found for place id %s" % self.pid)
+        assert cur.rowcount == 1, "No entry found for place id %s" % self.pid
 
         return "%s%s:%s" % cur.fetchone()
 
 def compare_place_id(expected, result, column, context):
     if expected == '0':
-        eq_(0, result,
+        assert result == 0, \
             LazyFmt("Bad place id in column %s. Expected: 0, got: %s.",
-                    column, PlaceObjName(result, context.db)))
+                    column, PlaceObjName(result, context.db))
     elif expected == '-':
-        assert_is_none(result,
+        assert result is None, \
                 LazyFmt("bad place id in column %s: %s.",
-                        column, PlaceObjName(result, context.db)))
+                        column, PlaceObjName(result, context.db))
     else:
-        eq_(NominatimID(expected).get_place_id(context.db.cursor()), result,
+        assert NominatimID(expected).get_place_id(context.db.cursor()) == result, \
             LazyFmt("Bad place id in column %s. Expected: %s, got: %s.",
-                    column, expected, PlaceObjName(result, context.db)))
+                    column, expected, PlaceObjName(result, context.db))
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
@@ -144,7 +145,7 @@ def check_database_integrity(context):
                     (SELECT place_id, address_place_id, count(*) as c
                      FROM place_addressline GROUP BY place_id, address_place_id) x
                    WHERE c > 1""")
-    eq_(0, cur.fetchone()[0], "Duplicates found in place_addressline")
+    assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
 
 
 class NominatimID:
@@ -160,7 +161,7 @@ class NominatimID:
 
         if oid is not None:
             m = self.id_regex.fullmatch(oid)
-            assert_is_not_none(m, "ID '%s' not of form <osmtype><osmid>[:<class>]" % oid)
+            assert m is not None, "ID '%s' not of form <osmtype><osmid>[:<class>]" % oid
 
             self.typ = m.group('tp')
             self.oid = m.group('id')
@@ -188,9 +189,8 @@ class NominatimID:
     def get_place_id(self, cur):
         where, params = self.table_select()
         cur.execute("SELECT place_id FROM placex WHERE %s" % where, params)
-        eq_(1, cur.rowcount,
-            "Expected exactly 1 entry in placex for %s found %s"
-              % (str(self), cur.rowcount))
+        assert cur.rowcount == 1, \
+            "Expected exactly 1 entry in placex for %s found %s" % (str(self), cur.rowcount)
 
         return cur.fetchone()[0]
 
@@ -206,25 +206,24 @@ def assert_db_column(row, column, value, context):
                       row['cx'], row['cy'], row['geomtxt'])
             cur = context.db.cursor()
             cur.execute(query)
-            eq_(cur.fetchone()[0], True, "(Row %s failed: %s)" % (column, query))
+            assert cur.fetchone()[0], "(Row %s failed: %s)" % (column, query)
         else:
             fac = float(column[9:]) if column.startswith('centroid*') else 1.0
             x, y = value.split(' ')
-            assert_almost_equal(float(x) * fac, row['cx'], msg="Bad x coordinate")
-            assert_almost_equal(float(y) * fac, row['cy'], msg="Bad y coordinate")
+            assert Almost(float(x) * fac) == row['cx'], "Bad x coordinate"
+            assert Almost(float(y) * fac) == row['cy'], "Bad y coordinate"
     elif column == 'geometry':
         geom = context.osm.parse_geometry(value, context.scene)
         cur = context.db.cursor()
         query = "SELECT ST_Equals(ST_SnapToGrid(%s, 0.00001, 0.00001), ST_SnapToGrid(ST_SetSRID('%s'::geometry, 4326), 0.00001, 0.00001))" % (
                  geom, row['geomtxt'],)
         cur.execute(query)
-        eq_(cur.fetchone()[0], True, "(Row %s failed: %s)" % (column, query))
+        assert cur.fetchone()[0], "(Row %s failed: %s)" % (column, query)
     elif value == '-':
-        assert_is_none(row[column], "Row %s" % column)
+        assert row[column] is None, "Row %s" % column
     else:
-        eq_(value, str(row[column]),
-            "Row '%s': expected: %s, got: %s"
-            % (column, value, str(row[column])))
+        assert value == str(row[column]), \
+            "Row '%s': expected: %s, got: %s" % (column, value, str(row[column]))
 
 
 ################################ STEPS ##################################
@@ -374,7 +373,7 @@ def check_placex_contents(context, exact):
                        ST_X(centroid) as cx, ST_Y(centroid) as cy
                        FROM placex where %s""" % where,
                     params)
-        assert_less(0, cur.rowcount, "No rows found for " + row['object'])
+        assert cur.rowcount > 0, "No rows found for " + row['object']
 
         for res in cur:
             if exact:
@@ -382,24 +381,23 @@ def check_placex_contents(context, exact):
             for h in row.headings:
                 if h in ('extratags', 'address'):
                     if row[h] == '-':
-                        assert_is_none(res[h])
+                        assert res[h] is None
                     else:
                         vdict = eval('{' + row[h] + '}')
-                        assert_equals(vdict, res[h])
+                        assert vdict == res[h]
                 elif h.startswith('name'):
                     name = h[5:] if h.startswith('name+') else 'name'
-                    assert_in(name, res['name'])
-                    eq_(res['name'][name], row[h])
+                    assert name in res['name']
+                    assert res['name'][name] == row[h]
                 elif h.startswith('extratags+'):
-                    eq_(res['extratags'][h[10:]], row[h])
+                    assert res['extratags'][h[10:]] == row[h]
                 elif h.startswith('addr+'):
                     if row[h] == '-':
                         if res['address'] is not None:
-                            assert_not_in(h[5:], res['address'])
+                            assert h[5:] not in res['address']
                     else:
-                        assert_in(h[5:], res['address'], "column " + h)
-                        assert_equals(res['address'][h[5:]], row[h],
-                                      "column %s" % h)
+                        assert h[5:] in res['address'], "column " + h
+                        assert res['address'][h[5:]] == row[h], "column %s" % h
                 elif h in ('linked_place_id', 'parent_place_id'):
                     compare_place_id(row[h], res[h], h, context)
                 else:
@@ -407,7 +405,7 @@ def check_placex_contents(context, exact):
 
     if exact:
         cur.execute('SELECT osm_type, osm_id, class from placex')
-        eq_(expected_content, set([(r[0], r[1], r[2]) for r in cur]))
+        assert expected_content == set([(r[0], r[1], r[2]) for r in cur])
 
     context.db.commit()
 
@@ -423,7 +421,7 @@ def check_placex_contents(context, exact):
                        ST_GeometryType(geometry) as geometrytype
                        FROM place where %s""" % where,
                     params)
-        assert_less(0, cur.rowcount, "No rows found for " + row['object'])
+        assert cur.rowcount > 0, "No rows found for " + row['object']
 
         for res in cur:
             if exact:
@@ -432,20 +430,20 @@ def check_placex_contents(context, exact):
                 msg = "%s: %s" % (row['object'], h)
                 if h in ('name', 'extratags', 'address'):
                     if row[h] == '-':
-                        assert_is_none(res[h], msg)
+                        assert res[h] is None, msg
                     else:
                         vdict = eval('{' + row[h] + '}')
-                        assert_equals(vdict, res[h], msg)
+                        assert vdict == res[h], msg
                 elif h.startswith('name+'):
-                    assert_equals(res['name'][h[5:]], row[h], msg)
+                    assert res['name'][h[5:]] == row[h], msg
                 elif h.startswith('extratags+'):
-                    assert_equals(res['extratags'][h[10:]], row[h], msg)
+                    assert res['extratags'][h[10:]] == row[h], msg
                 elif h.startswith('addr+'):
                     if row[h] == '-':
                         if res['address']  is not None:
-                            assert_not_in(h[5:], res['address'])
+                            assert h[5:] not in res['address']
                     else:
-                        assert_equals(res['address'][h[5:]], row[h], msg)
+                        assert res['address'][h[5:]] == row[h], msg
                 elif h in ('linked_place_id', 'parent_place_id'):
                     compare_place_id(row[h], res[h], h, context)
                 else:
@@ -453,7 +451,7 @@ def check_placex_contents(context, exact):
 
     if exact:
         cur.execute('SELECT osm_type, osm_id, class from place')
-        eq_(expected_content, set([(r[0], r[1], r[2]) for r in cur]))
+        assert expected_content, set([(r[0], r[1], r[2]) for r in cur])
 
     context.db.commit()
 
@@ -465,7 +463,7 @@ def check_search_name_contents(context, exclude):
         pid = NominatimID(row['object']).get_place_id(cur)
         cur.execute("""SELECT *, ST_X(centroid) as cx, ST_Y(centroid) as cy
                        FROM search_name WHERE place_id = %s""", (pid, ))
-        assert_less(0, cur.rowcount, "No rows found for " + row['object'])
+        assert cur.rowcount > 0, "No rows found for " + row['object']
 
         for res in cur:
             for h in row.headings:
@@ -487,15 +485,13 @@ def check_search_name_contents(context, exclude):
                                    """,
                                    (terms, words))
                     if not exclude:
-                        ok_(subcur.rowcount >= len(terms) + len(words),
-                            "No word entry found for " + row[h] + ". Entries found: " + str(subcur.rowcount))
+                        assert subcur.rowcount >= len(terms) + len(words), \
+                            "No word entry found for " + row[h] + ". Entries found: " + str(subcur.rowcount)
                     for wid in subcur:
                         if exclude:
-                            assert_not_in(wid[0], res[h],
-                                          "Found term for %s/%s: %s" % (pid, h, wid[1]))
+                            assert wid[0] not in res[h], "Found term for %s/%s: %s" % (pid, h, wid[1])
                         else:
-                            assert_in(wid[0], res[h],
-                                      "Missing term for %s/%s: %s" % (pid, h, wid[1]))
+                            assert wid[0] in res[h], "Missing term for %s/%s: %s" % (pid, h, wid[1])
                 else:
                     assert_db_column(res, h, row[h], context)
 
@@ -507,9 +503,8 @@ def check_location_postcode(context):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     cur.execute("SELECT *, ST_AsText(geometry) as geomtxt FROM location_postcode")
-    eq_(cur.rowcount, len(list(context.table)),
-        "Postcode table has %d rows, expected %d rows."
-          % (cur.rowcount, len(list(context.table))))
+    assert cur.rowcount == len(list(context.table)), \
+        "Postcode table has %d rows, expected %d rows." % (cur.rowcount, len(list(context.table)))
 
     table = list(cur)
     for row in context.table:
@@ -533,11 +528,9 @@ def check_word_table(context, exclude):
             values.append(row[h])
         cur.execute("SELECT * from word WHERE %s" % ' AND '.join(wheres), values)
         if exclude:
-            eq_(0, cur.rowcount,
-                "Row still in word table: %s" % '/'.join(values))
+            assert cur.rowcount == 0, "Row still in word table: %s" % '/'.join(values)
         else:
-            assert_greater(cur.rowcount, 0,
-                           "Row not in word table: %s" % '/'.join(values))
+            assert cur.rowcount > 0, "Row not in word table: %s" % '/'.join(values)
 
 @then("place_addressline contains")
 def check_place_addressline(context):
@@ -549,9 +542,8 @@ def check_place_addressline(context):
         cur.execute(""" SELECT * FROM place_addressline
                         WHERE place_id = %s AND address_place_id = %s""",
                     (pid, apid))
-        assert_less(0, cur.rowcount,
-                    "No rows found for place %s and address %s"
-                      % (row['object'], row['address']))
+        assert cur.rowcount > 0, \
+                    "No rows found for place %s and address %s" % (row['object'], row['address'])
 
         for res in cur:
             for h in row.headings:
@@ -570,8 +562,8 @@ def check_place_addressline_exclude(context):
         cur.execute(""" SELECT * FROM place_addressline
                         WHERE place_id = %s AND address_place_id = %s""",
                     (pid, apid))
-        eq_(0, cur.rowcount,
-            "Row found for place %s and address %s" % (row['object'], row['address']))
+        assert cur.rowcount == 0, \
+            "Row found for place %s and address %s" % (row['object'], row['address'])
 
     context.db.commit()
 
@@ -580,7 +572,7 @@ def check_location_property_osmline(context, oid, neg):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     nid = NominatimID(oid)
 
-    eq_('W', nid.typ, "interpolation must be a way")
+    assert 'W' == nid.typ, "interpolation must be a way"
 
     cur.execute("""SELECT *, ST_AsText(linegeo) as geomtxt
                    FROM location_property_osmline
@@ -588,7 +580,7 @@ def check_location_property_osmline(context, oid, neg):
                 (nid.oid, ))
 
     if neg:
-        eq_(0, cur.rowcount)
+        assert cur.rowcount == 0
         return
 
     todo = list(range(len(list(context.table))))
@@ -610,7 +602,7 @@ def check_location_property_osmline(context, oid, neg):
             else:
                 assert_db_column(res, h, row[h], context)
 
-    eq_(todo, [])
+    assert not todo
 
 
 @then("(?P<table>placex|place) has no entry for (?P<oid>.*)")
@@ -619,7 +611,7 @@ def check_placex_has_entry(context, table, oid):
     nid = NominatimID(oid)
     where, params = nid.table_select()
     cur.execute("SELECT * FROM %s where %s" % (table, where), params)
-    eq_(0, cur.rowcount)
+    assert cur.rowcount == 0
     context.db.commit()
 
 @then("search_name has no entry for (?P<oid>.*)")
@@ -627,5 +619,5 @@ def check_search_name_has_entry(context, oid):
     cur = context.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     pid = NominatimID(oid).get_place_id(cur)
     cur.execute("SELECT * FROM search_name WHERE place_id = %s", (pid, ))
-    eq_(0, cur.rowcount)
+    assert cur.rowcount == 0
     context.db.commit()

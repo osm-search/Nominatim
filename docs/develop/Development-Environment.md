@@ -29,7 +29,6 @@ The Nominatim test suite consists of behavioural tests (using behave) and
 unit tests (using PHPUnit). It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.5
-* [nose](https://nose.readthedocs.io)
 * [phpunit](https://phpunit.de) >= 7.3
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 
@@ -49,7 +48,7 @@ To install all necessary packages run:
 sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev
 
-pip3 install --user behave nose mkdocs
+pip3 install --user behave mkdocs
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

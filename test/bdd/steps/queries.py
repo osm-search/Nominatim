@@ -302,10 +302,9 @@ def send_api_query(endpoint, params, fmt, context):
 
     env['SCRIPT_NAME'] = '/%s.php' % endpoint
     env['REQUEST_URI'] = '%s?%s' % (env['SCRIPT_NAME'], env['QUERY_STRING'])
-    env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.build_dir, 'website')
+    env['CONTEXT_DOCUMENT_ROOT'] = os.path.join(context.nominatim.website_dir.name, 'website')
     env['SCRIPT_FILENAME'] = os.path.join(env['CONTEXT_DOCUMENT_ROOT'],
                                           '%s.php' % endpoint)
-    env['NOMINATIM_SETTINGS'] = context.nominatim.local_settings_file
 
     logger.debug("Environment:" + json.dumps(env, sort_keys=True, indent=2))
 
@@ -327,7 +326,7 @@ def send_api_query(endpoint, params, fmt, context):
     for k,v in params.items():
         cmd.append("%s=%s" % (k, v))
 
-    proc = subprocess.Popen(cmd, cwd=context.nominatim.build_dir, env=env,
+    proc = subprocess.Popen(cmd, cwd=context.nominatim.website_dir.name, env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     (outp, err) = proc.communicate()

@@ -42,7 +42,7 @@ class SetupFunctions
             $this->iCacheMemory = getCacheMemoryMB();
         }
 
-        $this->sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_InstallDir.'/module');
+        $this->sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_Default_ModulePath);
         info('module path: ' . $this->sModulePath);
 
         // parse database string
@@ -736,9 +736,6 @@ class SetupFunctions
             fwriteConstDef($rFile, 'LibDir', CONST_LibDir);
             fwriteConstDef($rFile, 'DataDir', CONST_DataDir);
             fwriteConstDef($rFile, 'InstallDir', CONST_InstallDir);
-
-            fwrite($rFile, "if (file_exists(getenv('NOMINATIM_SETTINGS'))) require_once(getenv('NOMINATIM_SETTINGS'));\n\n");
-
             fwriteConstDef($rFile, 'Database_DSN', getSetting('DATABASE_DSN'));
             fwriteConstDef($rFile, 'Default_Language', getSetting('DEFAULT_LANGUAGE'));
             fwriteConstDef($rFile, 'Log_DB', getSettingBool('LOG_DB'));

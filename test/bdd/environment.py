@@ -20,7 +20,6 @@ userconfig = {
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
-    'TEST_SETTINGS_FILE' : '/tmp/nominatim_settings.php',
     'SERVER_MODULE_PATH' : None,
     'PHPCOV' : False, # set to output directory to enable code coverage
 }
@@ -43,15 +42,14 @@ class NominatimEnvironment(object):
         self.test_db = config['TEST_DB']
         self.api_test_db = config['API_TEST_DB']
         self.server_module_path = config['SERVER_MODULE_PATH']
-        self.local_settings_file = config['TEST_SETTINGS_FILE']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
         self.code_coverage_path = config['PHPCOV']
         self.code_coverage_id = 1
         self.test_env = None
-        os.environ['NOMINATIM_SETTINGS'] = self.local_settings_file
 
         self.template_db_done = False
+        self.website_dir = None
 
     def connect_database(self, dbname):
         dbargs = {'database': dbname}
@@ -80,26 +78,24 @@ class NominatimEnvironment(object):
                  (';user=' + self.db_user) if self.db_user else '',
                  (';password=' + self.db_pass) if self.db_pass else ''
                  )
+
+        if self.website_dir is not None \
+           and self.test_env is not None \
+           and dsn == self.test_env['NOMINATIM_DATABASE_DSN']:
+            return # environment already set uo
+
         self.test_env = os.environ
         self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
 
-        f = open(self.local_settings_file, 'w')
-        # https://secure.php.net/manual/en/ref.pdo-pgsql.connection.php
-        f.write("<?php\n  @define('CONST_Database_DSN', '{}');\n".format(dsn))
-        f.write("@define('CONST_Osm2pgsql_Flatnode_File', null);\n")
-        f.write("@define('CONST_Import_Style', CONST_DataDir.'/settings/import-full.style');\n")
-        f.write("@define('CONST_Use_US_Tiger_Data', true);\n")
-        f.close()
+        if self.website_dir is not None:
+            self.website_dir.cleanup()
 
+        self.website_dir = tempfile.TemporaryDirectory()
+        self.run_setup_script('setup-website')
 
-    def cleanup(self):
-        try:
-            os.remove(self.local_settings_file)
-        except OSError:
-            pass # ignore missing file
 
     def db_drop_database(self, name):
         conn = self.connect_database('postgres')
@@ -203,7 +199,13 @@ class NominatimEnvironment(object):
         cmd.extend(['--%s' % x for x in args])
         for k, v in kwargs.items():
             cmd.extend(('--' + k.replace('_', '-'), str(v)))
-        proc = subprocess.Popen(cmd, cwd=self.build_dir, env=self.test_env,
+
+        if self.website_dir is not None:
+            cwd = self.website_dir.name
+        else:
+            cwd = self.build_dir
+
+        proc = subprocess.Popen(cmd, cwd=cwd, env=self.test_env,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (outp, outerr) = proc.communicate()
         outerr = outerr.decode('utf-8').replace('\\n', '\n')
@@ -299,9 +301,6 @@ def before_all(context):
     # Nominatim test setup
     context.nominatim = NominatimEnvironment(context.config.userdata)
     context.osm = OSMDataFactory()
-
-def after_all(context):
-    context.nominatim.cleanup()
 
 
 def before_scenario(context, scenario):

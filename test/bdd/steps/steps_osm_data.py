@@ -35,7 +35,7 @@ def define_node_grid(context, grid_step):
         grid_step = 0.00001
 
     context.osm.set_grid([context.table.headings] + [list(h) for h in context.table],
-                          grid_step)
+                         grid_step)
 
 
 @when(u'loading osm data')

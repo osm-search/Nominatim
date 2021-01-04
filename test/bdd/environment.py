@@ -5,7 +5,6 @@ import psycopg2
 import psycopg2.extras
 import subprocess
 import tempfile
-from sys import version_info as python_version
 
 logger = logging.getLogger(__name__)
 
@@ -172,10 +171,7 @@ class NominatimEnvironment(object):
         cur.execute('CREATE DATABASE %s TEMPLATE = %s' % (self.test_db, self.template_db))
         conn.close()
         context.db = self.connect_database(self.test_db)
-        if python_version[0] < 3:
-            psycopg2.extras.register_hstore(context.db, globally=False, unicode=True)
-        else:
-            psycopg2.extras.register_hstore(context.db, globally=False)
+        psycopg2.extras.register_hstore(context.db, globally=False)
 
     def teardown_db(self, context):
         if 'db' in context:

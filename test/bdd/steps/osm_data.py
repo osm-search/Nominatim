@@ -7,28 +7,16 @@ import os
 def define_node_grid(context, grid_step):
     """
     Define a grid of node positions.
+    Use a table to define the grid. The nodes must be integer ids. Optionally
+    you can give the grid distance. The default is 0.00001 degrees.
     """
     if grid_step is not None:
         grid_step = float(grid_step.strip())
     else:
         grid_step = 0.00001
 
-    context.osm.clear_grid()
-
-    i = 0
-    for h in context.table.headings:
-        if h.isdigit():
-            context.osm.add_grid_node(int(h), 0, i)
-        i += grid_step
-
-    x = grid_step
-    for r in context.table:
-        y = 0
-        for h in r:
-            if h.isdigit():
-                context.osm.add_grid_node(int(h), x, y)
-            y += grid_step
-        x += grid_step
+    context.osm.set_grid([context.table.headings] + [list(h) for h in context.table],
+                          grid_step)
 
 
 @when(u'loading osm data')

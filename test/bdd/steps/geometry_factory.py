@@ -9,7 +9,7 @@ class GeometryFactory:
         defpath = Path(__file__) / '..' / '..' / '..' / 'scenes' / 'data'
         self.scene_path = os.environ.get('SCENE_PATH', defpath.resolve())
         self.scene_cache = {}
-        self.clear_grid()
+        self.grid = {}
 
     def parse_geometry(self, geom, scene):
         """ Create a WKT SQL term for the given geometry.
@@ -103,11 +103,20 @@ class GeometryFactory:
 
         return scene
 
-    def clear_grid(self):
+    def set_grid(self, lines, grid_step):
+        """ Replace the grid with one from the given lines.
+        """
         self.grid = {}
-
-    def add_grid_node(self, nodeid, x, y):
-        self.grid[nodeid] = (x, y)
+        y = 0
+        for line in lines:
+            x = 0
+            for pt_id in line:
+                if pt_id.isdigit():
+                    self.grid[int(pt_id)] = (x, y)
+                x += grid_step
+            y += grid_step
 
     def grid_node(self, nodeid):
+        """ Get the coordinates for the given grid node.
+        """
         return self.grid.get(nodeid)

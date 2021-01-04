@@ -10,11 +10,11 @@ import io
 import re
 import logging
 import xml.etree.ElementTree as ET
-import subprocess
 from urllib.parse import urlencode
 from collections import OrderedDict
 
 from check_functions import Almost
+from utils import run_script
 
 logger = logging.getLogger(__name__)
 
@@ -277,14 +277,9 @@ def query_cmd(context, query, dups):
     if dups:
         cmd.extend(('--dedupe', '0'))
 
-    proc = subprocess.Popen(cmd, cwd=context.nominatim.build_dir,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (outp, err) = proc.communicate()
+    outp, err = run_script(cmd, cwd=context.nominatim.build_dir)
 
-    assert proc.returncode == 0, "query.php failed with message: %s\noutput: %s" % (err, outp)
-    logger.debug("run_nominatim_script: %s\n%s\n" % (cmd, outp.decode('utf-8').replace('\\n', '\n')))
-
-    context.response = SearchResponse(outp.decode('utf-8'), 'json')
+    context.response = SearchResponse(outp, 'json')
 
 def send_api_query(endpoint, params, fmt, context):
     if fmt is not None:
@@ -326,19 +321,7 @@ def send_api_query(endpoint, params, fmt, context):
     for k,v in params.items():
         cmd.append("%s=%s" % (k, v))
 
-    proc = subprocess.Popen(cmd, cwd=context.nominatim.website_dir.name, env=env,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    (outp, err) = proc.communicate()
-    outp = outp.decode('utf-8')
-    err = err.decode("utf-8")
-
-    logger.debug("Result: \n===============================\n"
-                 + outp + "\n===============================\n")
-
-    assert proc.returncode == 0, \
-                  "%s failed with message: %s" % (
-                      os.path.basename(env['SCRIPT_FILENAME']), err)
+    outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name, env=env)
 
     assert len(err) == 0, "Unexpected PHP error: %s" % (err)
 

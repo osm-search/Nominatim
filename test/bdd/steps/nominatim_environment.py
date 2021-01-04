@@ -1,13 +1,11 @@
-import logging
 import os
 from pathlib import Path
-import subprocess
 import tempfile
 
 import psycopg2
 import psycopg2.extras
 
-LOG = logging.getLogger(__name__)
+from steps.utils import run_script
 
 class NominatimEnvironment:
     """ Collects all functions for the execution of Nominatim functions.
@@ -216,9 +214,4 @@ class NominatimEnvironment:
         else:
             cwd = self.build_dir
 
-        proc = subprocess.Popen(cmd, cwd=cwd, env=self.test_env,
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (outp, outerr) = proc.communicate()
-        outerr = outerr.decode('utf-8').replace('\\n', '\n')
-        LOG.debug("run_nominatim_script: %s\n%s\n%s", cmd, outp, outerr)
-        assert (proc.returncode == 0), "Script '%s' failed:\n%s\n%s\n" % (script, outp, outerr)
+        run_script(cmd, cwd=cwd, env=self.test_env)

@@ -6,6 +6,8 @@ import psycopg2.extras
 import subprocess
 import tempfile
 
+from steps.geometry_factory import GeometryFactory
+
 logger = logging.getLogger(__name__)
 
 userconfig = {
@@ -209,83 +211,6 @@ class NominatimEnvironment(object):
         assert (proc.returncode == 0), "Script '%s' failed:\n%s\n%s\n" % (script, outp, outerr)
 
 
-class OSMDataFactory(object):
-
-    def __init__(self):
-        scriptpath = os.path.dirname(os.path.abspath(__file__))
-        self.scene_path = os.environ.get('SCENE_PATH',
-                           os.path.join(scriptpath, '..', 'scenes', 'data'))
-        self.scene_cache = {}
-        self.clear_grid()
-
-    def parse_geometry(self, geom, scene):
-        if geom.find(':') >= 0:
-            return "ST_SetSRID(%s, 4326)" % self.get_scene_geometry(scene, geom)
-
-        if geom.find(',') < 0:
-            out = "POINT(%s)" % self.mk_wkt_point(geom)
-        elif geom.find('(') < 0:
-            line = ','.join([self.mk_wkt_point(x) for x in geom.split(',')])
-            out = "LINESTRING(%s)" % line
-        else:
-            inner = geom.strip('() ')
-            line = ','.join([self.mk_wkt_point(x) for x in inner.split(',')])
-            out = "POLYGON((%s))" % line
-
-        return "ST_SetSRID('%s'::geometry, 4326)" % out
-
-    def mk_wkt_point(self, point):
-        geom = point.strip()
-        if geom.find(' ') >= 0:
-            return geom
-        else:
-            pt = self.grid_node(int(geom))
-            assert pt is not None, "Bad scenario: Point '{}' not found in grid".format(geom)
-            return "%f %f" % pt
-
-    def get_scene_geometry(self, default_scene, name):
-        geoms = []
-        for obj in name.split('+'):
-            oname = obj.strip()
-            if oname.startswith(':'):
-                assert default_scene is not None, "Bad scenario: You need to set a scene"
-                defscene = self.load_scene(default_scene)
-                wkt = defscene[oname[1:]]
-            else:
-                scene, obj = oname.split(':', 2)
-                scene_geoms = self.load_scene(scene)
-                wkt = scene_geoms[obj]
-
-            geoms.append("'%s'::geometry" % wkt)
-
-        if len(geoms) == 1:
-            return geoms[0]
-        else:
-            return 'ST_LineMerge(ST_Collect(ARRAY[%s]))' % ','.join(geoms)
-
-    def load_scene(self, name):
-        if name in self.scene_cache:
-            return self.scene_cache[name]
-
-        scene = {}
-        with open(os.path.join(self.scene_path, "%s.wkt" % name), 'r') as fd:
-            for line in fd:
-                if line.strip():
-                    obj, wkt = line.split('|', 2)
-                    scene[obj.strip()] = wkt.strip()
-            self.scene_cache[name] = scene
-
-        return scene
-
-    def clear_grid(self):
-        self.grid = {}
-
-    def add_grid_node(self, nodeid, x, y):
-        self.grid[nodeid] = (x, y)
-
-    def grid_node(self, nodeid):
-        return self.grid.get(nodeid)
-
 
 def before_all(context):
     # logging setup
@@ -296,7 +221,7 @@ def before_all(context):
     logging.debug('User config: %s' %(str(context.config.userdata)))
     # Nominatim test setup
     context.nominatim = NominatimEnvironment(context.config.userdata)
-    context.osm = OSMDataFactory()
+    context.osm = GeometryFactory()
 
 
 def before_scenario(context, scenario):

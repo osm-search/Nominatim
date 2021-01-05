@@ -220,10 +220,6 @@ def assert_db_column(row, column, value, context):
 
 ################################ GIVEN ##################################
 
-@given(u'the scene (?P<scene>.+)')
-def set_default_scene(context, scene):
-    context.scene = scene
-
 @given("the (?P<named>named )?places")
 def add_data_to_place_table(context, named):
     with context.db.cursor() as cur:

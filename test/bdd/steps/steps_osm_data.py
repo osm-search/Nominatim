@@ -22,6 +22,10 @@ def write_opl_file(opl, grid):
 
         return fd.name
 
+@given(u'the scene (?P<scene>.+)')
+def set_default_scene(context, scene):
+    context.scene = scene
+
 @given(u'the ([0-9.]+ )?grid')
 def define_node_grid(context, grid_step):
     """

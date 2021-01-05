@@ -1,97 +1,8 @@
-import base64
-import random
-import string
 import re
 import psycopg2.extras
 
 from check_functions import Almost
-
-class PlaceColumn:
-
-    def __init__(self, context, force_name):
-        self.columns = { 'admin_level' : 15}
-        self.force_name = force_name
-        self.context = context
-        self.geometry = None
-
-    def add(self, key, value):
-        if hasattr(self, 'set_key_' + key):
-            getattr(self, 'set_key_' + key)(value)
-        elif key.startswith('name+'):
-            self.add_hstore('name', key[5:], value)
-        elif key.startswith('extra+'):
-            self.add_hstore('extratags', key[6:], value)
-        elif key.startswith('addr+'):
-            self.add_hstore('address', key[5:], value)
-        elif key in ('name', 'address', 'extratags'):
-            self.columns[key] = eval('{' + value + '}')
-        else:
-            assert key in ('class', 'type')
-            self.columns[key] = None if value == '' else value
-
-    def set_key_name(self, value):
-        self.add_hstore('name', 'name', value)
-
-    def set_key_osm(self, value):
-        assert value[0] in 'NRW'
-        assert value[1:].isdigit()
-
-        self.columns['osm_type'] = value[0]
-        self.columns['osm_id'] = int(value[1:])
-
-    def set_key_admin(self, value):
-        self.columns['admin_level'] = int(value)
-
-    def set_key_housenr(self, value):
-        if value:
-            self.add_hstore('address', 'housenumber', value)
-
-    def set_key_postcode(self, value):
-        if value:
-            self.add_hstore('address', 'postcode', value)
-
-    def set_key_street(self, value):
-        if value:
-            self.add_hstore('address', 'street', value)
-
-    def set_key_addr_place(self, value):
-        if value:
-            self.add_hstore('address', 'place', value)
-
-    def set_key_country(self, value):
-        if value:
-            self.add_hstore('address', 'country', value)
-
-    def set_key_geometry(self, value):
-        self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
-        assert self.geometry is not None
-
-    def add_hstore(self, column, key, value):
-        if column in self.columns:
-            self.columns[column][key] = value
-        else:
-            self.columns[column] = { key : value }
-
-    def db_insert(self, cursor):
-        assert 'osm_type' in self.columns
-        if self.force_name and 'name' not in self.columns:
-            self.add_hstore('name', 'name', ''.join(random.choice(string.printable)
-                                           for _ in range(int(random.random()*30))))
-
-        if self.columns['osm_type'] == 'N' and self.geometry is None:
-            pt = self.context.osm.grid_node(self.columns['osm_id'])
-            if pt is None:
-                pt = (random.random()*360 - 180, random.random()*180 - 90)
-
-            self.geometry = "ST_SetSRID(ST_Point(%f, %f), 4326)" % pt
-        else:
-            assert self.geometry is not None, "Geometry missing"
-        query = 'INSERT INTO place (%s, geometry) values(%s, %s)' % (
-                     ','.join(self.columns.keys()),
-                     ','.join(['%s' for x in range(len(self.columns))]),
-                     self.geometry)
-        cursor.execute(query, list(self.columns.values()))
-
+from place_inserter import PlaceColumn
 
 class PlaceObjName(object):
 
@@ -224,13 +135,8 @@ def assert_db_column(row, column, value, context):
 def add_data_to_place_table(context, named):
     with context.db.cursor() as cur:
         cur.execute('ALTER TABLE place DISABLE TRIGGER place_before_insert')
-        for r in context.table:
-            col = PlaceColumn(context, named is not None)
-
-            for h in r.headings:
-                col.add(h, r[h])
-
-            col.db_insert(cur)
+        for row in context.table:
+            PlaceColumn(context).add_row(row, named is not None).db_insert(cur)
         cur.execute('ALTER TABLE place ENABLE TRIGGER place_before_insert')
 
 @given("the relations")
@@ -296,13 +202,8 @@ def update_place_table(context):
     context.nominatim.run_setup_script(
         'create-functions', 'create-partition-functions', 'enable-diff-updates')
     with context.db.cursor() as cur:
-        for r in context.table:
-            col = PlaceColumn(context, False)
-
-            for h in r.headings:
-                col.add(h, r[h])
-
-            col.db_insert(cur)
+        for row in context.table:
+            PlaceColumn(context).add_row(row, False).db_insert(cur)
 
         while True:
             context.nominatim.run_update_script('index')

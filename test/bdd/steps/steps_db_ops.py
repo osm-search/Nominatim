@@ -92,14 +92,6 @@ class PlaceColumn:
                      self.geometry)
         cursor.execute(query, list(self.columns.values()))
 
-class LazyFmt(object):
-
-    def __init__(self, fmtstr, *args):
-        self.fmt = fmtstr
-        self.args = args
-
-    def __str__(self):
-        return self.fmt % self.args
 
 class PlaceObjName(object):
 
@@ -125,15 +117,15 @@ class PlaceObjName(object):
 def compare_place_id(expected, result, column, context):
     if expected == '0':
         assert result == 0, \
-            LazyFmt("Bad place id in column %s. Expected: 0, got: %s.",
+               "Bad place id in column {}. Expected: 0, got: {!s}.".format(
                     column, PlaceObjName(result, context.db))
     elif expected == '-':
         assert result is None, \
-                LazyFmt("bad place id in column %s: %s.",
+               "Bad place id in column {}: {!s}.".format(
                         column, PlaceObjName(result, context.db))
     else:
         assert NominatimID(expected).get_place_id(context.db.cursor()) == result, \
-            LazyFmt("Bad place id in column %s. Expected: %s, got: %s.",
+               "Bad place id in column {}. Expected: {}, got: {!s}.".format(
                     column, expected, PlaceObjName(result, context.db))
 
 def check_database_integrity(context):

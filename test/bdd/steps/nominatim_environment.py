@@ -179,6 +179,7 @@ class NominatimEnvironment:
         cur.execute('CREATE DATABASE {} TEMPLATE = {}'.format(self.test_db, self.template_db))
         conn.close()
         context.db = self.connect_database(self.test_db)
+        context.db.autocommit = True
         psycopg2.extras.register_hstore(context.db, globally=False)
 
     def teardown_db(self, context):
@@ -215,3 +216,25 @@ class NominatimEnvironment:
             cwd = self.build_dir
 
         run_script(cmd, cwd=cwd, env=self.test_env)
+
+    def copy_from_place(self, db):
+        """ Copy data from place to the placex and location_property_osmline
+            tables invoking the appropriate triggers.
+        """
+        self.run_setup_script('create-functions', 'create-partition-functions')
+
+        with db.cursor() as cur:
+            cur.execute("""INSERT INTO placex (osm_type, osm_id, class, type,
+                                               name, admin_level, address,
+                                               extratags, geometry)
+                             SELECT osm_type, osm_id, class, type,
+                                    name, admin_level, address,
+                                    extratags, geometry
+                               FROM place
+                               WHERE not (class='place' and type='houses' and osm_type='W')""")
+            cur.execute("""INSERT INTO location_property_osmline (osm_id, address, linegeo)
+                             SELECT osm_id, address, geometry
+                               FROM place
+                              WHERE class='place' and type='houses'
+                                    and osm_type='W'
+                                    and ST_GeometryType(geometry) = 'ST_LineString'""")

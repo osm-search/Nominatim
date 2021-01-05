@@ -191,6 +191,20 @@ class NominatimEnvironment:
         if not self.keep_scenario_db:
             self.db_drop_database(self.test_db)
 
+    def reindex_placex(self, db):
+        """ Run the indexing step until all data in the placex has
+            been processed. Indexing during updates can produce more data
+            to index under some circumstances. That is why indexing may have
+            to be run multiple times.
+        """
+        with db.cursor() as cur:
+            while True:
+                self.run_update_script('index')
+
+                cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
+                if cur.rowcount == 0:
+                    return
+
     def run_setup_script(self, *args, **kwargs):
         """ Run the Nominatim setup script with the given arguments.
         """

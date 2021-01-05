@@ -205,13 +205,7 @@ def update_place_table(context):
         for row in context.table:
             PlaceColumn(context).add_row(row, False).db_insert(cur)
 
-        while True:
-            context.nominatim.run_update_script('index')
-
-            cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
-            if cur.rowcount == 0:
-                break
-
+    context.nominatim.reindex_placex(context.db)
     check_database_integrity(context)
 
 @when("updating postcodes")
@@ -227,13 +221,7 @@ def delete_places(context, oids):
             where, params = NominatimID(oid).table_select()
             cur.execute("DELETE FROM place WHERE " + where, params)
 
-    while True:
-        context.nominatim.run_update_script('index')
-
-        with context.db.cursor() as cur:
-            cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
-            if cur.rowcount == 0:
-                break
+    context.nominatim.reindex_placex(context.db)
 
 ################################ THEN ##################################
 

@@ -40,6 +40,10 @@ class GenericResponse:
     """ Common base class for all API responses.
     """
     def __init__(self, page, fmt, errorcode=200):
+        fmt = fmt.strip()
+        if fmt == 'jsonv2':
+            fmt = 'json'
+
         self.page = page
         self.format = fmt
         self.errorcode = errorcode

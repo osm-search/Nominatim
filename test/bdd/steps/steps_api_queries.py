@@ -148,12 +148,7 @@ def website_search_request(context, fmt, query, addr):
 
     outp, status = send_api_query('search', params, fmt, context)
 
-    if fmt is None or fmt == 'jsonv2 ':
-        outfmt = 'json'
-    else:
-        outfmt = fmt.strip()
-
-    context.response = SearchResponse(outp, outfmt, status)
+    context.response = SearchResponse(outp, fmt or 'json', status)
 
 @when(u'sending (?P<fmt>\S+ )?reverse coordinates (?P<lat>.+)?,(?P<lon>.+)?')
 def website_reverse_request(context, fmt, lat, lon):
@@ -165,14 +160,7 @@ def website_reverse_request(context, fmt, lat, lon):
 
     outp, status = send_api_query('reverse', params, fmt, context)
 
-    if fmt is None:
-        outfmt = 'xml'
-    elif fmt == 'jsonv2 ':
-        outfmt = 'json'
-    else:
-        outfmt = fmt.strip()
-
-    context.response = ReverseResponse(outp, outfmt, status)
+    context.response = ReverseResponse(outp, fmt or 'xml', status)
 
 @when(u'sending (?P<fmt>\S+ )?details query for (?P<query>.*)')
 def website_details_request(context, fmt, query):
@@ -184,42 +172,21 @@ def website_details_request(context, fmt, query):
         params['place_id'] = query
     outp, status = send_api_query('details', params, fmt, context)
 
-    if fmt is None:
-        outfmt = 'json'
-    else:
-        outfmt = fmt.strip()
-
-    context.response = GenericResponse(outp, outfmt, status)
+    context.response = GenericResponse(outp, fmt or 'json', status)
 
 @when(u'sending (?P<fmt>\S+ )?lookup query for (?P<query>.*)')
 def website_lookup_request(context, fmt, query):
     params = { 'osm_ids' : query }
     outp, status = send_api_query('lookup', params, fmt, context)
 
-    if fmt == 'json ':
-        outfmt = 'json'
-    elif fmt == 'jsonv2 ':
-        outfmt = 'json'
-    elif fmt == 'geojson ':
-        outfmt = 'geojson'
-    elif fmt == 'geocodejson ':
-        outfmt = 'geocodejson'
-    else:
-        outfmt = 'xml'
-
-    context.response = SearchResponse(outp, outfmt, status)
+    context.response = SearchResponse(outp, fmt or 'xml', status)
 
 @when(u'sending (?P<fmt>\S+ )?status query')
 def website_status_request(context, fmt):
     params = {}
     outp, status = send_api_query('status', params, fmt, context)
 
-    if fmt is None:
-        outfmt = 'text'
-    else:
-        outfmt = fmt.strip()
-
-    context.response = StatusResponse(outp, outfmt, status)
+    context.response = StatusResponse(outp, fmt or 'text', status)
 
 @step(u'(?P<operator>less than|more than|exactly|at least|at most) (?P<number>\d+) results? (?:is|are) returned')
 def validate_result_number(context, operator, number):

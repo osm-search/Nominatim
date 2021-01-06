@@ -1,3 +1,5 @@
+from itertools import chain
+
 import psycopg2.extras
 
 from place_inserter import PlaceColumn
@@ -20,6 +22,9 @@ def check_database_integrity(context):
 
 @given("the (?P<named>named )?places")
 def add_data_to_place_table(context, named):
+    """ Add entries into the place table. 'named places' makes sure that
+        the entries get a random name when none is explicitly given.
+    """
     with context.db.cursor() as cur:
         cur.execute('ALTER TABLE place DISABLE TRIGGER place_before_insert')
         for row in context.table:
@@ -28,6 +33,9 @@ def add_data_to_place_table(context, named):
 
 @given("the relations")
 def add_data_to_planet_relations(context):
+    """ Add entries into the osm2pgsql relation middle table. This is needed
+        for tests on data that looks up members.
+    """
     with context.db.cursor() as cur:
         for r in context.table:
             last_node = 0
@@ -51,28 +59,24 @@ def add_data_to_planet_relations(context):
             else:
                 members = None
 
-            tags = []
-            for h in r.headings:
-                if h.startswith("tags+"):
-                    tags.extend((h[5:], r[h]))
+            tags = chain.from_iterable([(h[5:], r[h]) for h in r.headings if h.startswith("tags+")])
 
             cur.execute("""INSERT INTO planet_osm_rels (id, way_off, rel_off, parts, members, tags)
                            VALUES (%s, %s, %s, %s, %s, %s)""",
-                        (r['id'], last_node, last_way, parts, members, tags))
+                        (r['id'], last_node, last_way, parts, members, list(tags)))
 
 @given("the ways")
 def add_data_to_planet_ways(context):
+    """ Add entries into the osm2pgsql way middle table. This is necessary for
+        tests on that that looks up node ids in this table.
+    """
     with context.db.cursor() as cur:
         for r in context.table:
-            tags = []
-            for h in r.headings:
-                if h.startswith("tags+"):
-                    tags.extend((h[5:], r[h]))
-
+            tags = chain.from_iterable([(h[5:], r[h]) for h in r.headings if h.startswith("tags+")])
             nodes = [ int(x.strip()) for x in r['nodes'].split(',') ]
 
             cur.execute("INSERT INTO planet_osm_ways (id, nodes, tags) VALUES (%s, %s, %s)",
-                        (r['id'], nodes, tags))
+                        (r['id'], nodes, list(tags)))
 
 ################################ WHEN ##################################
 
@@ -86,6 +90,9 @@ def import_and_index_data_from_place_table(context):
 
 @when("updating places")
 def update_place_table(context):
+    """ Update the place table with the given data. Also runs all triggers
+        related to updates and reindexes the new data.
+    """
     context.nominatim.run_setup_script(
         'create-functions', 'create-partition-functions', 'enable-diff-updates')
     with context.db.cursor() as cur:
@@ -97,10 +104,16 @@ def update_place_table(context):
 
 @when("updating postcodes")
 def update_postcodes(context):
+    """ Rerun the calculation of postcodes.
+    """
     context.nominatim.run_update_script('calculate-postcodes')
 
 @when("marking for delete (?P<oids>.*)")
 def delete_places(context, oids):
+    """ Remove entries from the place table. Multiple ids may be given
+        separated by commas. Also runs all triggers
+        related to updates and reindexes the new data.
+    """
     context.nominatim.run_setup_script(
         'create-functions', 'create-partition-functions', 'enable-diff-updates')
     with context.db.cursor() as cur:
@@ -113,6 +126,15 @@ def delete_places(context, oids):
 
 @then("(?P<table>placex|place) contains(?P<exact> exactly)?")
 def check_place_contents(context, table, exact):
+    """ Check contents of place/placex tables. Each row represents a table row
+        and all data must match. Data not present in the expected table, may
+        be arbitry. The rows are identified via the 'object' column which must
+        have an identifier of the form '<NRW><osm id>[:<class>]'. When multiple
+        rows match (for example because 'class' was left out and there are
+        multiple entries for the given OSM object) then all must match. All
+        expected rows are expected to be present with at least one database row.
+        When 'exactly' is given, there must not be additional rows in the database.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         expected_content = set()
         for row in context.table:
@@ -137,6 +159,9 @@ def check_place_contents(context, table, exact):
 
 @then("(?P<table>placex|place) has no entry for (?P<oid>.*)")
 def check_place_has_entry(context, table, oid):
+    """ Ensure that no database row for the given object exists. The ID
+        must be of the form '<NRW><osm id>[:<class>]'.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         NominatimID(oid).query_osm_id(cur, "SELECT * FROM %s where {}" % table)
         assert cur.rowcount == 0, \
@@ -145,6 +170,12 @@ def check_place_has_entry(context, table, oid):
 
 @then("search_name contains(?P<exclude> not)?")
 def check_search_name_contents(context, exclude):
+    """ Check contents of place/placex tables. Each row represents a table row
+        and all data must match. Data not present in the expected table, may
+        be arbitry. The rows are identified via the 'object' column which must
+        have an identifier of the form '<NRW><osm id>[:<class>]'. All
+        expected rows are expected to be present with at least one database row.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
             nid = NominatimID(row['object'])
@@ -154,10 +185,9 @@ def check_search_name_contents(context, exclude):
 
             for res in cur:
                 db_row = DBRow(nid, res, context)
-                for h in row.headings:
-                    if h in ('name_vector', 'nameaddress_vector'):
-                        terms = [x.strip() for x in row[h].split(',') if not x.strip().startswith('#')]
-                        words = [x.strip()[1:] for x in row[h].split(',') if x.strip().startswith('#')]
+                for name, value in zip(row.headings, row.cells):
+                    if name in ('name_vector', 'nameaddress_vector'):
+                        items = [x.strip() for x in value.split(',')]
                         with context.db.cursor() as subcur:
                             subcur.execute(""" SELECT word_id, word_token
                                                FROM word, (SELECT unnest(%s::TEXT[]) as term) t
@@ -171,24 +201,43 @@ def check_search_name_contents(context, exclude):
                                                      and class is null and country_code is null
                                                      and operator is null
                                            """,
-                                           (terms, words))
+                                           (list(filter(lambda x: not x.startswith('#'), items)),
+                                            list(filter(lambda x: x.startswith('#'), items))))
                             if not exclude:
-                                assert subcur.rowcount >= len(terms) + len(words), \
-                                    "No word entry found for " + row[h] + ". Entries found: " + str(subcur.rowcount)
+                                assert subcur.rowcount >= len(items), \
+                                    "No word entry found for {}. Entries found: {!s}".format(value, subcur.rowcount)
                             for wid in subcur:
+                                present = wid[0] in res[name]
                                 if exclude:
-                                    assert wid[0] not in res[h], "Found term for %s/%s: %s" % (row['object'], h, wid[1])
+                                    assert not present, "Found term for {}/{}: {}".format(row['object'], name, wid[1])
                                 else:
-                                    assert wid[0] in res[h], "Missing term for %s/%s: %s" % (row['object'], h, wid[1])
-                    elif h != 'object':
-                        assert db_row.contains(h, row[h]), db_row.assert_msg(h, row[h])
+                                    assert present, "Missing term for {}/{}: {}".fromat(row['object'], name, wid[1])
+                    elif name != 'object':
+                        assert db_row.contains(name, value), db_row.assert_msg(name, value)
+
+@then("search_name has no entry for (?P<oid>.*)")
+def check_search_name_has_entry(context, oid):
+    """ Check that there is noentry in the search_name table for the given
+        objects. IDs are in format '<NRW><osm id>[:<class>]'.
+    """
+    with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+        NominatimID(oid).row_by_place_id(cur, 'search_name')
+
+        assert cur.rowcount == 0, \
+               "Found {} entries for ID {}".format(cur.rowcount, oid)
 
 @then("location_postcode contains exactly")
 def check_location_postcode(context):
+    """ Check full contents for location_postcode table. Each row represents a table row
+        and all data must match. Data not present in the expected table, may
+        be arbitry. The rows are identified via 'country' and 'postcode' columns.
+        All rows must be present as excepted and there must not be additional
+        rows.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute("SELECT *, ST_AsText(geometry) as geomtxt FROM location_postcode")
         assert cur.rowcount == len(list(context.table)), \
-            "Postcode table has %d rows, expected %d rows." % (cur.rowcount, len(list(context.table)))
+            "Postcode table has {} rows, expected {}.".foramt(cur.rowcount, len(list(context.table)))
 
         results = {}
         for row in cur:
@@ -199,20 +248,20 @@ def check_location_postcode(context):
         for row in context.table:
             db_row = results.get((row['country'],row['postcode']))
             assert db_row is not None, \
-                "Missing row for country '{}' postcode '{}'.".format(r['country'],['postcode'])
+                "Missing row for country '{r['country']}' postcode '{r['postcode']}'.".format(r=row)
 
             db_row.assert_row(row, ('country', 'postcode'))
 
 @then("word contains(?P<exclude> not)?")
 def check_word_table(context, exclude):
+    """ Check the contents of the word table. Each row represents a table row
+        and all data must match. Data not present in the expected table, may
+        be arbitry. The rows are identified via all given columns.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
-            wheres = []
-            values = []
-            for h in row.headings:
-                wheres.append("%s = %%s" % h)
-                values.append(row[h])
-            cur.execute("SELECT * from word WHERE %s" % ' AND '.join(wheres), values)
+            wheres = ' AND '.join(["{} = %s".format(h) for h in row.headings])
+            cur.execute("SELECT * from word WHERE " + wheres, list(row.cells))
             if exclude:
                 assert cur.rowcount == 0, "Row still in word table: %s" % '/'.join(values)
             else:
@@ -220,6 +269,12 @@ def check_word_table(context, exclude):
 
 @then("place_addressline contains")
 def check_place_addressline(context):
+    """ Check the contents of the place_addressline table. Each row represents
+        a table row and all data must match. Data not present in the expected
+        table, may be arbitry. The rows are identified via the 'object' column,
+        representing the addressee and the 'address' column, representing the
+        address item.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
             nid = NominatimID(row['object'])
@@ -236,6 +291,9 @@ def check_place_addressline(context):
 
 @then("place_addressline doesn't contain")
 def check_place_addressline_exclude(context):
+    """ Check that the place_addressline doesn't contain any entries for the
+        given addressee/address item pairs.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
             pid = NominatimID(row['object']).get_place_id(cur)
@@ -246,20 +304,18 @@ def check_place_addressline_exclude(context):
             assert cur.rowcount == 0, \
                 "Row found for place %s and address %s" % (row['object'], row['address'])
 
-@then("(?P<oid>\w+) expands to(?P<neg> no)? interpolation")
+@then("W(?P<oid>\d+) expands to(?P<neg> no)? interpolation")
 def check_location_property_osmline(context, oid, neg):
-    nid = NominatimID(oid)
-
-    assert 'W' == nid.typ, "interpolation must be a way"
-
+    """ Check that the given way is present in the interpolation table.
+    """
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute("""SELECT *, ST_AsText(linegeo) as geomtxt
                        FROM location_property_osmline
                        WHERE osm_id = %s AND startnumber IS NOT NULL""",
-                    (nid.oid, ))
+                    (oid, ))
 
         if neg:
-            assert cur.rowcount == 0
+            assert cur.rowcount == 0, "Interpolation found for way {}.".format(oid)
             return
 
         todo = list(range(len(list(context.table))))
@@ -271,17 +327,10 @@ def check_location_property_osmline(context, oid, neg):
                     todo.remove(i)
                     break
             else:
-                assert False, "Unexpected row %s" % (str(res))
+                assert False, "Unexpected row " + str(res)
 
-            DBRow(nid, res, context).assert_row(row, ('start', 'end'))
+            DBRow(oid, res, context).assert_row(row, ('start', 'end'))
 
         assert not todo
 
 
-@then("search_name has no entry for (?P<oid>.*)")
-def check_search_name_has_entry(context, oid):
-    with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-        NominatimID(oid).row_by_place_id(cur, 'search_name')
-
-        assert cur.rowcount == 0, \
-               "Found {} entries for ID {}".format(cur.rowcount, oid)

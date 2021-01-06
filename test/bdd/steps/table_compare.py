@@ -196,7 +196,7 @@ class DBRow:
             if actual == 0:
                 return "place ID 0"
 
-            with self.context.db.cursor():
+            with self.context.db.cursor() as cur:
                 cur.execute("""SELECT osm_type, osm_id, class
                                FROM placex WHERE place_id = %s""",
                             (actual, ))

@@ -19,7 +19,7 @@
     </testsuites>
     <filter>
         <whitelist>
-            <directory>./lib/</directory>
+            <directory>../../lib/</directory>
         </whitelist>
     </filter>
 

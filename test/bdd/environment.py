@@ -4,8 +4,10 @@ from pathlib import Path
 from steps.geometry_factory import GeometryFactory
 from steps.nominatim_environment import NominatimEnvironment
 
+TEST_BASE_DIR = Path(__file__) / '..' / '..'
+
 userconfig = {
-    'BUILDDIR' : (Path(__file__) / '..' / '..' / '..' / 'build').resolve(),
+    'BUILDDIR' : (TEST_BASE_DIR / '..' / 'build').resolve(),
     'REMOVE_TEMPLATE' : False,
     'KEEP_TEST_DB' : False,
     'DB_HOST' : None,
@@ -15,6 +17,7 @@ userconfig = {
     'TEMPLATE_DB' : 'test_template_nominatim',
     'TEST_DB' : 'test_nominatim',
     'API_TEST_DB' : 'test_api_nominatim',
+    'API_TEST_FILE'  : (TEST_BASE_DIR / 'testdb' / 'apidb-test-data.pbf').resolve(),
     'SERVER_MODULE_PATH' : None,
     'PHPCOV' : False, # set to output directory to enable code coverage
 }

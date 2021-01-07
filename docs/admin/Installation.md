@@ -43,6 +43,7 @@ For running Nominatim:
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
+  * [PHP Symphony Dotenv](https://symfony.com/doc/4.3/components/dotenv.html)
 
 For running continuous updates:
 

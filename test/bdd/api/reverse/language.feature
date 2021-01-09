@@ -2,35 +2,35 @@
 Feature: Localization of reverse search results
 
     Scenario: default language
-        When sending json reverse coordinates 18.1147,-15.95
+        When sending json reverse coordinates 47.14,9.55
         Then result addresses contain
           | ID | country |
-          | 0  | موريتانيا |
+          | 0  | Liechtenstein |
 
     Scenario: accept-language parameter
-        When sending json reverse coordinates 18.1147,-15.95
+        When sending json reverse coordinates 47.14,9.55
           | accept-language |
-          | en,fr |
+          | ja,en |
         Then result addresses contain
           | ID | country |
-          | 0  | Mauritania |
+          | 0  | リヒテンシュタイン |
 
     Scenario: HTTP accept language header
         Given the HTTP header
           | accept-language |
-          | fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3 |
-        When sending json reverse coordinates 18.1147,-15.95
+          | fo-ca,fo;q=0.8,en-ca;q=0.5,en;q=0.3 |
+        When sending json reverse coordinates 47.14,9.55
         Then result addresses contain
           | ID | country |
-          | 0  | Mauritanie |
+          | 0  | Liktinstein |
 
     Scenario: accept-language parameter and HTTP header
         Given the HTTP header
           | accept-language |
-          | fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3 |
-        When sending json reverse coordinates 18.1147,-15.95
+          | fo-ca,fo;q=0.8,en-ca;q=0.5,en;q=0.3 |
+        When sending json reverse coordinates 47.14,9.55
           | accept-language |
           | en |
         Then result addresses contain
           | ID | country |
-          | 0  | Mauritania |
+          | 0  | Liechtenstein |

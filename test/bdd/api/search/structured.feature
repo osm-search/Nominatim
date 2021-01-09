@@ -15,13 +15,13 @@ Feature: Structured search queries
     Scenario: Postcode only
         When sending json search query "" with address
           | postalcode |
-          | 22547 |
+          | 9495 |
         Then results contain
           | type |
           | ^post(al_)?code |
         And result addresses contain
           | postcode |
-          | 22547 |
+          | 9495 |
 
     Scenario: Street, postcode and country
         When sending xml search query "" with address
@@ -50,16 +50,19 @@ Feature: Structured search queries
     Scenario: Amenity, city
         When sending json search query "" with address
           | city  | amenity |
-          | Vaduz | church  |
+          | Vaduz | bar  |
         Then result addresses contain
           | country |
           | Liechtenstein |
         And  results contain
           | class   | type |
-          | amenity | place_of_worship |
+          | amenity | ^(pub)\|(bar) |
 
-    Scenario: gihub #176
+    #176
+    Scenario: Structured search restricts rank
         When sending json search query "" with address
           | city |
-          | Mercedes |
-        Then at least 1 result is returned
+          | Vaduz |
+        Then result addresses contain
+          | town |
+          | Vaduz |

@@ -3,13 +3,15 @@ Feature: Parameters for Reverse API
     Testing correctness of geocodejson output.
 
     Scenario: City housenumber-level address with street
-        When sending geocodejson reverse coordinates 53.556,9.9607
+        When sending geocodejson reverse coordinates 47.1068011,9.52810091
         Then results contain
-          | housenumber | street           | postcode | city    | country |
-          | 10          | Brunnenhofstraße | 22767    | Hamburg | Deutschland | 
+          | housenumber | street    | postcode | city    | country |
+          | 8           | Im Winkel | 9495     | Triesen | Liechtenstein |
 
     Scenario: Town street-level address with street
         When sending geocodejson reverse coordinates 47.066,9.504
+          | zoom |
+          | 16 |
         Then results contain
           | name    | city    | postcode | country |
           | Gnetsch | Balzers | 9496     | Liechtenstein |
@@ -21,7 +23,7 @@ Feature: Parameters for Reverse API
           | Burgweg | Balzers | 9496     | Liechtenstein |
 
     Scenario: City address with suburb
-        When sending geocodejson reverse coordinates 53.5822,10.0805
+        When sending geocodejson reverse coordinates 47.146861,9.511771
         Then results contain
-          | housenumber | street                | district | city    | postcode | country |
-          | 64          | Hinschenfelder Straße | Wandsbek | Hamburg | 22047    | Deutschland |
+          | housenumber | street   | district | city  | postcode | country |
+          | 5           | Lochgass | Ebenholz | Vaduz | 9490     | Liechtenstein |

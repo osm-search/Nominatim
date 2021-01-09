@@ -25,47 +25,44 @@ Feature: Search queries
           | x45    |
         Then a HTTP 400 is returned
 
-    Scenario: JSON search with addressdetails
-        When sending json search query "Montevideo" with address
+    Scenario Outline: Search with addressdetails
+        When sending <format> search query "Triesen" with address
         Then address of result 0 is
           | type         | value |
-          | city         | Montevideo |
-          | state        | Montevideo |
-          | country      | Uruguay |
-          | country_code | uy |
+          | village      | Triesen |
+          | county       | Oberland |
+          | postcode     | 9495 |
+          | country      | Liechtenstein |
+          | country_code | li |
 
-    Scenario: XML search with addressdetails
-        When sending xml search query "Aleg" with address
-          | accept-language |
-          | en |
-        Then address of result 0 is
-          | type         | value |
-          | city         | Aleg |
-          | state        | Brakna |
-          | country      | Mauritania |
-          | country_code | mr |
+    Examples:
+          | format |
+          | json   |
+          | jsonv2 |
+          | geojson |
+          | xml |
 
-    Scenario: coordinate search with addressdetails
-        When sending json search query "14.271104294939,107.69828796387"
+    Scenario: Coordinate search with addressdetails
+        When sending json search query "47.12400621,9.6047552"
           | accept-language |
           | en |
         Then results contain
           | display_name |
-          | Plei Ya Rê, Vietnam |
+          | Guschg, Valorschstrasse, Balzers, Oberland, 9497, Liechtenstein |
 
     Scenario: Address details with unknown class types
-        When sending json search query "Hundeauslauf, Hamburg" with address
+        When sending json search query "Kloster St. Elisabeth" with address
         Then results contain
           | ID | class   | type |
-          | 0  | leisure | dog_park |
+          | 0  | amenity | monastery |
         And result addresses contain
-          | ID | leisure |
-          | 0  | Hundeauslauf |
+          | ID | amenity |
+          | 0  | Kloster St. Elisabeth |
 
     Scenario: Disabling deduplication
-        When sending json search query "Sievekingsallee, Hamburg"
+        When sending json search query "Malbunstr"
         Then there are no duplicates
-        When sending json search query "Sievekingsallee, Hamburg"
+        When sending json search query "Malbunstr"
           | dedupe |
           | 0 |
         Then there are duplicates
@@ -73,25 +70,32 @@ Feature: Search queries
     Scenario: Search with bounded viewbox in right area
         When sending json search query "bar" with address
           | bounded | viewbox |
-          | 1       | -56.16786,-34.84061,-56.12525,-34.86526 |
+          | 1       |  9,47,10,48 |
         Then result addresses contain
-          | city |
-          | Montevideo |
+          | ID | town |
+          | 0  | Vaduz |
+        When sending json search query "bar" with address
+          | bounded | viewbox |
+          | 1       |  9.49712,47.17122,9.52605,47.16242 |
+        Then result addresses contain
+          | town |
+          | Schaan |
 
     Scenario: Country search with bounded viewbox remain in the area
         When sending json search query "" with address
           | bounded | viewbox                                 | country |
-          | 1       | -56.16786,-34.84061,-56.12525,-34.86526 | de |
+          | 1       | 9.49712,47.17122,9.52605,47.16242 | de |
         Then less than 1 result is returned
 
     Scenario: Search with bounded viewboxlbrt in right area
         When sending json search query "bar" with address
           | bounded | viewboxlbrt |
-          | 1       | -56.16786,-34.86526,-56.12525,-34.84061 |
+          | 1       | 9.49712,47.16242,9.52605,47.17122 |
         Then result addresses contain
-          | city |
-          | Montevideo |
+          | town |
+          | Schaan |
 
+    @Fail
     Scenario: No POI search with unbounded viewbox
         When sending json search query "restaurant"
           | viewbox |
@@ -109,22 +113,22 @@ Feature: Search queries
     Scenario: bounded search remains within viewbox with results
         When sending json search query "restaurant"
          | bounded | viewbox |
-         | 1       | 9.93027,53.61634,10.10073,53.54500 |
-        Then result has centroid in 53.54500,53.61634,9.93027,10.10073
+         | 1       | 9.49712,47.17122,9.52605,47.16242 |
+        Then result has centroid in 9.49712,47.16242,9.52605,47.17122
 
     Scenario: Prefer results within viewbox
-        When sending json search query "25 de Mayo" with address
+        When sending json search query "Gässle" with address
           | accept-language |
           | en |
         Then result addresses contain
-          | ID | state |
-          | 0  | Florida |
-        When sending json search query "25 de Mayo" with address
+          | ID | town |
+          | 0  | Balzers |
+        When sending json search query "Gässle" with address
           | accept-language | viewbox |
-          | en              | -57.95468,-31.39261,-57.94741,-31.39490 |
+          | en              | 9.52413,47.10759,9.53140,47.10539 |
         Then result addresses contain
-          | ID | state |
-          | 0  | Salto |
+          | ID | village |
+          | 0  | Triesen |
 
     Scenario: viewboxes cannot be points
         When sending json search query "foo"
@@ -165,7 +169,9 @@ Feature: Search queries
         Then at most 50 results are returned
 
     Scenario: Limit number of search results
-        When sending json search query "restaurant"
+        When sending json search query "schloss"
+        Then more than 4 results are returned
+        When sending json search query "schloss"
           | limit |
           | 4 |
         Then exactly 4 results are returned
@@ -177,11 +183,11 @@ Feature: Search queries
         Then a HTTP 400 is returned
 
     Scenario: Restrict to feature type country
-        When sending xml search query "Uruguay"
+        When sending xml search query "fürstentum"
         Then results contain
-          | ID | place_rank |
-          | 1  | 16 |
-        When sending xml search query "Uruguay"
+          | ID | class |
+          | 1  | building |
+        When sending xml search query "fürstentum"
           | featureType |
           | country |
         Then results contain
@@ -189,16 +195,12 @@ Feature: Search queries
           | 4 |
 
     Scenario: Restrict to feature type state
-        When sending xml search query "Dakota"
-        Then results contain
-          | place_rank |
-          | 12 |
-        When sending xml search query "Dakota"
+        When sending xml search query "Wangerberg"
+        Then more than 1 result is returned
+        When sending xml search query "Wangerberg"
           | featureType |
           | state |
-        Then results contain
-          | place_rank |
-          | 8 |
+        Then exactly 0 results are returned
 
     Scenario: Restrict to feature type city
         When sending xml search query "vaduz"
@@ -213,16 +215,16 @@ Feature: Search queries
           | 16 |
 
     Scenario: Restrict to feature type settlement
-        When sending json search query "Burg"
+        When sending json search query "Malbun"
         Then results contain
           | ID | class |
-          | 1  | amenity |
-        When sending json search query "Burg"
+          | 1  | landuse |
+        When sending json search query "Malbun"
           | featureType |
           | settlement |
         Then results contain
-          | class    | type |
-          | boundary | administrative | 
+          | class | type |
+          | place | village |
 
     Scenario Outline: Search with polygon threshold (json)
         When sending json search query "switzerland"
@@ -265,7 +267,7 @@ Feature: Search queries
         | 1m |
 
     Scenario Outline: Search with extratags
-        When sending <format> search query "Hauptstr"
+        When sending <format> search query "Landstr"
           | extratags |
           | 1 |
         Then result has attributes extratags
@@ -278,7 +280,7 @@ Feature: Search queries
         | geojson |
 
     Scenario Outline: Search with namedetails
-        When sending <format> search query "Hauptstr"
+        When sending <format> search query "Landstr"
           | namedetails |
           | 1 |
         Then result has attributes namedetails
@@ -291,7 +293,7 @@ Feature: Search queries
         | geojson |
 
     Scenario Outline: Search result with contains TEXT geometry
-        When sending <format> search query "Highmore"
+        When sending <format> search query "triesenberg"
           | polygon_text |
           | 1 |
         Then result has attributes <response_attribute>
@@ -303,7 +305,7 @@ Feature: Search queries
         | jsonv2   | geotext |
 
     Scenario Outline: Search result contains SVG geometry
-        When sending <format> search query "Highmore"
+        When sending <format> search query "triesenberg"
           | polygon_svg |
           | 1 |
         Then result has attributes <response_attribute>
@@ -315,7 +317,7 @@ Feature: Search queries
         | jsonv2   | svg |
 
     Scenario Outline: Search result contains KML geometry
-        When sending <format> search query "Highmore"
+        When sending <format> search query "triesenberg"
           | polygon_kml |
           | 1 |
         Then result has attributes <response_attribute>
@@ -327,7 +329,7 @@ Feature: Search queries
         | jsonv2   | geokml |
 
     Scenario Outline: Search result contains GEOJSON geometry
-        When sending <format> search query "Highmore"
+        When sending <format> search query "triesenberg"
           | polygon_geojson |
           | 1 |
         Then result has attributes <response_attribute>
@@ -340,7 +342,7 @@ Feature: Search queries
         | geojson  | geojson |
 
     Scenario Outline: Search result in geojson format contains no non-geojson geometry
-        When sending geojson search query "Highmore"
+        When sending geojson search query "triesenberg"
           | polygon_text | polygon_svg | polygon_geokml |
           | 1            | 1           | 1              |
         Then result 0 has not attributes <response_attribute>
@@ -353,11 +355,15 @@ Feature: Search queries
         | geokml             |
 
     Scenario: Search along a route
-        When sending json search query "restaurant" with address
-          | bounded | routewidth | route                                   |
-          | 1       | 0.1        | -103.23255,44.08198,-103.22516,44.08079 |
+        When sending json search query "schloss" with address
         Then result addresses contain
-          | city |
-          | Rapid City |
+          | ID | town |
+          | 0  | Vaduz |
+        When sending json search query "schloss" with address
+          | bounded | routewidth | route                              |
+          | 1       | 0.1        |  9.54353,47.11772,9.54314,47.11894 |
+        Then result addresses contain
+          | town |
+          | Triesenberg |
 
 

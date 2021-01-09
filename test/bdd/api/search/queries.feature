@@ -3,60 +3,50 @@ Feature: Search queries
     Generic search result correctness
 
     Scenario: House number search for non-street address
-        When sending json search query "2 Steinwald, Austria" with address
+        When sending json search query "6 Silum, Liechtenstein" with address
           | accept-language |
           | en |
         Then address of result 0 is
           | type         | value |
-          | house_number | 2 |
-          | hamlet       | Steinwald |
-          | village      | Göfis |
-          | postcode     | 6811 |
-          | country      | Austria |
-          | country_code | at |
+          | house_number | 6 |
+          | village      | Silum |
+          | town         | Triesenberg |
+          | county       | Oberland |
+          | postcode     | 9497 |
+          | country      | Liechtenstein |
+          | country_code | li |
 
-    Scenario: House number interpolation even
-        When sending json search query "Schellingstr 86, Hamburg" with address
+    Scenario: House number interpolation
+        When sending json search query "Grosssteg 1023, Triesenberg" with address
           | accept-language |
           | de |
         Then address of result 0 contains
           | type          | value |
-          | house_number  | 86 |
-          | road          | Schellingstraße |
-          | postcode      | 22089 |
-          | city          | Hamburg |
-          | country       | Deutschland |
-          | country_code  | de |
-
-    Scenario: House number interpolation odd
-        When sending json search query "Schellingstr 73, Hamburg" with address
-          | accept-language |
-          | de |
-        Then address of result 0 contains
-          | type          | value |
-          | house_number  | 73 |
-          | road          | Schellingstraße |
-          | postcode      | 22089 |
-          | city          | Hamburg |
-          | country       | Deutschland |
-          | country_code  | de |
+          | house_number  | 1023 |
+          | road          | Grosssteg |
+          | village       | Sücka |
+          | postcode      | 9497 |
+          | town          | Triesenberg |
+          | country       | Liechtenstein |
+          | country_code  | li |
 
     Scenario: With missing housenumber search falls back to road
-        When sending json search query "342 rocha, santa lucia" with address
+        When sending json search query "Bündaweg 555" with address
         Then address of result 0 is
-          | type         | value |
-          | road         | Rocha |
-          | city         | Santa Lucía |
-          | state        | Canelones |
-          | postcode     | 90700 |
-          | country      | Uruguay |
-          | country_code | uy |
+          | type          | value |
+          | road          | Bündaweg |
+          | village       | Silum |
+          | postcode      | 9497 |
+          | county        | Oberland |
+          | town          | Triesenberg |
+          | country       | Liechtenstein |
+          | country_code  | li |
 
     Scenario Outline: Housenumber 0 can be found
-        When sending <format> search query "Pham Hung Road 0" with address
+        When sending <format> search query "Gnalpstrasse 0" with address
         Then results contain
           | display_name |
-          | ^.*, 0,.* |
+          | ^0,.* |
         And result addresses contain
           | house_number |
           | 0     |
@@ -70,10 +60,10 @@ Feature: Search queries
 
     @Tiger
     Scenario: TIGER house number
-        When sending json search query "323 22nd Street Southwest, Huron"
+        When sending json search query "697 Upper Kingston Road"
         Then results contain
-         | osm_type |
-         | way |
+         | osm_type | display_name |
+         | way      | ^697,.* |
 
     Scenario: Search with class-type feature
         When sending jsonv2 search query "Hotel in California"
@@ -91,19 +81,17 @@ Feature: Search queries
           | amenity | restaurant |
 
     Scenario: Search with key-value amenity
-        When sending json search query "[shop=hifi] hamburg"
+        When sending json search query "[club=scout] Vaduz"
         Then results contain
           | class | type |
-          | shop  | hifi |
+          | club  | scout |
 
     Scenario: With multiple amenity search only the first is used
-        When sending json search query "[shop=hifi] [church] hamburg"
+        When sending json search query "[club=scout] [church] vaduz"
         Then results contain
           | class | type |
-          | shop  | hifi |
-
-    Scenario: With multiple amenity search only the first is used
-        When sending json search query "[church] [restaurant] hamburg"
+          | club  | scout |
+        When sending json search query "[amenity=place_of_worship] [club=scout] vaduz"
         Then results contain
           | class   | type |
           | amenity | place_of_worship |
@@ -115,30 +103,36 @@ Feature: Search queries
           | amenity | restaurant |
 
     Scenario: Arbitrary key/value search near given coordinate
-        When sending json search query "[man_made=mast]  47.15739° N 9.61264° E"
+        When sending json search query "[leisure=firepit]   47.150° N 9.5340493° E"
         Then results contain
-          | class    | type |
-          | man_made | mast |
+          | class   | type |
+          | leisure | firepit |
 
     Scenario: Arbitrary key/value search near given coordinate and named place
-        When sending json search query "[man_made=mast] amerlugalpe  47° 9′ 26″ N 9° 36′ 45″ E"
+        When sending json search query "[leisure=firepit] ebenholz  47° 9′ 26″ N 9° 36′ 45″ E"
         Then results contain
           | class    | type |
-          | man_made | mast |
+          | leisure | firepit |
 
     Scenario: Name search near given coordinate
-        When sending json search query "amerlugalpe, N 47.15739° E 9.61264°"
-        Then exactly 1 result is returned
+        When sending json search query "sporry" with address
+        Then result addresses contain
+          | ID | town |
+          | 0  | Vaduz |
+        When sending json search query "sporry, 47.10791,9.52676" with address
+        Then result addresses contain
+          | ID | village |
+          | 0  | Triesen |
 
     Scenario: Name search near given coordinate without result
-        When sending json search query "amerlugalpe, N 47 15 7 W 9 61 26"
+        When sending json search query "sporry, N 47 15 7 W 9 61 26"
         Then exactly 0 results are returned
 
     Scenario: Arbitrary key/value search near a road
-        When sending json search query "[leisure=table_soccer_table] immenbusch"
+        When sending json search query "[amenity=drinking_water] Wissfläckaweg"
         Then results contain
           | class   | type |
-          | leisure | table_soccer_table |
+          | amenity | drinking_water |
 
     Scenario: Ignore other country codes in structured search with country
         When sending json search query ""
@@ -154,29 +148,29 @@ Feature: Search queries
 
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
-        When sending json search query "6395 geminis, montevideo" with address
+        When sending json search query "Austrasse 11, Vaduz" with address
         Then result addresses contain
           | ID | house_number |
-          | 0  | 6395 |
-          | 1  | 6395 BIS |
+          | 0  | 11 |
+          | 1  | 11 a |
 
-    Scenario Outline: Same Searches with white spaces 
+    Scenario Outline: Coordinate searches with white spaces
         When sending json search query "<data>"
         Then exactly 1 result is returned
         And results contain
           | class   |
-          | building |
+          | natural |
 
     Examples:
       | data |
-      | amerlugalpe, N 47.15739° E 9.61264° |
-      | amerlugalpe,	N 47.15739° E 9.61264° |
-      | 	amerlugalpe	, 	N 47.15739° E 9.61264° |
-      | amerlugalpe, N 47.15739° 		E 9.61264° |
-      | amerlugalpe, N 47.15739° E	9.61264° |
+      | sporry weiher, N 47.10791° E 9.52676° |
+      | sporry weiher,	N 47.10791° E 9.52676° |
+      | 	sporry weiher	, 	N 47.10791° E 9.52676° |
+      | sporry weiher, N 47.10791° 		E 9.52676° |
+      | sporry weiher, N 47.10791° E	9.52676° |
 
-    Scenario: Searched with white spaces
-        When sending json search query "22nd	Street Southwest,Huron"
+    Scenario: Searches with white spaces
+        When sending json search query "52	Bodastr,Triesenberg"
         Then results contain
           | class   | type |
           | highway | residential |
@@ -184,7 +178,7 @@ Feature: Search queries
 
     # github #1949
     Scenario: Addressdetails always return the place type
-       When sending json search query "Rotherbaum" with address
+       When sending json search query "Vaduz" with address
        Then result addresses contain
-         | ID | suburb |
-         | 0  | Rotherbaum |
+         | ID | town |
+         | 0  | Vaduz |

@@ -32,3 +32,18 @@ Feature: Searching of simple objects
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | R        | 1 |
+
+    # github #1763
+    Scenario: Correct translation of highways under construction
+        Given the grid
+         | 1 |  |   |  | 2 |
+         |   |  | 9 |  |   |
+        And the places
+         | osm | class   | type         | name      | geometry |
+         | W1  | highway | construction | The build | 1,2      |
+         | N1  | amenity | cafe         | Bean      | 9        |
+        When importing
+        And sending json search query "Bean" with address
+        Then result addresses contain
+         | amenity | road |
+         | Bean    | The build |

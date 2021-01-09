@@ -57,14 +57,9 @@ The coding style is enforced with PHPCS and can be tested with:
 
 ## Testing
 
-Before submitting a pull request make sure that the following tests pass:
+Before submitting a pull request make sure that the tests pass:
 
 ```
-  cd test/bdd
-  behave -DBUILDDIR=<builddir> db osm2pgsql
-```
-
-```
-  cd test/php
-  phpunit ./
+  cd build
+  make test
 ```

@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" upload="false" generator="osmium/1.10.0">
+  <node id="1" lat="47.11855" lon="9.5697463">
+    <tag k="addr:housenumber" v="1001"/>
+  </node>
+  <node id="2" lat="47.1185372" lon="9.5719698">
+    <tag k="addr:housenumber" v="1051"/>
+  </node>
+  <node id="3" lat="47.13288" lon="9.55267">
+    <tag k="addr:housenumber" v="6"/>
+    <tag k="addr:place" v="Silum" />
+  </node>
+  <node id="4" lat="47.122487032" lon="9.554483093">
+    <tag k="addr:housenumber" v="0"/>
+    <tag k="addr:street" v="Gnalpstrasse" />
+  </node>
+  <way id="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="addr:interpolation" v="odd"/>
+  </way>
+</osm>

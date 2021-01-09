@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 
 from utils import run_script
 from http_responses import GenericResponse, SearchResponse, ReverseResponse, StatusResponse
+from check_functions import Bbox
 
 LOG = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ def validate_result_number(context, operator, number):
     assert context.response.errorcode == 200
     numres = len(context.response.result)
     assert compare(operator, numres, int(number)), \
-        "Bad number of results: expected %s %s, got %d." % (operator, number, numres)
+        "Bad number of results: expected {} {}, got {}.".format(operator, number, numres)
 
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
@@ -261,18 +262,12 @@ def validate_attributes(context, lid, neg, attrs):
 def step_impl(context):
     context.execute_steps("then at least 1 result is returned")
 
-    if 'ID' not in context.table.headings:
-        addr_parts = context.response.property_list('address')
-
     for line in context.table:
-        if 'ID' in context.table.headings:
-            addr_parts = [dict(context.response.result[int(line['ID'])]['address'])]
+        idx = int(line['ID']) if 'ID' in line.headings else None
 
-        for h in context.table.headings:
-            if h != 'ID':
-                for p in addr_parts:
-                    assert h in p
-                    assert p[h] == line[h], "Bad address value for %s" % h
+        for name, value in zip(line.headings, line.cells):
+            if name != 'ID':
+                context.response.assert_address_field(idx, name, value)
 
 @then(u'address of result (?P<lid>\d+) has(?P<neg> no)? types (?P<attrs>.*)')
 def check_address(context, lid, neg, attrs):
@@ -290,12 +285,11 @@ def check_address(context, lid, neg, attrs):
 def check_address(context, lid, complete):
     context.execute_steps("then more than %s results are returned" % lid)
 
-    addr_parts = dict(context.response.result[int(lid)]['address'])
+    lid = int(lid)
+    addr_parts = dict(context.response.result[lid]['address'])
 
     for line in context.table:
-        assert line['type'] in addr_parts
-        assert addr_parts[line['type']] == line['value'], \
-                     "Bad address value for %s" % line['type']
+        context.response.assert_address_field(lid, line['type'], line['value'])
         del addr_parts[line['type']]
 
     if complete == 'is':
@@ -307,41 +301,30 @@ def step_impl(context, lid, coords):
         context.execute_steps("then at least 1 result is returned")
         bboxes = context.response.property_list('boundingbox')
     else:
-        context.execute_steps("then more than %sresults are returned" % lid)
-        bboxes = [ context.response.result[int(lid)]['boundingbox']]
+        context.execute_steps("then more than {}results are returned".format(lid))
+        bboxes = [context.response.result[int(lid)]['boundingbox']]
 
-    coord = [ float(x) for x in coords.split(',') ]
+    expected = Bbox(coords)
 
     for bbox in bboxes:
-        if isinstance(bbox, str):
-            bbox = bbox.split(',')
-        bbox = [ float(x) for x in bbox ]
-
-        assert bbox[0] >= coord[0]
-        assert bbox[1] <= coord[1]
-        assert bbox[2] >= coord[2]
-        assert bbox[3] <= coord[3]
+        assert bbox in expected, "Bbox {} is not contained in {}.".format(bbox, expected)
 
 @then(u'result (?P<lid>\d+ )?has centroid in (?P<coords>[\d,.-]+)')
 def step_impl(context, lid, coords):
     if lid is None:
         context.execute_steps("then at least 1 result is returned")
-        bboxes = zip(context.response.property_list('lat'),
-                     context.response.property_list('lon'))
+        centroids = zip(context.response.property_list('lon'),
+                        context.response.property_list('lat'))
     else:
-        context.execute_steps("then more than %sresults are returned" % lid)
+        context.execute_steps("then more than %sresults are returned".format(lid))
         res = context.response.result[int(lid)]
-        bboxes = [ (res['lat'], res['lon']) ]
+        centroids = [(res['lon'], res['lat'])]
 
-    coord = [ float(x) for x in coords.split(',') ]
+    expected = Bbox(coords)
 
-    for lat, lon in bboxes:
-        lat = float(lat)
-        lon = float(lon)
-        assert lat >= coord[0]
-        assert lat <= coord[1]
-        assert lon >= coord[2]
-        assert lon <= coord[3]
+    for centroid in centroids:
+        assert centroid in expected,\
+               "Centroid {} is not inside {}.".format(centroid, expected)
 
 @then(u'there are(?P<neg> no)? duplicates')
 def check_for_duplicates(context, neg):

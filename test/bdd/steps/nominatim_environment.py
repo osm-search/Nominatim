@@ -167,8 +167,11 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
 
         try:
-            self.run_setup_script('all', 'import-tiger-data',
-                                  osm_file=self.api_test_file)
+            self.run_setup_script('all', osm_file=self.api_test_file)
+            self.run_setup_script('import-tiger-data')
+
+            phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
+            run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
         except:
             self.db_drop_database(self.api_test_db)
             raise

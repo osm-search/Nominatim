@@ -95,6 +95,29 @@ class GenericResponse:
             assert str(self.result[idx][field]) == str(value), \
                    BadRowValueAssert(self, idx, field, value)
 
+    def assert_address_field(self, idx, field, value):
+        """ Check that result rows`idx` has a field `field` with value `value`
+            in its address. If idx is None, then all results are checked.
+        """
+        if idx is None:
+            todo = range(len(self.result))
+        else:
+            todo = [int(idx)]
+
+        for idx in todo:
+            assert 'address' in self.result[idx], \
+                   "Result row {} has no field 'address'.\nFull row: {}"\
+                       .format(idx, json.dumps(self.result[idx], indent=4))
+
+            address = self.result[idx]['address']
+            assert field in address, \
+                   "Result row {} has no field '{}' in address.\nFull address: {}"\
+                       .format(idx, field, json.dumps(address, indent=4))
+
+            assert address[field] == value, \
+                   "\nBad value for row {} field '{}' in address. Expected: {}, got: {}.\nFull address: {}"""\
+                       .format(idx, field, value, address[field], json.dumps(address, indent=4))
+
     def match_row(self, row):
         """ Match the result fields against the given behave table row.
         """

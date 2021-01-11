@@ -77,64 +77,14 @@ echo 'export PATH=~/.config/composer/vendor/bin:$PATH' > ~/.profile
 
 ## Executing Tests
 
-All tests are located in the `\test` directory.
+All tests are located in the `/test` directory.
 
-### Preparing the test database
-
-Some of the behavioural test expect a test database to be present. You need at
-least 2GB RAM and 10GB disk space to create the database.
-
-First create a separate directory for the test DB and fetch the test planet
-data and the Tiger data for South Dakota:
-
-```
-mkdir testdb
-cd testdb
-wget https://www.nominatim.org/data/test/nominatim-api-testdata.pbf
-wget -O - https://nominatim.org/data/tiger2018-nominatim-preprocessed.tar.gz | tar xz --wildcards --no-anchored '46*'
-```
-
-Configure and build Nominatim in the usual way:
-
-```
-cmake $USERNAME/Nominatim
-make
-```
-
-Create a minimal test settings file:
-
-```
-tee .env << EOF
-NOMINATIM_DATABASE_DSN="pgsql:dbname=test_api_nominatim"
-NOMINATIM_USE_US_TIGER_DATA=yes
-NOMINATIM_TIGER_DATA_PATH=tiger
-NOMINATIM_WIKIPEDIA_DATA_PATH=$USERNAME/Nominatim/test/testdb
-EOF
-```
-
-Inspect the file to check that all settings are correct for your local setup.
-In particular, the wikipedia path should point to the test directory in your
-Nominatim source directory.
-
-Now you can import the test database:
-
-```
-dropdb --if-exists test_api_nominatim
-./utils/setup.php --all --osm-file nominatim-api-testdb.pbf 2>&1 | tee import.log
-./utils/specialphrases.php --wiki-import | psql -d test_api_nominatim 2>&1 | tee -a import.log
-./utils/setup.php --import-tiger-data 2>&1 | tee -a import.log
-```
-
-### Running the tests
-
-To run all tests just go to the test directory and run make:
+To run all tests just go to the build directory and run make:
 
 ```sh
-cd test
-make
+cd build
+make test
 ```
-
-To skip tests that require the test database, run `make no-test-db` instead.
 
 For more information about the structure of the tests and how to change and
 extend the test suite, see the [Testing chapter](Testing.md).

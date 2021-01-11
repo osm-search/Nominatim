@@ -21,14 +21,16 @@ class NominatimEnvironment:
         self.template_db = config['TEMPLATE_DB']
         self.test_db = config['TEST_DB']
         self.api_test_db = config['API_TEST_DB']
+        self.api_test_file = config['API_TEST_FILE']
         self.server_module_path = config['SERVER_MODULE_PATH']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
         self.code_coverage_path = config['PHPCOV']
         self.code_coverage_id = 1
-        self.test_env = None
 
+        self.test_env = None
         self.template_db_done = False
+        self.api_db_done = False
         self.website_dir = None
 
     def connect_database(self, dbname):
@@ -111,18 +113,8 @@ class NominatimEnvironment:
 
         self.template_db_done = True
 
-        if self.reuse_template:
-            # check that the template is there
-            conn = self.connect_database('postgres')
-            cur = conn.cursor()
-            cur.execute('select count(*) from pg_database where datname = %s',
-                        (self.template_db,))
-            if cur.fetchone()[0] == 1:
-                return
-            conn.close()
-        else:
-            # just in case... make sure a previous table has been dropped
-            self.db_drop_database(self.template_db)
+        if self._reuse_or_drop_db(self.template_db):
+            return
 
         try:
             # call the first part of database setup
@@ -162,6 +154,29 @@ class NominatimEnvironment:
         """
         self.write_nominatim_config(self.api_test_db)
 
+        if self.api_db_done:
+            return
+
+        self.api_db_done = True
+
+        if self._reuse_or_drop_db(self.api_test_db):
+            return
+
+        testdata = Path('__file__') / '..' / '..' / 'testdb'
+        self.test_env['NOMINATIM_TIGER_DATA_PATH'] = str((testdata / 'tiger').resolve())
+        self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
+
+        try:
+            self.run_setup_script('all', osm_file=self.api_test_file)
+            self.run_setup_script('import-tiger-data')
+
+            phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
+            run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
+        except:
+            self.db_drop_database(self.api_test_db)
+            raise
+
+
     def setup_unknown_db(self):
         """ Setup a test against a non-existing database.
         """
@@ -190,6 +205,25 @@ class NominatimEnvironment:
 
         if not self.keep_scenario_db:
             self.db_drop_database(self.test_db)
+
+    def _reuse_or_drop_db(self, name):
+        """ Check for the existance of the given DB. If reuse is enabled,
+            then the function checks for existance and returns True if the
+            database is already there. Otherwise an existing database is
+            dropped and always false returned.
+        """
+        if self.reuse_template:
+            conn = self.connect_database('postgres')
+            with conn.cursor() as cur:
+                cur.execute('select count(*) from pg_database where datname = %s',
+                            (name,))
+                if cur.fetchone()[0] == 1:
+                    return True
+            conn.close()
+        else:
+            self.db_drop_database(name)
+
+        return False
 
     def reindex_placex(self, db):
         """ Run the indexing step until all data in the placex has

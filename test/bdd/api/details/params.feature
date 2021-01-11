@@ -3,20 +3,20 @@ Feature: Object details
     Testing different parameter options for details API.
 
     Scenario: JSON Details
-        When sending json details query for W78099902
+        When sending json details query for W297699560
         Then the result is valid json
         And result has attributes geometry
         And result has not attributes keywords,address,linked_places,parentof
 
     Scenario: JSON Details with keywords
-        When sending json details query for W78099902
+        When sending json details query for W297699560
             | keywords |
             | 1 |
         Then the result is valid json
         And result has attributes keywords
 
     Scenario: JSON Details with addressdetails
-        When sending json details query for W78099902
+        When sending json details query for W297699560
             | addressdetails |
             | 1 |
         Then the result is valid json
@@ -30,7 +30,7 @@ Feature: Object details
         And result has attributes linked_places
 
     Scenario: JSON Details with hierarchy
-        When sending json details query for W78099902
+        When sending json details query for W297699560
             | hierarchy |
             | 1 |
         Then the result is valid json
@@ -50,7 +50,8 @@ Feature: Object details
 
     Examples:
             | osmid |
-            | W78099902 |
-            | N3121929846 |
+            | W297699560 |
+            | W243055645 |
+            | W243055716 |
 
 

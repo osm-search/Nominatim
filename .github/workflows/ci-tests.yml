@@ -58,7 +58,7 @@ jobs:
               working-directory: test/php
 
             - name: BDD tests
-              run: behave -DREMOVE_TEMPLATE=1 --format=progress3 db osm2pgsql
+              run: behave -DREMOVE_TEMPLATE=1 --format=progress3
               working-directory: test/bdd
 
     import:

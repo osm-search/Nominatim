@@ -71,10 +71,10 @@ Feature: Simple Reverse Tests
       | geojson | geojson |
 
     Scenario Outline: Boundingbox is returned
-        When sending <format> reverse coordinates 14.62,108.1
+        When sending <format> reverse coordinates 47.11,9.57
           | zoom |
           | 8 |
-        Then result has bounding box in 9,20,102,113
+        Then result has bounding box in 47,48,9,10
 
     Examples:
       | format |
@@ -84,7 +84,7 @@ Feature: Simple Reverse Tests
       | xml |
 
     Scenario Outline: Reverse-geocoding with zoom
-        When sending <format> reverse coordinates 53.603,10.041
+        When sending <format> reverse coordinates 47.11,9.57
           | zoom |
           | 10 |
         Then exactly 1 result is returned

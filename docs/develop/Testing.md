@@ -67,17 +67,17 @@ The tests can be configured with a set of environment variables (`behave -D key=
                    the test databases (db tests)
  * `TEST_DB` - name of test database (db tests)
  * `API_TEST_DB` - name of the database containing the API test data (api tests)
+ * `API_TEST_FILE` - OSM file to be imported into the API test database (api tests)
  * `DB_HOST` - (optional) hostname of database host
  * `DB_PORT` - (optional) port of database on host
  * `DB_USER` - (optional) username of database login
  * `DB_PASS` - (optional) password for database login
  * `SERVER_MODULE_PATH` - (optional) path on the Postgres server to Nominatim
                           module shared library file
- * `TEST_SETTINGS_TEMPLATE` - file to write temporary Nominatim settings to
- * `REMOVE_TEMPLATE` - if true, the template database will not be reused during
-                       the next run. Reusing the base templates speeds up tests
-                       considerably but might lead to outdated errors for some
-                       changes in the database layout.
+ * `REMOVE_TEMPLATE` - if true, the template and API database will not be reused
+                       during the next run. Reusing the base templates speeds
+                       up tests considerably but might lead to outdated errors
+                       for some changes in the database layout.
  * `KEEP_TEST_DB` - if true, the test database will not be dropped after a test
                     is finished. Should only be used if one single scenario is
                     run, otherwise the result is undefined.
@@ -89,23 +89,20 @@ feature of behave which comes in handy when writing new tests.
 ### API Tests (`test/bdd/api`)
 
 These tests are meant to test the different API endpoints and their parameters.
-They require to import several datasets into a test database.
-See the [Development Setup chapter](Development-Environment.md#preparing-the-test-database)
-for instructions on how to set up this database.
+They require to import several datasets into a test database. This is normally
+done automatically during setup of the test. The API test database is then
+kept around and reused in subsequent runs of behave. Use `behave -DREMOVE_TEMPLATE`
+to force a reimport of the database.
 
-The official test dataset was derived from the 180924 planet (note: such
-file no longer exists at https://planet.openstreetmap.org/planet/2018/).
-Newer planets are likely to work as well but you may see isolated test
-failures where the data has changed.
+The official test dataset is saved in the file `test/testdb/apidb-test-data.pbf`
+and compromises the following data:
 
-The official test dataset can always be downloaded from
-[nominatim.org](https://www.nominatim.org/data/test/nominatim-api-testdata.pbf)
-To recreate the input data for the test database run:
+ * Geofabrik extract of Liechtenstein
+ * extract of Autauga country, Alabama, US (for tests against Tiger data)
+ * additional data from `test/testdb/additional_api_test.data.osm`
 
-```
-wget https://ftp5.gwdg.de/pub/misc/openstreetmap/planet.openstreetmap.org/pbf/planet-180924.osm.pbf
-osmconvert planet-180924.osm.pbf -B=test/testdb/testdb.polys -o=testdb.pbf
-```
+API tests should only be testing the functionality of the website PHP code.
+Most tests should be formulated as BDD DB creation tests (see below) instead.
 
 #### Code Coverage
 
@@ -140,3 +137,7 @@ needs superuser rights for postgres.
 
 These tests check that data is imported correctly into the place table. They
 use the same template database as the DB Creation tests, so the same remarks apply.
+
+Note that most testing of the gazetteer output of osm2pgsql is done in the tests
+of osm2pgsql itself. The BDD tests are just there to ensure compatibility of
+the osm2pgsql and Nominatim code.

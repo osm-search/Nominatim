@@ -3,27 +3,27 @@ Feature: Simple Tests
     Simple tests for internal server errors and response format.
 
     Scenario Outline: Testing different parameters
-        When sending search query "Hamburg"
+        When sending search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending xml search query "Hamburg"
+        When sending xml search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending json search query "Hamburg"
+        When sending json search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending jsonv2 search query "Hamburg"
+        When sending jsonv2 search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending geojson search query "Hamburg"
+        When sending geojson search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
-        When sending geocodejson search query "Hamburg"
+        When sending geocodejson search query "Vaduz"
           | param       | value   |
           | <parameter> | <value> |
         Then at least 1 result is returned
@@ -41,7 +41,7 @@ Feature: Simple Tests
      | polygon_svg      | 1 |
      | polygon_svg      | 0 |
      | accept-language  | de,en |
-     | countrycodes     | de |
+     | countrycodes     | li |
      | bounded          | 1 |
      | bounded          | 0 |
      | exclude_place_ids| 385252,1234515 |

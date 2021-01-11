@@ -3,7 +3,7 @@ Feature: Parameters for Reverse API
     Testing different parameter options for reverse API.
 
     Scenario Outline: Reverse-geocoding without address
-        When sending <format> reverse coordinates 53.603,10.041
+        When sending <format> reverse coordinates 47.13,9.56
           | addressdetails |
           | 0 |
         Then exactly 1 result is returned
@@ -26,7 +26,7 @@ Feature: Parameters for Reverse API
       | gkjd,50   |
 
     Scenario Outline: Reverse Geocoding with extratags
-        When sending <format> reverse coordinates 10.776234290950017,106.70425325632095
+        When sending <format> reverse coordinates 47.1395013150811,9.522098077031046
           | extratags |
           | 1 |
         Then result 0 has attributes extratags
@@ -39,7 +39,7 @@ Feature: Parameters for Reverse API
         | geojson |
 
     Scenario Outline: Reverse Geocoding with namedetails
-        When sending <format> reverse coordinates 10.776455623137625,106.70175343751907
+        When sending <format> reverse coordinates 47.1395013150811,9.522098077031046
           | namedetails |
           | 1 |
         Then result 0 has attributes namedetails

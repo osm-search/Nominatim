@@ -116,6 +116,7 @@ if (BUILD_IMPORTER)
        setup
        update
        admin
+       query
       )
 
    foreach (tool_name ${NOMINATIM_TOOLS})

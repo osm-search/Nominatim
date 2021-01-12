@@ -111,6 +111,17 @@ if (BUILD_IMPORTER)
        configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
                       ${PROJECT_BINARY_DIR}/utils/${script_source})
    endforeach()
+
+   set(NOMINATIM_TOOLS
+       setup
+       update
+       admin
+      )
+
+   foreach (tool_name ${NOMINATIM_TOOLS})
+       configure_file(${PROJECT_SOURCE_DIR}/cmake/tool.tmpl
+                      ${PROJECT_BINARY_DIR}/nominatim-${tool_name})
+   endforeach()
 endif()
 
 #-----------------------------------------------------------------------------

@@ -5,6 +5,10 @@ database administration and querying.
 import sys
 import argparse
 import logging
+from pathlib import Path
+
+from .config import Configuration
+from .admin.exec_utils import run_legacy_script
 
 class CommandlineParser:
     """ Wraps some of the common functions for parsing the command line
@@ -29,7 +33,7 @@ class CommandlineParser:
                            help='Print only error messages')
         group.add_argument('-v', '--verbose', action='count', default=1,
                            help='Increase verboseness of output')
-        group.add_argument('--project-dir', metavar='DIR',
+        group.add_argument('--project-dir', metavar='DIR', default='.',
                            help='Base directory of the Nominatim installation (default:.)')
         group.add_argument('-j', '--threads', metavar='NUM', type=int,
                            help='Number of parallel threads to use')
@@ -48,20 +52,27 @@ class CommandlineParser:
         parser.set_defaults(command=cmd)
         cmd.add_args(parser)
 
-    def run(self):
+    def run(self, **kwargs):
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
         args = self.parser.parse_args()
 
         if args.subcommand is None:
-            self.parser.print_help()
-        else:
-            logging.basicConfig(stream=sys.stderr,
-                                format='%(asctime)s %(levelname)s: %(message)s',
-                                datefmt='%Y-%m-%d %H:%M:%S',
-                                level=max(4 - args.verbose, 1) * 10)
-            args.command.run(args)
+            return self.parser.print_help()
+
+        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir'):
+            setattr(args, arg, Path(kwargs[arg]))
+        args.project_dir = Path(args.project_dir)
+
+        logging.basicConfig(stream=sys.stderr,
+                            format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S',
+                            level=max(4 - args.verbose, 1) * 10)
+
+        args.config = Configuration(args.project_dir, args.data_dir / 'settings')
+
+        args.command.run(args)
 
 
 class SetupAll:
@@ -290,7 +301,12 @@ class AdminWarm:
 
     @staticmethod
     def run(args):
-        print("TODO: ./utils/warm.php", args)
+        params = ['warm.php']
+        if args.target == 'reverse':
+            params.append('--reverse-only')
+        if args.target == 'search':
+            params.append('--search-only')
+        return run_legacy_script(*params, nominatim_env=args)
 
 
 class QueryExport:
@@ -372,4 +388,4 @@ def nominatim(**kwargs):
     parser.add_subcommand('details', QueryTodo)
     parser.add_subcommand('status', QueryTodo)
 
-    parser.run()
+    parser.run(**kwargs)

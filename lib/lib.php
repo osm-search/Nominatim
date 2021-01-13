@@ -5,6 +5,11 @@ require('Symfony/Component/Dotenv/autoload.php');
 function loadSettings($sProjectDir)
 {
     @define('CONST_InstallDir', $sProjectDir);
+    // Temporary hack to set the direcory via environment instead of
+    // the installed scripts. Neither setting is part of the official
+    // set of settings.
+    defined('CONST_DataDir') or define('CONST_DataDir', $_SERVER['NOMINATIM_DATADIR']);
+    defined('CONST_BinDir') or define('CONST_BinDir', $_SERVER['NOMINATIM_BINDIR']);
 
     $dotenv = new \Symfony\Component\Dotenv\Dotenv();
     $dotenv->load(CONST_DataDir.'/settings/env.defaults');

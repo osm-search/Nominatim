@@ -98,7 +98,6 @@ if (BUILD_IMPORTER)
    set(CUSTOMSCRIPTS
        check_import_finished.php
        country_languages.php
-       importWikipedia.php
        export.php
        query.php
        setup.php

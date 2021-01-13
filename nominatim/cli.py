@@ -66,14 +66,18 @@ class CommandlineParser:
 
 class SetupAll:
     """\
-    Create a new database and import data from an OSM file.
+    Create a new Nominatim database from an OSM file.
     """
 
     @staticmethod
     def add_args(parser):
-        group = parser.add_argument_group('Required arguments')
-        group.add_argument('--osm-file', required=True,
+        group_name = parser.add_argument_group('Required arguments')
+        group = group_name.add_mutually_exclusive_group(required=True)
+        group.add_argument('--osm-file',
                            help='OSM file to be imported.')
+        group.add_argument('--continue', nargs=1,
+                           choices=['load-data', 'indexing', 'db-postprocess'],
+                           help='Continue an import that was interrupted')
         group = parser.add_argument_group('Optional arguments')
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
@@ -98,28 +102,12 @@ class SetupAll:
 
     @staticmethod
     def run(args):
-        print("TODO: setup all", args)
+        print("TODO: ./utils/setup.php", args)
 
 
-class SetupContinue:
+class SetupFreeze:
     """\
-    Continue an import previously started with the `all` command.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Required aruments')
-        group.add_argument('pickup-point', nargs=1,
-                           choices=['load-data', 'indexing', 'db-postprocess'],
-                           help='Position where to continue the import')
-
-    @staticmethod
-    def run(args):
-        print("TODO: setup continue", args)
-
-class SetupDrop:
-    """\
-    Remove all tables only needed for keeping data up-to-date.
+    Make database read-only.
 
     About half of data in the Nominatim database is kept only to be able to
     keep the data up-to-date with new changes made in OpenStreetMap. This
@@ -137,27 +125,10 @@ class SetupDrop:
     def run(args):
         print("TODO: setup drop", args)
 
-class SetupAddExternal:
-    """\
-    Add additional external data to the Nominatim database.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Data sources')
-        group.add_argument('--tiger-data', metavar='DIR',
-                           help='Add housenumbers from the US TIGER census database.')
-        group.add_argument('--wiki-data',
-                           help='Add or update Wikipedia/data importance numbers.')
-
-    @staticmethod
-    def run(args):
-        print("TODO: setup extern", args)
-
 
 class SetupSpecialPhrases:
     """\
-    Create special phrases.
+    Maintain special phrases.
     """
 
     @staticmethod
@@ -176,23 +147,6 @@ class SetupSpecialPhrases:
         print("./utils/specialphrases.php --from-wiki", args)
 
 
-class UpdateStatus:
-    """\
-    Check for the status of the data.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Additional arguments')
-        group.add_argument('--check-for-updates', action='store_true',
-                           help='Check if new updates are available')
-
-
-    @staticmethod
-    def run(args):
-        print('./utils/update.php --check-for-updates', args)
-
-
 class UpdateReplication:
     """\
     Update the database using an online replication service.
@@ -208,6 +162,8 @@ class UpdateReplication:
                            help="""Do not update the trigger function to
                                    support differential updates.""")
         group = parser.add_argument_group('Arguments for updates')
+        group.add_argument('--check-for-updates', action='store_true',
+                           help='Check if new updates are available and exit')
         group.add_argument('--once', action='store_true',
                            help="""Download and apply updates only once. When
                                    not set, updates are continuously applied""")
@@ -223,7 +179,7 @@ class UpdateReplication:
             print('./utils/update.php --import-osmosis(-all)', args)
 
 
-class UpdateImport:
+class UpdateAddData:
     """\
     Add additional data from a file or an online source.
 
@@ -245,6 +201,8 @@ class UpdateImport:
                            help='Import a single way from the API')
         group.add_argument('--relation', metavar='ID', type=int,
                            help='Import a single relation from the API')
+        group.add_argument('--tiger-data', metavar='DIR',
+                           help='Add housenumbers from the US TIGER census database.')
         group = parser.add_argument_group('Extra arguments')
         group.add_argument('--use-main-api', action='store_true',
                            help='Use OSM API instead of Overpass to download objects')
@@ -286,49 +244,24 @@ class UpdateRefresh:
                            help='Reimport address level configuration')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances')
+        group.add_argument('--functions', action='store_true',
+                           help='Update the PL/pgSQL functions in the database')
+        group.add_argument('--wiki-data',
+                           help='Update Wikipedia/data importance numbers.')
+        group.add_argument('--website', action='store_true',
+                           help='Refresh the directory that serves the scripts for the web API')
+        group = parser.add_argument_group('Arguments for function refresh')
+        group.add_argument('--no-diff-updates', action='store_false', dest='diffs',
+                           help='Do not enable code for propagating updates')
 
     @staticmethod
     def run(args):
         print('./utils/update.php', args)
 
 
-
-class AdminCreateFunctions:
-    """\
-    Update the PL/pgSQL functions in the database.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Expert arguments')
-        group.add_argument('--no-diff-updates', action='store_false', dest='diffs',
-                           help='Do not enable code for propagating updates')
-
-    @staticmethod
-    def run(args):
-        print("TODO: ./utils/setup.php --create-functions --enable-diff-updates "
-              "--create-partition-functions", args)
-
-
-class AdminSetupWebsite:
-    """\
-    Setup the directory that serves the scripts for the web API.
-
-    The directory is created under `/website` in the project directory.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        pass # No options
-
-    @staticmethod
-    def run(args):
-        print("TODO: ./utils/setup.php --setup-website", args)
-
-
 class AdminCheckDatabase:
     """\
-    Check that the Nominatim database is complete and operational.
+    Check that the database is complete and operational.
     """
 
     @staticmethod
@@ -342,7 +275,7 @@ class AdminCheckDatabase:
 
 class AdminWarm:
     """\
-    Pre-warm caches of the database for search and reverse queries.
+    Warm database caches for search and reverse queries.
     """
 
     @staticmethod
@@ -360,9 +293,9 @@ class AdminWarm:
         print("TODO: ./utils/warm.php", args)
 
 
-class AdminExport:
+class QueryExport:
     """\
-    Export addresses as CSV file from a Nominatim database
+    Export addresses as CSV file from a Nominatim database.
     """
 
     @staticmethod
@@ -399,53 +332,44 @@ class AdminExport:
     def run(args):
         print("TODO: ./utils/export.php", args)
 
-def setup(**kwargs):
+
+class QueryTodo:
     """\
-    Commands for creating a Nominatim database and importing data.
+    Todo
     """
-    parser = CommandlineParser('nominatim-setup', setup.__doc__)
+    @staticmethod
+    def add_args(parser):
+        pass
 
-    parser.add_subcommand('all', SetupAll)
-    parser.add_subcommand('continue', SetupContinue())
-    parser.add_subcommand('drop', SetupDrop())
-    parser.add_subcommand('add-external', SetupAddExternal())
-    parser.add_subcommand('special-phrases', SetupSpecialPhrases())
-    parser.run()
+    def run(args):
+        print("TODO: searching")
 
-def update(**kwargs):
+
+def nominatim(**kwargs):
     """\
-    Commands for updating data inside a Nominatim database.
+    Command-line tools for importing, updating, administrating and
+    querying the Nominatim database.
     """
-    parser = CommandlineParser('nominatim-update', update.__doc__)
+    parser = CommandlineParser('nominatim', nominatim.__doc__)
 
-    parser.add_subcommand('status', UpdateStatus())
-    parser.add_subcommand('replication', UpdateReplication())
-    parser.add_subcommand('import', UpdateImport())
-    parser.add_subcommand('index', UpdateIndex())
-    parser.add_subcommand('refresh', UpdateRefresh())
+    parser.add_subcommand('import', SetupAll)
+    parser.add_subcommand('freeze', SetupFreeze)
+    parser.add_subcommand('replication', UpdateReplication)
 
-    parser.run()
+    parser.add_subcommand('check-database', AdminCheckDatabase)
+    parser.add_subcommand('warm', AdminWarm)
 
-def admin(**kwargs):
-    """\
-    Commands for inspecting and maintaining a Nomiantim database.
-    """
-    parser = CommandlineParser('nominatim-admin', admin.__doc__)
+    parser.add_subcommand('special-phrases', SetupSpecialPhrases)
 
-    parser.add_subcommand('create-functions', AdminCreateFunctions())
-    parser.add_subcommand('setup-website', AdminSetupWebsite())
-    parser.add_subcommand('check-database', AdminCheckDatabase())
-    parser.add_subcommand('warm', AdminWarm())
-    parser.add_subcommand('export', AdminExport())
+    parser.add_subcommand('add-data', UpdateAddData)
+    parser.add_subcommand('index', UpdateIndex)
+    parser.add_subcommand('refresh', UpdateRefresh)
 
-    parser.run()
-
-def query(**kwargs):
-    """\
-    Query the database.
-
-    This provides a command-line query interface to Nominatim's API.
-    """
-    parser = CommandlineParser('nominatim-query', query.__doc__)
+    parser.add_subcommand('export', QueryExport)
+    parser.add_subcommand('search', QueryTodo)
+    parser.add_subcommand('reverse', QueryTodo)
+    parser.add_subcommand('lookup', QueryTodo)
+    parser.add_subcommand('details', QueryTodo)
+    parser.add_subcommand('status', QueryTodo)
 
     parser.run()

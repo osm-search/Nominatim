@@ -1,4 +1,5 @@
 <?php
+@define('CONST_LibDir', dirname(dirname(__FILE__)));
 
 require_once(CONST_LibDir.'/init-cmd.php');
 require_once(CONST_LibDir.'/Geocode.php');

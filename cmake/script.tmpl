@@ -3,7 +3,6 @@
 @define('CONST_Default_ModulePath', '@CMAKE_BINARY_DIR@/module');
 @define('CONST_Default_Osm2pgsql', '@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql');
 @define('CONST_BinDir', '@CMAKE_SOURCE_DIR@/utils');
-@define('CONST_LibDir', '@CMAKE_SOURCE_DIR@/lib');
 @define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
 
-require_once(CONST_LibDir.'/admin/@script_source@');
+require_once('@CMAKE_SOURCE_DIR@/lib/admin/@script_source@');

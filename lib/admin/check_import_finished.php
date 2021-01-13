@@ -1,4 +1,5 @@
 <?php
+@define('CONST_LibDir', dirname(dirname(__FILE__)));
 
 require_once(CONST_LibDir.'/init-cmd.php');
 
@@ -17,7 +18,6 @@ $print_success = function ($message = 'OK') use ($term_colors) {
 $print_fail = function ($message = 'Failed') use ($term_colors) {
     echo $term_colors['red'].$message.$term_colors['normal']."\n";
 };
-
 
 $oDB = new Nominatim\DB;
 

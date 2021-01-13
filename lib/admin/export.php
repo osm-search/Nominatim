@@ -1,4 +1,5 @@
 <?php
+    @define('CONST_LibDir', dirname(dirname(__FILE__)));
     // Script to extract structured city and street data
     // from a running nominatim instance as CSV data
 

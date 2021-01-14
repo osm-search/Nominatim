@@ -17,7 +17,9 @@ function checkInFile($sOSMFile)
 
 function getOsm2pgsqlBinary()
 {
-    return getSetting('OSM2PGSQL_BINARY', CONST_Default_Osm2pgsql);
+    $sBinary = getSetting('OSM2PGSQL_BINARY');
+
+    return $sBinary ? $sBinary : CONST_Default_Osm2pgsql;
 }
 
 function getImportStyle()

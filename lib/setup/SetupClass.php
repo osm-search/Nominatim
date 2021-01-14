@@ -42,7 +42,10 @@ class SetupFunctions
             $this->iCacheMemory = getCacheMemoryMB();
         }
 
-        $this->sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_Default_ModulePath);
+        $this->sModulePath = getSetting('DATABASE_MODULE_PATH');
+        if (!$this->sModulePath) {
+            $this->sModulePath = CONST_Default_ModulePath;
+        }
         info('module path: ' . $this->sModulePath);
 
         // parse database string

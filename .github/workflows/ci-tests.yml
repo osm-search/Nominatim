@@ -101,25 +101,25 @@ jobs:
               shell: bash
 
             - name: Import
-              run: php ./utils/setup.php --osm-file ../monaco-latest.osm.pbf --osm2pgsql-cache 500 --all
+              run: ./nominatim import --osm-file ../monaco-latest.osm.pbf
               working-directory: build
 
             - name: Import special phrases
-              run: php ./utils/specialphrases.php --wiki-import | psql -d nominatim
+              run: ./nominatim special-phrases --from-wiki | psql -d nominatim
               working-directory: build
 
             - name: Check import
-              run: php ./utils/check_import_finished.php
+              run: ./nominatim check-database
               working-directory: build
 
             - name: Run update
               run: |
-                   php ./utils/update.php --init-updates
-                   php ./utils/update.php --import-osmosis
+                   ./nominatim replication --init
+                   ./nominatim replication --once
               working-directory: build
 
             - name: Run reverse-only import
               run : |
                   dropdb nominatim
-                  php ./utils/setup.php --osm-file ../monaco-latest.osm.pbf --reverse-only --all
+                  php ./nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only
               working-directory: build

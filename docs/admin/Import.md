@@ -8,7 +8,7 @@ software itself, if not return to the [installation page](Installation.md).
 ## Configuration setup in `.env`
 
 The Nominatim server can be customized via a `.env` in the build directory.
-This is a file in [dotenv](https://symfony.com/doc/4.3/components/dotenv.html) format
+This is a file in [dotenv](https://github.com/theskumar/python-dotenv) format
 which looks the same as variable settings in a standard shell environment.
 You can also set the same configuration via environment variables. All
 settings have a `NOMINATIM_` prefix to avoid conflicts with other environment

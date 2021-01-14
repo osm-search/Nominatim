@@ -1,10 +1,13 @@
-import os
 from pathlib import Path
+import sys
 import tempfile
 
 import psycopg2
 import psycopg2.extras
 
+sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
+
+from nominatim.config import Configuration
 from steps.utils import run_script
 
 class NominatimEnvironment:
@@ -28,6 +31,7 @@ class NominatimEnvironment:
         self.code_coverage_path = config['PHPCOV']
         self.code_coverage_id = 1
 
+        self.default_config = Configuration(None, self.src_dir / 'settings').get_os_env()
         self.test_env = None
         self.template_db_done = False
         self.api_db_done = False
@@ -78,11 +82,15 @@ class NominatimEnvironment:
            and dsn == self.test_env['NOMINATIM_DATABASE_DSN']:
             return # environment already set uo
 
-        self.test_env = os.environ
+        self.test_env = dict(self.default_config)
         self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
+        self.test_env['NOMINATIM_DATADIR'] = self.src_dir
+        self.test_env['NOMINATIM_BINDIR'] = self.src_dir / 'utils'
+        self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.build_dir / 'module'
+        self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = self.build_dir / 'osm2pgsql' / 'osm2pgsql'
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
@@ -253,7 +261,7 @@ class NominatimEnvironment:
         """ Run one of the Nominatim utility scripts with the given arguments.
         """
         cmd = ['/usr/bin/env', 'php', '-Cq']
-        cmd.append((Path(self.build_dir) / 'utils' / '{}.php'.format(script)).resolve())
+        cmd.append((Path(self.src_dir) / 'lib' / 'admin' / '{}.php'.format(script)).resolve())
         cmd.extend(['--' + x for x in args])
         for k, v in kwargs.items():
             cmd.extend(('--' + k.replace('_', '-'), str(v)))
@@ -261,7 +269,7 @@ class NominatimEnvironment:
         if self.website_dir is not None:
             cwd = self.website_dir.name
         else:
-            cwd = self.build_dir
+            cwd = None
 
         run_script(cmd, cwd=cwd, env=self.test_env)
 

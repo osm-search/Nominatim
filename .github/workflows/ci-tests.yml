@@ -47,7 +47,7 @@ jobs:
 
             - name: Install test prerequsites
               run: |
-                   sudo apt-get install -y -qq php-codesniffer python3-tidylib php-symfony-dotenv
+                   sudo apt-get install -y -qq php-codesniffer
                    sudo pip3 install behave
 
             - name: PHP linting

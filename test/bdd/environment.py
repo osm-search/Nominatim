@@ -1,5 +1,6 @@
-from behave import *
 from pathlib import Path
+
+from behave import *
 
 from steps.geometry_factory import GeometryFactory
 from steps.nominatim_environment import NominatimEnvironment

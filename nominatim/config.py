@@ -21,7 +21,8 @@ class Configuration:
 
     def __init__(self, project_dir, config_dir):
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
-        self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
+        if project_dir is not None:
+            self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
     def __getattr__(self, name):
         name = 'NOMINATIM_' + name

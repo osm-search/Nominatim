@@ -306,7 +306,7 @@ class UpdateIndex:
 
 class UpdateRefresh:
     """\
-    Recompute auxillary data used by the indexing process.
+    Recompute auxiliary data used by the indexing process.
 
     These functions must not be run in parallel with other update commands.
     """

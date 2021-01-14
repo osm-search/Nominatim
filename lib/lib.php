@@ -41,7 +41,7 @@ function getSettingBool($sConfName)
 
 function getSettingConfig($sConfName, $sSystemConfig)
 {
-    $sValue = $_ENV['NOMINATIM_'.$sConfName];
+    $sValue = $_SERVER['NOMINATIM_'.$sConfName];
 
     if (!$sValue) {
         return CONST_DataDir.'/settings/'.$sSystemConfig;

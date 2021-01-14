@@ -72,7 +72,19 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
-        args.command.run(args)
+        return args.command.run(args)
+
+##### Subcommand classes
+#
+# Each class needs to implement two functions: add_args() adds the CLI parameters
+# for the subfunction, run() executes the subcommand.
+#
+# The class documentation doubles as the help text for the command. The
+# first line is also used in the summary when calling the program without
+# a subcommand.
+#
+# No need to document the functions each time.
+# pylint: disable=C0111
 
 
 class SetupAll:
@@ -180,7 +192,7 @@ class SetupSpecialPhrases:
     def run(args):
         if args.output.name != '<stdout>':
             raise NotImplementedError('Only output to stdout is currently implemented.')
-        return run_legacy_script('specialphrases.php', '--wiki-import' , nominatim_env=args)
+        return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
 
 
 class UpdateReplication:
@@ -213,7 +225,7 @@ class UpdateReplication:
         if args.init:
             params.append('--init-updates')
             if not args.update_functions:
-                params.apend('--no-update-functions')
+                params.append('--no-update-functions')
         elif args.check_for_updates:
             params.append('--check-for-updates')
         else:
@@ -260,7 +272,7 @@ class UpdateAddData:
         if args.tiger_data:
             return run_legacy_script('setup.php', '--import-tiger-data', nominatim_env=args)
 
-        params = [ 'update.php']
+        params = ['update.php']
         if args.file:
             params.extend(('--import-file', args.file))
         elif args.diff:
@@ -270,7 +282,7 @@ class UpdateAddData:
         elif args.way:
             params.extend(('--import-way', args.way))
         elif args.relation:
-            params.extend(('--import-relation' , args.relation))
+            params.extend(('--import-relation', args.relation))
         if args.use_main_api:
             params.append('--use-main-api')
         return run_legacy_script(*params, nominatim_env=args)
@@ -435,11 +447,11 @@ class QueryExport:
         if args.restrict_to_country:
             params.extend(('--restrict-to-country', args.restrict_to_country))
         if args.restrict_to_osm_node:
-            params.exted(('--restrict-to-osm-node', args.restrict_to_osm_node))
+            params.extend(('--restrict-to-osm-node', args.restrict_to_osm_node))
         if args.restrict_to_osm_way:
-            params.exted(('--restrict-to-osm-way', args.restrict_to_osm_way))
+            params.extend(('--restrict-to-osm-way', args.restrict_to_osm_way))
         if args.restrict_to_osm_relation:
-            params.exted(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
+            params.extend(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
 
         return run_legacy_script(*params, nominatim_env=args)
 
@@ -451,7 +463,8 @@ class QueryTodo:
     def add_args(parser):
         pass
 
-    def run(args):
+    @staticmethod
+    def run(args): # pylint: disable=W0613
         print("TODO: searching")
 
 
@@ -482,4 +495,4 @@ def nominatim(**kwargs):
     parser.add_subcommand('details', QueryTodo)
     parser.add_subcommand('status', QueryTodo)
 
-    parser.run(**kwargs)
+    return parser.run(**kwargs)

@@ -3,6 +3,7 @@ Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
 import sys
+import os
 import argparse
 import logging
 from pathlib import Path
@@ -98,7 +99,7 @@ class SetupAll:
         group = group_name.add_mutually_exclusive_group(required=True)
         group.add_argument('--osm-file',
                            help='OSM file to be imported.')
-        group.add_argument('--continue', nargs=1, dest='continue_at',
+        group.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
         group = parser.add_argument_group('Optional arguments')
@@ -270,6 +271,7 @@ class UpdateAddData:
     @staticmethod
     def run(args):
         if args.tiger_data:
+            os.environ['NOMINATIM_TIGER_DATA_PATH'] = args.tiger_data
             return run_legacy_script('setup.php', '--import-tiger-data', nominatim_env=args)
 
         params = ['update.php']
@@ -318,12 +320,12 @@ class UpdateRefresh:
                            help='Compute frequency of full-word search terms')
         group.add_argument('--address-levels', action='store_true',
                            help='Reimport address level configuration')
-        group.add_argument('--importance', action='store_true',
-                           help='Recompute place importances (expensive!)')
         group.add_argument('--functions', action='store_true',
                            help='Update the PL/pgSQL functions in the database')
         group.add_argument('--wiki-data', action='store_true',
                            help='Update Wikipedia/data importance numbers.')
+        group.add_argument('--importance', action='store_true',
+                           help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
                            help='Refresh the directory that serves the scripts for the web API')
         group = parser.add_argument_group('Arguments for function refresh')
@@ -343,9 +345,6 @@ class UpdateRefresh:
         if args.address_levels:
             run_legacy_script('update.php', '--update-address-levels',
                               nominatim_env=args, throw_on_fail=True)
-        if args.importance:
-            run_legacy_script('update.php', '--recompute-importance',
-                              nominatim_env=args, throw_on_fail=True)
         if args.functions:
             params = ['setup.php', '--create-functions', '--create-partition-functions']
             if args.diffs:
@@ -355,6 +354,10 @@ class UpdateRefresh:
             run_legacy_script(*params, nominatim_env=args, throw_on_fail=True)
         if args.wiki_data:
             run_legacy_script('setup.php', '--import-wikipedia-articles',
+                              nominatim_env=args, throw_on_fail=True)
+        # Attention: importance MUST come after wiki data import.
+        if args.importance:
+            run_legacy_script('update.php', '--recompute-importance',
                               nominatim_env=args, throw_on_fail=True)
         if args.website:
             run_legacy_script('setup.php', '--setup-website',

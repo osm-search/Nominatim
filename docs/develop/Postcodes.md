@@ -14,7 +14,7 @@ country's format, e.g. if Swiss postcodes are 4 digits.
 ## Regular updating calculated postcodes
 
 The script to rerun the calculation is
-`build/utils/update.php --calculate-postcodes`
+`nominatim refresh --postcodes`
 and runs once per night on nominatim.openstreetmap.org.
 
 

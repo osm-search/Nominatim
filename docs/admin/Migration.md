@@ -6,6 +6,28 @@ to newer versions of Nominatim.
 SQL statements should be executed from the PostgreSQL commandline. Execute
 `psql nominatim` to enter command line mode.
 
+## 3.6.0 -> master
+
+### Introducing `nominatim` command line tool
+
+The various php utilities have been replaced with a single `nominatim`
+command line tool. Make sure to adapt any scripts. There is no direct 1:1
+matching between the old utilities and the commands of nominatim CLI. The
+following list gives you a list of nominatim sub-commands that contain
+functionality of each script:
+
+* ./utils/setup.php: `import`, `freeze`, `refresh`
+* ./utils/update.php: `replication`, `add-data`, `index`, `refresh`
+* ./utils/specialphrases.php: `special-phrases`
+* ./utils/check_import_finished.php: `check-database`
+* ./utils/warm.php: `warm`
+* ./utils/export.php: `export`
+
+Try `nominatim <command> --help` for more information about each subcommand.
+
+`./utils/query.php` no longer exists in its old form. `nominatim search`
+provides a replacement.
+
 ## 3.5.0 -> 3.6.0
 
 ### Change of layout of search_name_* tables

@@ -47,14 +47,15 @@ The file `import_multiple_regions.sh` needs to be edited as per your requirement
     
         BASEURL="https://download.geofabrik.de"
         DOWNCOUNTRYPOSTFIX="-latest.osm.pbf"
- 
+
+### Setting up multiple regions
+
 !!! tip
-    If your database already exists and you want to add more countries, replace the setting up part
+    If your database already exists and you want to add more countries,
+    replace the setting up part
     `${SETUPFILE} --osm-file ${UPDATEDIR}/tmp/combined.osm.pbf --all 2>&1`
     with `${UPDATEFILE} --import-file ${UPDATEDIR}/tmp/combined.osm.pbf --index --index-instances N 2>&1`
     where N is the numbers of CPUs in your system.
-
-### Setting up multiple regions
 
 Run the following command from your Nominatim directory after configuring the file.
 

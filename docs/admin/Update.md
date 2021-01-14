@@ -1,8 +1,10 @@
 # Updating the Database
 
 There are many different ways to update your Nominatim database.
-The following section describes how to keep it up-to-date with Pyosmium.
-For a list of other methods see the output of `./utils/update.php --help`.
+The following section describes how to keep it up-to-date using
+an [online replication service for OpenStreetMap data](https://wiki.openstreetmap.org/wiki/Planet.osm/diffs)
+For a list of other methods to add or update data see the output of
+`nominatim add-data --help`.
 
 !!! important
     If you have configured a flatnode file for the import, then you
@@ -44,23 +46,19 @@ diffs for Ireland from Geofabrik add the following:
 
 To set up the update process now run the following command:
 
-    ./utils/update.php --init-updates
+    ./nominatim replication --init
 
 It outputs the date where updates will start. Recheck that this date is
 what you expect.
 
-The `--init-updates` command needs to be rerun whenever the replication service
-is changed.
+The `replication --init` command needs to be rerun whenever the replication
+service is changed.
 
 #### Updating Nominatim
 
 The following command will keep your database constantly up to date:
 
-    ./utils/update.php --import-osmosis-all
-
-(Note that even though the old name "import-osmosis-all" has been kept for
-compatibility reasons, Osmosis is not required to run this - it uses pyosmium
-behind the scenes.)
+    ./nominatim replication
 
 If you have imported multiple country extracts and want to keep them
 up-to-date, [Advanced installations section](Advanced-Installations.md) contains instructions 

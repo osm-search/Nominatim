@@ -32,7 +32,7 @@ class Configuration:
         """ Return a copy of the OS environment with the Nominatim configuration
             merged in.
         """
-        env = dict(os.environ)
-        env.update(self._config)
+        env = dict(self._config)
+        env.update(os.environ)
 
         return env

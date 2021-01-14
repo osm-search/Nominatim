@@ -86,7 +86,7 @@ class SetupAll:
         group = group_name.add_mutually_exclusive_group(required=True)
         group.add_argument('--osm-file',
                            help='OSM file to be imported.')
-        group.add_argument('--continue', nargs=1,
+        group.add_argument('--continue', nargs=1, dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
         group = parser.add_argument_group('Optional arguments')
@@ -105,15 +105,38 @@ class SetupAll:
         group = parser.add_argument_group('Expert options')
         group.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
-        group.add_argument('--disable-token-precalc', action='store_true',
-                           help='Disable name precalculation')
         group.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index')
 
 
     @staticmethod
     def run(args):
-        print("TODO: ./utils/setup.php", args)
+        params = ['setup.php']
+        if args.osm_file:
+            params.extend(('--all', '--osm-file', args.osm_file))
+        else:
+            if args.continue_at == 'load-data':
+                params.append('--load-data')
+            if args.continue_at in ('load-data', 'indexing'):
+                params.append('--index')
+            params.extend(('--create-search-indices', '--create-country-names',
+                           '--setup-website'))
+        if args.osm2pgsql_cache:
+            params.extend(('--osm2pgsql-cache', args.osm2pgsql_cache))
+        if args.reverse_only:
+            params.append('--reverse-only')
+        if args.enable_debug_statements:
+            params.append('--enable-debug-statements')
+        if args.no_partitions:
+            params.append('--no-partitions')
+        if args.no_updates:
+            params.append('--drop')
+        if args.ignore_errors:
+            params.append('--ignore-errors')
+        if args.index_noanalyse:
+            params.append('--index-noanalyse')
+
+        return run_legacy_script(*params, nominatim_env=args)
 
 
 class SetupFreeze:
@@ -134,7 +157,7 @@ class SetupFreeze:
 
     @staticmethod
     def run(args):
-        print("TODO: setup drop", args)
+        return run_legacy_script('setup.php', '--drop', nominatim_env=args)
 
 
 class SetupSpecialPhrases:
@@ -155,7 +178,9 @@ class SetupSpecialPhrases:
 
     @staticmethod
     def run(args):
-        print("./utils/specialphrases.php --from-wiki", args)
+        if args.output.name != '<stdout>':
+            raise NotImplementedError('Only output to stdout is currently implemented.')
+        return run_legacy_script('specialphrases.php', '--wiki-import' , nominatim_env=args)
 
 
 class UpdateReplication:
@@ -184,10 +209,22 @@ class UpdateReplication:
 
     @staticmethod
     def run(args):
+        params = ['update.php']
         if args.init:
-            print('./utils/update.php --init-updates', args)
+            params.append('--init-updates')
+            if not args.update_functions:
+                params.apend('--no-update-functions')
+        elif args.check_for_updates:
+            params.append('--check-for-updates')
         else:
-            print('./utils/update.php --import-osmosis(-all)', args)
+            if args.once:
+                params.append('--import-osmosis')
+            else:
+                params.append('--import-osmosis-all')
+            if not args.do_index:
+                params.append('--no-index')
+
+        return run_legacy_script(*params, nominatim_env=args)
 
 
 class UpdateAddData:
@@ -220,7 +257,23 @@ class UpdateAddData:
 
     @staticmethod
     def run(args):
-        print('./utils/update.php --import-*', args)
+        if args.tiger_data:
+            return run_legacy_script('setup.php', '--import-tiger-data', nominatim_env=args)
+
+        params = [ 'update.php']
+        if args.file:
+            params.extend(('--import-file', args.file))
+        elif args.diff:
+            params.extend(('--import-diff', args.diff))
+        elif args.node:
+            params.extend(('--import-node', args.node))
+        elif args.way:
+            params.extend(('--import-way', args.way))
+        elif args.relation:
+            params.extend(('--import-relation' , args.relation))
+        if args.use_main_api:
+            params.append('--use-main-api')
+        return run_legacy_script(*params, nominatim_env=args)
 
 
 class UpdateIndex:
@@ -234,7 +287,7 @@ class UpdateIndex:
 
     @staticmethod
     def run(args):
-        print('./utils/update.php --index', args)
+        return run_legacy_script('update.php', '--index', nominatim_env=args)
 
 
 class UpdateRefresh:
@@ -254,20 +307,46 @@ class UpdateRefresh:
         group.add_argument('--address-levels', action='store_true',
                            help='Reimport address level configuration')
         group.add_argument('--importance', action='store_true',
-                           help='Recompute place importances')
+                           help='Recompute place importances (expensive!)')
         group.add_argument('--functions', action='store_true',
                            help='Update the PL/pgSQL functions in the database')
-        group.add_argument('--wiki-data',
+        group.add_argument('--wiki-data', action='store_true',
                            help='Update Wikipedia/data importance numbers.')
         group.add_argument('--website', action='store_true',
                            help='Refresh the directory that serves the scripts for the web API')
         group = parser.add_argument_group('Arguments for function refresh')
         group.add_argument('--no-diff-updates', action='store_false', dest='diffs',
                            help='Do not enable code for propagating updates')
+        group.add_argument('--enable-debug-statements', action='store_true',
+                           help='Enable debug warning statements in functions')
 
     @staticmethod
     def run(args):
-        print('./utils/update.php', args)
+        if args.postcodes:
+            run_legacy_script('update.php', '--calculate-postcodes',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.word_counts:
+            run_legacy_script('update.php', '--recompute-word-counts',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.address_levels:
+            run_legacy_script('update.php', '--update-address-levels',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.importance:
+            run_legacy_script('update.php', '--recompute-importance',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.functions:
+            params = ['setup.php', '--create-functions', '--create-partition-functions']
+            if args.diffs:
+                params.append('--enable-diff-updates')
+            if args.enable_debug_statements:
+                params.append('--enable-debug-statements')
+            run_legacy_script(*params, nominatim_env=args, throw_on_fail=True)
+        if args.wiki_data:
+            run_legacy_script('setup.php', '--import-wikipedia-articles',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.website:
+            run_legacy_script('setup.php', '--setup-website',
+                              nominatim_env=args, throw_on_fail=True)
 
 
 class AdminCheckDatabase:
@@ -281,7 +360,7 @@ class AdminCheckDatabase:
 
     @staticmethod
     def run(args):
-        print("TODO: ./utils/check_import_finished.php", args)
+        return run_legacy_script('check_import_finished.php', nominatim_env=args)
 
 
 class AdminWarm:
@@ -346,8 +425,23 @@ class QueryExport:
 
     @staticmethod
     def run(args):
-        print("TODO: ./utils/export.php", args)
+        params = ['export.php',
+                  '--output-type', args.output_type,
+                  '--output-format', args.output_format]
+        if args.output_all_postcodes:
+            params.append('--output-all-postcodes')
+        if args.language:
+            params.extend(('--language', args.language))
+        if args.restrict_to_country:
+            params.extend(('--restrict-to-country', args.restrict_to_country))
+        if args.restrict_to_osm_node:
+            params.exted(('--restrict-to-osm-node', args.restrict_to_osm_node))
+        if args.restrict_to_osm_way:
+            params.exted(('--restrict-to-osm-way', args.restrict_to_osm_way))
+        if args.restrict_to_osm_relation:
+            params.exted(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
 
+        return run_legacy_script(*params, nominatim_env=args)
 
 class QueryTodo:
     """\

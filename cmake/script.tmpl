@@ -1,8 +1,12 @@
 #!@PHP_BIN@ -Cq
 <?php
+require('@CMAKE_SOURCE_DIR@/lib/dotenv_loader.php');
+
 @define('CONST_Default_ModulePath', '@CMAKE_BINARY_DIR@/module');
 @define('CONST_Default_Osm2pgsql', '@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql');
 @define('CONST_BinDir', '@CMAKE_SOURCE_DIR@/utils');
 @define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
+
+loadDotEnv();
 
 require_once('@CMAKE_SOURCE_DIR@/lib/admin/@script_source@');

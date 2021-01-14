@@ -6,7 +6,7 @@ runs:
     steps:
         - name: Install prerequisits
           run: |
-            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium php-symfony-dotenv python3-dotenv
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium python3-dotenv
           shell: bash
 
         - name: Configure
@@ -16,7 +16,7 @@ runs:
         - name: Build
           run: |
               make -j2 all
-              ./utils/setup.php --setup-website
+              ./nominatim refresh --website
           shell: bash
           working-directory: build
 

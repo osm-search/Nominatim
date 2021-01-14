@@ -1,7 +1,5 @@
 <?php
 
-require('Symfony/Component/Dotenv/autoload.php');
-
 function loadSettings($sProjectDir)
 {
     @define('CONST_InstallDir', $sProjectDir);
@@ -10,13 +8,6 @@ function loadSettings($sProjectDir)
     // set of settings.
     defined('CONST_DataDir') or define('CONST_DataDir', $_SERVER['NOMINATIM_DATADIR']);
     defined('CONST_BinDir') or define('CONST_BinDir', $_SERVER['NOMINATIM_BINDIR']);
-
-    $dotenv = new \Symfony\Component\Dotenv\Dotenv();
-    $dotenv->load(CONST_DataDir.'/settings/env.defaults');
-
-    if (file_exists($sProjectDir.'/.env')) {
-        $dotenv->load($sProjectDir.'/.env');
-    }
 }
 
 function getSetting($sConfName, $sDefault = null)

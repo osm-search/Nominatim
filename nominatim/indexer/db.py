@@ -1,15 +1,19 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # This file is part of Nominatim.
-# Copyright (C) 2020 Sarah Hoffmann
-
+# Copyright (C) 2021 by the Nominatim developer community.
+# For a full list of authors see the git log.
+""" Database helper functions for the indexer.
+"""
 import logging
 import psycopg2
 from psycopg2.extras import wait_select
 
-log = logging.getLogger()
+LOG = logging.getLogger()
 
 def make_connection(options, asynchronous=False):
+    """ Create a psycopg2 connection from the given options.
+    """
     params = {'dbname' : options.dbname,
               'user' : options.user,
               'password' : options.password,
@@ -19,7 +23,7 @@ def make_connection(options, asynchronous=False):
 
     return psycopg2.connect(**params)
 
-class DBConnection(object):
+class DBConnection:
     """ A single non-blocking database connection.
     """
 
@@ -29,6 +33,7 @@ class DBConnection(object):
         self.options = options
 
         self.conn = None
+        self.cursor = None
         self.connect()
 
     def connect(self):
@@ -51,7 +56,7 @@ class DBConnection(object):
         # implemented.
         self.perform(
             """ UPDATE pg_settings SET setting = -1 WHERE name = 'jit_above_cost';
-                UPDATE pg_settings SET setting = 0 
+                UPDATE pg_settings SET setting = 0
                    WHERE name = 'max_parallel_workers_per_gather';""")
         self.wait()
 
@@ -63,14 +68,14 @@ class DBConnection(object):
                 wait_select(self.conn)
                 self.current_query = None
                 return
-            except psycopg2.extensions.TransactionRollbackError as e:
-                if e.pgcode == '40P01':
-                    log.info("Deadlock detected (params = {}), retry."
-                              .format(self.current_params))
+            except psycopg2.extensions.TransactionRollbackError as error:
+                if error.pgcode == '40P01':
+                    LOG.info("Deadlock detected (params = %s), retry.",
+                             str(self.current_params))
                     self.cursor.execute(self.current_query, self.current_params)
                 else:
                     raise
-            except psycopg2.errors.DeadlockDetected:
+            except psycopg2.errors.DeadlockDetected: # pylint: disable=E1101
                 self.cursor.execute(self.current_query, self.current_params)
 
     def perform(self, sql, args=None):
@@ -99,14 +104,13 @@ class DBConnection(object):
             if self.conn.poll() == psycopg2.extensions.POLL_OK:
                 self.current_query = None
                 return True
-        except psycopg2.extensions.TransactionRollbackError as e:
-            if e.pgcode == '40P01':
-                log.info("Deadlock detected (params = {}), retry.".format(self.current_params))
+        except psycopg2.extensions.TransactionRollbackError as error:
+            if error.pgcode == '40P01':
+                LOG.info("Deadlock detected (params = %s), retry.", str(self.current_params))
                 self.cursor.execute(self.current_query, self.current_params)
             else:
                 raise
-        except psycopg2.errors.DeadlockDetected:
+        except psycopg2.errors.DeadlockDetected: # pylint: disable=E1101
             self.cursor.execute(self.current_query, self.current_params)
 
         return False
-

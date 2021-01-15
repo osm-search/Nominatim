@@ -10,7 +10,8 @@ function coverage_shutdown($oCoverage)
 }
 
 $covfilter = new SebastianBergmann\CodeCoverage\Filter();
-$covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR']);
+$covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/lib');
+$covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/website');
 $coverage = new SebastianBergmann\CodeCoverage\CodeCoverage(null, $covfilter);
 $coverage->start($_SERVER['COV_TEST_NAME']);
 

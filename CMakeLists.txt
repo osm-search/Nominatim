@@ -140,6 +140,8 @@ if (BUILD_TESTS)
 
     set(TEST_BDD db osm2pgsql api)
 
+    find_program(PYLINT NAMES pylint3 pylint)
+
     foreach (test ${TEST_BDD})
         add_test(NAME bdd_${test}
                  COMMAND behave ${test}
@@ -156,9 +158,14 @@ if (BUILD_TESTS)
              COMMAND phpcs --report-width=120 --colors lib website utils
              WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-    add_test(NAME pylint
-             COMMAND pylint3 nominatim
-             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    if (PYLINT)
+        message(STATUS "Using '${PYLINT}' for Python linting.")
+        add_test(NAME pylint
+                 COMMAND ${PYLINT} nominatim
+                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    else()
+        message(STATUS "pylint not found. Linting tests disabled.")
+    endif()
 endif()
 
 #-----------------------------------------------------------------------------

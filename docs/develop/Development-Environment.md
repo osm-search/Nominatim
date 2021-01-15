@@ -47,7 +47,7 @@ To install all necessary packages run:
 
 ```sh
 sudo apt install php-cgi phpunit php-codesniffer \
-                 python3-pip python3-setuptools python3-dev pylint3
+                 python3-pip python3-setuptools python3-dev pylint
 
 pip3 install --user behave mkdocs
 ```

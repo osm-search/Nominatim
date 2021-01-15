@@ -140,31 +140,59 @@ if (BUILD_TESTS)
 
     set(TEST_BDD db osm2pgsql api)
 
+    find_program(PYTHON_BEHAVE behave)
     find_program(PYLINT NAMES pylint3 pylint)
+    find_program(PYTEST pytest)
+    find_program(PHPCS phpcs)
+    find_program(PHPUNIT phpunit)
 
-    foreach (test ${TEST_BDD})
-        add_test(NAME bdd_${test}
-                 COMMAND behave ${test}
-                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/bdd)
-        set_tests_properties(bdd_${test}
-            PROPERTIES ENVIRONMENT "NOMINATIM_DIR=${PROJECT_BINARY_DIR}")
-    endforeach()
+    if (PYTHON_BEHAVE)
+        message(STATUS "Using Python behave binary ${PYTHON_BEHAVE}")
+        foreach (test ${TEST_BDD})
+            add_test(NAME bdd_${test}
+                     COMMAND ${PYTHON_BEHAVE} ${test}
+                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/bdd)
+            set_tests_properties(bdd_${test}
+                PROPERTIES ENVIRONMENT "NOMINATIM_DIR=${PROJECT_BINARY_DIR}")
+        endforeach()
+    else()
+        message(WARNING "behave not found. BDD tests disabled." )
+    endif()
 
-    add_test(NAME php
-             COMMAND phpunit ./
-             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/php)
+    if (PHPUNIT)
+        message(STATUS "Using phpunit binary ${PHPUNIT}")
+        add_test(NAME php
+                 COMMAND ${PHPUNIT} ./
+                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test/php)
+    else()
+        message(WARNING "phpunit not found. PHP unit tests disabled." )
+    endif()
 
-    add_test(NAME phpcs
-             COMMAND phpcs --report-width=120 --colors lib website utils
-             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    if (PHPCS)
+        message(STATUS "Using phpcs binary ${PHPCS}")
+        add_test(NAME phpcs
+                 COMMAND ${PHPCS} --report-width=120 --colors lib website utils
+                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    else()
+        message(WARNING "phpcs not found. PHP linting tests disabled." )
+    endif()
 
     if (PYLINT)
-        message(STATUS "Using '${PYLINT}' for Python linting.")
+        message(STATUS "Using pylint binary ${PYLINT}")
         add_test(NAME pylint
                  COMMAND ${PYLINT} nominatim
                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     else()
-        message(STATUS "pylint not found. Linting tests disabled.")
+        message(WARNING "pylint not found. Python linting tests disabled.")
+    endif()
+
+    if (PYTEST)
+        message(STATUS "Using pytest binary ${PYTEST}")
+        add_test(NAME pytest
+                 COMMAND ${PYTEST} test/python
+                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    else()
+        message(WARNING "pytest not found. Python tests disabled." )
     endif()
 endif()
 

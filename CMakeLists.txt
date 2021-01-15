@@ -61,7 +61,7 @@ endif()
 #-----------------------------------------------------------------------------
 
 if (BUILD_IMPORTER)
-    find_package(PythonInterp 3)
+    find_package(PythonInterp 3.5 REQUIRED)
 
     find_program(PYOSMIUM pyosmium-get-changes)
     if (NOT EXISTS "${PYOSMIUM}")

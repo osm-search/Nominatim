@@ -38,12 +38,12 @@ For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.3+)
   * [PostGIS](https://postgis.net) (2.2+)
-  * [Python 3](https://www.python.org/)
+  * [Python 3](https://www.python.org/) (3.4+)
   * [Psycopg2](https://www.psycopg.org)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * [PHP Symphony Dotenv](https://symfony.com/doc/4.3/components/dotenv.html)
+  * [Python Dotenv](https://github.com/theskumar/python-dotenv)
 
 For running continuous updates:
 

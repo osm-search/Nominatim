@@ -98,7 +98,6 @@ if (BUILD_IMPORTER)
    set(CUSTOMSCRIPTS
        check_import_finished.php
        country_languages.php
-       importWikipedia.php
        export.php
        query.php
        setup.php
@@ -111,6 +110,9 @@ if (BUILD_IMPORTER)
        configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
                       ${PROJECT_BINARY_DIR}/utils/${script_source})
    endforeach()
+
+   configure_file(${PROJECT_SOURCE_DIR}/cmake/tool.tmpl
+                  ${PROJECT_BINARY_DIR}/nominatim)
 endif()
 
 #-----------------------------------------------------------------------------

@@ -59,7 +59,7 @@ def query_cmd(context, query, dups):
     """ Query directly via PHP script.
     """
     cmd = ['/usr/bin/env', 'php']
-    cmd.append(os.path.join(context.nominatim.build_dir, 'utils', 'query.php'))
+    cmd.append(context.nominatim.src_dir  / 'lib' / 'admin' / 'query.php')
     if query:
         cmd.extend(['--search', query])
     # add more parameters in table form
@@ -72,7 +72,8 @@ def query_cmd(context, query, dups):
     if dups:
         cmd.extend(('--dedupe', '0'))
 
-    outp, err = run_script(cmd, cwd=context.nominatim.build_dir)
+    outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name,
+                           env=context.nominatim.test_env)
 
     context.response = SearchResponse(outp, 'json')
 

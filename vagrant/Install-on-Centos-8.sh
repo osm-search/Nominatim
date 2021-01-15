@@ -6,10 +6,6 @@
 # Installing the Required Software
 # ================================
 #
-# !!! caution
-#     These instructions are currently broken because they do not
-#     include installation of the required PHP library symfony-dotenv.
-#
 # These instructions expect that you have a freshly installed CentOS version 8.
 # Make sure all packages are up-to-date by running:
 #
@@ -39,7 +35,7 @@
                         python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
-    pip3 install --user psycopg2
+    pip3 install --user psycopg2 python-dotenv
 
 
 #

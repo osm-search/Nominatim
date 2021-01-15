@@ -58,4 +58,4 @@ The [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) is more
 suited for these kinds of queries.
 
 That said if you installed your own Nominatim instance you can use the
-`/utils/export.php` PHP script as basis to return such lists.
+`nominatim export` PHP script as basis to return such lists.

@@ -8,7 +8,7 @@ software itself, if not return to the [installation page](Installation.md).
 ## Configuration setup in `.env`
 
 The Nominatim server can be customized via a `.env` in the build directory.
-This is a file in [dotenv](https://symfony.com/doc/4.3/components/dotenv.html) format
+This is a file in [dotenv](https://github.com/theskumar/python-dotenv) format
 which looks the same as variable settings in a standard shell environment.
 You can also set the same configuration via environment variables. All
 settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
@@ -47,8 +47,7 @@ The file is about 400MB and adds around 4GB to the Nominatim database.
 !!! tip
     If you forgot to download the wikipedia rankings, you can also add
     importances after the import. Download the files, then run
-    `./utils/setup.php --import-wikipedia-articles`
-    and `./utils/update.php --recompute-importance`.
+    `./nominatim refresh --wiki-data --importance`.
 
 ### Great Britain, USA postcodes
 
@@ -85,11 +84,14 @@ that Nominatim cannot compute the areas for some administrative areas.
 About half of the data in Nominatim's database is not really used for serving
 the API. It is only there to allow the data to be updated from the latest
 changes from OSM. For many uses these dynamic updates are not really required.
-If you don't plan to apply updates, the dynamic part of the database can be
-safely dropped using the following command:
+If you don't plan to apply updates, you can run the import with the
+`--no-updates` parameter. This will drop the dynamic part of the database as
+soon as it is not required anymore.
+
+You can also drop the dynamic part later using the following command:
 
 ```
-./utils/setup.php --drop
+./nominatim freeze
 ```
 
 Note that you still need to provide for sufficient disk space for the initial
@@ -155,7 +157,7 @@ Download the data to import. Then issue the following command
 from the **build directory** to start the import:
 
 ```sh
-./utils/setup.php --osm-file <data file> --all 2>&1 | tee setup.log
+./nominatim import --osm-file <data file> 2>&1 | tee setup.log
 ```
 
 ### Notes on full planet imports
@@ -196,19 +198,10 @@ reduce the cache size or even consider using a flatnode file.
 Run this script to verify all required tables and indices got created successfully.
 
 ```sh
-./utils/check_import_finished.php
+./nominatim check-database
 ```
 
-### Setting up the website
-
-Run the following command to set up the configuration file for the API frontend
-`settings/settings-frontend.php`. These settings are used in website/*.php files.
-
-```sh
-./utils/setup.php --setup-website
-```
-!!! Note
-    This step is not necessary if you use `--all` option while setting up the DB.
+### Testing the installation
 
 Now you can try out your installation by running:
 
@@ -231,7 +224,7 @@ planner to make the right decisions. Recomputing them can improve the performanc
 of forward geocoding in particular under high load. To recompute word counts run:
 
 ```sh
-./utils/update.php --recompute-word-counts
+./nominatim refresh --word-counts
 ```
 
 This will take a couple of hours for a full planet installation. You can
@@ -243,7 +236,7 @@ If you want to be able to search for places by their type through
 [special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to enable these key phrases like this:
 
-    ./utils/specialphrases.php --wiki-import > specialphrases.sql
+    ./nominatim special-phrases --from-wiki > specialphrases.sql
     psql -d nominatim -f specialphrases.sql
 
 Note that this command downloads the phrases from the wiki link above. You
@@ -260,13 +253,12 @@ entire US adds about 10GB to your database.
   1. Get preprocessed TIGER 2019 data and unpack it into the
      data directory in your Nominatim sources:
 
-        cd Nominatim/data
         wget https://nominatim.org/data/tiger2019-nominatim-preprocessed.tar.gz
         tar xf tiger2019-nominatim-preprocessed.tar.gz
 
   2. Import the data into your Nominatim database:
 
-        ./utils/setup.php --import-tiger-data
+        ./nominatim add-data --tiger-data tiger
 
   3. Enable use of the Tiger data in your `.env` by adding:
 
@@ -275,7 +267,7 @@ entire US adds about 10GB to your database.
   4. Apply the new settings:
 
 ```sh
-    ./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
+    ./nominatim refresh --functions
 ```
 
 

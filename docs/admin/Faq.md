@@ -16,7 +16,7 @@ was killed. If it looks like this:
 then you can resume with the following command:
 
 ```sh
-./utils/setup.php --index --create-search-indices --create-country-names
+nominatim import --continue indexing
 ```
 
 If the reported rank is 26 or higher, you can also safely add `--index-noanalyse`.
@@ -31,7 +31,7 @@ list for hints.
 If it happened during index creation you can try rerunning the step with
 
 ```sh
-./utils/setup.php --create-search-indices --ignore-errors
+nominatim import --continue indexing
 ```
 
 Otherwise it's best to start the full setup from the beginning.
@@ -93,7 +93,7 @@ on a non-managed machine.
 
 ### I see the error: "function transliteration(text) does not exist"
 
-Reinstall the nominatim functions with `setup.php --create--functions`
+Reinstall the nominatim functions with `nominatim refresh --functions`
 and check for any errors, e.g. a missing `nominatim.so` file.
 
 ### I see the error: "ERROR: mmap (remap) failed"
@@ -113,7 +113,8 @@ Double-check clang is installed. Instead of `make` try running `make CLANG=true`
 
 ### nominatim UPDATE failed: ERROR: buffer 179261 is not owned by resource owner Portal
 
-Several users [reported this](https://github.com/openstreetmap/Nominatim/issues/1168) during the initial import of the database. It's
+Several users [reported this](https://github.com/openstreetmap/Nominatim/issues/1168)
+during the initial import of the database. It's
 something PostgreSQL internal Nominatim doesn't control. And PostgreSQL forums
 suggest it's threading related but definitely some kind of crash of a process.
 Users reported either rebooting the server, different hardware or just trying
@@ -202,7 +203,7 @@ See the installation instructions for a full list of required packages.
 ### I forgot to delete the flatnodes file before starting an import.
 
 That's fine. For each import the flatnodes file get overwritten.
-See [https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage]()
+See [https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage](https://help.openstreetmap.org/questions/52419/nominatim-flatnode-storage)
 for more information.
 
 

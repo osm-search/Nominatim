@@ -47,11 +47,15 @@ jobs:
 
             - name: Install test prerequsites
               run: |
-                   sudo apt-get install -y -qq php-codesniffer
+                   sudo apt-get install -y -qq php-codesniffer pylint
                    sudo pip3 install behave
 
             - name: PHP linting
               run: phpcs --report-width=120 .
+
+            - name: Python linting
+              run: |
+                   pylint nominatim
 
             - name: PHP unit tests
               run: phpunit ./

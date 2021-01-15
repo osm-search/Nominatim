@@ -49,10 +49,11 @@ are in process of consolidating the style. The following rules apply:
  * for PHP variables use CamelCase with a prefixing letter indicating the type
    (i - integer, f - float, a - array, s - string, o - object)
 
-The coding style is enforced with PHPCS and can be tested with:
+The coding style is enforced with PHPCS and pylint. It can be tested with:
 
 ```
-  phpcs --report-width=120 --colors .
+phpcs --report-width=120 --colors .
+pylint3 nominatim
 ```
 
 ## Testing

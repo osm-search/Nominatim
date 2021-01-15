@@ -155,6 +155,10 @@ if (BUILD_TESTS)
     add_test(NAME phpcs
              COMMAND phpcs --report-width=120 --colors lib website utils
              WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+    add_test(NAME pylint
+             COMMAND pylint3 nominatim
+             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
 #-----------------------------------------------------------------------------

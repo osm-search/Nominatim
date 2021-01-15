@@ -21,14 +21,15 @@ This test directory is sturctured as follows:
   | +-  api        Tests for API endpoints (search, reverse, etc.)
   |
   +-   php         PHP unit tests
+  +-   python      Python unit tests
   +-   scenes      Geometry test data
   +-   testdb      Base data for generating API test database
 ```
 
 ## PHP Unit Tests (`test/php`)
 
-Unit tests can be found in the php/ directory. They test selected php functions.
-Very low coverage.
+Unit tests for PHP code can be found in the `php/` directory. They test selected
+PHP functions. Very low coverage.
 
 To execute the test suite run
 
@@ -36,10 +37,19 @@ To execute the test suite run
     UNIT_TEST_DSN='pgsql:dbname=nominatim_unit_tests' phpunit ../
 
 It will read phpunit.xml which points to the library, test path, bootstrap
-strip and set other parameters.
+strip and sets other parameters.
 
 It will use (and destroy) a local database 'nominatim_unit_tests'. You can set
 a different connection string with e.g. UNIT_TEST_DSN='pgsql:dbname=foo_unit_tests'.
+
+## Python Unit Tests (`test/python`)
+
+Unit tests for Python code can be found in the `python/` directory. The goal is
+to have complete coverage of the Python library in `nominatim`.
+
+To execute the tests run
+
+    pytest test/python
 
 ## BDD Functional Tests (`test/bdd`)
 

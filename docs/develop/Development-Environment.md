@@ -26,12 +26,14 @@ following packages should get you started:
 ## Prerequisites for testing and documentation
 
 The Nominatim test suite consists of behavioural tests (using behave) and
-unit tests (using PHPUnit). It has the following additional requirements:
+unit tests (using PHPUnit for PHP code and pytest for Python code).
+It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.5
 * [phpunit](https://phpunit.de) >= 7.3
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
-* [Pylint](https://pylint.org/)
+* [Pylint](https://pylint.org/) (2.6.0 is used for the CI)
+* [pytest](https://pytest.org)
 
 The documentation is built with mkdocs:
 
@@ -49,7 +51,7 @@ To install all necessary packages run:
 sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev pylint
 
-pip3 install --user behave mkdocs
+pip3 install --user behave mkdocs pytest
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

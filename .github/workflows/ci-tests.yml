@@ -46,20 +46,20 @@ jobs:
             - uses: ./.github/actions/build-nominatim
 
             - name: Install test prerequsites
-              run: |
-                   sudo apt-get install -y -qq php-codesniffer pylint
-                   sudo pip3 install behave
+              run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave
 
             - name: PHP linting
               run: phpcs --report-width=120 .
 
             - name: Python linting
-              run: |
-                   pylint nominatim
+              run: pylint nominatim
 
             - name: PHP unit tests
               run: phpunit ./
               working-directory: test/php
+
+            - name: Python unit tests
+              run: pytest test/python
 
             - name: BDD tests
               run: behave -DREMOVE_TEMPLATE=1 --format=progress3

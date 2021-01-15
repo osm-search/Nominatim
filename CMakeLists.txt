@@ -142,7 +142,7 @@ if (BUILD_TESTS)
 
     find_program(PYTHON_BEHAVE behave)
     find_program(PYLINT NAMES pylint3 pylint)
-    find_program(PYTEST pytest)
+    find_program(PYTEST NAMES pytest py.test-3 py.test)
     find_program(PHPCS phpcs)
     find_program(PHPUNIT phpunit)
 

@@ -49,7 +49,13 @@ to have complete coverage of the Python library in `nominatim`.
 
 To execute the tests run
 
+    py.test-3 test/python
+
+or
+
     pytest test/python
+
+The name of the pytest binary depends on your installation.
 
 ## BDD Functional Tests (`test/bdd`)
 

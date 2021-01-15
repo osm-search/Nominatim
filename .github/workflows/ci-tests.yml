@@ -59,7 +59,7 @@ jobs:
               working-directory: test/php
 
             - name: Python unit tests
-              run: pytest test/python
+              run: py.test-3 test/python
 
             - name: BDD tests
               run: behave -DREMOVE_TEMPLATE=1 --format=progress3

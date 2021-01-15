@@ -31,6 +31,7 @@ unit tests (using PHPUnit). It has the following additional requirements:
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.5
 * [phpunit](https://phpunit.de) >= 7.3
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
+* [Pylint](https://pylint.org/)
 
 The documentation is built with mkdocs:
 
@@ -46,7 +47,7 @@ To install all necessary packages run:
 
 ```sh
 sudo apt install php-cgi phpunit php-codesniffer \
-                 python3-pip python3-setuptools python3-dev
+                 python3-pip python3-setuptools python3-dev pylint
 
 pip3 install --user behave mkdocs
 ```

@@ -21,9 +21,7 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
     if not env['NOMINATIM_OSM2PGSQL_BINARY']:
         env['NOMINATIM_OSM2PGSQL_BINARY'] = nominatim_env.osm2pgsql_path
 
-    proc = subprocess.run(cmd, cwd=str(nominatim_env.project_dir), env=env)
-
-    if throw_on_fail:
-        proc.check_returncode()
+    proc = subprocess.run(cmd, cwd=str(nominatim_env.project_dir), env=env,
+                          check=throw_on_fail)
 
     return proc.returncode

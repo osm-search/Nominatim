@@ -195,3 +195,16 @@ Feature: Simple Tests
         Then result header contains
           | attr     | value |
           | more_url | .*&countrycodes=pl%2Cbo&.* |
+
+    Scenario Outline: Search debug output does not return errors
+        When sending debug search query "<query>"
+        Then a HTTP 200 is returned
+
+    Examples:
+        | query |
+        | Liechtenstein |
+        | Triesen |
+        | Pfarrkirche |
+        | Landstr 27 Steinort, Triesenberg, 9495 |
+        | 9497 |
+        | restaurant in triesen |

@@ -79,7 +79,7 @@ def query_cmd(context, query, dups):
     context.response = SearchResponse(outp, 'json')
 
 def send_api_query(endpoint, params, fmt, context):
-    if fmt is not None:
+    if fmt is not None and fmt.strip() != 'debug':
         params['format'] = fmt.strip()
     if context.table:
         if context.table.headings[0] == 'param':
@@ -148,6 +148,8 @@ def website_search_request(context, fmt, query, addr):
         params['q'] = query
     if addr is not None:
         params['addressdetails'] = '1'
+    if fmt and fmt.strip() == 'debug':
+        params['debug'] = '1'
 
     outp, status = send_api_query('search', params, fmt, context)
 
@@ -160,6 +162,8 @@ def website_reverse_request(context, fmt, lat, lon):
         params['lat'] = lat
     if lon is not None:
         params['lon'] = lon
+    if fmt and fmt.strip() == 'debug':
+        params['debug'] = '1'
 
     outp, status = send_api_query('reverse', params, fmt, context)
 
@@ -203,7 +207,8 @@ def validate_result_number(context, operator, number):
 
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
-    assert context.response.errorcode == int(status)
+    assert context.response.errorcode == int(status), \
+           "Return HTTP status is {}.".format(context.response.errorcode)
 
 @then(u'the page contents equals "(?P<text>.+)"')
 def check_page_content_equals(context, text):

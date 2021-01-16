@@ -131,3 +131,7 @@ Feature: Simple Reverse Tests
      | 48.966   | 8.448.2 |
      | Nan      | 8.448 |
      | 48.966   | Nan |
+
+     Scenario: Reverse Debug output returns no errors
+        When sending debug reverse coordinates 47.11,9.57
+        Then a HTTP 200 is returned

@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from utils import run_script
 from http_responses import GenericResponse, SearchResponse, ReverseResponse, StatusResponse
 from check_functions import Bbox
+from table_compare import NominatimID
 
 LOG = logging.getLogger(__name__)
 
@@ -168,8 +169,11 @@ def website_reverse_request(context, fmt, lat, lon):
 def website_details_request(context, fmt, query):
     params = {}
     if query[0] in 'NWR':
-        params['osmtype'] = query[0]
-        params['osmid'] = query[1:]
+        nid = NominatimID(query)
+        params['osmtype'] = nid.typ
+        params['osmid'] = nid.oid
+        if nid.cls:
+            params['class'] = nid.cls
     else:
         params['place_id'] = query
     outp, status = send_api_query('details', params, fmt, context)
@@ -232,9 +236,13 @@ def check_header_attr(context):
 def check_header_no_attr(context, neg, attrs):
     for attr in attrs.split(','):
         if neg:
-            assert attr not in context.response.header
+            assert attr not in context.response.header, \
+                   "Unexpected attribute {}. Full response:\n{}".format(
+                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
         else:
-            assert attr in context.response.header
+            assert attr in context.response.header, \
+                   "No attribute {}. Full response:\n{}".format(
+                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
 
 @then(u'results contain')
 def step_impl(context):
@@ -255,9 +263,13 @@ def validate_attributes(context, lid, neg, attrs):
     for i in idx:
         for attr in attrs.split(','):
             if neg:
-                assert attr not in context.response.result[i]
+                assert attr not in context.response.result[i],\
+                       "Unexpected attribute {}. Full response:\n{}".format(
+                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
             else:
-                assert attr in context.response.result[i]
+                assert attr in context.response.result[i], \
+                       "No attribute {}. Full response:\n{}".format(
+                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
 
 @then(u'result addresses contain')
 def step_impl(context):

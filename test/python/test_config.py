@@ -54,3 +54,22 @@ def test_get_os_env_prefer_os_environ():
     assert config.get_os_env()['NOMINATIM_DATABASE_WEBUSER'] == 'nobody'
 
     del os.environ['NOMINATIM_DATABASE_WEBUSER']
+
+def test_get_libpq_dsn_convert_default():
+    config = Configuration(None, DEFCFG_DIR)
+
+    assert config.get_libpq_dsn() == 'dbname=nominatim'
+
+def test_get_libpq_dsn_convert_php():
+    config = Configuration(None, DEFCFG_DIR)
+
+    os.environ['NOMINATIM_DATABASE_DSN'] = 'pgsql:dbname=gis;password=foo;host=localhost'
+
+    assert config.get_libpq_dsn() == 'dbname=gis password=foo host=localhost'
+
+def test_get_libpq_dsn_convert_libpq():
+    config = Configuration(None, DEFCFG_DIR)
+
+    os.environ['NOMINATIM_DATABASE_DSN'] = 'host=localhost dbname=gis password=foo'
+
+    assert config.get_libpq_dsn() == 'host=localhost dbname=gis password=foo'

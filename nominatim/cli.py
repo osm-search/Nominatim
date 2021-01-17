@@ -78,7 +78,7 @@ class CommandlineParser:
         args.project_dir = Path(args.project_dir)
 
         logging.basicConfig(stream=sys.stderr,
-                            format='%(asctime)s %(levelname)s: %(message)s',
+                            format='%(asctime)s: %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
                             level=max(4 - args.verbose, 1) * 10)
 
@@ -327,6 +327,9 @@ class UpdateIndex:
             indexer.index_boundaries(args.minrank, args.maxrank)
         if not args.boundaries_only:
             indexer.index_by_rank(args.minrank, args.maxrank)
+
+        if not args.no_boundaries and not args.boundaries_only:
+            indexer.update_status_table()
 
         return 0
 

@@ -124,6 +124,13 @@ class Indexer:
         else:
             self.index(RankRunner(maxrank))
 
+    def update_status_table(self):
+        """ Update the status in the status table to 'indexed'.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute('UPDATE import_status SET indexed = true')
+        self.conn.commit()
+
     def index(self, obj, batch=1):
         """ Index a single rank or table. `obj` describes the SQL to use
             for indexing. `batch` describes the number of objects that

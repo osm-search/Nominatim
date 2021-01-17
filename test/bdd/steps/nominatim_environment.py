@@ -91,6 +91,7 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_BINDIR'] = self.src_dir / 'utils'
         self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.build_dir / 'module'
         self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = self.build_dir / 'osm2pgsql' / 'osm2pgsql'
+        self.test_env['NOMINATIM_NOMINATIM_TOOL'] = self.build_dir / 'nominatim'
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path

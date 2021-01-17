@@ -8,5 +8,6 @@ require('@CMAKE_SOURCE_DIR@/lib/dotenv_loader.php');
 @define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
 
 loadDotEnv();
+$_SERVER['NOMINATIM_NOMINATIM_TOOL'] = '@CMAKE_BINARY_DIR@/nominatim';
 
 require_once('@CMAKE_SOURCE_DIR@/lib/admin/@script_source@');

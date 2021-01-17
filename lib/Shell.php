@@ -7,7 +7,7 @@ class Shell
     public function __construct($sBaseCmd, ...$aParams)
     {
         if (!$sBaseCmd) {
-            throw new Exception('Command missing in new() call');
+            throw new \Exception('Command missing in new() call');
         }
         $this->baseCmd = $sBaseCmd;
         $this->aParams = array();

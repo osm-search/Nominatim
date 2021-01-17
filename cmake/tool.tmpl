@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import sys
+import os
 
 sys.path.insert(1, '@CMAKE_SOURCE_DIR@')
+
+os.environ['NOMINATIM_NOMINATIM_TOOL'] = __file__
 
 from nominatim import cli
 

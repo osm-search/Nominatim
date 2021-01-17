@@ -549,25 +549,14 @@ class SetupFunctions
     {
         $this->checkModulePresence(); // raises exception on failure
 
-        $oBaseCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
-                    ->addParams('--database', $this->aDSNInfo['database'])
-                    ->addParams('--port', $this->aDSNInfo['port'])
-                    ->addParams('--threads', $this->iInstances);
+        $oBaseCmd = (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
+                    ->addParams('index');
 
-        if (!$this->bQuiet) {
-            $oBaseCmd->addParams('-v');
+        if ($this->bQuiet) {
+            $oBaseCmd->addParams('-q');
         }
         if ($this->bVerbose) {
             $oBaseCmd->addParams('-v');
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $oBaseCmd->addParams('--host', $this->aDSNInfo['hostspec']);
-        }
-        if (isset($this->aDSNInfo['username'])) {
-            $oBaseCmd->addParams('--user', $this->aDSNInfo['username']);
-        }
-        if (isset($this->aDSNInfo['password'])) {
-            $oBaseCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
         }
 
         info('Index ranks 0 - 4');
@@ -581,14 +570,14 @@ class SetupFunctions
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
 
         info('Index administrative boundaries');
-        $oCmd = (clone $oBaseCmd)->addParams('-b');
+        $oCmd = (clone $oBaseCmd)->addParams('--boundaries-only');
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
         }
 
         info('Index ranks 5 - 25');
-        $oCmd = (clone $oBaseCmd)->addParams('--minrank', 5, '--maxrank', 25);
+        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 5, '--maxrank', 25);
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');
@@ -597,7 +586,7 @@ class SetupFunctions
         if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
 
         info('Index ranks 26 - 30');
-        $oCmd = (clone $oBaseCmd)->addParams('--minrank', 26);
+        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 26);
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {
             fail('error status ' . $iStatus . ' running nominatim!');

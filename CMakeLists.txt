@@ -86,8 +86,19 @@ if (BUILD_API OR BUILD_IMPORTER)
     # sanity check if PHP binary exists
     if (NOT EXISTS ${PHP_BIN})
         message(FATAL_ERROR "PHP binary not found. Install php or provide location with -DPHP_BIN=/path/php ")
+    else()
+        message (STATUS "Using PHP binary " ${PHP_BIN})
     endif()
-    message (STATUS "Using PHP binary " ${PHP_BIN})
+    if (NOT PHPCGI_BIN)
+        find_program (PHPCGI_BIN php-cgi)
+    endif()
+    # sanity check if PHP binary exists
+    if (NOT EXISTS ${PHPCGI_BIN})
+        message(WARNING "php-cgi binary not found. nominatim tool will not provide query functions.")
+        set (PHPCGI_BIN "")
+    else()
+        message (STATUS "Using php-cgi binary " ${PHPCGI_BIN})
+    endif()
 endif()
 
 #-----------------------------------------------------------------------------

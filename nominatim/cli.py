@@ -435,7 +435,7 @@ class AdminWarm:
 
 class QueryExport:
     """\
-    Export addresses as CSV file from a Nominatim database.
+    Export addresses as CSV file from the database.
     """
 
     @staticmethod
@@ -522,10 +522,14 @@ def nominatim(**kwargs):
     parser.add_subcommand('refresh', UpdateRefresh)
 
     parser.add_subcommand('export', QueryExport)
-    parser.add_subcommand('search', QueryTodo)
-    parser.add_subcommand('reverse', QueryTodo)
-    parser.add_subcommand('lookup', QueryTodo)
-    parser.add_subcommand('details', QueryTodo)
-    parser.add_subcommand('status', QueryTodo)
+
+    if kwargs.get('phpcgi_path'):
+        parser.add_subcommand('search', QueryTodo)
+        parser.add_subcommand('reverse', QueryTodo)
+        parser.add_subcommand('lookup', QueryTodo)
+        parser.add_subcommand('details', QueryTodo)
+        parser.add_subcommand('status', QueryTodo)
+    else:
+        parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
     return parser.run(**kwargs)

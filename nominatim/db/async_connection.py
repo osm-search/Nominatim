@@ -11,26 +11,14 @@ from psycopg2.extras import wait_select
 
 LOG = logging.getLogger()
 
-def make_connection(options, asynchronous=False):
-    """ Create a psycopg2 connection from the given options.
-    """
-    params = {'dbname' : options.dbname,
-              'user' : options.user,
-              'password' : options.password,
-              'host' : options.host,
-              'port' : options.port,
-              'async' : asynchronous}
-
-    return psycopg2.connect(**params)
-
 class DBConnection:
     """ A single non-blocking database connection.
     """
 
-    def __init__(self, options):
+    def __init__(self, dsn):
         self.current_query = None
         self.current_params = None
-        self.options = options
+        self.dsn = dsn
 
         self.conn = None
         self.cursor = None
@@ -46,7 +34,9 @@ class DBConnection:
             self.cursor.close()
             self.conn.close()
 
-        self.conn = make_connection(self.options, asynchronous=True)
+        # Use a dict to hand in the parameters because async is a reserved
+        # word in Python3.
+        self.conn = psycopg2.connect(**{'dsn' : self.dsn, 'async' : True})
         self.wait()
 
         self.cursor = self.conn.cursor()

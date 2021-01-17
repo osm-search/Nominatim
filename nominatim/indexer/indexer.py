@@ -5,8 +5,10 @@ Main work horse for indexing (computing addresses) the database.
 import logging
 import select
 
+import psycopg2
+
 from .progress import ProgressLogger
-from db.async_connection import DBConnection, make_connection
+from ..db.async_connection import DBConnection
 
 LOG = logging.getLogger()
 
@@ -94,34 +96,33 @@ class Indexer:
     """ Main indexing routine.
     """
 
-    def __init__(self, opts):
-        self.minrank = max(1, opts.minrank)
-        self.maxrank = min(30, opts.maxrank)
-        self.conn = make_connection(opts)
-        self.threads = [DBConnection(opts) for _ in range(opts.threads)]
+    def __init__(self, dsn, num_threads):
+        self.conn = psycopg2.connect(dsn)
+        self.threads = [DBConnection(dsn) for _ in range(num_threads)]
 
-    def index_boundaries(self):
+    def index_boundaries(self, minrank, maxrank):
         LOG.warning("Starting indexing boundaries using %s threads",
                     len(self.threads))
 
-        for rank in range(max(self.minrank, 5), min(self.maxrank, 26)):
+        for rank in range(max(minrank, 5), min(maxrank, 26)):
             self.index(BoundaryRunner(rank))
 
-    def index_by_rank(self):
+    def index_by_rank(self, minrank, maxrank):
         """ Run classic indexing by rank.
         """
+        maxrank = min(maxrank, 30)
         LOG.warning("Starting indexing rank (%i to %i) using %i threads",
-                    self.minrank, self.maxrank, len(self.threads))
+                    minrank, maxrank, len(self.threads))
 
-        for rank in range(max(1, self.minrank), self.maxrank):
+        for rank in range(max(1, minrank), maxrank):
             self.index(RankRunner(rank))
 
-        if self.maxrank == 30:
+        if maxrank == 30:
             self.index(RankRunner(0))
             self.index(InterpolationRunner(), 20)
-            self.index(RankRunner(self.maxrank), 20)
+            self.index(RankRunner(30), 20)
         else:
-            self.index(RankRunner(self.maxrank))
+            self.index(RankRunner(maxrank))
 
     def index(self, obj, batch=1):
         """ Index a single rank or table. `obj` describes the SQL to use

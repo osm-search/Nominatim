@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from utils import run_script
 from http_responses import GenericResponse, SearchResponse, ReverseResponse, StatusResponse
 from check_functions import Bbox
+from table_compare import NominatimID
 
 LOG = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def query_cmd(context, query, dups):
     context.response = SearchResponse(outp, 'json')
 
 def send_api_query(endpoint, params, fmt, context):
-    if fmt is not None:
+    if fmt is not None and fmt.strip() != 'debug':
         params['format'] = fmt.strip()
     if context.table:
         if context.table.headings[0] == 'param':
@@ -147,6 +148,8 @@ def website_search_request(context, fmt, query, addr):
         params['q'] = query
     if addr is not None:
         params['addressdetails'] = '1'
+    if fmt and fmt.strip() == 'debug':
+        params['debug'] = '1'
 
     outp, status = send_api_query('search', params, fmt, context)
 
@@ -159,6 +162,8 @@ def website_reverse_request(context, fmt, lat, lon):
         params['lat'] = lat
     if lon is not None:
         params['lon'] = lon
+    if fmt and fmt.strip() == 'debug':
+        params['debug'] = '1'
 
     outp, status = send_api_query('reverse', params, fmt, context)
 
@@ -168,8 +173,11 @@ def website_reverse_request(context, fmt, lat, lon):
 def website_details_request(context, fmt, query):
     params = {}
     if query[0] in 'NWR':
-        params['osmtype'] = query[0]
-        params['osmid'] = query[1:]
+        nid = NominatimID(query)
+        params['osmtype'] = nid.typ
+        params['osmid'] = nid.oid
+        if nid.cls:
+            params['class'] = nid.cls
     else:
         params['place_id'] = query
     outp, status = send_api_query('details', params, fmt, context)
@@ -199,7 +207,8 @@ def validate_result_number(context, operator, number):
 
 @then(u'a HTTP (?P<status>\d+) is returned')
 def check_http_return_status(context, status):
-    assert context.response.errorcode == int(status)
+    assert context.response.errorcode == int(status), \
+           "Return HTTP status is {}.".format(context.response.errorcode)
 
 @then(u'the page contents equals "(?P<text>.+)"')
 def check_page_content_equals(context, text):
@@ -232,9 +241,13 @@ def check_header_attr(context):
 def check_header_no_attr(context, neg, attrs):
     for attr in attrs.split(','):
         if neg:
-            assert attr not in context.response.header
+            assert attr not in context.response.header, \
+                   "Unexpected attribute {}. Full response:\n{}".format(
+                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
         else:
-            assert attr in context.response.header
+            assert attr in context.response.header, \
+                   "No attribute {}. Full response:\n{}".format(
+                       attr, json.dumps(context.response.header, sort_keys=True, indent=2))
 
 @then(u'results contain')
 def step_impl(context):
@@ -255,9 +268,13 @@ def validate_attributes(context, lid, neg, attrs):
     for i in idx:
         for attr in attrs.split(','):
             if neg:
-                assert attr not in context.response.result[i]
+                assert attr not in context.response.result[i],\
+                       "Unexpected attribute {}. Full response:\n{}".format(
+                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
             else:
-                assert attr in context.response.result[i]
+                assert attr in context.response.result[i], \
+                       "No attribute {}. Full response:\n{}".format(
+                           attr, json.dumps(context.response.result[i], sort_keys=True, indent=2))
 
 @then(u'result addresses contain')
 def step_impl(context):

@@ -25,6 +25,39 @@ Feature: Parameters for Reverse API
       | -45.3,;   |
       | gkjd,50   |
 
+    Scenario Outline: Zoom levels between 4 and 18 are allowed
+        When sending reverse coordinates 47.14122383,9.52169581334
+          | zoom |
+          | <zoom> |
+        Then exactly 1 result is returned
+        And result addresses contain
+          | country_code |
+          | li |
+
+    Examples:
+      | zoom |
+      | 4 |
+      | 5 |
+      | 6 |
+      | 7 |
+      | 8 |
+      | 9 |
+      | 10 |
+      | 11 |
+      | 12 |
+      | 13 |
+      | 14 |
+      | 15 |
+      | 16 |
+      | 17 |
+      | 18 |
+
+    Scenario: Non-numerical zoom levels return an error
+        When sending reverse coordinates 47.14122383,9.52169581334
+          | zoom |
+          | adfe |
+        Then a HTTP 400 is returned
+
     Scenario Outline: Reverse Geocoding with extratags
         When sending <format> reverse coordinates 47.1395013150811,9.522098077031046
           | extratags |

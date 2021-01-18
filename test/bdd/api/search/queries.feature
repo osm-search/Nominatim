@@ -80,6 +80,15 @@ Feature: Search queries
           | class   | type |
           | amenity | restaurant |
 
+    Scenario: Search with specific amenity also work in country
+        When sending json search query "restaurants in liechtenstein" with address
+        Then result addresses contain
+          | country |
+          | Liechtenstein |
+        And  results contain
+          | class   | type |
+          | amenity | restaurant |
+
     Scenario: Search with key-value amenity
         When sending json search query "[club=scout] Vaduz"
         Then results contain
@@ -114,6 +123,19 @@ Feature: Search queries
           | class    | type |
           | leisure | firepit |
 
+    Scenario Outline: Key/value search near given coordinate can be restricted to country
+        When sending json search query "[natural=peak] 47.06512,9.53965" with address
+          | countrycodes |
+          | <cc> |
+        Then result addresses contain
+          | country_code |
+          | <cc> |
+
+    Examples:
+        | cc |
+        | li |
+        | ch |
+
     Scenario: Name search near given coordinate
         When sending json search query "sporry" with address
         Then result addresses contain
@@ -145,6 +167,14 @@ Feature: Search queries
             | countrycodes |
             | li  |
         Then exactly 0 results are returned
+
+    Scenario: Country searches only return results for the given country
+        When sending search query "Ans Trail" with address
+            | countrycodes |
+            | li |
+        Then result addresses contain
+            | country_code |
+            | li |
 
     # https://trac.openstreetmap.org/ticket/5094
     Scenario: housenumbers are ordered by complete match first
@@ -182,3 +212,7 @@ Feature: Search queries
        Then result addresses contain
          | ID | town |
          | 0  | Vaduz |
+
+    Scenario: Search can handle complex query word sets
+       When sending search query "aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus aussenstelle universitat lichtenstein wachterhaus"
+       Then a HTTP 200 is returned

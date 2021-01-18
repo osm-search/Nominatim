@@ -30,15 +30,10 @@ Feature: Simple Tests
 
     Examples:
      | parameter        | value |
-     | addressdetails   | 1 |
      | addressdetails   | 0 |
-     | polygon_text     | 1 |
      | polygon_text     | 0 |
-     | polygon_kml      | 1 |
      | polygon_kml      | 0 |
-     | polygon_geojson  | 1 |
      | polygon_geojson  | 0 |
-     | polygon_svg      | 1 |
      | polygon_svg      | 0 |
      | accept-language  | de,en |
      | countrycodes     | li |
@@ -48,9 +43,7 @@ Feature: Simple Tests
      | limit            | 1000 |
      | dedupe           | 1 |
      | dedupe           | 0 |
-     | extratags        | 1 |
      | extratags        | 0 |
-     | namedetails      | 1 |
      | namedetails      | 0 |
 
     Scenario: Search with invalid output format
@@ -180,13 +173,16 @@ Feature: Simple Tests
           | 234 |
         Then the result is valid xml
 
-    Scenario: Empty JSON search
-        When sending json search query "YHlERzzx"
+    Scenario Outline: Empty search
+        When sending <format> search query "YHlERzzx"
         Then exactly 0 results are returned
 
-    Scenario: Empty JSONv2 search
-        When sending jsonv2 search query "Flubb XdfESSaZx"
-        Then exactly 0 results are returned
+    Examples:
+        | format |
+        | json |
+        | jsonv2 |
+        | geojson |
+        | geocodejson |
 
     Scenario: Search for non-existing coordinates
         When sending json search query "-21.0,-33.0"
@@ -199,3 +195,16 @@ Feature: Simple Tests
         Then result header contains
           | attr     | value |
           | more_url | .*&countrycodes=pl%2Cbo&.* |
+
+    Scenario Outline: Search debug output does not return errors
+        When sending debug search query "<query>"
+        Then a HTTP 200 is returned
+
+    Examples:
+        | query |
+        | Liechtenstein |
+        | Triesen |
+        | Pfarrkirche |
+        | Landstr 27 Steinort, Triesenberg, 9495 |
+        | 9497 |
+        | restaurant in triesen |

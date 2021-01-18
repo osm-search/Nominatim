@@ -87,18 +87,6 @@ class SearchDescription
     }
 
     /**
-     * Check if this might be a full address search.
-     *
-     * @return bool True if the search contains name, address and housenumber.
-     */
-    public function looksLikeFullAddress()
-    {
-        return (!empty($this->aName))
-               && (!empty($this->aAddress) || $this->sCountryCode)
-               && preg_match('/[0-9]+/', $this->sHouseNumber);
-    }
-
-    /**
      * Check if any operator is set.
      *
      * @return bool True, if this is a special search operation.
@@ -1027,7 +1015,7 @@ class SearchDescription
                 'Name terms (stop words)' => $this->aNameNonSearch,
                 'Address terms' => $this->aAddress,
                 'Address terms (stop words)' => $this->aAddressNonSearch,
-                'Address terms (full words)' => $this->aFullNameAddress,
+                'Address terms (full words)' => $this->aFullNameAddress ?? '',
                 'Special search' => $this->iOperator,
                 'Class' => $this->sClass,
                 'Type' => $this->sType,
@@ -1039,7 +1027,7 @@ class SearchDescription
     public function dumpAsHtmlTableRow(&$aWordIDs)
     {
         $kf = function ($k) use (&$aWordIDs) {
-            return $aWordIDs[$k];
+            return $aWordIDs[$k] ?? '['.$k.']';
         };
 
         echo '<tr>';

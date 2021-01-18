@@ -50,7 +50,7 @@ class GenericResponse:
         self.result = []
         self.header = dict()
 
-        if errorcode == 200:
+        if errorcode == 200 and fmt != 'debug':
             getattr(self, '_parse_' + fmt)()
 
     def _parse_json(self):

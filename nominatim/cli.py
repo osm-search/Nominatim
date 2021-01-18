@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from .config import Configuration
-from .admin.exec_utils import run_legacy_script
+from .tools.exec_utils import run_legacy_script
 
 from .indexer.indexer import Indexer
 

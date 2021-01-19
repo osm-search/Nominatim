@@ -105,24 +105,13 @@ if ($fPostgresVersion >= 11.0) {
 }
 
 
-$oIndexCmd = (new \Nominatim\Shell(CONST_DataDir.'/nominatim/nominatim.py'))
-             ->addParams('--database', $aDSNInfo['database'])
-             ->addParams('--port', $aDSNInfo['port'])
-             ->addParams('--threads', $aResult['index-instances']);
-if (!$aResult['quiet']) {
-    $oIndexCmd->addParams('--verbose');
+$oIndexCmd = (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
+             ->addParams('index');
+if ($aResult['quiet']) {
+    $oIndexCmd->addParams('--quiet');
 }
 if ($aResult['verbose']) {
     $oIndexCmd->addParams('--verbose');
-}
-if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-    $oIndexCmd->addParams('--host', $aDSNInfo['hostspec']);
-}
-if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-    $oIndexCmd->addParams('--username', $aDSNInfo['username']);
-}
-if (isset($aDSNInfo['password']) && $aDSNInfo['password']) {
-    $oIndexCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
 }
 
 $sPyosmiumBin = getSetting('PYOSMIUM_BINARY');
@@ -289,14 +278,8 @@ if ($aResult['recompute-word-counts']) {
 
 if ($aResult['index']) {
     $oCmd = (clone $oIndexCmd)
-            ->addParams('--minrank', $aResult['index-rank'], '-b');
-    $oCmd->run();
-
-    $oCmd = (clone $oIndexCmd)
             ->addParams('--minrank', $aResult['index-rank']);
     $oCmd->run();
-
-    $oDB->exec('update import_status set indexed = true');
 }
 
 if ($aResult['update-address-levels']) {
@@ -439,15 +422,6 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             $fCMDStartTime = time();
 
             $oThisIndexCmd = clone($oIndexCmd);
-            $oThisIndexCmd->addParams('-b');
-            echo $oThisIndexCmd->escapedCmd()."\n";
-            $iErrorLevel = $oThisIndexCmd->run();
-            if ($iErrorLevel) {
-                echo "Error: $iErrorLevel\n";
-                exit($iErrorLevel);
-            }
-
-            $oThisIndexCmd = clone($oIndexCmd);
             echo $oThisIndexCmd->escapedCmd()."\n";
             $iErrorLevel = $oThisIndexCmd->run();
             if ($iErrorLevel) {
@@ -463,9 +437,6 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
             var_Dump($sSQL);
             $oDB->exec($sSQL);
             echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
-
-            $sSQL = 'update import_status set indexed = true';
-            $oDB->exec($sSQL);
         } else {
             if ($aResult['import-osmosis-all']) {
                 echo "Error: --no-index cannot be used with continuous imports (--import-osmosis-all).\n";

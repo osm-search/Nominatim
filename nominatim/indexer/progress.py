@@ -26,7 +26,7 @@ class ProgressLogger:
         self.done_places = 0
         self.rank_start_time = datetime.now()
         self.log_interval = log_interval
-        self.next_info = INITIAL_PROGRESS if LOG.isEnabledFor(logging.INFO) else total + 1
+        self.next_info = INITIAL_PROGRESS if LOG.isEnabledFor(logging.WARNING) else total + 1
 
     def add(self, num=1):
         """ Mark `num` places as processed. Print a log message if the
@@ -47,9 +47,9 @@ class ProgressLogger:
         places_per_sec = self.done_places / done_time
         eta = (self.total_places - self.done_places) / places_per_sec
 
-        LOG.info("Done %d in %d @ %.3f per second - %s ETA (seconds): %.2f",
-                 self.done_places, int(done_time),
-                 places_per_sec, self.name, eta)
+        LOG.warning("Done %d in %d @ %.3f per second - %s ETA (seconds): %.2f",
+                    self.done_places, int(done_time),
+                    places_per_sec, self.name, eta)
 
         self.next_info += int(places_per_sec) * self.log_interval
 

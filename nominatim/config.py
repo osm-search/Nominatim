@@ -29,6 +29,18 @@ class Configuration:
 
         return os.environ.get(name) or self._config[name]
 
+    def get_libpq_dsn(self):
+        """ Get configured database DSN converted into the key/value format
+            understood by libpq and psycopg.
+        """
+        dsn = self.DATABASE_DSN
+
+        if dsn.startswith('pgsql:'):
+            # Old PHP DSN format. Convert before returning.
+            return dsn[6:].replace(';', ' ')
+
+        return dsn
+
     def get_os_env(self):
         """ Return a copy of the OS environment with the Nominatim configuration
             merged in.

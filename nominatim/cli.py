@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from .config import Configuration
-from .admin.exec_utils import run_legacy_script
+from .tools.exec_utils import run_legacy_script, run_api_script
 
 from .indexer.indexer import Indexer
 
@@ -73,7 +73,7 @@ class CommandlineParser:
         if args.subcommand is None:
             return self.parser.print_help()
 
-        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir'):
+        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
         args.project_dir = Path(args.project_dir)
 
@@ -435,7 +435,7 @@ class AdminWarm:
 
 class QueryExport:
     """\
-    Export addresses as CSV file from a Nominatim database.
+    Export addresses as CSV file from the database.
     """
 
     @staticmethod
@@ -488,17 +488,269 @@ class QueryExport:
 
         return run_legacy_script(*params, nominatim_env=args)
 
-class QueryTodo:
+STRUCTURED_QUERY = (
+    ('street', 'housenumber and street'),
+    ('city', 'city, town or village'),
+    ('county', 'county'),
+    ('state', 'state'),
+    ('country', 'country'),
+    ('postcalcode', 'postcode')
+)
+
+EXTRADATA_PARAMS = (
+    ('addressdetails', 'Include a breakdown of the address into elements.'),
+    ('extratags', """Include additional information if available
+                     (e.g. wikipedia link, opening hours)."""),
+    ('namedetails', 'Include a list of alternative names.')
+)
+
+DETAILS_SWITCHES = (
+    ('addressdetails', 'Include a breakdown of the address into elements.'),
+    ('keywords', 'Include a list of name keywords and address keywords.'),
+    ('linkedplaces', 'Include a details of places that are linked with this one.'),
+    ('hierarchy', 'Include details of places lower in the address hierarchy.'),
+    ('group_hierarchy', 'Group the places by type.'),
+    ('polygon_geojson', 'Include geometry of result.')
+)
+
+class APISearch:
     """\
-    Todo
+    Execute API search query.
     """
-    @staticmethod
-    def add_args(parser):
-        pass
 
     @staticmethod
-    def run(args): # pylint: disable=W0613
-        print("TODO: searching")
+    def add_args(parser):
+        group = parser.add_argument_group('Query arguments')
+        group.add_argument('--query',
+                           help='Free-form query string')
+        for name, desc in STRUCTURED_QUERY:
+            group.add_argument('--' + name, help='Structured query: ' + desc)
+
+        group = parser.add_argument_group('Output arguments')
+        group.add_argument('--format', default='jsonv2',
+                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
+                           help='Format of result')
+        for name, desc in EXTRADATA_PARAMS:
+            group.add_argument('--' + name, action='store_true', help=desc)
+
+        group.add_argument('--lang', '--accept-language', metavar='LANGS',
+                           help='Preferred language order for presenting search results')
+        group.add_argument('--polygon-output',
+                           choices=['geojson', 'kml', 'svg', 'text'],
+                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
+        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
+                           help="""Simplify output geometry.
+                                   Parameter is difference tolerance in degrees.""")
+
+        group = parser.add_argument_group('Result limitation')
+        group.add_argument('--countrycodes', metavar='CC,..',
+                           help='Limit search results to one or more countries.')
+        group.add_argument('--exclude_place_ids', metavar='ID,..',
+                           help='List of search object to be excluded')
+        group.add_argument('--limit', type=int,
+                           help='Limit the number of returned results')
+        group.add_argument('--viewbox', metavar='X1,Y1,X2,Y2',
+                           help='Preferred area to find search results')
+        group.add_argument('--bounded', action='store_true',
+                           help='Strictly restrict results to viewbox area')
+
+        group = parser.add_argument_group('Other arguments')
+        group.add_argument('--no-dedupe', action='store_false', dest='dedupe',
+                           help='Do not remove duplicates from the result list')
+
+
+    @staticmethod
+    def run(args):
+        if args.query:
+            params = dict(q=args.query)
+        else:
+            params = {k : getattr(args, k) for k, _ in STRUCTURED_QUERY if getattr(args, k)}
+
+        for param, _ in EXTRADATA_PARAMS:
+            if getattr(args, param):
+                params[param] = '1'
+        for param in ('format', 'countrycodes', 'exclude_place_ids', 'limit', 'viewbox'):
+            if getattr(args, param):
+                params[param] = getattr(args, param)
+        if args.lang:
+            params['accept-language'] = args.lang
+        if args.polygon_output:
+            params['polygon_' + args.polygon_output] = '1'
+        if args.polygon_threshold:
+            params['polygon_threshold'] = args.polygon_threshold
+        if args.bounded:
+            params['bounded'] = '1'
+        if not args.dedupe:
+            params['dedupe'] = '0'
+
+        return run_api_script('search', args.project_dir,
+                              phpcgi_bin=args.phpcgi_path, params=params)
+
+class APIReverse:
+    """\
+    Execute API reverse query.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('Query arguments')
+        group.add_argument('--lat', type=float, required=True,
+                           help='Latitude of coordinate to look up (in WGS84)')
+        group.add_argument('--lon', type=float, required=True,
+                           help='Longitude of coordinate to look up (in WGS84)')
+        group.add_argument('--zoom', type=int,
+                           help='Level of detail required for the address')
+
+        group = parser.add_argument_group('Output arguments')
+        group.add_argument('--format', default='jsonv2',
+                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
+                           help='Format of result')
+        for name, desc in EXTRADATA_PARAMS:
+            group.add_argument('--' + name, action='store_true', help=desc)
+
+        group.add_argument('--lang', '--accept-language', metavar='LANGS',
+                           help='Preferred language order for presenting search results')
+        group.add_argument('--polygon-output',
+                           choices=['geojson', 'kml', 'svg', 'text'],
+                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
+        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
+                           help="""Simplify output geometry.
+                                   Parameter is difference tolerance in degrees.""")
+
+
+    @staticmethod
+    def run(args):
+        params = dict(lat=args.lat, lon=args.lon)
+        if args.zoom is not None:
+            params['zoom'] = args.zoom
+
+        for param, _ in EXTRADATA_PARAMS:
+            if getattr(args, param):
+                params[param] = '1'
+        if args.format:
+            params['format'] = args.format
+        if args.lang:
+            params['accept-language'] = args.lang
+        if args.polygon_output:
+            params['polygon_' + args.polygon_output] = '1'
+        if args.polygon_threshold:
+            params['polygon_threshold'] = args.polygon_threshold
+
+        return run_api_script('reverse', args.project_dir,
+                              phpcgi_bin=args.phpcgi_path, params=params)
+
+
+class APILookup:
+    """\
+    Execute API reverse query.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('Query arguments')
+        group.add_argument('--id', metavar='OSMID',
+                           action='append', required=True, dest='ids',
+                           help='OSM id to lookup in format <NRW><id> (may be repeated)')
+
+        group = parser.add_argument_group('Output arguments')
+        group.add_argument('--format', default='jsonv2',
+                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
+                           help='Format of result')
+        for name, desc in EXTRADATA_PARAMS:
+            group.add_argument('--' + name, action='store_true', help=desc)
+
+        group.add_argument('--lang', '--accept-language', metavar='LANGS',
+                           help='Preferred language order for presenting search results')
+        group.add_argument('--polygon-output',
+                           choices=['geojson', 'kml', 'svg', 'text'],
+                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
+        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
+                           help="""Simplify output geometry.
+                                   Parameter is difference tolerance in degrees.""")
+
+
+    @staticmethod
+    def run(args):
+        params = dict(osm_ids=','.join(args.ids))
+
+        for param, _ in EXTRADATA_PARAMS:
+            if getattr(args, param):
+                params[param] = '1'
+        if args.format:
+            params['format'] = args.format
+        if args.lang:
+            params['accept-language'] = args.lang
+        if args.polygon_output:
+            params['polygon_' + args.polygon_output] = '1'
+        if args.polygon_threshold:
+            params['polygon_threshold'] = args.polygon_threshold
+
+        return run_api_script('lookup', args.project_dir,
+                              phpcgi_bin=args.phpcgi_path, params=params)
+
+
+class APIDetails:
+    """\
+    Execute API lookup query.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('Query arguments')
+        objs = group.add_mutually_exclusive_group(required=True)
+        objs.add_argument('--node', '-n', type=int,
+                          help="Look up the OSM node with the given ID.")
+        objs.add_argument('--way', '-w', type=int,
+                          help="Look up the OSM way with the given ID.")
+        objs.add_argument('--relation', '-r', type=int,
+                          help="Look up the OSM relation with the given ID.")
+        objs.add_argument('--place_id', '-p', type=int,
+                          help='Database internal identifier of the OSM object to look up.')
+        group.add_argument('--class', dest='object_class',
+                           help="""Class type to disambiguated multiple entries
+                                   of the same object.""")
+
+        group = parser.add_argument_group('Output arguments')
+        for name, desc in DETAILS_SWITCHES:
+            group.add_argument('--' + name, action='store_true', help=desc)
+        group.add_argument('--lang', '--accept-language', metavar='LANGS',
+                           help='Preferred language order for presenting search results')
+
+    @staticmethod
+    def run(args):
+        if args.node:
+            params = dict(osmtype='N', osmid=args.node)
+        elif args.way:
+            params = dict(osmtype='W', osmid=args.node)
+        elif args.relation:
+            params = dict(osmtype='R', osmid=args.node)
+        else:
+            params = dict(place_id=args.place_id)
+        if args.object_class:
+            params['class'] = args.object_class
+        for name, _ in DETAILS_SWITCHES:
+            params[name] = '1' if getattr(args, name) else '0'
+
+        return run_api_script('details', args.project_dir,
+                              phpcgi_bin=args.phpcgi_path, params=params)
+
+
+class APIStatus:
+    """\
+    Execute API status query.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('API parameters')
+        group.add_argument('--format', default='text', choices=['text', 'json'],
+                           help='Format of result')
+
+    @staticmethod
+    def run(args):
+        return run_api_script('status', args.project_dir,
+                              phpcgi_bin=args.phpcgi_path,
+                              params=dict(format=args.format))
 
 
 def nominatim(**kwargs):
@@ -522,10 +774,14 @@ def nominatim(**kwargs):
     parser.add_subcommand('refresh', UpdateRefresh)
 
     parser.add_subcommand('export', QueryExport)
-    parser.add_subcommand('search', QueryTodo)
-    parser.add_subcommand('reverse', QueryTodo)
-    parser.add_subcommand('lookup', QueryTodo)
-    parser.add_subcommand('details', QueryTodo)
-    parser.add_subcommand('status', QueryTodo)
+
+    if kwargs.get('phpcgi_path'):
+        parser.add_subcommand('search', APISearch)
+        parser.add_subcommand('reverse', APIReverse)
+        parser.add_subcommand('lookup', APILookup)
+        parser.add_subcommand('details', APIDetails)
+        parser.add_subcommand('status', APIStatus)
+    else:
+        parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
     return parser.run(**kwargs)

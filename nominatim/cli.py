@@ -68,10 +68,11 @@ class CommandlineParser:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
-        args = self.parser.parse_args()
+        args = self.parser.parse_args(args=kwargs.get('cli_args'))
 
         if args.subcommand is None:
-            return self.parser.print_help()
+            self.parser.print_help()
+            return 1
 
         for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))

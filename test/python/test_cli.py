@@ -48,6 +48,7 @@ def test_cli_help(capsys):
     captured = capsys.readouterr()
     assert captured.out.startswith('usage:')
 
+
 @pytest.mark.parametrize("command,script", [
                          (('import', '--continue', 'load-data'), 'setup'),
                          (('freeze',), 'setup'),
@@ -64,6 +65,57 @@ def test_legacy_commands_simple(mock_run_legacy, command, script):
 
     assert mock_run_legacy.called == 1
     assert mock_run_legacy.last_args[0] == script + '.php'
+
+
+@pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
+                                      ('node', 12), ('way', 8), ('relation', 32)])
+def test_add_data_command(mock_run_legacy, name, oid):
+    assert 0 == call_nominatim('add-data', '--' + name, str(oid))
+
+    assert mock_run_legacy.called == 1
+    assert mock_run_legacy.last_args == ('update.php', '--import-' + name, oid)
+
+
+@pytest.mark.parametrize("params,do_bnds,do_ranks", [
+                          ([], 1, 1),
+                          (['--boundaries-only'], 1, 0),
+                          (['--no-boundaries'], 0, 1),
+                          (['--boundaries-only', '--no-boundaries'], 0, 0)])
+def test_index_command(monkeypatch, params, do_bnds, do_ranks):
+    bnd_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.cli.Indexer, 'index_boundaries', bnd_mock)
+    rank_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.cli.Indexer, 'index_by_rank', rank_mock)
+
+    assert 0 == call_nominatim('index', *params)
+
+    assert bnd_mock.called == do_bnds
+    assert rank_mock.called == do_ranks
+
+
+@pytest.mark.parametrize("command,params", [
+                         ('postcodes', ('update.php', '--calculate-postcodes')),
+                         ('word-counts', ('update.php', '--recompute-word-counts')),
+                         ('address-levels', ('update.php', '--update-address-levels')),
+                         ('functions', ('setup.php',)),
+                         ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
+                         ('importance', ('update.php', '--recompute-importance')),
+                         ('website', ('setup.php', '--setup-website')),
+                         ])
+def test_refresh_command(mock_run_legacy, command, params):
+    assert 0 == call_nominatim('refresh', '--' + command)
+
+    assert mock_run_legacy.called == 1
+    assert len(mock_run_legacy.last_args) >= len(params)
+    assert mock_run_legacy.last_args[:len(params)] == params
+
+
+def test_refresh_importance_computed_after_wiki_import(mock_run_legacy):
+    assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')
+
+    assert mock_run_legacy.called == 2
+    assert mock_run_legacy.last_args == ('update.php', '--recompute-importance')
+
 
 @pytest.mark.parametrize("params", [
                          ('search', '--query', 'new'),

@@ -34,7 +34,7 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
 
         The function needs a project directory that contains the website
         directory with the scripts to be executed. The scripts will be run
-        using php_cgi. Query parameters can be addd as named arguments.
+        using php_cgi. Query parameters can be added as named arguments.
 
         Returns the exit code of the script.
     """

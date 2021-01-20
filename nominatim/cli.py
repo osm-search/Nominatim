@@ -494,7 +494,7 @@ STRUCTURED_QUERY = (
     ('county', 'county'),
     ('state', 'state'),
     ('country', 'country'),
-    ('postcalcode', 'postcode')
+    ('postalcode', 'postcode')
 )
 
 EXTRADATA_PARAMS = (

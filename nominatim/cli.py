@@ -197,13 +197,12 @@ class SetupSpecialPhrases:
                            help='Pull special phrases from the OSM wiki.')
         group = parser.add_argument_group('Output arguments')
         group.add_argument('-o', '--output', default='-',
-                           type=argparse.FileType('w', encoding='UTF-8'),
                            help="""File to write the preprocessed phrases to.
                                    If omitted, it will be written to stdout.""")
 
     @staticmethod
     def run(args):
-        if args.output.name != '<stdout>':
+        if args.output != '-':
             raise NotImplementedError('Only output to stdout is currently implemented.')
         return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
 

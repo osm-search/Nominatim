@@ -68,7 +68,10 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
                           check=False)
 
     if proc.returncode != 0 or proc.stderr:
-        log.error(proc.stderr.decode('utf-8').replace('\\n', '\n'))
+        if proc.stderr:
+            log.error(proc.stderr.decode('utf-8').replace('\\n', '\n'))
+        else:
+            log.error(proc.stdout.decode('utf-8').replace('\\n', '\n'))
         return proc.returncode or 1
 
     result = proc.stdout.decode('utf-8')

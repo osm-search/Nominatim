@@ -1,6 +1,7 @@
 """
 Tests for command line interface wrapper.
 """
+import psycopg2
 import pytest
 
 import nominatim.cli
@@ -81,7 +82,10 @@ def test_add_data_command(mock_run_legacy, name, oid):
                           (['--boundaries-only'], 1, 0),
                           (['--no-boundaries'], 0, 1),
                           (['--boundaries-only', '--no-boundaries'], 0, 0)])
-def test_index_command(monkeypatch, params, do_bnds, do_ranks):
+def test_index_command(monkeypatch, temp_db, params, do_bnds, do_ranks):
+    with psycopg2.connect(database=temp_db) as conn:
+        with conn.cursor() as cur:
+            cur.execute("CREATE TABLE import_status (indexed bool)")
     bnd_mock = MockParamCapture()
     monkeypatch.setattr(nominatim.cli.Indexer, 'index_boundaries', bnd_mock)
     rank_mock = MockParamCapture()

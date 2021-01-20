@@ -9,19 +9,11 @@ from nominatim.indexer.indexer import Indexer
 
 class IndexerTestDB:
 
-    def __init__(self, name):
-        self.name = name
-        self.conn = None
+    def __init__(self, conn):
         self.placex_id = itertools.count(100000)
         self.osmline_id = itertools.count(500000)
 
-    def setup(self):
-        with psycopg2.connect(database='postgres') as conn:
-            conn.set_isolation_level(0)
-            with conn.cursor() as cur:
-                cur.execute('DROP DATABASE IF EXISTS {}'.format(self.name))
-                cur.execute('CREATE DATABASE {}'.format(self.name))
-        self.conn = psycopg2.connect(database=self.name)
+        self.conn = conn
         self.conn.set_isolation_level(0)
         with self.conn.cursor() as cur:
             cur.execute("""CREATE TABLE placex (place_id BIGINT,
@@ -51,16 +43,6 @@ class IndexerTestDB:
                            FOR EACH ROW EXECUTE PROCEDURE date_update()""")
             cur.execute("""CREATE TRIGGER osmline_update BEFORE UPDATE ON location_property_osmline
                            FOR EACH ROW EXECUTE PROCEDURE date_update()""")
-
-
-    def drop(self):
-        if self.conn:
-            self.conn.close()
-            self.conn = None
-        with psycopg2.connect(database='postgres') as conn:
-            conn.set_isolation_level(0)
-            with conn.cursor() as cur:
-                cur.execute('DROP DATABASE IF EXISTS {}'.format(self.name))
 
     def scalar(self, query):
         with self.conn.cursor() as cur:
@@ -100,11 +82,10 @@ class IndexerTestDB:
 
 
 @pytest.fixture
-def test_db():
-    db = IndexerTestDB('test_nominatim_python_unittest')
-    db.setup()
-    yield db
-    db.drop()
+def test_db(temp_db):
+    conn = psycopg2.connect(database=temp_db)
+    yield IndexerTestDB(conn)
+    conn.close()
 
 
 @pytest.mark.parametrize("threads", [1, 15])

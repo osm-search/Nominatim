@@ -68,10 +68,11 @@ class CommandlineParser:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
-        args = self.parser.parse_args()
+        args = self.parser.parse_args(args=kwargs.get('cli_args'))
 
         if args.subcommand is None:
-            return self.parser.print_help()
+            self.parser.print_help()
+            return 1
 
         for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
@@ -196,13 +197,12 @@ class SetupSpecialPhrases:
                            help='Pull special phrases from the OSM wiki.')
         group = parser.add_argument_group('Output arguments')
         group.add_argument('-o', '--output', default='-',
-                           type=argparse.FileType('w', encoding='UTF-8'),
                            help="""File to write the preprocessed phrases to.
                                    If omitted, it will be written to stdout.""")
 
     @staticmethod
     def run(args):
-        if args.output.name != '<stdout>':
+        if args.output != '-':
             raise NotImplementedError('Only output to stdout is currently implemented.')
         return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
 
@@ -392,6 +392,7 @@ class UpdateRefresh:
         if args.website:
             run_legacy_script('setup.php', '--setup-website',
                               nominatim_env=args, throw_on_fail=True)
+        return 0
 
 
 class AdminCheckDatabase:
@@ -513,6 +514,24 @@ DETAILS_SWITCHES = (
     ('polygon_geojson', 'Include geometry of result.')
 )
 
+def _add_api_output_arguments(parser):
+    group = parser.add_argument_group('Output arguments')
+    group.add_argument('--format', default='jsonv2',
+                       choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
+                       help='Format of result')
+    for name, desc in EXTRADATA_PARAMS:
+        group.add_argument('--' + name, action='store_true', help=desc)
+
+    group.add_argument('--lang', '--accept-language', metavar='LANGS',
+                       help='Preferred language order for presenting search results')
+    group.add_argument('--polygon-output',
+                       choices=['geojson', 'kml', 'svg', 'text'],
+                       help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
+    group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
+                       help="""Simplify output geometry.
+                               Parameter is difference tolerance in degrees.""")
+
+
 class APISearch:
     """\
     Execute API search query.
@@ -526,21 +545,7 @@ class APISearch:
         for name, desc in STRUCTURED_QUERY:
             group.add_argument('--' + name, help='Structured query: ' + desc)
 
-        group = parser.add_argument_group('Output arguments')
-        group.add_argument('--format', default='jsonv2',
-                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
-                           help='Format of result')
-        for name, desc in EXTRADATA_PARAMS:
-            group.add_argument('--' + name, action='store_true', help=desc)
-
-        group.add_argument('--lang', '--accept-language', metavar='LANGS',
-                           help='Preferred language order for presenting search results')
-        group.add_argument('--polygon-output',
-                           choices=['geojson', 'kml', 'svg', 'text'],
-                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
-        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
-                           help="""Simplify output geometry.
-                                   Parameter is difference tolerance in degrees.""")
+        _add_api_output_arguments(parser)
 
         group = parser.add_argument_group('Result limitation')
         group.add_argument('--countrycodes', metavar='CC,..',
@@ -601,21 +606,7 @@ class APIReverse:
         group.add_argument('--zoom', type=int,
                            help='Level of detail required for the address')
 
-        group = parser.add_argument_group('Output arguments')
-        group.add_argument('--format', default='jsonv2',
-                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
-                           help='Format of result')
-        for name, desc in EXTRADATA_PARAMS:
-            group.add_argument('--' + name, action='store_true', help=desc)
-
-        group.add_argument('--lang', '--accept-language', metavar='LANGS',
-                           help='Preferred language order for presenting search results')
-        group.add_argument('--polygon-output',
-                           choices=['geojson', 'kml', 'svg', 'text'],
-                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
-        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
-                           help="""Simplify output geometry.
-                                   Parameter is difference tolerance in degrees.""")
+        _add_api_output_arguments(parser)
 
 
     @staticmethod
@@ -652,21 +643,7 @@ class APILookup:
                            action='append', required=True, dest='ids',
                            help='OSM id to lookup in format <NRW><id> (may be repeated)')
 
-        group = parser.add_argument_group('Output arguments')
-        group.add_argument('--format', default='jsonv2',
-                           choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
-                           help='Format of result')
-        for name, desc in EXTRADATA_PARAMS:
-            group.add_argument('--' + name, action='store_true', help=desc)
-
-        group.add_argument('--lang', '--accept-language', metavar='LANGS',
-                           help='Preferred language order for presenting search results')
-        group.add_argument('--polygon-output',
-                           choices=['geojson', 'kml', 'svg', 'text'],
-                           help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
-        group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
-                           help="""Simplify output geometry.
-                                   Parameter is difference tolerance in degrees.""")
+        _add_api_output_arguments(parser)
 
 
     @staticmethod

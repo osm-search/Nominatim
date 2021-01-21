@@ -104,7 +104,7 @@ class Indexer:
         LOG.warning("Starting indexing boundaries using %s threads",
                     len(self.threads))
 
-        for rank in range(max(minrank, 5), min(maxrank, 26)):
+        for rank in range(max(minrank, 4), min(maxrank, 26)):
             self.index(BoundaryRunner(rank))
 
     def index_by_rank(self, minrank, maxrank):

@@ -11,8 +11,6 @@ from pathlib import Path
 from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_api_script
 
-from .indexer.indexer import Indexer
-
 def _num_system_cpus():
     try:
         cpus = len(os.sched_getaffinity(0))
@@ -320,6 +318,8 @@ class UpdateIndex:
 
     @staticmethod
     def run(args):
+        from .indexer.indexer import Indexer
+
         indexer = Indexer(args.config.get_libpq_dsn(),
                           args.threads or _num_system_cpus() or 1)
 

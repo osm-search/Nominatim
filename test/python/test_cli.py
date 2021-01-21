@@ -5,6 +5,7 @@ import psycopg2
 import pytest
 
 import nominatim.cli
+import nominatim.indexer.indexer
 
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
@@ -87,9 +88,9 @@ def test_index_command(monkeypatch, temp_db, params, do_bnds, do_ranks):
         with conn.cursor() as cur:
             cur.execute("CREATE TABLE import_status (indexed bool)")
     bnd_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli.Indexer, 'index_boundaries', bnd_mock)
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', bnd_mock)
     rank_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli.Indexer, 'index_by_rank', rank_mock)
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', rank_mock)
 
     assert 0 == call_nominatim('index', *params)
 

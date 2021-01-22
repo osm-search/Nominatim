@@ -104,14 +104,12 @@ if ($fPostgresVersion >= 11.0) {
     );
 }
 
-
-$oIndexCmd = (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
-             ->addParams('index');
+$oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
 if ($aResult['quiet']) {
-    $oIndexCmd->addParams('--quiet');
+    $oNominatimCmd->addParams('--quiet');
 }
 if ($aResult['verbose']) {
-    $oIndexCmd->addParams('--verbose');
+    $oNominatimCmd->addParams('--verbose');
 }
 
 $sPyosmiumBin = getSetting('PYOSMIUM_BINARY');
@@ -220,9 +218,7 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
 }
 
 if ($aResult['calculate-postcodes']) {
-    info('Update postcodes centroids');
-    $sTemplate = file_get_contents(CONST_DataDir.'/sql/update-postcodes.sql');
-    runSQLScript($sTemplate, true, true);
+    (clone($oNominatimCmd))->addParams('refresh', '--postcodes')->run();
 }
 
 $sTemporaryFile = CONST_InstallDir.'/osmosischange.osc';
@@ -271,15 +267,11 @@ if ($bHaveDiff) {
 }
 
 if ($aResult['recompute-word-counts']) {
-    info('Recompute frequency of full-word search terms');
-    $sTemplate = file_get_contents(CONST_DataDir.'/sql/words_from_search_name.sql');
-    runSQLScript($sTemplate, true, true);
+    (clone($oNominatimCmd))->addParams('refresh', '--word-counts')->run();
 }
 
 if ($aResult['index']) {
-    $oCmd = (clone $oIndexCmd)
-            ->addParams('--minrank', $aResult['index-rank']);
-    $oCmd->run();
+    (clone $oNominatimCmd)->addParams('index', '--minrank', $aResult['index-rank'])->run();
 }
 
 if ($aResult['update-address-levels']) {
@@ -421,7 +413,8 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         if (!$aResult['no-index']) {
             $fCMDStartTime = time();
 
-            $oThisIndexCmd = clone($oIndexCmd);
+            $oThisIndexCmd = clone($oNominatimCmd);
+            $oThisIndexCmd->addParams('index');
             echo $oThisIndexCmd->escapedCmd()."\n";
             $iErrorLevel = $oThisIndexCmd->run();
             if ($iErrorLevel) {

@@ -6,6 +6,7 @@ import pytest
 
 import nominatim.cli
 import nominatim.indexer.indexer
+import nominatim.tools.refresh
 
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
@@ -99,21 +100,30 @@ def test_index_command(monkeypatch, temp_db, params, do_bnds, do_ranks):
 
 
 @pytest.mark.parametrize("command,params", [
-                         ('postcodes', ('update.php', '--calculate-postcodes')),
-                         ('word-counts', ('update.php', '--recompute-word-counts')),
                          ('address-levels', ('update.php', '--update-address-levels')),
                          ('functions', ('setup.php',)),
                          ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
                          ('importance', ('update.php', '--recompute-importance')),
                          ('website', ('setup.php', '--setup-website')),
                          ])
-def test_refresh_command(mock_run_legacy, command, params):
+def test_refresh_legacy_command(mock_run_legacy, command, params):
     assert 0 == call_nominatim('refresh', '--' + command)
 
     assert mock_run_legacy.called == 1
     assert len(mock_run_legacy.last_args) >= len(params)
     assert mock_run_legacy.last_args[:len(params)] == params
 
+@pytest.mark.parametrize("command,func", [
+                         ('postcodes', 'update_postcodes'),
+                         ('word-counts', 'recompute_word_counts'),
+                         ])
+def test_refresh_command(monkeypatch, command, func):
+    func_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.tools.refresh, func, func_mock)
+
+    assert 0 == call_nominatim('refresh', '--' + command)
+
+    assert func_mock.called == 1
 
 def test_refresh_importance_computed_after_wiki_import(mock_run_legacy):
     assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')

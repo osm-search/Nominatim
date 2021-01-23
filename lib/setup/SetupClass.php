@@ -2,7 +2,6 @@
 
 namespace Nominatim\Setup;
 
-require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
 require_once(CONST_LibDir.'/Shell.php');
 
 class SetupFunctions
@@ -19,6 +18,7 @@ class SetupFunctions
     protected $bNoPartitions;
     protected $bDrop;
     protected $oDB = null;
+    protected $oNominatimCmd;
 
     public function __construct(array $aCMDResult)
     {
@@ -81,6 +81,14 @@ class SetupFunctions
         }
 
         $this->bDrop = isset($aCMDResult['drop']) && $aCMDResult['drop'];
+
+        $this->oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
+        if ($this->bQuiet) {
+            $this->oNominatimCmd->addParams('--quiet');
+        }
+        if ($this->bVerbose) {
+            $this->oNominatimCmd->addParams('--verbose');
+        }
     }
 
     public function createDB()
@@ -256,8 +264,7 @@ class SetupFunctions
             $this->dropTable('search_name');
         }
 
-        $oAlParser = new AddressLevelParser(getSettingConfig('ADDRESS_LEVEL_CONFIG', 'address-levels.json'));
-        $oAlParser->createTable($this->db(), 'address_levels');
+        (clone($this->oNominatimCmd))->addParams('refresh', '--address-levels')->run();
     }
 
     public function createTableTriggers()
@@ -549,19 +556,10 @@ class SetupFunctions
     {
         $this->checkModulePresence(); // raises exception on failure
 
-        $oBaseCmd = (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
-                    ->addParams('index');
-
-        if ($this->bQuiet) {
-            $oBaseCmd->addParams('-q');
-        }
-        if ($this->bVerbose) {
-            $oBaseCmd->addParams('-v');
-        }
+        $oBaseCmd = (clone $this->oNominatimCmd)->addParams('index');
 
         info('Index ranks 0 - 4');
         $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
-        echo $oCmd->escapedCmd();
 
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {

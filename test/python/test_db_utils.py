@@ -6,28 +6,25 @@ import pytest
 
 import nominatim.db.utils as db_utils
 
-def test_execute_file_success(temp_db, tmp_path):
+def test_execute_file_success(temp_db_conn, tmp_path):
     tmpfile = tmp_path / 'test.sql'
     tmpfile.write_text('CREATE TABLE test (id INT);\nINSERT INTO test VALUES(56);')
 
-    with psycopg2.connect('dbname=' + temp_db) as conn:
-        db_utils.execute_file(conn, tmpfile)
+    db_utils.execute_file(temp_db_conn, tmpfile)
 
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM test')
+    with temp_db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM test')
 
-            assert cur.rowcount == 1
-            assert cur.fetchone()[0] == 56
+        assert cur.rowcount == 1
+        assert cur.fetchone()[0] == 56
 
-def test_execute_file_bad_file(temp_db, tmp_path):
-    with psycopg2.connect('dbname=' + temp_db) as conn:
-        with pytest.raises(FileNotFoundError):
-            db_utils.execute_file(conn, tmp_path / 'test2.sql')
+def test_execute_file_bad_file(temp_db_conn, tmp_path):
+    with pytest.raises(FileNotFoundError):
+        db_utils.execute_file(temp_db_conn, tmp_path / 'test2.sql')
 
-def test_execute_file_bad_sql(temp_db, tmp_path):
+def test_execute_file_bad_sql(temp_db_conn, tmp_path):
     tmpfile = tmp_path / 'test.sql'
     tmpfile.write_text('CREATE STABLE test (id INT)')
 
-    with psycopg2.connect('dbname=' + temp_db) as conn:
-        with pytest.raises(psycopg2.ProgrammingError):
-            db_utils.execute_file(conn, tmpfile)
+    with pytest.raises(psycopg2.ProgrammingError):
+        db_utils.execute_file(temp_db_conn, tmpfile)

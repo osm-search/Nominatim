@@ -7,7 +7,6 @@ import tempfile
 
 import pytest
 
-from nominatim.config import Configuration
 import nominatim.tools.exec_utils as exec_utils
 
 @pytest.fixture
@@ -18,9 +17,9 @@ def tmp_phplib_dir():
         yield Path(phpdir)
 
 @pytest.fixture
-def nominatim_env(tmp_phplib_dir):
+def nominatim_env(tmp_phplib_dir, def_config):
     class _NominatimEnv:
-        config = Configuration(None, Path(__file__) / '..' / '..' / '..' / 'settings')
+        config = def_config
         phplib_dir = tmp_phplib_dir
         data_dir = Path('data')
         project_dir = Path('.')

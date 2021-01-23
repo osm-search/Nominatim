@@ -84,10 +84,8 @@ def test_add_data_command(mock_run_legacy, name, oid):
                           (['--boundaries-only'], 1, 0),
                           (['--no-boundaries'], 0, 1),
                           (['--boundaries-only', '--no-boundaries'], 0, 0)])
-def test_index_command(monkeypatch, temp_db, params, do_bnds, do_ranks):
-    with psycopg2.connect(database=temp_db) as conn:
-        with conn.cursor() as cur:
-            cur.execute("CREATE TABLE import_status (indexed bool)")
+def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
+    temp_db_cursor.execute("CREATE TABLE import_status (indexed bool)")
     bnd_mock = MockParamCapture()
     monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', bnd_mock)
     rank_mock = MockParamCapture()
@@ -100,7 +98,6 @@ def test_index_command(monkeypatch, temp_db, params, do_bnds, do_ranks):
 
 
 @pytest.mark.parametrize("command,params", [
-                         ('address-levels', ('update.php', '--update-address-levels')),
                          ('functions', ('setup.php',)),
                          ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
                          ('importance', ('update.php', '--recompute-importance')),
@@ -116,6 +113,7 @@ def test_refresh_legacy_command(mock_run_legacy, command, params):
 @pytest.mark.parametrize("command,func", [
                          ('postcodes', 'update_postcodes'),
                          ('word-counts', 'recompute_word_counts'),
+                         ('address-levels', 'load_address_levels_from_file'),
                          ])
 def test_refresh_command(monkeypatch, command, func):
     func_mock = MockParamCapture()

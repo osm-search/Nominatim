@@ -372,33 +372,38 @@ class UpdateRefresh:
     def run(args):
         import nominatim.tools.refresh
 
-        with psycopg2.connect(args.config.get_libpq_dsn()) as conn:
-            if args.postcodes:
-                LOG.warning("Update postcodes centroid")
-                nominatim.tools.refresh.update_postcodes(conn, args.data_dir)
-            if args.word_counts:
-                LOG.warning('Recompute frequency of full-word search terms')
-                nominatim.tools.refresh.recompute_word_counts(conn, args.data_dir)
-            if args.address_levels:
-                run_legacy_script('update.php', '--update-address-levels',
-                                  nominatim_env=args, throw_on_fail=True)
-            if args.functions:
-                params = ['setup.php', '--create-functions', '--create-partition-functions']
-                if args.diffs:
-                    params.append('--enable-diff-updates')
-                if args.enable_debug_statements:
-                    params.append('--enable-debug-statements')
-                run_legacy_script(*params, nominatim_env=args, throw_on_fail=True)
-            if args.wiki_data:
-                run_legacy_script('setup.php', '--import-wikipedia-articles',
-                                  nominatim_env=args, throw_on_fail=True)
-            # Attention: importance MUST come after wiki data import.
-            if args.importance:
-                run_legacy_script('update.php', '--recompute-importance',
-                                  nominatim_env=args, throw_on_fail=True)
-            if args.website:
-                run_legacy_script('setup.php', '--setup-website',
-                                  nominatim_env=args, throw_on_fail=True)
+        conn = psycopg2.connect(args.config.get_libpq_dsn())
+
+        if args.postcodes:
+            LOG.warning("Update postcodes centroid")
+            nominatim.tools.refresh.update_postcodes(conn, args.data_dir)
+        if args.word_counts:
+            LOG.warning('Recompute frequency of full-word search terms')
+            nominatim.tools.refresh.recompute_word_counts(conn, args.data_dir)
+        if args.address_levels:
+            cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
+            LOG.warning('Updating address levels from %s', cfg)
+            nominatim.tools.refresh.load_address_levels_from_file(conn, cfg)
+        if args.functions:
+            params = ['setup.php', '--create-functions', '--create-partition-functions']
+            if args.diffs:
+                params.append('--enable-diff-updates')
+            if args.enable_debug_statements:
+                params.append('--enable-debug-statements')
+            run_legacy_script(*params, nominatim_env=args, throw_on_fail=True)
+        if args.wiki_data:
+            run_legacy_script('setup.php', '--import-wikipedia-articles',
+                              nominatim_env=args, throw_on_fail=True)
+        # Attention: importance MUST come after wiki data import.
+        if args.importance:
+            run_legacy_script('update.php', '--recompute-importance',
+                              nominatim_env=args, throw_on_fail=True)
+        if args.website:
+            run_legacy_script('setup.php', '--setup-website',
+                              nominatim_env=args, throw_on_fail=True)
+
+        conn.close()
+
         return 0
 
 

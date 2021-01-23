@@ -4,7 +4,6 @@
 require_once(CONST_LibDir.'/init-cmd.php');
 require_once(CONST_LibDir.'/setup_functions.php');
 require_once(CONST_LibDir.'/setup/SetupClass.php');
-require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
 
 ini_set('memory_limit', '800M');
 
@@ -275,10 +274,7 @@ if ($aResult['index']) {
 }
 
 if ($aResult['update-address-levels']) {
-    $sAddressLevelConfig = getSettingConfig('ADDRESS_LEVEL_CONFIG', 'address-levels.json');
-    echo 'Updating address levels from '.$sAddressLevelConfig.".\n";
-    $oAlParser = new \Nominatim\Setup\AddressLevelParser($sAddressLevelConfig);
-    $oAlParser->createTable($oDB, 'address_levels');
+    (clone($oNominatimCmd))->addParams('refresh', '--address-levels')->run();
 }
 
 if ($aResult['recompute-importance']) {

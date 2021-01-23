@@ -9,3 +9,4 @@ def execute_file(conn, fname):
         sql = fdesc.read()
     with conn.cursor() as cur:
         cur.execute(sql)
+    conn.commit()

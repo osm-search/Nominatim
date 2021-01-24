@@ -98,7 +98,6 @@ def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
 
 
 @pytest.mark.parametrize("command,params", [
-                         ('functions', ('setup.php',)),
                          ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
                          ('importance', ('update.php', '--recompute-importance')),
                          ('website', ('setup.php', '--setup-website')),
@@ -114,6 +113,7 @@ def test_refresh_legacy_command(mock_run_legacy, command, params):
                          ('postcodes', 'update_postcodes'),
                          ('word-counts', 'recompute_word_counts'),
                          ('address-levels', 'load_address_levels_from_file'),
+                         ('functions', 'create_functions'),
                          ])
 def test_refresh_command(monkeypatch, command, func):
     func_mock = MockParamCapture()
@@ -128,7 +128,6 @@ def test_refresh_importance_computed_after_wiki_import(mock_run_legacy):
 
     assert mock_run_legacy.called == 2
     assert mock_run_legacy.last_args == ('update.php', '--recompute-importance')
-
 
 @pytest.mark.parametrize("params", [
                          ('search', '--query', 'new'),

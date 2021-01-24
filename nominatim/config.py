@@ -20,6 +20,7 @@ class Configuration:
     """
 
     def __init__(self, project_dir, config_dir):
+        self.project_dir = project_dir
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
         if project_dir is not None:
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
@@ -35,6 +36,13 @@ class Configuration:
         name = 'NOMINATIM_' + name
 
         return os.environ.get(name) or self._config[name]
+
+    def get_bool(self, name):
+        """ Return the given configuration parameters as a boolean.
+            Values of '1', 'yes' and 'true' are accepted as truthy values,
+            everything else is interpreted as false.
+        """
+        return self.__getattr__(name).lower() in ('1', 'yes', 'true')
 
     def get_libpq_dsn(self):
         """ Get configured database DSN converted into the key/value format

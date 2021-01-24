@@ -290,9 +290,7 @@ class SetupFunctions
     public function createPartitionFunctions()
     {
         info('Create Partition Functions');
-
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-functions.src.sql');
-        $this->pgsqlRunPartitionScript($sTemplate);
+        $this->createSqlFunctions(); // also create partition functions
     }
 
     public function importWikipediaArticles()
@@ -788,43 +786,18 @@ class SetupFunctions
 
     private function createSqlFunctions()
     {
-        $sBasePath = CONST_DataDir.'/sql/functions/';
-        $sTemplate = file_get_contents($sBasePath.'utils.sql');
-        $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
-        $sTemplate .= file_get_contents($sBasePath.'ranking.sql');
-        $sTemplate .= file_get_contents($sBasePath.'importance.sql');
-        $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
-        $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
-        if ($this->db()->tableExists('place')) {
-            $sTemplate .= file_get_contents($sBasePath.'place_triggers.sql');
+        $oCmd = (clone($this->oNominatimCmd))
+                ->addParams('refresh', '--functions');
+
+        if (!$this->bEnableDiffUpdates) {
+            $oCmd->addParams('--no-diff-updates');
         }
-        if ($this->db()->tableExists('placex')) {
-            $sTemplate .= file_get_contents($sBasePath.'placex_triggers.sql');
-        }
-        if ($this->db()->tableExists('location_postcode')) {
-            $sTemplate .= file_get_contents($sBasePath.'postcode_triggers.sql');
-        }
-        $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
-        if ($this->bEnableDiffUpdates) {
-            $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
-        }
+
         if ($this->bEnableDebugStatements) {
-            $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
-        }
-        if (getSettingBool('LIMIT_REINDEXING')) {
-            $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
-        }
-        if (!getSettingBool('USE_US_TIGER_DATA')) {
-            $sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
-        }
-        if (!getSettingBool('USE_AUX_LOCATION_DATA')) {
-            $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
+            $oCmd->addParams('--enable-debug-statements');
         }
 
-        $sReverseOnly = $this->dbReverseOnly() ? 'true' : 'false';
-        $sTemplate = str_replace('%REVERSE-ONLY%', $sReverseOnly, $sTemplate);
-
-        $this->pgsqlRunScript($sTemplate);
+        $oCmd->run();
     }
 
     private function pgsqlRunPartitionScript($sTemplate)

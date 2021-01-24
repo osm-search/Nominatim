@@ -8,10 +8,9 @@ import argparse
 import logging
 from pathlib import Path
 
-import psycopg2
-
 from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_api_script
+from .db.connection import connect
 
 LOG = logging.getLogger()
 
@@ -370,27 +369,28 @@ class UpdateRefresh:
 
     @staticmethod
     def run(args):
-        import nominatim.tools.refresh
+        from .tools import refresh
 
-        conn = psycopg2.connect(args.config.get_libpq_dsn())
+        conn = connect(args.config.get_libpq_dsn())
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
-            nominatim.tools.refresh.update_postcodes(conn, args.data_dir)
+            refresh.update_postcodes(conn, args.data_dir)
+
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
-            nominatim.tools.refresh.recompute_word_counts(conn, args.data_dir)
+            refresh.recompute_word_counts(conn, args.data_dir)
+
         if args.address_levels:
             cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
             LOG.warning('Updating address levels from %s', cfg)
-            nominatim.tools.refresh.load_address_levels_from_file(conn, cfg)
+            refresh.load_address_levels_from_file(conn, cfg)
+
         if args.functions:
-            params = ['setup.php', '--create-functions', '--create-partition-functions']
-            if args.diffs:
-                params.append('--enable-diff-updates')
-            if args.enable_debug_statements:
-                params.append('--enable-debug-statements')
-            run_legacy_script(*params, nominatim_env=args, throw_on_fail=True)
+            LOG.warning('Create functions')
+            refresh.create_functions(conn, args.config, args.data_dir,
+                                     args.diffs, args.enable_debug_statements)
+
         if args.wiki_data:
             run_legacy_script('setup.php', '--import-wikipedia-articles',
                               nominatim_env=args, throw_on_fail=True)

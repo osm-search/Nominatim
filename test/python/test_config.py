@@ -15,6 +15,7 @@ def test_no_project_dir():
 
     assert config.DATABASE_WEBUSER == 'www-data'
 
+
 def test_prefer_project_setting_over_default():
     with tempfile.TemporaryDirectory() as project_dir:
         with open(project_dir + '/.env', 'w') as envfile:
@@ -23,6 +24,7 @@ def test_prefer_project_setting_over_default():
         config = Configuration(Path(project_dir), DEFCFG_DIR)
 
         assert config.DATABASE_WEBUSER == 'apache'
+
 
 def test_prefer_os_environ_over_project_setting(monkeypatch):
     with tempfile.TemporaryDirectory() as project_dir:
@@ -35,12 +37,14 @@ def test_prefer_os_environ_over_project_setting(monkeypatch):
 
         assert config.DATABASE_WEBUSER == 'nobody'
 
+
 def test_get_os_env_add_defaults(monkeypatch):
     config = Configuration(None, DEFCFG_DIR)
 
     monkeypatch.delenv('NOMINATIM_DATABASE_WEBUSER', raising=False)
 
     assert config.get_os_env()['NOMINATIM_DATABASE_WEBUSER'] == 'www-data'
+
 
 def test_get_os_env_prefer_os_environ(monkeypatch):
     config = Configuration(None, DEFCFG_DIR)
@@ -49,10 +53,12 @@ def test_get_os_env_prefer_os_environ(monkeypatch):
 
     assert config.get_os_env()['NOMINATIM_DATABASE_WEBUSER'] == 'nobody'
 
+
 def test_get_libpq_dsn_convert_default():
     config = Configuration(None, DEFCFG_DIR)
 
     assert config.get_libpq_dsn() == 'dbname=nominatim'
+
 
 def test_get_libpq_dsn_convert_php(monkeypatch):
     config = Configuration(None, DEFCFG_DIR)
@@ -62,6 +68,7 @@ def test_get_libpq_dsn_convert_php(monkeypatch):
 
     assert config.get_libpq_dsn() == 'dbname=gis password=foo host=localhost'
 
+
 def test_get_libpq_dsn_convert_libpq(monkeypatch):
     config = Configuration(None, DEFCFG_DIR)
 
@@ -69,3 +76,20 @@ def test_get_libpq_dsn_convert_libpq(monkeypatch):
                        'host=localhost dbname=gis password=foo')
 
     assert config.get_libpq_dsn() == 'host=localhost dbname=gis password=foo'
+
+
+@pytest.mark.parametrize("value,result",
+                         [(x, True) for x in ('1', 'true', 'True', 'yes', 'YES')] +
+                         [(x, False) for x in ('0', 'false', 'no', 'NO', 'x')])
+def test_get_bool(monkeypatch, value, result):
+    config = Configuration(None, DEFCFG_DIR)
+
+    monkeypatch.setenv('NOMINATIM_FOOBAR', value)
+
+    assert config.get_bool('FOOBAR') == result
+
+def test_get_bool_empty():
+    config = Configuration(None, DEFCFG_DIR)
+
+    assert config.DATABASE_MODULE_PATH == ''
+    assert config.get_bool('DATABASE_MODULE_PATH') == False

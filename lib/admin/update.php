@@ -143,12 +143,7 @@ if ($aResult['init-updates']) {
     }
 
     if (!$aResult['no-update-functions']) {
-        // instantiate setupClass to use the function therein
-        $cSetup = new SetupFunctions(array(
-                                      'enable-diff-updates' => true,
-                                      'verbose' => $aResult['verbose']
-                                     ));
-        $cSetup->createFunctions();
+        (clone($oNominatimCmd))->addParams('refresh', '--functions')->run();
     }
 
     $sDatabaseDate = getDatabaseDate($oDB);

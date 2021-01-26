@@ -234,12 +234,29 @@ class UpdateReplication:
 
     @staticmethod
     def run(args):
+        try:
+            import osmium # pylint: disable=W0611
+        except ModuleNotFoundError:
+            LOG.fatal("pyosmium not installed. Replication functions not available.\n"
+                      "To install pyosmium via pip: pip3 install osmium")
+            return 1
+
+        from .tools import replication, refresh
+
+        conn = connect(args.config.get_libpq_dsn())
+
         params = ['update.php']
         if args.init:
-            params.append('--init-updates')
-            if not args.update_functions:
-                params.append('--no-update-functions')
-        elif args.check_for_updates:
+            LOG.warning("Initialising replication updates")
+            replication.init_replication(conn, args.config.REPLICATION_URL)
+            if args.update_functions:
+                LOG.warning("Create functions")
+                refresh.create_functions(conn, args.config, args.data_dir,
+                                         True, False)
+            conn.close()
+            return 0
+
+        if args.check_for_updates:
             params.append('--check-for-updates')
         else:
             if args.once:

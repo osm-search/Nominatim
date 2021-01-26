@@ -116,64 +116,13 @@ $sBaseURL = getSetting('REPLICATION_URL');
 
 
 if ($aResult['init-updates']) {
-    // sanity check that the replication URL is correct
-    $sBaseState = file_get_contents($sBaseURL.'/state.txt');
-    if ($sBaseState === false) {
-        echo "\nCannot find state.txt file at the configured replication URL.\n";
-        echo "Does the URL point to a directory containing OSM update data?\n\n";
-        fail('replication URL not reachable.');
-    }
-    // sanity check for pyosmium-get-changes
-    if (!$sPyosmiumBin) {
-        echo "\nNOMINATIM_PYOSMIUM_BINARY not configured.\n";
-        echo "You need to install pyosmium and set up the path to pyosmium-get-changes\n";
-        echo "in your local .env file.\n\n";
-        fail('NOMINATIM_PYOSMIUM_BINARY not configured');
+    $oCmd = (clone($oNominatimCmd))->addParams('replication', '--init');
+
+    if ($aResult['no-update-functions']) {
+        $oCmd->addParams('--no-update-functions');
     }
 
-    $aOutput = 0;
-    $oCMD = new \Nominatim\Shell($sPyosmiumBin, '--help');
-    exec($oCMD->escapedCmd(), $aOutput, $iRet);
-
-    if ($iRet != 0) {
-        echo "Cannot execute pyosmium-get-changes.\n";
-        echo "Make sure you have pyosmium installed correctly\n";
-        echo "and have set up NOMINATIM_PYOSMIUM_BINARY to point to pyosmium-get-changes.\n";
-        fail('pyosmium-get-changes not found or not usable');
-    }
-
-    if (!$aResult['no-update-functions']) {
-        (clone($oNominatimCmd))->addParams('refresh', '--functions')->run();
-    }
-
-    $sDatabaseDate = getDatabaseDate($oDB);
-    if (!$sDatabaseDate) {
-        fail('Cannot determine date of database.');
-    }
-    $sWindBack = strftime('%Y-%m-%dT%H:%M:%SZ', strtotime($sDatabaseDate) - (3*60*60));
-
-    // get the appropriate state id
-    $aOutput = 0;
-    $oCMD = (new \Nominatim\Shell($sPyosmiumBin))
-            ->addParams('--start-date', $sWindBack)
-            ->addParams('--server', $sBaseURL);
-
-    exec($oCMD->escapedCmd(), $aOutput, $iRet);
-    if ($iRet != 0 || $aOutput[0] == 'None') {
-        fail('Error running pyosmium tools');
-    }
-
-    $oDB->exec('TRUNCATE import_status');
-    $sSQL = "INSERT INTO import_status (lastimportdate, sequence_id, indexed) VALUES('";
-    $sSQL .= $sDatabaseDate."',".$aOutput[0].', true)';
-
-    try {
-        $oDB->exec($sSQL);
-    } catch (\Nominatim\DatabaseError $e) {
-        fail('Could not enter sequence into database.');
-    }
-
-    echo "Done. Database updates will start at sequence $aOutput[0] ($sWindBack)\n";
+    $oCmd->run();
 }
 
 if ($aResult['check-for-updates']) {

@@ -3,7 +3,12 @@ Helper functions for executing external programs.
 """
 import logging
 import subprocess
+import urllib.request as urlrequest
 from urllib.parse import urlencode
+
+from ..version import NOMINATIM_VERSION
+
+LOG = logging.getLogger()
 
 def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
     """ Run a Nominatim PHP script with the given arguments.
@@ -80,3 +85,16 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     print(result[content_start + 4:].replace('\\n', '\n'))
 
     return 0
+
+
+def get_url(url):
+    """ Get the contents from the given URL and return it as a UTF-8 string.
+    """
+    headers = {"User-Agent" : "Nominatim/" + NOMINATIM_VERSION}
+
+    try:
+        with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
+            return response.read().decode('utf-8')
+    except:
+        LOG.fatal('Failed to load URL: %s', url)
+        raise

@@ -7,6 +7,7 @@ import pytest
 import nominatim.cli
 import nominatim.indexer.indexer
 import nominatim.tools.refresh
+import nominatim.tools.replication
 
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
@@ -56,7 +57,6 @@ def test_cli_help(capsys):
                          (('import', '--continue', 'load-data'), 'setup'),
                          (('freeze',), 'setup'),
                          (('special-phrases',), 'specialphrases'),
-                         (('replication',), 'update'),
                          (('add-data', '--tiger-data', 'tiger'), 'setup'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
                          (('check-database',), 'check_import_finished'),
@@ -102,7 +102,7 @@ def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
                          ('importance', ('update.php', '--recompute-importance')),
                          ('website', ('setup.php', '--setup-website')),
                          ])
-def test_refresh_legacy_command(mock_run_legacy, command, params):
+def test_refresh_legacy_command(mock_run_legacy, temp_db, command, params):
     assert 0 == call_nominatim('refresh', '--' + command)
 
     assert mock_run_legacy.called == 1
@@ -115,7 +115,7 @@ def test_refresh_legacy_command(mock_run_legacy, command, params):
                          ('address-levels', 'load_address_levels_from_file'),
                          ('functions', 'create_functions'),
                          ])
-def test_refresh_command(monkeypatch, command, func):
+def test_refresh_command(monkeypatch, temp_db, command, func):
     func_mock = MockParamCapture()
     monkeypatch.setattr(nominatim.tools.refresh, func, func_mock)
 
@@ -123,11 +123,25 @@ def test_refresh_command(monkeypatch, command, func):
 
     assert func_mock.called == 1
 
-def test_refresh_importance_computed_after_wiki_import(mock_run_legacy):
+
+def test_refresh_importance_computed_after_wiki_import(mock_run_legacy, temp_db):
     assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')
 
     assert mock_run_legacy.called == 2
     assert mock_run_legacy.last_args == ('update.php', '--recompute-importance')
+
+
+@pytest.mark.parametrize("params,func", [
+                         (('--init', '--no-update-functions'), 'init_replication')
+                         ])
+def test_replication_command(monkeypatch, temp_db, params, func):
+    func_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.tools.replication, func, func_mock)
+
+    assert 0 == call_nominatim('replication', *params)
+
+    assert func_mock.called == 1
+
 
 @pytest.mark.parametrize("params", [
                          ('search', '--query', 'new'),

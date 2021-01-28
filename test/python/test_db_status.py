@@ -72,3 +72,15 @@ def test_set_status_filled_table(status_table, temp_db_conn, temp_db_cursor):
 
     assert temp_db_cursor.rowcount == 1
     assert temp_db_cursor.fetchone() == [date, 456, False]
+
+
+def test_get_status_empty_table(status_table, temp_db_conn):
+    assert nominatim.db.status.get_status(temp_db_conn) == (None, None, None)
+
+
+def test_get_status_success(status_table, temp_db_conn):
+    date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
+    nominatim.db.status.set_status(temp_db_conn, date=date, seq=667, indexed=False)
+
+    assert nominatim.db.status.get_status(temp_db_conn) == \
+             (date, 667, False)

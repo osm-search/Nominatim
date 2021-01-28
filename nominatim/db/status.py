@@ -48,3 +48,16 @@ def set_status(conn, date, seq=None, indexed=True):
                        VALUES (%s, %s, %s)""", (date, seq, indexed))
 
     conn.commit()
+
+
+def get_status(conn):
+    """ Return the current status as a triple of (date, sequence, indexed).
+        If status has not been set up yet, a triple of None is returned.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM import_status LIMIT 1")
+        if cur.rowcount < 1:
+            return None, None, None
+
+        row = cur.fetchone()
+        return row['lastimportdate'], row['sequence_id'], row['indexed']

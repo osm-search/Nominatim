@@ -126,18 +126,7 @@ if ($aResult['init-updates']) {
 }
 
 if ($aResult['check-for-updates']) {
-    $aLastState = $oDB->getRow('SELECT sequence_id FROM import_status');
-
-    if (!$aLastState['sequence_id']) {
-        fail('Updates not set up. Please run ./utils/update.php --init-updates.');
-    }
-
-    $oCmd = (new \Nominatim\Shell(CONST_BinDir.'/check_server_for_updates.py'))
-            ->addParams($sBaseURL)
-            ->addParams($aLastState['sequence_id']);
-    $iRet = $oCmd->run();
-
-    exit($iRet);
+    exit((clone($oNominatimCmd))->addParams('replication', '--check-for-updates')->run());
 }
 
 if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {

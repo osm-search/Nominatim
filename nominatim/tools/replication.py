@@ -32,3 +32,28 @@ def init_replication(conn, base_url):
     status.set_status(conn, date=date, seq=seq)
 
     LOG.warning("Updates intialised at sequence %s (%s)", seq, date)
+
+
+def check_for_updates(conn, base_url):
+    """ Check if new data is available from the replication service at the
+        given base URL.
+    """
+    _, seq, _ = status.get_status(conn)
+
+    if seq is None:
+        LOG.error("Replication not set up. "
+                  "Please run 'nominatim replication --init' first.")
+        return 254
+
+    state = ReplicationServer(base_url).get_state_info()
+
+    if state is None:
+        LOG.error("Cannot get state for URL %s.", base_url)
+        return 253
+
+    if state.sequence <= seq:
+        LOG.warning("Database is up to date.")
+        return 1
+
+    LOG.warning("New data available (%i => %i).", seq, state.sequence)
+    return 0

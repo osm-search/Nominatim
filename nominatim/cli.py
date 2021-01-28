@@ -257,14 +257,16 @@ class UpdateReplication:
             return 0
 
         if args.check_for_updates:
-            params.append('--check-for-updates')
+            ret = replication.check_for_updates(conn, args.config.REPLICATION_URL)
+            conn.close()
+            return ret
+
+        if args.once:
+            params.append('--import-osmosis')
         else:
-            if args.once:
-                params.append('--import-osmosis')
-            else:
-                params.append('--import-osmosis-all')
-            if not args.do_index:
-                params.append('--no-index')
+            params.append('--import-osmosis-all')
+        if not args.do_index:
+            params.append('--no-index')
 
         return run_legacy_script(*params, nominatim_env=args)
 

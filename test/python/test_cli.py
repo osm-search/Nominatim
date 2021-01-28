@@ -120,7 +120,6 @@ def test_refresh_command(monkeypatch, temp_db, command, func):
     monkeypatch.setattr(nominatim.tools.refresh, func, func_mock)
 
     assert 0 == call_nominatim('refresh', '--' + command)
-
     assert func_mock.called == 1
 
 
@@ -132,14 +131,14 @@ def test_refresh_importance_computed_after_wiki_import(mock_run_legacy, temp_db)
 
 
 @pytest.mark.parametrize("params,func", [
-                         (('--init', '--no-update-functions'), 'init_replication')
+                         (('--init', '--no-update-functions'), 'init_replication'),
+                         (('--check-for-updates',), 'check_for_updates')
                          ])
 def test_replication_command(monkeypatch, temp_db, params, func):
     func_mock = MockParamCapture()
     monkeypatch.setattr(nominatim.tools.replication, func, func_mock)
 
     assert 0 == call_nominatim('replication', *params)
-
     assert func_mock.called == 1
 
 

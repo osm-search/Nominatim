@@ -162,7 +162,7 @@ This overrides the specified machine readable format. (Default: 0)
   "licence":"Data © OpenStreetMap contributors, ODbL 1.0. https:\/\/www.openstreetmap.org\/copyright",
   "osm_type":"way",
   "osm_id":"280940520",
-"lat":"-34.4391708",
+  "lat":"-34.4391708",
   "lon":"-58.7064573",
   "place_rank":"26",
   "category":"highway",

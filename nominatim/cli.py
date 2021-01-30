@@ -123,6 +123,8 @@ def _osm2pgsql_options_from_args(args, default_cache, default_threads):
 #
 # No need to document the functions each time.
 # pylint: disable=C0111
+# Using non-top-level imports to make pyosmium optional for replication only.
+# pylint: disable=C0415
 
 
 class SetupAll:

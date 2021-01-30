@@ -19,15 +19,6 @@ Run (as the same user who will later run the updates):
 pip3 install --user osmium
 ```
 
-Nominatim needs a tool called `pyosmium-get-changes` which comes with
-Pyosmium. You need to tell Nominatim where to find it. Add the
-following line to your `.env`:
-
-    NOMINATIM_PYOSMIUM_BINARY=/home/user/.local/bin/pyosmium-get-changes
-
-The path above is fine if you used the `--user` parameter with pip.
-Replace `user` with your user name.
-
 #### Setting up the update process
 
 Next the update needs to be initialised. By default Nominatim is configured

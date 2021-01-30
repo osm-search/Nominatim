@@ -84,3 +84,30 @@ def test_get_status_success(status_table, temp_db_conn):
 
     assert nominatim.db.status.get_status(temp_db_conn) == \
              (date, 667, False)
+
+
+@pytest.mark.parametrize("old_state", [True, False])
+@pytest.mark.parametrize("new_state", [True, False])
+def test_set_indexed(status_table, temp_db_conn, temp_db_cursor, old_state, new_state):
+    date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
+    nominatim.db.status.set_status(temp_db_conn, date=date, indexed=old_state)
+    nominatim.db.status.set_indexed(temp_db_conn, new_state)
+
+    assert temp_db_cursor.scalar("SELECT indexed FROM import_status") == new_state
+
+
+def test_set_indexed_empty_status(status_table, temp_db_conn, temp_db_cursor):
+    nominatim.db.status.set_indexed(temp_db_conn, True)
+
+    assert temp_db_cursor.scalar("SELECT count(*) FROM import_status") == 0
+
+
+def text_log_status(status_table, temp_db_conn):
+    date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
+    start = dt.datetime.now() - dt.timedelta(hours=1)
+    nominatim.db.status.set_status(temp_db_conn, date=date, seq=56)
+    nominatim.db.status.log_status(temp_db_conn, start, 'index')
+
+    assert temp_db_cursor.scalar("SELECT count(*) FROM import_osmosis_log") == 1
+    assert temp_db_cursor.scalar("SELECT seq FROM import_osmosis_log") == 56
+    assert temp_db_cursor.scalar("SELECT date FROM import_osmosis_log") == date

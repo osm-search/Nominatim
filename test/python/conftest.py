@@ -101,7 +101,8 @@ def def_config():
 
 @pytest.fixture
 def status_table(temp_db_conn):
-    """ Create an empty version of the status table.
+    """ Create an empty version of the status table and
+        the status logging table.
     """
     with temp_db_conn.cursor() as cur:
         cur.execute("""CREATE TABLE import_status (
@@ -109,6 +110,14 @@ def status_table(temp_db_conn):
                            sequence_id integer,
                            indexed boolean
                        )""")
+        cur.execute("""CREATE TABLE import_osmosis_log (
+                           batchend timestamp,
+                           batchseq integer,
+                           batchsize bigint,
+                           starttime timestamp,
+                           endtime timestamp,
+                           event text
+                           )""")
     temp_db_conn.commit()
 
 

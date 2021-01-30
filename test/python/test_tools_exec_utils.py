@@ -99,3 +99,12 @@ def test_run_api_with_extra_env(tmp_project_dir):
     extra_env = dict(SCRIPT_FILENAME=str(tmp_project_dir / 'website' / 'test.php'))
     assert 0 == exec_utils.run_api_script('badname', tmp_project_dir,
                                           extra_env=extra_env)
+
+
+### run_osm2pgsql
+
+def test_run_osm2pgsql():
+    exec_utils.run_osm2pgsql(dict(osm2pgsql='echo', append=False, flatnode_file=None,
+                                  dsn='dbname=foobar', threads=1, osm2pgsql_cache=500,
+                                  osm2pgsql_style='./my.style',
+                                  import_file='foo.bar'))

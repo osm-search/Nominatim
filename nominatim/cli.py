@@ -2,8 +2,10 @@
 Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
-import sys
+import datetime as dt
 import os
+import sys
+import time
 import argparse
 import logging
 from pathlib import Path
@@ -11,6 +13,7 @@ from pathlib import Path
 from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_api_script
 from .db.connection import connect
+from .db import status
 
 LOG = logging.getLogger()
 
@@ -87,6 +90,17 @@ class CommandlineParser:
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
         return args.command.run(args)
+
+
+def _osm2pgsql_options_from_args(args, default_cache, default_threads):
+    """ Set up the stanadrd osm2pgsql from the command line arguments.
+    """
+    return dict(osm2pgsql=args.osm2pgsql_path,
+                osm2pgsql_cache=args.osm2pgsql_cache or default_cache,
+                osm2pgsql_style=args.config.get_import_style_file(),
+                threads=args.threads or default_threads,
+                dsn=args.config.get_libpq_dsn(),
+                flatnode_file=args.config.FLATNODE_FILE)
 
 ##### Subcommand classes
 #
@@ -231,6 +245,88 @@ class UpdateReplication:
         group.add_argument('--no-index', action='store_false', dest='do_index',
                            help="""Do not index the new data. Only applicable
                                    together with --once""")
+        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
+                           help='Size of cache to be used by osm2pgsql (in MB)')
+
+    @staticmethod
+    def _init_replication(args):
+        from .tools import replication, refresh
+
+        LOG.warning("Initialising replication updates")
+        conn = connect(args.config.get_libpq_dsn())
+        replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
+        if args.update_functions:
+            LOG.warning("Create functions")
+            refresh.create_functions(conn, args.config, args.data_dir,
+                                     True, False)
+        conn.close()
+        return 0
+
+
+    @staticmethod
+    def _check_for_updates(args):
+        from .tools import replication
+
+        conn = connect(args.config.get_libpq_dsn())
+        ret = replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
+        conn.close()
+        return ret
+
+
+    @staticmethod
+    def _update(args):
+        from .tools import replication
+        from .indexer.indexer import Indexer
+
+        params = _osm2pgsql_options_from_args(args, 2000, 1)
+        params.update(base_url=args.config.REPLICATION_URL,
+                      update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
+                      import_file=args.project_dir / 'osmosischange.osc',
+                      max_diff_size=args.config.get_int('REPLICATION_MAX_DIFF'),
+                      indexed_only=not args.once)
+
+        # Sanity check to not overwhelm the Geofabrik servers.
+        if 'download.geofabrik.de'in params['base_url']\
+           and params['update_interval'] < 86400:
+            LOG.fatal("Update interval too low for download.geofabrik.de.\n"
+                      "Please check install documentation "
+                      "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
+                      "setting-up-the-update-process).")
+            raise RuntimeError("Invalid replication update interval setting.")
+
+        if not args.once:
+            if not args.do_index:
+                LOG.fatal("Indexing cannot be disabled when running updates continuously.")
+                raise RuntimeError("Bad arguments.")
+            recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
+
+        while True:
+            conn = connect(args.config.get_libpq_dsn())
+            start = dt.datetime.now(dt.timezone.utc)
+            state = replication.update(conn, params)
+            status.log_status(conn, start, 'import')
+            conn.close()
+
+            if state is not replication.UpdateState.NO_CHANGES and args.do_index:
+                start = dt.datetime.now(dt.timezone.utc)
+                indexer = Indexer(args.config.get_libpq_dsn(),
+                                  args.threads or 1)
+                indexer.index_boundaries(0, 30)
+                indexer.index_by_rank(0, 30)
+
+                conn = connect(args.config.get_libpq_dsn())
+                status.set_indexed(conn, True)
+                status.log_status(conn, start, 'index')
+                conn.close()
+
+            if args.once:
+                break
+
+            if state is replication.UpdateState.NO_CHANGES:
+                LOG.warning("No new changes. Sleeping for %d sec.", recheck_interval)
+                time.sleep(recheck_interval)
+
+        return state.value
 
     @staticmethod
     def run(args):
@@ -241,35 +337,13 @@ class UpdateReplication:
                       "To install pyosmium via pip: pip3 install osmium")
             return 1
 
-        from .tools import replication, refresh
-
-        conn = connect(args.config.get_libpq_dsn())
-
-        params = ['update.php']
         if args.init:
-            LOG.warning("Initialising replication updates")
-            replication.init_replication(conn, args.config.REPLICATION_URL)
-            if args.update_functions:
-                LOG.warning("Create functions")
-                refresh.create_functions(conn, args.config, args.data_dir,
-                                         True, False)
-            conn.close()
-            return 0
+            return UpdateReplication._init_replication(args)
 
         if args.check_for_updates:
-            ret = replication.check_for_updates(conn, args.config.REPLICATION_URL)
-            conn.close()
-            return ret
+            return UpdateReplication._check_for_updates(args)
 
-        if args.once:
-            params.append('--import-osmosis')
-        else:
-            params.append('--import-osmosis-all')
-        if not args.do_index:
-            params.append('--no-index')
-
-        return run_legacy_script(*params, nominatim_env=args)
-
+        return UpdateReplication._update(args)
 
 class UpdateAddData:
     """\
@@ -350,8 +424,11 @@ class UpdateIndex:
         if not args.boundaries_only:
             indexer.index_by_rank(args.minrank, args.maxrank)
 
-        if not args.no_boundaries and not args.boundaries_only:
-            indexer.update_status_table()
+        if not args.no_boundaries and not args.boundaries_only \
+           and args.minrank == 0 and args.maxrank == 30:
+            conn = connect(args.config.get_libpq_dsn())
+            status.set_indexed(conn, True)
+            conn.close()
 
         return 0
 
@@ -390,25 +467,31 @@ class UpdateRefresh:
     def run(args):
         from .tools import refresh
 
-        conn = connect(args.config.get_libpq_dsn())
-
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
+            conn = connect(args.config.get_libpq_dsn())
             refresh.update_postcodes(conn, args.data_dir)
+            conn.close()
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
+            conn = connect(args.config.get_libpq_dsn())
             refresh.recompute_word_counts(conn, args.data_dir)
+            conn.close()
 
         if args.address_levels:
             cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
             LOG.warning('Updating address levels from %s', cfg)
+            conn = connect(args.config.get_libpq_dsn())
             refresh.load_address_levels_from_file(conn, cfg)
+            conn.close()
 
         if args.functions:
             LOG.warning('Create functions')
+            conn = connect(args.config.get_libpq_dsn())
             refresh.create_functions(conn, args.config, args.data_dir,
                                      args.diffs, args.enable_debug_statements)
+            conn.close()
 
         if args.wiki_data:
             run_legacy_script('setup.php', '--import-wikipedia-articles',
@@ -420,8 +503,6 @@ class UpdateRefresh:
         if args.website:
             run_legacy_script('setup.php', '--setup-website',
                               nominatim_env=args, throw_on_fail=True)
-
-        conn.close()
 
         return 0
 

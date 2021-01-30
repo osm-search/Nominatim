@@ -1,9 +1,13 @@
 """
 Nominatim configuration accessor.
 """
+import logging
 import os
+from pathlib import Path
 
 from dotenv import dotenv_values
+
+LOG = logging.getLogger()
 
 class Configuration:
     """ Load and manage the project configuration.
@@ -21,6 +25,7 @@ class Configuration:
 
     def __init__(self, project_dir, config_dir):
         self.project_dir = project_dir
+        self.config_dir = config_dir
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
         if project_dir is not None:
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
@@ -38,11 +43,22 @@ class Configuration:
         return os.environ.get(name) or self._config[name]
 
     def get_bool(self, name):
-        """ Return the given configuration parameters as a boolean.
+        """ Return the given configuration parameter as a boolean.
             Values of '1', 'yes' and 'true' are accepted as truthy values,
             everything else is interpreted as false.
         """
         return self.__getattr__(name).lower() in ('1', 'yes', 'true')
+
+
+    def get_int(self, name):
+        """ Return the given configuration parameter as an int.
+        """
+        try:
+            return int(self.__getattr__(name))
+        except ValueError:
+            LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
+            raise
+
 
     def get_libpq_dsn(self):
         """ Get configured database DSN converted into the key/value format
@@ -50,11 +66,32 @@ class Configuration:
         """
         dsn = self.DATABASE_DSN
 
+        def quote_param(param):
+            key, val = param.split('=')
+            val = val.replace('\\', '\\\\').replace("'", "\\'")
+            if ' ' in val:
+                val = "'" + val + "'"
+            return key + '=' + val
+
         if dsn.startswith('pgsql:'):
             # Old PHP DSN format. Convert before returning.
-            return dsn[6:].replace(';', ' ')
+            return ' '.join([quote_param(p) for p in dsn[6:].split(';')])
 
         return dsn
+
+
+    def get_import_style_file(self):
+        """ Return the import style file as a path object. Translates the
+            name of the standard styles automatically into a file in the
+            config style.
+        """
+        style = self.__getattr__('IMPORT_STYLE')
+
+        if style in ('admin', 'street', 'address', 'full', 'extratags'):
+            return self.config_dir / 'import-{}.style'.format(style)
+
+        return Path(style)
+
 
     def get_os_env(self):
         """ Return a copy of the OS environment with the Nominatim configuration

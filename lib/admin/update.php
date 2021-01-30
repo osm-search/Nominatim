@@ -111,9 +111,6 @@ if ($aResult['verbose']) {
     $oNominatimCmd->addParams('--verbose');
 }
 
-$sPyosmiumBin = getSetting('PYOSMIUM_BINARY');
-$sBaseURL = getSetting('REPLICATION_URL');
-
 
 if ($aResult['init-updates']) {
     $oCmd = (clone($oNominatimCmd))->addParams('replication', '--init');
@@ -203,7 +200,10 @@ if ($aResult['recompute-word-counts']) {
 }
 
 if ($aResult['index']) {
-    (clone $oNominatimCmd)->addParams('index', '--minrank', $aResult['index-rank'])->run();
+    (clone $oNominatimCmd)
+        ->addParams('index', '--minrank', $aResult['index-rank'])
+        ->addParams('--threads', $aResult['index-instances'])
+        ->run();
 }
 
 if ($aResult['update-address-levels']) {
@@ -228,146 +228,17 @@ if ($aResult['recompute-importance']) {
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
-    //
-    if (strpos($sBaseURL, 'download.geofabrik.de') !== false && getSetting('REPLICATION_UPDATE_INTERVAL') < 86400) {
-        fail('Error: Update interval too low for download.geofabrik.de. ' .
-             "Please check install documentation (https://nominatim.org/release-docs/latest/admin/Import-and-Update#setting-up-the-update-process)\n");
+    $oCmd = (clone($oNominatimCmd))
+              ->addParams('replication')
+              ->addParams('--threads', $aResult['index-instances']);
+
+    if (!$aResult['import-osmosis-all']) {
+        $oCmd->addParams('--once');
     }
 
-    $sImportFile = CONST_InstallDir.'/osmosischange.osc';
-
-    $oCMDDownload = (new \Nominatim\Shell($sPyosmiumBin))
-                    ->addParams('--server', $sBaseURL)
-                    ->addParams('--outfile', $sImportFile)
-                    ->addParams('--size', getSetting('REPLICATION_MAX_DIFF'));
-
-    $oCMDImport = (clone $oOsm2pgsqlCmd)->addParams($sImportFile);
-
-    while (true) {
-        $fStartTime = time();
-        $aLastState = $oDB->getRow('SELECT *, EXTRACT (EPOCH FROM lastimportdate) as unix_ts FROM import_status');
-
-        if (!$aLastState['sequence_id']) {
-            echo "Updates not set up. Please run ./utils/update.php --init-updates.\n";
-            exit(1);
-        }
-
-        echo 'Currently at sequence '.$aLastState['sequence_id'].' ('.$aLastState['lastimportdate'].') - '.$aLastState['indexed']." indexed\n";
-
-        $sBatchEnd = $aLastState['lastimportdate'];
-        $iEndSequence = $aLastState['sequence_id'];
-
-        if ($aLastState['indexed']) {
-            // Sleep if the update interval has not yet been reached.
-            $fNextUpdate = $aLastState['unix_ts'] + getSetting('REPLICATION_UPDATE_INTERVAL');
-            if ($fNextUpdate > $fStartTime) {
-                $iSleepTime = $fNextUpdate - $fStartTime;
-                echo "Waiting for next update for $iSleepTime sec.";
-                sleep($iSleepTime);
-            }
-
-            // Download the next batch of changes.
-            do {
-                $fCMDStartTime = time();
-                $iNextSeq = (int) $aLastState['sequence_id'];
-                unset($aOutput);
-
-                $oCMD = (clone $oCMDDownload)->addParams('--start-id', $iNextSeq);
-                echo $oCMD->escapedCmd()."\n";
-                if (file_exists($sImportFile)) {
-                    unlink($sImportFile);
-                }
-                exec($oCMD->escapedCmd(), $aOutput, $iResult);
-
-                if ($iResult == 3) {
-                    $sSleep = getSetting('REPLICATION_RECHECK_INTERVAL');
-                    echo 'No new updates. Sleeping for '.$sSleep." sec.\n";
-                    sleep($sSleep);
-                } elseif ($iResult != 0) {
-                    echo 'ERROR: updates failed.';
-                    exit($iResult);
-                } else {
-                    $iEndSequence = (int)$aOutput[0];
-                }
-            } while ($iResult);
-
-            // get the newest object from the diff file
-            $sBatchEnd = 0;
-            $iRet = 0;
-            $oCMD = new \Nominatim\Shell(CONST_BinDir.'/osm_file_date.py', $sImportFile);
-            exec($oCMD->escapedCmd(), $sBatchEnd, $iRet);
-            if ($iRet == 5) {
-                echo "Diff file is empty. skipping import.\n";
-                if (!$aResult['import-osmosis-all']) {
-                    exit(0);
-                } else {
-                    continue;
-                }
-            }
-            if ($iRet != 0) {
-                fail('Error getting date from diff file.');
-            }
-            $sBatchEnd = $sBatchEnd[0];
-
-            // Import the file
-            $fCMDStartTime = time();
-
-
-            echo $oCMDImport->escapedCmd()."\n";
-            unset($sJunk);
-            $iErrorLevel = $oCMDImport->run();
-            if ($iErrorLevel) {
-                echo "Error executing osm2pgsql: $iErrorLevel\n";
-                exit($iErrorLevel);
-            }
-
-            // write the update logs
-            $iFileSize = filesize($sImportFile);
-            $sSQL = 'INSERT INTO import_osmosis_log';
-            $sSQL .= '(batchend, batchseq, batchsize, starttime, endtime, event)';
-            $sSQL .= " values ('$sBatchEnd',$iEndSequence,$iFileSize,'";
-            $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
-            $sSQL .= date('Y-m-d H:i:s')."','import')";
-            var_Dump($sSQL);
-            $oDB->exec($sSQL);
-
-            // update the status
-            $sSQL = "UPDATE import_status SET lastimportdate = '$sBatchEnd', indexed=false, sequence_id = $iEndSequence";
-            var_Dump($sSQL);
-            $oDB->exec($sSQL);
-            echo date('Y-m-d H:i:s')." Completed download step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
-        }
-
-        // Index file
-        if (!$aResult['no-index']) {
-            $fCMDStartTime = time();
-
-            $oThisIndexCmd = clone($oNominatimCmd);
-            $oThisIndexCmd->addParams('index');
-            echo $oThisIndexCmd->escapedCmd()."\n";
-            $iErrorLevel = $oThisIndexCmd->run();
-            if ($iErrorLevel) {
-                echo "Error: $iErrorLevel\n";
-                exit($iErrorLevel);
-            }
-
-            $sSQL = 'INSERT INTO import_osmosis_log';
-            $sSQL .= '(batchend, batchseq, batchsize, starttime, endtime, event)';
-            $sSQL .= " values ('$sBatchEnd',$iEndSequence,NULL,'";
-            $sSQL .= date('Y-m-d H:i:s', $fCMDStartTime)."','";
-            $sSQL .= date('Y-m-d H:i:s')."','index')";
-            var_Dump($sSQL);
-            $oDB->exec($sSQL);
-            echo date('Y-m-d H:i:s')." Completed index step for $sBatchEnd in ".round((time()-$fCMDStartTime)/60, 2)." minutes\n";
-        } else {
-            if ($aResult['import-osmosis-all']) {
-                echo "Error: --no-index cannot be used with continuous imports (--import-osmosis-all).\n";
-                exit(1);
-            }
-        }
-
-        $fDuration = time() - $fStartTime;
-        echo date('Y-m-d H:i:s')." Completed all for $sBatchEnd in ".round($fDuration/60, 2)." minutes\n";
-        if (!$aResult['import-osmosis-all']) exit(0);
+    if ($aResult['no-index']) {
+        $oCmd->addParams('--no-index');
     }
+
+    exit($oCmd->run());
 }

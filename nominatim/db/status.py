@@ -1,5 +1,5 @@
 """
-Access and helper functions for the status table.
+Access and helper functions for the status and status log table.
 """
 import datetime as dt
 import logging
@@ -61,3 +61,21 @@ def get_status(conn):
 
         row = cur.fetchone()
         return row['lastimportdate'], row['sequence_id'], row['indexed']
+
+
+def set_indexed(conn, state):
+    """ Set the indexed flag in the status table to the given state.
+    """
+    with conn.cursor() as cur:
+        cur.execute("UPDATE import_status SET indexed = %s", (state, ))
+    conn.commit()
+
+
+def log_status(conn, start, event, batchsize=None):
+    """ Write a new status line to the `import_osmosis_log` table.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""INSERT INTO import_osmosis_log
+                       (batchend, batchseq, batchsize, starttime, endtime, event)
+                       SELECT lastimportdate, sequence_id, %s, %s, now(), %s FROM import_status""",
+                    (batchsize, start, event))

@@ -1,8 +1,13 @@
 """
 Tests for command line interface wrapper.
+
+These tests just check that the various command line parameters route to the
+correct functionionality. They use a lot of monkeypatching to avoid executing
+the actual functions.
 """
 import psycopg2
 import pytest
+import time
 
 import nominatim.cli
 import nominatim.indexer.indexer
@@ -21,9 +26,9 @@ class MockParamCapture:
     """ Mock that records the parameters with which a function was called
         as well as the number of calls.
     """
-    def __init__(self):
+    def __init__(self, retval=0):
         self.called = 0
-        self.return_value = 0
+        self.return_value = retval
 
     def __call__(self, *args, **kwargs):
         self.called += 1
@@ -140,6 +145,69 @@ def test_replication_command(monkeypatch, temp_db, params, func):
 
     assert 0 == call_nominatim('replication', *params)
     assert func_mock.called == 1
+
+
+def test_replication_update_bad_interval(monkeypatch, temp_db):
+    monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', 'xx')
+
+    with pytest.raises(ValueError):
+        call_nominatim('replication')
+
+
+def test_replication_update_bad_interval_for_geofabrik(monkeypatch, temp_db):
+    monkeypatch.setenv('NOMINATIM_REPLICATION_URL',
+                       'https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates')
+
+    with pytest.raises(RuntimeError, match='Invalid replication.*'):
+        call_nominatim('replication')
+
+
+@pytest.mark.parametrize("state, retval", [
+                         (nominatim.tools.replication.UpdateState.UP_TO_DATE, 0),
+                         (nominatim.tools.replication.UpdateState.NO_CHANGES, 3)
+                         ])
+def test_replication_update_once_no_index(monkeypatch, temp_db, status_table, state, retval):
+    func_mock = MockParamCapture(retval=state)
+    monkeypatch.setattr(nominatim.tools.replication, 'update', func_mock)
+
+    assert retval == call_nominatim('replication', '--once', '--no-index')
+
+
+def test_replication_update_continuous(monkeypatch, status_table):
+    states = [nominatim.tools.replication.UpdateState.UP_TO_DATE,
+              nominatim.tools.replication.UpdateState.UP_TO_DATE]
+    monkeypatch.setattr(nominatim.tools.replication, 'update',
+                        lambda *args, **kwargs: states.pop())
+
+    index_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', index_mock)
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', index_mock)
+
+    with pytest.raises(IndexError):
+        call_nominatim('replication')
+
+    assert index_mock.called == 4
+
+
+def test_replication_update_continuous_no_change(monkeypatch, status_table):
+    states = [nominatim.tools.replication.UpdateState.NO_CHANGES,
+              nominatim.tools.replication.UpdateState.UP_TO_DATE]
+    monkeypatch.setattr(nominatim.tools.replication, 'update',
+                        lambda *args, **kwargs: states.pop())
+
+    index_mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', index_mock)
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', index_mock)
+
+    sleep_mock = MockParamCapture()
+    monkeypatch.setattr(time, 'sleep', sleep_mock)
+
+    with pytest.raises(IndexError):
+        call_nominatim('replication')
+
+    assert index_mock.called == 2
+    assert sleep_mock.called == 1
+    assert sleep_mock.last_args[0] == 60
 
 
 @pytest.mark.parametrize("params", [

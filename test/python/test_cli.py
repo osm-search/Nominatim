@@ -13,6 +13,7 @@ import nominatim.cli
 import nominatim.indexer.indexer
 import nominatim.tools.refresh
 import nominatim.tools.replication
+from nominatim.errors import UsageError
 
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
@@ -150,16 +151,14 @@ def test_replication_command(monkeypatch, temp_db, params, func):
 def test_replication_update_bad_interval(monkeypatch, temp_db):
     monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', 'xx')
 
-    with pytest.raises(ValueError):
-        call_nominatim('replication')
+    assert call_nominatim('replication') == 1
 
 
 def test_replication_update_bad_interval_for_geofabrik(monkeypatch, temp_db):
     monkeypatch.setenv('NOMINATIM_REPLICATION_URL',
                        'https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates')
 
-    with pytest.raises(RuntimeError, match='Invalid replication.*'):
-        call_nominatim('replication')
+    assert call_nominatim('replication') == 1
 
 
 @pytest.mark.parametrize("state, retval", [

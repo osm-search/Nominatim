@@ -27,7 +27,7 @@ class _Cursor(psycopg2.extras.DictCursor):
         self.execute(sql, args)
 
         if self.rowcount != 1:
-            raise ValueError("Query did not return a single row.")
+            raise RuntimeError("Query did not return a single row.")
 
         return self.fetchone()[0]
 

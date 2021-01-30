@@ -14,6 +14,7 @@ from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_api_script
 from .db.connection import connect
 from .db import status
+from .errors import UsageError
 
 LOG = logging.getLogger()
 
@@ -89,7 +90,16 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
-        return args.command.run(args)
+        try:
+            return args.command.run(args)
+        except UsageError as e:
+            log = logging.getLogger()
+            if log.isEnabledFor(logging.DEBUG):
+                raise # use Python's exception printing
+            log.fatal('FATAL: ' + str(e))
+
+        # If we get here, then execution has failed in some way.
+        return 1
 
 
 def _osm2pgsql_options_from_args(args, default_cache, default_threads):
@@ -292,12 +302,12 @@ class UpdateReplication:
                       "Please check install documentation "
                       "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
                       "setting-up-the-update-process).")
-            raise RuntimeError("Invalid replication update interval setting.")
+            raise UsageError("Invalid replication update interval setting.")
 
         if not args.once:
             if not args.do_index:
                 LOG.fatal("Indexing cannot be disabled when running updates continuously.")
-                raise RuntimeError("Bad arguments.")
+                raise UsageError("Bad argument '--no-index'.")
             recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
         while True:

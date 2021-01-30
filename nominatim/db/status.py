@@ -6,6 +6,7 @@ import logging
 import re
 
 from ..tools.exec_utils import get_url
+from ..errors import UsageError
 
 LOG = logging.getLogger()
 
@@ -19,7 +20,7 @@ def compute_database_date(conn):
 
         if osmid is None:
             LOG.fatal("No data found in the database.")
-            raise RuntimeError("No data found in the database.")
+            raise UsageError("No data found in the database.")
 
     LOG.info("Using node id %d for timestamp lookup", osmid)
     # Get the node from the API to find the timestamp when it was created.
@@ -31,7 +32,7 @@ def compute_database_date(conn):
     if match is None:
         LOG.fatal("The node data downloaded from the API does not contain valid data.\n"
                   "URL used: %s", node_url)
-        raise RuntimeError("Bad API data.")
+        raise UsageError("Bad API data.")
 
     LOG.debug("Found timestamp %s", match[1])
 

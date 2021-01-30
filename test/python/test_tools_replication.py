@@ -9,6 +9,7 @@ from osmium.replication.server import OsmosisState
 
 import nominatim.tools.replication
 import nominatim.db.status as status
+from nominatim.errors import UsageError
 
 OSM_NODE_DATA = """\
 <osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
@@ -24,7 +25,7 @@ def test_init_replication_bad_base_url(monkeypatch, status_table, place_row, tem
 
     monkeypatch.setattr(nominatim.db.status, "get_url", lambda u : OSM_NODE_DATA)
 
-    with pytest.raises(RuntimeError, match="Failed to reach replication service"):
+    with pytest.raises(UsageError, match="Failed to reach replication service"):
         nominatim.tools.replication.init_replication(temp_db_conn, 'https://test.io')
 
 
@@ -90,7 +91,7 @@ def update_options(tmpdir):
                    max_diff_size=1)
 
 def test_update_empty_status_table(status_table, temp_db_conn):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UsageError):
         nominatim.tools.replication.update(temp_db_conn, {})
 
 

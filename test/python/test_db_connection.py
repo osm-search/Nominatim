@@ -28,5 +28,5 @@ def test_cursor_scalar(db, temp_db_cursor):
 
 def test_cursor_scalar_many_rows(db):
     with db.cursor() as cur:
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError):
             cur.scalar('SELECT * FROM pg_tables')

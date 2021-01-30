@@ -11,6 +11,7 @@ from osmium import WriteHandler
 
 from ..db import status
 from .exec_utils import run_osm2pgsql
+from ..errors import UsageError
 
 LOG = logging.getLogger()
 
@@ -31,7 +32,7 @@ def init_replication(conn, base_url):
         LOG.fatal("Cannot reach the configured replication service '%s'.\n"
                   "Does the URL point to a directory containing OSM update data?",
                   base_url)
-        raise RuntimeError("Failed to reach replication service")
+        raise UsageError("Failed to reach replication service")
 
     status.set_status(conn, date=date, seq=seq)
 
@@ -80,7 +81,7 @@ def update(conn, options):
     if startseq is None:
         LOG.error("Replication not set up. "
                   "Please run 'nominatim replication --init' first.")
-        raise RuntimeError("Replication not set up.")
+        raise UsageError("Replication not set up.")
 
     if not indexed and options['indexed_only']:
         LOG.info("Skipping update. There is data that needs indexing.")

@@ -7,6 +7,7 @@ import tempfile
 import pytest
 
 from nominatim.config import Configuration
+from nominatim.errors import UsageError
 
 DEFCFG_DIR = Path(__file__) / '..' / '..' / '..' / 'settings'
 
@@ -123,7 +124,7 @@ def test_get_int_bad_values(monkeypatch, value):
 
     monkeypatch.setenv('NOMINATIM_FOOBAR', value)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(UsageError):
         config.get_int('FOOBAR')
 
 
@@ -132,7 +133,7 @@ def test_get_int_empty():
 
     assert config.DATABASE_MODULE_PATH == ''
 
-    with pytest.raises(ValueError):
+    with pytest.raises(UsageError):
         config.get_int('DATABASE_MODULE_PATH')
 
 

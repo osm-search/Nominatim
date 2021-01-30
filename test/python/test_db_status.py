@@ -6,9 +6,10 @@ import datetime as dt
 import pytest
 
 import nominatim.db.status
+from nominatim.errors import UsageError
 
 def test_compute_database_date_place_empty(status_table, place_table, temp_db_conn):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UsageError):
         nominatim.db.status.compute_database_date(temp_db_conn)
 
 OSM_NODE_DATA = """\
@@ -44,7 +45,7 @@ def test_compute_database_broken_api(monkeypatch, status_table, place_row, temp_
 
     monkeypatch.setattr(nominatim.db.status, "get_url", mock_url)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(UsageError):
         date = nominatim.db.status.compute_database_date(temp_db_conn)
 
 

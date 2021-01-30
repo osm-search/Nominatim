@@ -7,6 +7,8 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
+from .errors import UsageError
+
 LOG = logging.getLogger()
 
 class Configuration:
@@ -57,7 +59,7 @@ class Configuration:
             return int(self.__getattr__(name))
         except ValueError:
             LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
-            raise
+            raise UsageError("Configuration error.")
 
 
     def get_libpq_dsn(self):

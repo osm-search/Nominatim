@@ -284,6 +284,18 @@ class UpdateReplication:
         conn.close()
         return ret
 
+    @staticmethod
+    def _report_update(batchdate, start_import, start_index):
+        def round_time(delta):
+            return dt.timedelta(seconds=int(delta.total_seconds()))
+
+        end = dt.datetime.now(dt.timezone.utc)
+        LOG.warning("Update completed. Import: %s. %sTotal: %s. Remaining backlog: %s.",
+                    round_time((start_index or end) - start_import),
+                    "Indexing: {} ".format(round_time(end - start_index))
+                    if start_index else '',
+                    round_time(end - start_import),
+                    round_time(end - batchdate))
 
     @staticmethod
     def _update(args):
@@ -317,10 +329,11 @@ class UpdateReplication:
             start = dt.datetime.now(dt.timezone.utc)
             state = replication.update(conn, params)
             status.log_status(conn, start, 'import')
+            batchdate, _, _ = status.get_status(conn)
             conn.close()
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
-                start = dt.datetime.now(dt.timezone.utc)
+                index_start = dt.datetime.now(dt.timezone.utc)
                 indexer = Indexer(args.config.get_libpq_dsn(),
                                   args.threads or 1)
                 indexer.index_boundaries(0, 30)
@@ -328,8 +341,13 @@ class UpdateReplication:
 
                 conn = connect(args.config.get_libpq_dsn())
                 status.set_indexed(conn, True)
-                status.log_status(conn, start, 'index')
+                status.log_status(conn, index_start, 'index')
                 conn.close()
+            else:
+                index_start = None
+
+            if LOG.isEnabledFor(logging.WARNING):
+                UpdateReplication._report_update(batchdate, start, index_start)
 
             if args.once:
                 break

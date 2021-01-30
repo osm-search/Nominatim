@@ -5,6 +5,7 @@ These tests just check that the various command line parameters route to the
 correct functionionality. They use a lot of monkeypatching to avoid executing
 the actual functions.
 """
+import datetime as dt
 import psycopg2
 import pytest
 import time
@@ -14,6 +15,7 @@ import nominatim.indexer.indexer
 import nominatim.tools.refresh
 import nominatim.tools.replication
 from nominatim.errors import UsageError
+from nominatim.db import status
 
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
@@ -165,14 +167,17 @@ def test_replication_update_bad_interval_for_geofabrik(monkeypatch, temp_db):
                          (nominatim.tools.replication.UpdateState.UP_TO_DATE, 0),
                          (nominatim.tools.replication.UpdateState.NO_CHANGES, 3)
                          ])
-def test_replication_update_once_no_index(monkeypatch, temp_db, status_table, state, retval):
+def test_replication_update_once_no_index(monkeypatch, temp_db, temp_db_conn,
+                                          status_table, state, retval):
+    status.set_status(temp_db_conn, date=dt.datetime.now(dt.timezone.utc), seq=1)
     func_mock = MockParamCapture(retval=state)
     monkeypatch.setattr(nominatim.tools.replication, 'update', func_mock)
 
     assert retval == call_nominatim('replication', '--once', '--no-index')
 
 
-def test_replication_update_continuous(monkeypatch, status_table):
+def test_replication_update_continuous(monkeypatch, temp_db_conn, status_table):
+    status.set_status(temp_db_conn, date=dt.datetime.now(dt.timezone.utc), seq=1)
     states = [nominatim.tools.replication.UpdateState.UP_TO_DATE,
               nominatim.tools.replication.UpdateState.UP_TO_DATE]
     monkeypatch.setattr(nominatim.tools.replication, 'update',
@@ -188,7 +193,8 @@ def test_replication_update_continuous(monkeypatch, status_table):
     assert index_mock.called == 4
 
 
-def test_replication_update_continuous_no_change(monkeypatch, status_table):
+def test_replication_update_continuous_no_change(monkeypatch, temp_db_conn, status_table):
+    status.set_status(temp_db_conn, date=dt.datetime.now(dt.timezone.utc), seq=1)
     states = [nominatim.tools.replication.UpdateState.NO_CHANGES,
               nominatim.tools.replication.UpdateState.UP_TO_DATE]
     monkeypatch.setattr(nominatim.tools.replication, 'update',

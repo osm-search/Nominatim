@@ -92,11 +92,11 @@ class CommandlineParser:
 
         try:
             return args.command.run(args)
-        except UsageError as e:
+        except UsageError as exception:
             log = logging.getLogger()
             if log.isEnabledFor(logging.DEBUG):
                 raise # use Python's exception printing
-            log.fatal('FATAL: ' + str(e))
+            log.fatal('FATAL: %s', exception)
 
         # If we get here, then execution has failed in some way.
         return 1
@@ -124,7 +124,7 @@ def _osm2pgsql_options_from_args(args, default_cache, default_threads):
 # No need to document the functions each time.
 # pylint: disable=C0111
 # Using non-top-level imports to make pyosmium optional for replication only.
-# pylint: disable=C0415
+# pylint: disable=E0012,C0415
 
 
 class SetupAll:

@@ -191,7 +191,7 @@ if (BUILD_TESTS)
     if (PYLINT)
         message(STATUS "Using pylint binary ${PYLINT}")
         add_test(NAME pylint
-                 COMMAND ${PYLINT} nominatim
+                 COMMAND ${PYLINT} --extension-pkg-whitelist=osmium nominatim
                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     else()
         message(WARNING "pylint not found. Python linting tests disabled.")

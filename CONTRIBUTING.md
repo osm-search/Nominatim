@@ -53,7 +53,7 @@ The coding style is enforced with PHPCS and pylint. It can be tested with:
 
 ```
 phpcs --report-width=120 --colors .
-pylint3 nominatim
+pylint3 --extension-pkg-whitelist=osmium nominatim
 ```
 
 ## Testing

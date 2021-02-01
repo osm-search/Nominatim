@@ -119,10 +119,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
-    $sTigerPath = getSetting('TIGER_DATA_PATH');
-    if (!$sTigerPath) {
-        $sTigerPath = CONST_DataDir.'/data/tiger';
-    }
+    $sTigerPath = getSetting('TIGER_DATA_PATH', CONST_InstallDir.'/tiger');
     $oSetup->importTigerData($sTigerPath);
 }
 

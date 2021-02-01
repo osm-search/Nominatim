@@ -8,6 +8,14 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 
 ## 3.6.0 -> master
 
+### New location for data files
+
+External data files for Wikipedia importance, postcodes etc. are no longer
+expected to reside in the source tree by default. Instead they will be searched
+in the project directory. If you have an automated setup script you must
+either adapt the download location or explicitly set the location of the
+files to the old place in your `.env`.
+
 ### Introducing `nominatim` command line tool
 
 The various php utilities have been replaced with a single `nominatim`
@@ -26,7 +34,7 @@ functionality of each script:
 Try `nominatim <command> --help` for more information about each subcommand.
 
 `./utils/query.php` no longer exists in its old form. `nominatim search`
-provides a replacement.
+provides a replacement but returns different output.
 
 ## 3.5.0 -> 3.6.0
 

@@ -162,14 +162,14 @@ class SetupFunctions
         $this->pgsqlRunScriptFile(CONST_DataDir.'/data/gb_postcode_table.sql');
         $this->pgsqlRunScriptFile(CONST_DataDir.'/data/us_postcode_table.sql');
 
-        $sPostcodeFilename = CONST_DataDir.'/data/gb_postcode_data.sql.gz';
+        $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
             $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
             warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
         }
 
-        $sPostcodeFilename = CONST_DataDir.'/data/us_postcode_data.sql.gz';
+        $sPostcodeFilename = CONST_InstallDir.'/us_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
             $this->pgsqlRunScriptFile($sPostcodeFilename);
         } else {
@@ -295,7 +295,7 @@ class SetupFunctions
 
     public function importWikipediaArticles()
     {
-        $sWikiArticlePath = getSetting('WIKIPEDIA_DATA_PATH', CONST_DataDir.'/data');
+        $sWikiArticlePath = getSetting('WIKIPEDIA_DATA_PATH', CONST_InstallDir);
         $sWikiArticlesFile = $sWikiArticlePath.'/wikimedia-importance.sql.gz';
         if (file_exists($sWikiArticlesFile)) {
             info('Importing wikipedia articles and redirects');

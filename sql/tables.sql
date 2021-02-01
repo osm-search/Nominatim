@@ -1,6 +1,6 @@
 drop table if exists import_status;
 CREATE TABLE import_status (
-  lastimportdate timestamp NOT NULL,
+  lastimportdate timestamp with time zone NOT NULL,
   sequence_id integer,
   indexed boolean
   );

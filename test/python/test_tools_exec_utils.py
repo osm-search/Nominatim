@@ -7,7 +7,6 @@ import tempfile
 
 import pytest
 
-from nominatim.config import Configuration
 import nominatim.tools.exec_utils as exec_utils
 
 @pytest.fixture
@@ -18,9 +17,9 @@ def tmp_phplib_dir():
         yield Path(phpdir)
 
 @pytest.fixture
-def nominatim_env(tmp_phplib_dir):
+def nominatim_env(tmp_phplib_dir, def_config):
     class _NominatimEnv:
-        config = Configuration(None, Path(__file__) / '..' / '..' / '..' / 'settings')
+        config = def_config
         phplib_dir = tmp_phplib_dir
         data_dir = Path('data')
         project_dir = Path('.')
@@ -100,3 +99,12 @@ def test_run_api_with_extra_env(tmp_project_dir):
     extra_env = dict(SCRIPT_FILENAME=str(tmp_project_dir / 'website' / 'test.php'))
     assert 0 == exec_utils.run_api_script('badname', tmp_project_dir,
                                           extra_env=extra_env)
+
+
+### run_osm2pgsql
+
+def test_run_osm2pgsql():
+    exec_utils.run_osm2pgsql(dict(osm2pgsql='echo', append=False, flatnode_file=None,
+                                  dsn='dbname=foobar', threads=1, osm2pgsql_cache=500,
+                                  osm2pgsql_style='./my.style',
+                                  import_file='foo.bar'))

@@ -2,7 +2,6 @@
 
 namespace Nominatim\Setup;
 
-require_once(CONST_LibDir.'/setup/AddressLevelParser.php');
 require_once(CONST_LibDir.'/Shell.php');
 
 class SetupFunctions
@@ -19,6 +18,7 @@ class SetupFunctions
     protected $bNoPartitions;
     protected $bDrop;
     protected $oDB = null;
+    protected $oNominatimCmd;
 
     public function __construct(array $aCMDResult)
     {
@@ -81,6 +81,14 @@ class SetupFunctions
         }
 
         $this->bDrop = isset($aCMDResult['drop']) && $aCMDResult['drop'];
+
+        $this->oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
+        if ($this->bQuiet) {
+            $this->oNominatimCmd->addParams('--quiet');
+        }
+        if ($this->bVerbose) {
+            $this->oNominatimCmd->addParams('--verbose');
+        }
     }
 
     public function createDB()
@@ -256,8 +264,7 @@ class SetupFunctions
             $this->dropTable('search_name');
         }
 
-        $oAlParser = new AddressLevelParser(getSettingConfig('ADDRESS_LEVEL_CONFIG', 'address-levels.json'));
-        $oAlParser->createTable($this->db(), 'address_levels');
+        (clone($this->oNominatimCmd))->addParams('refresh', '--address-levels')->run();
     }
 
     public function createTableTriggers()
@@ -283,9 +290,7 @@ class SetupFunctions
     public function createPartitionFunctions()
     {
         info('Create Partition Functions');
-
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-functions.src.sql');
-        $this->pgsqlRunPartitionScript($sTemplate);
+        $this->createSqlFunctions(); // also create partition functions
     }
 
     public function importWikipediaArticles()
@@ -549,19 +554,10 @@ class SetupFunctions
     {
         $this->checkModulePresence(); // raises exception on failure
 
-        $oBaseCmd = (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
-                    ->addParams('index');
-
-        if ($this->bQuiet) {
-            $oBaseCmd->addParams('-q');
-        }
-        if ($this->bVerbose) {
-            $oBaseCmd->addParams('-v');
-        }
+        $oBaseCmd = (clone $this->oNominatimCmd)->addParams('index');
 
         info('Index ranks 0 - 4');
         $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
-        echo $oCmd->escapedCmd();
 
         $iStatus = $oCmd->run();
         if ($iStatus != 0) {
@@ -790,43 +786,18 @@ class SetupFunctions
 
     private function createSqlFunctions()
     {
-        $sBasePath = CONST_DataDir.'/sql/functions/';
-        $sTemplate = file_get_contents($sBasePath.'utils.sql');
-        $sTemplate .= file_get_contents($sBasePath.'normalization.sql');
-        $sTemplate .= file_get_contents($sBasePath.'ranking.sql');
-        $sTemplate .= file_get_contents($sBasePath.'importance.sql');
-        $sTemplate .= file_get_contents($sBasePath.'address_lookup.sql');
-        $sTemplate .= file_get_contents($sBasePath.'interpolation.sql');
-        if ($this->db()->tableExists('place')) {
-            $sTemplate .= file_get_contents($sBasePath.'place_triggers.sql');
+        $oCmd = (clone($this->oNominatimCmd))
+                ->addParams('refresh', '--functions');
+
+        if (!$this->bEnableDiffUpdates) {
+            $oCmd->addParams('--no-diff-updates');
         }
-        if ($this->db()->tableExists('placex')) {
-            $sTemplate .= file_get_contents($sBasePath.'placex_triggers.sql');
-        }
-        if ($this->db()->tableExists('location_postcode')) {
-            $sTemplate .= file_get_contents($sBasePath.'postcode_triggers.sql');
-        }
-        $sTemplate = str_replace('{modulepath}', $this->sModulePath, $sTemplate);
-        if ($this->bEnableDiffUpdates) {
-            $sTemplate = str_replace('RETURN NEW; -- %DIFFUPDATES%', '--', $sTemplate);
-        }
+
         if ($this->bEnableDebugStatements) {
-            $sTemplate = str_replace('--DEBUG:', '', $sTemplate);
-        }
-        if (getSettingBool('LIMIT_REINDEXING')) {
-            $sTemplate = str_replace('--LIMIT INDEXING:', '', $sTemplate);
-        }
-        if (!getSettingBool('USE_US_TIGER_DATA')) {
-            $sTemplate = str_replace('-- %NOTIGERDATA% ', '', $sTemplate);
-        }
-        if (!getSettingBool('USE_AUX_LOCATION_DATA')) {
-            $sTemplate = str_replace('-- %NOAUXDATA% ', '', $sTemplate);
+            $oCmd->addParams('--enable-debug-statements');
         }
 
-        $sReverseOnly = $this->dbReverseOnly() ? 'true' : 'false';
-        $sTemplate = str_replace('%REVERSE-ONLY%', $sReverseOnly, $sTemplate);
-
-        $this->pgsqlRunScript($sTemplate);
+        $oCmd->run();
     }
 
     private function pgsqlRunPartitionScript($sTemplate)

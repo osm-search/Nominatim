@@ -2,8 +2,16 @@
 Helper functions for executing external programs.
 """
 import logging
+import os
 import subprocess
+import urllib.request as urlrequest
 from urllib.parse import urlencode
+
+from psycopg2.extensions import parse_dsn
+
+from ..version import NOMINATIM_VERSION
+
+LOG = logging.getLogger()
 
 def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
     """ Run a Nominatim PHP script with the given arguments.
@@ -80,3 +88,51 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     print(result[content_start + 4:].replace('\\n', '\n'))
 
     return 0
+
+
+def run_osm2pgsql(options):
+    """ Run osm2pgsql with the given options.
+    """
+    env = os.environ
+    cmd = [options['osm2pgsql'],
+           '--hstore', '--latlon', '--slim',
+           '--with-forward-dependencies', 'false',
+           '--log-progress', 'true',
+           '--number-processes', str(options['threads']),
+           '--cache', str(options['osm2pgsql_cache']),
+           '--output', 'gazetteer',
+           '--style', str(options['osm2pgsql_style'])
+          ]
+    if options['append']:
+        cmd.append('--append')
+
+    if options['flatnode_file']:
+        cmd.extend(('--flat-nodes', options['flatnode_file']))
+
+    dsn = parse_dsn(options['dsn'])
+    if 'password' in dsn:
+        env['PGPASSWORD'] = dsn['password']
+    if 'dbname' in dsn:
+        cmd.extend(('-d', dsn['dbname']))
+    if 'user' in dsn:
+        cmd.extend(('--username', dsn['user']))
+    for param in ('host', 'port'):
+        if param in dsn:
+            cmd.extend(('--' + param, dsn[param]))
+
+    cmd.append(str(options['import_file']))
+
+    subprocess.run(cmd, cwd=options.get('cwd', '.'), env=env, check=True)
+
+
+def get_url(url):
+    """ Get the contents from the given URL and return it as a UTF-8 string.
+    """
+    headers = {"User-Agent" : "Nominatim/" + NOMINATIM_VERSION}
+
+    try:
+        with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
+            return response.read().decode('utf-8')
+    except:
+        LOG.fatal('Failed to load URL: %s', url)
+        raise

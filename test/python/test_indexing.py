@@ -82,10 +82,8 @@ class IndexerTestDB:
 
 
 @pytest.fixture
-def test_db(temp_db):
-    conn = psycopg2.connect(database=temp_db)
-    yield IndexerTestDB(conn)
-    conn.close()
+def test_db(temp_db_conn):
+    yield IndexerTestDB(temp_db_conn)
 
 
 @pytest.mark.parametrize("threads", [1, 15])

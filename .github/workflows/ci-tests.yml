@@ -52,7 +52,7 @@ jobs:
               run: phpcs --report-width=120 .
 
             - name: Python linting
-              run: pylint nominatim
+              run: pylint --extension-pkg-whitelist=osmium nominatim
 
             - name: PHP unit tests
               run: phpunit ./

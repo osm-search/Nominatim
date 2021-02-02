@@ -57,20 +57,11 @@ endif()
 
 
 #-----------------------------------------------------------------------------
-#  python and pyosmium (imports/updates only)
+#  python (imports/updates only)
 #-----------------------------------------------------------------------------
 
 if (BUILD_IMPORTER)
     find_package(PythonInterp 3.5 REQUIRED)
-
-    find_program(PYOSMIUM pyosmium-get-changes)
-    if (NOT EXISTS "${PYOSMIUM}")
-        set(PYOSMIUM_PATH "")
-            message(WARNING "pyosmium-get-changes not found (required for updates)")
-    else()
-        set(PYOSMIUM_PATH "${PYOSMIUM}")
-        message(STATUS "Using pyosmium-get-changes at ${PYOSMIUM_PATH}")
-    endif()
 endif()
 
 #-----------------------------------------------------------------------------

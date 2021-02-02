@@ -8,7 +8,6 @@ class SetupFunctions
 {
     protected $iCacheMemory;
     protected $iInstances;
-    protected $sModulePath;
     protected $aDSNInfo;
     protected $bQuiet;
     protected $bVerbose;
@@ -41,12 +40,6 @@ class SetupFunctions
             // Otherwise: Assume we can steal all the cache memory in the box.
             $this->iCacheMemory = getCacheMemoryMB();
         }
-
-        $this->sModulePath = getSetting('DATABASE_MODULE_PATH');
-        if (!$this->sModulePath) {
-            $this->sModulePath = CONST_Default_ModulePath;
-        }
-        info('module path: ' . $this->sModulePath);
 
         // parse database string
         $this->aDSNInfo = \Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
@@ -149,6 +142,23 @@ class SetupFunctions
             exit(1);
         }
 
+        if (!getSetting('DATABASE_MODULE_PATH')) {
+            // If no custom module path is set then copy the module into the
+            // project directory, but only if it is not the same file already
+            // (aka we are running from the build dir).
+            $sDest = CONST_InstallDir.'/module';
+            if ($sDest != CONST_Default_ModulePath) {
+                mkdir($sDest);
+                if (!copy(CONST_Default_ModulePath.'/nominatim.so', $sDest.'/nominatim.so')) {
+                    echo "Failed to copy database module to $sDest.";
+                    exit(1);
+                }
+                chmod($sDest.'/nominatim.so', 0755);
+                info("Database module installed at $sDest.");
+            } else {
+                info("Running from build directory. Leaving database module as is.");
+            }
+        }
         // Try accessing the C module, so we know early if something is wrong
         $this->checkModulePresence(); // raises exception on failure
 
@@ -933,12 +943,13 @@ class SetupFunctions
      */
     private function checkModulePresence()
     {
+        $sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_InstallDir.'/module');
         $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-        $sSQL .= $this->sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
+        $sSQL .= $sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
         $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
 
         $oDB = new \Nominatim\DB();
         $oDB->connect();
-        $oDB->exec($sSQL, null, 'Database server failed to load '.$this->sModulePath.'/nominatim.so module');
+        $oDB->exec($sSQL, null, 'Database server failed to load '.$sModulePath.'/nominatim.so module');
     }
 }

@@ -35,8 +35,8 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                     {{ github.workspace }}/data/country_osm_grid.sql.gz
-                     {{ github.workspace }}/monaco-latest.osm.pbf
+                     data/country_osm_grid.sql.gz
+                     monaco-latest.osm.pbf
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql
@@ -82,8 +82,8 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                     {{ github.workspace }}/data/country_osm_grid.sql.gz
-                     {{ github.workspace }}/monaco-latest.osm.pbf
+                     data/country_osm_grid.sql.gz
+                     monaco-latest.osm.pbf
                   key: nominatim-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./.github/actions/setup-postgresql

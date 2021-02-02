@@ -156,7 +156,7 @@ class SetupFunctions
                 chmod($sDest.'/nominatim.so', 0755);
                 info("Database module installed at $sDest.");
             } else {
-                info("Running from build directory. Leaving database module as is.");
+                info('Running from build directory. Leaving database module as is.');
             }
         }
         // Try accessing the C module, so we know early if something is wrong

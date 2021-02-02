@@ -63,8 +63,8 @@ def test_run_legacy_return_dont_throw_on_success(nominatim_env, test_script):
     assert 0 == exec_utils.run_legacy_script(fname, nominatim_env=nominatim_env,
                                              throw_on_fail=True)
 
-def test_run_legacy_use_given__module_path(nominatim_env, test_script):
-    fname = test_script("exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == 'module' ? 0 : 23);")
+def test_run_legacy_use_given_module_path(nominatim_env, test_script):
+    fname = test_script("exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == '' ? 0 : 23);")
 
     assert 0 == exec_utils.run_legacy_script(fname, nominatim_env=nominatim_env)
 

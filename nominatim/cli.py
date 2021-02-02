@@ -81,7 +81,7 @@ class CommandlineParser:
 
         for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
-        args.project_dir = Path(args.project_dir)
+        args.project_dir = Path(args.project_dir).resolve()
 
         logging.basicConfig(stream=sys.stderr,
                             format='%(asctime)s: %(message)s',
@@ -91,7 +91,7 @@ class CommandlineParser:
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
         log = logging.getLogger()
-        log.warn('Using project directory: %s', str(args.project_dir))
+        log.warning('Using project directory: %s', str(args.project_dir))
 
         try:
             return args.command.run(args)

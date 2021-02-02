@@ -148,7 +148,9 @@ class SetupFunctions
             // (aka we are running from the build dir).
             $sDest = CONST_InstallDir.'/module';
             if ($sDest != CONST_Default_ModulePath) {
-                mkdir($sDest);
+                if (!file_exists($sDest)) {
+                    mkdir($sDest);
+                }
                 if (!copy(CONST_Default_ModulePath.'/nominatim.so', $sDest.'/nominatim.so')) {
                     echo "Failed to copy database module to $sDest.";
                     exit(1);
@@ -158,6 +160,8 @@ class SetupFunctions
             } else {
                 info('Running from build directory. Leaving database module as is.');
             }
+        } else {
+            info('Using database module from DATABASE_MODULE_PATH ('.getSetting('DATABASE_MODULE_PATH').').');
         }
         // Try accessing the C module, so we know early if something is wrong
         $this->checkModulePresence(); // raises exception on failure

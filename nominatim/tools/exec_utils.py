@@ -26,8 +26,7 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
     env = nominatim_env.config.get_os_env()
     env['NOMINATIM_DATADIR'] = str(nominatim_env.data_dir)
     env['NOMINATIM_BINDIR'] = str(nominatim_env.data_dir / 'utils')
-    if not env['NOMINATIM_DATABASE_MODULE_PATH']:
-        env['NOMINATIM_DATABASE_MODULE_PATH'] = nominatim_env.module_dir
+    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = nominatim_env.module_dir
     if not env['NOMINATIM_OSM2PGSQL_BINARY']:
         env['NOMINATIM_OSM2PGSQL_BINARY'] = nominatim_env.osm2pgsql_path
 

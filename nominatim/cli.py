@@ -90,10 +90,12 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
+        log = logging.getLogger()
+        log.warn('Using project directory: %s', str(args.project_dir))
+
         try:
             return args.command.run(args)
         except UsageError as exception:
-            log = logging.getLogger()
             if log.isEnabledFor(logging.DEBUG):
                 raise # use Python's exception printing
             log.fatal('FATAL: %s', exception)

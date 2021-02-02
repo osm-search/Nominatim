@@ -27,11 +27,16 @@ The Nominatim tool assumes per default that the current working directory is
 the project directory but you may explicitly state a different directory using
 the `--project-dir` parameter. The following instructions assume that you have
 added the Nominatim build directory to your PATH and run all directories from
-the project directory. So change into now:
+the project directory. If you haven't done yet, add the build directory to your
+path and change to the new project directory:
 
 ```
+export PATH=~/Nominatim/build:$PATH
 cd $PROJECT_DIR
 ```
+
+Of course, you have to replace the path above with the location of your build
+directory.
 
 !!! tip "Migration Tip"
 

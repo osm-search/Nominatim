@@ -92,11 +92,6 @@ jobs:
                   postgis-version: 3
             - uses: ./.github/actions/build-nominatim
 
-            - name: Create configuration
-              run: |
-                   echo "NOMINATIM_PYOSMIUM_BINARY=/usr/lib/python3-pyosmium/pyosmium-get-changes" >> .env
-              working-directory: build
-
             - name: Download import data
               run: |
                   if [ ! -f monaco-latest.osm.pbf ]; then

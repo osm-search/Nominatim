@@ -8,6 +8,16 @@ SQL statements should be executed from the PostgreSQL commandline. Execute
 
 ## 3.6.0 -> master
 
+### Status table contains now time zone information
+
+The `import_status` table has been changed to include timezone information
+with the time stamp. You need to alter an existing table before running
+any replication functions with:
+
+```sql
+ALTER TABLE import_status ALTER COLUMN lastimportdate TYPE timestamp with time zone;
+```
+
 ### New location for data files
 
 External data files for Wikipedia importance, postcodes etc. are no longer

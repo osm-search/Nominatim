@@ -236,7 +236,8 @@ MB. Make sure you leave enough RAM for PostgreSQL and osm2pgsql as mentioned
 above. If the system starts swapping or you are getting out-of-memory errors,
 reduce the cache size or even consider using a flatnode file.
 
-### Verify the import
+
+### Testing the installation
 
 Run this script to verify all required tables and indices got created successfully.
 
@@ -244,12 +245,10 @@ Run this script to verify all required tables and indices got created successful
 nominatim check-database
 ```
 
-### Testing the installation
-
 Now you can try out your installation by running:
 
 ```sh
-make serve
+nominatim serve
 ```
 
 This runs a small test server normally used for development. You can use it

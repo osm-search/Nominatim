@@ -89,6 +89,13 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     return 0
 
 
+def run_php_server(server_address, base_dir):
+    """ Run the built-in server from the given directory.
+    """
+    subprocess.run(['/usr/bin/env', 'php', '-S', server_address],
+                   cwd=str(base_dir), check=True)
+
+
 def run_osm2pgsql(options):
     """ Run osm2pgsql with the given options.
     """

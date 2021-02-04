@@ -101,7 +101,7 @@ def update(conn, options):
     repl = ReplicationServer(options['base_url'])
 
     outhandler = WriteHandler(str(options['import_file']))
-    endseq = repl.apply_diffs(outhandler, startseq,
+    endseq = repl.apply_diffs(outhandler, startseq + 1,
                               max_size=options['max_diff_size'] * 1024)
     outhandler.close()
 

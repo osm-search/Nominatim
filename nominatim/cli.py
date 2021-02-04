@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 
 from .config import Configuration
-from .tools.exec_utils import run_legacy_script, run_api_script
+from .tools.exec_utils import run_legacy_script, run_api_script, run_php_server
 from .db.connection import connect
 from .db import status
 from .errors import UsageError
@@ -81,7 +81,7 @@ class CommandlineParser:
 
         for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
-        args.project_dir = Path(args.project_dir)
+        args.project_dir = Path(args.project_dir).resolve()
 
         logging.basicConfig(stream=sys.stderr,
                             format='%(asctime)s: %(message)s',
@@ -90,10 +90,12 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.data_dir / 'settings')
 
+        log = logging.getLogger()
+        log.warning('Using project directory: %s', str(args.project_dir))
+
         try:
             return args.command.run(args)
         except UsageError as exception:
-            log = logging.getLogger()
             if log.isEnabledFor(logging.DEBUG):
                 raise # use Python's exception printing
             log.fatal('FATAL: %s', exception)
@@ -631,6 +633,28 @@ class QueryExport:
 
         return run_legacy_script(*params, nominatim_env=args)
 
+
+class AdminServe:
+    """\
+    Start a simple web server for serving the API.
+
+    This command starts the built-in PHP webserver to serve the website
+    from the current project directory. This webserver is only suitable
+    for testing and develop. Do not use it in production setups!
+
+    By the default, the webserver can be accessed at: http://127.0.0.1:8088
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('Server arguments')
+        group.add_argument('--server', default='127.0.0.1:8088',
+                           help='The address the server will listen to.')
+
+    @staticmethod
+    def run(args):
+        run_php_server(args.server, args.project_dir / 'website')
+
 STRUCTURED_QUERY = (
     ('street', 'housenumber and street'),
     ('city', 'city, town or village'),
@@ -893,6 +917,7 @@ def nominatim(**kwargs):
     parser.add_subcommand('refresh', UpdateRefresh)
 
     parser.add_subcommand('export', QueryExport)
+    parser.add_subcommand('serve', AdminServe)
 
     if kwargs.get('phpcgi_path'):
         parser.add_subcommand('search', APISearch)

@@ -100,25 +100,28 @@ jobs:
               shell: bash
 
             - name: Import
-              run: ./nominatim import --osm-file ../monaco-latest.osm.pbf
-              working-directory: build
+              run: |
+                  mkdir data-env
+                  cd data-env
+                  ../build/nominatim import --osm-file ../monaco-latest.osm.pbf
+              shell: bash
 
             - name: Import special phrases
-              run: ./nominatim special-phrases --from-wiki | psql -d nominatim
-              working-directory: build
+              run: ../build/nominatim special-phrases --from-wiki | psql -d nominatim
+              working-directory: data-env
 
             - name: Check import
-              run: ./nominatim check-database
-              working-directory: build
+              run: ../build/nominatim check-database
+              working-directory: data-env
 
             - name: Run update
               run: |
-                   ./nominatim replication --init
-                   ./nominatim replication --once
-              working-directory: build
+                   ../build/nominatim replication --init
+                   ../build/nominatim replication --once
+              working-directory: data-env
 
             - name: Run reverse-only import
               run : |
-                  dropdb nominatim
-                  php ./nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only
-              working-directory: build
+                  echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' > .env
+                  ../build/nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only
+              working-directory: data-env

@@ -215,6 +215,14 @@ def test_replication_update_continuous_no_change(monkeypatch, temp_db_conn, stat
     assert sleep_mock.last_args[0] == 60
 
 
+def test_serve_command(monkeypatch):
+    func = MockParamCapture()
+    monkeypatch.setattr(nominatim.cli, 'run_php_server', func)
+
+    call_nominatim('serve')
+
+    assert func.called == 1
+
 @pytest.mark.parametrize("params", [
                          ('search', '--query', 'new'),
                          ('reverse', '--lat', '0', '--lon', '0'),

@@ -37,7 +37,7 @@ diffs for Ireland from Geofabrik add the following:
 
 To set up the update process now run the following command:
 
-    ./nominatim replication --init
+    nominatim replication --init
 
 It outputs the date where updates will start. Recheck that this date is
 what you expect.
@@ -49,7 +49,7 @@ service is changed.
 
 The following command will keep your database constantly up to date:
 
-    ./nominatim replication
+    nominatim replication
 
 If you have imported multiple country extracts and want to keep them
 up-to-date, [Advanced installations section](Advanced-Installations.md) contains instructions 

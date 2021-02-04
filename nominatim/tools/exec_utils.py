@@ -26,8 +26,7 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
     env = nominatim_env.config.get_os_env()
     env['NOMINATIM_DATADIR'] = str(nominatim_env.data_dir)
     env['NOMINATIM_BINDIR'] = str(nominatim_env.data_dir / 'utils')
-    if not env['NOMINATIM_DATABASE_MODULE_PATH']:
-        env['NOMINATIM_DATABASE_MODULE_PATH'] = nominatim_env.module_dir
+    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = nominatim_env.module_dir
     if not env['NOMINATIM_OSM2PGSQL_BINARY']:
         env['NOMINATIM_OSM2PGSQL_BINARY'] = nominatim_env.osm2pgsql_path
 
@@ -88,6 +87,13 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     print(result[content_start + 4:].replace('\\n', '\n'))
 
     return 0
+
+
+def run_php_server(server_address, base_dir):
+    """ Run the built-in server from the given directory.
+    """
+    subprocess.run(['/usr/bin/env', 'php', '-S', server_address],
+                   cwd=str(base_dir), check=True)
 
 
 def run_osm2pgsql(options):

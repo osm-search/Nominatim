@@ -1,13 +1,54 @@
 # Importing the Database
 
 The following instructions explain how to create a Nominatim database
-from an OSM planet file and how to keep the database up to date. It
-is assumed that you have already successfully installed the Nominatim
-software itself, if not return to the [installation page](Installation.md).
+from an OSM planet file. It is assumed that you have already successfully
+installed the Nominatim software itself. If this is not the case, return to the
+[installation page](Installation.md).
 
-## Configuration setup in `.env`
+## Creating the project directory
 
-The Nominatim server can be customized via a `.env` in the build directory.
+Before you start the import, you should create a project directory for your
+new database installation. This directory receives all data that is related
+to a single Nominatim setup: configuration, extra data, etc. Create a project
+directory apart from the Nominatim software:
+
+```
+mkdir ~/nominatim-planet
+```
+
+In the following, we refer to the project directory as `$PROJECT_DIR`. To be
+able to copy&paste instructions, you can export the appropriate variable:
+
+```
+export PROJECT_DIR=~/nominatim-planet
+```
+
+The Nominatim tool assumes per default that the current working directory is
+the project directory but you may explicitly state a different directory using
+the `--project-dir` parameter. The following instructions assume that you have
+added the Nominatim build directory to your PATH and run all directories from
+the project directory. If you haven't done yet, add the build directory to your
+path and change to the new project directory:
+
+```
+export PATH=~/Nominatim/build:$PATH
+cd $PROJECT_DIR
+```
+
+Of course, you have to replace the path above with the location of your build
+directory.
+
+!!! tip "Migration Tip"
+
+    Nominatim used to be run directly from the build directory until version 3.6.
+    Essentially, the build directory functioned as the project directory
+    for the database installation. This setup still works and can be useful for
+    development purposes. It is not recommended anymore for production setups.
+    Create a project directory that is separate from the Nominatim software.
+
+### Configuration setup in `.env`
+
+The Nominatim server can be customized via a `.env` in the project directory.
 This is a file in [dotenv](https://github.com/theskumar/python-dotenv) format
 which looks the same as variable settings in a standard shell environment.
 You can also set the same configuration via environment variables. All
@@ -37,9 +78,9 @@ the directory exists. There should be at least 75GB of free space.
 Wikipedia can be used as an optional auxiliary data source to help indicate
 the importance of OSM features. Nominatim will work without this information
 but it will improve the quality of the results if this is installed.
-This data is available as a binary download:
+This data is available as a binary download. Put it into your project directory:
 
-    cd $NOMINATIM_SOURCE_DIR/data
+    cd $PROJECT_DIR
     wget https://www.nominatim.org/data/wikimedia-importance.sql.gz
 
 The file is about 400MB and adds around 4GB to the Nominatim database.
@@ -47,14 +88,16 @@ The file is about 400MB and adds around 4GB to the Nominatim database.
 !!! tip
     If you forgot to download the wikipedia rankings, you can also add
     importances after the import. Download the files, then run
-    `./nominatim refresh --wiki-data --importance`.
+    `nominatim refresh --wiki-data --importance`. Updating importances for
+    a planet can take a couple of hours.
 
 ### Great Britain, USA postcodes
 
 Nominatim can use postcodes from an external source to improve searches that
-involve a GB or US postcode. This data can be optionally downloaded:
+involve a GB or US postcode. This data can be optionally downloaded into the
+project directory:
 
-    cd $NOMINATIM_SOURCE_DIR/data
+    cd $PROJECT_DIR
     wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
     wget https://www.nominatim.org/data/us_postcode_data.sql.gz
 
@@ -91,7 +134,7 @@ soon as it is not required anymore.
 You can also drop the dynamic part later using the following command:
 
 ```
-./nominatim freeze
+nominatim freeze
 ```
 
 Note that you still need to provide for sufficient disk space for the initial
@@ -157,7 +200,7 @@ Download the data to import. Then issue the following command
 from the **build directory** to start the import:
 
 ```sh
-./nominatim import --osm-file <data file> 2>&1 | tee setup.log
+nominatim import --osm-file <data file> 2>&1 | tee setup.log
 ```
 
 ### Notes on full planet imports
@@ -193,20 +236,19 @@ MB. Make sure you leave enough RAM for PostgreSQL and osm2pgsql as mentioned
 above. If the system starts swapping or you are getting out-of-memory errors,
 reduce the cache size or even consider using a flatnode file.
 
-### Verify the import
+
+### Testing the installation
 
 Run this script to verify all required tables and indices got created successfully.
 
 ```sh
-./nominatim check-database
+nominatim check-database
 ```
-
-### Testing the installation
 
 Now you can try out your installation by running:
 
 ```sh
-make serve
+nominatim serve
 ```
 
 This runs a small test server normally used for development. You can use it
@@ -224,7 +266,7 @@ planner to make the right decisions. Recomputing them can improve the performanc
 of forward geocoding in particular under high load. To recompute word counts run:
 
 ```sh
-./nominatim refresh --word-counts
+nominatim refresh --word-counts
 ```
 
 This will take a couple of hours for a full planet installation. You can
@@ -236,7 +278,7 @@ If you want to be able to search for places by their type through
 [special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to enable these key phrases like this:
 
-    ./nominatim special-phrases --from-wiki > specialphrases.sql
+    nominatim special-phrases --from-wiki > specialphrases.sql
     psql -d nominatim -f specialphrases.sql
 
 Note that this command downloads the phrases from the wiki link above. You
@@ -250,25 +292,24 @@ address set to complement the OSM house number data in the US. You can add
 TIGER data to your own Nominatim instance by following these steps. The
 entire US adds about 10GB to your database.
 
-  1. Get preprocessed TIGER 2019 data and unpack it into the
-     data directory in your Nominatim sources:
+  1. Get preprocessed TIGER 2019 data and unpack it into your project
+     directory:
 
+        cd $PROJECT_DIR
         wget https://nominatim.org/data/tiger2019-nominatim-preprocessed.tar.gz
         tar xf tiger2019-nominatim-preprocessed.tar.gz
 
   2. Import the data into your Nominatim database:
 
-        ./nominatim add-data --tiger-data tiger
+        nominatim add-data --tiger-data tiger
 
   3. Enable use of the Tiger data in your `.env` by adding:
 
-         NOMINATIM_USE_US_TIGER_DATA=yes
+        echo NOMINATIM_USE_US_TIGER_DATA=yes >> .env
 
   4. Apply the new settings:
 
-```sh
-    ./nominatim refresh --functions
-```
+        nominatim refresh --functions
 
 
 See the [developer's guide](../develop/data-sources.md#us-census-tiger) for more

@@ -4,6 +4,7 @@ database administration and querying.
 """
 import datetime as dt
 import os
+import socket
 import sys
 import time
 import argparse
@@ -261,10 +262,15 @@ class UpdateReplication:
                                    together with --once""")
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
+        group = parser.add_argument_group('Download parameters')
+        group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
+                           help='Set timeout for file downloads.')
 
     @staticmethod
     def _init_replication(args):
         from .tools import replication, refresh
+
+        socket.setdefaulttimeout(args.socket_timeout)
 
         LOG.warning("Initialising replication updates")
         conn = connect(args.config.get_libpq_dsn())

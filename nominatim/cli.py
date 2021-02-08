@@ -2,30 +2,18 @@
 Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
-import datetime as dt
-import os
-import socket
-import sys
-import time
-import argparse
 import logging
+import os
+import sys
+import argparse
 from pathlib import Path
 
 from .config import Configuration
-from .tools.exec_utils import run_legacy_script, run_api_script, run_php_server
-from .db.connection import connect
-from .db import status
+from .tools.exec_utils import run_legacy_script, run_php_server
 from .errors import UsageError
+from . import clicmd
 
 LOG = logging.getLogger()
-
-def _num_system_cpus():
-    try:
-        cpus = len(os.sched_getaffinity(0))
-    except NotImplementedError:
-        cpus = None
-
-    return cpus or os.cpu_count()
 
 
 class CommandlineParser:
@@ -104,16 +92,6 @@ class CommandlineParser:
         # If we get here, then execution has failed in some way.
         return 1
 
-
-def _osm2pgsql_options_from_args(args, default_cache, default_threads):
-    """ Set up the stanadrd osm2pgsql from the command line arguments.
-    """
-    return dict(osm2pgsql=args.osm2pgsql_path,
-                osm2pgsql_cache=args.osm2pgsql_cache or default_cache,
-                osm2pgsql_style=args.config.get_import_style_file(),
-                threads=args.threads or default_threads,
-                dsn=args.config.get_libpq_dsn(),
-                flatnode_file=args.config.FLATNODE_FILE)
 
 ##### Subcommand classes
 #
@@ -237,153 +215,6 @@ class SetupSpecialPhrases:
         return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
 
 
-class UpdateReplication:
-    """\
-    Update the database using an online replication service.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Arguments for initialisation')
-        group.add_argument('--init', action='store_true',
-                           help='Initialise the update process')
-        group.add_argument('--no-update-functions', dest='update_functions',
-                           action='store_false',
-                           help="""Do not update the trigger function to
-                                   support differential updates.""")
-        group = parser.add_argument_group('Arguments for updates')
-        group.add_argument('--check-for-updates', action='store_true',
-                           help='Check if new updates are available and exit')
-        group.add_argument('--once', action='store_true',
-                           help="""Download and apply updates only once. When
-                                   not set, updates are continuously applied""")
-        group.add_argument('--no-index', action='store_false', dest='do_index',
-                           help="""Do not index the new data. Only applicable
-                                   together with --once""")
-        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
-                           help='Size of cache to be used by osm2pgsql (in MB)')
-        group = parser.add_argument_group('Download parameters')
-        group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
-                           help='Set timeout for file downloads.')
-
-    @staticmethod
-    def _init_replication(args):
-        from .tools import replication, refresh
-
-        socket.setdefaulttimeout(args.socket_timeout)
-
-        LOG.warning("Initialising replication updates")
-        conn = connect(args.config.get_libpq_dsn())
-        replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
-        if args.update_functions:
-            LOG.warning("Create functions")
-            refresh.create_functions(conn, args.config, args.data_dir,
-                                     True, False)
-        conn.close()
-        return 0
-
-
-    @staticmethod
-    def _check_for_updates(args):
-        from .tools import replication
-
-        conn = connect(args.config.get_libpq_dsn())
-        ret = replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
-        conn.close()
-        return ret
-
-    @staticmethod
-    def _report_update(batchdate, start_import, start_index):
-        def round_time(delta):
-            return dt.timedelta(seconds=int(delta.total_seconds()))
-
-        end = dt.datetime.now(dt.timezone.utc)
-        LOG.warning("Update completed. Import: %s. %sTotal: %s. Remaining backlog: %s.",
-                    round_time((start_index or end) - start_import),
-                    "Indexing: {} ".format(round_time(end - start_index))
-                    if start_index else '',
-                    round_time(end - start_import),
-                    round_time(end - batchdate))
-
-    @staticmethod
-    def _update(args):
-        from .tools import replication
-        from .indexer.indexer import Indexer
-
-        params = _osm2pgsql_options_from_args(args, 2000, 1)
-        params.update(base_url=args.config.REPLICATION_URL,
-                      update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
-                      import_file=args.project_dir / 'osmosischange.osc',
-                      max_diff_size=args.config.get_int('REPLICATION_MAX_DIFF'),
-                      indexed_only=not args.once)
-
-        # Sanity check to not overwhelm the Geofabrik servers.
-        if 'download.geofabrik.de'in params['base_url']\
-           and params['update_interval'] < 86400:
-            LOG.fatal("Update interval too low for download.geofabrik.de.\n"
-                      "Please check install documentation "
-                      "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
-                      "setting-up-the-update-process).")
-            raise UsageError("Invalid replication update interval setting.")
-
-        if not args.once:
-            if not args.do_index:
-                LOG.fatal("Indexing cannot be disabled when running updates continuously.")
-                raise UsageError("Bad argument '--no-index'.")
-            recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
-
-        while True:
-            conn = connect(args.config.get_libpq_dsn())
-            start = dt.datetime.now(dt.timezone.utc)
-            state = replication.update(conn, params)
-            if state is not replication.UpdateState.NO_CHANGES:
-                status.log_status(conn, start, 'import')
-            batchdate, _, _ = status.get_status(conn)
-            conn.close()
-
-            if state is not replication.UpdateState.NO_CHANGES and args.do_index:
-                index_start = dt.datetime.now(dt.timezone.utc)
-                indexer = Indexer(args.config.get_libpq_dsn(),
-                                  args.threads or 1)
-                indexer.index_boundaries(0, 30)
-                indexer.index_by_rank(0, 30)
-
-                conn = connect(args.config.get_libpq_dsn())
-                status.set_indexed(conn, True)
-                status.log_status(conn, index_start, 'index')
-                conn.close()
-            else:
-                index_start = None
-
-            if LOG.isEnabledFor(logging.WARNING):
-                UpdateReplication._report_update(batchdate, start, index_start)
-
-            if args.once:
-                break
-
-            if state is replication.UpdateState.NO_CHANGES:
-                LOG.warning("No new changes. Sleeping for %d sec.", recheck_interval)
-                time.sleep(recheck_interval)
-
-        return state.value
-
-    @staticmethod
-    def run(args):
-        try:
-            import osmium # pylint: disable=W0611
-        except ModuleNotFoundError:
-            LOG.fatal("pyosmium not installed. Replication functions not available.\n"
-                      "To install pyosmium via pip: pip3 install osmium")
-            return 1
-
-        if args.init:
-            return UpdateReplication._init_replication(args)
-
-        if args.check_for_updates:
-            return UpdateReplication._check_for_updates(args)
-
-        return UpdateReplication._update(args)
-
 class UpdateAddData:
     """\
     Add additional data from a file or an online source.
@@ -432,118 +263,6 @@ class UpdateAddData:
         if args.use_main_api:
             params.append('--use-main-api')
         return run_legacy_script(*params, nominatim_env=args)
-
-
-class UpdateIndex:
-    """\
-    Reindex all new and modified data.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Filter arguments')
-        group.add_argument('--boundaries-only', action='store_true',
-                           help="""Index only administrative boundaries.""")
-        group.add_argument('--no-boundaries', action='store_true',
-                           help="""Index everything except administrative boundaries.""")
-        group.add_argument('--minrank', '-r', type=int, metavar='RANK', default=0,
-                           help='Minimum/starting rank')
-        group.add_argument('--maxrank', '-R', type=int, metavar='RANK', default=30,
-                           help='Maximum/finishing rank')
-
-    @staticmethod
-    def run(args):
-        from .indexer.indexer import Indexer
-
-        indexer = Indexer(args.config.get_libpq_dsn(),
-                          args.threads or _num_system_cpus() or 1)
-
-        if not args.no_boundaries:
-            indexer.index_boundaries(args.minrank, args.maxrank)
-        if not args.boundaries_only:
-            indexer.index_by_rank(args.minrank, args.maxrank)
-
-        if not args.no_boundaries and not args.boundaries_only \
-           and args.minrank == 0 and args.maxrank == 30:
-            conn = connect(args.config.get_libpq_dsn())
-            status.set_indexed(conn, True)
-            conn.close()
-
-        return 0
-
-
-class UpdateRefresh:
-    """\
-    Recompute auxiliary data used by the indexing process.
-
-    These functions must not be run in parallel with other update commands.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Data arguments')
-        group.add_argument('--postcodes', action='store_true',
-                           help='Update postcode centroid table')
-        group.add_argument('--word-counts', action='store_true',
-                           help='Compute frequency of full-word search terms')
-        group.add_argument('--address-levels', action='store_true',
-                           help='Reimport address level configuration')
-        group.add_argument('--functions', action='store_true',
-                           help='Update the PL/pgSQL functions in the database')
-        group.add_argument('--wiki-data', action='store_true',
-                           help='Update Wikipedia/data importance numbers.')
-        group.add_argument('--importance', action='store_true',
-                           help='Recompute place importances (expensive!)')
-        group.add_argument('--website', action='store_true',
-                           help='Refresh the directory that serves the scripts for the web API')
-        group = parser.add_argument_group('Arguments for function refresh')
-        group.add_argument('--no-diff-updates', action='store_false', dest='diffs',
-                           help='Do not enable code for propagating updates')
-        group.add_argument('--enable-debug-statements', action='store_true',
-                           help='Enable debug warning statements in functions')
-
-    @staticmethod
-    def run(args):
-        from .tools import refresh
-
-        if args.postcodes:
-            LOG.warning("Update postcodes centroid")
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.update_postcodes(conn, args.data_dir)
-            conn.close()
-
-        if args.word_counts:
-            LOG.warning('Recompute frequency of full-word search terms')
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.recompute_word_counts(conn, args.data_dir)
-            conn.close()
-
-        if args.address_levels:
-            cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
-            LOG.warning('Updating address levels from %s', cfg)
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.load_address_levels_from_file(conn, cfg)
-            conn.close()
-
-        if args.functions:
-            LOG.warning('Create functions')
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.create_functions(conn, args.config, args.data_dir,
-                                     args.diffs, args.enable_debug_statements)
-            conn.close()
-
-        if args.wiki_data:
-            run_legacy_script('setup.php', '--import-wikipedia-articles',
-                              nominatim_env=args, throw_on_fail=True)
-        # Attention: importance MUST come after wiki data import.
-        if args.importance:
-            run_legacy_script('update.php', '--recompute-importance',
-                              nominatim_env=args, throw_on_fail=True)
-        if args.website:
-            run_legacy_script('setup.php', '--setup-website',
-                              nominatim_env=args, throw_on_fail=True)
-
-        return 0
 
 
 class AdminCheckDatabase:
@@ -662,246 +381,6 @@ class AdminServe:
     def run(args):
         run_php_server(args.server, args.project_dir / 'website')
 
-STRUCTURED_QUERY = (
-    ('street', 'housenumber and street'),
-    ('city', 'city, town or village'),
-    ('county', 'county'),
-    ('state', 'state'),
-    ('country', 'country'),
-    ('postalcode', 'postcode')
-)
-
-EXTRADATA_PARAMS = (
-    ('addressdetails', 'Include a breakdown of the address into elements.'),
-    ('extratags', """Include additional information if available
-                     (e.g. wikipedia link, opening hours)."""),
-    ('namedetails', 'Include a list of alternative names.')
-)
-
-DETAILS_SWITCHES = (
-    ('addressdetails', 'Include a breakdown of the address into elements.'),
-    ('keywords', 'Include a list of name keywords and address keywords.'),
-    ('linkedplaces', 'Include a details of places that are linked with this one.'),
-    ('hierarchy', 'Include details of places lower in the address hierarchy.'),
-    ('group_hierarchy', 'Group the places by type.'),
-    ('polygon_geojson', 'Include geometry of result.')
-)
-
-def _add_api_output_arguments(parser):
-    group = parser.add_argument_group('Output arguments')
-    group.add_argument('--format', default='jsonv2',
-                       choices=['xml', 'json', 'jsonv2', 'geojson', 'geocodejson'],
-                       help='Format of result')
-    for name, desc in EXTRADATA_PARAMS:
-        group.add_argument('--' + name, action='store_true', help=desc)
-
-    group.add_argument('--lang', '--accept-language', metavar='LANGS',
-                       help='Preferred language order for presenting search results')
-    group.add_argument('--polygon-output',
-                       choices=['geojson', 'kml', 'svg', 'text'],
-                       help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
-    group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
-                       help="""Simplify output geometry.
-                               Parameter is difference tolerance in degrees.""")
-
-
-class APISearch:
-    """\
-    Execute API search query.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Query arguments')
-        group.add_argument('--query',
-                           help='Free-form query string')
-        for name, desc in STRUCTURED_QUERY:
-            group.add_argument('--' + name, help='Structured query: ' + desc)
-
-        _add_api_output_arguments(parser)
-
-        group = parser.add_argument_group('Result limitation')
-        group.add_argument('--countrycodes', metavar='CC,..',
-                           help='Limit search results to one or more countries.')
-        group.add_argument('--exclude_place_ids', metavar='ID,..',
-                           help='List of search object to be excluded')
-        group.add_argument('--limit', type=int,
-                           help='Limit the number of returned results')
-        group.add_argument('--viewbox', metavar='X1,Y1,X2,Y2',
-                           help='Preferred area to find search results')
-        group.add_argument('--bounded', action='store_true',
-                           help='Strictly restrict results to viewbox area')
-
-        group = parser.add_argument_group('Other arguments')
-        group.add_argument('--no-dedupe', action='store_false', dest='dedupe',
-                           help='Do not remove duplicates from the result list')
-
-
-    @staticmethod
-    def run(args):
-        if args.query:
-            params = dict(q=args.query)
-        else:
-            params = {k : getattr(args, k) for k, _ in STRUCTURED_QUERY if getattr(args, k)}
-
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        for param in ('format', 'countrycodes', 'exclude_place_ids', 'limit', 'viewbox'):
-            if getattr(args, param):
-                params[param] = getattr(args, param)
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
-        if args.bounded:
-            params['bounded'] = '1'
-        if not args.dedupe:
-            params['dedupe'] = '0'
-
-        return run_api_script('search', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
-
-class APIReverse:
-    """\
-    Execute API reverse query.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Query arguments')
-        group.add_argument('--lat', type=float, required=True,
-                           help='Latitude of coordinate to look up (in WGS84)')
-        group.add_argument('--lon', type=float, required=True,
-                           help='Longitude of coordinate to look up (in WGS84)')
-        group.add_argument('--zoom', type=int,
-                           help='Level of detail required for the address')
-
-        _add_api_output_arguments(parser)
-
-
-    @staticmethod
-    def run(args):
-        params = dict(lat=args.lat, lon=args.lon)
-        if args.zoom is not None:
-            params['zoom'] = args.zoom
-
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        if args.format:
-            params['format'] = args.format
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
-
-        return run_api_script('reverse', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
-
-
-class APILookup:
-    """\
-    Execute API reverse query.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Query arguments')
-        group.add_argument('--id', metavar='OSMID',
-                           action='append', required=True, dest='ids',
-                           help='OSM id to lookup in format <NRW><id> (may be repeated)')
-
-        _add_api_output_arguments(parser)
-
-
-    @staticmethod
-    def run(args):
-        params = dict(osm_ids=','.join(args.ids))
-
-        for param, _ in EXTRADATA_PARAMS:
-            if getattr(args, param):
-                params[param] = '1'
-        if args.format:
-            params['format'] = args.format
-        if args.lang:
-            params['accept-language'] = args.lang
-        if args.polygon_output:
-            params['polygon_' + args.polygon_output] = '1'
-        if args.polygon_threshold:
-            params['polygon_threshold'] = args.polygon_threshold
-
-        return run_api_script('lookup', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
-
-
-class APIDetails:
-    """\
-    Execute API lookup query.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Query arguments')
-        objs = group.add_mutually_exclusive_group(required=True)
-        objs.add_argument('--node', '-n', type=int,
-                          help="Look up the OSM node with the given ID.")
-        objs.add_argument('--way', '-w', type=int,
-                          help="Look up the OSM way with the given ID.")
-        objs.add_argument('--relation', '-r', type=int,
-                          help="Look up the OSM relation with the given ID.")
-        objs.add_argument('--place_id', '-p', type=int,
-                          help='Database internal identifier of the OSM object to look up.')
-        group.add_argument('--class', dest='object_class',
-                           help="""Class type to disambiguated multiple entries
-                                   of the same object.""")
-
-        group = parser.add_argument_group('Output arguments')
-        for name, desc in DETAILS_SWITCHES:
-            group.add_argument('--' + name, action='store_true', help=desc)
-        group.add_argument('--lang', '--accept-language', metavar='LANGS',
-                           help='Preferred language order for presenting search results')
-
-    @staticmethod
-    def run(args):
-        if args.node:
-            params = dict(osmtype='N', osmid=args.node)
-        elif args.way:
-            params = dict(osmtype='W', osmid=args.node)
-        elif args.relation:
-            params = dict(osmtype='R', osmid=args.node)
-        else:
-            params = dict(place_id=args.place_id)
-        if args.object_class:
-            params['class'] = args.object_class
-        for name, _ in DETAILS_SWITCHES:
-            params[name] = '1' if getattr(args, name) else '0'
-
-        return run_api_script('details', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
-
-
-class APIStatus:
-    """\
-    Execute API status query.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('API parameters')
-        group.add_argument('--format', default='text', choices=['text', 'json'],
-                           help='Format of result')
-
-    @staticmethod
-    def run(args):
-        return run_api_script('status', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path,
-                              params=dict(format=args.format))
-
 
 def nominatim(**kwargs):
     """\
@@ -912,7 +391,7 @@ def nominatim(**kwargs):
 
     parser.add_subcommand('import', SetupAll)
     parser.add_subcommand('freeze', SetupFreeze)
-    parser.add_subcommand('replication', UpdateReplication)
+    parser.add_subcommand('replication', clicmd.UpdateReplication)
 
     parser.add_subcommand('check-database', AdminCheckDatabase)
     parser.add_subcommand('warm', AdminWarm)
@@ -920,18 +399,18 @@ def nominatim(**kwargs):
     parser.add_subcommand('special-phrases', SetupSpecialPhrases)
 
     parser.add_subcommand('add-data', UpdateAddData)
-    parser.add_subcommand('index', UpdateIndex)
-    parser.add_subcommand('refresh', UpdateRefresh)
+    parser.add_subcommand('index', clicmd.UpdateIndex)
+    parser.add_subcommand('refresh', clicmd.UpdateRefresh)
 
     parser.add_subcommand('export', QueryExport)
     parser.add_subcommand('serve', AdminServe)
 
     if kwargs.get('phpcgi_path'):
-        parser.add_subcommand('search', APISearch)
-        parser.add_subcommand('reverse', APIReverse)
-        parser.add_subcommand('lookup', APILookup)
-        parser.add_subcommand('details', APIDetails)
-        parser.add_subcommand('status', APIStatus)
+        parser.add_subcommand('search', clicmd.APISearch)
+        parser.add_subcommand('reverse', clicmd.APIReverse)
+        parser.add_subcommand('lookup', clicmd.APILookup)
+        parser.add_subcommand('details', clicmd.APIDetails)
+        parser.add_subcommand('status', clicmd.APIStatus)
     else:
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 

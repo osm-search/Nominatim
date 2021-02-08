@@ -11,6 +11,8 @@ import pytest
 import time
 
 import nominatim.cli
+import nominatim.clicmd.api
+import nominatim.clicmd.refresh
 import nominatim.indexer.indexer
 import nominatim.tools.refresh
 import nominatim.tools.replication
@@ -43,12 +45,6 @@ class MockParamCapture:
 def mock_run_legacy(monkeypatch):
     mock = MockParamCapture()
     monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
-    return mock
-
-@pytest.fixture
-def mock_run_api(monkeypatch):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli, 'run_api_script', mock)
     return mock
 
 
@@ -110,7 +106,10 @@ def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
                          ('importance', ('update.php', '--recompute-importance')),
                          ('website', ('setup.php', '--setup-website')),
                          ])
-def test_refresh_legacy_command(mock_run_legacy, temp_db, command, params):
+def test_refresh_legacy_command(monkeypatch, temp_db, command, params):
+    mock_run_legacy = MockParamCapture()
+    monkeypatch.setattr(nominatim.clicmd.refresh, 'run_legacy_script', mock_run_legacy)
+
     assert 0 == call_nominatim('refresh', '--' + command)
 
     assert mock_run_legacy.called == 1
@@ -131,7 +130,10 @@ def test_refresh_command(monkeypatch, temp_db, command, func):
     assert func_mock.called == 1
 
 
-def test_refresh_importance_computed_after_wiki_import(mock_run_legacy, temp_db):
+def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):
+    mock_run_legacy = MockParamCapture()
+    monkeypatch.setattr(nominatim.clicmd.refresh, 'run_legacy_script', mock_run_legacy)
+
     assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')
 
     assert mock_run_legacy.called == 2
@@ -233,7 +235,10 @@ def test_serve_command(monkeypatch):
                          ('details', '--place_id', '10001'),
                          ('status',)
                          ])
-def test_api_commands_simple(mock_run_api, params):
+def test_api_commands_simple(monkeypatch, params):
+    mock_run_api = MockParamCapture()
+    monkeypatch.setattr(nominatim.clicmd.api, 'run_api_script', mock_run_api)
+
     assert 0 == call_nominatim(*params)
 
     assert mock_run_api.called == 1

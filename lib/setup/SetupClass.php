@@ -173,22 +173,6 @@ class SetupFunctions
         }
         $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_name.sql');
         $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_osm_grid.sql.gz');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/gb_postcode_table.sql');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/us_postcode_table.sql');
-
-        $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
-        if (file_exists($sPostcodeFilename)) {
-            $this->pgsqlRunScriptFile($sPostcodeFilename);
-        } else {
-            warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
-        }
-
-        $sPostcodeFilename = CONST_InstallDir.'/us_postcode_data.sql.gz';
-        if (file_exists($sPostcodeFilename)) {
-            $this->pgsqlRunScriptFile($sPostcodeFilename);
-        } else {
-            warn('optional external US postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
-        }
 
         if ($this->bNoPartitions) {
             $this->pgsqlRunScript('update country_name set partition = 0');
@@ -521,6 +505,23 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/sql/postcode_tables.sql');
+
+        $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
+        } else {
+            warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
+        }
+
+        $sPostcodeFilename = CONST_InstallDir.'/us_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
+        } else {
+            warn('optional external US postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
+        }
+
+
         $this->db()->exec('TRUNCATE location_postcode');
 
         $sSQL  = 'INSERT INTO location_postcode';

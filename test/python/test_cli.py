@@ -13,6 +13,7 @@ import time
 import nominatim.cli
 import nominatim.clicmd.api
 import nominatim.clicmd.refresh
+import nominatim.clicmd.admin
 import nominatim.indexer.indexer
 import nominatim.tools.refresh
 import nominatim.tools.replication
@@ -63,8 +64,6 @@ def test_cli_help(capsys):
                          (('special-phrases',), 'specialphrases'),
                          (('add-data', '--tiger-data', 'tiger'), 'setup'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
-                         (('check-database',), 'check_import_finished'),
-                         (('warm',), 'warm'),
                          (('export',), 'export')
                          ])
 def test_legacy_commands_simple(mock_run_legacy, command, script):
@@ -72,6 +71,19 @@ def test_legacy_commands_simple(mock_run_legacy, command, script):
 
     assert mock_run_legacy.called == 1
     assert mock_run_legacy.last_args[0] == script + '.php'
+
+
+@pytest.mark.parametrize("params", [('--warm', ),
+                                    ('--warm', '--reverse-only'),
+                                    ('--warm', '--search-only'),
+                                    ('--check-database', )])
+def test_admin_command_legacy(monkeypatch, params):
+    mock_run_legacy = MockParamCapture()
+    monkeypatch.setattr(nominatim.clicmd.admin, 'run_legacy_script', mock_run_legacy)
+
+    assert 0 == call_nominatim('admin', *params)
+
+    assert mock_run_legacy.called == 1
 
 
 @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),

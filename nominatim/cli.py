@@ -265,45 +265,6 @@ class UpdateAddData:
         return run_legacy_script(*params, nominatim_env=args)
 
 
-class AdminCheckDatabase:
-    """\
-    Check that the database is complete and operational.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        pass # No options
-
-    @staticmethod
-    def run(args):
-        return run_legacy_script('check_import_finished.php', nominatim_env=args)
-
-
-class AdminWarm:
-    """\
-    Warm database caches for search and reverse queries.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Target arguments')
-        group.add_argument('--search-only', action='store_const', dest='target',
-                           const='search',
-                           help="Only pre-warm tables for search queries")
-        group.add_argument('--reverse-only', action='store_const', dest='target',
-                           const='reverse',
-                           help="Only pre-warm tables for reverse queries")
-
-    @staticmethod
-    def run(args):
-        params = ['warm.php']
-        if args.target == 'reverse':
-            params.append('--reverse-only')
-        if args.target == 'search':
-            params.append('--search-only')
-        return run_legacy_script(*params, nominatim_env=args)
-
-
 class QueryExport:
     """\
     Export addresses as CSV file from the database.
@@ -393,14 +354,13 @@ def nominatim(**kwargs):
     parser.add_subcommand('freeze', SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)
 
-    parser.add_subcommand('check-database', AdminCheckDatabase)
-    parser.add_subcommand('warm', AdminWarm)
-
     parser.add_subcommand('special-phrases', SetupSpecialPhrases)
 
     parser.add_subcommand('add-data', UpdateAddData)
     parser.add_subcommand('index', clicmd.UpdateIndex)
     parser.add_subcommand('refresh', clicmd.UpdateRefresh)
+
+    parser.add_subcommand('admin', clicmd.AdminFuncs)
 
     parser.add_subcommand('export', QueryExport)
     parser.add_subcommand('serve', AdminServe)

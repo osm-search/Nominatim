@@ -754,8 +754,7 @@ class SetupFunctions
             fwriteConstDef($rFile, 'Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
             fwriteConstDef($rFile, 'MapIcon_URL', getSetting('MAPICON_URL'));
 
-            // XXX scripts should go into the library.
-            fwrite($rFile, 'require_once(\''.CONST_DataDir.'/website/'.$sScript."');\n");
+            fwrite($rFile, 'require_once(\''.CONST_LibDir.'/website/'.$sScript."');\n");
             fclose($rFile);
 
             chmod(CONST_InstallDir.'/website/'.$sScript, 0755);

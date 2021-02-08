@@ -1,8 +1,0 @@
-CREATE OR REPLACE FUNCTION hstore(k text, v text) RETURNS HSTORE
-  AS $$
-DECLARE
-BEGIN
-  RETURN k => v;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE;

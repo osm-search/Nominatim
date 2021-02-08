@@ -85,6 +85,13 @@ def test_admin_command_legacy(monkeypatch, params):
 
     assert mock_run_legacy.called == 1
 
+@pytest.mark.parametrize("func, params", [('analyse_indexing', ('--analyse-indexing', ))])
+def test_admin_command_tool(monkeypatch, func, params):
+    mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.tools.admin, func, mock)
+
+    assert 0 == call_nominatim('admin', *params)
+    assert mock.called == 1
 
 @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
                                       ('node', 12), ('way', 8), ('relation', 32)])

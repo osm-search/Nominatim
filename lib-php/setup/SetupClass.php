@@ -253,7 +253,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tables.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tables.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -269,7 +269,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/table-triggers.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/table-triggers.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -279,7 +279,7 @@ class SetupFunctions
     {
         info('Create Partition Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-tables.src.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/partition-tables.src.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunPartitionScript($sTemplate);
@@ -442,7 +442,7 @@ class SetupFunctions
             warn('Tiger data import selected but no files found in path '.$sTigerPath);
             return;
         }
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_start.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tiger_import_start.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -496,7 +496,7 @@ class SetupFunctions
         }
 
         info('Creating indexes on Tiger data');
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_finish.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tiger_import_finish.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -505,7 +505,7 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/sql/postcode_tables.sql');
+        $this->pgsqlRunScriptFile(CONST_SqlDir.'/postcode_tables.sql');
 
         $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
         if (file_exists($sPostcodeFilename)) {
@@ -621,12 +621,12 @@ class SetupFunctions
             $this->db()->exec("DROP INDEX $sIndexName;");
         }
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/indices.src.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/indices.src.sql');
         if (!$this->bDrop) {
-            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_updates.src.sql');
+            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_updates.src.sql');
         }
         if (!$this->dbReverseOnly()) {
-            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_search.src.sql');
+            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_search.src.sql');
         }
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 

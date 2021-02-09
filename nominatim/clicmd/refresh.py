@@ -51,7 +51,7 @@ class UpdateRefresh:
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
             conn = connect(args.config.get_libpq_dsn())
-            refresh.update_postcodes(conn, args.data_dir)
+            refresh.update_postcodes(conn, args.sqllib_dir)
             conn.close()
 
         if args.word_counts:
@@ -70,7 +70,7 @@ class UpdateRefresh:
         if args.functions:
             LOG.warning('Create functions')
             conn = connect(args.config.get_libpq_dsn())
-            refresh.create_functions(conn, args.config, args.data_dir,
+            refresh.create_functions(conn, args.config, args.sqllib_dir,
                                      args.diffs, args.enable_debug_statements)
             conn.close()
 

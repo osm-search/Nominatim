@@ -6,6 +6,7 @@ require('@CMAKE_SOURCE_DIR@/lib-php/dotenv_loader.php');
 @define('CONST_Default_Osm2pgsql', '@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql');
 @define('CONST_BinDir', '@CMAKE_SOURCE_DIR@/utils');
 @define('CONST_DataDir', '@CMAKE_SOURCE_DIR@');
+@define('CONST_SqlDir', '@CMAKE_SOURCE_DIR@/lib-sql');
 
 loadDotEnv();
 $_SERVER['NOMINATIM_NOMINATIM_TOOL'] = '@CMAKE_BINARY_DIR@/nominatim';

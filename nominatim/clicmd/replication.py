@@ -66,7 +66,7 @@ class UpdateReplication:
         replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
         if args.update_functions:
             LOG.warning("Create functions")
-            refresh.create_functions(conn, args.config, args.data_dir,
+            refresh.create_functions(conn, args.config, args.sqllib_dir,
                                      True, False)
         conn.close()
         return 0

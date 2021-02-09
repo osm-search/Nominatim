@@ -68,7 +68,8 @@ class CommandlineParser:
             self.parser.print_help()
             return 1
 
-        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'data_dir', 'phpcgi_path'):
+        for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'sqllib_dir',
+                    'data_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
         args.project_dir = Path(args.project_dir).resolve()
 

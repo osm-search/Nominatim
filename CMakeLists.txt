@@ -197,3 +197,45 @@ endif()
 if (BUILD_DOCS)
    add_subdirectory(docs)
 endif()
+
+#-----------------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------------
+
+
+include(GNUInstallDirs)
+set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
+set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
+set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
+
+configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
+install(PROGRAMS ${PROJECT_BINARY_DIR}/installed.bin
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        RENAME nominatim)
+
+install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
+install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
+        DESTINATION ${NOMINATIM_LIBDIR}/module)
+install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
+install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
+install(DIRECTORY nominatim
+        DESTINATION ${NOMINATIM_LIBDIR}/lib-python
+        FILES_MATCHING PATTERN "*.py"
+        PATTERN __pycache__ EXCLUDE)
+
+install(FILES data/country_name.sql
+              data/country_osm_grid.sql.gz
+              data/words.sql
+        DESTINATION ${NOMINATIM_DATADIR})
+
+install(FILES settings/env.defaults
+              settings/address-levels.json
+              settings/phrase_settings.php
+              settings/import-admin.style
+              settings/import-street.style
+              settings/import-address.style
+              settings/import-full.style
+              settings/import-extratags.style
+        DESTINATION ${NOMINATIM_CONFIGDIR})
+
+install(CODE "MESSAGE(\"Sample install ${NOMINATIM_DATADIR} message.\")")

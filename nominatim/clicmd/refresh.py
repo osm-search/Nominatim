@@ -57,7 +57,7 @@ class UpdateRefresh:
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
             conn = connect(args.config.get_libpq_dsn())
-            refresh.recompute_word_counts(conn, args.data_dir)
+            refresh.recompute_word_counts(conn, args.sqllib_dir)
             conn.close()
 
         if args.address_levels:

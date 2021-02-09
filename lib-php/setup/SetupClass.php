@@ -166,13 +166,13 @@ class SetupFunctions
         // Try accessing the C module, so we know early if something is wrong
         $this->checkModulePresence(); // raises exception on failure
 
-        if (!file_exists(CONST_DataDir.'/data/country_osm_grid.sql.gz')) {
+        if (!file_exists(CONST_DataDir.'/country_osm_grid.sql.gz')) {
             echo 'Error: you need to download the country_osm_grid first:';
-            echo "\n    wget -O ".CONST_DataDir."/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
+            echo "\n    wget -O ".CONST_DataDir."/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
             exit(1);
         }
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_name.sql');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_osm_grid.sql.gz');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_name.sql');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_osm_grid.sql.gz');
 
         if ($this->bNoPartitions) {
             $this->pgsqlRunScript('update country_name set partition = 0');
@@ -350,7 +350,7 @@ class SetupFunctions
         // pre-create the word list
         if (!$bDisableTokenPrecalc) {
             info('Loading word list');
-            $this->pgsqlRunScriptFile(CONST_DataDir.'/data/words.sql');
+            $this->pgsqlRunScriptFile(CONST_DataDir.'/words.sql');
         }
 
         info('Load Data');
@@ -737,8 +737,6 @@ class SetupFunctions
             fwrite($rFile, '@define(\'CONST_Debug\', $_GET[\'debug\'] ?? false);'."\n\n");
 
             fwriteConstDef($rFile, 'LibDir', CONST_LibDir);
-            fwriteConstDef($rFile, 'DataDir', CONST_DataDir);
-            fwriteConstDef($rFile, 'InstallDir', CONST_InstallDir);
             fwriteConstDef($rFile, 'Database_DSN', getSetting('DATABASE_DSN'));
             fwriteConstDef($rFile, 'Default_Language', getSetting('DEFAULT_LANGUAGE'));
             fwriteConstDef($rFile, 'Log_DB', getSettingBool('LOG_DB'));

@@ -26,6 +26,8 @@ def call_nominatim(*args):
                                    phplib_dir='lib-php',
                                    data_dir='.',
                                    phpcgi_path='/usr/bin/php-cgi',
+                                   sqllib_dir='lib-sql',
+                                   config_dir='settings',
                                    cli_args=args)
 
 class MockParamCapture:

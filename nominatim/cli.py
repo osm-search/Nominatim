@@ -69,7 +69,7 @@ class CommandlineParser:
             return 1
 
         for arg in ('module_dir', 'osm2pgsql_path', 'phplib_dir', 'sqllib_dir',
-                    'data_dir', 'phpcgi_path'):
+                    'data_dir', 'config_dir', 'phpcgi_path'):
             setattr(args, arg, Path(kwargs[arg]))
         args.project_dir = Path(args.project_dir).resolve()
 
@@ -78,7 +78,7 @@ class CommandlineParser:
                             datefmt='%Y-%m-%d %H:%M:%S',
                             level=max(4 - args.verbose, 1) * 10)
 
-        args.config = Configuration(args.project_dir, args.data_dir / 'settings')
+        args.config = Configuration(args.project_dir, args.config_dir)
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))

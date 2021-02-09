@@ -10,6 +10,6 @@ from nominatim import cli
 
 exit(cli.nominatim(module_dir='@CMAKE_BINARY_DIR@/module',
                    osm2pgsql_path='@CMAKE_BINARY_DIR@/osm2pgsql/osm2pgsql',
-                   phplib_dir='@CMAKE_SOURCE_DIR@/lib',
+                   phplib_dir='@CMAKE_SOURCE_DIR@/lib-php',
                    data_dir='@CMAKE_SOURCE_DIR@',
                    phpcgi_path='@PHPCGI_BIN@'))

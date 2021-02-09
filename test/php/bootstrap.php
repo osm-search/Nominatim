@@ -1,5 +1,5 @@
 <?php
-    @define('CONST_LibDir', '../../lib');
+    @define('CONST_LibDir', '../../lib-php');
     @define('CONST_DataDir', '../..');
 
     @define('CONST_Debug', true);

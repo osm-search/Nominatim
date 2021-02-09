@@ -60,7 +60,7 @@ def query_cmd(context, query, dups):
     """ Query directly via PHP script.
     """
     cmd = ['/usr/bin/env', 'php']
-    cmd.append(context.nominatim.src_dir  / 'lib' / 'admin' / 'query.php')
+    cmd.append(context.nominatim.src_dir  / 'lib-php' / 'admin' / 'query.php')
     if query:
         cmd.extend(['--search', query])
     # add more parameters in table form

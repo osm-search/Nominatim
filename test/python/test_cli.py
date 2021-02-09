@@ -23,7 +23,7 @@ from nominatim.db import status
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
                                    osm2pgsql_path='build/osm2pgsql/osm2pgsql',
-                                   phplib_dir='lib',
+                                   phplib_dir='lib-php',
                                    data_dir='.',
                                    phpcgi_path='/usr/bin/php-cgi',
                                    cli_args=args)

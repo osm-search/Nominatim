@@ -262,7 +262,7 @@ class NominatimEnvironment:
         """ Run one of the Nominatim utility scripts with the given arguments.
         """
         cmd = ['/usr/bin/env', 'php', '-Cq']
-        cmd.append((Path(self.src_dir) / 'lib' / 'admin' / '{}.php'.format(script)).resolve())
+        cmd.append((Path(self.src_dir) / 'lib-php' / 'admin' / '{}.php'.format(script)).resolve())
         cmd.extend(['--' + x for x in args])
         for k, v in kwargs.items():
             cmd.extend(('--' + k.replace('_', '-'), str(v)))

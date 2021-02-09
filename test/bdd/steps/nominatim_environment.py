@@ -90,7 +90,6 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_DATADIR'] = self.src_dir
         self.test_env['NOMINATIM_SQLDIR'] = self.src_dir / 'lib-sql'
         self.test_env['NOMINATIM_CONFIGDIR'] = self.src_dir / 'settings'
-        self.test_env['NOMINATIM_BINDIR'] = self.src_dir / 'utils'
         self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = self.build_dir / 'module'
         self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = self.build_dir / 'osm2pgsql' / 'osm2pgsql'
         self.test_env['NOMINATIM_NOMINATIM_TOOL'] = self.build_dir / 'nominatim'

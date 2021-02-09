@@ -7,7 +7,6 @@ function loadSettings($sProjectDir)
     // the installed scripts. Neither setting is part of the official
     // set of settings.
     defined('CONST_DataDir') or define('CONST_DataDir', $_SERVER['NOMINATIM_DATADIR']);
-    defined('CONST_BinDir') or define('CONST_BinDir', $_SERVER['NOMINATIM_BINDIR']);
     defined('CONST_SqlDir') or define('CONST_SqlDir', $_SERVER['NOMINATIM_SQLDIR']);
     defined('CONST_ConfigDir') or define('CONST_ConfigDir', $_SERVER['NOMINATIM_CONFIGDIR']);
     defined('CONST_Default_ModulePath') or define('CONST_Default_ModulePath', $_SERVER['NOMINATIM_DATABASE_MODULE_SRC_PATH']);

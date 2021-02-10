@@ -9,17 +9,6 @@ runs:
             sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium python3-dotenv
           shell: bash
 
-        - name: Configure
-          run: mkdir build && cd build && cmake ..
-          shell: bash
-
-        - name: Build
-          run: |
-              make -j2 all
-              ./nominatim refresh --website
-          shell: bash
-          working-directory: build
-
         - name: Download dependencies
           run: |
               if [ ! -f data/country_osm_grid.sql.gz ]; then
@@ -27,3 +16,13 @@ runs:
               fi
           shell: bash
 
+        - name: Configure
+          run: mkdir build && cd build && cmake ..
+          shell: bash
+
+        - name: Build
+          run: |
+              make -j2 all
+              sudo make install
+          shell: bash
+          working-directory: build

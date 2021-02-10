@@ -234,7 +234,7 @@ reduce the cache size or even consider using a flatnode file.
 Run this script to verify all required tables and indices got created successfully.
 
 ```sh
-nominatim check-database
+nominatim admin --check-database
 ```
 
 Now you can try out your installation by running:

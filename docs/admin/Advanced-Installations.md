@@ -155,7 +155,7 @@ Make sure that the PostgreSQL server package is installed on the machine
 the PostgreSQL server itself.
 
 Download and compile Nominatim as per standard instructions. Once done, you find
-the nomrmalization library in `build/module/nominatim.so`. Copy the file to
+the normalization library in `build/module/nominatim.so`. Copy the file to
 the database server at a location where it is readable and executable by the
 PostgreSQL server process.
 

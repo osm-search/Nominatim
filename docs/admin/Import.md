@@ -2,7 +2,8 @@
 
 The following instructions explain how to create a Nominatim database
 from an OSM planet file. It is assumed that you have already successfully
-installed the Nominatim software itself. If this is not the case, return to the
+installed the Nominatim software itself and the `nominatim` tool can be found
+in your `PATH`. If this is not the case, return to the
 [installation page](Installation.md).
 
 ## Creating the project directory
@@ -10,10 +11,11 @@ installed the Nominatim software itself. If this is not the case, return to the
 Before you start the import, you should create a project directory for your
 new database installation. This directory receives all data that is related
 to a single Nominatim setup: configuration, extra data, etc. Create a project
-directory apart from the Nominatim software:
+directory apart from the Nominatim software and change into the directory:
 
 ```
 mkdir ~/nominatim-planet
+cd ~/nominatim-planet
 ```
 
 In the following, we refer to the project directory as `$PROJECT_DIR`. To be
@@ -25,18 +27,8 @@ export PROJECT_DIR=~/nominatim-planet
 
 The Nominatim tool assumes per default that the current working directory is
 the project directory but you may explicitly state a different directory using
-the `--project-dir` parameter. The following instructions assume that you have
-added the Nominatim build directory to your PATH and run all directories from
-the project directory. If you haven't done yet, add the build directory to your
-path and change to the new project directory:
-
-```
-export PATH=~/Nominatim/build:$PATH
-cd $PROJECT_DIR
-```
-
-Of course, you have to replace the path above with the location of your build
-directory.
+the `--project-dir` parameter. The following instructions assume that you run
+all commands from the project directory.
 
 !!! tip "Migration Tip"
 

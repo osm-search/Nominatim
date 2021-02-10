@@ -40,14 +40,15 @@ For running Nominatim:
   * [PostGIS](https://postgis.net) (2.2+)
   * [Python 3](https://www.python.org/) (3.5+)
   * [Psycopg2](https://www.psycopg.org)
+  * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  * [Python Dotenv](https://github.com/theskumar/python-dotenv)
+  ( PHP-cgi (for running queries from the command line)
 
 For running continuous updates:
 
-  * [pyosmium](https://osmcode.org/pyosmium/) (with Python 3)
+  * [pyosmium](https://osmcode.org/pyosmium/)
 
 For dependencies for running tests and building documentation, see
 the [Development section](../develop/Development-Environment.md).
@@ -143,6 +144,16 @@ build at the same level as the Nominatim source directory run:
 ```
 cmake ../Nominatim
 make
+sudo make install
+```
+
+Nominatim installs itself into `/usr/local` per default. To choose a different
+installation directory add `-DCMAKE_INSTALL_PREFIX=<install root>` to the
+cmake command. Make sure that the `bin` directory is available in your path
+in that case, e.g.
+
+```
+export PATH=<install root>/bin:$PATH
 ```
 
 Now continue with [importing the database](Import.md).

@@ -208,25 +208,36 @@ set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
 set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
 set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
-install(PROGRAMS ${PROJECT_BINARY_DIR}/installed.bin
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-        RENAME nominatim)
+if (BUILD_IMPORTER)
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/installed.bin
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            RENAME nominatim)
 
-install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
-install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
-        DESTINATION ${NOMINATIM_LIBDIR}/module)
-install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
-install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
-install(DIRECTORY nominatim
-        DESTINATION ${NOMINATIM_LIBDIR}/lib-python
-        FILES_MATCHING PATTERN "*.py"
-        PATTERN __pycache__ EXCLUDE)
+    install(DIRECTORY nominatim
+            DESTINATION ${NOMINATIM_LIBDIR}/lib-python
+            FILES_MATCHING PATTERN "*.py"
+            PATTERN __pycache__ EXCLUDE)
+    install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
 
-install(FILES data/country_name.sql
-              data/country_osm_grid.sql.gz
-              data/words.sql
-        DESTINATION ${NOMINATIM_DATADIR})
+    install(FILES data/country_name.sql
+                  data/country_osm_grid.sql.gz
+                  data/words.sql
+            DESTINATION ${NOMINATIM_DATADIR})
+endif()
+
+if (BUILD_OSM2PGSQL)
+    install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
+endif()
+
+if (BUILD_MODULE)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
+            DESTINATION ${NOMINATIM_LIBDIR}/module)
+endif()
+
+if (BUILD_API)
+    install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
+endif()
 
 install(FILES settings/env.defaults
               settings/address-levels.json
@@ -237,5 +248,3 @@ install(FILES settings/env.defaults
               settings/import-full.style
               settings/import-extratags.style
         DESTINATION ${NOMINATIM_CONFIGDIR})
-
-install(CODE "MESSAGE(\"Sample install ${NOMINATIM_DATADIR} message.\")")

@@ -166,11 +166,6 @@ class SetupFunctions
         // Try accessing the C module, so we know early if something is wrong
         $this->checkModulePresence(); // raises exception on failure
 
-        if (!file_exists(CONST_DataDir.'/country_osm_grid.sql.gz')) {
-            echo 'Error: you need to download the country_osm_grid first:';
-            echo "\n    wget -O ".CONST_DataDir."/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
-            exit(1);
-        }
         $this->pgsqlRunScriptFile(CONST_DataDir.'/country_name.sql');
         $this->pgsqlRunScriptFile(CONST_DataDir.'/country_osm_grid.sql.gz');
 

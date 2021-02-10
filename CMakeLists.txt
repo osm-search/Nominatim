@@ -97,6 +97,17 @@ endif()
 #-----------------------------------------------------------------------------
 
 if (BUILD_IMPORTER)
+   find_file(COUNTRY_GRID_FILE country_osm_grid.sql.gz
+             PATHS ${PROJECT_SOURCE_DIR}/data
+             NO_DEFAULT_PATH
+             DOC "Location of the country grid file."
+            )
+
+   if (NOT COUNTRY_GRID_FILE)
+       message(FATAL_ERROR "\nYou need to download the country_osm_grid first:\n"
+                           "    wget -O ${PROJECT_SOURCE_DIR}/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz")
+   endif()
+
    set(CUSTOMSCRIPTS
        check_import_finished.php
        country_languages.php
@@ -221,7 +232,7 @@ if (BUILD_IMPORTER)
     install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
 
     install(FILES data/country_name.sql
-                  data/country_osm_grid.sql.gz
+                  ${COUNTRY_GRID_FILE}
                   data/words.sql
             DESTINATION ${NOMINATIM_DATADIR})
 endif()

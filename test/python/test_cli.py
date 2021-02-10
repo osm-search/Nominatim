@@ -88,7 +88,7 @@ def test_admin_command_legacy(monkeypatch, params):
     assert mock_run_legacy.called == 1
 
 @pytest.mark.parametrize("func, params", [('analyse_indexing', ('--analyse-indexing', ))])
-def test_admin_command_tool(monkeypatch, func, params):
+def test_admin_command_tool(temp_db, monkeypatch, func, params):
     mock = MockParamCapture()
     monkeypatch.setattr(nominatim.tools.admin, func, mock)
 

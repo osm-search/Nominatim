@@ -19,6 +19,7 @@ jobs:
             - uses: actions/checkout@v2
               with:
                   submodules: true
+                  path: Nominatim
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -35,35 +36,37 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                     data/country_osm_grid.sql.gz
-                     monaco-latest.osm.pbf
-                  key: nominatim-data-${{ steps.get-date.outputs.date }}
+                     country_grid.sql.gz
+                  key: nominatim-country-data-${{ steps.get-date.outputs.date }}
 
-            - uses: ./.github/actions/setup-postgresql
+            - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
                   postgresql-version: ${{ matrix.postgresql }}
                   postgis-version: ${{ matrix.postgis }}
-            - uses: ./.github/actions/build-nominatim
+            - uses: ./Nominatim/.github/actions/build-nominatim
 
             - name: Install test prerequsites
               run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave
 
             - name: PHP linting
               run: phpcs --report-width=120 .
+              working-directory: Nominatim
 
             - name: Python linting
               run: pylint --extension-pkg-whitelist=osmium nominatim
+              working-directory: Nominatim
 
             - name: PHP unit tests
               run: phpunit ./
-              working-directory: test/php
+              working-directory: Nominatim/test/php
 
             - name: Python unit tests
               run: py.test-3 test/python
+              working-directory: Nominatim
 
             - name: BDD tests
-              run: behave -DREMOVE_TEMPLATE=1 --format=progress3
-              working-directory: test/bdd
+              run: behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+              working-directory: Nominatim/test/bdd
 
     import:
         runs-on: ubuntu-20.04
@@ -72,6 +75,7 @@ jobs:
             - uses: actions/checkout@v2
               with:
                   submodules: true
+                  path: Nominatim
 
             - name: Get Date
               id: get-date
@@ -82,28 +86,36 @@ jobs:
             - uses: actions/cache@v2
               with:
                   path: |
-                     data/country_osm_grid.sql.gz
-                     monaco-latest.osm.pbf
-                  key: nominatim-data-${{ steps.get-date.outputs.date }}
+                     country_grid.sql.gz
+                  key: nominatim-country-data-${{ steps.get-date.outputs.date }}
 
-            - uses: ./.github/actions/setup-postgresql
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                     monaco-latest.osm.pbf
+                  key: nominatim-test-data-${{ steps.get-date.outputs.date }}
+
+            - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
                   postgresql-version: 13
                   postgis-version: 3
-            - uses: ./.github/actions/build-nominatim
+            - uses: ./Nominatim/.github/actions/build-nominatim
+
+            - name: Clean installation
+              run: rm -rf Nominatim build
+              shell: bash
 
             - name: Prepare import environment
               run: |
-                  mkdir data-env
-                  cd data-env
                   if [ ! -f monaco-latest.osm.pbf ]; then
                       wget --no-verbose https://download.geofabrik.de/europe/monaco-latest.osm.pbf
                   fi
-                  which nominatim
+                  mkdir data-env
+                  cd data-env
               shell: bash
 
             - name: Import
-              run: nominatim import --osm-file monaco-latest.osm.pbf
+              run: nominatim import --osm-file ../monaco-latest.osm.pbf
               shell: bash
               working-directory: data-env
 
@@ -112,7 +124,7 @@ jobs:
               working-directory: data-env
 
             - name: Check import
-              run: nominatim check-database
+              run: nominatim admin --check-database
               working-directory: data-env
 
             - name: Run update

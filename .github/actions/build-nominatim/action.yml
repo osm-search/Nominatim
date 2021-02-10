@@ -11,13 +11,14 @@ runs:
 
         - name: Download dependencies
           run: |
-              if [ ! -f data/country_osm_grid.sql.gz ]; then
-                  wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+              if [ ! -f country_grid.sql.gz ]; then
+                  wget --no-verbose https://www.nominatim.org/data/country_grid.sql.gz
               fi
+              cp country_grid.sql.gz Nominatim/data/country_osm_grid.sql.gz
           shell: bash
 
         - name: Configure
-          run: mkdir build && cd build && cmake ..
+          run: mkdir build && cd build && cmake ../Nominatim
           shell: bash
 
         - name: Build

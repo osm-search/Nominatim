@@ -154,8 +154,6 @@ class UpdateReplication:
                 LOG.warning("No new changes. Sleeping for %d sec.", recheck_interval)
                 time.sleep(recheck_interval)
 
-        return state.value
-
 
     @staticmethod
     def run(args):
@@ -167,4 +165,5 @@ class UpdateReplication:
         if args.check_for_updates:
             return UpdateReplication._check_for_updates(args)
 
-        return UpdateReplication._update(args)
+        UpdateReplication._update(args)
+        return 0

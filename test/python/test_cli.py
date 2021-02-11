@@ -186,17 +186,15 @@ def test_replication_update_bad_interval_for_geofabrik(monkeypatch, temp_db):
     assert call_nominatim('replication') == 1
 
 
-@pytest.mark.parametrize("state, retval", [
-                         (nominatim.tools.replication.UpdateState.UP_TO_DATE, 0),
-                         (nominatim.tools.replication.UpdateState.NO_CHANGES, 3)
-                         ])
+@pytest.mark.parametrize("state", [nominatim.tools.replication.UpdateState.UP_TO_DATE,
+                                   nominatim.tools.replication.UpdateState.NO_CHANGES])
 def test_replication_update_once_no_index(monkeypatch, temp_db, temp_db_conn,
-                                          status_table, state, retval):
+                                          status_table, state):
     status.set_status(temp_db_conn, date=dt.datetime.now(dt.timezone.utc), seq=1)
     func_mock = MockParamCapture(retval=state)
     monkeypatch.setattr(nominatim.tools.replication, 'update', func_mock)
 
-    assert retval == call_nominatim('replication', '--once', '--no-index')
+    assert 0 == call_nominatim('replication', '--once', '--no-index')
 
 
 def test_replication_update_continuous(monkeypatch, temp_db_conn, status_table):

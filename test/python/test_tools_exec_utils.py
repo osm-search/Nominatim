@@ -23,6 +23,8 @@ def nominatim_env(tmp_phplib_dir, def_config):
         phplib_dir = tmp_phplib_dir
         data_dir = Path('data')
         project_dir = Path('.')
+        sqllib_dir = Path('lib-sql')
+        config_dir = Path('settings')
         module_dir = 'module'
         osm2pgsql_path = 'osm2pgsql'
 

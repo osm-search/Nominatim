@@ -9,21 +9,21 @@ runs:
             sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium python3-dotenv
           shell: bash
 
+        - name: Download dependencies
+          run: |
+              if [ ! -f country_grid.sql.gz ]; then
+                  wget --no-verbose https://www.nominatim.org/data/country_grid.sql.gz
+              fi
+              cp country_grid.sql.gz Nominatim/data/country_osm_grid.sql.gz
+          shell: bash
+
         - name: Configure
-          run: mkdir build && cd build && cmake ..
+          run: mkdir build && cd build && cmake ../Nominatim
           shell: bash
 
         - name: Build
           run: |
               make -j2 all
-              ./nominatim refresh --website
+              sudo make install
           shell: bash
           working-directory: build
-
-        - name: Download dependencies
-          run: |
-              if [ ! -f data/country_osm_grid.sql.gz ]; then
-                  wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
-              fi
-          shell: bash
-

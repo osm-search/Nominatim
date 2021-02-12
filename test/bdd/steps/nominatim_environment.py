@@ -87,14 +87,18 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
-        self.test_env['NOMINATIM_DATADIR'] = self.src_dir
-        self.test_env['NOMINATIM_BINDIR'] = self.src_dir / 'utils'
-        self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.build_dir / 'module'
+        self.test_env['NOMINATIM_DATADIR'] = self.src_dir / 'data'
+        self.test_env['NOMINATIM_SQLDIR'] = self.src_dir / 'lib-sql'
+        self.test_env['NOMINATIM_CONFIGDIR'] = self.src_dir / 'settings'
+        self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = self.build_dir / 'module'
         self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = self.build_dir / 'osm2pgsql' / 'osm2pgsql'
         self.test_env['NOMINATIM_NOMINATIM_TOOL'] = self.build_dir / 'nominatim'
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
+        else:
+            # avoid module being copied into the temporary environment
+            self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.build_dir / 'module'
 
         if self.website_dir is not None:
             self.website_dir.cleanup()
@@ -262,7 +266,7 @@ class NominatimEnvironment:
         """ Run one of the Nominatim utility scripts with the given arguments.
         """
         cmd = ['/usr/bin/env', 'php', '-Cq']
-        cmd.append((Path(self.src_dir) / 'lib' / 'admin' / '{}.php'.format(script)).resolve())
+        cmd.append((Path(self.src_dir) / 'lib-php' / 'admin' / '{}.php'.format(script)).resolve())
         cmd.extend(['--' + x for x in args])
         for k, v in kwargs.items():
             cmd.extend(('--' + k.replace('_', '-'), str(v)))

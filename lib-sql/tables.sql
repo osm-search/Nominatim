@@ -35,8 +35,6 @@ GRANT UPDATE ON new_query_log TO "{www-user}" ;
 GRANT SELECT ON new_query_log TO "{www-user}" ;
 
 GRANT SELECT ON TABLE country_name TO "{www-user}";
-GRANT SELECT ON TABLE gb_postcode TO "{www-user}";
-GRANT SELECT ON TABLE us_postcode TO "{www-user}";
 
 drop table IF EXISTS word;
 CREATE TABLE word (

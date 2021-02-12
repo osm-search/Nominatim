@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+import sys
+import os
+
+sys.path.insert(1, '@NOMINATIM_LIBDIR@/lib-python')
+
+os.environ['NOMINATIM_NOMINATIM_TOOL'] = os.path.abspath(__file__)
+
+from nominatim import cli
+
+exit(cli.nominatim(module_dir='@NOMINATIM_LIBDIR@/module',
+                   osm2pgsql_path='@NOMINATIM_LIBDIR@/osm2pgsql',
+                   phplib_dir='@NOMINATIM_LIBDIR@/lib-php',
+                   sqllib_dir='@NOMINATIM_LIBDIR@/lib-sql',
+                   data_dir='@NOMINATIM_DATADIR@',
+                   config_dir='@NOMINATIM_CONFIGDIR@',
+                   phpcgi_path='@PHPCGI_BIN@'))

@@ -27,7 +27,7 @@ function getImportStyle()
     $sStyle = getSetting('IMPORT_STYLE');
 
     if (in_array($sStyle, array('admin', 'street', 'address', 'full', 'extratags'))) {
-        return CONST_DataDir.'/settings/import-'.$sStyle.'.style';
+        return CONST_ConfigDir.'/import-'.$sStyle.'.style';
     }
 
     return $sStyle;

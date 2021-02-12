@@ -37,8 +37,8 @@ functionality of each script:
 * ./utils/setup.php: `import`, `freeze`, `refresh`
 * ./utils/update.php: `replication`, `add-data`, `index`, `refresh`
 * ./utils/specialphrases.php: `special-phrases`
-* ./utils/check_import_finished.php: `check-database`
-* ./utils/warm.php: `warm`
+* ./utils/check_import_finished.php: `admin`
+* ./utils/warm.php: `admin`
 * ./utils/export.php: `export`
 
 Try `nominatim <command> --help` for more information about each subcommand.

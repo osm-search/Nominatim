@@ -166,29 +166,8 @@ class SetupFunctions
         // Try accessing the C module, so we know early if something is wrong
         $this->checkModulePresence(); // raises exception on failure
 
-        if (!file_exists(CONST_DataDir.'/data/country_osm_grid.sql.gz')) {
-            echo 'Error: you need to download the country_osm_grid first:';
-            echo "\n    wget -O ".CONST_DataDir."/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz\n";
-            exit(1);
-        }
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_name.sql');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/country_osm_grid.sql.gz');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/gb_postcode_table.sql');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/data/us_postcode_table.sql');
-
-        $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
-        if (file_exists($sPostcodeFilename)) {
-            $this->pgsqlRunScriptFile($sPostcodeFilename);
-        } else {
-            warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
-        }
-
-        $sPostcodeFilename = CONST_InstallDir.'/us_postcode_data.sql.gz';
-        if (file_exists($sPostcodeFilename)) {
-            $this->pgsqlRunScriptFile($sPostcodeFilename);
-        } else {
-            warn('optional external US postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
-        }
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_name.sql');
+        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_osm_grid.sql.gz');
 
         if ($this->bNoPartitions) {
             $this->pgsqlRunScript('update country_name set partition = 0');
@@ -269,7 +248,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tables.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tables.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -285,7 +264,7 @@ class SetupFunctions
     {
         info('Create Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/table-triggers.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/table-triggers.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -295,7 +274,7 @@ class SetupFunctions
     {
         info('Create Partition Tables');
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/partition-tables.src.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/partition-tables.src.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunPartitionScript($sTemplate);
@@ -366,7 +345,7 @@ class SetupFunctions
         // pre-create the word list
         if (!$bDisableTokenPrecalc) {
             info('Loading word list');
-            $this->pgsqlRunScriptFile(CONST_DataDir.'/data/words.sql');
+            $this->pgsqlRunScriptFile(CONST_DataDir.'/words.sql');
         }
 
         info('Load Data');
@@ -458,7 +437,7 @@ class SetupFunctions
             warn('Tiger data import selected but no files found in path '.$sTigerPath);
             return;
         }
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_start.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tiger_import_start.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -512,7 +491,7 @@ class SetupFunctions
         }
 
         info('Creating indexes on Tiger data');
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/tiger_import_finish.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/tiger_import_finish.sql');
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunScript($sTemplate, false);
@@ -521,6 +500,23 @@ class SetupFunctions
     public function calculatePostcodes($bCMDResultAll)
     {
         info('Calculate Postcodes');
+        $this->pgsqlRunScriptFile(CONST_SqlDir.'/postcode_tables.sql');
+
+        $sPostcodeFilename = CONST_InstallDir.'/gb_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
+        } else {
+            warn('optional external GB postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
+        }
+
+        $sPostcodeFilename = CONST_InstallDir.'/us_postcode_data.sql.gz';
+        if (file_exists($sPostcodeFilename)) {
+            $this->pgsqlRunScriptFile($sPostcodeFilename);
+        } else {
+            warn('optional external US postcode table file ('.$sPostcodeFilename.') not found. Skipping.');
+        }
+
+
         $this->db()->exec('TRUNCATE location_postcode');
 
         $sSQL  = 'INSERT INTO location_postcode';
@@ -620,12 +616,12 @@ class SetupFunctions
             $this->db()->exec("DROP INDEX $sIndexName;");
         }
 
-        $sTemplate = file_get_contents(CONST_DataDir.'/sql/indices.src.sql');
+        $sTemplate = file_get_contents(CONST_SqlDir.'/indices.src.sql');
         if (!$this->bDrop) {
-            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_updates.src.sql');
+            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_updates.src.sql');
         }
         if (!$this->dbReverseOnly()) {
-            $sTemplate .= file_get_contents(CONST_DataDir.'/sql/indices_search.src.sql');
+            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_search.src.sql');
         }
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
@@ -736,8 +732,6 @@ class SetupFunctions
             fwrite($rFile, '@define(\'CONST_Debug\', $_GET[\'debug\'] ?? false);'."\n\n");
 
             fwriteConstDef($rFile, 'LibDir', CONST_LibDir);
-            fwriteConstDef($rFile, 'DataDir', CONST_DataDir);
-            fwriteConstDef($rFile, 'InstallDir', CONST_InstallDir);
             fwriteConstDef($rFile, 'Database_DSN', getSetting('DATABASE_DSN'));
             fwriteConstDef($rFile, 'Default_Language', getSetting('DEFAULT_LANGUAGE'));
             fwriteConstDef($rFile, 'Log_DB', getSettingBool('LOG_DB'));
@@ -753,8 +747,7 @@ class SetupFunctions
             fwriteConstDef($rFile, 'Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
             fwriteConstDef($rFile, 'MapIcon_URL', getSetting('MAPICON_URL'));
 
-            // XXX scripts should go into the library.
-            fwrite($rFile, 'require_once(\''.CONST_DataDir.'/website/'.$sScript."');\n");
+            fwrite($rFile, 'require_once(\''.CONST_LibDir.'/website/'.$sScript."');\n");
             fclose($rFile);
 
             chmod(CONST_InstallDir.'/website/'.$sScript, 0755);

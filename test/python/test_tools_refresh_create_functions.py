@@ -7,7 +7,7 @@ import pytest
 from nominatim.db.connection import connect
 from nominatim.tools.refresh import _get_standard_function_sql, _get_partition_function_sql
 
-SQL_DIR = (Path(__file__) / '..' / '..' / '..' / 'sql').resolve()
+SQL_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-sql').resolve()
 
 @pytest.fixture
 def db(temp_db):

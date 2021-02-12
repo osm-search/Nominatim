@@ -41,12 +41,13 @@ A quick summary of the necessary steps:
         cd build
         cmake ..
         make
+        sudo make install
 
 2. Create a project directory, get OSM data and import:
 
         mkdir nominatim-project
         cd nominatim-project
-        ~/build/nominatim import --osm-file <your planet file>
+        nominatim import --osm-file <your planet file>
 
 3. Point your webserver to the nominatim-project/website directory.
 

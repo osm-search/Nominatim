@@ -6,12 +6,17 @@ from enum import Enum
 import logging
 import time
 
-from osmium.replication.server import ReplicationServer
-from osmium import WriteHandler
-
 from ..db import status
 from .exec_utils import run_osm2pgsql
 from ..errors import UsageError
+
+try:
+    from osmium.replication.server import ReplicationServer
+    from osmium import WriteHandler
+except ModuleNotFoundError as exc:
+    logging.getLogger().fatal("pyosmium not installed. Replication functions not available.\n"
+                              "To install pyosmium via pip: pip3 install osmium")
+    raise UsageError("replication tools not available") from exc
 
 LOG = logging.getLogger()
 

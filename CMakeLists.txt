@@ -97,6 +97,17 @@ endif()
 #-----------------------------------------------------------------------------
 
 if (BUILD_IMPORTER)
+   find_file(COUNTRY_GRID_FILE country_osm_grid.sql.gz
+             PATHS ${PROJECT_SOURCE_DIR}/data
+             NO_DEFAULT_PATH
+             DOC "Location of the country grid file."
+            )
+
+   if (NOT COUNTRY_GRID_FILE)
+       message(FATAL_ERROR "\nYou need to download the country_osm_grid first:\n"
+                           "    wget -O ${PROJECT_SOURCE_DIR}/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz")
+   endif()
+
    set(CUSTOMSCRIPTS
        check_import_finished.php
        country_languages.php
@@ -197,3 +208,54 @@ endif()
 if (BUILD_DOCS)
    add_subdirectory(docs)
 endif()
+
+#-----------------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------------
+
+
+include(GNUInstallDirs)
+set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
+set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
+set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
+
+if (BUILD_IMPORTER)
+    configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/installed.bin
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            RENAME nominatim)
+
+    install(DIRECTORY nominatim
+            DESTINATION ${NOMINATIM_LIBDIR}/lib-python
+            FILES_MATCHING PATTERN "*.py"
+            PATTERN __pycache__ EXCLUDE)
+    install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
+
+    install(FILES data/country_name.sql
+                  ${COUNTRY_GRID_FILE}
+                  data/words.sql
+            DESTINATION ${NOMINATIM_DATADIR})
+endif()
+
+if (BUILD_OSM2PGSQL)
+    install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
+endif()
+
+if (BUILD_MODULE)
+    install(PROGRAMS ${PROJECT_BINARY_DIR}/module/nominatim.so
+            DESTINATION ${NOMINATIM_LIBDIR}/module)
+endif()
+
+if (BUILD_API)
+    install(DIRECTORY lib-php DESTINATION ${NOMINATIM_LIBDIR})
+endif()
+
+install(FILES settings/env.defaults
+              settings/address-levels.json
+              settings/phrase_settings.php
+              settings/import-admin.style
+              settings/import-street.style
+              settings/import-address.style
+              settings/import-full.style
+              settings/import-extratags.style
+        DESTINATION ${NOMINATIM_CONFIGDIR})

@@ -19,7 +19,7 @@
     </testsuites>
     <filter>
         <whitelist>
-            <directory>../../lib/</directory>
+            <directory>../../lib-php/</directory>
         </whitelist>
     </filter>
 

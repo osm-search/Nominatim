@@ -8,17 +8,17 @@ from psycopg2.extras import execute_values
 
 from ..db.utils import execute_file
 
-def update_postcodes(conn, datadir):
+def update_postcodes(conn, sql_dir):
     """ Recalculate postcode centroids and add, remove and update entries in the
         location_postcode table. `conn` is an opne connection to the database.
     """
-    execute_file(conn, datadir / 'sql' / 'update-postcodes.sql')
+    execute_file(conn, sql_dir / 'update-postcodes.sql')
 
 
-def recompute_word_counts(conn, datadir):
+def recompute_word_counts(conn, sql_dir):
     """ Compute the frequency of full-word search terms.
     """
-    execute_file(conn, datadir / 'sql' / 'words_from_search_name.sql')
+    execute_file(conn, sql_dir / 'words_from_search_name.sql')
 
 
 def _add_address_level_rows_from_entry(rows, entry):
@@ -153,12 +153,10 @@ def _get_partition_function_sql(conn, sql_dir):
 
     return replace_partition_string(sql, sorted(partitions))
 
-def create_functions(conn, config, data_dir,
+def create_functions(conn, config, sql_dir,
                      enable_diff_updates=True, enable_debug=False):
     """ (Re)create the PL/pgSQL functions.
     """
-    sql_dir = data_dir / 'sql'
-
     sql = _get_standard_function_sql(conn, config, sql_dir,
                                      enable_diff_updates, enable_debug)
     sql += _get_partition_function_sql(conn, sql_dir)

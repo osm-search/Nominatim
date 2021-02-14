@@ -119,6 +119,7 @@ def update(conn, options):
 
     # Write the current status to the file
     endstate = repl.get_state_info(endseq)
-    status.set_status(conn, endstate.timestamp, seq=endseq, indexed=False)
+    status.set_status(conn, endstate.timestamp if endstate else None,
+                      seq=endseq, indexed=False)
 
     return UpdateState.UP_TO_DATE

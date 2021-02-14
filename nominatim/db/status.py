@@ -40,13 +40,19 @@ def compute_database_date(conn):
 
 
 def set_status(conn, date, seq=None, indexed=True):
-    """ Replace the current status with the given status.
+    """ Replace the current status with the given status. If date is `None`
+        then only sequence and indexed will be updated as given. Otherwise
+        the whole status is replaced.
     """
-    assert date.tzinfo == dt.timezone.utc
+    assert date is None or date.tzinfo == dt.timezone.utc
     with conn.cursor() as cur:
-        cur.execute("TRUNCATE TABLE import_status")
-        cur.execute("""INSERT INTO import_status (lastimportdate, sequence_id, indexed)
-                       VALUES (%s, %s, %s)""", (date, seq, indexed))
+        if date is None:
+            cur.execute("UPDATE import_status set sequence_id = %s, indexed = %s",
+                        (seq, indexed))
+        else:
+            cur.execute("TRUNCATE TABLE import_status")
+            cur.execute("""INSERT INTO import_status (lastimportdate, sequence_id, indexed)
+                           VALUES (%s, %s, %s)""", (date, seq, indexed))
 
     conn.commit()
 

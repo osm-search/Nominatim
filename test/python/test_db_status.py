@@ -65,9 +65,22 @@ def test_set_status_filled_table(status_table, temp_db_conn, temp_db_cursor):
 
     assert 1 == temp_db_cursor.scalar("SELECT count(*) FROM import_status")
 
-
     date = dt.datetime.fromordinal(1000100).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date, seq=456, indexed=False)
+
+    temp_db_cursor.execute("SELECT * FROM import_status")
+
+    assert temp_db_cursor.rowcount == 1
+    assert temp_db_cursor.fetchone() == [date, 456, False]
+
+
+def test_set_status_missing_date(status_table, temp_db_conn, temp_db_cursor):
+    date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
+    nominatim.db.status.set_status(temp_db_conn, date=date)
+
+    assert 1 == temp_db_cursor.scalar("SELECT count(*) FROM import_status")
+
+    nominatim.db.status.set_status(temp_db_conn, date=None, seq=456, indexed=False)
 
     temp_db_cursor.execute("SELECT * FROM import_status")
 

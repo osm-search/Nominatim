@@ -127,6 +127,9 @@ def run_osm2pgsql(options):
         if param in dsn:
             cmd.extend(('--' + param, dsn[param]))
 
+    if options.get('disable_jit', False):
+        env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'
+
     cmd.append(str(options['import_file']))
 
     subprocess.run(cmd, cwd=options.get('cwd', '.'), env=env, check=True)

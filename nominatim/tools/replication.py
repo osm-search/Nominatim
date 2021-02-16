@@ -115,6 +115,7 @@ def update(conn, options):
 
     # Consume updates with osm2pgsql.
     options['append'] = True
+    options['disable_jit'] = conn.server_version_tuple() >= (11, 0)
     run_osm2pgsql(options)
 
     # Write the current status to the file

@@ -6,7 +6,7 @@
 #
 #-----------------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 
@@ -238,7 +238,14 @@ if (BUILD_IMPORTER)
 endif()
 
 if (BUILD_OSM2PGSQL)
-    install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
+    if (${CMAKE_VERSION} VERSION_LESS 3.13)
+        # Installation of subdirectory targets was only introduced in 3.13.
+        # So just copy the osm2pgsql file for older versions.
+        install(PROGRAMS ${PROJECT_BINARY_DIR}/osm2pgsql/osm2pgsql
+                DESTINATION ${NOMINATIM_LIBDIR})
+    else()
+        install(TARGETS osm2pgsql RUNTIME DESTINATION ${NOMINATIM_LIBDIR})
+    endif()
 endif()
 
 if (BUILD_MODULE)

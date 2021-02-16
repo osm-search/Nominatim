@@ -107,36 +107,6 @@ sudo chown vagrant /srv/nominatim  #DOCS:
     sudo -u postgres createuser apache
 
 #
-# Setting up the Apache Webserver
-# -------------------------------
-#
-# You need to create an alias to the website directory in your apache
-# configuration. Add a separate nominatim configuration to your webserver:
-
-#DOCS:```sh
-sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website">
-  Options FollowSymLinks MultiViews
-  AddType text/html   .php
-  DirectoryIndex search.php
-  Require all granted
-</Directory>
-
-Alias /nominatim $USERHOME/build/website
-EOFAPACHECONF
-#DOCS:```
-
-sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
-
-#
-# Then reload apache
-#
-
-    sudo systemctl enable httpd
-    sudo systemctl restart httpd
-
-
-#
 # Installing Nominatim
 # ====================
 #
@@ -164,11 +134,48 @@ fi                                 #DOCS:
 # then configure and build Nominatim in there:
 
 #DOCS:    :::sh
-    cd $USERHOME
-    mkdir build
-    cd build
+    mkdir $USERHOME/build
+    cd $USERHOME/build
     cmake $USERHOME/Nominatim
     make
+    sudo make install
+
+#
+# Setting up the Apache Webserver
+# -------------------------------
+#
+# The webserver should serve the php scripts from the website directory of your
+# [project directory](../admin/import.md#creating-the-project-directory).
+# Therefore set up a project directory and populate the website directory:
+#
+    mkdir $USERHOME/nominatim-project
+    cd $USERHOME/nominatim-project
+    nominatim refresh --website
+#
+# You need to create an alias to the website directory in your apache
+# configuration. Add a separate nominatim configuration to your webserver:
+
+#DOCS:```sh
+sudo tee /etc/httpd/conf.d/nominatim.conf << EOFAPACHECONF
+<Directory "$USERHOME/nominatim-project/website">
+  Options FollowSymLinks MultiViews
+  AddType text/html   .php
+  DirectoryIndex search.php
+  Require all granted
+</Directory>
+
+Alias /nominatim $USERHOME/nominatim-project/website
+EOFAPACHECONF
+#DOCS:```
+
+sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
+
+#
+# Then reload apache
+#
+
+    sudo systemctl enable httpd
+    sudo systemctl restart httpd
 
 #
 # Adding SELinux Security Settings
@@ -178,11 +185,11 @@ fi                                 #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/Nominatim/(website|lib|settings)(/.*)?"
-    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/build/(website|lib|settings)(/.*)?"
-    sudo semanage fcontext -a -t lib_t "$USERHOME/build/module/nominatim.so"
-    sudo restorecon -R -v $USERHOME/Nominatim
-    sudo restorecon -R -v $USERHOME/build
+    sudo semanage fcontext -a -t httpd_sys_content_t "/usr/local/nominatim/lib/lib-php(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/nominatim-project/website(/.*)?"
+    sudo semanage fcontext -a -t lib_t "$USERHOME/nominatim-project/module/nominatim.so"
+    sudo restorecon -R -v /usr/local/lib/nominatim
+    sudo restorecon -R -v $USERHOME/nominatim-project
 
 
 # You need to create a minimal configuration file that tells nominatim

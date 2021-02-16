@@ -50,6 +50,15 @@ class _Connection(psycopg2.extensions.connection):
                                 WHERE tablename = %s""", (table, ))
             return num == 1
 
+    def server_version_tuple(self):
+        """ Return the server version as a tuple of (major, minor).
+            Converts correctly for pre-10 and post-10 PostgreSQL versions.
+        """
+        version = self.server_version
+        if version < 100000:
+            return (version / 10000, (version % 10000) / 100)
+
+        return (version / 10000, version % 10000)
 
 def connect(dsn):
     """ Open a connection to the database using the specialised connection

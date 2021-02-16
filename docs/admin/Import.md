@@ -284,12 +284,12 @@ address set to complement the OSM house number data in the US. You can add
 TIGER data to your own Nominatim instance by following these steps. The
 entire US adds about 10GB to your database.
 
-  1. Get preprocessed TIGER 2019 data and unpack it into your project
+  1. Get preprocessed TIGER 2020 data and unpack it into your project
      directory:
 
         cd $PROJECT_DIR
-        wget https://nominatim.org/data/tiger2019-nominatim-preprocessed.tar.gz
-        tar xf tiger2019-nominatim-preprocessed.tar.gz
+        wget https://nominatim.org/data/tiger2020-nominatim-preprocessed.tar.gz
+        tar xf tiger2020-nominatim-preprocessed.tar.gz
 
   2. Import the data into your Nominatim database:
 

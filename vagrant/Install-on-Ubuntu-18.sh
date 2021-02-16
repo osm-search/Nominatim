@@ -29,9 +29,13 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
-                        php php-pgsql php-intl python3-dotenv \
+                        php php-pgsql php-intl python3-pip \
                         python3-psycopg2 git
 
+# The python-dotenv package that comes with Ubuntu 18.04 is too old, so
+# install the latest version from pip:
+
+    pip3 install python-dotenv
 
 #
 # System Configuration
@@ -113,11 +117,11 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME
-    mkdir build
-    cd build
+    mkdir $USERHOME/build
+    cd $USERHOME/build
     cmake $USERHOME/Nominatim
     make
+    sudo make install
 
 
 # Nominatim is now ready to use. You can continue with
@@ -126,6 +130,14 @@ fi                                 #DOCS:
 #
 # Setting up a webserver
 # ======================
+#
+# The webserver should serve the php scripts from the website directory of your
+# [project directory](../admin/import.md#creating-the-project-directory).
+# Therefore set up a project directory and populate the website directory:
+
+    mkdir $USERHOME/nominatim-project
+    cd $USERHOME/nominatim-project
+    nominatim refresh --website
 #
 # Option 1: Using Apache
 # ----------------------
@@ -142,14 +154,14 @@ if [ "x$2" == "xinstall-apache" ]; then #DOCS:
 
 #DOCS:```sh
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website">
+<Directory "$USERHOME/nominatim-project/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/build/website
+Alias /nominatim $USERHOME/nominatim-project/website
 EOFAPACHECONF
 #DOCS:```
 
@@ -206,7 +218,7 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    root $USERHOME/build/website;
+    root $USERHOME/nominatim-project/website;
     index search.php index.html;
     location / {
         try_files \$uri \$uri/ @php;

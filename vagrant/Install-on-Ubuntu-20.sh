@@ -115,11 +115,11 @@ fi                                 #DOCS:
 # The code must be built in a separate directory. Create this directory,
 # then configure and build Nominatim in there:
 
-    cd $USERHOME
-    mkdir build
-    cd build
+    mkdir $USERHOME/build
+    cd $USERHOME/build
     cmake $USERHOME/Nominatim
     make
+    sudo make install
 
 # Nominatim is now ready to use. You can continue with
 # [importing a database from OSM data](../admin/Import.md). If you want to set up
@@ -127,6 +127,15 @@ fi                                 #DOCS:
 #
 # Setting up a webserver
 # ======================
+#
+# The webserver should serve the php scripts from the website directory of your
+# [project directory](../admin/import.md#creating-the-project-directory).
+# Therefore set up a project directory and populate the website directory:
+
+    mkdir $USERHOME/nominatim-project
+    cd $USERHOME/nominatim-project
+    nominatim refresh --website
+
 #
 # Option 1: Using Apache
 # ----------------------
@@ -143,14 +152,14 @@ if [ "x$2" == "xinstall-apache" ]; then #DOCS:
 
 #DOCS:```sh
 sudo tee /etc/apache2/conf-available/nominatim.conf << EOFAPACHECONF
-<Directory "$USERHOME/build/website">
+<Directory "$USERHOME/nominatim-project/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
 
-Alias /nominatim $USERHOME/build/website
+Alias /nominatim $USERHOME/nominatim-project/website
 EOFAPACHECONF
 #DOCS:```
 
@@ -207,7 +216,7 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    root $USERHOME/build/website;
+    root $USERHOME/nominatim-project/website;
     index search.php index.html;
     location / {
         try_files \$uri \$uri/ @php;

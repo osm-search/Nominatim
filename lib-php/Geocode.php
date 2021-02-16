@@ -778,13 +778,17 @@ class Geocode
                 if (!empty($aResults)) {
                     $aSplitResults = Result::splitResults($aResults);
                     Debug::printVar('Split results', $aSplitResults);
-                    if ($iGroupLoop <= 4 && empty($aSplitResults['tail'])
+                    if ($iGroupLoop <= 4
                         && reset($aSplitResults['head'])->iResultRank > 0) {
                         // Haven't found an exact match for the query yet.
                         // Therefore add result from the next group level.
                         $aNextResults = $aSplitResults['head'];
                         foreach ($aNextResults as $oRes) {
                             $oRes->iResultRank--;
+                        }
+                        foreach ($aSplitResults['tail'] as $oRes) {
+                            $oRes->iResultRank--;
+                            $aNextResults[$oRes->iId] = $oRes;
                         }
                         $aResults = array();
                     } else {

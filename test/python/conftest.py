@@ -36,6 +36,14 @@ class _TestingCursor(psycopg2.extras.DictCursor):
 
         return set((tuple(row) for row in self))
 
+    def table_exists(self, table):
+        """ Check that a table with the given name exists in the database.
+        """
+        num = self.scalar("""SELECT count(*) FROM pg_tables
+                             WHERE tablename = %s""", (table, ))
+        return num == 1
+
+
 @pytest.fixture
 def temp_db(monkeypatch):
     """ Create an empty database for the test. The database name is also

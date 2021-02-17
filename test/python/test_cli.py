@@ -17,6 +17,7 @@ import nominatim.clicmd.admin
 import nominatim.indexer.indexer
 import nominatim.tools.refresh
 import nominatim.tools.replication
+import nominatim.tools.freeze
 from nominatim.errors import UsageError
 from nominatim.db import status
 
@@ -50,6 +51,14 @@ def mock_run_legacy(monkeypatch):
     monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
     return mock
 
+@pytest.fixture
+def mock_func_factory(monkeypatch):
+    def get_mock(module, func):
+        mock = MockParamCapture()
+        monkeypatch.setattr(module, func, mock)
+        return mock
+
+    return get_mock
 
 def test_cli_help(capsys):
     """ Running nominatim tool without arguments prints help.
@@ -62,7 +71,6 @@ def test_cli_help(capsys):
 
 @pytest.mark.parametrize("command,script", [
                          (('import', '--continue', 'load-data'), 'setup'),
-                         (('freeze',), 'setup'),
                          (('special-phrases',), 'specialphrases'),
                          (('add-data', '--tiger-data', 'tiger'), 'setup'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
@@ -75,22 +83,30 @@ def test_legacy_commands_simple(mock_run_legacy, command, script):
     assert mock_run_legacy.last_args[0] == script + '.php'
 
 
+def test_freeze_command(mock_func_factory, temp_db):
+    mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')
+    mock_flatnode = mock_func_factory(nominatim.tools.freeze, 'drop_flatnode_file')
+
+    assert 0 == call_nominatim('freeze')
+
+    assert mock_drop.called == 1
+    assert mock_flatnode.called == 1
+
+
 @pytest.mark.parametrize("params", [('--warm', ),
                                     ('--warm', '--reverse-only'),
                                     ('--warm', '--search-only'),
                                     ('--check-database', )])
-def test_admin_command_legacy(monkeypatch, params):
-    mock_run_legacy = MockParamCapture()
-    monkeypatch.setattr(nominatim.clicmd.admin, 'run_legacy_script', mock_run_legacy)
+def test_admin_command_legacy(mock_func_factory, params):
+    mock_run_legacy = mock_func_factory(nominatim.clicmd.admin, 'run_legacy_script')
 
     assert 0 == call_nominatim('admin', *params)
 
     assert mock_run_legacy.called == 1
 
 @pytest.mark.parametrize("func, params", [('analyse_indexing', ('--analyse-indexing', ))])
-def test_admin_command_tool(temp_db, monkeypatch, func, params):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.tools.admin, func, mock)
+def test_admin_command_tool(temp_db, mock_func_factory, func, params):
+    mock = mock_func_factory(nominatim.tools.admin, func)
 
     assert 0 == call_nominatim('admin', *params)
     assert mock.called == 1
@@ -109,12 +125,10 @@ def test_add_data_command(mock_run_legacy, name, oid):
                           (['--boundaries-only'], 1, 0),
                           (['--no-boundaries'], 0, 1),
                           (['--boundaries-only', '--no-boundaries'], 0, 0)])
-def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
+def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ranks):
     temp_db_cursor.execute("CREATE TABLE import_status (indexed bool)")
-    bnd_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', bnd_mock)
-    rank_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', rank_mock)
+    bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
+    rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
 
     assert 0 == call_nominatim('index', *params)
 
@@ -127,9 +141,8 @@ def test_index_command(monkeypatch, temp_db_cursor, params, do_bnds, do_ranks):
                          ('importance', ('update.php', '--recompute-importance')),
                          ('website', ('setup.php', '--setup-website')),
                          ])
-def test_refresh_legacy_command(monkeypatch, temp_db, command, params):
-    mock_run_legacy = MockParamCapture()
-    monkeypatch.setattr(nominatim.clicmd.refresh, 'run_legacy_script', mock_run_legacy)
+def test_refresh_legacy_command(mock_func_factory, temp_db, command, params):
+    mock_run_legacy = mock_func_factory(nominatim.clicmd.refresh, 'run_legacy_script')
 
     assert 0 == call_nominatim('refresh', '--' + command)
 
@@ -143,17 +156,15 @@ def test_refresh_legacy_command(monkeypatch, temp_db, command, params):
                          ('address-levels', 'load_address_levels_from_file'),
                          ('functions', 'create_functions'),
                          ])
-def test_refresh_command(monkeypatch, temp_db, command, func):
-    func_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.tools.refresh, func, func_mock)
+def test_refresh_command(mock_func_factory, temp_db, command, func):
+    func_mock = mock_func_factory(nominatim.tools.refresh, func)
 
     assert 0 == call_nominatim('refresh', '--' + command)
     assert func_mock.called == 1
 
 
-def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):
-    mock_run_legacy = MockParamCapture()
-    monkeypatch.setattr(nominatim.clicmd.refresh, 'run_legacy_script', mock_run_legacy)
+def test_refresh_importance_computed_after_wiki_import(mock_func_factory, temp_db):
+    mock_run_legacy = mock_func_factory(nominatim.clicmd.refresh, 'run_legacy_script')
 
     assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')
 
@@ -165,9 +176,8 @@ def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):
                          (('--init', '--no-update-functions'), 'init_replication'),
                          (('--check-for-updates',), 'check_for_updates')
                          ])
-def test_replication_command(monkeypatch, temp_db, params, func):
-    func_mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.tools.replication, func, func_mock)
+def test_replication_command(mock_func_factory, temp_db, params, func):
+    func_mock = mock_func_factory(nominatim.tools.replication, func)
 
     assert 0 == call_nominatim('replication', *params)
     assert func_mock.called == 1
@@ -188,11 +198,10 @@ def test_replication_update_bad_interval_for_geofabrik(monkeypatch, temp_db):
 
 @pytest.mark.parametrize("state", [nominatim.tools.replication.UpdateState.UP_TO_DATE,
                                    nominatim.tools.replication.UpdateState.NO_CHANGES])
-def test_replication_update_once_no_index(monkeypatch, temp_db, temp_db_conn,
+def test_replication_update_once_no_index(mock_func_factory, temp_db, temp_db_conn,
                                           status_table, state):
     status.set_status(temp_db_conn, date=dt.datetime.now(dt.timezone.utc), seq=1)
-    func_mock = MockParamCapture(retval=state)
-    monkeypatch.setattr(nominatim.tools.replication, 'update', func_mock)
+    func_mock = mock_func_factory(nominatim.tools.replication, 'update')
 
     assert 0 == call_nominatim('replication', '--once', '--no-index')
 
@@ -236,9 +245,8 @@ def test_replication_update_continuous_no_change(monkeypatch, temp_db_conn, stat
     assert sleep_mock.last_args[0] == 60
 
 
-def test_serve_command(monkeypatch):
-    func = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli, 'run_php_server', func)
+def test_serve_command(mock_func_factory):
+    func = mock_func_factory(nominatim.cli, 'run_php_server')
 
     call_nominatim('serve')
 
@@ -254,9 +262,8 @@ def test_serve_command(monkeypatch):
                          ('details', '--place_id', '10001'),
                          ('status',)
                          ])
-def test_api_commands_simple(monkeypatch, params):
-    mock_run_api = MockParamCapture()
-    monkeypatch.setattr(nominatim.clicmd.api, 'run_api_script', mock_run_api)
+def test_api_commands_simple(mock_func_factory, params):
+    mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
 
     assert 0 == call_nominatim(*params)
 

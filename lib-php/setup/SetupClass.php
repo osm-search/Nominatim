@@ -657,50 +657,7 @@ class SetupFunctions
 
     public function drop()
     {
-        info('Drop tables only required for updates');
-
-        // The implementation is potentially a bit dangerous because it uses
-        // a positive selection of tables to keep, and deletes everything else.
-        // Including any tables that the unsuspecting user might have manually
-        // created. USE AT YOUR OWN PERIL.
-        // tables we want to keep. everything else goes.
-        $aKeepTables = array(
-                        '*columns',
-                        'import_polygon_*',
-                        'import_status',
-                        'place_addressline',
-                        'location_postcode',
-                        'location_property*',
-                        'placex',
-                        'search_name',
-                        'seq_*',
-                        'word',
-                        'query_log',
-                        'new_query_log',
-                        'spatial_ref_sys',
-                        'country_name',
-                        'place_classtype_*',
-                        'country_osm_grid'
-                       );
-
-        $aDropTables = array();
-        $aHaveTables = $this->db()->getListOfTables();
-
-        foreach ($aHaveTables as $sTable) {
-            $bFound = false;
-            foreach ($aKeepTables as $sKeep) {
-                if (fnmatch($sKeep, $sTable)) {
-                    $bFound = true;
-                    break;
-                }
-            }
-            if (!$bFound) array_push($aDropTables, $sTable);
-        }
-        foreach ($aDropTables as $sDrop) {
-            $this->dropTable($sDrop);
-        }
-
-        $this->removeFlatnodeFile();
+        (clone($this->oNominatimCmd))->addParams('freeze')->run();
     }
 
     /**

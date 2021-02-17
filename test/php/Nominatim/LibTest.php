@@ -15,26 +15,6 @@ class LibTest extends \PHPUnit\Framework\TestCase
         $this->assertSame("''", addQuotes(''));
     }
 
-
-    public function testCreatePointsAroundCenter()
-    {
-        // you might say we're creating a circle
-        $aPoints = createPointsAroundCenter(0, 0, 2);
-
-        $this->assertEquals(
-            101,
-            count($aPoints)
-        );
-        $this->assertEquals(
-            array(
-             array('', 0, 2),
-             array('', 0.12558103905863, 1.9960534568565),
-             array('', 0.25066646712861, 1.984229402629)
-            ),
-            array_splice($aPoints, 0, 3)
-        );
-    }
-
     public function testParseLatLon()
     {
         // no coordinates expected
@@ -131,13 +111,5 @@ class LibTest extends \PHPUnit\Framework\TestCase
         $this->closestHouseNumberEvenOddOther(50, 100, 0, array('even' => 50, 'odd' => 51, 'other' => 50));
         // start == end
         $this->closestHouseNumberEvenOddOther(50, 50, 0.5, array('even' => 50, 'odd' => 50, 'other' => 50));
-    }
-
-    public function testGetSearchRankLabel()
-    {
-        $this->assertEquals('unknown', getSearchRankLabel(null));
-        $this->assertEquals('continent', getSearchRankLabel(0));
-        $this->assertEquals('continent', getSearchRankLabel(1));
-        $this->assertEquals('other: 30', getSearchRankLabel(30));
     }
 }

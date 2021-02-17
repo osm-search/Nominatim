@@ -241,16 +241,6 @@ class DB
     }
 
     /**
-    * Returns a list of table names in the database
-    *
-    * @return array[]
-    */
-    public function getListOfTables()
-    {
-        return $this->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
-    }
-
-    /**
      * Deletes a table. Returns true if deleted or didn't exist.
      *
      * @param string  $sTableName

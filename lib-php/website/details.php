@@ -144,7 +144,6 @@ if (!$aPointDetails) {
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
-$aPointDetails['rank_search_label'] = getSearchRankLabel($aPointDetails['rank_search']); // only used in HTML format
 
 // Get all alternative names (languages, etc)
 $sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';

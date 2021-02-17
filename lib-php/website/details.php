@@ -53,7 +53,7 @@ if ($sOsmType && $iOsmId > 0) {
 
     // Be nice about our error messages for broken geometry
 
-    if (!$sPlaceId) {
+    if (!$sPlaceId && $oDB->tableExists('import_polygon_error')) {
         $sSQL = 'SELECT ';
         $sSQL .= '    osm_type, ';
         $sSQL .= '    osm_id, ';

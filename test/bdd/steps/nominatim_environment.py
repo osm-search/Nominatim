@@ -182,6 +182,7 @@ class NominatimEnvironment:
         try:
             self.run_setup_script('all', osm_file=self.api_test_file)
             self.run_setup_script('import-tiger-data')
+            self.run_setup_script('drop')
 
             phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
             run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])

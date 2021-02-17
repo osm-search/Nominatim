@@ -26,6 +26,8 @@ class Result
     public $iExactMatches = 0;
     /// Subranking within the results (the higher the worse).
     public $iResultRank = 0;
+    /// Address rank of the result.
+    public $iAddressRank;
 
     public function debugInfo()
     {
@@ -84,7 +86,7 @@ class Result
 
         foreach ($aResults as $oRes) {
             if ($oRes->iResultRank < $iMinRank) {
-                $aTail = array_merge($aTail, $aHead);
+                $aTail += $aHead;
                 $aHead = array($oRes->iId => $oRes);
                 $iMinRank = $oRes->iResultRank;
             } elseif ($oRes->iResultRank == $iMinRank) {

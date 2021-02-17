@@ -450,7 +450,11 @@ class SearchDescription
                 // Downgrade the rank of the street results, they are missing
                 // the housenumber.
                 foreach ($aResults as $oRes) {
-                    $oRes->iResultRank++;
+                    if ($oRes->iAddressRank >= 26) {
+                        $oRes->iResultRank++;
+                    } else {
+                        $oRes->iResultRank += 2;
+                    }
                 }
 
                 $aHnResults = $this->queryHouseNumber($oDB, $aResults);
@@ -715,7 +719,7 @@ class SearchDescription
         $aResults = array();
 
         if (!empty($aTerms)) {
-            $sSQL = 'SELECT place_id,'.$sExactMatchSQL;
+            $sSQL = 'SELECT place_id, address_rank,'.$sExactMatchSQL;
             $sSQL .= ' FROM search_name';
             $sSQL .= ' WHERE '.join(' and ', $aTerms);
             $sSQL .= ' ORDER BY '.join(', ', $aOrder);
@@ -728,6 +732,7 @@ class SearchDescription
             foreach ($aDBResults as $aResult) {
                 $oResult = new Result($aResult['place_id']);
                 $oResult->iExactMatches = $aResult['exactmatch'];
+                $oResult->iAddressRank = $aResult['address_rank'];
                 $aResults[$aResult['place_id']] = $oResult;
             }
         }

@@ -1,6 +1,8 @@
 """
 Implementation of the 'admin' subcommand.
 """
+import logging
+
 from ..tools.exec_utils import run_legacy_script
 from ..db.connection import connect
 
@@ -8,6 +10,8 @@ from ..db.connection import connect
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
 # pylint: disable=E0012,C0415
+
+LOG = logging.getLogger()
 
 class AdminFuncs:
     """\
@@ -39,14 +43,17 @@ class AdminFuncs:
 
     @staticmethod
     def run(args):
-        from ..tools import admin
         if args.warm:
             AdminFuncs._warm(args)
 
         if args.check_database:
-            run_legacy_script('check_import_finished.php', nominatim_env=args)
+            LOG.warning('Checking database')
+            from ..tools import check_database
+            return check_database.check_database(args.config)
 
         if args.analyse_indexing:
+            LOG.warning('Analysing performance of indexing function')
+            from ..tools import admin
             conn = connect(args.config.get_libpq_dsn())
             admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
             conn.close()
@@ -56,6 +63,7 @@ class AdminFuncs:
 
     @staticmethod
     def _warm(args):
+        LOG.warning('Warming database caches')
         params = ['warm.php']
         if args.target == 'reverse':
             params.append('--reverse-only')

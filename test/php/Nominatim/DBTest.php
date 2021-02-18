@@ -164,14 +164,6 @@ class DBTest extends \PHPUnit\Framework\TestCase
             $this->assertTrue($oDB->tableExists('table1'));
             $this->assertFalse($oDB->tableExists('table99'));
             $this->assertFalse($oDB->tableExists(null));
-
-            $this->assertEmpty($oDB->getListOfIndices());
-            $oDB->exec('CREATE UNIQUE INDEX table1_index ON table1 (id)');
-            $this->assertEquals(
-                array('table1_index'),
-                $oDB->getListOfIndices()
-            );
-            $this->assertEmpty($oDB->getListOfIndices('table2'));
         }
 
         # select queries

@@ -15,9 +15,11 @@ import nominatim.clicmd.api
 import nominatim.clicmd.refresh
 import nominatim.clicmd.admin
 import nominatim.indexer.indexer
+import nominatim.tools.admin
+import nominatim.tools.check_database
+import nominatim.tools.freeze
 import nominatim.tools.refresh
 import nominatim.tools.replication
-import nominatim.tools.freeze
 from nominatim.errors import UsageError
 from nominatim.db import status
 
@@ -95,8 +97,7 @@ def test_freeze_command(mock_func_factory, temp_db):
 
 @pytest.mark.parametrize("params", [('--warm', ),
                                     ('--warm', '--reverse-only'),
-                                    ('--warm', '--search-only'),
-                                    ('--check-database', )])
+                                    ('--warm', '--search-only')])
 def test_admin_command_legacy(mock_func_factory, params):
     mock_run_legacy = mock_func_factory(nominatim.clicmd.admin, 'run_legacy_script')
 
@@ -104,12 +105,21 @@ def test_admin_command_legacy(mock_func_factory, params):
 
     assert mock_run_legacy.called == 1
 
+
 @pytest.mark.parametrize("func, params", [('analyse_indexing', ('--analyse-indexing', ))])
 def test_admin_command_tool(temp_db, mock_func_factory, func, params):
     mock = mock_func_factory(nominatim.tools.admin, func)
 
     assert 0 == call_nominatim('admin', *params)
     assert mock.called == 1
+
+
+def test_admin_command_check_database(mock_func_factory):
+    mock = mock_func_factory(nominatim.tools.check_database, 'check_database')
+
+    assert 0 == call_nominatim('admin', '--check-database')
+    assert mock.called == 1
+
 
 @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
                                       ('node', 12), ('way', 8), ('relation', 32)])

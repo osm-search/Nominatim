@@ -154,6 +154,7 @@ def check_placex_size(conn, config): # pylint: disable=W0613
 
     return CheckState.OK if cnt > 0 else CheckState.FATAL
 
+
 @_check(hint="""\
              The Postgresql extension nominatim.so was not correctly loaded.
 
@@ -198,11 +199,10 @@ def check_indexing(conn, config): # pylint: disable=W0613
         # Likely just an interrupted update.
         index_cmd = 'nominatim index'
     else:
-        # Looks like the import process got interupted.
+        # Looks like the import process got interrupted.
         index_cmd = 'nominatim import --continue indexing'
 
     return CheckState.FAIL, dict(count=cnt, index_cmd=index_cmd)
-
 
 
 @_check(hint="""\

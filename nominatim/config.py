@@ -25,8 +25,8 @@ class Configuration:
         avoid conflicts with other environment variables.
     """
 
-    def __init__(self, project_dir, config_dir, environ=os.environ):
-        self.environ = environ
+    def __init__(self, project_dir, config_dir, environ=None):
+        self.environ = environ or os.environ
         self.project_dir = project_dir
         self.config_dir = config_dir
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))

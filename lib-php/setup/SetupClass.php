@@ -667,48 +667,7 @@ class SetupFunctions
      */
     public function setupWebsite()
     {
-        if (!is_dir(CONST_InstallDir.'/website')) {
-            info('Creating directory for website scripts at: '.CONST_InstallDir.'/website');
-            mkdir(CONST_InstallDir.'/website');
-        }
-
-        $aScripts = array(
-          'deletable.php',
-          'details.php',
-          'lookup.php',
-          'polygons.php',
-          'reverse.php',
-          'search.php',
-          'status.php'
-        );
-
-        foreach ($aScripts as $sScript) {
-            $rFile = fopen(CONST_InstallDir.'/website/'.$sScript, 'w');
-
-            fwrite($rFile, "<?php\n\n");
-            fwrite($rFile, '@define(\'CONST_Debug\', $_GET[\'debug\'] ?? false);'."\n\n");
-
-            fwriteConstDef($rFile, 'LibDir', CONST_LibDir);
-            fwriteConstDef($rFile, 'Database_DSN', getSetting('DATABASE_DSN'));
-            fwriteConstDef($rFile, 'Default_Language', getSetting('DEFAULT_LANGUAGE'));
-            fwriteConstDef($rFile, 'Log_DB', getSettingBool('LOG_DB'));
-            fwriteConstDef($rFile, 'Log_File', getSetting('LOG_FILE'));
-            fwriteConstDef($rFile, 'Max_Word_Frequency', (int)getSetting('MAX_WORD_FREQUENCY'));
-            fwriteConstDef($rFile, 'NoAccessControl', getSettingBool('CORS_NOACCESSCONTROL'));
-            fwriteConstDef($rFile, 'Places_Max_ID_count', (int)getSetting('LOOKUP_MAX_COUNT'));
-            fwriteConstDef($rFile, 'PolygonOutput_MaximumTypes', getSetting('POLYGON_OUTPUT_MAX_TYPES'));
-            fwriteConstDef($rFile, 'Search_BatchMode', getSettingBool('SEARCH_BATCH_MODE'));
-            fwriteConstDef($rFile, 'Search_NameOnlySearchFrequencyThreshold', getSetting('SEARCH_NAME_ONLY_THRESHOLD'));
-            fwriteConstDef($rFile, 'Term_Normalization_Rules', getSetting('TERM_NORMALIZATION'));
-            fwriteConstDef($rFile, 'Use_Aux_Location_data', getSettingBool('USE_AUX_LOCATION_DATA'));
-            fwriteConstDef($rFile, 'Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
-            fwriteConstDef($rFile, 'MapIcon_URL', getSetting('MAPICON_URL'));
-
-            fwrite($rFile, 'require_once(\''.CONST_LibDir.'/website/'.$sScript."');\n");
-            fclose($rFile);
-
-            chmod(CONST_InstallDir.'/website/'.$sScript, 0755);
-        }
+        (clone($this->oNominatimCmd))->addParams('refresh', '--website')->run();
     }
 
     /**

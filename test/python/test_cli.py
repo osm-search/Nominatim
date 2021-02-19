@@ -149,7 +149,6 @@ def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ra
 @pytest.mark.parametrize("command,params", [
                          ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
                          ('importance', ('update.php', '--recompute-importance')),
-                         ('website', ('setup.php', '--setup-website')),
                          ])
 def test_refresh_legacy_command(mock_func_factory, temp_db, command, params):
     mock_run_legacy = mock_func_factory(nominatim.clicmd.refresh, 'run_legacy_script')
@@ -165,6 +164,7 @@ def test_refresh_legacy_command(mock_func_factory, temp_db, command, params):
                          ('word-counts', 'recompute_word_counts'),
                          ('address-levels', 'load_address_levels_from_file'),
                          ('functions', 'create_functions'),
+                         ('website', 'setup_website'),
                          ])
 def test_refresh_command(mock_func_factory, temp_db, command, func):
     func_mock = mock_func_factory(nominatim.tools.refresh, func)

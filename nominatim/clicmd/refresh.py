@@ -82,7 +82,8 @@ class UpdateRefresh:
             run_legacy_script('update.php', '--recompute-importance',
                               nominatim_env=args, throw_on_fail=True)
         if args.website:
-            run_legacy_script('setup.php', '--setup-website',
-                              nominatim_env=args, throw_on_fail=True)
+            webdir = args.project_dir / 'website'
+            LOG.warning('Setting up website directory at %s', webdir)
+            refresh.setup_website(webdir, args.phplib_dir, args.config)
 
         return 0

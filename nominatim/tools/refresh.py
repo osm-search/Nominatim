@@ -2,11 +2,15 @@
 Functions for bringing auxiliary data in the database up-to-date.
 """
 import json
+import logging
 import re
+from textwrap import dedent
 
 from psycopg2.extras import execute_values
 
 from ..db.utils import execute_file
+
+LOG = logging.getLogger()
 
 def update_postcodes(conn, sql_dir):
     """ Recalculate postcode centroids and add, remove and update entries in the
@@ -165,3 +169,65 @@ def create_functions(conn, config, sql_dir,
         cur.execute(sql)
 
     conn.commit()
+
+
+WEBSITE_SCRIPTS = (
+    'deletable.php',
+    'details.php',
+    'lookup.php',
+    'polygons.php',
+    'reverse.php',
+    'search.php',
+    'status.php'
+)
+
+# constants needed by PHP scripts: PHP name, config name, type
+PHP_CONST_DEFS = (
+    ('Database_DSN', 'DATABASE_DSN', str),
+    ('Default_Language', 'DEFAULT_LANGUAGE', str),
+    ('Log_DB', 'LOG_DB', bool),
+    ('Log_File', 'LOG_FILE', str),
+    ('Max_Word_Frequency', 'MAX_WORD_FREQUENCY', int),
+    ('NoAccessControl', 'CORS_NOACCESSCONTROL', bool),
+    ('Places_Max_ID_count', 'LOOKUP_MAX_COUNT', int),
+    ('PolygonOutput_MaximumTypes', 'POLYGON_OUTPUT_MAX_TYPES', int),
+    ('Search_BatchMode', 'SEARCH_BATCH_MODE', bool),
+    ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
+    ('Term_Normalization_Rules', 'TERM_NORMALIZATION', str),
+    ('Use_Aux_Location_data', 'USE_AUX_LOCATION_DATA', bool),
+    ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
+    ('MapIcon_URL', 'MAPICON_URL', str),
+)
+
+
+def setup_website(basedir, phplib_dir, config):
+    """ Create the website script stubs.
+    """
+    if not basedir.exists():
+        LOG.info('Creating website directory.')
+        basedir.mkdir()
+
+    template = dedent("""\
+                      <?php
+
+                      @define('CONST_Debug', $_GET['debug'] ?? false);
+                      @define('CONST_LibDir', '{}');
+
+                      """.format(phplib_dir))
+
+    for php_name, conf_name, var_type in PHP_CONST_DEFS:
+        if var_type == bool:
+            varout = 'true' if config.get_bool(conf_name) else 'false'
+        elif var_type == int:
+            varout = getattr(config, conf_name)
+        elif not getattr(config, conf_name):
+            varout = 'false'
+        else:
+            varout = "'{}'".format(getattr(config, conf_name).replace("'", "\\'"))
+
+        template += "@define('CONST_{}', {});\n".format(php_name, varout)
+
+    template += "\nrequire_once('{}/website/{{}}');\n".format(phplib_dir)
+
+    for script in WEBSITE_SCRIPTS:
+        (basedir / script).write_text(template.format(script), 'utf-8')

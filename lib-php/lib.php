@@ -132,24 +132,6 @@ function addQuotes($s)
     return "'".$s."'";
 }
 
-function fwriteConstDef($rFile, $sConstName, $value)
-{
-    $sEscapedValue;
-
-    if (is_bool($value)) {
-        $sEscapedValue = $value ? 'true' : 'false';
-    } elseif (is_numeric($value)) {
-        $sEscapedValue = strval($value);
-    } elseif (!$value) {
-        $sEscapedValue = 'false';
-    } else {
-        $sEscapedValue = addQuotes(str_replace("'", "\\'", (string)$value));
-    }
-
-    fwrite($rFile, "@define('CONST_$sConstName', $sEscapedValue);\n");
-}
-
-
 function parseLatLon($sQuery)
 {
     $sFound    = null;

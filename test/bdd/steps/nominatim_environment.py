@@ -8,6 +8,7 @@ import psycopg2.extras
 sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
 from nominatim.config import Configuration
+from nominatim.tools import refresh
 from steps.utils import run_script
 
 class NominatimEnvironment:
@@ -104,7 +105,8 @@ class NominatimEnvironment:
             self.website_dir.cleanup()
 
         self.website_dir = tempfile.TemporaryDirectory()
-        self.run_setup_script('setup-website')
+        cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
+        refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg)
 
 
     def db_drop_database(self, name):

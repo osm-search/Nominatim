@@ -17,7 +17,7 @@ class Configuration:
         Nominatim uses dotenv to configure the software. Configuration options
         are resolved in the following order:
 
-         * from the OS environment
+         * from the OS environment (or the dirctionary given in `environ`
          * from the .env file in the project directory of the installation
          * from the default installation in the configuration directory
 
@@ -25,7 +25,8 @@ class Configuration:
         avoid conflicts with other environment variables.
     """
 
-    def __init__(self, project_dir, config_dir):
+    def __init__(self, project_dir, config_dir, environ=os.environ):
+        self.environ = environ
         self.project_dir = project_dir
         self.config_dir = config_dir
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
@@ -42,7 +43,7 @@ class Configuration:
     def __getattr__(self, name):
         name = 'NOMINATIM_' + name
 
-        return os.environ.get(name) or self._config[name]
+        return self.environ.get(name) or self._config[name]
 
     def get_bool(self, name):
         """ Return the given configuration parameter as a boolean.
@@ -100,6 +101,6 @@ class Configuration:
             merged in.
         """
         env = dict(self._config)
-        env.update(os.environ)
+        env.update(self.environ)
 
         return env

@@ -8,4 +8,3 @@ loadSettings(getcwd());
 (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
     ->addParams('admin', '--check-database')
     ->run();
-

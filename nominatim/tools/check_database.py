@@ -70,7 +70,7 @@ def check_database(config):
         if ret == CheckState.FATAL:
             conn.close()
             return 1
-        if ret != CheckState.OK:
+        if ret in (CheckState.FATAL, CheckState.FAIL):
             overall_result = 1
 
     conn.close()

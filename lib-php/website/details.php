@@ -81,10 +81,15 @@ if ($sOsmType && $iOsmId > 0) {
             exit;
         }
     }
+
+    if ($sPlaceId === false) {
+        throw new Exception('No place with that OSM ID found.', 404);
+    }
+} else {
+    if ($sPlaceId === false) {
+        userError('Required parameters missing. Need either osmtype/osmid or place_id.');
+    }
 }
-
-
-if ($sPlaceId === false) userError('Please select a place id');
 
 $iPlaceID = (int)$sPlaceId;
 
@@ -140,7 +145,7 @@ $sSQL .= " WHERE place_id = $iPlaceID";
 $aPointDetails = $oDB->getRow($sSQL, null, 'Could not get details of place object.');
 
 if (!$aPointDetails) {
-    userError('Unknown place id.');
+    throw new Exception('No place with that place ID found.', 404);
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];

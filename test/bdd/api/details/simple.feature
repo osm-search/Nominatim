@@ -44,7 +44,7 @@ Feature: Object details
 
     Scenario Outline: Details via unknown OSM id
         When sending details query for <object>
-        Then a HTTP 400 is returned
+        Then a HTTP 404 is returned
 
     Examples:
       | object |

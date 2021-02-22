@@ -8,6 +8,7 @@ import psycopg2.extras
 sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
 from nominatim.config import Configuration
+from nominatim.tools import refresh
 from steps.utils import run_script
 
 class NominatimEnvironment:
@@ -104,7 +105,8 @@ class NominatimEnvironment:
             self.website_dir.cleanup()
 
         self.website_dir = tempfile.TemporaryDirectory()
-        self.run_setup_script('setup-website')
+        cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
+        refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg)
 
 
     def db_drop_database(self, name):
@@ -182,6 +184,7 @@ class NominatimEnvironment:
         try:
             self.run_setup_script('all', osm_file=self.api_test_file)
             self.run_setup_script('import-tiger-data')
+            self.run_setup_script('drop')
 
             phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
             run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])

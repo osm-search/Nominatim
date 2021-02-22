@@ -53,7 +53,7 @@ if ($sOsmType && $iOsmId > 0) {
 
     // Be nice about our error messages for broken geometry
 
-    if (!$sPlaceId) {
+    if (!$sPlaceId && $oDB->tableExists('import_polygon_error')) {
         $sSQL = 'SELECT ';
         $sSQL .= '    osm_type, ';
         $sSQL .= '    osm_id, ';
@@ -144,7 +144,6 @@ if (!$aPointDetails) {
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];
-$aPointDetails['rank_search_label'] = getSearchRankLabel($aPointDetails['rank_search']); // only used in HTML format
 
 // Get all alternative names (languages, etc)
 $sSQL = 'SELECT (each(name)).key,(each(name)).value FROM placex ';

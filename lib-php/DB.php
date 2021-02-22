@@ -241,16 +241,6 @@ class DB
     }
 
     /**
-    * Returns a list of table names in the database
-    *
-    * @return array[]
-    */
-    public function getListOfTables()
-    {
-        return $this->getCol("SELECT tablename FROM pg_tables WHERE schemaname='public'");
-    }
-
-    /**
      * Deletes a table. Returns true if deleted or didn't exist.
      *
      * @param string  $sTableName
@@ -260,76 +250,6 @@ class DB
     public function deleteTable($sTableName)
     {
         return $this->exec('DROP TABLE IF EXISTS '.$sTableName.' CASCADE') == 0;
-    }
-
-    /**
-    * Check if an index exists in the database. Optional filtered by tablename
-    *
-    * @param string  $sTableName
-    *
-    * @return boolean
-    */
-    public function indexExists($sIndexName, $sTableName = null)
-    {
-        return in_array($sIndexName, $this->getListOfIndices($sTableName));
-    }
-
-    /**
-    * Returns a list of index names in the database, optional filtered by tablename
-    *
-    * @param string  $sTableName
-    *
-    * @return array
-    */
-    public function getListOfIndices($sTableName = null)
-    {
-        //  table_name            | index_name                      | column_name
-        // -----------------------+---------------------------------+--------------
-        //  country_name          | idx_country_name_country_code   | country_code
-        //  country_osm_grid      | idx_country_osm_grid_geometry   | geometry
-        //  import_polygon_delete | idx_import_polygon_delete_osmid | osm_id
-        //  import_polygon_delete | idx_import_polygon_delete_osmid | osm_type
-        //  import_polygon_error  | idx_import_polygon_error_osmid  | osm_id
-        //  import_polygon_error  | idx_import_polygon_error_osmid  | osm_type
-        $sSql = <<< END
-SELECT
-    t.relname as table_name,
-    i.relname as index_name,
-    a.attname as column_name
-FROM
-    pg_class t,
-    pg_class i,
-    pg_index ix,
-    pg_attribute a
-WHERE
-    t.oid = ix.indrelid
-    and i.oid = ix.indexrelid
-    and a.attrelid = t.oid
-    and a.attnum = ANY(ix.indkey)
-    and t.relkind = 'r'
-    and i.relname NOT LIKE 'pg_%'
-    FILTERS
- ORDER BY
-    t.relname,
-    i.relname,
-    a.attname
-END;
-
-        $aRows = null;
-        if ($sTableName) {
-            $sSql = str_replace('FILTERS', 'and t.relname = :tablename', $sSql);
-            $aRows = $this->getAll($sSql, array(':tablename' => $sTableName));
-        } else {
-            $sSql = str_replace('FILTERS', '', $sSql);
-            $aRows = $this->getAll($sSql);
-        }
-
-        $aIndexNames = array_unique(array_map(function ($aRow) {
-            return $aRow['index_name'];
-        }, $aRows));
-        sort($aIndexNames);
-
-        return $aIndexNames;
     }
 
     /**

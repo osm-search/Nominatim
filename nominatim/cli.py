@@ -173,27 +173,6 @@ class SetupAll:
         return run_legacy_script(*params, nominatim_env=args)
 
 
-class SetupFreeze:
-    """\
-    Make database read-only.
-
-    About half of data in the Nominatim database is kept only to be able to
-    keep the data up-to-date with new changes made in OpenStreetMap. This
-    command drops all this data and only keeps the part needed for geocoding
-    itself.
-
-    This command has the same effect as the `--no-updates` option for imports.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        pass # No options
-
-    @staticmethod
-    def run(args):
-        return run_legacy_script('setup.php', '--drop', nominatim_env=args)
-
-
 class SetupSpecialPhrases:
     """\
     Maintain special phrases.
@@ -352,7 +331,7 @@ def nominatim(**kwargs):
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
     parser.add_subcommand('import', SetupAll)
-    parser.add_subcommand('freeze', SetupFreeze)
+    parser.add_subcommand('freeze', clicmd.SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)
 
     parser.add_subcommand('special-phrases', SetupSpecialPhrases)

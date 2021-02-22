@@ -159,31 +159,11 @@ class DBTest extends \PHPUnit\Framework\TestCase
 
         # Tables, Indices
         {
-            $this->assertEmpty($oDB->getListOfTables());
             $oDB->exec('CREATE TABLE table1 (id integer, city varchar, country varchar)');
-            $oDB->exec('CREATE TABLE table2 (id integer, city varchar, country varchar)');
-            $this->assertEquals(
-                array('table1', 'table2'),
-                $oDB->getListOfTables()
-            );
-            $this->assertTrue($oDB->deleteTable('table2'));
-            $this->assertTrue($oDB->deleteTable('table99'));
-            $this->assertEquals(
-                array('table1'),
-                $oDB->getListOfTables()
-            );
 
             $this->assertTrue($oDB->tableExists('table1'));
             $this->assertFalse($oDB->tableExists('table99'));
             $this->assertFalse($oDB->tableExists(null));
-
-            $this->assertEmpty($oDB->getListOfIndices());
-            $oDB->exec('CREATE UNIQUE INDEX table1_index ON table1 (id)');
-            $this->assertEquals(
-                array('table1_index'),
-                $oDB->getListOfIndices()
-            );
-            $this->assertEmpty($oDB->getListOfIndices('table2'));
         }
 
         # select queries

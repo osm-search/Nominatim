@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 from psycopg2.extensions import parse_dsn
 
 from ..version import NOMINATIM_VERSION
+from ..db.connection import get_pg_env
 
 LOG = logging.getLogger()
 
@@ -100,7 +101,7 @@ def run_php_server(server_address, base_dir):
 def run_osm2pgsql(options):
     """ Run osm2pgsql with the given options.
     """
-    env = os.environ
+    env = get_pg_env(options['dsn'])
     cmd = [options['osm2pgsql'],
            '--hstore', '--latlon', '--slim',
            '--with-forward-dependencies', 'false',
@@ -115,17 +116,6 @@ def run_osm2pgsql(options):
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))
-
-    dsn = parse_dsn(options['dsn'])
-    if 'password' in dsn:
-        env['PGPASSWORD'] = dsn['password']
-    if 'dbname' in dsn:
-        cmd.extend(('-d', dsn['dbname']))
-    if 'user' in dsn:
-        cmd.extend(('--username', dsn['user']))
-    for param in ('host', 'port'):
-        if param in dsn:
-            cmd.extend(('--' + param, dsn[param]))
 
     if options.get('disable_jit', False):
         env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'

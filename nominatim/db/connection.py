@@ -3,12 +3,15 @@ Specialised connection and cursor functions.
 """
 import contextlib
 import logging
+import os
 
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
 
 from ..errors import UsageError
+
+LOG = logging.getLogger()
 
 class _Cursor(psycopg2.extras.DictCursor):
     """ A cursor returning dict-like objects and providing specialised
@@ -18,8 +21,7 @@ class _Cursor(psycopg2.extras.DictCursor):
     def execute(self, query, args=None): # pylint: disable=W0221
         """ Query execution that logs the SQL query when debugging is enabled.
         """
-        logger = logging.getLogger()
-        logger.debug(self.mogrify(query, args).decode('utf-8'))
+        LOG.debug(self.mogrify(query, args).decode('utf-8'))
 
         super().execute(query, args)
 
@@ -96,3 +98,52 @@ def connect(dsn):
         return ctxmgr
     except psycopg2.OperationalError as err:
         raise UsageError("Cannot connect to database: {}".format(err)) from err
+
+
+# Translation from PG connection string parameters to PG environment variables.
+# Derived from https://www.postgresql.org/docs/current/libpq-envars.html.
+_PG_CONNECTION_STRINGS = {
+    'host': 'PGHOST',
+    'hostaddr': 'PGHOSTADDR',
+    'port': 'PGPORT',
+    'dbname': 'PGDATABASE',
+    'user': 'PGUSER',
+    'password': 'PGPASSWORD',
+    'passfile': 'PGPASSFILE',
+    'channel_binding': 'PGCHANNELBINDING',
+    'service': 'PGSERVICE',
+    'options': 'PGOPTIONS',
+    'application_name': 'PGAPPNAME',
+    'sslmode': 'PGSSLMODE',
+    'requiressl': 'PGREQUIRESSL',
+    'sslcompression': 'PGSSLCOMPRESSION',
+    'sslcert': 'PGSSLCERT',
+    'sslkey': 'PGSSLKEY',
+    'sslrootcert': 'PGSSLROOTCERT',
+    'sslcrl': 'PGSSLCRL',
+    'requirepeer': 'PGREQUIREPEER',
+    'ssl_min_protocol_version': 'PGSSLMINPROTOCOLVERSION',
+    'ssl_min_protocol_version': 'PGSSLMAXPROTOCOLVERSION',
+    'gssencmode': 'PGGSSENCMODE',
+    'krbsrvname': 'PGKRBSRVNAME',
+    'gsslib': 'PGGSSLIB',
+    'connect_timeout': 'PGCONNECT_TIMEOUT',
+    'target_session_attrs': 'PGTARGETSESSIONATTRS',
+}
+
+
+def get_pg_env(dsn, base_env=None):
+    """ Return a copy of `base_env` with the environment variables for
+        PostgresSQL set up from the given database connection string.
+        If `base_env` is None, then the OS environment is used as a base
+        environment.
+    """
+    env = base_env if base_env is not None else os.environ
+
+    for param, value in psycopg2.extensions.parse_dsn(dsn).items():
+        if param in _PG_CONNECTION_STRINGS:
+            env[_PG_CONNECTION_STRINGS[param]] = value
+        else:
+            LOG.error("Unknown connection parameter '%s' ignored.", param)
+
+    return env

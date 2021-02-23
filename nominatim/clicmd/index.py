@@ -51,8 +51,7 @@ class UpdateIndex:
 
         if not args.no_boundaries and not args.boundaries_only \
            and args.minrank == 0 and args.maxrank == 30:
-            conn = connect(args.config.get_libpq_dsn())
-            status.set_indexed(conn, True)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                status.set_indexed(conn, True)
 
         return 0

@@ -7,9 +7,8 @@ from nominatim.db.connection import connect
 
 @pytest.fixture
 def db(temp_db):
-    conn = connect('dbname=' + temp_db)
-    yield conn
-    conn.close()
+    with connect('dbname=' + temp_db) as conn:
+        yield conn
 
 
 def test_connection_table_exists(db, temp_db_cursor):

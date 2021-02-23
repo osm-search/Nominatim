@@ -85,9 +85,8 @@ def temp_db_with_extensions(temp_db):
 def temp_db_conn(temp_db):
     """ Connection to the test database.
     """
-    conn = connection.connect('dbname=' + temp_db)
-    yield conn
-    conn.close()
+    with connection.connect('dbname=' + temp_db) as conn:
+        yield conn
 
 
 @pytest.fixture

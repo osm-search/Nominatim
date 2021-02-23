@@ -9,9 +9,8 @@ from nominatim.tools import admin
 
 @pytest.fixture
 def db(temp_db, placex_table):
-    conn = connect('dbname=' + temp_db)
-    yield conn
-    conn.close()
+    with connect('dbname=' + temp_db) as conn:
+        yield conn
 
 def test_analyse_indexing_no_objects(db):
     with pytest.raises(UsageError):

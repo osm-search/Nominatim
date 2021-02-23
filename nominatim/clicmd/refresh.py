@@ -50,29 +50,25 @@ class UpdateRefresh:
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.update_postcodes(conn, args.sqllib_dir)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.update_postcodes(conn, args.sqllib_dir)
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.recompute_word_counts(conn, args.sqllib_dir)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.recompute_word_counts(conn, args.sqllib_dir)
 
         if args.address_levels:
             cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
             LOG.warning('Updating address levels from %s', cfg)
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.load_address_levels_from_file(conn, cfg)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.load_address_levels_from_file(conn, cfg)
 
         if args.functions:
             LOG.warning('Create functions')
-            conn = connect(args.config.get_libpq_dsn())
-            refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                     args.diffs, args.enable_debug_statements)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                                         args.diffs, args.enable_debug_statements)
 
         if args.wiki_data:
             run_legacy_script('setup.php', '--import-wikipedia-articles',

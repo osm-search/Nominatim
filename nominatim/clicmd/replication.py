@@ -62,13 +62,12 @@ class UpdateReplication:
         from ..tools import replication, refresh
 
         LOG.warning("Initialising replication updates")
-        conn = connect(args.config.get_libpq_dsn())
-        replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
-        if args.update_functions:
-            LOG.warning("Create functions")
-            refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                     True, False)
-        conn.close()
+        with connect(args.config.get_libpq_dsn()) as conn:
+            replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
+            if args.update_functions:
+                LOG.warning("Create functions")
+                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                                         True, False)
         return 0
 
 
@@ -76,10 +75,8 @@ class UpdateReplication:
     def _check_for_updates(args):
         from ..tools import replication
 
-        conn = connect(args.config.get_libpq_dsn())
-        ret = replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
-        conn.close()
-        return ret
+        with connect(args.config.get_libpq_dsn()) as conn:
+            return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
 
     @staticmethod
     def _report_update(batchdate, start_import, start_index):
@@ -122,13 +119,12 @@ class UpdateReplication:
             recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
         while True:
-            conn = connect(args.config.get_libpq_dsn())
-            start = dt.datetime.now(dt.timezone.utc)
-            state = replication.update(conn, params)
-            if state is not replication.UpdateState.NO_CHANGES:
-                status.log_status(conn, start, 'import')
-            batchdate, _, _ = status.get_status(conn)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                start = dt.datetime.now(dt.timezone.utc)
+                state = replication.update(conn, params)
+                if state is not replication.UpdateState.NO_CHANGES:
+                    status.log_status(conn, start, 'import')
+                batchdate, _, _ = status.get_status(conn)
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
                 index_start = dt.datetime.now(dt.timezone.utc)
@@ -137,10 +133,9 @@ class UpdateReplication:
                 indexer.index_boundaries(0, 30)
                 indexer.index_by_rank(0, 30)
 
-                conn = connect(args.config.get_libpq_dsn())
-                status.set_indexed(conn, True)
-                status.log_status(conn, index_start, 'index')
-                conn.close()
+                with connect(args.config.get_libpq_dsn()) as conn:
+                    status.set_indexed(conn, True)
+                    status.log_status(conn, index_start, 'index')
             else:
                 index_start = None
 

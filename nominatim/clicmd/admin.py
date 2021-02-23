@@ -54,9 +54,8 @@ class AdminFuncs:
         if args.analyse_indexing:
             LOG.warning('Analysing performance of indexing function')
             from ..tools import admin
-            conn = connect(args.config.get_libpq_dsn())
-            admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
 
         return 0
 

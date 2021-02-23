@@ -1,6 +1,7 @@
 """
 Specialised connection and cursor functions.
 """
+import contextlib
 import logging
 
 import psycopg2
@@ -84,9 +85,14 @@ class _Connection(psycopg2.extensions.connection):
 
 def connect(dsn):
     """ Open a connection to the database using the specialised connection
-        factory.
+        factory. The returned object may be used in conjunction with 'with'.
+        When used outside a context manager, use the `connection` attribute
+        to get the connection.
     """
     try:
-        return psycopg2.connect(dsn, connection_factory=_Connection)
+        conn = psycopg2.connect(dsn, connection_factory=_Connection)
+        ctxmgr = contextlib.closing(conn)
+        ctxmgr.connection = conn
+        return ctxmgr
     except psycopg2.OperationalError as err:
         raise UsageError("Cannot connect to database: {}".format(err)) from err

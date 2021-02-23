@@ -12,17 +12,17 @@ from ..db.utils import execute_file
 
 LOG = logging.getLogger()
 
-def update_postcodes(conn, sql_dir):
+def update_postcodes(dsn, sql_dir):
     """ Recalculate postcode centroids and add, remove and update entries in the
         location_postcode table. `conn` is an opne connection to the database.
     """
-    execute_file(conn, sql_dir / 'update-postcodes.sql')
+    execute_file(dsn, sql_dir / 'update-postcodes.sql')
 
 
-def recompute_word_counts(conn, sql_dir):
+def recompute_word_counts(dsn, sql_dir):
     """ Compute the frequency of full-word search terms.
     """
-    execute_file(conn, sql_dir / 'words_from_search_name.sql')
+    execute_file(dsn, sql_dir / 'words_from_search_name.sql')
 
 
 def _add_address_level_rows_from_entry(rows, entry):

@@ -56,6 +56,15 @@ setupHTTPProxy();
 
 $bDidSomething = false;
 
+$oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
+if (isset($aCMDResult['quiet']) && $aCMDResult['quiet']) {
+    $oNominatimCmd->addParams('--quiet');
+}
+if ($aCMDResult['verbose']) {
+    $oNominatimCmd->addParams('--verbose');
+}
+
+
 //*******************************************************
 // Making some sanity check:
 // Check if osm-file is set and points to a valid file
@@ -72,12 +81,12 @@ $oSetup = new SetupFunctions($aCMDResult);
 // go through complete process if 'all' is selected or start selected functions
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createDB();
+    (clone($oNominatimCmd))->addParams('transition', '--create-db')->run(true);
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->setupDB();
+    (clone($oNominatimCmd))->addParams('transition', '--setup-db')->run(true);
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {

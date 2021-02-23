@@ -105,6 +105,9 @@ def temp_db_cursor(temp_db):
 def def_config():
     return Configuration(None, SRC_DIR.resolve() / 'settings')
 
+@pytest.fixture
+def src_dir():
+    return SRC_DIR.resolve()
 
 @pytest.fixture
 def status_table(temp_db_conn):

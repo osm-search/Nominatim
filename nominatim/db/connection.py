@@ -81,9 +81,21 @@ class _Connection(psycopg2.extensions.connection):
         """
         version = self.server_version
         if version < 100000:
-            return (version / 10000, (version % 10000) / 100)
+            return (int(version / 10000), (version % 10000) / 100)
 
-        return (version / 10000, version % 10000)
+        return (int(version / 10000), version % 10000)
+
+
+    def postgis_version_tuple(self):
+        """ Return the postgis version installed in the database as a
+            tuple of (major, minor). Assumes that the PostGIS extension
+            has been installed already.
+        """
+        with self.cursor() as cur:
+            version = cur.scalar('SELECT postgis_lib_version()')
+
+        return tuple((int(x) for x in version.split('.')[:2]))
+
 
 def connect(dsn):
     """ Open a connection to the database using the specialised connection
@@ -123,7 +135,7 @@ _PG_CONNECTION_STRINGS = {
     'sslcrl': 'PGSSLCRL',
     'requirepeer': 'PGREQUIREPEER',
     'ssl_min_protocol_version': 'PGSSLMINPROTOCOLVERSION',
-    'ssl_min_protocol_version': 'PGSSLMAXPROTOCOLVERSION',
+    'ssl_max_protocol_version': 'PGSSLMAXPROTOCOLVERSION',
     'gssencmode': 'PGGSSENCMODE',
     'krbsrvname': 'PGKRBSRVNAME',
     'gsslib': 'PGGSSLIB',
@@ -138,7 +150,7 @@ def get_pg_env(dsn, base_env=None):
         If `base_env` is None, then the OS environment is used as a base
         environment.
     """
-    env = base_env if base_env is not None else os.environ
+    env = dict(base_env if base_env is not None else os.environ)
 
     for param, value in psycopg2.extensions.parse_dsn(dsn).items():
         if param in _PG_CONNECTION_STRINGS:

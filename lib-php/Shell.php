@@ -48,7 +48,7 @@ class Shell
         return join(' ', $aEscaped);
     }
 
-    public function run()
+    public function run($bExitOnFail = False)
     {
         $sCmd = $this->escapedCmd();
         // $aEnv does not need escaping, proc_open seems to handle it fine
@@ -67,6 +67,11 @@ class Shell
         fclose($aPipes[0]); // no stdin
 
         $iStat = proc_close($hProc);
+
+        if ($iStat != 0 && $bExitOnFail) {
+            exit($iStat);
+        }
+
         return $iStat;
     }
 

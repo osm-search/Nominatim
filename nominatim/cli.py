@@ -354,4 +354,6 @@ def nominatim(**kwargs):
     else:
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
+    parser.add_subcommand('transition', clicmd.AdminTransition)
+
     return parser.run(**kwargs)

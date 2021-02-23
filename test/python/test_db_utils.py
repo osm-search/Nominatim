@@ -26,6 +26,7 @@ def test_execute_file_bad_file(dsn, tmp_path):
     with pytest.raises(FileNotFoundError):
         db_utils.execute_file(dsn, tmp_path / 'test2.sql')
 
+
 def test_execute_file_bad_sql(dsn, tmp_path):
     tmpfile = tmp_path / 'test.sql'
     tmpfile.write_text('CREATE STABLE test (id INT)')

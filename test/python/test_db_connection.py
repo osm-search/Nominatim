@@ -37,6 +37,17 @@ def test_connection_server_version_tuple(db):
     assert len(ver) == 2
     assert ver[0] > 8
 
+
+def test_connection_postgis_version_tuple(db, temp_db_cursor):
+    temp_db_cursor.execute('CREATE EXTENSION postgis')
+
+    ver = db.postgis_version_tuple()
+
+    assert isinstance(ver, tuple)
+    assert len(ver) == 2
+    assert ver[0] >= 2
+
+
 def test_cursor_scalar(db, temp_db_cursor):
     temp_db_cursor.execute('CREATE TABLE dummy (id INT)')
 

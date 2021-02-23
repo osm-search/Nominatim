@@ -6,9 +6,11 @@ correct functionionality. They use a lot of monkeypatching to avoid executing
 the actual functions.
 """
 import datetime as dt
+import time
+from pathlib import Path
+
 import psycopg2
 import pytest
-import time
 
 import nominatim.cli
 import nominatim.clicmd.api
@@ -23,14 +25,16 @@ import nominatim.tools.replication
 from nominatim.errors import UsageError
 from nominatim.db import status
 
+SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
+
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
                                    osm2pgsql_path='build/osm2pgsql/osm2pgsql',
-                                   phplib_dir='lib-php',
-                                   data_dir='.',
+                                   phplib_dir=str(SRC_DIR / 'lib-php'),
+                                   data_dir=str(SRC_DIR / 'data'),
                                    phpcgi_path='/usr/bin/php-cgi',
-                                   sqllib_dir='lib-sql',
-                                   config_dir='settings',
+                                   sqllib_dir=str(SRC_DIR / 'lib-sql'),
+                                   config_dir=str(SRC_DIR / 'settings'),
                                    cli_args=args)
 
 class MockParamCapture:

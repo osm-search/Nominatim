@@ -50,13 +50,11 @@ class UpdateRefresh:
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
-            with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.update_postcodes(conn, args.sqllib_dir)
+            refresh.update_postcodes(args.config.get_libpq_dsn(), args.sqllib_dir)
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
-            with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.recompute_word_counts(conn, args.sqllib_dir)
+            refresh.recompute_word_counts(args.config.get_libpq_dsn(), args.sqllib_dir)
 
         if args.address_levels:
             cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)

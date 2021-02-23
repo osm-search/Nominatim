@@ -2,12 +2,9 @@
 Helper functions for executing external programs.
 """
 import logging
-import os
 import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
-
-from psycopg2.extensions import parse_dsn
 
 from ..version import NOMINATIM_VERSION
 from ..db.connection import get_pg_env

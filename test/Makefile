@@ -10,5 +10,8 @@ bdd-no-test-db:
 php:
 	cd php && phpunit ./
 
+python:
+	pytest python
+
 
 .PHONY: bdd php no-test-db

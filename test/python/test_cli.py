@@ -135,24 +135,13 @@ def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ra
     assert rank_mock.called == do_ranks
 
 
-@pytest.mark.parametrize("command,params", [
-                         ('wiki-data', ('setup.php', '--import-wikipedia-articles')),
-                         ('importance', ('update.php', '--recompute-importance')),
-                         ])
-def test_refresh_legacy_command(mock_func_factory, temp_db, command, params):
-    mock_run_legacy = mock_func_factory(nominatim.clicmd.refresh, 'run_legacy_script')
-
-    assert 0 == call_nominatim('refresh', '--' + command)
-
-    assert mock_run_legacy.called == 1
-    assert len(mock_run_legacy.last_args) >= len(params)
-    assert mock_run_legacy.last_args[:len(params)] == params
-
 @pytest.mark.parametrize("command,func", [
                          ('postcodes', 'update_postcodes'),
                          ('word-counts', 'recompute_word_counts'),
                          ('address-levels', 'load_address_levels_from_file'),
                          ('functions', 'create_functions'),
+                         ('wiki-data', 'import_wikipedia_articles'),
+                         ('importance', 'recompute_importance'),
                          ('website', 'setup_website'),
                          ])
 def test_refresh_command(mock_func_factory, temp_db, command, func):
@@ -162,13 +151,16 @@ def test_refresh_command(mock_func_factory, temp_db, command, func):
     assert func_mock.called == 1
 
 
-def test_refresh_importance_computed_after_wiki_import(mock_func_factory, temp_db):
-    mock_run_legacy = mock_func_factory(nominatim.clicmd.refresh, 'run_legacy_script')
+def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):
+    calls = []
+    monkeypatch.setattr(nominatim.tools.refresh, 'import_wikipedia_articles',
+                        lambda *args, **kwargs: calls.append('import') or 0)
+    monkeypatch.setattr(nominatim.tools.refresh, 'recompute_importance',
+                        lambda *args, **kwargs: calls.append('update'))
 
     assert 0 == call_nominatim('refresh', '--importance', '--wiki-data')
 
-    assert mock_run_legacy.called == 2
-    assert mock_run_legacy.last_args == ('update.php', '--recompute-importance')
+    assert calls == ['import', 'update']
 
 
 def test_serve_command(mock_func_factory):

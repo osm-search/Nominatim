@@ -71,6 +71,12 @@ def temp_db(monkeypatch):
 
     conn.close()
 
+
+@pytest.fixture
+def dsn(temp_db):
+    return 'dbname=' + temp_db
+
+
 @pytest.fixture
 def temp_db_with_extensions(temp_db):
     conn = psycopg2.connect(database=temp_db)
@@ -99,6 +105,14 @@ def temp_db_cursor(temp_db):
     with conn.cursor(cursor_factory=_TestingCursor) as cur:
         yield cur
     conn.close()
+
+
+@pytest.fixture
+def table_factory(temp_db_cursor):
+    def mk_table(name, definition='id INT'):
+        temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
+
+    return mk_table
 
 
 @pytest.fixture

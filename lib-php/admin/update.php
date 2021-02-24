@@ -211,20 +211,7 @@ if ($aResult['update-address-levels']) {
 }
 
 if ($aResult['recompute-importance']) {
-    echo "Updating importance values for database.\n";
-    $oDB = new Nominatim\DB();
-    $oDB->connect();
-
-    $sSQL = 'ALTER TABLE placex DISABLE TRIGGER ALL;';
-    $sSQL .= 'UPDATE placex SET (wikipedia, importance) =';
-    $sSQL .= '   (SELECT wikipedia, importance';
-    $sSQL .= '    FROM compute_importance(extratags, country_code, osm_type, osm_id));';
-    $sSQL .= 'UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance';
-    $sSQL .= ' FROM placex d';
-    $sSQL .= ' WHERE s.place_id = d.linked_place_id and d.wikipedia is not null';
-    $sSQL .= '       and (s.wikipedia is null or s.importance < d.importance);';
-    $sSQL .= 'ALTER TABLE placex ENABLE TRIGGER ALL;';
-    $oDB->exec($sSQL);
+    (clone($oNominatimCmd))->addParams('refresh', '--importance')->run(true);
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {

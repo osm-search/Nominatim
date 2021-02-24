@@ -200,6 +200,53 @@ PHP_CONST_DEFS = (
 )
 
 
+def import_wikipedia_articles(dsn, data_path, ignore_errors=False):
+    """ Replaces the wikipedia importance tables with new data.
+        The import is run in a single transaction so that the new data
+        is replace seemlessly.
+
+        Returns 0 if all was well and 1 if the importance file could not
+        be found. Throws an exception if there was an error reading the file.
+    """
+    datafile = data_path / 'wikimedia-importance.sql.gz'
+
+    if not datafile.exists():
+        return 1
+
+    pre_code = """BEGIN;
+                  DROP TABLE IF EXISTS "wikipedia_article";
+                  DROP TABLE IF EXISTS "wikipedia_redirect"
+               """
+    post_code = "COMMIT"
+    execute_file(dsn, datafile, ignore_errors=ignore_errors,
+                 pre_code=pre_code, post_code=post_code)
+
+    return 0
+
+
+def recompute_importance(conn):
+    """ Recompute wikipedia links and importance for all entries in placex.
+        This is a long-running operations that must not be executed in
+        parallel with updates.
+    """
+    with conn.cursor() as cur:
+        cur.execute('ALTER TABLE placex DISABLE TRIGGER ALL')
+        cur.execute("""
+            UPDATE placex SET (wikipedia, importance) =
+               (SELECT wikipedia, importance
+                FROM compute_importance(extratags, country_code, osm_type, osm_id))
+            """)
+        cur.execute("""
+            UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance
+             FROM placex d
+             WHERE s.place_id = d.linked_place_id and d.wikipedia is not null
+                   and (s.wikipedia is null or s.importance < d.importance);
+            """)
+
+        cur.execute('ALTER TABLE placex ENABLE TRIGGER ALL')
+    conn.commit()
+
+
 def setup_website(basedir, phplib_dir, config):
     """ Create the website script stubs.
     """

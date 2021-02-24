@@ -6,7 +6,6 @@ require_once(CONST_LibDir.'/Shell.php');
 
 class SetupFunctions
 {
-    protected $iCacheMemory;
     protected $iInstances;
     protected $aDSNInfo;
     protected $bQuiet;
@@ -29,16 +28,6 @@ class SetupFunctions
         if ($this->iInstances < 1) {
             $this->iInstances = 1;
             warn('resetting threads to '.$this->iInstances);
-        }
-
-        if (isset($aCMDResult['osm2pgsql-cache'])) {
-            $this->iCacheMemory = $aCMDResult['osm2pgsql-cache'];
-        } elseif (getSetting('FLATNODE_FILE')) {
-            // When flatnode files are enabled then disable cache per default.
-            $this->iCacheMemory = 0;
-        } else {
-            // Otherwise: Assume we can steal all the cache memory in the box.
-            $this->iCacheMemory = getCacheMemoryMB();
         }
 
         // parse database string
@@ -82,6 +71,7 @@ class SetupFunctions
         if ($this->bVerbose) {
             $this->oNominatimCmd->addParams('--verbose');
         }
+        $this->oNominatimCmd->addParams('--threads', $this->iInstances);
     }
 
     public function createFunctions()
@@ -134,20 +124,6 @@ class SetupFunctions
     {
         info('Create Partition Functions');
         $this->createSqlFunctions(); // also create partition functions
-    }
-
-    public function importWikipediaArticles()
-    {
-        $sWikiArticlePath = getSetting('WIKIPEDIA_DATA_PATH', CONST_InstallDir);
-        $sWikiArticlesFile = $sWikiArticlePath.'/wikimedia-importance.sql.gz';
-        if (file_exists($sWikiArticlesFile)) {
-            info('Importing wikipedia articles and redirects');
-            $this->dropTable('wikipedia_article');
-            $this->dropTable('wikipedia_redirect');
-            $this->pgsqlRunScriptFile($sWikiArticlesFile);
-        } else {
-            warn('wikipedia importance dump file not found - places will have default importance');
-        }
     }
 
     public function loadData($bDisableTokenPrecalc)
@@ -505,21 +481,6 @@ class SetupFunctions
         $this->pgsqlRunScript($sSQL);
     }
 
-    public function drop()
-    {
-        (clone($this->oNominatimCmd))->addParams('freeze')->run();
-    }
-
-    /**
-     * Setup the directory for the API scripts.
-     *
-     * @return null
-     */
-    public function setupWebsite()
-    {
-        (clone($this->oNominatimCmd))->addParams('refresh', '--website')->run();
-    }
-
     /**
      * Return the connection to the database.
      *
@@ -536,15 +497,6 @@ class SetupFunctions
         }
 
         return $this->oDB;
-    }
-
-    private function removeFlatnodeFile()
-    {
-        $sFName = getSetting('FLATNODE_FILE');
-        if ($sFName && file_exists($sFName)) {
-            if ($this->bVerbose) echo 'Deleting '.$sFName."\n";
-            unlink($sFName);
-        }
     }
 
     private function pgsqlRunScript($sScript, $bfatal = true)
@@ -570,7 +522,7 @@ class SetupFunctions
             $oCmd->addParams('--enable-debug-statements');
         }
 
-        $oCmd->run();
+        $oCmd->run(!$this->sIgnoreErrors);
     }
 
     private function pgsqlRunPartitionScript($sTemplate)

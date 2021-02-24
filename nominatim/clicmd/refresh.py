@@ -5,7 +5,6 @@ import logging
 from pathlib import Path
 
 from ..db.connection import connect
-from ..tools.exec_utils import run_legacy_script
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -69,12 +68,20 @@ class UpdateRefresh:
                                          args.diffs, args.enable_debug_statements)
 
         if args.wiki_data:
-            run_legacy_script('setup.php', '--import-wikipedia-articles',
-                              nominatim_env=args, throw_on_fail=True)
+            data_path = Path(args.config.WIKIPEDIA_DATA_PATH
+                             or args.project_dir)
+            LOG.warning('Import wikipdia article importance from %s', data_path)
+            if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
+                                                 data_path) > 0:
+                LOG.fatal('FATAL: Wikipedia importance dump file not found')
+                return 1
+
         # Attention: importance MUST come after wiki data import.
         if args.importance:
-            run_legacy_script('update.php', '--recompute-importance',
-                              nominatim_env=args, throw_on_fail=True)
+            LOG.warning('Update importance values for database')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                refresh.recompute_importance(conn)
+
         if args.website:
             webdir = args.project_dir / 'website'
             LOG.warning('Setting up website directory at %s', webdir)

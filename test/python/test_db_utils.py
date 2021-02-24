@@ -7,10 +7,6 @@ import pytest
 import nominatim.db.utils as db_utils
 from nominatim.errors import UsageError
 
-@pytest.fixture
-def dsn(temp_db):
-    return 'dbname=' + temp_db
-
 def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
     tmpfile = tmp_path / 'test.sql'
     tmpfile.write_text('CREATE TABLE test (id INT);\nINSERT INTO test VALUES(56);')
@@ -40,3 +36,27 @@ def test_execute_file_bad_sql_ignore_errors(dsn, tmp_path):
     tmpfile.write_text('CREATE STABLE test (id INT)')
 
     db_utils.execute_file(dsn, tmpfile, ignore_errors=True)
+
+
+def test_execute_file_with_pre_code(dsn, tmp_path, temp_db_cursor):
+    tmpfile = tmp_path / 'test.sql'
+    tmpfile.write_text('INSERT INTO test VALUES(4)')
+
+    db_utils.execute_file(dsn, tmpfile, pre_code='CREATE TABLE test (id INT)')
+
+    temp_db_cursor.execute('SELECT * FROM test')
+
+    assert temp_db_cursor.rowcount == 1
+    assert temp_db_cursor.fetchone()[0] == 4
+
+
+def test_execute_file_with_post_code(dsn, tmp_path, temp_db_cursor):
+    tmpfile = tmp_path / 'test.sql'
+    tmpfile.write_text('CREATE TABLE test (id INT)')
+
+    db_utils.execute_file(dsn, tmpfile, post_code='INSERT INTO test VALUES(23)')
+
+    temp_db_cursor.execute('SELECT * FROM test')
+
+    assert temp_db_cursor.rowcount == 1
+    assert temp_db_cursor.fetchone()[0] == 23

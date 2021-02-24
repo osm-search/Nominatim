@@ -131,7 +131,7 @@ if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->importWikipediaArticles();
+    (clone($oNominatimCmd))->addParams('refresh', '--wiki-data')->run();
 }
 
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
@@ -157,7 +157,7 @@ if ($aCMDResult['index'] || $aCMDResult['all']) {
 
 if ($aCMDResult['drop']) {
     $bDidSomething = true;
-    $oSetup->drop($aCMDResult);
+    (clone($oNominatimCmd))->addParams('freeze')->run(true);
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
@@ -172,7 +172,7 @@ if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
 
 if ($aCMDResult['setup-website'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->setupWebsite();
+    (clone($oNominatimCmd))->addParams('refresh', '--website')->run(true);
 }
 
 // ******************************************************

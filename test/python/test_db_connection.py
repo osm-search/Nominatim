@@ -12,10 +12,10 @@ def db(temp_db):
         yield conn
 
 
-def test_connection_table_exists(db, temp_db_cursor):
+def test_connection_table_exists(db, table_factory):
     assert db.table_exists('foobar') == False
 
-    temp_db_cursor.execute('CREATE TABLE foobar (id INT)')
+    table_factory('foobar')
 
     assert db.table_exists('foobar') == True
 
@@ -31,10 +31,10 @@ def test_connection_index_exists(db, temp_db_cursor):
     assert db.index_exists('some_index', table='bar') == False
 
 
-def test_drop_table_existing(db, temp_db_cursor):
-    temp_db_cursor.execute('CREATE TABLE dummy (id INT)')
-
+def test_drop_table_existing(db, table_factory):
+    table_factory('dummy')
     assert db.table_exists('dummy')
+
     db.drop_table('dummy')
     assert not db.table_exists('dummy')
 
@@ -65,8 +65,8 @@ def test_connection_postgis_version_tuple(db, temp_db_cursor):
     assert ver[0] >= 2
 
 
-def test_cursor_scalar(db, temp_db_cursor):
-    temp_db_cursor.execute('CREATE TABLE dummy (id INT)')
+def test_cursor_scalar(db, table_factory):
+    table_factory('dummy')
 
     with db.cursor() as cur:
         assert cur.scalar('SELECT count(*) FROM dummy') == 0

@@ -17,17 +17,6 @@ LOG = logging.getLogger()
 # Using non-top-level imports to make pyosmium optional for replication only.
 # pylint: disable=E0012,C0415
 
-def _osm2pgsql_options_from_args(args, default_cache, default_threads):
-    """ Set up the standard osm2pgsql from the command line arguments.
-    """
-    return dict(osm2pgsql=args.osm2pgsql_path,
-                osm2pgsql_cache=args.osm2pgsql_cache or default_cache,
-                osm2pgsql_style=args.config.get_import_style_file(),
-                threads=args.threads or default_threads,
-                dsn=args.config.get_libpq_dsn(),
-                flatnode_file=args.config.FLATNODE_FILE)
-
-
 class UpdateReplication:
     """\
     Update the database using an online replication service.
@@ -96,7 +85,7 @@ class UpdateReplication:
         from ..tools import replication
         from ..indexer.indexer import Indexer
 
-        params = _osm2pgsql_options_from_args(args, 2000, 1)
+        params = args.osm2pgsql_options(default_cache=2000, default_threads=1)
         params.update(base_url=args.config.REPLICATION_URL,
                       update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
                       import_file=args.project_dir / 'osmosischange.osc',

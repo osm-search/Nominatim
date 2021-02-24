@@ -12,6 +12,7 @@ from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_php_server
 from .errors import UsageError
 from . import clicmd
+from .clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
 
@@ -62,7 +63,8 @@ class CommandlineParser:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
-        args = self.parser.parse_args(args=kwargs.get('cli_args'))
+        args = NominatimArgs()
+        self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
 
         if args.subcommand is None:
             self.parser.print_help()

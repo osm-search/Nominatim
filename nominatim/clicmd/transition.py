@@ -6,8 +6,10 @@ through the PHP scripts but are now no longer directly accessible.
 This module will be removed as soon as the transition phase is over.
 """
 import logging
+from pathlib import Path
 
 from ..db.connection import connect
+from ..errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -28,9 +30,17 @@ class AdminTransition:
                            help='Create nominatim db')
         group.add_argument('--setup-db', action='store_true',
                            help='Build a blank nominatim db')
+        group.add_argument('--import-data', action='store_true',
+                           help='Import a osm file')
         group = parser.add_argument_group('Options')
         group.add_argument('--no-partitions', action='store_true',
                            help='Do not partition search indices')
+        group.add_argument('--osm-file', metavar='FILE',
+                           help='File to import')
+        group.add_argument('--drop', action='store_true',
+                           help='Drop tables needed for updates, making the database readonly')
+        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
+                           help='Size of cache to be used by osm2pgsql (in MB)')
 
     @staticmethod
     def run(args):
@@ -51,3 +61,11 @@ class AdminTransition:
 
             database_import.import_base_data(args.config.get_libpq_dsn(),
                                              args.data_dir, args.no_partitions)
+
+        if args.import_data:
+            LOG.warning('Import data')
+            if not args.osm_file:
+                raise UsageError('Missing required --osm-file argument')
+            database_import.import_osm_data(Path(args.osm_file),
+                                            args.osm2pgsql_options(0, 1),
+                                            drop=args.drop)

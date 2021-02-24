@@ -86,12 +86,25 @@ if ($aCMDResult['create-db'] || $aCMDResult['all']) {
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    (clone($oNominatimCmd))->addParams('transition', '--setup-db')->run(true);
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--setup-db');
+
+    if ($aCMDResult['no-partitions'] ?? false) {
+        $oCmd->addParams('--no-partitions');
+    }
+
+    $oCmd->run(true);
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->importData($aCMDResult['osm-file']);
+    $oCmd = (clone($oNominatimCmd))
+        ->addParams('transition', '--import-data')
+        ->addParams('--osm-file', $aCMDResult['osm-file']);
+    if ($aCMDResult['drop'] ?? false) {
+        $oCmd->addParams('--drop');
+    }
+
+    $oCmd->run(true);
 }
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {

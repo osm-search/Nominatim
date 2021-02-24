@@ -1,7 +1,7 @@
 """
 Implementation of the 'index' subcommand.
 """
-import os
+import psutil
 
 from ..db import status
 from ..db.connection import connect
@@ -10,14 +10,6 @@ from ..db.connection import connect
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
 # pylint: disable=E0012,C0415
-
-def _num_system_cpus():
-    try:
-        cpus = len(os.sched_getaffinity(0))
-    except NotImplementedError:
-        cpus = None
-
-    return cpus or os.cpu_count()
 
 
 class UpdateIndex:
@@ -42,7 +34,7 @@ class UpdateIndex:
         from ..indexer.indexer import Indexer
 
         indexer = Indexer(args.config.get_libpq_dsn(),
-                          args.threads or _num_system_cpus() or 1)
+                          args.threads or psutil.cpu_count() or 1)
 
         if not args.no_boundaries:
             indexer.index_boundaries(args.minrank, args.maxrank)

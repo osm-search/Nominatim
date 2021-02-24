@@ -75,6 +75,17 @@ class _Connection(psycopg2.extensions.connection):
         return True
 
 
+    def drop_table(self, name, if_exists=True):
+        """ Drop the table with the given name.
+            Set `if_exists` to False if a non-existant table should raise
+            an exception instead of just being ignored.
+        """
+        with self.cursor() as cur:
+            cur.execute("""DROP TABLE {} "{}"
+                        """.format('IF EXISTS' if if_exists else '', name))
+        self.commit()
+
+
     def server_version_tuple(self):
         """ Return the server version as a tuple of (major, minor).
             Converts correctly for pre-10 and post-10 PostgreSQL versions.

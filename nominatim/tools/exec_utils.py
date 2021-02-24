@@ -110,9 +110,18 @@ def run_osm2pgsql(options):
           ]
     if options['append']:
         cmd.append('--append')
+    else:
+        cmd.append('--create')
 
     if options['flatnode_file']:
         cmd.extend(('--flat-nodes', options['flatnode_file']))
+
+    for key, param in (('slim_data', '--tablespace-slim-data'),
+                       ('slim_index', '--tablespace-slim-index'),
+                       ('main_data', '--tablespace-main-data'),
+                       ('main_index', '--tablespace-main-index')):
+        if options['tablespaces'][key]:
+            cmd.extend((param, options['tablespaces'][key]))
 
     if options.get('disable_jit', False):
         env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'

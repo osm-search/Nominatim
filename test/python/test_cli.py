@@ -40,6 +40,7 @@ def mock_run_legacy(monkeypatch):
     monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
     return mock
 
+
 @pytest.fixture
 def mock_func_factory(monkeypatch):
     def get_mock(module, func):
@@ -48,6 +49,7 @@ def mock_func_factory(monkeypatch):
         return mock
 
     return get_mock
+
 
 def test_cli_help(capsys):
     """ Running nominatim tool without arguments prints help.

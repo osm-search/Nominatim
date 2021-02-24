@@ -41,10 +41,11 @@ For running Nominatim:
   * [Python 3](https://www.python.org/) (3.5+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
+  * [psutil] (https://github.com/giampaolo/psutil)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)
-  ( PHP-cgi (for running queries from the command line)
+  * PHP-cgi (for running queries from the command line)
 
 For running continuous updates:
 

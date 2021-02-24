@@ -84,66 +84,6 @@ class SetupFunctions
         }
     }
 
-    public function importData($sOSMFile)
-    {
-        info('Import data');
-
-        if (!file_exists(getOsm2pgsqlBinary())) {
-            echo "Check NOMINATIM_OSM2PGSQL_BINARY in your local .env file.\n";
-            echo "Normally you should not need to set this manually.\n";
-            fail("osm2pgsql not found in '".getOsm2pgsqlBinary()."'");
-        }
-
-        $oCmd = new \Nominatim\Shell(getOsm2pgsqlBinary());
-        $oCmd->addParams('--style', getImportStyle());
-
-        if (getSetting('FLATNODE_FILE')) {
-            $oCmd->addParams('--flat-nodes', getSetting('FLATNODE_FILE'));
-        }
-        if (getSetting('TABLESPACE_OSM_DATA')) {
-            $oCmd->addParams('--tablespace-slim-data', getSetting('TABLESPACE_OSM_DATA'));
-        }
-        if (getSetting('TABLESPACE_OSM_INDEX')) {
-            $oCmd->addParams('--tablespace-slim-index', getSetting('TABLESPACE_OSM_INDEX'));
-        }
-        if (getSetting('TABLESPACE_PLACE_DATA')) {
-            $oCmd->addParams('--tablespace-main-data', getSetting('TABLESPACE_PLACE_DATA'));
-        }
-        if (getSetting('TABLESPACE_PLACE_INDEX')) {
-            $oCmd->addParams('--tablespace-main-index', getSetting('TABLESPACE_PLACE_INDEX'));
-        }
-        $oCmd->addParams('--latlong', '--slim', '--create');
-        $oCmd->addParams('--output', 'gazetteer');
-        $oCmd->addParams('--hstore');
-        $oCmd->addParams('--number-processes', 1);
-        $oCmd->addParams('--with-forward-dependencies', 'false');
-        $oCmd->addParams('--log-progress', 'true');
-        $oCmd->addParams('--cache', $this->iCacheMemory);
-        $oCmd->addParams('--port', $this->aDSNInfo['port']);
-
-        if (isset($this->aDSNInfo['username'])) {
-            $oCmd->addParams('--username', $this->aDSNInfo['username']);
-        }
-        if (isset($this->aDSNInfo['password'])) {
-            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $oCmd->addParams('--host', $this->aDSNInfo['hostspec']);
-        }
-        $oCmd->addParams('--database', $this->aDSNInfo['database']);
-        $oCmd->addParams($sOSMFile);
-        $oCmd->run();
-
-        if (!$this->sIgnoreErrors && !$this->db()->getRow('select * from place limit 1')) {
-            fail('No Data');
-        }
-
-        if ($this->bDrop) {
-            $this->dropTable('planet_osm_nodes');
-            $this->removeFlatnodeFile();
-        }
-    }
-
     public function createFunctions()
     {
         info('Create Functions');

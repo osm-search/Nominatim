@@ -48,7 +48,7 @@ class Shell
         return join(' ', $aEscaped);
     }
 
-    public function run($bExitOnFail = False)
+    public function run($bExitOnFail = false)
     {
         $sCmd = $this->escapedCmd();
         // $aEnv does not need escaping, proc_open seems to handle it fine

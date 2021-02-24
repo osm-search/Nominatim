@@ -2,6 +2,7 @@
 Tests for specialised conenction and cursor classes.
 """
 import pytest
+import psycopg2
 
 from nominatim.db.connection import connect, get_pg_env
 
@@ -29,6 +30,22 @@ def test_connection_index_exists(db, temp_db_cursor):
     assert db.index_exists('some_index', table='foobar') == True
     assert db.index_exists('some_index', table='bar') == False
 
+
+def test_drop_table_existing(db, temp_db_cursor):
+    temp_db_cursor.execute('CREATE TABLE dummy (id INT)')
+
+    assert db.table_exists('dummy')
+    db.drop_table('dummy')
+    assert not db.table_exists('dummy')
+
+
+def test_drop_table_non_existsing(db):
+    db.drop_table('dfkjgjriogjigjgjrdghehtre')
+
+
+def test_drop_table_non_existing_force(db):
+    with pytest.raises(psycopg2.ProgrammingError, match='.*does not exist.*'):
+        db.drop_table('dfkjgjriogjigjgjrdghehtre', if_exists=False)
 
 def test_connection_server_version_tuple(db):
     ver = db.server_version_tuple()

@@ -4,6 +4,7 @@ Tests for functions to import a new database.
 import pytest
 import psycopg2
 import sys
+from pathlib import Path
 
 from nominatim.tools import database_import
 from nominatim.errors import UsageError
@@ -94,3 +95,42 @@ def test_import_base_data_ignore_partitions(src_dir, temp_db, temp_db_cursor):
 
     assert temp_db_cursor.scalar('SELECT count(*) FROM country_name') > 0
     assert temp_db_cursor.scalar('SELECT count(*) FROM country_name WHERE partition != 0') == 0
+
+
+def test_import_osm_data_simple(temp_db_cursor,osm2pgsql_options):
+    temp_db_cursor.execute('CREATE TABLE place (id INT)')
+    temp_db_cursor.execute('INSERT INTO place values (1)')
+
+    database_import.import_osm_data('file.pdf', osm2pgsql_options)
+
+
+def test_import_osm_data_simple_no_data(temp_db_cursor,osm2pgsql_options):
+    temp_db_cursor.execute('CREATE TABLE place (id INT)')
+
+    with pytest.raises(UsageError, match='No data.*'):
+        database_import.import_osm_data('file.pdf', osm2pgsql_options)
+
+
+def test_import_osm_data_drop(temp_db_conn, temp_db_cursor, tmp_path, osm2pgsql_options):
+    temp_db_cursor.execute('CREATE TABLE place (id INT)')
+    temp_db_cursor.execute('CREATE TABLE planet_osm_nodes (id INT)')
+    temp_db_cursor.execute('INSERT INTO place values (1)')
+
+    flatfile = tmp_path / 'flatfile'
+    flatfile.write_text('touch')
+
+    osm2pgsql_options['flatnode_file'] = str(flatfile.resolve())
+
+    database_import.import_osm_data('file.pdf', osm2pgsql_options, drop=True)
+
+    assert not flatfile.exists()
+    assert not temp_db_conn.table_exists('planet_osm_nodes')
+
+
+def test_import_osm_data_default_cache(temp_db_cursor,osm2pgsql_options):
+    temp_db_cursor.execute('CREATE TABLE place (id INT)')
+    temp_db_cursor.execute('INSERT INTO place values (1)')
+
+    osm2pgsql_options['osm2pgsql_cache'] = 0
+
+    database_import.import_osm_data(Path(__file__), osm2pgsql_options)

@@ -120,12 +120,6 @@ class SetupFunctions
         $this->pgsqlRunPartitionScript($sTemplate);
     }
 
-    public function createPartitionFunctions()
-    {
-        info('Create Partition Functions');
-        $this->createSqlFunctions(); // also create partition functions
-    }
-
     public function loadData($bDisableTokenPrecalc)
     {
         info('Drop old Data');

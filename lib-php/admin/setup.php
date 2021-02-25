@@ -126,7 +126,7 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createPartitionFunctions();
+    $oSetup->createFunctions(); // also create partition functions
 }
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {

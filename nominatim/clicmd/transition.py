@@ -32,6 +32,8 @@ class AdminTransition:
                            help='Build a blank nominatim db')
         group.add_argument('--import-data', action='store_true',
                            help='Import a osm file')
+        group.add_argument('--index', action='store_true',
+                           help='Index the data')
         group = parser.add_argument_group('Options')
         group.add_argument('--no-partitions', action='store_true',
                            help='Do not partition search indices')
@@ -41,6 +43,8 @@ class AdminTransition:
                            help='Drop tables needed for updates, making the database readonly')
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
+        group.add_argument('--no-analyse', action='store_true',
+                           help='Do not perform analyse operations during index')
 
     @staticmethod
     def run(args):
@@ -69,3 +73,9 @@ class AdminTransition:
             database_import.import_osm_data(Path(args.osm_file),
                                             args.osm2pgsql_options(0, 1),
                                             drop=args.drop)
+
+        if args.index:
+            LOG.warning('Indexing')
+            from ..indexer.indexer import Indexer
+            indexer = Indexer(args.config.get_libpq_dsn(), args.threads or 1)
+            indexer.index_full()

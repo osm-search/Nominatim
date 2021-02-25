@@ -64,6 +64,16 @@ if ($aCMDResult['verbose']) {
     $oNominatimCmd->addParams('--verbose');
 }
 
+// by default, use all but one processor, but never more than 15.
+var_dump($aCMDResult);
+$iInstances = max(1, $aCMDResult['threads'] ?? (min(16, getProcessorCount()) - 1));
+
+function run($oCmd) {
+    global $iInstances;
+    $oCmd->addParams('--threads', $iInstances);
+    $oCmd->run(true);
+}
+
 
 //*******************************************************
 // Making some sanity check:
@@ -81,7 +91,7 @@ $oSetup = new SetupFunctions($aCMDResult);
 // go through complete process if 'all' is selected or start selected functions
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    (clone($oNominatimCmd))->addParams('transition', '--create-db')->run(true);
+    run((clone($oNominatimCmd))->addParams('transition', '--create-db'));
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
@@ -92,7 +102,7 @@ if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
         $oCmd->addParams('--no-partitions');
     }
 
-    $oCmd->run(true);
+    run($oCmd);
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
@@ -104,7 +114,7 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
         $oCmd->addParams('--drop');
     }
 
-    $oCmd->run(true);
+    run($oCmd);
 }
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
@@ -131,6 +141,7 @@ if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
+    // ignore errors!
     (clone($oNominatimCmd))->addParams('refresh', '--wiki-data')->run();
 }
 
@@ -152,12 +163,17 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
 
 if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->index($aCMDResult['index-noanalyse']);
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--index');
+    if ($aCMDResult['index-noanalyse'] ?? false) {
+        $oCmd->addParams('--no-analyse');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['drop']) {
     $bDidSomething = true;
-    (clone($oNominatimCmd))->addParams('freeze')->run(true);
+    run((clone($oNominatimCmd))->addParams('freeze'));
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
@@ -172,7 +188,7 @@ if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
 
 if ($aCMDResult['setup-website'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    (clone($oNominatimCmd))->addParams('refresh', '--website')->run(true);
+    run((clone($oNominatimCmd))->addParams('refresh', '--website'));
 }
 
 // ******************************************************

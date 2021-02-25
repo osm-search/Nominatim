@@ -171,6 +171,8 @@ class SetupAll:
             params.append('--ignore-errors')
         if args.index_noanalyse:
             params.append('--index-noanalyse')
+        if args.threads:
+            params.extend(('--threads', args.threads))
 
         return run_legacy_script(*params, nominatim_env=args)
 

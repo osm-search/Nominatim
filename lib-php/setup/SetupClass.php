@@ -71,7 +71,6 @@ class SetupFunctions
         if ($this->bVerbose) {
             $this->oNominatimCmd->addParams('--verbose');
         }
-        $this->oNominatimCmd->addParams('--threads', $this->iInstances);
     }
 
     public function createFunctions()
@@ -377,49 +376,6 @@ class SetupFunctions
 
         $sSQL = 'SELECT count(getorcreate_postcode_id(v)) FROM ';
         $sSQL .= '(SELECT distinct(postcode) as v FROM location_postcode) p';
-        $this->db()->exec($sSQL);
-    }
-
-    public function index($bIndexNoanalyse)
-    {
-        $this->checkModulePresence(); // raises exception on failure
-
-        $oBaseCmd = (clone $this->oNominatimCmd)->addParams('index');
-
-        info('Index ranks 0 - 4');
-        $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
-
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-        if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
-
-        info('Index administrative boundaries');
-        $oCmd = (clone $oBaseCmd)->addParams('--boundaries-only');
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        info('Index ranks 5 - 25');
-        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 5, '--maxrank', 25);
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
-
-        info('Index ranks 26 - 30');
-        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 26);
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        info('Index postcodes');
-        $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
         $this->db()->exec($sSQL);
     }
 

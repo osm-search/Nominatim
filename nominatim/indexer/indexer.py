@@ -61,8 +61,8 @@ class InterpolationRunner:
     @staticmethod
     def sql_index_place(ids):
         return """UPDATE location_property_osmline
-                  SET indexed_status = 0 WHERE place_id IN ({})"""\
-               .format(','.join((str(i) for i in ids)))
+                  SET indexed_status = 0 WHERE place_id IN ({})
+               """.format(','.join((str(i) for i in ids)))
 
 class BoundaryRunner:
     """ Returns SQL commands for indexing the administrative boundaries
@@ -79,18 +79,45 @@ class BoundaryRunner:
         return """SELECT count(*) FROM placex
                   WHERE indexed_status > 0
                     AND rank_search = {}
-                    AND class = 'boundary' and type = 'administrative'""".format(self.rank)
+                    AND class = 'boundary' and type = 'administrative'
+               """.format(self.rank)
 
     def sql_get_objects(self):
         return """SELECT place_id FROM placex
                   WHERE indexed_status > 0 and rank_search = {}
                         and class = 'boundary' and type = 'administrative'
-                  ORDER BY partition, admin_level""".format(self.rank)
+                  ORDER BY partition, admin_level
+               """.format(self.rank)
 
     @staticmethod
     def sql_index_place(ids):
         return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
                .format(','.join((str(i) for i in ids)))
+
+
+class PostcodeRunner:
+    """ Provides the SQL commands for indexing the location_postcode table.
+    """
+
+    @staticmethod
+    def name():
+        return "postcodes (location_postcode)"
+
+    @staticmethod
+    def sql_count_objects():
+        return 'SELECT count(*) FROM location_postcode WHERE indexed_status > 0'
+
+    @staticmethod
+    def sql_get_objects():
+        return """SELECT place_id FROM location_postcode
+                  WHERE indexed_status > 0
+                  ORDER BY country_code, postcode"""
+
+    @staticmethod
+    def sql_index_place(ids):
+        return """UPDATE location_postcode SET indexed_status = 0
+                  WHERE place_id IN ({})
+               """.format(','.join((str(i) for i in ids)))
 
 class Indexer:
     """ Main indexing routine.
@@ -100,7 +127,36 @@ class Indexer:
         self.conn = psycopg2.connect(dsn)
         self.threads = [DBConnection(dsn) for _ in range(num_threads)]
 
+
+    def index_full(self, analyse=True):
+        """ Index the complete database. This will first index boudnaries
+            followed by all other objects. When `analyse` is True, then the
+            database will be analysed at the appropriate places to
+            ensure that database statistics are updated.
+        """
+        self.index_by_rank(0, 4)
+        self._analyse_db_if(analyse)
+
+        self.index_boundaries(0, 30)
+        self._analyse_db_if(analyse)
+
+        self.index_by_rank(5, 25)
+        self._analyse_db_if(analyse)
+
+        self.index_by_rank(26, 30)
+        self._analyse_db_if(analyse)
+
+        self.index_postcodes()
+        self._analyse_db_if(analyse)
+
+    def _analyse_db_if(self, condition):
+        if condition:
+            with self.conn.cursor() as cur:
+                cur.execute('ANALYSE')
+
     def index_boundaries(self, minrank, maxrank):
+        """ Index only administrative boundaries within the given rank range.
+        """
         LOG.warning("Starting indexing boundaries using %s threads",
                     len(self.threads))
 
@@ -108,7 +164,11 @@ class Indexer:
             self.index(BoundaryRunner(rank))
 
     def index_by_rank(self, minrank, maxrank):
-        """ Run classic indexing by rank.
+        """ Index all entries of placex in the given rank range (inclusive)
+            in order of their address rank.
+
+            When rank 30 is requested then also interpolations and
+            places with address rank 0 will be indexed.
         """
         maxrank = min(maxrank, 30)
         LOG.warning("Starting indexing rank (%i to %i) using %i threads",
@@ -123,6 +183,12 @@ class Indexer:
             self.index(RankRunner(30), 20)
         else:
             self.index(RankRunner(maxrank))
+
+
+    def index_postcodes(self):
+        """Index the entries ofthe location_postcode table.
+        """
+        self.index(PostcodeRunner(), 20)
 
     def update_status_table(self):
         """ Update the status in the status table to 'indexed'.

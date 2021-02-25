@@ -12,6 +12,7 @@ class IndexerTestDB:
     def __init__(self, conn):
         self.placex_id = itertools.count(100000)
         self.osmline_id = itertools.count(500000)
+        self.postcode_id = itertools.count(700000)
 
         self.conn = conn
         self.conn.set_isolation_level(0)
@@ -31,6 +32,12 @@ class IndexerTestDB:
                                indexed_status SMALLINT,
                                indexed_date TIMESTAMP,
                                geometry_sector INTEGER)""")
+            cur.execute("""CREATE TABLE location_postcode (
+                               place_id BIGINT,
+                               indexed_status SMALLINT,
+                               indexed_date TIMESTAMP,
+                               country_code varchar(2),
+                               postcode TEXT)""")
             cur.execute("""CREATE OR REPLACE FUNCTION date_update() RETURNS TRIGGER
                            AS $$
                            BEGIN
@@ -39,10 +46,10 @@ class IndexerTestDB:
                              END IF;
                              RETURN NEW;
                            END; $$ LANGUAGE plpgsql;""")
-            cur.execute("""CREATE TRIGGER placex_update BEFORE UPDATE ON placex
-                           FOR EACH ROW EXECUTE PROCEDURE date_update()""")
-            cur.execute("""CREATE TRIGGER osmline_update BEFORE UPDATE ON location_property_osmline
-                           FOR EACH ROW EXECUTE PROCEDURE date_update()""")
+            for table in ('placex', 'location_property_osmline', 'location_postcode'):
+                cur.execute("""CREATE TRIGGER {0}_update BEFORE UPDATE ON {0}
+                               FOR EACH ROW EXECUTE PROCEDURE date_update()
+                            """.format(table))
 
     def scalar(self, query):
         with self.conn.cursor() as cur:
@@ -74,6 +81,15 @@ class IndexerTestDB:
                         (next_id, sector))
         return next_id
 
+    def add_postcode(self, country, postcode):
+        next_id = next(self.postcode_id)
+        with self.conn.cursor() as cur:
+            cur.execute("""INSERT INTO location_postcode
+                            (place_id, indexed_status, country_code, postcode)
+                            VALUES (%s, 1, %s, %s)""",
+                        (next_id, country, postcode))
+        return next_id
+
     def placex_unindexed(self):
         return self.scalar('SELECT count(*) from placex where indexed_status > 0')
 
@@ -87,7 +103,7 @@ def test_db(temp_db_conn):
 
 
 @pytest.mark.parametrize("threads", [1, 15])
-def test_index_full(test_db, threads):
+def test_index_all_by_rank(test_db, threads):
     for rank in range(31):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
@@ -184,3 +200,35 @@ def test_index_boundaries(test_db, threads):
     assert 0 == test_db.scalar("""
                     SELECT count(*) FROM placex
                       WHERE indexed_status = 0 AND class != 'boundary'""")
+
+
+@pytest.mark.parametrize("threads", [1, 15])
+def test_index_postcodes(test_db, threads):
+    for postcode in range(1000):
+        test_db.add_postcode('de', postcode)
+    for postcode in range(32000, 33000):
+        test_db.add_postcode('us', postcode)
+
+    idx = Indexer('dbname=test_nominatim_python_unittest', threads)
+    idx.index_postcodes()
+
+    assert 0 == test_db.scalar("""SELECT count(*) FROM location_postcode
+                                  WHERE indexed_status != 0""")
+
+
+def test_index_full(test_db):
+    for rank in range(4, 10):
+        test_db.add_admin(rank_address=rank, rank_search=rank)
+    for rank in range(31):
+        test_db.add_place(rank_address=rank, rank_search=rank)
+    test_db.add_osmline()
+    for postcode in range(1000):
+        test_db.add_postcode('de', postcode)
+
+    idx = Indexer('dbname=test_nominatim_python_unittest', 4)
+    idx.index_full()
+
+    assert 0 == test_db.placex_unindexed()
+    assert 0 == test_db.osmline_unindexed()
+    assert 0 == test_db.scalar("""SELECT count(*) FROM location_postcode
+                                  WHERE indexed_status != 0""")

@@ -65,7 +65,6 @@ if ($aCMDResult['verbose']) {
 }
 
 // by default, use all but one processor, but never more than 15.
-var_dump($aCMDResult);
 $iInstances = max(1, $aCMDResult['threads'] ?? (min(16, getProcessorCount()) - 1));
 
 function run($oCmd) {
@@ -147,7 +146,7 @@ if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
 
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->loadData($aCMDResult['disable-token-precalc']);
+    run((clone($oNominatimCmd))->addParams('transition', '--load-data'));
 }
 
 if ($aCMDResult['import-tiger-data']) {

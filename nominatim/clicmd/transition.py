@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 
 from ..db.connection import connect
+from ..db import status
 from ..errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
@@ -32,6 +33,8 @@ class AdminTransition:
                            help='Build a blank nominatim db')
         group.add_argument('--import-data', action='store_true',
                            help='Import a osm file')
+        group.add_argument('--load-data', action='store_true',
+                           help='Copy data to live tables from import table')
         group.add_argument('--index', action='store_true',
                            help='Index the data')
         group = parser.add_argument_group('Options')
@@ -73,6 +76,20 @@ class AdminTransition:
             database_import.import_osm_data(Path(args.osm_file),
                                             args.osm2pgsql_options(0, 1),
                                             drop=args.drop)
+
+        if args.load_data:
+            LOG.warning('Load data')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
+            database_import.load_data(args.config.get_libpq_dsn(),
+                                      args.data_dir,
+                                      args.threads or 1)
+
+            with connect(args.config.get_libpq_dsn()) as conn:
+                try:
+                    status.set_status(conn, status.compute_database_date(conn))
+                except Exception as exc: # pylint: disable=bare-except
+                    LOG.error('Cannot determine date of database: %s', exc)
 
         if args.index:
             LOG.warning('Indexing')

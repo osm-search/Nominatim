@@ -3,6 +3,7 @@ Functions for setting up and importing a new Nominatim database.
 """
 import logging
 import os
+import selectors
 import subprocess
 import shutil
 from pathlib import Path
@@ -11,6 +12,7 @@ import psutil
 
 from ..db.connection import connect, get_pg_env
 from ..db import utils as db_utils
+from ..db.async_connection import DBConnection
 from .exec_utils import run_osm2pgsql
 from ..errors import UsageError
 from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
@@ -156,3 +158,84 @@ def import_osm_data(osm_file, options, drop=False):
     if drop:
         if options['flatnode_file']:
             Path(options['flatnode_file']).unlink()
+
+
+def truncate_data_tables(conn, max_word_frequency=None):
+    """ Truncate all data tables to prepare for a fresh load.
+    """
+    with conn.cursor() as cur:
+        cur.execute('TRUNCATE word')
+        cur.execute('TRUNCATE placex')
+        cur.execute('TRUNCATE place_addressline')
+        cur.execute('TRUNCATE location_area')
+        cur.execute('TRUNCATE location_area_country')
+        cur.execute('TRUNCATE location_property')
+        cur.execute('TRUNCATE location_property_tiger')
+        cur.execute('TRUNCATE location_property_osmline')
+        cur.execute('TRUNCATE location_postcode')
+        cur.execute('TRUNCATE search_name')
+        cur.execute('DROP SEQUENCE seq_place')
+        cur.execute('CREATE SEQUENCE seq_place start 100000')
+
+        cur.execute("""SELECT tablename FROM pg_tables
+                       WHERE tablename LIKE 'location_road_%'""")
+
+        for table in [r[0] for r in list(cur)]:
+            cur.execute('TRUNCATE ' + table)
+
+        if max_word_frequency is not None:
+            # Used by getorcreate_word_id to ignore frequent partial words.
+            cur.execute("""CREATE OR REPLACE FUNCTION get_maxwordfreq()
+                           RETURNS integer AS $$
+                             SELECT {} as maxwordfreq;
+                           $$ LANGUAGE SQL IMMUTABLE
+                        """.format(max_word_frequency))
+        conn.commit()
+
+_COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
+
+def load_data(dsn, data_dir, threads):
+    """ Copy data into the word and placex table.
+    """
+    # Pre-calculate the most important terms in the word list.
+    db_utils.execute_file(dsn, data_dir / 'words.sql')
+
+    sel = selectors.DefaultSelector()
+    # Then copy data from place to placex in <threads - 1> chunks.
+    place_threads = max(1, threads - 1)
+    for imod in range(place_threads):
+        conn = DBConnection(dsn)
+        conn.connect()
+        conn.perform("""INSERT INTO placex ({0})
+                         SELECT {0} FROM place
+                         WHERE osm_id % {1} = {2}
+                           AND NOT (class='place' and type='houses')
+                           AND ST_IsValid(geometry)
+                     """.format(_COPY_COLUMNS, place_threads, imod))
+        sel.register(conn, selectors.EVENT_READ, conn)
+
+    # Address interpolations go into another table.
+    conn = DBConnection(dsn)
+    conn.connect()
+    conn.perform("""INSERT INTO location_property_osmline (osm_id, address, linegeo)
+                      SELECT osm_id, address, geometry FROM place
+                      WHERE class='place' and type='houses' and osm_type='W'
+                            and ST_GeometryType(geometry) = 'ST_LineString'
+                 """)
+    sel.register(conn, selectors.EVENT_READ, conn)
+
+    # Now wait for all of them to finish.
+    todo = place_threads + 1
+    while todo > 0:
+        for key, _ in sel.select(1):
+            conn = key.data
+            sel.unregister(conn)
+            conn.wait()
+            conn.close()
+            todo -= 1
+        print('.', end='', flush=True)
+    print('\n')
+
+    with connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute('ANALYSE')

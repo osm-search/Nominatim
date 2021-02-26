@@ -13,9 +13,11 @@ import nominatim.cli
 import nominatim.clicmd.api
 import nominatim.clicmd.refresh
 import nominatim.clicmd.admin
+import nominatim.clicmd.setup
 import nominatim.indexer.indexer
 import nominatim.tools.admin
 import nominatim.tools.check_database
+import nominatim.tools.database_import
 import nominatim.tools.freeze
 import nominatim.tools.refresh
 
@@ -61,7 +63,6 @@ def test_cli_help(capsys):
 
 
 @pytest.mark.parametrize("command,script", [
-                         (('import', '--continue', 'load-data'), 'setup'),
                          (('special-phrases',), 'specialphrases'),
                          (('add-data', '--tiger-data', 'tiger'), 'setup'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
@@ -73,6 +74,36 @@ def test_legacy_commands_simple(mock_run_legacy, command, script):
     assert mock_run_legacy.called == 1
     assert mock_run_legacy.last_args[0] == script + '.php'
 
+
+def test_import_missing_file(temp_db):
+    assert 1 == call_nominatim('import', '--osm-file', 'sfsafegweweggdgw.reh.erh')
+
+
+def test_import_bad_file(temp_db):
+    assert 1 == call_nominatim('import', '--osm-file', '.')
+
+
+def test_import_full(temp_db, mock_func_factory):
+    mocks = [
+        mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
+        mock_func_factory(nominatim.tools.database_import, 'install_module'),
+        mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
+        mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
+        mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
+        mock_func_factory(nominatim.tools.database_import, 'load_data'),
+        mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
+        mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+    ]
+
+    cf_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+    mock_func_factory(nominatim.clicmd.setup, 'run_legacy_script')
+
+    assert 0 == call_nominatim('import', '--osm-file', __file__)
+
+    assert cf_mock.called > 1
+
+    for mock in mocks:
+        assert mock.called == 1
 
 def test_freeze_command(mock_func_factory, temp_db):
     mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')

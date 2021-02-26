@@ -119,6 +119,13 @@ class PostcodeRunner:
                   WHERE place_id IN ({})
                """.format(','.join((str(i) for i in ids)))
 
+
+def _analyse_db_if(conn, condition):
+    if condition:
+        with conn.cursor() as cur:
+            cur.execute('ANALYSE')
+
+
 class Indexer:
     """ Main indexing routine.
     """
@@ -142,7 +149,7 @@ class Indexer:
 
         for thread in self.threads:
             thread.close()
-        threads = []
+        self.threads = []
 
 
     def index_full(self, analyse=True):
@@ -155,26 +162,22 @@ class Indexer:
 
         try:
             self.index_by_rank(0, 4)
-            self._analyse_db_if(conn, analyse)
+            _analyse_db_if(conn, analyse)
 
             self.index_boundaries(0, 30)
-            self._analyse_db_if(conn, analyse)
+            _analyse_db_if(conn, analyse)
 
             self.index_by_rank(5, 25)
-            self._analyse_db_if(conn, analyse)
+            _analyse_db_if(conn, analyse)
 
             self.index_by_rank(26, 30)
-            self._analyse_db_if(conn, analyse)
+            _analyse_db_if(conn, analyse)
 
             self.index_postcodes()
-            self._analyse_db_if(conn, analyse)
+            _analyse_db_if(conn, analyse)
         finally:
             conn.close()
 
-    def _analyse_db_if(self, conn, condition):
-        if condition:
-            with conn.cursor() as cur:
-                cur.execute('ANALYSE')
 
     def index_boundaries(self, minrank, maxrank):
         """ Index only administrative boundaries within the given rank range.

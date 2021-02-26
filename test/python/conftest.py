@@ -43,6 +43,11 @@ class _TestingCursor(psycopg2.extras.DictCursor):
                              WHERE tablename = %s""", (table, ))
         return num == 1
 
+    def table_rows(self, table):
+        """ Return the number of rows in the given table.
+        """
+        return self.scalar('SELECT count(*) FROM ' + table)
+
 
 @pytest.fixture
 def temp_db(monkeypatch):
@@ -109,8 +114,12 @@ def temp_db_cursor(temp_db):
 
 @pytest.fixture
 def table_factory(temp_db_cursor):
-    def mk_table(name, definition='id INT'):
+    def mk_table(name, definition='id INT', content=None):
         temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
+        if content is not None:
+            if not isinstance(content, str):
+                content = '),('.join([str(x) for x in content])
+            temp_db_cursor.execute("INSERT INTO {} VALUES ({})".format(name, content))
 
     return mk_table
 
@@ -174,7 +183,7 @@ def place_row(place_table, temp_db_cursor):
         temp_db_cursor.execute("INSERT INTO place VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                (osm_id or next(idseq), osm_type, cls, typ, names,
                                 admin_level, address, extratags,
-                                geom or 'SRID=4326;POINT(0 0 )'))
+                                geom or 'SRID=4326;POINT(0 0)'))
 
     return _insert
 
@@ -184,7 +193,7 @@ def placex_table(temp_db_with_extensions, temp_db_conn):
     """
     with temp_db_conn.cursor() as cur:
         cur.execute("""CREATE TABLE placex (
-                           place_id BIGINT NOT NULL,
+                           place_id BIGINT,
                            parent_place_id BIGINT,
                            linked_place_id BIGINT,
                            importance FLOAT,
@@ -207,8 +216,43 @@ def placex_table(temp_db_with_extensions, temp_db_conn):
                            country_code varchar(2),
                            housenumber TEXT,
                            postcode TEXT,
-                           centroid GEOMETRY(Geometry, 4326))
-                           """)
+                           centroid GEOMETRY(Geometry, 4326))""")
+    temp_db_conn.commit()
+
+
+@pytest.fixture
+def osmline_table(temp_db_with_extensions, temp_db_conn):
+    with temp_db_conn.cursor() as cur:
+        cur.execute("""CREATE TABLE location_property_osmline (
+                           place_id BIGINT,
+                           osm_id BIGINT,
+                           parent_place_id BIGINT,
+                           geometry_sector INTEGER,
+                           indexed_date TIMESTAMP,
+                           startnumber INTEGER,
+                           endnumber INTEGER,
+                           partition SMALLINT,
+                           indexed_status SMALLINT,
+                           linegeo GEOMETRY,
+                           interpolationtype TEXT,
+                           address HSTORE,
+                           postcode TEXT,
+                           country_code VARCHAR(2))""")
+    temp_db_conn.commit()
+
+
+@pytest.fixture
+def word_table(temp_db, temp_db_conn):
+    with temp_db_conn.cursor() as cur:
+        cur.execute("""CREATE TABLE word (
+                           word_id INTEGER,
+                           word_token text,
+                           word text,
+                           class text,
+                           type text,
+                           country_code varchar(2),
+                           search_name_count INTEGER,
+                           operator TEXT)""")
     temp_db_conn.commit()
 
 

@@ -63,6 +63,10 @@ def test_check_database_indexes_bad(temp_db_conn, def_config):
     assert chkdb.check_database_indexes(temp_db_conn, def_config) == chkdb.CheckState.FAIL
 
 
+def test_check_database_indexes_valid(temp_db_conn, def_config):
+    assert chkdb.check_database_index_valid(temp_db_conn, def_config) == chkdb.CheckState.OK
+
+
 def test_check_tiger_table_disabled(temp_db_conn, def_config, monkeypatch):
     monkeypatch.setenv('NOMINATIM_USE_US_TIGER_DATA' , 'no')
     assert chkdb.check_tiger_table(temp_db_conn, def_config) == chkdb.CheckState.NOT_APPLICABLE

@@ -2,6 +2,7 @@
 Subcommand definitions for the command-line tool.
 """
 
+from .setup import SetupAll
 from .replication import UpdateReplication
 from .api import APISearch, APIReverse, APILookup, APIDetails, APIStatus
 from .index import UpdateIndex

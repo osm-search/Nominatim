@@ -24,6 +24,24 @@ def nonexistant_db():
     with conn.cursor() as cur:
         cur.execute('DROP DATABASE IF EXISTS {}'.format(dbname))
 
+@pytest.mark.parametrize("no_partitions", (True, False))
+def test_setup_skeleton(src_dir, nonexistant_db, no_partitions):
+    database_import.setup_database_skeleton('dbname=' + nonexistant_db,
+                                            src_dir / 'data', no_partitions)
+
+    conn = psycopg2.connect(database=nonexistant_db)
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT distinct partition FROM country_name")
+            partitions = set([r[0] for r in list(cur)])
+            if no_partitions:
+                assert partitions == set([0])
+            else:
+                assert len(partitions) > 10
+    finally:
+        conn.close()
+
 
 def test_create_db_success(nonexistant_db):
     database_import.create_db('dbname=' + nonexistant_db, rouser='www-data')
@@ -77,6 +95,22 @@ def test_install_module(tmp_path):
     assert outfile.exists()
     assert outfile.read_text() == 'TEST nomiantim.so'
     assert outfile.stat().st_mode == 33261
+
+
+def test_install_module_custom(tmp_path):
+    (tmp_path / 'nominatim.so').write_text('TEST nomiantim.so')
+
+    database_import.install_module(tmp_path, tmp_path, str(tmp_path.resolve()))
+
+    assert not (tmp_path / 'module').exists()
+
+
+def test_install_module_fail_access(temp_db_conn, tmp_path):
+    (tmp_path / 'nominatim.so').write_text('TEST nomiantim.so')
+
+    with pytest.raises(UsageError, match='.*module cannot be accessed.*'):
+        database_import.install_module(tmp_path, tmp_path, '',
+                                       conn=temp_db_conn)
 
 
 def test_import_base_data(src_dir, temp_db, temp_db_cursor):
@@ -134,3 +168,35 @@ def test_import_osm_data_default_cache(temp_db_cursor,osm2pgsql_options):
     osm2pgsql_options['osm2pgsql_cache'] = 0
 
     database_import.import_osm_data(Path(__file__), osm2pgsql_options)
+
+
+def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):
+    tables = ('word', 'placex', 'place_addressline', 'location_area',
+              'location_area_country', 'location_property',
+              'location_property_tiger', 'location_property_osmline',
+              'location_postcode', 'search_name', 'location_road_23')
+    for table in tables:
+        table_factory(table, content=(1, 2, 3))
+
+    database_import.truncate_data_tables(temp_db_conn, max_word_frequency=23)
+
+    for table in tables:
+        assert temp_db_cursor.table_rows(table) == 0
+
+
+@pytest.mark.parametrize("threads", (1, 5))
+def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table, word_table,
+                   temp_db_cursor, threads):
+    for func in ('make_keywords', 'getorcreate_housenumber_id', 'make_standard_name'):
+        temp_db_cursor.execute("""CREATE FUNCTION {} (src TEXT)
+                                  RETURNS TEXT AS $$ SELECT 'a' $$ LANGUAGE SQL
+                               """.format(func))
+    for oid in range(100, 130):
+        place_row(osm_id=oid)
+    place_row(osm_type='W', osm_id=342, cls='place', typ='houses',
+              geom='SRID=4326;LINESTRING(0 0, 10 10)')
+
+    database_import.load_data(dsn, src_dir / 'data', threads)
+
+    assert temp_db_cursor.table_rows('placex') == 30
+    assert temp_db_cursor.table_rows('location_property_osmline') == 1

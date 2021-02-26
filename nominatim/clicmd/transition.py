@@ -59,12 +59,12 @@ class AdminTransition:
 
         if args.setup_db:
             LOG.warning('Setup DB')
-            mpath = database_import.install_module(args.module_dir, args.project_dir,
-                                                   args.config.DATABASE_MODULE_PATH)
 
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.setup_extensions(conn)
-                database_import.check_module_dir_path(conn, mpath)
+                database_import.install_module(args.module_dir, args.project_dir,
+                                               args.config.DATABASE_MODULE_PATH,
+                                               conn=conn)
 
             database_import.import_base_data(args.config.get_libpq_dsn(),
                                              args.data_dir, args.no_partitions)
@@ -88,7 +88,7 @@ class AdminTransition:
             with connect(args.config.get_libpq_dsn()) as conn:
                 try:
                     status.set_status(conn, status.compute_database_date(conn))
-                except Exception as exc: # pylint: disable=bare-except
+                except Exception as exc: # pylint: disable=broad-except
                     LOG.error('Cannot determine date of database: %s', exc)
 
         if args.index:

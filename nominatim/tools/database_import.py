@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 
 import psutil
+import psycopg2
 
 from ..db.connection import connect, get_pg_env
 from ..db import utils as db_utils
@@ -18,6 +19,21 @@ from ..errors import UsageError
 from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
 
 LOG = logging.getLogger()
+
+def setup_database_skeleton(dsn, data_dir, no_partitions, rouser=None):
+    """ Create a new database for Nominatim and populate it with the
+        essential extensions and data.
+    """
+    LOG.warning('Creating database')
+    create_db(dsn, rouser)
+
+    LOG.warning('Setting up database')
+    with connect(dsn) as conn:
+        setup_extensions(conn)
+
+    LOG.warning('Loading basic data')
+    import_base_data(dsn, data_dir, no_partitions)
+
 
 def create_db(dsn, rouser=None):
     """ Create a new database for the given DSN. Fails when the database
@@ -72,7 +88,7 @@ def setup_extensions(conn):
         raise UsageError('PostGIS version is too old.')
 
 
-def install_module(src_dir, project_dir, module_dir):
+def install_module(src_dir, project_dir, module_dir, conn=None):
     """ Copy the normalization module from src_dir into the project
         directory under the '/module' directory. If 'module_dir' is set, then
         use the module from there instead and check that it is accessible
@@ -80,6 +96,9 @@ def install_module(src_dir, project_dir, module_dir):
 
         The function detects when the installation is run from the
         build directory. It doesn't touch the module in that case.
+
+        If 'conn' is given, then the function also tests if the module
+        can be access via the given database.
     """
     if not module_dir:
         module_dir = project_dir / 'module'
@@ -99,19 +118,17 @@ def install_module(src_dir, project_dir, module_dir):
     else:
         LOG.info("Using custom path for database module at '%s'", module_dir)
 
-    return module_dir
-
-
-def check_module_dir_path(conn, path):
-    """ Check that the normalisation module can be found and executed
-        from the given path.
-    """
-    with conn.cursor() as cur:
-        cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
-                       RETURNS text AS '{}/nominatim.so', 'transliteration'
-                       LANGUAGE c IMMUTABLE STRICT;
-                       DROP FUNCTION nominatim_test_import_func(text)
-                    """.format(path))
+    if conn is not None:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
+                               RETURNS text AS '{}/nominatim.so', 'transliteration'
+                               LANGUAGE c IMMUTABLE STRICT;
+                               DROP FUNCTION nominatim_test_import_func(text)
+                            """.format(module_dir))
+            except psycopg2.DatabaseError as err:
+                LOG.fatal("Error accessing database module: %s", err)
+                raise UsageError("Database module cannot be accessed.") from err
 
 
 def import_base_data(dsn, sql_dir, ignore_partitions=False):
@@ -174,7 +191,7 @@ def truncate_data_tables(conn, max_word_frequency=None):
         cur.execute('TRUNCATE location_property_osmline')
         cur.execute('TRUNCATE location_postcode')
         cur.execute('TRUNCATE search_name')
-        cur.execute('DROP SEQUENCE seq_place')
+        cur.execute('DROP SEQUENCE IF EXISTS seq_place')
         cur.execute('CREATE SEQUENCE seq_place start 100000')
 
         cur.execute("""SELECT tablename FROM pg_tables

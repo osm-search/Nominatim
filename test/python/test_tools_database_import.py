@@ -189,7 +189,7 @@ def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table, word_ta
                    temp_db_cursor, threads):
     for func in ('make_keywords', 'getorcreate_housenumber_id', 'make_standard_name'):
         temp_db_cursor.execute("""CREATE FUNCTION {} (src TEXT)
-                                  RETURNS TEXT AS $$ SELECT 'a' $$ LANGUAGE SQL
+                                  RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
                                """.format(func))
     for oid in range(100, 130):
         place_row(osm_id=oid)

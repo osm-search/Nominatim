@@ -75,7 +75,8 @@ class SetupAll:
             LOG.warning('Importing OSM data file')
             database_import.import_osm_data(Path(args.osm_file),
                                             args.osm2pgsql_options(0, 1),
-                                            drop=args.no_updates)
+                                            drop=args.no_updates,
+                                            ignore_errors=args.ignore_errors)
 
             LOG.warning('Create functions (1st pass)')
             with connect(args.config.get_libpq_dsn()) as conn:

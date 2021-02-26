@@ -69,7 +69,11 @@ $iInstances = max(1, $aCMDResult['threads'] ?? (min(16, getProcessorCount()) - 1
 
 function run($oCmd) {
     global $iInstances;
+    global $aCMDResult;
     $oCmd->addParams('--threads', $iInstances);
+    if ($aCMDResult['ignore-errors'] ?? false) {
+        $oCmd->addParams('--ignore-errors');
+    }
     $oCmd->run(true);
 }
 

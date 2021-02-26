@@ -75,12 +75,14 @@ class CommandlineParser:
             setattr(args, arg, Path(kwargs[arg]))
         args.project_dir = Path(args.project_dir).resolve()
 
-        logging.basicConfig(stream=sys.stderr,
-                            format='%(asctime)s: %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            level=max(4 - args.verbose, 1) * 10)
+        if 'cli_args' not in kwargs:
+            logging.basicConfig(stream=sys.stderr,
+                                format='%(asctime)s: %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S',
+                                level=max(4 - args.verbose, 1) * 10)
 
-        args.config = Configuration(args.project_dir, args.config_dir)
+        args.config = Configuration(args.project_dir, args.config_dir,
+                                    environ=kwargs.get('environ', os.environ))
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))

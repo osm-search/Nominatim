@@ -145,7 +145,7 @@ def import_base_data(dsn, sql_dir, ignore_partitions=False):
             conn.commit()
 
 
-def import_osm_data(osm_file, options, drop=False):
+def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
     """ Import the given OSM file. 'options' contains the list of
         default settings for osm2pgsql.
     """
@@ -164,10 +164,11 @@ def import_osm_data(osm_file, options, drop=False):
     run_osm2pgsql(options)
 
     with connect(options['dsn']) as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM place LIMIT 1')
-            if cur.rowcount == 0:
-                raise UsageError('No data imported by osm2pgsql.')
+        if not ignore_errors:
+            with conn.cursor() as cur:
+                cur.execute('SELECT * FROM place LIMIT 1')
+                if cur.rowcount == 0:
+                    raise UsageError('No data imported by osm2pgsql.')
 
         if drop:
             conn.drop_table('planet_osm_nodes')

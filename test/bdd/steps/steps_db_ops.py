@@ -5,6 +5,7 @@ import psycopg2.extras
 from place_inserter import PlaceColumn
 from table_compare import NominatimID, DBRow
 
+from nominatim.indexer.indexer import Indexer
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
@@ -85,7 +86,12 @@ def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
     context.nominatim.copy_from_place(context.db)
-    context.nominatim.run_setup_script('calculate-postcodes', 'index', 'index-noanalyse')
+    context.nominatim.run_setup_script('calculate-postcodes')
+
+    # Call directly as the refresh function does not include postcodes.
+    indexer = Indexer(context.nominatim.test_env['NOMINATIM_DATABASE_DSN'][6:], 1)
+    indexer.index_full(analyse=False)
+
     check_database_integrity(context)
 
 @when("updating places")
@@ -93,8 +99,7 @@ def update_place_table(context):
     """ Update the place table with the given data. Also runs all triggers
         related to updates and reindexes the new data.
     """
-    context.nominatim.run_setup_script(
-        'create-functions', 'create-partition-functions', 'enable-diff-updates')
+    context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
         for row in context.table:
             PlaceColumn(context).add_row(row, False).db_insert(cur)
@@ -106,7 +111,7 @@ def update_place_table(context):
 def update_postcodes(context):
     """ Rerun the calculation of postcodes.
     """
-    context.nominatim.run_update_script('calculate-postcodes')
+    context.nominatim.run_nominatim('refresh', '--postcodes')
 
 @when("marking for delete (?P<oids>.*)")
 def delete_places(context, oids):
@@ -114,8 +119,7 @@ def delete_places(context, oids):
         separated by commas. Also runs all triggers
         related to updates and reindexes the new data.
     """
-    context.nominatim.run_setup_script(
-        'create-functions', 'create-partition-functions', 'enable-diff-updates')
+    context.nominatim.run_nominatim('refresh', '--functions')
     with context.db.cursor() as cur:
         for oid in oids.split(','):
             NominatimID(oid).query_osm_id(cur, 'DELETE FROM place WHERE {}')

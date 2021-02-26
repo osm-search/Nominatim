@@ -48,6 +48,8 @@ class AdminTransition:
                            help='Size of cache to be used by osm2pgsql (in MB)')
         group.add_argument('--no-analyse', action='store_true',
                            help='Do not perform analyse operations during index')
+        group.add_argument('--ignore-errors', action='store_true',
+                           help="Ignore certain erros on import.")
 
     @staticmethod
     def run(args):
@@ -75,7 +77,8 @@ class AdminTransition:
                 raise UsageError('Missing required --osm-file argument')
             database_import.import_osm_data(Path(args.osm_file),
                                             args.osm2pgsql_options(0, 1),
-                                            drop=args.drop)
+                                            drop=args.drop,
+                                            ignore_errors=args.ignore_errors)
 
         if args.load_data:
             LOG.warning('Load data')

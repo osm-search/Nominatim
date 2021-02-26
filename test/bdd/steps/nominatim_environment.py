@@ -7,6 +7,7 @@ import psycopg2.extras
 
 sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
+from nominatim import cli
 from nominatim.config import Configuration
 from nominatim.tools import refresh
 from steps.utils import run_script
@@ -88,18 +89,18 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'
-        self.test_env['NOMINATIM_DATADIR'] = self.src_dir / 'data'
-        self.test_env['NOMINATIM_SQLDIR'] = self.src_dir / 'lib-sql'
-        self.test_env['NOMINATIM_CONFIGDIR'] = self.src_dir / 'settings'
-        self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = self.build_dir / 'module'
-        self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = self.build_dir / 'osm2pgsql' / 'osm2pgsql'
-        self.test_env['NOMINATIM_NOMINATIM_TOOL'] = self.build_dir / 'nominatim'
+        self.test_env['NOMINATIM_DATADIR'] = str((self.src_dir / 'data').resolve())
+        self.test_env['NOMINATIM_SQLDIR'] = str((self.src_dir / 'lib-sql').resolve())
+        self.test_env['NOMINATIM_CONFIGDIR'] = str((self.src_dir / 'settings').resolve())
+        self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str((self.build_dir / 'module').resolve())
+        self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = str((self.build_dir / 'osm2pgsql' / 'osm2pgsql').resolve())
+        self.test_env['NOMINATIM_NOMINATIM_TOOL'] = str((self.build_dir / 'nominatim').resolve())
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
         else:
             # avoid module being copied into the temporary environment
-            self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.build_dir / 'module'
+            self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = str((self.build_dir / 'module').resolve())
 
         if self.website_dir is not None:
             self.website_dir.cleanup()
@@ -182,9 +183,9 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
 
         try:
-            self.run_setup_script('all', osm_file=self.api_test_file)
+            self.run_nominatim('import', '--osm-file', str(self.api_test_file))
             self.run_setup_script('import-tiger-data')
-            self.run_setup_script('drop')
+            self.run_nominatim('freeze')
 
             phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
             run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
@@ -249,11 +250,24 @@ class NominatimEnvironment:
         """
         with db.cursor() as cur:
             while True:
-                self.run_update_script('index')
+                self.run_nominatim('index')
 
                 cur.execute("SELECT 'a' FROM placex WHERE indexed_status != 0 LIMIT 1")
                 if cur.rowcount == 0:
                     return
+
+    def run_nominatim(self, *cmdline):
+        """ Run the nominatim command-line tool via the library.
+        """
+        cli.nominatim(module_dir='',
+                      osm2pgsql_path=str(self.build_dir / 'osm2pgsql' / 'osm2pgsql'),
+                      phplib_dir=str(self.src_dir / 'lib-php'),
+                      sqllib_dir=str(self.src_dir / 'lib-sql'),
+                      data_dir=str(self.src_dir / 'data'),
+                      config_dir=str(self.src_dir / 'settings'),
+                      cli_args=cmdline,
+                      phpcgi_path='',
+                      environ=self.test_env)
 
     def run_setup_script(self, *args, **kwargs):
         """ Run the Nominatim setup script with the given arguments.
@@ -285,7 +299,7 @@ class NominatimEnvironment:
         """ Copy data from place to the placex and location_property_osmline
             tables invoking the appropriate triggers.
         """
-        self.run_setup_script('create-functions', 'create-partition-functions')
+        self.run_nominatim('refresh', '--functions', '--no-diff-updates')
 
         with db.cursor() as cur:
             cur.execute("""INSERT INTO placex (osm_type, osm_id, class, type,

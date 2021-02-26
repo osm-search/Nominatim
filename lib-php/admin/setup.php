@@ -57,22 +57,23 @@ setupHTTPProxy();
 $bDidSomething = false;
 
 $oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
-if (isset($aCMDResult['quiet']) && $aCMDResult['quiet']) {
-    $oNominatimCmd->addParams('--quiet');
-}
-if ($aCMDResult['verbose']) {
-    $oNominatimCmd->addParams('--verbose');
-}
 
 // by default, use all but one processor, but never more than 15.
 $iInstances = max(1, $aCMDResult['threads'] ?? (min(16, getProcessorCount()) - 1));
 
-function run($oCmd) {
+function run($oCmd)
+{
     global $iInstances;
     global $aCMDResult;
     $oCmd->addParams('--threads', $iInstances);
     if ($aCMDResult['ignore-errors'] ?? false) {
         $oCmd->addParams('--ignore-errors');
+    }
+    if ($aCMDResult['quiet'] ?? false) {
+        $oCmd->addParams('--quiet');
+    }
+    if ($aCMDResult['verbose'] ?? false) {
+        $oCmd->addParams('--verbose');
     }
     $oCmd->run(true);
 }

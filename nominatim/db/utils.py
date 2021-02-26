@@ -31,6 +31,8 @@ def execute_file(dsn, fname, ignore_errors=False, pre_code=None, post_code=None)
     cmd = ['psql']
     if not ignore_errors:
         cmd.extend(('-v', 'ON_ERROR_STOP=1'))
+    if not LOG.isEnabledFor(logging.INFO):
+        cmd.append('--quiet')
     proc = subprocess.Popen(cmd, env=get_pg_env(dsn), stdin=subprocess.PIPE)
 
     if not LOG.isEnabledFor(logging.INFO):

@@ -105,8 +105,15 @@ def test_run_api_with_extra_env(tmp_project_dir):
 
 ### run_osm2pgsql
 
-def test_run_osm2pgsql():
-    exec_utils.run_osm2pgsql(dict(osm2pgsql='echo', append=False, flatnode_file=None,
-                                  dsn='dbname=foobar', threads=1, osm2pgsql_cache=500,
-                                  osm2pgsql_style='./my.style',
-                                  import_file='foo.bar'))
+def test_run_osm2pgsql(osm2pgsql_options):
+    osm2pgsql_options['append'] = False
+    osm2pgsql_options['import_file'] = 'foo.bar'
+    osm2pgsql_options['tablespaces']['osm_data'] = 'extra'
+    exec_utils.run_osm2pgsql(osm2pgsql_options)
+
+
+def test_run_osm2pgsql_disable_jit(osm2pgsql_options):
+    osm2pgsql_options['append'] = True
+    osm2pgsql_options['import_file'] = 'foo.bar'
+    osm2pgsql_options['disable_jit'] = True
+    exec_utils.run_osm2pgsql(osm2pgsql_options)

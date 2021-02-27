@@ -104,11 +104,17 @@ if ($fPostgresVersion >= 11.0) {
 }
 
 $oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
-if ($aResult['quiet']) {
-    $oNominatimCmd->addParams('--quiet');
-}
-if ($aResult['verbose']) {
-    $oNominatimCmd->addParams('--verbose');
+
+function run($oCmd)
+{
+    global $aCMDResult;
+    if ($aCMDResult['quiet'] ?? false) {
+        $oCmd->addParams('--quiet');
+    }
+    if ($aCMDResult['verbose'] ?? false) {
+        $oCmd->addParams('--verbose');
+    }
+    $oCmd->run(true);
 }
 
 
@@ -119,7 +125,7 @@ if ($aResult['init-updates']) {
         $oCmd->addParams('--no-update-functions');
     }
 
-    $oCmd->run();
+    run($oCmd);
 }
 
 if ($aResult['check-for-updates']) {
@@ -147,7 +153,7 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
 }
 
 if ($aResult['calculate-postcodes']) {
-    (clone($oNominatimCmd))->addParams('refresh', '--postcodes')->run();
+    run((clone($oNominatimCmd))->addParams('refresh', '--postcodes'));
 }
 
 $sTemporaryFile = CONST_InstallDir.'/osmosischange.osc';
@@ -196,35 +202,21 @@ if ($bHaveDiff) {
 }
 
 if ($aResult['recompute-word-counts']) {
-    (clone($oNominatimCmd))->addParams('refresh', '--word-counts')->run();
+    run((clone($oNominatimCmd))->addParams('refresh', '--word-counts'));
 }
 
 if ($aResult['index']) {
-    (clone $oNominatimCmd)
+    run((clone $oNominatimCmd)
         ->addParams('index', '--minrank', $aResult['index-rank'])
-        ->addParams('--threads', $aResult['index-instances'])
-        ->run();
+        ->addParams('--threads', $aResult['index-instances']));
 }
 
 if ($aResult['update-address-levels']) {
-    (clone($oNominatimCmd))->addParams('refresh', '--address-levels')->run();
+    run((clone($oNominatimCmd))->addParams('refresh', '--address-levels'));
 }
 
 if ($aResult['recompute-importance']) {
-    echo "Updating importance values for database.\n";
-    $oDB = new Nominatim\DB();
-    $oDB->connect();
-
-    $sSQL = 'ALTER TABLE placex DISABLE TRIGGER ALL;';
-    $sSQL .= 'UPDATE placex SET (wikipedia, importance) =';
-    $sSQL .= '   (SELECT wikipedia, importance';
-    $sSQL .= '    FROM compute_importance(extratags, country_code, osm_type, osm_id));';
-    $sSQL .= 'UPDATE placex s SET wikipedia = d.wikipedia, importance = d.importance';
-    $sSQL .= ' FROM placex d';
-    $sSQL .= ' WHERE s.place_id = d.linked_place_id and d.wikipedia is not null';
-    $sSQL .= '       and (s.wikipedia is null or s.importance < d.importance);';
-    $sSQL .= 'ALTER TABLE placex ENABLE TRIGGER ALL;';
-    $oDB->exec($sSQL);
+    run((clone($oNominatimCmd))->addParams('refresh', '--importance'));
 }
 
 if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
@@ -240,5 +232,5 @@ if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
         $oCmd->addParams('--no-index');
     }
 
-    exit($oCmd->run());
+    run($oCmd);
 }

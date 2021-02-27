@@ -29,9 +29,8 @@ class SetupFreeze:
     def run(args):
         from ..tools import freeze
 
-        conn = connect(args.config.get_libpq_dsn())
-        freeze.drop_update_tables(conn)
+        with connect(args.config.get_libpq_dsn()) as conn:
+            freeze.drop_update_tables(conn)
         freeze.drop_flatnode_file(args.config.FLATNODE_FILE)
-        conn.close()
 
         return 0

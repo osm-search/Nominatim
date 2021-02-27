@@ -6,7 +6,6 @@ require_once(CONST_LibDir.'/Shell.php');
 
 class SetupFunctions
 {
-    protected $iCacheMemory;
     protected $iInstances;
     protected $aDSNInfo;
     protected $bQuiet;
@@ -29,16 +28,6 @@ class SetupFunctions
         if ($this->iInstances < 1) {
             $this->iInstances = 1;
             warn('resetting threads to '.$this->iInstances);
-        }
-
-        if (isset($aCMDResult['osm2pgsql-cache'])) {
-            $this->iCacheMemory = $aCMDResult['osm2pgsql-cache'];
-        } elseif (getSetting('FLATNODE_FILE')) {
-            // When flatnode files are enabled then disable cache per default.
-            $this->iCacheMemory = 0;
-        } else {
-            // Otherwise: Assume we can steal all the cache memory in the box.
-            $this->iCacheMemory = getCacheMemoryMB();
         }
 
         // parse database string
@@ -81,156 +70,6 @@ class SetupFunctions
         }
         if ($this->bVerbose) {
             $this->oNominatimCmd->addParams('--verbose');
-        }
-    }
-
-    public function createDB()
-    {
-        info('Create DB');
-        $oDB = new \Nominatim\DB;
-
-        if ($oDB->checkConnection()) {
-            fail('database already exists ('.getSetting('DATABASE_DSN').')');
-        }
-
-        $oCmd = (new \Nominatim\Shell('createdb'))
-                ->addParams('-E', 'UTF-8')
-                ->addParams('-p', $this->aDSNInfo['port']);
-
-        if (isset($this->aDSNInfo['username'])) {
-            $oCmd->addParams('-U', $this->aDSNInfo['username']);
-        }
-        if (isset($this->aDSNInfo['password'])) {
-            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $oCmd->addParams('-h', $this->aDSNInfo['hostspec']);
-        }
-        $oCmd->addParams($this->aDSNInfo['database']);
-
-        $result = $oCmd->run();
-        if ($result != 0) fail('Error executing external command: '.$oCmd->escapedCmd());
-    }
-
-    public function setupDB()
-    {
-        info('Setup DB');
-
-        $fPostgresVersion = $this->db()->getPostgresVersion();
-        echo 'Postgres version found: '.$fPostgresVersion."\n";
-
-        if ($fPostgresVersion < 9.03) {
-            fail('Minimum supported version of Postgresql is 9.3.');
-        }
-
-        $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS hstore');
-        $this->pgsqlRunScript('CREATE EXTENSION IF NOT EXISTS postgis');
-
-        $fPostgisVersion = $this->db()->getPostgisVersion();
-        echo 'Postgis version found: '.$fPostgisVersion."\n";
-
-        if ($fPostgisVersion < 2.2) {
-            echo "Minimum required Postgis version 2.2\n";
-            exit(1);
-        }
-
-        $sPgUser = getSetting('DATABASE_WEBUSER');
-        $i = $this->db()->getOne("select count(*) from pg_user where usename = '$sPgUser'");
-        if ($i == 0) {
-            echo "\nERROR: Web user '".$sPgUser."' does not exist. Create it with:\n";
-            echo "\n          createuser ".$sPgUser."\n\n";
-            exit(1);
-        }
-
-        if (!getSetting('DATABASE_MODULE_PATH')) {
-            // If no custom module path is set then copy the module into the
-            // project directory, but only if it is not the same file already
-            // (aka we are running from the build dir).
-            $sDest = CONST_InstallDir.'/module';
-            if ($sDest != CONST_Default_ModulePath) {
-                if (!file_exists($sDest)) {
-                    mkdir($sDest);
-                }
-                if (!copy(CONST_Default_ModulePath.'/nominatim.so', $sDest.'/nominatim.so')) {
-                    echo "Failed to copy database module to $sDest.";
-                    exit(1);
-                }
-                chmod($sDest.'/nominatim.so', 0755);
-                info("Database module installed at $sDest.");
-            } else {
-                info('Running from build directory. Leaving database module as is.');
-            }
-        } else {
-            info('Using database module from DATABASE_MODULE_PATH ('.getSetting('DATABASE_MODULE_PATH').').');
-        }
-        // Try accessing the C module, so we know early if something is wrong
-        $this->checkModulePresence(); // raises exception on failure
-
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_name.sql');
-        $this->pgsqlRunScriptFile(CONST_DataDir.'/country_osm_grid.sql.gz');
-
-        if ($this->bNoPartitions) {
-            $this->pgsqlRunScript('update country_name set partition = 0');
-        }
-    }
-
-    public function importData($sOSMFile)
-    {
-        info('Import data');
-
-        if (!file_exists(getOsm2pgsqlBinary())) {
-            echo "Check NOMINATIM_OSM2PGSQL_BINARY in your local .env file.\n";
-            echo "Normally you should not need to set this manually.\n";
-            fail("osm2pgsql not found in '".getOsm2pgsqlBinary()."'");
-        }
-
-        $oCmd = new \Nominatim\Shell(getOsm2pgsqlBinary());
-        $oCmd->addParams('--style', getImportStyle());
-
-        if (getSetting('FLATNODE_FILE')) {
-            $oCmd->addParams('--flat-nodes', getSetting('FLATNODE_FILE'));
-        }
-        if (getSetting('TABLESPACE_OSM_DATA')) {
-            $oCmd->addParams('--tablespace-slim-data', getSetting('TABLESPACE_OSM_DATA'));
-        }
-        if (getSetting('TABLESPACE_OSM_INDEX')) {
-            $oCmd->addParams('--tablespace-slim-index', getSetting('TABLESPACE_OSM_INDEX'));
-        }
-        if (getSetting('TABLESPACE_PLACE_DATA')) {
-            $oCmd->addParams('--tablespace-main-data', getSetting('TABLESPACE_PLACE_DATA'));
-        }
-        if (getSetting('TABLESPACE_PLACE_INDEX')) {
-            $oCmd->addParams('--tablespace-main-index', getSetting('TABLESPACE_PLACE_INDEX'));
-        }
-        $oCmd->addParams('--latlong', '--slim', '--create');
-        $oCmd->addParams('--output', 'gazetteer');
-        $oCmd->addParams('--hstore');
-        $oCmd->addParams('--number-processes', 1);
-        $oCmd->addParams('--with-forward-dependencies', 'false');
-        $oCmd->addParams('--log-progress', 'true');
-        $oCmd->addParams('--cache', $this->iCacheMemory);
-        $oCmd->addParams('--port', $this->aDSNInfo['port']);
-
-        if (isset($this->aDSNInfo['username'])) {
-            $oCmd->addParams('--username', $this->aDSNInfo['username']);
-        }
-        if (isset($this->aDSNInfo['password'])) {
-            $oCmd->addEnvPair('PGPASSWORD', $this->aDSNInfo['password']);
-        }
-        if (isset($this->aDSNInfo['hostspec'])) {
-            $oCmd->addParams('--host', $this->aDSNInfo['hostspec']);
-        }
-        $oCmd->addParams('--database', $this->aDSNInfo['database']);
-        $oCmd->addParams($sOSMFile);
-        $oCmd->run();
-
-        if (!$this->sIgnoreErrors && !$this->db()->getRow('select * from place limit 1')) {
-            fail('No Data');
-        }
-
-        if ($this->bDrop) {
-            $this->dropTable('planet_osm_nodes');
-            $this->removeFlatnodeFile();
         }
     }
 
@@ -278,153 +117,6 @@ class SetupFunctions
         $sTemplate = $this->replaceSqlPatterns($sTemplate);
 
         $this->pgsqlRunPartitionScript($sTemplate);
-    }
-
-    public function createPartitionFunctions()
-    {
-        info('Create Partition Functions');
-        $this->createSqlFunctions(); // also create partition functions
-    }
-
-    public function importWikipediaArticles()
-    {
-        $sWikiArticlePath = getSetting('WIKIPEDIA_DATA_PATH', CONST_InstallDir);
-        $sWikiArticlesFile = $sWikiArticlePath.'/wikimedia-importance.sql.gz';
-        if (file_exists($sWikiArticlesFile)) {
-            info('Importing wikipedia articles and redirects');
-            $this->dropTable('wikipedia_article');
-            $this->dropTable('wikipedia_redirect');
-            $this->pgsqlRunScriptFile($sWikiArticlesFile);
-        } else {
-            warn('wikipedia importance dump file not found - places will have default importance');
-        }
-    }
-
-    public function loadData($bDisableTokenPrecalc)
-    {
-        info('Drop old Data');
-
-        $oDB = $this->db();
-
-        $oDB->exec('TRUNCATE word');
-        echo '.';
-        $oDB->exec('TRUNCATE placex');
-        echo '.';
-        $oDB->exec('TRUNCATE location_property_osmline');
-        echo '.';
-        $oDB->exec('TRUNCATE place_addressline');
-        echo '.';
-        $oDB->exec('TRUNCATE location_area');
-        echo '.';
-        if (!$this->dbReverseOnly()) {
-            $oDB->exec('TRUNCATE search_name');
-            echo '.';
-        }
-        $oDB->exec('TRUNCATE search_name_blank');
-        echo '.';
-        $oDB->exec('DROP SEQUENCE seq_place');
-        echo '.';
-        $oDB->exec('CREATE SEQUENCE seq_place start 100000');
-        echo '.';
-
-        $sSQL = 'select distinct partition from country_name';
-        $aPartitions = $oDB->getCol($sSQL);
-
-        if (!$this->bNoPartitions) $aPartitions[] = 0;
-        foreach ($aPartitions as $sPartition) {
-            $oDB->exec('TRUNCATE location_road_'.$sPartition);
-            echo '.';
-        }
-
-        // used by getorcreate_word_id to ignore frequent partial words
-        $sSQL = 'CREATE OR REPLACE FUNCTION get_maxwordfreq() RETURNS integer AS ';
-        $sSQL .= '$$ SELECT '.getSetting('MAX_WORD_FREQUENCY').' as maxwordfreq; $$ LANGUAGE SQL IMMUTABLE';
-        $oDB->exec($sSQL);
-        echo ".\n";
-
-        // pre-create the word list
-        if (!$bDisableTokenPrecalc) {
-            info('Loading word list');
-            $this->pgsqlRunScriptFile(CONST_DataDir.'/words.sql');
-        }
-
-        info('Load Data');
-        $sColumns = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry';
-
-        $aDBInstances = array();
-        $iLoadThreads = max(1, $this->iInstances - 1);
-        for ($i = 0; $i < $iLoadThreads; $i++) {
-            // https://secure.php.net/manual/en/function.pg-connect.php
-            $DSN = getSetting('DATABASE_DSN');
-            $DSN = preg_replace('/^pgsql:/', '', $DSN);
-            $DSN = preg_replace('/;/', ' ', $DSN);
-            $aDBInstances[$i] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
-            pg_ping($aDBInstances[$i]);
-        }
-
-        for ($i = 0; $i < $iLoadThreads; $i++) {
-            $sSQL = "INSERT INTO placex ($sColumns) SELECT $sColumns FROM place WHERE osm_id % $iLoadThreads = $i";
-            $sSQL .= " and not (class='place' and type='houses' and osm_type='W'";
-            $sSQL .= "          and ST_GeometryType(geometry) = 'ST_LineString')";
-            $sSQL .= ' and ST_IsValid(geometry)';
-            if ($this->bVerbose) echo "$sSQL\n";
-            if (!pg_send_query($aDBInstances[$i], $sSQL)) {
-                fail(pg_last_error($aDBInstances[$i]));
-            }
-        }
-
-        // last thread for interpolation lines
-        // https://secure.php.net/manual/en/function.pg-connect.php
-        $DSN = getSetting('DATABASE_DSN');
-        $DSN = preg_replace('/^pgsql:/', '', $DSN);
-        $DSN = preg_replace('/;/', ' ', $DSN);
-        $aDBInstances[$iLoadThreads] = pg_connect($DSN, PGSQL_CONNECT_FORCE_NEW);
-        pg_ping($aDBInstances[$iLoadThreads]);
-        $sSQL = 'insert into location_property_osmline';
-        $sSQL .= ' (osm_id, address, linegeo)';
-        $sSQL .= ' SELECT osm_id, address, geometry from place where ';
-        $sSQL .= "class='place' and type='houses' and osm_type='W' and ST_GeometryType(geometry) = 'ST_LineString'";
-        if ($this->bVerbose) echo "$sSQL\n";
-        if (!pg_send_query($aDBInstances[$iLoadThreads], $sSQL)) {
-            fail(pg_last_error($aDBInstances[$iLoadThreads]));
-        }
-
-        $bFailed = false;
-        for ($i = 0; $i <= $iLoadThreads; $i++) {
-            while (($hPGresult = pg_get_result($aDBInstances[$i])) !== false) {
-                $resultStatus = pg_result_status($hPGresult);
-                // PGSQL_EMPTY_QUERY, PGSQL_COMMAND_OK, PGSQL_TUPLES_OK,
-                // PGSQL_COPY_OUT, PGSQL_COPY_IN, PGSQL_BAD_RESPONSE,
-                // PGSQL_NONFATAL_ERROR and PGSQL_FATAL_ERROR
-                // echo 'Query result ' . $i . ' is: ' . $resultStatus . "\n";
-                if ($resultStatus != PGSQL_COMMAND_OK && $resultStatus != PGSQL_TUPLES_OK) {
-                    $resultError = pg_result_error($hPGresult);
-                    echo '-- error text ' . $i . ': ' . $resultError . "\n";
-                    $bFailed = true;
-                }
-            }
-        }
-        if ($bFailed) {
-            fail('SQL errors loading placex and/or location_property_osmline tables');
-        }
-
-        for ($i = 0; $i < $this->iInstances; $i++) {
-            pg_close($aDBInstances[$i]);
-        }
-
-        echo "\n";
-        info('Reanalysing database');
-        $this->pgsqlRunScript('ANALYSE');
-
-        $sDatabaseDate = getDatabaseDate($oDB);
-        $oDB->exec('TRUNCATE import_status');
-        if (!$sDatabaseDate) {
-            warn('could not determine database date.');
-        } else {
-            $sSQL = "INSERT INTO import_status (lastimportdate) VALUES('".$sDatabaseDate."')";
-            $oDB->exec($sSQL);
-            echo "Latest data imported from $sDatabaseDate.\n";
-        }
     }
 
     public function importTigerData($sTigerPath)
@@ -560,49 +252,6 @@ class SetupFunctions
         $this->db()->exec($sSQL);
     }
 
-    public function index($bIndexNoanalyse)
-    {
-        $this->checkModulePresence(); // raises exception on failure
-
-        $oBaseCmd = (clone $this->oNominatimCmd)->addParams('index');
-
-        info('Index ranks 0 - 4');
-        $oCmd = (clone $oBaseCmd)->addParams('--maxrank', 4);
-
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-        if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
-
-        info('Index administrative boundaries');
-        $oCmd = (clone $oBaseCmd)->addParams('--boundaries-only');
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        info('Index ranks 5 - 25');
-        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 5, '--maxrank', 25);
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        if (!$bIndexNoanalyse) $this->pgsqlRunScript('ANALYSE');
-
-        info('Index ranks 26 - 30');
-        $oCmd = (clone $oBaseCmd)->addParams('--no-boundaries', '--minrank', 26);
-        $iStatus = $oCmd->run();
-        if ($iStatus != 0) {
-            fail('error status ' . $iStatus . ' running nominatim!');
-        }
-
-        info('Index postcodes');
-        $sSQL = 'UPDATE location_postcode SET indexed_status = 0';
-        $this->db()->exec($sSQL);
-    }
-
     public function createSearchIndices()
     {
         info('Create Search indices');
@@ -655,21 +304,6 @@ class SetupFunctions
         $this->pgsqlRunScript($sSQL);
     }
 
-    public function drop()
-    {
-        (clone($this->oNominatimCmd))->addParams('freeze')->run();
-    }
-
-    /**
-     * Setup the directory for the API scripts.
-     *
-     * @return null
-     */
-    public function setupWebsite()
-    {
-        (clone($this->oNominatimCmd))->addParams('refresh', '--website')->run();
-    }
-
     /**
      * Return the connection to the database.
      *
@@ -686,15 +320,6 @@ class SetupFunctions
         }
 
         return $this->oDB;
-    }
-
-    private function removeFlatnodeFile()
-    {
-        $sFName = getSetting('FLATNODE_FILE');
-        if ($sFName && file_exists($sFName)) {
-            if ($this->bVerbose) echo 'Deleting '.$sFName."\n";
-            unlink($sFName);
-        }
     }
 
     private function pgsqlRunScript($sScript, $bfatal = true)
@@ -720,7 +345,7 @@ class SetupFunctions
             $oCmd->addParams('--enable-debug-statements');
         }
 
-        $oCmd->run();
+        $oCmd->run(!$this->sIgnoreErrors);
     }
 
     private function pgsqlRunPartitionScript($sTemplate)

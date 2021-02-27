@@ -12,6 +12,7 @@ from .config import Configuration
 from .tools.exec_utils import run_legacy_script, run_php_server
 from .errors import UsageError
 from . import clicmd
+from .clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
 
@@ -62,7 +63,8 @@ class CommandlineParser:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
-        args = self.parser.parse_args(args=kwargs.get('cli_args'))
+        args = NominatimArgs()
+        self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
 
         if args.subcommand is None:
             self.parser.print_help()
@@ -73,12 +75,14 @@ class CommandlineParser:
             setattr(args, arg, Path(kwargs[arg]))
         args.project_dir = Path(args.project_dir).resolve()
 
-        logging.basicConfig(stream=sys.stderr,
-                            format='%(asctime)s: %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S',
-                            level=max(4 - args.verbose, 1) * 10)
+        if 'cli_args' not in kwargs:
+            logging.basicConfig(stream=sys.stderr,
+                                format='%(asctime)s: %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S',
+                                level=max(4 - args.verbose, 1) * 10)
 
-        args.config = Configuration(args.project_dir, args.config_dir)
+        args.config = Configuration(args.project_dir, args.config_dir,
+                                    environ=kwargs.get('environ', os.environ))
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))
@@ -107,70 +111,6 @@ class CommandlineParser:
 # pylint: disable=C0111
 # Using non-top-level imports to make pyosmium optional for replication only.
 # pylint: disable=E0012,C0415
-
-
-class SetupAll:
-    """\
-    Create a new Nominatim database from an OSM file.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group_name = parser.add_argument_group('Required arguments')
-        group = group_name.add_mutually_exclusive_group(required=True)
-        group.add_argument('--osm-file',
-                           help='OSM file to be imported.')
-        group.add_argument('--continue', dest='continue_at',
-                           choices=['load-data', 'indexing', 'db-postprocess'],
-                           help='Continue an import that was interrupted')
-        group = parser.add_argument_group('Optional arguments')
-        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
-                           help='Size of cache to be used by osm2pgsql (in MB)')
-        group.add_argument('--reverse-only', action='store_true',
-                           help='Do not create tables and indexes for searching')
-        group.add_argument('--enable-debug-statements', action='store_true',
-                           help='Include debug warning statements in SQL code')
-        group.add_argument('--no-partitions', action='store_true',
-                           help="""Do not partition search indices
-                                   (speeds up import of single country extracts)""")
-        group.add_argument('--no-updates', action='store_true',
-                           help="""Do not keep tables that are only needed for
-                                   updating the database later""")
-        group = parser.add_argument_group('Expert options')
-        group.add_argument('--ignore-errors', action='store_true',
-                           help='Continue import even when errors in SQL are present')
-        group.add_argument('--index-noanalyse', action='store_true',
-                           help='Do not perform analyse operations during index')
-
-
-    @staticmethod
-    def run(args):
-        params = ['setup.php']
-        if args.osm_file:
-            params.extend(('--all', '--osm-file', args.osm_file))
-        else:
-            if args.continue_at == 'load-data':
-                params.append('--load-data')
-            if args.continue_at in ('load-data', 'indexing'):
-                params.append('--index')
-            params.extend(('--create-search-indices', '--create-country-names',
-                           '--setup-website'))
-        if args.osm2pgsql_cache:
-            params.extend(('--osm2pgsql-cache', args.osm2pgsql_cache))
-        if args.reverse_only:
-            params.append('--reverse-only')
-        if args.enable_debug_statements:
-            params.append('--enable-debug-statements')
-        if args.no_partitions:
-            params.append('--no-partitions')
-        if args.no_updates:
-            params.append('--drop')
-        if args.ignore_errors:
-            params.append('--ignore-errors')
-        if args.index_noanalyse:
-            params.append('--index-noanalyse')
-
-        return run_legacy_script(*params, nominatim_env=args)
 
 
 class SetupSpecialPhrases:
@@ -330,7 +270,7 @@ def nominatim(**kwargs):
     """
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
-    parser.add_subcommand('import', SetupAll)
+    parser.add_subcommand('import', clicmd.SetupAll)
     parser.add_subcommand('freeze', clicmd.SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)
 
@@ -353,5 +293,7 @@ def nominatim(**kwargs):
         parser.add_subcommand('status', clicmd.APIStatus)
     else:
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
+
+    parser.add_subcommand('transition', clicmd.AdminTransition)
 
     return parser.run(**kwargs)

@@ -56,6 +56,29 @@ setupHTTPProxy();
 
 $bDidSomething = false;
 
+$oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
+
+// by default, use all but one processor, but never more than 15.
+$iInstances = max(1, $aCMDResult['threads'] ?? (min(16, getProcessorCount()) - 1));
+
+function run($oCmd)
+{
+    global $iInstances;
+    global $aCMDResult;
+    $oCmd->addParams('--threads', $iInstances);
+    if ($aCMDResult['ignore-errors'] ?? false) {
+        $oCmd->addParams('--ignore-errors');
+    }
+    if ($aCMDResult['quiet'] ?? false) {
+        $oCmd->addParams('--quiet');
+    }
+    if ($aCMDResult['verbose'] ?? false) {
+        $oCmd->addParams('--verbose');
+    }
+    $oCmd->run(true);
+}
+
+
 //*******************************************************
 // Making some sanity check:
 // Check if osm-file is set and points to a valid file
@@ -72,17 +95,30 @@ $oSetup = new SetupFunctions($aCMDResult);
 // go through complete process if 'all' is selected or start selected functions
 if ($aCMDResult['create-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createDB();
+    run((clone($oNominatimCmd))->addParams('transition', '--create-db'));
 }
 
 if ($aCMDResult['setup-db'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->setupDB();
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--setup-db');
+
+    if ($aCMDResult['no-partitions'] ?? false) {
+        $oCmd->addParams('--no-partitions');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['import-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->importData($aCMDResult['osm-file']);
+    $oCmd = (clone($oNominatimCmd))
+        ->addParams('transition', '--import-data')
+        ->addParams('--osm-file', $aCMDResult['osm-file']);
+    if ($aCMDResult['drop'] ?? false) {
+        $oCmd->addParams('--drop');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
@@ -104,17 +140,18 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createPartitionFunctions();
+    $oSetup->createFunctions(); // also create partition functions
 }
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->importWikipediaArticles();
+    // ignore errors!
+    (clone($oNominatimCmd))->addParams('refresh', '--wiki-data')->run();
 }
 
 if ($aCMDResult['load-data'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->loadData($aCMDResult['disable-token-precalc']);
+    run((clone($oNominatimCmd))->addParams('transition', '--load-data'));
 }
 
 if ($aCMDResult['import-tiger-data']) {
@@ -130,12 +167,17 @@ if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
 
 if ($aCMDResult['index'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->index($aCMDResult['index-noanalyse']);
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--index');
+    if ($aCMDResult['index-noanalyse'] ?? false) {
+        $oCmd->addParams('--no-analyse');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['drop']) {
     $bDidSomething = true;
-    $oSetup->drop($aCMDResult);
+    run((clone($oNominatimCmd))->addParams('freeze'));
 }
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
@@ -150,7 +192,7 @@ if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
 
 if ($aCMDResult['setup-website'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->setupWebsite();
+    run((clone($oNominatimCmd))->addParams('refresh', '--website'));
 }
 
 // ******************************************************

@@ -10,6 +10,10 @@ def test_check_database_unknown_db(def_config, monkeypatch):
     assert 1 == chkdb.check_database(def_config)
 
 
+def test_check_database_fatal_test(def_config, temp_db):
+    assert 1 == chkdb.check_database(def_config)
+
+
 def test_check_conection_good(temp_db_conn, def_config):
     assert chkdb.check_connection(temp_db_conn, def_config) == chkdb.CheckState.OK
 
@@ -57,6 +61,10 @@ def test_check_indexing_bad(temp_db_cursor, temp_db_conn, def_config):
 
 def test_check_database_indexes_bad(temp_db_conn, def_config):
     assert chkdb.check_database_indexes(temp_db_conn, def_config) == chkdb.CheckState.FAIL
+
+
+def test_check_database_indexes_valid(temp_db_conn, def_config):
+    assert chkdb.check_database_index_valid(temp_db_conn, def_config) == chkdb.CheckState.OK
 
 
 def test_check_tiger_table_disabled(temp_db_conn, def_config, monkeypatch):

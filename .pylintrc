@@ -1,0 +1,11 @@
+[MASTER]
+
+extension-pkg-whitelist=osmium
+
+[MESSAGES CONTROL]
+
+[TYPECHECK]
+
+# closing added here because it sometimes triggers a false positive with
+# 'with' statements.
+ignored-classes=NominatimArgs,closing

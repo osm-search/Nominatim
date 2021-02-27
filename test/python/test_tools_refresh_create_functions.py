@@ -11,9 +11,8 @@ SQL_DIR = (Path(__file__) / '..' / '..' / '..' / 'lib-sql').resolve()
 
 @pytest.fixture
 def db(temp_db):
-    conn = connect('dbname=' + temp_db)
-    yield conn
-    conn.close()
+    with connect('dbname=' + temp_db) as conn:
+        yield conn
 
 @pytest.fixture
 def db_with_tables(db):

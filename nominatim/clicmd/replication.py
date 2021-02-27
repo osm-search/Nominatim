@@ -17,17 +17,6 @@ LOG = logging.getLogger()
 # Using non-top-level imports to make pyosmium optional for replication only.
 # pylint: disable=E0012,C0415
 
-def _osm2pgsql_options_from_args(args, default_cache, default_threads):
-    """ Set up the standard osm2pgsql from the command line arguments.
-    """
-    return dict(osm2pgsql=args.osm2pgsql_path,
-                osm2pgsql_cache=args.osm2pgsql_cache or default_cache,
-                osm2pgsql_style=args.config.get_import_style_file(),
-                threads=args.threads or default_threads,
-                dsn=args.config.get_libpq_dsn(),
-                flatnode_file=args.config.FLATNODE_FILE)
-
-
 class UpdateReplication:
     """\
     Update the database using an online replication service.
@@ -62,13 +51,12 @@ class UpdateReplication:
         from ..tools import replication, refresh
 
         LOG.warning("Initialising replication updates")
-        conn = connect(args.config.get_libpq_dsn())
-        replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
-        if args.update_functions:
-            LOG.warning("Create functions")
-            refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                     True, False)
-        conn.close()
+        with connect(args.config.get_libpq_dsn()) as conn:
+            replication.init_replication(conn, base_url=args.config.REPLICATION_URL)
+            if args.update_functions:
+                LOG.warning("Create functions")
+                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                                         True, False)
         return 0
 
 
@@ -76,10 +64,8 @@ class UpdateReplication:
     def _check_for_updates(args):
         from ..tools import replication
 
-        conn = connect(args.config.get_libpq_dsn())
-        ret = replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
-        conn.close()
-        return ret
+        with connect(args.config.get_libpq_dsn()) as conn:
+            return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
 
     @staticmethod
     def _report_update(batchdate, start_import, start_index):
@@ -99,7 +85,7 @@ class UpdateReplication:
         from ..tools import replication
         from ..indexer.indexer import Indexer
 
-        params = _osm2pgsql_options_from_args(args, 2000, 1)
+        params = args.osm2pgsql_options(default_cache=2000, default_threads=1)
         params.update(base_url=args.config.REPLICATION_URL,
                       update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
                       import_file=args.project_dir / 'osmosischange.osc',
@@ -122,13 +108,12 @@ class UpdateReplication:
             recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
         while True:
-            conn = connect(args.config.get_libpq_dsn())
-            start = dt.datetime.now(dt.timezone.utc)
-            state = replication.update(conn, params)
-            if state is not replication.UpdateState.NO_CHANGES:
-                status.log_status(conn, start, 'import')
-            batchdate, _, _ = status.get_status(conn)
-            conn.close()
+            with connect(args.config.get_libpq_dsn()) as conn:
+                start = dt.datetime.now(dt.timezone.utc)
+                state = replication.update(conn, params)
+                if state is not replication.UpdateState.NO_CHANGES:
+                    status.log_status(conn, start, 'import')
+                batchdate, _, _ = status.get_status(conn)
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
                 index_start = dt.datetime.now(dt.timezone.utc)
@@ -137,10 +122,9 @@ class UpdateReplication:
                 indexer.index_boundaries(0, 30)
                 indexer.index_by_rank(0, 30)
 
-                conn = connect(args.config.get_libpq_dsn())
-                status.set_indexed(conn, True)
-                status.log_status(conn, index_start, 'index')
-                conn.close()
+                with connect(args.config.get_libpq_dsn()) as conn:
+                    status.set_indexed(conn, True)
+                    status.log_status(conn, index_start, 'index')
             else:
                 index_start = None
 

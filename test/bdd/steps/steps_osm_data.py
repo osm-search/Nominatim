@@ -75,9 +75,8 @@ def update_from_osm_file(context):
     The data is expected as attached text in OPL format.
     """
     context.nominatim.copy_from_place(context.db)
-    context.nominatim.run_setup_script('index', 'index-noanalyse')
-    context.nominatim.run_setup_script('create-functions', 'create-partition-functions',
-                                       'enable-diff-updates')
+    context.nominatim.run_nominatim('index')
+    context.nominatim.run_nominatim('refresh', '--functions')
 
     # create an OSM file and import it
     fname = write_opl_file(context.text, context.osm)

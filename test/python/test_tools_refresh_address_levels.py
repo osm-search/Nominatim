@@ -2,8 +2,9 @@
 Tests for function for importing address ranks.
 """
 import json
-import pytest
 from pathlib import Path
+
+import pytest
 
 from nominatim.tools.refresh import load_address_levels, load_address_levels_from_file
 

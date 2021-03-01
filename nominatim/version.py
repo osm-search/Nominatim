@@ -2,7 +2,15 @@
 Version information for Nominatim.
 """
 
-NOMINATIM_VERSION = "3.6.0"
+# Version information: major, minor, patch level, database patch level
+#
+# The first three numbers refer to the last released version.
+#
+# The database patch level tracks important changes between releases
+# and must always be increased when there is a change to the database or code
+# that requires a migration.
+# Released versions always have a database patch level of 0.
+NOMINATIM_VERSION = (3, 6, 0, 0)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 3)
 POSTGIS_REQUIRED_VERSION = (2, 2)

@@ -56,4 +56,10 @@ class Status
 
         return $iDataDateEpoch;
     }
+
+    public function databaseVersion()
+    {
+        $sSQL = 'SELECT value FROM nominatim_properties WHERE property = \'database_version\'';
+        return $this->oDB->getOne($sSQL);
+    }
 }

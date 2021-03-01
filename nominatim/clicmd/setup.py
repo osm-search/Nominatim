@@ -87,7 +87,8 @@ class SetupAll:
             params = ['setup.php', '--create-tables', '--create-partition-tables']
             if args.reverse_only:
                 params.append('--reverse-only')
-            run_legacy_script(*params, nominatim_env=args)
+            run_legacy_script(*params, nominatim_env=args,
+                              throw_on_fail=not args.ignore_errors)
 
             LOG.warning('Create functions (2nd pass)')
             with connect(args.config.get_libpq_dsn()) as conn:
@@ -112,7 +113,8 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
             LOG.warning('Calculate postcodes')
-            run_legacy_script('setup.php', '--calculate-postcodes', nominatim_env=args)
+            run_legacy_script('setup.php', '--calculate-postcodes',
+                              nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             LOG.warning('Indexing places')
@@ -124,7 +126,7 @@ class SetupAll:
         params = ['setup.php', '--create-search-indices', '--create-country-names']
         if args.no_updates:
             params.append('--drop')
-        run_legacy_script(*params, nominatim_env=args)
+        run_legacy_script(*params, nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

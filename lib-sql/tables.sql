@@ -36,6 +36,13 @@ GRANT SELECT ON new_query_log TO "{www-user}" ;
 
 GRANT SELECT ON TABLE country_name TO "{www-user}";
 
+DROP TABLE IF EXISTS nominatim_properties;
+CREATE TABLE nominatim_properties (
+    property TEXT,
+    value TEXT
+);
+GRANT SELECT ON TABLE nominatim_properties TO "{www-user}";
+
 drop table IF EXISTS word;
 CREATE TABLE word (
   word_id INTEGER,

@@ -78,6 +78,14 @@ def test_cursor_scalar_many_rows(db):
             cur.scalar('SELECT * FROM pg_tables')
 
 
+def test_cursor_scalar_no_rows(db, table_factory):
+    table_factory('dummy')
+
+    with db.cursor() as cur:
+        with pytest.raises(RuntimeError):
+            cur.scalar('SELECT id FROM dummy')
+
+
 def test_get_pg_env_add_variable(monkeypatch):
     monkeypatch.delenv('PGPASSWORD', raising=False)
     env = get_pg_env('user=fooF')

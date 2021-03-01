@@ -8,7 +8,8 @@ import psutil
 
 from ..tools.exec_utils import run_legacy_script
 from ..db.connection import connect
-from ..db import status
+from ..db import status, properties
+from ..version import NOMINATIM_VERSION
 from ..errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
@@ -139,5 +140,8 @@ class SetupAll:
                 LOG.info('Database is at %s.', dbdate)
             except Exception as exc: # pylint: disable=broad-except
                 LOG.error('Cannot determine date of database: %s', exc)
+
+            properties.set_property(conn, 'database_version',
+                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
 
         return 0

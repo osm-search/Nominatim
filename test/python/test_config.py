@@ -17,26 +17,25 @@ def test_no_project_dir():
     assert config.DATABASE_WEBUSER == 'www-data'
 
 
-def test_prefer_project_setting_over_default():
-    with tempfile.TemporaryDirectory() as project_dir:
-        with open(project_dir + '/.env', 'w') as envfile:
-            envfile.write('NOMINATIM_DATABASE_WEBUSER=apache\n')
+@pytest.mark.parametrize("val", ('apache', '"apache"'))
+def test_prefer_project_setting_over_default(val, tmp_path):
+    envfile = tmp_path / '.env'
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER={}\n'.format(val))
 
-        config = Configuration(Path(project_dir), DEFCFG_DIR)
+    config = Configuration(Path(tmp_path), DEFCFG_DIR)
 
-        assert config.DATABASE_WEBUSER == 'apache'
+    assert config.DATABASE_WEBUSER == 'apache'
 
 
-def test_prefer_os_environ_over_project_setting(monkeypatch):
-    with tempfile.TemporaryDirectory() as project_dir:
-        with open(project_dir + '/.env', 'w') as envfile:
-            envfile.write('NOMINATIM_DATABASE_WEBUSER=apache\n')
+def test_prefer_os_environ_over_project_setting(monkeypatch, tmp_path):
+    envfile = tmp_path / '.env'
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n')
 
-        monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', 'nobody')
+    monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', 'nobody')
 
-        config = Configuration(Path(project_dir), DEFCFG_DIR)
+    config = Configuration(Path(tmp_path), DEFCFG_DIR)
 
-        assert config.DATABASE_WEBUSER == 'nobody'
+    assert config.DATABASE_WEBUSER == 'nobody'
 
 
 def test_get_os_env_add_defaults(monkeypatch):

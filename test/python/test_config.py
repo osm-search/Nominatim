@@ -2,7 +2,6 @@
 Test for loading dotenv configuration.
 """
 from pathlib import Path
-import tempfile
 
 import pytest
 

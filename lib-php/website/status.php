@@ -37,7 +37,8 @@ if ($sOutputFormat == 'json') {
     $aResponse = array(
                   'status' => 0,
                   'message' => 'OK',
-                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339)
+                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339),
+                  'software_version' => CONST_NominatimVersion
                  );
     javascript_renderData($aResponse);
 } else {

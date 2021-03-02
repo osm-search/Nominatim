@@ -9,6 +9,7 @@ from textwrap import dedent
 from psycopg2.extras import execute_values
 
 from ..db.utils import execute_file
+from ..version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
@@ -258,9 +259,10 @@ def setup_website(basedir, phplib_dir, config):
                       <?php
 
                       @define('CONST_Debug', $_GET['debug'] ?? false);
-                      @define('CONST_LibDir', '{}');
+                      @define('CONST_LibDir', '{0}');
+                      @define('CONST_NominatimVersion', '{1[0]}.{1[1]}.{1[2]}-{1[3]}');
 
-                      """.format(phplib_dir))
+                      """.format(phplib_dir, NOMINATIM_VERSION))
 
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
         if var_type == bool:

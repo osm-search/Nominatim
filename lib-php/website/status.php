@@ -37,8 +37,13 @@ if ($sOutputFormat == 'json') {
     $aResponse = array(
                   'status' => 0,
                   'message' => 'OK',
-                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339)
+                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339),
+                  'software_version' => CONST_NominatimVersion
                  );
+    $sDatabaseVersion = $oStatus->databaseVersion();
+    if ($sDatabaseVersion) {
+        $aResponse['database_version'] = $sDatabaseVersion;
+    }
     javascript_renderData($aResponse);
 } else {
     echo 'OK';

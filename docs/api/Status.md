@@ -35,9 +35,15 @@ will return HTTP code 200 and a structure
   {
       "status": 0,
       "message": "OK",
-      "data_updated": "2020-05-04T14:47:00+00:00"
+      "data_updated": "2020-05-04T14:47:00+00:00",
+      "software_version": "3.6.0-0",
+      "database_version": "3.6.0-0"
   }
 ```
+
+The `software_version` field contains the version of Nominatim used to serve
+the API. The `database_version` field contains the version of the data format
+in the database.
 
 On error will also return HTTP status code 200 and a structure with error
 code and message, e.g.

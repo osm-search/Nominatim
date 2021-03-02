@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import nominatim.db.properties
 import nominatim.cli
 import nominatim.clicmd.api
 import nominatim.clicmd.refresh
@@ -93,6 +94,7 @@ def test_import_full(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'load_data'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+        mock_func_factory(nominatim.db.properties, 'set_property')
     ]
 
     cf_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')

@@ -13,7 +13,6 @@ class SetupFunctions
     protected $sIgnoreErrors;
     protected $bEnableDiffUpdates;
     protected $bEnableDebugStatements;
-    protected $bNoPartitions;
     protected $bDrop;
     protected $oDB = null;
     protected $oNominatimCmd;
@@ -50,11 +49,6 @@ class SetupFunctions
             $this->bEnableDebugStatements = $aCMDResult['enable-debug-statements'];
         } else {
             $this->bEnableDebugStatements = false;
-        }
-        if (isset($aCMDResult['no-partitions'])) {
-            $this->bNoPartitions = $aCMDResult['no-partitions'];
-        } else {
-            $this->bNoPartitions = false;
         }
         if (isset($aCMDResult['enable-diff-updates'])) {
             $this->bEnableDiffUpdates = $aCMDResult['enable-diff-updates'];
@@ -350,9 +344,9 @@ class SetupFunctions
 
     private function pgsqlRunPartitionScript($sTemplate)
     {
-        $sSQL = 'select distinct partition from country_name';
+        $sSQL = 'select distinct partition from country_name order by partition';
         $aPartitions = $this->db()->getCol($sSQL);
-        if (!$this->bNoPartitions) $aPartitions[] = 0;
+        if ($aPartitions[0] != 0) $aPartitions[] = 0;
 
         preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
         foreach ($aMatches as $aMatch) {

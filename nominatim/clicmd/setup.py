@@ -8,7 +8,8 @@ import psutil
 
 from ..tools.exec_utils import run_legacy_script
 from ..db.connection import connect
-from ..db import status
+from ..db import status, properties
+from ..version import NOMINATIM_VERSION
 from ..errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
@@ -87,7 +88,8 @@ class SetupAll:
             params = ['setup.php', '--create-tables', '--create-partition-tables']
             if args.reverse_only:
                 params.append('--reverse-only')
-            run_legacy_script(*params, nominatim_env=args)
+            run_legacy_script(*params, nominatim_env=args,
+                              throw_on_fail=not args.ignore_errors)
 
             LOG.warning('Create functions (2nd pass)')
             with connect(args.config.get_libpq_dsn()) as conn:
@@ -112,7 +114,8 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
             LOG.warning('Calculate postcodes')
-            run_legacy_script('setup.php', '--calculate-postcodes', nominatim_env=args)
+            run_legacy_script('setup.php', '--calculate-postcodes',
+                              nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             LOG.warning('Indexing places')
@@ -124,7 +127,7 @@ class SetupAll:
         params = ['setup.php', '--create-search-indices', '--create-country-names']
         if args.no_updates:
             params.append('--drop')
-        run_legacy_script(*params, nominatim_env=args)
+        run_legacy_script(*params, nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)
@@ -137,5 +140,8 @@ class SetupAll:
                 LOG.info('Database is at %s.', dbdate)
             except Exception as exc: # pylint: disable=broad-except
                 LOG.error('Cannot determine date of database: %s', exc)
+
+            properties.set_property(conn, 'database_version',
+                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
 
         return 0

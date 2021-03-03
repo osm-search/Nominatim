@@ -35,6 +35,10 @@ class AdminTransition:
                            help='Import a osm file')
         group.add_argument('--load-data', action='store_true',
                            help='Copy data to live tables from import table')
+        group.add_argument('--create-tables', action='store_true',
+                           help='Create main tables')
+        group.add_argument('--create-partition-tables', action='store_true',
+                           help='Create required partition tables')
         group.add_argument('--index', action='store_true',
                            help='Index the data')
         group = parser.add_argument_group('Options')
@@ -50,10 +54,13 @@ class AdminTransition:
                            help='Do not perform analyse operations during index')
         group.add_argument('--ignore-errors', action='store_true',
                            help="Ignore certain erros on import.")
+        group.add_argument('--reverse-only', action='store_true',
+                           help='Do not create search tables and indexes')
 
     @staticmethod
     def run(args):
         from ..tools import database_import
+        from ..tools import refresh
 
         if args.create_db:
             LOG.warning('Create DB')
@@ -79,6 +86,20 @@ class AdminTransition:
                                             args.osm2pgsql_options(0, 1),
                                             drop=args.drop,
                                             ignore_errors=args.ignore_errors)
+
+        if args.create_tables:
+            LOG.warning('Create Tables')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                database_import.create_tables(conn, args.config, args.sqllib_dir, args.reverse_only)
+                refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
+                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                                         enable_diff_updates=False)
+                database_import.create_table_triggers(conn, args.config, args.sqllib_dir)
+
+        if args.create_partition_tables:
+            LOG.warning('Create Partition Tables')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                database_import.create_partition_tables(conn, args.config, args.sqllib_dir)
 
         if args.load_data:
             LOG.warning('Load data')

@@ -128,14 +128,18 @@ if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createTables($aCMDResult['reverse-only']);
-    $oSetup->createFunctions();
-    $oSetup->createTableTriggers();
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--create-tables');
+
+    if ($aCMDResult['reverse-only'] ?? false) {
+        $oCmd->addParams('--reverse-only');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createPartitionTables();
+    run((clone($oNominatimCmd))->addParams('transition', '--create-partition-tables'));
 }
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {

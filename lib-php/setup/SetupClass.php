@@ -77,42 +77,6 @@ class SetupFunctions
         $this->createSqlFunctions();
     }
 
-    public function createTables($bReverseOnly = false)
-    {
-        info('Create Tables');
-
-        $sTemplate = file_get_contents(CONST_SqlDir.'/tables.sql');
-        $sTemplate = $this->replaceSqlPatterns($sTemplate);
-
-        $this->pgsqlRunScript($sTemplate, false);
-
-        if ($bReverseOnly) {
-            $this->dropTable('search_name');
-        }
-
-        (clone($this->oNominatimCmd))->addParams('refresh', '--address-levels')->run();
-    }
-
-    public function createTableTriggers()
-    {
-        info('Create Tables');
-
-        $sTemplate = file_get_contents(CONST_SqlDir.'/table-triggers.sql');
-        $sTemplate = $this->replaceSqlPatterns($sTemplate);
-
-        $this->pgsqlRunScript($sTemplate, false);
-    }
-
-    public function createPartitionTables()
-    {
-        info('Create Partition Tables');
-
-        $sTemplate = file_get_contents(CONST_SqlDir.'/partition-tables.src.sql');
-        $sTemplate = $this->replaceSqlPatterns($sTemplate);
-
-        $this->pgsqlRunPartitionScript($sTemplate);
-    }
-
     public function importTigerData($sTigerPath)
     {
         info('Import Tiger data');
@@ -340,24 +304,6 @@ class SetupFunctions
         }
 
         $oCmd->run(!$this->sIgnoreErrors);
-    }
-
-    private function pgsqlRunPartitionScript($sTemplate)
-    {
-        $sSQL = 'select distinct partition from country_name order by partition';
-        $aPartitions = $this->db()->getCol($sSQL);
-        if ($aPartitions[0] != 0) $aPartitions[] = 0;
-
-        preg_match_all('#^-- start(.*?)^-- end#ms', $sTemplate, $aMatches, PREG_SET_ORDER);
-        foreach ($aMatches as $aMatch) {
-            $sResult = '';
-            foreach ($aPartitions as $sPartitionName) {
-                $sResult .= str_replace('-partition-', $sPartitionName, $aMatch[1]);
-            }
-            $sTemplate = str_replace($aMatch[0], $sResult, $sTemplate);
-        }
-
-        $this->pgsqlRunScript($sTemplate);
     }
 
     private function pgsqlRunScriptFile($sFilename)

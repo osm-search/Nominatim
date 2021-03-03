@@ -4,7 +4,7 @@ CREATE TABLE import_status (
   sequence_id integer,
   indexed boolean
   );
-GRANT SELECT ON import_status TO "{www-user}" ;
+GRANT SELECT ON import_status TO "{{config.DATABASE_WEBUSER}}" ;
 
 drop table if exists import_osmosis_log;
 CREATE TABLE import_osmosis_log (
@@ -30,18 +30,18 @@ CREATE TABLE new_query_log (
   secret text
   );
 CREATE INDEX idx_new_query_log_starttime ON new_query_log USING BTREE (starttime);
-GRANT INSERT ON new_query_log TO "{www-user}" ;
-GRANT UPDATE ON new_query_log TO "{www-user}" ;
-GRANT SELECT ON new_query_log TO "{www-user}" ;
+GRANT INSERT ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
+GRANT UPDATE ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT ON new_query_log TO "{{config.DATABASE_WEBUSER}}" ;
 
-GRANT SELECT ON TABLE country_name TO "{www-user}";
+GRANT SELECT ON TABLE country_name TO "{{config.DATABASE_WEBUSER}}";
 
 DROP TABLE IF EXISTS nominatim_properties;
 CREATE TABLE nominatim_properties (
     property TEXT,
     value TEXT
 );
-GRANT SELECT ON TABLE nominatim_properties TO "{www-user}";
+GRANT SELECT ON TABLE nominatim_properties TO "{{config.DATABASE_WEBUSER}}";
 
 drop table IF EXISTS word;
 CREATE TABLE word (
@@ -53,9 +53,9 @@ CREATE TABLE word (
   country_code varchar(2),
   search_name_count INTEGER,
   operator TEXT
-  ) {ts:search-data};
-CREATE INDEX idx_word_word_token on word USING BTREE (word_token) {ts:search-index};
-GRANT SELECT ON word TO "{www-user}" ;
+  ) {{db.tablespace.search_data}};
+CREATE INDEX idx_word_word_token on word USING BTREE (word_token) {{db.tablespace.search_index}};
+GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}" ;
 DROP SEQUENCE IF EXISTS seq_word;
 CREATE SEQUENCE seq_word start 1;
 
@@ -80,8 +80,8 @@ CREATE TABLE location_area_country (
   place_id BIGINT,
   country_code varchar(2),
   geometry GEOMETRY(Geometry, 4326)
-  ) {ts:address-data};
-CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry) {ts:address-index};
+  ) {{db.tablespace.address_data}};
+CREATE INDEX idx_location_area_country_geometry ON location_area_country USING GIST (geometry) {{db.tablespace.address_index}};
 
 
 drop table IF EXISTS location_property CASCADE;
@@ -98,7 +98,7 @@ CREATE TABLE location_property_aux () INHERITS (location_property);
 CREATE INDEX idx_location_property_aux_place_id ON location_property_aux USING BTREE (place_id);
 CREATE INDEX idx_location_property_aux_parent_place_id ON location_property_aux USING BTREE (parent_place_id);
 CREATE INDEX idx_location_property_aux_housenumber_parent_place_id ON location_property_aux USING BTREE (parent_place_id, housenumber);
-GRANT SELECT ON location_property_aux TO "{www-user}";
+GRANT SELECT ON location_property_aux TO "{{config.DATABASE_WEBUSER}}";
 
 CREATE TABLE location_property_tiger (
   place_id BIGINT,
@@ -109,7 +109,7 @@ CREATE TABLE location_property_tiger (
   linegeo GEOMETRY,
   interpolationtype TEXT,
   postcode TEXT);
-GRANT SELECT ON location_property_tiger TO "{www-user}";
+GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
 
 drop table if exists location_property_osmline;
 CREATE TABLE location_property_osmline (
@@ -127,13 +127,14 @@ CREATE TABLE location_property_osmline (
     address HSTORE,
     postcode TEXT,
     country_code VARCHAR(2)
-  ){ts:search-data};
-CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {ts:search-index};
-CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {ts:address-index};
-CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {ts:search-index};
-GRANT SELECT ON location_property_osmline TO "{www-user}";
+  ){{db.tablespace.search_data}};
+CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {{db.tablespace.address_index}};
+CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}};
+GRANT SELECT ON location_property_osmline TO "{{config.DATABASE_WEBUSER}}";
 
 drop table IF EXISTS search_name;
+{% if not db.reverse_only %}
 CREATE TABLE search_name (
   place_id BIGINT,
   importance FLOAT,
@@ -143,8 +144,10 @@ CREATE TABLE search_name (
   nameaddress_vector integer[],
   country_code varchar(2),
   centroid GEOMETRY(Geometry, 4326)
-  ) {ts:search-data};
-CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id) {ts:search-index};
+  ) {{db.tablespace.search_data}};
+CREATE INDEX idx_search_name_place_id ON search_name USING BTREE (place_id) {{db.tablespace.search_index}};
+GRANT SELECT ON search_name to "{{config.DATABASE_WEBUSER}}" ;
+{% endif %}
 
 drop table IF EXISTS place_addressline;
 CREATE TABLE place_addressline (
@@ -154,8 +157,8 @@ CREATE TABLE place_addressline (
   cached_rank_address SMALLINT,
   fromarea boolean,
   isaddress boolean
-  ) {ts:search-data};
-CREATE INDEX idx_place_addressline_place_id on place_addressline USING BTREE (place_id) {ts:search-index};
+  ) {{db.tablespace.search_data}};
+CREATE INDEX idx_place_addressline_place_id on place_addressline USING BTREE (place_id) {{db.tablespace.search_index}};
 
 drop table if exists placex;
 CREATE TABLE placex (
@@ -175,24 +178,23 @@ CREATE TABLE placex (
   housenumber TEXT,
   postcode TEXT,
   centroid GEOMETRY(Geometry, 4326)
-  ) {ts:search-data};
-CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id) {ts:search-index};
-CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {ts:search-index};
-CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {ts:address-index} WHERE linked_place_id IS NOT NULL;
-CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {ts:address-index};
-CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {ts:search-index};
-CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name')) {ts:address-index} WHERE osm_type='N' and rank_search < 26;
-CREATE INDEX idx_placex_wikidata on placex USING BTREE ((extratags -> 'wikidata')) {ts:address-index} WHERE extratags ? 'wikidata' and class = 'place' and osm_type = 'N' and rank_search < 26;
+  ) {{db.tablespace.search_data}};
+CREATE UNIQUE INDEX idx_place_id ON placex USING BTREE (place_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {{db.tablespace.search_index}};
+CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {{db.tablespace.address_index}} WHERE linked_place_id IS NOT NULL;
+CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {{db.tablespace.address_index}};
+CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {{db.tablespace.search_index}};
+CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name')) {{db.tablespace.address_index}} WHERE osm_type='N' and rank_search < 26;
+CREATE INDEX idx_placex_wikidata on placex USING BTREE ((extratags -> 'wikidata')) {{db.tablespace.address_index}} WHERE extratags ? 'wikidata' and class = 'place' and osm_type = 'N' and rank_search < 26;
 
 DROP SEQUENCE IF EXISTS seq_place;
 CREATE SEQUENCE seq_place start 1;
-GRANT SELECT on placex to "{www-user}" ;
-GRANT SELECT ON search_name to "{www-user}" ;
-GRANT SELECT on place_addressline to "{www-user}" ;
-GRANT SELECT ON seq_word to "{www-user}" ;
-GRANT SELECT ON planet_osm_ways to "{www-user}" ;
-GRANT SELECT ON planet_osm_rels to "{www-user}" ;
-GRANT SELECT on location_area to "{www-user}" ;
+GRANT SELECT on placex to "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT on place_addressline to "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT ON seq_word to "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT ON planet_osm_ways to "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT ON planet_osm_rels to "{{config.DATABASE_WEBUSER}}" ;
+GRANT SELECT on location_area to "{{config.DATABASE_WEBUSER}}" ;
 
 -- Table for synthetic postcodes.
 DROP TABLE IF EXISTS location_postcode;
@@ -207,8 +209,8 @@ CREATE TABLE location_postcode (
   postcode TEXT,
   geometry GEOMETRY(Geometry, 4326)
   );
-CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {ts:address-index};
-GRANT SELECT ON location_postcode TO "{www-user}" ;
+CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {{db.tablespace.address_index}};
+GRANT SELECT ON location_postcode TO "{{config.DATABASE_WEBUSER}}" ;
 
 DROP TABLE IF EXISTS import_polygon_error;
 CREATE TABLE import_polygon_error (
@@ -224,7 +226,7 @@ CREATE TABLE import_polygon_error (
   newgeometry GEOMETRY(Geometry, 4326)
   );
 CREATE INDEX idx_import_polygon_error_osmid ON import_polygon_error USING BTREE (osm_type, osm_id);
-GRANT SELECT ON import_polygon_error TO "{www-user}";
+GRANT SELECT ON import_polygon_error TO "{{config.DATABASE_WEBUSER}}";
 
 DROP TABLE IF EXISTS import_polygon_delete;
 CREATE TABLE import_polygon_delete (
@@ -234,7 +236,7 @@ CREATE TABLE import_polygon_delete (
   type TEXT NOT NULL
   );
 CREATE INDEX idx_import_polygon_delete_osmid ON import_polygon_delete USING BTREE (osm_type, osm_id);
-GRANT SELECT ON import_polygon_delete TO "{www-user}";
+GRANT SELECT ON import_polygon_delete TO "{{config.DATABASE_WEBUSER}}";
 
 DROP SEQUENCE IF EXISTS file;
 CREATE SEQUENCE file start 1;

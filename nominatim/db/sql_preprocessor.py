@@ -45,6 +45,14 @@ class SQLPreprocessor: # pylint: disable=too-few-public-methods
         db_info['tables'] = _get_tables(conn)
         db_info['reverse_only'] = 'search_name' not in db_info['tables']
 
+        db_info['tablespace'] = {}
+        for subset in ('ADDRESS', 'SEARCH', 'AUX'):
+            for kind in ('DATA', 'INDEX'):
+                tspace = getattr(config, 'TABLESPACE_{}_{}'.format(subset, kind))
+                if tspace:
+                    tspace = 'TABLESPACE "{}"'.format(tspace)
+                db_info['tablespace']['{}_{}'.format(subset.lower, kind.lower())] = tspace
+
         self.env.globals['config'] = config
         self.env.globals['db'] = db_info
         self.env.globals['modulepath'] = config.DATABASE_MODULE_PATH or \

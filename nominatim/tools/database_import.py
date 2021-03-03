@@ -14,6 +14,7 @@ import psycopg2
 from ..db.connection import connect, get_pg_env
 from ..db import utils as db_utils
 from ..db.async_connection import DBConnection
+from ..db.sql_preprocessor import SQLPreprocessor
 from .exec_utils import run_osm2pgsql
 from ..errors import UsageError
 from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
@@ -176,6 +177,32 @@ def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
     if drop:
         if options['flatnode_file']:
             Path(options['flatnode_file']).unlink()
+
+
+def create_tables(conn, config, sqllib_dir, reverse_only=False):
+    """ Create the set of basic tables.
+        When `reverse_only` is True, then the main table for searching will
+        be skipped and only reverse search is possible.
+    """
+    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql.env.globals['db']['reverse_only'] = reverse_only
+
+    sql.run_sql_file(conn, 'tables.sql')
+
+
+def create_table_triggers(conn, config, sqllib_dir):
+    """ Create the triggers for the tables. The trigger functions must already
+        have been imported with refresh.create_functions().
+    """
+    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql.run_sql_file(conn, 'table-triggers.sql')
+
+
+def create_partition_tables(conn, config, sqllib_dir):
+    """ Create tables that have explicit partioning.
+    """
+    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql.run_sql_file(conn, 'partition-tables.src.sql')
 
 
 def truncate_data_tables(conn, max_word_frequency=None):

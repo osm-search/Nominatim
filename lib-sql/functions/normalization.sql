@@ -1,12 +1,12 @@
 -- Functions for term normalisation and access to the 'word' table.
 
 CREATE OR REPLACE FUNCTION transliteration(text) RETURNS text
-  AS '{modulepath}/nominatim.so', 'transliteration'
+  AS '{{ modulepath }}/nominatim.so', 'transliteration'
 LANGUAGE c IMMUTABLE STRICT;
 
 
 CREATE OR REPLACE FUNCTION gettokenstring(text) RETURNS text
-  AS '{modulepath}/nominatim.so', 'gettokenstring'
+  AS '{{ modulepath }}/nominatim.so', 'gettokenstring'
 LANGUAGE c IMMUTABLE STRICT;
 
 

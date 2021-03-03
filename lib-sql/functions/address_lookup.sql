@@ -121,7 +121,7 @@ BEGIN
   END IF;
 
   --then query tiger data
-  -- %NOTIGERDATA% IF 0 THEN
+  {% if config.get_bool('USE_US_TIGER_DATA') %}
   IF place IS NULL AND in_housenumber >= 0 THEN
     SELECT parent_place_id as place_id, 'us' as country_code,
            in_housenumber as housenumber, postcode,
@@ -133,9 +133,10 @@ BEGIN
       WHERE place_id = in_place_id
             AND in_housenumber between startnumber and endnumber;
   END IF;
-  -- %NOTIGERDATA% END IF;
+  {% endif %}
 
-  -- %NOAUXDATA% IF 0 THEN
+  -- then additional data
+  {% if config.get_bool('USE_AUX_LOCATION_DATA') %}
   IF place IS NULL THEN
     SELECT parent_place_id as place_id, 'us' as country_code,
            housenumber, postcode,
@@ -146,7 +147,7 @@ BEGIN
       FROM location_property_aux
       WHERE place_id = in_place_id;
   END IF;
-  -- %NOAUXDATA% END IF;
+  {% endif %}
 
   -- postcode table
   IF place IS NULL THEN

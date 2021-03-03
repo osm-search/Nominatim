@@ -20,7 +20,7 @@ DECLARE
   location RECORD;
   parent RECORD;
 BEGIN
-    --DEBUG: RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;
+    {% if debug %}RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;{% endif %}
 
     -- Is this object part of an associatedStreet relation?
     FOR location IN
@@ -58,7 +58,7 @@ BEGIN
                and poi_osm_id = any(x.nodes)
          LIMIT 1
       LOOP
-        --DEBUG: RAISE WARNING 'Get parent from interpolation: %', parent.parent_place_id;
+        {% if debug %}RAISE WARNING 'Get parent from interpolation: %', parent.parent_place_id;{% endif %}
         RETURN parent.parent_place_id;
       END LOOP;
 
@@ -71,11 +71,11 @@ BEGIN
                and p.geometry && bbox
                and w.id = p.osm_id and poi_osm_id = any(w.nodes)
       LOOP
-        --DEBUG: RAISE WARNING 'Node is part of way % ', location.osm_id;
+        {% if debug %}RAISE WARNING 'Node is part of way % ', location.osm_id;{% endif %}
 
         -- Way IS a road then we are on it - that must be our road
         IF location.rank_search < 28 THEN
-          --DEBUG: RAISE WARNING 'node in way that is a street %',location;
+          {% if debug %}RAISE WARNING 'node in way that is a street %',location;{% endif %}
           return location.place_id;
         END IF;
 
@@ -106,7 +106,7 @@ BEGIN
       ELSEIF ST_Area(bbox) < 0.005 THEN
         -- for smaller features get the nearest road
         SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
-        --DEBUG: RAISE WARNING 'Checked for nearest way (%)', parent_place_id;
+        {% if debug %}RAISE WARNING 'Checked for nearest way (%)', parent_place_id;{% endif %}
       ELSE
         -- for larger features simply find the area with the largest rank that
         -- contains the bbox, only use addressable features
@@ -146,21 +146,21 @@ BEGIN
   IF bnd.osm_type = 'R' THEN
     -- see if we have any special relation members
     SELECT members FROM planet_osm_rels WHERE id = bnd.osm_id INTO relation_members;
-    --DEBUG: RAISE WARNING 'Got relation members';
+    {% if debug %}RAISE WARNING 'Got relation members';{% endif %}
 
     -- Search for relation members with role 'lable'.
     IF relation_members IS NOT NULL THEN
       FOR rel_member IN
         SELECT get_rel_node_members(relation_members, ARRAY['label']) as member
       LOOP
-        --DEBUG: RAISE WARNING 'Found label member %', rel_member.member;
+        {% if debug %}RAISE WARNING 'Found label member %', rel_member.member;{% endif %}
 
         FOR linked_placex IN
           SELECT * from placex
           WHERE osm_type = 'N' and osm_id = rel_member.member
             and class = 'place'
         LOOP
-          --DEBUG: RAISE WARNING 'Linked label member';
+          {% if debug %}RAISE WARNING 'Linked label member';{% endif %}
           RETURN linked_placex;
         END LOOP;
 
@@ -187,7 +187,7 @@ BEGIN
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
-      --DEBUG: RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;
+      {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
     END LOOP;
   END IF;
@@ -203,14 +203,14 @@ BEGIN
         AND _st_covers(bnd.geometry, placex.geometry)
       ORDER BY make_standard_name(name->'name') = bnd_name desc
     LOOP
-      --DEBUG: RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;
+      {% if debug %}RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
     END LOOP;
   END IF;
 
   -- Name searches can be done for ways as well as relations
   IF bnd_name is not null THEN
-    --DEBUG: RAISE WARNING 'Looking for nodes with matching names';
+    {% if debug %}RAISE WARNING 'Looking for nodes with matching names';{% endif %}
     FOR linked_placex IN
       SELECT placex.* from placex
       WHERE make_standard_name(name->'name') = bnd_name
@@ -225,7 +225,7 @@ BEGIN
         AND placex.rank_search < 26 -- needed to select the right index
         AND _st_covers(bnd.geometry, placex.geometry)
     LOOP
-      --DEBUG: RAISE WARNING 'Found matching place node %', linked_placex.osm_id;
+      {% if debug %}RAISE WARNING 'Found matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
     END LOOP;
   END IF;
@@ -285,10 +285,10 @@ BEGIN
                                                    address, country)
     ORDER BY rank_address, distance, isguess desc
   LOOP
-    IF NOT %REVERSE-ONLY% THEN
+    {% if not db.reverse_only %}
       nameaddress_vector := array_merge(nameaddress_vector,
                                         location.keywords::int[]);
-    END IF;
+    {% endif %}
 
     IF location.place_id is not null THEN
       location_isaddress := not address_havelevel[location.rank_address];
@@ -362,10 +362,10 @@ BEGIN
     END IF;
 
     -- Add it to the list of search terms
-    IF NOT %REVERSE-ONLY% THEN
+    {% if not db.reverse_only %}
       nameaddress_vector := array_merge(nameaddress_vector,
                                         location.keywords::integer[]);
-    END IF;
+    {% endif %}
 
     INSERT INTO place_addressline (place_id, address_place_id, fromarea,
                                      isaddress, distance, cached_rank_address)
@@ -388,7 +388,7 @@ DECLARE
   diameter FLOAT;
   classtable TEXT;
 BEGIN
-  --DEBUG: RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
+  {% if debug %}RAISE WARNING '% % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
@@ -440,9 +440,10 @@ BEGIN
 
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;
+  {% if debug %}RAISE WARNING 'placex_insert:END: % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type;{% endif %}
 
-  RETURN NEW; -- %DIFFUPDATES% The following is not needed until doing diff updates, and slows the main index process down
+{% if not disable_diff_updates %}
+  -- The following is not needed until doing diff updates, and slows the main index process down
 
   IF NEW.osm_type = 'N' and NEW.rank_search > 28 THEN
       -- might be part of an interpolation
@@ -497,6 +498,8 @@ BEGIN
     USING NEW.place_id, ST_Centroid(NEW.geometry);
   END IF;
 
+{% endif %} -- not disable_diff_updates
+
   RETURN NEW;
 
 END;
@@ -534,7 +537,7 @@ DECLARE
 BEGIN
   -- deferred delete
   IF OLD.indexed_status = 100 THEN
-    --DEBUG: RAISE WARNING 'placex_update delete % %',NEW.osm_type,NEW.osm_id;
+    {% if debug %}RAISE WARNING 'placex_update delete % %',NEW.osm_type,NEW.osm_id;{% endif %}
     delete from placex where place_id = OLD.place_id;
     RETURN NULL;
   END IF;
@@ -543,13 +546,13 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_update % % (%)',NEW.osm_type,NEW.osm_id,NEW.place_id;
+  {% if debug %}RAISE WARNING 'placex_update % % (%)',NEW.osm_type,NEW.osm_id,NEW.place_id;{% endif %}
 
   NEW.indexed_date = now();
 
-  IF NOT %REVERSE-ONLY% THEN
+  {% if 'search_name' in db.tables %}
     DELETE from search_name WHERE place_id = NEW.place_id;
-  END IF;
+  {% endif %}
   result := deleteSearchName(NEW.partition, NEW.place_id);
   DELETE FROM place_addressline WHERE place_id = NEW.place_id;
   result := deleteRoad(NEW.partition, NEW.place_id);
@@ -562,7 +565,7 @@ BEGIN
   NEW.address := NEW.address - '_unlisted_place'::TEXT;
 
   IF NEW.linked_place_id is not null THEN
-    --DEBUG: RAISE WARNING 'place already linked to %', NEW.linked_place_id;
+    {% if debug %}RAISE WARNING 'place already linked to %', NEW.linked_place_id;{% endif %}
     RETURN NEW;
   END IF;
 
@@ -578,7 +581,7 @@ BEGIN
   -- Speed up searches - just use the centroid of the feature
   -- cheaper but less acurate
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
-  --DEBUG: RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);
+  {% if debug %}RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);{% endif %}
 
   -- recompute the ranks, they might change when linking changes
   SELECT * INTO NEW.rank_search, NEW.rank_address
@@ -658,7 +661,7 @@ BEGIN
     parent_address_level := 3;
   END IF;
 
-  --DEBUG: RAISE WARNING 'Copy over address tags';
+  {% if debug %}RAISE WARNING 'Copy over address tags';{% endif %}
   -- housenumber is a computed field, so start with an empty value
   NEW.housenumber := NULL;
   IF NEW.address is not NULL THEN
@@ -707,7 +710,7 @@ BEGIN
     END IF;
     NEW.partition := get_partition(NEW.country_code);
   END IF;
-  --DEBUG: RAISE WARNING 'Country updated: "%"', NEW.country_code;
+  {% if debug %}RAISE WARNING 'Country updated: "%"', NEW.country_code;{% endif %}
 
   -- waterway ways are linked when they are part of a relation and have the same class/type
   IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
@@ -715,21 +718,21 @@ BEGIN
       LOOP
           FOR i IN 1..array_upper(relation_members, 1) BY 2 LOOP
               IF relation_members[i+1] in ('', 'main_stream', 'side_stream') AND substring(relation_members[i],1,1) = 'w' THEN
-                --DEBUG: RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation_members[i];
+                {% if debug %}RAISE WARNING 'waterway parent %, child %/%', NEW.osm_id, i, relation_members[i];{% endif %}
                 FOR linked_node_id IN SELECT place_id FROM placex
                   WHERE osm_type = 'W' and osm_id = substring(relation_members[i],2,200)::bigint
                   and class = NEW.class and type in ('river', 'stream', 'canal', 'drain', 'ditch')
                   and ( relation_members[i+1] != 'side_stream' or NEW.name->'name' = name->'name')
                 LOOP
                   UPDATE placex SET linked_place_id = NEW.place_id WHERE place_id = linked_node_id;
-                  IF NOT %REVERSE-ONLY% THEN
+                  {% if 'search_name' in db.tables %}
                     DELETE FROM search_name WHERE place_id = linked_node_id;
-                  END IF;
+                  {% endif %}
                 END LOOP;
               END IF;
           END LOOP;
       END LOOP;
-      --DEBUG: RAISE WARNING 'Waterway processed';
+      {% if debug %}RAISE WARNING 'Waterway processed';{% endif %}
   END IF;
 
   NEW.importance := null;
@@ -737,13 +740,13 @@ BEGIN
     FROM compute_importance(NEW.extratags, NEW.country_code, NEW.osm_type, NEW.osm_id)
     INTO NEW.wikipedia,NEW.importance;
 
---DEBUG: RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;
+{% if debug %}RAISE WARNING 'Importance computed from wikipedia: %', NEW.importance;{% endif %}
 
   -- ---------------------------------------------------------------------------
   -- For low level elements we inherit from our parent road
   IF NEW.rank_search > 27 THEN
 
-    --DEBUG: RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;
+    {% if debug %}RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;{% endif %}
     NEW.parent_place_id := null;
 
     -- if we have a POI and there is no address information,
@@ -791,7 +794,7 @@ BEGIN
       END IF;
 
       NEW.country_code := location.country_code;
-      --DEBUG: RAISE WARNING 'Got parent details from search name';
+      {% if debug %}RAISE WARNING 'Got parent details from search name';{% endif %}
 
       -- determine postcode
       IF NEW.address is not null AND NEW.address ? 'postcode' THEN
@@ -812,13 +815,14 @@ BEGIN
                                    name_vector, NEW.rank_search, NEW.rank_address,
                                    upper(trim(NEW.address->'postcode')), NEW.geometry,
                                    NEW.centroid);
-            --DEBUG: RAISE WARNING 'Place added to location table';
+            {% if debug %}RAISE WARNING 'Place added to location table';{% endif %}
           END IF;
 
       END IF;
 
-      IF not %REVERSE-ONLY% AND (array_length(name_vector, 1) is not NULL
-         OR inherited_address is not NULL OR NEW.address is not NULL)
+      {% if not db.reverse_only %}
+      IF array_length(name_vector, 1) is not NULL
+         OR inherited_address is not NULL OR NEW.address is not NULL
       THEN
         SELECT * INTO name_vector, nameaddress_vector
           FROM create_poi_search_terms(NEW.place_id,
@@ -834,9 +838,10 @@ BEGIN
                  VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
                          NEW.importance, NEW.country_code, name_vector,
                          nameaddress_vector, NEW.centroid);
-          --DEBUG: RAISE WARNING 'Place added to search table';
+          {% if debug %}RAISE WARNING 'Place added to search table';{% endif %}
         END IF;
       END IF;
+      {% endif %}
 
       RETURN NEW;
     END IF;
@@ -845,10 +850,10 @@ BEGIN
 
   -- ---------------------------------------------------------------------------
   -- Full indexing
-  --DEBUG: RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;
+  {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
   SELECT * INTO location FROM find_linked_place(NEW);
   IF location.place_id is not null THEN
-    --DEBUG: RAISE WARNING 'Linked %', location;
+    {% if debug %}RAISE WARNING 'Linked %', location;{% endif %}
 
     -- Use the linked point as the centre point of the geometry,
     -- but only if it is within the area of the boundary.
@@ -857,7 +862,7 @@ BEGIN
         NEW.centroid := geom;
     END IF;
 
-    --DEBUG: RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;
+    {% if debug %}RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;{% endif %}
     IF location.rank_address > parent_address_level
        and location.rank_address < 26
     THEN
@@ -878,9 +883,9 @@ BEGIN
     UPDATE placex set linked_place_id = NEW.place_id
       WHERE place_id = location.place_id;
     -- ensure that those places are not found anymore
-    IF NOT %REVERSE-ONLY% THEN
+    {% if 'search_name' in db.tables %}
       DELETE FROM search_name WHERE place_id = location.place_id;
-    END IF;
+    {% endif %}
     PERFORM deleteLocationArea(NEW.partition, location.place_id, NEW.rank_search);
 
     SELECT wikipedia, importance
@@ -918,7 +923,7 @@ BEGIN
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
     PERFORM create_country(NEW.name, lower(NEW.country_code));
-    --DEBUG: RAISE WARNING 'Country names updated';
+    {% if debug %}RAISE WARNING 'Country names updated';{% endif %}
 
     -- Also update the list of country names. Adding an additional sanity
     -- check here: make sure the country does overlap with the area where
@@ -928,7 +933,7 @@ BEGIN
        WHERE ST_Covers(geometry, NEW.centroid) and country_code = NEW.country_code
        LIMIT 1
     LOOP
-      --DEBUG: RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;
+      {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
       UPDATE country_name SET name = name || NEW.name WHERE country_code = NEW.country_code;
     END LOOP;
   END IF;
@@ -960,7 +965,7 @@ BEGIN
                                     NEW.address, geom, NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
-  --DEBUG: RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;
+  {% if debug %}RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;{% endif %}
 
   IF NEW.address is not null AND NEW.address ? 'postcode' 
      AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
@@ -976,30 +981,30 @@ BEGIN
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
       result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry, NEW.centroid);
-      --DEBUG: RAISE WARNING 'added to location (full)';
+      {% if debug %}RAISE WARNING 'added to location (full)';{% endif %}
     END IF;
 
     IF NEW.rank_search between 26 and 27 and NEW.class = 'highway' THEN
       result := insertLocationRoad(NEW.partition, NEW.place_id, NEW.country_code, NEW.geometry);
-      --DEBUG: RAISE WARNING 'insert into road location table (full)';
+      {% if debug %}RAISE WARNING 'insert into road location table (full)';{% endif %}
     END IF;
 
     result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
                                NEW.rank_search, NEW.rank_address, NEW.geometry);
-    --DEBUG: RAISE WARNING 'added to search name (full)';
+    {% if debug %}RAISE WARNING 'added to search name (full)';{% endif %}
 
-    IF NOT %REVERSE-ONLY% THEN
+    {% if not db.reverse_only %}
         INSERT INTO search_name (place_id, search_rank, address_rank,
                                  importance, country_code, name_vector,
                                  nameaddress_vector, centroid)
                VALUES (NEW.place_id, NEW.rank_search, NEW.rank_address,
                        NEW.importance, NEW.country_code, name_vector,
                        nameaddress_vector, NEW.centroid);
-    END IF;
+    {% endif %}
 
   END IF;
 
-  --DEBUG: RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;
+  {% if debug %}RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;{% endif %}
 
   RETURN NEW;
 END;
@@ -1018,9 +1023,9 @@ BEGIN
 
   IF OLD.linked_place_id is null THEN
     update placex set linked_place_id = null, indexed_status = 2 where linked_place_id = OLD.place_id and indexed_status = 0;
-    --DEBUG: RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:01 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     update placex set linked_place_id = null where linked_place_id = OLD.place_id;
-    --DEBUG: RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:02 % %',OLD.osm_type,OLD.osm_id;{% endif %}
   ELSE
     update placex set indexed_status = 2 where place_id = OLD.linked_place_id and indexed_status = 0;
   END IF;
@@ -1028,44 +1033,44 @@ BEGIN
   IF OLD.rank_address < 30 THEN
 
     -- mark everything linked to this place for re-indexing
-    --DEBUG: RAISE WARNING 'placex_delete:03 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:03 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     UPDATE placex set indexed_status = 2 from place_addressline where address_place_id = OLD.place_id 
       and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress;
 
-    --DEBUG: RAISE WARNING 'placex_delete:04 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:04 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     DELETE FROM place_addressline where address_place_id = OLD.place_id;
 
-    --DEBUG: RAISE WARNING 'placex_delete:05 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:05 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     b := deleteRoad(OLD.partition, OLD.place_id);
 
-    --DEBUG: RAISE WARNING 'placex_delete:06 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:06 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     update placex set indexed_status = 2 where parent_place_id = OLD.place_id and indexed_status = 0;
-    --DEBUG: RAISE WARNING 'placex_delete:07 % %',OLD.osm_type,OLD.osm_id;
+    {% if debug %}RAISE WARNING 'placex_delete:07 % %',OLD.osm_type,OLD.osm_id;{% endif %}
     -- reparenting also for OSM Interpolation Lines (and for Tiger?)
     update location_property_osmline set indexed_status = 2 where indexed_status = 0 and parent_place_id = OLD.place_id;
 
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;
+  {% if debug %}RAISE WARNING 'placex_delete:08 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
   IF OLD.rank_address < 26 THEN
     b := deleteLocationArea(OLD.partition, OLD.place_id, OLD.rank_search);
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_delete:09 % %',OLD.osm_type,OLD.osm_id;
+  {% if debug %}RAISE WARNING 'placex_delete:09 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
   IF OLD.name is not null THEN
-    IF NOT %REVERSE-ONLY% THEN
+    {% if 'search_name' in db.tables %}
       DELETE from search_name WHERE place_id = OLD.place_id;
-    END IF;
+    {% endif %}
     b := deleteSearchName(OLD.partition, OLD.place_id);
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_delete:10 % %',OLD.osm_type,OLD.osm_id;
+  {% if debug %}RAISE WARNING 'placex_delete:10 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
   DELETE FROM place_addressline where place_id = OLD.place_id;
 
-  --DEBUG: RAISE WARNING 'placex_delete:11 % %',OLD.osm_type,OLD.osm_id;
+  {% if debug %}RAISE WARNING 'placex_delete:11 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
   -- remove from tables for special search
   classtable := 'place_classtype_' || OLD.class || '_' || OLD.type;
@@ -1074,7 +1079,7 @@ BEGIN
     EXECUTE 'DELETE FROM ' || classtable::regclass || ' WHERE place_id = $1' USING OLD.place_id;
   END IF;
 
-  --DEBUG: RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;
+  {% if debug %}RAISE WARNING 'placex_delete:12 % %',OLD.osm_type,OLD.osm_id;{% endif %}
 
   RETURN OLD;
 

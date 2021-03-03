@@ -237,7 +237,7 @@ BEGIN
     IF word_ids is not null THEN
       parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:street: %', parent_place_id;
+        {% if debug %}RAISE WARNING 'Get parent form addr:street: %', parent_place_id;{% endif %}
         RETURN parent_place_id;
       END IF;
     END IF;
@@ -249,7 +249,7 @@ BEGIN
     IF word_ids is not null THEN
       parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, word_ids);
       IF parent_place_id is not null THEN
-        --DEBUG: RAISE WARNING 'Get parent form addr:place: %', parent_place_id;
+        {% if debug %}RAISE WARNING 'Get parent form addr:place: %', parent_place_id;{% endif %}
         RETURN parent_place_id;
       END IF;
     END IF;

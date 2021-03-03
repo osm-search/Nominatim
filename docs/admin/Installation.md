@@ -42,6 +42,7 @@ For running Nominatim:
   * [Psycopg2](https://www.psycopg.org) (2.7+)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [psutil](https://github.com/giampaolo/psutil)
+  * [Jinja2](https://palletsprojects.com/p/jinja/)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)

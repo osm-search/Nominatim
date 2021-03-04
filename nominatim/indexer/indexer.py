@@ -159,6 +159,7 @@ class Indexer:
             ensure that database statistics are updated.
         """
         conn = psycopg2.connect(self.dsn)
+        conn.autocommit = True
 
         try:
             self.index_by_rank(0, 4)

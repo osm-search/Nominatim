@@ -30,7 +30,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
                         php php-pgsql php-intl python3-pip \
-                        python3-psycopg2 python3-psutil git
+                        python3-psycopg2 python3-psutil python3-jinja2 git
 
 # The python-dotenv package that comes with Ubuntu 18.04 is too old, so
 # install the latest version from pip:

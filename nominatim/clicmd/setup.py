@@ -79,20 +79,22 @@ class SetupAll:
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)
 
-            LOG.warning('Create functions (1st pass)')
             with connect(args.config.get_libpq_dsn()) as conn:
+                LOG.warning('Create functions (1st pass)')
                 refresh.create_functions(conn, args.config, args.sqllib_dir,
                                          False, False)
-
-            LOG.warning('Create tables')
-            params = ['setup.php', '--create-tables', '--create-partition-tables']
-            if args.reverse_only:
-                params.append('--reverse-only')
-            run_legacy_script(*params, nominatim_env=args,
-                              throw_on_fail=not args.ignore_errors)
-
-            LOG.warning('Create functions (2nd pass)')
-            with connect(args.config.get_libpq_dsn()) as conn:
+                LOG.warning('Create tables')
+                database_import.create_tables(conn, args.config, args.sqllib_dir,
+                                              reverse_only=args.reverse_only)
+                refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
+                LOG.warning('Create functions (2nd pass)')
+                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                                         False, False)
+                LOG.warning('Create table triggers')
+                database_import.create_table_triggers(conn, args.config, args.sqllib_dir)
+                LOG.warning('Create partition tables')
+                database_import.create_partition_tables(conn, args.config, args.sqllib_dir)
+                LOG.warning('Create functions (3rd pass)')
                 refresh.create_functions(conn, args.config, args.sqllib_dir,
                                          False, False)
 
@@ -124,10 +126,12 @@ class SetupAll:
             indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
-        params = ['setup.php', '--create-search-indices', '--create-country-names']
-        if args.no_updates:
-            params.append('--drop')
-        run_legacy_script(*params, nominatim_env=args, throw_on_fail=not args.ignore_errors)
+        with connect(args.config.get_libpq_dsn()) as conn:
+            database_import.create_search_indices(conn, args.config,
+                                                  args.sqllib_dir,
+                                                  drop=args.no_updates)
+        run_legacy_script('setup.php', '--create-country-names',
+                          nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

@@ -12,8 +12,10 @@ DECLARE
   partition INTEGER;
 BEGIN
 
-  --DEBUG: RAISE WARNING '-----------------------------------------------------------------------------------';
-  --DEBUG: RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
+  {% if debug %}
+    RAISE WARNING '-----------------------------------------------------------------------------------';
+    RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
+  {% endif %}
   -- filter wrong tupels
   IF ST_IsEmpty(NEW.geometry) OR NOT ST_IsValid(NEW.geometry) OR ST_X(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') OR ST_Y(ST_Centroid(NEW.geometry))::text in ('NaN','Infinity','-Infinity') THEN  
     INSERT INTO import_polygon_error (osm_type, osm_id, class, type, name, country_code, updated, errormessage, prevgeometry, newgeometry)
@@ -97,8 +99,8 @@ BEGIN
       DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
     END IF;
 
-    --DEBUG: RAISE WARNING 'Existing: %',existing.osm_id;
-    --DEBUG: RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;
+    {% if debug %}RAISE WARNING 'Existing: %',existing.osm_id;{% endif %}
+    {% if debug %}RAISE WARNING 'Existing PlaceX: %',existingplacex.place_id;{% endif %}
 
     -- Log and discard 
     IF existing.geometry is not null AND st_isvalid(existing.geometry) 
@@ -122,14 +124,20 @@ BEGIN
           (existingplacex.type != NEW.type)))
     THEN
 
+      {% if config.get_bool('LIMIT_REINDEXING') %}
       IF existingplacex.osm_type IS NOT NULL THEN
         -- sanity check: ignore admin_level changes on places with too many active children
         -- or we end up reindexing entire countries because somebody accidentally deleted admin_level
-        --LIMIT INDEXING: SELECT count(*) FROM (SELECT 'a' FROM placex , place_addressline where address_place_id = existingplacex.place_id and placex.place_id = place_addressline.place_id and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub INTO i;
-        --LIMIT INDEXING: IF i > 100000 THEN
-        --LIMIT INDEXING:  RETURN null;
-        --LIMIT INDEXING: END IF;
+        SELECT count(*) INTO i FROM
+          (SELECT 'a' FROM placex, place_addressline 
+            WHERE address_place_id = existingplacex.place_id
+                  and placex.place_id = place_addressline.place_id
+                  and indexed_status = 0 and place_addressline.isaddress LIMIT 100001) sub;
+        IF i > 100000 THEN
+          RETURN null;
+        END IF;
       END IF;
+      {% endif %}
 
       IF existing.osm_type IS NOT NULL THEN
         -- pathological case caused by the triggerless copy into place during initial import
@@ -144,7 +152,7 @@ BEGIN
         values (NEW.osm_type, NEW.osm_id, NEW.class, NEW.type, NEW.name,
                 NEW.admin_level, NEW.address, NEW.extratags, NEW.geometry);
 
-      --DEBUG: RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;
+      {% if debug %}RAISE WARNING 'insert done % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,NEW.name;{% endif %}
 
       RETURN NEW;
     END IF;
@@ -258,7 +266,7 @@ DECLARE
   has_rank BOOLEAN;
 BEGIN
 
-  --DEBUG: RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;
+  {% if debug %}RAISE WARNING 'delete: % % % %',OLD.osm_type,OLD.osm_id,OLD.class,OLD.type;{% endif %}
 
   -- deleting large polygons can have a massive effect on the system - require manual intervention to let them through
   IF st_area(OLD.geometry) > 2 and st_isvalid(OLD.geometry) THEN

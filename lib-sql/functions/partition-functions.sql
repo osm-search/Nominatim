@@ -37,13 +37,13 @@ DECLARE
   r nearfeaturecentr%rowtype;
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
     FOR r IN
       SELECT place_id, keywords, rank_address, rank_search,
              min(ST_Distance(feature, centroid)) as distance,
              isguess, postcode, centroid
-      FROM location_area_large_-partition-
+      FROM location_area_large_{{ partition }}
       WHERE geometry && feature
         AND is_relevant_geometry(ST_Relate(geometry, feature), ST_GeometryType(feature))
         AND rank_address < maxrank
@@ -56,7 +56,7 @@ BEGIN
     END LOOP;
     RETURN;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
@@ -80,12 +80,12 @@ BEGIN
      CONTINUE;
    END IF;
 
--- start
-    IF in_partition = -partition- THEN
+{% for partition in db.partitions %}
+    IF in_partition = {{ partition }} THEN
         SELECT place_id, keywords, rank_address, rank_search,
                min(ST_Distance(feature, centroid)) as distance,
                isguess, postcode, centroid INTO r
-        FROM location_area_large_-partition-
+        FROM location_area_large_{{ partition }}
         WHERE geometry && ST_Expand(feature, item.extent)
           AND rank_address between item.from_rank and item.to_rank
           AND word_ids_from_name(item.name) && keywords
@@ -103,7 +103,7 @@ BEGIN
       END IF;
       CONTINUE;
     END IF;
--- end
+{% endfor %}
 
     RAISE EXCEPTION 'Unknown partition %', in_partition;
   END LOOP;
@@ -120,12 +120,12 @@ BEGIN
     RETURN TRUE;
   END IF;
 
--- start
-  IF in_partition = -partition- THEN
-    DELETE from location_area_large_-partition- WHERE place_id = in_place_id;
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    DELETE from location_area_large_{{ partition }} WHERE place_id = in_place_id;
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 
@@ -150,13 +150,13 @@ BEGIN
     RETURN TRUE;
   END IF;
 
--- start
-  IF in_partition = -partition- THEN
-    INSERT INTO location_area_large_-partition- (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    INSERT INTO location_area_large_{{ partition }} (partition, place_id, country_code, keywords, rank_search, rank_address, isguess, postcode, centroid, geometry)
       values (in_partition, in_place_id, in_country_code, in_keywords, in_rank_search, in_rank_address, in_estimate, postcode, in_centroid, in_geometry);
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
   RETURN FALSE;
@@ -173,9 +173,9 @@ DECLARE
   parent BIGINT;
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
-    SELECT place_id FROM search_name_-partition-
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    SELECT place_id FROM search_name_{{ partition }}
       INTO parent
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.015)
@@ -183,7 +183,7 @@ BEGIN
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
@@ -199,18 +199,18 @@ DECLARE
   parent BIGINT;
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
     SELECT place_id
       INTO parent
-      FROM search_name_-partition-
+      FROM search_name_{{ partition }}
       WHERE name_vector && isin_token
             AND centroid && ST_Expand(point, 0.04)
             AND address_rank between 16 and 25
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
     RETURN parent;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
@@ -223,16 +223,16 @@ create or replace function insertSearchName(
 RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
--- start
-  IF in_partition = -partition- THEN
-    DELETE FROM search_name_-partition- values WHERE place_id = in_place_id;
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    DELETE FROM search_name_{{ partition }} values WHERE place_id = in_place_id;
     IF in_rank_address > 0 THEN
-      INSERT INTO search_name_-partition- (place_id, address_rank, name_vector, centroid)
+      INSERT INTO search_name_{{ partition }} (place_id, address_rank, name_vector, centroid)
         values (in_place_id, in_rank_address, in_name_vector, in_geometry);
     END IF;
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
   RETURN FALSE;
@@ -243,12 +243,12 @@ LANGUAGE plpgsql;
 create or replace function deleteSearchName(in_partition INTEGER, in_place_id BIGINT) RETURNS BOOLEAN AS $$
 DECLARE
 BEGIN
--- start
-  IF in_partition = -partition- THEN
-    DELETE from search_name_-partition- WHERE place_id = in_place_id;
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    DELETE from search_name_{{ partition }} WHERE place_id = in_place_id;
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 
@@ -262,14 +262,14 @@ create or replace function insertLocationRoad(
 DECLARE
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
-    DELETE FROM location_road_-partition- where place_id = in_place_id;
-    INSERT INTO location_road_-partition- (partition, place_id, country_code, geometry)
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    DELETE FROM location_road_{{ partition }} where place_id = in_place_id;
+    INSERT INTO location_road_{{ partition }} (partition, place_id, country_code, geometry)
       values (in_partition, in_place_id, in_country_code, in_geometry);
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
   RETURN FALSE;
@@ -281,12 +281,12 @@ create or replace function deleteRoad(in_partition INTEGER, in_place_id BIGINT) 
 DECLARE
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
-    DELETE FROM location_road_-partition- where place_id = in_place_id;
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
+    DELETE FROM location_road_{{ partition }} where place_id = in_place_id;
     RETURN TRUE;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 
@@ -303,12 +303,12 @@ DECLARE
   search_diameter FLOAT;
 BEGIN
 
--- start
-  IF in_partition = -partition- THEN
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
     search_diameter := 0.00005;
     WHILE search_diameter < 0.1 LOOP
       FOR r IN
-        SELECT place_id FROM location_road_-partition-
+        SELECT place_id FROM location_road_{{ partition }}
           WHERE ST_DWithin(geometry, point, search_diameter)
           ORDER BY ST_Distance(geometry, point) ASC limit 1
       LOOP
@@ -318,7 +318,7 @@ BEGIN
     END LOOP;
     RETURN NULL;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END
@@ -345,12 +345,12 @@ BEGIN
   p2 := ST_LineInterpolatePoint(line,0.5);
   p3 := ST_LineInterpolatePoint(line,1);
 
--- start
-  IF in_partition = -partition- THEN
+{% for partition in db.partitions %}
+  IF in_partition = {{ partition }} THEN
     search_diameter := 0.0005;
     WHILE search_diameter < 0.01 LOOP
       FOR r IN
-        SELECT place_id FROM location_road_-partition-
+        SELECT place_id FROM location_road_{{ partition }}
           WHERE ST_DWithin(line, geometry, search_diameter)
           ORDER BY (ST_distance(geometry, p1)+
                     ST_distance(geometry, p2)+
@@ -362,7 +362,7 @@ BEGIN
     END LOOP;
     RETURN NULL;
   END IF;
--- end
+{% endfor %}
 
   RAISE EXCEPTION 'Unknown partition %', in_partition;
 END

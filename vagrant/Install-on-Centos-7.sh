@@ -42,7 +42,7 @@
                         python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel
 
-    pip3 install --user psycopg2 python-dotenv psutil
+    pip3 install --user psycopg2 python-dotenv psutil Jinja2
 
 
 #

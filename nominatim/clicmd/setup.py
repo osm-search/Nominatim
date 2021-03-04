@@ -126,10 +126,12 @@ class SetupAll:
             indexer.index_full(analyse=not args.index_noanalyse)
 
         LOG.warning('Post-process tables')
-        params = ['setup.php', '--create-search-indices', '--create-country-names']
-        if args.no_updates:
-            params.append('--drop')
-        run_legacy_script(*params, nominatim_env=args, throw_on_fail=not args.ignore_errors)
+        with connect(args.config.get_libpq_dsn()) as conn:
+            database_import.create_search_indices(conn, args.config,
+                                                  args.sqllib_dir,
+                                                  drop=args.no_updates)
+        run_legacy_script('setup.php', '--create-country-names',
+                          nominatim_env=args, throw_on_fail=not args.ignore_errors)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

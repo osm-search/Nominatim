@@ -67,16 +67,6 @@ class SetupFunctions
         }
     }
 
-    public function createFunctions()
-    {
-        info('Create Functions');
-
-        // Try accessing the C module, so we know early if something is wrong
-        $this->checkModulePresence(); // raises exception on failure
-
-        $this->createSqlFunctions();
-    }
-
     public function importTigerData($sTigerPath)
     {
         info('Import Tiger data');
@@ -210,31 +200,6 @@ class SetupFunctions
         $this->db()->exec($sSQL);
     }
 
-    public function createSearchIndices()
-    {
-        info('Create Search indices');
-
-        $sSQL = 'SELECT relname FROM pg_class, pg_index ';
-        $sSQL .= 'WHERE pg_index.indisvalid = false AND pg_index.indexrelid = pg_class.oid';
-        $aInvalidIndices = $this->db()->getCol($sSQL);
-
-        foreach ($aInvalidIndices as $sIndexName) {
-            info("Cleaning up invalid index $sIndexName");
-            $this->db()->exec("DROP INDEX $sIndexName;");
-        }
-
-        $sTemplate = file_get_contents(CONST_SqlDir.'/indices.src.sql');
-        if (!$this->bDrop) {
-            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_updates.src.sql');
-        }
-        if (!$this->dbReverseOnly()) {
-            $sTemplate .= file_get_contents(CONST_SqlDir.'/indices_search.src.sql');
-        }
-        $sTemplate = $this->replaceSqlPatterns($sTemplate);
-
-        $this->pgsqlRunScript($sTemplate);
-    }
-
     public function createCountryNames()
     {
         info('Create search index for default country names');
@@ -290,7 +255,7 @@ class SetupFunctions
         );
     }
 
-    private function createSqlFunctions()
+    public function createSqlFunctions()
     {
         $oCmd = (clone($this->oNominatimCmd))
                 ->addParams('refresh', '--functions');
@@ -389,45 +354,5 @@ class SetupFunctions
         }
 
         return $sSql;
-    }
-
-    /**
-     * Drop table with the given name if it exists.
-     *
-     * @param string $sName Name of table to remove.
-     *
-     * @return null
-     */
-    private function dropTable($sName)
-    {
-        if ($this->bVerbose) echo "Dropping table $sName\n";
-        $this->db()->deleteTable($sName);
-    }
-
-    /**
-     * Check if the database is in reverse-only mode.
-     *
-     * @return True if there is no search_name table and infrastructure.
-     */
-    private function dbReverseOnly()
-    {
-        return !($this->db()->tableExists('search_name'));
-    }
-
-    /**
-     * Try accessing the C module, so we know early if something is wrong.
-     *
-     * Raises Nominatim\DatabaseError on failure
-     */
-    private function checkModulePresence()
-    {
-        $sModulePath = getSetting('DATABASE_MODULE_PATH', CONST_InstallDir.'/module');
-        $sSQL = "CREATE FUNCTION nominatim_test_import_func(text) RETURNS text AS '";
-        $sSQL .= $sModulePath . "/nominatim.so', 'transliteration' LANGUAGE c IMMUTABLE STRICT";
-        $sSQL .= ';DROP FUNCTION nominatim_test_import_func(text);';
-
-        $oDB = new \Nominatim\DB();
-        $oDB->connect();
-        $oDB->exec($sSQL, null, 'Database server failed to load '.$sModulePath.'/nominatim.so module');
     }
 }

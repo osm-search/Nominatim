@@ -199,7 +199,7 @@ def create_table_triggers(conn, config, sqllib_dir):
 
 
 def create_partition_tables(conn, config, sqllib_dir):
-    """ Create tables that have explicit partioning.
+    """ Create tables that have explicit partitioning.
     """
     sql = SQLPreprocessor(conn, config, sqllib_dir)
     sql.run_sql_file(conn, 'partition-tables.src.sql')
@@ -285,3 +285,24 @@ def load_data(dsn, data_dir, threads):
     with connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute('ANALYSE')
+
+
+def create_search_indices(conn, config, sqllib_dir, drop=False):
+    """ Create tables that have explicit partitioning.
+    """
+
+    # If index creation failed and left an index invalid, they need to be
+    # cleaned out first, so that the script recreates them.
+    with conn.cursor() as cur:
+        cur.execute("""SELECT relname FROM pg_class, pg_index
+                       WHERE pg_index.indisvalid = false
+                             AND pg_index.indexrelid = pg_class.oid""")
+        bad_indices = [row[0] for row in list(cur)]
+        for idx in bad_indices:
+            LOG.info("Drop invalid index %s.", idx)
+            cur.execute('DROP INDEX "{}"'.format(idx))
+    conn.commit()
+
+    sql = SQLPreprocessor(conn, config, sqllib_dir)
+
+    sql.run_sql_file(conn, 'indices.sql', drop=drop)

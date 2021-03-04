@@ -123,7 +123,7 @@ if ($aCMDResult['import-data'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createFunctions();
+    $oSetup->createSqlFunctions();
 }
 
 if ($aCMDResult['create-tables'] || $aCMDResult['all']) {
@@ -144,7 +144,7 @@ if ($aCMDResult['create-partition-tables'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-partition-functions'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createFunctions(); // also create partition functions
+    $oSetup->createSqlFunctions(); // also create partition functions
 }
 
 if ($aCMDResult['import-wikipedia-articles'] || $aCMDResult['all']) {
@@ -186,7 +186,14 @@ if ($aCMDResult['drop']) {
 
 if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createSearchIndices();
+
+    $oCmd = (clone($oNominatimCmd))->addParams('transition', '--create-search-indices');
+
+    if ($aCMDResult['drop'] ?? false) {
+        $oCmd->addParams('--drop');
+    }
+
+    run($oCmd);
 }
 
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {

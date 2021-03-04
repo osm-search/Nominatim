@@ -41,6 +41,8 @@ class AdminTransition:
                            help='Create required partition tables')
         group.add_argument('--index', action='store_true',
                            help='Index the data')
+        group.add_argument('--create-search-indices', action='store_true',
+                           help='Create additional indices required for search and update')
         group = parser.add_argument_group('Options')
         group.add_argument('--no-partitions', action='store_true',
                            help='Do not partition search indices')
@@ -120,3 +122,8 @@ class AdminTransition:
             from ..indexer.indexer import Indexer
             indexer = Indexer(args.config.get_libpq_dsn(), args.threads or 1)
             indexer.index_full()
+
+        if args.create_search_indices:
+            LOG.warning('Create Search indices')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                database_import.create_search_indices(conn, args.config, args.sqllib_dir, args.drop)

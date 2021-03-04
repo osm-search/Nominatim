@@ -95,6 +95,7 @@ def test_import_full(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_tables'),
         mock_func_factory(nominatim.tools.database_import, 'create_table_triggers'),
         mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
+        mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),

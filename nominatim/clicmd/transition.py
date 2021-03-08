@@ -129,7 +129,7 @@ class AdminTransition:
             LOG.warning('Create Search indices')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.create_search_indices(conn, args.config, args.sqllib_dir, args.drop)
-        
+
         if args.tiger_data:
             LOG.warning('Tiger data')
             tiger_data.add_tiger_data(args.config.get_libpq_dsn(),

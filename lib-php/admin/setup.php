@@ -161,7 +161,7 @@ if ($aCMDResult['load-data'] || $aCMDResult['all']) {
 if ($aCMDResult['import-tiger-data']) {
     $bDidSomething = true;
     $sTigerPath = getSetting('TIGER_DATA_PATH', CONST_InstallDir.'/tiger');
-    $oSetup->importTigerData($sTigerPath);
+    run((clone($oNominatimCmd))->addParams('transition', '--tiger-data', $sTigerPath));
 }
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {

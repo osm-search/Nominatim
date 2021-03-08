@@ -1,22 +1,21 @@
 # Database Migrations
 
-This page describes database migrations necessary to update existing databases
-to newer versions of Nominatim.
+Since version 3.7.0 Nominatim offers automatic migrations. Please follow
+the following steps:
 
-SQL statements should be executed from the PostgreSQL commandline. Execute
-`psql nominatim` to enter command line mode.
+* stop any updates that are potentially running
+* update Nominatim to the nwer version
+* goto your project directory and run `nominatim admin --migrate`
+* (optionally) restart updates
+
+Below you find additional migrations and hints about other structural and
+breaking changes.
+
+!!! note
+    If you are migrating from a version <3.6, then you still have to follow
+    the manual migration steps up to 3.6.
 
 ## 3.6.0 -> master
-
-### Status table contains now time zone information
-
-The `import_status` table has been changed to include timezone information
-with the time stamp. You need to alter an existing table before running
-any replication functions with:
-
-```sql
-ALTER TABLE import_status ALTER COLUMN lastimportdate TYPE timestamp with time zone;
-```
 
 ### New location for data files
 

@@ -20,13 +20,16 @@ class AdminFuncs:
 
     @staticmethod
     def add_args(parser):
-        group = parser.add_argument_group('Admin task arguments')
-        group.add_argument('--warm', action='store_true',
-                           help='Warm database caches for search and reverse queries.')
-        group.add_argument('--check-database', action='store_true',
-                           help='Check that the database is complete and operational.')
-        group.add_argument('--analyse-indexing', action='store_true',
-                           help='Print performance analysis of the indexing process.')
+        group = parser.add_argument_group('Admin tasks')
+        objs = group.add_mutually_exclusive_group(required=True)
+        objs.add_argument('--warm', action='store_true',
+                          help='Warm database caches for search and reverse queries.')
+        objs.add_argument('--check-database', action='store_true',
+                          help='Check that the database is complete and operational.')
+        objs.add_argument('--migrate', action='store_true',
+                          help='Migrate the database to a new software version.')
+        objs.add_argument('--analyse-indexing', action='store_true',
+                          help='Print performance analysis of the indexing process.')
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
                            const='search',
@@ -44,7 +47,7 @@ class AdminFuncs:
     @staticmethod
     def run(args):
         if args.warm:
-            AdminFuncs._warm(args)
+            return AdminFuncs._warm(args)
 
         if args.check_database:
             LOG.warning('Checking database')
@@ -56,8 +59,14 @@ class AdminFuncs:
             from ..tools import admin
             with connect(args.config.get_libpq_dsn()) as conn:
                 admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
+            return 0
 
-        return 0
+        if args.migrate:
+            LOG.warning('Checking for necessary database migrations')
+            from ..tools import migration
+            return migration.migrate(args.config, args)
+
+        return 1
 
 
     @staticmethod

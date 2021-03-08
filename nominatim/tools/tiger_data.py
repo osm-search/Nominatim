@@ -54,7 +54,7 @@ def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):
         lines = 0
         end_of_file = False
         total_used_threads = place_threads
-        while True :
+        while True:
             if end_of_file:
                 break
             for imod in range(place_threads):

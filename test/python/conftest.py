@@ -13,6 +13,7 @@ sys.path.insert(0, str(SRC_DIR.resolve()))
 
 from nominatim.config import Configuration
 from nominatim.db import connection
+from nominatim.db.sql_preprocessor import SQLPreprocessor
 
 class _TestingCursor(psycopg2.extras.DictCursor):
     """ Extension to the DictCursor class that provides execution
@@ -266,3 +267,9 @@ def osm2pgsql_options(temp_db):
                 flatnode_file='',
                 tablespaces=dict(slim_data='', slim_index='',
                                  main_data='', main_index=''))
+
+@pytest.fixture
+def sql_preprocessor(temp_db_conn, tmp_path, def_config, monkeypatch, table_factory):
+    monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', '.')
+    table_factory('country_name', 'partition INT', (0, 1, 2))
+    return SQLPreprocessor(temp_db_conn, def_config, tmp_path)

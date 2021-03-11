@@ -44,9 +44,7 @@ def handle_threaded_sql_statements(sel, file):
     lines = 0
     end_of_file = False
     # Using pool of database connections to execute sql statements
-    while True:
-        if end_of_file:
-            break
+    while not end_of_file:
         for key, _ in sel.select(1):
             conn = key.data
             try:
@@ -61,7 +59,7 @@ def handle_threaded_sql_statements(sel, file):
                         print('. ', end='', flush=True)
                         lines = 0
             except Exception as exc: # pylint: disable=broad-except
-                LOG.error('Wrong SQL statement: %s', exc)
+                LOG.info('Wrong SQL statement: %s', exc)
 
 
 def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):

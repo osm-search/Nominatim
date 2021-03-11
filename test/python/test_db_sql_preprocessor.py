@@ -5,8 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from nominatim.db.sql_preprocessor import SQLPreprocessor
-
 @pytest.fixture
 def sql_factory(tmp_path):
     def _mk_sql(sql_body):
@@ -20,13 +18,6 @@ def sql_factory(tmp_path):
         return 'test.sql'
 
     return _mk_sql
-
-
-@pytest.fixture
-def sql_preprocessor(temp_db_conn, tmp_path, def_config, monkeypatch, table_factory):
-    monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', '.')
-    table_factory('country_name', 'partition INT', (0, 1, 2))
-    return SQLPreprocessor(temp_db_conn, def_config, tmp_path)
 
 @pytest.mark.parametrize("expr,ret", [
     ("'a'", 'a'),

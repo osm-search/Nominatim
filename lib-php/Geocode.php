@@ -779,7 +779,8 @@ class Geocode
                     $aSplitResults = Result::splitResults($aResults);
                     Debug::printVar('Split results', $aSplitResults);
                     if ($iGroupLoop <= 4
-                        && reset($aSplitResults['head'])->iResultRank > 0) {
+                        && reset($aSplitResults['head'])->iResultRank > 0
+                        && $iGroupedRank !== array_key_last($aGroupedSearches)) {
                         // Haven't found an exact match for the query yet.
                         // Therefore add result from the next group level.
                         $aNextResults = $aSplitResults['head'];

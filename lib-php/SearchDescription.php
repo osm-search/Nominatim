@@ -329,51 +329,30 @@ class SearchDescription
 
         if ((!$bStructuredPhrases || $iPhrase > 0)
             && (!empty($this->aName))
-            && strpos($sToken, ' ') === false
         ) {
+            $oSearch = clone $this;
+            $oSearch->iSearchRank++;
+            if (preg_match('#^[0-9 ]+$#', $sToken)) {
+                $oSearch->iSearchRank++;
+            }
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank += $oSearchTerm->iTermCount + 1;
-                if (empty($this->aName)) {
-                    $oSearch->iSearchRank++;
-                }
-                if (preg_match('#^[0-9]+$#', $sToken)) {
-                    $oSearch->iSearchRank++;
-                }
                 $oSearch->aAddress[$iWordID] = $iWordID;
-                $aNewSearches[] = $oSearch;
             } else {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank += $oSearchTerm->iTermCount + 1;
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
                 if (!empty($aFullTokens)) {
                     $oSearch->iSearchRank++;
                 }
-                $aNewSearches[] = $oSearch;
-
-                // revert to the token version?
-                foreach ($aFullTokens as $oSearchTermToken) {
-                    if (is_a($oSearchTermToken, '\Nominatim\Token\Word')) {
-                        $oSearch = clone $this;
-                        $oSearch->iSearchRank += 3;
-                        $oSearch->aAddress[$oSearchTermToken->iId]
-                            = $oSearchTermToken->iId;
-                        $aNewSearches[] = $oSearch;
-                    }
-                }
             }
+            $aNewSearches[] = $oSearch;
         }
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
             && (empty($this->aName) || $this->iNamePhrase == $iPhrase)
         ) {
             $oSearch = clone $this;
-            $oSearch->iSearchRank += 2;
-            if (empty($this->aName)) {
-                $oSearch->iSearchRank += 1;
-            }
-            if (preg_match('#^[0-9]+$#', $sToken)) {
-                $oSearch->iSearchRank += 2;
+            $oSearch->iSearchRank++;
+            if (preg_match('#^[0-9 ]+$#', $sToken)) {
+                $oSearch->iSearchRank++;
             }
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
                 if (empty($this->aName)
@@ -387,6 +366,9 @@ class SearchDescription
                 }
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
+                if (!empty($aFullTokens)) {
+                    $oSearch->iSearchRank++;
+                }
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;
             }
             $oSearch->iNamePhrase = $iPhrase;

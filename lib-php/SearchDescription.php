@@ -268,7 +268,7 @@ class SearchDescription
                         $iOp = Operator::NEAR;
                     }
                     $oSearch->iSearchRank += 2;
-                } else if (!$bFirstToken && !$bLastToken) {
+                } elseif (!$bFirstToken && !$bLastToken) {
                     $oSearch->iSearchRank += 2;
                 }
                 if ($this->sHouseNumber) {
@@ -297,7 +297,7 @@ class SearchDescription
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
                 }
-            } else if (empty($this->aNameNonSearch)) {
+            } elseif (empty($this->aNameNonSearch)) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aName = array($iWordID => $iWordID);

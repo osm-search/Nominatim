@@ -65,7 +65,6 @@ def test_cli_help(capsys):
 
 @pytest.mark.parametrize("command,script", [
                          (('special-phrases',), 'specialphrases'),
-                         (('add-data', '--tiger-data', 'tiger'), 'setup'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
                          (('export',), 'export')
                          ])

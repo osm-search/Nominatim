@@ -58,10 +58,12 @@ class AdminTransition:
                            help="Ignore certain erros on import.")
         group.add_argument('--reverse-only', action='store_true',
                            help='Do not create search tables and indexes')
+        group.add_argument('--tiger-data', metavar='FILE',
+                           help='File to import')
 
     @staticmethod
     def run(args):
-        from ..tools import database_import
+        from ..tools import database_import, tiger_data
         from ..tools import refresh
 
         if args.create_db:
@@ -127,3 +129,11 @@ class AdminTransition:
             LOG.warning('Create Search indices')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.create_search_indices(conn, args.config, args.sqllib_dir, args.drop)
+
+        if args.tiger_data:
+            LOG.warning('Tiger data')
+            tiger_data.add_tiger_data(args.config.get_libpq_dsn(),
+                                      args.tiger_data,
+                                      args.threads or 1,
+                                      args.config,
+                                      args.sqllib_dir)

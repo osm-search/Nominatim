@@ -13,6 +13,7 @@ from .tools.exec_utils import run_legacy_script, run_php_server
 from .errors import UsageError
 from . import clicmd
 from .clicmd.args import NominatimArgs
+from .tools import tiger_data
 
 LOG = logging.getLogger()
 
@@ -166,8 +167,11 @@ class UpdateAddData:
     @staticmethod
     def run(args):
         if args.tiger_data:
-            os.environ['NOMINATIM_TIGER_DATA_PATH'] = args.tiger_data
-            return run_legacy_script('setup.php', '--import-tiger-data', nominatim_env=args)
+            return tiger_data.add_tiger_data(args.config.get_libpq_dsn(),
+                                             args.tiger_data,
+                                             args.threads or 1,
+                                             args.config,
+                                             args.sqllib_dir)
 
         params = ['update.php']
         if args.file:

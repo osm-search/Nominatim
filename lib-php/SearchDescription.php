@@ -219,6 +219,9 @@ class SearchDescription
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->sHouseNumber = $oSearchTerm->sToken;
+                if ($this->iOperator != Operator::NONE) {
+                    $oSearch->iSearchRank++;
+                }
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
                 if (preg_match('/\\d/', $oSearch->sHouseNumber) === 0
@@ -255,7 +258,7 @@ class SearchDescription
         ) {
             if ($this->iOperator == Operator::NONE) {
                 $oSearch = clone $this;
-                $oSearch->iSearchRank++;
+                $oSearch->iSearchRank += 2;
 
                 $iOp = $oSearchTerm->iOperator;
                 if ($iOp == Operator::NONE) {
@@ -265,6 +268,11 @@ class SearchDescription
                         $iOp = Operator::NEAR;
                     }
                     $oSearch->iSearchRank += 2;
+                } else if (!$bFirstToken && !$bLastToken) {
+                    $oSearch->iSearchRank += 2;
+                }
+                if ($this->sHouseNumber) {
+                    $oSearch->iSearchRank++;
                 }
 
                 $oSearch->setPoiSearch(

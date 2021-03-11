@@ -289,7 +289,7 @@ class SearchDescription
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
                 }
-            } else {
+            } else if (empty($this->aNameNonSearch)) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
                 $oSearch->aName = array($iWordID => $iWordID);

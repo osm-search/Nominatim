@@ -347,10 +347,13 @@ class SearchDescription
         }
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
-            && (empty($this->aName) || $this->iNamePhrase == $iPhrase)
+            && ((empty($this->aName) && empty($this->aNameNonSearch)) || $this->iNamePhrase == $iPhrase)
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank++;
+            if (empty($this->aName) && empty($this->aNameNonSearch)) {
+                $oSearch->iSearchRank++;
+            }
             if (preg_match('#^[0-9 ]+$#', $sToken)) {
                 $oSearch->iSearchRank++;
             }

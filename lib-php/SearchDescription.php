@@ -179,6 +179,7 @@ class SearchDescription
                 // - increase score for finding it anywhere else (optimisation)
                 if (!$bLastToken) {
                     $oSearch->iSearchRank += 5;
+                    $oSearch->iNamePhrase = -1;
                 }
                 $aNewSearches[] = $oSearch;
             }
@@ -205,6 +206,7 @@ class SearchDescription
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
+                    $oSearch->iNamePhrase = -1;
                     if (strlen($oSearchTerm->sPostcode) < 4) {
                         $oSearch->iSearchRank += 4 - strlen($oSearchTerm->sPostcode);
                     }
@@ -218,6 +220,7 @@ class SearchDescription
             if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank++;
+                $oSearch->iNamePhrase = -1;
                 $oSearch->sHouseNumber = $oSearchTerm->sToken;
                 if ($this->iOperator != Operator::NONE) {
                     $oSearch->iSearchRank++;
@@ -259,6 +262,7 @@ class SearchDescription
             if ($this->iOperator == Operator::NONE) {
                 $oSearch = clone $this;
                 $oSearch->iSearchRank += 2;
+                $oSearch->iNamePhrase = -1;
 
                 $iOp = $oSearchTerm->iOperator;
                 if ($iOp == Operator::NONE) {
@@ -293,6 +297,7 @@ class SearchDescription
             if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
                 if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
                     $oSearch = clone $this;
+                    $oSearch->iNamePhrase = -1;
                     $oSearch->iSearchRank += 3 * $oSearchTerm->iTermCount;
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;

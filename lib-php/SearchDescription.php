@@ -356,6 +356,7 @@ class SearchDescription
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
             && ((empty($this->aName) && empty($this->aNameNonSearch)) || $this->iNamePhrase == $iPhrase)
+            && strpos($sToken, ' ') === false
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank++;

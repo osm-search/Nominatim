@@ -209,17 +209,23 @@ def test_create_country_names(temp_db_conn, temp_db_cursor, def_config,
     temp_db_cursor.execute("""CREATE FUNCTION make_standard_name (name TEXT)
                                   RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
                                """)
+    temp_db_cursor.execute('CREATE TABLE country_name (country_code varchar(2), name hstore)')
+    temp_db_cursor.execute('CREATE TABLE word (code varchar(2))')
+    temp_db_cursor.execute("""INSERT INTO country_name VALUES ('us',
+                              '"name"=>"us","name:af"=>"us"')""")
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_country(lookup_word TEXT,
-                                               lookup_country_code varchar(2))
+                            lookup_country_code varchar(2))
                             RETURNS INTEGER
                             AS $$
                             BEGIN
-                                INSERT INTO country_name VALUES (5, lookup_word);
+                                INSERT INTO word VALUES (lookup_country_code);
                                 RETURN 5;
                             END;
                             $$
                             LANGUAGE plpgsql;
                                """)
-    temp_db_cursor.execute('CREATE TABLE country_name (id int, country_code varchar(2), name hstore)')
     database_import.create_country_names(temp_db_conn, def_config)
-    assert temp_db_cursor.table_rows('country_name') == 4
+    if languages:
+        assert temp_db_cursor.table_rows('word') == 4
+    else:
+        assert temp_db_cursor.table_rows('word') == 5

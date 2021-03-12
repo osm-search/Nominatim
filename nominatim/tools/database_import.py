@@ -330,7 +330,7 @@ def create_country_names(conn, config):
             sql_statement = "{} IN (".format(sql_statement)
             delim = ''
             for language in languages.split(','):
-                sql_statement = "{}{}'name:{}'".format(sql_statement,delim,language)
+                sql_statement = "{}{}'name:{}'".format(sql_statement, delim, language)
                 delim = ', '
             sql_statement = '{})'.format(sql_statement)
         else:

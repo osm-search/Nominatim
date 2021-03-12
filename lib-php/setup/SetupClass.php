@@ -130,33 +130,6 @@ class SetupFunctions
         $this->db()->exec($sSQL);
     }
 
-    public function createCountryNames()
-    {
-        info('Create search index for default country names');
-
-        $this->pgsqlRunScript("select getorcreate_country(make_standard_name('uk'), 'gb')");
-        $this->pgsqlRunScript("select getorcreate_country(make_standard_name('united states'), 'us')");
-        $this->pgsqlRunScript('select count(*) from (select getorcreate_country(make_standard_name(country_code), country_code) from country_name where country_code is not null) as x');
-        $this->pgsqlRunScript("select count(*) from (select getorcreate_country(make_standard_name(name->'name'), country_code) from country_name where name ? 'name') as x");
-        $sSQL = 'select count(*) from (select getorcreate_country(make_standard_name(v),'
-            .'country_code) from (select country_code, skeys(name) as k, svals(name) as v from country_name) x where k ';
-        $sLanguages = getSetting('LANGUAGES');
-        if ($sLanguages) {
-            $sSQL .= 'in ';
-            $sDelim = '(';
-            foreach (explode(',', $sLanguages) as $sLang) {
-                $sSQL .= $sDelim."'name:$sLang'";
-                $sDelim = ',';
-            }
-            $sSQL .= ')';
-        } else {
-            // all include all simple name tags
-            $sSQL .= "like 'name:%'";
-        }
-        $sSQL .= ') v';
-        $this->pgsqlRunScript($sSQL);
-    }
-
     /**
      * Return the connection to the database.
      *

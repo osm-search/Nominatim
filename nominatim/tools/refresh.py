@@ -84,7 +84,7 @@ def create_functions(conn, config, sqllib_dir,
     sql = SQLPreprocessor(conn, config, sqllib_dir)
 
     sql.run_sql_file(conn, 'functions.sql',
-                     disable_diff_update=not enable_diff_updates,
+                     disable_diff_updates=not enable_diff_updates,
                      debug=enable_debug)
 
 

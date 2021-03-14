@@ -198,7 +198,7 @@ if ($aCMDResult['create-search-indices'] || $aCMDResult['all']) {
 
 if ($aCMDResult['create-country-names'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->createCountryNames($aCMDResult);
+    run(clone($oNominatimCmd))->addParams('transition', '--create-country-names');
 }
 
 if ($aCMDResult['setup-website'] || $aCMDResult['all']) {

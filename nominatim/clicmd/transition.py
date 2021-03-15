@@ -43,6 +43,8 @@ class AdminTransition:
                            help='Index the data')
         group.add_argument('--create-search-indices', action='store_true',
                            help='Create additional indices required for search and update')
+        group.add_argument('--create-country-names', action='store_true',
+                           help='Create search index for default country names.')
         group = parser.add_argument_group('Options')
         group.add_argument('--no-partitions', action='store_true',
                            help='Do not partition search indices')
@@ -62,7 +64,7 @@ class AdminTransition:
                            help='File to import')
 
     @staticmethod
-    def run(args):
+    def run(args): # pylint: disable=too-many-statements
         from ..tools import database_import, tiger_data
         from ..tools import refresh
 
@@ -137,3 +139,8 @@ class AdminTransition:
                                       args.threads or 1,
                                       args.config,
                                       args.sqllib_dir)
+
+        if args.create_country_names:
+            LOG.warning('Create search index for default country names.')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                database_import.create_country_names(conn, args.config)

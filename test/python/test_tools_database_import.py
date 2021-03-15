@@ -200,3 +200,32 @@ def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table, word_ta
 
     assert temp_db_cursor.table_rows('placex') == 30
     assert temp_db_cursor.table_rows('location_property_osmline') == 1
+
+@pytest.mark.parametrize("languages", (False, True))
+def test_create_country_names(temp_db_conn, temp_db_cursor, def_config,
+                              temp_db_with_extensions, monkeypatch, languages):
+    if languages:
+        monkeypatch.setenv('NOMINATIM_LANGUAGES', 'fr,en')
+    temp_db_cursor.execute("""CREATE FUNCTION make_standard_name (name TEXT)
+                                  RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL
+                               """)
+    temp_db_cursor.execute('CREATE TABLE country_name (country_code varchar(2), name hstore)')
+    temp_db_cursor.execute('CREATE TABLE word (code varchar(2))')
+    temp_db_cursor.execute("""INSERT INTO country_name VALUES ('us',
+                              '"name"=>"us","name:af"=>"us"')""")
+    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_country(lookup_word TEXT,
+                            lookup_country_code varchar(2))
+                            RETURNS INTEGER
+                            AS $$
+                            BEGIN
+                                INSERT INTO word VALUES (lookup_country_code);
+                                RETURN 5;
+                            END;
+                            $$
+                            LANGUAGE plpgsql;
+                               """)
+    database_import.create_country_names(temp_db_conn, def_config)
+    if languages:
+        assert temp_db_cursor.table_rows('word') == 4
+    else:
+        assert temp_db_cursor.table_rows('word') == 5

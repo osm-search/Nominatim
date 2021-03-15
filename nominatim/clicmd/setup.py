@@ -130,8 +130,8 @@ class SetupAll:
             database_import.create_search_indices(conn, args.config,
                                                   args.sqllib_dir,
                                                   drop=args.no_updates)
-        run_legacy_script('setup.php', '--create-country-names',
-                          nominatim_env=args, throw_on_fail=not args.ignore_errors)
+            LOG.warning('Create search index for default country names.')
+            database_import.create_country_names(conn, args.config)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

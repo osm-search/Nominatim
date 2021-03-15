@@ -306,3 +306,35 @@ def create_search_indices(conn, config, sqllib_dir, drop=False):
     sql = SQLPreprocessor(conn, config, sqllib_dir)
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
+
+def create_country_names(conn, config):
+    """ Create search index for default country names.
+    """
+
+    with conn.cursor() as cur:
+        cur.execute("""SELECT getorcreate_country(make_standard_name('uk'), 'gb')""")
+        cur.execute("""SELECT getorcreate_country(make_standard_name('united states'), 'us')""")
+        cur.execute("""SELECT COUNT(*) FROM
+                       (SELECT getorcreate_country(make_standard_name(country_code),
+                       country_code) FROM country_name WHERE country_code is not null) AS x""")
+        cur.execute("""SELECT COUNT(*) FROM
+                       (SELECT getorcreate_country(make_standard_name(name->'name'), country_code) 
+                       FROM country_name WHERE name ? 'name') AS x""")
+        sql_statement = """SELECT COUNT(*) FROM (SELECT getorcreate_country(make_standard_name(v),
+                           country_code) FROM (SELECT country_code, skeys(name)
+                           AS k, svals(name) AS v FROM country_name) x WHERE k"""
+
+        languages = config.LANGUAGES
+
+        if languages:
+            sql_statement = "{} IN (".format(sql_statement)
+            delim = ''
+            for language in languages.split(','):
+                sql_statement = "{}{}'name:{}'".format(sql_statement, delim, language)
+                delim = ', '
+            sql_statement = '{})'.format(sql_statement)
+        else:
+            sql_statement = "{} LIKE 'name:%'".format(sql_statement)
+        sql_statement = "{}) v".format(sql_statement)
+        cur.execute(sql_statement)
+    conn.commit()

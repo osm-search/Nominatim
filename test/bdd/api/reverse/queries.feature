@@ -70,6 +70,23 @@ Feature: Reverse geocoding
          | display_name |
          | 1021, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |
 
+    # github 2214
+    Scenario: Interpolations do not override house numbers when they are closer
+        When sending jsonv2 reverse coordinates 47.11778,9.57255
+         | zoom |
+         | 18 |
+        Then results contain
+         | display_name |
+         | 5, Grosssteg, Steg, Triesenberg, Oberland, 9497, Liechtenstein |
+
+    Scenario: Interpolations do not override house numbers when they are closer (2)
+        When sending jsonv2 reverse coordinates 47.11834,9.57167
+         | zoom |
+         | 18 |
+        Then results contain
+         | display_name |
+         | 3, Grosssteg, Sücka, Triesenberg, Oberland, 9497, Liechtenstein |
+
     Scenario: When on a street with zoom 18, the closest housenumber is returned
         When sending jsonv2 reverse coordinates 47.11755503977281,9.572722250405036
          | zoom |

@@ -280,29 +280,6 @@ class ReverseGeocode
                 $iPlaceID = $aPlace['place_id'];
                 $oResult = new Result($iPlaceID);
                 $iRankAddress = $aPlace['rank_address'];
-                $iParentPlaceID = $aPlace['parent_place_id'];
-            }
-
-            if ($bDoInterpolation && $iMaxRank >= 30) {
-                $fDistance = $fSearchDiam;
-                if ($aPlace) {
-                    // We can't reliably go from the closest street to an
-                    // interpolation line because the closest interpolation
-                    // may have a different street segments as a parent.
-                    // Therefore allow an interpolation line to take precendence
-                    // even when the street is closer.
-                    $fDistance = $iRankAddress < 28 ? 0.001 : $aPlace['distance'];
-                }
-
-                $aHouse = $this->lookupInterpolation($sPointSQL, $fDistance);
-                Debug::printVar('Interpolation result', $aPlace);
-
-                if ($aHouse) {
-                    $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
-                    $oResult->iHouseNumber = closestHouseNumber($aHouse);
-                    $aPlace = $aHouse;
-                    $iRankAddress = 30;
-                }
             }
 
             if ($aPlace) {
@@ -328,7 +305,9 @@ class ReverseGeocode
                     Debug::printVar('Closest POI result', $aStreet);
 
                     if ($aStreet) {
+                        $aPlace = $aStreet;
                         $oResult = new Result($aStreet['place_id']);
+                        $iRankAddress = 30;
                     }
                 }
 
@@ -351,11 +330,37 @@ class ReverseGeocode
                     Debug::printVar('Tiger house number result', $aPlaceTiger);
 
                     if ($aPlaceTiger) {
+                        $aPlace = $aPlaceTiger;
                         $oResult = new Result($aPlaceTiger['place_id'], Result::TABLE_TIGER);
                         $oResult->iHouseNumber = closestHouseNumber($aPlaceTiger);
+                        $iRankAddress = 30;
                     }
                 }
-            } else {
+            }
+
+            if ($bDoInterpolation && $iMaxRank >= 30) {
+                $fDistance = $fSearchDiam;
+                if ($aPlace) {
+                    // We can't reliably go from the closest street to an
+                    // interpolation line because the closest interpolation
+                    // may have a different street segments as a parent.
+                    // Therefore allow an interpolation line to take precendence
+                    // even when the street is closer.
+                    $fDistance = $iRankAddress < 28 ? 0.001 : $aPlace['distance'];
+                }
+
+                $aHouse = $this->lookupInterpolation($sPointSQL, $fDistance);
+                Debug::printVar('Interpolation result', $aPlace);
+
+                if ($aHouse) {
+                    $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
+                    $oResult->iHouseNumber = closestHouseNumber($aHouse);
+                    $aPlace = $aHouse;
+                    $iRankAddress = 30;
+                }
+            }
+
+            if (!$aPlace) {
                 // if no POI or street is found ...
                 $oResult = $this->lookupLargeArea($sPointSQL, 25);
             }

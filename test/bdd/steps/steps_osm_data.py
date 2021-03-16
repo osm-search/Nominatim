@@ -1,6 +1,23 @@
 import tempfile
 import random
 import os
+from pathlib import Path
+
+from nominatim.tools.exec_utils import run_osm2pgsql
+
+def get_osm2pgsql_options(nominatim_env, fname, append):
+    return dict(import_file=fname,
+                osm2pgsql=str(nominatim_env.build_dir / 'osm2pgsql' / 'osm2pgsql'),
+                osm2pgsql_cache=50,
+                osm2pgsql_style=str(nominatim_env.src_dir / 'settings' / 'import-extratags.style'),
+                threads=1,
+                dsn=nominatim_env.get_libpq_dsn(),
+                flatnode_file='',
+                tablespaces=dict(slim_data='', slim_index='',
+                                 main_data='', main_index=''),
+                append=append
+               )
+
 
 def write_opl_file(opl, grid):
     """ Create a temporary OSM file from OPL and return the file name. It is
@@ -52,9 +69,10 @@ def load_osm_file(context):
     """
     # create an OSM file and import it
     fname = write_opl_file(context.text, context.osm)
-    context.nominatim.run_setup_script('import-data', osm_file=fname,
-                                       osm2pgsql_cache=300)
-    os.remove(fname)
+    try:
+        run_osm2pgsql(get_osm2pgsql_options(context.nominatim, fname, append=False))
+    finally:
+        os.remove(fname)
 
     ### reintroduce the triggers/indexes we've lost by having osm2pgsql set up place again
     cur = context.db.cursor()
@@ -80,5 +98,7 @@ def update_from_osm_file(context):
 
     # create an OSM file and import it
     fname = write_opl_file(context.text, context.osm)
-    context.nominatim.run_update_script(import_diff=fname)
-    os.remove(fname)
+    try:
+        run_osm2pgsql(get_osm2pgsql_options(context.nominatim, fname, append=True))
+    finally:
+        os.remove(fname)

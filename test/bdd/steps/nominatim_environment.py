@@ -109,6 +109,22 @@ class NominatimEnvironment:
         cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
         refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg)
 
+    def get_libpq_dsn(self):
+        dsn = self.test_env['NOMINATIM_DATABASE_DSN']
+
+        def quote_param(param):
+            key, val = param.split('=')
+            val = val.replace('\\', '\\\\').replace("'", "\\'")
+            if ' ' in val:
+                val = "'" + val + "'"
+            return key + '=' + val
+
+        if dsn.startswith('pgsql:'):
+            # Old PHP DSN format. Convert before returning.
+            return ' '.join([quote_param(p) for p in dsn[6:].split(';')])
+
+        return dsn
+
 
     def db_drop_database(self, name):
         """ Drop the database with the given name.
@@ -132,34 +148,16 @@ class NominatimEnvironment:
         if self._reuse_or_drop_db(self.template_db):
             return
 
-        try:
-            # call the first part of database setup
-            self.write_nominatim_config(self.template_db)
-            self.run_setup_script('create-db', 'setup-db')
-            # remove external data to speed up indexing for tests
-            conn = self.connect_database(self.template_db)
-            cur = conn.cursor()
-            cur.execute("""select tablename from pg_tables
-                           where tablename in ('gb_postcode', 'us_postcode')""")
-            for t in cur:
-                conn.cursor().execute('TRUNCATE TABLE {}'.format(t[0]))
-            conn.commit()
-            conn.close()
+        self.write_nominatim_config(self.template_db)
 
-            # execute osm2pgsql import on an empty file to get the right tables
+        try:
+            # execute nominatim import on an empty file to get the right tables
             with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
                 fd.write(b'<osm version="0.6"></osm>')
                 fd.flush()
-                self.run_setup_script('import-data',
-                                      'ignore-errors',
-                                      'create-functions',
-                                      'create-tables',
-                                      'create-partition-tables',
-                                      'create-partition-functions',
-                                      'load-data',
-                                      'create-search-indices',
-                                      osm_file=fd.name,
-                                      osm2pgsql_cache='200')
+                self.run_nominatim('import', '--osm-file', fd.name,
+                                             '--osm2pgsql-cache', '1',
+                                             '--ignore-errors')
         except:
             self.db_drop_database(self.template_db)
             raise
@@ -179,12 +177,11 @@ class NominatimEnvironment:
             return
 
         testdata = Path('__file__') / '..' / '..' / 'testdb'
-        self.test_env['NOMINATIM_TIGER_DATA_PATH'] = str((testdata / 'tiger').resolve())
         self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
 
         try:
             self.run_nominatim('import', '--osm-file', str(self.api_test_file))
-            self.run_setup_script('import-tiger-data')
+            self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
             self.run_nominatim('freeze')
 
             phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
@@ -259,6 +256,9 @@ class NominatimEnvironment:
     def run_nominatim(self, *cmdline):
         """ Run the nominatim command-line tool via the library.
         """
+        if self.website_dir is not None:
+            cmdline = list(cmdline) + ['--project-dir', self.website_dir.name]
+
         cli.nominatim(module_dir='',
                       osm2pgsql_path=str(self.build_dir / 'osm2pgsql' / 'osm2pgsql'),
                       phplib_dir=str(self.src_dir / 'lib-php'),
@@ -269,31 +269,6 @@ class NominatimEnvironment:
                       phpcgi_path='',
                       environ=self.test_env)
 
-    def run_setup_script(self, *args, **kwargs):
-        """ Run the Nominatim setup script with the given arguments.
-        """
-        self.run_nominatim_script('setup', *args, **kwargs)
-
-    def run_update_script(self, *args, **kwargs):
-        """ Run the Nominatim update script with the given arguments.
-        """
-        self.run_nominatim_script('update', *args, **kwargs)
-
-    def run_nominatim_script(self, script, *args, **kwargs):
-        """ Run one of the Nominatim utility scripts with the given arguments.
-        """
-        cmd = ['/usr/bin/env', 'php', '-Cq']
-        cmd.append((Path(self.src_dir) / 'lib-php' / 'admin' / '{}.php'.format(script)).resolve())
-        cmd.extend(['--' + x for x in args])
-        for k, v in kwargs.items():
-            cmd.extend(('--' + k.replace('_', '-'), str(v)))
-
-        if self.website_dir is not None:
-            cwd = self.website_dir.name
-        else:
-            cwd = None
-
-        run_script(cmd, cwd=cwd, env=self.test_env)
 
     def copy_from_place(self, db):
         """ Copy data from place to the placex and location_property_osmline

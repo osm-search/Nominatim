@@ -86,10 +86,24 @@ def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
     context.nominatim.copy_from_place(context.db)
-    context.nominatim.run_setup_script('calculate-postcodes')
+
+    # XXX use tool function as soon as it is ported
+    with context.db.cursor() as cur:
+        with (context.nominatim.src_dir / 'lib-sql' / 'postcode_tables.sql').open('r') as fd:
+            cur.execute(fd.read())
+        cur.execute("""
+            INSERT INTO location_postcode
+             (place_id, indexed_status, country_code, postcode, geometry)
+            SELECT nextval('seq_place'), 1, country_code,
+                   upper(trim (both ' ' from address->'postcode')) as pc,
+                   ST_Centroid(ST_Collect(ST_Centroid(geometry)))
+              FROM placex
+             WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'
+                   AND geometry IS NOT null
+             GROUP BY country_code, pc""")
 
     # Call directly as the refresh function does not include postcodes.
-    indexer = Indexer(context.nominatim.test_env['NOMINATIM_DATABASE_DSN'][6:], 1)
+    indexer = Indexer(context.nominatim.get_libpq_dsn(), 1)
     indexer.index_full(analyse=False)
 
     check_database_integrity(context)

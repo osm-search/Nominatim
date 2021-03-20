@@ -1,3 +1,4 @@
+import logging
 from itertools import chain
 
 import psycopg2.extras
@@ -5,7 +6,7 @@ import psycopg2.extras
 from place_inserter import PlaceColumn
 from table_compare import NominatimID, DBRow
 
-from nominatim.indexer.indexer import Indexer
+from nominatim.indexer import indexer
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
@@ -103,8 +104,8 @@ def import_and_index_data_from_place_table(context):
              GROUP BY country_code, pc""")
 
     # Call directly as the refresh function does not include postcodes.
-    indexer = Indexer(context.nominatim.get_libpq_dsn(), 1)
-    indexer.index_full(analyse=False)
+    indexer.LOG.setLevel(logging.ERROR)
+    indexer.Indexer(context.nominatim.get_libpq_dsn(), 1).index_full(analyse=False)
 
     check_database_integrity(context)
 

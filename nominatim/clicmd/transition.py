@@ -45,6 +45,8 @@ class AdminTransition:
                            help='Create additional indices required for search and update')
         group.add_argument('--create-country-names', action='store_true',
                            help='Create search index for default country names.')
+        group.add_argument('--calculate-postcodes', action='store_true',
+                           help='Calculate the intial postcode table')
         group = parser.add_argument_group('Options')
         group.add_argument('--no-partitions', action='store_true',
                            help='Do not partition search indices')
@@ -65,7 +67,7 @@ class AdminTransition:
 
     @staticmethod
     def run(args): # pylint: disable=too-many-statements
-        from ..tools import database_import, tiger_data
+        from ..tools import database_import, tiger_data, calculate_postcodes
         from ..tools import refresh
 
         if args.create_db:
@@ -144,3 +146,8 @@ class AdminTransition:
             LOG.warning('Create search index for default country names.')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.create_country_names(conn, args.config)
+
+        if args.calculate_postcodes:
+            LOG.warning('Calculate the intial postcode table')
+            with connect(args.config.get_libpq_dsn()) as conn:
+                calculate_postcodes.calc_postcodes(conn, args.config, arg.sqllib_dir, arg.data_dir)

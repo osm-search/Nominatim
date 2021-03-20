@@ -166,7 +166,7 @@ if ($aCMDResult['import-tiger-data']) {
 
 if ($aCMDResult['calculate-postcodes'] || $aCMDResult['all']) {
     $bDidSomething = true;
-    $oSetup->calculatePostcodes($aCMDResult['all']);
+    run(clone($oNominatimCmd))->addParams('transition', '--calculate-postcodes');
 }
 
 if ($aCMDResult['index'] || $aCMDResult['all']) {

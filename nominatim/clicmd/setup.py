@@ -53,7 +53,7 @@ class SetupAll:
 
     @staticmethod
     def run(args): # pylint: disable=too-many-statements
-        from ..tools import database_import
+        from ..tools import database_import, calculate_postcodes
         from ..tools import refresh
         from ..indexer.indexer import Indexer
 
@@ -116,8 +116,7 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
             LOG.warning('Calculate postcodes')
-            run_legacy_script('setup.php', '--calculate-postcodes',
-                              nominatim_env=args, throw_on_fail=not args.ignore_errors)
+            calculate_postcodes.calc_postcodes(conn, args.config, args.sqllib_dir, args.data_dir)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             LOG.warning('Indexing places')

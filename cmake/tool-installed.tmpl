@@ -2,7 +2,9 @@
 import sys
 import os
 
-sys.path.insert(1, '@NOMINATIM_LIBDIR@/lib-python')
+sys.path.insert(0, '@NOMINATIM_LIBDIR@/lib-python')
+#Add config directory to the python path for module importation
+sys.path.insert(1, '@NOMINATIM_CONFIGDIR@/..')
 
 os.environ['NOMINATIM_NOMINATIM_TOOL'] = os.path.abspath(__file__)
 

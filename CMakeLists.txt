@@ -114,7 +114,6 @@ if (BUILD_IMPORTER)
        export.php
        query.php
        setup.php
-       specialphrases.php
        update.php
        warm.php
       )
@@ -217,7 +216,7 @@ endif()
 include(GNUInstallDirs)
 set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
 set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
-set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
+set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/settings)
 
 if (BUILD_IMPORTER)
     configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
@@ -258,8 +257,9 @@ if (BUILD_API)
 endif()
 
 install(FILES settings/env.defaults
+              settings/__init__.py
               settings/address-levels.json
-              settings/phrase_settings.php
+              settings/phrase_settings.py
               settings/import-admin.style
               settings/import-street.style
               settings/import-address.style

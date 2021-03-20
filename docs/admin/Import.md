@@ -268,10 +268,9 @@ running this function.
 
 If you want to be able to search for places by their type through
 [special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
-you also need to enable these key phrases like this:
+you also need to import these key phrases like this:
 
-    nominatim special-phrases --from-wiki > specialphrases.sql
-    psql -d nominatim -f specialphrases.sql
+    nominatim import-special-phrases --from-wiki
 
 Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.

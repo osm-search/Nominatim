@@ -112,30 +112,6 @@ class CommandlineParser:
 # pylint: disable=C0111
 # Using non-top-level imports to make pyosmium optional for replication only.
 # pylint: disable=E0012,C0415
-
-
-class SetupSpecialPhrases:
-    """\
-    Maintain special phrases.
-    """
-
-    @staticmethod
-    def add_args(parser):
-        group = parser.add_argument_group('Input arguments')
-        group.add_argument('--from-wiki', action='store_true',
-                           help='Pull special phrases from the OSM wiki.')
-        group = parser.add_argument_group('Output arguments')
-        group.add_argument('-o', '--output', default='-',
-                           help="""File to write the preprocessed phrases to.
-                                   If omitted, it will be written to stdout.""")
-
-    @staticmethod
-    def run(args):
-        if args.output != '-':
-            raise NotImplementedError('Only output to stdout is currently implemented.')
-        return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
-
-
 class UpdateAddData:
     """\
     Add additional data from a file or an online source.
@@ -278,7 +254,7 @@ def nominatim(**kwargs):
     parser.add_subcommand('freeze', clicmd.SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)
 
-    parser.add_subcommand('special-phrases', SetupSpecialPhrases)
+    parser.add_subcommand('import-special-phrases', clicmd.ImportSpecialPhrases)
 
     parser.add_subcommand('add-data', UpdateAddData)
     parser.add_subcommand('index', clicmd.UpdateIndex)

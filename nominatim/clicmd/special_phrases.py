@@ -25,5 +25,5 @@ class ImportSpecialPhrases:
         if args.from_wiki:
             LOG.warning('Special phrases importation starting')
             with connect(args.config.get_libpq_dsn()) as db_connection:
-                import_from_wiki(args.config, db_connection)
+                import_from_wiki(args, db_connection)
         return 0

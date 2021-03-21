@@ -2,26 +2,32 @@
     Functions to import special phrases into the database.
 """
 import logging
+import os
 import re
+import subprocess
 import sys
+import json
+from os.path import isfile
 from psycopg2.sql import Identifier, Literal, SQL
-from settings.phrase_settings import BLACK_LIST, WHITE_LIST
 from nominatim.tools.exec_utils import get_url
 
 LOG = logging.getLogger()
 
-def import_from_wiki(config, db_connection, languages=None):
+def import_from_wiki(args, db_connection, languages=None):
+    # pylint: disable-msg=too-many-locals
     """
         Iterate through all specified languages and
         extract corresponding special phrases from the wiki.
     """
+    black_list, white_list = _load_white_and_black_lists(args)
+
     #Compile the match regex to increase performance for the following loop.
     occurence_pattern = re.compile(
         r'\| ([^\|]+) \|\| ([^\|]+) \|\| ([^\|]+) \|\| ([^\|]+) \|\| ([\-YN])'
     )
     sanity_check_pattern = re.compile(r'^\w+$')
 
-    languages = _get_languages(config) if not languages else languages
+    languages = _get_languages(args.config) if not languages else languages
 
     #array for pairs of class/type
     pairs = dict()
@@ -43,10 +49,10 @@ def import_from_wiki(config, db_connection, languages=None):
             _check_sanity(lang, phrase_class, phrase_type, sanity_check_pattern)
 
             #blacklisting: disallow certain class/type combinations
-            if phrase_class in BLACK_LIST.keys() and phrase_type in BLACK_LIST[phrase_class]:
+            if phrase_class in black_list.keys() and phrase_type in black_list[phrase_class]:
                 continue
             #whitelisting: if class is in whitelist, allow only tags in the list
-            if phrase_class in WHITE_LIST.keys() and phrase_type not in WHITE_LIST[phrase_class]:
+            if phrase_class in white_list.keys() and phrase_type not in white_list[phrase_class]:
                 continue
 
             #add class/type to the pairs dict
@@ -56,10 +62,23 @@ def import_from_wiki(config, db_connection, languages=None):
                 db_connection, phrase_label, phrase_class, phrase_type, phrase_operator
             )
 
-    _create_place_classtype_table_and_indexes(db_connection, config, pairs)
+    _create_place_classtype_table_and_indexes(db_connection, args.config, pairs)
     db_connection.commit()
     LOG.warning('Import done.')
 
+def _load_white_and_black_lists(args):
+    """
+        Load white and black lists from phrases-settings.json.
+    """
+    config = args.config
+    settings_path = str(config.config_dir)+'/phrase-settings.json'
+
+    if config.PHRASE_CONFIG:
+        settings_path = _convert_php_settings_if_needed(args, config.PHRASE_CONFIG)
+
+    with open(settings_path, "r") as json_settings:
+        settings = json.load(json_settings)
+    return settings['blackList'], settings['whiteList']
 
 def _get_languages(config):
     """
@@ -199,3 +218,22 @@ def _grant_access_to_webuser(db_connection, config, phrase_class, phrase_type):
         db_cursor.execute(SQL("""GRANT SELECT ON {} TO {}""")
                           .format(Identifier(f'place_classtype_{phrase_class}_{phrase_type}'),
                                   Identifier(config.DATABASE_WEBUSER)))
+
+def _convert_php_settings_if_needed(args, file_path):
+    """
+        Convert php settings file of special phrases to json file if it is still in php format.
+    """
+    file, extension = os.path.splitext(file_path)
+    json_file_path = f'{file}.json'
+    if extension == '.php' and not isfile(json_file_path):
+        try:
+            subprocess.run(['/usr/bin/env', 'php', '-Cq',
+                            args.phplib_dir / 'migration/phraseSettingsToJson.php',
+                            file_path], check=True)
+            LOG.warning('special_phrase configuration file has been converted to json.')
+            return json_file_path
+        except subprocess.CalledProcessError:
+            LOG.error('Error while converting %s to json.', file_path)
+            raise
+    else:
+        return json_file_path

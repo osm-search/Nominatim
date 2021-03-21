@@ -1,3 +1,0 @@
-"""
-    Module for settings
-"""

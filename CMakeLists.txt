@@ -216,7 +216,7 @@ endif()
 include(GNUInstallDirs)
 set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
 set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
-set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/settings)
+set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
 
 if (BUILD_IMPORTER)
     configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
@@ -257,9 +257,8 @@ if (BUILD_API)
 endif()
 
 install(FILES settings/env.defaults
-              settings/__init__.py
               settings/address-levels.json
-              settings/phrase_settings.py
+              settings/phrase-settings.json
               settings/import-admin.style
               settings/import-street.style
               settings/import-address.style

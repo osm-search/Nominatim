@@ -57,8 +57,14 @@ class ProgressLogger:
         """ Print final statistics about the progress.
         """
         rank_end_time = datetime.now()
-        diff_seconds = (rank_end_time-self.rank_start_time).total_seconds()
+
+        if rank_end_time == self.rank_start_time:
+            diff_seconds = 0
+            places_per_sec = self.done_places
+        else:
+            diff_seconds = (rank_end_time - self.rank_start_time).total_seconds()
+            places_per_sec = self.done_places/diff_seconds
 
         LOG.warning("Done %d/%d in %d @ %.3f per second - FINISHED %s\n",
                     self.done_places, self.total_places, int(diff_seconds),
-                    self.done_places/diff_seconds, self.name)
+                    places_per_sec, self.name)

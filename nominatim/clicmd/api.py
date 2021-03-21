@@ -154,7 +154,7 @@ class APIReverse:
 
 class APILookup:
     """\
-    Execute API reverse query.
+    Execute API lookup query.
     """
 
     @staticmethod
@@ -189,7 +189,7 @@ class APILookup:
 
 class APIDetails:
     """\
-    Execute API lookup query.
+    Execute API details query.
     """
 
     @staticmethod

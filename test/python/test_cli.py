@@ -26,6 +26,7 @@ from mocks import MockParamCapture
 
 SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 
+
 def call_nominatim(*args):
     return nominatim.cli.nominatim(module_dir='build/module',
                                    osm2pgsql_path='build/osm2pgsql/osm2pgsql',
@@ -76,7 +77,8 @@ def test_legacy_commands_simple(mock_run_legacy, command, script):
 
 
 def test_import_missing_file(temp_db):
-    assert 1 == call_nominatim('import', '--osm-file', 'sfsafegweweggdgw.reh.erh')
+    assert 1 == call_nominatim(
+        'import', '--osm-file', 'sfsafegweweggdgw.reh.erh')
 
 
 def test_import_bad_file(temp_db):
@@ -85,19 +87,28 @@ def test_import_bad_file(temp_db):
 
 def test_import_full(temp_db, mock_func_factory):
     mocks = [
-        mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'setup_database_skeleton'),
         mock_func_factory(nominatim.tools.database_import, 'install_module'),
         mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
-        mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
-        mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
+        mock_func_factory(nominatim.tools.refresh,
+                          'import_wikipedia_articles'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'truncate_data_tables'),
         mock_func_factory(nominatim.tools.database_import, 'load_data'),
         mock_func_factory(nominatim.tools.database_import, 'create_tables'),
-        mock_func_factory(nominatim.tools.database_import, 'create_table_triggers'),
-        mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
-        mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
-        mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
-        mock_func_factory(nominatim.tools.calculate_postcodes, 'calculate_postcodes'),
-        mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'create_table_triggers'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'create_partition_tables'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'create_search_indices'),
+        mock_func_factory(nominatim.tools.database_import,
+                          'create_country_names'),
+        mock_func_factory(nominatim.tools.calculate_postcodes,
+                          'calculate_postcodes'),
+        mock_func_factory(nominatim.tools.refresh,
+                          'load_address_levels_from_file'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
         mock_func_factory(nominatim.db.properties, 'set_property')
@@ -113,9 +124,11 @@ def test_import_full(temp_db, mock_func_factory):
     for mock in mocks:
         assert mock.called == 1
 
+
 def test_freeze_command(mock_func_factory, temp_db):
     mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')
-    mock_flatnode = mock_func_factory(nominatim.tools.freeze, 'drop_flatnode_file')
+    mock_flatnode = mock_func_factory(
+        nominatim.tools.freeze, 'drop_flatnode_file')
 
     assert 0 == call_nominatim('freeze')
 
@@ -127,7 +140,8 @@ def test_freeze_command(mock_func_factory, temp_db):
                                     ('--warm', '--reverse-only'),
                                     ('--warm', '--search-only')])
 def test_admin_command_legacy(mock_func_factory, params):
-    mock_run_legacy = mock_func_factory(nominatim.clicmd.admin, 'run_legacy_script')
+    mock_run_legacy = mock_func_factory(
+        nominatim.clicmd.admin, 'run_legacy_script')
 
     assert 0 == call_nominatim('admin', *params)
 
@@ -159,14 +173,16 @@ def test_add_data_command(mock_run_legacy, name, oid):
 
 
 @pytest.mark.parametrize("params,do_bnds,do_ranks", [
-                          ([], 1, 1),
-                          (['--boundaries-only'], 1, 0),
-                          (['--no-boundaries'], 0, 1),
-                          (['--boundaries-only', '--no-boundaries'], 0, 0)])
+    ([], 1, 1),
+    (['--boundaries-only'], 1, 0),
+    (['--no-boundaries'], 0, 1),
+    (['--boundaries-only', '--no-boundaries'], 0, 0)])
 def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ranks):
     temp_db_cursor.execute("CREATE TABLE import_status (indexed bool)")
-    bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
-    rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
+    bnd_mock = mock_func_factory(
+        nominatim.indexer.indexer.Indexer, 'index_boundaries')
+    rank_mock = mock_func_factory(
+        nominatim.indexer.indexer.Indexer, 'index_by_rank')
 
     assert 0 == call_nominatim('index', *params)
 
@@ -208,6 +224,7 @@ def test_serve_command(mock_func_factory):
     call_nominatim('serve')
 
     assert func.called == 1
+
 
 @pytest.mark.parametrize("params", [
                          ('search', '--query', 'new'),

@@ -19,8 +19,9 @@ from ..errors import UsageError
 
 LOG = logging.getLogger()
 
+
 class AdminTransition:
-    """\
+    """
     Internal functions for code transition. Do not use.
     """
 
@@ -66,7 +67,7 @@ class AdminTransition:
                            help='File to import')
 
     @staticmethod
-    def run(args): # pylint: disable=too-many-statements
+    def run(args):  # pylint: disable=too-many-statements
         from ..tools import database_import, tiger_data, calculate_postcodes
         from ..tools import refresh
 
@@ -98,21 +99,26 @@ class AdminTransition:
         if args.create_tables:
             LOG.warning('Create Tables')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.create_tables(conn, args.config, args.sqllib_dir, args.reverse_only)
-                refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
+                database_import.create_tables(
+                    conn, args.config, args.sqllib_dir, args.reverse_only)
+                refresh.load_address_levels_from_file(
+                    conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
                 refresh.create_functions(conn, args.config, args.sqllib_dir,
                                          enable_diff_updates=False)
-                database_import.create_table_triggers(conn, args.config, args.sqllib_dir)
+                database_import.create_table_triggers(
+                    conn, args.config, args.sqllib_dir)
 
         if args.create_partition_tables:
             LOG.warning('Create Partition Tables')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.create_partition_tables(conn, args.config, args.sqllib_dir)
+                database_import.create_partition_tables(
+                    conn, args.config, args.sqllib_dir)
 
         if args.load_data:
             LOG.warning('Load data')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
+                database_import.truncate_data_tables(
+                    conn, args.config.MAX_WORD_FREQUENCY)
             database_import.load_data(args.config.get_libpq_dsn(),
                                       args.data_dir,
                                       args.threads or 1)
@@ -120,7 +126,7 @@ class AdminTransition:
             with connect(args.config.get_libpq_dsn()) as conn:
                 try:
                     status.set_status(conn, status.compute_database_date(conn))
-                except Exception as exc: # pylint: disable=broad-except
+                except Exception as exc:  # pylint: disable=broad-except
                     LOG.error('Cannot determine date of database: %s', exc)
 
         if args.index:
@@ -132,7 +138,8 @@ class AdminTransition:
         if args.create_search_indices:
             LOG.warning('Create Search indices')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.create_search_indices(conn, args.config, args.sqllib_dir, args.drop)
+                database_import.create_search_indices(
+                    conn, args.config, args.sqllib_dir, args.drop)
 
         if args.tiger_data:
             LOG.warning('Tiger data')
@@ -150,4 +157,5 @@ class AdminTransition:
         if args.calculate_postcodes:
             LOG.warning('Calculate the intial postcode table')
             with connect(args.config.get_libpq_dsn()) as conn:
-                calculate_postcodes.calc_postcodes(conn, args.config, arg.sqllib_dir, arg.data_dir)
+                calculate_postcodes.calc_postcodes(
+                    conn, args.config, args.sqllib_dir, args.data_dir)

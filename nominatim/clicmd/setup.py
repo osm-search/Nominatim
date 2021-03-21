@@ -6,7 +6,6 @@ from pathlib import Path
 
 import psutil
 
-from ..tools.exec_utils import run_legacy_script
 from ..db.connection import connect
 from ..db import status, properties
 from ..version import NOMINATIM_VERSION
@@ -18,6 +17,7 @@ from ..errors import UsageError
 # pylint: disable=E0012,C0415
 
 LOG = logging.getLogger()
+
 
 class SetupAll:
     """\
@@ -50,9 +50,8 @@ class SetupAll:
         group.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index')
 
-
     @staticmethod
-    def run(args): # pylint: disable=too-many-statements
+    def run(args):  # pylint: disable=too-many-statements
         from ..tools import database_import, calculate_postcodes
         from ..tools import refresh
         from ..indexer.indexer import Indexer
@@ -86,20 +85,24 @@ class SetupAll:
                 LOG.warning('Create tables')
                 database_import.create_tables(conn, args.config, args.sqllib_dir,
                                               reverse_only=args.reverse_only)
-                refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
+                refresh.load_address_levels_from_file(
+                    conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
                 LOG.warning('Create functions (2nd pass)')
                 refresh.create_functions(conn, args.config, args.sqllib_dir,
                                          False, False)
                 LOG.warning('Create table triggers')
-                database_import.create_table_triggers(conn, args.config, args.sqllib_dir)
+                database_import.create_table_triggers(
+                    conn, args.config, args.sqllib_dir)
                 LOG.warning('Create partition tables')
-                database_import.create_partition_tables(conn, args.config, args.sqllib_dir)
+                database_import.create_partition_tables(
+                    conn, args.config, args.sqllib_dir)
                 LOG.warning('Create functions (3rd pass)')
                 refresh.create_functions(conn, args.config, args.sqllib_dir,
                                          False, False)
 
             LOG.warning('Importing wikipedia importance data')
-            data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
+            data_path = Path(
+                args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.error('Wikipedia importance dump file not found. '
@@ -107,7 +110,8 @@ class SetupAll:
 
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
+                database_import.truncate_data_tables(
+                    conn, args.config.MAX_WORD_FREQUENCY)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Load data into placex table')
@@ -116,7 +120,8 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
             LOG.warning('Calculate postcodes')
-            calculate_postcodes.calc_postcodes(conn, args.config, args.sqllib_dir, args.data_dir)
+            calculate_postcodes.calc_postcodes(
+                conn, args.config, args.sqllib_dir, args.data_dir)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             LOG.warning('Indexing places')
@@ -141,7 +146,7 @@ class SetupAll:
                 dbdate = status.compute_database_date(conn)
                 status.set_status(conn, dbdate)
                 LOG.info('Database is at %s.', dbdate)
-            except Exception as exc: # pylint: disable=broad-except
+            except Exception as exc:  # pylint: disable=broad-except
                 LOG.error('Cannot determine date of database: %s', exc)
 
             properties.set_property(conn, 'database_version',

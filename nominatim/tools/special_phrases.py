@@ -8,6 +8,7 @@ import subprocess
 import sys
 import json
 from os.path import isfile
+from icu import Transliterator # pylint: disable-msg=no-name-in-module
 from psycopg2.sql import Identifier, Literal, SQL
 from nominatim.tools.exec_utils import get_url
 
@@ -27,10 +28,15 @@ def import_from_wiki(args, db_connection, languages=None):
     )
     sanity_check_pattern = re.compile(r'^\w+$')
 
+    #Get all languages to process.
     languages = _get_languages(args.config) if not languages else languages
 
     #array for pairs of class/type
     pairs = dict()
+
+    transliterator = Transliterator.createFromRules("special-phrases normalizer",
+                                                    args.config.TERM_NORMALIZATION)
+
     for lang in languages:
         LOG.warning('Import phrases for lang: %s', lang)
         wiki_page_xml_content = _get_wiki_content(lang)
@@ -39,6 +45,7 @@ def import_from_wiki(args, db_connection, languages=None):
 
         for match in matches:
             phrase_label = match[0].strip()
+            normalized_label = transliterator.transliterate(phrase_label)
             phrase_class = match[1].strip()
             phrase_type = match[2].strip()
             phrase_operator = match[3].strip()
@@ -59,7 +66,8 @@ def import_from_wiki(args, db_connection, languages=None):
             pairs[f'{phrase_class}|{phrase_type}'] = (phrase_class, phrase_type)
 
             _process_amenity(
-                db_connection, phrase_label, phrase_class, phrase_type, phrase_operator
+                db_connection, phrase_label, normalized_label,
+                phrase_class, phrase_type, phrase_operator
             )
 
     _create_place_classtype_table_and_indexes(db_connection, args.config, pairs)
@@ -118,23 +126,25 @@ def _check_sanity(lang, phrase_class, phrase_type, pattern):
         raise
 
 
-def _process_amenity(db_connection, phrase_label, phrase_class, phrase_type, phrase_operator):
+def _process_amenity(db_connection, phrase_label, normalized_label,
+                     phrase_class, phrase_type, phrase_operator):
+    # pylint: disable-msg=too-many-arguments
     """
         Add phrase lookup and corresponding class and type to the word table based on the operator.
     """
     with db_connection.cursor() as db_cursor:
         if phrase_operator == 'near':
             db_cursor.execute("""SELECT getorcreate_amenityoperator(
-                              make_standard_name(%s), %s, %s, 'near')""",
-                              (phrase_label, phrase_class, phrase_type))
+                              make_standard_name(%s), %s, %s, %s, 'near')""",
+                              (phrase_label, normalized_label, phrase_class, phrase_type))
         elif phrase_operator == 'in':
             db_cursor.execute("""SELECT getorcreate_amenityoperator(
-                              make_standard_name(%s), %s, %s, 'in')""",
-                              (phrase_label, phrase_class, phrase_type))
+                              make_standard_name(%s), %s, %s, %s, 'in')""",
+                              (phrase_label, normalized_label, phrase_class, phrase_type))
         else:
             db_cursor.execute("""SELECT getorcreate_amenity(
-                              make_standard_name(%s), %s, %s)""",
-                              (phrase_label, phrase_class, phrase_type))
+                              make_standard_name(%s), %s, %s, %s)""",
+                              (phrase_label, normalized_label, phrase_class, phrase_type))
 
 
 def _create_place_classtype_table_and_indexes(db_connection, config, pairs):

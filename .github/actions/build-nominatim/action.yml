@@ -6,7 +6,8 @@ runs:
     steps:
         - name: Install prerequisites
           run: |
-            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev python3-psycopg2 python3-pyosmium python3-dotenv python3-psutil python3-jinja2
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev python3-psycopg2 python3-pyosmium python3-dotenv python3-psutil python3-jinja2
+            sudo pip install PyICU
           shell: bash
 
         - name: Download dependencies

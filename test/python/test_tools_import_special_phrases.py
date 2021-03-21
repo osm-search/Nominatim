@@ -7,39 +7,48 @@ from nominatim.tools.special_phrases import _create_place_classtype_indexes, _cr
 def test_get_wiki_content():
     assert _get_wiki_content('fr')
 
-def execute_and_verify_add_word(temp_db_conn, phrase_label, phrase_class, phrase_type):
-    _process_amenity(temp_db_conn, phrase_label, phrase_class, phrase_type, '')
+def execute_and_verify_add_word(temp_db_conn, phrase_label, normalized_label, 
+                                phrase_class, phrase_type):
+    _process_amenity(temp_db_conn, phrase_label, normalized_label,
+                     phrase_class, phrase_type, '')
 
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute(f"""
             SELECT * FROM word 
-            WHERE word_token=' {phrase_label}'
-            AND word='{phrase_label}'
+            WHERE word_token=' {normalized_label}'
+            AND word='{normalized_label}'
             AND class='{phrase_class}'
+            AND type='{phrase_type}'
             AND type='{phrase_type}'""")
         return temp_db_cursor.fetchone()
 
-def execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, phrase_class, phrase_type, phrase_operator):
-    _process_amenity(temp_db_conn, phrase_label, phrase_class, phrase_type, phrase_operator)
+def execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, normalized_label,
+                                              phrase_class, phrase_type, phrase_operator):
+    _process_amenity(temp_db_conn, phrase_label, normalized_label,
+                     phrase_class, phrase_type, phrase_operator)
 
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute(f"""
             SELECT * FROM word 
-            WHERE word_token=' {phrase_label}'
-            AND word='{phrase_label}'
+            WHERE word_token=' {normalized_label}'
+            AND word='{normalized_label}'
             AND class='{phrase_class}'
             AND type='{phrase_type}'
             AND operator='{phrase_operator}'""")
         return temp_db_cursor.fetchone()
 
 def test_process_amenity_with_near_operator(temp_db_conn, word_table, amenity_operator_funcs):
-    phrase_label = 'label'
+    phrase_label = ' label    '
+    normalized_label = 'label'
     phrase_class = 'class'
     phrase_type = 'type'
 
-    assert execute_and_verify_add_word(temp_db_conn, phrase_label, phrase_class, phrase_type)
-    assert execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, phrase_class, phrase_type, 'near')
-    assert execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, phrase_class, phrase_type, 'in')
+    assert execute_and_verify_add_word(temp_db_conn, phrase_label, normalized_label, 
+                                       phrase_class, phrase_type)
+    assert execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, normalized_label, 
+                                                     phrase_class, phrase_type, 'near')
+    assert execute_and_verify_add_word_with_operator(temp_db_conn, phrase_label, normalized_label, 
+                                                     phrase_class, phrase_type, 'in')
 
 def index_exists(db_connect, index):
         """ Check that an index with the given name exists in the database.
@@ -108,14 +117,14 @@ def amenity_operator_funcs(temp_db_cursor):
         DECLARE
         o TEXT;
         BEGIN
-        RETURN name; --Basically return the same name for the tests
+        RETURN trim(name); --Basically return only the trimed name for the tests
         END;
         $$
         LANGUAGE plpgsql IMMUTABLE;
 
         CREATE SEQUENCE seq_word start 1;
 
-        CREATE OR REPLACE FUNCTION getorcreate_amenity(lookup_word TEXT,
+        CREATE OR REPLACE FUNCTION getorcreate_amenity(lookup_word TEXT, normalized_word TEXT,
                                                     lookup_class text, lookup_type text)
         RETURNS INTEGER
         AS $$
@@ -125,23 +134,24 @@ def amenity_operator_funcs(temp_db_cursor):
         BEGIN
         lookup_token := ' '||trim(lookup_word);
         SELECT min(word_id) FROM word
-        WHERE word_token = lookup_token and word = lookup_word
+        WHERE word_token = lookup_token and word = normalized_word
                 and class = lookup_class and type = lookup_type
         INTO return_word_id;
         IF return_word_id IS NULL THEN
             return_word_id := nextval('seq_word');
-            INSERT INTO word VALUES (return_word_id, lookup_token, lookup_word,
+            INSERT INTO word VALUES (return_word_id, lookup_token, normalized_word,
                                     lookup_class, lookup_type, null, 0);
         END IF;
         RETURN return_word_id;
         END;
         $$
         LANGUAGE plpgsql;
-        
+
         CREATE OR REPLACE FUNCTION getorcreate_amenityoperator(lookup_word TEXT,
-                                                        lookup_class text,
-                                                        lookup_type text,
-                                                        op text)
+                                                       normalized_word TEXT,
+                                                       lookup_class text,
+                                                       lookup_type text,
+                                                       op text)
         RETURNS INTEGER
         AS $$
         DECLARE
@@ -150,12 +160,12 @@ def amenity_operator_funcs(temp_db_cursor):
         BEGIN
         lookup_token := ' '||trim(lookup_word);
         SELECT min(word_id) FROM word
-        WHERE word_token = lookup_token and word = lookup_word
+        WHERE word_token = lookup_token and word = normalized_word
                 and class = lookup_class and type = lookup_type and operator = op
         INTO return_word_id;
         IF return_word_id IS NULL THEN
             return_word_id := nextval('seq_word');
-            INSERT INTO word VALUES (return_word_id, lookup_token, lookup_word,
+            INSERT INTO word VALUES (return_word_id, lookup_token, normalized_word,
                                     lookup_class, lookup_type, null, 0, op);
         END IF;
         RETURN return_word_id;

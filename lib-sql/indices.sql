@@ -35,9 +35,6 @@ CREATE INDEX {{sql.if_index_not_exists}} idx_osmline_parent_place_id
 CREATE INDEX {{sql.if_index_not_exists}} idx_osmline_parent_osm_id
   ON location_property_osmline USING BTREE (osm_id) {{db.tablespace.search_index}};
 
-CREATE UNIQUE INDEX {{sql.if_index_not_exists}} idx_postcode_id
-  ON location_postcode USING BTREE (place_id) {{db.tablespace.search_index}};
-
 CREATE INDEX {{sql.if_index_not_exists}} idx_postcode_postcode
   ON location_postcode USING BTREE (postcode) {{db.tablespace.search_index}};
 

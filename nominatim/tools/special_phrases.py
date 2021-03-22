@@ -5,10 +5,9 @@ import logging
 import os
 import re
 import subprocess
-import sys
 import json
 from os.path import isfile
-from icu import Transliterator # pylint: disable-msg=no-name-in-module
+from icu import Transliterator
 from psycopg2.sql import Identifier, Literal, SQL
 from nominatim.tools.exec_utils import get_url
 
@@ -32,7 +31,7 @@ def import_from_wiki(args, db_connection, languages=None):
     languages = _get_languages(args.config) if not languages else languages
 
     #array for pairs of class/type
-    pairs = dict()
+    class_type_pairs = set()
 
     transliterator = Transliterator.createFromRules("special-phrases normalizer",
                                                     args.config.TERM_NORMALIZATION)
@@ -63,14 +62,14 @@ def import_from_wiki(args, db_connection, languages=None):
                 continue
 
             #add class/type to the pairs dict
-            pairs[f'{phrase_class}|{phrase_type}'] = (phrase_class, phrase_type)
+            class_type_pairs.add((phrase_class, phrase_type))
 
             _process_amenity(
                 db_connection, phrase_label, normalized_label,
                 phrase_class, phrase_type, phrase_operator
             )
 
-    _create_place_classtype_table_and_indexes(db_connection, args.config, pairs)
+    _create_place_classtype_table_and_indexes(db_connection, args.config, class_type_pairs)
     db_connection.commit()
     LOG.warning('Import done.')
 
@@ -118,12 +117,8 @@ def _check_sanity(lang, phrase_class, phrase_type, pattern):
         Check sanity of given inputs in case somebody added garbage in the wiki.
         If a bad class/type is detected the system will exit with an error.
     """
-    try:
-        if len(pattern.findall(phrase_class)) < 1 or len(pattern.findall(phrase_type)) < 1:
-            sys.exit()
-    except SystemExit:
+    if len(pattern.findall(phrase_class)) < 1 or len(pattern.findall(phrase_type)) < 1:
         LOG.error("Bad class/type for language %s: %s=%s", lang, phrase_class, phrase_type)
-        raise
 
 
 def _process_amenity(db_connection, phrase_label, normalized_label,
@@ -147,7 +142,7 @@ def _process_amenity(db_connection, phrase_label, normalized_label,
                               (phrase_label, normalized_label, phrase_class, phrase_type))
 
 
-def _create_place_classtype_table_and_indexes(db_connection, config, pairs):
+def _create_place_classtype_table_and_indexes(db_connection, config, class_type_pairs):
     """
         Create table place_classtype for each given pair.
         Also create indexes on place_id and centroid.
@@ -161,7 +156,7 @@ def _create_place_classtype_table_and_indexes(db_connection, config, pairs):
     with db_connection.cursor() as db_cursor:
         db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
 
-    for _, pair in pairs.items():
+    for pair in class_type_pairs.items():
         phrase_class = pair[0]
         phrase_type = pair[1]
 
@@ -188,53 +183,54 @@ def _create_place_classtype_table(db_connection, sql_tablespace, phrase_class, p
     """
         Create table place_classtype of the given phrase_class/phrase_type if doesn't exit.
     """
+    table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
     with db_connection.cursor() as db_cursor:
-        db_cursor.execute(SQL(f"""
-                CREATE TABLE IF NOT EXISTS {{}} {sql_tablespace} 
+        db_cursor.execute(SQL("""
+                CREATE TABLE IF NOT EXISTS {{}} {} 
                 AS SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex 
-                WHERE class = {{}} AND type = {{}}""")
-                          .format(Identifier(f'place_classtype_{phrase_class}_{phrase_type}'),
-                                  Literal(phrase_class), Literal(phrase_type)))
+                WHERE class = {{}} AND type = {{}}""".format(sql_tablespace))
+                          .format(Identifier(table_name), Literal(phrase_class),
+                                  Literal(phrase_type)))
 
 
 def _create_place_classtype_indexes(db_connection, sql_tablespace, phrase_class, phrase_type):
     """
         Create indexes on centroid and place_id for the place_classtype table.
     """
+    index_prefix = 'idx_place_classtype_{}_{}_'.format(phrase_class, phrase_type)
+    base_table = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
     #Index on centroid
-    if not db_connection.index_exists(f'idx_place_classtype_{phrase_class}_{phrase_type}_centroid'):
+    if not db_connection.index_exists(index_prefix + 'centroid'):
         with db_connection.cursor() as db_cursor:
-            db_cursor.execute(SQL(f"""
-                    CREATE INDEX {{}} ON {{}} USING GIST (centroid) {sql_tablespace}""")
-                              .format(Identifier(
-                                  f"""idx_place_classtype_{phrase_class}_{phrase_type}_centroid"""),
-                                      Identifier(f'place_classtype_{phrase_class}_{phrase_type}')))
+            db_cursor.execute(SQL("""
+                CREATE INDEX {{}} ON {{}} USING GIST (centroid) {}""".format(sql_tablespace))
+                              .format(Identifier(index_prefix + 'centroid'),
+                                      Identifier(base_table)), sql_tablespace)
 
     #Index on place_id
-    if not db_connection.index_exists(f'idx_place_classtype_{phrase_class}_{phrase_type}_place_id'):
+    if not db_connection.index_exists(index_prefix + 'place_id'):
         with db_connection.cursor() as db_cursor:
-            db_cursor.execute(SQL(f"""
-            CREATE INDEX {{}} ON {{}} USING btree(place_id) {sql_tablespace}""")
-                              .format(Identifier(
-                                  f"""idx_place_classtype_{phrase_class}_{phrase_type}_place_id"""),
-                                      Identifier(f'place_classtype_{phrase_class}_{phrase_type}')))
+            db_cursor.execute(SQL(
+                """CREATE INDEX {{}} ON {{}} USING btree(place_id) {}""".format(sql_tablespace))
+                              .format(Identifier(index_prefix + 'place_id'),
+                                      Identifier(base_table)))
 
 
 def _grant_access_to_webuser(db_connection, config, phrase_class, phrase_type):
     """
         Grant access on read to the table place_classtype for the webuser.
     """
+    table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
     with db_connection.cursor() as db_cursor:
         db_cursor.execute(SQL("""GRANT SELECT ON {} TO {}""")
-                          .format(Identifier(f'place_classtype_{phrase_class}_{phrase_type}'),
-                                  Identifier(config.DATABASE_WEBUSER)))
+                          .format(Identifier(table_name), Identifier(config.DATABASE_WEBUSER)))
 
 def _convert_php_settings_if_needed(args, file_path):
     """
         Convert php settings file of special phrases to json file if it is still in php format.
     """
     file, extension = os.path.splitext(file_path)
-    json_file_path = f'{file}.json'
+    json_file_path = file + '.json'
     if extension == '.php' and not isfile(json_file_path):
         try:
             subprocess.run(['/usr/bin/env', 'php', '-Cq',

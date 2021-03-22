@@ -32,11 +32,8 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-12 postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
-                        php php-pgsql php-intl python3-dotenv \
-                        python3-psycopg2 python3-psutil python3-jinja2 git libicu-dev
-#Python packages:
-
-    pip3 install PyICU
+                        php php-pgsql php-intl libicu-dev python3-dotenv \
+                        python3-psycopg2 python3-psutil python3-jinja2 python3-icu git
 
 #
 # System Configuration

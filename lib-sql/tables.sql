@@ -209,6 +209,7 @@ CREATE TABLE location_postcode (
   postcode TEXT,
   geometry GEOMETRY(Geometry, 4326)
   );
+CREATE UNIQUE INDEX idx_postcode_id ON location_postcode USING BTREE (place_id) {{db.tablespace.search_index}};
 CREATE INDEX idx_postcode_geometry ON location_postcode USING GIST (geometry) {{db.tablespace.address_index}};
 GRANT SELECT ON location_postcode TO "{{config.DATABASE_WEBUSER}}" ;
 

@@ -242,11 +242,10 @@ class AdminServe:
     def run(args):
         run_php_server(args.server, args.project_dir / 'website')
 
-
-def nominatim(**kwargs):
+def get_set_parser(**kwargs):
     """\
-    Command-line tools for importing, updating, administrating and
-    querying the Nominatim database.
+    Initializes the parser and adds various subcommands for
+    nominatim cli.
     """
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
@@ -275,5 +274,15 @@ def nominatim(**kwargs):
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
     parser.add_subcommand('transition', clicmd.AdminTransition)
+
+    return parser
+
+
+def nominatim(**kwargs):
+    """\
+    Command-line tools for importing, updating, administrating and
+    querying the Nominatim database.
+    """
+    parser = get_set_parser(**kwargs)
 
     return parser.run(**kwargs)

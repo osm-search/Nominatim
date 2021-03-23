@@ -36,6 +36,7 @@ set(BUILD_API on CACHE BOOL "Build everything for the API server")
 set(BUILD_MODULE on CACHE BOOL "Build PostgreSQL module")
 set(BUILD_TESTS on CACHE BOOL "Build test suite")
 set(BUILD_DOCS on CACHE BOOL "Build documentation")
+set(BUILD_MANPAGE on CACHE BOOL "Build Manual Page")
 set(BUILD_OSM2PGSQL on CACHE BOOL "Build osm2pgsql (expert only)")
 
 #-----------------------------------------------------------------------------
@@ -206,6 +207,14 @@ endif()
 
 if (BUILD_DOCS)
    add_subdirectory(docs)
+endif()
+
+#-----------------------------------------------------------------------------
+# Manual page
+#-----------------------------------------------------------------------------
+
+if (BUILD_MANPAGE)
+   add_subdirectory(manual)
 endif()
 
 #-----------------------------------------------------------------------------

@@ -35,7 +35,7 @@
                         python3-pip python3-setuptools python3-devel \
                         expat-devel zlib-devel libicu-dev
 
-    pip3 install --user psycopg2 python-dotenv psutil Jinja2 PyICU
+    pip3 install --user psycopg2 python-dotenv psutil Jinja2 PyICU argparse-manpage
 
 
 #

@@ -6,7 +6,7 @@ runs:
     steps:
         - name: Install prerequisites
           run: |
-            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev python3-psycopg2 python3-pyosmium python3-dotenv python3-psutil python3-jinja2 python3-icu
+            sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev python3-psycopg2 python3-pyosmium python3-dotenv python3-psutil python3-jinja2 python3-icu python3-argparse-manpage
           shell: bash
 
         - name: Download dependencies

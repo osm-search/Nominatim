@@ -107,13 +107,11 @@ Do not create tables and indexes for searching
 
 .TP
 \fB\-\-no\-partitions\fR
-Do not partition search indices
-                                   (speeds up import of single country extracts)
+Do not partition search indices (speeds up import of single country extracts)
 
 .TP
 \fB\-\-no\-updates\fR
-Do not keep tables that are only needed for
-                                   updating the database later
+Do not keep tables that are only needed for updating the database later
 
 .TP
 \fB\-\-ignore\-errors\fR
@@ -188,8 +186,7 @@ Initialise the update process
 
 .TP
 \fB\-\-no\-update\-functions\fR
-Do not update the trigger function to
-                                   support differential updates.
+Do not update the trigger function to support differential updates.
 
 .TP
 \fB\-\-check\-for\-updates\fR
@@ -197,13 +194,11 @@ Check if new updates are available and exit
 
 .TP
 \fB\-\-once\fR
-Download and apply updates only once. When
-                                   not set, updates are continuously applied
+Download and apply updates only once. When not set, updates are continuously applied
 
 .TP
 \fB\-\-no\-index\fR
-Do not index the new data. Only applicable
-                                   together with \-\-once
+Do not index the new data. Only applicable together with \-\-once
 
 .TP
 \fB\-\-osm2pgsql\-cache\fR SIZE
@@ -244,8 +239,7 @@ Pull special phrases from the OSM wiki.
 
 .TP
 \fB\-o\fR \fI\,OUTPUT\/\fR, \fB\-\-output\fR \fI\,OUTPUT\/\fR
-File to write the preprocessed phrases to.
-                                   If omitted, it will be written to stdout.
+File to write the preprocessed phrases to.If omitted, it will be written to stdout.
 
 .SH OPTIONS 'nominatim add-data'
 usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
@@ -507,20 +501,15 @@ Type of places to output (default: street)
 
 .TP
 \fB\-\-output\-format\fR \fI\,OUTPUT_FORMAT\/\fR
-Semicolon\-separated list of address types
-                                   (see \-\-output\-type). Multiple ranks can be
-                                   merged into one column by simply using a
-                                   comma\-separated list.
+Semicolon\-separated list of address types (see \-\-output\-type). Multiple ranks can be merged into one column by simply using a comma\-separated list.
 
 .TP
 \fB\-\-output\-all\-postcodes\fR
-List all postcodes for address instead of
-                                   just the most likely one
+List all postcodes for address instead of just the most likely one
 
 .TP
 \fB\-\-language\fR \fI\,LANGUAGE\/\fR
-Preferred language for output
-                                   (use local name, if omitted)
+Preferred language for output (use local name, if omitted)
 
 .TP
 \fB\-\-restrict\-to\-country\fR COUNTRY_CODE
@@ -645,8 +634,7 @@ Include a breakdown of the address into elements.
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available
-                     (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours).
 
 .TP
 \fB\-\-namedetails\fR
@@ -662,8 +650,7 @@ Output geometry of results as a GeoJSON, KML, SVG or WKT.
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
-Simplify output geometry.
-                               Parameter is difference tolerance in degrees.
+Simplify output geometry.Parameter is difference tolerance in degrees.
 
 .TP
 \fB\-\-countrycodes\fR CC,..
@@ -741,8 +728,7 @@ Include a breakdown of the address into elements.
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available
-                     (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours).
 
 .TP
 \fB\-\-namedetails\fR
@@ -758,8 +744,7 @@ Output geometry of results as a GeoJSON, KML, SVG or WKT.
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
-Simplify output geometry.
-                               Parameter is difference tolerance in degrees.
+Simplify output geometry.Parameter is difference tolerance in degrees.
 
 .SH OPTIONS 'nominatim lookup'
 usage: nominatim lookup [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --id OSMID
@@ -804,8 +789,7 @@ Include a breakdown of the address into elements.
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available
-                     (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours).
 
 .TP
 \fB\-\-namedetails\fR
@@ -821,8 +805,7 @@ Output geometry of results as a GeoJSON, KML, SVG or WKT.
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
-Simplify output geometry.
-                               Parameter is difference tolerance in degrees.
+Simplify output geometry.Parameter is difference tolerance in degrees.
 
 .SH OPTIONS 'nominatim details'
 usage: nominatim details [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
@@ -871,8 +854,7 @@ Database internal identifier of the OSM object to look up.
 
 .TP
 \fB\-\-class\fR \fI\,OBJECT_CLASS\/\fR
-Class type to disambiguated multiple entries
-                                   of the same object.
+Class type to disambiguated multiple entries of the same object.
 
 .TP
 \fB\-\-addressdetails\fR
@@ -1031,10 +1013,7 @@ Do not create search tables and indexes
 \fB\-\-tiger\-data\fR FILE
 File to import
 
-.SH AUTHORS
-.B <<UNSET \-\-project\-name OPTION>>
-was written by <<UNSET \-\-author OPTION>> <<<UNSET \-\-author_email OPTION>>>.
 .SH DISTRIBUTION
-The latest version of <<UNSET \-\-project\-name OPTION>> may be downloaded from
-.UR <<UNSET \-\-url OPTION>>
+The latest version of Nominatim may be downloaded from
+.UR https://nominatim.org
 .UE

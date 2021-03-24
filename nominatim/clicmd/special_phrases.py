@@ -2,7 +2,7 @@
     Implementation of the 'import-special-phrases' command.
 """
 import logging
-from nominatim.tools.special_phrases import import_from_wiki
+from nominatim.tools.special_phrases import SpecialPhrasesImporter
 from nominatim.db.connection import connect
 
 LOG = logging.getLogger()
@@ -25,5 +25,7 @@ class ImportSpecialPhrases:
         if args.from_wiki:
             LOG.warning('Special phrases importation starting')
             with connect(args.config.get_libpq_dsn()) as db_connection:
-                import_from_wiki(args, db_connection)
+                SpecialPhrasesImporter(
+                    args.config, args.phplib_dir, db_connection
+                ).import_from_wiki()
         return 0

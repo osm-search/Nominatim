@@ -1,17 +1,20 @@
 """
     Tests for import special phrases functions
 """
+from pathlib import Path
 import pytest
-from nominatim.tools.special_phrases import _create_place_classtype_indexes, _create_place_classtype_table, _get_wiki_content, _grant_access_to_webuser, _process_amenity
+from nominatim.tools.special_phrases import SpecialPhrasesImporter
 
-def test_process_amenity_with_operator(temp_db_conn, getorcreate_amenityoperator_funcs):
-    _process_amenity(temp_db_conn, '', '', '', '', 'near')
-    _process_amenity(temp_db_conn, '', '', '', '', 'in')
+TEST_BASE_DIR = Path(__file__) / '..' / '..'
 
-def test_process_amenity_without_operator(temp_db_conn, getorcreate_amenity_funcs):
-    _process_amenity(temp_db_conn, '', '', '', '', '')
+def test_process_amenity_with_operator(special_phrases_importer, getorcreate_amenityoperator_funcs):
+    special_phrases_importer._process_amenity('', '', '', '', 'near')
+    special_phrases_importer._process_amenity('', '', '', '', 'in')
 
-def test_create_place_classtype_indexes(temp_db_conn):
+def test_process_amenity_without_operator(special_phrases_importer, getorcreate_amenity_funcs):
+    special_phrases_importer._process_amenity('', '', '', '', '')
+
+def test_create_place_classtype_indexes(temp_db_conn, special_phrases_importer):
     phrase_class = 'class'
     phrase_type = 'type'
     table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
@@ -21,17 +24,17 @@ def test_create_place_classtype_indexes(temp_db_conn):
         temp_db_cursor.execute("CREATE EXTENSION postgis;")
         temp_db_cursor.execute('CREATE TABLE {}(place_id BIGINT, centroid GEOMETRY)'.format(table_name))
 
-    _create_place_classtype_indexes(temp_db_conn, '', phrase_class, phrase_type)
+    special_phrases_importer._create_place_classtype_indexes('', phrase_class, phrase_type)
 
     centroid_index_exists = temp_db_conn.index_exists(index_prefix + 'centroid')
     place_id_index_exists = temp_db_conn.index_exists(index_prefix + 'place_id')
 
     assert centroid_index_exists and place_id_index_exists
 
-def test_create_place_classtype_table(temp_db_conn, placex_table):
+def test_create_place_classtype_table(temp_db_conn, placex_table, special_phrases_importer):
     phrase_class = 'class'
     phrase_type = 'type'
-    _create_place_classtype_table(temp_db_conn, '', phrase_class, phrase_type)
+    special_phrases_importer._create_place_classtype_table('', phrase_class, phrase_type)
 
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute(f"""
@@ -42,7 +45,7 @@ def test_create_place_classtype_table(temp_db_conn, placex_table):
         result = temp_db_cursor.fetchone()
     assert result
 
-def test_grant_access_to_web_user(temp_db_conn, def_config):
+def test_grant_access_to_web_user(temp_db_conn, def_config, special_phrases_importer):
     phrase_class = 'class'
     phrase_type = 'type'
     table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
@@ -50,7 +53,7 @@ def test_grant_access_to_web_user(temp_db_conn, def_config):
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute('CREATE TABLE {}()'.format(table_name))
 
-    _grant_access_to_webuser(temp_db_conn, def_config, phrase_class, phrase_type)
+    special_phrases_importer._grant_access_to_webuser(phrase_class, phrase_type)
 
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute(f"""
@@ -60,6 +63,35 @@ def test_grant_access_to_web_user(temp_db_conn, def_config):
                 AND privilege_type='SELECT'""")
         result = temp_db_cursor.fetchone()
     assert result
+
+def test_create_place_classtype_table_and_indexes(
+        placex_table, getorcreate_amenity_funcs, 
+        getorcreate_amenityoperator_funcs, special_phrases_importer):
+    pairs = {('class1', 'type1'), ('class2', 'type2')}
+
+    special_phrases_importer._create_place_classtype_table_and_indexes(pairs)
+
+def test_process_xml_content(special_phrases_importer, getorcreate_amenity_funcs,
+                             getorcreate_amenityoperator_funcs):
+    special_phrases_importer._process_xml_content(get_test_xml_wiki_content(), 'en')
+
+def mock_get_wiki_content(lang):
+    return get_test_xml_wiki_content()
+
+def test_import_from_wiki(monkeypatch, special_phrases_importer, placex_table, 
+                          getorcreate_amenity_funcs, getorcreate_amenityoperator_funcs):
+    #mocker.patch.object(special_phrases_importer, '_get_wiki_content', new=mock_get_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.SpecialPhrasesImporter._get_wiki_content', mock_get_wiki_content)
+    special_phrases_importer.import_from_wiki(['en'])
+
+def get_test_xml_wiki_content():
+    xml_test_content_path = (TEST_BASE_DIR / 'testdata' / 'special_phrases_test_content.txt').resolve()
+    with open(xml_test_content_path) as xml_content_reader:
+        return xml_content_reader.read()
+
+@pytest.fixture
+def special_phrases_importer(temp_db_conn, def_config, tmp_phplib_dir):
+    return SpecialPhrasesImporter(def_config, tmp_phplib_dir, temp_db_conn)
 
 @pytest.fixture
 def make_strandard_name_func(temp_db_cursor):

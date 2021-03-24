@@ -172,7 +172,7 @@ def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ra
     assert rank_mock.called == do_ranks
 
 def test_special_phrases_command(temp_db, mock_func_factory):
-    func = mock_func_factory(nominatim.clicmd.special_phrases, 'import_from_wiki')
+    func = mock_func_factory(nominatim.clicmd.special_phrases.SpecialPhrasesImporter, 'import_from_wiki')
 
     call_nominatim('import-special-phrases', '--from-wiki')
 

@@ -9,3 +9,4 @@ data/wiki_specialphrases.sql
 data/osmosischange.osc
 
 .vagrant
+data/country_osm_grid.sql.gz

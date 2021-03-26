@@ -3,6 +3,7 @@
 """
 import logging
 import os
+from pathlib import Path
 import re
 import subprocess
 import json
@@ -10,6 +11,7 @@ from os.path import isfile
 from icu import Transliterator
 from psycopg2.sql import Identifier, Literal, SQL
 from nominatim.tools.exec_utils import get_url
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 class SpecialPhrasesImporter():
@@ -37,18 +39,18 @@ class SpecialPhrasesImporter():
             extract corresponding special phrases from the wiki.
         """
         if languages is not None and not isinstance(languages, list):
-            raise TypeError('languages argument should be of type list')
+            raise TypeError('The \'languages\' argument should be of type list.')
 
         #Get all languages to process.
         languages = self._load_languages() if not languages else languages
 
-        #array for pairs of class/type
+        #Store pairs of class/type for further processing
         class_type_pairs = set()
 
         for lang in languages:
             LOG.warning('Import phrases for lang: %s', lang)
             wiki_page_xml_content = SpecialPhrasesImporter._get_wiki_content(lang)
-            self._process_xml_content(wiki_page_xml_content, lang)
+            class_type_pairs.update(self._process_xml_content(wiki_page_xml_content, lang))
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
         self.db_connection.commit()
@@ -58,7 +60,7 @@ class SpecialPhrasesImporter():
         """
             Load white and black lists from phrases-settings.json.
         """
-        settings_path = str(self.config.config_dir)+'/phrase-settings.json'
+        settings_path = (self.config.config_dir / 'phrase-settings.json').resolve()
 
         if self.config.PHRASE_CONFIG:
             settings_path = self._convert_php_settings_if_needed(self.config.PHRASE_CONFIG)
@@ -100,11 +102,18 @@ class SpecialPhrasesImporter():
         class_matchs = self.sanity_check_pattern.findall(phrase_class)
 
         if len(class_matchs) < 1 or len(type_matchs) < 1:
-            LOG.error("Bad class/type for language %s: %s=%s", lang, phrase_class, phrase_type)
+            raise UsageError("Bad class/type for language {}: {}={}".format(
+                lang, phrase_class, phrase_type))
 
     def _process_xml_content(self, xml_content, lang):
+        """
+            Process given xml content by extracting matching patterns.
+            Matching patterns are processed there and returned in a
+            set of class/type pairs.
+        """
         #One match will be of format [label, class, type, operator, plural]
         matches = self.occurence_pattern.findall(xml_content)
+        #Store pairs of class/type for further processing
         class_type_pairs = set()
 
         for match in matches:
@@ -246,12 +255,19 @@ class SpecialPhrasesImporter():
         """
             Convert php settings file of special phrases to json file if it is still in php format.
         """
+        if not isfile(file_path):
+            raise UsageError(str(file_path) + ' is not a valid file.')
+
         file, extension = os.path.splitext(file_path)
-        json_file_path = file + '.json'
+        json_file_path = Path(file + '.json').resolve()
+
+        if extension not in('.php', '.json'):
+            raise UsageError('The custom NOMINATIM_PHRASE_CONFIG file has not a valid extension.')
+
         if extension == '.php' and not isfile(json_file_path):
             try:
                 subprocess.run(['/usr/bin/env', 'php', '-Cq',
-                                self.phplib_dir / 'migration/phraseSettingsToJson.php',
+                                (self.phplib_dir / 'migration/PhraseSettingsToJson.php').resolve(),
                                 file_path], check=True)
                 LOG.warning('special_phrase configuration file has been converted to json.')
                 return json_file_path

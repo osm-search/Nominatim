@@ -254,7 +254,7 @@ def nominatim(**kwargs):
     parser.add_subcommand('freeze', clicmd.SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)
 
-    parser.add_subcommand('import-special-phrases', clicmd.ImportSpecialPhrases)
+    parser.add_subcommand('special-phrases', clicmd.ImportSpecialPhrases)
 
     parser.add_subcommand('add-data', UpdateAddData)
     parser.add_subcommand('index', clicmd.UpdateIndex)

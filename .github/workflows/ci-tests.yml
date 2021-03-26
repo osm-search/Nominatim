@@ -120,7 +120,7 @@ jobs:
               working-directory: data-env
 
             - name: Import special phrases
-              run: nominatim special-phrases --from-wiki | psql -d nominatim
+              run: nominatim special-phrases --import-from-wiki
               working-directory: data-env
 
             - name: Check import

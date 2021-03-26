@@ -7,5 +7,5 @@ require_once(CONST_LibDir.'/init-cmd.php');
 loadSettings(getcwd());
 
 (new \Nominatim\Shell(getSetting('NOMINATIM_TOOL')))
-    ->addParams('import-special-phrases', '--from-wiki')
+    ->addParams('special-phrases', '--import-from-wiki')
     ->run();

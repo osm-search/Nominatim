@@ -1,5 +1,5 @@
 """
-    Implementation of the 'import-special-phrases' command.
+    Implementation of the 'special-phrases' command.
 """
 import logging
 from nominatim.tools.special_phrases import SpecialPhrasesImporter
@@ -17,12 +17,12 @@ class ImportSpecialPhrases:
     @staticmethod
     def add_args(parser):
         group = parser.add_argument_group('Input arguments')
-        group.add_argument('--from-wiki', action='store_true',
+        group.add_argument('--import-from-wiki', action='store_true',
                            help='Import special phrases from the OSM wiki to the database.')
 
     @staticmethod
     def run(args):
-        if args.from_wiki:
+        if args.import_from_wiki:
             LOG.warning('Special phrases importation starting')
             with connect(args.config.get_libpq_dsn()) as db_connection:
                 SpecialPhrasesImporter(

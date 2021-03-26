@@ -174,7 +174,7 @@ def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ra
 def test_special_phrases_command(temp_db, mock_func_factory):
     func = mock_func_factory(nominatim.clicmd.special_phrases.SpecialPhrasesImporter, 'import_from_wiki')
 
-    call_nominatim('import-special-phrases', '--from-wiki')
+    call_nominatim('special-phrases', '--import-from-wiki')
 
     assert func.called == 1
 

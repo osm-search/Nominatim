@@ -112,6 +112,30 @@ class CommandlineParser:
 # pylint: disable=C0111
 # Using non-top-level imports to make pyosmium optional for replication only.
 # pylint: disable=E0012,C0415
+
+
+class SetupSpecialPhrases:
+    """\
+    Maintain special phrases.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        group = parser.add_argument_group('Input arguments')
+        group.add_argument('--from-wiki', action='store_true',
+                           help='Pull special phrases from the OSM wiki.')
+        group = parser.add_argument_group('Output arguments')
+        group.add_argument('-o', '--output', default='-',
+                           help=("File to write the preprocessed phrases to."
+                                 "If omitted, it will be written to stdout."))
+
+    @staticmethod
+    def run(args):
+        if args.output != '-':
+            raise NotImplementedError('Only output to stdout is currently implemented.')
+        return run_legacy_script('specialphrases.php', '--wiki-import', nominatim_env=args)
+
+
 class UpdateAddData:
     """\
     Add additional data from a file or an online source.
@@ -179,16 +203,16 @@ class QueryExport:
                            help='Type of places to output (default: street)')
         group.add_argument('--output-format',
                            default='street;suburb;city;county;state;country',
-                           help="""Semicolon-separated list of address types
-                                   (see --output-type). Multiple ranks can be
-                                   merged into one column by simply using a
-                                   comma-separated list.""")
+                           help=("Semicolon-separated list of address types "
+                                 "(see --output-type). Multiple ranks can be "
+                                 "merged into one column by simply using a "
+                                 "comma-separated list."))
         group.add_argument('--output-all-postcodes', action='store_true',
-                           help="""List all postcodes for address instead of
-                                   just the most likely one""")
+                           help=("List all postcodes for address instead of "
+                                 "just the most likely one"))
         group.add_argument('--language',
-                           help="""Preferred language for output
-                                   (use local name, if omitted)""")
+                           help=("Preferred language for output "
+                                 "(use local name, if omitted)"))
         group = parser.add_argument_group('Filter arguments')
         group.add_argument('--restrict-to-country', metavar='COUNTRY_CODE',
                            help='Export only objects within country')

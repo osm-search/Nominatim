@@ -24,7 +24,7 @@ nominatim
     Update the database using an online replication service.
 .TP
 \fBnominatim\fR \fI\,special-phrases\/\fR
-    Maintain special phrases.
+    Import special phrases.
 .TP
 \fBnominatim\fR \fI\,add-data\/\fR
     Add additional data from a file or an online source.
@@ -210,9 +210,9 @@ Set timeout for file downloads.
 
 .SH OPTIONS 'nominatim special-phrases'
 usage: nominatim special-phrases [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
-                                 [--from-wiki] [-o OUTPUT]
+                                 [--import-from-wiki]
 
-    Maintain special phrases.
+    Import special phrases.
     
 
 
@@ -234,12 +234,8 @@ Base directory of the Nominatim installation (default:.)
 Number of parallel threads to use
 
 .TP
-\fB\-\-from\-wiki\fR
-Pull special phrases from the OSM wiki.
-
-.TP
-\fB\-o\fR \fI\,OUTPUT\/\fR, \fB\-\-output\fR \fI\,OUTPUT\/\fR
-File to write the preprocessed phrases to.If omitted, it will be written to stdout.
+\fB\-\-import\-from\-wiki\fR
+Import special phrases from the OSM wiki to the database.
 
 .SH OPTIONS 'nominatim add-data'
 usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]

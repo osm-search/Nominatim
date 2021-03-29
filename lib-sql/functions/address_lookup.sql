@@ -164,7 +164,10 @@ BEGIN
   -- POI objects in the placex table
   IF place IS NULL THEN
     SELECT parent_place_id as place_id, country_code,
-           housenumber, postcode,
+           coalesce(address->'housenumber',
+                    address->'streetnumber',
+                    address->'conscriptionnumber')::text as housenumber,
+           postcode,
            class, type,
            name, address,
            centroid
@@ -178,7 +181,7 @@ BEGIN
   -- place we should be using instead.
   IF place IS NULL THEN
     select coalesce(linked_place_id, place_id) as place_id,  country_code,
-           housenumber, postcode,
+           null::text as housenumber, postcode,
            class, type,
            null as name, address,
            null as centroid

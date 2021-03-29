@@ -29,17 +29,17 @@ class UpdateReplication:
                            help='Initialise the update process')
         group.add_argument('--no-update-functions', dest='update_functions',
                            action='store_false',
-                           help="""Do not update the trigger function to
-                                   support differential updates.""")
+                           help=("Do not update the trigger function to "
+                                 "support differential updates."))
         group = parser.add_argument_group('Arguments for updates')
         group.add_argument('--check-for-updates', action='store_true',
                            help='Check if new updates are available and exit')
         group.add_argument('--once', action='store_true',
-                           help="""Download and apply updates only once. When
-                                   not set, updates are continuously applied""")
+                           help=("Download and apply updates only once. When "
+                                 "not set, updates are continuously applied"))
         group.add_argument('--no-index', action='store_false', dest='do_index',
-                           help="""Do not index the new data. Only applicable
-                                   together with --once""")
+                           help=("Do not index the new data. Only applicable "
+                                 "together with --once"))
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
         group = parser.add_argument_group('Download parameters')

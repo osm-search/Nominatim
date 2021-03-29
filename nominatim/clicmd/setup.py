@@ -39,11 +39,11 @@ class SetupAll:
         group.add_argument('--reverse-only', action='store_true',
                            help='Do not create tables and indexes for searching')
         group.add_argument('--no-partitions', action='store_true',
-                           help="""Do not partition search indices
-                                   (speeds up import of single country extracts)""")
+                           help=("Do not partition search indices "
+                                 "(speeds up import of single country extracts)"))
         group.add_argument('--no-updates', action='store_true',
-                           help="""Do not keep tables that are only needed for
-                                   updating the database later""")
+                           help="Do not keep tables that are only needed for "
+                                "updating the database later")
         group = parser.add_argument_group('Expert options')
         group.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')

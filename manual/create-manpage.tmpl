@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+import sys
+import os
+
+sys.path.append('@PROJECT_SOURCE_DIR@')
+
+from nominatim.cli import get_set_parser
+
+def get_parser():
+    parser = get_set_parser(phpcgi_path='@PHPCGI_BIN@')
+
+    return parser.parser

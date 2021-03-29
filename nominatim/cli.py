@@ -179,16 +179,16 @@ class QueryExport:
                            help='Type of places to output (default: street)')
         group.add_argument('--output-format',
                            default='street;suburb;city;county;state;country',
-                           help="""Semicolon-separated list of address types
-                                   (see --output-type). Multiple ranks can be
-                                   merged into one column by simply using a
-                                   comma-separated list.""")
+                           help=("Semicolon-separated list of address types "
+                                 "(see --output-type). Multiple ranks can be "
+                                 "merged into one column by simply using a "
+                                 "comma-separated list."))
         group.add_argument('--output-all-postcodes', action='store_true',
-                           help="""List all postcodes for address instead of
-                                   just the most likely one""")
+                           help=("List all postcodes for address instead of "
+                                 "just the most likely one"))
         group.add_argument('--language',
-                           help="""Preferred language for output
-                                   (use local name, if omitted)""")
+                           help=("Preferred language for output "
+                                 "(use local name, if omitted)"))
         group = parser.add_argument_group('Filter arguments')
         group.add_argument('--restrict-to-country', metavar='COUNTRY_CODE',
                            help='Export only objects within country')
@@ -242,11 +242,10 @@ class AdminServe:
     def run(args):
         run_php_server(args.server, args.project_dir / 'website')
 
-
-def nominatim(**kwargs):
+def get_set_parser(**kwargs):
     """\
-    Command-line tools for importing, updating, administrating and
-    querying the Nominatim database.
+    Initializes the parser and adds various subcommands for
+    nominatim cli.
     """
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
@@ -275,5 +274,15 @@ def nominatim(**kwargs):
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
     parser.add_subcommand('transition', clicmd.AdminTransition)
+
+    return parser
+
+
+def nominatim(**kwargs):
+    """\
+    Command-line tools for importing, updating, administrating and
+    querying the Nominatim database.
+    """
+    parser = get_set_parser(**kwargs)
 
     return parser.run(**kwargs)

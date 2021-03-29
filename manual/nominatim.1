@@ -1,0 +1,1015 @@
+.TH nominatim "1" Manual
+.SH NAME
+nominatim
+.SH SYNOPSIS
+.B nominatim
+[-h] {import,freeze,replication,special-phrases,add-data,index,refresh,admin,export,serve,search,reverse,lookup,details,status,transition} ...
+.SH DESCRIPTION
+    Command\-line tools for importing, updating, administrating and
+    querying the Nominatim database.
+    
+.SH OPTIONS
+
+
+.SS
+\fBSub-commands\fR
+.TP
+\fBnominatim\fR \fI\,import\/\fR
+    Create a new Nominatim database from an OSM file.
+.TP
+\fBnominatim\fR \fI\,freeze\/\fR
+    Make database read-only.
+.TP
+\fBnominatim\fR \fI\,replication\/\fR
+    Update the database using an online replication service.
+.TP
+\fBnominatim\fR \fI\,special-phrases\/\fR
+    Import special phrases.
+.TP
+\fBnominatim\fR \fI\,add-data\/\fR
+    Add additional data from a file or an online source.
+.TP
+\fBnominatim\fR \fI\,index\/\fR
+    Reindex all new and modified data.
+.TP
+\fBnominatim\fR \fI\,refresh\/\fR
+    Recompute auxiliary data used by the indexing process.
+.TP
+\fBnominatim\fR \fI\,admin\/\fR
+    Analyse and maintain the database.
+.TP
+\fBnominatim\fR \fI\,export\/\fR
+    Export addresses as CSV file from the database.
+.TP
+\fBnominatim\fR \fI\,serve\/\fR
+    Start a simple web server for serving the API.
+.TP
+\fBnominatim\fR \fI\,search\/\fR
+    Execute API search query.
+.TP
+\fBnominatim\fR \fI\,reverse\/\fR
+    Execute API reverse query.
+.TP
+\fBnominatim\fR \fI\,lookup\/\fR
+    Execute API lookup query.
+.TP
+\fBnominatim\fR \fI\,details\/\fR
+    Execute API details query.
+.TP
+\fBnominatim\fR \fI\,status\/\fR
+    Execute API status query.
+.TP
+\fBnominatim\fR \fI\,transition\/\fR
+    Internal functions for code transition. Do not use.
+.SH OPTIONS 'nominatim import'
+usage: nominatim import [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                        (--osm-file FILE | --continue {load-data,indexing,db-postprocess})
+                        [--osm2pgsql-cache SIZE] [--reverse-only]
+                        [--no-partitions] [--no-updates] [--ignore-errors]
+                        [--index-noanalyse]
+
+    Create a new Nominatim database from an OSM file.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-osm\-file\fR FILE
+OSM file to be imported.
+
+.TP
+\fB\-\-continue\fR {load\-data,indexing,db\-postprocess}
+Continue an import that was interrupted
+
+.TP
+\fB\-\-osm2pgsql\-cache\fR SIZE
+Size of cache to be used by osm2pgsql (in MB)
+
+.TP
+\fB\-\-reverse\-only\fR
+Do not create tables and indexes for searching
+
+.TP
+\fB\-\-no\-partitions\fR
+Do not partition search indices (speeds up import of single country extracts)
+
+.TP
+\fB\-\-no\-updates\fR
+Do not keep tables that are only needed for updating the database later
+
+.TP
+\fB\-\-ignore\-errors\fR
+Continue import even when errors in SQL are present
+
+.TP
+\fB\-\-index\-noanalyse\fR
+Do not perform analyse operations during index
+
+.SH OPTIONS 'nominatim freeze'
+usage: nominatim freeze [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+
+    Make database read\-only.
+
+    About half of data in the Nominatim database is kept only to be able to
+    keep the data up\-to\-date with new changes made in OpenStreetMap. This
+    command drops all this data and only keeps the part needed for geocoding
+    itself.
+
+    This command has the same effect as the `\-\-no\-updates` option for imports.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.SH OPTIONS 'nominatim replication'
+usage: nominatim replication [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                             [--init] [--no-update-functions]
+                             [--check-for-updates] [--once] [--no-index]
+                             [--osm2pgsql-cache SIZE]
+                             [--socket-timeout SOCKET_TIMEOUT]
+
+    Update the database using an online replication service.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-init\fR
+Initialise the update process
+
+.TP
+\fB\-\-no\-update\-functions\fR
+Do not update the trigger function to support differential updates.
+
+.TP
+\fB\-\-check\-for\-updates\fR
+Check if new updates are available and exit
+
+.TP
+\fB\-\-once\fR
+Download and apply updates only once. When not set, updates are continuously applied
+
+.TP
+\fB\-\-no\-index\fR
+Do not index the new data. Only applicable together with \-\-once
+
+.TP
+\fB\-\-osm2pgsql\-cache\fR SIZE
+Size of cache to be used by osm2pgsql (in MB)
+
+.TP
+\fB\-\-socket\-timeout\fR \fI\,SOCKET_TIMEOUT\/\fR
+Set timeout for file downloads.
+
+.SH OPTIONS 'nominatim special-phrases'
+usage: nominatim special-phrases [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                                 [--import-from-wiki]
+
+    Import special phrases.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-import\-from\-wiki\fR
+Import special phrases from the OSM wiki to the database.
+
+.SH OPTIONS 'nominatim add-data'
+usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                          (--file FILE | --diff FILE | --node ID | --way ID | --relation ID | --tiger-data DIR)
+                          [--use-main-api]
+
+    Add additional data from a file or an online source.
+
+    Data is only imported, not indexed. You need to call `nominatim\-update index`
+    to complete the process.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-file\fR FILE
+Import data from an OSM file
+
+.TP
+\fB\-\-diff\fR FILE
+Import data from an OSM diff file
+
+.TP
+\fB\-\-node\fR ID
+Import a single node from the API
+
+.TP
+\fB\-\-way\fR ID
+Import a single way from the API
+
+.TP
+\fB\-\-relation\fR ID
+Import a single relation from the API
+
+.TP
+\fB\-\-tiger\-data\fR DIR
+Add housenumbers from the US TIGER census database.
+
+.TP
+\fB\-\-use\-main\-api\fR
+Use OSM API instead of Overpass to download objects
+
+.SH OPTIONS 'nominatim index'
+usage: nominatim index [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                       [--boundaries-only] [--no-boundaries] [--minrank RANK]
+                       [--maxrank RANK]
+
+    Reindex all new and modified data.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-boundaries\-only\fR
+Index only administrative boundaries.
+
+.TP
+\fB\-\-no\-boundaries\fR
+Index everything except administrative boundaries.
+
+.TP
+\fB\-\-minrank\fR RANK, \fB\-r\fR RANK
+Minimum/starting rank
+
+.TP
+\fB\-\-maxrank\fR RANK, \fB\-R\fR RANK
+Maximum/finishing rank
+
+.SH OPTIONS 'nominatim refresh'
+usage: nominatim refresh [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                         [--postcodes] [--word-counts] [--address-levels]
+                         [--functions] [--wiki-data] [--importance]
+                         [--website] [--no-diff-updates]
+                         [--enable-debug-statements]
+
+    Recompute auxiliary data used by the indexing process.
+
+    These functions must not be run in parallel with other update commands.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-postcodes\fR
+Update postcode centroid table
+
+.TP
+\fB\-\-word\-counts\fR
+Compute frequency of full\-word search terms
+
+.TP
+\fB\-\-address\-levels\fR
+Reimport address level configuration
+
+.TP
+\fB\-\-functions\fR
+Update the PL/pgSQL functions in the database
+
+.TP
+\fB\-\-wiki\-data\fR
+Update Wikipedia/data importance numbers.
+
+.TP
+\fB\-\-importance\fR
+Recompute place importances (expensive!)
+
+.TP
+\fB\-\-website\fR
+Refresh the directory that serves the scripts for the web API
+
+.TP
+\fB\-\-no\-diff\-updates\fR
+Do not enable code for propagating updates
+
+.TP
+\fB\-\-enable\-debug\-statements\fR
+Enable debug warning statements in functions
+
+.SH OPTIONS 'nominatim admin'
+usage: nominatim admin [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                       (--warm | --check-database | --migrate | --analyse-indexing)
+                       [--search-only] [--reverse-only]
+                       [--osm-id OSM_ID | --place-id PLACE_ID]
+
+    Analyse and maintain the database.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-warm\fR
+Warm database caches for search and reverse queries.
+
+.TP
+\fB\-\-check\-database\fR
+Check that the database is complete and operational.
+
+.TP
+\fB\-\-migrate\fR
+Migrate the database to a new software version.
+
+.TP
+\fB\-\-analyse\-indexing\fR
+Print performance analysis of the indexing process.
+
+.TP
+\fB\-\-search\-only\fR
+Only pre\-warm tables for search queries
+
+.TP
+\fB\-\-reverse\-only\fR
+Only pre\-warm tables for reverse queries
+
+.TP
+\fB\-\-osm\-id\fR \fI\,OSM_ID\/\fR
+Analyse indexing of the given OSM object
+
+.TP
+\fB\-\-place\-id\fR \fI\,PLACE_ID\/\fR
+Analyse indexing of the given Nominatim object
+
+.SH OPTIONS 'nominatim export'
+usage: nominatim export [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                        [--output-type {continent,country,state,county,city,suburb,street,path}]
+                        [--output-format OUTPUT_FORMAT]
+                        [--output-all-postcodes] [--language LANGUAGE]
+                        [--restrict-to-country COUNTRY_CODE]
+                        [--restrict-to-osm-node ID] [--restrict-to-osm-way ID]
+                        [--restrict-to-osm-relation ID]
+
+    Export addresses as CSV file from the database.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-output\-type\fR {continent,country,state,county,city,suburb,street,path}
+Type of places to output (default: street)
+
+.TP
+\fB\-\-output\-format\fR \fI\,OUTPUT_FORMAT\/\fR
+Semicolon\-separated list of address types (see \-\-output\-type). Multiple ranks can be merged into one column by simply using a comma\-separated list.
+
+.TP
+\fB\-\-output\-all\-postcodes\fR
+List all postcodes for address instead of just the most likely one
+
+.TP
+\fB\-\-language\fR \fI\,LANGUAGE\/\fR
+Preferred language for output (use local name, if omitted)
+
+.TP
+\fB\-\-restrict\-to\-country\fR COUNTRY_CODE
+Export only objects within country
+
+.TP
+\fB\-\-restrict\-to\-osm\-node\fR ID
+Export only children of this OSM node
+
+.TP
+\fB\-\-restrict\-to\-osm\-way\fR ID
+Export only children of this OSM way
+
+.TP
+\fB\-\-restrict\-to\-osm\-relation\fR ID
+Export only children of this OSM relation
+
+.SH OPTIONS 'nominatim serve'
+usage: nominatim serve [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                       [--server SERVER]
+
+    Start a simple web server for serving the API.
+
+    This command starts the built\-in PHP webserver to serve the website
+    from the current project directory. This webserver is only suitable
+    for testing and develop. Do not use it in production setups!
+
+    By the default, the webserver can be accessed at: http://127.0.0.1:8088
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-server\fR \fI\,SERVER\/\fR
+The address the server will listen to.
+
+.SH OPTIONS 'nominatim search'
+usage: nominatim search [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                        [--query QUERY] [--street STREET] [--city CITY]
+                        [--county COUNTY] [--state STATE] [--country COUNTRY]
+                        [--postalcode POSTALCODE]
+                        [--format {xml,json,jsonv2,geojson,geocodejson}]
+                        [--addressdetails] [--extratags] [--namedetails]
+                        [--lang LANGS]
+                        [--polygon-output {geojson,kml,svg,text}]
+                        [--polygon-threshold TOLERANCE] [--countrycodes CC,..]
+                        [--exclude_place_ids ID,..] [--limit LIMIT]
+                        [--viewbox X1,Y1,X2,Y2] [--bounded] [--no-dedupe]
+
+    Execute API search query.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-query\fR \fI\,QUERY\/\fR
+Free\-form query string
+
+.TP
+\fB\-\-street\fR \fI\,STREET\/\fR
+Structured query: housenumber and street
+
+.TP
+\fB\-\-city\fR \fI\,CITY\/\fR
+Structured query: city, town or village
+
+.TP
+\fB\-\-county\fR \fI\,COUNTY\/\fR
+Structured query: county
+
+.TP
+\fB\-\-state\fR \fI\,STATE\/\fR
+Structured query: state
+
+.TP
+\fB\-\-country\fR \fI\,COUNTRY\/\fR
+Structured query: country
+
+.TP
+\fB\-\-postalcode\fR \fI\,POSTALCODE\/\fR
+Structured query: postcode
+
+.TP
+\fB\-\-format\fR {xml,json,jsonv2,geojson,geocodejson}
+Format of result
+
+.TP
+\fB\-\-addressdetails\fR
+Include a breakdown of the address into elements.
+
+.TP
+\fB\-\-extratags\fR
+Include additional information if available (e.g. wikipedia link, opening hours).
+
+.TP
+\fB\-\-namedetails\fR
+Include a list of alternative names.
+
+.TP
+\fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
+Preferred language order for presenting search results
+
+.TP
+\fB\-\-polygon\-output\fR {geojson,kml,svg,text}
+Output geometry of results as a GeoJSON, KML, SVG or WKT.
+
+.TP
+\fB\-\-polygon\-threshold\fR TOLERANCE
+Simplify output geometry.Parameter is difference tolerance in degrees.
+
+.TP
+\fB\-\-countrycodes\fR CC,..
+Limit search results to one or more countries.
+
+.TP
+\fB\-\-exclude_place_ids\fR ID,..
+List of search object to be excluded
+
+.TP
+\fB\-\-limit\fR \fI\,LIMIT\/\fR
+Limit the number of returned results
+
+.TP
+\fB\-\-viewbox\fR X1,Y1,X2,Y2
+Preferred area to find search results
+
+.TP
+\fB\-\-bounded\fR
+Strictly restrict results to viewbox area
+
+.TP
+\fB\-\-no\-dedupe\fR
+Do not remove duplicates from the result list
+
+.SH OPTIONS 'nominatim reverse'
+usage: nominatim reverse [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --lat LAT
+                         --lon LON [--zoom ZOOM]
+                         [--format {xml,json,jsonv2,geojson,geocodejson}]
+                         [--addressdetails] [--extratags] [--namedetails]
+                         [--lang LANGS]
+                         [--polygon-output {geojson,kml,svg,text}]
+                         [--polygon-threshold TOLERANCE]
+
+    Execute API reverse query.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-lat\fR \fI\,LAT\/\fR
+Latitude of coordinate to look up (in WGS84)
+
+.TP
+\fB\-\-lon\fR \fI\,LON\/\fR
+Longitude of coordinate to look up (in WGS84)
+
+.TP
+\fB\-\-zoom\fR \fI\,ZOOM\/\fR
+Level of detail required for the address
+
+.TP
+\fB\-\-format\fR {xml,json,jsonv2,geojson,geocodejson}
+Format of result
+
+.TP
+\fB\-\-addressdetails\fR
+Include a breakdown of the address into elements.
+
+.TP
+\fB\-\-extratags\fR
+Include additional information if available (e.g. wikipedia link, opening hours).
+
+.TP
+\fB\-\-namedetails\fR
+Include a list of alternative names.
+
+.TP
+\fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
+Preferred language order for presenting search results
+
+.TP
+\fB\-\-polygon\-output\fR {geojson,kml,svg,text}
+Output geometry of results as a GeoJSON, KML, SVG or WKT.
+
+.TP
+\fB\-\-polygon\-threshold\fR TOLERANCE
+Simplify output geometry.Parameter is difference tolerance in degrees.
+
+.SH OPTIONS 'nominatim lookup'
+usage: nominatim lookup [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --id OSMID
+                        [--format {xml,json,jsonv2,geojson,geocodejson}]
+                        [--addressdetails] [--extratags] [--namedetails]
+                        [--lang LANGS]
+                        [--polygon-output {geojson,kml,svg,text}]
+                        [--polygon-threshold TOLERANCE]
+
+    Execute API lookup query.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-id\fR OSMID
+OSM id to lookup in format <NRW><id> (may be repeated)
+
+.TP
+\fB\-\-format\fR {xml,json,jsonv2,geojson,geocodejson}
+Format of result
+
+.TP
+\fB\-\-addressdetails\fR
+Include a breakdown of the address into elements.
+
+.TP
+\fB\-\-extratags\fR
+Include additional information if available (e.g. wikipedia link, opening hours).
+
+.TP
+\fB\-\-namedetails\fR
+Include a list of alternative names.
+
+.TP
+\fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
+Preferred language order for presenting search results
+
+.TP
+\fB\-\-polygon\-output\fR {geojson,kml,svg,text}
+Output geometry of results as a GeoJSON, KML, SVG or WKT.
+
+.TP
+\fB\-\-polygon\-threshold\fR TOLERANCE
+Simplify output geometry.Parameter is difference tolerance in degrees.
+
+.SH OPTIONS 'nominatim details'
+usage: nominatim details [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                         (--node NODE | --way WAY | --relation RELATION | --place_id PLACE_ID)
+                         [--class OBJECT_CLASS] [--addressdetails]
+                         [--keywords] [--linkedplaces] [--hierarchy]
+                         [--group_hierarchy] [--polygon_geojson]
+                         [--lang LANGS]
+
+    Execute API details query.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-node\fR \fI\,NODE\/\fR, \fB\-n\fR \fI\,NODE\/\fR
+Look up the OSM node with the given ID.
+
+.TP
+\fB\-\-way\fR \fI\,WAY\/\fR, \fB\-w\fR \fI\,WAY\/\fR
+Look up the OSM way with the given ID.
+
+.TP
+\fB\-\-relation\fR \fI\,RELATION\/\fR, \fB\-r\fR \fI\,RELATION\/\fR
+Look up the OSM relation with the given ID.
+
+.TP
+\fB\-\-place_id\fR \fI\,PLACE_ID\/\fR, \fB\-p\fR \fI\,PLACE_ID\/\fR
+Database internal identifier of the OSM object to look up.
+
+.TP
+\fB\-\-class\fR \fI\,OBJECT_CLASS\/\fR
+Class type to disambiguated multiple entries of the same object.
+
+.TP
+\fB\-\-addressdetails\fR
+Include a breakdown of the address into elements.
+
+.TP
+\fB\-\-keywords\fR
+Include a list of name keywords and address keywords.
+
+.TP
+\fB\-\-linkedplaces\fR
+Include a details of places that are linked with this one.
+
+.TP
+\fB\-\-hierarchy\fR
+Include details of places lower in the address hierarchy.
+
+.TP
+\fB\-\-group_hierarchy\fR
+Group the places by type.
+
+.TP
+\fB\-\-polygon_geojson\fR
+Include geometry of result.
+
+.TP
+\fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
+Preferred language order for presenting search results
+
+.SH OPTIONS 'nominatim status'
+usage: nominatim status [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                        [--format {text,json}]
+
+    Execute API status query.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-format\fR {text,json}
+Format of result
+
+.SH OPTIONS 'nominatim transition'
+usage: nominatim transition [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
+                            [--create-db] [--setup-db] [--import-data]
+                            [--load-data] [--create-tables]
+                            [--create-partition-tables] [--index]
+                            [--create-search-indices] [--create-country-names]
+                            [--no-partitions] [--osm-file FILE] [--drop]
+                            [--osm2pgsql-cache SIZE] [--no-analyse]
+                            [--ignore-errors] [--reverse-only]
+                            [--tiger-data FILE]
+
+    Internal functions for code transition. Do not use.
+    
+
+
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Print only error messages
+
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Increase verboseness of output
+
+.TP
+\fB\-\-project\-dir\fR DIR
+Base directory of the Nominatim installation (default:.)
+
+.TP
+\fB\-j\fR NUM, \fB\-\-threads\fR NUM
+Number of parallel threads to use
+
+.TP
+\fB\-\-create\-db\fR
+Create nominatim db
+
+.TP
+\fB\-\-setup\-db\fR
+Build a blank nominatim db
+
+.TP
+\fB\-\-import\-data\fR
+Import a osm file
+
+.TP
+\fB\-\-load\-data\fR
+Copy data to live tables from import table
+
+.TP
+\fB\-\-create\-tables\fR
+Create main tables
+
+.TP
+\fB\-\-create\-partition\-tables\fR
+Create required partition tables
+
+.TP
+\fB\-\-index\fR
+Index the data
+
+.TP
+\fB\-\-create\-search\-indices\fR
+Create additional indices required for search and update
+
+.TP
+\fB\-\-create\-country\-names\fR
+Create search index for default country names.
+
+.TP
+\fB\-\-no\-partitions\fR
+Do not partition search indices
+
+.TP
+\fB\-\-osm\-file\fR FILE
+File to import
+
+.TP
+\fB\-\-drop\fR
+Drop tables needed for updates, making the database readonly
+
+.TP
+\fB\-\-osm2pgsql\-cache\fR SIZE
+Size of cache to be used by osm2pgsql (in MB)
+
+.TP
+\fB\-\-no\-analyse\fR
+Do not perform analyse operations during index
+
+.TP
+\fB\-\-ignore\-errors\fR
+Ignore certain erros on import.
+
+.TP
+\fB\-\-reverse\-only\fR
+Do not create search tables and indexes
+
+.TP
+\fB\-\-tiger\-data\fR FILE
+File to import
+
+.SH DISTRIBUTION
+The latest version of Nominatim may be downloaded from
+.UR https://nominatim.org
+.UE

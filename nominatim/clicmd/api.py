@@ -21,8 +21,8 @@ STRUCTURED_QUERY = (
 
 EXTRADATA_PARAMS = (
     ('addressdetails', 'Include a breakdown of the address into elements.'),
-    ('extratags', """Include additional information if available
-                     (e.g. wikipedia link, opening hours)."""),
+    ('extratags', ("Include additional information if available "
+                   "(e.g. wikipedia link, opening hours).")),
     ('namedetails', 'Include a list of alternative names.')
 )
 
@@ -49,8 +49,8 @@ def _add_api_output_arguments(parser):
                        choices=['geojson', 'kml', 'svg', 'text'],
                        help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
     group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
-                       help="""Simplify output geometry.
-                               Parameter is difference tolerance in degrees.""")
+                       help=("Simplify output geometry."
+                             "Parameter is difference tolerance in degrees."))
 
 
 class APISearch:
@@ -205,8 +205,8 @@ class APIDetails:
         objs.add_argument('--place_id', '-p', type=int,
                           help='Database internal identifier of the OSM object to look up.')
         group.add_argument('--class', dest='object_class',
-                           help="""Class type to disambiguated multiple entries
-                                   of the same object.""")
+                           help=("Class type to disambiguated multiple entries "
+                                 "of the same object."))
 
         group = parser.add_argument_group('Output arguments')
         for name, desc in DETAILS_SWITCHES:

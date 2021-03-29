@@ -614,7 +614,7 @@ class SearchDescription
         // too many results are expected for the street, i.e. if the result
         // will be narrowed down by an address. Remeber that with ordering
         // every single result has to be checked.
-        if ($this->sHouseNumber && (!empty($this->aAddress) || $this->sPostcode)) {
+        if ($this->sHouseNumber && ($this->bRareName || !empty($this->aAddress) || $this->sPostcode)) {
             $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
             $aOrder[] = ' (';
             $aOrder[0] .= 'EXISTS(';

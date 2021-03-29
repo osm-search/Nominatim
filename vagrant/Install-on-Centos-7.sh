@@ -40,9 +40,9 @@
                         php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel boost-devel \
                         python3-pip python3-setuptools python3-devel \
-                        expat-devel zlib-devel
+                        expat-devel zlib-devel libicu-dev
 
-    pip3 install --user psycopg2 python-dotenv psutil Jinja2
+    pip3 install --user psycopg2 python-dotenv psutil Jinja2 PyICU
 
 
 #

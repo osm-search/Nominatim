@@ -5,6 +5,7 @@ from pathlib import Path
 import psycopg2
 import psycopg2.extras
 import pytest
+import tempfile
 
 SRC_DIR = Path(__file__) / '..' / '..' / '..'
 
@@ -132,6 +133,13 @@ def def_config():
 @pytest.fixture
 def src_dir():
     return SRC_DIR.resolve()
+
+@pytest.fixture
+def tmp_phplib_dir():
+    with tempfile.TemporaryDirectory() as phpdir:
+        (Path(phpdir) / 'admin').mkdir()
+
+        yield Path(phpdir)
 
 @pytest.fixture
 def status_table(temp_db_conn):

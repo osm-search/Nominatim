@@ -10,3 +10,4 @@ from .refresh import UpdateRefresh
 from .admin import AdminFuncs
 from .freeze import SetupFreeze
 from .transition import AdminTransition
+from .special_phrases import ImportSpecialPhrases

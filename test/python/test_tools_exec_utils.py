@@ -10,13 +10,6 @@ import pytest
 import nominatim.tools.exec_utils as exec_utils
 
 @pytest.fixture
-def tmp_phplib_dir():
-    with tempfile.TemporaryDirectory() as phpdir:
-        (Path(phpdir) / 'admin').mkdir()
-
-        yield Path(phpdir)
-
-@pytest.fixture
 def nominatim_env(tmp_phplib_dir, def_config):
     class _NominatimEnv:
         config = def_config

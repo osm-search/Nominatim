@@ -64,7 +64,6 @@ def test_cli_help(capsys):
 
 
 @pytest.mark.parametrize("command,script", [
-                         (('special-phrases',), 'specialphrases'),
                          (('add-data', '--file', 'foo.osm'), 'update'),
                          (('export',), 'export')
                          ])
@@ -172,6 +171,12 @@ def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ra
     assert bnd_mock.called == do_bnds
     assert rank_mock.called == do_ranks
 
+def test_special_phrases_command(temp_db, mock_func_factory):
+    func = mock_func_factory(nominatim.clicmd.special_phrases.SpecialPhrasesImporter, 'import_from_wiki')
+
+    call_nominatim('special-phrases', '--import-from-wiki')
+
+    assert func.called == 1
 
 @pytest.mark.parametrize("command,func", [
                          ('postcodes', 'update_postcodes'),

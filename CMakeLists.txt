@@ -114,7 +114,6 @@ if (BUILD_IMPORTER)
        export.php
        query.php
        setup.php
-       specialphrases.php
        update.php
        warm.php
       )
@@ -259,7 +258,7 @@ endif()
 
 install(FILES settings/env.defaults
               settings/address-levels.json
-              settings/phrase_settings.php
+              settings/phrase-settings.json
               settings/import-admin.style
               settings/import-street.style
               settings/import-address.style

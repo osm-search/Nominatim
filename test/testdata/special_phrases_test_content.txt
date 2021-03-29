@@ -1,0 +1,78 @@
+<mediawiki xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.11/ http://www.mediawiki.org/xml/export-0.11.xsd" version="0.11" xml:lang="en">
+<siteinfo>
+<sitename>OpenStreetMap Wiki</sitename>
+<dbname>wiki</dbname>
+<base>https://wiki.openstreetmap.org/wiki/Main_Page</base>
+<generator>MediaWiki 1.35.1</generator>
+<case>first-letter</case>
+<namespaces>
+<namespace key="-2" case="first-letter">Media</namespace>
+<namespace key="-1" case="first-letter">Special</namespace>
+<namespace key="0" case="first-letter"/>
+<namespace key="1" case="first-letter">Talk</namespace>
+<namespace key="2" case="first-letter">User</namespace>
+<namespace key="3" case="first-letter">User talk</namespace>
+<namespace key="4" case="first-letter">Wiki</namespace>
+<namespace key="5" case="first-letter">Wiki talk</namespace>
+<namespace key="6" case="first-letter">File</namespace>
+<namespace key="7" case="first-letter">File talk</namespace>
+<namespace key="8" case="first-letter">MediaWiki</namespace>
+<namespace key="9" case="first-letter">MediaWiki talk</namespace>
+<namespace key="10" case="first-letter">Template</namespace>
+<namespace key="11" case="first-letter">Template talk</namespace>
+<namespace key="12" case="first-letter">Help</namespace>
+<namespace key="13" case="first-letter">Help talk</namespace>
+<namespace key="14" case="first-letter">Category</namespace>
+<namespace key="15" case="first-letter">Category talk</namespace>
+<namespace key="120" case="first-letter">Item</namespace>
+<namespace key="121" case="first-letter">Item talk</namespace>
+<namespace key="122" case="first-letter">Property</namespace>
+<namespace key="123" case="first-letter">Property talk</namespace>
+<namespace key="200" case="first-letter">DE</namespace>
+<namespace key="201" case="first-letter">DE talk</namespace>
+<namespace key="202" case="first-letter">FR</namespace>
+<namespace key="203" case="first-letter">FR talk</namespace>
+<namespace key="204" case="first-letter">ES</namespace>
+<namespace key="205" case="first-letter">ES talk</namespace>
+<namespace key="206" case="first-letter">IT</namespace>
+<namespace key="207" case="first-letter">IT talk</namespace>
+<namespace key="208" case="first-letter">NL</namespace>
+<namespace key="209" case="first-letter">NL talk</namespace>
+<namespace key="210" case="first-letter">RU</namespace>
+<namespace key="211" case="first-letter">RU talk</namespace>
+<namespace key="212" case="first-letter">JA</namespace>
+<namespace key="213" case="first-letter">JA talk</namespace>
+<namespace key="710" case="first-letter">TimedText</namespace>
+<namespace key="711" case="first-letter">TimedText talk</namespace>
+<namespace key="828" case="first-letter">Module</namespace>
+<namespace key="829" case="first-letter">Module talk</namespace>
+<namespace key="2300" case="first-letter">Gadget</namespace>
+<namespace key="2301" case="first-letter">Gadget talk</namespace>
+<namespace key="2302" case="case-sensitive">Gadget definition</namespace>
+<namespace key="2303" case="case-sensitive">Gadget definition talk</namespace>
+</namespaces>
+</siteinfo>
+<page>
+<title>Nominatim/Special Phrases/EN</title>
+<ns>0</ns>
+<id>67365</id>
+<revision>
+<id>2100424</id>
+<parentid>2100422</parentid>
+<timestamp>2021-01-27T20:29:53Z</timestamp>
+<contributor>
+<username>Violaine Do</username>
+<id>88152</id>
+</contributor>
+<minor/>
+<comment>/* en */ add coworking amenity</comment>
+<origin>2100424</origin>
+<model>wikitext</model>
+<format>text/x-wiki</format>
+<text bytes="158218" sha1="cst5x7tt58izti1pxzgljf27tx8qjcj" xml:space="preserve">
+== en == {| class="wikitable sortable" |- ! Word / Phrase !! Key !! Value !! Operator !! Plural |- | Zip Line || aerialway || zip_line || - || N |- | Zip Lines || aerialway || zip_line || - || Y |- | Zip Line in || aerialway || zip_line || in || N |- | Zip Lines in || aerialway || zip_line || in || Y |- | Zip Line near || aerialway || zip_line || near || N |- | Zip Lines near || aerialway || zip_line || near || Y |- | Zip Wire || aerialway || zip_line || - || N |- | Zip Wires || aerialway || zip_line || - || Y |- | Zip Wire in || aerialway || zip_line || in || N |- | Zip Wires in || aerialway || zip_line || in || Y |- | Zip Wire near || aerialway || zip_line || near || N |} [[Category:Word list]]
+</text>
+<sha1>cst5x7tt58izti1pxzgljf27tx8qjcj</sha1>
+</revision>
+</page>
+</mediawiki>

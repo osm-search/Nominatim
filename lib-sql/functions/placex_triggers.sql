@@ -680,6 +680,7 @@ BEGIN
         NEW.housenumber := NEW.address->'housenumber';
         i := getorcreate_housenumber_id(make_standard_name(NEW.housenumber));
       END IF;
+      NEW.housenumber := transliteration(NEW.housenumber);
 
       addr_street := NEW.address->'street';
       addr_place := NEW.address->'place';

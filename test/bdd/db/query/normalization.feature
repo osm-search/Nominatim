@@ -164,12 +164,42 @@ Feature: Import and search of names
          | N        | 1      | <nr>, Main St |
 
     Examples:
-      | nr |
-      | 1  |
-      | 3456 |
-      | 1 a |
-      | 56b |
-      | 1 A |
-      | 2號 |
-      | 1Б  |
-      | 1 к1 |
+        | nr |
+        | 1  |
+        | 3456 |
+        | 1 a |
+        | 56b |
+        | 1 A |
+        | 2號 |
+        | 1Б  |
+        | 1 к1 |
+        | 23-123 |
+
+    Scenario Outline: Housenumbers in lists are found
+        Given the grid
+            | 1 |  |   |  | 2 |
+            |   |  | 9 |  |   |
+        And the places
+            | osm | class   | type    | name    | geometry |
+            | W1  | highway | primary | Main St | 1,2      |
+        And the places
+            | osm | class    | type | housenr   | geometry |
+            | N1  | building | yes  | <nr-list> | 9        |
+        When importing
+        And searching for "Main St <nr>"
+        Then results contain
+         | osm_type | osm_id | name |
+         | N        | 1      | <nr-list>, Main St |
+
+    Examples:
+        | nr-list    | nr |
+        | 1,2,3      | 1  |
+        | 1,2,3      | 2  |
+        | 1, 2, 3    | 3  |
+        | 45 ;67;3   | 45 |
+        | 45 ;67;3   | 67 |
+        | 1a;1k      | 1a |
+        | 1a;1k      | 1k |
+        | 34/678     | 34 |
+        | 34/678     | 678 |
+        | 34/678     | 34/678 |

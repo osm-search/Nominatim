@@ -666,21 +666,17 @@ BEGIN
   NEW.housenumber := NULL;
   IF NEW.address is not NULL THEN
       IF NEW.address ? 'conscriptionnumber' THEN
-        i := getorcreate_housenumber_id(make_standard_name(NEW.address->'conscriptionnumber'));
         IF NEW.address ? 'streetnumber' THEN
-            i := getorcreate_housenumber_id(make_standard_name(NEW.address->'streetnumber'));
-            NEW.housenumber := (NEW.address->'conscriptionnumber') || '/' || (NEW.address->'streetnumber');
+            NEW.housenumber := (NEW.address->'conscriptionnumber') || ';' || (NEW.address->'streetnumber');
         ELSE
             NEW.housenumber := NEW.address->'conscriptionnumber';
         END IF;
       ELSEIF NEW.address ? 'streetnumber' THEN
         NEW.housenumber := NEW.address->'streetnumber';
-        i := getorcreate_housenumber_id(make_standard_name(NEW.address->'streetnumber'));
       ELSEIF NEW.address ? 'housenumber' THEN
         NEW.housenumber := NEW.address->'housenumber';
-        i := getorcreate_housenumber_id(make_standard_name(NEW.housenumber));
       END IF;
-      NEW.housenumber := transliteration(NEW.housenumber);
+      NEW.housenumber := create_housenumber_id(NEW.housenumber);
 
       addr_street := NEW.address->'street';
       addr_place := NEW.address->'place';

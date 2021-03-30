@@ -67,11 +67,11 @@ if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
 }
 
 if (isset($_SERVER['REQUEST_SCHEME'])
-    && isset($_SERVER['SERVER_NAME'])
+    && isset($_SERVER['HTTP_HOST'])
     && isset($_SERVER['DOCUMENT_URI'])
 ) {
     $sMoreURL = $_SERVER['REQUEST_SCHEME'].'://'
-                .$_SERVER['SERVER_NAME'].$_SERVER['DOCUMENT_URI'].'/?'
+                .$_SERVER['HTTP_HOST'].$_SERVER['DOCUMENT_URI'].'/?'
                 .http_build_query($aMoreParams);
 } else {
     $sMoreURL = '/search.php'.http_build_query($aMoreParams);

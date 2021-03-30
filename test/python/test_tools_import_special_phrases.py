@@ -17,15 +17,13 @@ def test_check_sanity_class(special_phrases_importer):
         If a wrong class or type is given, an UsageError should raise.
         If a good class and type are given, nothing special happens.
     """
-    with pytest.raises(UsageError) as wrong_class:
+    with pytest.raises(UsageError):
         special_phrases_importer._check_sanity('en', '', 'type')
     
-    with pytest.raises(UsageError) as wrong_type:
+    with pytest.raises(UsageError):
         special_phrases_importer._check_sanity('en', 'class', '')
 
     special_phrases_importer._check_sanity('en', 'class', 'type')
-
-    assert wrong_class and wrong_type
 
 def test_load_white_and_black_lists(special_phrases_importer):
     """
@@ -55,11 +53,8 @@ def test_convert_settings_wrong_file(special_phrases_importer):
         Test that _convert_php_settings_if_needed() raise an exception
         if the given file is not a valid file.
     """
-
-    with pytest.raises(UsageError) as exceptioninfos:
+    with pytest.raises(UsageError, match='random_file is not a valid file.'):
         special_phrases_importer._convert_php_settings_if_needed('random_file')
-
-    assert str(exceptioninfos.value) == 'random_file is not a valid file.'
 
 def test_convert_settings_json_already_exist(special_phrases_importer):
     """
@@ -78,7 +73,7 @@ def test_convert_settings_giving_json(special_phrases_importer):
         Test that if we give to '_convert_php_settings_if_needed' a json file path
         the same path is directly returned
     """
-    json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase-settings.json').resolve()
+    json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
     
     returned = special_phrases_importer._convert_php_settings_if_needed(json_file)
 

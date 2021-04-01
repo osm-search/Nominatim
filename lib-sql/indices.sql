@@ -61,4 +61,11 @@ CREATE INDEX {{sql.if_index_not_exists}} idx_postcode_postcode
     ON search_name USING GIN (name_vector) WITH (fastupdate = off) {{db.tablespace.search_index}};
   CREATE INDEX {{sql.if_index_not_exists}} idx_search_name_centroid
     ON search_name USING GIST (centroid) {{db.tablespace.search_index}};
+
+  {% if postgres.has_index_non_key_column %}
+    CREATE INDEX {{sql.if_index_not_exists}} idx_placex_housenumber
+      ON placex USING btree (parent_place_id) INCLUDE (housenumber) WHERE housenumber is not null;
+    CREATE INDEX {{sql.if_index_not_exists}} idx_osmline_parent_osm_id_with_hnr
+      ON location_property_osmline USING btree(parent_place_id) INCLUDE (startnumber, endnumber);
+  {% endif %}
 {% endif %}

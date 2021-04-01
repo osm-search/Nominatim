@@ -37,7 +37,7 @@ For compiling:
 
 For running Nominatim:
 
-  * [PostgreSQL](https://www.postgresql.org) (9.3+)
+  * [PostgreSQL](https://www.postgresql.org) (9.3+ will work, 11+ strongly recommended)
   * [PostGIS](https://postgis.net) (2.2+)
   * [Python 3](https://www.python.org/) (3.5+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)

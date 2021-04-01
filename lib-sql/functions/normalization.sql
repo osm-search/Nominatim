@@ -47,7 +47,10 @@ END;
 $$
 LANGUAGE plpgsql;
 
-
+-- Create housenumber tokens from an OSM addr:housenumber.
+-- The housnumber is split at comma and semicolon as necessary.
+-- The function returns the normalized form of the housenumber suitable
+-- for comparison.
 CREATE OR REPLACE FUNCTION create_housenumber_id(housenumber TEXT)
   RETURNS TEXT
   AS $$
@@ -56,7 +59,7 @@ DECLARE
 BEGIN
   SELECT array_to_string(array_agg(trans), ';')
     INTO normtext
-    FROM (SELECT transliteration(lookup_word) as trans, getorcreate_housenumber_id(lookup_word)
+    FROM (SELECT lookup_word as trans, getorcreate_housenumber_id(lookup_word)
           FROM (SELECT make_standard_name(h) as lookup_word
                 FROM regexp_split_to_table(housenumber, '[,;]') h) x) y;
 

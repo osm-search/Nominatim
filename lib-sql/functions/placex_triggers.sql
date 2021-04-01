@@ -667,7 +667,7 @@ BEGIN
   IF NEW.address is not NULL THEN
       IF NEW.address ? 'conscriptionnumber' THEN
         IF NEW.address ? 'streetnumber' THEN
-            NEW.housenumber := (NEW.address->'conscriptionnumber') || ';' || (NEW.address->'streetnumber');
+            NEW.housenumber := (NEW.address->'conscriptionnumber') || '/' || (NEW.address->'streetnumber');
         ELSE
             NEW.housenumber := NEW.address->'conscriptionnumber';
         END IF;

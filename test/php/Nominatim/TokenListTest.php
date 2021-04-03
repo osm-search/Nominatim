@@ -77,6 +77,15 @@ class TokenTest extends \PHPUnit\Framework\TestCase
                                                          'type' => 'house'
                                                         ));
                     }
+                    if (preg_match('/hauptstr/', $sql)) {
+                        $aResults[] = $this->wordResult(array(
+                                                         'word_id' => 999,
+                                                         'word_token' => 'hauptstr',
+                                                         'class' => 'place',
+                                                         'type' => 'street',
+                                                         'operator' => true
+                                                        ));
+                    }
                     if (preg_match('/64286/', $sql)) {
                         $aResults[] = $this->wordResult(array(
                                                          'word_id' => 999,
@@ -116,11 +125,12 @@ class TokenTest extends \PHPUnit\Framework\TestCase
 
         $TL = new TokenList;
         $TL->addTokensFromDB($oDbStub, $aTokens, $aCountryCodes, $sNormQuery, $this->oNormalizer);
-        $this->assertEquals(4, $TL->count());
+        $this->assertEquals(5, $TL->count());
 
         $this->assertEquals(array(new Token\HouseNumber(999, '1051')), $TL->get('1051'));
         $this->assertEquals(array(new Token\Country(999, 'de')), $TL->get('alemagne'));
         $this->assertEquals(array(new Token\Postcode(999, '64286')), $TL->get('64286'));
         $this->assertEquals(array(new Token\Word(999, true, 533, 0)), $TL->get('darmstadt'));
+        $this->assertEquals(array(new Token\SpecialTerm(999, 'place', 'street', true)), $TL->get('hauptstr'));
     }
 }

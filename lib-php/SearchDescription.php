@@ -621,7 +621,7 @@ class SearchDescription
             $aOrder[0] .= '  SELECT place_id';
             $aOrder[0] .= '  FROM placex';
             $aOrder[0] .= '  WHERE parent_place_id = search_name.place_id';
-            $aOrder[0] .= "    AND transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
+            $aOrder[0] .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
             $aOrder[0] .= '  LIMIT 1';
             $aOrder[0] .= ') ';
             // also housenumbers from interpolation lines table are needed
@@ -751,7 +751,7 @@ class SearchDescription
         $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
         $sSQL = 'SELECT place_id FROM placex ';
         $sSQL .= 'WHERE parent_place_id in ('.$sPlaceIDs.')';
-        $sSQL .= "  AND transliteration(housenumber) ~* E'".$sHouseNumberRegex."'";
+        $sSQL .= "  AND housenumber ~* E'".$sHouseNumberRegex."'";
         $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
         Debug::printSQL($sSQL);

@@ -130,3 +130,29 @@ def add_nominatim_property_table(conn, config, **_):
                                value TEXT);
                            GRANT SELECT ON TABLE nominatim_properties TO "{}";
                         """.format(config.DATABASE_WEBUSER))
+
+@_migration(3, 6, 0, 0)
+def change_housenumber_transliteration(conn, **_):
+    """ Transliterate housenumbers.
+
+        The database schema switched from saving raw housenumbers in
+        placex.housenumber to saving transliterated ones.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE OR REPLACE FUNCTION create_housenumber_id(housenumber TEXT)
+                       RETURNS TEXT AS $$
+                       DECLARE
+                         normtext TEXT;
+                       BEGIN
+                         SELECT array_to_string(array_agg(trans), ';')
+                           INTO normtext
+                           FROM (SELECT lookup_word as trans, getorcreate_housenumber_id(lookup_word)
+                                 FROM (SELECT make_standard_name(h) as lookup_word
+                                       FROM regexp_split_to_table(housenumber, '[,;]') h) x) y;
+                         return normtext;
+                       END;
+                       $$ LANGUAGE plpgsql STABLE STRICT;""")
+        cur.execute("DELETE FROM word WHERE class = 'place' and type = 'house'")
+        cur.execute("""UPDATE placex
+                       SET housenumber = create_housenumber_id(housenumber)
+                       WHERE housenumber is not null""")

@@ -130,7 +130,7 @@ fi                                 #DOCS:
 # ======================
 #
 # The webserver should serve the php scripts from the website directory of your
-# [project directory](../admin/import.md#creating-the-project-directory).
+# [project directory](../admin/Import.md#creating-the-project-directory).
 # Therefore set up a project directory and populate the website directory:
 
     mkdir $USERHOME/nominatim-project

@@ -40,9 +40,9 @@ all commands from the project directory.
 
 ### Configuration setup in `.env`
 
-The Nominatim server can be customized via a `.env` in the project directory.
-This is a file in [dotenv](https://github.com/theskumar/python-dotenv) format
-which looks the same as variable settings in a standard shell environment.
+The Nominatim server can be customized via an `.env` configuration file in the
+project directory. This is a file in [dotenv](https://github.com/theskumar/python-dotenv)
+format which looks the same as variable settings in a standard shell environment.
 You can also set the same configuration via environment variables. All
 settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
 variables.

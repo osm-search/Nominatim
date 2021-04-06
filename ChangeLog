@@ -1,3 +1,26 @@
+3.7.0
+
+ * switch to dotenv for configuration file
+ * introduce 'make install' (reorganising most of the code)
+ * introduce nominatim tool as replacement for various php scripts
+ * introduce project directories and allow multiple installations from same build
+ * clean up BDD tests: drop nose, reorganise step code
+ * simplify test database for API BDD tests and autoinstall database
+ * port most of the code for command-line tools to Python
+   (thanks to @darkshredder and @AntoJvlt)
+ * add tests for all tooling
+ * replace pyosmium-get-changes with custom internal implementation using
+   pyosmium
+ * improve search for queries with housenumber and partial terms
+ * add database versioning
+ * use jinja2 for preprocessing SQL files
+ * introduce automatic migrations
+ * reverse fix preference of interpolations over housenumbers
+ * parallelize indexing of postcodes
+ * add non-key indexes to speed up housenumber + street searches
+ * switch housenumber field in placex to save transliterated names
+
+
 3.6.0
 
  * add full support for searching by and displaying of addr:* tags

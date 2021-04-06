@@ -4,18 +4,18 @@ Since version 3.7.0 Nominatim offers automatic migrations. Please follow
 the following steps:
 
 * stop any updates that are potentially running
-* update Nominatim to the nwer version
-* goto your project directory and run `nominatim admin --migrate`
+* update Nominatim to the newer version
+* go to your project directory and run `nominatim admin --migrate`
 * (optionally) restart updates
 
 Below you find additional migrations and hints about other structural and
-breaking changes.
+breaking changes. **Please read them before running the migration.**
 
 !!! note
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
-## 3.6.0 -> master
+## 3.6.0 -> 3.7.0
 
 ### New location for data files
 
@@ -44,6 +44,12 @@ Try `nominatim <command> --help` for more information about each subcommand.
 
 `./utils/query.php` no longer exists in its old form. `nominatim search`
 provides a replacement but returns different output.
+
+### Switch to normalized house numbers
+
+The housenumber column in the placex table uses now normalized version.
+The automatic migration step will convert the column but this may take a
+very long time. It is advisable to take the machine offline while doing that.
 
 ## 3.5.0 -> 3.6.0
 

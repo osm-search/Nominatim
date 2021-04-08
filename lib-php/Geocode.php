@@ -18,7 +18,6 @@ class Geocode
     protected $aLangPrefOrder = array();
 
     protected $aExcludePlaceIDs = array();
-    protected $bReverseInPlan = true;
 
     protected $iLimit = 20;
     protected $iFinalLimit = 10;
@@ -59,11 +58,6 @@ class Geocode
         }
 
         return $this->oNormalizer->transliterate($sTerm);
-    }
-
-    public function setReverseInPlan($bReverse)
-    {
-        $this->bReverseInPlan = $bReverse;
     }
 
     public function setLanguagePreference($aLangPref)
@@ -262,7 +256,6 @@ class Geocode
                 $oParams->getString('country'),
                 $oParams->getString('postalcode')
             );
-            $this->setReverseInPlan(false);
         } else {
             $this->setQuery($sQuery);
         }
@@ -686,7 +679,7 @@ class Geocode
 
                 $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens, $bStructuredPhrases);
 
-                if ($this->bReverseInPlan) {
+                if (!$this->aStructuredQuery) {
                     // Reverse phrase array and also reverse the order of the wordsets in
                     // the first and final phrase. Don't bother about phrases in the middle
                     // because order in the address doesn't matter.
@@ -999,7 +992,6 @@ class Geocode
                 'Structured query' => $this->aStructuredQuery,
                 'Name keys' => Debug::fmtArrayVals($this->aLangPrefOrder),
                 'Excluded place IDs' => Debug::fmtArrayVals($this->aExcludePlaceIDs),
-                'Try reversed query'=> $this->bReverseInPlan,
                 'Limit (for searches)' => $this->iLimit,
                 'Limit (for results)'=> $this->iFinalLimit,
                 'Country codes' => Debug::fmtArrayVals($this->aCountryCodes),

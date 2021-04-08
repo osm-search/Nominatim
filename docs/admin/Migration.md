@@ -17,6 +17,17 @@ breaking changes. **Please read them before running the migration.**
 
 ## 3.6.0 -> 3.7.0
 
+### New format and name of configuration file
+
+The configuration for an import is now saved in a `.env` file in the project
+directory. This file follows the dotenv format. For more information, see
+the [installation chapter](Import.md#configuration-setup-in-env).
+
+To migrate to the new system, create a new project directory, add the `.env`
+file and port your custom configuration from `settings/local.php`. Most
+settings are named similar and only have received a `NOMINATIM_` prefix.
+Use the default settings in `settings/env.defaults` as a reference.
+
 ### New location for data files
 
 External data files for Wikipedia importance, postcodes etc. are no longer

@@ -18,7 +18,6 @@ class Geocode
     protected $aLangPrefOrder = array();
 
     protected $aExcludePlaceIDs = array();
-    protected $bReverseInPlan = true;
 
     protected $iLimit = 20;
     protected $iFinalLimit = 10;
@@ -59,11 +58,6 @@ class Geocode
         }
 
         return $this->oNormalizer->transliterate($sTerm);
-    }
-
-    public function setReverseInPlan($bReverse)
-    {
-        $this->bReverseInPlan = $bReverse;
     }
 
     public function setLanguagePreference($aLangPref)
@@ -262,7 +256,6 @@ class Geocode
                 $oParams->getString('country'),
                 $oParams->getString('postalcode')
             );
-            $this->setReverseInPlan(false);
         } else {
             $this->setQuery($sQuery);
         }
@@ -330,7 +323,7 @@ class Geocode
         return false;
     }
 
-    public function getGroupedSearches($aSearches, $aPhrases, $oValidTokens, $bIsStructured)
+    public function getGroupedSearches($aSearches, $aPhrases, $oValidTokens)
     {
         /*
              Calculate all searches using oValidTokens i.e.
@@ -345,7 +338,7 @@ class Geocode
          */
         foreach ($aPhrases as $iPhrase => $oPhrase) {
             $aNewPhraseSearches = array();
-            $sPhraseType = $bIsStructured ? $oPhrase->getPhraseType() : '';
+            $sPhraseType = $oPhrase->getPhraseType();
 
             foreach ($oPhrase->getWordSets() as $aWordset) {
                 $aWordsetSearches = $aSearches;
@@ -388,7 +381,7 @@ class Geocode
                                 $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
                                     $sToken,
                                     $oSearchTerm,
-                                    $bIsStructured,
+                                    (bool) $sPhraseType,
                                     $iPhrase,
                                     $oValidTokens->get(' '.$sToken)
                                 );
@@ -607,10 +600,8 @@ class Geocode
             // Commas are used to reduce the search space by indicating where phrases split
             if ($this->aStructuredQuery) {
                 $aInPhrases = $this->aStructuredQuery;
-                $bStructuredPhrases = true;
             } else {
                 $aInPhrases = explode(',', $sQuery);
-                $bStructuredPhrases = false;
             }
 
             Debug::printDebugArray('Search context', $oCtx);
@@ -684,9 +675,9 @@ class Geocode
 
                 Debug::newSection('Search candidates');
 
-                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens, $bStructuredPhrases);
+                $aGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens);
 
-                if ($this->bReverseInPlan) {
+                if (!$this->aStructuredQuery) {
                     // Reverse phrase array and also reverse the order of the wordsets in
                     // the first and final phrase. Don't bother about phrases in the middle
                     // because order in the address doesn't matter.
@@ -695,7 +686,7 @@ class Geocode
                     if (count($aPhrases) > 1) {
                         $aPhrases[count($aPhrases)-1]->invertWordSets();
                     }
-                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens, false);
+                    $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens);
 
                     foreach ($aGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
@@ -999,7 +990,6 @@ class Geocode
                 'Structured query' => $this->aStructuredQuery,
                 'Name keys' => Debug::fmtArrayVals($this->aLangPrefOrder),
                 'Excluded place IDs' => Debug::fmtArrayVals($this->aExcludePlaceIDs),
-                'Try reversed query'=> $this->bReverseInPlan,
                 'Limit (for searches)' => $this->iLimit,
                 'Limit (for results)'=> $this->iFinalLimit,
                 'Country codes' => Debug::fmtArrayVals($this->aCountryCodes),

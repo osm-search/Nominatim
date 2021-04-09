@@ -23,12 +23,6 @@ CREATE INDEX {{sql.if_index_not_exists}} idx_placex_geometry_reverse_lookupPolyg
     AND rank_address between 4 and 25 AND type != 'postcode'
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 
-CREATE INDEX {{sql.if_index_not_exists}} idx_placex_geometry_reverse_placeNode
-  ON placex USING gist (geometry) {{db.tablespace.search_index}}
-  WHERE osm_type = 'N' AND rank_search between 5 and 25
-    AND class = 'place' AND type != 'postcode'
-    AND name is not null AND indexed_status = 0 AND linked_place_id is null;
-
 CREATE INDEX {{sql.if_index_not_exists}} idx_osmline_parent_place_id
   ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}};
 

@@ -169,7 +169,7 @@ BEGIN
   END IF;
 
   IF bnd.name ? 'name' THEN
-    bnd_name := make_standard_name(bnd.name->'name');
+    bnd_name := lower(bnd.name->'name');
     IF bnd_name = '' THEN
       bnd_name := NULL;
     END IF;
@@ -180,12 +180,14 @@ BEGIN
   IF bnd.extratags ? 'place' and bnd_name is not null THEN
     FOR linked_placex IN
       SELECT * FROM placex
-      WHERE make_standard_name(name->'name') = bnd_name
+      WHERE (position(lower(name->'name') in bnd_name) > 0
+             OR position(bnd_name in lower(name->'name')) > 0)
         AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
         AND placex.osm_type = 'N'
         AND placex.linked_place_id is null
         AND placex.rank_search < 26 -- needed to select the right index
-        AND _st_covers(bnd.geometry, placex.geometry)
+        AND placex.type != 'postcode'
+        AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found type-matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
@@ -201,7 +203,7 @@ BEGIN
         AND placex.linked_place_id is null
         AND placex.rank_search < 26
         AND _st_covers(bnd.geometry, placex.geometry)
-      ORDER BY make_standard_name(name->'name') = bnd_name desc
+      ORDER BY lower(name->'name') = bnd_name desc
     LOOP
       {% if debug %}RAISE WARNING 'Found wikidata-matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;
@@ -213,7 +215,7 @@ BEGIN
     {% if debug %}RAISE WARNING 'Looking for nodes with matching names';{% endif %}
     FOR linked_placex IN
       SELECT placex.* from placex
-      WHERE make_standard_name(name->'name') = bnd_name
+      WHERE lower(name->'name') = bnd_name
         AND ((bnd.rank_address > 0
               and bnd.rank_address = (compute_place_rank(placex.country_code,
                                                          'N', placex.class,
@@ -221,9 +223,11 @@ BEGIN
                                                          false, placex.postcode)).address_rank)
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
+        AND placex.class = 'place'
         AND placex.linked_place_id is null
         AND placex.rank_search < 26 -- needed to select the right index
-        AND _st_covers(bnd.geometry, placex.geometry)
+        AND placex.type != 'postcode'
+        AND ST_Covers(bnd.geometry, placex.geometry)
     LOOP
       {% if debug %}RAISE WARNING 'Found matching place node %', linked_placex.osm_id;{% endif %}
       RETURN linked_placex;

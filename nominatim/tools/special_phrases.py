@@ -80,7 +80,7 @@ class SpecialPhrasesImporter():
             'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
             'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
             'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']
-        return self.config.LANGUAGES or default_languages
+        return self.config.LANGUAGES.split(',') or default_languages
 
     @staticmethod
     def _get_wiki_content(lang):

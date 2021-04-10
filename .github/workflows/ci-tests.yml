@@ -25,7 +25,7 @@ jobs:
               uses: shivammathur/setup-php@v2
               with:
                   php-version: '7.4'
-                  tools: phpunit, phpcs
+                  tools: phpunit, phpcs, composer
 
             - name: Get Date
               id: get-date
@@ -46,7 +46,7 @@ jobs:
             - uses: ./Nominatim/.github/actions/build-nominatim
 
             - name: Install test prerequsites
-              run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave
+              run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave python3-pytest-cov php-codecoverage php-xdebug
 
             - name: PHP linting
               run: phpcs --report-width=120 .
@@ -57,16 +57,29 @@ jobs:
               working-directory: Nominatim
 
             - name: PHP unit tests
-              run: phpunit ./
+              run: phpunit --coverage-clover ../../coverage-php.xml ./
               working-directory: Nominatim/test/php
 
             - name: Python unit tests
-              run: py.test-3 test/python
+              run: py.test-3 --cov=nominatim --cov-report=xml test/python
               working-directory: Nominatim
 
             - name: BDD tests
-              run: behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+              run: |
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3 -DPHPCOV=./cov
+                  composer require phpunit/phpcov:7.0.2
+                  vendor/bin/phpcov merge --clover ../../coverage-bdd.xml ./cov
               working-directory: Nominatim/test/bdd
+
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v1
+              with:
+                files: ./Nominatim/coverage*.xml
+                directory: ./
+                name: codecov-umbrella
+                fail_ci_if_error: true
+                path_to_write_report: ./coverage/codecov_report.txt
+                verbose: true
 
     import:
         runs-on: ubuntu-20.04

@@ -1,5 +1,14 @@
 codecov:
   require_ci_to_pass: yes
 
+coverage:
+  status:
+    project: off
+    patch: off
+
+comment:
+  require_changes: true
+  after_n_builds: 2
+
 fixes:
   - "Nominatim/::"

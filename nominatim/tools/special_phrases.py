@@ -32,6 +32,18 @@ class SpecialPhrasesImporter():
         self.sanity_check_pattern = re.compile(r'^\w+$')
         self.transliterator = Transliterator.createFromRules("special-phrases normalizer",
                                                              self.config.TERM_NORMALIZATION)
+        #This set will contain all existing phrases from the word table which
+        #no longer exist on the wiki.
+        #It contain tuples with the following format: (normalized_word, class, type, operator)
+        self.words_phrases_to_delete = set()
+        #This set will contain the phrases which still exist from the wiki.
+        #It is used to prevent duplicates on the wiki by removing them from
+        #the word_phrases_to_delete only at the end.
+        self.words_phrases_still_exist = set()
+        #This set will contain all existing place_classtype tables which doesn't match any
+        #special phrases class/type on the wiki.
+        self.table_phrases_to_delete = set()
+        self.table_phrases = set()
 
     def import_from_wiki(self, languages=None):
         """
@@ -40,6 +52,9 @@ class SpecialPhrasesImporter():
         """
         if languages is not None and not isinstance(languages, list):
             raise TypeError('The \'languages\' argument should be of type list.')
+
+        self.fetch_existing_words_phrases()
+        self.fetch_existing_place_classtype_tables()
 
         #Get all languages to process.
         languages = self._load_languages() if not languages else languages
@@ -53,8 +68,45 @@ class SpecialPhrasesImporter():
             class_type_pairs.update(self._process_xml_content(wiki_page_xml_content, lang))
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
+        self.remove_non_existent_phrases_from_db()
         self.db_connection.commit()
         LOG.warning('Import done.')
+
+    def fetch_existing_words_phrases(self):
+        """
+            Fetch existing special phrases from the word table.
+            Fill the word_phrases_to_delete set of the class.
+        """
+        #Only extract special phrases terms:
+        #If class=place and type=house then it is a housenumber term.
+        #If class=place and type=postcode then it is a postcode term.
+        word_query = """
+            SELECT word, class, type, operator FROM word
+            WHERE class != 'place' OR (type != 'house' AND type != 'postcode')
+        """
+        with self.db_connection.cursor() as db_cursor:
+            db_cursor.execute(SQL(word_query))
+            for row in db_cursor:
+                row[3] = '-' if row[3] is None else row[3]
+                self.words_phrases_to_delete.add(
+                    (row[0], row[1], row[2], row[3])
+                )
+
+    def fetch_existing_place_classtype_tables(self):
+        """
+            Fetch existing place_classtype tables.
+            Fill the table_phrases_to_delete set of the class.
+        """
+        query = """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema='public'
+            AND table_name like 'place_classtype_%';
+        """
+        with self.db_connection.cursor() as db_cursor:
+            db_cursor.execute(SQL(query))
+            for row in db_cursor:
+                self.table_phrases_to_delete.add(row[0])
 
     def _load_white_and_black_lists(self):
         """
@@ -122,11 +174,10 @@ class SpecialPhrasesImporter():
             phrase_class = match[1].strip()
             phrase_type = match[2].strip()
             phrase_operator = match[3].strip()
+            #Needed if some operator in the wiki are not written in english
+            phrase_operator = '-' if phrase_operator not in ('near', 'in') else phrase_operator
             #hack around a bug where building=yes was imported with quotes into the wiki
             phrase_type = re.sub(r'\"|&quot;', '', phrase_type)
-
-            #sanity check, in case somebody added garbage in the wiki
-            self._check_sanity(lang, phrase_class, phrase_type)
 
             #blacklisting: disallow certain class/type combinations
             if (
@@ -141,7 +192,22 @@ class SpecialPhrasesImporter():
             ):
                 continue
 
-            #add class/type to the pairs dict
+            #Check if the phrase already exists in the database.
+            if (
+                    (normalized_label, phrase_class, phrase_type, phrase_operator)
+                    in self.words_phrases_to_delete
+            ):
+                #Remove this phrase from the ones to delete as it still exist on the wiki.
+                self.words_phrases_still_exist.add(
+                    (normalized_label, phrase_class, phrase_type, phrase_operator)
+                )
+                class_type_pairs.add((phrase_class, phrase_type))
+                #Dont need to add this phrase as it already exists in the word table.
+                continue
+
+            #sanity check, in case somebody added garbage in the wiki
+            self._check_sanity(lang, phrase_class, phrase_type)
+
             class_type_pairs.add((phrase_class, phrase_type))
 
             self._process_amenity(
@@ -191,6 +257,15 @@ class SpecialPhrasesImporter():
             phrase_class = pair[0]
             phrase_type = pair[1]
 
+            table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
+
+            if table_name in self.table_phrases_to_delete:
+                #Remove this table from the ones to delete as it match a class/type
+                #still existing on the special phrases of the wiki.
+                self.table_phrases_to_delete.remove(table_name)
+                #So dont need to create the table and indexes.
+                continue
+
             #Table creation
             self._create_place_classtype_table(sql_tablespace, phrase_class, phrase_type)
 
@@ -224,7 +299,7 @@ class SpecialPhrasesImporter():
         """
         index_prefix = 'idx_place_classtype_{}_{}_'.format(phrase_class, phrase_type)
         base_table = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
-        #Index on centroid
+        #Index on centroidself.table_phrases_to_delete.add(row)
         if not self.db_connection.index_exists(index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL("""
@@ -250,6 +325,41 @@ class SpecialPhrasesImporter():
             db_cursor.execute(SQL("""GRANT SELECT ON {} TO {}""")
                               .format(Identifier(table_name),
                                       Identifier(self.config.DATABASE_WEBUSER)))
+
+    def remove_non_existent_phrases_from_db(self):
+        """
+            Remove special phrases which doesn't exist on the wiki anymore.
+            Delete from the word table and delete the place_classtype tables.
+        """
+        LOG.warning('Cleaning database...')
+        self.words_phrases_to_delete = self.words_phrases_to_delete - self.words_phrases_still_exist
+        #Array containing all queries to execute. Contain tuples of format (query, parameters)
+        queries_parameters = []
+
+        #Delete phrases from the word table which are not on the wiki anymore.
+        for phrase_to_delete in self.words_phrases_to_delete:
+            if phrase_to_delete[3] == '-':
+                query = """
+                    DELETE FROM word WHERE word = %s AND class = %s AND type = %s AND operator IS null
+                """
+                parameters = (phrase_to_delete[0], phrase_to_delete[1], phrase_to_delete[2], )
+                queries_parameters.append((query, parameters))
+            else:
+                query = """
+                    DELETE FROM word WHERE word = %s AND class = %s AND type = %s AND operator = %s
+                """
+                parameters = (phrase_to_delete[0], phrase_to_delete[1],
+                              phrase_to_delete[2], phrase_to_delete[3], )
+                queries_parameters.append((query, parameters))
+
+        #Delete place_classtype tables corresponding to class/type which are not on the wiki anymore
+        for table in self.table_phrases_to_delete:
+            query = SQL('DROP TABLE IF EXISTS {}').format(Identifier(table))
+            queries_parameters.append((query, ()))
+
+        with self.db_connection.cursor() as db_cursor:
+            for query, parameters in queries_parameters:
+                db_cursor.execute(query, parameters)
 
     def _convert_php_settings_if_needed(self, file_path):
         """

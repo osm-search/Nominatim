@@ -61,6 +61,20 @@ def handle_threaded_sql_statements(sel, file):
             except Exception as exc: # pylint: disable=broad-except
                 LOG.info('Wrong SQL statement: %s', exc)
 
+def handle_unregister_connection_pool(sel, place_threads):
+    """ Handles unregistering pool of connections
+    """
+
+    while place_threads > 0:
+        for key, _ in sel.select(1):
+            conn = key.data
+            sel.unregister(conn)
+            try:
+                conn.wait()
+            except Exception as exc: # pylint: disable=broad-except
+                LOG.info('Wrong SQL statement: %s', exc)
+            conn.close()
+            place_threads -= 1
 
 def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):
     """ Import tiger data from directory or tar file
@@ -95,13 +109,7 @@ def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):
         handle_threaded_sql_statements(sel, file)
 
     # Unregistering pool of database connections
-    while place_threads > 0:
-        for key, _ in sel.select(1):
-            conn = key.data
-            sel.unregister(conn)
-            conn.wait()
-            conn.close()
-            place_threads -= 1
+    handle_unregister_connection_pool(sel, place_threads)
 
     if tar:
         tar.close()

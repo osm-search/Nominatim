@@ -156,3 +156,20 @@ def change_housenumber_transliteration(conn, **_):
         cur.execute("""UPDATE placex
                        SET housenumber = create_housenumber_id(housenumber)
                        WHERE housenumber is not null""")
+
+
+@_migration(3, 7, 0, 0)
+def switch_placenode_geometry_index(conn, **_):
+    """ Replace idx_placex_geometry_reverse_placeNode index.
+
+        Make the index slightly more permissive, so that it can also be used
+        when matching up boundaries and place nodes. It makes the index
+        idx_placex_adminname index unnecessary.
+    """
+    with conn.cursor() as cur:
+        cur.execute(""" CREATE INDEX IF NOT EXISTS idx_placex_geometry_placenode ON placex
+                        USING GIST (geometry)
+                        WHERE osm_type = 'N' and rank_search < 26
+                              and class = 'place' and type != 'postcode'
+                              and linked_place_id is null""")
+        cur.execute(""" DROP INDEX IF EXISTS idx_placex_adminname """)

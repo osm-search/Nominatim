@@ -184,7 +184,10 @@ CREATE INDEX idx_placex_osmid ON placex USING BTREE (osm_type, osm_id) {{db.tabl
 CREATE INDEX idx_placex_linked_place_id ON placex USING BTREE (linked_place_id) {{db.tablespace.address_index}} WHERE linked_place_id IS NOT NULL;
 CREATE INDEX idx_placex_rank_search ON placex USING BTREE (rank_search, geometry_sector) {{db.tablespace.address_index}};
 CREATE INDEX idx_placex_geometry ON placex USING GIST (geometry) {{db.tablespace.search_index}};
-CREATE INDEX idx_placex_adminname on placex USING BTREE (make_standard_name(name->'name')) {{db.tablespace.address_index}} WHERE osm_type='N' and rank_search < 26;
+CREATE INDEX idx_placex_geometry_placenode ON placex
+  USING GIST (geometry) {{db.tablespace.search_index}}
+  WHERE osm_type = 'N' and rank_search < 26
+        and class = 'place' and type != 'postcode' and linked_place_id is null;
 CREATE INDEX idx_placex_wikidata on placex USING BTREE ((extratags -> 'wikidata')) {{db.tablespace.address_index}} WHERE extratags ? 'wikidata' and class = 'place' and osm_type = 'N' and rank_search < 26;
 
 DROP SEQUENCE IF EXISTS seq_place;

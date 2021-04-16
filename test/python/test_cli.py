@@ -21,6 +21,7 @@ import nominatim.tools.check_database
 import nominatim.tools.database_import
 import nominatim.tools.freeze
 import nominatim.tools.refresh
+import nominatim.tools.postcodes
 
 from mocks import MockParamCapture
 
@@ -96,13 +97,13 @@ def test_import_full(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
+        mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
 
     cf_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
-    mock_func_factory(nominatim.clicmd.setup, 'run_legacy_script')
 
     assert 0 == call_nominatim('import', '--osm-file', __file__)
 

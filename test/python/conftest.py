@@ -33,8 +33,6 @@ class _TestingCursor(psycopg2.extras.DictCursor):
         """ Execute a query and return the result as a set of tuples.
         """
         self.execute(sql, params)
-        if self.rowcount == 1:
-            return set(tuple(self.fetchone()))
 
         return set((tuple(row) for row in self))
 

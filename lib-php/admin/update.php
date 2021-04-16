@@ -3,11 +3,8 @@
 
 require_once(CONST_LibDir.'/init-cmd.php');
 require_once(CONST_LibDir.'/setup_functions.php');
-require_once(CONST_LibDir.'/setup/SetupClass.php');
 
 ini_set('memory_limit', '800M');
-
-use Nominatim\Setup\SetupFunctions as SetupFunctions;
 
 // (long-opt, short-opt, min-occurs, max-occurs, num-arguments, num-arguments, type, help)
 $aCMDOptions
@@ -16,13 +13,6 @@ $aCMDOptions
    array('help', 'h', 0, 1, 0, 0, false, 'Show Help'),
    array('quiet', 'q', 0, 1, 0, 0, 'bool', 'Quiet output'),
    array('verbose', 'v', 0, 1, 0, 0, 'bool', 'Verbose output'),
-
-   array('init-updates', '', 0, 1, 0, 0, 'bool', 'Set up database for updating'),
-   array('check-for-updates', '', 0, 1, 0, 0, 'bool', 'Check if new updates are available'),
-   array('no-update-functions', '', 0, 1, 0, 0, 'bool', 'Do not update trigger functions to support differential updates (assuming the diff update logic is already present)'),
-   array('import-osmosis', '', 0, 1, 0, 0, 'bool', 'Import updates once'),
-   array('import-osmosis-all', '', 0, 1, 0, 0, 'bool', 'Import updates forever'),
-   array('no-index', '', 0, 1, 0, 0, 'bool', 'Do not index the new data'),
 
    array('calculate-postcodes', '', 0, 1, 0, 0, 'bool', 'Update postcode centroid table'),
 
@@ -35,14 +25,6 @@ $aCMDOptions
    array('import-relation', '', 0, 1, 1, 1, 'int', 'Re-import relation'),
    array('import-from-main-api', '', 0, 1, 0, 0, 'bool', 'Use OSM API instead of Overpass to download objects'),
 
-   array('index', '', 0, 1, 0, 0, 'bool', 'Index'),
-   array('index-rank', '', 0, 1, 1, 1, 'int', 'Rank to start indexing from'),
-   array('index-instances', '', 0, 1, 1, 1, 'int', 'Number of indexing instances (threads)'),
-
-   array('recompute-word-counts', '', 0, 1, 0, 0, 'bool', 'Compute frequency of full-word search terms'),
-   array('update-address-levels', '', 0, 1, 0, 0, 'bool', 'Reimport address level configuration (EXPERT)'),
-   array('recompute-importance', '', 0, 1, 0, 0, 'bool', 'Recompute place importances'),
-
    array('project-dir', '', 0, 1, 1, 1, 'realpath', 'Base directory of the Nominatim installation (default: .)'),
   );
 
@@ -50,9 +32,6 @@ getCmdOpt($_SERVER['argv'], $aCMDOptions, $aResult, true, true);
 
 loadSettings($aCMDResult['project-dir'] ?? getcwd());
 setupHTTPProxy();
-
-if (!isset($aResult['index-instances'])) $aResult['index-instances'] = 1;
-if (!isset($aResult['index-rank'])) $aResult['index-rank'] = 0;
 
 date_default_timezone_set('Etc/UTC');
 
@@ -103,35 +82,6 @@ if ($fPostgresVersion >= 11.0) {
     );
 }
 
-$oNominatimCmd = new \Nominatim\Shell(getSetting('NOMINATIM_TOOL'));
-
-function run($oCmd)
-{
-    global $aCMDResult;
-    if ($aCMDResult['quiet'] ?? false) {
-        $oCmd->addParams('--quiet');
-    }
-    if ($aCMDResult['verbose'] ?? false) {
-        $oCmd->addParams('--verbose');
-    }
-    $oCmd->run(true);
-}
-
-
-if ($aResult['init-updates']) {
-    $oCmd = (clone($oNominatimCmd))->addParams('replication', '--init');
-
-    if ($aResult['no-update-functions']) {
-        $oCmd->addParams('--no-update-functions');
-    }
-
-    run($oCmd);
-}
-
-if ($aResult['check-for-updates']) {
-    exit((clone($oNominatimCmd))->addParams('replication', '--check-for-updates')->run());
-}
-
 if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     // import diffs and files directly (e.g. from osmosis --rri)
     $sNextFile = isset($aResult['import-diff']) ? $aResult['import-diff'] : $aResult['import-file'];
@@ -150,10 +100,6 @@ if (isset($aResult['import-diff']) || isset($aResult['import-file'])) {
     }
 
     // Don't update the import status - we don't know what this file contains
-}
-
-if ($aResult['calculate-postcodes']) {
-    run((clone($oNominatimCmd))->addParams('refresh', '--postcodes'));
 }
 
 $sTemporaryFile = CONST_InstallDir.'/osmosischange.osc';
@@ -199,38 +145,4 @@ if ($bHaveDiff) {
     if ($iRet) {
         fail("osm2pgsql exited with error level $iRet\n");
     }
-}
-
-if ($aResult['recompute-word-counts']) {
-    run((clone($oNominatimCmd))->addParams('refresh', '--word-counts'));
-}
-
-if ($aResult['index']) {
-    run((clone $oNominatimCmd)
-        ->addParams('index', '--minrank', $aResult['index-rank'])
-        ->addParams('--threads', $aResult['index-instances']));
-}
-
-if ($aResult['update-address-levels']) {
-    run((clone($oNominatimCmd))->addParams('refresh', '--address-levels'));
-}
-
-if ($aResult['recompute-importance']) {
-    run((clone($oNominatimCmd))->addParams('refresh', '--importance'));
-}
-
-if ($aResult['import-osmosis'] || $aResult['import-osmosis-all']) {
-    $oCmd = (clone($oNominatimCmd))
-              ->addParams('replication')
-              ->addParams('--threads', $aResult['index-instances']);
-
-    if (!$aResult['import-osmosis-all']) {
-        $oCmd->addParams('--once');
-    }
-
-    if ($aResult['no-index']) {
-        $oCmd->addParams('--no-index');
-    }
-
-    run($oCmd);
 }

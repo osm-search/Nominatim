@@ -5,8 +5,8 @@ import subprocess
 import logging
 import gzip
 
-from .connection import get_pg_env
-from ..errors import UsageError
+from nominatim.db.connection import get_pg_env
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

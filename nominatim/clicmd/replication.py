@@ -6,9 +6,9 @@ import logging
 import socket
 import time
 
-from ..db import status
-from ..db.connection import connect
-from ..errors import UsageError
+from nominatim.db import status
+from nominatim.db.connection import connect
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

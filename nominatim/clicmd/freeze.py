@@ -2,7 +2,7 @@
 Implementation of the 'freeze' subcommand.
 """
 
-from ..db.connection import connect
+from nominatim.db.connection import connect
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

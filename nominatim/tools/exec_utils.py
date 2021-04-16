@@ -6,8 +6,8 @@ import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
-from ..version import NOMINATIM_VERSION
-from ..db.connection import get_pg_env
+from nominatim.version import NOMINATIM_VERSION
+from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
 

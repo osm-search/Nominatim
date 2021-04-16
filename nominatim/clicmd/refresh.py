@@ -4,7 +4,7 @@ Implementation of 'refresh' subcommand.
 import logging
 from pathlib import Path
 
-from ..db.connection import connect
+from nominatim.db.connection import connect
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

@@ -8,12 +8,12 @@ import sys
 import argparse
 from pathlib import Path
 
-from .config import Configuration
-from .tools.exec_utils import run_legacy_script, run_php_server
-from .errors import UsageError
-from . import clicmd
-from .clicmd.args import NominatimArgs
-from .tools import tiger_data
+from nominatim.config import Configuration
+from nominatim.tools.exec_utils import run_legacy_script, run_php_server
+from nominatim.errors import UsageError
+from nominatim import clicmd
+from nominatim.clicmd.args import NominatimArgs
+from nominatim.tools import tiger_data
 
 LOG = logging.getLogger()
 

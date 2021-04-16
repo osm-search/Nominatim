@@ -7,7 +7,7 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-from .errors import UsageError
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

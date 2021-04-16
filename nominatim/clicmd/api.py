@@ -3,7 +3,7 @@ Subcommand definitions for API calls from the command line.
 """
 import logging
 
-from ..tools.exec_utils import run_api_script
+from nominatim.tools.exec_utils import run_api_script
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

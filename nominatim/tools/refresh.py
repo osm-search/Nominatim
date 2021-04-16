@@ -7,9 +7,9 @@ from textwrap import dedent
 
 from psycopg2.extras import execute_values
 
-from ..db.utils import execute_file
-from ..db.sql_preprocessor import SQLPreprocessor
-from ..version import NOMINATIM_VERSION
+from nominatim.db.utils import execute_file
+from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 

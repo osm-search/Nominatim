@@ -9,5 +9,4 @@ from nominatim.clicmd.index import UpdateIndex
 from nominatim.clicmd.refresh import UpdateRefresh
 from nominatim.clicmd.admin import AdminFuncs
 from nominatim.clicmd.freeze import SetupFreeze
-from nominatim.clicmd.transition import AdminTransition
 from nominatim.clicmd.special_phrases import ImportSpecialPhrases

@@ -6,7 +6,6 @@ from pathlib import Path
 
 import psutil
 
-from nominatim.tools.exec_utils import run_legacy_script
 from nominatim.db.connection import connect
 from nominatim.db import status, properties
 from nominatim.version import NOMINATIM_VERSION
@@ -56,6 +55,7 @@ class SetupAll:
         from ..tools import database_import
         from ..tools import refresh
         from ..indexer.indexer import Indexer
+        from ..tools import postcodes
 
         if args.osm_file and not Path(args.osm_file).is_file():
             LOG.fatal("OSM file '%s' does not exist.", args.osm_file)
@@ -116,8 +116,7 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
             LOG.warning('Calculate postcodes')
-            run_legacy_script('setup.php', '--calculate-postcodes',
-                              nominatim_env=args, throw_on_fail=not args.ignore_errors)
+            postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             LOG.warning('Indexing places')

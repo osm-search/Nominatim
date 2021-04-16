@@ -6,11 +6,11 @@ from pathlib import Path
 
 import psutil
 
-from ..tools.exec_utils import run_legacy_script
-from ..db.connection import connect
-from ..db import status, properties
-from ..version import NOMINATIM_VERSION
-from ..errors import UsageError
+from nominatim.tools.exec_utils import run_legacy_script
+from nominatim.db.connection import connect
+from nominatim.db import status, properties
+from nominatim.version import NOMINATIM_VERSION
+from nominatim.errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

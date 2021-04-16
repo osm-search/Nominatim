@@ -2,12 +2,12 @@
 Subcommand definitions for the command-line tool.
 """
 
-from .setup import SetupAll
-from .replication import UpdateReplication
-from .api import APISearch, APIReverse, APILookup, APIDetails, APIStatus
-from .index import UpdateIndex
-from .refresh import UpdateRefresh
-from .admin import AdminFuncs
-from .freeze import SetupFreeze
-from .transition import AdminTransition
-from .special_phrases import ImportSpecialPhrases
+from nominatim.clicmd.setup import SetupAll
+from nominatim.clicmd.replication import UpdateReplication
+from nominatim.clicmd.api import APISearch, APIReverse, APILookup, APIDetails, APIStatus
+from nominatim.clicmd.index import UpdateIndex
+from nominatim.clicmd.refresh import UpdateRefresh
+from nominatim.clicmd.admin import AdminFuncs
+from nominatim.clicmd.freeze import SetupFreeze
+from nominatim.clicmd.transition import AdminTransition
+from nominatim.clicmd.special_phrases import ImportSpecialPhrases

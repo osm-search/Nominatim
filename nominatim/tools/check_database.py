@@ -6,8 +6,8 @@ from textwrap import dedent
 
 import psycopg2
 
-from ..db.connection import connect
-from ..errors import UsageError
+from nominatim.db.connection import connect
+from nominatim.errors import UsageError
 
 CHECKLIST = []
 

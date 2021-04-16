@@ -3,7 +3,7 @@ Functions for database analysis and maintenance.
 """
 import logging
 
-from ..errors import UsageError
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

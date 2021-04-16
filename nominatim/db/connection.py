@@ -9,7 +9,7 @@ import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
 
-from ..errors import UsageError
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

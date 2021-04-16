@@ -11,13 +11,13 @@ from pathlib import Path
 import psutil
 import psycopg2
 
-from ..db.connection import connect, get_pg_env
-from ..db import utils as db_utils
-from ..db.async_connection import DBConnection
-from ..db.sql_preprocessor import SQLPreprocessor
-from .exec_utils import run_osm2pgsql
-from ..errors import UsageError
-from ..version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
+from nominatim.db.connection import connect, get_pg_env
+from nominatim.db import utils as db_utils
+from nominatim.db.async_connection import DBConnection
+from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.tools.exec_utils import run_osm2pgsql
+from nominatim.errors import UsageError
+from nominatim.version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERSION
 
 LOG = logging.getLogger()
 

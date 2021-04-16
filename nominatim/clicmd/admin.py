@@ -3,8 +3,8 @@ Implementation of the 'admin' subcommand.
 """
 import logging
 
-from ..tools.exec_utils import run_legacy_script
-from ..db.connection import connect
+from nominatim.tools.exec_utils import run_legacy_script
+from nominatim.db.connection import connect
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

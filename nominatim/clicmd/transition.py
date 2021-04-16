@@ -8,9 +8,9 @@ This module will be removed as soon as the transition phase is over.
 import logging
 from pathlib import Path
 
-from ..db.connection import connect
-from ..db import status
-from ..errors import UsageError
+from nominatim.db.connection import connect
+from nominatim.db import status
+from nominatim.errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111

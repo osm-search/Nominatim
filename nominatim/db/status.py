@@ -5,8 +5,8 @@ import datetime as dt
 import logging
 import re
 
-from ..tools.exec_utils import get_url
-from ..errors import UsageError
+from nominatim.tools.exec_utils import get_url
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

@@ -7,8 +7,8 @@ import select
 
 import psycopg2
 
-from .progress import ProgressLogger
-from ..db.async_connection import DBConnection
+from nominatim.indexer.progress import ProgressLogger
+from nominatim.db.async_connection import DBConnection
 
 LOG = logging.getLogger()
 

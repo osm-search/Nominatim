@@ -3,11 +3,11 @@ Functions for database migration to newer software versions.
 """
 import logging
 
-from ..db import properties
-from ..db.connection import connect
-from ..version import NOMINATIM_VERSION
-from . import refresh, database_import
-from ..errors import UsageError
+from nominatim.db import properties
+from nominatim.db.connection import connect
+from nominatim.version import NOMINATIM_VERSION
+from nominatim.tools import refresh, database_import
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 

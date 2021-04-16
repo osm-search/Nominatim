@@ -6,9 +6,9 @@ import os
 import tarfile
 import selectors
 
-from ..db.connection import connect
-from ..db.async_connection import DBConnection
-from ..db.sql_preprocessor import SQLPreprocessor
+from nominatim.db.connection import connect
+from nominatim.db.async_connection import DBConnection
+from nominatim.db.sql_preprocessor import SQLPreprocessor
 
 
 LOG = logging.getLogger()

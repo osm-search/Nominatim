@@ -6,9 +6,9 @@ from enum import Enum
 import logging
 import time
 
-from ..db import status
-from .exec_utils import run_osm2pgsql
-from ..errors import UsageError
+from nominatim.db import status
+from nominatim.tools.exec_utils import run_osm2pgsql
+from nominatim.errors import UsageError
 
 try:
     from osmium.replication.server import ReplicationServer

@@ -17,13 +17,11 @@ def test_check_sanity_class(special_phrases_importer):
         If a wrong class or type is given, an UsageError should raise.
         If a good class and type are given, nothing special happens.
     """
-    with pytest.raises(UsageError):
-        special_phrases_importer._check_sanity('en', '', 'type')
     
-    with pytest.raises(UsageError):
-        special_phrases_importer._check_sanity('en', 'class', '')
+    assert not special_phrases_importer._check_sanity('en', '', 'type')
+    assert not special_phrases_importer._check_sanity('en', 'class', '')
 
-    special_phrases_importer._check_sanity('en', 'class', 'type')
+    assert special_phrases_importer._check_sanity('en', 'class', 'type')
 
 def test_load_white_and_black_lists(special_phrases_importer):
     """

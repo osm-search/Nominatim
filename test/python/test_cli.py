@@ -49,6 +49,7 @@ def mock_run_legacy(monkeypatch):
 def mock_func_factory(monkeypatch):
     def get_mock(module, func):
         mock = MockParamCapture()
+        mock.func_name = func
         monkeypatch.setattr(module, func, mock)
         return mock
 
@@ -110,7 +111,61 @@ def test_import_full(temp_db, mock_func_factory):
     assert cf_mock.called > 1
 
     for mock in mocks:
-        assert mock.called == 1
+        assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
+
+
+def test_import_continue_load_data(temp_db, mock_func_factory):
+    mocks = [
+        mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
+        mock_func_factory(nominatim.tools.database_import, 'load_data'),
+        mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
+        mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
+        mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
+        mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
+        mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+        mock_func_factory(nominatim.db.properties, 'set_property')
+    ]
+
+    assert 0 == call_nominatim('import', '--continue', 'load-data')
+
+    for mock in mocks:
+        assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
+
+
+def test_import_continue_indexing(temp_db, mock_func_factory, placex_table, temp_db_conn):
+    mocks = [
+        mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
+        mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
+        mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
+        mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+        mock_func_factory(nominatim.db.properties, 'set_property')
+    ]
+
+    assert 0 == call_nominatim('import', '--continue', 'indexing')
+
+    for mock in mocks:
+        assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
+
+    assert temp_db_conn.index_exists('idx_placex_pendingsector')
+
+    # Calling it again still works for the index
+    assert 0 == call_nominatim('import', '--continue', 'indexing')
+    assert temp_db_conn.index_exists('idx_placex_pendingsector')
+
+
+def test_import_continue_postprocess(temp_db, mock_func_factory):
+    mocks = [
+        mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
+        mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
+        mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+        mock_func_factory(nominatim.db.properties, 'set_property')
+    ]
+
+    assert 0 == call_nominatim('import', '--continue', 'db-postprocess')
+
+    for mock in mocks:
+        assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
+
 
 def test_freeze_command(mock_func_factory, temp_db):
     mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')

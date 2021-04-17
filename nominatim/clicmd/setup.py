@@ -105,11 +105,11 @@ class SetupAll:
                 LOG.error('Wikipedia importance dump file not found. '
                           'Will be using default importances.')
 
+        if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
                 database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
 
-        if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Load data into placex table')
             database_import.load_data(args.config.get_libpq_dsn(),
                                       args.data_dir,
@@ -119,6 +119,9 @@ class SetupAll:
             postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
+            if args.continue_at is not None and args.continue_at != 'load-data':
+                with connect(args.config.get_libpq_dsn()) as conn:
+                    SetupAll._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
             indexer = Indexer(args.config.get_libpq_dsn(),
                               args.threads or psutil.cpu_count() or 1)
@@ -148,3 +151,25 @@ class SetupAll:
                                     '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
 
         return 0
+
+
+    @staticmethod
+    def _create_pending_index(conn, tablespace):
+        """ Add a supporting index for finding places still to be indexed.
+
+            This index is normally created at the end of the import process
+            for later updates. When indexing was partially done, then this
+            index can greatly improve speed going through already indexed data.
+        """
+        if conn.index_exists('idx_placex_pendingsector'):
+            return
+
+        with conn.cursor() as cur:
+            LOG.warning('Creating support index')
+            if tablespace:
+                tablespace = 'TABLESPACE ' + tablespace
+            cur.execute("""CREATE INDEX idx_placex_pendingsector
+                           ON placex USING BTREE (rank_address,geometry_sector)
+                           {} WHERE indexed_status > 0
+                        """.format(tablespace))
+        conn.commit()

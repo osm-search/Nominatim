@@ -27,7 +27,7 @@ class SpecialPhrasesImporter():
         self.black_list, self.white_list = self._load_white_and_black_lists()
         #Compile the regex here to increase performances.
         self.occurence_pattern = re.compile(
-            r'\| ([^\|]+) \|\| ([^\|]+) \|\| ([^\|]+) \|\| ([^\|]+) \|\| ([\-YN])'
+            r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
         )
         self.sanity_check_pattern = re.compile(r'^\w+$')
         self.transliterator = Transliterator.createFromRules("special-phrases normalizer",

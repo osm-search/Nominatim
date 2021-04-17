@@ -109,21 +109,6 @@ if (BUILD_IMPORTER)
                            "    wget -O ${PROJECT_SOURCE_DIR}/data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz")
    endif()
 
-   set(CUSTOMSCRIPTS
-       check_import_finished.php
-       country_languages.php
-       export.php
-       query.php
-       setup.php
-       update.php
-       warm.php
-      )
-
-   foreach (script_source ${CUSTOMSCRIPTS})
-       configure_file(${PROJECT_SOURCE_DIR}/cmake/script.tmpl
-                      ${PROJECT_BINARY_DIR}/utils/${script_source})
-   endforeach()
-
    configure_file(${PROJECT_SOURCE_DIR}/cmake/tool.tmpl
                   ${PROJECT_BINARY_DIR}/nominatim)
 endif()

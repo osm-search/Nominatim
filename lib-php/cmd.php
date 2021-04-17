@@ -144,58 +144,6 @@ function repeatWarnings()
 }
 
 
-function runSQLScript($sScript, $bfatal = true, $bVerbose = false, $bIgnoreErrors = false)
-{
-    // Convert database DSN to psql parameters
-    $aDSNInfo = \Nominatim\DB::parseDSN(getSetting('DATABASE_DSN'));
-    if (!isset($aDSNInfo['port']) || !$aDSNInfo['port']) $aDSNInfo['port'] = 5432;
-
-    $oCmd = new \Nominatim\Shell('psql');
-    $oCmd->addParams('--port', $aDSNInfo['port']);
-    $oCmd->addParams('--dbname', $aDSNInfo['database']);
-    if (isset($aDSNInfo['hostspec']) && $aDSNInfo['hostspec']) {
-        $oCmd->addParams('--host', $aDSNInfo['hostspec']);
-    }
-    if (isset($aDSNInfo['username']) && $aDSNInfo['username']) {
-        $oCmd->addParams('--username', $aDSNInfo['username']);
-    }
-    if (isset($aDSNInfo['password'])) {
-        $oCmd->addEnvPair('PGPASSWORD', $aDSNInfo['password']);
-    }
-    if (!$bVerbose) {
-        $oCmd->addParams('--quiet');
-    }
-    if ($bfatal && !$bIgnoreErrors) {
-        $oCmd->addParams('-v', 'ON_ERROR_STOP=1');
-    }
-
-    $aDescriptors = array(
-                     0 => array('pipe', 'r'),
-                     1 => STDOUT,
-                     2 => STDERR
-                    );
-    $ahPipes = null;
-    $hProcess = @proc_open($oCmd->escapedCmd(), $aDescriptors, $ahPipes, null, $oCmd->aEnv);
-    if (!is_resource($hProcess)) {
-        fail('unable to start pgsql');
-    }
-
-    if (!$bVerbose) {
-        fwrite($ahPipes[0], 'set client_min_messages to WARNING;');
-    }
-
-    while (strlen($sScript)) {
-        $iWritten = fwrite($ahPipes[0], $sScript);
-        if ($iWritten <= 0) break;
-        $sScript = substr($sScript, $iWritten);
-    }
-    fclose($ahPipes[0]);
-    $iReturn = proc_close($hProcess);
-    if ($bfatal && $iReturn > 0) {
-        fail("pgsql returned with error code ($iReturn)");
-    }
-}
-
 function setupHTTPProxy()
 {
     if (!getSettingBool('HTTP_PROXY')) {

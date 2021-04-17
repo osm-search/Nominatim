@@ -153,8 +153,10 @@ class SpecialPhrasesImporter():
         class_matchs = self.sanity_check_pattern.findall(phrase_class)
 
         if len(class_matchs) < 1 or len(type_matchs) < 1:
-            raise UsageError("Bad class/type for language {}: {}={}".format(
-                lang, phrase_class, phrase_type))
+            LOG.warning("Bad class/type for language %s: %s=%s. It will not be imported",
+                        lang, phrase_class, phrase_type)
+            return False
+        return True
 
     def _process_xml_content(self, xml_content, lang):
         """
@@ -205,7 +207,8 @@ class SpecialPhrasesImporter():
                 continue
 
             #sanity check, in case somebody added garbage in the wiki
-            self._check_sanity(lang, phrase_class, phrase_type)
+            if not self._check_sanity(lang, phrase_class, phrase_type):
+                continue
 
             class_type_pairs.add((phrase_class, phrase_type))
 

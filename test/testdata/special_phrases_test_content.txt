@@ -3,7 +3,7 @@
 <sitename>OpenStreetMap Wiki</sitename>
 <dbname>wiki</dbname>
 <base>https://wiki.openstreetmap.org/wiki/Main_Page</base>
-<generator>MediaWiki 1.35.1</generator>
+<generator>MediaWiki 1.35.2</generator>
 <case>first-letter</case>
 <namespaces>
 <namespace key="-2" case="first-letter">Media</namespace>
@@ -70,7 +70,7 @@
 <model>wikitext</model>
 <format>text/x-wiki</format>
 <text bytes="158218" sha1="cst5x7tt58izti1pxzgljf27tx8qjcj" xml:space="preserve">
-== en == {| class="wikitable sortable" |- ! Word / Phrase !! Key !! Value !! Operator !! Plural |- | Zip Line || aerialway || zip_line || - || N |- | Zip Lines || aerialway || zip_line || - || Y |- | Zip Line in || aerialway || zip_line || in || N |- | Zip Lines in || aerialway || zip_line || in || Y |- | Zip Line near || aerialway || zip_line || near || N |- | Zip Lines near || aerialway || zip_line || near || Y |- | Zip Wire || aerialway || zip_line || - || N |- | Zip Wires || aerialway || zip_line || - || Y |- | Zip Wire in || aerialway || zip_line || in || N |- | Zip Wires in || aerialway || zip_line || in || Y |- | Zip Wire near || aerialway || zip_line || near || N |} [[Category:Word list]]
+== en == {| class="wikitable sortable" |- ! Word / Phrase !! Key !! Value !! Operator !! Plural |- | Zip Line || aerialway || zip_line || - || N |- | Zip Lines || aerialway || zip_line || - || Y |- | Zip Line in || aerialway || zip_line || in || N |- | Zip Lines in || aerialway || zip_line || in || Y |- | Zip Line near || aerialway || zip_line || near || N |- | Animal shelter || amenity || animal_shelter || - || N |- | Animal shelters || amenity || animal_shelter || - || Y |- | Animal shelter in || amenity || animal_shelter || in || N |- | Animal shelters in || amenity || animal_shelter || in || Y |- | Animal shelter near || amenity || animal_shelter || near|| N |- | Animal shelters near || amenity || animal_shelter || near|| Y |- | Drinking Water near || amenity || drinking_water || near || N |- | Water || amenity || drinking_water || - || N |- | Water in || amenity || drinking_water || in || N |- | Water near || amenity || drinking_water || near || N |- | Embassy || amenity || embassy || - || N |- | Embassys || amenity || embassy || - || Y |- | Embassies || amenity || embassy || - || Y |- |Coworkings near |amenity |coworking_space |near |Y |} [[Category:Word list]]
 </text>
 <sha1>cst5x7tt58izti1pxzgljf27tx8qjcj</sha1>
 </revision>

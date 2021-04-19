@@ -13,12 +13,6 @@ from nominatim.db.async_connection import DBConnection
 LOG = logging.getLogger()
 
 
-def _analyse_db_if(conn, condition):
-    if condition:
-        with conn.cursor() as cur:
-            cur.execute('ANALYSE')
-
-
 class Indexer:
     """ Main indexing routine.
     """
@@ -51,26 +45,31 @@ class Indexer:
             database will be analysed at the appropriate places to
             ensure that database statistics are updated.
         """
-        conn = psycopg2.connect(self.dsn)
-        conn.autocommit = True
+        with psycopg2.connect(self.dsn) as conn:
+            conn.autocommit = True
 
-        try:
+            if analyse:
+                def _analyse():
+                    with conn.cursor() as cur:
+                        cur.execute('ANALYSE')
+            else:
+                def _analyse():
+                    pass
+
             self.index_by_rank(0, 4)
-            _analyse_db_if(conn, analyse)
+            _analyse()
 
             self.index_boundaries(0, 30)
-            _analyse_db_if(conn, analyse)
+            _analyse()
 
             self.index_by_rank(5, 25)
-            _analyse_db_if(conn, analyse)
+            _analyse()
 
             self.index_by_rank(26, 30)
-            _analyse_db_if(conn, analyse)
+            _analyse()
 
             self.index_postcodes()
-            _analyse_db_if(conn, analyse)
-        finally:
-            conn.close()
+            _analyse()
 
 
     def index_boundaries(self, minrank, maxrank):

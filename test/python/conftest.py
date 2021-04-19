@@ -126,7 +126,12 @@ def table_factory(temp_db_cursor):
 
 @pytest.fixture
 def def_config():
-    return Configuration(None, SRC_DIR.resolve() / 'settings')
+    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
+    cfg.set_libdirs(module='.', osm2pgsql='.',
+                    php=SRC_DIR / 'lib-php',
+                    sql=SRC_DIR / 'lib-sql',
+                    data=SRC_DIR / 'data')
+    return cfg
 
 @pytest.fixture
 def src_dir():

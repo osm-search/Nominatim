@@ -76,17 +76,17 @@ def handle_unregister_connection_pool(sel, place_threads):
             conn.close()
             place_threads -= 1
 
-def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):
-    """ Import tiger data from directory or tar file
+def add_tiger_data(data_dir, config, threads):
+    """ Import tiger data from directory or tar file `data dir`.
     """
-
+    dsn = config.get_libpq_dsn()
     sql_files, tar = handle_tarfile_or_directory(data_dir)
 
     if not sql_files:
         return
 
     with connect(dsn) as conn:
-        sql = SQLPreprocessor(conn, config, sqllib_dir)
+        sql = SQLPreprocessor(conn, config, config.lib_dir.sql)
         sql.run_sql_file(conn, 'tiger_import_start.sql')
 
     # Reading sql_files and then for each file line handling
@@ -116,5 +116,5 @@ def add_tiger_data(dsn, data_dir, threads, config, sqllib_dir):
     print('\n')
     LOG.warning("Creating indexes on Tiger data")
     with connect(dsn) as conn:
-        sql = SQLPreprocessor(conn, config, sqllib_dir)
+        sql = SQLPreprocessor(conn, config, config.lib_dir.sql)
         sql.run_sql_file(conn, 'tiger_import_finish.sql')

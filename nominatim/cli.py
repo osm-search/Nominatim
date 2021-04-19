@@ -148,11 +148,8 @@ class UpdateAddData:
     @staticmethod
     def run(args):
         if args.tiger_data:
-            return tiger_data.add_tiger_data(args.config.get_libpq_dsn(),
-                                             args.tiger_data,
-                                             args.threads or 1,
-                                             args.config,
-                                             args.sqllib_dir)
+            return tiger_data.add_tiger_data(args.tiger_data,
+                                             args.config, args.threads or 1)
 
         params = ['update.php']
         if args.file:

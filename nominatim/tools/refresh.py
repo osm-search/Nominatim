@@ -81,7 +81,7 @@ def create_functions(conn, config, sqllib_dir,
                      enable_diff_updates=True, enable_debug=False):
     """ (Re)create the PL/pgSQL functions.
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
 
     sql.run_sql_file(conn, 'functions.sql',
                      disable_diff_updates=not enable_diff_updates,

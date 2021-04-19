@@ -184,7 +184,7 @@ def create_tables(conn, config, sqllib_dir, reverse_only=False):
         When `reverse_only` is True, then the main table for searching will
         be skipped and only reverse search is possible.
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.env.globals['db']['reverse_only'] = reverse_only
 
     sql.run_sql_file(conn, 'tables.sql')
@@ -194,14 +194,14 @@ def create_table_triggers(conn, config, sqllib_dir):
     """ Create the triggers for the tables. The trigger functions must already
         have been imported with refresh.create_functions().
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.run_sql_file(conn, 'table-triggers.sql')
 
 
 def create_partition_tables(conn, config, sqllib_dir):
     """ Create tables that have explicit partitioning.
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.run_sql_file(conn, 'partition-tables.src.sql')
 
 
@@ -303,7 +303,7 @@ def create_search_indices(conn, config, sqllib_dir, drop=False):
             cur.execute('DROP INDEX "{}"'.format(idx))
     conn.commit()
 
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
 

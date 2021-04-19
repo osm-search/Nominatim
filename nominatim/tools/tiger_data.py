@@ -86,7 +86,7 @@ def add_tiger_data(data_dir, config, threads):
         return
 
     with connect(dsn) as conn:
-        sql = SQLPreprocessor(conn, config, config.lib_dir.sql)
+        sql = SQLPreprocessor(conn, config)
         sql.run_sql_file(conn, 'tiger_import_start.sql')
 
     # Reading sql_files and then for each file line handling
@@ -116,5 +116,5 @@ def add_tiger_data(data_dir, config, threads):
     print('\n')
     LOG.warning("Creating indexes on Tiger data")
     with connect(dsn) as conn:
-        sql = SQLPreprocessor(conn, config, config.lib_dir.sql)
+        sql = SQLPreprocessor(conn, config)
         sql.run_sql_file(conn, 'tiger_import_finish.sql')

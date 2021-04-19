@@ -126,7 +126,12 @@ def table_factory(temp_db_cursor):
 
 @pytest.fixture
 def def_config():
-    return Configuration(None, SRC_DIR.resolve() / 'settings')
+    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
+    cfg.set_libdirs(module='.', osm2pgsql='.',
+                    php=SRC_DIR / 'lib-php',
+                    sql=SRC_DIR / 'lib-sql',
+                    data=SRC_DIR / 'data')
+    return cfg
 
 @pytest.fixture
 def src_dir():
@@ -275,7 +280,11 @@ def osm2pgsql_options(temp_db):
                                  main_data='', main_index=''))
 
 @pytest.fixture
-def sql_preprocessor(temp_db_conn, tmp_path, def_config, monkeypatch, table_factory):
+def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
     monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', '.')
     table_factory('country_name', 'partition INT', (0, 1, 2))
-    return SQLPreprocessor(temp_db_conn, def_config, tmp_path)
+    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
+    cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',
+                    sql=tmp_path, data=SRC_DIR / 'data')
+
+    return SQLPreprocessor(temp_db_conn, cfg)

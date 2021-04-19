@@ -107,7 +107,8 @@ class NominatimEnvironment:
 
         self.website_dir = tempfile.TemporaryDirectory()
         cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
-        refresh.setup_website(Path(self.website_dir.name) / 'website', self.src_dir / 'lib-php', cfg)
+        cfg.lib_dir.php = self.src_dir / 'lib-php'
+        refresh.setup_website(Path(self.website_dir.name) / 'website', cfg)
 
     def get_libpq_dsn(self):
         dsn = self.test_env['NOMINATIM_DATABASE_DSN']

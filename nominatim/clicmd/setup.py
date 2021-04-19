@@ -81,22 +81,19 @@ class SetupAll:
 
             with connect(args.config.get_libpq_dsn()) as conn:
                 LOG.warning('Create functions (1st pass)')
-                refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                         False, False)
+                refresh.create_functions(conn, args.config, False, False)
                 LOG.warning('Create tables')
-                database_import.create_tables(conn, args.config, args.sqllib_dir,
+                database_import.create_tables(conn, args.config,
                                               reverse_only=args.reverse_only)
                 refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
                 LOG.warning('Create functions (2nd pass)')
-                refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                         False, False)
+                refresh.create_functions(conn, args.config, False, False)
                 LOG.warning('Create table triggers')
-                database_import.create_table_triggers(conn, args.config, args.sqllib_dir)
+                database_import.create_table_triggers(conn, args.config)
                 LOG.warning('Create partition tables')
-                database_import.create_partition_tables(conn, args.config, args.sqllib_dir)
+                database_import.create_partition_tables(conn, args.config)
                 LOG.warning('Create functions (3rd pass)')
-                refresh.create_functions(conn, args.config, args.sqllib_dir,
-                                         False, False)
+                refresh.create_functions(conn, args.config, False, False)
 
             LOG.warning('Importing wikipedia importance data')
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
@@ -130,14 +127,13 @@ class SetupAll:
         LOG.warning('Post-process tables')
         with connect(args.config.get_libpq_dsn()) as conn:
             database_import.create_search_indices(conn, args.config,
-                                                  args.sqllib_dir,
                                                   drop=args.no_updates)
             LOG.warning('Create search index for default country names.')
             database_import.create_country_names(conn, args.config)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)
-        refresh.setup_website(webdir, args.phplib_dir, args.config)
+        refresh.setup_website(webdir, args.config)
 
         with connect(args.config.get_libpq_dsn()) as conn:
             try:

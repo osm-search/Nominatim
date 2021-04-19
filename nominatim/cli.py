@@ -84,6 +84,11 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.config_dir,
                                     environ=kwargs.get('environ', os.environ))
+        args.config.set_libdirs(module=args.module_dir,
+                                osm2pgsql=args.osm2pgsql_path,
+                                php=args.phplib_dir,
+                                sql=args.sqllib_dir,
+                                data=args.data_dir)
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))
@@ -143,11 +148,8 @@ class UpdateAddData:
     @staticmethod
     def run(args):
         if args.tiger_data:
-            return tiger_data.add_tiger_data(args.config.get_libpq_dsn(),
-                                             args.tiger_data,
-                                             args.threads or 1,
-                                             args.config,
-                                             args.sqllib_dir)
+            return tiger_data.add_tiger_data(args.tiger_data,
+                                             args.config, args.threads or 1)
 
         params = ['update.php']
         if args.file:

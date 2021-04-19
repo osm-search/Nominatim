@@ -179,29 +179,29 @@ def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
             Path(options['flatnode_file']).unlink()
 
 
-def create_tables(conn, config, sqllib_dir, reverse_only=False):
+def create_tables(conn, config, reverse_only=False):
     """ Create the set of basic tables.
         When `reverse_only` is True, then the main table for searching will
         be skipped and only reverse search is possible.
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.env.globals['db']['reverse_only'] = reverse_only
 
     sql.run_sql_file(conn, 'tables.sql')
 
 
-def create_table_triggers(conn, config, sqllib_dir):
+def create_table_triggers(conn, config):
     """ Create the triggers for the tables. The trigger functions must already
         have been imported with refresh.create_functions().
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.run_sql_file(conn, 'table-triggers.sql')
 
 
-def create_partition_tables(conn, config, sqllib_dir):
+def create_partition_tables(conn, config):
     """ Create tables that have explicit partitioning.
     """
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
     sql.run_sql_file(conn, 'partition-tables.src.sql')
 
 
@@ -287,7 +287,7 @@ def load_data(dsn, data_dir, threads):
             cur.execute('ANALYSE')
 
 
-def create_search_indices(conn, config, sqllib_dir, drop=False):
+def create_search_indices(conn, config, drop=False):
     """ Create tables that have explicit partitioning.
     """
 
@@ -303,7 +303,7 @@ def create_search_indices(conn, config, sqllib_dir, drop=False):
             cur.execute('DROP INDEX "{}"'.format(idx))
     conn.commit()
 
-    sql = SQLPreprocessor(conn, config, sqllib_dir)
+    sql = SQLPreprocessor(conn, config)
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
 

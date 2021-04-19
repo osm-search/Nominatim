@@ -47,7 +47,7 @@ def migrate(config, paths):
 
         if has_run_migration:
             LOG.warning('Updating SQL functions.')
-            refresh.create_functions(conn, config, paths.sqllib_dir)
+            refresh.create_functions(conn, config)
 
         properties.set_property(conn, 'database_version',
                                 '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))

@@ -75,9 +75,9 @@ class SQLPreprocessor: # pylint: disable=too-few-public-methods
         and follows its syntax.
     """
 
-    def __init__(self, conn, config, sqllib_dir):
+    def __init__(self, conn, config):
         self.env = jinja2.Environment(autoescape=False,
-                                      loader=jinja2.FileSystemLoader(str(sqllib_dir)))
+                                      loader=jinja2.FileSystemLoader(str(config.lib_dir.sql)))
 
         db_info = {}
         db_info['partitions'] = _get_partitions(conn)

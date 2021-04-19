@@ -29787,7 +29787,7 @@ st	5557484
 
 -- prefill word table
 
-select count(make_keywords(v)) from (select distinct svals(name) as v from place) as w where v is not null;
+select count(precompute_words(v)) from (select distinct svals(name) as v from place) as w where v is not null;
 select count(getorcreate_housenumber_id(make_standard_name(v))) from (select distinct address->'housenumber' as v from place where address ? 'housenumber') as w;
 
 -- copy the word frequencies

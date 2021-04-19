@@ -377,40 +377,26 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION make_keywords(src TEXT)
-  RETURNS INTEGER[]
+CREATE OR REPLACE FUNCTION precompute_words(src TEXT)
+  RETURNS INTEGER
   AS $$
 DECLARE
-  result INTEGER[];
   s TEXT;
   w INTEGER;
   words TEXT[];
   i INTEGER;
   j INTEGER;
 BEGIN
-  result := '{}'::INTEGER[];
-
   s := make_standard_name(src);
   w := getorcreate_name_id(s, src);
 
-  IF NOT (ARRAY[w] <@ result) THEN
-    result := result || w;
-  END IF;
-
   w := getorcreate_word_id(s);
-
-  IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
-    result := result || w;
-  END IF;
 
   words := string_to_array(s, ' ');
   IF array_upper(words, 1) IS NOT NULL THEN
     FOR j IN 1..array_upper(words, 1) LOOP
       IF (words[j] != '') THEN
-        w = getorcreate_word_id(words[j]);
-        IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
-          result := result || w;
-        END IF;
+        w := getorcreate_word_id(words[j]);
       END IF;
     END LOOP;
   END IF;
@@ -421,9 +407,6 @@ BEGIN
       s := make_standard_name(words[j]);
       IF s != '' THEN
         w := getorcreate_word_id(s);
-        IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
-          result := result || w;
-        END IF;
       END IF;
     END LOOP;
   END IF;
@@ -433,13 +416,10 @@ BEGIN
     s := make_standard_name(s);
     IF s != '' THEN
       w := getorcreate_name_id(s, src);
-      IF NOT (ARRAY[w] <@ result) THEN
-        result := result || w;
-      END IF;
     END IF;
   END IF;
 
-  RETURN result;
+  RETURN 1;
 END;
 $$
 LANGUAGE plpgsql;

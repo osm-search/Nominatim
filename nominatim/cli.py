@@ -84,6 +84,11 @@ class CommandlineParser:
 
         args.config = Configuration(args.project_dir, args.config_dir,
                                     environ=kwargs.get('environ', os.environ))
+        args.config.set_libdirs(module=args.module_dir,
+                                osm2pgsql=args.osm2pgsql_path,
+                                php=args.phplib_dir,
+                                sql=args.sqllib_dir,
+                                data=args.data_dir)
 
         log = logging.getLogger()
         log.warning('Using project directory: %s', str(args.project_dir))

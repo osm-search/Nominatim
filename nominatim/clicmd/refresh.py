@@ -64,7 +64,7 @@ class UpdateRefresh:
         if args.functions:
             LOG.warning('Create functions')
             with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.create_functions(conn, args.config, args.sqllib_dir,
+                refresh.create_functions(conn, args.config,
                                          args.diffs, args.enable_debug_statements)
 
         if args.wiki_data:
@@ -85,6 +85,6 @@ class UpdateRefresh:
         if args.website:
             webdir = args.project_dir / 'website'
             LOG.warning('Setting up website directory at %s', webdir)
-            refresh.setup_website(webdir, args.phplib_dir, args.config)
+            refresh.setup_website(webdir, args.config)
 
         return 0

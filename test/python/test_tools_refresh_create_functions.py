@@ -27,7 +27,7 @@ def test_create_functions(temp_db_cursor, conn, def_config, sql_tmp_path):
                           $$ LANGUAGE plpgsql IMMUTABLE;
                        """)
 
-    create_functions(conn, def_config, sql_tmp_path)
+    create_functions(conn, def_config)
 
     assert temp_db_cursor.scalar('SELECT test()') == 43
 
@@ -47,6 +47,6 @@ def test_create_functions_with_template(temp_db_cursor, conn, def_config, sql_tm
                           $$ LANGUAGE plpgsql IMMUTABLE;
                        """)
 
-    create_functions(conn, def_config, sql_tmp_path, enable_debug=dbg)
+    create_functions(conn, def_config, enable_debug=dbg)
 
     assert temp_db_cursor.scalar('SELECT test()') == ret

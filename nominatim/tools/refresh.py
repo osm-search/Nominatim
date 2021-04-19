@@ -77,8 +77,7 @@ def load_address_levels_from_file(conn, config_file):
         load_address_levels(conn, 'address_levels', json.load(fdesc))
 
 
-def create_functions(conn, config, sqllib_dir,
-                     enable_diff_updates=True, enable_debug=False):
+def create_functions(conn, config, enable_diff_updates=True, enable_debug=False):
     """ (Re)create the PL/pgSQL functions.
     """
     sql = SQLPreprocessor(conn, config)
@@ -165,7 +164,7 @@ def recompute_importance(conn):
     conn.commit()
 
 
-def setup_website(basedir, phplib_dir, config):
+def setup_website(basedir, config):
     """ Create the website script stubs.
     """
     if not basedir.exists():
@@ -179,7 +178,7 @@ def setup_website(basedir, phplib_dir, config):
                       @define('CONST_LibDir', '{0}');
                       @define('CONST_NominatimVersion', '{1[0]}.{1[1]}.{1[2]}-{1[3]}');
 
-                      """.format(phplib_dir, NOMINATIM_VERSION))
+                      """.format(config.lib_dir.php, NOMINATIM_VERSION))
 
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
         if var_type == bool:
@@ -193,7 +192,7 @@ def setup_website(basedir, phplib_dir, config):
 
         template += "@define('CONST_{}', {});\n".format(php_name, varout)
 
-    template += "\nrequire_once('{}/website/{{}}');\n".format(phplib_dir)
+    template += "\nrequire_once('{}/website/{{}}');\n".format(config.lib_dir.php)
 
     for script in WEBSITE_SCRIPTS:
         (basedir / script).write_text(template.format(script), 'utf-8')

@@ -144,6 +144,11 @@ def tmp_phplib_dir():
 
         yield Path(phpdir)
 
+
+@pytest.fixture
+def property_table(table_factory):
+    table_factory('nominatim_properties', 'property TEXT, value TEXT')
+
 @pytest.fixture
 def status_table(temp_db_conn):
     """ Create an empty version of the status table and

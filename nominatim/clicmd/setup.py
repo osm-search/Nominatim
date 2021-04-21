@@ -56,6 +56,7 @@ class SetupAll:
         from ..tools import refresh
         from ..indexer.indexer import Indexer
         from ..tools import postcodes
+        from ..tokenizer import factory as tokenizer_factory
 
         if args.osm_file and not Path(args.osm_file).is_file():
             LOG.fatal("OSM file '%s' does not exist.", args.osm_file)
@@ -112,6 +113,10 @@ class SetupAll:
                                       args.data_dir,
                                       args.threads or psutil.cpu_count() or 1)
 
+        LOG.warning("Setting up tokenizer")
+        tokenizer = tokenizer_factory.create_tokenizer(args.config)
+
+        if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')
             postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir)
 

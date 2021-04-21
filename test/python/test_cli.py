@@ -22,6 +22,7 @@ import nominatim.tools.database_import
 import nominatim.tools.freeze
 import nominatim.tools.refresh
 import nominatim.tools.postcodes
+import nominatim.tokenizer.factory
 
 from mocks import MockParamCapture
 
@@ -97,6 +98,7 @@ def test_import_full(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
+        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
         mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
@@ -120,6 +122,7 @@ def test_import_continue_load_data(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'load_data'),
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
+        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
@@ -137,6 +140,7 @@ def test_import_continue_indexing(temp_db, mock_func_factory, placex_table, temp
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
+        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
@@ -158,6 +162,7 @@ def test_import_continue_postprocess(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
+        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
 

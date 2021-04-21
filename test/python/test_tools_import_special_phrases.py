@@ -2,13 +2,12 @@
     Tests for import special phrases methods
     of the class SpecialPhrasesImporter.
 """
-from mocks import MockParamCapture
 from nominatim.errors import UsageError
 from pathlib import Path
 import tempfile
 from shutil import copyfile
 import pytest
-from nominatim.tools.special_phrases import SpecialPhrasesImporter
+from nominatim.tools import SpecialPhrasesImporter
 
 TEST_BASE_DIR = Path(__file__) / '..' / '..'
 
@@ -304,7 +303,7 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
             CREATE TABLE place_classtype_amenity_animal_shelter();
             CREATE TABLE place_classtype_wrongclass_wrongtype();""")
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.SpecialPhrasesImporter._get_wiki_content', mock_get_wiki_content)
+    monkeypatch.setattr('nominatim.tools.SpecialPhrasesImporter._get_wiki_content', mock_get_wiki_content)
     special_phrases_importer.import_from_wiki(['en'])
 
     class_test = 'aerialway'

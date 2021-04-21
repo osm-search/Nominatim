@@ -62,6 +62,7 @@ class WorkerPool:
                         thread.wait()
                     thread.connect()
                 ready = self.threads
+                command_stat = 0
             else:
                 _, ready, _ = select.select([], self.threads, [])
 

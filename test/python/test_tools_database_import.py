@@ -80,39 +80,6 @@ def test_setup_extensions_old_postgis(temp_db_conn, monkeypatch):
         database_import.setup_extensions(temp_db_conn)
 
 
-def test_install_module(tmp_path):
-    src_dir = tmp_path / 'source'
-    src_dir.mkdir()
-    (src_dir / 'nominatim.so').write_text('TEST nomiantim.so')
-
-    project_dir = tmp_path / 'project'
-    project_dir.mkdir()
-
-    database_import.install_module(src_dir, project_dir, '')
-
-    outfile = project_dir / 'module' / 'nominatim.so'
-
-    assert outfile.exists()
-    assert outfile.read_text() == 'TEST nomiantim.so'
-    assert outfile.stat().st_mode == 33261
-
-
-def test_install_module_custom(tmp_path):
-    (tmp_path / 'nominatim.so').write_text('TEST nomiantim.so')
-
-    database_import.install_module(tmp_path, tmp_path, str(tmp_path.resolve()))
-
-    assert not (tmp_path / 'module').exists()
-
-
-def test_install_module_fail_access(temp_db_conn, tmp_path):
-    (tmp_path / 'nominatim.so').write_text('TEST nomiantim.so')
-
-    with pytest.raises(UsageError, match='.*module cannot be accessed.*'):
-        database_import.install_module(tmp_path, tmp_path, '',
-                                       conn=temp_db_conn)
-
-
 def test_import_base_data(src_dir, temp_db, temp_db_cursor):
     temp_db_cursor.execute('CREATE EXTENSION hstore')
     temp_db_cursor.execute('CREATE EXTENSION postgis')

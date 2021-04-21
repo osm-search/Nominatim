@@ -5,11 +5,9 @@ import logging
 import os
 import selectors
 import subprocess
-import shutil
 from pathlib import Path
 
 import psutil
-import psycopg2
 
 from nominatim.db.connection import connect, get_pg_env
 from nominatim.db import utils as db_utils
@@ -87,49 +85,6 @@ def setup_extensions(conn):
                   POSTGIS_REQUIRED_VERSION[0], POSTGIS_REQUIRED_VERSION[1],
                   postgis_version[0], postgis_version[1])
         raise UsageError('PostGIS version is too old.')
-
-
-def install_module(src_dir, project_dir, module_dir, conn=None):
-    """ Copy the normalization module from src_dir into the project
-        directory under the '/module' directory. If 'module_dir' is set, then
-        use the module from there instead and check that it is accessible
-        for Postgresql.
-
-        The function detects when the installation is run from the
-        build directory. It doesn't touch the module in that case.
-
-        If 'conn' is given, then the function also tests if the module
-        can be access via the given database.
-    """
-    if not module_dir:
-        module_dir = project_dir / 'module'
-
-        if not module_dir.exists() or not src_dir.samefile(module_dir):
-
-            if not module_dir.exists():
-                module_dir.mkdir()
-
-            destfile = module_dir / 'nominatim.so'
-            shutil.copy(str(src_dir / 'nominatim.so'), str(destfile))
-            destfile.chmod(0o755)
-
-            LOG.info('Database module installed at %s', str(destfile))
-        else:
-            LOG.info('Running from build directory. Leaving database module as is.')
-    else:
-        LOG.info("Using custom path for database module at '%s'", module_dir)
-
-    if conn is not None:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
-                               RETURNS text AS '{}/nominatim.so', 'transliteration'
-                               LANGUAGE c IMMUTABLE STRICT;
-                               DROP FUNCTION nominatim_test_import_func(text)
-                            """.format(module_dir))
-            except psycopg2.DatabaseError as err:
-                LOG.fatal("Error accessing database module: %s", err)
-                raise UsageError("Database module cannot be accessed.") from err
 
 
 def import_base_data(dsn, sql_dir, ignore_partitions=False):

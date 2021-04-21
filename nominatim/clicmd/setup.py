@@ -68,12 +68,6 @@ class SetupAll:
                                                     args.no_partitions,
                                                     rouser=args.config.DATABASE_WEBUSER)
 
-            LOG.warning('Installing database module')
-            with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.install_module(args.module_dir, args.project_dir,
-                                               args.config.DATABASE_MODULE_PATH,
-                                               conn=conn)
-
             LOG.warning('Importing OSM data file')
             database_import.import_osm_data(Path(args.osm_file),
                                             args.osm2pgsql_options(0, 1),

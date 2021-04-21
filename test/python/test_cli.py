@@ -88,7 +88,6 @@ def test_import_bad_file(temp_db):
 def test_import_full(temp_db, mock_func_factory):
     mocks = [
         mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
-        mock_func_factory(nominatim.tools.database_import, 'install_module'),
         mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
         mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
         mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),

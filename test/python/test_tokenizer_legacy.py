@@ -5,24 +5,78 @@ import pytest
 
 from nominatim.tokenizer import legacy_tokenizer
 from nominatim.db import properties
+from nominatim.errors import UsageError
 
 @pytest.fixture
-def tokenizer(dsn, tmp_path, def_config, property_table):
-    tok = legacy_tokenizer.create(dsn, tmp_path)
-    tok.init_new_db(def_config)
+def test_config(def_config, tmp_path):
+    def_config.project_dir = tmp_path / 'project'
+    def_config.project_dir.mkdir()
 
-    return tok
+    module_dir = tmp_path / 'module_src'
+    module_dir.mkdir()
+    (module_dir / 'nominatim.so').write_text('TEST nomiantim.so')
 
-def test_init_new(dsn, tmp_path, def_config, property_table, monkeypatch, temp_db_conn):
+    def_config.lib_dir.module = module_dir
+
+    return def_config
+
+
+@pytest.fixture
+def tokenizer_factory(dsn, tmp_path, monkeypatch):
+
+    def _maker():
+        return legacy_tokenizer.create(dsn, tmp_path / 'tokenizer')
+
+    return _maker
+
+@pytest.fixture
+def tokenizer_setup(tokenizer_factory, test_config, property_table, monkeypatch):
+    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+
+
+def test_init_new(tokenizer_factory, test_config, property_table, monkeypatch, temp_db_conn):
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', 'xxvv')
+    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
 
-    tok = legacy_tokenizer.create(dsn, tmp_path)
-    tok.init_new_db(def_config)
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
 
     assert properties.get_property(temp_db_conn, legacy_tokenizer.DBCFG_NORMALIZATION) == 'xxvv'
 
+    outfile = test_config.project_dir / 'module' / 'nominatim.so'
 
-def test_init_from_project(tokenizer):
-    tokenizer.init_from_project()
+    assert outfile.exists()
+    assert outfile.read_text() == 'TEST nomiantim.so'
+    assert outfile.stat().st_mode == 33261
 
-    assert tokenizer.normalization is not None
+
+def test_init_module_load_failed(tokenizer_factory, test_config, property_table, monkeypatch, temp_db_conn):
+    tok = tokenizer_factory()
+
+    with pytest.raises(UsageError):
+        tok.init_new_db(test_config)
+
+
+def test_init_module_custom(tokenizer_factory, test_config, property_table,
+                            monkeypatch, tmp_path):
+    module_dir = (tmp_path / 'custom').resolve()
+    module_dir.mkdir()
+    (module_dir/ 'nominatim.so').write_text('CUSTOM nomiantim.so')
+
+    monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', str(module_dir))
+    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+
+    assert not (test_config.project_dir / 'module').exists()
+
+
+def test_init_from_project(tokenizer_setup, tokenizer_factory):
+    tok = tokenizer_factory()
+
+    tok.init_from_project()
+
+    assert tok.normalization is not None

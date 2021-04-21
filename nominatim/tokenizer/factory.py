@@ -33,12 +33,15 @@ def _import_tokenizer(name):
         raise UsageError('Tokenizer not found') from exp
 
 
-def create_tokenizer(config):
+def create_tokenizer(config, init_db=True, module_name=None):
     """ Create a new tokenizer as defined by the given configuration.
 
         The tokenizer data and code is copied into the 'tokenizer' directory
         of the project directory and the tokenizer loaded from its new location.
     """
+    if module_name is None:
+        module_name = config.TOKENIZER
+
     # Create the directory for the tokenizer data
     basedir = config.project_dir / 'tokenizer'
     if not basedir.exists():
@@ -47,13 +50,15 @@ def create_tokenizer(config):
         LOG.fatal("Tokenizer directory '%s' cannot be created.", basedir)
         raise UsageError("Tokenizer setup failed.")
 
-    tokenizer_module = _import_tokenizer(config.TOKENIZER)
+    # Import and initialize the tokenizer.
+    tokenizer_module = _import_tokenizer(module_name)
 
     tokenizer = tokenizer_module.create(config.get_libpq_dsn(), basedir)
-    tokenizer.init_new_db(config)
+    if init_db:
+        tokenizer.init_new_db(config)
 
     with connect(config.get_libpq_dsn()) as conn:
-        properties.set_property(conn, 'tokenizer', config.TOKENIZER)
+        properties.set_property(conn, 'tokenizer', module_name)
 
     return tokenizer
 

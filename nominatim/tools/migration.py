@@ -6,7 +6,8 @@ import logging
 from nominatim.db import properties
 from nominatim.db.connection import connect
 from nominatim.version import NOMINATIM_VERSION
-from nominatim.tools import refresh, database_import
+from nominatim.tools import refresh
+from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
@@ -109,17 +110,6 @@ def import_status_timestamp_change(conn, **_):
 
 
 @_migration(3, 5, 0, 99)
-def install_database_module_in_project_directory(conn, config, paths, **_):
-    """ Install database module in project directory.
-
-        The database module needs to be present in the project directory
-        since those were introduced.
-    """
-    database_import.install_module(paths.module_dir, paths.project_dir,
-                                   config.DATABASE_MODULE_PATH, conn=conn)
-
-
-@_migration(3, 5, 0, 99)
 def add_nominatim_property_table(conn, config, **_):
     """ Add nominatim_property table.
     """
@@ -173,3 +163,17 @@ def switch_placenode_geometry_index(conn, **_):
                               and class = 'place' and type != 'postcode'
                               and linked_place_id is null""")
         cur.execute(""" DROP INDEX IF EXISTS idx_placex_adminname """)
+
+
+@_migration(3, 7, 0, 1)
+def install_legacy_tokenizer(conn, config, **_):
+    """ Setup legacy tokenizer.
+
+        If no other tokenizer has been configured yet, then create the
+        configuration for the backwards-compatible legacy tokenizer
+    """
+    if properties.get_property(conn, 'tokenizer') is None:
+        tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
+                                                       module_name='legacy')
+
+        tokenizer.migrate_database(config)

@@ -139,7 +139,7 @@ def test_import_continue_indexing(temp_db, mock_func_factory, placex_table, temp
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
-        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
+        mock_func_factory(nominatim.tokenizer.factory, 'get_tokenizer_for_db'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
@@ -161,7 +161,7 @@ def test_import_continue_postprocess(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
-        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
+        mock_func_factory(nominatim.tokenizer.factory, 'get_tokenizer_for_db'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
 
@@ -242,7 +242,6 @@ def test_special_phrases_command(temp_db, mock_func_factory):
                          ('postcodes', 'update_postcodes'),
                          ('word-counts', 'recompute_word_counts'),
                          ('address-levels', 'load_address_levels_from_file'),
-                         ('functions', 'create_functions'),
                          ('wiki-data', 'import_wikipedia_articles'),
                          ('importance', 'recompute_importance'),
                          ('website', 'setup_website'),
@@ -252,6 +251,22 @@ def test_refresh_command(mock_func_factory, temp_db, command, func):
 
     assert 0 == call_nominatim('refresh', '--' + command)
     assert func_mock.called == 1
+
+
+def test_refresh_create_functions(mock_func_factory, monkeypatch, temp_db):
+    class DummyTokenizer:
+        def update_sql_functions(self, *args):
+            self.called = True
+
+    func_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+    tok = DummyTokenizer()
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
+                        lambda *args: tok)
+
+
+    assert 0 == call_nominatim('refresh', '--functions')
+    assert func_mock.called == 1
+    assert hasattr(tok, 'called')
 
 
 def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):

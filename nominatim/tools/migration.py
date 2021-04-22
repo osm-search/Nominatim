@@ -49,6 +49,8 @@ def migrate(config, paths):
         if has_run_migration:
             LOG.warning('Updating SQL functions.')
             refresh.create_functions(conn, config)
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+            tokenizer.update_sql_functions(config)
 
         properties.set_property(conn, 'database_version',
                                 '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))

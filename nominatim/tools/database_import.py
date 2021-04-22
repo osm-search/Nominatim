@@ -160,11 +160,10 @@ def create_partition_tables(conn, config):
     sql.run_sql_file(conn, 'partition-tables.src.sql')
 
 
-def truncate_data_tables(conn, max_word_frequency=None):
+def truncate_data_tables(conn):
     """ Truncate all data tables to prepare for a fresh load.
     """
     with conn.cursor() as cur:
-        cur.execute('TRUNCATE word')
         cur.execute('TRUNCATE placex')
         cur.execute('TRUNCATE place_addressline')
         cur.execute('TRUNCATE location_area')
@@ -183,23 +182,13 @@ def truncate_data_tables(conn, max_word_frequency=None):
         for table in [r[0] for r in list(cur)]:
             cur.execute('TRUNCATE ' + table)
 
-        if max_word_frequency is not None:
-            # Used by getorcreate_word_id to ignore frequent partial words.
-            cur.execute("""CREATE OR REPLACE FUNCTION get_maxwordfreq()
-                           RETURNS integer AS $$
-                             SELECT {} as maxwordfreq;
-                           $$ LANGUAGE SQL IMMUTABLE
-                        """.format(max_word_frequency))
-        conn.commit()
+    conn.commit()
 
 _COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
 
-def load_data(dsn, data_dir, threads):
+def load_data(dsn, threads):
     """ Copy data into the word and placex table.
     """
-    # Pre-calculate the most important terms in the word list.
-    db_utils.execute_file(dsn, data_dir / 'words.sql')
-
     sel = selectors.DefaultSelector()
     # Then copy data from place to placex in <threads - 1> chunks.
     place_threads = max(1, threads - 1)

@@ -286,7 +286,6 @@ def osm2pgsql_options(temp_db):
 
 @pytest.fixture
 def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
-    monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', '.')
     table_factory('country_name', 'partition INT', (0, 1, 2))
     cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',

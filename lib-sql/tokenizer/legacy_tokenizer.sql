@@ -38,7 +38,7 @@ BEGIN
     return_word_id := nextval('seq_word');
     INSERT INTO word VALUES (return_word_id, lookup_token, null, null, null, null, 0);
   ELSE
-    IF count > get_maxwordfreq() THEN
+    IF count > {{ max_word_freq }} THEN
       return_word_id := NULL;
     END IF;
   END IF;

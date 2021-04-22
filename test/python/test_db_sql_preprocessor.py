@@ -24,7 +24,6 @@ def sql_factory(tmp_path):
     ("'{{db.partitions|join}}'", '012'),
     ("{% if 'country_name' in db.tables %}'yes'{% else %}'no'{% endif %}", "yes"),
     ("{% if 'xxx' in db.tables %}'yes'{% else %}'no'{% endif %}", "no"),
-    ("'{{config.DATABASE_MODULE_PATH}}'", '.')
     ])
 def test_load_file_simple(sql_preprocessor, sql_factory, temp_db_conn, temp_db_cursor, expr, ret):
     sqlfile = sql_factory("RETURN {};".format(expr))

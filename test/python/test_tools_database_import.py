@@ -138,14 +138,14 @@ def test_import_osm_data_default_cache(temp_db_cursor,osm2pgsql_options):
 
 
 def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):
-    tables = ('word', 'placex', 'place_addressline', 'location_area',
+    tables = ('placex', 'place_addressline', 'location_area',
               'location_area_country',
               'location_property_tiger', 'location_property_osmline',
               'location_postcode', 'search_name', 'location_road_23')
     for table in tables:
         table_factory(table, content=(1, 2, 3))
 
-    database_import.truncate_data_tables(temp_db_conn, max_word_frequency=23)
+    database_import.truncate_data_tables(temp_db_conn)
 
     for table in tables:
         assert temp_db_cursor.table_rows(table) == 0
@@ -163,7 +163,7 @@ def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table, word_ta
     place_row(osm_type='W', osm_id=342, cls='place', typ='houses',
               geom='SRID=4326;LINESTRING(0 0, 10 10)')
 
-    database_import.load_data(dsn, src_dir / 'data', threads)
+    database_import.load_data(dsn, threads)
 
     assert temp_db_cursor.table_rows('placex') == 30
     assert temp_db_cursor.table_rows('location_property_osmline') == 1

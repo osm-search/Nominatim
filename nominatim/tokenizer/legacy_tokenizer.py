@@ -8,9 +8,12 @@ import psycopg2
 
 from nominatim.db.connection import connect
 from nominatim.db import properties
+from nominatim.db import utils as db_utils
+from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.errors import UsageError
 
 DBCFG_NORMALIZATION = "tokenizer_normalization"
+DBCFG_MAXWORDFREQ = "tokenizer_maxwordfreq"
 
 LOG = logging.getLogger()
 
@@ -53,6 +56,9 @@ def _install_module(config_module_path, src_dir, module_dir):
 
 
 def _check_module(module_dir, conn):
+    """ Try to use the PostgreSQL module to confirm that it is correctly
+        installed and accessible from PostgreSQL.
+    """
     with conn.cursor() as cur:
         try:
             cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
@@ -91,7 +97,11 @@ class LegacyTokenizer:
 
         with connect(self.dsn) as conn:
             _check_module(module_dir, conn)
-            self._save_config(conn)
+            self._save_config(conn, config)
+            conn.commit()
+
+        self.update_sql_functions(config)
+        self._init_db_tables(config)
 
 
     def init_from_project(self):
@@ -99,6 +109,19 @@ class LegacyTokenizer:
         """
         with connect(self.dsn) as conn:
             self.normalization = properties.get_property(conn, DBCFG_NORMALIZATION)
+
+
+    def update_sql_functions(self, config):
+        """ Reimport the SQL functions for this tokenizer.
+        """
+        with connect(self.dsn) as conn:
+            max_word_freq = properties.get_property(conn, DBCFG_MAXWORDFREQ)
+            modulepath = config.DATABASE_MODULE_PATH or \
+                         str((config.project_dir / 'module').resolve())
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer.sql',
+                              max_word_freq=max_word_freq,
+                              modulepath=modulepath)
 
 
     def migrate_database(self, config):
@@ -114,11 +137,25 @@ class LegacyTokenizer:
 
         with connect(self.dsn) as conn:
             _check_module(module_dir, conn)
-            self._save_config(conn)
+            self._save_config(conn, config)
 
 
-    def _save_config(self, conn):
+    def _init_db_tables(self, config):
+        """ Set up the word table and fill it with pre-computed word
+            frequencies.
+        """
+        with connect(self.dsn) as conn:
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_tables.sql')
+            conn.commit()
+
+        LOG.warning("Precomputing word tokens")
+        db_utils.execute_file(self.dsn, config.lib_dir.data / 'words.sql')
+
+
+    def _save_config(self, conn, config):
         """ Save the configuration that needs to remain stable for the given
             database as database properties.
         """
         properties.set_property(conn, DBCFG_NORMALIZATION, self.normalization)
+        properties.set_property(conn, DBCFG_MAXWORDFREQ, config.MAX_WORD_FREQUENCY)

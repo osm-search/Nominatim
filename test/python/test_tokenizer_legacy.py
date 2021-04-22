@@ -1,6 +1,8 @@
 """
 Test for legacy tokenizer.
 """
+import shutil
+
 import pytest
 
 from nominatim.tokenizer import legacy_tokenizer
@@ -18,6 +20,18 @@ def test_config(def_config, tmp_path):
 
     def_config.lib_dir.module = module_dir
 
+    sqldir = tmp_path / 'sql'
+    sqldir.mkdir()
+    (sqldir / 'tokenizer').mkdir()
+    (sqldir / 'tokenizer' / 'legacy_tokenizer.sql').write_text("SELECT 'a'")
+    (sqldir / 'words.sql').write_text("SELECT 'a'")
+    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_tables.sql'),
+                str(sqldir / 'tokenizer' / 'legacy_tokenizer_tables.sql'))
+
+    def_config.lib_dir.sql = sqldir
+    def_config.lib_dir.data = sqldir
+
+
     return def_config
 
 
@@ -30,13 +44,15 @@ def tokenizer_factory(dsn, tmp_path, monkeypatch):
     return _maker
 
 @pytest.fixture
-def tokenizer_setup(tokenizer_factory, test_config, property_table, monkeypatch):
+def tokenizer_setup(tokenizer_factory, test_config, property_table,
+                    monkeypatch, sql_preprocessor):
     monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
 
-def test_init_new(tokenizer_factory, test_config, property_table, monkeypatch, temp_db_conn):
+def test_init_new(tokenizer_factory, test_config, property_table, monkeypatch,
+                  temp_db_conn, sql_preprocessor):
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', 'xxvv')
     monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
 
@@ -52,7 +68,8 @@ def test_init_new(tokenizer_factory, test_config, property_table, monkeypatch, t
     assert outfile.stat().st_mode == 33261
 
 
-def test_init_module_load_failed(tokenizer_factory, test_config, property_table, monkeypatch, temp_db_conn):
+def test_init_module_load_failed(tokenizer_factory, test_config, property_table,
+                                 monkeypatch, temp_db_conn):
     tok = tokenizer_factory()
 
     with pytest.raises(UsageError):
@@ -60,7 +77,7 @@ def test_init_module_load_failed(tokenizer_factory, test_config, property_table,
 
 
 def test_init_module_custom(tokenizer_factory, test_config, property_table,
-                            monkeypatch, tmp_path):
+                            monkeypatch, tmp_path, sql_preprocessor):
     module_dir = (tmp_path / 'custom').resolve()
     module_dir.mkdir()
     (module_dir/ 'nominatim.so').write_text('CUSTOM nomiantim.so')

@@ -100,15 +100,19 @@ class SetupAll:
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
+                database_import.truncate_data_tables(conn)
 
             LOG.warning('Load data into placex table')
             database_import.load_data(args.config.get_libpq_dsn(),
-                                      args.data_dir,
                                       args.threads or psutil.cpu_count() or 1)
 
         LOG.warning("Setting up tokenizer")
-        tokenizer = tokenizer_factory.create_tokenizer(args.config)
+        if args.continue_at is None or args.continue_at == 'load-data':
+            # (re)initialise the tokenizer data
+            tokenizer = tokenizer_factory.create_tokenizer(args.config)
+        else:
+            # just load the tokenizer
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')

@@ -14,6 +14,7 @@ from psycopg2.sql import Identifier, Literal, SQL
 
 from nominatim.tools.exec_utils import get_url
 from nominatim.errors import UsageError
+from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 
 LOG = logging.getLogger()
 class SpecialPhrasesImporter():
@@ -22,6 +23,7 @@ class SpecialPhrasesImporter():
         Class handling the process of special phrases importations.
     """
     def __init__(self, config, phplib_dir, db_connection) -> None:
+        self.statistics_handler = SpecialPhrasesImporterStatistics()
         self.db_connection = db_connection
         self.config = config
         self.phplib_dir = phplib_dir
@@ -63,14 +65,16 @@ class SpecialPhrasesImporter():
         class_type_pairs = set()
 
         for lang in languages:
-            LOG.warning('Import phrases for lang: %s', lang)
+            LOG.warning('Importing phrases for lang: %s...', lang)
             wiki_page_xml_content = SpecialPhrasesImporter._get_wiki_content(lang)
             class_type_pairs.update(self._process_xml_content(wiki_page_xml_content, lang))
+            self.statistics_handler.notify_current_lang_done(lang)
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
         self._remove_non_existent_phrases_from_db()
         self.db_connection.commit()
         LOG.warning('Import done.')
+        self.statistics_handler.notify_import_done()
 
     def _fetch_existing_words_phrases(self):
         """
@@ -204,11 +208,13 @@ class SpecialPhrasesImporter():
                     (normalized_label, phrase_class, phrase_type, phrase_operator)
                 )
                 class_type_pairs.add((phrase_class, phrase_type))
+                self.statistics_handler.notify_one_phrase_ignored()
                 #Dont need to add this phrase as it already exists in the word table.
                 continue
 
             #sanity check, in case somebody added garbage in the wiki
             if not self._check_sanity(lang, phrase_class, phrase_type):
+                self.statistics_handler.notify_one_phrase_invalid()
                 continue
 
             class_type_pairs.add((phrase_class, phrase_type))
@@ -217,6 +223,7 @@ class SpecialPhrasesImporter():
                 phrase_label, normalized_label, phrase_class,
                 phrase_type, phrase_operator
             )
+            self.statistics_handler.notify_one_phrase_added()
 
         return class_type_pairs
 
@@ -263,6 +270,7 @@ class SpecialPhrasesImporter():
             table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
 
             if table_name in self.table_phrases_to_delete:
+                self.statistics_handler.notify_one_table_ignored()
                 #Remove this table from the ones to delete as it match a class/type
                 #still existing on the special phrases of the wiki.
                 self.table_phrases_to_delete.remove(table_name)
@@ -277,6 +285,8 @@ class SpecialPhrasesImporter():
 
             #Grant access on read to the web user.
             self._grant_access_to_webuser(phrase_class, phrase_type)
+
+            self.statistics_handler.notify_one_table_created()
 
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("DROP INDEX idx_placex_classtype")
@@ -341,6 +351,7 @@ class SpecialPhrasesImporter():
 
         #Delete phrases from the word table which are not on the wiki anymore.
         for phrase_to_delete in self.words_phrases_to_delete:
+            self.statistics_handler.notify_one_phrase_deleted()
             if phrase_to_delete[3] == '-':
                 query = """
                     DELETE FROM word WHERE word = %s AND class = %s AND type = %s AND operator IS null
@@ -357,6 +368,7 @@ class SpecialPhrasesImporter():
 
         #Delete place_classtype tables corresponding to class/type which are not on the wiki anymore
         for table in self.table_phrases_to_delete:
+            self.statistics_handler.notify_one_table_deleted()
             query = SQL('DROP TABLE IF EXISTS {}').format(Identifier(table))
             queries_parameters.append((query, ()))
 

@@ -121,7 +121,7 @@ class UpdateAddData:
     """\
     Add additional data from a file or an online source.
 
-    Data is only imported, not indexed. You need to call `nominatim-update index`
+    Data is only imported, not indexed. You need to call `nominatim index`
     to complete the process.
     """
 

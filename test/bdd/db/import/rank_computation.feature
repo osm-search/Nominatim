@@ -4,22 +4,22 @@ Feature: Rank assignment
 
     Scenario: Ranks for place nodes are assigned according to their type
         Given the named places
-          | osm  | class     | type      |
-          | N1   | foo       | bar       |
-          | N11  | place     | Continent |
-          | N12  | place     | continent |
-          | N13  | place     | sea       |
-          | N14  | place     | country   |
-          | N15  | place     | state     |
-          | N16  | place     | region    |
-          | N17  | place     | county    |
-          | N18  | place     | city      |
-          | N19  | place     | island    |
-          | N36  | place     | house               |
-          | N38  | place     | houses              |
+          | osm  | class     | type      | geometry |
+          | N1   | foo       | bar       | 0 0 |
+          | N11  | place     | Continent | 0 0 |
+          | N12  | place     | continent | 0 0 |
+          | N13  | place     | sea       | 0 0 |
+          | N14  | place     | country   | 0 0 |
+          | N15  | place     | state     | 0 0 |
+          | N16  | place     | region    | 0 0 |
+          | N17  | place     | county    | 0 0 |
+          | N18  | place     | city      | 0 0 |
+          | N19  | place     | island    | 0 0 |
+          | N36  | place     | house     | 0 0 |
+          | N38  | place     | houses    | 0 0 |
         And the named places
-          | osm  | class     | type      | extra+capital |
-          | N101 | place     | city      | yes |
+          | osm  | class     | type      | extra+capital | geometry |
+          | N101 | place     | city      | yes           | 0 0 |
         When importing
         Then placex contains
           | object | rank_search | rank_address |

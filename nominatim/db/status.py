@@ -35,9 +35,9 @@ def compute_database_date(conn):
                   "URL used: %s", node_url)
         raise UsageError("Bad API data.")
 
-    LOG.debug("Found timestamp %s", match[1])
+    LOG.debug("Found timestamp %s", match.group(1))
 
-    return dt.datetime.strptime(match[1], ISODATE_FORMAT).replace(tzinfo=dt.timezone.utc)
+    return dt.datetime.strptime(match.group(1), ISODATE_FORMAT).replace(tzinfo=dt.timezone.utc)
 
 
 def set_status(conn, date, seq=None, indexed=True):

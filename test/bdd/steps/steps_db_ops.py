@@ -7,6 +7,7 @@ from place_inserter import PlaceColumn
 from table_compare import NominatimID, DBRow
 
 from nominatim.indexer import indexer
+from nominatim.tokenizer import factory as tokenizer_factory
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
@@ -86,6 +87,9 @@ def add_data_to_planet_ways(context):
 def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
+    nctx = context.nominatim
+
+    tokenizer = tokenizer_factory.create_tokenizer(nctx.get_test_config())
     context.nominatim.copy_from_place(context.db)
 
     # XXX use tool function as soon as it is ported

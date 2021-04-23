@@ -1,5 +1,51 @@
 -- Trigger functions for the placex table.
 
+-- Retrieve the data needed by the indexer for updating the place.
+--
+-- Return parameters:
+--  name            list of names
+--  address         list of address tags, either from the object or a surrounding
+--                  building
+--  country_feature If the place is a country feature, this contains the
+--                  country code, otherwise it is null.
+CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
+                                                 OUT name HSTORE,
+                                                 OUT address HSTORE,
+                                                 OUT country_feature VARCHAR)
+  AS $$
+BEGIN
+  -- For POI nodes, check if the address should be derived from a surrounding
+  -- building.
+  IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
+    RAISE WARNING 'self address for % %', p.osm_type, p.osm_id;
+    address := p.address;
+  ELSE
+    -- The additional && condition works around the misguided query
+    -- planner of postgis 3.0.
+    SELECT placex.address || hstore('_inherited', '') INTO address
+      FROM placex
+     WHERE ST_Covers(geometry, p.centroid)
+           and geometry && p.centroid
+           and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
+           and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+     LIMIT 1;
+    RAISE WARNING 'other address for % %: % (%)', p.osm_type, p.osm_id, address, p.centroid;
+  END IF;
+
+  address := address - '_unlisted_place'::TEXT;
+  name := p.name;
+
+  country_feature := CASE WHEN p.admin_level = 2
+                               and p.class = 'boundary' and p.type = 'administrative'
+                               and p.osm_type = 'R'
+                          THEN p.country_code
+                          ELSE null
+                     END;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
 -- Find the parent road of a POI.
 --
 -- \returns Place ID of parent object or NULL if none
@@ -397,10 +443,11 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.country_code := lower(get_country_code(NEW.geometry));
+  NEW.centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.country_code := lower(get_country_code(NEW.centroid));
 
   NEW.partition := get_partition(NEW.country_code);
-  NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
+  NEW.geometry_sector := geometry_sector(NEW.partition, NEW.centroid);
 
   IF NEW.osm_type = 'X' THEN
     -- E'X'ternal records should already be in the right format so do nothing
@@ -531,8 +578,6 @@ DECLARE
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
 
-  inherited_address HSTORE;
-
   linked_node_id BIGINT;
   linked_importance FLOAT;
   linked_wikipedia TEXT;
@@ -566,7 +611,6 @@ BEGIN
   -- update not necessary for osmline, cause linked_place_id does not exist
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
-  NEW.address := NEW.address - '_unlisted_place'::TEXT;
 
   IF NEW.linked_place_id is not null THEN
     {% if debug %}RAISE WARNING 'place already linked to %', NEW.linked_place_id;{% endif %}
@@ -750,27 +794,6 @@ BEGIN
     {% if debug %}RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;{% endif %}
     NEW.parent_place_id := null;
 
-    -- if we have a POI and there is no address information,
-    -- see if we can get it from a surrounding building
-    inherited_address := ''::HSTORE;
-    IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
-       AND NEW.housenumber IS NULL THEN
-      FOR location IN
-        -- The additional && condition works around the misguided query
-        -- planner of postgis 3.0.
-        SELECT address from placex where ST_Covers(geometry, NEW.centroid)
-            and geometry && NEW.centroid
-            and (address ? 'housenumber' or address ? 'street' or address ? 'place')
-            and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-            limit 1
-      LOOP
-        NEW.housenumber := location.address->'housenumber';
-        addr_street := location.address->'street';
-        addr_place := location.address->'place';
-        inherited_address := location.address;
-      END LOOP;
-    END IF;
-
     -- We have to find our parent road.
     NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
                                                NEW.partition,
@@ -823,12 +846,12 @@ BEGIN
 
       {% if not db.reverse_only %}
       IF array_length(name_vector, 1) is not NULL
-         OR inherited_address is not NULL OR NEW.address is not NULL
+         OR NEW.address is not NULL
       THEN
         SELECT * INTO name_vector, nameaddress_vector
           FROM create_poi_search_terms(NEW.place_id,
                                        NEW.partition, NEW.parent_place_id,
-                                       inherited_address || NEW.address,
+                                       NEW.address,
                                        NEW.country_code, NEW.housenumber,
                                        name_vector, NEW.centroid);
 
@@ -843,6 +866,16 @@ BEGIN
         END IF;
       END IF;
       {% endif %}
+
+      -- If the address was inherited from a surrounding building,
+      -- do not add it permanently to the table.
+      IF NEW.address ? '_inherited' THEN
+        IF NEW.address ? '_unlisted_place' THEN
+          NEW.address := hstore('_unlisted_place', NEW.address->'_unlisted_place');
+        ELSE
+          NEW.address := null;
+        END IF;
+      END IF;
 
       RETURN NEW;
     END IF;

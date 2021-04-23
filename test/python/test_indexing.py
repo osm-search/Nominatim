@@ -17,6 +17,7 @@ class IndexerTestDB:
         self.conn = conn
         self.conn.set_isolation_level(0)
         with self.conn.cursor() as cur:
+            cur.execute('CREATE EXTENSION hstore')
             cur.execute("""CREATE TABLE placex (place_id BIGINT,
                                                 class TEXT,
                                                 type TEXT,
@@ -26,6 +27,7 @@ class IndexerTestDB:
                                                 indexed_date TIMESTAMP,
                                                 partition SMALLINT,
                                                 admin_level SMALLINT,
+                                                address HSTORE,
                                                 geometry_sector INTEGER)""")
             cur.execute("""CREATE TABLE location_property_osmline (
                                place_id BIGINT,
@@ -46,6 +48,17 @@ class IndexerTestDB:
                              END IF;
                              RETURN NEW;
                            END; $$ LANGUAGE plpgsql;""")
+            cur.execute("""CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
+                                                      OUT name HSTORE,
+                                                      OUT address HSTORE,
+                                                      OUT country_feature VARCHAR)
+                           AS $$
+                           BEGIN
+                            address := p.address;
+                            name := p.address;
+                           END;
+                           $$ LANGUAGE plpgsql STABLE;
+                        """)
             for table in ('placex', 'location_property_osmline', 'location_postcode'):
                 cur.execute("""CREATE TRIGGER {0}_update BEFORE UPDATE ON {0}
                                FOR EACH ROW EXECUTE PROCEDURE date_update()

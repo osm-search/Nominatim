@@ -106,9 +106,19 @@ class NominatimEnvironment:
             self.website_dir.cleanup()
 
         self.website_dir = tempfile.TemporaryDirectory()
-        cfg = Configuration(None, self.src_dir / 'settings', environ=self.test_env)
-        cfg.lib_dir.php = self.src_dir / 'lib-php'
-        refresh.setup_website(Path(self.website_dir.name) / 'website', cfg)
+        refresh.setup_website(Path(self.website_dir.name) / 'website',
+                              self.get_test_config())
+
+
+    def get_test_config(self):
+        cfg = Configuration(Path(self.website_dir.name), self.src_dir / 'settings',
+                            environ=self.test_env)
+        cfg.set_libdirs(module=self.build_dir / 'module',
+                        osm2pgsql=self.build_dir / 'osm2pgsql' / 'osm2pgsql',
+                        php=self.src_dir / 'lib-php',
+                        sql=self.src_dir / 'lib-sql',
+                        data=self.src_dir / 'data')
+        return cfg
 
     def get_libpq_dsn(self):
         dsn = self.test_env['NOMINATIM_DATABASE_DSN']

@@ -187,14 +187,14 @@ class Indexer:
 
                     with WorkerPool(self.dsn, self.num_threads) as pool:
                         while True:
-                            places = [p[0] for p in cur.fetchmany(batch)]
+                            places = [p for p in cur.fetchmany(batch)]
                             if not places:
                                 break
 
                             LOG.debug("Processing places: %s", str(places))
                             worker = pool.next_free_worker()
 
-                            worker.perform(runner.sql_index_place(places))
+                            runner.index_places(worker, places)
                             progress.add(len(places))
 
                         pool.finish_all()

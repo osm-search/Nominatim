@@ -4,12 +4,40 @@ tasks.
 """
 # pylint: disable=C0111
 
-class RankRunner:
-    """ Returns SQL commands for indexing one rank within the placex table.
+class AbstractPlacexRunner:
+    """ Returns SQL commands for indexing of the placex table.
     """
+    SELECT_SQL = 'SELECT place_id, (placex_prepare_update(placex)).* FROM placex'
 
     def __init__(self, rank):
         self.rank = rank
+        self._sql_terms = 0
+        self._cached_index_sql = None
+
+    def _index_sql(self, num_places):
+        if num_places != self._sql_terms:
+            self._cached_index_sql = \
+                """ UPDATE placex
+                    SET indexed_status = 0, address = v.addr
+                    FROM (VALUES {}) as v(id, addr)
+                    WHERE place_id = v.id
+                """.format(','.join(["(%s, %s::hstore)"]  * num_places))
+            self._sql_terms = num_places
+
+        return self._cached_index_sql
+
+
+    def index_places(self, worker, places):
+        values = []
+        for place in places:
+            values.extend((place[x] for x in ('place_id', 'address')))
+
+        worker.perform(self._index_sql(len(places)), values)
+
+
+class RankRunner(AbstractPlacexRunner):
+    """ Returns SQL commands for indexing one rank within the placex table.
+    """
 
     def name(self):
         return "rank {}".format(self.rank)
@@ -20,23 +48,15 @@ class RankRunner:
                """.format(self.rank)
 
     def sql_get_objects(self):
-        return """SELECT place_id FROM placex
-                  WHERE indexed_status > 0 and rank_address = {}
-                  ORDER BY geometry_sector""".format(self.rank)
-
-    @staticmethod
-    def sql_index_place(ids):
-        return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
-               .format(','.join((str(i) for i in ids)))
+        return """{} WHERE indexed_status > 0 and rank_address = {}
+                     ORDER BY geometry_sector
+               """.format(self.SELECT_SQL, self.rank)
 
 
-class BoundaryRunner:
+class BoundaryRunner(AbstractPlacexRunner):
     """ Returns SQL commands for indexing the administrative boundaries
         of a certain rank.
     """
-
-    def __init__(self, rank):
-        self.rank = rank
 
     def name(self):
         return "boundaries rank {}".format(self.rank)
@@ -49,16 +69,10 @@ class BoundaryRunner:
                """.format(self.rank)
 
     def sql_get_objects(self):
-        return """SELECT place_id FROM placex
-                  WHERE indexed_status > 0 and rank_search = {}
-                        and class = 'boundary' and type = 'administrative'
-                  ORDER BY partition, admin_level
-               """.format(self.rank)
-
-    @staticmethod
-    def sql_index_place(ids):
-        return "UPDATE placex SET indexed_status = 0 WHERE place_id IN ({})"\
-               .format(','.join((str(i) for i in ids)))
+        return """{} WHERE indexed_status > 0 and rank_search = {}
+                           and class = 'boundary' and type = 'administrative'
+                     ORDER BY partition, admin_level
+               """.format(self.SELECT_SQL, self.rank)
 
 
 class InterpolationRunner:
@@ -82,10 +96,10 @@ class InterpolationRunner:
                   ORDER BY geometry_sector"""
 
     @staticmethod
-    def sql_index_place(ids):
-        return """UPDATE location_property_osmline
-                  SET indexed_status = 0 WHERE place_id IN ({})
-               """.format(','.join((str(i) for i in ids)))
+    def index_places(worker, ids):
+        worker.perform(""" UPDATE location_property_osmline
+                           SET indexed_status = 0 WHERE place_id IN ({})
+                       """.format(','.join((str(i[0]) for i in ids))))
 
 
 class PostcodeRunner:
@@ -107,7 +121,7 @@ class PostcodeRunner:
                   ORDER BY country_code, postcode"""
 
     @staticmethod
-    def sql_index_place(ids):
-        return """UPDATE location_postcode SET indexed_status = 0
-                  WHERE place_id IN ({})
-               """.format(','.join((str(i) for i in ids)))
+    def index_places(worker, ids):
+        worker.perform(""" UPDATE location_postcode SET indexed_status = 0
+                           WHERE place_id IN ({})
+                       """.format(','.join((str(i[0]) for i in ids))))

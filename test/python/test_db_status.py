@@ -19,6 +19,11 @@ OSM_NODE_DATA = """\
 </osm>
 """
 
+def iso_date(date):
+    return dt.datetime.strptime(date, nominatim.db.status.ISODATE_FORMAT)\
+               .replace(tzinfo=dt.timezone.utc)
+
+
 def test_compute_database_date_valid(monkeypatch, status_table, place_row, temp_db_conn):
     place_row(osm_type='N', osm_id=45673)
 
@@ -32,7 +37,7 @@ def test_compute_database_date_valid(monkeypatch, status_table, place_row, temp_
     date = nominatim.db.status.compute_database_date(temp_db_conn)
 
     assert requested_url == ['https://www.openstreetmap.org/api/0.6/node/45673/1']
-    assert date == dt.datetime.fromisoformat('2006-01-27T22:09:10').replace(tzinfo=dt.timezone.utc)
+    assert date == iso_date('2006-01-27T22:09:10')
 
 
 def test_compute_database_broken_api(monkeypatch, status_table, place_row, temp_db_conn):

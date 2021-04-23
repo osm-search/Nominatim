@@ -85,7 +85,6 @@ def _get_indexes(conn):
                'idx_placex_parent_place_id',
                'idx_placex_geometry_reverse_lookuppolygon',
                'idx_placex_geometry_placenode',
-               'idx_placex_housenumber',
                'idx_osmline_parent_place_id',
                'idx_osmline_parent_osm_id',
                'idx_postcode_id',
@@ -100,6 +99,9 @@ def _get_indexes(conn):
                         'idx_location_area_country_place_id',
                         'idx_place_osm_unique'
                        ))
+    if conn.server_version_tuple() >= (11, 0, 0):
+        indexes.extend(('idx_placex_housenumber',
+                        'idx_osmline_parent_osm_id_with_hnr'))
 
     return indexes
 

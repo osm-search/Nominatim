@@ -30,7 +30,7 @@ class Configuration:
         self.project_dir = project_dir
         self.config_dir = config_dir
         self._config = dotenv_values(str((config_dir / 'env.defaults').resolve()))
-        if project_dir is not None:
+        if project_dir is not None and (project_dir / '.env').is_file():
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
         # Add defaults for variables that are left empty to set the default.

@@ -41,7 +41,8 @@ def test_init_replication_success(monkeypatch, status_table, place_row, temp_db_
 
     temp_db_cursor.execute("SELECT * FROM import_status")
 
-    expected_date = dt.datetime.fromisoformat('2006-01-27T19:09:10').replace(tzinfo=dt.timezone.utc)
+    expected_date = dt.datetime.strptime('2006-01-27T19:09:10', status.ISODATE_FORMAT)\
+                        .replace(tzinfo=dt.timezone.utc)
     assert temp_db_cursor.rowcount == 1
     assert temp_db_cursor.fetchone() == [expected_date, 234, True]
 

@@ -9,6 +9,7 @@ from ..tools.exec_utils import get_url
 from ..errors import UsageError
 
 LOG = logging.getLogger()
+ISODATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 def compute_database_date(conn):
     """ Determine the date of the database from the newest object in the
@@ -36,7 +37,7 @@ def compute_database_date(conn):
 
     LOG.debug("Found timestamp %s", match[1])
 
-    return dt.datetime.fromisoformat(match[1]).replace(tzinfo=dt.timezone.utc)
+    return dt.datetime.strptime(match[1], ISODATE_FORMAT).replace(tzinfo=dt.timezone.utc)
 
 
 def set_status(conn, date, seq=None, indexed=True):

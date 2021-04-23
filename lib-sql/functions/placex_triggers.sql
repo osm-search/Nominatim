@@ -26,8 +26,9 @@ BEGIN
       FROM placex
      WHERE ST_Covers(geometry, p.centroid)
            and geometry && p.centroid
+           and placex.address is not null
            and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
-           and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+           and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
      LIMIT 1;
     RAISE WARNING 'other address for % %: % (%)', p.osm_type, p.osm_id, address, p.centroid;
   END IF;

@@ -116,7 +116,7 @@ class SpecialPhrasesImporter():
         if self.config.PHRASE_CONFIG:
             settings_path = self._convert_php_settings_if_needed(self.config.PHRASE_CONFIG)
 
-        with open(settings_path, "r") as json_settings:
+        with settings_path.open("r") as json_settings:
             settings = json.load(json_settings)
         return settings['blackList'], settings['whiteList']
 

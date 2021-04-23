@@ -175,6 +175,14 @@ def install_legacy_tokenizer(conn, config, **_):
         configuration for the backwards-compatible legacy tokenizer
     """
     if properties.get_property(conn, 'tokenizer') is None:
+        with conn.cursor() as cur:
+            for table in ('placex', 'location_property_osmline'):
+                has_column = cur.scalar("""SELECT count(*) FROM information_schema.columns
+                                           WHERE table_name = %s
+                                           and column_name = 'token_info'""",
+                                        (table, ))
+            if has_column == 0:
+                cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 

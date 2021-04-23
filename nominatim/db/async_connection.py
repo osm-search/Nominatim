@@ -14,7 +14,7 @@ from psycopg2.extras import wait_select
 try:
     import psycopg2.errors # pylint: disable=no-name-in-module,import-error
     __has_psycopg2_errors__ = True
-except ModuleNotFoundError:
+except ImportError:
     __has_psycopg2_errors__ = False
 
 LOG = logging.getLogger()

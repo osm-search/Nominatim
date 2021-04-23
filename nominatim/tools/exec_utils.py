@@ -99,7 +99,7 @@ def run_osm2pgsql(options):
     """ Run osm2pgsql with the given options.
     """
     env = get_pg_env(options['dsn'])
-    cmd = [options['osm2pgsql'],
+    cmd = [str(options['osm2pgsql']),
            '--hstore', '--latlon', '--slim',
            '--with-forward-dependencies', 'false',
            '--log-progress', 'true',

@@ -82,7 +82,18 @@ jobs:
                 verbose: true
 
     import:
-        runs-on: ubuntu-20.04
+        strategy:
+            matrix:
+                ubuntu: [18, 20]
+                include:
+                    - ubuntu: 18
+                      postgresql: 9.5
+                      postgis: 2.5
+                    - ubuntu: 20
+                      postgresql: 13
+                      postgis: 3
+
+        runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
             - uses: actions/checkout@v2
@@ -108,11 +119,23 @@ jobs:
                      monaco-latest.osm.pbf
                   key: nominatim-test-data-${{ steps.get-date.outputs.date }}
 
+            - uses: actions/setup-python@v2
+              with:
+                python-version: 3.5
+              if: matrix.ubuntu == 18
+
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
-                  postgresql-version: 13
-                  postgis-version: 3
+                  postgresql-version: ${{ matrix.postgresql }}
+                  postgis-version: ${{ matrix.postgis }}
             - uses: ./Nominatim/.github/actions/build-nominatim
+
+            - name: Install extra dependencies for Ubuntu 18
+              run: |
+                sudo apt-get install libicu-dev
+                pip3 install python-dotenv psycopg2==2.7.7 jinja2==2.8 psutil==5.4.2 pyicu osmium
+              shell: bash
+              if: matrix.ubuntu == 18
 
             - name: Clean installation
               run: rm -rf Nominatim build

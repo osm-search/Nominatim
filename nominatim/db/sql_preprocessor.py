@@ -64,7 +64,7 @@ def _setup_postgresql_features(conn):
         'has_index_non_key_column' : pg_version >= (11, 0, 0)
     }
 
-class SQLPreprocessor: # pylint: disable=too-few-public-methods
+class SQLPreprocessor:
     """ A environment for preprocessing SQL files from the
         lib-sql directory.
 

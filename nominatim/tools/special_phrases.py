@@ -16,7 +16,6 @@ from nominatim.errors import UsageError
 LOG = logging.getLogger()
 class SpecialPhrasesImporter():
     # pylint: disable-msg=too-many-instance-attributes
-    # pylint: disable-msg=too-few-public-methods
     """
         Class handling the process of special phrases importations.
     """

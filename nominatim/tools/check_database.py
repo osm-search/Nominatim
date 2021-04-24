@@ -47,7 +47,7 @@ def _check(hint=None):
 
     return decorator
 
-class _BadConnection: # pylint: disable=R0903
+class _BadConnection:
 
     def __init__(self, msg):
         self.msg = msg

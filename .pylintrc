@@ -10,3 +10,4 @@ ignored-modules=icu
 # closing added here because it sometimes triggers a false positive with
 # 'with' statements.
 ignored-classes=NominatimArgs,closing
+disable=too-few-public-methods

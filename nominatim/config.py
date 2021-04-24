@@ -39,7 +39,7 @@ class Configuration:
             self._config['NOMINATIM_ADDRESS_LEVEL_CONFIG'] = \
                 str(config_dir / 'address-levels.json')
 
-        class _LibDirs: # pylint: disable=too-few-public-methods
+        class _LibDirs:
             pass
 
         self.lib_dir = _LibDirs()

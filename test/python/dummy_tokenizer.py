@@ -23,3 +23,30 @@ class DummyTokenizer:
     def init_from_project(self):
         assert self.init_state == None
         self.init_state = "loaded"
+
+
+    def name_analyzer(self):
+        return DummyNameAnalyzer()
+
+
+class DummyNameAnalyzer:
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+
+    def close(self):
+        """ Free all resources used by the analyzer.
+        """
+        pass
+
+    def process_place(self, place):
+        """ Determine tokenizer information about the given place.
+
+            Returns a JSON-serialisable structure that will be handed into
+            the database via the token_info field.
+        """
+        return {}

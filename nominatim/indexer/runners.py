@@ -2,6 +2,10 @@
 Mix-ins that provide the actual commands for the indexer for various indexing
 tasks.
 """
+import functools
+
+import psycopg2.extras
+
 # pylint: disable=C0111
 
 class AbstractPlacexRunner:
@@ -9,28 +13,26 @@ class AbstractPlacexRunner:
     """
     SELECT_SQL = 'SELECT place_id, (placex_prepare_update(placex)).* FROM placex'
 
-    def __init__(self, rank):
+    def __init__(self, rank, analyzer):
         self.rank = rank
-        self._sql_terms = 0
-        self._cached_index_sql = None
+        self.analyzer = analyzer
 
-    def _index_sql(self, num_places):
-        if num_places != self._sql_terms:
-            self._cached_index_sql = \
-                """ UPDATE placex
-                    SET indexed_status = 0, address = v.addr
-                    FROM (VALUES {}) as v(id, addr)
-                    WHERE place_id = v.id
-                """.format(','.join(["(%s, %s::hstore)"]  * num_places))
-            self._sql_terms = num_places
 
-        return self._cached_index_sql
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def _index_sql(num_places):
+        return """ UPDATE placex
+                   SET indexed_status = 0, address = v.addr, token_info = v.ti
+                   FROM (VALUES {}) as v(id, addr, ti)
+                   WHERE place_id = v.id
+               """.format(','.join(["(%s, %s::hstore, %s::json)"]  * num_places))
 
 
     def index_places(self, worker, places):
         values = []
         for place in places:
             values.extend((place[x] for x in ('place_id', 'address')))
+            values.append(psycopg2.extras.Json(self.analyzer.process_place(place)))
 
         worker.perform(self._index_sql(len(places)), values)
 

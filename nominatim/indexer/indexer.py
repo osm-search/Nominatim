@@ -124,8 +124,9 @@ class Indexer:
         LOG.warning("Starting indexing boundaries using %s threads",
                     self.num_threads)
 
-        for rank in range(max(minrank, 4), min(maxrank, 26)):
-            self._index(runners.BoundaryRunner(rank))
+        with self.tokenizer.name_analyzer() as analyzer:
+            for rank in range(max(minrank, 4), min(maxrank, 26)):
+                self._index(runners.BoundaryRunner(rank, analyzer))
 
     def index_by_rank(self, minrank, maxrank):
         """ Index all entries of placex in the given rank range (inclusive)
@@ -138,15 +139,16 @@ class Indexer:
         LOG.warning("Starting indexing rank (%i to %i) using %i threads",
                     minrank, maxrank, self.num_threads)
 
-        for rank in range(max(1, minrank), maxrank):
-            self._index(runners.RankRunner(rank))
+        with self.tokenizer.name_analyzer() as analyzer:
+            for rank in range(max(1, minrank), maxrank):
+                self._index(runners.RankRunner(rank, analyzer))
 
-        if maxrank == 30:
-            self._index(runners.RankRunner(0))
-            self._index(runners.InterpolationRunner(), 20)
-            self._index(runners.RankRunner(30), 20)
-        else:
-            self._index(runners.RankRunner(maxrank))
+            if maxrank == 30:
+                self._index(runners.RankRunner(0, analyzer))
+                self._index(runners.InterpolationRunner(), 20)
+                self._index(runners.RankRunner(30, analyzer), 20)
+            else:
+                self._index(runners.RankRunner(maxrank, analyzer))
 
 
     def index_postcodes(self):

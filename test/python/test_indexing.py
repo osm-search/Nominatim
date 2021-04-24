@@ -29,6 +29,7 @@ class IndexerTestDB:
                                                 partition SMALLINT,
                                                 admin_level SMALLINT,
                                                 address HSTORE,
+                                                token_info JSONB,
                                                 geometry_sector INTEGER)""")
             cur.execute("""CREATE TABLE location_property_osmline (
                                place_id BIGINT,

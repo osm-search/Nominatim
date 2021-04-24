@@ -5,6 +5,7 @@ import logging
 import shutil
 
 import psycopg2
+import psycopg2.extras
 
 from nominatim.db.connection import connect
 from nominatim.db import properties
@@ -140,6 +141,24 @@ class LegacyTokenizer:
             self._save_config(conn, config)
 
 
+    def name_analyzer(self):
+        """ Create a new analyzer for tokenizing names and queries
+            using this tokinzer. Analyzers are context managers and should
+            be used accordingly:
+
+            ```
+            with tokenizer.name_analyzer() as analyzer:
+                analyser.tokenize()
+            ```
+
+            When used outside the with construct, the caller must ensure to
+            call the close() function before destructing the analyzer.
+
+            Analyzers are not thread-safe. You need to instantiate one per thread.
+        """
+        return LegacyNameAnalyzer(self.dsn)
+
+
     def _init_db_tables(self, config):
         """ Set up the word table and fill it with pre-computed word
             frequencies.
@@ -159,3 +178,42 @@ class LegacyTokenizer:
         """
         properties.set_property(conn, DBCFG_NORMALIZATION, self.normalization)
         properties.set_property(conn, DBCFG_MAXWORDFREQ, config.MAX_WORD_FREQUENCY)
+
+
+
+class LegacyNameAnalyzer:
+    """ The legacy analyzer uses the special Postgresql module for
+        splitting names.
+
+        Each instance opens a connection to the database to request the
+        normalization.
+    """
+
+    def __init__(self, dsn):
+        self.conn = connect(dsn).connection
+        self.conn.autocommit = True
+        psycopg2.extras.register_hstore(self.conn)
+
+
+    def __enter__(self):
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+
+    def close(self):
+        """ Free all resources used by the analyzer.
+        """
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+
+    def process_place(self, place):
+        """ Determine tokenizer information about the given place.
+
+            Returns a JSON-serialisable structure that will be handed into
+            the database via the token_info field.
+        """
+        return {}

@@ -1,7 +1,7 @@
 # Deploying Nominatim
 
 The Nominatim API is implemented as a PHP application. The `website/` directory
-in the build directory contains the configured website. You can serve this
+in the project directory contains the configured website. You can serve this
 in a production environment with any web server that is capable to run
 PHP scripts.
 
@@ -13,10 +13,11 @@ to run a web service. Please refer to the documentation of
 for background information on configuring the services.
 
 !!! Note
-    Throughout this page, we assume that your Nominatim build directory is
-    located in `/srv/nominatim/build` and the source code in
-    `/srv/nominatim/Nominatim`. If you have put it somewhere else, you
-    need to adjust the commands and configuration accordingly.
+    Throughout this page, we assume that your Nominatim project directory is
+    located in `/srv/nominatim-project` and that you have installed Nominatim
+    using the default installation prefix `/usr/local`. If you have put it
+    somewhere else, you need to adjust the commands and configuration
+    accordingly.
 
     We further assume that your web server runs as user `www-data`. Older
     versions of CentOS may still use the user name `apache`. You also need
@@ -29,7 +30,7 @@ web server user. You can check that the permissions are correct by accessing
 on of the php files as the web server user:
 
 ``` sh
-sudo -u www-data head -n 1 /srv/nominatim/build/website/search.php
+sudo -u www-data head -n 1 /srv/nominatim-project/website/search.php
 ```
 
 If this shows a permission error, then you need to adapt the permissions of
@@ -40,11 +41,11 @@ web server access. At a minimum the following SELinux labelling should be done
 for Nominatim:
 
 ``` sh
-sudo semanage fcontext -a -t httpd_sys_content_t "/srv/nominatim/Nominatim/(website|lib|settings)(/.*)?"
-sudo semanage fcontext -a -t httpd_sys_content_t "/srv/nominatim/build/(website|settings)(/.*)?"
-sudo semanage fcontext -a -t lib_t "/srv/nominatim/build/module/nominatim.so"
-sudo restorecon -R -v /srv/nominatim/Nominatim
-sudo restorecon -R -v /srv/nominatim/build
+sudo semanage fcontext -a -t httpd_sys_content_t "/usr/local/nominatim/lib/lib-php(/.*)?"
+sudo semanage fcontext -a -t httpd_sys_content_t "/srv/nominatim-project/website(/.*)?"
+sudo semanage fcontext -a -t lib_t "/srv/nominatim-project/module/nominatim.so"
+sudo restorecon -R -v /usr/local/lib/nominatim
+sudo restorecon -R -v /srv/nominatim-project
 ```
 
 ## Nominatim with Apache
@@ -65,13 +66,13 @@ Make sure your Apache configuration contains the required permissions for the
 directory and create an alias:
 
 ``` apache
-<Directory "/srv/nominatim/build/website">
+<Directory "/srv/nominatim-project/website">
   Options FollowSymLinks MultiViews
   AddType text/html   .php
   DirectoryIndex search.php
   Require all granted
 </Directory>
-Alias /nominatim /srv/nominatim/build/website
+Alias /nominatim /srv/nominatim-project/website
 ```
 
 After making changes in the apache config you need to restart apache.
@@ -110,7 +111,7 @@ Tell nginx that php files are special and to fastcgi_pass to the php-fpm
 unix socket by adding the location definition to the default configuration.
 
 ``` nginx
-root /srv/nominatim/build/website;
+root /srv/nominatim-project/website;
 index search.php;
 location / {
     try_files $uri $uri/ @php;

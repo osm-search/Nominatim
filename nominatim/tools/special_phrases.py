@@ -3,13 +3,15 @@
 """
 import logging
 import os
+from os.path import isfile
 from pathlib import Path
 import re
 import subprocess
 import json
-from os.path import isfile
+
 from icu import Transliterator
 from psycopg2.sql import Identifier, Literal, SQL
+
 from nominatim.tools.exec_utils import get_url
 from nominatim.errors import UsageError
 
@@ -151,7 +153,7 @@ class SpecialPhrasesImporter():
         type_matchs = self.sanity_check_pattern.findall(phrase_type)
         class_matchs = self.sanity_check_pattern.findall(phrase_class)
 
-        if len(class_matchs) < 1 or len(type_matchs) < 1:
+        if not class_matchs or not type_matchs:
             LOG.warning("Bad class/type for language %s: %s=%s. It will not be imported",
                         lang, phrase_class, phrase_type)
             return False

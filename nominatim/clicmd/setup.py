@@ -123,7 +123,7 @@ class SetupAll:
                 with connect(args.config.get_libpq_dsn()) as conn:
                     SetupAll._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
-            indexer = Indexer(args.config.get_libpq_dsn(),
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                               args.threads or psutil.cpu_count() or 1)
             indexer.index_full(analyse=not args.index_noanalyse)
 

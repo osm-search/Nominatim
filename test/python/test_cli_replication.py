@@ -27,7 +27,7 @@ def call_nominatim(*args):
                                    cli_args=['replication'] + list(args))
 
 @pytest.fixture
-def index_mock(monkeypatch):
+def index_mock(monkeypatch, tokenizer_mock):
     mock = MockParamCapture()
     monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', mock)
     monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', mock)
@@ -52,7 +52,7 @@ def init_status(temp_db_conn, status_table):
 
 
 @pytest.fixture
-def update_mock(mock_func_factory, init_status):
+def update_mock(mock_func_factory, init_status, tokenizer_mock):
     return mock_func_factory(nominatim.tools.replication, 'update')
 
 @pytest.mark.parametrize("params,func", [

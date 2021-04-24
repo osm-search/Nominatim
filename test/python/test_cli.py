@@ -57,6 +57,22 @@ def mock_func_factory(monkeypatch):
     return get_mock
 
 
+@pytest.fixture
+def tokenizer_mock(monkeypatch):
+    class DummyTokenizer:
+        def __init__(self, *args, **kwargs):
+            self.update_sql_functions_called = False
+
+        def update_sql_functions(self, *args):
+            self.update_sql_functions_called = True
+
+    tok = DummyTokenizer()
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
+                        lambda *args: tok)
+
+    return tok
+
+
 def test_cli_help(capsys):
     """ Running nominatim tool without arguments prints help.
     """
@@ -221,7 +237,8 @@ def test_add_data_command(mock_run_legacy, name, oid):
                           (['--boundaries-only'], 1, 0),
                           (['--no-boundaries'], 0, 1),
                           (['--boundaries-only', '--no-boundaries'], 0, 0)])
-def test_index_command(mock_func_factory, temp_db_cursor, params, do_bnds, do_ranks):
+def test_index_command(mock_func_factory, temp_db_cursor, tokenizer_mock,
+                       params, do_bnds, do_ranks):
     temp_db_cursor.execute("CREATE TABLE import_status (indexed bool)")
     bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
     rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
@@ -253,20 +270,12 @@ def test_refresh_command(mock_func_factory, temp_db, command, func):
     assert func_mock.called == 1
 
 
-def test_refresh_create_functions(mock_func_factory, monkeypatch, temp_db):
-    class DummyTokenizer:
-        def update_sql_functions(self, *args):
-            self.called = True
-
+def test_refresh_create_functions(mock_func_factory, temp_db, tokenizer_mock):
     func_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
-    tok = DummyTokenizer()
-    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
-                        lambda *args: tok)
-
 
     assert 0 == call_nominatim('refresh', '--functions')
     assert func_mock.called == 1
-    assert hasattr(tok, 'called')
+    assert tokenizer_mock.update_sql_functions_called
 
 
 def test_refresh_importance_computed_after_wiki_import(monkeypatch, temp_db):

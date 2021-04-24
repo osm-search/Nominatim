@@ -79,8 +79,9 @@ class Indexer:
     """ Main indexing routine.
     """
 
-    def __init__(self, dsn, num_threads):
+    def __init__(self, dsn, tokenizer, num_threads):
         self.dsn = dsn
+        self.tokenizer = tokenizer
         self.num_threads = num_threads
 
 

@@ -32,8 +32,11 @@ class UpdateIndex:
     @staticmethod
     def run(args):
         from ..indexer.indexer import Indexer
+        from ..tokenizer import factory as tokenizer_factory
 
-        indexer = Indexer(args.config.get_libpq_dsn(),
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+
+        indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                           args.threads or psutil.cpu_count() or 1)
 
         if not args.no_boundaries:

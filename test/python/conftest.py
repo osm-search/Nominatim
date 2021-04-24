@@ -1,3 +1,4 @@
+import importlib
 import itertools
 import sys
 from pathlib import Path
@@ -15,6 +16,9 @@ sys.path.insert(0, str(SRC_DIR.resolve()))
 from nominatim.config import Configuration
 from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.db import properties
+
+import dummy_tokenizer
 
 class _TestingCursor(psycopg2.extras.DictCursor):
     """ Extension to the DictCursor class that provides execution
@@ -292,3 +296,17 @@ def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
                     sql=tmp_path, data=SRC_DIR / 'data')
 
     return SQLPreprocessor(temp_db_conn, cfg)
+
+
+@pytest.fixture
+def tokenizer_mock(monkeypatch, property_table, temp_db_conn):
+    """ Sets up the configuration so that the test dummy tokenizer will be
+        loaded.
+    """
+    monkeypatch.setenv('NOMINATIM_TOKENIZER', 'dummy')
+
+    def _import_dummy(module, *args, **kwargs):
+        return dummy_tokenizer
+
+    monkeypatch.setattr(importlib, "import_module", _import_dummy)
+    properties.set_property(temp_db_conn, 'tokenizer', 'dummy')

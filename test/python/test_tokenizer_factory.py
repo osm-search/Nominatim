@@ -7,7 +7,7 @@ import pytest
 from nominatim.db import properties
 from nominatim.tokenizer import factory
 from nominatim.errors import UsageError
-import dummy_tokenizer
+from dummy_tokenizer import DummyTokenizer
 
 @pytest.fixture
 def test_config(def_config, tmp_path):
@@ -15,37 +15,27 @@ def test_config(def_config, tmp_path):
     return def_config
 
 
-@pytest.fixture
-def tokenizer_import(monkeypatch):
-    monkeypatch.setenv('NOMINATIM_TOKENIZER', 'dummy')
-
-    def _import_dummy(module, *args, **kwargs):
-        return dummy_tokenizer
-
-    monkeypatch.setattr(importlib, "import_module", _import_dummy)
-
-
 def test_setup_dummy_tokenizer(temp_db_conn, test_config,
-                               tokenizer_import, property_table):
+                               tokenizer_mock, property_table):
     tokenizer = factory.create_tokenizer(test_config)
 
-    assert isinstance(tokenizer, dummy_tokenizer.DummyTokenizer)
+    assert isinstance(tokenizer, DummyTokenizer)
     assert tokenizer.init_state == "new"
     assert (test_config.project_dir / 'tokenizer').is_dir()
 
     assert properties.get_property(temp_db_conn, 'tokenizer') == 'dummy'
 
 
-def test_setup_tokenizer_dir_exists(test_config, tokenizer_import, property_table):
+def test_setup_tokenizer_dir_exists(test_config, tokenizer_mock, property_table):
     (test_config.project_dir / 'tokenizer').mkdir()
 
     tokenizer = factory.create_tokenizer(test_config)
 
-    assert isinstance(tokenizer, dummy_tokenizer.DummyTokenizer)
+    assert isinstance(tokenizer, DummyTokenizer)
     assert tokenizer.init_state == "new"
 
 
-def test_setup_tokenizer_dir_failure(test_config, tokenizer_import, property_table):
+def test_setup_tokenizer_dir_failure(test_config, tokenizer_mock, property_table):
     (test_config.project_dir / 'tokenizer').write_text("foo")
 
     with pytest.raises(UsageError):
@@ -59,16 +49,16 @@ def test_setup_bad_tokenizer_name(test_config, monkeypatch):
         factory.create_tokenizer(test_config)
 
 def test_load_tokenizer(temp_db_conn, test_config,
-                        tokenizer_import, property_table):
+                        tokenizer_mock, property_table):
     factory.create_tokenizer(test_config)
 
     tokenizer = factory.get_tokenizer_for_db(test_config)
 
-    assert isinstance(tokenizer, dummy_tokenizer.DummyTokenizer)
+    assert isinstance(tokenizer, DummyTokenizer)
     assert tokenizer.init_state == "loaded"
 
 
-def test_load_no_tokenizer_dir(test_config, tokenizer_import, property_table):
+def test_load_no_tokenizer_dir(test_config, tokenizer_mock, property_table):
     factory.create_tokenizer(test_config)
 
     test_config.project_dir = test_config.project_dir / 'foo'
@@ -77,7 +67,7 @@ def test_load_no_tokenizer_dir(test_config, tokenizer_import, property_table):
         factory.get_tokenizer_for_db(test_config)
 
 
-def test_load_missing_propoerty(temp_db_cursor, test_config, tokenizer_import, property_table):
+def test_load_missing_propoerty(temp_db_cursor, test_config, tokenizer_mock, property_table):
     factory.create_tokenizer(test_config)
 
     temp_db_cursor.execute("TRUNCATE TABLE nominatim_properties")

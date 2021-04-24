@@ -3,7 +3,7 @@
 nominatim
 .SH SYNOPSIS
 .B nominatim
-[-h] {import,freeze,replication,special-phrases,add-data,index,refresh,admin,export,serve,search,reverse,lookup,details,status,transition} ...
+[-h] {import,freeze,replication,special-phrases,add-data,index,refresh,admin,export,serve,search,reverse,lookup,details,status} ...
 .SH DESCRIPTION
     Command\-line tools for importing, updating, administrating and
     querying the Nominatim database.
@@ -58,9 +58,6 @@ nominatim
 .TP
 \fBnominatim\fR \fI\,status\/\fR
     Execute API status query.
-.TP
-\fBnominatim\fR \fI\,transition\/\fR
-    Internal functions for code transition. Do not use.
 .SH OPTIONS 'nominatim import'
 usage: nominatim import [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         (--osm-file FILE | --continue {load-data,indexing,db-postprocess})
@@ -244,7 +241,7 @@ usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
 
     Add additional data from a file or an online source.
 
-    Data is only imported, not indexed. You need to call `nominatim\-update index`
+    Data is only imported, not indexed. You need to call `nominatim index`
     to complete the process.
     
 
@@ -908,106 +905,6 @@ Number of parallel threads to use
 .TP
 \fB\-\-format\fR {text,json}
 Format of result
-
-.SH OPTIONS 'nominatim transition'
-usage: nominatim transition [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
-                            [--create-db] [--setup-db] [--import-data]
-                            [--load-data] [--create-tables]
-                            [--create-partition-tables] [--index]
-                            [--create-search-indices] [--create-country-names]
-                            [--no-partitions] [--osm-file FILE] [--drop]
-                            [--osm2pgsql-cache SIZE] [--no-analyse]
-                            [--ignore-errors] [--reverse-only]
-                            [--tiger-data FILE]
-
-    Internal functions for code transition. Do not use.
-    
-
-
-
-.TP
-\fB\-q\fR, \fB\-\-quiet\fR
-Print only error messages
-
-.TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Increase verboseness of output
-
-.TP
-\fB\-\-project\-dir\fR DIR
-Base directory of the Nominatim installation (default:.)
-
-.TP
-\fB\-j\fR NUM, \fB\-\-threads\fR NUM
-Number of parallel threads to use
-
-.TP
-\fB\-\-create\-db\fR
-Create nominatim db
-
-.TP
-\fB\-\-setup\-db\fR
-Build a blank nominatim db
-
-.TP
-\fB\-\-import\-data\fR
-Import a osm file
-
-.TP
-\fB\-\-load\-data\fR
-Copy data to live tables from import table
-
-.TP
-\fB\-\-create\-tables\fR
-Create main tables
-
-.TP
-\fB\-\-create\-partition\-tables\fR
-Create required partition tables
-
-.TP
-\fB\-\-index\fR
-Index the data
-
-.TP
-\fB\-\-create\-search\-indices\fR
-Create additional indices required for search and update
-
-.TP
-\fB\-\-create\-country\-names\fR
-Create search index for default country names.
-
-.TP
-\fB\-\-no\-partitions\fR
-Do not partition search indices
-
-.TP
-\fB\-\-osm\-file\fR FILE
-File to import
-
-.TP
-\fB\-\-drop\fR
-Drop tables needed for updates, making the database readonly
-
-.TP
-\fB\-\-osm2pgsql\-cache\fR SIZE
-Size of cache to be used by osm2pgsql (in MB)
-
-.TP
-\fB\-\-no\-analyse\fR
-Do not perform analyse operations during index
-
-.TP
-\fB\-\-ignore\-errors\fR
-Ignore certain erros on import.
-
-.TP
-\fB\-\-reverse\-only\fR
-Do not create search tables and indexes
-
-.TP
-\fB\-\-tiger\-data\fR FILE
-File to import
 
 .SH DISTRIBUTION
 The latest version of Nominatim may be downloaded from

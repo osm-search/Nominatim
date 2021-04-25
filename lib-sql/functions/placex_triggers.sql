@@ -287,6 +287,106 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
+CREATE OR REPLACE FUNCTION create_poi_search_terms(obj_place_id BIGINT,
+                                                   in_partition SMALLINT,
+                                                   parent_place_id BIGINT,
+                                                   address HSTORE,
+                                                   country TEXT,
+                                                   housenumber TEXT,
+                                                   token_info JSONB,
+                                                   geometry GEOMETRY,
+                                                   OUT name_vector INTEGER[],
+                                                   OUT nameaddress_vector INTEGER[])
+  AS $$
+DECLARE
+  parent_name_vector INTEGER[];
+  parent_address_vector INTEGER[];
+  addr_place_ids INTEGER[];
+
+  addr_item RECORD;
+  parent_address_place_ids BIGINT[];
+  filtered_address HSTORE;
+BEGIN
+  nameaddress_vector := '{}'::INTEGER[];
+
+  SELECT s.name_vector, s.nameaddress_vector
+    INTO parent_name_vector, parent_address_vector
+    FROM search_name s
+    WHERE s.place_id = parent_place_id;
+
+  -- Find all address tags that don't appear in the parent search names.
+  SELECT hstore(array_agg(ARRAY[k, v])) INTO filtered_address
+    FROM (SELECT skeys(address) as k, svals(address) as v) a
+   WHERE not addr_ids_from_name(v) && parent_address_vector
+         AND k not in ('country', 'street', 'place', 'postcode',
+                       'housenumber', 'streetnumber', 'conscriptionnumber');
+
+  -- Compute all search terms from the addr: tags.
+  IF filtered_address IS NOT NULL THEN
+    FOR addr_item IN
+      SELECT * FROM
+        get_places_for_addr_tags(in_partition, geometry, filtered_address, country)
+    LOOP
+        IF addr_item.place_id is null THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              addr_item.keywords);
+            CONTINUE;
+        END IF;
+
+        IF parent_address_place_ids is null THEN
+            SELECT array_agg(parent_place_id) INTO parent_address_place_ids
+              FROM place_addressline
+             WHERE place_id = parent_place_id;
+        END IF;
+
+        IF not parent_address_place_ids @> ARRAY[addr_item.place_id] THEN
+            nameaddress_vector := array_merge(nameaddress_vector,
+                                              addr_item.keywords);
+
+            INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                           isaddress, distance, cached_rank_address)
+            VALUES (obj_place_id, addr_item.place_id, not addr_item.isguess,
+                    true, addr_item.distance, addr_item.rank_address);
+        END IF;
+    END LOOP;
+  END IF;
+
+  name_vector := token_get_name_search_tokens(token_info);
+
+  -- Check if the parent covers all address terms.
+  -- If not, create a search name entry with the house number as the name.
+  -- This is unusual for the search_name table but prevents that the place
+  -- is returned when we only search for the street/place.
+
+  IF housenumber is not null and not nameaddress_vector <@ parent_address_vector THEN
+    name_vector := array_merge(name_vector,
+                               ARRAY[getorcreate_housenumber_id(make_standard_name(housenumber))]);
+  END IF;
+
+  IF not address ? 'street' and address ? 'place' THEN
+    addr_place_ids := addr_ids_from_name(address->'place');
+    IF not addr_place_ids <@ parent_name_vector THEN
+      -- make sure addr:place terms are always searchable
+      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+      -- If there is a housenumber, also add the place name as a name,
+      -- so we can search it by the usual housenumber+place algorithms.
+      IF housenumber is not null THEN
+        name_vector := array_merge(name_vector,
+                                   ARRAY[getorcreate_name_id(make_standard_name(address->'place'))]);
+      END IF;
+    END IF;
+  END IF;
+
+  -- Cheating here by not recomputing all terms but simply using the ones
+  -- from the parent object.
+  nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
+  nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
+
+END;
+$$
+LANGUAGE plpgsql;
+
+
 -- Insert address of a place into the place_addressline table.
 --
 -- \param obj_place_id  Place_id of the place to compute the address for.
@@ -833,28 +933,16 @@ BEGIN
 
       IF NEW.name is not NULL THEN
           NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-          name_vector := make_keywords(NEW.name);
-
-          IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-            result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
-                                   name_vector, NEW.rank_search, NEW.rank_address,
-                                   upper(trim(NEW.address->'postcode')), NEW.geometry,
-                                   NEW.centroid);
-            {% if debug %}RAISE WARNING 'Place added to location table';{% endif %}
-          END IF;
-
       END IF;
 
       {% if not db.reverse_only %}
-      IF array_length(name_vector, 1) is not NULL
-         OR NEW.address is not NULL
-      THEN
+      IF NEW.name is not NULL OR NEW.address is not NULL THEN
         SELECT * INTO name_vector, nameaddress_vector
           FROM create_poi_search_terms(NEW.place_id,
                                        NEW.partition, NEW.parent_place_id,
                                        NEW.address,
                                        NEW.country_code, NEW.housenumber,
-                                       name_vector, NEW.centroid);
+                                       NEW.token_info, NEW.centroid);
 
         IF array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
@@ -868,6 +956,7 @@ BEGIN
       END IF;
       {% endif %}
 
+      NEW.token_info := token_strip_info(NEW.token_info);
       -- If the address was inherited from a surrounding building,
       -- do not add it permanently to the table.
       IF NEW.address ? '_inherited' THEN
@@ -948,19 +1037,12 @@ BEGIN
     END IF;
   END IF;
 
-  -- Initialise the name vector using our name
-  NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-  name_vector := make_keywords(NEW.name);
-
   -- make sure all names are in the word table
   IF NEW.admin_level = 2
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
-    PERFORM create_country(NEW.name, lower(NEW.country_code));
-    {% if debug %}RAISE WARNING 'Country names updated';{% endif %}
-
-    -- Also update the list of country names. Adding an additional sanity
+    -- Update the list of country names. Adding an additional sanity
     -- check here: make sure the country does overlap with the area where
     -- we expect it to be as per static country grid.
     FOR location IN
@@ -1013,9 +1095,14 @@ BEGIN
 
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN
+    -- Initialise the name vector using our name
+    NEW.name := add_default_place_name(NEW.country_code, NEW.name);
+    name_vector := token_get_name_search_tokens(NEW.token_info);
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry, NEW.centroid);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
+                             name_vector, NEW.rank_search, NEW.rank_address,
+                             upper(trim(NEW.address->'postcode')), NEW.geometry, NEW.centroid);
       {% if debug %}RAISE WARNING 'added to location (full)';{% endif %}
     END IF;
 
@@ -1024,7 +1111,8 @@ BEGIN
       {% if debug %}RAISE WARNING 'insert into road location table (full)';{% endif %}
     END IF;
 
-    result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
+    result := insertSearchName(NEW.partition, NEW.place_id,
+                               token_get_name_match_tokens(NEW.token_info),
                                NEW.rank_search, NEW.rank_address, NEW.geometry);
     {% if debug %}RAISE WARNING 'added to search name (full)';{% endif %}
 
@@ -1041,6 +1129,7 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;{% endif %}
 
+  NEW.token_info := token_strip_info(NEW.token_info);
   RETURN NEW;
 END;
 $$

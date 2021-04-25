@@ -2,6 +2,7 @@
 Tokenizer implementing normalisation as used before Nominatim 4.
 """
 import logging
+import re
 import shutil
 
 import psycopg2
@@ -216,4 +217,31 @@ class LegacyNameAnalyzer:
             Returns a JSON-serialisable structure that will be handed into
             the database via the token_info field.
         """
-        return {}
+        token_info = _TokenInfo()
+
+        token_info.add_names(self.conn, place.get('name'), place.get('country_feature'))
+
+        return token_info.data
+
+
+class _TokenInfo:
+
+    def __init__(self):
+        self.data = {}
+
+
+    def add_names(self, conn, names, country_feature):
+        """ Add token information for the names of the place.
+        """
+        if not names:
+            return
+
+        with conn.cursor() as cur:
+            # Create the token IDs for all names.
+            self.data['names'] = cur.scalar("SELECT make_keywords(%s)::text",
+                                            (names, ))
+
+            # Add country tokens to word table if necessary.
+            if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
+                cur.execute("SELECT create_country(%s, %s)",
+                            (names, country_feature.lower()))

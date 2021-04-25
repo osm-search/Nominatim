@@ -190,7 +190,7 @@ class Indexer:
 
                     with WorkerPool(self.dsn, self.num_threads) as pool:
                         while True:
-                            places = [p for p in cur.fetchmany(batch)]
+                            places = cur.fetchmany(batch)
                             if not places:
                                 break
 

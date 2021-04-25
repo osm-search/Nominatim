@@ -33,6 +33,9 @@ class IndexerTestDB:
                                                 geometry_sector INTEGER)""")
             cur.execute("""CREATE TABLE location_property_osmline (
                                place_id BIGINT,
+                               osm_id BIGINT,
+                               address HSTORE,
+                               token_info JSONB,
                                indexed_status SMALLINT,
                                indexed_date TIMESTAMP,
                                geometry_sector INTEGER)""")
@@ -61,6 +64,14 @@ class IndexerTestDB:
                            END;
                            $$ LANGUAGE plpgsql STABLE;
                         """)
+            cur.execute("""CREATE OR REPLACE FUNCTION get_interpolation_address(in_address HSTORE, wayid BIGINT)
+                           RETURNS HSTORE AS $$
+                           BEGIN
+                             RETURN in_address;
+                           END;
+                           $$ LANGUAGE plpgsql STABLE;
+                        """)
+
             for table in ('placex', 'location_property_osmline', 'location_postcode'):
                 cur.execute("""CREATE TRIGGER {0}_update BEFORE UPDATE ON {0}
                                FOR EACH ROW EXECUTE PROCEDURE date_update()
@@ -91,9 +102,9 @@ class IndexerTestDB:
         next_id = next(self.osmline_id)
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO location_property_osmline
-                              (place_id, indexed_status, geometry_sector)
-                              VALUES (%s, 1, %s)""",
-                        (next_id, sector))
+                              (place_id, osm_id, indexed_status, geometry_sector)
+                              VALUES (%s, %s, 1, %s)""",
+                        (next_id, next_id, sector))
         return next_id
 
     def add_postcode(self, country, postcode):

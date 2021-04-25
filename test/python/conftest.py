@@ -299,7 +299,7 @@ def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
 
 
 @pytest.fixture
-def tokenizer_mock(monkeypatch, property_table, temp_db_conn):
+def tokenizer_mock(monkeypatch, property_table, temp_db_conn, dsn):
     """ Sets up the configuration so that the test dummy tokenizer will be
         loaded.
     """

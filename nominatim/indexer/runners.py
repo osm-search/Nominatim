@@ -25,7 +25,7 @@ class AbstractPlacexRunner:
                    SET indexed_status = 0, address = v.addr, token_info = v.ti
                    FROM (VALUES {}) as v(id, addr, ti)
                    WHERE place_id = v.id
-               """.format(','.join(["(%s, %s::hstore, %s::json)"]  * num_places))
+               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
 
 
     def index_places(self, worker, places):
@@ -82,6 +82,10 @@ class InterpolationRunner:
         location_property_osmline.
     """
 
+    def __init__(self, analyzer):
+        self.analyzer = analyzer
+
+
     @staticmethod
     def name():
         return "interpolation lines (location_property_osmline)"
@@ -93,15 +97,30 @@ class InterpolationRunner:
 
     @staticmethod
     def sql_get_objects():
-        return """SELECT place_id FROM location_property_osmline
+        return """SELECT place_id, get_interpolation_address(address, osm_id) as address
+                  FROM location_property_osmline
                   WHERE indexed_status > 0
                   ORDER BY geometry_sector"""
 
+
     @staticmethod
-    def index_places(worker, ids):
-        worker.perform(""" UPDATE location_property_osmline
-                           SET indexed_status = 0 WHERE place_id IN ({})
-                       """.format(','.join((str(i[0]) for i in ids))))
+    @functools.lru_cache(maxsize=1)
+    def _index_sql(num_places):
+        return """ UPDATE location_property_osmline
+                   SET indexed_status = 0, address = v.addr, token_info = v.ti
+                   FROM (VALUES {}) as v(id, addr, ti)
+                   WHERE place_id = v.id
+               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+
+
+    def index_places(self, worker, places):
+        values = []
+        for place in places:
+            values.extend((place[x] for x in ('place_id', 'address')))
+            values.append(psycopg2.extras.Json(self.analyzer.process_place(place)))
+
+        worker.perform(self._index_sql(len(places)), values)
+
 
 
 class PostcodeRunner:

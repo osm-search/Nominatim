@@ -34,6 +34,13 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
+CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
+  RETURNS TEXT
+AS $$
+  SELECT CASE WHEN postcode SIMILAR TO '%(,|;)%' THEN NULL ELSE upper(trim(postcode))END;
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
 -- Return token info that should be saved permanently in the database.
 CREATE OR REPLACE FUNCTION token_strip_info(info JSONB)
   RETURNS JSONB
@@ -133,26 +140,26 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION getorcreate_postcode_id(postcode TEXT)
-  RETURNS INTEGER
+CREATE OR REPLACE FUNCTION create_postcode_id(postcode TEXT)
+  RETURNS BOOLEAN
   AS $$
 DECLARE
+  r RECORD;
   lookup_token TEXT;
-  lookup_word TEXT;
   return_word_id INTEGER;
 BEGIN
-  lookup_word := upper(trim(postcode));
-  lookup_token := ' ' || make_standard_name(lookup_word);
-  SELECT min(word_id) FROM word
-    WHERE word_token = lookup_token and word = lookup_word
+  lookup_token := ' ' || make_standard_name(postcode);
+  FOR r IN
+    SELECT word_id FROM word
+    WHERE word_token = lookup_token and word = postcode
           and class='place' and type='postcode'
-    INTO return_word_id;
-  IF return_word_id IS NULL THEN
-    return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, lookup_word,
-                             'place', 'postcode', null, 0);
-  END IF;
-  RETURN return_word_id;
+  LOOP
+    RETURN false;
+  END LOOP;
+
+  INSERT INTO word VALUES (nextval('seq_word'), lookup_token, postcode,
+                           'place', 'postcode', null, 0);
+  RETURN true;
 END;
 $$
 LANGUAGE plpgsql;

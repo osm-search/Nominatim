@@ -6,7 +6,7 @@ of artificial postcode centroids.
 from nominatim.db.utils import execute_file
 from nominatim.db.connection import connect
 
-def import_postcodes(dsn, project_dir):
+def import_postcodes(dsn, project_dir, tokenizer):
     """ Set up the initial list of postcodes.
     """
 
@@ -41,10 +41,11 @@ def import_postcodes(dsn, project_dir):
                 INSERT INTO location_postcode
                  (place_id, indexed_status, country_code, postcode, geometry)
                 SELECT nextval('seq_place'), 1, country_code,
-                       upper(trim (both ' ' from address->'postcode')) as pc,
+                       token_normalized_postcode(address->'postcode') as pc,
                        ST_Centroid(ST_Collect(ST_Centroid(geometry)))
                   FROM placex
-                 WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'
+                 WHERE address ? 'postcode'
+                       and token_normalized_postcode(address->'postcode') is not null
                        AND geometry IS NOT null
                  GROUP BY country_code, pc
             """)
@@ -52,9 +53,10 @@ def import_postcodes(dsn, project_dir):
             cur.execute("""
                 INSERT INTO location_postcode
                  (place_id, indexed_status, country_code, postcode, geometry)
-                SELECT nextval('seq_place'), 1, 'us', postcode,
+                SELECT nextval('seq_place'), 1, 'us',
+                       token_normalized_postcode(postcode),
                        ST_SetSRID(ST_Point(x,y),4326)
-                  FROM us_postcode WHERE postcode NOT IN
+                  FROM us_postcode WHERE token_normalized_postcode(postcode) NOT IN
                         (SELECT postcode FROM location_postcode
                           WHERE country_code = 'us')
             """)
@@ -62,8 +64,9 @@ def import_postcodes(dsn, project_dir):
             cur.execute("""
                 INSERT INTO location_postcode
                  (place_id, indexed_status, country_code, postcode, geometry)
-                SELECT nextval('seq_place'), 1, 'gb', postcode, geometry
-                  FROM gb_postcode WHERE postcode NOT IN
+                SELECT nextval('seq_place'), 1, 'gb',
+                       token_normalized_postcode(postcode), geometry
+                  FROM gb_postcode WHERE token_normalized_postcode(postcode) NOT IN
                            (SELECT postcode FROM location_postcode
                              WHERE country_code = 'gb')
             """)
@@ -72,9 +75,7 @@ def import_postcodes(dsn, project_dir):
                     DELETE FROM word WHERE class='place' and type='postcode'
                     and word NOT IN (SELECT postcode FROM location_postcode)
             """)
-
-            cur.execute("""
-                SELECT count(getorcreate_postcode_id(v)) FROM
-                (SELECT distinct(postcode) as v FROM location_postcode) p
-            """)
         conn.commit()
+
+        with tokenizer.name_analyzer() as analyzer:
+            analyzer.add_postcodes_from_db()

@@ -1,6 +1,7 @@
 """
 Tokenizer implementing normalisation as used before Nominatim 4.
 """
+from collections import OrderedDict
 import logging
 import re
 import shutil
@@ -213,6 +214,15 @@ class LegacyNameAnalyzer:
             self.conn.close()
             self.conn = None
 
+
+    def add_postcodes_from_db(self):
+        """ Add postcodes from the location_postcode table to the word table.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute("""SELECT count(create_postcode_id(pc))
+                           FROM (SELECT distinct(postcode) as pc
+                                 FROM location_postcode) x""")
+
     def process_place(self, place):
         """ Determine tokenizer information about the given place.
 
@@ -226,9 +236,23 @@ class LegacyNameAnalyzer:
         address = place.get('address')
 
         if address:
+            self._add_postcode(address.get('postcode'))
             token_info.add_housenumbers(self.conn, address)
 
         return token_info.data
+
+
+    def _add_postcode(self, postcode):
+        """ Make sure the normalized postcode is present in the word table.
+        """
+        if not postcode or re.search(r'[:,;]', postcode) is not None:
+            return
+
+        def _create_postcode_from_db(pcode):
+            with self.conn.cursor() as cur:
+                cur.execute('SELECT create_postcode_id(%s)', (pcode, ))
+
+        self._cache.postcodes.get(postcode.strip().upper(), _create_postcode_from_db)
 
 
 class _TokenInfo:
@@ -285,6 +309,32 @@ class _TokenInfo:
             self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
 
 
+class _LRU:
+    """ Least recently used cache that accepts a generator function to
+        produce the item when there is a cache miss.
+    """
+
+    def __init__(self, maxsize=128):
+        self.data = OrderedDict()
+        self.maxsize = maxsize
+
+    def get(self, key, generator):
+        """ Get the item with the given key from the cache. If nothing
+            is found in the cache, generate the value through the
+            generator function and store it in the cache.
+        """
+        value = self.data.get(key)
+        if value is not None:
+            self.data.move_to_end(key)
+        else:
+            value = generator(key)
+            if len(self.data) >= self.maxsize:
+                self.data.popitem(last=False)
+            self.data[key] = value
+
+        return value
+
+
 class _TokenCache:
     """ Cache for token information to avoid repeated database queries.
 
@@ -292,6 +342,9 @@ class _TokenCache:
         analyzer.
     """
     def __init__(self, conn):
+        # various LRU caches
+        self.postcodes = _LRU(maxsize=32)
+
         # Lookup houseunumbers up to 100 and cache them
         with conn.cursor() as cur:
             cur.execute("""SELECT i, ARRAY[getorcreate_housenumber_id(i::text)]::text

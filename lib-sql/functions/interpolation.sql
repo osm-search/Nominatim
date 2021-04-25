@@ -12,39 +12,47 @@ $$
 LANGUAGE plpgsql IMMUTABLE;
 
 
+CREATE OR REPLACE FUNCTION get_interpolation_address(in_address HSTORE, wayid BIGINT)
+RETURNS HSTORE
+  AS $$
+DECLARE
+  location RECORD;
+  waynodes BIGINT[];
+BEGIN
+  IF akeys(in_address) != ARRAY['interpolation'] THEN
+    RETURN in_address;
+  END IF;
+
+  SELECT nodes INTO waynodes FROM planet_osm_ways WHERE id = wayid;
+  FOR location IN
+    SELECT placex.address, placex.osm_id FROM placex
+     WHERE osm_type = 'N' and osm_id = ANY(waynodes)
+           and placex.address is not null
+           and (placex.address ? 'street' or placex.address ? 'place')
+           and indexed_status < 100
+  LOOP
+    -- mark it as a derived address
+    RETURN location.address || in_address || hstore('_inherited', '');
+  END LOOP;
+
+  RETURN in_address;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
+
 -- find the parent road of the cut road parts
-CREATE OR REPLACE FUNCTION get_interpolation_parent(wayid BIGINT, street TEXT,
+CREATE OR REPLACE FUNCTION get_interpolation_parent(street TEXT,
                                                     place TEXT, partition SMALLINT,
                                                     centroid GEOMETRY, geom GEOMETRY)
   RETURNS BIGINT
   AS $$
 DECLARE
-  addr_street TEXT;
-  addr_place TEXT;
   parent_place_id BIGINT;
-
-  waynodes BIGINT[];
-
   location RECORD;
 BEGIN
-  addr_street = street;
-  addr_place = place;
-
-  IF addr_street is null and addr_place is null THEN
-    select nodes from planet_osm_ways where id = wayid INTO waynodes;
-    FOR location IN SELECT placex.address from placex
-                    where osm_type = 'N' and osm_id = ANY(waynodes)
-                          and placex.address is not null
-                          and (placex.address ? 'street' or placex.address ? 'place')
-                          and indexed_status < 100
-                    limit 1 LOOP
-      addr_street = location.address->'street';
-      addr_place = location.address->'place';
-    END LOOP;
-  END IF;
-
-  parent_place_id := find_parent_for_address(addr_street, addr_place,
-                                             partition, centroid);
+  parent_place_id := find_parent_for_address(street, place, partition, centroid);
 
   IF parent_place_id is null THEN
     FOR location IN SELECT place_id FROM placex
@@ -147,15 +155,18 @@ BEGIN
   NEW.interpolationtype = NEW.address->'interpolation';
 
   place_centroid := ST_PointOnSurface(NEW.linegeo);
-  NEW.parent_place_id = get_interpolation_parent(NEW.osm_id, NEW.address->'street',
+  NEW.parent_place_id = get_interpolation_parent(NEW.address->'street',
                                                  NEW.address->'place',
                                                  NEW.partition, place_centroid, NEW.linegeo);
 
   IF NEW.address is not NULL AND NEW.address ? 'postcode' AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
     interpol_postcode := NEW.address->'postcode';
-    housenum := getorcreate_postcode_id(NEW.address->'postcode');
   ELSE
     interpol_postcode := NULL;
+  END IF;
+
+  IF NEW.address ? '_inherited' THEN
+    NEW.address := hstore('interpolation', NEW.interpolationtype);
   END IF;
 
   -- if the line was newly inserted, split the line as necessary

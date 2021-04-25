@@ -43,6 +43,9 @@ class DummyNameAnalyzer:
         """
         pass
 
+    def add_postcodes_from_db(self):
+        pass
+
     def process_place(self, place):
         """ Determine tokenizer information about the given place.
 

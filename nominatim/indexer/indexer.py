@@ -147,7 +147,7 @@ class Indexer:
 
             if maxrank == 30:
                 self._index(runners.RankRunner(0, analyzer))
-                self._index(runners.InterpolationRunner(), 20)
+                self._index(runners.InterpolationRunner(analyzer), 20)
                 self._index(runners.RankRunner(30, analyzer), 20)
             else:
                 self._index(runners.RankRunner(maxrank, analyzer))

@@ -116,7 +116,8 @@ class SetupAll:
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')
-            postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir)
+            postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir,
+                                       tokenizer)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             if args.continue_at is not None and args.continue_at != 'load-data':

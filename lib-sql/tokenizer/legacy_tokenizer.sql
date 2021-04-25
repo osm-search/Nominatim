@@ -7,6 +7,7 @@ AS $$
   SELECT (info->>'names')::INTEGER[]
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
+
 -- Get tokens for matching the place name against others.
 --
 -- This should usually be restricted to full name tokens.
@@ -14,6 +15,22 @@ CREATE OR REPLACE FUNCTION token_get_name_match_tokens(info JSONB)
   RETURNS INTEGER[]
 AS $$
   SELECT (info->>'names')::INTEGER[]
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+-- Return the housenumber tokens applicable for the place.
+CREATE OR REPLACE FUNCTION token_get_housenumber_search_tokens(info JSONB)
+  RETURNS INTEGER[]
+AS $$
+  SELECT (info->>'hnr_tokens')::INTEGER[]
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+-- Return the housenumber in the form that it can be matched during search.
+CREATE OR REPLACE FUNCTION token_normalized_housenumber(info JSONB)
+  RETURNS TEXT
+AS $$
+  SELECT info->>'hnr';
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
@@ -75,25 +92,24 @@ END;
 $$
 LANGUAGE plpgsql;
 
+
 -- Create housenumber tokens from an OSM addr:housenumber.
 -- The housnumber is split at comma and semicolon as necessary.
 -- The function returns the normalized form of the housenumber suitable
 -- for comparison.
-CREATE OR REPLACE FUNCTION create_housenumber_id(housenumber TEXT)
-  RETURNS TEXT
+CREATE OR REPLACE FUNCTION create_housenumbers(housenumbers TEXT[],
+                                               OUT tokens TEXT,
+                                               OUT normtext TEXT)
   AS $$
-DECLARE
-  normtext TEXT;
 BEGIN
-  SELECT array_to_string(array_agg(trans), ';')
-    INTO normtext
-    FROM (SELECT lookup_word as trans, getorcreate_housenumber_id(lookup_word)
+  SELECT array_to_string(array_agg(trans), ';'), array_agg(tid)::TEXT
+    INTO normtext, tokens
+    FROM (SELECT lookup_word as trans, getorcreate_housenumber_id(lookup_word) as tid
           FROM (SELECT make_standard_name(h) as lookup_word
-                FROM regexp_split_to_table(housenumber, '[,;]') h) x) y;
-
-  return normtext;
+                FROM unnest(housenumbers) h) x) y;
 END;
 $$ LANGUAGE plpgsql STABLE STRICT;
+
 
 CREATE OR REPLACE FUNCTION getorcreate_housenumber_id(lookup_word TEXT)
   RETURNS INTEGER

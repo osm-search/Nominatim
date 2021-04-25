@@ -195,6 +195,8 @@ class LegacyNameAnalyzer:
         self.conn.autocommit = True
         psycopg2.extras.register_hstore(self.conn)
 
+        self._cache = _TokenCache(self.conn)
+
 
     def __enter__(self):
         return self
@@ -217,16 +219,23 @@ class LegacyNameAnalyzer:
             Returns a JSON-serialisable structure that will be handed into
             the database via the token_info field.
         """
-        token_info = _TokenInfo()
+        token_info = _TokenInfo(self._cache)
 
         token_info.add_names(self.conn, place.get('name'), place.get('country_feature'))
+
+        address = place.get('address')
+
+        if address:
+            token_info.add_housenumbers(self.conn, address)
 
         return token_info.data
 
 
 class _TokenInfo:
-
-    def __init__(self):
+    """ Collect token information to be sent back to the database.
+    """
+    def __init__(self, cache):
+        self.cache = cache
         self.data = {}
 
 
@@ -245,3 +254,52 @@ class _TokenInfo:
             if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
                 cur.execute("SELECT create_country(%s, %s)",
                             (names, country_feature.lower()))
+
+
+    def add_housenumbers(self, conn, address):
+        """ Extract housenumber information from the address.
+        """
+        hnrs = [v for k, v in address.items()
+                if k in ('housenumber', 'streetnumber', 'conscriptionnumber')]
+
+        if not hnrs:
+            return
+
+        if len(hnrs) == 1:
+            token = self.cache.get_housenumber(hnrs[0])
+            if token is not None:
+                self.data['hnr_tokens'] = token
+                self.data['hnr'] = hnrs[0]
+                return
+
+        # split numbers if necessary
+        simple_list = []
+        for hnr in hnrs:
+            simple_list.extend((x.strip() for x in re.split(r'[;,]', hnr)))
+
+        if len(simple_list) > 1:
+            simple_list = list(set(simple_list))
+
+        with conn.cursor() as cur:
+            cur.execute("SELECT (create_housenumbers(%s)).* ", (simple_list, ))
+            self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
+
+
+class _TokenCache:
+    """ Cache for token information to avoid repeated database queries.
+
+        This cache is not thread-safe and needs to be instantiated per
+        analyzer.
+    """
+    def __init__(self, conn):
+        # Lookup houseunumbers up to 100 and cache them
+        with conn.cursor() as cur:
+            cur.execute("""SELECT i, ARRAY[getorcreate_housenumber_id(i::text)]::text
+                           FROM generate_series(1, 100) as i""")
+            self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
+
+
+    def get_housenumber(self, number):
+        """ Get a housenumber token from the cache.
+        """
+        return self._cached_housenumbers.get(number)

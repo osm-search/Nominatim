@@ -129,6 +129,9 @@ def change_housenumber_transliteration(conn, **_):
 
         The database schema switched from saving raw housenumbers in
         placex.housenumber to saving transliterated ones.
+
+        Note: the function create_housenumber_id() has been dropped in later
+              versions.
     """
     with conn.cursor() as cur:
         cur.execute("""CREATE OR REPLACE FUNCTION create_housenumber_id(housenumber TEXT)

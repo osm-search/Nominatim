@@ -4,6 +4,8 @@ Main work horse for indexing (computing addresses) the database.
 import logging
 import select
 
+import psycopg2.extras
+
 from nominatim.indexer.progress import ProgressLogger
 from nominatim.indexer import runners
 from nominatim.db.async_connection import DBConnection
@@ -176,6 +178,7 @@ class Indexer:
         LOG.warning("Starting %s (using batch size %s)", runner.name(), batch)
 
         with connect(self.dsn) as conn:
+            psycopg2.extras.register_hstore(conn)
             with conn.cursor() as cur:
                 total_tuples = cur.scalar(runner.sql_count_objects())
                 LOG.debug("Total number of rows: %i", total_tuples)

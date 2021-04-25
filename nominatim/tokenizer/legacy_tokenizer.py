@@ -238,6 +238,9 @@ class LegacyNameAnalyzer:
         if address:
             self._add_postcode(address.get('postcode'))
             token_info.add_housenumbers(self.conn, address)
+            token_info.add_address_parent(self.conn, address.get('street'),
+                                          address.get('place'))
+            token_info.add_address_parts(self.conn, address)
 
         return token_info.data
 
@@ -309,6 +312,46 @@ class _TokenInfo:
             self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
 
 
+    def add_address_parent(self, conn, street, place):
+        """ Extract the tokens for street and place terms.
+        """
+        def _get_streetplace(name):
+            with conn.cursor() as cur:
+                cur.execute("""SELECT (addr_ids_from_name(%s) || getorcreate_name_id(make_standard_name(%s), ''))::text,
+                                      word_ids_from_name(%s)::text""",
+                            (name, name, name))
+                return cur.fetchone()
+
+        if street:
+            self.data['street_search'], self.data['street_match'] = \
+                self.cache.streets.get(street, _get_streetplace)
+
+        if place:
+            self.data['place_search'], self.data['place_match'] = \
+                self.cache.streets.get(place, _get_streetplace)
+
+
+    def add_address_parts(self, conn, address):
+        """ Extract address terms.
+        """
+        def _get_address_term(name):
+            with conn.cursor() as cur:
+                cur.execute("""SELECT addr_ids_from_name(%s)::text,
+                                      word_ids_from_name(%s)::text""",
+                            (name, name))
+                return cur.fetchone()
+
+        tokens = {}
+        for key, value in address.items():
+            if not key.startswith('_') and \
+               key not in ('country', 'street', 'place', 'postcode', 'full',
+                           'housenumber', 'streetnumber', 'conscriptionnumber'):
+                tokens[key] = self.cache.address_terms.get(value, _get_address_term)
+
+        if tokens:
+            self.data['addr'] = tokens
+
+
 class _LRU:
     """ Least recently used cache that accepts a generator function to
         produce the item when there is a cache miss.
@@ -344,6 +387,9 @@ class _TokenCache:
     def __init__(self, conn):
         # various LRU caches
         self.postcodes = _LRU(maxsize=32)
+        self.streets = _LRU(maxsize=256)
+        self.places = _LRU(maxsize=128)
+        self.address_terms = _LRU(maxsize=1024)
 
         # Lookup houseunumbers up to 100 and cache them
         with conn.cursor() as cur:

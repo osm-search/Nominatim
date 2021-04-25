@@ -17,7 +17,6 @@ BEGIN
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
   IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
-    RAISE WARNING 'self address for % %', p.osm_type, p.osm_id;
     address := p.address;
   ELSE
     -- The additional && condition works around the misguided query
@@ -30,7 +29,6 @@ BEGIN
            and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
            and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
      LIMIT 1;
-    RAISE WARNING 'other address for % %: % (%)', p.osm_type, p.osm_id, address, p.centroid;
   END IF;
 
   address := address - '_unlisted_place'::TEXT;

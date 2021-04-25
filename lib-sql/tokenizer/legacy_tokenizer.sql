@@ -34,6 +34,43 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
+CREATE OR REPLACE FUNCTION token_addr_street_match_tokens(info JSONB)
+  RETURNS INTEGER[]
+AS $$
+  SELECT (info->>'street_match')::INTEGER[]
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION token_addr_place_match_tokens(info JSONB)
+  RETURNS INTEGER[]
+AS $$
+  SELECT (info->>'place_match')::INTEGER[]
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION token_addr_place_search_tokens(info JSONB)
+  RETURNS INTEGER[]
+AS $$
+  SELECT (info->>'place_search')::INTEGER[]
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+DROP TYPE IF EXISTS token_addresstoken CASCADE;
+CREATE TYPE token_addresstoken AS (
+  key TEXT,
+  match_tokens INT[],
+  search_tokens INT[]
+);
+
+CREATE OR REPLACE FUNCTION token_get_address_tokens(info JSONB)
+  RETURNS SETOF token_addresstoken
+AS $$
+  SELECT key, (value->>1)::int[] as match_tokens,
+         (value->>0)::int[] as search_tokens
+  FROM jsonb_each(info->'addr');
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
 CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
   RETURNS TEXT
 AS $$

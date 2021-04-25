@@ -43,8 +43,8 @@ LANGUAGE plpgsql STABLE;
 
 
 -- find the parent road of the cut road parts
-CREATE OR REPLACE FUNCTION get_interpolation_parent(street TEXT,
-                                                    place TEXT, partition SMALLINT,
+CREATE OR REPLACE FUNCTION get_interpolation_parent(street INTEGER[], place INTEGER[],
+                                                    partition SMALLINT,
                                                     centroid GEOMETRY, geom GEOMETRY)
   RETURNS BIGINT
   AS $$
@@ -155,16 +155,13 @@ BEGIN
   NEW.interpolationtype = NEW.address->'interpolation';
 
   place_centroid := ST_PointOnSurface(NEW.linegeo);
-  NEW.parent_place_id = get_interpolation_parent(NEW.address->'street',
-                                                 NEW.address->'place',
+  NEW.parent_place_id = get_interpolation_parent(token_addr_street_match_tokens(NEW.token_info),
+                                                 token_addr_place_match_tokens(NEW.token_info),
                                                  NEW.partition, place_centroid, NEW.linegeo);
 
-  IF NEW.address is not NULL AND NEW.address ? 'postcode' AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
-    interpol_postcode := NEW.address->'postcode';
-  ELSE
-    interpol_postcode := NULL;
-  END IF;
+  interpol_postcode := token_normalized_postcode(NEW.address->'postcode');
 
+  NEW.token_info := token_strip_info(NEW.token_info);
   IF NEW.address ? '_inherited' THEN
     NEW.address := hstore('interpolation', NEW.interpolationtype);
   END IF;
@@ -213,12 +210,13 @@ BEGIN
 
             -- determine postcode
             postcode := coalesce(interpol_postcode,
-                                 prevnode.address->'postcode',
-                                 nextnode.address->'postcode',
+                                 token_normalized_postcode(prevnode.address->'postcode'),
+                                 token_normalized_postcode(nextnode.address->'postcode'),
                                  postcode);
 
             IF postcode is NULL THEN
-                SELECT placex.postcode FROM placex WHERE place_id = NEW.parent_place_id INTO postcode;
+                SELECT token_normalized_postcode(placex.postcode)
+                  FROM placex WHERE place_id = NEW.parent_place_id INTO postcode;
             END IF;
             IF postcode is NULL THEN
                 postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);
@@ -228,7 +226,7 @@ BEGIN
                 NEW.startnumber := startnumber;
                 NEW.endnumber := endnumber;
                 NEW.linegeo := sectiongeo;
-                NEW.postcode := upper(trim(postcode));
+                NEW.postcode := postcode;
              ELSE
               insert into location_property_osmline
                      (linegeo, partition, osm_id, parent_place_id,

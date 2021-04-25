@@ -1,5 +1,5 @@
 """
-    Contain the class which handle statistics for the
+    Contains the class which handles statistics for the
     import of special phrases.
 """
 import logging
@@ -92,23 +92,27 @@ class SpecialPhrasesImporterStatistics():
             Print stats for the whole import process
             and reset all values.
         """
-        LOG.warning('====================================================================')
-        LOG.warning('Final statistics of the import:')
-        LOG.warning('- %s phrases were invalid.', self.global_phrases_invalid)
+        LOG.info('====================================================================')
+        LOG.info('Final statistics of the import:')
+        LOG.info('- %s phrases were invalid.', self.global_phrases_invalid)
         if self.global_phrases_invalid > 0:
-            LOG.warning('  Those invalid phrases have been skipped.')
-        LOG.warning('- %s phrases were ignored as they are already in the database',
-                    self.global_phrases_ignored)
-        LOG.warning('- %s phrases were added to the database', self.global_phrases_added)
-        LOG.warning('- %s phrases were deleted from the database', self.global_phrases_deleted)
+            LOG.info('  Those invalid phrases have been skipped.')
+        LOG.info('- %s phrases were ignored as they are already in the database',
+                 self.global_phrases_ignored)
+        LOG.info('- %s phrases were added to the database', self.global_phrases_added)
+        LOG.info('- %s phrases were deleted from the database', self.global_phrases_deleted)
         if self.global_phrases_deleted > 0:
-            LOG.warning('  They were deleted as they are not valid anymore.')
-        LOG.warning('- %s tables were ignored as they already exist on the database',
-                    self.tables_ignored)
-        LOG.warning('- %s tables were created', self.tables_created)
-        LOG.warning('- %s tables were deleted from the database', self.tables_deleted)
+            LOG.info('  They were deleted as they are not valid anymore.')
+        LOG.info('- %s tables were ignored as they already exist on the database',
+                 self.tables_ignored)
+        LOG.info('- %s tables were created', self.tables_created)
+        LOG.info('- %s tables were deleted from the database', self.tables_deleted)
         if self.tables_deleted > 0:
-            LOG.warning('  They were deleted as they are not valid anymore.')
+            LOG.info('  They were deleted as they are not valid anymore.')
+
+        if self.global_phrases_invalid > 0:
+            LOG.warning('%s phrases were invalid and have been skipped during the whole process.',
+                        self.global_phrases_invalid)
 
         self._set_global_values_to_0()
 
@@ -117,14 +121,18 @@ class SpecialPhrasesImporterStatistics():
             Print stats for the current lang
             and then reset lang values.
         """
-        LOG.warning('====================================================================')
-        LOG.warning('Statistics for the import of %s:', lang)
-        LOG.warning('- %s phrases were invalid.', self.lang_phrases_invalid)
+        LOG.info('====================================================================')
+        LOG.info('Statistics for the import of %s:', lang)
+        LOG.info('- %s phrases were invalid.', self.lang_phrases_invalid)
         if self.lang_phrases_invalid > 0:
-            LOG.warning('  Those invalid phrases have been skipped.')
-        LOG.warning('- %s phrases were ignored as they are already in the database',
-                    self.lang_phrases_ignored)
-        LOG.warning('- %s phrases were added to the database', self.lang_phrases_added)
-        LOG.warning('====================================================================')
+            LOG.info('  Those invalid phrases have been skipped.')
+        LOG.info('- %s phrases were ignored as they are already in the database',
+                 self.lang_phrases_ignored)
+        LOG.info('- %s phrases were added to the database', self.lang_phrases_added)
+        LOG.info('====================================================================')
+
+        if self.lang_phrases_invalid > 0:
+            LOG.warning('%s phrases were invalid and have been skipped for the import of lang %s.',
+                        self.lang_phrases_invalid, lang)
 
         self._set_lang_values_to_0()

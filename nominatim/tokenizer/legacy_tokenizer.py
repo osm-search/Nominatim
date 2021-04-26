@@ -365,9 +365,11 @@ class _LRU:
         produce the item when there is a cache miss.
     """
 
-    def __init__(self, maxsize=128):
-        self.data = OrderedDict()
+    def __init__(self, maxsize=128, init_data=None):
+        self.data = init_data or OrderedDict()
         self.maxsize = maxsize
+        if init_data is not None and len(init_data) > maxsize:
+            self.maxsize = len(init_data)
 
     def get(self, key, generator):
         """ Get the item with the given key from the cache. If nothing
@@ -394,7 +396,6 @@ class _TokenCache:
     """
     def __init__(self, conn):
         # various LRU caches
-        self.postcodes = _LRU(maxsize=32)
         self.streets = _LRU(maxsize=256)
         self.places = _LRU(maxsize=128)
         self.address_terms = _LRU(maxsize=1024)
@@ -405,6 +406,14 @@ class _TokenCache:
                            FROM generate_series(1, 100) as i""")
             self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
 
+        # Get postcodes that are already saved
+        postcodes = OrderedDict()
+        with conn.cursor() as cur:
+            cur.execute("""SELECT word FROM word
+                           WHERE class ='place' and type = 'postcode'""")
+            for row in cur:
+                postcodes[row[0]] = None
+        self.postcodes = _LRU(maxsize=32, init_data=postcodes)
 
     def get_housenumber(self, number):
         """ Get a housenumber token from the cache.

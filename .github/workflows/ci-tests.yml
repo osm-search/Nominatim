@@ -150,6 +150,10 @@ jobs:
               run: nominatim admin --check-database
               working-directory: data-env
 
+            - name: Warm up database
+              run: nominatim admin --warm
+              working-directory: data-env
+
             - name: Run update
               run: |
                    nominatim replication --init

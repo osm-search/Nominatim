@@ -37,3 +37,24 @@ Feature: Import and search of names
         Then placex contains
           | object | country_code | name   | name+name:fi | name+name:de |
           | N1     | de           | german | finnish      | local        |
+
+    Scenario Outline: Names in any script can be found
+        Given the places
+            | osm | class | type   | name   |
+            | N1  | place | hamlet | <name> |
+        When importing
+        And sending search query "<name>"
+        Then results contain
+            | osm |
+            | N1  |
+
+     Examples:
+        | name |
+        | Berlin |
+        | 北京 |
+        | Вологда |
+        | Αθήνα |
+        | القاهرة |
+        | រាជធានីភ្នំពេញ |
+        | 東京都 |
+        | ပုဗ္ဗသီရိ |

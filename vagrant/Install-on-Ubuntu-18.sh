@@ -30,7 +30,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
                         php php-pgsql php-intl libicu-dev python3-pip \
-                        python3-psycopg2 python3-psutil python3-jinja2 python3-icu git
+                        python3-psycopg2 python3-psutil python3-jinja2 python3-icu
 
 # The python-dotenv package that comes with Ubuntu 18.04 is too old, so
 # install the latest version from pip:
@@ -101,8 +101,8 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.7.0.tar.bz2
-    tar xf Nominatim-3.7.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.7.1.tar.bz2
+    tar xf Nominatim-3.7.1.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -112,7 +112,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim-3.7.0
+    cmake $USERHOME/Nominatim-3.7.1
     make
     sudo make install
 

@@ -116,8 +116,8 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # Get the source for the release and unpack it
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
-    wget https://nominatim.org/release/Nominatim-3.7.0.tar.bz2
-    tar xf Nominatim-3.7.0.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.7.1.tar.bz2
+    tar xf Nominatim-3.7.1.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -128,7 +128,7 @@ fi                                 #DOCS:
 #DOCS:    :::sh
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim-3.7.0
+    cmake $USERHOME/Nominatim-3.7.1
     make
     sudo make install
 

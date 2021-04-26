@@ -18,16 +18,16 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
         then throw a `CalledProcessError` on a non-zero exit.
     """
     cmd = ['/usr/bin/env', 'php', '-Cq',
-           nominatim_env.phplib_dir / 'admin' / script]
+           str(nominatim_env.phplib_dir / 'admin' / script)]
     cmd.extend([str(a) for a in args])
 
     env = nominatim_env.config.get_os_env()
     env['NOMINATIM_DATADIR'] = str(nominatim_env.data_dir)
     env['NOMINATIM_SQLDIR'] = str(nominatim_env.sqllib_dir)
     env['NOMINATIM_CONFIGDIR'] = str(nominatim_env.config_dir)
-    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = nominatim_env.module_dir
+    env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str(nominatim_env.module_dir)
     if not env['NOMINATIM_OSM2PGSQL_BINARY']:
-        env['NOMINATIM_OSM2PGSQL_BINARY'] = nominatim_env.osm2pgsql_path
+        env['NOMINATIM_OSM2PGSQL_BINARY'] = str(nominatim_env.osm2pgsql_path)
 
     proc = subprocess.run(cmd, cwd=str(nominatim_env.project_dir), env=env,
                           check=throw_on_fail)

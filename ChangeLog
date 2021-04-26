@@ -1,3 +1,11 @@
+3.7.1
+
+ * fix smaller issues with special phrases import
+ * add index to speed up continued indexing during import
+ * fix index on location_property_tiger(parent_place_id)
+ * make sure Python code is backward-compatible with Python 3.5
+ * various documentation fixes
+
 3.7.0
 
  * switch to dotenv for configuration file

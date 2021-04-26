@@ -6,7 +6,9 @@ nominatim
 [-h] {import,freeze,replication,special-phrases,add-data,index,refresh,admin,export,serve,search,reverse,lookup,details,status,transition} ...
 .SH DESCRIPTION
     Command\-line tools for importing, updating, administrating and
+.br
     querying the Nominatim database.
+.br
     
 .SH OPTIONS
 
@@ -69,6 +71,7 @@ usage: nominatim import [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--index-noanalyse]
 
     Create a new Nominatim database from an OSM file.
+.br
     
 
 
@@ -125,13 +128,21 @@ Do not perform analyse operations during index
 usage: nominatim freeze [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
 
     Make database read\-only.
+.br
 
+.br
     About half of data in the Nominatim database is kept only to be able to
+.br
     keep the data up\-to\-date with new changes made in OpenStreetMap. This
+.br
     command drops all this data and only keeps the part needed for geocoding
+.br
     itself.
+.br
 
+.br
     This command has the same effect as the `\-\-no\-updates` option for imports.
+.br
     
 
 
@@ -160,6 +171,7 @@ usage: nominatim replication [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                              [--socket-timeout SOCKET_TIMEOUT]
 
     Update the database using an online replication service.
+.br
     
 
 
@@ -213,6 +225,7 @@ usage: nominatim special-phrases [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                                  [--import-from-wiki]
 
     Import special phrases.
+.br
     
 
 
@@ -243,9 +256,13 @@ usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                           [--use-main-api]
 
     Add additional data from a file or an online source.
+.br
 
-    Data is only imported, not indexed. You need to call `nominatim\-update index`
+.br
+    Data is only imported, not indexed. You need to call `nominatim index`
+.br
     to complete the process.
+.br
     
 
 
@@ -300,6 +317,7 @@ usage: nominatim index [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--maxrank RANK]
 
     Reindex all new and modified data.
+.br
     
 
 
@@ -344,8 +362,11 @@ usage: nominatim refresh [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                          [--enable-debug-statements]
 
     Recompute auxiliary data used by the indexing process.
+.br
 
+.br
     These functions must not be run in parallel with other update commands.
+.br
     
 
 
@@ -409,6 +430,7 @@ usage: nominatim admin [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--osm-id OSM_ID | --place-id PLACE_ID]
 
     Analyse and maintain the database.
+.br
     
 
 
@@ -471,6 +493,7 @@ usage: nominatim export [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--restrict-to-osm-relation ID]
 
     Export addresses as CSV file from the database.
+.br
     
 
 
@@ -528,12 +551,19 @@ usage: nominatim serve [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--server SERVER]
 
     Start a simple web server for serving the API.
+.br
 
+.br
     This command starts the built\-in PHP webserver to serve the website
+.br
     from the current project directory. This webserver is only suitable
+.br
     for testing and develop. Do not use it in production setups!
+.br
 
+.br
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
+.br
     
 
 
@@ -572,6 +602,7 @@ usage: nominatim search [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--viewbox X1,Y1,X2,Y2] [--bounded] [--no-dedupe]
 
     Execute API search query.
+.br
     
 
 
@@ -682,6 +713,7 @@ usage: nominatim reverse [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --lat LAT
                          [--polygon-threshold TOLERANCE]
 
     Execute API reverse query.
+.br
     
 
 
@@ -751,6 +783,7 @@ usage: nominatim lookup [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --id OSMID
                         [--polygon-threshold TOLERANCE]
 
     Execute API lookup query.
+.br
     
 
 
@@ -812,6 +845,7 @@ usage: nominatim details [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                          [--lang LANGS]
 
     Execute API details query.
+.br
     
 
 
@@ -885,6 +919,7 @@ usage: nominatim status [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--format {text,json}]
 
     Execute API status query.
+.br
     
 
 
@@ -921,6 +956,7 @@ usage: nominatim transition [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                             [--tiger-data FILE]
 
     Internal functions for code transition. Do not use.
+.br
     
 
 

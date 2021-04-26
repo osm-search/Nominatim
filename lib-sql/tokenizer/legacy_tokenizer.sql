@@ -37,7 +37,7 @@ $$ LANGUAGE SQL IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION token_addr_street_match_tokens(info JSONB)
   RETURNS INTEGER[]
 AS $$
-  SELECT (info->>'street_match')::INTEGER[]
+  SELECT (info->>'street')::INTEGER[]
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 

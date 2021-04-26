@@ -236,11 +236,26 @@ class LegacyNameAnalyzer:
         address = place.get('address')
 
         if address:
-            self._add_postcode(address.get('postcode'))
-            token_info.add_housenumbers(self.conn, address)
-            token_info.add_address_parent(self.conn, address.get('street'),
-                                          address.get('place'))
-            token_info.add_address_parts(self.conn, address)
+            hnrs = []
+            addr_terms = []
+            for key, value in address.items():
+                if key == 'postcode':
+                    self._add_postcode(value)
+                elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
+                    hnrs.append(value)
+                elif key == 'street':
+                    token_info.add_street(self.conn, value)
+                elif key == 'place':
+                    token_info.add_place(self.conn, value)
+                elif not key.startswith('_') and \
+                     key not in ('country', 'full'):
+                    addr_terms.append((key, value))
+
+            if hnrs:
+                token_info.add_housenumbers(self.conn, hnrs)
+
+            if addr_terms:
+                token_info.add_address_terms(self.conn, addr_terms)
 
         return token_info.data
 
@@ -248,14 +263,12 @@ class LegacyNameAnalyzer:
     def _add_postcode(self, postcode):
         """ Make sure the normalized postcode is present in the word table.
         """
-        if not postcode or re.search(r'[:,;]', postcode) is not None:
-            return
-
         def _create_postcode_from_db(pcode):
             with self.conn.cursor() as cur:
                 cur.execute('SELECT create_postcode_id(%s)', (pcode, ))
 
-        self._cache.postcodes.get(postcode.strip().upper(), _create_postcode_from_db)
+        if re.search(r'[:,;]', postcode) is None:
+            self._cache.postcodes.get(postcode.strip().upper(), _create_postcode_from_db)
 
 
 class _TokenInfo:
@@ -283,15 +296,9 @@ class _TokenInfo:
                             (names, country_feature.lower()))
 
 
-    def add_housenumbers(self, conn, address):
+    def add_housenumbers(self, conn, hnrs):
         """ Extract housenumber information from the address.
         """
-        hnrs = [v for k, v in address.items()
-                if k in ('housenumber', 'streetnumber', 'conscriptionnumber')]
-
-        if not hnrs:
-            return
-
         if len(hnrs) == 1:
             token = self.cache.get_housenumber(hnrs[0])
             if token is not None:
@@ -312,27 +319,32 @@ class _TokenInfo:
             self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
 
 
-    def add_address_parent(self, conn, street, place):
-        """ Extract the tokens for street and place terms.
+    def add_street(self, conn, street):
+        """ Add addr:street match terms.
         """
-        def _get_streetplace(name):
+        def _get_street(name):
+            with conn.cursor() as cur:
+                return cur.scalar("SELECT word_ids_from_name(%s)::text", (name, ))
+
+        self.data['street'] = self.cache.streets.get(street, _get_street)
+
+
+    def add_place(self, conn, place):
+        """ Add addr:place search and match terms.
+        """
+        def _get_place(name):
             with conn.cursor() as cur:
                 cur.execute("""SELECT (addr_ids_from_name(%s) || getorcreate_name_id(make_standard_name(%s), ''))::text,
                                       word_ids_from_name(%s)::text""",
                             (name, name, name))
                 return cur.fetchone()
 
-        if street:
-            self.data['street_search'], self.data['street_match'] = \
-                self.cache.streets.get(street, _get_streetplace)
-
-        if place:
-            self.data['place_search'], self.data['place_match'] = \
-                self.cache.streets.get(place, _get_streetplace)
+        self.data['place_search'], self.data['place_match'] = \
+            self.cache.places.get(place, _get_place)
 
 
-    def add_address_parts(self, conn, address):
-        """ Extract address terms.
+    def add_address_terms(self, conn, terms):
+        """ Add additional address terms.
         """
         def _get_address_term(name):
             with conn.cursor() as cur:
@@ -342,14 +354,10 @@ class _TokenInfo:
                 return cur.fetchone()
 
         tokens = {}
-        for key, value in address.items():
-            if not key.startswith('_') and \
-               key not in ('country', 'street', 'place', 'postcode', 'full',
-                           'housenumber', 'streetnumber', 'conscriptionnumber'):
-                tokens[key] = self.cache.address_terms.get(value, _get_address_term)
+        for key, value in terms:
+            tokens[key] = self.cache.address_terms.get(value, _get_address_term)
 
-        if tokens:
-            self.data['addr'] = tokens
+        self.data['addr'] = tokens
 
 
 class _LRU:

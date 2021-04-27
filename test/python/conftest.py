@@ -121,9 +121,8 @@ def table_factory(temp_db_cursor):
     def mk_table(name, definition='id INT', content=None):
         temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
         if content is not None:
-            if not isinstance(content, str):
-                content = '),('.join([str(x) for x in content])
-            temp_db_cursor.execute("INSERT INTO {} VALUES ({})".format(name, content))
+            psycopg2.extras.execute_values(
+                temp_db_cursor, "INSERT INTO {} VALUES %s".format(name), content)
 
     return mk_table
 
@@ -290,7 +289,7 @@ def osm2pgsql_options(temp_db):
 
 @pytest.fixture
 def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
-    table_factory('country_name', 'partition INT', (0, 1, 2))
+    table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',
                     sql=tmp_path, data=SRC_DIR / 'data')
@@ -299,9 +298,10 @@ def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
 
 
 @pytest.fixture
-def tokenizer_mock(monkeypatch, property_table, temp_db_conn, dsn):
+def tokenizer_mock(monkeypatch, property_table, temp_db_conn, tmp_path):
     """ Sets up the configuration so that the test dummy tokenizer will be
-        loaded.
+        loaded when the tokenizer factory is used. Also returns a factory
+        with which a new dummy tokenizer may be created.
     """
     monkeypatch.setenv('NOMINATIM_TOKENIZER', 'dummy')
 
@@ -310,3 +310,8 @@ def tokenizer_mock(monkeypatch, property_table, temp_db_conn, dsn):
 
     monkeypatch.setattr(importlib, "import_module", _import_dummy)
     properties.set_property(temp_db_conn, 'tokenizer', 'dummy')
+
+    def _create_tokenizer():
+        return dummy_tokenizer.DummyTokenizer(None, None)
+
+    return _create_tokenizer

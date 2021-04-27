@@ -223,6 +223,21 @@ class LegacyNameAnalyzer:
                            FROM (SELECT distinct(postcode) as pc
                                  FROM location_postcode) x""")
 
+
+    def add_country_names(self, country_code, names):
+        """ Add names for the given country to the search index.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO word (word_id, word_token, country_code)
+                   (SELECT nextval('seq_word'), lookup_token, %s
+                      FROM (SELECT ' ' || make_standard_name(n) as lookup_token
+                            FROM unnest(%s)n) y
+                      WHERE NOT EXISTS(SELECT * FROM word
+                                       WHERE word_token = lookup_token and country_code = %s))
+                """, (country_code, names, country_code))
+
+
     def process_place(self, place):
         """ Determine tokenizer information about the given place.
 
@@ -231,7 +246,14 @@ class LegacyNameAnalyzer:
         """
         token_info = _TokenInfo(self._cache)
 
-        token_info.add_names(self.conn, place.get('name'), place.get('country_feature'))
+        names = place.get('name')
+
+        if names:
+            token_info.add_names(self.conn, names)
+
+            country_feature = place.get('country_feature')
+            if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
+                self.add_country_names(country_feature.lower(), list(names.values()))
 
         address = place.get('address')
 
@@ -279,21 +301,13 @@ class _TokenInfo:
         self.data = {}
 
 
-    def add_names(self, conn, names, country_feature):
+    def add_names(self, conn, names):
         """ Add token information for the names of the place.
         """
-        if not names:
-            return
-
         with conn.cursor() as cur:
             # Create the token IDs for all names.
             self.data['names'] = cur.scalar("SELECT make_keywords(%s)::text",
                                             (names, ))
-
-            # Add country tokens to word table if necessary.
-            if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
-                cur.execute("SELECT create_country(%s, %s)",
-                            (names, country_feature.lower()))
 
 
     def add_housenumbers(self, conn, hnrs):
@@ -334,7 +348,8 @@ class _TokenInfo:
         """
         def _get_place(name):
             with conn.cursor() as cur:
-                cur.execute("""SELECT (addr_ids_from_name(%s) || getorcreate_name_id(make_standard_name(%s), ''))::text,
+                cur.execute("""SELECT (addr_ids_from_name(%s)
+                                       || getorcreate_name_id(make_standard_name(%s), ''))::text,
                                       word_ids_from_name(%s)::text""",
                             (name, name, name))
                 return cur.fetchone()

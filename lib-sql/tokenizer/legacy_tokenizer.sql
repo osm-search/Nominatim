@@ -202,29 +202,6 @@ $$
 LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION getorcreate_country(lookup_word TEXT,
-                                               lookup_country_code varchar(2))
-  RETURNS INTEGER
-  AS $$
-DECLARE
-  lookup_token TEXT;
-  return_word_id INTEGER;
-BEGIN
-  lookup_token := ' '||trim(lookup_word);
-  SELECT min(word_id) FROM word
-    WHERE word_token = lookup_token and country_code=lookup_country_code
-    INTO return_word_id;
-  IF return_word_id IS NULL THEN
-    return_word_id := nextval('seq_word');
-    INSERT INTO word VALUES (return_word_id, lookup_token, null,
-                             null, null, lookup_country_code, 0);
-  END IF;
-  RETURN return_word_id;
-END;
-$$
-LANGUAGE plpgsql;
-
-
 CREATE OR REPLACE FUNCTION getorcreate_amenity(lookup_word TEXT, normalized_word TEXT,
                                                lookup_class text, lookup_type text)
   RETURNS INTEGER
@@ -361,36 +338,6 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE STRICT;
-
-
-CREATE OR REPLACE FUNCTION create_country(src HSTORE, country_code varchar(2))
-  RETURNS VOID
-  AS $$
-DECLARE
-  s TEXT;
-  w INTEGER;
-  words TEXT[];
-  item RECORD;
-  j INTEGER;
-BEGIN
-  FOR item IN SELECT (each(src)).* LOOP
-
-    s := make_standard_name(item.value);
-    w := getorcreate_country(s, country_code);
-
-    words := regexp_split_to_array(item.value, E'[,;()]');
-    IF array_upper(words, 1) != 1 THEN
-      FOR j IN 1..array_upper(words, 1) LOOP
-        s := make_standard_name(words[j]);
-        IF s != '' THEN
-          w := getorcreate_country(s, country_code);
-        END IF;
-      END LOOP;
-    END IF;
-  END LOOP;
-END;
-$$
-LANGUAGE plpgsql;
 
 
 CREATE OR REPLACE FUNCTION make_keywords(src HSTORE)

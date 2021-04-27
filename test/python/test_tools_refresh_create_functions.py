@@ -11,9 +11,7 @@ def sql_tmp_path(tmp_path, def_config):
     return tmp_path
 
 @pytest.fixture
-def conn(temp_db_conn, table_factory, monkeypatch):
-    monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', '.')
-    table_factory('country_name', 'partition INT', (0, 1, 2))
+def conn(sql_preprocessor, temp_db_conn):
     return temp_db_conn
 
 

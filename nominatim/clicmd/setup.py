@@ -133,7 +133,8 @@ class SetupAll:
             database_import.create_search_indices(conn, args.config,
                                                   drop=args.no_updates)
             LOG.warning('Create search index for default country names.')
-            database_import.create_country_names(conn, args.config)
+            database_import.create_country_names(conn, tokenizer,
+                                                 args.config.LANGUAGES)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

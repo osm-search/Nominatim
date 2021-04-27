@@ -13,6 +13,7 @@ class DummyTokenizer:
         self.dsn = dsn
         self.data_dir = data_dir
         self.init_state = None
+        self.analyser_cache = {}
 
 
     def init_new_db(self, config):
@@ -26,7 +27,7 @@ class DummyTokenizer:
 
 
     def name_analyzer(self):
-        return DummyNameAnalyzer()
+        return DummyNameAnalyzer(self.analyser_cache)
 
 
 class DummyNameAnalyzer:
@@ -38,18 +39,20 @@ class DummyNameAnalyzer:
         self.close()
 
 
+    def __init__(self, cache):
+        self.analyser_cache = cache
+        cache['countries'] = []
+
+
     def close(self):
-        """ Free all resources used by the analyzer.
-        """
         pass
 
     def add_postcodes_from_db(self):
         pass
 
-    def process_place(self, place):
-        """ Determine tokenizer information about the given place.
 
-            Returns a JSON-serialisable structure that will be handed into
-            the database via the token_info field.
-        """
+    def add_country_names(self, code, names):
+        self.analyser_cache['countries'].append((code, names))
+
+    def process_place(self, place):
         return {}

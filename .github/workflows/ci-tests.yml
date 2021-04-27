@@ -159,7 +159,7 @@ jobs:
               run: nominatim special-phrases --import-from-wiki
               working-directory: data-env
 
-            - name: Check import
+            - name: Check full import
               run: nominatim admin --check-database
               working-directory: data-env
 
@@ -174,7 +174,11 @@ jobs:
               working-directory: data-env
 
             - name: Run reverse-only import
-              run : nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only
+              run : nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only --no-updates
               working-directory: data-env
               env:
                   NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse
+
+            - name: Check reverse import
+              run: nominatim admin --check-database
+              working-directory: data-env

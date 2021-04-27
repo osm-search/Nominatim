@@ -50,6 +50,8 @@ class DummyNameAnalyzer:
     def add_postcodes_from_db(self):
         pass
 
+    def update_special_phrases(self, phrases):
+        self.analyser_cache['special_phrases'] = phrases
 
     def add_country_names(self, code, names):
         self.analyser_cache['countries'].append((code, names))

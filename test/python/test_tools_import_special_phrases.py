@@ -11,41 +11,6 @@ from nominatim.tools import SpecialPhrasesImporter
 
 TEST_BASE_DIR = Path(__file__) / '..' / '..'
 
-def test_fetch_existing_words_phrases_basic(special_phrases_importer, word_table,
-                                            temp_db_cursor):
-    """
-        Check for the fetch_existing_words_phrases() method.
-        It should return special phrase term added to the word
-        table.
-    """
-    query ="""
-        INSERT INTO word VALUES(99999, 'lookup_token', 'normalized_word',
-        'class', 'type', null, 0, 'near');
-    """
-    temp_db_cursor.execute(query)
-
-    assert not special_phrases_importer.words_phrases_to_delete
-    special_phrases_importer._fetch_existing_words_phrases()
-    contained_phrase = special_phrases_importer.words_phrases_to_delete.pop()
-    assert contained_phrase == ('normalized_word', 'class', 'type', 'near')
-
-@pytest.mark.parametrize("house_type", ['house', 'postcode'])
-def test_fetch_existing_words_phrases_special_cases(special_phrases_importer, word_table,
-                                                    house_type, temp_db_cursor):
-    """
-        Check for the fetch_existing_words_phrases() method.
-        It should return nothing as the terms added correspond
-        to a housenumber and postcode term.
-    """
-    query ="""
-        INSERT INTO word VALUES(99999, 'lookup_token', 'normalized_word',
-        'place', %s, null, 0, 'near');
-    """
-    temp_db_cursor.execute(query, (house_type,))
-
-    special_phrases_importer._fetch_existing_words_phrases()
-    assert not special_phrases_importer.words_phrases_to_delete
-
 def test_fetch_existing_place_classtype_tables(special_phrases_importer, temp_db_cursor):
     """
         Check for the fetch_existing_place_classtype_tables() method.
@@ -118,40 +83,10 @@ def test_convert_settings_giving_json(special_phrases_importer):
         the same path is directly returned
     """
     json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
-    
+
     returned = special_phrases_importer._convert_php_settings_if_needed(json_file)
 
     assert returned == json_file
-
-def test_process_amenity_with_operator(special_phrases_importer, getorcreate_amenityoperator_funcs,
-                                       temp_db_conn, word_table):
-    """
-        Test that _process_amenity() execute well the 
-        getorcreate_amenityoperator() SQL function and that
-        the 2 differents operators are well handled.
-    """
-    special_phrases_importer._process_amenity('', '', '', '', 'near')
-    special_phrases_importer._process_amenity('', '', '', '', 'in')
-
-    with temp_db_conn.cursor() as temp_db_cursor:
-        temp_db_cursor.execute("SELECT * FROM word WHERE operator='near' OR operator='in'")
-        results = temp_db_cursor.fetchall()
-
-    assert len(results) == 2
-
-def test_process_amenity_without_operator(special_phrases_importer, getorcreate_amenity_funcs,
-                                          temp_db_conn, word_table):
-    """
-        Test that _process_amenity() execute well the
-        getorcreate_amenity() SQL function.
-    """
-    special_phrases_importer._process_amenity('', '', '', '', '')
-
-    with temp_db_conn.cursor() as temp_db_cursor:
-        temp_db_cursor.execute("SELECT * FROM word WHERE operator='no_operator'")
-        result = temp_db_cursor.fetchone()
-
-    assert result
 
 def test_create_place_classtype_indexes(temp_db_conn, special_phrases_importer):
     """
@@ -215,8 +150,7 @@ def test_create_place_classtype_table_and_indexes(
         assert check_placeid_and_centroid_indexes(temp_db_conn, pair[0], pair[1])
         assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, pair[0], pair[1])
 
-def test_process_xml_content(temp_db_conn, def_config, special_phrases_importer, word_table,
-                             getorcreate_amenity_funcs, getorcreate_amenityoperator_funcs):
+def test_process_xml_content(temp_db_conn, def_config, special_phrases_importer):
     """
         Test that _process_xml_content() process the given xml content right
         by executing the right SQL functions for amenities and 
@@ -228,11 +162,9 @@ def test_process_xml_content(temp_db_conn, def_config, special_phrases_importer,
     #Converted output set to a dict for easy assert further.
     results = dict(special_phrases_importer._process_xml_content(get_test_xml_wiki_content(), 'en'))
 
-    assert check_amenities_with_op(temp_db_conn)
-    assert check_amenities_without_op(temp_db_conn)
     assert results[class_test] and type_test in results.values()
 
-def test_remove_non_existent_phrases_from_db(special_phrases_importer, default_phrases,
+def test_remove_non_existent_tables_from_db(special_phrases_importer, default_phrases,
                                              temp_db_conn):
     """
         Check for the remove_non_existent_phrases_from_db() method.
@@ -245,22 +177,10 @@ def test_remove_non_existent_phrases_from_db(special_phrases_importer, default_p
         be deleted.
     """
     with temp_db_conn.cursor() as temp_db_cursor:
-        to_delete_phrase_tuple = ('normalized_word', 'class', 'type', 'near')
-        to_keep_phrase_tuple = (
-            'normalized_word_exists', 'class_exists', 'type_exists', 'near'
-        )
-        special_phrases_importer.words_phrases_to_delete = {
-            to_delete_phrase_tuple,
-            to_keep_phrase_tuple
-        }
-        special_phrases_importer.words_phrases_still_exist = {
-            to_keep_phrase_tuple
-        }
         special_phrases_importer.table_phrases_to_delete = {
             'place_classtype_testclasstypetable_to_delete'
         }
 
-        query_words = 'SELECT word, class, type, operator FROM word;'
         query_tables = """
             SELECT table_name
             FROM information_schema.tables
@@ -268,21 +188,16 @@ def test_remove_non_existent_phrases_from_db(special_phrases_importer, default_p
             AND table_name like 'place_classtype_%';
         """
 
-        special_phrases_importer._remove_non_existent_phrases_from_db()
+        special_phrases_importer._remove_non_existent_tables_from_db()
 
-        temp_db_cursor.execute(query_words)
-        words_result = temp_db_cursor.fetchall()
         temp_db_cursor.execute(query_tables)
         tables_result = temp_db_cursor.fetchall()
-        assert len(words_result) == 1 and words_result[0] == [
-            'normalized_word_exists', 'class_exists', 'type_exists', 'near'
-        ]
         assert (len(tables_result) == 1 and
             tables_result[0][0] == 'place_classtype_testclasstypetable_to_keep'
         )
 
-def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases_importer, placex_table, 
-                          getorcreate_amenity_funcs, getorcreate_amenityoperator_funcs, word_table):
+def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases_importer,
+                          placex_table, tokenizer_mock):
     """
         Check that the main import_from_wiki() method is well executed.
         It should create the place_classtype table, the place_id and centroid indexes,
@@ -294,17 +209,14 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
     #what is deleted and what is preserved.
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute("""
-            INSERT INTO word VALUES(99999, ' animal shelter', 'animal shelter',
-            'amenity', 'animal_shelter', null, 0, null);
-
-            INSERT INTO word VALUES(99999, ' wrong_lookup_token', 'wrong_normalized_word',
-            'wrong_class', 'wrong_type', null, 0, 'near');
-
             CREATE TABLE place_classtype_amenity_animal_shelter();
             CREATE TABLE place_classtype_wrongclass_wrongtype();""")
 
     monkeypatch.setattr('nominatim.tools.SpecialPhrasesImporter._get_wiki_content', mock_get_wiki_content)
-    special_phrases_importer.import_from_wiki(['en'])
+    tokenizer = tokenizer_mock()
+    special_phrases_importer.import_from_wiki(tokenizer, ['en'])
+
+    assert len(tokenizer.analyser_cache['special_phrases']) == 18
 
     class_test = 'aerialway'
     type_test = 'zip_line'
@@ -312,21 +224,11 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
     assert check_table_exist(temp_db_conn, class_test, type_test)
     assert check_placeid_and_centroid_indexes(temp_db_conn, class_test, type_test)
     assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, class_test, type_test)
-    assert check_amenities_with_op(temp_db_conn)
-    assert check_amenities_without_op(temp_db_conn)
     assert check_table_exist(temp_db_conn, 'amenity', 'animal_shelter')
     assert not check_table_exist(temp_db_conn, 'wrong_class', 'wrong_type')
 
     #Format (query, should_return_something_bool) use to easily execute all asserts
     queries_tests = set()
-
-    #Used to check that the correct phrase already in the word table before is still there.
-    query_correct_word = "SELECT * FROM word WHERE word = 'animal shelter'"
-    queries_tests.add((query_correct_word, True))
-
-    #Used to check if wrong phrase was deleted from the word table of the database.
-    query_wrong_word = "SELECT word FROM word WHERE word = 'wrong_normalized_word'"
-    queries_tests.add((query_wrong_word, False))
 
     #Used to check that correct place_classtype table already in the datase before is still there.
     query_existing_table = """
@@ -412,24 +314,6 @@ def check_placeid_and_centroid_indexes(temp_db_conn, phrase_class, phrase_type):
         temp_db_conn.index_exists(index_prefix + 'place_id')
     )
 
-def check_amenities_with_op(temp_db_conn):
-    """
-        Check that the test table for the SQL function getorcreate_amenityoperator()
-        contains more than one value (so that the SQL function was call more than one time).
-    """
-    with temp_db_conn.cursor() as temp_db_cursor:
-        temp_db_cursor.execute("SELECT * FROM word WHERE operator != 'no_operator'")
-        return len(temp_db_cursor.fetchall()) > 1
-
-def check_amenities_without_op(temp_db_conn):
-    """
-        Check that the test table for the SQL function getorcreate_amenity()
-        contains more than one value (so that the SQL function was call more than one time).
-    """
-    with temp_db_conn.cursor() as temp_db_cursor:
-        temp_db_cursor.execute("SELECT * FROM word WHERE operator = 'no_operator'")
-        return len(temp_db_cursor.fetchall()) > 1
-
 @pytest.fixture
 def special_phrases_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
     """
@@ -453,48 +337,7 @@ def temp_phplib_dir_with_migration():
         yield Path(phpdir)
 
 @pytest.fixture
-def default_phrases(word_table, temp_db_cursor):
+def default_phrases(temp_db_cursor):
     temp_db_cursor.execute("""
-        INSERT INTO word VALUES(99999, 'lookup_token', 'normalized_word',
-        'class', 'type', null, 0, 'near');
-
-        INSERT INTO word VALUES(99999, 'lookup_token', 'normalized_word_exists',
-        'class_exists', 'type_exists', null, 0, 'near');
-
         CREATE TABLE place_classtype_testclasstypetable_to_delete();
         CREATE TABLE place_classtype_testclasstypetable_to_keep();""")
-
-@pytest.fixture
-def make_strandard_name_func(temp_db_cursor):
-    temp_db_cursor.execute("""
-        CREATE OR REPLACE FUNCTION make_standard_name(name TEXT) RETURNS TEXT AS $$
-        BEGIN
-        RETURN trim(name); --Basically return only the trimed name for the tests
-        END;
-        $$ LANGUAGE plpgsql IMMUTABLE;""")
-        
-@pytest.fixture
-def getorcreate_amenity_funcs(temp_db_cursor, make_strandard_name_func):
-    temp_db_cursor.execute("""
-        CREATE OR REPLACE FUNCTION getorcreate_amenity(lookup_word TEXT, normalized_word TEXT,
-                                                    lookup_class text, lookup_type text)
-        RETURNS void as $$
-        BEGIN
-            INSERT INTO word VALUES(null, lookup_word, normalized_word,
-            lookup_class, lookup_type, null, 0, 'no_operator');
-        END;
-        $$ LANGUAGE plpgsql""")
-
-@pytest.fixture
-def getorcreate_amenityoperator_funcs(temp_db_cursor, make_strandard_name_func):
-    temp_db_cursor.execute("""
-        CREATE TABLE temp_with_operator(op TEXT);
-
-        CREATE OR REPLACE FUNCTION getorcreate_amenityoperator(lookup_word TEXT, normalized_word TEXT,
-                                                    lookup_class text, lookup_type text, op text)
-        RETURNS void as $$
-        BEGIN 
-            INSERT INTO word VALUES(null, lookup_word, normalized_word,
-            lookup_class, lookup_type, null, 0, op);
-        END;
-        $$ LANGUAGE plpgsql""")

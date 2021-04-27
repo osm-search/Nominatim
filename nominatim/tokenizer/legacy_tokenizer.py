@@ -6,6 +6,7 @@ import logging
 import re
 import shutil
 
+from icu import Transliterator
 import psycopg2
 import psycopg2.extras
 
@@ -158,7 +159,9 @@ class LegacyTokenizer:
 
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
-        return LegacyNameAnalyzer(self.dsn)
+        normalizer = Transliterator.createFromRules("phrase normalizer",
+                                                    self.normalization)
+        return LegacyNameAnalyzer(self.dsn, normalizer)
 
 
     def _init_db_tables(self, config):
@@ -182,7 +185,6 @@ class LegacyTokenizer:
         properties.set_property(conn, DBCFG_MAXWORDFREQ, config.MAX_WORD_FREQUENCY)
 
 
-
 class LegacyNameAnalyzer:
     """ The legacy analyzer uses the special Postgresql module for
         splitting names.
@@ -191,9 +193,10 @@ class LegacyNameAnalyzer:
         normalization.
     """
 
-    def __init__(self, dsn):
+    def __init__(self, dsn, normalizer):
         self.conn = connect(dsn).connection
         self.conn.autocommit = True
+        self.normalizer = normalizer
         psycopg2.extras.register_hstore(self.conn)
 
         self._cache = _TokenCache(self.conn)
@@ -215,6 +218,13 @@ class LegacyNameAnalyzer:
             self.conn = None
 
 
+    def normalize(self, phrase):
+        """ Normalize the given phrase, i.e. remove all properties that
+            are irrelevant for search.
+        """
+        return self.normalizer.transliterate(phrase)
+
+
     def add_postcodes_from_db(self):
         """ Add postcodes from the location_postcode table to the word table.
         """
@@ -222,6 +232,47 @@ class LegacyNameAnalyzer:
             cur.execute("""SELECT count(create_postcode_id(pc))
                            FROM (SELECT distinct(postcode) as pc
                                  FROM location_postcode) x""")
+
+
+    def update_special_phrases(self, phrases):
+        """ Replace the search index for special phrases with the new phrases.
+        """
+        norm_phrases = set(((self.normalize(p[0]), p[1], p[2], p[3])
+                            for p in phrases))
+
+        with self.conn.cursor() as cur:
+            # Get the old phrases.
+            existing_phrases = set()
+            cur.execute("""SELECT word, class, type, operator FROM word
+                           WHERE class != 'place'
+                                 OR (type != 'house' AND type != 'postcode')""")
+            for label, cls, typ, oper in cur:
+                existing_phrases.add((label, cls, typ, oper or '-'))
+
+            to_add = norm_phrases - existing_phrases
+            to_delete = existing_phrases - norm_phrases
+
+            if to_add:
+                psycopg2.extras.execute_values(
+                    cur,
+                    """ INSERT INTO word (word_id, word_token, word, class, type,
+                                          search_name_count, operator)
+                        (SELECT nextval('seq_word'), make_standard_name(name), name,
+                                class, type, 0,
+                                CASE WHEN op in ('in', 'near') THEN op ELSE null END
+                           FROM (VALUES %s) as v(name, class, type, op))""",
+                    to_add)
+
+            if to_delete:
+                psycopg2.extras.execute_values(
+                    cur,
+                    """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
+                        WHERE word = name and class = in_class and type = in_type
+                              and ((op = '-' and operator is null) or op = operator)""",
+                    to_delete)
+
+        LOG.info("Total phrases: %s. Added: %s. Deleted: %s",
+                 len(norm_phrases), len(to_add), len(to_delete))
 
 
     def add_country_names(self, country_code, names):

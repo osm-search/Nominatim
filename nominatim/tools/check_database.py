@@ -94,6 +94,9 @@ def _get_indexes(conn):
         indexes.extend(('idx_search_name_nameaddress_vector',
                         'idx_search_name_name_vector',
                         'idx_search_name_centroid'))
+        if conn.server_version_tuple() >= (11, 0, 0):
+            indexes.extend(('idx_placex_housenumber',
+                            'idx_osmline_parent_osm_id_with_hnr'))
     if conn.table_exists('place'):
         indexes.extend(('idx_placex_pendingsector',
                         'idx_location_area_country_place_id',

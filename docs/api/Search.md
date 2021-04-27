@@ -37,7 +37,7 @@ The search term may be specified with two different sets of parameters:
 * `county=<county>`
 * `state=<state>`
 * `country=<country>`
-* `postalcode=<postalcode>`
+* `postalCode=<postalcode>`
 
     Alternative query string format split into several parameters for structured requests.
     Structured requests are faster but are less robust against alternative

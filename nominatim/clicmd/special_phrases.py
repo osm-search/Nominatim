@@ -2,7 +2,7 @@
     Implementation of the 'special-phrases' command.
 """
 import logging
-from nominatim.tools.special_phrases import SpecialPhrasesImporter
+from nominatim.tools import SpecialPhrasesImporter
 from nominatim.db.connection import connect
 
 LOG = logging.getLogger()

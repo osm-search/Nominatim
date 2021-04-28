@@ -8,6 +8,7 @@ require_once(CONST_LibDir.'/ReverseGeocode.php');
 require_once(CONST_LibDir.'/SearchDescription.php');
 require_once(CONST_LibDir.'/SearchContext.php');
 require_once(CONST_LibDir.'/TokenList.php');
+require_once(CONST_TokenizerDir.'/tokenizer.php');
 
 class Geocode
 {

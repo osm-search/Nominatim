@@ -16,7 +16,7 @@ class DummyTokenizer:
         self.analyser_cache = {}
 
 
-    def init_new_db(self, config):
+    def init_new_db(self, *args, **kwargs):
         assert self.init_state == None
         self.init_state = "new"
 

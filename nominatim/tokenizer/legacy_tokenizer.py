@@ -5,6 +5,7 @@ from collections import OrderedDict
 import logging
 import re
 import shutil
+from textwrap import dedent
 
 from icu import Transliterator
 import psycopg2
@@ -87,7 +88,7 @@ class LegacyTokenizer:
         self.normalization = None
 
 
-    def init_new_db(self, config):
+    def init_new_db(self, config, init_db=True):
         """ Set up a new tokenizer for the database.
 
             This copies all necessary data in the project directory to make
@@ -99,13 +100,16 @@ class LegacyTokenizer:
 
         self.normalization = config.TERM_NORMALIZATION
 
+        self._install_php(config)
+
         with connect(self.dsn) as conn:
             _check_module(module_dir, conn)
             self._save_config(conn, config)
             conn.commit()
 
-        self.update_sql_functions(config)
-        self._init_db_tables(config)
+        if init_db:
+            self.update_sql_functions(config)
+            self._init_db_tables(config)
 
 
     def init_from_project(self):
@@ -163,6 +167,18 @@ class LegacyTokenizer:
         normalizer = Transliterator.createFromRules("phrase normalizer",
                                                     self.normalization)
         return LegacyNameAnalyzer(self.dsn, normalizer)
+
+
+    def _install_php(self, config):
+        """ Install the php script for the tokenizer.
+        """
+        php_file = self.data_dir / "tokenizer.php"
+        php_file.write_text(dedent("""\
+            <?php
+            @define('CONST_Max_Word_Frequency', {0.MAX_WORD_FREQUENCY});
+            @define('CONST_Term_Normalization_Rules', "{0.TERM_NORMALIZATION}");
+            require_once('{0.lib_dir.php}/tokenizer/legacy_tokenizer.php');
+            """.format(config)))
 
 
     def _init_db_tables(self, config):

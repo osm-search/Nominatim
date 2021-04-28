@@ -54,8 +54,7 @@ def create_tokenizer(config, init_db=True, module_name=None):
     tokenizer_module = _import_tokenizer(module_name)
 
     tokenizer = tokenizer_module.create(config.get_libpq_dsn(), basedir)
-    if init_db:
-        tokenizer.init_new_db(config)
+    tokenizer.init_new_db(config, init_db=init_db)
 
     with connect(config.get_libpq_dsn()) as conn:
         properties.set_property(conn, 'tokenizer', module_name)

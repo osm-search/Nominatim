@@ -26,6 +26,7 @@ def test_script(envdir):
 
 def run_website_script(envdir, config):
     config.lib_dir.php = envdir / 'php'
+    config.project_dir = envdir
     refresh.setup_website(envdir, config)
 
     proc = subprocess.run(['/usr/bin/env', 'php', '-Cq',

@@ -36,6 +36,7 @@ def test_config(def_config, tmp_path):
 
 @pytest.fixture
 def tokenizer_factory(dsn, tmp_path, monkeypatch, property_table):
+    (tmp_path / 'tokenizer').mkdir()
 
     def _maker():
         return legacy_tokenizer.create(dsn, tmp_path / 'tokenizer')

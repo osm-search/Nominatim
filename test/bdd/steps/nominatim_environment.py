@@ -10,6 +10,7 @@ sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 from nominatim import cli
 from nominatim.config import Configuration
 from nominatim.tools import refresh
+from nominatim.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
 
 class NominatimEnvironment:
@@ -179,27 +180,25 @@ class NominatimEnvironment:
         """
         self.write_nominatim_config(self.api_test_db)
 
-        if self.api_db_done:
-            return
+        if not self.api_db_done:
+            self.api_db_done = True
 
-        self.api_db_done = True
+            if not self._reuse_or_drop_db(self.api_test_db):
+                testdata = Path('__file__') / '..' / '..' / 'testdb'
+                self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
 
-        if self._reuse_or_drop_db(self.api_test_db):
-            return
+                try:
+                    self.run_nominatim('import', '--osm-file', str(self.api_test_file))
+                    self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
+                    self.run_nominatim('freeze')
 
-        testdata = Path('__file__') / '..' / '..' / 'testdb'
-        self.test_env['NOMINATIM_WIKIPEDIA_DATA_PATH'] = str(testdata.resolve())
+                    phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
+                    run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
+                except:
+                    self.db_drop_database(self.api_test_db)
+                    raise
 
-        try:
-            self.run_nominatim('import', '--osm-file', str(self.api_test_file))
-            self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
-            self.run_nominatim('freeze')
-
-            phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
-            run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
-        except:
-            self.db_drop_database(self.api_test_db)
-            raise
+        tokenizer_factory.create_tokenizer(self.get_test_config(), init_db=False)
 
 
     def setup_unknown_db(self):

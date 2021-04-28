@@ -135,6 +135,7 @@ class LegacyTokenizer:
             This is a special migration function for updating existing databases
             to new software versions.
         """
+        self.normalization = config.TERM_NORMALIZATION
         module_dir = _install_module(config.DATABASE_MODULE_PATH,
                                      config.lib_dir.module,
                                      config.project_dir / 'module')

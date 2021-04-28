@@ -43,8 +43,22 @@ def test_check_placex_table_size_bad(temp_db_cursor, temp_db_conn, def_config):
     assert chkdb.check_placex_size(temp_db_conn, def_config) == chkdb.CheckState.FATAL
 
 
-def test_check_module_bad(temp_db_conn, def_config):
-    assert chkdb.check_module(temp_db_conn, def_config) == chkdb.CheckState.FAIL
+def test_check_tokenizer_missing(temp_db_conn, def_config, tmp_path):
+    def_config.project_dir = tmp_path
+    assert chkdb.check_tokenizer(temp_db_conn, def_config) == chkdb.CheckState.FAIL
+
+
+@pytest.mark.parametrize("check_result,state", [(None, chkdb.CheckState.OK),
+                                                ("Something wrong", chkdb.CheckState.FAIL)])
+def test_check_tokenizer(tokenizer_mock, temp_db_conn, def_config, monkeypatch,
+                         check_result, state):
+    class _TestTokenizer:
+        def check_database(self):
+            return check_result
+
+    monkeypatch.setattr(chkdb.tokenizer_factory, 'get_tokenizer_for_db',
+                         lambda *a, **k: _TestTokenizer())
+    assert chkdb.check_tokenizer(temp_db_conn, def_config) == state
 
 
 def test_check_indexing_good(temp_db_cursor, temp_db_conn, def_config):

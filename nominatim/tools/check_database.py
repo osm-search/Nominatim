@@ -4,10 +4,9 @@ Collection of functions that check if the database is complete and functional.
 from enum import Enum
 from textwrap import dedent
 
-import psycopg2
-
 from nominatim.db.connection import connect
 from nominatim.errors import UsageError
+from nominatim.tokenizer import factory as tokenizer_factory
 
 CHECKLIST = []
 
@@ -78,8 +77,7 @@ def check_database(config):
 
 
 def _get_indexes(conn):
-    indexes = ['idx_word_word_id',
-               'idx_place_addressline_address_place_id',
+    indexes = ['idx_place_addressline_address_place_id',
                'idx_placex_rank_search',
                'idx_placex_rank_address',
                'idx_placex_parent_place_id',
@@ -149,7 +147,7 @@ def check_placex_table(conn, config):
 
 
 @_check(hint="""placex table has no data. Did the import finish sucessfully?""")
-def check_placex_size(conn, config): # pylint: disable=W0613
+def check_placex_size(conn, _):
     """ Checking for placex content
     """
     with conn.cursor() as cur:
@@ -158,30 +156,22 @@ def check_placex_size(conn, config): # pylint: disable=W0613
     return CheckState.OK if cnt > 0 else CheckState.FATAL
 
 
-@_check(hint="""\
-             The Postgresql extension nominatim.so was not correctly loaded.
-
-             Error: {error}
-
-             Hints:
-             * Check the output of the CMmake/make installation step
-             * Does nominatim.so exist?
-             * Does nominatim.so exist on the database server?
-             * Can nominatim.so be accessed by the database user?
-             """)
-def check_module(conn, config): # pylint: disable=W0613
-    """ Checking that nominatim.so module is installed
+@_check(hint="""{msg}""")
+def check_tokenizer(_, config):
+    """ Checking that tokenizer works
     """
-    with conn.cursor() as cur:
-        try:
-            out = cur.scalar("SELECT make_standard_name('a')")
-        except psycopg2.ProgrammingError as err:
-            return CheckState.FAIL, dict(error=str(err))
+    try:
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+    except UsageError:
+        return CheckState.FAIL, dict(msg="""\
+            Cannot load tokenizer. Did the import finish sucessfully?""")
 
-        if out != 'a':
-            return CheckState.FAIL, dict(error='Unexpected result for make_standard_name()')
+    result = tokenizer.check_database()
 
+    if result is None:
         return CheckState.OK
+
+    return CheckState.FAIL, dict(msg=result)
 
 
 @_check(hint="""\
@@ -189,7 +179,7 @@ def check_module(conn, config): # pylint: disable=W0613
 
              To index the remaining entries, run:   {index_cmd}
              """)
-def check_indexing(conn, config): # pylint: disable=W0613
+def check_indexing(conn, _):
     """ Checking indexing status
     """
     with conn.cursor() as cur:
@@ -198,7 +188,7 @@ def check_indexing(conn, config): # pylint: disable=W0613
     if cnt == 0:
         return CheckState.OK
 
-    if conn.index_exists('idx_word_word_id'):
+    if conn.index_exists('idx_placex_rank_search'):
         # Likely just an interrupted update.
         index_cmd = 'nominatim index'
     else:
@@ -214,7 +204,7 @@ def check_indexing(conn, config): # pylint: disable=W0613
 
              Rerun the index creation with:   nominatim import --continue db-postprocess
              """)
-def check_database_indexes(conn, config): # pylint: disable=W0613
+def check_database_indexes(conn, _):
     """ Checking that database indexes are complete
     """
     missing = []
@@ -236,7 +226,7 @@ def check_database_indexes(conn, config): # pylint: disable=W0613
              Invalid indexes:
                {indexes}
              """)
-def check_database_index_valid(conn, config): # pylint: disable=W0613
+def check_database_index_valid(conn, _):
     """ Checking that all database indexes are valid
     """
     with conn.cursor() as cur:

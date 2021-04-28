@@ -132,6 +132,33 @@ class LegacyTokenizer:
                               modulepath=modulepath)
 
 
+    def check_database(self):
+        """ Check that the tokenizer is set up correctly.
+        """
+        hint = """\
+             The Postgresql extension nominatim.so was not correctly loaded.
+
+             Error: {error}
+
+             Hints:
+             * Check the output of the CMmake/make installation step
+             * Does nominatim.so exist?
+             * Does nominatim.so exist on the database server?
+             * Can nominatim.so be accessed by the database user?
+             """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                try:
+                    out = cur.scalar("SELECT make_standard_name('a')")
+                except psycopg2.Error as err:
+                    return hint.format(error=str(err))
+
+        if out != 'a':
+            return hint.format(error='Unexpected result for make_standard_name()')
+
+        return None
+
+
     def migrate_database(self, config):
         """ Initialise the project directory of an existing database for
             use with this tokenizer.

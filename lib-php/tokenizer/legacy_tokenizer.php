@@ -15,6 +15,27 @@ class Tokenizer
         $this->oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
     }
 
+    public function checkStatus()
+    {
+        $sStandardWord = $this->oDB->getOne("SELECT make_standard_name('a')");
+        if ($sStandardWord === false) {
+            throw new Exception('Module failed', 701);
+        }
+
+        if ($sStandardWord != 'a') {
+            throw new Exception('Module call failed', 702);
+        }
+
+        $sSQL = "SELECT word_id FROM word WHERE word_token IN (' a')";
+        $iWordID = $this->oDB->getOne($sSQL);
+        if ($iWordID === false) {
+            throw new Exception('Query failed', 703);
+        }
+        if (!$iWordID) {
+            throw new Exception('No value', 704);
+        }
+    }
+
 
     public function setCountryRestriction($aCountries)
     {

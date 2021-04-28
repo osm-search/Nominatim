@@ -2,6 +2,8 @@
 
 namespace Nominatim;
 
+require_once(CONST_TokenizerDir.'/tokenizer.php');
+
 use Exception;
 
 class Status
@@ -25,24 +27,8 @@ class Status
             throw new Exception('Database connection failed', 700);
         }
 
-        $sStandardWord = $this->oDB->getOne("SELECT make_standard_name('a')");
-        if ($sStandardWord === false) {
-            throw new Exception('Module failed', 701);
-        }
-
-        if ($sStandardWord != 'a') {
-            throw new Exception('Module call failed', 702);
-        }
-
-        $sSQL = 'SELECT word_id, word_token, word, class, type, country_code, ';
-        $sSQL .= "operator, search_name_count FROM word WHERE word_token IN (' a')";
-        $iWordID = $this->oDB->getOne($sSQL);
-        if ($iWordID === false) {
-            throw new Exception('Query failed', 703);
-        }
-        if (!$iWordID) {
-            throw new Exception('No value', 704);
-        }
+        $oTokenizer = new \Nominatim\Tokenizer($this->oDB);
+        $oTokenizer->checkStatus();
     }
 
     public function dataDate()

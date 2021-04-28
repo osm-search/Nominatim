@@ -204,7 +204,17 @@ class NominatimEnvironment:
     def setup_unknown_db(self):
         """ Setup a test against a non-existing database.
         """
-        self.write_nominatim_config('UNKNOWN_DATABASE_NAME')
+        # The tokenizer needs an existing database to function.
+        # So start with the usual database
+        class _Context:
+            db = None
+
+        context = _Context()
+        self.setup_db(context)
+        tokenizer_factory.create_tokenizer(self.get_test_config(), init_db=False)
+
+        # Then drop the DB again
+        self.teardown_db(context, force_drop=True)
 
     def setup_db(self, context):
         """ Setup a test against a fresh, empty test database.
@@ -221,13 +231,13 @@ class NominatimEnvironment:
         context.db.autocommit = True
         psycopg2.extras.register_hstore(context.db, globally=False)
 
-    def teardown_db(self, context):
+    def teardown_db(self, context, force_drop=False):
         """ Remove the test database, if it exists.
         """
-        if 'db' in context:
+        if hasattr(context, 'db'):
             context.db.close()
 
-        if not self.keep_scenario_db:
+        if force_drop or not self.keep_scenario_db:
             self.db_drop_database(self.test_db)
 
     def _reuse_or_drop_db(self, name):

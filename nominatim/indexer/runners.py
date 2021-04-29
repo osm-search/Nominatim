@@ -11,7 +11,7 @@ import psycopg2.extras
 class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
     """
-    SELECT_SQL = 'SELECT place_id, (placex_prepare_update(placex)).* FROM placex'
+    SELECT_SQL = 'SELECT place_id FROM placex'
 
     def __init__(self, rank, analyzer):
         self.rank = rank
@@ -26,6 +26,12 @@ class AbstractPlacexRunner:
                    FROM (VALUES {}) as v(id, addr, ti)
                    WHERE place_id = v.id
                """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+
+
+    def get_place_details(self, worker, ids):
+        worker.perform("""SELECT place_id, (placex_prepare_update(placex)).*
+                          FROM placex WHERE place_id IN %s""",
+                       (tuple((p[0] for p in ids)), ))
 
 
     def index_places(self, worker, places):

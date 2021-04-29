@@ -48,14 +48,14 @@ class DBConnection:
     """ A single non-blocking database connection.
     """
 
-    def __init__(self, dsn):
+    def __init__(self, dsn, cursor_factory=None):
         self.current_query = None
         self.current_params = None
         self.dsn = dsn
 
         self.conn = None
         self.cursor = None
-        self.connect()
+        self.connect(cursor_factory=cursor_factory)
 
     def close(self):
         """ Close all open connections. Does not wait for pending requests.
@@ -66,7 +66,7 @@ class DBConnection:
 
         self.conn = None
 
-    def connect(self):
+    def connect(self, cursor_factory=None):
         """ (Re)connect to the database. Creates an asynchronous connection
             with JIT and parallel processing disabled. If a connection was
             already open, it is closed and a new connection established.
@@ -79,7 +79,7 @@ class DBConnection:
         self.conn = psycopg2.connect(**{'dsn' : self.dsn, 'async' : True})
         self.wait()
 
-        self.cursor = self.conn.cursor()
+        self.cursor = self.conn.cursor(cursor_factory=cursor_factory)
         # Disable JIT and parallel workers as they are known to cause problems.
         # Update pg_settings instead of using SET because it does not yield
         # errors on older versions of Postgres where the settings are not

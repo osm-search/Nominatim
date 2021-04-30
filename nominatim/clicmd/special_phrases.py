@@ -9,6 +9,8 @@ LOG = logging.getLogger()
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
+# Using non-top-level imports to avoid eventually unused imports.
+# pylint: disable=E0012,C0415
 
 class ImportSpecialPhrases:
     """\

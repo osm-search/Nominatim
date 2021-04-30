@@ -214,7 +214,6 @@ def truncate_data_tables(conn, max_word_frequency=None):
         cur.execute('TRUNCATE place_addressline')
         cur.execute('TRUNCATE location_area')
         cur.execute('TRUNCATE location_area_country')
-        cur.execute('TRUNCATE location_property')
         cur.execute('TRUNCATE location_property_tiger')
         cur.execute('TRUNCATE location_property_osmline')
         cur.execute('TRUNCATE location_postcode')

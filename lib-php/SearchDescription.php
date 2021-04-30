@@ -790,20 +790,6 @@ class SearchDescription
             }
         }
 
-        // If nothing found try the aux fallback table
-        if (CONST_Use_Aux_Location_data && empty($aResults)) {
-            $sSQL = 'SELECT place_id FROM location_property_aux';
-            $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.')';
-            $sSQL .= " AND housenumber = '".$this->sHouseNumber."'";
-            $sSQL .= $this->oContext->excludeSQL(' AND place_id');
-
-            Debug::printSQL($sSQL);
-
-            foreach ($oDB->getCol($sSQL) as $iPlaceId) {
-                $aResults[$iPlaceId] = new Result($iPlaceId, Result::TABLE_AUX);
-            }
-        }
-
         // If nothing found then search in Tiger data (location_property_tiger)
         if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_tiger';

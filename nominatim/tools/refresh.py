@@ -111,7 +111,6 @@ PHP_CONST_DEFS = (
     ('Search_BatchMode', 'SEARCH_BATCH_MODE', bool),
     ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
     ('Term_Normalization_Rules', 'TERM_NORMALIZATION', str),
-    ('Use_Aux_Location_data', 'USE_AUX_LOCATION_DATA', bool),
     ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
     ('MapIcon_URL', 'MAPICON_URL', str),
 )

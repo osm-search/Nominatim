@@ -28,7 +28,8 @@ class AbstractPlacexRunner:
                """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
 
 
-    def get_place_details(self, worker, ids):
+    @staticmethod
+    def get_place_details(worker, ids):
         worker.perform("""SELECT place_id, (placex_prepare_update(placex)).*
                           FROM placex WHERE place_id IN %s""",
                        (tuple((p[0] for p in ids)), ))
@@ -103,10 +104,17 @@ class InterpolationRunner:
 
     @staticmethod
     def sql_get_objects():
-        return """SELECT place_id, get_interpolation_address(address, osm_id) as address
+        return """SELECT place_id
                   FROM location_property_osmline
                   WHERE indexed_status > 0
                   ORDER BY geometry_sector"""
+
+
+    @staticmethod
+    def get_place_details(worker, ids):
+        worker.perform("""SELECT place_id, get_interpolation_address(address, osm_id) as address
+                          FROM location_property_osmline WHERE place_id IN %s""",
+                       (tuple((p[0] for p in ids)), ))
 
 
     @staticmethod

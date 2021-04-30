@@ -26,6 +26,10 @@ class DummyTokenizer:
         self.init_state = "loaded"
 
 
+    def finalize_import(self, _):
+        pass
+
+
     def name_analyzer(self):
         return DummyNameAnalyzer(self.analyser_cache)
 

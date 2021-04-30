@@ -135,6 +135,7 @@ class SetupAll:
             LOG.warning('Create search index for default country names.')
             database_import.create_country_names(conn, tokenizer,
                                                  args.config.LANGUAGES)
+        tokenizer.finalize_import(args.config)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

@@ -62,12 +62,18 @@ def tokenizer_mock(monkeypatch):
     class DummyTokenizer:
         def __init__(self, *args, **kwargs):
             self.update_sql_functions_called = False
+            self.finalize_import_called = False
 
         def update_sql_functions(self, *args):
             self.update_sql_functions_called = True
 
+        def finalize_import(self, *args):
+            self.finalize_import_called = True
+
     tok = DummyTokenizer()
     monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
+                        lambda *args: tok)
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer' ,
                         lambda *args: tok)
 
     return tok
@@ -101,7 +107,7 @@ def test_import_bad_file(temp_db):
     assert 1 == call_nominatim('import', '--osm-file', '.')
 
 
-def test_import_full(temp_db, mock_func_factory):
+def test_import_full(temp_db, mock_func_factory, tokenizer_mock):
     mocks = [
         mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
         mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
@@ -113,7 +119,6 @@ def test_import_full(temp_db, mock_func_factory):
         mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
-        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
         mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
@@ -124,6 +129,7 @@ def test_import_full(temp_db, mock_func_factory):
     cf_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
 
     assert 0 == call_nominatim('import', '--osm-file', __file__)
+    assert tokenizer_mock.finalize_import_called
 
     assert cf_mock.called > 1
 
@@ -131,13 +137,12 @@ def test_import_full(temp_db, mock_func_factory):
         assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
 
-def test_import_continue_load_data(temp_db, mock_func_factory):
+def test_import_continue_load_data(temp_db, mock_func_factory, tokenizer_mock):
     mocks = [
         mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
         mock_func_factory(nominatim.tools.database_import, 'load_data'),
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
-        mock_func_factory(nominatim.tokenizer.factory, 'create_tokenizer'),
         mock_func_factory(nominatim.tools.postcodes, 'import_postcodes'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
@@ -145,17 +150,18 @@ def test_import_continue_load_data(temp_db, mock_func_factory):
     ]
 
     assert 0 == call_nominatim('import', '--continue', 'load-data')
+    assert tokenizer_mock.finalize_import_called
 
     for mock in mocks:
         assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
 
 
-def test_import_continue_indexing(temp_db, mock_func_factory, placex_table, temp_db_conn):
+def test_import_continue_indexing(temp_db, mock_func_factory, placex_table,
+                                  temp_db_conn, tokenizer_mock):
     mocks = [
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
-        mock_func_factory(nominatim.tokenizer.factory, 'get_tokenizer_for_db'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
@@ -172,16 +178,17 @@ def test_import_continue_indexing(temp_db, mock_func_factory, placex_table, temp
     assert temp_db_conn.index_exists('idx_placex_pendingsector')
 
 
-def test_import_continue_postprocess(temp_db, mock_func_factory):
+def test_import_continue_postprocess(temp_db, mock_func_factory, tokenizer_mock):
     mocks = [
         mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
         mock_func_factory(nominatim.tools.database_import, 'create_country_names'),
         mock_func_factory(nominatim.tools.refresh, 'setup_website'),
-        mock_func_factory(nominatim.tokenizer.factory, 'get_tokenizer_for_db'),
         mock_func_factory(nominatim.db.properties, 'set_property')
     ]
 
     assert 0 == call_nominatim('import', '--continue', 'db-postprocess')
+
+    assert tokenizer_mock.finalize_import_called
 
     for mock in mocks:
         assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)

@@ -172,7 +172,7 @@ def test_import_osm_data_default_cache(temp_db_cursor,osm2pgsql_options):
 
 def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):
     tables = ('word', 'placex', 'place_addressline', 'location_area',
-              'location_area_country', 'location_property',
+              'location_area_country',
               'location_property_tiger', 'location_property_osmline',
               'location_postcode', 'search_name', 'location_road_23')
     for table in tables:

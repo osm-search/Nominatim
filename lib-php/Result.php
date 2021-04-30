@@ -13,8 +13,7 @@ class Result
     const TABLE_PLACEX = 0;
     const TABLE_POSTCODE = 1;
     const TABLE_OSMLINE = 2;
-    const TABLE_AUX = 3;
-    const TABLE_TIGER = 4;
+    const TABLE_TIGER = 3;
 
     /// Database table that contains the result.
     public $iTable;

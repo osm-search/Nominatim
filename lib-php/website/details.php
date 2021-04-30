@@ -106,11 +106,6 @@ if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_postcode WHERE place_id = '.$iPlaceID);
 if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
 
-if (CONST_Use_Aux_Location_data) {
-    $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_aux WHERE place_id = '.$iPlaceID);
-    if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
-}
-
 $hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 
 // Get the details for this point

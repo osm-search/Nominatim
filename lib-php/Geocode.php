@@ -829,7 +829,6 @@ class Geocode
                     foreach ($aResults as $oResult) {
                         if (($this->iMaxAddressRank == 30 &&
                              ($oResult->iTable == Result::TABLE_OSMLINE
-                              || $oResult->iTable == Result::TABLE_AUX
                               || $oResult->iTable == Result::TABLE_TIGER))
                             || in_array($oResult->iId, $aFilteredIDs)
                         ) {

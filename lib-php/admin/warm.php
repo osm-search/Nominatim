@@ -33,7 +33,6 @@ loadSettings($aCMDResult['project-dir'] ?? getcwd());
 @define('CONST_Search_BatchMode', getSettingBool('SEARCH_BATCH_MODE'));
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', getSetting('SEARCH_NAME_ONLY_THRESHOLD'));
 @define('CONST_Term_Normalization_Rules', getSetting('TERM_NORMALIZATION'));
-@define('CONST_Use_Aux_Location_data', getSettingBool('USE_AUX_LOCATION_DATA'));
 @define('CONST_Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
 @define('CONST_MapIcon_URL', getSetting('MAPICON_URL', false));
 

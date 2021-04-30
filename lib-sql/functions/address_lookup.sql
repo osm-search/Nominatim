@@ -135,20 +135,6 @@ BEGIN
   END IF;
   {% endif %}
 
-  -- then additional data
-  {% if config.get_bool('USE_AUX_LOCATION_DATA') %}
-  IF place IS NULL THEN
-    SELECT parent_place_id as place_id, 'us' as country_code,
-           housenumber, postcode,
-           'place' as class, 'house' as type,
-           null as name, null as address,
-           centroid
-      INTO place
-      FROM location_property_aux
-      WHERE place_id = in_place_id;
-  END IF;
-  {% endif %}
-
   -- postcode table
   IF place IS NULL THEN
     SELECT parent_place_id as place_id, country_code,

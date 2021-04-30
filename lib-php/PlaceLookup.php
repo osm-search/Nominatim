@@ -373,42 +373,6 @@ class PlaceLookup
 
                 $aSubSelects[] = $sSQL;
             }
-
-            if (CONST_Use_Aux_Location_data) {
-                $sPlaceIDs = Result::joinIdsByTable($aResults, Result::TABLE_AUX);
-                if ($sPlaceIDs) {
-                    $sHousenumbers = Result::sqlHouseNumberTable($aResults, Result::TABLE_AUX);
-                    $sSQL = '  SELECT ';
-                    $sSQL .= "     'L' AS osm_type, ";
-                    $sSQL .= '     place_id AS osm_id, ';
-                    $sSQL .= "     'place' AS class,";
-                    $sSQL .= "     'house' AS type, ";
-                    $sSQL .= '     null::smallint AS admin_level, ';
-                    $sSQL .= '     30 AS rank_search,';
-                    $sSQL .= '     30 AS rank_address, ';
-                    $sSQL .= '     place_id,';
-                    $sSQL .= '     parent_place_id, ';
-                    $sSQL .= '     housenumber,';
-                    $sSQL .= "     'us' AS country_code, ";
-                    $sSQL .= $this->langAddressSql('-1');
-                    $sSQL .= '     null::text AS placename, ';
-                    $sSQL .= '     null::text AS ref, ';
-                    if ($this->bExtraTags) $sSQL .= 'null::text AS extra, ';
-                    if ($this->bNameDetails) $sSQL .= 'null::text AS names, ';
-                    $sSQL .= '     ST_X(centroid) AS lon, ';
-                    $sSQL .= '     ST_Y(centroid) AS lat, ';
-                    $sSQL .= '     -1.10 AS importance, ';
-                    $sSQL .= $this->addressImportanceSql(
-                        'centroid',
-                        'location_property_aux.parent_place_id'
-                    );
-                    $sSQL .= '     null::text AS extra_place ';
-                    $sSQL .= '  FROM location_property_aux ';
-                    $sSQL .= "  WHERE place_id in ($sPlaceIDs) ";
-
-                    $aSubSelects[] = $sSQL;
-                }
-            }
         }
 
         if (empty($aSubSelects)) {

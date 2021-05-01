@@ -44,6 +44,7 @@ def migrate(config, paths):
                             '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
+                conn.commit()
                 has_run_migration = True
 
         if has_run_migration:

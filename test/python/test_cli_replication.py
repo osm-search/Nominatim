@@ -27,6 +27,28 @@ def call_nominatim(*args):
                                    cli_args=['replication'] + list(args))
 
 @pytest.fixture
+def tokenizer_mock(monkeypatch):
+    class DummyTokenizer:
+        def __init__(self, *args, **kwargs):
+            self.update_sql_functions_called = False
+            self.finalize_import_called = False
+
+        def update_sql_functions(self, *args):
+            self.update_sql_functions_called = True
+
+        def finalize_import(self, *args):
+            self.finalize_import_called = True
+
+    tok = DummyTokenizer()
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
+                        lambda *args: tok)
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer' ,
+                        lambda *args: tok)
+
+    return tok
+
+
+@pytest.fixture
 def index_mock(monkeypatch, tokenizer_mock):
     mock = MockParamCapture()
     monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', mock)

@@ -133,15 +133,18 @@ class LegacyICUTokenizer:
     def _install_php(self, config):
         """ Install the php script for the tokenizer.
         """
+        abbr_inverse = list(zip(*self.abbreviations))
         php_file = self.data_dir / "tokenizer.php"
         php_file.write_text(dedent("""\
             <?php
             @define('CONST_Max_Word_Frequency', {1.MAX_WORD_FREQUENCY});
             @define('CONST_Term_Normalization_Rules', "{0.normalization}");
-            @define('CONST_Transliteration'. "{0.transliteration}");
-            # XXX abreviations
+            @define('CONST_Transliteration', "{0.transliteration}");
+            @define('CONST_Abbreviations', array(array('{2}'), array('{3}')));
             require_once('{1.lib_dir.php}/tokenizer/legacy_icu_tokenizer.php');
-            """.format(self, config)))
+            """.format(self, config,
+                       "','".join(abbr_inverse[0]),
+                       "','".join(abbr_inverse[1]))))
 
 
     def _save_config(self, config):

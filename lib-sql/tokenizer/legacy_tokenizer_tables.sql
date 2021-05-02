@@ -12,6 +12,8 @@ CREATE TABLE word (
 
 CREATE INDEX idx_word_word_token ON word
     USING BTREE (word_token) {{db.tablespace.search_index}};
+CREATE INDEX idx_word_word ON word
+    USING BTREE (word) {{db.tablespace.search_index}} WHERE word is not null;
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 
 DROP SEQUENCE IF EXISTS seq_word;

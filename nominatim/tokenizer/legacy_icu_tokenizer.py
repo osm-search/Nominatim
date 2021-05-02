@@ -3,6 +3,7 @@ Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
 """
 from collections import Counter
+import functools
 import io
 import itertools
 import json
@@ -232,6 +233,7 @@ class LegacyICUNameAnalyzer:
         """
         return self.normalizer.transliterate(phrase)
 
+    @functools.lru_cache(maxsize=1024)
     def make_standard_word(self, name):
         """ Create the normalised version of the name.
         """

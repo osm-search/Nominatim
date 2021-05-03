@@ -83,6 +83,7 @@ class UpdateReplication:
     def _update(args):
         from ..tools import replication
         from ..indexer.indexer import Indexer
+        from ..tokenizer import factory as tokenizer_factory
 
         params = args.osm2pgsql_options(default_cache=2000, default_threads=1)
         params.update(base_url=args.config.REPLICATION_URL,
@@ -106,6 +107,8 @@ class UpdateReplication:
                 raise UsageError("Bad argument '--no-index'.")
             recheck_interval = args.config.get_int('REPLICATION_RECHECK_INTERVAL')
 
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+
         while True:
             with connect(args.config.get_libpq_dsn()) as conn:
                 start = dt.datetime.now(dt.timezone.utc)
@@ -116,7 +119,7 @@ class UpdateReplication:
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
                 index_start = dt.datetime.now(dt.timezone.utc)
-                indexer = Indexer(args.config.get_libpq_dsn(),
+                indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                                   args.threads or 1)
                 indexer.index_boundaries(0, 30)
                 indexer.index_by_rank(0, 30)

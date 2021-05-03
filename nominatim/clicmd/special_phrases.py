@@ -9,6 +9,8 @@ LOG = logging.getLogger()
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
+# Using non-top-level imports to avoid eventually unused imports.
+# pylint: disable=E0012,C0415
 
 class ImportSpecialPhrases:
     """\
@@ -22,10 +24,13 @@ class ImportSpecialPhrases:
 
     @staticmethod
     def run(args):
+        from ..tokenizer import factory as tokenizer_factory
+
         if args.import_from_wiki:
             LOG.warning('Special phrases importation starting')
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
             with connect(args.config.get_libpq_dsn()) as db_connection:
                 SpecialPhrasesImporter(
                     args.config, args.phplib_dir, db_connection
-                ).import_from_wiki()
+                ).import_from_wiki(tokenizer)
         return 0

@@ -16,8 +16,6 @@ class Phrase
     private $sPhrase;
     // Element type for structured searches.
     private $sPhraseType;
-    // Space-separated words of the phrase.
-    private $aWords;
     // Possible segmentations of the phrase.
     private $aWordSets;
 
@@ -38,7 +36,14 @@ class Phrase
     {
         $this->sPhrase = trim($sPhrase);
         $this->sPhraseType = $sPhraseType;
-        $this->aWords = explode(' ', $this->sPhrase);
+    }
+
+    /**
+     * Get the orginal phrase of the string.
+     */
+    public function getPhrase()
+    {
+        return $this->sPhrase;
     }
 
     /**
@@ -64,30 +69,6 @@ class Phrase
     }
 
     /**
-     * Add the tokens from this phrase to the given list of tokens.
-     *
-     * @param string[] $aTokens List of tokens to append.
-     *
-     * @return void
-     */
-    public function addTokens(&$aTokens)
-    {
-        $iNumWords = count($this->aWords);
-
-        for ($i = 0; $i < $iNumWords; $i++) {
-            $sPhrase = $this->aWords[$i];
-            $aTokens[' '.$sPhrase] = ' '.$sPhrase;
-            $aTokens[$sPhrase] = $sPhrase;
-
-            for ($j = $i + 1; $j < $iNumWords; $j++) {
-                $sPhrase .= ' '.$this->aWords[$j];
-                $aTokens[' '.$sPhrase] = ' '.$sPhrase;
-                $aTokens[$sPhrase] = $sPhrase;
-            }
-        }
-    }
-
-    /**
      * Invert the set of possible segmentations.
      *
      * @return void
@@ -99,21 +80,27 @@ class Phrase
         }
     }
 
-    public function computeWordSets($oTokens)
+    public function computeWordSets($aWords, $oTokens)
     {
-        $iNumWords = count($this->aWords);
+        $iNumWords = count($aWords);
+
+        if ($iNumWords == 0) {
+            $this->aWordSets = null;
+            return;
+        }
+
         // Caches the word set for the partial phrase up to word i.
         $aSetCache = array_fill(0, $iNumWords, array());
 
         // Initialise first element of cache. There can only be the word.
-        if ($oTokens->containsAny($this->aWords[0])) {
-            $aSetCache[0][] = array($this->aWords[0]);
+        if ($oTokens->containsAny($aWords[0])) {
+            $aSetCache[0][] = array($aWords[0]);
         }
 
         // Now do the next elements using what we already have.
         for ($i = 1; $i < $iNumWords; $i++) {
             for ($j = $i; $j > 0; $j--) {
-                $sPartial = $j == $i ? $this->aWords[$j] : $this->aWords[$j].' '.$sPartial;
+                $sPartial = $j == $i ? $aWords[$j] : $aWords[$j].' '.$sPartial;
                 if (!empty($aSetCache[$j - 1]) && $oTokens->containsAny($sPartial)) {
                     $aPartial = array($sPartial);
                     foreach ($aSetCache[$j - 1] as $aSet) {
@@ -136,7 +123,7 @@ class Phrase
             }
 
             // finally the current full phrase
-            $sPartial = $this->aWords[0].' '.$sPartial;
+            $sPartial = $aWords[0].' '.$sPartial;
             if ($oTokens->containsAny($sPartial)) {
                 $aSetCache[$i][] = array($sPartial);
             }
@@ -153,7 +140,6 @@ class Phrase
         return array(
                 'Type' => $this->sPhraseType,
                 'Phrase' => $this->sPhrase,
-                'Words' => $this->aWords,
                 'WordSets' => $this->aWordSets
                );
     }

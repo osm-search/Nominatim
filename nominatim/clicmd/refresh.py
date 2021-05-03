@@ -46,6 +46,7 @@ class UpdateRefresh:
     @staticmethod
     def run(args):
         from ..tools import refresh
+        from ..tokenizer import factory as tokenizer_factory
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
@@ -66,6 +67,8 @@ class UpdateRefresh:
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.create_functions(conn, args.config,
                                          args.diffs, args.enable_debug_statements)
+                tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+                tokenizer.update_sql_functions(args.config)
 
         if args.wiki_data:
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH

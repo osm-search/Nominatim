@@ -89,8 +89,6 @@ class SQLPreprocessor:
         self.env.globals['db'] = db_info
         self.env.globals['sql'] = _setup_postgres_sql(conn)
         self.env.globals['postgres'] = _setup_postgresql_features(conn)
-        self.env.globals['modulepath'] = config.DATABASE_MODULE_PATH or \
-                                         str((config.project_dir / 'module').resolve())
 
 
     def run_sql_file(self, conn, name, **kwargs):

@@ -1,5 +1,4 @@
 {% include('functions/utils.sql') %}
-{% include('functions/normalization.sql') %}
 {% include('functions/ranking.sql') %}
 {% include('functions/importance.sql') %}
 {% include('functions/address_lookup.sql') %}

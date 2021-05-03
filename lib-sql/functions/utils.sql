@@ -221,37 +221,30 @@ LANGUAGE plpgsql STABLE;
 -- \param centroid   Location of the address.
 --
 -- \return Place ID of the parent if one was found, NULL otherwise.
-CREATE OR REPLACE FUNCTION find_parent_for_address(street TEXT, place TEXT,
+CREATE OR REPLACE FUNCTION find_parent_for_address(street INTEGER[], place INTEGER[],
                                                    partition SMALLINT,
                                                    centroid GEOMETRY)
   RETURNS BIGINT
   AS $$
 DECLARE
   parent_place_id BIGINT;
-  word_ids INTEGER[];
 BEGIN
   IF street is not null THEN
     -- Check for addr:street attributes
     -- Note that addr:street links can only be indexed, once the street itself is indexed
-    word_ids := word_ids_from_name(street);
-    IF word_ids is not null THEN
-      parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, word_ids);
-      IF parent_place_id is not null THEN
-        {% if debug %}RAISE WARNING 'Get parent form addr:street: %', parent_place_id;{% endif %}
-        RETURN parent_place_id;
-      END IF;
+    parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, street);
+    IF parent_place_id is not null THEN
+      {% if debug %}RAISE WARNING 'Get parent form addr:street: %', parent_place_id;{% endif %}
+      RETURN parent_place_id;
     END IF;
   END IF;
 
   -- Check for addr:place attributes.
   IF place is not null THEN
-    word_ids := word_ids_from_name(place);
-    IF word_ids is not null THEN
-      parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, word_ids);
-      IF parent_place_id is not null THEN
-        {% if debug %}RAISE WARNING 'Get parent form addr:place: %', parent_place_id;{% endif %}
-        RETURN parent_place_id;
-      END IF;
+    parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, place);
+    IF parent_place_id is not null THEN
+      {% if debug %}RAISE WARNING 'Get parent form addr:place: %', parent_place_id;{% endif %}
+      RETURN parent_place_id;
     END IF;
   END IF;
 

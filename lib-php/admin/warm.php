@@ -3,7 +3,6 @@
 
 require_once(CONST_LibDir.'/init-cmd.php');
 require_once(CONST_LibDir.'/log.php');
-require_once(CONST_LibDir.'/Geocode.php');
 require_once(CONST_LibDir.'/PlaceLookup.php');
 require_once(CONST_LibDir.'/ReverseGeocode.php');
 
@@ -26,16 +25,16 @@ loadSettings($aCMDResult['project-dir'] ?? getcwd());
 @define('CONST_Default_Language', getSetting('DEFAULT_LANGUAGE', false));
 @define('CONST_Log_DB', getSettingBool('LOG_DB'));
 @define('CONST_Log_File', getSetting('LOG_FILE', false));
-@define('CONST_Max_Word_Frequency', getSetting('MAX_WORD_FREQUENCY'));
 @define('CONST_NoAccessControl', getSettingBool('CORS_NOACCESSCONTROL'));
 @define('CONST_Places_Max_ID_count', getSetting('LOOKUP_MAX_COUNT'));
 @define('CONST_PolygonOutput_MaximumTypes', getSetting('POLYGON_OUTPUT_MAX_TYPES'));
 @define('CONST_Search_BatchMode', getSettingBool('SEARCH_BATCH_MODE'));
 @define('CONST_Search_NameOnlySearchFrequencyThreshold', getSetting('SEARCH_NAME_ONLY_THRESHOLD'));
-@define('CONST_Term_Normalization_Rules', getSetting('TERM_NORMALIZATION'));
 @define('CONST_Use_US_Tiger_Data', getSettingBool('USE_US_TIGER_DATA'));
 @define('CONST_MapIcon_URL', getSetting('MAPICON_URL', false));
+@define('CONST_TokenizerDir', CONST_InstallDir.'/tokenizer');
 
+require_once(CONST_LibDir.'/Geocode.php');
 
 $oDB = new Nominatim\DB();
 $oDB->connect();

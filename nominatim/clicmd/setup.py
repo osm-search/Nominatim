@@ -56,6 +56,7 @@ class SetupAll:
         from ..tools import refresh
         from ..indexer.indexer import Indexer
         from ..tools import postcodes
+        from ..tokenizer import factory as tokenizer_factory
 
         if args.osm_file and not Path(args.osm_file).is_file():
             LOG.fatal("OSM file '%s' does not exist.", args.osm_file)
@@ -66,12 +67,6 @@ class SetupAll:
                                                     args.data_dir,
                                                     args.no_partitions,
                                                     rouser=args.config.DATABASE_WEBUSER)
-
-            LOG.warning('Installing database module')
-            with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.install_module(args.module_dir, args.project_dir,
-                                               args.config.DATABASE_MODULE_PATH,
-                                               conn=conn)
 
             LOG.warning('Importing OSM data file')
             database_import.import_osm_data(Path(args.osm_file),
@@ -105,22 +100,31 @@ class SetupAll:
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')
             with connect(args.config.get_libpq_dsn()) as conn:
-                database_import.truncate_data_tables(conn, args.config.MAX_WORD_FREQUENCY)
+                database_import.truncate_data_tables(conn)
 
             LOG.warning('Load data into placex table')
             database_import.load_data(args.config.get_libpq_dsn(),
-                                      args.data_dir,
                                       args.threads or psutil.cpu_count() or 1)
 
+        LOG.warning("Setting up tokenizer")
+        if args.continue_at is None or args.continue_at == 'load-data':
+            # (re)initialise the tokenizer data
+            tokenizer = tokenizer_factory.create_tokenizer(args.config)
+        else:
+            # just load the tokenizer
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+
+        if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')
-            postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir)
+            postcodes.import_postcodes(args.config.get_libpq_dsn(), args.project_dir,
+                                       tokenizer)
 
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             if args.continue_at is not None and args.continue_at != 'load-data':
                 with connect(args.config.get_libpq_dsn()) as conn:
                     SetupAll._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
-            indexer = Indexer(args.config.get_libpq_dsn(),
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                               args.threads or psutil.cpu_count() or 1)
             indexer.index_full(analyse=not args.index_noanalyse)
 
@@ -129,7 +133,9 @@ class SetupAll:
             database_import.create_search_indices(conn, args.config,
                                                   drop=args.no_updates)
             LOG.warning('Create search index for default country names.')
-            database_import.create_country_names(conn, args.config)
+            database_import.create_country_names(conn, tokenizer,
+                                                 args.config.LANGUAGES)
+        tokenizer.finalize_import(args.config)
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

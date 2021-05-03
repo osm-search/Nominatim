@@ -24,9 +24,6 @@ class SpecialPhrasesImporterStatistics():
         self.tables_deleted = 0
         self.tables_ignored = 0
         self.global_phrases_invalid = 0
-        self.global_phrases_added = 0
-        self.global_phrases_ignored = 0
-        self.global_phrases_deleted = 0
 
     def _set_lang_values_to_0(self):
         """
@@ -34,8 +31,6 @@ class SpecialPhrasesImporterStatistics():
             lang to 0.
         """
         self.lang_phrases_invalid = 0
-        self.lang_phrases_added = 0
-        self.lang_phrases_ignored = 0
 
     def notify_one_phrase_invalid(self):
         """
@@ -44,29 +39,6 @@ class SpecialPhrasesImporterStatistics():
         """
         self.lang_phrases_invalid += 1
         self.global_phrases_invalid += 1
-
-    def notify_one_phrase_added(self):
-        """
-            Add +1 to the count of entries
-            added to the db.
-        """
-        self.lang_phrases_added += 1
-        self.global_phrases_added += 1
-
-    def notify_one_phrase_ignored(self):
-        """
-            Add +1 to the count of ignored
-            entries as it was already in the db.
-        """
-        self.lang_phrases_ignored += 1
-        self.global_phrases_ignored += 1
-
-    def notify_one_phrase_deleted(self):
-        """
-            Add +1 to the count of phrases deleted
-            from the database.
-        """
-        self.global_phrases_deleted += 1
 
     def notify_one_table_created(self):
         """
@@ -97,12 +69,6 @@ class SpecialPhrasesImporterStatistics():
         LOG.info('- %s phrases were invalid.', self.global_phrases_invalid)
         if self.global_phrases_invalid > 0:
             LOG.info('  Those invalid phrases have been skipped.')
-        LOG.info('- %s phrases were ignored as they are already in the database',
-                 self.global_phrases_ignored)
-        LOG.info('- %s phrases were added to the database', self.global_phrases_added)
-        LOG.info('- %s phrases were deleted from the database', self.global_phrases_deleted)
-        if self.global_phrases_deleted > 0:
-            LOG.info('  They were deleted as they are not valid anymore.')
         LOG.info('- %s tables were ignored as they already exist on the database',
                  self.tables_ignored)
         LOG.info('- %s tables were created', self.tables_created)
@@ -126,9 +92,6 @@ class SpecialPhrasesImporterStatistics():
         LOG.info('- %s phrases were invalid.', self.lang_phrases_invalid)
         if self.lang_phrases_invalid > 0:
             LOG.info('  Those invalid phrases have been skipped.')
-        LOG.info('- %s phrases were ignored as they are already in the database',
-                 self.lang_phrases_ignored)
-        LOG.info('- %s phrases were added to the database', self.lang_phrases_added)
         LOG.info('====================================================================')
 
         if self.lang_phrases_invalid > 0:

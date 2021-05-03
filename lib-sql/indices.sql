@@ -1,9 +1,6 @@
 -- Indices used only during search and update.
 -- These indices are created only after the indexing process is done.
 
-CREATE INDEX {{sql.if_index_not_exists}} idx_word_word_id
-  ON word USING BTREE (word_id) {{db.tablespace.search_index}};
-
 CREATE INDEX {{sql.if_index_not_exists}} idx_place_addressline_address_place_id
   ON place_addressline USING BTREE (address_place_id) {{db.tablespace.search_index}};
 

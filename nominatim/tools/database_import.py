@@ -5,11 +5,10 @@ import logging
 import os
 import selectors
 import subprocess
-import shutil
 from pathlib import Path
 
 import psutil
-import psycopg2
+import psycopg2.extras
 
 from nominatim.db.connection import connect, get_pg_env
 from nominatim.db import utils as db_utils
@@ -89,49 +88,6 @@ def setup_extensions(conn):
         raise UsageError('PostGIS version is too old.')
 
 
-def install_module(src_dir, project_dir, module_dir, conn=None):
-    """ Copy the normalization module from src_dir into the project
-        directory under the '/module' directory. If 'module_dir' is set, then
-        use the module from there instead and check that it is accessible
-        for Postgresql.
-
-        The function detects when the installation is run from the
-        build directory. It doesn't touch the module in that case.
-
-        If 'conn' is given, then the function also tests if the module
-        can be access via the given database.
-    """
-    if not module_dir:
-        module_dir = project_dir / 'module'
-
-        if not module_dir.exists() or not src_dir.samefile(module_dir):
-
-            if not module_dir.exists():
-                module_dir.mkdir()
-
-            destfile = module_dir / 'nominatim.so'
-            shutil.copy(str(src_dir / 'nominatim.so'), str(destfile))
-            destfile.chmod(0o755)
-
-            LOG.info('Database module installed at %s', str(destfile))
-        else:
-            LOG.info('Running from build directory. Leaving database module as is.')
-    else:
-        LOG.info("Using custom path for database module at '%s'", module_dir)
-
-    if conn is not None:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
-                               RETURNS text AS '{}/nominatim.so', 'transliteration'
-                               LANGUAGE c IMMUTABLE STRICT;
-                               DROP FUNCTION nominatim_test_import_func(text)
-                            """.format(module_dir))
-            except psycopg2.DatabaseError as err:
-                LOG.fatal("Error accessing database module: %s", err)
-                raise UsageError("Database module cannot be accessed.") from err
-
-
 def import_base_data(dsn, sql_dir, ignore_partitions=False):
     """ Create and populate the tables with basic static data that provides
         the background for geocoding. Data is assumed to not yet exist.
@@ -205,11 +161,10 @@ def create_partition_tables(conn, config):
     sql.run_sql_file(conn, 'partition-tables.src.sql')
 
 
-def truncate_data_tables(conn, max_word_frequency=None):
+def truncate_data_tables(conn):
     """ Truncate all data tables to prepare for a fresh load.
     """
     with conn.cursor() as cur:
-        cur.execute('TRUNCATE word')
         cur.execute('TRUNCATE placex')
         cur.execute('TRUNCATE place_addressline')
         cur.execute('TRUNCATE location_area')
@@ -228,23 +183,13 @@ def truncate_data_tables(conn, max_word_frequency=None):
         for table in [r[0] for r in list(cur)]:
             cur.execute('TRUNCATE ' + table)
 
-        if max_word_frequency is not None:
-            # Used by getorcreate_word_id to ignore frequent partial words.
-            cur.execute("""CREATE OR REPLACE FUNCTION get_maxwordfreq()
-                           RETURNS integer AS $$
-                             SELECT {} as maxwordfreq;
-                           $$ LANGUAGE SQL IMMUTABLE
-                        """.format(max_word_frequency))
-        conn.commit()
+    conn.commit()
 
 _COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
 
-def load_data(dsn, data_dir, threads):
+def load_data(dsn, threads):
     """ Copy data into the word and placex table.
     """
-    # Pre-calculate the most important terms in the word list.
-    db_utils.execute_file(dsn, data_dir / 'words.sql')
-
     sel = selectors.DefaultSelector()
     # Then copy data from place to placex in <threads - 1> chunks.
     place_threads = max(1, threads - 1)
@@ -306,34 +251,37 @@ def create_search_indices(conn, config, drop=False):
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
 
-def create_country_names(conn, config):
-    """ Create search index for default country names.
+def create_country_names(conn, tokenizer, languages=None):
+    """ Add default country names to search index. `languages` is a comma-
+        separated list of language codes as used in OSM. If `languages` is not
+        empty then only name translations for the given languages are added
+        to the index.
     """
+    if languages:
+        languages = languages.split(',')
+
+    def _include_key(key):
+        return key == 'name' or \
+               (key.startswith('name:') \
+                and (not languages or key[5:] in languages))
 
     with conn.cursor() as cur:
-        cur.execute("""SELECT getorcreate_country(make_standard_name('uk'), 'gb')""")
-        cur.execute("""SELECT getorcreate_country(make_standard_name('united states'), 'us')""")
-        cur.execute("""SELECT COUNT(*) FROM
-                       (SELECT getorcreate_country(make_standard_name(country_code),
-                       country_code) FROM country_name WHERE country_code is not null) AS x""")
-        cur.execute("""SELECT COUNT(*) FROM
-                       (SELECT getorcreate_country(make_standard_name(name->'name'), country_code) 
-                       FROM country_name WHERE name ? 'name') AS x""")
-        sql_statement = """SELECT COUNT(*) FROM (SELECT getorcreate_country(make_standard_name(v),
-                           country_code) FROM (SELECT country_code, skeys(name)
-                           AS k, svals(name) AS v FROM country_name) x WHERE k"""
+        psycopg2.extras.register_hstore(cur)
+        cur.execute("""SELECT country_code, name FROM country_name
+                       WHERE country_code is not null""")
 
-        languages = config.LANGUAGES
+        with tokenizer.name_analyzer() as analyzer:
+            for code, name in cur:
+                names = [code]
+                if code == 'gb':
+                    names.append('UK')
+                if code == 'us':
+                    names.append('United States')
 
-        if languages:
-            sql_statement = "{} IN (".format(sql_statement)
-            delim = ''
-            for language in languages.split(','):
-                sql_statement = "{}{}'name:{}'".format(sql_statement, delim, language)
-                delim = ', '
-            sql_statement = '{})'.format(sql_statement)
-        else:
-            sql_statement = "{} LIKE 'name:%'".format(sql_statement)
-        sql_statement = "{}) v".format(sql_statement)
-        cur.execute(sql_statement)
+                # country names (only in languages as provided)
+                if name:
+                    names.extend((v for k, v in name.items() if _include_key(k)))
+
+                analyzer.add_country_names(code, names)
+
     conn.commit()

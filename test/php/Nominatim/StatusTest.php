@@ -2,6 +2,8 @@
 
 namespace Nominatim;
 
+@define('CONST_TokenizerDir', dirname(__FILE__));
+
 require_once(CONST_LibDir.'/DB.php');
 require_once(CONST_LibDir.'/Status.php');
 
@@ -40,45 +42,6 @@ class StatusTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals('No database', $oStatus->status());
     }
 
-
-    public function testModuleFail()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Module call failed');
-        $this->expectExceptionCode(702);
-
-        // stub has getOne method but doesn't return anything
-        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
-                        ->setMethods(array('connect', 'getOne'))
-                        ->getMock();
-
-        $oStatus = new Status($oDbStub);
-        $this->assertNull($oStatus->status());
-    }
-
-
-    public function testWordIdQueryFail()
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('No value');
-        $this->expectExceptionCode(704);
-
-        $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
-                        ->setMethods(array('connect', 'getOne'))
-                        ->getMock();
-
-        // return no word_id
-        $oDbStub->method('getOne')
-                ->will($this->returnCallback(function ($sql) {
-                    if (preg_match("/make_standard_name\('a'\)/", $sql)) return 'a';
-                    if (preg_match('/SELECT word_id, word_token/', $sql)) return null;
-                }));
-
-        $oStatus = new Status($oDbStub);
-        $this->assertNull($oStatus->status());
-    }
-
-
     public function testOK()
     {
         $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
@@ -100,7 +63,7 @@ class StatusTest extends \PHPUnit\Framework\TestCase
         $oDbStub = $this->getMockBuilder(Nominatim\DB::class)
                         ->setMethods(array('getOne'))
                         ->getMock();
-     
+
         $oDbStub->method('getOne')
                 ->willReturn(1519430221);
 

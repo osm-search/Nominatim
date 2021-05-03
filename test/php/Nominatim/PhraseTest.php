@@ -44,19 +44,16 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
     public function testEmptyPhrase()
     {
         $oPhrase = new Phrase('', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array(), new TokensFullSet());
 
-        $this->assertEquals(
-            array(array('')),
-            $oPhrase->getWordSets()
-        );
+        $this->assertNull($oPhrase->getWordSets());
     }
 
 
     public function testSingleWordPhrase()
     {
         $oPhrase = new Phrase('a', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array('a'), new TokensFullSet());
 
         $this->assertEquals(
             '(a)',
@@ -68,21 +65,21 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
     public function testMultiWordPhrase()
     {
         $oPhrase = new Phrase('a b', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array('a', 'b'), new TokensFullSet());
         $this->assertEquals(
             '(a b),(a|b)',
             $this->serializeSets($oPhrase->getWordSets())
         );
 
         $oPhrase = new Phrase('a b c', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array('a', 'b', 'c'), new TokensFullSet());
         $this->assertEquals(
             '(a b c),(a|b c),(a b|c),(a|b|c)',
             $this->serializeSets($oPhrase->getWordSets())
         );
 
         $oPhrase = new Phrase('a b c d', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array('a', 'b', 'c', 'd'), new TokensFullSet());
         $this->assertEquals(
             '(a b c d),(a b c|d),(a b|c d),(a|b c d),(a b|c|d),(a|b c|d),(a|b|c d),(a|b|c|d)',
             $this->serializeSets($oPhrase->getWordSets())
@@ -93,7 +90,7 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
     public function testInverseWordSets()
     {
         $oPhrase = new Phrase('a b c', '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $oPhrase->computeWordSets(array('a', 'b', 'c'), new TokensFullSet());
         $oPhrase->invertWordSets();
 
         $this->assertEquals(
@@ -105,14 +102,16 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
 
     public function testMaxWordSets()
     {
-        $oPhrase = new Phrase(join(' ', array_fill(0, 4, 'a')), '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $aWords = array_fill(0, 4, 'a');
+        $oPhrase = new Phrase(join(' ', $aWords), '');
+        $oPhrase->computeWordSets($aWords, new TokensFullSet());
         $this->assertEquals(8, count($oPhrase->getWordSets()));
         $oPhrase->invertWordSets();
         $this->assertEquals(8, count($oPhrase->getWordSets()));
 
-        $oPhrase = new Phrase(join(' ', array_fill(0, 18, 'a')), '');
-        $oPhrase->computeWordSets(new TokensFullSet());
+        $aWords = array_fill(0, 18, 'a');
+        $oPhrase = new Phrase(join(' ', $aWords), '');
+        $oPhrase->computeWordSets($aWords, new TokensFullSet());
         $this->assertEquals(100, count($oPhrase->getWordSets()));
         $oPhrase->invertWordSets();
         $this->assertEquals(100, count($oPhrase->getWordSets()));
@@ -122,7 +121,7 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
     public function testPartialTokensShortTerm()
     {
         $oPhrase = new Phrase('a b c d', '');
-        $oPhrase->computeWordSets(new TokensPartialSet(array('a', 'b', 'd', 'b c', 'b c d')));
+        $oPhrase->computeWordSets(array('a', 'b', 'c', 'd'), new TokensPartialSet(array('a', 'b', 'd', 'b c', 'b c d')));
         $this->assertEquals(
             '(a|b c d),(a|b c|d)',
             $this->serializeSets($oPhrase->getWordSets())
@@ -132,8 +131,9 @@ class PhraseTest extends \PHPUnit\Framework\TestCase
 
     public function testPartialTokensLongTerm()
     {
-        $oPhrase = new Phrase(join(' ', array_fill(0, 18, 'a')), '');
-        $oPhrase->computeWordSets(new TokensPartialSet(array('a', 'a a a a a')));
+        $aWords = array_fill(0, 18, 'a');
+        $oPhrase = new Phrase(join(' ', $aWords), '');
+        $oPhrase->computeWordSets($aWords, new TokensPartialSet(array('a', 'a a a a a')));
         $this->assertEquals(80, count($oPhrase->getWordSets()));
     }
 }

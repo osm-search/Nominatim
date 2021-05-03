@@ -24,7 +24,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | nameaddress_vector |
-         | N1     | Rose, Street, Walltown |
+         | N1     | #Rose Street, Walltown |
         When searching for "23 Rose Street, Walltown"
         Then results contain
          | osm_type | osm_id | name |
@@ -248,7 +248,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | #Green Moss | Rose, Street, Walltown |
+         | N1     | #Green Moss | #Rose Street, Walltown |
         When searching for "Green Moss, Rose Street, Walltown"
         Then results contain
          | osm_type | osm_id | name |
@@ -299,7 +299,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | name_vector | nameaddress_vector |
-         | N1     | foo         | the road |
+         | N1     | foo         | #the road |
 
     Scenario: Some addr: tags are added to address
         Given the scene roads-with-pois

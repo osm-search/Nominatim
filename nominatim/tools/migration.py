@@ -6,7 +6,8 @@ import logging
 from nominatim.db import properties
 from nominatim.db.connection import connect
 from nominatim.version import NOMINATIM_VERSION
-from nominatim.tools import refresh, database_import
+from nominatim.tools import refresh
+from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
@@ -43,11 +44,14 @@ def migrate(config, paths):
                             '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
+                conn.commit()
                 has_run_migration = True
 
         if has_run_migration:
             LOG.warning('Updating SQL functions.')
             refresh.create_functions(conn, config)
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+            tokenizer.update_sql_functions(config)
 
         properties.set_property(conn, 'database_version',
                                 '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
@@ -109,17 +113,6 @@ def import_status_timestamp_change(conn, **_):
 
 
 @_migration(3, 5, 0, 99)
-def install_database_module_in_project_directory(conn, config, paths, **_):
-    """ Install database module in project directory.
-
-        The database module needs to be present in the project directory
-        since those were introduced.
-    """
-    database_import.install_module(paths.module_dir, paths.project_dir,
-                                   config.DATABASE_MODULE_PATH, conn=conn)
-
-
-@_migration(3, 5, 0, 99)
 def add_nominatim_property_table(conn, config, **_):
     """ Add nominatim_property table.
     """
@@ -137,6 +130,9 @@ def change_housenumber_transliteration(conn, **_):
 
         The database schema switched from saving raw housenumbers in
         placex.housenumber to saving transliterated ones.
+
+        Note: the function create_housenumber_id() has been dropped in later
+              versions.
     """
     with conn.cursor() as cur:
         cur.execute("""CREATE OR REPLACE FUNCTION create_housenumber_id(housenumber TEXT)
@@ -173,3 +169,25 @@ def switch_placenode_geometry_index(conn, **_):
                               and class = 'place' and type != 'postcode'
                               and linked_place_id is null""")
         cur.execute(""" DROP INDEX IF EXISTS idx_placex_adminname """)
+
+
+@_migration(3, 7, 0, 1)
+def install_legacy_tokenizer(conn, config, **_):
+    """ Setup legacy tokenizer.
+
+        If no other tokenizer has been configured yet, then create the
+        configuration for the backwards-compatible legacy tokenizer
+    """
+    if properties.get_property(conn, 'tokenizer') is None:
+        with conn.cursor() as cur:
+            for table in ('placex', 'location_property_osmline'):
+                has_column = cur.scalar("""SELECT count(*) FROM information_schema.columns
+                                           WHERE table_name = %s
+                                           and column_name = 'token_info'""",
+                                        (table, ))
+            if has_column == 0:
+                cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
+        tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
+                                                       module_name='legacy')
+
+        tokenizer.migrate_database(config)

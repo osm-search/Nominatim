@@ -104,13 +104,11 @@ PHP_CONST_DEFS = (
     ('Default_Language', 'DEFAULT_LANGUAGE', str),
     ('Log_DB', 'LOG_DB', bool),
     ('Log_File', 'LOG_FILE', str),
-    ('Max_Word_Frequency', 'MAX_WORD_FREQUENCY', int),
     ('NoAccessControl', 'CORS_NOACCESSCONTROL', bool),
     ('Places_Max_ID_count', 'LOOKUP_MAX_COUNT', int),
     ('PolygonOutput_MaximumTypes', 'POLYGON_OUTPUT_MAX_TYPES', int),
     ('Search_BatchMode', 'SEARCH_BATCH_MODE', bool),
     ('Search_NameOnlySearchFrequencyThreshold', 'SEARCH_NAME_ONLY_THRESHOLD', str),
-    ('Term_Normalization_Rules', 'TERM_NORMALIZATION', str),
     ('Use_US_Tiger_Data', 'USE_US_TIGER_DATA', bool),
     ('MapIcon_URL', 'MAPICON_URL', str),
 )
@@ -175,9 +173,11 @@ def setup_website(basedir, config):
 
                       @define('CONST_Debug', $_GET['debug'] ?? false);
                       @define('CONST_LibDir', '{0}');
+                      @define('CONST_TokenizerDir', '{2}');
                       @define('CONST_NominatimVersion', '{1[0]}.{1[1]}.{1[2]}-{1[3]}');
 
-                      """.format(config.lib_dir.php, NOMINATIM_VERSION))
+                      """.format(config.lib_dir.php, NOMINATIM_VERSION,
+                                 config.project_dir / 'tokenizer'))
 
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
         if var_type == bool:

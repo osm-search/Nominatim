@@ -7,6 +7,7 @@ from place_inserter import PlaceColumn
 from table_compare import NominatimID, DBRow
 
 from nominatim.indexer import indexer
+from nominatim.tokenizer import factory as tokenizer_factory
 
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
@@ -86,6 +87,9 @@ def add_data_to_planet_ways(context):
 def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
+    nctx = context.nominatim
+
+    tokenizer = tokenizer_factory.create_tokenizer(nctx.get_test_config())
     context.nominatim.copy_from_place(context.db)
 
     # XXX use tool function as soon as it is ported
@@ -105,7 +109,7 @@ def import_and_index_data_from_place_table(context):
 
     # Call directly as the refresh function does not include postcodes.
     indexer.LOG.setLevel(logging.ERROR)
-    indexer.Indexer(context.nominatim.get_libpq_dsn(), 1).index_full(analyse=False)
+    indexer.Indexer(context.nominatim.get_libpq_dsn(), tokenizer, 1).index_full(analyse=False)
 
     check_database_integrity(context)
 
@@ -230,7 +234,7 @@ def check_search_name_contents(context, exclude):
                                 if exclude:
                                     assert not present, "Found term for {}/{}: {}".format(row['object'], name, wid[1])
                                 else:
-                                    assert present, "Missing term for {}/{}: {}".fromat(row['object'], name, wid[1])
+                                    assert present, "Missing term for {}/{}: {}".format(row['object'], name, wid[1])
                     elif name != 'object':
                         assert db_row.contains(name, value), db_row.assert_msg(name, value)
 

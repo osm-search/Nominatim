@@ -1,5 +1,84 @@
 -- Trigger functions for the placex table.
 
+-- Retrieve the data needed by the indexer for updating the place.
+--
+-- Return parameters:
+--  name            list of names
+--  address         list of address tags, either from the object or a surrounding
+--                  building
+--  country_feature If the place is a country feature, this contains the
+--                  country code, otherwise it is null.
+CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
+                                                 OUT name HSTORE,
+                                                 OUT address HSTORE,
+                                                 OUT country_feature VARCHAR)
+  AS $$
+BEGIN
+  -- For POI nodes, check if the address should be derived from a surrounding
+  -- building.
+  IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
+    address := p.address;
+  ELSE
+    -- The additional && condition works around the misguided query
+    -- planner of postgis 3.0.
+    SELECT placex.address || hstore('_inherited', '') INTO address
+      FROM placex
+     WHERE ST_Covers(geometry, p.centroid)
+           and geometry && p.centroid
+           and placex.address is not null
+           and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
+           and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+     LIMIT 1;
+  END IF;
+
+  address := address - '_unlisted_place'::TEXT;
+  name := p.name;
+
+  country_feature := CASE WHEN p.admin_level = 2
+                               and p.class = 'boundary' and p.type = 'administrative'
+                               and p.osm_type = 'R'
+                          THEN p.country_code
+                          ELSE null
+                     END;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
+CREATE OR REPLACE FUNCTION find_associated_street(poi_osm_type CHAR(1),
+                                                  poi_osm_id BIGINT)
+  RETURNS BIGINT
+  AS $$
+DECLARE
+  location RECORD;
+  parent RECORD;
+BEGIN
+  FOR location IN
+    SELECT members FROM planet_osm_rels
+    WHERE parts @> ARRAY[poi_osm_id]
+          and members @> ARRAY[lower(poi_osm_type) || poi_osm_id]
+          and tags @> ARRAY['associatedStreet']
+  LOOP
+    FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
+      IF location.members[i+1] = 'street' THEN
+        FOR parent IN
+          SELECT place_id from placex
+           WHERE osm_type = 'W' and osm_id = substring(location.members[i],2)::bigint
+                 and name is not null
+                 and rank_search between 26 and 27
+        LOOP
+          RETURN parent.place_id;
+        END LOOP;
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
 -- Find the parent road of a POI.
 --
 -- \returns Place ID of parent object or NULL if none
@@ -10,118 +89,89 @@ CREATE OR REPLACE FUNCTION find_parent_for_poi(poi_osm_type CHAR(1),
                                                poi_osm_id BIGINT,
                                                poi_partition SMALLINT,
                                                bbox GEOMETRY,
-                                               addr_street TEXT,
-                                               addr_place TEXT,
-                                               fallback BOOL = true)
+                                               addr_street INTEGER[],
+                                               addr_place INTEGER[],
+                                               is_place_addr BOOLEAN)
   RETURNS BIGINT
   AS $$
 DECLARE
   parent_place_id BIGINT DEFAULT NULL;
   location RECORD;
-  parent RECORD;
 BEGIN
-    {% if debug %}RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;{% endif %}
+  {% if debug %}RAISE WARNING 'finding street for % %', poi_osm_type, poi_osm_id;{% endif %}
 
-    -- Is this object part of an associatedStreet relation?
-    FOR location IN
-      SELECT members FROM planet_osm_rels
-      WHERE parts @> ARRAY[poi_osm_id]
-        and members @> ARRAY[lower(poi_osm_type) || poi_osm_id]
-        and tags @> ARRAY['associatedStreet']
-    LOOP
-      FOR i IN 1..array_upper(location.members, 1) BY 2 LOOP
-        IF location.members[i+1] = 'street' THEN
-          FOR parent IN
-            SELECT place_id from placex
-             WHERE osm_type = 'W' and osm_id = substring(location.members[i],2)::bigint
-               and name is not null
-               and rank_search between 26 and 27
-          LOOP
-            RETURN parent.place_id;
-          END LOOP;
-        END IF;
-      END LOOP;
-    END LOOP;
+  -- Is this object part of an associatedStreet relation?
+  parent_place_id := find_associated_street(poi_osm_type, poi_osm_id);
 
+  IF parent_place_id is null THEN
     parent_place_id := find_parent_for_address(addr_street, addr_place,
                                                poi_partition, bbox);
-    IF parent_place_id is not null THEN
-      RETURN parent_place_id;
-    END IF;
+  END IF;
 
-    IF poi_osm_type = 'N' THEN
-      -- Is this node part of an interpolation?
-      FOR parent IN
-        SELECT q.parent_place_id
-          FROM location_property_osmline q, planet_osm_ways x
-         WHERE q.linegeo && bbox and x.id = q.osm_id
-               and poi_osm_id = any(x.nodes)
-         LIMIT 1
-      LOOP
-        {% if debug %}RAISE WARNING 'Get parent from interpolation: %', parent.parent_place_id;{% endif %}
-        RETURN parent.parent_place_id;
-      END LOOP;
+  IF parent_place_id is null and poi_osm_type = 'N' THEN
+    -- Is this node part of an interpolation?
+    FOR location IN
+      SELECT q.parent_place_id
+        FROM location_property_osmline q, planet_osm_ways x
+       WHERE q.linegeo && bbox and x.id = q.osm_id
+             and poi_osm_id = any(x.nodes)
+       LIMIT 1
+    LOOP
+      {% if debug %}RAISE WARNING 'Get parent from interpolation: %', location.parent_place_id;{% endif %}
+      RETURN location.parent_place_id;
+    END LOOP;
 
-      -- Is this node part of any other way?
-      FOR location IN
-        SELECT p.place_id, p.osm_id, p.rank_search, p.address,
-               coalesce(p.centroid, ST_Centroid(p.geometry)) as centroid
-          FROM placex p, planet_osm_ways w
-         WHERE p.osm_type = 'W' and p.rank_search >= 26
-               and p.geometry && bbox
-               and w.id = p.osm_id and poi_osm_id = any(w.nodes)
-      LOOP
-        {% if debug %}RAISE WARNING 'Node is part of way % ', location.osm_id;{% endif %}
+    FOR location IN
+      SELECT p.place_id, p.osm_id, p.rank_search, p.address,
+             coalesce(p.centroid, ST_Centroid(p.geometry)) as centroid
+        FROM placex p, planet_osm_ways w
+       WHERE p.osm_type = 'W' and p.rank_search >= 26
+             and p.geometry && bbox
+             and w.id = p.osm_id and poi_osm_id = any(w.nodes)
+    LOOP
+      {% if debug %}RAISE WARNING 'Node is part of way % ', location.osm_id;{% endif %}
 
-        -- Way IS a road then we are on it - that must be our road
-        IF location.rank_search < 28 THEN
-          {% if debug %}RAISE WARNING 'node in way that is a street %',location;{% endif %}
-          return location.place_id;
-        END IF;
-
-        SELECT find_parent_for_poi('W', location.osm_id, poi_partition,
-                                   location.centroid,
-                                   location.address->'street',
-                                   location.address->'place',
-                                   false)
-          INTO parent_place_id;
-        IF parent_place_id is not null THEN
-          RETURN parent_place_id;
-        END IF;
-      END LOOP;
-    END IF;
-
-    IF fallback THEN
-      IF addr_street is null and addr_place is not null THEN
-        -- The address is attached to a place we don't know.
-        -- Instead simply use the containing area with the largest rank.
-        FOR location IN
-          SELECT place_id FROM placex
-            WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
-                  AND rank_address between 5 and 25
-            ORDER BY rank_address desc
-        LOOP
-            RETURN location.place_id;
-        END LOOP;
-      ELSEIF ST_Area(bbox) < 0.005 THEN
-        -- for smaller features get the nearest road
-        SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
-        {% if debug %}RAISE WARNING 'Checked for nearest way (%)', parent_place_id;{% endif %}
-      ELSE
-        -- for larger features simply find the area with the largest rank that
-        -- contains the bbox, only use addressable features
-        FOR location IN
-          SELECT place_id FROM placex
-            WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
-                  AND rank_address between 5 and 25
-            ORDER BY rank_address desc
-        LOOP
-            RETURN location.place_id;
-        END LOOP;
+      -- Way IS a road then we are on it - that must be our road
+      IF location.rank_search < 28 THEN
+        {% if debug %}RAISE WARNING 'node in way that is a street %',location;{% endif %}
+        RETURN location.place_id;
       END IF;
-    END IF;
 
-    RETURN parent_place_id;
+      parent_place_id := find_associated_street('W', location.osm_id);
+    END LOOP;
+  END IF;
+
+  IF parent_place_id is NULL THEN
+    IF is_place_addr THEN
+      -- The address is attached to a place we don't know.
+      -- Instead simply use the containing area with the largest rank.
+      FOR location IN
+        SELECT place_id FROM placex
+         WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+               AND rank_address between 5 and 25
+         ORDER BY rank_address desc
+      LOOP
+        RETURN location.place_id;
+      END LOOP;
+    ELSEIF ST_Area(bbox) < 0.005 THEN
+      -- for smaller features get the nearest road
+      SELECT getNearestRoadPlaceId(poi_partition, bbox) INTO parent_place_id;
+      {% if debug %}RAISE WARNING 'Checked for nearest way (%)', parent_place_id;{% endif %}
+    ELSE
+      -- for larger features simply find the area with the largest rank that
+      -- contains the bbox, only use addressable features
+      FOR location IN
+        SELECT place_id FROM placex
+         WHERE bbox && geometry AND _ST_Covers(geometry, ST_Centroid(bbox))
+               AND rank_address between 5 and 25
+        ORDER BY rank_address desc
+      LOOP
+        RETURN location.place_id;
+      END LOOP;
+    END IF;
+  END IF;
+
+  RETURN parent_place_id;
 END;
 $$
 LANGUAGE plpgsql STABLE;
@@ -240,6 +290,101 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
+CREATE OR REPLACE FUNCTION create_poi_search_terms(obj_place_id BIGINT,
+                                                   in_partition SMALLINT,
+                                                   parent_place_id BIGINT,
+                                                   is_place_addr BOOLEAN,
+                                                   country TEXT,
+                                                   token_info JSONB,
+                                                   geometry GEOMETRY,
+                                                   OUT name_vector INTEGER[],
+                                                   OUT nameaddress_vector INTEGER[])
+  AS $$
+DECLARE
+  parent_name_vector INTEGER[];
+  parent_address_vector INTEGER[];
+  addr_place_ids INTEGER[];
+  hnr_vector INTEGER[];
+
+  addr_item RECORD;
+  addr_place RECORD;
+  parent_address_place_ids BIGINT[];
+BEGIN
+  nameaddress_vector := '{}'::INTEGER[];
+
+  SELECT s.name_vector, s.nameaddress_vector
+    INTO parent_name_vector, parent_address_vector
+    FROM search_name s
+    WHERE s.place_id = parent_place_id;
+
+  FOR addr_item IN
+    SELECT (get_addr_tag_rank(key, country)).*, match_tokens, search_tokens
+      FROM token_get_address_tokens(token_info)
+      WHERE not search_tokens <@ parent_address_vector
+  LOOP
+    addr_place := get_address_place(in_partition, geometry,
+                                    addr_item.from_rank, addr_item.to_rank,
+                                    addr_item.extent, addr_item.match_tokens);
+
+    IF addr_place is null THEN
+      -- No place found in OSM that matches. Make it at least searchable.
+      nameaddress_vector := array_merge(nameaddress_vector, addr_item.search_tokens);
+    ELSE
+      IF parent_address_place_ids is null THEN
+        SELECT array_agg(parent_place_id) INTO parent_address_place_ids
+          FROM place_addressline
+          WHERE place_id = parent_place_id;
+      END IF;
+
+      -- If the parent already lists the place in place_address line, then we
+      -- are done. Otherwise, add its own place_address line.
+      IF not parent_address_place_ids @> ARRAY[addr_place.place_id] THEN
+        nameaddress_vector := array_merge(nameaddress_vector, addr_place.keywords);
+
+        INSERT INTO place_addressline (place_id, address_place_id, fromarea,
+                                       isaddress, distance, cached_rank_address)
+          VALUES (obj_place_id, addr_place.place_id, not addr_place.isguess,
+                    true, addr_place.distance, addr_place.rank_address);
+      END IF;
+    END IF;
+  END LOOP;
+
+  name_vector := token_get_name_search_tokens(token_info);
+
+  -- Check if the parent covers all address terms.
+  -- If not, create a search name entry with the house number as the name.
+  -- This is unusual for the search_name table but prevents that the place
+  -- is returned when we only search for the street/place.
+
+  hnr_vector := token_get_housenumber_search_tokens(token_info);
+
+  IF hnr_vector is not null and not nameaddress_vector <@ parent_address_vector THEN
+    name_vector := array_merge(name_vector, hnr_vector);
+  END IF;
+
+  IF is_place_addr THEN
+    addr_place_ids := token_addr_place_search_tokens(token_info);
+    IF not addr_place_ids <@ parent_name_vector THEN
+      -- make sure addr:place terms are always searchable
+      nameaddress_vector := array_merge(nameaddress_vector, addr_place_ids);
+      -- If there is a housenumber, also add the place name as a name,
+      -- so we can search it by the usual housenumber+place algorithms.
+      IF hnr_vector is not null THEN
+        name_vector := array_merge(name_vector, addr_place_ids);
+      END IF;
+    END IF;
+  END IF;
+
+  -- Cheating here by not recomputing all terms but simply using the ones
+  -- from the parent object.
+  nameaddress_vector := array_merge(nameaddress_vector, parent_name_vector);
+  nameaddress_vector := array_merge(nameaddress_vector, parent_address_vector);
+
+END;
+$$
+LANGUAGE plpgsql;
+
+
 -- Insert address of a place into the place_addressline table.
 --
 -- \param obj_place_id  Place_id of the place to compute the address for.
@@ -260,7 +405,7 @@ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
                                                partition SMALLINT,
                                                maxrank SMALLINT,
-                                               address HSTORE,
+                                               token_info JSONB,
                                                geometry GEOMETRY,
                                                country TEXT,
                                                OUT parent_place_id BIGINT,
@@ -275,7 +420,8 @@ DECLARE
   current_node_area GEOMETRY := NULL;
 
   parent_place_rank INT := 0;
-  addr_place_ids BIGINT[];
+  addr_place_ids BIGINT[] := '{}'::int[];
+  new_address_vector INT[];
 
   location RECORD;
 BEGIN
@@ -285,16 +431,21 @@ BEGIN
   address_havelevel := array_fill(false, ARRAY[maxrank]);
 
   FOR location IN
-    SELECT * FROM get_places_for_addr_tags(partition, geometry,
-                                                   address, country)
-    ORDER BY rank_address, distance, isguess desc
+    SELECT (get_address_place(partition, geometry, from_rank, to_rank,
+                              extent, match_tokens)).*, search_tokens
+      FROM (SELECT (get_addr_tag_rank(key, country)).*, match_tokens, search_tokens
+              FROM token_get_address_tokens(token_info)) x
+      ORDER BY rank_address, distance, isguess desc
   LOOP
-    {% if not db.reverse_only %}
-      nameaddress_vector := array_merge(nameaddress_vector,
-                                        location.keywords::int[]);
-    {% endif %}
+    IF location.place_id is null THEN
+      {% if not db.reverse_only %}
+      nameaddress_vector := array_merge(nameaddress_vector, location.search_tokens);
+      {% endif %}
+    ELSE
+      {% if not db.reverse_only %}
+      nameaddress_vector := array_merge(nameaddress_vector, location.keywords::INTEGER[]);
+      {% endif %}
 
-    IF location.place_id is not null THEN
       location_isaddress := not address_havelevel[location.rank_address];
       IF not address_havelevel[location.rank_address] THEN
         address_havelevel[location.rank_address] := true;
@@ -309,13 +460,13 @@ BEGIN
         VALUES (obj_place_id, location.place_id, not location.isguess,
                 true, location.distance, location.rank_address);
 
-      addr_place_ids := array_append(addr_place_ids, location.place_id);
+      addr_place_ids := addr_place_ids || location.place_id;
     END IF;
   END LOOP;
 
   FOR location IN
     SELECT * FROM getNearFeatures(partition, geometry, maxrank)
-    WHERE addr_place_ids is null or not addr_place_ids @> ARRAY[place_id]
+    WHERE not addr_place_ids @> ARRAY[place_id]
     ORDER BY rank_address, isguess asc,
              distance *
                CASE WHEN rank_address = 16 AND rank_search = 15 THEN 0.2
@@ -397,10 +548,11 @@ BEGIN
   NEW.place_id := nextval('seq_place');
   NEW.indexed_status := 1; --STATUS_NEW
 
-  NEW.country_code := lower(get_country_code(NEW.geometry));
+  NEW.centroid := ST_PointOnSurface(NEW.geometry);
+  NEW.country_code := lower(get_country_code(NEW.centroid));
 
   NEW.partition := get_partition(NEW.country_code);
-  NEW.geometry_sector := geometry_sector(NEW.partition, NEW.geometry);
+  NEW.geometry_sector := geometry_sector(NEW.partition, NEW.centroid);
 
   IF NEW.osm_type = 'X' THEN
     -- E'X'ternal records should already be in the right format so do nothing
@@ -522,8 +674,8 @@ DECLARE
   parent_address_level SMALLINT;
   place_address_level SMALLINT;
 
-  addr_street TEXT;
-  addr_place TEXT;
+  addr_street INTEGER[];
+  addr_place INTEGER[];
 
   max_rank SMALLINT;
 
@@ -531,12 +683,11 @@ DECLARE
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
 
-  inherited_address HSTORE;
-
   linked_node_id BIGINT;
   linked_importance FLOAT;
   linked_wikipedia TEXT;
 
+  is_place_address BOOLEAN;
   result BOOLEAN;
 BEGIN
   -- deferred delete
@@ -566,9 +717,9 @@ BEGIN
   -- update not necessary for osmline, cause linked_place_id does not exist
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
-  NEW.address := NEW.address - '_unlisted_place'::TEXT;
 
   IF NEW.linked_place_id is not null THEN
+    NEW.token_info := null;
     {% if debug %}RAISE WARNING 'place already linked to %', NEW.linked_place_id;{% endif %}
     RETURN NEW;
   END IF;
@@ -579,13 +730,34 @@ BEGIN
   -- imported as place=postcode. That's why relations are allowed to pass here.
   -- This can go away in a couple of versions.
   IF NEW.class = 'place'  and NEW.type = 'postcode' and NEW.osm_type != 'R' THEN
+    NEW.token_info := null;
     RETURN NEW;
   END IF;
 
-  -- Speed up searches - just use the centroid of the feature
-  -- cheaper but less acurate
+  -- Compute a preliminary centroid.
   NEW.centroid := ST_PointOnSurface(NEW.geometry);
-  {% if debug %}RAISE WARNING 'Computing preliminary centroid at %',ST_AsText(NEW.centroid);{% endif %}
+
+    -- recalculate country and partition
+  IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN
+    -- for countries, believe the mapped country code,
+    -- so that we remain in the right partition if the boundaries
+    -- suddenly expand.
+    NEW.country_code := lower(NEW.address->'country');
+    NEW.partition := get_partition(lower(NEW.country_code));
+    IF NEW.partition = 0 THEN
+      NEW.country_code := lower(get_country_code(NEW.centroid));
+      NEW.partition := get_partition(NEW.country_code);
+    END IF;
+  ELSE
+    IF NEW.rank_search >= 4 THEN
+      NEW.country_code := lower(get_country_code(NEW.centroid));
+    ELSE
+      NEW.country_code := NULL;
+    END IF;
+    NEW.partition := get_partition(NEW.country_code);
+  END IF;
+  {% if debug %}RAISE WARNING 'Country updated: "%"', NEW.country_code;{% endif %}
+
 
   -- recompute the ranks, they might change when linking changes
   SELECT * INTO NEW.rank_search, NEW.rank_address
@@ -665,53 +837,11 @@ BEGIN
     parent_address_level := 3;
   END IF;
 
-  {% if debug %}RAISE WARNING 'Copy over address tags';{% endif %}
-  -- housenumber is a computed field, so start with an empty value
-  NEW.housenumber := NULL;
-  IF NEW.address is not NULL THEN
-      IF NEW.address ? 'conscriptionnumber' THEN
-        IF NEW.address ? 'streetnumber' THEN
-            NEW.housenumber := (NEW.address->'conscriptionnumber') || '/' || (NEW.address->'streetnumber');
-        ELSE
-            NEW.housenumber := NEW.address->'conscriptionnumber';
-        END IF;
-      ELSEIF NEW.address ? 'streetnumber' THEN
-        NEW.housenumber := NEW.address->'streetnumber';
-      ELSEIF NEW.address ? 'housenumber' THEN
-        NEW.housenumber := NEW.address->'housenumber';
-      END IF;
-      NEW.housenumber := create_housenumber_id(NEW.housenumber);
-
-      addr_street := NEW.address->'street';
-      addr_place := NEW.address->'place';
-
-      IF NEW.address ? 'postcode' and NEW.address->'postcode' not similar to '%(:|,|;)%' THEN
-        i := getorcreate_postcode_id(NEW.address->'postcode');
-      END IF;
-  END IF;
+  NEW.housenumber := token_normalized_housenumber(NEW.token_info);
+  addr_street := token_addr_street_match_tokens(NEW.token_info);
+  addr_place := token_addr_place_match_tokens(NEW.token_info);
 
   NEW.postcode := null;
-
-  -- recalculate country and partition
-  IF NEW.rank_search = 4 AND NEW.address is not NULL AND NEW.address ? 'country' THEN
-    -- for countries, believe the mapped country code,
-    -- so that we remain in the right partition if the boundaries
-    -- suddenly expand.
-    NEW.country_code := lower(NEW.address->'country');
-    NEW.partition := get_partition(lower(NEW.country_code));
-    IF NEW.partition = 0 THEN
-      NEW.country_code := lower(get_country_code(NEW.centroid));
-      NEW.partition := get_partition(NEW.country_code);
-    END IF;
-  ELSE
-    IF NEW.rank_search >= 4 THEN
-      NEW.country_code := lower(get_country_code(NEW.centroid));
-    ELSE
-      NEW.country_code := NULL;
-    END IF;
-    NEW.partition := get_partition(NEW.country_code);
-  END IF;
-  {% if debug %}RAISE WARNING 'Country updated: "%"', NEW.country_code;{% endif %}
 
   -- waterway ways are linked when they are part of a relation and have the same class/type
   IF NEW.osm_type = 'R' and NEW.class = 'waterway' THEN
@@ -749,33 +879,14 @@ BEGIN
 
     {% if debug %}RAISE WARNING 'finding street for % %', NEW.osm_type, NEW.osm_id;{% endif %}
     NEW.parent_place_id := null;
-
-    -- if we have a POI and there is no address information,
-    -- see if we can get it from a surrounding building
-    inherited_address := ''::HSTORE;
-    IF NEW.osm_type = 'N' AND addr_street IS NULL AND addr_place IS NULL
-       AND NEW.housenumber IS NULL THEN
-      FOR location IN
-        -- The additional && condition works around the misguided query
-        -- planner of postgis 3.0.
-        SELECT address from placex where ST_Covers(geometry, NEW.centroid)
-            and geometry && NEW.centroid
-            and (address ? 'housenumber' or address ? 'street' or address ? 'place')
-            and rank_search > 28 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-            limit 1
-      LOOP
-        NEW.housenumber := location.address->'housenumber';
-        addr_street := location.address->'street';
-        addr_place := location.address->'place';
-        inherited_address := location.address;
-      END LOOP;
-    END IF;
+    is_place_address := coalesce(not NEW.address ? 'street' and NEW.address ? 'place', FALSE);
 
     -- We have to find our parent road.
     NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
                                                NEW.partition,
                                                ST_Envelope(NEW.geometry),
-                                               addr_street, addr_place);
+                                               addr_street, addr_place,
+                                               is_place_address);
 
     -- If we found the road take a shortcut here.
     -- Otherwise fall back to the full address getting method below.
@@ -785,12 +896,12 @@ BEGIN
       SELECT p.country_code, p.postcode, p.name FROM placex p
        WHERE p.place_id = NEW.parent_place_id INTO location;
 
-      IF addr_street is null and addr_place is not null THEN
+      IF is_place_address THEN
         -- Check if the addr:place tag is part of the parent name
         SELECT count(*) INTO i
-          FROM svals(location.name) AS pname WHERE pname = addr_place;
+          FROM svals(location.name) AS pname WHERE pname = NEW.address->'place';
         IF i = 0 THEN
-          NEW.address = NEW.address || hstore('_unlisted_place', addr_place);
+          NEW.address = NEW.address || hstore('_unlisted_place', NEW.address->'place');
         END IF;
       END IF;
 
@@ -798,39 +909,21 @@ BEGIN
       {% if debug %}RAISE WARNING 'Got parent details from search name';{% endif %}
 
       -- determine postcode
-      IF NEW.address is not null AND NEW.address ? 'postcode' THEN
-          NEW.postcode = upper(trim(NEW.address->'postcode'));
-      ELSE
-         NEW.postcode := location.postcode;
-      END IF;
-      IF NEW.postcode is null THEN
-        NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
-      END IF;
+      NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
+                               location.postcode,
+                               get_nearest_postcode(NEW.country_code, NEW.geometry));
 
       IF NEW.name is not NULL THEN
           NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-          name_vector := make_keywords(NEW.name);
-
-          IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-            result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
-                                   name_vector, NEW.rank_search, NEW.rank_address,
-                                   upper(trim(NEW.address->'postcode')), NEW.geometry,
-                                   NEW.centroid);
-            {% if debug %}RAISE WARNING 'Place added to location table';{% endif %}
-          END IF;
-
       END IF;
 
       {% if not db.reverse_only %}
-      IF array_length(name_vector, 1) is not NULL
-         OR inherited_address is not NULL OR NEW.address is not NULL
-      THEN
+      IF NEW.name is not NULL OR NEW.address is not NULL THEN
         SELECT * INTO name_vector, nameaddress_vector
           FROM create_poi_search_terms(NEW.place_id,
                                        NEW.partition, NEW.parent_place_id,
-                                       inherited_address || NEW.address,
-                                       NEW.country_code, NEW.housenumber,
-                                       name_vector, NEW.centroid);
+                                       is_place_address, NEW.country_code,
+                                       NEW.token_info, NEW.centroid);
 
         IF array_length(name_vector, 1) is not NULL THEN
           INSERT INTO search_name (place_id, search_rank, address_rank,
@@ -843,6 +936,17 @@ BEGIN
         END IF;
       END IF;
       {% endif %}
+
+      NEW.token_info := token_strip_info(NEW.token_info);
+      -- If the address was inherited from a surrounding building,
+      -- do not add it permanently to the table.
+      IF NEW.address ? '_inherited' THEN
+        IF NEW.address ? '_unlisted_place' THEN
+          NEW.address := hstore('_unlisted_place', NEW.address->'_unlisted_place');
+        ELSE
+          NEW.address := null;
+        END IF;
+      END IF;
 
       RETURN NEW;
     END IF;
@@ -914,19 +1018,11 @@ BEGIN
     END IF;
   END IF;
 
-  -- Initialise the name vector using our name
-  NEW.name := add_default_place_name(NEW.country_code, NEW.name);
-  name_vector := make_keywords(NEW.name);
-
-  -- make sure all names are in the word table
   IF NEW.admin_level = 2
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
-    PERFORM create_country(NEW.name, lower(NEW.country_code));
-    {% if debug %}RAISE WARNING 'Country names updated';{% endif %}
-
-    -- Also update the list of country names. Adding an additional sanity
+    -- Update the list of country names. Adding an additional sanity
     -- check here: make sure the country does overlap with the area where
     -- we expect it to be as per static country grid.
     FOR location IN
@@ -959,29 +1055,28 @@ BEGIN
   ELSEIF NEW.rank_address > 25 THEN
     max_rank := 25;
   ELSE
-    max_rank = NEW.rank_address;
+    max_rank := NEW.rank_address;
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition, max_rank,
-                                    NEW.address, geom, NEW.country_code)
+                                    NEW.token_info, geom, NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   {% if debug %}RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;{% endif %}
 
-  IF NEW.address is not null AND NEW.address ? 'postcode' 
-     AND NEW.address->'postcode' not similar to '%(,|;)%' THEN
-    NEW.postcode := upper(trim(NEW.address->'postcode'));
-  END IF;
-
-  IF NEW.postcode is null AND NEW.rank_search > 8 THEN
-    NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
-  END IF;
+  NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
+                           NEW.postcode);
 
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN
+    -- Initialise the name vector using our name
+    NEW.name := add_default_place_name(NEW.country_code, NEW.name);
+    name_vector := token_get_name_search_tokens(NEW.token_info);
 
     IF NEW.rank_search <= 25 and NEW.rank_address > 0 THEN
-      result := add_location(NEW.place_id, NEW.country_code, NEW.partition, name_vector, NEW.rank_search, NEW.rank_address, upper(trim(NEW.address->'postcode')), NEW.geometry, NEW.centroid);
+      result := add_location(NEW.place_id, NEW.country_code, NEW.partition,
+                             name_vector, NEW.rank_search, NEW.rank_address,
+                             NEW.postcode, NEW.geometry, NEW.centroid);
       {% if debug %}RAISE WARNING 'added to location (full)';{% endif %}
     END IF;
 
@@ -990,8 +1085,11 @@ BEGIN
       {% if debug %}RAISE WARNING 'insert into road location table (full)';{% endif %}
     END IF;
 
-    result := insertSearchName(NEW.partition, NEW.place_id, name_vector,
-                               NEW.rank_search, NEW.rank_address, NEW.geometry);
+    IF NEW.rank_address between 16 and 27 THEN
+      result := insertSearchName(NEW.partition, NEW.place_id,
+                                 token_get_name_match_tokens(NEW.token_info),
+                                 NEW.rank_search, NEW.rank_address, NEW.geometry);
+    END IF;
     {% if debug %}RAISE WARNING 'added to search name (full)';{% endif %}
 
     {% if not db.reverse_only %}
@@ -1002,11 +1100,15 @@ BEGIN
                        NEW.importance, NEW.country_code, name_vector,
                        nameaddress_vector, NEW.centroid);
     {% endif %}
+  END IF;
 
+  IF NEW.postcode is null AND NEW.rank_search > 8 THEN
+    NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
   END IF;
 
   {% if debug %}RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;{% endif %}
 
+  NEW.token_info := token_strip_info(NEW.token_info);
   RETURN NEW;
 END;
 $$

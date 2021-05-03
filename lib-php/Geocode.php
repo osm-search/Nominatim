@@ -8,12 +8,14 @@ require_once(CONST_LibDir.'/ReverseGeocode.php');
 require_once(CONST_LibDir.'/SearchDescription.php');
 require_once(CONST_LibDir.'/SearchContext.php');
 require_once(CONST_LibDir.'/TokenList.php');
+require_once(CONST_TokenizerDir.'/tokenizer.php');
 
 class Geocode
 {
     protected $oDB;
 
     protected $oPlaceLookup;
+    protected $oTokenizer;
 
     protected $aLangPrefOrder = array();
 
@@ -41,23 +43,12 @@ class Geocode
     protected $sQuery = false;
     protected $aStructuredQuery = false;
 
-    protected $oNormalizer = null;
-
 
     public function __construct(&$oDB)
     {
         $this->oDB =& $oDB;
         $this->oPlaceLookup = new PlaceLookup($this->oDB);
-        $this->oNormalizer = \Transliterator::createFromRules(CONST_Term_Normalization_Rules);
-    }
-
-    private function normTerm($sTerm)
-    {
-        if ($this->oNormalizer === null) {
-            return $sTerm;
-        }
-
-        return $this->oNormalizer->transliterate($sTerm);
+        $this->oTokenizer = new \Nominatim\Tokenizer($this->oDB);
     }
 
     public function setLanguagePreference($aLangPref)
@@ -510,11 +501,9 @@ class Geocode
         if ($this->aCountryCodes) {
             $oCtx->setCountryList($this->aCountryCodes);
         }
+        $this->oTokenizer->setCountryRestriction($this->aCountryCodes);
 
         Debug::newSection('Query Preprocessing');
-
-        $sNormQuery = $this->normTerm($this->sQuery);
-        Debug::printVar('Normalized query', $sNormQuery);
 
         $sLanguagePrefArraySQL = $this->oDB->getArraySQL(
             $this->oDB->getDBQuotedList($this->aLangPrefOrder)
@@ -569,108 +558,55 @@ class Geocode
             }
 
             if ($sSpecialTerm && !$aSearches[0]->hasOperator()) {
-                $sSpecialTerm = pg_escape_string($sSpecialTerm);
-                $sToken = $this->oDB->getOne(
-                    'SELECT make_standard_name(:term)',
-                    array(':term' => $sSpecialTerm),
-                    'Cannot decode query. Wrong encoding?'
-                );
-                $sSQL = 'SELECT class, type FROM word ';
-                $sSQL .= '   WHERE word_token in (\' '.$sToken.'\')';
-                $sSQL .= '   AND class is not null AND class not in (\'place\')';
+                $aTokens = $this->oTokenizer->tokensForSpecialTerm($sSpecialTerm);
 
-                Debug::printSQL($sSQL);
-                $aSearchWords = $this->oDB->getAll($sSQL);
-                $aNewSearches = array();
-                foreach ($aSearches as $oSearch) {
-                    foreach ($aSearchWords as $aSearchTerm) {
-                        $oNewSearch = clone $oSearch;
-                        $oNewSearch->setPoiSearch(
-                            Operator::TYPE,
-                            $aSearchTerm['class'],
-                            $aSearchTerm['type']
-                        );
-                        $aNewSearches[] = $oNewSearch;
+                if (!empty($aTokens)) {
+                    $aNewSearches = array();
+                    foreach ($aSearches as $oSearch) {
+                        foreach ($aTokens as $oToken) {
+                            $oNewSearch = clone $oSearch;
+                            $oNewSearch->setPoiSearch(
+                                $oToken->iOperator,
+                                $oToken->sClass,
+                                $oToken->sType
+                            );
+                            $aNewSearches[] = $oNewSearch;
+                        }
                     }
+                    $aSearches = $aNewSearches;
                 }
-                $aSearches = $aNewSearches;
             }
 
             // Split query into phrases
             // Commas are used to reduce the search space by indicating where phrases split
+            $aPhrases = array();
             if ($this->aStructuredQuery) {
-                $aInPhrases = $this->aStructuredQuery;
+                foreach ($this->aStructuredQuery as $iPhrase => $sPhrase) {
+                    $aPhrases[] = new Phrase($sPhrase, $iPhrase);
+                }
             } else {
-                $aInPhrases = explode(',', $sQuery);
+                foreach (explode(',', $sQuery) as $sPhrase) {
+                    $aPhrases[] = new Phrase($sPhrase, '');
+                }
             }
 
             Debug::printDebugArray('Search context', $oCtx);
             Debug::printDebugArray('Base search', empty($aSearches) ? null : $aSearches[0]);
-            Debug::printVar('Final query phrases', $aInPhrases);
 
-            // Convert each phrase to standard form
-            // Create a list of standard words
-            // Get all 'sets' of words
-            // Generate a complete list of all
             Debug::newSection('Tokenization');
-            $aTokens = array();
-            $aPhrases = array();
-            foreach ($aInPhrases as $iPhrase => $sPhrase) {
-                $sPhrase = $this->oDB->getOne(
-                    'SELECT make_standard_name(:phrase)',
-                    array(':phrase' => $sPhrase),
-                    'Cannot normalize query string (is it a UTF-8 string?)'
-                );
-                if (trim($sPhrase)) {
-                    $oPhrase = new Phrase($sPhrase, is_string($iPhrase) ? $iPhrase : '');
-                    $oPhrase->addTokens($aTokens);
-                    $aPhrases[] = $oPhrase;
-                }
-            }
+            $oValidTokens = $this->oTokenizer->extractTokensFromPhrases($aPhrases);
 
-            Debug::printVar('Tokens', $aTokens);
-
-            $oValidTokens = new TokenList();
-
-            if (!empty($aTokens)) {
-                $oValidTokens->addTokensFromDB(
-                    $this->oDB,
-                    $aTokens,
-                    $this->aCountryCodes,
-                    $sNormQuery,
-                    $this->oNormalizer
-                );
-
+            if ($oValidTokens->count() > 0) {
                 $oCtx->setFullNameWords($oValidTokens->getFullWordIDs());
 
-                // Try more interpretations for Tokens that could not be matched.
-                foreach ($aTokens as $sToken) {
-                    if ($sToken[0] == ' ' && !$oValidTokens->contains($sToken)) {
-                        if (preg_match('/^ ([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
-                            // US ZIP+4 codes - merge in the 5-digit ZIP code
-                            $oValidTokens->addToken(
-                                $sToken,
-                                new Token\Postcode(null, $aData[1], 'us')
-                            );
-                        } elseif (preg_match('/^ [0-9]+$/', $sToken)) {
-                            // Unknown single word token with a number.
-                            // Assume it is a house number.
-                            $oValidTokens->addToken(
-                                $sToken,
-                                new Token\HouseNumber(null, trim($sToken))
-                            );
-                        }
-                    }
-                }
+                $aPhrases = array_filter($aPhrases, function ($oPhrase) {
+                    return $oPhrase->getWordSets() !== null;
+                });
 
                 // Any words that have failed completely?
                 // TODO: suggestions
 
                 Debug::printGroupTable('Valid Tokens', $oValidTokens->debugInfo());
-
-                foreach ($aPhrases as $oPhrase) {
-                    $oPhrase->computeWordSets($oValidTokens);
-                }
                 Debug::printDebugTable('Phrases', $aPhrases);
 
                 Debug::newSection('Search candidates');

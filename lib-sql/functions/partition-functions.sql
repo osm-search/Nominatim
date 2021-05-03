@@ -63,53 +63,35 @@ END
 $$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION get_places_for_addr_tags(in_partition SMALLINT,
-                                                    feature GEOMETRY,
-                                                    address HSTORE, country TEXT)
-  RETURNS SETOF nearfeaturecentr
+
+CREATE OR REPLACE FUNCTION get_address_place(in_partition SMALLINT, feature GEOMETRY,
+                                             from_rank SMALLINT, to_rank SMALLINT,
+                                             extent FLOAT, tokens INT[])
+  RETURNS nearfeaturecentr
   AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
-  item RECORD;
 BEGIN
-  FOR item IN
-    SELECT (get_addr_tag_rank(key, country)).*, key, name FROM
-      (SELECT skeys(address) as key, svals(address) as name) x
-  LOOP
-   IF item.from_rank is null THEN
-     CONTINUE;
-   END IF;
-
 {% for partition in db.partitions %}
-    IF in_partition = {{ partition }} THEN
-        SELECT place_id, keywords, rank_address, rank_search,
-               min(ST_Distance(feature, centroid)) as distance,
-               isguess, postcode, centroid INTO r
+  IF in_partition = {{ partition }} THEN
+      SELECT place_id, keywords, rank_address, rank_search,
+             min(ST_Distance(feature, centroid)) as distance,
+             isguess, postcode, centroid INTO r
         FROM location_area_large_{{ partition }}
-        WHERE geometry && ST_Expand(feature, item.extent)
-          AND rank_address between item.from_rank and item.to_rank
-          AND word_ids_from_name(item.name) && keywords
+        WHERE geometry && ST_Expand(feature, extent)
+              AND rank_address between from_rank and to_rank
+              AND tokens && keywords
         GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
         ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
-      IF r.place_id is null THEN
-        -- If we cannot find a place for the term, just return the
-        -- search term for the given name. That ensures that the address
-        -- element can still be searched for, even though it will not be
-        -- displayed.
-        RETURN NEXT ROW(null, addr_ids_from_name(item.name), null, null,
-                        null, null, null, null)::nearfeaturecentr;
-      ELSE
-        RETURN NEXT r;
-      END IF;
-      CONTINUE;
-    END IF;
+      RETURN r;
+  END IF;
 {% endfor %}
 
-    RAISE EXCEPTION 'Unknown partition %', in_partition;
-  END LOOP;
+  RAISE EXCEPTION 'Unknown partition %', in_partition;
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
 
 create or replace function deleteLocationArea(in_partition INTEGER, in_place_id BIGINT, in_rank_search INTEGER) RETURNS BOOLEAN AS $$
 DECLARE

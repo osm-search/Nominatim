@@ -30,9 +30,9 @@ diffs for Ireland from Geofabrik add the following:
 
     # base URL of the replication service
     NOMINATIM_REPLICATION_URL="https://download.geofabrik.de/europe/ireland-and-northern-ireland-updates"
-    # How often upstream publishes diffs
+    # How often upstream publishes diffs (in seconds)
     NOMINATIM_REPLICATION_UPDATE_INTERVAL=86400
-    # How long to sleep if no update found yet
+    # How long to sleep if no update found yet (in seconds)
     NOMINATIM_REPLICATION_RECHECK_INTERVAL=900
 
 To set up the update process now run the following command:

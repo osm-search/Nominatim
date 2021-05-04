@@ -185,7 +185,9 @@ class LegacyICUTokenizer:
             # copy them back into the word table
             copystr = io.StringIO(''.join(('{}\t{}\n'.format(*args) for args in words.items())))
 
+
             with conn.cursor() as cur:
+                copystr.seek(0)
                 cur.copy_from(copystr, 'word', columns=['word_token', 'search_name_count'])
                 cur.execute("""UPDATE word SET word_id = nextval('seq_word')
                                WHERE word_id is null""")
@@ -206,7 +208,6 @@ class LegacyICUNameAnalyzer:
         self.normalizer = normalizer
         self.transliterator = transliterator
         self.abbreviations = abbreviations
-        #psycopg2.extras.register_hstore(self.conn)
 
         self._cache = _TokenCache()
 
@@ -267,6 +268,7 @@ class LegacyICUNameAnalyzer:
                 copystr.write(self.transliterator.transliterate(postcode))
                 copystr.write('\tplace\tpostcode\t0\n')
 
+            copystr.seek(0)
             cur.copy_from(copystr, 'word',
                           columns=['word', 'word_token', 'class', 'type',
                                    'search_name_count'])
@@ -309,6 +311,7 @@ class LegacyICUNameAnalyzer:
                         copystr.write(oper if oper in ('in', 'near')  else '\\N')
                         copystr.write('\t0\n')
 
+                copystr.seek(0)
                 cur.copy_from(copystr, 'word',
                               columns=['word', 'word_token', 'class', 'type',
                                        'operator', 'search_name_count'])

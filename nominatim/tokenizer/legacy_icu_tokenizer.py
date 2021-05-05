@@ -35,7 +35,7 @@ def create(dsn, data_dir):
 class LegacyICUTokenizer:
     """ This tokenizer uses libICU to covert names and queries to ASCII.
         Otherwise it uses the same algorithms and data structures as the
-        normalization routines in Nominatm 3.
+        normalization routines in Nominatim 3.
     """
 
     def __init__(self, dsn, data_dir):
@@ -228,6 +228,35 @@ class LegacyICUNameAnalyzer:
             self.conn = None
 
 
+    def get_word_token_info(self, conn, words):
+        """ Return token information for the given list of words.
+            If a word starts with # it is assumed to be a full name
+            otherwise is a partial name.
+
+            The function returns a list of tuples with
+            (original word, word token, word id).
+
+            The function is used for testing and debugging only
+            and not necessarily efficient.
+        """
+        tokens = {}
+        for word in words:
+            if word.startswith('#'):
+                tokens[word] = ' ' + self.make_standard_word(word[1:])
+            else:
+                tokens[word] = self.make_standard_word(word)
+
+        with conn.cursor() as cur:
+            cur.execute("""SELECT word_token, word_id
+                           FROM word, (SELECT unnest(%s::TEXT[]) as term) t
+                           WHERE word_token = t.term
+                                 and class is null and country_code is null""",
+                        (list(tokens.values()), ))
+            ids = {r[0]: r[1] for r in cur}
+
+        return [(k, v, ids[v]) for k, v in tokens.items()]
+
+
     def normalize(self, phrase):
         """ Normalize the given phrase, i.e. remove all properties that
             are irrelevant for search.
@@ -236,7 +265,7 @@ class LegacyICUNameAnalyzer:
 
     @functools.lru_cache(maxsize=1024)
     def make_standard_word(self, name):
-        """ Create the normalised version of the name.
+        """ Create the normalised version of the input.
         """
         norm = ' ' + self.transliterator.transliterate(name) + ' '
         for full, abbr in self.abbreviations:
@@ -333,24 +362,25 @@ class LegacyICUNameAnalyzer:
         """
         full_names = set((self.make_standard_word(n) for n in names))
         full_names.discard('')
-        self._add_normalised_country_names(country_code, full_names)
+        self._add_normalized_country_names(country_code, full_names)
 
 
-    def _add_normalised_country_names(self, country_code, names):
+    def _add_normalized_country_names(self, country_code, names):
         """ Add names for the given country to the search index.
         """
+        word_tokens = set((' ' + name for name in names))
         with self.conn.cursor() as cur:
             # Get existing names
             cur.execute("SELECT word_token FROM word WHERE country_code = %s",
                         (country_code, ))
-            new_names = names.difference((t[0] for t in cur))
+            word_tokens.difference_update((t[0] for t in cur))
 
-            if new_names:
+            if word_tokens:
                 cur.execute("""INSERT INTO word (word_id, word_token, country_code,
                                                  search_name_count)
                                (SELECT nextval('seq_word'), token, '{}', 0
                                 FROM unnest(%s) as token)
-                            """.format(country_code), (list(new_names),))
+                            """.format(country_code), (list(word_tokens),))
 
 
     def process_place(self, place):
@@ -371,7 +401,7 @@ class LegacyICUNameAnalyzer:
 
             country_feature = place.get('country_feature')
             if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
-                self._add_normalised_country_names(country_feature.lower(),
+                self._add_normalized_country_names(country_feature.lower(),
                                                    full_names)
 
         address = place.get('address')

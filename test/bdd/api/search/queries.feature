@@ -163,7 +163,7 @@ Feature: Search queries
         Then exactly 0 results are returned
 
     Scenario: Ignore country searches when query is restricted to countries
-        When sending json search query "de"
+        When sending json search query "fr"
             | countrycodes |
             | li  |
         Then exactly 0 results are returned

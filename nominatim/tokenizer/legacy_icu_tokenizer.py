@@ -127,7 +127,7 @@ class LegacyICUTokenizer:
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
         norm = Transliterator.createFromRules("normalizer", self.normalization)
-        trans = Transliterator.createFromRules("normalizer", self.transliteration)
+        trans = Transliterator.createFromRules("trans", self.transliteration)
         return LegacyICUNameAnalyzer(self.dsn, norm, trans, self.abbreviations)
 
 

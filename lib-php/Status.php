@@ -37,7 +37,7 @@ class Status
         $iDataDateEpoch = $this->oDB->getOne($sSQL);
 
         if ($iDataDateEpoch === false) {
-            throw Exception('Data date query failed '.$iDataDateEpoch->getMessage(), 705);
+            throw new Exception('Import date is not available', 705);
         }
 
         return $iDataDateEpoch;

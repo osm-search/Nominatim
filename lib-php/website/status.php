@@ -17,6 +17,23 @@ if ($sOutputFormat == 'json') {
 try {
     $oStatus = new Nominatim\Status($oDB);
     $oStatus->status();
+
+    if ($sOutputFormat == 'json') {
+        $epoch = $oStatus->dataDate();
+        $aResponse = array(
+                      'status' => 0,
+                      'message' => 'OK',
+                      'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339),
+                      'software_version' => CONST_NominatimVersion
+                     );
+        $sDatabaseVersion = $oStatus->databaseVersion();
+        if ($sDatabaseVersion) {
+            $aResponse['database_version'] = $sDatabaseVersion;
+        }
+        javascript_renderData($aResponse);
+    } else {
+        echo 'OK';
+    }
 } catch (Exception $oErr) {
     if ($sOutputFormat == 'json') {
         $aResponse = array(
@@ -28,25 +45,4 @@ try {
         header('HTTP/1.0 500 Internal Server Error');
         echo 'ERROR: '.$oErr->getMessage();
     }
-    exit;
 }
-
-
-if ($sOutputFormat == 'json') {
-    $epoch = $oStatus->dataDate();
-    $aResponse = array(
-                  'status' => 0,
-                  'message' => 'OK',
-                  'data_updated' => (new DateTime('@'.$epoch))->format(DateTime::RFC3339),
-                  'software_version' => CONST_NominatimVersion
-                 );
-    $sDatabaseVersion = $oStatus->databaseVersion();
-    if ($sDatabaseVersion) {
-        $aResponse['database_version'] = $sDatabaseVersion;
-    }
-    javascript_renderData($aResponse);
-} else {
-    echo 'OK';
-}
-
-exit;

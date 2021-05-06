@@ -28,6 +28,7 @@ class NominatimEnvironment:
         self.test_db = config['TEST_DB']
         self.api_test_db = config['API_TEST_DB']
         self.api_test_file = config['API_TEST_FILE']
+        self.tokenizer = config['TOKENIZER']
         self.server_module_path = config['SERVER_MODULE_PATH']
         self.reuse_template = not config['REMOVE_TEMPLATE']
         self.keep_scenario_db = config['KEEP_TEST_DB']
@@ -96,6 +97,8 @@ class NominatimEnvironment:
         self.test_env['NOMINATIM_DATABASE_MODULE_SRC_PATH'] = str((self.build_dir / 'module').resolve())
         self.test_env['NOMINATIM_OSM2PGSQL_BINARY'] = str((self.build_dir / 'osm2pgsql' / 'osm2pgsql').resolve())
         self.test_env['NOMINATIM_NOMINATIM_TOOL'] = str((self.build_dir / 'nominatim').resolve())
+        if self.tokenizer is not None:
+            self.test_env['NOMINATIM_TOKENIZER'] = self.tokenizer
 
         if self.server_module_path:
             self.test_env['NOMINATIM_DATABASE_MODULE_PATH'] = self.server_module_path
@@ -189,11 +192,19 @@ class NominatimEnvironment:
 
                 try:
                     self.run_nominatim('import', '--osm-file', str(self.api_test_file))
-                    self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
+                    if self.tokenizer != 'legacy_icu':
+                        self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
                     self.run_nominatim('freeze')
 
-                    phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
-                    run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
+                    if self.tokenizer != 'legacy_icu':
+                        phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
+                        run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
+                    else:
+                        # XXX Temporary use the wiki while there is no CSV import
+                        # available.
+                        self.test_env['NOMINATIM_LANGUAGES'] = 'en'
+                        self.run_nominatim('special-phrases', '--import-from-wiki')
+                        del self.test_env['NOMINATIM_LANGUAGES']
                 except:
                     self.db_drop_database(self.api_test_db)
                     raise

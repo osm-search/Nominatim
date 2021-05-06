@@ -271,6 +271,33 @@ class LegacyNameAnalyzer:
             self.conn = None
 
 
+    @staticmethod
+    def get_word_token_info(conn, words):
+        """ Return token information for the given list of words.
+            If a word starts with # it is assumed to be a full name
+            otherwise is a partial name.
+
+            The function returns a list of tuples with
+            (original word, word token, word id).
+
+            The function is used for testing and debugging only
+            and not necessarily efficient.
+        """
+        with conn.cursor() as cur:
+            cur.execute("""SELECT t.term, word_token, word_id
+                           FROM word, (SELECT unnest(%s::TEXT[]) as term) t
+                           WHERE word_token = (CASE
+                                   WHEN left(t.term, 1) = '#' THEN
+                                     ' ' || make_standard_name(substring(t.term from 2))
+                                   ELSE
+                                     make_standard_name(t.term)
+                                   END)
+                                 and class is null and country_code is null""",
+                        (words, ))
+
+            return [(r[0], r[1], r[2]) for r in cur]
+
+
     def normalize(self, phrase):
         """ Normalize the given phrase, i.e. remove all properties that
             are irrelevant for search.

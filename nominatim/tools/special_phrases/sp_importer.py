@@ -1,5 +1,11 @@
 """
-    Functions to import special phrases into the database.
+    Module containing the class handling the import
+    of the special phrases.
+
+    Phrases are analyzed and imported into the database.
+
+    The phrases already present in the database which are not
+    valids anymore are removed.
 """
 import logging
 import os
@@ -10,27 +16,24 @@ import subprocess
 import json
 
 from psycopg2.sql import Identifier, Literal, SQL
-
-from nominatim.tools.exec_utils import get_url
 from nominatim.errors import UsageError
 from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 
 LOG = logging.getLogger()
-class SpecialPhrasesImporter():
+class SPImporter():
     # pylint: disable-msg=too-many-instance-attributes
     """
-        Class handling the process of special phrases importations.
+        Class handling the process of special phrases importations into the database.
+
+        Take a SPLoader which load the phrases from an external source.
     """
-    def __init__(self, config, phplib_dir, db_connection) -> None:
-        self.statistics_handler = SpecialPhrasesImporterStatistics()
-        self.db_connection = db_connection
+    def __init__(self, config, phplib_dir, db_connection, sp_loader) -> None:
         self.config = config
         self.phplib_dir = phplib_dir
+        self.db_connection = db_connection
+        self.sp_loader = sp_loader
+        self.statistics_handler = SpecialPhrasesImporterStatistics()
         self.black_list, self.white_list = self._load_white_and_black_lists()
-        #Compile the regex here to increase performances.
-        self.occurence_pattern = re.compile(
-            r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
-        )
         self.sanity_check_pattern = re.compile(r'^\w+$')
         # This set will contain all existing phrases to be added.
         # It contains tuples with the following format: (lable, class, type, operator)
@@ -39,27 +42,22 @@ class SpecialPhrasesImporter():
         #special phrases class/type on the wiki.
         self.table_phrases_to_delete = set()
 
-    def import_from_wiki(self, tokenizer, languages=None):
+    def import_phrases(self, tokenizer):
         """
             Iterate through all specified languages and
             extract corresponding special phrases from the wiki.
         """
-        if languages is not None and not isinstance(languages, list):
-            raise TypeError('The \'languages\' argument should be of type list.')
-
+        LOG.warning('Special phrases importation starting')
         self._fetch_existing_place_classtype_tables()
-
-        #Get all languages to process.
-        languages = self._load_languages() if not languages else languages
 
         #Store pairs of class/type for further processing
         class_type_pairs = set()
 
-        for lang in languages:
-            LOG.warning('Importing phrases for lang: %s...', lang)
-            wiki_page_xml_content = SpecialPhrasesImporter._get_wiki_content(lang)
-            class_type_pairs.update(self._process_xml_content(wiki_page_xml_content, lang))
-            self.statistics_handler.notify_current_lang_done(lang)
+        for loaded_phrases in self.sp_loader:
+            for phrase in loaded_phrases:
+                result = self._process_phrase(phrase)
+                if result:
+                    class_type_pairs.update(result)
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
         self._remove_non_existent_tables_from_db()
@@ -101,89 +99,48 @@ class SpecialPhrasesImporter():
             settings = json.load(json_settings)
         return settings['blackList'], settings['whiteList']
 
-    def _load_languages(self):
-        """
-            Get list of all languages from env config file
-            or default if there is no languages configured.
-            The system will extract special phrases only from all specified languages.
-        """
-        default_languages = [
-            'af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
-            'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
-            'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
-            'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']
-        return self.config.LANGUAGES.split(',') if self.config.LANGUAGES else default_languages
-
-    @staticmethod
-    def _get_wiki_content(lang):
-        """
-            Request and return the wiki page's content
-            corresponding to special phrases for a given lang.
-            Requested URL Example :
-                https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/EN
-        """
-        url = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/' + lang.upper() # pylint: disable=line-too-long
-        return get_url(url)
-
-    def _check_sanity(self, lang, phrase_class, phrase_type):
+    def _check_sanity(self, phrase):
         """
             Check sanity of given inputs in case somebody added garbage in the wiki.
             If a bad class/type is detected the system will exit with an error.
         """
-        type_matchs = self.sanity_check_pattern.findall(phrase_type)
-        class_matchs = self.sanity_check_pattern.findall(phrase_class)
+        class_matchs = self.sanity_check_pattern.findall(phrase.p_class)
+        type_matchs = self.sanity_check_pattern.findall(phrase.p_type)
 
         if not class_matchs or not type_matchs:
-            LOG.warning("Bad class/type for language %s: %s=%s. It will not be imported",
-                        lang, phrase_class, phrase_type)
+            LOG.warning("Bad class/type: %s=%s. It will not be imported",
+                        phrase.p_class, phrase.p_type)
             return False
         return True
 
-    def _process_xml_content(self, xml_content, lang):
+    def _process_phrase(self, phrase):
         """
-            Process given xml content by extracting matching patterns.
-            Matching patterns are processed there and returned in a
-            set of class/type pairs.
+            Processes the given phrase by checking black and white list
+            and sanity.
+            Return the class/type pair corresponding to the phrase.
         """
-        #One match will be of format [label, class, type, operator, plural]
-        matches = self.occurence_pattern.findall(xml_content)
-        #Store pairs of class/type for further processing
-        class_type_pairs = set()
 
-        for match in matches:
-            phrase_label = match[0].strip()
-            phrase_class = match[1].strip()
-            phrase_type = match[2].strip()
-            phrase_operator = match[3].strip()
-            #Needed if some operator in the wiki are not written in english
-            phrase_operator = '-' if phrase_operator not in ('near', 'in') else phrase_operator
-            #hack around a bug where building=yes was imported with quotes into the wiki
-            phrase_type = re.sub(r'\"|&quot;', '', phrase_type)
+        #blacklisting: disallow certain class/type combinations
+        if (
+            phrase.p_class in self.black_list.keys() and
+            phrase.p_type in self.black_list[phrase.p_class]
+        ): return None
 
-            #blacklisting: disallow certain class/type combinations
-            if (
-                    phrase_class in self.black_list.keys() and
-                    phrase_type in self.black_list[phrase_class]
-            ):
-                continue
-            #whitelisting: if class is in whitelist, allow only tags in the list
-            if (
-                    phrase_class in self.white_list.keys() and
-                    phrase_type not in self.white_list[phrase_class]
-            ):
-                continue
+        #whitelisting: if class is in whitelist, allow only tags in the list
+        if (
+            phrase.p_class in self.white_list.keys() and
+            phrase.p_type not in self.white_list[phrase.p_class]
+        ): return None
 
-            #sanity check, in case somebody added garbage in the wiki
-            if not self._check_sanity(lang, phrase_class, phrase_type):
-                self.statistics_handler.notify_one_phrase_invalid()
-                continue
+        #sanity check, in case somebody added garbage in the wiki
+        if not self._check_sanity(phrase):
+            self.statistics_handler.notify_one_phrase_invalid()
+            return None
 
-            class_type_pairs.add((phrase_class, phrase_type))
+        self.word_phrases.add((phrase.p_label, phrase.p_class,
+                               phrase.p_type, phrase.p_operator))
 
-            self.word_phrases.add((phrase_label, phrase_class,
-                                   phrase_type, phrase_operator))
-
-        return class_type_pairs
+        return set({(phrase.p_class, phrase.p_type)})
 
 
     def _create_place_classtype_table_and_indexes(self, class_type_pairs):

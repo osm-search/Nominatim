@@ -2,14 +2,15 @@
     Tests for import special phrases methods
     of the class SPImporter.
 """
-from nominatim.tools import SpecialPhrase
-from nominatim.tools import SPWikiLoader
 from nominatim.errors import UsageError
 from pathlib import Path
 import tempfile
 from shutil import copyfile
 import pytest
-from nominatim.tools import SPImporter
+from nominatim.tools.special_phrases.sp_importer import SPImporter
+from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
+from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
+from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 
 TEST_BASE_DIR = Path(__file__) / '..' / '..'
 
@@ -187,7 +188,7 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
 def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, sp_importer,
                           placex_table, tokenizer_mock):
     """
-        Check that the main import_from_wiki() method is well executed.
+        Check that the main import_phrases() method is well executed.
         It should create the place_classtype table, the place_id and centroid indexes,
         grand access to the web user and executing the SQL functions for amenities.
         It should also update the database well by deleting or preserving existing entries
@@ -200,7 +201,9 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, sp_importer,
             CREATE TABLE place_classtype_amenity_animal_shelter();
             CREATE TABLE place_classtype_wrongclass_wrongtype();""")
     
-    monkeypatch.setattr('nominatim.tools.SPWikiLoader._get_wiki_content', mock_get_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
+                    mock_get_wiki_content)
+
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer)
 
@@ -244,7 +247,7 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, sp_importer,
             else:
                 assert not temp_db_cursor.fetchone()
 
-def mock_get_wiki_content(self, lang):
+def mock_get_wiki_content(lang):
     """
         Mock the _get_wiki_content() method to return
         static xml test file content.

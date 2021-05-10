@@ -1,8 +1,8 @@
 """
     Module containing the SPWikiLoader class.
 """
-import logging
 import re
+import logging
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 from nominatim.tools.special_phrases.sp_loader import SPLoader
 from nominatim.tools.exec_utils import get_url

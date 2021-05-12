@@ -35,6 +35,9 @@ class _CountryPostcodesCollector:
         self._update_from_external(analyzer, project_dir)
         to_add, to_delete, to_update = self._compute_changes(conn)
 
+        LOG.info("Processing country '%s' (%s added, %s deleted, %s updated).",
+                 self.country, len(to_add), len(to_delete), len(to_update))
+
         with conn.cursor() as cur:
             if to_add:
                 execute_values(cur,
@@ -165,4 +168,4 @@ def update_postcodes(dsn, project_dir, tokenizer):
 
             conn.commit()
 
-        analyzer.add_postcodes_from_db()
+        analyzer.update_postcodes_from_db()

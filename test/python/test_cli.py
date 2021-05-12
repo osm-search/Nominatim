@@ -278,6 +278,7 @@ def test_refresh_command(mock_func_factory, temp_db, command, func, tokenizer_mo
 
 def test_refresh_postcodes(mock_func_factory, temp_db, tokenizer_mock):
     func_mock = mock_func_factory(nominatim.tools.postcodes, 'update_postcodes')
+    idx_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')
 
     assert 0 == call_nominatim('refresh', '--postcodes')
     assert func_mock.called == 1

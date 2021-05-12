@@ -47,6 +47,7 @@ class UpdateRefresh:
     def run(args):
         from ..tools import refresh, postcodes
         from ..tokenizer import factory as tokenizer_factory
+        from ..indexer.indexer import Indexer
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
 
@@ -54,6 +55,9 @@ class UpdateRefresh:
             LOG.warning("Update postcodes centroid")
             postcodes.update_postcodes(args.config.get_libpq_dsn(),
                                        args.project_dir, tokenizer)
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
+                              args.threads or 1)
+            indexer.index_postcodes()
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')

@@ -252,6 +252,9 @@ to verify that your installation is working. Go to
 `http://localhost:8088/status.php` and you should see the message `OK`.
 You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`.
 
+Note that search query is not supported for reverse-only imports. You can run a
+reverse query, e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
+
 To run Nominatim via webservers like Apache or nginx, please read the
 [Deployment chapter](Deployment.md).
 

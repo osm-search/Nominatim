@@ -13,12 +13,6 @@ from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
-def update_postcodes(dsn, sql_dir):
-    """ Recalculate postcode centroids and add, remove and update entries in the
-        location_postcode table. `conn` is an opne connection to the database.
-    """
-    execute_file(dsn, sql_dir / 'update-postcodes.sql')
-
 
 def recompute_word_counts(dsn, sql_dir):
     """ Compute the frequency of full-word search terms.

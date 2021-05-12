@@ -51,6 +51,9 @@ class DummyNameAnalyzer:
     def close(self):
         pass
 
+    def normalize_postcode(self, postcode):
+        return postcode
+
     def add_postcodes_from_db(self):
         pass
 

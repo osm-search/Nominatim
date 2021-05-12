@@ -38,20 +38,20 @@ class _CountryPostcodesCollector:
         with conn.cursor() as cur:
             if to_add:
                 execute_values(cur,
-                               """INSERT INTO location_postcodes
-                                      (place_id, indexed_status, countrycode,
+                               """INSERT INTO location_postcode
+                                      (place_id, indexed_status, country_code,
                                        postcode, geometry) VALUES %s""",
                                to_add,
                                template="""(nextval('seq_place'), 1, '{}',
                                            %s, 'SRID=4326;POINT(%s %s)')
                                         """.format(self.country))
             if to_delete:
-                cur.execute("""DELETE FROM location_postcodes
+                cur.execute("""DELETE FROM location_postcode
                                WHERE country_code = %s and postcode = any(%s)
                             """, (self.country, to_delete))
             if to_update:
                 execute_values(cur,
-                               """UPDATE location_postcodes
+                               """UPDATE location_postcode
                                   SET indexed_status = 2,
                                       geometry = ST_SetSRID(ST_Point(v.x, v.y), 4326)
                                   FROM (VALUES %s) AS v (pc, x, y)
@@ -62,22 +62,22 @@ class _CountryPostcodesCollector:
 
     def _compute_changes(self, conn):
         """ Compute which postcodes from the collected postcodes have to be
-            added or modified and which from the location_postcodes table
+            added or modified and which from the location_postcode table
             have to be deleted.
         """
         to_update = []
         to_delete = []
         with conn.cursor() as cur:
             cur.execute("""SELECT postcode, ST_X(geometry), ST_Y(geometry)
-                           FROM location_postcodes
+                           FROM location_postcode
                            WHERE country_code = %s""",
                         (self.country, ))
             for postcode, x, y in cur:
-                oldx, oldy = self.collected.pop(postcode, (None, None))
-                if oldx is not None:
-                    dist = (x - oldx)**2 + (y - oldy)**2
-                    if dist > 0.000001:
-                        to_update.append(postcode, x, y)
+                newx, newy = self.collected.pop(postcode, (None, None))
+                if newx is not None:
+                    dist = (x - newx)**2 + (y - newy)**2
+                    if dist > 0.0000001:
+                        to_update.append((postcode, newx, newy))
                 else:
                     to_delete.append(postcode)
 
@@ -105,7 +105,7 @@ class _CountryPostcodesCollector:
                 postcode = analyzer.normalize_postcode(row['postcode'])
                 if postcode not in self.collected:
                     try:
-                        self.collected[postcode] = (float(row['lon'], float(row['lat'])))
+                        self.collected[postcode] = (float(row['lon']), float(row['lat']))
                     except ValueError:
                         LOG.warning("Bad coordinates %s, %s in %s country postcode file.",
                                     row['lat'], row['lon'], self.country)
@@ -139,7 +139,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
     """
     with tokenizer.name_analyzer() as analyzer:
         with connect(dsn) as conn:
-            with conn.cursor("placex_postcodes") as cur:
+            with conn.cursor(name="placex_postcodes") as cur:
                 cur.execute("""SELECT country_code, pc, ST_X(centroid), ST_Y(centroid)
                                FROM (
                                  SELECT country_code,

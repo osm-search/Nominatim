@@ -51,11 +51,11 @@ entire US adds about 10GB to your database.
   1. Get preprocessed TIGER 2020 data:
 
         cd $PROJECT_DIR
-        wget https://nominatim.org/data/tiger2020-nominatim-preprocessed.tar.gz
+        wget https://nominatim.org/data/tiger2020-nominatim-preprocessed.csv.tar.gz
 
   2. Import the data into your Nominatim database:
 
-        nominatim add-data --tiger-data tiger2020-nominatim-preprocessed.tar.gz
+        nominatim add-data --tiger-data tiger2020-nominatim-preprocessed.csv.tar.gz
 
   3. Enable use of the Tiger data in your `.env` by adding:
 

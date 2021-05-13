@@ -28,8 +28,9 @@ class DeadlockHandler:
         normally.
     """
 
-    def __init__(self, handler):
+    def __init__(self, handler, ignore_sql_errors=False):
         self.handler = handler
+        self.ignore_sql_errors = ignore_sql_errors
 
     def __enter__(self):
         pass
@@ -44,6 +45,11 @@ class DeadlockHandler:
                 if exc_value.pgcode == '40P01':
                     self.handler()
                     return True
+
+        if self.ignore_sql_errors and isinstance(exc_value, psycopg2.Error):
+            LOG.info("SQL error ignored: %s", exc_value)
+            return True
+
         return False
 
 
@@ -51,10 +57,11 @@ class DBConnection:
     """ A single non-blocking database connection.
     """
 
-    def __init__(self, dsn, cursor_factory=None):
+    def __init__(self, dsn, cursor_factory=None, ignore_sql_errors=False):
         self.current_query = None
         self.current_params = None
         self.dsn = dsn
+        self.ignore_sql_errors = ignore_sql_errors
 
         self.conn = None
         self.cursor = None
@@ -101,7 +108,7 @@ class DBConnection:
         """ Block until any pending operation is done.
         """
         while True:
-            with DeadlockHandler(self._deadlock_handler):
+            with DeadlockHandler(self._deadlock_handler, self.ignore_sql_errors):
                 wait_select(self.conn)
                 self.current_query = None
                 return
@@ -128,7 +135,7 @@ class DBConnection:
         if self.current_query is None:
             return True
 
-        with DeadlockHandler(self._deadlock_handler):
+        with DeadlockHandler(self._deadlock_handler, self.ignore_sql_errors):
             if self.conn.poll() == psycopg2.extensions.POLL_OK:
                 self.current_query = None
                 return True
@@ -143,8 +150,9 @@ class WorkerPool:
     """
     REOPEN_CONNECTIONS_AFTER = 100000
 
-    def __init__(self, dsn, pool_size):
-        self.threads = [DBConnection(dsn) for _ in range(pool_size)]
+    def __init__(self, dsn, pool_size, ignore_sql_errors=False):
+        self.threads = [DBConnection(dsn, ignore_sql_errors=ignore_sql_errors)
+                        for _ in range(pool_size)]
         self.free_workers = self._yield_free_worker()
         self.wait_time = 0
 

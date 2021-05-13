@@ -4,10 +4,9 @@ Functions for importing tiger data and handling tarbar and directory files
 import logging
 import os
 import tarfile
-import selectors
 
 from nominatim.db.connection import connect
-from nominatim.db.async_connection import DBConnection
+from nominatim.db.async_connection import WorkerPool
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 
 
@@ -37,44 +36,20 @@ def handle_tarfile_or_directory(data_dir):
     return sql_files, tar
 
 
-def handle_threaded_sql_statements(sel, file):
+def handle_threaded_sql_statements(pool, file):
     """ Handles sql statement with multiplexing
     """
 
     lines = 0
-    end_of_file = False
     # Using pool of database connections to execute sql statements
-    while not end_of_file:
-        for key, _ in sel.select(1):
-            conn = key.data
-            try:
-                if conn.is_done():
-                    sql_query = file.readline()
-                    lines += 1
-                    if not sql_query:
-                        end_of_file = True
-                        break
-                    conn.perform(sql_query)
-                    if lines == 1000:
-                        print('. ', end='', flush=True)
-                        lines = 0
-            except Exception as exc: # pylint: disable=broad-except
-                LOG.info('Wrong SQL statement: %s', exc)
+    for sql_query in file:
+        pool.next_free_worker().perform(sql_query)
 
-def handle_unregister_connection_pool(sel, place_threads):
-    """ Handles unregistering pool of connections
-    """
+        lines += 1
+        if lines == 1000:
+            print('.', end='', flush=True)
+            lines = 0
 
-    while place_threads > 0:
-        for key, _ in sel.select(1):
-            conn = key.data
-            sel.unregister(conn)
-            try:
-                conn.wait()
-            except Exception as exc: # pylint: disable=broad-except
-                LOG.info('Wrong SQL statement: %s', exc)
-            conn.close()
-            place_threads -= 1
 
 def add_tiger_data(data_dir, config, threads):
     """ Import tiger data from directory or tar file `data dir`.
@@ -91,25 +66,16 @@ def add_tiger_data(data_dir, config, threads):
 
     # Reading sql_files and then for each file line handling
     # sql_query in <threads - 1> chunks.
-    sel = selectors.DefaultSelector()
     place_threads = max(1, threads - 1)
 
-    # Creates a pool of database connections
-    for _ in range(place_threads):
-        conn = DBConnection(dsn)
-        conn.connect()
-        sel.register(conn, selectors.EVENT_WRITE, conn)
+    with WorkerPool(dsn, place_threads, ignore_sql_errors=True) as pool:
+        for sql_file in sql_files:
+            if not tar:
+                file = open(sql_file)
+            else:
+                file = tar.extractfile(sql_file)
 
-    for sql_file in sql_files:
-        if not tar:
-            file = open(sql_file)
-        else:
-            file = tar.extractfile(sql_file)
-
-        handle_threaded_sql_statements(sel, file)
-
-    # Unregistering pool of database connections
-    handle_unregister_connection_pool(sel, place_threads)
+            handle_threaded_sql_statements(pool, file)
 
     if tar:
         tar.close()

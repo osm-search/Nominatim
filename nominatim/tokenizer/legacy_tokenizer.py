@@ -454,13 +454,8 @@ class LegacyNameAnalyzer:
     def _add_postcode(self, postcode):
         """ Make sure the normalized postcode is present in the word table.
         """
-        def _create_postcode_from_db(pcode):
-            with self.conn.cursor() as cur:
-                cur.execute('SELECT create_postcode_id(%s)', (pcode, ))
-
         if re.search(r'[:,;]', postcode) is None:
-            self._cache.postcodes.get(self.normalize_postcode(postcode),
-                                      _create_postcode_from_db)
+            self._cache.add_postcode(self.conn, self.normalize_postcode(postcode))
 
 
 class _TokenInfo:
@@ -591,16 +586,19 @@ class _TokenCache:
                            FROM generate_series(1, 100) as i""")
             self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
 
-        # Get postcodes that are already saved
-        postcodes = OrderedDict()
-        with conn.cursor() as cur:
-            cur.execute("""SELECT word FROM word
-                           WHERE class ='place' and type = 'postcode'""")
-            for row in cur:
-                postcodes[row[0]] = None
-        self.postcodes = _LRU(maxsize=32, init_data=postcodes)
+        # For postcodes remember the ones that have already been added
+        self.postcodes = set()
 
     def get_housenumber(self, number):
         """ Get a housenumber token from the cache.
         """
         return self._cached_housenumbers.get(number)
+
+
+    def add_postcode(self, conn, postcode):
+        """ Make sure the given postcode is in the database.
+        """
+        if postcode not in self.postcodes:
+            with conn.cursor() as cur:
+                cur.execute('SELECT create_postcode_id(%s)', (postcode, ))
+            self.postcodes.add(postcode)

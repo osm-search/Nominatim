@@ -45,12 +45,19 @@ class UpdateRefresh:
 
     @staticmethod
     def run(args):
-        from ..tools import refresh
+        from ..tools import refresh, postcodes
         from ..tokenizer import factory as tokenizer_factory
+        from ..indexer.indexer import Indexer
+
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
-            refresh.update_postcodes(args.config.get_libpq_dsn(), args.sqllib_dir)
+            postcodes.update_postcodes(args.config.get_libpq_dsn(),
+                                       args.project_dir, tokenizer)
+            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
+                              args.threads or 1)
+            indexer.index_postcodes()
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')
@@ -67,7 +74,6 @@ class UpdateRefresh:
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.create_functions(conn, args.config,
                                          args.diffs, args.enable_debug_statements)
-                tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
                 tokenizer.update_sql_functions(args.config)
 
         if args.wiki_data:

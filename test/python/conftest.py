@@ -19,6 +19,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.db import properties
 
 import dummy_tokenizer
+import mocks
 
 class _TestingCursor(psycopg2.extras.DictCursor):
     """ Extension to the DictCursor class that provides execution
@@ -211,33 +212,7 @@ def place_row(place_table, temp_db_cursor):
 def placex_table(temp_db_with_extensions, temp_db_conn):
     """ Create an empty version of the place table.
     """
-    with temp_db_conn.cursor() as cur:
-        cur.execute("""CREATE TABLE placex (
-                           place_id BIGINT,
-                           parent_place_id BIGINT,
-                           linked_place_id BIGINT,
-                           importance FLOAT,
-                           indexed_date TIMESTAMP,
-                           geometry_sector INTEGER,
-                           rank_address SMALLINT,
-                           rank_search SMALLINT,
-                           partition SMALLINT,
-                           indexed_status SMALLINT,
-                           osm_id int8,
-                           osm_type char(1),
-                           class text,
-                           type text,
-                           name hstore,
-                           admin_level smallint,
-                           address hstore,
-                           extratags hstore,
-                           geometry Geometry(Geometry,4326),
-                           wikipedia TEXT,
-                           country_code varchar(2),
-                           housenumber TEXT,
-                           postcode TEXT,
-                           centroid GEOMETRY(Geometry, 4326))""")
-    temp_db_conn.commit()
+    return mocks.MockPlacexTable(temp_db_conn)
 
 
 @pytest.fixture
@@ -262,18 +237,8 @@ def osmline_table(temp_db_with_extensions, temp_db_conn):
 
 
 @pytest.fixture
-def word_table(temp_db, temp_db_conn):
-    with temp_db_conn.cursor() as cur:
-        cur.execute("""CREATE TABLE word (
-                           word_id INTEGER,
-                           word_token text,
-                           word text,
-                           class text,
-                           type text,
-                           country_code varchar(2),
-                           search_name_count INTEGER,
-                           operator TEXT)""")
-    temp_db_conn.commit()
+def word_table(temp_db_conn):
+    return mocks.MockWordTable(temp_db_conn)
 
 
 @pytest.fixture

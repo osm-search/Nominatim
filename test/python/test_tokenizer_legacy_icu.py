@@ -141,16 +141,28 @@ def test_make_standard_hnr(analyzer):
         assert a._make_standard_hnr('iv') == 'IV'
 
 
-def test_add_postcodes_from_db(analyzer, word_table, table_factory, temp_db_cursor):
+def test_update_postcodes_from_db_empty(analyzer, table_factory, word_table):
     table_factory('location_postcode', 'postcode TEXT',
                   content=(('1234',), ('12 34',), ('AB23',), ('1234',)))
 
     with analyzer() as a:
-        a.add_postcodes_from_db()
+        a.update_postcodes_from_db()
 
-    assert temp_db_cursor.row_set("""SELECT word, word_token from word
-                                     """) \
-               == set((('1234', ' 1234'), ('12 34', ' 12 34'), ('AB23', ' AB23')))
+    assert word_table.count() == 3
+    assert word_table.get_postcodes() == {'1234', '12 34', 'AB23'}
+
+
+def test_update_postcodes_from_db_add_and_remove(analyzer, table_factory, word_table):
+    table_factory('location_postcode', 'postcode TEXT',
+                  content=(('1234',), ('45BC', ), ('XX45', )))
+    word_table.add_postcode(' 1234', '1234')
+    word_table.add_postcode(' 5678', '5678')
+
+    with analyzer() as a:
+        a.update_postcodes_from_db()
+
+    assert word_table.count() == 3
+    assert word_table.get_postcodes() == {'1234', '45BC', 'XX45'}
 
 
 def test_update_special_phrase_empty_table(analyzer, word_table, temp_db_cursor):
@@ -211,22 +223,19 @@ def test_process_place_names(analyzer, getorcreate_term_id):
 
 
 @pytest.mark.parametrize('pc', ['12345', 'AB 123', '34-345'])
-def test_process_place_postcode(analyzer, temp_db_cursor, pc):
+def test_process_place_postcode(analyzer, word_table, pc):
     with analyzer() as a:
         info = a.process_place({'address': {'postcode' : pc}})
 
-    assert temp_db_cursor.row_set("""SELECT word FROM word
-                                     WHERE class = 'place' and type = 'postcode'""") \
-               == set(((pc, ),))
+    assert word_table.get_postcodes() == {pc, }
 
 
 @pytest.mark.parametrize('pc', ['12:23', 'ab;cd;f', '123;836'])
-def test_process_place_bad_postcode(analyzer, temp_db_cursor, pc):
+def test_process_place_bad_postcode(analyzer, word_table, pc):
     with analyzer() as a:
         info = a.process_place({'address': {'postcode' : pc}})
 
-    assert 0 == temp_db_cursor.scalar("""SELECT count(*) FROM word
-                                         WHERE class = 'place' and type = 'postcode'""")
+    assert not word_table.get_postcodes()
 
 
 @pytest.mark.parametrize('hnr', ['123a', '1', '101'])

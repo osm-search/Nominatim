@@ -263,6 +263,16 @@ class LegacyICUNameAnalyzer:
         """
         return self.normalizer.transliterate(phrase)
 
+    @staticmethod
+    def normalize_postcode(postcode):
+        """ Convert the postcode to a standardized form.
+
+            This function must yield exactly the same result as the SQL function
+            'token_normalized_postcode()'.
+        """
+        return postcode.strip().upper()
+
+
     @functools.lru_cache(maxsize=1024)
     def make_standard_word(self, name):
         """ Create the normalised version of the input.
@@ -285,25 +295,44 @@ class LegacyICUNameAnalyzer:
 
         return self.transliterator.transliterate(hnr)
 
-    def add_postcodes_from_db(self):
-        """ Add postcodes from the location_postcode table to the word table.
+    def update_postcodes_from_db(self):
+        """ Update postcode tokens in the word table from the location_postcode
+            table.
         """
+        to_delete = []
         copystr = io.StringIO()
         with self.conn.cursor() as cur:
-            cur.execute("SELECT distinct(postcode) FROM location_postcode")
-            for (postcode, ) in cur:
-                copystr.write(postcode)
-                copystr.write('\t ')
-                copystr.write(self.transliterator.transliterate(postcode))
-                copystr.write('\tplace\tpostcode\t0\n')
+            # This finds us the rows in location_postcode and word that are
+            # missing in the other table.
+            cur.execute("""SELECT * FROM
+                            (SELECT pc, word FROM
+                              (SELECT distinct(postcode) as pc FROM location_postcode) p
+                              FULL JOIN
+                              (SELECT word FROM word
+                                WHERE class ='place' and type = 'postcode') w
+                              ON pc = word) x
+                           WHERE pc is null or word is null""")
 
-            copystr.seek(0)
-            cur.copy_from(copystr, 'word',
-                          columns=['word', 'word_token', 'class', 'type',
-                                   'search_name_count'])
-            # Don't really need an ID for postcodes....
-            # cur.execute("""UPDATE word SET word_id = nextval('seq_word')
-            #                WHERE word_id is null and type = 'postcode'""")
+            for postcode, word in cur:
+                if postcode is None:
+                    to_delete.append(word)
+                else:
+                    copystr.write(postcode)
+                    copystr.write('\t ')
+                    copystr.write(self.transliterator.transliterate(postcode))
+                    copystr.write('\tplace\tpostcode\t0\n')
+
+            if to_delete:
+                cur.execute("""DELETE FROM WORD
+                               WHERE class ='place' and type = 'postcode'
+                                     and word = any(%s)
+                            """, (to_delete, ))
+
+            if copystr.getvalue():
+                copystr.seek(0)
+                cur.copy_from(copystr, 'word',
+                              columns=['word', 'word_token', 'class', 'type',
+                                       'search_name_count'])
 
 
     def update_special_phrases(self, phrases):
@@ -435,22 +464,25 @@ class LegacyICUNameAnalyzer:
     def _add_postcode(self, postcode):
         """ Make sure the normalized postcode is present in the word table.
         """
-        if re.search(r'[:,;]', postcode) is None and not postcode in self._cache.postcodes:
-            term = self.make_standard_word(postcode)
-            if not term:
-                return
+        if re.search(r'[:,;]', postcode) is None:
+            postcode = self.normalize_postcode(postcode)
 
-            with self.conn.cursor() as cur:
-                # no word_id needed for postcodes
-                cur.execute("""INSERT INTO word (word, word_token, class, type,
-                                                 search_name_count)
-                               (SELECT pc, %s, 'place', 'postcode', 0
-                                FROM (VALUES (%s)) as v(pc)
-                                WHERE NOT EXISTS
-                                 (SELECT * FROM word
-                                  WHERE word = pc and class='place' and type='postcode'))
-                            """, (' ' + term, postcode))
-            self._cache.postcodes.add(postcode)
+            if postcode not in self._cache.postcodes:
+                term = self.make_standard_word(postcode)
+                if not term:
+                    return
+
+                with self.conn.cursor() as cur:
+                    # no word_id needed for postcodes
+                    cur.execute("""INSERT INTO word (word, word_token, class, type,
+                                                     search_name_count)
+                                   (SELECT pc, %s, 'place', 'postcode', 0
+                                    FROM (VALUES (%s)) as v(pc)
+                                    WHERE NOT EXISTS
+                                     (SELECT * FROM word
+                                      WHERE word = pc and class='place' and type='postcode'))
+                                """, (' ' + term, postcode))
+                self._cache.postcodes.add(postcode)
 
     @staticmethod
     def _split_housenumbers(hnrs):

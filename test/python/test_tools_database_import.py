@@ -153,8 +153,8 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):
 
 
 @pytest.mark.parametrize("threads", (1, 5))
-def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table, word_table,
-                   temp_db_cursor, threads):
+def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table,
+                   word_table, temp_db_cursor, threads):
     for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
         temp_db_cursor.execute("""CREATE FUNCTION {} (src TEXT)
                                   RETURNS TEXT AS $$ SELECT 'a'::TEXT $$ LANGUAGE SQL

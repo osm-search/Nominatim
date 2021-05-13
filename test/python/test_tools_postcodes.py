@@ -71,8 +71,7 @@ def test_import_postcodes_add_new(dsn, placex_table, postcode_table, tmp_path, t
 
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
 
-    assert postcode_table.row_set == {('xx', '9486', 10, 12),
-                                      ('yy', '9486', 99, 34)}
+    assert postcode_table.row_set == {('xx', '9486', 10, 12), }
 
 
 def test_import_postcodes_replace_coordinates(dsn, placex_table, postcode_table, tmp_path, tokenizer):
@@ -103,6 +102,14 @@ def test_import_postcodes_remove(dsn, placex_table, postcode_table, tmp_path, to
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
 
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
+
+
+def test_import_postcodes_remove_all(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+    postcode_table.add('ch', '5613', 10, 12)
+
+    postcodes.update_postcodes(dsn, tmp_path, tokenizer)
+
+    assert not postcode_table.row_set
 
 
 def test_import_postcodes_multi_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):

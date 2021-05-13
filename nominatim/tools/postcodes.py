@@ -142,6 +142,13 @@ def update_postcodes(dsn, project_dir, tokenizer):
     """
     with tokenizer.name_analyzer() as analyzer:
         with connect(dsn) as conn:
+            # First get the list of countries that currently have postcodes.
+            # (Doing this before starting to insert, so it is fast on import.)
+            with conn.cursor() as cur:
+                cur.execute("SELECT DISTINCT country_code FROM location_postcode")
+                todo_countries = set((row[0] for row in cur))
+
+            # Recompute the list of valid postcodes from placex.
             with conn.cursor(name="placex_postcodes") as cur:
                 cur.execute("""SELECT country_code, pc, ST_X(centroid), ST_Y(centroid)
                                FROM (
@@ -161,10 +168,15 @@ def update_postcodes(dsn, project_dir, tokenizer):
                         if collector is not None:
                             collector.commit(conn, analyzer, project_dir)
                         collector = _CountryPostcodesCollector(country)
+                        todo_countries.discard(country)
                     collector.add(postcode, x, y)
 
                 if collector is not None:
                     collector.commit(conn, analyzer, project_dir)
+
+            # Now handle any countries that are only in the postcode table.
+            for country in todo_countries:
+                _CountryPostcodesCollector(country).commit(conn, analyzer, project_dir)
 
             conn.commit()
 

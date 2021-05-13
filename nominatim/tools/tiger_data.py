@@ -12,7 +12,7 @@ import psycopg2.extras
 from nominatim.db.connection import connect
 from nominatim.db.async_connection import WorkerPool
 from nominatim.db.sql_preprocessor import SQLPreprocessor
-
+from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
@@ -23,7 +23,12 @@ def handle_tarfile_or_directory(data_dir):
 
     tar = None
     if data_dir.endswith('.tar.gz'):
-        tar = tarfile.open(data_dir)
+        try:
+            tar = tarfile.open(data_dir)
+        except tarfile.ReadError as err:
+            LOG.fatal("Cannot open '%s'. Is this a tar file?", data_dir)
+            raise UsageError("Cannot open Tiger data file.") from err
+
         csv_files = [i for i in tar.getmembers() if i.name.endswith('.csv')]
         LOG.warning("Found %d CSV files in tarfile with path %s", len(csv_files), data_dir)
         if not csv_files:

@@ -83,15 +83,19 @@ The file is about 400MB and adds around 4GB to the Nominatim database.
     `nominatim refresh --wiki-data --importance`. Updating importances for
     a planet can take a couple of hours.
 
-### Great Britain, USA postcodes
+### External postcodes
 
-Nominatim can use postcodes from an external source to improve searches that
-involve a GB or US postcode. This data can be optionally downloaded into the
-project directory:
+Nominatim can use postcodes from an external source to improve searching with
+postcodes. We provide precomputed postcodes sets for the US (using TIGER data)
+and the UK (using the [CodePoint OpenData set](https://osdatahub.os.uk/downloads/open/CodePointOpen).
+This data can be optionally downloaded into the project directory:
 
     cd $PROJECT_DIR
-    wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
-    wget https://www.nominatim.org/data/us_postcode_data.sql.gz
+    wget https://www.nominatim.org/data/gb_postcodes.csv.gz
+    wget https://www.nominatim.org/data/us_postcodes.csv.gz
+
+You can also add your own custom postcode sources, see
+[Customization of postcodes](Customization.md#external-postcode-data).
 
 ## Choosing the data to import
 
@@ -274,33 +278,3 @@ you also need to import these key phrases like this:
 
 Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
-
-
-## Installing Tiger housenumber data for the US
-
-Nominatim is able to use the official [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
-address set to complement the OSM house number data in the US. You can add
-TIGER data to your own Nominatim instance by following these steps. The
-entire US adds about 10GB to your database.
-
-  1. Get preprocessed TIGER 2020 data:
-
-        cd $PROJECT_DIR
-        wget https://nominatim.org/data/tiger2020-nominatim-preprocessed.tar.gz
-
-  2. Import the data into your Nominatim database:
-
-        nominatim add-data --tiger-data tiger2020-nominatim-preprocessed.tar.gz
-
-  3. Enable use of the Tiger data in your `.env` by adding:
-
-        echo NOMINATIM_USE_US_TIGER_DATA=yes >> .env
-
-  4. Apply the new settings:
-
-        nominatim refresh --functions
-
-
-See the [developer's guide](../develop/data-sources.md#us-census-tiger) for more
-information on how the data got preprocessed.
-

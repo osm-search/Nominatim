@@ -5,12 +5,24 @@ of artificial postcode centroids.
 import csv
 import gzip
 import logging
+from math import isfinite
 
 from psycopg2.extras import execute_values
 
 from nominatim.db.connection import connect
 
 LOG = logging.getLogger()
+
+def _to_float(num, max_value):
+    """ Convert the number in string into a float. The number is expected
+        to be in the range of [-max_value, max_value]. Otherwise rises a
+        ValueError.
+    """
+    num = float(num)
+    if not isfinite(num) or num <= -max_value or num >= max_value:
+        raise ValueError()
+
+    return num
 
 class _CountryPostcodesCollector:
     """ Collector for postcodes of a single country.
@@ -108,7 +120,8 @@ class _CountryPostcodesCollector:
                 postcode = analyzer.normalize_postcode(row['postcode'])
                 if postcode not in self.collected:
                     try:
-                        self.collected[postcode] = (float(row['lon']), float(row['lat']))
+                        self.collected[postcode] = (_to_float(row['lon'], 180),
+                                                    _to_float(row['lat'], 90))
                     except ValueError:
                         LOG.warning("Bad coordinates %s, %s in %s country postcode file.",
                                     row['lat'], row['lon'], self.country)

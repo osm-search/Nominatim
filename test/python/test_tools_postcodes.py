@@ -157,3 +157,29 @@ def test_import_postcodes_extern(dsn, placex_table, postcode_table, tmp_path,
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12),
                                       ('xx', 'CD 4511', -10, -5)}
 
+
+def test_import_postcodes_extern_bad_column(dsn, placex_table, postcode_table,
+                                            tmp_path, tokenizer):
+    placex_table.add(country='xx', geom='POINT(10 12)',
+                     address=dict(postcode='AB 4511'))
+
+    extfile = tmp_path / 'xx_postcodes.csv'
+    extfile.write_text("postode,lat,lon\nAB 4511,-4,-1\nCD 4511,-5, -10")
+
+    postcodes.update_postcodes(dsn, tmp_path, tokenizer)
+
+    assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
+
+
+def test_import_postcodes_extern_bad_number(dsn, placex_table, postcode_table,
+                                            tmp_path, tokenizer):
+    placex_table.add(country='xx', geom='POINT(10 12)',
+                     address=dict(postcode='AB 4511'))
+
+    extfile = tmp_path / 'xx_postcodes.csv'
+    extfile.write_text("postcode,lat,lon\nXX 4511,-4,NaN\nCD 4511,-5, -10\n34,200,0")
+
+    postcodes.update_postcodes(dsn, tmp_path, tokenizer)
+
+    assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12),
+                                      ('xx', 'CD 4511', -10, -5)}

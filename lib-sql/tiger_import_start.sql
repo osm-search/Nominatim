@@ -1,9 +1,9 @@
 DROP TABLE IF EXISTS location_property_tiger_import;
 CREATE TABLE location_property_tiger_import (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 
-CREATE OR REPLACE FUNCTION tiger_line_import(linegeo GEOMETRY, in_startnumber INTEGER, 
-  in_endnumber INTEGER, interpolationtype TEXT,
-  in_street TEXT, in_isin TEXT, in_postcode TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION tiger_line_import(linegeo GEOMETRY, in_startnumber INTEGER,
+                                             in_endnumber INTEGER, interpolationtype TEXT,
+                                             token_info JSONB, in_postcode TEXT) RETURNS INTEGER
   AS $$
 DECLARE
   startnumber INTEGER;
@@ -27,13 +27,13 @@ BEGIN
   END IF;
 
   IF startnumber < 0 THEN
-    RAISE WARNING 'Negative house number range (% to %) on %, %', startnumber, endnumber, in_street, in_isin;
+    RAISE WARNING 'Negative house number range (% to %)', startnumber, endnumber;
     RETURN 0;
   END IF;
 
   numberrange := endnumber - startnumber;
 
-  IF (interpolationtype = 'odd' AND startnumber%2 = 0) OR (interpolationtype = 'even' AND startnumber%2 = 1) THEN
+  IF (interpolationtype = 'odd' AND startnumber % 2 = 0) OR (interpolationtype = 'even' AND startnumber % 2 = 1) THEN
     startnumber := startnumber + 1;
     stepsize := 2;
   ELSE
@@ -45,10 +45,10 @@ BEGIN
   END IF;
 
   -- Filter out really broken tiger data
-  IF numberrange > 0 AND (numberrange::float/stepsize::float > 500) 
+  IF numberrange > 0 AND (numberrange::float/stepsize::float > 500)
                     AND ST_length(linegeo)/(numberrange::float/stepsize::float) < 0.000001 THEN
-    RAISE WARNING 'Road too short for number range % to % on %, % (%)',startnumber,endnumber,in_street,in_isin,
-                  ST_length(linegeo)/(numberrange::float/stepsize::float);    
+    RAISE WARNING 'Road too short for number range % to % (%)',startnumber,endnumber,
+                  ST_length(linegeo)/(numberrange::float/stepsize::float);
     RETURN 0;
   END IF;
 
@@ -56,7 +56,7 @@ BEGIN
   out_partition := get_partition('us');
   out_parent_place_id := null;
 
-  address_street_word_ids := word_ids_from_name(in_street);
+  address_street_word_ids := token_addr_street_match_tokens(token_info);
   IF address_street_word_ids IS NOT NULL THEN
     out_parent_place_id := getNearestNamedRoadPlaceId(out_partition, place_centroid,
                                                       address_street_word_ids);

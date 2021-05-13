@@ -1,9 +1,13 @@
 """
 Functions for importing tiger data and handling tarbar and directory files
 """
+import csv
+import io
 import logging
 import os
 import tarfile
+
+import psycopg2.extras
 
 from nominatim.db.connection import connect
 from nominatim.db.async_connection import WorkerPool
@@ -20,30 +24,40 @@ def handle_tarfile_or_directory(data_dir):
     tar = None
     if data_dir.endswith('.tar.gz'):
         tar = tarfile.open(data_dir)
-        sql_files = [i for i in tar.getmembers() if i.name.endswith('.sql')]
-        LOG.warning("Found %d SQL files in tarfile with path %s", len(sql_files), data_dir)
-        if not sql_files:
+        csv_files = [i for i in tar.getmembers() if i.name.endswith('.csv')]
+        LOG.warning("Found %d CSV files in tarfile with path %s", len(csv_files), data_dir)
+        if not csv_files:
             LOG.warning("Tiger data import selected but no files in tarfile's path %s", data_dir)
             return None, None
     else:
         files = os.listdir(data_dir)
-        sql_files = [os.path.join(data_dir, i) for i in files if i.endswith('.sql')]
-        LOG.warning("Found %d SQL files in path %s", len(sql_files), data_dir)
-        if not sql_files:
+        csv_files = [os.path.join(data_dir, i) for i in files if i.endswith('.csv')]
+        LOG.warning("Found %d CSV files in path %s", len(csv_files), data_dir)
+        if not csv_files:
             LOG.warning("Tiger data import selected but no files found in path %s", data_dir)
             return None, None
 
-    return sql_files, tar
+    return csv_files, tar
 
 
-def handle_threaded_sql_statements(pool, file):
+def handle_threaded_sql_statements(pool, fd, analyzer):
     """ Handles sql statement with multiplexing
     """
-
     lines = 0
     # Using pool of database connections to execute sql statements
-    for sql_query in file:
-        pool.next_free_worker().perform(sql_query)
+
+    sql = "SELECT tiger_line_import(%s, %s, %s, %s, %s, %s)"
+
+    for row in csv.DictReader(fd, delimiter=';'):
+        try:
+            address = dict(street=row['street'], postcode=row['postcode'])
+            args = ('SRID=4326;' + row['geometry'],
+                    int(row['from']), int(row['to']), row['interpolation'],
+                    psycopg2.extras.Json(analyzer.process_place(dict(address=address))),
+                    analyzer.normalize_postcode(row['postcode']))
+        except ValueError:
+            continue
+        pool.next_free_worker().perform(sql, args=args)
 
         lines += 1
         if lines == 1000:
@@ -51,31 +65,34 @@ def handle_threaded_sql_statements(pool, file):
             lines = 0
 
 
-def add_tiger_data(data_dir, config, threads):
+def add_tiger_data(data_dir, config, threads, tokenizer):
     """ Import tiger data from directory or tar file `data dir`.
     """
     dsn = config.get_libpq_dsn()
-    sql_files, tar = handle_tarfile_or_directory(data_dir)
+    files, tar = handle_tarfile_or_directory(data_dir)
 
-    if not sql_files:
+    if not files:
         return
 
     with connect(dsn) as conn:
         sql = SQLPreprocessor(conn, config)
         sql.run_sql_file(conn, 'tiger_import_start.sql')
 
-    # Reading sql_files and then for each file line handling
+    # Reading files and then for each file line handling
     # sql_query in <threads - 1> chunks.
     place_threads = max(1, threads - 1)
 
     with WorkerPool(dsn, place_threads, ignore_sql_errors=True) as pool:
-        for sql_file in sql_files:
-            if not tar:
-                file = open(sql_file)
-            else:
-                file = tar.extractfile(sql_file)
+        with tokenizer.name_analyzer() as analyzer:
+            for fname in files:
+                if not tar:
+                    fd = open(fname)
+                else:
+                    fd = io.TextIOWrapper(tar.extractfile(fname))
 
-            handle_threaded_sql_statements(pool, file)
+                handle_threaded_sql_statements(pool, fd, analyzer)
+
+                fd.close()
 
     if tar:
         tar.close()

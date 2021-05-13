@@ -157,6 +157,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
                                         ST_Centroid(ST_Collect(ST_Centroid(geometry))) as centroid
                                  FROM placex
                                  WHERE address ? 'postcode' and geometry IS NOT null
+                                       and country_code is not null
                                  GROUP BY country_code, pc) xx
                                WHERE pc is not null
                                ORDER BY country_code, pc""")

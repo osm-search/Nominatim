@@ -104,6 +104,15 @@ def test_import_postcodes_remove(dsn, placex_table, postcode_table, tmp_path, to
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
 
 
+def test_import_postcodes_ignore_empty_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+    placex_table.add(country=None, geom='POINT(10 12)',
+                     address=dict(postcode='AB 4511'))
+
+    postcodes.update_postcodes(dsn, tmp_path, tokenizer)
+
+    assert not postcode_table.row_set
+
+
 def test_import_postcodes_remove_all(dsn, placex_table, postcode_table, tmp_path, tokenizer):
     postcode_table.add('ch', '5613', 10, 12)
 

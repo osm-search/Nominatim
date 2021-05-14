@@ -155,7 +155,7 @@ def recompute_importance(conn):
     conn.commit()
 
 
-def setup_website(basedir, config):
+def setup_website(basedir, config, conn):
     """ Create the website script stubs.
     """
     if not basedir.exists():
@@ -187,5 +187,10 @@ def setup_website(basedir, config):
 
     template += "\nrequire_once('{}/website/{{}}');\n".format(config.lib_dir.php)
 
+    search_name_table_exists = bool(conn and conn.table_exists('search_name'))
+
     for script in WEBSITE_SCRIPTS:
-        (basedir / script).write_text(template.format(script), 'utf-8')
+        if not search_name_table_exists and script == 'search.php':
+            (basedir / script).write_text(template.format('reverse-only-search.php'), 'utf-8')
+        else:
+            (basedir / script).write_text(template.format(script), 'utf-8')

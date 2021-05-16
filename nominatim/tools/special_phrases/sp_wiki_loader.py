@@ -3,12 +3,12 @@
 """
 import re
 import logging
+from collections.abc import Iterator
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
-from nominatim.tools.special_phrases.sp_loader import SPLoader
 from nominatim.tools.exec_utils import get_url
 
 LOG = logging.getLogger()
-class SPWikiLoader(SPLoader):
+class SPWikiLoader(Iterator):
     """
         Handles loading of special phrases from the wiki.
     """
@@ -28,7 +28,7 @@ class SPWikiLoader(SPLoader):
             raise StopIteration
 
         lang = self.languages.pop(0)
-        loaded_xml = SPWikiLoader._get_wiki_content(lang)
+        loaded_xml = self._get_wiki_content(lang)
         LOG.warning('Importing phrases for lang: %s...', lang)
         return self.parse_xml(loaded_xml)
 

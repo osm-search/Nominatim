@@ -5,14 +5,13 @@
 """
 import csv
 import os
+from collections.abc import Iterator
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
-from nominatim.tools.special_phrases.sp_loader import SPLoader
 from nominatim.errors import UsageError
 
-class SPCsvLoader(SPLoader):
+class SPCsvLoader(Iterator):
     """
-        Base class for special phrases loaders.
-        Handle the loading of special phrases from external sources.
+        Handles loading of special phrases from external csv file.
     """
     def __init__(self, csv_path):
         super().__init__()
@@ -24,18 +23,17 @@ class SPCsvLoader(SPLoader):
             raise StopIteration()
 
         self.has_been_read = True
-        SPCsvLoader.check_csv_validity(self.csv_path)
-        return SPCsvLoader.parse_csv(self.csv_path)
+        self.check_csv_validity()
+        return self.parse_csv()
 
-    @staticmethod
-    def parse_csv(csv_path):
+    def parse_csv(self):
         """
             Open and parse the given csv file.
             Create the corresponding SpecialPhrases.
         """
         phrases = set()
 
-        with open(csv_path) as file:
+        with open(self.csv_path) as file:
             reader = csv.DictReader(file, delimiter=',')
             for row in reader:
                 phrases.add(
@@ -43,12 +41,11 @@ class SPCsvLoader(SPLoader):
                 )
         return phrases
 
-    @staticmethod
-    def check_csv_validity(csv_path):
+    def check_csv_validity(self):
         """
             Check that the csv file has the right extension.
         """
-        _, extension = os.path.splitext(csv_path)
+        _, extension = os.path.splitext(self.csv_path)
 
         if extension != '.csv':
-            raise UsageError('The file {} is not a csv file.'.format(csv_path))
+            raise UsageError('The file {} is not a csv file.'.format(self.csv_path))

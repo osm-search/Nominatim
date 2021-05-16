@@ -13,7 +13,7 @@ def test_parse_csv(sp_csv_loader):
         Test method parse_csv()
         Should return the right SpecialPhrase objects.
     """
-    phrases = sp_csv_loader.parse_csv(sp_csv_loader.csv_path)
+    phrases = sp_csv_loader.parse_csv()
     assert check_phrases_content(phrases)
 
 
@@ -33,10 +33,10 @@ def test_check_csv_validity(sp_csv_loader):
         different exception than .csv is given.
     """
     sp_csv_loader.csv_path = 'test.csv'
-    sp_csv_loader.check_csv_validity(sp_csv_loader.csv_path)
+    sp_csv_loader.check_csv_validity()
     sp_csv_loader.csv_path = 'test.wrong'
     with pytest.raises(UsageError):
-        assert sp_csv_loader.check_csv_validity(sp_csv_loader.csv_path)
+        assert sp_csv_loader.check_csv_validity()
 
 def check_phrases_content(phrases):
     """

@@ -46,7 +46,7 @@ class ImportSpecialPhrases:
     def start_import(args, loader):
         """
             Create the SPImporter object containing the right
-            SPLoader and then start the import of special phrases.
+            sp loader and then start the import of special phrases.
         """
         from ..tokenizer import factory as tokenizer_factory
 

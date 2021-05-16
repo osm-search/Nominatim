@@ -25,7 +25,7 @@ class SPImporter():
     """
         Class handling the process of special phrases importations into the database.
 
-        Take a SPLoader which load the phrases from an external source.
+        Take a sp loader which load the phrases from an external source.
     """
     def __init__(self, config, phplib_dir, db_connection, sp_loader) -> None:
         self.config = config
@@ -121,16 +121,14 @@ class SPImporter():
         """
 
         #blacklisting: disallow certain class/type combinations
-        if (
-            phrase.p_class in self.black_list.keys() and
-            phrase.p_type in self.black_list[phrase.p_class]
-        ): return None
+        if phrase.p_class in self.black_list.keys() \
+           and phrase.p_type in self.black_list[phrase.p_class]:
+            return None
 
         #whitelisting: if class is in whitelist, allow only tags in the list
-        if (
-            phrase.p_class in self.white_list.keys() and
-            phrase.p_type not in self.white_list[phrase.p_class]
-        ): return None
+        if phrase.p_class in self.white_list.keys() \
+           and phrase.p_type not in self.white_list[phrase.p_class]:
+            return None
 
         #sanity check, in case somebody added garbage in the wiki
         if not self._check_sanity(phrase):

@@ -200,11 +200,8 @@ class NominatimEnvironment:
                         phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
                         run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
                     else:
-                        # XXX Temporary use the wiki while there is no CSV import
-                        # available.
-                        self.test_env['NOMINATIM_LANGUAGES'] = 'en'
-                        self.run_nominatim('special-phrases', '--import-from-wiki')
-                        del self.test_env['NOMINATIM_LANGUAGES']
+                        csv_path = str((testdata / 'full_en_phrases_test.csv').resolve())
+                        self.run_nominatim('special-phrases', '--import-from-csv', csv_path)
                 except:
                     self.db_drop_database(self.api_test_db)
                     raise

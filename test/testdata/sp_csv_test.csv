@@ -1,0 +1,42 @@
+phrase,class,type,operator,plural 
+Zip Lines,aerialway,zip_line,-,Y 
+Zip Line in,aerialway,zip_line,in,N 
+Zip Lines in,aerialway,zip_line,in,Y 
+Zip Line near,aerialway,zip_line,near,N 
+Zip Lines near,aerialway,zip_line,near,Y 
+Zip Wire,aerialway,zip_line,-,N 
+Zip Wires,aerialway,zip_line,-,Y 
+Zip Wire in,aerialway,zip_line,in,N 
+Zip Wires in,aerialway,zip_line,in,Y 
+Zip Wire near,aerialway,zip_line,near,N 
+Zip Wires near,aerialway,zip_line,near,Y 
+Zipline,aerialway,zip_line,-,N 
+Ziplines,aerialway,zip_line,-,Y 
+Zipline in,aerialway,zip_line,in,N 
+Ziplines in,aerialway,zip_line,in,Y 
+Zipline near,aerialway,zip_line,near,N 
+Ziplines near,aerialway,zip_line,near,Y 
+Zipwire,aerialway,zip_line,-,N 
+Zipwires,aerialway,zip_line,-,Y 
+Zipwire in,aerialway,zip_line,in,N 
+Zipwires in,aerialway,zip_line,in,Y 
+Zipwire near,aerialway,zip_line,near,N 
+Zipwires near,aerialway,zip_line,near,Y 
+Aerodrome,aeroway,aerodrome,-,N 
+Aerodromes,aeroway,aerodrome,-,Y 
+Aerodrome in,aeroway,aerodrome,in,N 
+Aerodromes in,aeroway,aerodrome,in,Y 
+Aerodrome near,aeroway,aerodrome,near,N 
+Aerodromes near,aeroway,aerodrome,near,Y 
+Airport,aeroway,aerodrome,-,N 
+Airports,aeroway,aerodrome,-,Y 
+Airport in,aeroway,aerodrome,in,N 
+Airports in,aeroway,aerodrome,in,Y 
+Airport near,aeroway,aerodrome,near,N 
+Airports near,aeroway,aerodrome,near,Y 
+Billboard,advertising,billboard,-,N 
+Billboards,advertising,billboard,-,Y 
+Billboard in,advertising,billboard,in,N 
+Billboards in,advertising,billboard,in,Y 
+Billboard near,advertising,billboard,near,N 
+Billboards near,advertising,billboard,near,Y 

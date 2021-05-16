@@ -255,10 +255,18 @@ def test_index_command(mock_func_factory, temp_db_cursor, tokenizer_mock,
     assert bnd_mock.called == do_bnds
     assert rank_mock.called == do_ranks
 
-def test_special_phrases_command(temp_db, mock_func_factory, tokenizer_mock):
+def test_special_phrases_wiki_command(temp_db, mock_func_factory, tokenizer_mock):
     func = mock_func_factory(nominatim.clicmd.special_phrases.SPImporter, 'import_phrases')
 
     call_nominatim('special-phrases', '--import-from-wiki')
+
+    assert func.called == 1
+
+def test_special_phrases_csv_command(temp_db, mock_func_factory, tokenizer_mock):
+    func = mock_func_factory(nominatim.clicmd.special_phrases.SPImporter, 'import_phrases')
+    testdata = Path('__file__') / '..' / '..' / 'testdb'
+    csv_path = str((testdata / 'full_en_phrases_test.csv').resolve())
+    call_nominatim('special-phrases', '--import-from-csv', csv_path)
 
     assert func.called == 1
 

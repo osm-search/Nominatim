@@ -185,7 +185,7 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
             tables_result[0][0] == 'place_classtype_testclasstypetable_to_keep'
         )
 
-def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, sp_importer,
+def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
                           placex_table, tokenizer_mock):
     """
         Check that the main import_phrases() method is well executed.

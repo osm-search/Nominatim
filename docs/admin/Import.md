@@ -270,11 +270,34 @@ If you want to be able to search for places by their type through
 [special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 
-    nominatim special-phrases --import-from-wiki
+```sh
+nominatim special-phrases --import-from-wiki
+```
 
 Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
 
+You can also import some phrases from a csv file. 
+To do so, you have access to the following command:
+
+```sh
+nominatim special-phrases --import-from-csv <csv file>
+```
+
+Note that the 2 previous commands will update the phrases from your database.
+This mean that if you import some phrases from a csv file, only the phrases
+present in the csv file will be kept into the database. All other phrases will
+be removed.
+
+If you want to only add new phrases and not update the other ones you can add
+the argument `--no-replace` to the import command. For example:
+
+```sh
+nominatim special-phrases --import-from-csv <csv file> --no-replace
+```
+
+This will add the phrases present in the csv file into the database without
+removing the other ones.
 
 ## Installing Tiger housenumber data for the US
 

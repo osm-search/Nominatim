@@ -185,8 +185,8 @@ def install_legacy_tokenizer(conn, config, **_):
                                            WHERE table_name = %s
                                            and column_name = 'token_info'""",
                                         (table, ))
-            if has_column == 0:
-                cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
+                if has_column == 0:
+                    cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 

@@ -13,7 +13,6 @@ from nominatim.tools.exec_utils import run_legacy_script, run_php_server
 from nominatim.errors import UsageError
 from nominatim import clicmd
 from nominatim.clicmd.args import NominatimArgs
-from nominatim.tools import tiger_data
 
 LOG = logging.getLogger()
 
@@ -147,9 +146,14 @@ class UpdateAddData:
 
     @staticmethod
     def run(args):
+        from nominatim.tokenizer import factory as tokenizer_factory
+        from nominatim.tools import tiger_data
+
         if args.tiger_data:
+            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
             return tiger_data.add_tiger_data(args.tiger_data,
-                                             args.config, args.threads or 1)
+                                             args.config, args.threads or 1,
+                                             tokenizer)
 
         params = ['update.php']
         if args.file:

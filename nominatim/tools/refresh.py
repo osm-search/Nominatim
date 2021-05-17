@@ -13,12 +13,6 @@ from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
-def update_postcodes(dsn, sql_dir):
-    """ Recalculate postcode centroids and add, remove and update entries in the
-        location_postcode table. `conn` is an opne connection to the database.
-    """
-    execute_file(dsn, sql_dir / 'update-postcodes.sql')
-
 
 def recompute_word_counts(dsn, sql_dir):
     """ Compute the frequency of full-word search terms.
@@ -161,7 +155,7 @@ def recompute_importance(conn):
     conn.commit()
 
 
-def setup_website(basedir, config):
+def setup_website(basedir, config, conn):
     """ Create the website script stubs.
     """
     if not basedir.exists():
@@ -193,5 +187,10 @@ def setup_website(basedir, config):
 
     template += "\nrequire_once('{}/website/{{}}');\n".format(config.lib_dir.php)
 
+    search_name_table_exists = bool(conn and conn.table_exists('search_name'))
+
     for script in WEBSITE_SCRIPTS:
-        (basedir / script).write_text(template.format(script), 'utf-8')
+        if not search_name_table_exists and script == 'search.php':
+            (basedir / script).write_text(template.format('reverse-only-search.php'), 'utf-8')
+        else:
+            (basedir / script).write_text(template.format(script), 'utf-8')

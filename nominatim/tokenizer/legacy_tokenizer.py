@@ -305,13 +305,51 @@ class LegacyNameAnalyzer:
         return self.normalizer.transliterate(phrase)
 
 
-    def add_postcodes_from_db(self):
-        """ Add postcodes from the location_postcode table to the word table.
+    @staticmethod
+    def normalize_postcode(postcode):
+        """ Convert the postcode to a standardized form.
+
+            This function must yield exactly the same result as the SQL function
+            'token_normalized_postcode()'.
+        """
+        return postcode.strip().upper()
+
+
+    def update_postcodes_from_db(self):
+        """ Update postcode tokens in the word table from the location_postcode
+            table.
         """
         with self.conn.cursor() as cur:
-            cur.execute("""SELECT count(create_postcode_id(pc))
-                           FROM (SELECT distinct(postcode) as pc
-                                 FROM location_postcode) x""")
+            # This finds us the rows in location_postcode and word that are
+            # missing in the other table.
+            cur.execute("""SELECT * FROM
+                            (SELECT pc, word FROM
+                              (SELECT distinct(postcode) as pc FROM location_postcode) p
+                              FULL JOIN
+                              (SELECT word FROM word
+                                WHERE class ='place' and type = 'postcode') w
+                              ON pc = word) x
+                           WHERE pc is null or word is null""")
+
+            to_delete = []
+            to_add = []
+
+            for postcode, word in cur:
+                if postcode is None:
+                    to_delete.append(word)
+                else:
+                    to_add.append(postcode)
+
+            if to_delete:
+                cur.execute("""DELETE FROM WORD
+                               WHERE class ='place' and type = 'postcode'
+                                     and word = any(%s)
+                            """, (to_delete, ))
+            if to_add:
+                cur.execute("""SELECT count(create_postcode_id(pc))
+                               FROM unnest(%s) as pc
+                            """, (to_add, ))
+
 
 
     def update_special_phrases(self, phrases, should_replace):
@@ -416,12 +454,8 @@ class LegacyNameAnalyzer:
     def _add_postcode(self, postcode):
         """ Make sure the normalized postcode is present in the word table.
         """
-        def _create_postcode_from_db(pcode):
-            with self.conn.cursor() as cur:
-                cur.execute('SELECT create_postcode_id(%s)', (pcode, ))
-
         if re.search(r'[:,;]', postcode) is None:
-            self._cache.postcodes.get(postcode.strip().upper(), _create_postcode_from_db)
+            self._cache.add_postcode(self.conn, self.normalize_postcode(postcode))
 
 
 class _TokenInfo:
@@ -552,16 +586,19 @@ class _TokenCache:
                            FROM generate_series(1, 100) as i""")
             self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
 
-        # Get postcodes that are already saved
-        postcodes = OrderedDict()
-        with conn.cursor() as cur:
-            cur.execute("""SELECT word FROM word
-                           WHERE class ='place' and type = 'postcode'""")
-            for row in cur:
-                postcodes[row[0]] = None
-        self.postcodes = _LRU(maxsize=32, init_data=postcodes)
+        # For postcodes remember the ones that have already been added
+        self.postcodes = set()
 
     def get_housenumber(self, number):
         """ Get a housenumber token from the cache.
         """
         return self._cached_housenumbers.get(number)
+
+
+    def add_postcode(self, conn, postcode):
+        """ Make sure the given postcode is in the database.
+        """
+        if postcode not in self.postcodes:
+            with conn.cursor() as cur:
+                cur.execute('SELECT create_postcode_id(%s)', (postcode, ))
+            self.postcodes.add(postcode)

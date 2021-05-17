@@ -83,15 +83,19 @@ The file is about 400MB and adds around 4GB to the Nominatim database.
     `nominatim refresh --wiki-data --importance`. Updating importances for
     a planet can take a couple of hours.
 
-### Great Britain, USA postcodes
+### External postcodes
 
-Nominatim can use postcodes from an external source to improve searches that
-involve a GB or US postcode. This data can be optionally downloaded into the
-project directory:
+Nominatim can use postcodes from an external source to improve searching with
+postcodes. We provide precomputed postcodes sets for the US (using TIGER data)
+and the UK (using the [CodePoint OpenData set](https://osdatahub.os.uk/downloads/open/CodePointOpen).
+This data can be optionally downloaded into the project directory:
 
     cd $PROJECT_DIR
-    wget https://www.nominatim.org/data/gb_postcode_data.sql.gz
-    wget https://www.nominatim.org/data/us_postcode_data.sql.gz
+    wget https://www.nominatim.org/data/gb_postcodes.csv.gz
+    wget https://www.nominatim.org/data/us_postcodes.csv.gz
+
+You can also add your own custom postcode sources, see
+[Customization of postcodes](Customization.md#external-postcode-data).
 
 ## Choosing the data to import
 
@@ -247,6 +251,9 @@ This runs a small test server normally used for development. You can use it
 to verify that your installation is working. Go to
 `http://localhost:8088/status.php` and you should see the message `OK`.
 You can also run a search query, e.g. `http://localhost:8088/search.php?q=Berlin`.
+
+Note that search query is not supported for reverse-only imports. You can run a
+reverse query, e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=78.04209025`.
 
 To run Nominatim via webservers like Apache or nginx, please read the
 [Deployment chapter](Deployment.md).

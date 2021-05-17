@@ -56,13 +56,21 @@ def test_bad_query(conn):
         conn.wait()
 
 
+def test_bad_query_ignore(temp_db):
+    with closing(DBConnection('dbname=' + temp_db, ignore_sql_errors=True)) as conn:
+        conn.connect()
+
+        conn.perform('SELECT efasfjsea')
+
+        conn.wait()
+
+
 def exec_with_deadlock(cur, sql, detector):
     with DeadlockHandler(lambda *args: detector.append(1)):
         cur.execute(sql)
 
 
 def test_deadlock(simple_conns):
-    print(psycopg2.__version__)
     cur1, cur2 = simple_conns
 
     cur1.execute("""CREATE TABLE t1 (id INT PRIMARY KEY, t TEXT);

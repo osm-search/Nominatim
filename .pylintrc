@@ -11,3 +11,5 @@ ignored-modules=icu
 # 'with' statements.
 ignored-classes=NominatimArgs,closing
 disable=too-few-public-methods,duplicate-code
+
+good-names=i,x,y,fd

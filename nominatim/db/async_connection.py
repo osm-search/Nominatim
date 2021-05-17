@@ -6,6 +6,9 @@
 """ Database helper functions for the indexer.
 """
 import logging
+import select
+import time
+
 import psycopg2
 from psycopg2.extras import wait_select
 
@@ -25,8 +28,9 @@ class DeadlockHandler:
         normally.
     """
 
-    def __init__(self, handler):
+    def __init__(self, handler, ignore_sql_errors=False):
         self.handler = handler
+        self.ignore_sql_errors = ignore_sql_errors
 
     def __enter__(self):
         pass
@@ -41,6 +45,11 @@ class DeadlockHandler:
                 if exc_value.pgcode == '40P01':
                     self.handler()
                     return True
+
+        if self.ignore_sql_errors and isinstance(exc_value, psycopg2.Error):
+            LOG.info("SQL error ignored: %s", exc_value)
+            return True
+
         return False
 
 
@@ -48,10 +57,11 @@ class DBConnection:
     """ A single non-blocking database connection.
     """
 
-    def __init__(self, dsn, cursor_factory=None):
+    def __init__(self, dsn, cursor_factory=None, ignore_sql_errors=False):
         self.current_query = None
         self.current_params = None
         self.dsn = dsn
+        self.ignore_sql_errors = ignore_sql_errors
 
         self.conn = None
         self.cursor = None
@@ -98,7 +108,7 @@ class DBConnection:
         """ Block until any pending operation is done.
         """
         while True:
-            with DeadlockHandler(self._deadlock_handler):
+            with DeadlockHandler(self._deadlock_handler, self.ignore_sql_errors):
                 wait_select(self.conn)
                 self.current_query = None
                 return
@@ -125,9 +135,78 @@ class DBConnection:
         if self.current_query is None:
             return True
 
-        with DeadlockHandler(self._deadlock_handler):
+        with DeadlockHandler(self._deadlock_handler, self.ignore_sql_errors):
             if self.conn.poll() == psycopg2.extensions.POLL_OK:
                 self.current_query = None
                 return True
 
         return False
+
+
+class WorkerPool:
+    """ A pool of asynchronous database connections.
+
+        The pool may be used as a context manager.
+    """
+    REOPEN_CONNECTIONS_AFTER = 100000
+
+    def __init__(self, dsn, pool_size, ignore_sql_errors=False):
+        self.threads = [DBConnection(dsn, ignore_sql_errors=ignore_sql_errors)
+                        for _ in range(pool_size)]
+        self.free_workers = self._yield_free_worker()
+        self.wait_time = 0
+
+
+    def finish_all(self):
+        """ Wait for all connection to finish.
+        """
+        for thread in self.threads:
+            while not thread.is_done():
+                thread.wait()
+
+        self.free_workers = self._yield_free_worker()
+
+    def close(self):
+        """ Close all connections and clear the pool.
+        """
+        for thread in self.threads:
+            thread.close()
+        self.threads = []
+        self.free_workers = None
+
+
+    def next_free_worker(self):
+        """ Get the next free connection.
+        """
+        return next(self.free_workers)
+
+
+    def _yield_free_worker(self):
+        ready = self.threads
+        command_stat = 0
+        while True:
+            for thread in ready:
+                if thread.is_done():
+                    command_stat += 1
+                    yield thread
+
+            if command_stat > self.REOPEN_CONNECTIONS_AFTER:
+                for thread in self.threads:
+                    while not thread.is_done():
+                        thread.wait()
+                    thread.connect()
+                ready = self.threads
+                command_stat = 0
+            else:
+                tstart = time.time()
+                _, ready, _ = select.select([], self.threads, [])
+                self.wait_time += time.time() - tstart
+
+
+    def __enter__(self):
+        return self
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.finish_all()
+        self.close()

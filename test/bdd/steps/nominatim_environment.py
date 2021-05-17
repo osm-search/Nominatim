@@ -9,6 +9,7 @@ sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
 from nominatim import cli
 from nominatim.config import Configuration
+from nominatim.db.connection import _Connection
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
@@ -54,7 +55,7 @@ class NominatimEnvironment:
             dbargs['user'] = self.db_user
         if self.db_pass:
             dbargs['password'] = self.db_pass
-        conn = psycopg2.connect(**dbargs)
+        conn = psycopg2.connect(connection_factory=_Connection, **dbargs)
         return conn
 
     def next_code_coverage_file(self):
@@ -110,8 +111,13 @@ class NominatimEnvironment:
             self.website_dir.cleanup()
 
         self.website_dir = tempfile.TemporaryDirectory()
+
+        try:
+            conn = self.connect_database(dbname)
+        except:
+            conn = False
         refresh.setup_website(Path(self.website_dir.name) / 'website',
-                              self.get_test_config())
+                              self.get_test_config(), conn)
 
 
     def get_test_config(self):
@@ -228,13 +234,13 @@ class NominatimEnvironment:
         """ Setup a test against a fresh, empty test database.
         """
         self.setup_template_db()
-        self.write_nominatim_config(self.test_db)
         conn = self.connect_database(self.template_db)
         conn.set_isolation_level(0)
         cur = conn.cursor()
         cur.execute('DROP DATABASE IF EXISTS {}'.format(self.test_db))
         cur.execute('CREATE DATABASE {} TEMPLATE = {}'.format(self.test_db, self.template_db))
         conn.close()
+        self.write_nominatim_config(self.test_db)
         context.db = self.connect_database(self.test_db)
         context.db.autocommit = True
         psycopg2.extras.register_hstore(context.db, globally=False)

@@ -80,7 +80,6 @@ class AddressDetails
             }
 
             if (isset($sName)) {
-                $sTypeLabel = strtolower(str_replace(' ', '_', $sTypeLabel));
                 if (!isset($aAddress[$sTypeLabel])
                     || $aLine['class'] == 'place'
                 ) {

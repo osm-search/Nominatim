@@ -251,7 +251,7 @@ def check_location_postcode(context):
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute("SELECT *, ST_AsText(geometry) as geomtxt FROM location_postcode")
         assert cur.rowcount == len(list(context.table)), \
-            "Postcode table has {} rows, expected {}.".foramt(cur.rowcount, len(list(context.table)))
+            "Postcode table has {} rows, expected {}.".format(cur.rowcount, len(list(context.table)))
 
         results = {}
         for row in cur:

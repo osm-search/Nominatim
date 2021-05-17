@@ -13,15 +13,13 @@ class SPWikiLoader(Iterator):
         Handles loading of special phrases from the wiki.
     """
     def __init__(self, config, languages=None):
-        if languages is not None and not isinstance(languages, list):
-            raise TypeError('The \'languages\' parameter should be of type list.')
         super().__init__()
         self.config = config
         #Compile the regex here to increase performances.
         self.occurence_pattern = re.compile(
             r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
         )
-        self.languages = self._load_languages() if not languages else languages
+        self.languages = self._load_languages() if not languages else list(languages)
 
     def __next__(self):
         if not self.languages:

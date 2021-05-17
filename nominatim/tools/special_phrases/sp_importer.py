@@ -61,7 +61,7 @@ class SPImporter():
             for phrase in loaded_phrases:
                 result = self._process_phrase(phrase)
                 if result:
-                    class_type_pairs.update(result)
+                    class_type_pairs.add(result)
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
         if should_replace:
@@ -143,7 +143,7 @@ class SPImporter():
         self.word_phrases.add((phrase.p_label, phrase.p_class,
                                phrase.p_type, phrase.p_operator))
 
-        return set({(phrase.p_class, phrase.p_type)})
+        return (phrase.p_class, phrase.p_type)
 
 
     def _create_place_classtype_table_and_indexes(self, class_type_pairs):

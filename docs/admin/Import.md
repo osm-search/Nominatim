@@ -284,53 +284,5 @@ nominatim special-phrases --import-from-wiki
 Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
 
-You can also import some phrases from a csv file. 
-To do so, you have access to the following command:
-
-```sh
-nominatim special-phrases --import-from-csv <csv file>
-```
-
-Note that the 2 previous commands will update the phrases from your database.
-This mean that if you import some phrases from a csv file, only the phrases
-present in the csv file will be kept into the database. All other phrases will
-be removed.
-
-If you want to only add new phrases and not update the other ones you can add
-the argument `--no-replace` to the import command. For example:
-
-```sh
-nominatim special-phrases --import-from-csv <csv file> --no-replace
-```
-
-This will add the phrases present in the csv file into the database without
-removing the other ones.
-
-## Installing Tiger housenumber data for the US
-
-Nominatim is able to use the official [TIGER](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
-address set to complement the OSM house number data in the US. You can add
-TIGER data to your own Nominatim instance by following these steps. The
-entire US adds about 10GB to your database.
-
-  1. Get preprocessed TIGER 2020 data:
-
-        cd $PROJECT_DIR
-        wget https://nominatim.org/data/tiger2020-nominatim-preprocessed.tar.gz
-
-  2. Import the data into your Nominatim database:
-
-        nominatim add-data --tiger-data tiger2020-nominatim-preprocessed.tar.gz
-
-  3. Enable use of the Tiger data in your `.env` by adding:
-
-        echo NOMINATIM_USE_US_TIGER_DATA=yes >> .env
-
-  4. Apply the new settings:
-
-        nominatim refresh --functions
-
-
-See the [developer's guide](../develop/data-sources.md#us-census-tiger) for more
-information on how the data got preprocessed.
-
+You can also import special phrases from a csv file, for more 
+information please read the [Customization chapter](Customization.md).

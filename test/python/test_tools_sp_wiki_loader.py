@@ -47,7 +47,7 @@ def sp_wiki_loader(monkeypatch, def_config):
                         mock_get_wiki_content)
     return loader
 
-def mock_get_wiki_content(lang):
+def mock_get_wiki_content(self, lang):
     """
         Mock the _get_wiki_content() method to return
         static xml test file content.

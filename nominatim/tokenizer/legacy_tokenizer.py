@@ -314,7 +314,7 @@ class LegacyNameAnalyzer:
                                  FROM location_postcode) x""")
 
 
-    def update_special_phrases(self, phrases):
+    def update_special_phrases(self, phrases, should_replace):
         """ Replace the search index for special phrases with the new phrases.
         """
         norm_phrases = set(((self.normalize(p[0]), p[1], p[2], p[3])
@@ -343,7 +343,7 @@ class LegacyNameAnalyzer:
                            FROM (VALUES %s) as v(name, class, type, op))""",
                     to_add)
 
-            if to_delete:
+            if to_delete and should_replace:
                 psycopg2.extras.execute_values(
                     cur,
                     """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)

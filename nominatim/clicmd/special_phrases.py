@@ -27,6 +27,8 @@ class ImportSpecialPhrases:
                            help='Import special phrases from the OSM wiki to the database.')
         group.add_argument('--import-from-csv', metavar='FILE',
                            help='Import special phrases from a CSV file.')
+        group.add_argument('--no-replace', action='store_true',
+                           help='Keep the old phrases and only add the new ones.')
 
     @staticmethod
     def run(args):
@@ -51,7 +53,8 @@ class ImportSpecialPhrases:
         from ..tokenizer import factory as tokenizer_factory
 
         tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+        should_replace = not args.no_replace
         with connect(args.config.get_libpq_dsn()) as db_connection:
             SPImporter(
                 args.config, args.phplib_dir, db_connection, loader
-            ).import_phrases(tokenizer)
+            ).import_phrases(tokenizer, should_replace)

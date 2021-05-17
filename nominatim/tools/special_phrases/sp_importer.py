@@ -23,7 +23,7 @@ LOG = logging.getLogger()
 class SPImporter():
     # pylint: disable-msg=too-many-instance-attributes
     """
-        Class handling the process of special phrases importations into the database.
+        Class handling the process of special phrases importation into the database.
 
         Take a sp loader which load the phrases from an external source.
     """
@@ -42,10 +42,14 @@ class SPImporter():
         #special phrases class/type on the wiki.
         self.table_phrases_to_delete = set()
 
-    def import_phrases(self, tokenizer):
+    def import_phrases(self, tokenizer, should_replace):
         """
-            Iterate through all specified languages and
-            extract corresponding special phrases from the wiki.
+            Iterate through all SpecialPhrases extracted from the
+            loader and import them into the database.
+
+            If should_replace is set to True only the loaded phrases
+            will be kept into the database. All other phrases already
+            in the database will be removed.
         """
         LOG.warning('Special phrases importation starting')
         self._fetch_existing_place_classtype_tables()
@@ -60,11 +64,12 @@ class SPImporter():
                     class_type_pairs.update(result)
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
-        self._remove_non_existent_tables_from_db()
+        if should_replace:
+            self._remove_non_existent_tables_from_db()
         self.db_connection.commit()
 
         with tokenizer.name_analyzer() as analyzer:
-            analyzer.update_special_phrases(self.word_phrases)
+            analyzer.update_special_phrases(self.word_phrases, should_replace)
 
         LOG.warning('Import done.')
         self.statistics_handler.notify_import_done()

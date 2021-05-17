@@ -185,8 +185,9 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
             tables_result[0][0] == 'place_classtype_testclasstypetable_to_keep'
         )
 
+@pytest.mark.parametrize("should_replace", [(True), (False)])
 def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
-                          placex_table, tokenizer_mock):
+                        placex_table, tokenizer_mock, should_replace):
     """
         Check that the main import_phrases() method is well executed.
         It should create the place_classtype table, the place_id and centroid indexes,
@@ -202,10 +203,10 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
             CREATE TABLE place_classtype_wrongclass_wrongtype();""")
     
     monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                    mock_get_wiki_content)
+                        mock_get_wiki_content)
 
     tokenizer = tokenizer_mock()
-    sp_importer.import_phrases(tokenizer)
+    sp_importer.import_phrases(tokenizer, should_replace)
 
     assert len(tokenizer.analyser_cache['special_phrases']) == 18
 
@@ -216,7 +217,8 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     assert check_placeid_and_centroid_indexes(temp_db_conn, class_test, type_test)
     assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, class_test, type_test)
     assert check_table_exist(temp_db_conn, 'amenity', 'animal_shelter')
-    assert not check_table_exist(temp_db_conn, 'wrong_class', 'wrong_type')
+    if should_replace:
+        assert not check_table_exist(temp_db_conn, 'wrong_class', 'wrong_type')
 
     #Format (query, should_return_something_bool) use to easily execute all asserts
     queries_tests = set()
@@ -237,7 +239,8 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
         WHERE table_schema='public'
         AND table_name = 'place_classtype_wrongclass_wrongtype';
     """
-    queries_tests.add((query_wrong_table, False))
+    if should_replace:
+        queries_tests.add((query_wrong_table, False))
 
     with temp_db_conn.cursor() as temp_db_cursor:
         for query in queries_tests:
@@ -247,7 +250,7 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
             else:
                 assert not temp_db_cursor.fetchone()
 
-def mock_get_wiki_content(lang):
+def mock_get_wiki_content(self, lang):
     """
         Mock the _get_wiki_content() method to return
         static xml test file content.

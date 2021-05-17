@@ -16,7 +16,6 @@ def test_parse_csv(sp_csv_loader):
     phrases = sp_csv_loader.parse_csv()
     assert check_phrases_content(phrases)
 
-
 def test_next(sp_csv_loader):
     """
         Test objects returned from the next() method.

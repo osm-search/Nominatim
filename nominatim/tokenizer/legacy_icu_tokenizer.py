@@ -306,7 +306,7 @@ class LegacyICUNameAnalyzer:
             #                WHERE word_id is null and type = 'postcode'""")
 
 
-    def update_special_phrases(self, phrases):
+    def update_special_phrases(self, phrases, should_replace):
         """ Replace the search index for special phrases with the new phrases.
         """
         norm_phrases = set(((self.normalize(p[0]), p[1], p[2], p[3])
@@ -345,7 +345,7 @@ class LegacyICUNameAnalyzer:
                               columns=['word', 'word_token', 'class', 'type',
                                        'operator', 'search_name_count'])
 
-            if to_delete:
+            if to_delete and should_replace:
                 psycopg2.extras.execute_values(
                     cur,
                     """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)

@@ -12,10 +12,9 @@ class SpecialPhrasesImporterStatistics():
         process of special phrases.
     """
     def __init__(self):
-        self._set_lang_values_to_0()
-        self._set_global_values_to_0()
+        self._intialize_values()
 
-    def _set_global_values_to_0(self):
+    def _intialize_values(self):
         """
             Set all counts for the global
             import to 0.
@@ -23,22 +22,14 @@ class SpecialPhrasesImporterStatistics():
         self.tables_created = 0
         self.tables_deleted = 0
         self.tables_ignored = 0
-        self.global_phrases_invalid = 0
-
-    def _set_lang_values_to_0(self):
-        """
-            Set all counts for the current
-            lang to 0.
-        """
-        self.lang_phrases_invalid = 0
+        self.invalids = 0
 
     def notify_one_phrase_invalid(self):
         """
             Add +1 to the count of invalid entries
             fetched from the wiki.
         """
-        self.lang_phrases_invalid += 1
-        self.global_phrases_invalid += 1
+        self.invalids += 1
 
     def notify_one_table_created(self):
         """
@@ -58,7 +49,6 @@ class SpecialPhrasesImporterStatistics():
         """
         self.tables_ignored += 1
 
-
     def notify_import_done(self):
         """
             Print stats for the whole import process
@@ -66,8 +56,8 @@ class SpecialPhrasesImporterStatistics():
         """
         LOG.info('====================================================================')
         LOG.info('Final statistics of the import:')
-        LOG.info('- %s phrases were invalid.', self.global_phrases_invalid)
-        if self.global_phrases_invalid > 0:
+        LOG.info('- %s phrases were invalid.', self.invalids)
+        if self.invalids > 0:
             LOG.info('  Those invalid phrases have been skipped.')
         LOG.info('- %s tables were ignored as they already exist on the database',
                  self.tables_ignored)
@@ -76,26 +66,8 @@ class SpecialPhrasesImporterStatistics():
         if self.tables_deleted > 0:
             LOG.info('  They were deleted as they are not valid anymore.')
 
-        if self.global_phrases_invalid > 0:
+        if self.invalids > 0:
             LOG.warning('%s phrases were invalid and have been skipped during the whole process.',
-                        self.global_phrases_invalid)
+                        self.invalids)
 
-        self._set_global_values_to_0()
-
-    def notify_current_lang_done(self, lang):
-        """
-            Print stats for the current lang
-            and then reset lang values.
-        """
-        LOG.info('====================================================================')
-        LOG.info('Statistics for the import of %s:', lang)
-        LOG.info('- %s phrases were invalid.', self.lang_phrases_invalid)
-        if self.lang_phrases_invalid > 0:
-            LOG.info('  Those invalid phrases have been skipped.')
-        LOG.info('====================================================================')
-
-        if self.lang_phrases_invalid > 0:
-            LOG.warning('%s phrases were invalid and have been skipped for the import of lang %s.',
-                        self.lang_phrases_invalid, lang)
-
-        self._set_lang_values_to_0()
+        self._intialize_values()

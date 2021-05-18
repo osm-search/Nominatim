@@ -1,49 +1,52 @@
 """
     Tests for import special phrases methods
-    of the class SpecialPhrasesImporter.
+    of the class SPImporter.
 """
 from nominatim.errors import UsageError
 from pathlib import Path
 import tempfile
 from shutil import copyfile
 import pytest
-from nominatim.tools import SpecialPhrasesImporter
+from nominatim.tools.special_phrases.sp_importer import SPImporter
+from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
+from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
+from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 
 TEST_BASE_DIR = Path(__file__) / '..' / '..'
 
-def test_fetch_existing_place_classtype_tables(special_phrases_importer, temp_db_cursor):
+def test_fetch_existing_place_classtype_tables(sp_importer, temp_db_cursor):
     """
         Check for the fetch_existing_place_classtype_tables() method.
         It should return the table just created.
     """
     temp_db_cursor.execute('CREATE TABLE place_classtype_testclasstypetable()')
 
-    special_phrases_importer._fetch_existing_place_classtype_tables()
-    contained_table = special_phrases_importer.table_phrases_to_delete.pop()
+    sp_importer._fetch_existing_place_classtype_tables()
+    contained_table = sp_importer.table_phrases_to_delete.pop()
     assert contained_table == 'place_classtype_testclasstypetable'
 
-def test_check_sanity_class(special_phrases_importer):
+def test_check_sanity_class(sp_importer):
     """
         Check for _check_sanity() method.
         If a wrong class or type is given, an UsageError should raise.
         If a good class and type are given, nothing special happens.
     """
-    
-    assert not special_phrases_importer._check_sanity('en', '', 'type')
-    assert not special_phrases_importer._check_sanity('en', 'class', '')
 
-    assert special_phrases_importer._check_sanity('en', 'class', 'type')
+    assert not sp_importer._check_sanity(SpecialPhrase('en', '', 'type', ''))
+    assert not sp_importer._check_sanity(SpecialPhrase('en', 'class', '', ''))
 
-def test_load_white_and_black_lists(special_phrases_importer):
+    assert sp_importer._check_sanity(SpecialPhrase('en', 'class', 'type', ''))
+
+def test_load_white_and_black_lists(sp_importer):
     """
         Test that _load_white_and_black_lists() well return
         black list and white list and that they are of dict type.
     """
-    black_list, white_list = special_phrases_importer._load_white_and_black_lists()
+    black_list, white_list = sp_importer._load_white_and_black_lists()
 
     assert isinstance(black_list, dict) and isinstance(white_list, dict)
 
-def test_convert_php_settings(special_phrases_importer):
+def test_convert_php_settings(sp_importer):
     """
         Test that _convert_php_settings_if_needed() convert the given
         php file to a json file.
@@ -53,19 +56,19 @@ def test_convert_php_settings(special_phrases_importer):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_settings = (Path(temp_dir) / 'phrase_settings.php').resolve()
         copyfile(php_file, temp_settings)
-        special_phrases_importer._convert_php_settings_if_needed(temp_settings)
+        sp_importer._convert_php_settings_if_needed(temp_settings)
 
         assert (Path(temp_dir) / 'phrase_settings.json').is_file()
 
-def test_convert_settings_wrong_file(special_phrases_importer):
+def test_convert_settings_wrong_file(sp_importer):
     """
         Test that _convert_php_settings_if_needed() raise an exception
         if the given file is not a valid file.
     """
     with pytest.raises(UsageError, match='random_file is not a valid file.'):
-        special_phrases_importer._convert_php_settings_if_needed('random_file')
+        sp_importer._convert_php_settings_if_needed('random_file')
 
-def test_convert_settings_json_already_exist(special_phrases_importer):
+def test_convert_settings_json_already_exist(sp_importer):
     """
         Test that if we give to '_convert_php_settings_if_needed' a php file path
         and that a the corresponding json file already exists, it is returned.
@@ -73,22 +76,22 @@ def test_convert_settings_json_already_exist(special_phrases_importer):
     php_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.php').resolve()
     json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
 
-    returned = special_phrases_importer._convert_php_settings_if_needed(php_file)
+    returned = sp_importer._convert_php_settings_if_needed(php_file)
 
     assert returned == json_file
 
-def test_convert_settings_giving_json(special_phrases_importer):
+def test_convert_settings_giving_json(sp_importer):
     """
         Test that if we give to '_convert_php_settings_if_needed' a json file path
         the same path is directly returned
     """
     json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
 
-    returned = special_phrases_importer._convert_php_settings_if_needed(json_file)
+    returned = sp_importer._convert_php_settings_if_needed(json_file)
 
     assert returned == json_file
 
-def test_create_place_classtype_indexes(temp_db_conn, special_phrases_importer):
+def test_create_place_classtype_indexes(temp_db_conn, sp_importer):
     """
         Test that _create_place_classtype_indexes() create the
         place_id index and centroid index on the right place_class_type table.
@@ -101,24 +104,24 @@ def test_create_place_classtype_indexes(temp_db_conn, special_phrases_importer):
         temp_db_cursor.execute("CREATE EXTENSION postgis;")
         temp_db_cursor.execute('CREATE TABLE {}(place_id BIGINT, centroid GEOMETRY)'.format(table_name))
 
-    special_phrases_importer._create_place_classtype_indexes('', phrase_class, phrase_type)
+    sp_importer._create_place_classtype_indexes('', phrase_class, phrase_type)
 
     assert check_placeid_and_centroid_indexes(temp_db_conn, phrase_class, phrase_type)
 
-def test_create_place_classtype_table(temp_db_conn, placex_table, special_phrases_importer):
+def test_create_place_classtype_table(temp_db_conn, placex_table, sp_importer):
     """
         Test that _create_place_classtype_table() create
         the right place_classtype table.
     """
     phrase_class = 'class'
     phrase_type = 'type'
-    special_phrases_importer._create_place_classtype_table('', phrase_class, phrase_type)
+    sp_importer._create_place_classtype_table('', phrase_class, phrase_type)
 
     assert check_table_exist(temp_db_conn, phrase_class, phrase_type)
 
-def test_grant_access_to_web_user(temp_db_conn, def_config, special_phrases_importer):
+def test_grant_access_to_web_user(temp_db_conn, def_config, sp_importer):
     """
-        Test that _grant_access_to_webuser() give 
+        Test that _grant_access_to_webuser() give
         right access to the web user.
     """
     phrase_class = 'class'
@@ -128,13 +131,13 @@ def test_grant_access_to_web_user(temp_db_conn, def_config, special_phrases_impo
     with temp_db_conn.cursor() as temp_db_cursor:
         temp_db_cursor.execute('CREATE TABLE {}()'.format(table_name))
 
-    special_phrases_importer._grant_access_to_webuser(phrase_class, phrase_type)
+    sp_importer._grant_access_to_webuser(phrase_class, phrase_type)
 
     assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, phrase_class, phrase_type)
 
 def test_create_place_classtype_table_and_indexes(
         temp_db_conn, def_config, placex_table,
-        special_phrases_importer):
+        sp_importer):
     """
         Test that _create_place_classtype_table_and_indexes()
         create the right place_classtype tables and place_id indexes
@@ -143,28 +146,14 @@ def test_create_place_classtype_table_and_indexes(
     """
     pairs = set([('class1', 'type1'), ('class2', 'type2')])
 
-    special_phrases_importer._create_place_classtype_table_and_indexes(pairs)
+    sp_importer._create_place_classtype_table_and_indexes(pairs)
 
     for pair in pairs:
         assert check_table_exist(temp_db_conn, pair[0], pair[1])
         assert check_placeid_and_centroid_indexes(temp_db_conn, pair[0], pair[1])
         assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, pair[0], pair[1])
 
-def test_process_xml_content(temp_db_conn, def_config, special_phrases_importer):
-    """
-        Test that _process_xml_content() process the given xml content right
-        by executing the right SQL functions for amenities and 
-        by returning the right set of pairs.
-    """
-    class_test = 'aerialway'
-    type_test = 'zip_line'
-
-    #Converted output set to a dict for easy assert further.
-    results = dict(special_phrases_importer._process_xml_content(get_test_xml_wiki_content(), 'en'))
-
-    assert results[class_test] and type_test in results.values()
-
-def test_remove_non_existent_tables_from_db(special_phrases_importer, default_phrases,
+def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
                                              temp_db_conn):
     """
         Check for the remove_non_existent_phrases_from_db() method.
@@ -177,7 +166,7 @@ def test_remove_non_existent_tables_from_db(special_phrases_importer, default_ph
         be deleted.
     """
     with temp_db_conn.cursor() as temp_db_cursor:
-        special_phrases_importer.table_phrases_to_delete = {
+        sp_importer.table_phrases_to_delete = {
             'place_classtype_testclasstypetable_to_delete'
         }
 
@@ -188,7 +177,7 @@ def test_remove_non_existent_tables_from_db(special_phrases_importer, default_ph
             AND table_name like 'place_classtype_%';
         """
 
-        special_phrases_importer._remove_non_existent_tables_from_db()
+        sp_importer._remove_non_existent_tables_from_db()
 
         temp_db_cursor.execute(query_tables)
         tables_result = temp_db_cursor.fetchall()
@@ -196,13 +185,14 @@ def test_remove_non_existent_tables_from_db(special_phrases_importer, default_ph
             tables_result[0][0] == 'place_classtype_testclasstypetable_to_keep'
         )
 
-def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases_importer,
-                          placex_table, tokenizer_mock):
+@pytest.mark.parametrize("should_replace", [(True), (False)])
+def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
+                        placex_table, tokenizer_mock, should_replace):
     """
-        Check that the main import_from_wiki() method is well executed.
+        Check that the main import_phrases() method is well executed.
         It should create the place_classtype table, the place_id and centroid indexes,
         grand access to the web user and executing the SQL functions for amenities.
-        It should also update the database well by deleting or preserving existing entries 
+        It should also update the database well by deleting or preserving existing entries
         of the database.
     """
     #Add some data to the database before execution in order to test
@@ -211,10 +201,12 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
         temp_db_cursor.execute("""
             CREATE TABLE place_classtype_amenity_animal_shelter();
             CREATE TABLE place_classtype_wrongclass_wrongtype();""")
+    
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
+                        mock_get_wiki_content)
 
-    monkeypatch.setattr('nominatim.tools.SpecialPhrasesImporter._get_wiki_content', mock_get_wiki_content)
     tokenizer = tokenizer_mock()
-    special_phrases_importer.import_from_wiki(tokenizer, ['en'])
+    sp_importer.import_phrases(tokenizer, should_replace)
 
     assert len(tokenizer.analyser_cache['special_phrases']) == 18
 
@@ -225,7 +217,8 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
     assert check_placeid_and_centroid_indexes(temp_db_conn, class_test, type_test)
     assert check_grant_access(temp_db_conn, def_config.DATABASE_WEBUSER, class_test, type_test)
     assert check_table_exist(temp_db_conn, 'amenity', 'animal_shelter')
-    assert not check_table_exist(temp_db_conn, 'wrong_class', 'wrong_type')
+    if should_replace:
+        assert not check_table_exist(temp_db_conn, 'wrong_class', 'wrong_type')
 
     #Format (query, should_return_something_bool) use to easily execute all asserts
     queries_tests = set()
@@ -246,7 +239,8 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
         WHERE table_schema='public'
         AND table_name = 'place_classtype_wrongclass_wrongtype';
     """
-    queries_tests.add((query_wrong_table, False))
+    if should_replace:
+        queries_tests.add((query_wrong_table, False))
 
     with temp_db_conn.cursor() as temp_db_cursor:
         for query in queries_tests:
@@ -256,7 +250,7 @@ def test_import_from_wiki(monkeypatch, temp_db_conn, def_config, special_phrases
             else:
                 assert not temp_db_cursor.fetchone()
 
-def mock_get_wiki_content(lang):
+def mock_get_wiki_content(self, lang):
     """
         Mock the _get_wiki_content() method to return
         static xml test file content.
@@ -315,11 +309,12 @@ def check_placeid_and_centroid_indexes(temp_db_conn, phrase_class, phrase_type):
     )
 
 @pytest.fixture
-def special_phrases_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
+def sp_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
     """
-        Return an instance of SpecialPhrasesImporter.
+        Return an instance of SPImporter.
     """
-    return SpecialPhrasesImporter(def_config, temp_phplib_dir_with_migration, temp_db_conn)
+    loader = SPWikiLoader(def_config, ['en'])
+    return SPImporter(def_config, temp_phplib_dir_with_migration, temp_db_conn, loader)
 
 @pytest.fixture
 def temp_phplib_dir_with_migration():

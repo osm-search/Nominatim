@@ -277,7 +277,12 @@ If you want to be able to search for places by their type through
 [special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 
-    nominatim special-phrases --import-from-wiki
+```sh
+nominatim special-phrases --import-from-wiki
+```
 
 Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
+
+You can also import special phrases from a csv file, for more 
+information please read the [Customization chapter](Customization.md).

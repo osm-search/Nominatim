@@ -171,7 +171,7 @@ def test_update_special_phrase_empty_table(analyzer, word_table, temp_db_cursor)
             ("König bei", "amenity", "royal", "near"),
             ("Könige", "amenity", "royal", "-"),
             ("street", "highway", "primary", "in")
-        ])
+        ], True)
 
     assert temp_db_cursor.row_set("""SELECT word_token, word, class, type, operator
                                      FROM word WHERE class != 'place'""") \
@@ -188,9 +188,22 @@ def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor):
     assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
 
     with analyzer() as a:
-        a.update_special_phrases([])
+        a.update_special_phrases([], True)
 
     assert 0 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+
+
+def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,):
+    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
+                              VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
+                                     (' BAR', 'bar', 'highway', 'road', null)""")
+
+    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+
+    with analyzer() as a:
+        a.update_special_phrases([], False)
+
+    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
 
 
 def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
@@ -205,7 +218,7 @@ def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
           ('prison', 'amenity', 'prison', 'in'),
           ('bar', 'highway', 'road', '-'),
           ('garden', 'leisure', 'garden', 'near')
-        ])
+        ], True)
 
     assert temp_db_cursor.row_set("""SELECT word_token, word, class, type, operator
                                      FROM word WHERE class != 'place'""") \

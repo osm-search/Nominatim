@@ -2,8 +2,12 @@
     Implementation of the 'special-phrases' command.
 """
 import logging
-from nominatim.tools import SpecialPhrasesImporter
+from pathlib import Path
+from nominatim.errors import UsageError
 from nominatim.db.connection import connect
+from nominatim.tools.special_phrases.sp_importer import SPImporter
+from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
+from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
 
 LOG = logging.getLogger()
 
@@ -21,16 +25,36 @@ class ImportSpecialPhrases:
         group = parser.add_argument_group('Input arguments')
         group.add_argument('--import-from-wiki', action='store_true',
                            help='Import special phrases from the OSM wiki to the database.')
+        group.add_argument('--import-from-csv', metavar='FILE',
+                           help='Import special phrases from a CSV file.')
+        group.add_argument('--no-replace', action='store_true',
+                           help='Keep the old phrases and only add the new ones.')
 
     @staticmethod
     def run(args):
+        if args.import_from_wiki:
+            ImportSpecialPhrases.start_import(args, SPWikiLoader(args.config))
+
+        if args.import_from_csv:
+            if not Path(args.import_from_csv).is_file():
+                LOG.fatal("CSV file '%s' does not exist.", args.import_from_csv)
+                raise UsageError('Cannot access file.')
+
+            ImportSpecialPhrases.start_import(args, SPCsvLoader(args.import_from_csv))
+
+        return 0
+
+    @staticmethod
+    def start_import(args, loader):
+        """
+            Create the SPImporter object containing the right
+            sp loader and then start the import of special phrases.
+        """
         from ..tokenizer import factory as tokenizer_factory
 
-        if args.import_from_wiki:
-            LOG.warning('Special phrases importation starting')
-            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
-            with connect(args.config.get_libpq_dsn()) as db_connection:
-                SpecialPhrasesImporter(
-                    args.config, args.phplib_dir, db_connection
-                ).import_from_wiki(tokenizer)
-        return 0
+        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+        should_replace = not args.no_replace
+        with connect(args.config.get_libpq_dsn()) as db_connection:
+            SPImporter(
+                args.config, args.phplib_dir, db_connection, loader
+            ).import_phrases(tokenizer, should_replace)

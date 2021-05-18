@@ -1,0 +1,2914 @@
+phrase,class,type,operator,plural
+Zip Line,aerialway,zip_line,-,N 
+Zip Lines,aerialway,zip_line,-,Y 
+Zip Line in,aerialway,zip_line,in,N 
+Zip Lines in,aerialway,zip_line,in,Y 
+Zip Line near,aerialway,zip_line,near,N 
+Zip Lines near,aerialway,zip_line,near,Y 
+Zip Wire,aerialway,zip_line,-,N 
+Zip Wires,aerialway,zip_line,-,Y 
+Zip Wire in,aerialway,zip_line,in,N 
+Zip Wires in,aerialway,zip_line,in,Y 
+Zip Wire near,aerialway,zip_line,near,N 
+Zip Wires near,aerialway,zip_line,near,Y 
+Zipline,aerialway,zip_line,-,N 
+Ziplines,aerialway,zip_line,-,Y 
+Zipline in,aerialway,zip_line,in,N 
+Ziplines in,aerialway,zip_line,in,Y 
+Zipline near,aerialway,zip_line,near,N 
+Ziplines near,aerialway,zip_line,near,Y 
+Zipwire,aerialway,zip_line,-,N 
+Zipwires,aerialway,zip_line,-,Y 
+Zipwire in,aerialway,zip_line,in,N 
+Zipwires in,aerialway,zip_line,in,Y 
+Zipwire near,aerialway,zip_line,near,N 
+Zipwires near,aerialway,zip_line,near,Y 
+Aerodrome,aeroway,aerodrome,-,N 
+Aerodromes,aeroway,aerodrome,-,Y 
+Aerodrome in,aeroway,aerodrome,in,N 
+Aerodromes in,aeroway,aerodrome,in,Y 
+Aerodrome near,aeroway,aerodrome,near,N 
+Aerodromes near,aeroway,aerodrome,near,Y 
+Airport,aeroway,aerodrome,-,N 
+Airports,aeroway,aerodrome,-,Y 
+Airport in,aeroway,aerodrome,in,N 
+Airports in,aeroway,aerodrome,in,Y 
+Airport near,aeroway,aerodrome,near,N 
+Airports near,aeroway,aerodrome,near,Y 
+Billboard,advertising,billboard,-,N 
+Billboards,advertising,billboard,-,Y 
+Billboard in,advertising,billboard,in,N 
+Billboards in,advertising,billboard,in,Y 
+Billboard near,advertising,billboard,near,N 
+Billboards near,advertising,billboard,near,Y 
+Hoarding,advertising,billboard,-,N 
+Hoardings,advertising,billboard,-,Y 
+Hoarding in,advertising,billboard,in,N 
+Hoardings in,advertising,billboard,in,Y 
+Hoarding near,advertising,billboard,near,N 
+Hoardings near,advertising,billboard,near,Y 
+Advertising column,advertising,column,-,N 
+Advertising columns,advertising,column,-,Y 
+Advertising column in,advertising,column,in,N 
+Advertising columns in,advertising,column,in,Y 
+Advertising column near,advertising,column,near,N 
+Advertising columns near,advertising,column,near,Y 
+Litfass column,advertising,column,-,N 
+Litfass columns,advertising,column,-,Y 
+Litfass column in,advertising,column,in,N 
+Litfass columns in,advertising,column,in,Y 
+Litfass column near,advertising,column,near,N 
+Litfass columns near,advertising,column,near,Y 
+Morris column,advertising,column,-,N 
+Morris columns,advertising,column,-,Y 
+Morris column in,advertising,column,in,N 
+Morris columns in,advertising,column,in,Y 
+Morris column near,advertising,column,near,N 
+Morris columns near,advertising,column,near,Y 
+Animal boarding facility,amenity,animal_boarding,-,N 
+Animal boarding facilities,amenity,animal_boarding,-,Y 
+Animal boarding facility in,amenity,animal_boarding,in,N 
+Animal boarding facilities in,amenity,animal_boarding,in,Y 
+Animal boarding facility near,amenity,animal_boarding,near,N 
+Animal boarding facilities near,amenity,animal_boarding,near,Y 
+Animal shelter,amenity,animal_shelter,-,N 
+Animal shelters,amenity,animal_shelter,-,Y 
+Animal shelter in,amenity,animal_shelter,in,N 
+Animal shelters in,amenity,animal_shelter,in,Y 
+Animal shelter near,amenity,animal_shelter,near,N 
+Animal shelters near,amenity,animal_shelter,near,Y 
+Arts Centre,amenity,arts_centre,-,N 
+Arts Centres,amenity,arts_centre,-,Y 
+Arts Centre in,amenity,arts_centre,in,N 
+Arts Centres in,amenity,arts_centre,in,Y 
+Arts Centre near,amenity,arts_centre,near,N 
+Arts Centres near,amenity,arts_centre,near,Y 
+Arts Center,amenity,arts_centre,-,N 
+Arts Centers,amenity,arts_centre,-,Y 
+Arts Center in,amenity,arts_centre,in,N 
+Arts Centers in,amenity,arts_centre,in,Y 
+Arts Center near,amenity,arts_centre,near,N 
+Arts Centers near,amenity,arts_centre,near,Y 
+ATM,amenity,atm,-,N 
+ATMs,amenity,atm,-,Y 
+ATM in,amenity,atm,in,N 
+ATMs in,amenity,atm,in,Y 
+ATM near,amenity,atm,near,N 
+ATMs near,amenity,atm,near,Y 
+cash,amenity,atm,-,N 
+cash,amenity,atm,-,Y 
+cash in,amenity,atm,in,N 
+cash in,amenity,atm,in,Y 
+cash near,amenity,atm,near,N 
+cash near,amenity,atm,near,Y 
+cash machine,amenity,atm,-,N 
+cash machines,amenity,atm,-,Y 
+cash machine in,amenity,atm,in,N 
+cash machines in,amenity,atm,in,Y 
+cash machine near,amenity,atm,near,N 
+cash machines near,amenity,atm,near,Y 
+Bank,amenity,bank,-,N 
+Banks,amenity,bank,-,Y 
+Bank in,amenity,bank,in,N 
+Banks in,amenity,bank,in,Y 
+Bank near,amenity,bank,near,N 
+Banks near,amenity,bank,near,Y 
+Bar,amenity,bar,-,N 
+Bars,amenity,bar,-,Y 
+Bar in,amenity,bar,in,N 
+Bars in,amenity,bar,in,Y 
+Bar near,amenity,bar,near,N 
+Bars near,amenity,bar,near,Y 
+Bar,amenity,pub,-,N 
+Bars,amenity,pub,-,Y 
+Bar in,amenity,pub,in,N 
+Bars in,amenity,pub,in,Y 
+Bar near,amenity,pub,near,N 
+Bars near,amenity,pub,near,Y 
+Barbecue,amenity,bbq,-,N 
+Barbecues,amenity,bbq,-,Y 
+Barbecue in,amenity,bbq,in,N 
+Barbecues in,amenity,bbq,in,Y 
+Barbecue near,amenity,bbq,near,N 
+Barbecues near,amenity,bbq,near,Y 
+Barbecue grill,amenity,bbq,-,N 
+Barbecue grills,amenity,bbq,-,Y 
+Barbecue grill in,amenity,bbq,in,N 
+Barbecue grills in,amenity,bbq,in,Y 
+Barbecue grill near,amenity,bbq,near,N 
+Barbecue grills near,amenity,bbq,near,Y 
+Bbq,amenity,bbq,-,N 
+Bbqs,amenity,bbq,-,Y 
+Bbq in,amenity,bbq,in,N 
+Bbqs in,amenity,bbq,in,Y 
+Bbq near,amenity,bbq,near,N 
+Bbqs near,amenity,bbq,near,Y 
+Bench,amenity,bench,-,N 
+Benches,amenity,bench,-,Y 
+Bench in,amenity,bench,in,N 
+Benches in,amenity,bench,in,Y 
+Bench near,amenity,bench,near,N 
+Benches near,amenity,bench,near,Y 
+Cycle Parking,amenity,bicycle_parking,-,N 
+Cycle Parkings,amenity,bicycle_parking,-,Y 
+Cycle Parking in,amenity,bicycle_parking,in,N 
+Cycle Parkings in,amenity,bicycle_parking,in,Y 
+Cycle Parking near,amenity,bicycle_parking,near,N 
+Cycle Parkings near,amenity,bicycle_parking,near,Y 
+Cycle Rental,amenity,bicycle_rental,-,N 
+Cycle Rentals,amenity,bicycle_rental,-,Y 
+Cycle Rental in,amenity,bicycle_rental,in,N 
+Cycle Rentals in,amenity,bicycle_rental,in,Y 
+Cycle Rental near,amenity,bicycle_rental,near,N 
+Cycle Rentals near,amenity,bicycle_rental,near,Y 
+Bicycle Parking,amenity,bicycle_parking,-,N 
+Bicycle Parkings,amenity,bicycle_parking,-,Y 
+Bicycle Parking in,amenity,bicycle_parking,in,N 
+Bicycle Parkings in,amenity,bicycle_parking,in,Y 
+Bicycle Parking near,amenity,bicycle_parking,near,N 
+Bicycle Parkings near,amenity,bicycle_parking,near,Y 
+Bicycle Rental,amenity,bicycle_rental,-,N 
+Bicycle Rentals,amenity,bicycle_rental,-,Y 
+Bicycle Rental in,amenity,bicycle_rental,in,N 
+Bicycle Rentals in,amenity,bicycle_rental,in,Y 
+Bicycle Rental near,amenity,bicycle_rental,near,N 
+Bicycle Rentals near,amenity,bicycle_rental,near,Y 
+Beer garden,amenity,biergarten,-,N 
+Beer gardens,amenity,biergarten,-,Y 
+Beer garden in,amenity,biergarten,in,N 
+Beer gardens in,amenity,biergarten,in,Y 
+Beer garden near,amenity,biergarten,near,N 
+Beer gardens near,amenity,biergarten,near,Y 
+Brothel,amenity,brothel,-,N 
+Brothels,amenity,brothel,-,Y 
+Brothel in,amenity,brothel,in,N 
+Brothels in,amenity,brothel,in,Y 
+Brothel near,amenity,brothel,near,N 
+Brothels near,amenity,brothel,near,Y 
+Bureau de Change,amenity,bureau_de_change,-,N 
+Bureau de Changes,amenity,bureau_de_change,-,Y 
+Bureaus de Change,amenity,bureau_de_change,-,Y 
+Bureau de Change in,amenity,bureau_de_change,in,N 
+Bureau de Changes in,amenity,bureau_de_change,in,Y 
+Bureaus de Change in,amenity,bureau_de_change,in,Y 
+Bureau de Change near,amenity,bureau_de_change,near,N 
+Bureau de Changes near,amenity,bureau_de_change,near,Y 
+Bureaus de Change near,amenity,bureau_de_change,near,Y 
+Bus Station,amenity,bus_station,-,N 
+Bus Stations,amenity,bus_station,-,Y 
+Bus Station in,amenity,bus_station,in,N 
+Bus Stations in,amenity,bus_station,in,Y 
+Bus Station near,amenity,bus_station,near,N 
+Bus Stations near,amenity,bus_station,near,Y 
+Cafe,amenity,cafe,-,N 
+Cafes,amenity,cafe,-,Y 
+Cafe in,amenity,cafe,in,N 
+Cafes in,amenity,cafe,in,Y 
+Cafe near,amenity,cafe,near,N 
+Cafes near,amenity,cafe,near,Y 
+Car Rental,amenity,car_rental,-,N 
+Car Rentals,amenity,car_rental,-,Y 
+Car Rental in,amenity,car_rental,in,N 
+Car Rentals in,amenity,car_rental,in,Y 
+Car Rental near,amenity,car_rental,near,N 
+Car Rentals near,amenity,car_rental,near,Y 
+Car Share,amenity,car_sharing,-,N 
+Car Sharing,amenity,car_sharing,-,N 
+Car Sharings,amenity,car_sharing,-,Y 
+Car Share in,amenity,car_sharing,in,N 
+Car Sharing in,amenity,car_sharing,in,N 
+Car Sharings in,amenity,car_sharing,in,Y 
+Car Share near,amenity,car_sharing,near,N 
+Car Sharing near,amenity,car_sharing,near,N 
+Car Sharings near,amenity,car_sharing,near,Y 
+Car Wash,amenity,car_wash,-,N 
+Car Washes,amenity,car_wash,-,Y 
+Car Wash in,amenity,car_wash,in,N 
+Car Washes in,amenity,car_wash,in,Y 
+Car Wash near,amenity,car_wash,near,N 
+Car Washes near,amenity,car_wash,near,Y 
+Casino,amenity,casino,-,N 
+Casinos,amenity,casino,-,Y 
+Casino in,amenity,casino,in,N 
+Casinos in,amenity,casino,in,Y 
+Casino near,amenity,casino,near,N 
+Casinos near,amenity,casino,near,Y 
+Charging station,amenity,charging_station,-,N 
+Charging stations,amenity,charging_station,-,Y 
+Charging station in,amenity,charging_station,in,N 
+Charging stations in,amenity,charging_station,in,Y 
+Charging station near,amenity,charging_station,near,N 
+Charging stations near,amenity,charging_station,near,Y 
+Cinema,amenity,cinema,-,N 
+Cinemas,amenity,cinema,-,Y 
+Cinema in,amenity,cinema,in,N 
+Cinemas in,amenity,cinema,in,Y 
+Cinema near,amenity,cinema,near,N 
+Cinemas near,amenity,cinema,near,Y 
+Clinic,amenity,clinic,-,N 
+Clinics,amenity,clinic,-,Y 
+Clinic in,amenity,clinic,in,N 
+Clinics in,amenity,clinic,in,Y 
+Clinic near,amenity,clinic,near,N 
+Clinics near,amenity,clinic,near,Y 
+College,amenity,college,-,N 
+Colleges,amenity,college,-,Y 
+College in,amenity,college,in,N 
+Colleges in,amenity,college,in,Y 
+College near,amenity,college,near,N 
+Colleges near,amenity,college,near,Y 
+Conference Centre,amenity,conference_centre,-,N 
+Conference Centres,amenity,conference_centre,-,Y 
+Conference Centre in,amenity,conference_centre,in,N 
+Conference Centres in,amenity,conference_centre,in,Y 
+Conference Centre near,amenity,conference_centre,near,N 
+Conference Centres near,amenity,conference_centre,near,Y 
+Conference Center,amenity,conference_centre,-,N 
+Conference Centers,amenity,conference_centre,-,Y 
+Conference Center in,amenity,conference_centre,in,N 
+Conference Centers in,amenity,conference_centre,in,Y 
+Conference Center near,amenity,conference_centre,near,N 
+Conference Centers near,amenity,conference_centre,near,Y 
+Community Centre,amenity,community_centre,-,N 
+Community Centres,amenity,community_centre,-,Y 
+Community Centre in,amenity,community_centre,in,N 
+Community Centres in,amenity,community_centre,in,Y 
+Community Centre near,amenity,community_centre,near,N 
+Community Centres near,amenity,community_centre,near,Y 
+Community Center,amenity,community_centre,-,N 
+Community Centers,amenity,community_centre,-,Y 
+Community Center in,amenity,community_centre,in,N 
+Community Centers in,amenity,community_centre,in,Y 
+Community Center near,amenity,community_centre,near,N 
+Community Centers near,amenity,community_centre,near,Y 
+Courthouse,amenity,courthouse,-,N 
+Courthouses,amenity,courthouse,-,Y 
+Courthouse in,amenity,courthouse,in,N 
+Courthouses in,amenity,courthouse,in,Y 
+Courthouse near,amenity,courthouse,near,N 
+Courthouses near,amenity,courthouse,near,Y 
+Crematorium,amenity,crematorium,-,N 
+Crematoriums,amenity,crematorium,-,Y 
+Crematorium in,amenity,crematorium,in,N 
+Crematoriums in,amenity,crematorium,in,Y 
+Crematorium near,amenity,crematorium,near,N 
+Crematoriums near,amenity,crematorium,near,Y 
+Dentist,amenity,dentist,-,N 
+Dentists,amenity,dentist,-,Y 
+Dentist in,amenity,dentist,in,N 
+Dentists in,amenity,dentist,in,Y 
+Dentist near,amenity,dentist,near,N 
+Dentists near,amenity,dentist,near,Y 
+Doctor,amenity,doctors,-,N 
+Doctors,amenity,doctors,-,Y 
+Doctor in,amenity,doctors,in,N 
+Doctors in,amenity,doctors,in,Y 
+Doctor near,amenity,doctors,near,N 
+Doctors near,amenity,doctors,near,Y 
+Martial Arts,amenity,dojo,-,N 
+Martial Arts,amenity,dojo,-,Y 
+Martial Arts in,amenity,dojo,in,N 
+Martial Arts in,amenity,dojo,in,Y 
+Martial Arts near,amenity,dojo,near,N 
+Martial Arts near,amenity,dojo,near,Y 
+Dojo,amenity,dojo,-,N 
+Dojos,amenity,dojo,-,Y 
+Dojo in,amenity,dojo,in,N 
+Dojos in,amenity,dojo,in,Y 
+Dojo near,amenity,dojo,near,N 
+Dojos near,amenity,dojo,near,Y 
+Dojang,amenity,dojo,-,N 
+Dojang,amenity,dojo,-,Y 
+Dojang in,amenity,dojo,in,N 
+Dojang in,amenity,dojo,in,Y 
+Dojang near,amenity,dojo,near,N 
+Dojang near,amenity,dojo,near,Y 
+Drinking Water,amenity,drinking_water,-,N 
+Drinking Water in,amenity,drinking_water,in,N 
+Drinking Water near,amenity,drinking_water,near,N 
+Water,amenity,drinking_water,-,N 
+Water in,amenity,drinking_water,in,N 
+Water near,amenity,drinking_water,near,N 
+Driving School,amenity,driving_school,-,N 
+Driving Schools,amenity,driving_school,-,Y 
+Driving School in,amenity,driving_school,in,N 
+Driving Schools in,amenity,driving_school,in,Y 
+Driving School near,amenity,driving_school,near,N 
+Driving Schools near,amenity,driving_school,near,Y 
+Embassy,amenity,embassy,-,N 
+Embassys,amenity,embassy,-,Y 
+Embassies,amenity,embassy,-,Y 
+Embassy in,amenity,embassy,in,N 
+Embassys in,amenity,embassy,in,Y 
+Embassies in,amenity,embassy,in,Y 
+Embassy near,amenity,embassy,near,N 
+Embassys near,amenity,embassy,near,Y 
+Embassies near,amenity,embassy,near,Y 
+Fast Food,amenity,fast_food,-,N 
+Fast Food in,amenity,fast_food,in,N 
+Fast Food near,amenity,fast_food,near,N 
+Food,amenity,restaurant,-,N 
+Food,amenity,fast_food,-,N 
+Food,amenity,restaurant,-,Y 
+Food,amenity,fast_food,-,Y 
+Food in,amenity,restaurant,in,N 
+Food in,amenity,fast_food,in,N 
+Food in,amenity,restaurant,in,Y 
+Food in,amenity,fast_food,in,Y 
+Food near,amenity,restaurant,near,N 
+Food near,amenity,fast_food,near,N 
+Food near,amenity,restaurant,near,Y 
+Food near,amenity,fast_food,near,Y 
+Ferry Terminal,amenity,ferry_terminal,-,N 
+Ferry Terminals,amenity,ferry_terminal,-,Y 
+Ferry Terminal in,amenity,ferry_terminal,in,N 
+Ferry Terminals in,amenity,ferry_terminal,in,Y 
+Ferry Terminal near,amenity,ferry_terminal,near,N 
+Ferry Terminals near,amenity,ferry_terminal,near,Y 
+Fire Station,amenity,fire_station,-,N 
+Fire Stations,amenity,fire_station,-,Y 
+Fire Station in,amenity,fire_station,in,N 
+Fire Stations in,amenity,fire_station,in,Y 
+Fire Station near,amenity,fire_station,near,N 
+Fire Stations near,amenity,fire_station,near,Y 
+Fountain,amenity,fountain,-,N 
+Fountains,amenity,fountain,-,Y 
+Fountain in,amenity,fountain,in,N 
+Fountains in,amenity,fountain,in,Y 
+Fountain near,amenity,fountain,near,N 
+Fountains near,amenity,fountain,near,Y 
+Fuel,amenity,fuel,-,N 
+Fuels,amenity,fuel,-,Y 
+Fuel in,amenity,fuel,in,N 
+Fuels in,amenity,fuel,in,Y 
+Fuel near,amenity,fuel,near,N 
+Fuels near,amenity,fuel,near,Y 
+Fuel Station,amenity,fuel,-,N 
+Fuel Stations,amenity,fuel,-,Y 
+Fuel Station in,amenity,fuel,in,N 
+Fuel Stations in,amenity,fuel,in,Y 
+Fuel Station near,amenity,fuel,near,N 
+Fuel Stations near,amenity,fuel,near,Y 
+Gas,amenity,fuel,-,N 
+Gas,amenity,fuel,-,Y 
+Gas in,amenity,fuel,in,N 
+Gas in,amenity,fuel,in,Y 
+Gas near,amenity,fuel,near,N 
+Gas near,amenity,fuel,near,Y 
+Gas Station,amenity,fuel,-,N 
+Gas Stations,amenity,fuel,-,Y 
+Gas Station in,amenity,fuel,in,N 
+Gas Stations in,amenity,fuel,in,Y 
+Gas Station near,amenity,fuel,near,N 
+Gas Stations near,amenity,fuel,near,Y 
+Petrol,amenity,fuel,-,N 
+Petrol in,amenity,fuel,in,N 
+Petrol near,amenity,fuel,near,N 
+Petrol Stations near,amenity,fuel,near,Y 
+Petrol Station,amenity,fuel,-,N 
+Petrol Stations,amenity,fuel,-,Y 
+Petrol Station in,amenity,fuel,in,N 
+Petrol Stations in,amenity,fuel,in,Y 
+Petrol Station near,amenity,fuel,near,N 
+Petrol Stations near,amenity,fuel,near,Y 
+Grave Yard,amenity,grave_yard,-,N 
+Grave Yards,amenity,grave_yard,-,Y 
+Grave Yard in,amenity,grave_yard,in,N 
+Grave Yards in,amenity,grave_yard,in,Y 
+Grave Yard near,amenity,grave_yard,near,N 
+Grave Yards near,amenity,grave_yard,near,Y 
+Grit bin,amenity,grit_bin,-,N 
+Grit bins,amenity,grit_bin,-,Y 
+Grit bin in,amenity,grit_bin,in,N 
+Grit bins in,amenity,grit_bin,in,Y 
+Grit bin near,amenity,grit_bin,near,N 
+Grit bins near,amenity,grit_bin,near,Y 
+Fitness Centre,amenity,gym,-,N 
+Fitness Centres,amenity,gym,-,Y 
+Fitness Centre in,amenity,gym,in,N 
+Fitness Centres in,amenity,gym,in,Y 
+Fitness Centre near,amenity,gym,near,N 
+Fitness Centres near,amenity,gym,near,Y 
+Fitness Center,amenity,gym,-,N 
+Fitness Centers,amenity,gym,-,Y 
+Fitness Center in,amenity,gym,in,N 
+Fitness Centers in,amenity,gym,in,Y 
+Fitness Center near,amenity,gym,near,N 
+Fitness Centers near,amenity,gym,near,Y 
+Gym,amenity,gym,-,N 
+Gyms,amenity,gym,-,Y 
+Gym in,amenity,gym,in,N 
+Gyms in,amenity,gym,in,Y 
+Gym near,amenity,gym,near,N 
+Gyms near,amenity,gym,near,Y 
+Hospital,amenity,hospital,-,N 
+Hospitals,amenity,hospital,-,Y 
+Hospital in,amenity,hospital,in,N 
+Hospitals in,amenity,hospital,in,Y 
+Hospital near,amenity,hospital,near,N 
+Hospitals near,amenity,hospital,near,Y 
+Hunting Stand,amenity,hunting_stand,-,N 
+Hunting Stands,amenity,hunting_stand,-,Y 
+Hunting Stand in,amenity,hunting_stand,in,N 
+Hunting Stands in,amenity,hunting_stand,in,Y 
+Hunting Stand near,amenity,hunting_stand,near,N 
+Hunting Stands near,amenity,hunting_stand,near,Y 
+Ice Cream,amenity,ice_cream,-,N 
+Ice Cream in,amenity,ice_cream,in,N 
+Ice Cream near,amenity,ice_cream,near,N 
+Karaoke,amenity,karaoke_box,-,N 
+Karaokes,amenity,karaoke_box,-,Y 
+Karaoke in,amenity,karaoke_box,in,N 
+Karaokes in,amenity,karaoke_box,in,Y 
+Karaokes near,amenity,karaoke_box,near,Y 
+Kindergarten,amenity,kindergarten,-,N 
+Kindergartens,amenity,kindergarten,-,Y 
+Kindergarten in,amenity,kindergarten,in,N 
+Kindergartens in,amenity,kindergarten,in,Y 
+Kindergarten near,amenity,kindergarten,near,N 
+Kindergartens near,amenity,kindergarten,near,Y 
+Nursery,amenity,kindergarten,-,N 
+Nurserys,amenity,kindergarten,-,Y 
+Nurseries,amenity,kindergarten,-,Y 
+Nursery in,amenity,kindergarten,in,N 
+Nurserys in,amenity,kindergarten,in,Y 
+Nurseries in,amenity,kindergarten,in,Y 
+Nursery near,amenity,kindergarten,near,N 
+Nurserys near,amenity,kindergarten,near,Y 
+Nurseries near,amenity,kindergarten,near,Y 
+Nursery School,amenity,kindergarten,-,N 
+Nursery Schools,amenity,kindergarten,-,Y 
+Nursery School in,amenity,kindergarten,in,N 
+Nursery Schools in,amenity,kindergarten,in,Y 
+Nursery School near,amenity,kindergarten,near,N 
+Nursery Schools near,amenity,kindergarten,near,Y 
+Kneipp Basin,amenity,kneipp_water_cure,-,N 
+Kneipp Basins,amenity,kneipp_water_cure,-,Y 
+Kneipp Basin in,amenity,kneipp_water_cure,in,N 
+Kneipp Basins in,amenity,kneipp_water_cure,in,Y 
+Kneipp Basin near,amenity,kneipp_water_cure,near,N 
+Kneipp Basins near,amenity,kneipp_water_cure,near,Y 
+Kneipp Bath,amenity,kneipp_water_cure,-,N 
+Kneipp Baths,amenity,kneipp_water_cure,-,Y 
+Kneipp Bath in,amenity,kneipp_water_cure,in,N 
+Kneipp Baths in,amenity,kneipp_water_cure,in,Y 
+Kneipp Bath near,amenity,kneipp_water_cure,near,N 
+Kneipp Baths near,amenity,kneipp_water_cure,near,Y 
+Kneipp Facility,amenity,kneipp_water_cure,-,N 
+Kneipp Facilitys,amenity,kneipp_water_cure,-,Y 
+Kneipp Facilities,amenity,kneipp_water_cure,-,Y 
+Kneipp Facility in,amenity,kneipp_water_cure,in,N 
+Kneipp Facilitys in,amenity,kneipp_water_cure,in,Y 
+Kneipp Facilities in,amenity,kneipp_water_cure,in,Y 
+Kneipp Facility near,amenity,kneipp_water_cure,near,N 
+Kneipp Facilitys near,amenity,kneipp_water_cure,near,Y 
+Kneipp Facilities near,amenity,kneipp_water_cure,near,Y 
+Library,amenity,library,-,N 
+Librarys,amenity,library,-,Y 
+Libraries,amenity,library,-,Y 
+Library in,amenity,library,in,N 
+Librarys in,amenity,library,in,Y 
+Libraries in,amenity,library,in,Y 
+Library near,amenity,library,near,N 
+Librarys near,amenity,library,near,Y 
+Libraries near,amenity,library,near,Y 
+Marketplace,amenity,marketplace,-,N 
+Marketplaces,amenity,marketplace,-,Y 
+Marketplace in,amenity,marketplace,in,N 
+Marketplaces in,amenity,marketplace,in,Y 
+Marketplace near,amenity,marketplace,near,N 
+Marketplaces near,amenity,marketplace,near,Y 
+Motorcycle parking,amenity,motorcycle_parking,-,N 
+Motorcycle parkings,amenity,motorcycle_parking,-,Y 
+Motorcycle parking in,amenity,motorcycle_parking,in,N 
+Motorcycle parkings in,amenity,motorcycle_parking,in,Y 
+Motorcycle parking near,amenity,motorcycle_parking,near,N 
+Motorcycle parkings near,amenity,motorcycle_parking,near,Y 
+Night Club,amenity,nightclub,-,N 
+Night Clubs,amenity,nightclub,-,Y 
+Night Club in,amenity,nightclub,in,N 
+Night Clubs in,amenity,nightclub,in,Y 
+Night Club near,amenity,nightclub,near,N 
+Night Clubs near,amenity,nightclub,near,Y 
+Nursing Home,amenity,nursing_home,-,N 
+Nursing Homes,amenity,nursing_home,-,Y 
+Nursing Home in,amenity,nursing_home,in,N 
+Nursing Homes in,amenity,nursing_home,in,Y 
+Nursing Home near,amenity,nursing_home,near,N 
+Nursing Homes near,amenity,nursing_home,near,Y 
+Pharmacy,amenity,pharmacy,-,N 
+Pharmacys,amenity,pharmacy,-,Y 
+Pharmacies,amenity,pharmacy,-,Y 
+Pharmacy in,amenity,pharmacy,in,N 
+Pharmacys in,amenity,pharmacy,in,Y 
+Pharmacies in,amenity,pharmacy,in,Y 
+Pharmacy near,amenity,pharmacy,near,N 
+Pharmacys near,amenity,pharmacy,near,Y 
+Pharmacies near,amenity,pharmacy,near,Y 
+Parking,amenity,parking,-,N 
+Parkings,amenity,parking,-,Y 
+Parking in,amenity,parking,in,N 
+Parkings in,amenity,parking,in,Y 
+Parking near,amenity,parking,near,N 
+Parkings near,amenity,parking,near,Y 
+Church,amenity,place_of_worship,-,N 
+Churches,amenity,place_of_worship,-,Y 
+Church in,amenity,place_of_worship,in,N 
+Churches in,amenity,place_of_worship,in,Y 
+Church near,amenity,place_of_worship,near,N 
+Churches near,amenity,place_of_worship,near,Y 
+Place of Worship,amenity,place_of_worship,-,N 
+Place of Worships,amenity,place_of_worship,-,Y 
+Places of Worship,amenity,place_of_worship,-,Y 
+Place of Worship in,amenity,place_of_worship,in,N 
+Place of Worships in,amenity,place_of_worship,in,Y 
+Places of Worship in,amenity,place_of_worship,in,Y 
+Place of Worship near,amenity,place_of_worship,near,N 
+Place of Worships near,amenity,place_of_worship,near,Y 
+Places of Worship near,amenity,place_of_worship,near,Y 
+Planetarium,amenity,planetarium,-,N 
+Planetariums,amenity,planetarium,-,Y 
+Planetaria,amenity,planetarium,-,Y 
+Planetarium in,amenity,planetarium,in,N 
+Planetariums in,amenity,planetarium,in,Y 
+Planetaria in,amenity,planetarium,in,Y 
+Planetarium near,amenity,planetarium,near,N 
+Planetariums near,amenity,planetarium,near,Y 
+Planetaria near,amenity,planetarium,near,Y 
+Police,amenity,police,-,N 
+Police in,amenity,police,in,N 
+Police near,amenity,police,near,N 
+Post Box,amenity,post_box,-,N 
+Post Boxes,amenity,post_box,-,Y 
+Post Box in,amenity,post_box,in,N 
+Post Boxes in,amenity,post_box,in,Y 
+Post Box near,amenity,post_box,near,N 
+Post Boxes near,amenity,post_box,near,Y 
+Post Office,amenity,post_office,-,N 
+Post Offices,amenity,post_office,-,Y 
+Post Office in,amenity,post_office,in,N 
+Post Offices in,amenity,post_office,in,Y 
+Post Office near,amenity,post_office,near,N 
+Post Offices near,amenity,post_office,near,Y 
+Prison,amenity,prison,-,N 
+Prisons,amenity,prison,-,Y 
+Prison in,amenity,prison,in,N 
+Prisons in,amenity,prison,in,Y 
+Prison near,amenity,prison,near,N 
+Prisons near,amenity,prison,near,Y 
+Bookcase,amenity,public_bookcase,-,N 
+Bookcases,amenity,public_bookcase,-,Y 
+Bookcase in,amenity,public_bookcase,in,N 
+Bookcases in,amenity,public_bookcase,in,Y 
+Bookcase near,amenity,public_bookcase,near,N 
+Bookcases near,amenity,public_bookcase,near,Y 
+Public Bookcase,amenity,public_bookcase,-,N 
+Public Bookcases,amenity,public_bookcase,-,Y 
+Public Bookcase in,amenity,public_bookcase,in,N 
+Public Bookcases in,amenity,public_bookcase,in,Y 
+Public Bookcase near,amenity,public_bookcase,near,N 
+Public Bookcases near,amenity,public_bookcase,near,Y 
+Pub,amenity,bar,-,N 
+Pubs,amenity,bar,-,Y 
+Pub in,amenity,bar,in,N 
+Pubs in,amenity,bar,in,Y 
+Pub near,amenity,bar,near,N 
+Pubs near,amenity,bar,near,Y 
+Pub,amenity,pub,-,N 
+Pubs,amenity,pub,-,Y 
+Pub in,amenity,pub,in,N 
+Pubs in,amenity,pub,in,Y 
+Pub near,amenity,pub,near,N 
+Pubs near,amenity,pub,near,Y 
+Public Building,amenity,public_building,-,N 
+Public Buildings,amenity,public_building,-,Y 
+Public Building in,amenity,public_building,in,N 
+Public Buildings in,amenity,public_building,in,Y 
+Public Building near,amenity,public_building,near,N 
+Public Buildings near,amenity,public_building,near,Y 
+Recycling Point,amenity,recycling,-,N 
+Recycling Points,amenity,recycling,-,Y 
+Recycling Point in,amenity,recycling,in,N 
+Recycling Points in,amenity,recycling,in,Y 
+Recycling Point near,amenity,recycling,near,N 
+Recycling Points near,amenity,recycling,near,Y 
+Recycling Station,amenity,recycling,-,N 
+Recycling Stations,amenity,recycling,-,Y 
+Recycling Station in,amenity,recycling,in,N 
+Recycling Stations in,amenity,recycling,in,Y 
+Recycling Station near,amenity,recycling,near,N 
+Recycling Stations near,amenity,recycling,near,Y 
+Restaurant,amenity,restaurant,-,N 
+Restaurants,amenity,restaurant,-,Y 
+Restaurant in,amenity,restaurant,in,N 
+Restaurants in,amenity,restaurant,in,Y 
+Restaurant near,amenity,restaurant,near,N 
+Restaurants near,amenity,restaurant,near,Y 
+Retirement Home,amenity,retirement_home,-,N 
+Retirement Homes,amenity,retirement_home,-,Y 
+Retirement Home in,amenity,retirement_home,in,N 
+Retirement Homes in,amenity,retirement_home,in,Y 
+Retirement Home near,amenity,retirement_home,near,N 
+Retirement Homes near,amenity,retirement_home,near,Y 
+Sauna,amenity,sauna,-,N 
+Saunas,amenity,sauna,-,Y 
+Sauna in,amenity,sauna,in,N 
+Saunas in,amenity,sauna,in,Y 
+Sauna near,amenity,sauna,near,N 
+Saunas near,amenity,sauna,near,Y 
+School,amenity,school,-,N 
+Schools,amenity,school,-,Y 
+School in,amenity,school,in,N 
+Schools in,amenity,school,in,Y 
+School near,amenity,school,near,N 
+Schools near,amenity,school,near,Y 
+Shelter,amenity,shelter,-,N 
+Shelters,amenity,shelter,-,Y 
+Shelter in,amenity,shelter,in,N 
+Shelters in,amenity,shelter,in,Y 
+Shelter near,amenity,shelter,near,N 
+Shelters near,amenity,shelter,near,Y 
+Studio,amenity,studio,-,N 
+Studios,amenity,studio,-,Y 
+Studio in,amenity,studio,in,N 
+Studios in,amenity,studio,in,Y 
+Studio near,amenity,studio,near,N 
+Studios near,amenity,studio,near,Y 
+Swinger Club,amenity,swingerclub,-,N 
+Swinger Clubs,amenity,swingerclub,-,Y 
+Swinger Club in,amenity,swingerclub,in,N 
+Swinger Clubs in,amenity,swingerclub,in,Y 
+Swinger Club near,amenity,swingerclub,near,N 
+Swinger Clubs near,amenity,swingerclub,near,Y 
+Taxi,amenity,taxi,-,N 
+Taxis,amenity,taxi,-,Y 
+Taxi in,amenity,taxi,in,N 
+Taxis in,amenity,taxi,in,Y 
+Taxi near,amenity,taxi,near,N 
+Taxis near,amenity,taxi,near,Y 
+Taxi Rank,amenity,taxi,-,N 
+Taxi Ranks,amenity,taxi,-,Y 
+Taxi Rank in,amenity,taxi,in,N 
+Taxi Ranks in,amenity,taxi,in,Y 
+Taxi Rank near,amenity,taxi,near,N 
+Taxi Ranks near,amenity,taxi,near,Y 
+Telephone,amenity,telephone,-,N 
+Telephones,amenity,telephone,-,Y 
+Telephone in,amenity,telephone,in,N 
+Telephones in,amenity,telephone,in,Y 
+Telephone near,amenity,telephone,near,N 
+Telephones near,amenity,telephone,near,Y 
+Public Telephone,amenity,telephone,-,N 
+Public Telephones,amenity,telephone,-,Y 
+Public Telephone in,amenity,telephone,in,N 
+Public Telephones in,amenity,telephone,in,Y 
+Public Telephone near,amenity,telephone,near,N 
+Public Telephones near,amenity,telephone,near,Y 
+Phone Booth,amenity,telephone,-,N 
+Phone Booths,amenity,telephone,-,Y 
+Phone Booth in,amenity,telephone,in,N 
+Phone Booths in,amenity,telephone,in,Y 
+Phone Booth near,amenity,telephone,near,N 
+Phone Booths near,amenity,telephone,near,Y 
+Theatre,amenity,theatre,-,N 
+Theatres,amenity,theatre,-,Y 
+Theatre in,amenity,theatre,in,N 
+Theatres in,amenity,theatre,in,Y 
+Theatre near,amenity,theatre,near,N 
+Theatres near,amenity,theatre,near,Y 
+Toilet,amenity,toilets,-,N 
+Toilets,amenity,toilets,-,Y 
+Toilet in,amenity,toilets,in,N 
+Toilets in,amenity,toilets,in,Y 
+Toilet near,amenity,toilets,near,N 
+Toilets near,amenity,toilets,near,Y 
+Town Hall,amenity,townhall,-,N 
+Town Halls,amenity,townhall,-,Y 
+Town Hall in,amenity,townhall,in,N 
+Town Halls in,amenity,townhall,in,Y 
+Town Hall near,amenity,townhall,near,N 
+Town Halls near,amenity,townhall,near,Y 
+University,amenity,university,-,N 
+Universitys,amenity,university,-,Y 
+Universities,amenity,university,-,Y 
+University in,amenity,university,in,N 
+Universitys in,amenity,university,in,Y 
+Universities in,amenity,university,in,Y 
+University near,amenity,university,near,N 
+Universitys near,amenity,university,near,Y 
+Universities near,amenity,university,near,Y 
+Vending Machine,amenity,vending_machine,-,N 
+Vending Machines,amenity,vending_machine,-,Y 
+Vending Machine in,amenity,vending_machine,in,N 
+Vending Machines in,amenity,vending_machine,in,Y 
+Vending Machine near,amenity,vending_machine,near,N 
+Vending Machines near,amenity,vending_machine,near,Y 
+Veterinary Surgery,amenity,veterinary,-,N 
+Veterinary Surgeries,amenity,veterinary,-,Y 
+Veterinary Surgery in,amenity,veterinary,in,N 
+Veterinary Surgeries in,amenity,veterinary,in,Y 
+Veterinary Surgery near,amenity,veterinary,near,N 
+Veterinary Surgeries near,amenity,veterinary,near,Y 
+Waste Basket,amenity,waste_basket,-,N 
+Waste Baskets,amenity,waste_basket,-,Y 
+Waste Basket in,amenity,waste_basket,in,N 
+Waste Baskets in,amenity,waste_basket,in,Y 
+Waste Basket near,amenity,waste_basket,near,N 
+Waste Baskets near,amenity,waste_basket,near,Y 
+Rubbish Bin,amenity,waste_basket,-,N 
+Rubbish Bins,amenity,waste_basket,-,Y 
+Rubbish Bin in,amenity,waste_basket,in,N 
+Rubbish Bins in,amenity,waste_basket,in,Y 
+Rubbish Bin near,amenity,waste_basket,near,N 
+Rubbish Bins near,amenity,waste_basket,near,Y 
+Bin,amenity,waste_basket,-,N 
+Bins,amenity,waste_basket,-,Y 
+Bin in,amenity,waste_basket,in,N 
+Bins in,amenity,waste_basket,in,Y 
+Bin near,amenity,waste_basket,near,N 
+Bins near,amenity,waste_basket,near,Y 
+Mural,artwork_type,mural,-,N 
+Murals,artwork_type,mural,-,Y 
+Mural in,artwork_type,mural,in,N 
+Murals in,artwork_type,mural,in,Y 
+Mural near,artwork_type,mural,near,N 
+Murals near,artwork_type,mural,near,Y 
+Sculpture,artwork_type,sculpture,-,N 
+Sculptures,artwork_type,sculpture,-,Y 
+Sculpture in,artwork_type,sculpture,in,N 
+Sculptures in,artwork_type,sculpture,in,Y 
+Sculpture near,artwork_type,sculpture,near,N 
+Sculptures near,artwork_type,sculpture,near,Y 
+Statue,artwork_type,statue,-,N 
+Statues,artwork_type,statue,-,Y 
+Statue in,artwork_type,statue,in,N 
+Statues in,artwork_type,statue,in,Y 
+Statue near,artwork_type,statue,near,N 
+Statues near,artwork_type,statue,near,Y 
+ATM,atm,yes,-,N 
+ATMs,atm,yes,-,Y 
+ATM in,atm,yes,in,N 
+ATMs in,atm,yes,in,Y 
+ATM near,atm,yes,near,N 
+ATMs near,atm,yes,near,Y 
+National Park,boundary,national_park,-,N 
+National Parks,boundary,national_park,-,Y 
+National Park in,boundary,national_park,in,N 
+National Parks in,boundary,national_park,in,Y 
+National Park near,boundary,national_park,near,N 
+National Parks near,boundary,national_park,near,Y 
+Apartment Block,building,apartments,-,N 
+Apartment Blocks,building,apartments,-,Y 
+Apartment Block in,building,apartments,in,N 
+Apartment Blocks in,building,apartments,in,Y 
+Apartment Block near,building,apartments,near,N 
+Apartment Blocks near,building,apartments,near,Y 
+Building Block,building,block,-,N 
+Building Blocks,building,block,-,Y 
+Building Block in,building,block,in,N 
+Building Blocks in,building,block,in,Y 
+Building Block near,building,block,near,N 
+Building Blocks near,building,block,near,Y 
+Bunker,building,bunker,-,N 
+Bunkers,building,bunker,-,Y 
+Bunker in,building,bunker,in,N 
+Bunkers in,building,bunker,in,Y 
+Bunker near,building,bunker,near,N 
+Bunkers near,building,bunker,near,Y 
+Cathedral,building,cathedral,-,N 
+Cathedrals,building,cathedral,-,Y 
+Cathedral in,building,cathedral,in,N 
+Cathedrals in,building,cathedral,in,Y 
+Cathedral near,building,cathedral,near,N 
+Cathedrals near,building,cathedral,near,Y 
+Chapel,building,chapel,-,N 
+Chapels,building,chapel,-,Y 
+Chapel in,building,chapel,in,N 
+Chapels in,building,chapel,in,Y 
+Chapel near,building,chapel,near,N 
+Chapels near,building,chapel,near,Y 
+Church,building,church,-,N 
+Churchs,building,church,-,Y 
+Churches,building,church,-,Y 
+Church in,building,church,in,N 
+Churchs in,building,church,in,Y 
+Churches in,building,church,in,Y 
+Church near,building,church,near,N 
+Churchs near,building,church,near,Y 
+Churches near,building,church,near,Y 
+City Hall,building,city_hall,-,N 
+City Halls,building,city_hall,-,Y 
+City Hall in,building,city_hall,in,N 
+City Halls in,building,city_hall,in,Y 
+City Hall near,building,city_hall,near,N 
+City Halls near,building,city_hall,near,Y 
+Civic Building,building,civic,-,N 
+Civic Buildings,building,civic,-,Y 
+Civic Building in,building,civic,in,N 
+Civic Buildings in,building,civic,in,Y 
+Civic Building near,building,civic,near,N 
+Civic Buildings near,building,civic,near,Y 
+Commercial Building,building,commercial,-,N 
+Commercial Buildings,building,commercial,-,Y 
+Commercial Building in,building,commercial,in,N 
+Commercial Buildings in,building,commercial,in,Y 
+Commercial Building near,building,commercial,near,N 
+Commercial Buildings near,building,commercial,near,Y 
+Dormitory,building,dormitory,-,N 
+Dormitorys,building,dormitory,-,Y 
+Dormitory in,building,dormitory,in,N 
+Dormitorys in,building,dormitory,in,Y 
+Dormitory near,building,dormitory,near,N 
+Dormitorys near,building,dormitory,near,Y 
+Building Entrance,building,entrance,-,N 
+Building Entrances,building,entrance,-,Y 
+Building Entrance in,building,entrance,in,N 
+Building Entrances in,building,entrance,in,Y 
+Building Entrance near,building,entrance,near,N 
+Building Entrances near,building,entrance,near,Y 
+Faculty Building,building,faculty,-,N 
+Faculty Buildings,building,faculty,-,Y 
+Faculty Building in,building,faculty,in,N 
+Faculty Buildings in,building,faculty,in,Y 
+Faculty Building near,building,faculty,near,N 
+Faculty Buildings near,building,faculty,near,Y 
+Farm Building,building,farm_auxiliary,-,N 
+Farm Buildings,building,farm_auxiliary,-,Y 
+Farm Building in,building,farm_auxiliary,in,N 
+Farm Buildings in,building,farm_auxiliary,in,Y 
+Farm Building near,building,farm_auxiliary,near,N 
+Farm Buildings near,building,farm_auxiliary,near,Y 
+Farm Building,building,farm,-,N 
+Farm Buildings,building,farm,-,Y 
+Farm Building in,building,farm,in,N 
+Farm Buildings in,building,farm,in,Y 
+Farm Building near,building,farm,near,N 
+Farm Buildings near,building,farm,near,Y 
+Flats,building,flats,-,N 
+Flats,building,flats,-,Y 
+Flats in,building,flats,in,N 
+Flats in,building,flats,in,Y 
+Flats near,building,flats,near,N 
+Flats near,building,flats,near,Y 
+Glass House,building,greenhouse,-,N 
+Glass Houses,building,greenhouse,-,Y 
+Glass House in,building,greenhouse,in,N 
+Glass Houses in,building,greenhouse,in,Y 
+Glass House near,building,greenhouse,near,N 
+Glass Houses near,building,greenhouse,near,Y 
+Glasshouse,building,greenhouse,-,N 
+Glasshouses,building,greenhouse,-,Y 
+Glasshouse in,building,greenhouse,in,N 
+Glasshouses in,building,greenhouse,in,Y 
+Glasshouse near,building,greenhouse,near,N 
+Glasshouses near,building,greenhouse,near,Y 
+Green House,building,greenhouse,-,N 
+Green Houses,building,greenhouse,-,Y 
+Green House in,building,greenhouse,in,N 
+Green Houses in,building,greenhouse,in,Y 
+Green House near,building,greenhouse,near,N 
+Green Houses near,building,greenhouse,near,Y 
+Greenhouse,building,greenhouse,-,N 
+Greenhouses,building,greenhouse,-,Y 
+Greenhouse in,building,greenhouse,in,N 
+Greenhouses in,building,greenhouse,in,Y 
+Greenhouse near,building,greenhouse,near,N 
+Greenhouses near,building,greenhouse,near,Y 
+Garage,building,garage,-,N 
+Garages,building,garage,-,Y 
+Garage in,building,garage,in,N 
+Garages in,building,garage,in,Y 
+Garage near,building,garage,near,N 
+Garages near,building,garage,near,Y 
+Hall,building,hall,-,N 
+Halls,building,hall,-,Y 
+Hall in,building,hall,in,N 
+Halls in,building,hall,in,Y 
+Hall near,building,hall,near,N 
+Halls near,building,hall,near,Y 
+Hospital Building,building,hospital,-,N 
+Hospital Buildings,building,hospital,-,Y 
+Hospital Building in,building,hospital,in,N 
+Hospital Buildings in,building,hospital,in,Y 
+Hospital Building near,building,hospital,near,N 
+Hospital Buildings near,building,hospital,near,Y 
+Hotel,building,hotel,-,N 
+Hotels,building,hotel,-,Y 
+Hotel in,building,hotel,in,N 
+Hotels in,building,hotel,in,Y 
+Hotel near,building,hotel,near,N 
+Hotels near,building,hotel,near,Y 
+House,building,house,-,N 
+Houses,building,house,-,Y 
+House in,building,house,in,N 
+Houses in,building,house,in,Y 
+House near,building,house,near,N 
+Houses near,building,house,near,Y 
+Industrial Building,building,industrial,-,N 
+Industrial Buildings,building,industrial,-,Y 
+Industrial Building in,building,industrial,in,N 
+Industrial Buildings in,building,industrial,in,Y 
+Industrial Building near,building,industrial,near,N 
+Industrial Buildings near,building,industrial,near,Y 
+Mosque,building,mosque,-,N 
+Mosques,building,mosque,-,Y 
+Mosque in,building,mosque,in,N 
+Mosques in,building,mosque,in,Y 
+Mosque near,building,mosque,near,N 
+Mosques near,building,mosque,near,Y 
+Office Building,building,office,-,N 
+Office Buildings,building,office,-,Y 
+Office Building in,building,office,in,N 
+Office Buildings in,building,office,in,Y 
+Office Building near,building,office,near,N 
+Office Buildings near,building,office,near,Y 
+Public Building,building,public,-,N 
+Public Buildings,building,public,-,Y 
+Public Building in,building,public,in,N 
+Public Buildings in,building,public,in,Y 
+Public Building near,building,public,near,N 
+Public Buildings near,building,public,near,Y 
+Residential Building,building,residential,-,N 
+Residential Buildings,building,residential,-,Y 
+Residential Building in,building,residential,in,N 
+Residential Buildings in,building,residential,in,Y 
+Residential Building near,building,residential,near,N 
+Residential Buildings near,building,residential,near,Y 
+Retail Building,building,retail,-,N 
+Retail Buildings,building,retail,-,Y 
+Retail Building in,building,retail,in,N 
+Retail Buildings in,building,retail,in,Y 
+Retail Building near,building,retail,near,N 
+Retail Buildings near,building,retail,near,Y 
+School Building,building,school,-,N 
+School Buildings,building,school,-,Y 
+School Building in,building,school,in,N 
+School Buildings in,building,school,in,Y 
+School Building near,building,school,near,N 
+School Buildings near,building,school,near,Y 
+Shop,building,shop,-,N 
+Shops,building,shop,-,Y 
+Shop in,building,shop,in,N 
+Shops in,building,shop,in,Y 
+Shop near,building,shop,near,N 
+Shops near,building,shop,near,Y 
+Stadium,building,stadium,-,N 
+Stadiums,building,stadium,-,Y 
+Stadium in,building,stadium,in,N 
+Stadiums in,building,stadium,in,Y 
+Stadium near,building,stadium,near,N 
+Stadiums near,building,stadium,near,Y 
+Synagogue,building,synagogue,-,N 
+Synagogues,building,synagogue,-,Y 
+Synagogue in,building,synagogue,in,N 
+Synagogues in,building,synagogue,in,Y 
+Synagogue near,building,synagogue,near,N 
+Synagogues near,building,synagogue,near,Y 
+Store,building,store,-,N 
+Stores,building,store,-,Y 
+Store in,building,store,in,N 
+Stores in,building,store,in,Y 
+Store near,building,store,near,N 
+Stores near,building,store,near,Y 
+Terrace,building,terrace,-,N 
+Terraces,building,terrace,-,Y 
+Terrace in,building,terrace,in,N 
+Terraces in,building,terrace,in,Y 
+Terrace near,building,terrace,near,N 
+Terraces near,building,terrace,near,Y 
+Tower,building,tower,-,N 
+Towers,building,tower,-,Y 
+Tower in,building,tower,in,N 
+Towers in,building,tower,in,Y 
+Tower near,building,tower,near,N 
+Towers near,building,tower,near,Y 
+Railway Station,building,train_station,-,N 
+Railway Stations,building,train_station,-,Y 
+Railway Station in,building,train_station,in,N 
+Railway Stations in,building,train_station,in,Y 
+Railway Station near,building,train_station,near,N 
+Railway Stations near,building,train_station,near,Y 
+Station,building,train_station,-,N 
+Stations,building,train_station,-,Y 
+Station in,building,train_station,in,N 
+Stations in,building,train_station,in,Y 
+Station near,building,train_station,near,N 
+Stations near,building,train_station,near,Y 
+University Building,building,university,-,N 
+University Buildings,building,university,-,Y 
+University Building in,building,university,in,N 
+University Buildings in,building,university,in,Y 
+University Building near,building,university,near,N 
+University Buildings near,building,university,near,Y 
+Building,building,yes,-,N 
+Buildings,building,yes,-,Y 
+Building in,building,yes,in,N 
+Buildings in,building,yes,in,Y 
+Building near,building,yes,near,N 
+Buildings near,building,yes,near,Y 
+Bridleway,highway,bridleway,-,N 
+Bridleways,highway,bridleway,-,Y 
+Bridleway in,highway,bridleway,in,N 
+Bridleways in,highway,bridleway,in,Y 
+Bridleway near,highway,bridleway,near,N 
+Bridleways near,highway,bridleway,near,Y 
+Guided Bus Lane,highway,bus_guideway,-,N 
+Guided Bus Lanes,highway,bus_guideway,-,Y 
+Guided Bus Lane in,highway,bus_guideway,in,N 
+Guided Bus Lanes in,highway,bus_guideway,in,Y 
+Guided Bus Lane near,highway,bus_guideway,near,N 
+Guided Bus Lanes near,highway,bus_guideway,near,Y 
+Bus Stop,highway,bus_stop,-,N 
+Bus Stops,highway,bus_stop,-,Y 
+Bus Stop in,highway,bus_stop,in,N 
+Bus Stops in,highway,bus_stop,in,Y 
+Bus Stop near,highway,bus_stop,near,N 
+Bus Stops near,highway,bus_stop,near,Y 
+Byway,highway,byway,-,N 
+Byways,highway,byway,-,Y 
+Byway in,highway,byway,in,N 
+Byways in,highway,byway,in,Y 
+Byway near,highway,byway,near,N 
+Byways near,highway,byway,near,Y 
+Changing table,changing_table,yes,-,N 
+Changing tables,changing_table,yes,-,Y 
+Changing table in,changing_table,yes,in,N 
+Changing tables in,changing_table,yes,in,Y 
+Changing table near,changing_table,yes,near,N 
+Changing tables near,changing_table,yes,near,Y 
+Brewery,craft,brewery,-,N 
+Brewerys,craft,brewery,-,Y 
+Breweries,craft,brewery,-,Y 
+Brewery in,craft,brewery,in,N 
+Brewerys in,craft,brewery,in,Y 
+Breweries in,craft,brewery,in,Y 
+Brewery near,craft,brewery,near,N 
+Brewerys near,craft,brewery,near,Y 
+Breweries near,craft,brewery,near,Y 
+Carpenter,craft,carpenter,-,N 
+Carpenters,craft,carpenter,-,Y 
+Carpenter in,craft,carpenter,in,N 
+Carpenters in,craft,carpenter,in,Y 
+Carpenter near,craft,carpenter,near,N 
+Carpenters near,craft,carpenter,near,Y 
+Distillery,craft,distillery,-,N 
+Distillerys,craft,distillery,-,Y 
+Distilleries,craft,distillery,-,Y 
+Distillery in,craft,distillery,in,N 
+Distillerys in,craft,distillery,in,Y 
+Distilleries in,craft,distillery,in,Y 
+Distillery near,craft,distillery,near,N 
+Distillerys near,craft,distillery,near,Y 
+Distilleries near,craft,distillery,near,Y 
+Key Cutter,craft,key_cutter,-,N 
+Key Cutters,craft,key_cutter,-,Y 
+Key Cutter in,craft,key_cutter,in,N 
+Key Cutters in,craft,key_cutter,in,Y 
+Key Cutter near,craft,key_cutter,near,N 
+Key Cutters near,craft,key_cutter,near,Y 
+Key Duplication,craft,key_cutter,-,N 
+Key Duplication in,craft,key_cutter,in,N 
+Key Duplication near,craft,key_cutter,near,N 
+Electrician,craft,electrician,-,N 
+Electricians,craft,electrician,-,Y 
+Electrician in,craft,electrician,in,N 
+Electricians in,craft,electrician,in,Y 
+Electrician near,craft,electrician,near,N 
+Electricians near,craft,electrician,near,Y 
+Photographer,craft,photographer,-,N 
+Photographers,craft,photographer,-,Y 
+Photographer in,craft,photographer,in,N 
+Photographers in,craft,photographer,in,Y 
+Photographer near,craft,photographer,near,N 
+Photographers near,craft,photographer,near,Y 
+Shoe Maker,craft,shoemaker,-,N 
+Shoe Makers,craft,shoemaker,-,Y 
+Shoe Maker in,craft,shoemaker,in,N 
+Shoe Makers in,craft,shoemaker,in,Y 
+Shoe Maker near,craft,shoemaker,near,N 
+Shoe Makers near,craft,shoemaker,near,Y 
+Shoemaker,craft,shoemaker,-,N 
+Shoemakers,craft,shoemaker,-,Y 
+Shoemaker in,craft,shoemaker,in,N 
+Shoemakers in,craft,shoemaker,in,Y 
+Shoemaker near,craft,shoemaker,near,N 
+Shoemakers near,craft,shoemaker,near,Y 
+Tailor,craft,tailor,-,N 
+Tailors,craft,tailor,-,Y 
+Tailor in,craft,tailor,in,N 
+Tailors in,craft,tailor,in,Y 
+Tailor near,craft,tailor,near,N 
+Tailors near,craft,tailor,near,Y 
+Winery,craft,winery,-,N 
+Winerys,craft,winery,-,Y 
+Wineries,craft,winery,-,Y 
+Winery in,craft,winery,in,N 
+Winerys in,craft,winery,in,Y 
+Wineries in,craft,winery,in,Y 
+Winery near,craft,winery,near,N 
+Winerys near,craft,winery,near,Y 
+Wineries near,craft,winery,near,Y 
+Ambulance Station,emergency,ambulance_station,-,N 
+Ambulance Stations,emergency,ambulance_station,-,Y 
+Ambulance Station in,emergency,ambulance_station,in,N 
+Ambulance Stations in,emergency,ambulance_station,in,Y 
+Ambulance Station near,emergency,ambulance_station,near,N 
+Ambulance Stations near,emergency,ambulance_station,near,Y 
+Defibrillator,emergency,defibrillator,-,N 
+Defibrillators,emergency,defibrillator,-,Y 
+Defibrillator in,emergency,defibrillator,in,N 
+Defibrillators in,emergency,defibrillator,in,Y 
+Defibrillator near,emergency,defibrillator,near,N 
+Defibrillators near,emergency,defibrillator,near,Y 
+Fire Hydrant,emergency,fire_hydrant,-,N 
+Fire Hydrants,emergency,fire_hydrant,-,Y 
+Fire Hydrant in,emergency,fire_hydrant,in,N 
+Fire Hydrants in,emergency,fire_hydrant,in,Y 
+Fire Hydrant near,emergency,fire_hydrant,near,N 
+Fire Hydrants near,emergency,fire_hydrant,near,Y 
+Emergency Phone,emergency,phone,-,N 
+Emergency Phones,emergency,phone,-,Y 
+Emergency Phone in,emergency,phone,in,N 
+Emergency Phones in,emergency,phone,in,Y 
+Emergency Phone near,emergency,phone,near,N 
+Emergency Phones near,emergency,phone,near,Y 
+Highway under Construction,highway,construction,-,N 
+Highways under Construction,highway,construction,-,Y 
+Highway under Construction in,highway,construction,in,N 
+Highways under Construction in,highway,construction,in,Y 
+Highway under Construction near,highway,construction,near,N 
+Highways under Construction near,highway,construction,near,Y 
+Cycle Path,highway,cycleway,-,N 
+Cycle Paths,highway,cycleway,-,Y 
+Cycle Path in,highway,cycleway,in,N 
+Cycle Paths in,highway,cycleway,in,Y 
+Cycle Path near,highway,cycleway,near,N 
+Cycle Paths near,highway,cycleway,near,Y 
+Distance Marker,highway,distance_marker,-,N 
+Distance Markers,highway,distance_marker,-,Y 
+Distance Marker in,highway,distance_marker,in,N 
+Distance Markers in,highway,distance_marker,in,Y 
+Distance Marker near,highway,distance_marker,near,N 
+Distance Markers near,highway,distance_marker,near,Y 
+Emergency Access Point,highway,emergency_access_point,-,N 
+Emergency Access Points,highway,emergency_access_point,-,Y 
+Emergency Access Point in,highway,emergency_access_point,in,N 
+Emergency Access Points in,highway,emergency_access_point,in,Y 
+Emergency Access Point near,highway,emergency_access_point,near,N 
+Emergency Access Points near,highway,emergency_access_point,near,Y 
+Radar Trap,highway,speed_camera,-,N 
+Radar Traps,highway,speed_camera,-,Y 
+Radar Trap in,highway,speed_camera,in,N 
+Radar Traps in,highway,speed_camera,in,Y 
+Radar Trap near,highway,speed_camera,near,N 
+Radar Traps near,highway,speed_camera,near,Y 
+Speed Camera,highway,speed_camera,-,N 
+Speed Cameras,highway,speed_camera,-,Y 
+Speed Camera in,highway,speed_camera,in,N 
+Speed Cameras in,highway,speed_camera,in,Y 
+Speed Camera near,highway,speed_camera,near,N 
+Speed Cameras near,highway,speed_camera,near,Y 
+Speed Trap,highway,speed_camera,-,N 
+Speed Traps,highway,speed_camera,-,Y 
+Speed Trap in,highway,speed_camera,in,N 
+Speed Traps in,highway,speed_camera,in,Y 
+Speed Trap near,highway,speed_camera,near,N 
+Speed Traps near,highway,speed_camera,near,Y 
+Traffic Enforcement Camera,highway,speed_camera,-,N 
+Traffic Enforcement Cameras,highway,speed_camera,-,Y 
+Traffic Enforcement Camera in,highway,speed_camera,in,N 
+Traffic Enforcement Cameras in,highway,speed_camera,in,Y 
+Traffic Enforcement Camera near,highway,speed_camera,near,N 
+Traffic Enforcement Cameras near,highway,speed_camera,near,Y 
+Stoplights,highway,traffic_signals,-,Y 
+Stoplights in,highway,traffic_signals,in,Y 
+Stoplights near,highway,traffic_signals,near,Y 
+Traffic Lights,highway,traffic_signals,-,Y 
+Traffic Lights in,highway,traffic_signals,in,Y 
+Traffic Lights near,highway,traffic_signals,near,Y 
+Traffic Signals,highway,traffic_signals,-,Y 
+Traffic Signals in,highway,traffic_signals,in,Y 
+Traffic Signals near,highway,traffic_signals,near,Y 
+Footpath,highway,footway,-,N 
+Footpaths,highway,footway,-,Y 
+Footpath in,highway,footway,in,N 
+Footpaths in,highway,footway,in,Y 
+Footpath near,highway,footway,near,N 
+Footpaths near,highway,footway,near,Y 
+Ford,highway,ford,-,N 
+Fords,highway,ford,-,Y 
+Ford in,highway,ford,in,N 
+Fords in,highway,ford,in,Y 
+Ford near,highway,ford,near,N 
+Fords near,highway,ford,near,Y 
+Gate,highway,gate,-,N 
+Gates,highway,gate,-,Y 
+Gate in,highway,gate,in,N 
+Gates in,highway,gate,in,Y 
+Gate near,highway,gate,near,N 
+Gates near,highway,gate,near,Y 
+Living Street,highway,living_street,-,N 
+Living Streets,highway,living_street,-,Y 
+Living Street in,highway,living_street,in,N 
+Living Streets in,highway,living_street,in,Y 
+Living Street near,highway,living_street,near,N 
+Living Streets near,highway,living_street,near,Y 
+Minor Road,highway,minor,-,N 
+Minor Roads,highway,minor,-,Y 
+Minor Road in,highway,minor,in,N 
+Minor Roads in,highway,minor,in,Y 
+Minor Road near,highway,minor,near,N 
+Minor Roads near,highway,minor,near,Y 
+Motorway,highway,motorway,-,N 
+Motorways,highway,motorway,-,Y 
+Motorway in,highway,motorway,in,N 
+Motorways in,highway,motorway,in,Y 
+Motorway near,highway,motorway,near,N 
+Motorways near,highway,motorway,near,Y 
+Motorway Junction,highway,motorway_junction,-,N 
+Motorway Junctions,highway,motorway_junction,-,Y 
+Motorway Junction in,highway,motorway_junction,in,N 
+Motorway Junctions in,highway,motorway_junction,in,Y 
+Motorway Junction near,highway,motorway_junction,near,N 
+Motorway Junctions near,highway,motorway_junction,near,Y 
+Motorway Road,highway,motorway_link,-,N 
+Motorway Roads,highway,motorway_link,-,Y 
+Motorway Road in,highway,motorway_link,in,N 
+Motorway Roads in,highway,motorway_link,in,Y 
+Motorway Road near,highway,motorway_link,near,N 
+Motorway Roads near,highway,motorway_link,near,Y 
+Path,highway,path,-,N 
+Paths,highway,path,-,Y 
+Path in,highway,path,in,N 
+Paths in,highway,path,in,Y 
+Path near,highway,path,near,N 
+Paths near,highway,path,near,Y 
+Pedestrian Way,highway,pedestrian,-,N 
+Pedestrian Ways,highway,pedestrian,-,Y 
+Pedestrian Way in,highway,pedestrian,in,N 
+Pedestrian Ways in,highway,pedestrian,in,Y 
+Pedestrian Way near,highway,pedestrian,near,N 
+Pedestrian Ways near,highway,pedestrian,near,Y 
+Platform,highway,platform,-,N 
+Platforms,highway,platform,-,Y 
+Platform in,highway,platform,in,N 
+Platforms in,highway,platform,in,Y 
+Platform near,highway,platform,near,N 
+Platforms near,highway,platform,near,Y 
+Primary Road,highway,primary,-,N 
+Primary Roads,highway,primary,-,Y 
+Primary Road in,highway,primary,in,N 
+Primary Roads in,highway,primary,in,Y 
+Primary Road near,highway,primary,near,N 
+Primary Roads near,highway,primary,near,Y 
+Primary Road,highway,primary_link,-,N 
+Primary Roads,highway,primary_link,-,Y 
+Primary Road in,highway,primary_link,in,N 
+Primary Roads in,highway,primary_link,in,Y 
+Primary Road near,highway,primary_link,near,N 
+Primary Roads near,highway,primary_link,near,Y 
+Raceway,highway,raceway,-,N 
+Raceways,highway,raceway,-,Y 
+Raceway in,highway,raceway,in,N 
+Raceways in,highway,raceway,in,Y 
+Raceway near,highway,raceway,near,N 
+Raceways near,highway,raceway,near,Y 
+Residential,highway,residential,-,N 
+Residentials,highway,residential,-,Y 
+Residential in,highway,residential,in,N 
+Residentials in,highway,residential,in,Y 
+Residential near,highway,residential,near,N 
+Residentials near,highway,residential,near,Y 
+Residential Road,highway,residential,-,N 
+Residential Roads,highway,residential,-,Y 
+Residential Road in,highway,residential,in,N 
+Residential Roads in,highway,residential,in,Y 
+Residential Road near,highway,residential,near,N 
+Residential Roads near,highway,residential,near,Y 
+Rest Area,highway,rest_area,-,N 
+Rest Stop,highway,rest_area,-,N 
+Road,highway,road,-,N 
+Roads,highway,road,-,Y 
+Road in,highway,road,in,N 
+Roads in,highway,road,in,Y 
+Road near,highway,road,near,N 
+Roads near,highway,road,near,Y 
+Secondary Road,highway,secondary,-,N 
+Secondary Roads,highway,secondary,-,Y 
+Secondary Road in,highway,secondary,in,N 
+Secondary Roads in,highway,secondary,in,Y 
+Secondary Road near,highway,secondary,near,N 
+Secondary Roads near,highway,secondary,near,Y 
+Secondary Road,highway,secondary_link,-,N 
+Secondary Roads,highway,secondary_link,-,Y 
+Secondary Road in,highway,secondary_link,in,N 
+Secondary Roads in,highway,secondary_link,in,Y 
+Secondary Road near,highway,secondary_link,near,N 
+Secondary Roads near,highway,secondary_link,near,Y 
+Service Road,highway,service,-,N 
+Service Roads,highway,service,-,Y 
+Service Road in,highway,service,in,N 
+Service Roads in,highway,service,in,Y 
+Service Road near,highway,service,near,N 
+Service Roads near,highway,service,near,Y 
+Service Area,highway,services,-,N 
+Motorway Services,highway,services,-,N 
+Motorway Services,highway,services,-,Y 
+Motorway Services in,highway,services,in,N 
+Motorway Services in,highway,services,in,Y 
+Motorway Services near,highway,services,near,N 
+Motorway Services near,highway,services,near,Y 
+Steps,highway,steps,-,N 
+Steps,highway,steps,-,Y 
+Steps in,highway,steps,in,N 
+Steps in,highway,steps,in,Y 
+Steps near,highway,steps,near,N 
+Steps near,highway,steps,near,Y 
+Stile,highway,stile,-,N 
+Stiles,highway,stile,-,Y 
+Stile in,highway,stile,in,N 
+Stiles in,highway,stile,in,Y 
+Stile near,highway,stile,near,N 
+Stiles near,highway,stile,near,Y 
+Tertiary Road,highway,tertiary,-,N 
+Tertiary Roads,highway,tertiary,-,Y 
+Tertiary Road in,highway,tertiary,in,N 
+Tertiary Roads in,highway,tertiary,in,Y 
+Tertiary Road near,highway,tertiary,near,N 
+Tertiary Roads near,highway,tertiary,near,Y 
+Track,highway,track,-,N 
+Tracks,highway,track,-,Y 
+Track in,highway,track,in,N 
+Tracks in,highway,track,in,Y 
+Track near,highway,track,near,N 
+Tracks near,highway,track,near,Y 
+Trail,highway,trail,-,N 
+Trails,highway,trail,-,Y 
+Trail in,highway,trail,in,N 
+Trails in,highway,trail,in,Y 
+Trail near,highway,trail,near,N 
+Trails near,highway,trail,near,Y 
+Trunk Road,highway,trunk,-,N 
+Trunk Roads,highway,trunk,-,Y 
+Trunk Road in,highway,trunk,in,N 
+Trunk Roads in,highway,trunk,in,Y 
+Trunk Road near,highway,trunk,near,N 
+Trunk Roads near,highway,trunk,near,Y 
+Trunk Road,highway,trunk_link,-,N 
+Trunk Roads,highway,trunk_link,-,Y 
+Trunk Road in,highway,trunk_link,in,N 
+Trunk Roads in,highway,trunk_link,in,Y 
+Trunk Road near,highway,trunk_link,near,N 
+Trunk Roads near,highway,trunk_link,near,Y 
+Unclassified Road,highway,unclassified,-,N 
+Unclassified Roads,highway,unclassified,-,Y 
+Unclassified Road in,highway,unclassified,in,N 
+Unclassified Roads in,highway,unclassified,in,Y 
+Unclassified Road near,highway,unclassified,near,N 
+Unclassified Roads near,highway,unclassified,near,Y 
+Unsurfaced Road,highway,unsurfaced,-,N 
+Unsurfaced Roads,highway,unsurfaced,-,Y 
+Unsurfaced Road in,highway,unsurfaced,in,N 
+Unsurfaced Roads in,highway,unsurfaced,in,Y 
+Unsurfaced Road near,highway,unsurfaced,near,N 
+Unsurfaced Roads near,highway,unsurfaced,near,Y 
+Archaeological Site,historic,archaeological_site,-,N 
+Archaeological Sites,historic,archaeological_site,-,Y 
+Archaeological Site in,historic,archaeological_site,in,N 
+Archaeological Sites in,historic,archaeological_site,in,Y 
+Archaeological Site near,historic,archaeological_site,near,N 
+Archaeological Sites near,historic,archaeological_site,near,Y 
+Battlefield,historic,battlefield,-,N 
+Battlefields,historic,battlefield,-,Y 
+Battlefield in,historic,battlefield,in,N 
+Battlefields in,historic,battlefield,in,Y 
+Battlefield near,historic,battlefield,near,N 
+Battlefields near,historic,battlefield,near,Y 
+Boundary Stone,historic,boundary_stone,-,N 
+Boundary Stones,historic,boundary_stone,-,Y 
+Boundary Stone in,historic,boundary_stone,in,N 
+Boundary Stones in,historic,boundary_stone,in,Y 
+Boundary Stone near,historic,boundary_stone,near,N 
+Boundary Stones near,historic,boundary_stone,near,Y 
+Historic Building,historic,building,-,N 
+Historic Buildings,historic,building,-,Y 
+Historic Building in,historic,building,in,N 
+Historic Buildings in,historic,building,in,Y 
+Historic Building near,historic,building,near,N 
+Historic Buildings near,historic,building,near,Y 
+Castle,historic,castle,-,N 
+Castles,historic,castle,-,Y 
+Castle in,historic,castle,in,N 
+Castles in,historic,castle,in,Y 
+Castle near,historic,castle,near,N 
+Castles near,historic,castle,near,Y 
+Manor,historic,manor,-,N 
+Manors,historic,manor,-,Y 
+Manor in,historic,manor,in,N 
+Manors in,historic,manor,in,Y 
+Manor near,historic,manor,near,N 
+Manors near,historic,manor,near,Y 
+Memorial,historic,memorial,-,N 
+Memorials,historic,memorial,-,Y 
+Memorial in,historic,memorial,in,N 
+Memorials in,historic,memorial,in,Y 
+Memorial near,historic,memorial,near,N 
+Memorials near,historic,memorial,near,Y 
+Mine,historic,mine,-,N 
+Mines,historic,mine,-,Y 
+Mine in,historic,mine,in,N 
+Mines in,historic,mine,in,Y 
+Mine near,historic,mine,near,N 
+Mines near,historic,mine,near,Y 
+Monument,historic,monument,-,N 
+Monuments,historic,monument,-,Y 
+Monument in,historic,monument,in,N 
+Monuments in,historic,monument,in,Y 
+Monument near,historic,monument,near,N 
+Monuments near,historic,monument,near,Y 
+Ruin,historic,ruins,-,N 
+Ruins,historic,ruins,-,Y 
+Ruin in,historic,ruins,in,N 
+Ruins in,historic,ruins,in,Y 
+Ruin near,historic,ruins,near,N 
+Ruins near,historic,ruins,near,Y 
+Wayside Cross,historic,wayside_cross,-,N 
+Wayside Crosses,historic,wayside_cross,-,Y 
+Wayside Cross in,historic,wayside_cross,in,N 
+Wayside Crosses in,historic,wayside_cross,in,Y 
+Wayside Cross near,historic,wayside_cross,near,N 
+Wayside Crosses near,historic,wayside_cross,near,Y 
+Wayside Shrine,historic,wayside_shrine,-,N 
+Wayside Shrines,historic,wayside_shrine,-,Y 
+Wayside Shrine in,historic,wayside_shrine,in,N 
+Wayside Shrines in,historic,wayside_shrine,in,Y 
+Wayside Shrine near,historic,wayside_shrine,near,N 
+Wayside Shrines near,historic,wayside_shrine,near,Y 
+Wreck,historic,wreck,-,N 
+Wrecks,historic,wreck,-,Y 
+Wreck in,historic,wreck,in,N 
+Wrecks in,historic,wreck,in,Y 
+Wreck near,historic,wreck,near,N 
+Wrecks near,historic,wreck,near,Y 
+Allotment,landuse,allotments,-,N 
+Allotments,landuse,allotments,-,Y 
+Allotment in,landuse,allotments,in,N 
+Allotments in,landuse,allotments,in,Y 
+Allotment near,landuse,allotments,near,N 
+Allotments near,landuse,allotments,near,Y 
+Roundabout,junction,roundabout,-,N 
+Roundabouts,junction,roundabout,-,Y 
+Roundabout in,junction,roundabout,in,N 
+Roundabouts in,junction,roundabout,in,Y 
+Roundabout near,junction,roundabout,near,N 
+Roundabouts near,junction,roundabout,near,Y 
+Basin,landuse,basin,-,N 
+Basins,landuse,basin,-,Y 
+Basin in,landuse,basin,in,N 
+Basins in,landuse,basin,in,Y 
+Basin near,landuse,basin,near,N 
+Basins near,landuse,basin,near,Y 
+Brownfield Land,landuse,brownfield,-,N 
+Brownfield Lands,landuse,brownfield,-,Y 
+Brownfield Land in,landuse,brownfield,in,N 
+Brownfield Lands in,landuse,brownfield,in,Y 
+Brownfield Land near,landuse,brownfield,near,N 
+Brownfield Lands near,landuse,brownfield,near,Y 
+Cemetery,landuse,cemetery,-,N 
+Cemeterys,landuse,cemetery,-,Y 
+Cemeteries,landuse,cemetery,-,Y 
+Cemetery in,landuse,cemetery,in,N 
+Cemeterys in,landuse,cemetery,in,Y 
+Cemeteries in,landuse,cemetery,in,Y 
+Cemetery near,landuse,cemetery,near,N 
+Cemeterys near,landuse,cemetery,near,Y 
+Cemeteries near,landuse,cemetery,near,Y 
+Commercial Area,landuse,commercial,-,N 
+Commercial Areas,landuse,commercial,-,Y 
+Commercial Area in,landuse,commercial,in,N 
+Commercial Areas in,landuse,commercial,in,Y 
+Commercial Area near,landuse,commercial,near,N 
+Commercial Areas near,landuse,commercial,near,Y 
+Conservation,landuse,conservation,-,N 
+Conservations,landuse,conservation,-,Y 
+Conservation in,landuse,conservation,in,N 
+Conservations in,landuse,conservation,in,Y 
+Conservation near,landuse,conservation,near,N 
+Conservations near,landuse,conservation,near,Y 
+Construction,landuse,construction,-,N 
+Constructions,landuse,construction,-,Y 
+Construction in,landuse,construction,in,N 
+Constructions in,landuse,construction,in,Y 
+Construction near,landuse,construction,near,N 
+Constructions near,landuse,construction,near,Y 
+Farm,landuse,farm,-,N 
+Farms,landuse,farm,-,Y 
+Farm in,landuse,farm,in,N 
+Farms in,landuse,farm,in,Y 
+Farm near,landuse,farm,near,N 
+Farms near,landuse,farm,near,Y 
+Farmland,landuse,farmland,-,N 
+Farmlands,landuse,farmland,-,Y 
+Farmland in,landuse,farmland,in,N 
+Farmlands in,landuse,farmland,in,Y 
+Farmland near,landuse,farmland,near,N 
+Farmlands near,landuse,farmland,near,Y 
+Farmyard,landuse,farmyard,-,N 
+Farmyards,landuse,farmyard,-,Y 
+Farmyard in,landuse,farmyard,in,N 
+Farmyards in,landuse,farmyard,in,Y 
+Farmyard near,landuse,farmyard,near,N 
+Farmyards near,landuse,farmyard,near,Y 
+Forest,landuse,forest,-,N 
+Forests,landuse,forest,-,Y 
+Forest in,landuse,forest,in,N 
+Forests in,landuse,forest,in,Y 
+Forest near,landuse,forest,near,N 
+Forests near,landuse,forest,near,Y 
+Wood,landuse,forest,-,N 
+Woods,landuse,forest,-,Y 
+Wood in,landuse,forest,in,N 
+Woods in,landuse,forest,in,Y 
+Wood near,landuse,forest,near,N 
+Woods near,landuse,forest,near,Y 
+Grass,landuse,grass,-,N 
+Grasses,landuse,grass,-,Y 
+Grass in,landuse,grass,in,N 
+Grasses in,landuse,grass,in,Y 
+Grass near,landuse,grass,near,N 
+Grasses near,landuse,grass,near,Y 
+Greenfield Land,landuse,greenfield,-,N 
+Greenfield Lands,landuse,greenfield,-,Y 
+Greenfield Land in,landuse,greenfield,in,N 
+Greenfield Lands in,landuse,greenfield,in,Y 
+Greenfield Land near,landuse,greenfield,near,N 
+Greenfield Lands near,landuse,greenfield,near,Y 
+Industrial Area,landuse,industrial,-,N 
+Industrial Areas,landuse,industrial,-,Y 
+Industrial Area in,landuse,industrial,in,N 
+Industrial Areas in,landuse,industrial,in,Y 
+Industrial Area near,landuse,industrial,near,N 
+Industrial Areas near,landuse,industrial,near,Y 
+Landfill,landuse,landfill,-,N 
+Landfills,landuse,landfill,-,Y 
+Landfill in,landuse,landfill,in,N 
+Landfills in,landuse,landfill,in,Y 
+Landfill near,landuse,landfill,near,N 
+Landfills near,landuse,landfill,near,Y 
+Meadow,landuse,meadow,-,N 
+Meadows,landuse,meadow,-,Y 
+Meadow in,landuse,meadow,in,N 
+Meadows in,landuse,meadow,in,Y 
+Meadow near,landuse,meadow,near,N 
+Meadows near,landuse,meadow,near,Y 
+Military Area,landuse,military,-,N 
+Military Areas,landuse,military,-,Y 
+Military Area in,landuse,military,in,N 
+Military Areas in,landuse,military,in,Y 
+Military Area near,landuse,military,near,N 
+Military Areas near,landuse,military,near,Y 
+Piste,landuse,piste,-,N 
+Pistes,landuse,piste,-,Y 
+Piste in,landuse,piste,in,N 
+Pistes in,landuse,piste,in,Y 
+Piste near,landuse,piste,near,N 
+Pistes near,landuse,piste,near,Y 
+Quarry,landuse,quarry,-,N 
+Quarrys,landuse,quarry,-,Y 
+Quarries,landuse,quarry,-,Y 
+Quarry in,landuse,quarry,in,N 
+Quarrys in,landuse,quarry,in,Y 
+Quarries in,landuse,quarry,in,Y 
+Quarry near,landuse,quarry,near,N 
+Quarrys near,landuse,quarry,near,Y 
+Quarries near,landuse,quarry,near,Y 
+Railway,landuse,railway,-,N 
+Railways,landuse,railway,-,Y 
+Railway in,landuse,railway,in,N 
+Railways in,landuse,railway,in,Y 
+Railway near,landuse,railway,near,N 
+Railways near,landuse,railway,near,Y 
+Recreation Ground,landuse,recreation_ground,-,N 
+Recreation Grounds,landuse,recreation_ground,-,Y 
+Recreation Ground in,landuse,recreation_ground,in,N 
+Recreation Grounds in,landuse,recreation_ground,in,Y 
+Recreation Ground near,landuse,recreation_ground,near,N 
+Recreation Grounds near,landuse,recreation_ground,near,Y 
+Reservoir,landuse,reservoir,-,N 
+Reservoirs,landuse,reservoir,-,Y 
+Reservoir in,landuse,reservoir,in,N 
+Reservoirs in,landuse,reservoir,in,Y 
+Reservoir near,landuse,reservoir,near,N 
+Reservoirs near,landuse,reservoir,near,Y 
+Residential Area,landuse,residential,-,N 
+Residential Areas,landuse,residential,-,Y 
+Residential Area in,landuse,residential,in,N 
+Residential Areas in,landuse,residential,in,Y 
+Residential Area near,landuse,residential,near,N 
+Residential Areas near,landuse,residential,near,Y 
+Retail,landuse,retail,-,N 
+Retails,landuse,retail,-,Y 
+Retail in,landuse,retail,in,N 
+Retails in,landuse,retail,in,Y 
+Retail near,landuse,retail,near,N 
+Retails near,landuse,retail,near,Y 
+Village Green,landuse,village_green,-,N 
+Village Greens,landuse,village_green,-,Y 
+Village Green in,landuse,village_green,in,N 
+Village Greens in,landuse,village_green,in,Y 
+Village Green near,landuse,village_green,near,N 
+Village Greens near,landuse,village_green,near,Y 
+Vineyard,landuse,vineyard,-,N 
+Vineyards,landuse,vineyard,-,Y 
+Vineyard in,landuse,vineyard,in,N 
+Vineyards in,landuse,vineyard,in,Y 
+Vineyard near,landuse,vineyard,near,N 
+Vineyards near,landuse,vineyard,near,Y 
+Beach Resort,leisure,beach_resort,-,N 
+Beach Resorts,leisure,beach_resort,-,Y 
+Beach Resort in,leisure,beach_resort,in,N 
+Beach Resorts in,leisure,beach_resort,in,Y 
+Beach Resort near,leisure,beach_resort,near,N 
+Beach Resorts near,leisure,beach_resort,near,Y 
+Common Land,leisure,common,-,N 
+Common Lands,leisure,common,-,Y 
+Common Land in,leisure,common,in,N 
+Common Lands in,leisure,common,in,Y 
+Common Land near,leisure,common,near,N 
+Common Lands near,leisure,common,near,Y 
+Fishing Area,leisure,fishing,-,N 
+Fishing Areas,leisure,fishing,-,Y 
+Fishing Area in,leisure,fishing,in,N 
+Fishing Areas in,leisure,fishing,in,Y 
+Fishing Area near,leisure,fishing,near,N 
+Fishing Areas near,leisure,fishing,near,Y 
+Garden,leisure,garden,-,N 
+Gardens,leisure,garden,-,Y 
+Garden in,leisure,garden,in,N 
+Gardens in,leisure,garden,in,Y 
+Garden near,leisure,garden,near,N 
+Gardens near,leisure,garden,near,Y 
+Golf Course,leisure,golf_course,-,N 
+Golf Courses,leisure,golf_course,-,Y 
+Golf Course in,leisure,golf_course,in,N 
+Golf Courses in,leisure,golf_course,in,Y 
+Golf Course near,leisure,golf_course,near,N 
+Golf Courses near,leisure,golf_course,near,Y 
+Hackerspace,leisure,hackerspace,-,N 
+Hackerspaces,leisure,hackerspace,-,Y 
+Hackerspace in,leisure,hackerspace,in,N 
+Hackerspaces in,leisure,hackerspace,in,Y 
+Hackerspace near,leisure,hackerspace,near,N 
+Hackerspaces near,leisure,hackerspace,near,Y 
+Ice Rink,leisure,ice_rink,-,N 
+Ice Rinks,leisure,ice_rink,-,Y 
+Ice Rink in,leisure,ice_rink,in,N 
+Ice Rinks in,leisure,ice_rink,in,Y 
+Ice Rink near,leisure,ice_rink,near,N 
+Ice Rinks near,leisure,ice_rink,near,Y 
+Marina,leisure,marina,-,N 
+Marinas,leisure,marina,-,Y 
+Marina in,leisure,marina,in,N 
+Marinas in,leisure,marina,in,Y 
+Marina near,leisure,marina,near,N 
+Marinas near,leisure,marina,near,Y 
+Miniature Golf,leisure,miniature_golf,-,N 
+Miniature Golfs,leisure,miniature_golf,-,Y 
+Miniature Golf in,leisure,miniature_golf,in,N 
+Miniature Golfs in,leisure,miniature_golf,in,Y 
+Miniature Golf near,leisure,miniature_golf,near,N 
+Miniature Golfs near,leisure,miniature_golf,near,Y 
+Nature Reserve,leisure,nature_reserve,-,N 
+Nature Reserves,leisure,nature_reserve,-,Y 
+Nature Reserve in,leisure,nature_reserve,in,N 
+Nature Reserves in,leisure,nature_reserve,in,Y 
+Nature Reserve near,leisure,nature_reserve,near,N 
+Nature Reserves near,leisure,nature_reserve,near,Y 
+Park,leisure,park,-,N 
+Parks,leisure,park,-,Y 
+Park in,leisure,park,in,N 
+Parks in,leisure,park,in,Y 
+Park near,leisure,park,near,N 
+Parks near,leisure,park,near,Y 
+Sports Pitch,leisure,pitch,-,N 
+Sports Pitches,leisure,pitch,-,Y 
+Sports Pitch in,leisure,pitch,in,N 
+Sports Pitches in,leisure,pitch,in,Y 
+Sports Pitch near,leisure,pitch,near,N 
+Sports Pitches near,leisure,pitch,near,Y 
+Playground,leisure,playground,-,N 
+Playgrounds,leisure,playground,-,Y 
+Playground in,leisure,playground,in,N 
+Playgrounds in,leisure,playground,in,Y 
+Playground near,leisure,playground,near,N 
+Playgrounds near,leisure,playground,near,Y 
+Recreation Ground,leisure,recreation_ground,-,N 
+Recreation Grounds,leisure,recreation_ground,-,Y 
+Recreation Ground in,leisure,recreation_ground,in,N 
+Recreation Grounds in,leisure,recreation_ground,in,Y 
+Recreation Ground near,leisure,recreation_ground,near,N 
+Recreation Grounds near,leisure,recreation_ground,near,Y 
+Slipway,leisure,slipway,-,N 
+Slipways,leisure,slipway,-,Y 
+Slipway in,leisure,slipway,in,N 
+Slipways in,leisure,slipway,in,Y 
+Slipway near,leisure,slipway,near,N 
+Slipways near,leisure,slipway,near,Y 
+Sports Centre,leisure,sports_centre,-,N 
+Sports Centres,leisure,sports_centre,-,Y 
+Sports Centre in,leisure,sports_centre,in,N 
+Sports Centres in,leisure,sports_centre,in,Y 
+Sports Centre near,leisure,sports_centre,near,N 
+Sports Centres near,leisure,sports_centre,near,Y 
+Sports Centre,leisure,sports_centre,-,N 
+Sports Centers,leisure,sports_centre,-,Y 
+Sports Center in,leisure,sports_centre,in,N 
+Sports Centers in,leisure,sports_centre,in,Y 
+Sports Center near,leisure,sports_centre,near,N 
+Sports Centers near,leisure,sports_centre,near,Y 
+Stadium,leisure,stadium,-,N 
+Stadiums,leisure,stadium,-,Y 
+Stadium in,leisure,stadium,in,N 
+Stadiums in,leisure,stadium,in,Y 
+Stadium near,leisure,stadium,near,N 
+Stadiums near,leisure,stadium,near,Y 
+Swimming Pool,leisure,swimming_pool,-,N 
+Swimming Pools,leisure,swimming_pool,-,Y 
+Swimming Pool in,leisure,swimming_pool,in,N 
+Swimming Pools in,leisure,swimming_pool,in,Y 
+Swimming Pool near,leisure,swimming_pool,near,N 
+Swimming Pools near,leisure,swimming_pool,near,Y 
+Running Track,leisure,track,-,N 
+Running Tracks,leisure,track,-,Y 
+Running Track in,leisure,track,in,N 
+Running Tracks in,leisure,track,in,Y 
+Running Track near,leisure,track,near,N 
+Running Tracks near,leisure,track,near,Y 
+Water Park,leisure,water_park,-,N 
+Water Parks,leisure,water_park,-,Y 
+Water Park in,leisure,water_park,in,N 
+Water Parks in,leisure,water_park,in,Y 
+Water Park near,leisure,water_park,near,N 
+Water Parks near,leisure,water_park,near,Y 
+Water well,man_made,water_well,-,N 
+Water wells,man_made,water_well,-,Y 
+Water well in,man_made,water_well,in,N 
+Water wells in,man_made,water_well,in,Y 
+Water well near,man_made,water_well,near,N 
+Water wells near,man_made,water_well,near,Y 
+Windmill,man_made,windmill,-,N 
+Windmills,man_made,windmill,-,Y 
+Windmill in,man_made,windmill,in,N 
+Windmills in,man_made,windmill,in,Y 
+Windmill near,man_made,windmill,near,N 
+Windmills near,man_made,windmill,near,Y 
+Maypole,man_made,maypole,-,N 
+Maypoles,man_made,maypole,-,Y 
+Maypole in,man_made,maypole,in,N 
+Maypoles in,man_made,maypole,in,Y 
+Maypole near,man_made,maypole,near,N 
+Maypoles near,man_made,maypole,near,Y 
+Plaque,memorial,plaque,-,N 
+Plaques,memorial,plaque,-,Y 
+Plaque in,memorial,plaque,in,N 
+Plaques in,memorial,plaque,in,Y 
+Plaque near,memorial,plaque,near,N 
+Plaques near,memorial,plaque,near,Y 
+Statue,memorial,statue,-,N 
+Statues,memorial,statue,-,Y 
+Statue in,memorial,statue,in,N 
+Statues in,memorial,statue,in,Y 
+Statue near,memorial,statue,near,N 
+Statues near,memorial,statue,near,Y 
+Stolperstein,memorial,stolperstein,-,N 
+Stolpersteins,memorial,stolperstein,-,Y 
+Stolpersteine,memorial,stolperstein,-,Y 
+Stolperstein in,memorial,stolperstein,in,N 
+Stolpersteins in,memorial,stolperstein,in,Y 
+Stolpersteine in,memorial,stolperstein,in,Y 
+Stolperstein near,memorial,stolperstein,near,N 
+Stolpersteins near,memorial,stolperstein,near,Y 
+Stolpersteine near,memorial,stolperstein,near,Y 
+War Memorial,memorial,war_memorial,-,N 
+War Memorials,memorial,war_memorial,-,Y 
+War Memorial in,memorial,war_memorial,in,N 
+War Memorials in,memorial,war_memorial,in,Y 
+War Memorial near,memorial,war_memorial,near,N 
+War Memorials near,memorial,war_memorial,near,Y 
+Bay,natural,bay,-,N 
+Bays,natural,bay,-,Y 
+Bay in,natural,bay,in,N 
+Bays in,natural,bay,in,Y 
+Bay near,natural,bay,near,N 
+Bays near,natural,bay,near,Y 
+Beach,natural,beach,-,N 
+Beachs,natural,beach,-,Y 
+Beaches,natural,beach,-,Y 
+Beach in,natural,beach,in,N 
+Beachs in,natural,beach,in,Y 
+Beaches in,natural,beach,in,Y 
+Beach near,natural,beach,near,N 
+Beachs near,natural,beach,near,Y 
+Beaches near,natural,beach,near,Y 
+Cape,natural,cape,-,N 
+Capes,natural,cape,-,Y 
+Cape in,natural,cape,in,N 
+Capes in,natural,cape,in,Y 
+Cape near,natural,cape,near,N 
+Capes near,natural,cape,near,Y 
+Cave Entrance,natural,cave_entrance,-,N 
+Cave Entrances,natural,cave_entrance,-,Y 
+Cave Entrance in,natural,cave_entrance,in,N 
+Cave Entrances in,natural,cave_entrance,in,Y 
+Cave Entrance near,natural,cave_entrance,near,N 
+Cave Entrances near,natural,cave_entrance,near,Y 
+Cliff,natural,cliff,-,N 
+Cliffs,natural,cliff,-,Y 
+Cliff in,natural,cliff,in,N 
+Cliffs in,natural,cliff,in,Y 
+Cliff near,natural,cliff,near,N 
+Cliffs near,natural,cliff,near,Y 
+Coastline,natural,coastline,-,N 
+Coastlines,natural,coastline,-,Y 
+Coastline in,natural,coastline,in,N 
+Coastlines in,natural,coastline,in,Y 
+Coastline near,natural,coastline,near,N 
+Coastlines near,natural,coastline,near,Y 
+Desert,natural,desert,-,N 
+Deserts,natural,desert,-,Y 
+Desert in,natural,desert,in,N 
+Deserts in,natural,desert,in,Y 
+Desert near,natural,desert,near,N 
+Deserts near,natural,desert,near,Y 
+Fell,natural,fell,-,N 
+Fells,natural,fell,-,Y 
+Fell in,natural,fell,in,N 
+Fells in,natural,fell,in,Y 
+Fell near,natural,fell,near,N 
+Fells near,natural,fell,near,Y 
+Glacier,natural,glacier,-,N 
+Glaciers,natural,glacier,-,Y 
+Glacier in,natural,glacier,in,N 
+Glaciers in,natural,glacier,in,Y 
+Glacier near,natural,glacier,near,N 
+Glaciers near,natural,glacier,near,Y 
+Heath,natural,heath,-,N 
+Heaths,natural,heath,-,Y 
+Heath in,natural,heath,in,N 
+Heaths in,natural,heath,in,Y 
+Heath near,natural,heath,near,N 
+Heaths near,natural,heath,near,Y 
+Land,natural,land,-,N 
+Lands,natural,land,-,Y 
+Land in,natural,land,in,N 
+Lands in,natural,land,in,Y 
+Land near,natural,land,near,N 
+Lands near,natural,land,near,Y 
+Marsh,natural,marsh,-,N 
+Marshs,natural,marsh,-,Y 
+Marshes,natural,marsh,-,Y 
+Marsh in,natural,marsh,in,N 
+Marshs in,natural,marsh,in,Y 
+Marshes in,natural,marsh,in,Y 
+Marsh near,natural,marsh,near,N 
+Marshs near,natural,marsh,near,Y 
+Marshes near,natural,marsh,near,Y 
+Moor,natural,moor,-,N 
+Moors,natural,moor,-,Y 
+Moor in,natural,moor,in,N 
+Moors in,natural,moor,in,Y 
+Moor near,natural,moor,near,N 
+Moors near,natural,moor,near,Y 
+Mud,natural,mud,-,N 
+Muds,natural,mud,-,Y 
+Mud in,natural,mud,in,N 
+Muds in,natural,mud,in,Y 
+Mud near,natural,mud,near,N 
+Muds near,natural,mud,near,Y 
+Peak,natural,peak,-,N 
+Peaks,natural,peak,-,Y 
+Peak in,natural,peak,in,N 
+Peaks in,natural,peak,in,Y 
+Peak near,natural,peak,near,N 
+Peaks near,natural,peak,near,Y 
+Reef,natural,reef,-,N 
+Reefs,natural,reef,-,Y 
+Reef in,natural,reef,in,N 
+Reefs in,natural,reef,in,Y 
+Reef near,natural,reef,near,N 
+Reefs near,natural,reef,near,Y 
+Ridge,natural,ridge,-,N 
+Ridges,natural,ridge,-,Y 
+Ridge in,natural,ridge,in,N 
+Ridges in,natural,ridge,in,Y 
+Ridge near,natural,ridge,near,N 
+Ridges near,natural,ridge,near,Y 
+Rock,natural,rock,-,N 
+Rocks,natural,rock,-,Y 
+Rock in,natural,rock,in,N 
+Rocks in,natural,rock,in,Y 
+Rock near,natural,rock,near,N 
+Rocks near,natural,rock,near,Y 
+Scree,natural,scree,-,N 
+Screes,natural,scree,-,Y 
+Scree in,natural,scree,in,N 
+Screes in,natural,scree,in,Y 
+Scree near,natural,scree,near,N 
+Screes near,natural,scree,near,Y 
+Scrub,natural,scrub,-,N 
+Scrubs,natural,scrub,-,Y 
+Scrub in,natural,scrub,in,N 
+Scrubs in,natural,scrub,in,Y 
+Scrub near,natural,scrub,near,N 
+Scrubs near,natural,scrub,near,Y 
+Shoal,natural,shoal,-,N 
+Shoals,natural,shoal,-,Y 
+Shoal in,natural,shoal,in,N 
+Shoals in,natural,shoal,in,Y 
+Shoal near,natural,shoal,near,N 
+Shoals near,natural,shoal,near,Y 
+Spring,natural,spring,-,N 
+Springs,natural,spring,-,Y 
+Spring in,natural,spring,in,N 
+Springs in,natural,spring,in,Y 
+Spring near,natural,spring,near,N 
+Springs near,natural,spring,near,Y 
+Tree,natural,tree,-,N 
+Trees,natural,tree,-,Y 
+Tree in,natural,tree,in,N 
+Trees in,natural,tree,in,Y 
+Tree near,natural,tree,near,N 
+Trees near,natural,tree,near,Y 
+Valley,natural,valley,-,N 
+Valleys,natural,valley,-,Y 
+Valley in,natural,valley,in,N 
+Valleys in,natural,valley,in,Y 
+Valley near,natural,valley,near,N 
+Valleys near,natural,valley,near,Y 
+Volcano,natural,volcano,-,N 
+Volcanos,natural,volcano,-,Y 
+Volcano in,natural,volcano,in,N 
+Volcanos in,natural,volcano,in,Y 
+Volcano near,natural,volcano,near,N 
+Volcanos near,natural,volcano,near,Y 
+Water,natural,water,-,N 
+Waters,natural,water,-,Y 
+Water in,natural,water,in,N 
+Waters in,natural,water,in,Y 
+Water near,natural,water,near,N 
+Waters near,natural,water,near,Y 
+Wetland,natural,wetland,-,N 
+Wetlands,natural,wetland,-,Y 
+Wetland in,natural,wetland,in,N 
+Wetlands in,natural,wetland,in,Y 
+Wetland near,natural,wetland,near,N 
+Wetlands near,natural,wetland,near,Y 
+Wood,natural,wood,-,N 
+Woods,natural,wood,-,Y 
+Wood in,natural,wood,in,N 
+Woods in,natural,wood,in,Y 
+Wood near,natural,wood,near,N 
+Woods near,natural,wood,near,Y 
+City,place,city,-,N 
+Citys,place,city,-,Y 
+Cities,place,city,-,Y 
+City in,place,city,in,N 
+Citys in,place,city,in,Y 
+Cities in,place,city,in,Y 
+City near,place,city,near,N 
+Citys near,place,city,near,Y 
+Cities near,place,city,near,Y 
+Country,place,country,-,N 
+Countrys,place,country,-,Y 
+Countries,place,country,-,Y 
+Country in,place,country,in,N 
+Countrys in,place,country,in,Y 
+Countries in,place,country,in,Y 
+Country near,place,country,near,N 
+Countrys near,place,country,near,Y 
+Countries near,place,country,near,Y 
+County,place,county,-,N 
+Countys,place,county,-,Y 
+Counties,place,county,-,Y 
+County in,place,county,in,N 
+Countys in,place,county,in,Y 
+Counties in,place,county,in,Y 
+County near,place,county,near,N 
+Countys near,place,county,near,Y 
+Counties near,place,county,near,Y 
+Farm,place,farm,-,N 
+Farms,place,farm,-,Y 
+Farm in,place,farm,in,N 
+Farms in,place,farm,in,Y 
+Farm near,place,farm,near,N 
+Farms near,place,farm,near,Y 
+Hamlet,place,hamlet,-,N 
+Hamlets,place,hamlet,-,Y 
+Hamlet in,place,hamlet,in,N 
+Hamlets in,place,hamlet,in,Y 
+Hamlet near,place,hamlet,near,N 
+Hamlets near,place,hamlet,near,Y 
+Houses,place,houses,-,N 
+Houses,place,houses,-,Y 
+Houses in,place,houses,in,N 
+Houses in,place,houses,in,Y 
+Houses near,place,houses,near,N 
+Houses near,place,houses,near,Y 
+Island,place,island,-,N 
+Islands,place,island,-,Y 
+Island in,place,island,in,N 
+Islands in,place,island,in,Y 
+Island near,place,island,near,N 
+Islands near,place,island,near,Y 
+Islet,place,islet,-,N 
+Islets,place,islet,-,Y 
+Islet in,place,islet,in,N 
+Islets in,place,islet,in,Y 
+Islet near,place,islet,near,N 
+Islets near,place,islet,near,Y 
+Locality,place,locality,-,N 
+Localitys,place,locality,-,Y 
+Localities,place,locality,-,Y 
+Locality in,place,locality,in,N 
+Localitys in,place,locality,in,Y 
+Localities in,place,locality,in,Y 
+Locality near,place,locality,near,N 
+Localitys near,place,locality,near,Y 
+Localities near,place,locality,near,Y 
+Municipality,place,municipality,-,N 
+Municipalitys,place,municipality,-,Y 
+Municipalities,place,municipality,-,Y 
+Municipality in,place,municipality,in,N 
+Municipalitys in,place,municipality,in,Y 
+Municipalities in,place,municipality,in,Y 
+Municipality near,place,municipality,near,N 
+Municipalitys near,place,municipality,near,Y 
+Municipalities near,place,municipality,near,Y 
+Region,place,region,-,N 
+Regions,place,region,-,Y 
+Region in,place,region,in,N 
+Regions in,place,region,in,Y 
+Region near,place,region,near,N 
+Regions near,place,region,near,Y 
+Sea,place,sea,-,N 
+Seas,place,sea,-,Y 
+Sea in,place,sea,in,N 
+Seas in,place,sea,in,Y 
+Sea near,place,sea,near,N 
+Seas near,place,sea,near,Y 
+State,place,state,-,N 
+States,place,state,-,Y 
+State in,place,state,in,N 
+States in,place,state,in,Y 
+State near,place,state,near,N 
+States near,place,state,near,Y 
+Suburb,place,suburb,-,N 
+Suburbs,place,suburb,-,Y 
+Suburb in,place,suburb,in,N 
+Suburbs in,place,suburb,in,Y 
+Suburb near,place,suburb,near,N 
+Suburbs near,place,suburb,near,Y 
+Town,place,town,-,N 
+Towns,place,town,-,Y 
+Town in,place,town,in,N 
+Towns in,place,town,in,Y 
+Town near,place,town,near,N 
+Towns near,place,town,near,Y 
+Village,place,village,-,N 
+Villages,place,village,-,Y 
+Village in,place,village,in,N 
+Villages in,place,village,in,Y 
+Village near,place,village,near,N 
+Villages near,place,village,near,Y 
+Abandoned Railway,railway,abandoned,-,N 
+Abandoned Railways,railway,abandoned,-,Y 
+Abandoned Railway in,railway,abandoned,in,N 
+Abandoned Railways in,railway,abandoned,in,Y 
+Abandoned Railway near,railway,abandoned,near,N 
+Abandoned Railways near,railway,abandoned,near,Y 
+Railway under Construction,railway,construction,-,N 
+Railway under Constructions,railway,construction,-,Y 
+Railway under Construction in,railway,construction,in,N 
+Railway under Constructions in,railway,construction,in,Y 
+Railway under Construction near,railway,construction,near,N 
+Railway under Constructions near,railway,construction,near,Y 
+Disused Railway,railway,disused,-,N 
+Disused Railways,railway,disused,-,Y 
+Disused Railway in,railway,disused,in,N 
+Disused Railways in,railway,disused,in,Y 
+Disused Railway near,railway,disused,near,N 
+Disused Railways near,railway,disused,near,Y 
+Funicular Railway,railway,funicular,-,N 
+Funicular Railways,railway,funicular,-,Y 
+Funicular Railway in,railway,funicular,in,N 
+Funicular Railways in,railway,funicular,in,Y 
+Funicular Railway near,railway,funicular,near,N 
+Funicular Railways near,railway,funicular,near,Y 
+Train Stop,railway,halt,-,N 
+Train Stops,railway,halt,-,Y 
+Train Stop in,railway,halt,in,N 
+Train Stops in,railway,halt,in,Y 
+Train Stop near,railway,halt,near,N 
+Train Stops near,railway,halt,near,Y 
+Level Crossing,railway,level_crossing,-,N 
+Level Crossings,railway,level_crossing,-,Y 
+Level Crossing in,railway,level_crossing,in,N 
+Level Crossings in,railway,level_crossing,in,Y 
+Level Crossing near,railway,level_crossing,near,N 
+Level Crossings near,railway,level_crossing,near,Y 
+Light Rail,railway,light_rail,-,N 
+Light Rails,railway,light_rail,-,Y 
+Light Rail in,railway,light_rail,in,N 
+Light Rails in,railway,light_rail,in,Y 
+Light Rail near,railway,light_rail,near,N 
+Light Rails near,railway,light_rail,near,Y 
+Monorail,railway,monorail,-,N 
+Monorails,railway,monorail,-,Y 
+Monorail in,railway,monorail,in,N 
+Monorails in,railway,monorail,in,Y 
+Monorail near,railway,monorail,near,N 
+Monorails near,railway,monorail,near,Y 
+Narrow Gauge Railway,railway,narrow_gauge,-,N 
+Narrow Gauge Railways,railway,narrow_gauge,-,Y 
+Narrow Gauge Railway in,railway,narrow_gauge,in,N 
+Narrow Gauge Railways in,railway,narrow_gauge,in,Y 
+Narrow Gauge Railway near,railway,narrow_gauge,near,N 
+Narrow Gauge Railways near,railway,narrow_gauge,near,Y 
+Railway Platform,railway,platform,-,N 
+Railway Platforms,railway,platform,-,Y 
+Railway Platform in,railway,platform,in,N 
+Railway Platforms in,railway,platform,in,Y 
+Railway Platform near,railway,platform,near,N 
+Railway Platforms near,railway,platform,near,Y 
+Preserved Railway,railway,preserved,-,N 
+Preserved Railways,railway,preserved,-,Y 
+Preserved Railway in,railway,preserved,in,N 
+Preserved Railways in,railway,preserved,in,Y 
+Preserved Railway near,railway,preserved,near,N 
+Preserved Railways near,railway,preserved,near,Y 
+Railway Station,railway,station,-,N 
+Railway Stations,railway,station,-,Y 
+Railway Station in,railway,station,in,N 
+Railway Stations in,railway,station,in,Y 
+Railway Station near,railway,station,near,N 
+Railway Stations near,railway,station,near,Y 
+Station,railway,station,-,N 
+Stations,railway,station,-,Y 
+Station in,railway,station,in,N 
+Stations in,railway,station,in,Y 
+Station near,railway,station,near,N 
+Stations near,railway,station,near,Y 
+Subway Station,railway,subway,-,N 
+Subway Stations,railway,subway,-,Y 
+Subway Station in,railway,subway,in,N 
+Subway Stations in,railway,subway,in,Y 
+Subway Station near,railway,subway,near,N 
+Subway Stations near,railway,subway,near,Y 
+Subway Entrance,railway,subway_entrance,-,N 
+Subway Entrances,railway,subway_entrance,-,Y 
+Subway Entrance in,railway,subway_entrance,in,N 
+Subway Entrances in,railway,subway_entrance,in,Y 
+Subway Entrance near,railway,subway_entrance,near,N 
+Subway Entrances near,railway,subway_entrance,near,Y 
+Railway Points,railway,switch,-,N 
+Railway Points,railway,switch,-,Y 
+Railway Points in,railway,switch,in,N 
+Railway Points in,railway,switch,in,Y 
+Railway Points near,railway,switch,near,N 
+Railway Points near,railway,switch,near,Y 
+Tramway,railway,tram,-,N 
+Tramways,railway,tram,-,Y 
+Tramway in,railway,tram,in,N 
+Tramways in,railway,tram,in,Y 
+Tramway near,railway,tram,near,N 
+Tramways near,railway,tram,near,Y 
+Tram Stop,railway,tram_stop,-,N 
+Tram Stops,railway,tram_stop,-,Y 
+Tram Stop in,railway,tram_stop,in,N 
+Tram Stops in,railway,tram_stop,in,Y 
+Tram Stop near,railway,tram_stop,near,N 
+Tram Stops near,railway,tram_stop,near,Y 
+Off Licence,shop,alcohol,-,N 
+Off Licences,shop,alcohol,-,Y 
+Off Licence in,shop,alcohol,in,N 
+Off Licences in,shop,alcohol,in,Y 
+Off Licence near,shop,alcohol,near,N 
+Off Licences near,shop,alcohol,near,Y 
+Off License,shop,alcohol,-,N 
+Off Licenses,shop,alcohol,-,Y 
+Off License in,shop,alcohol,in,N 
+Off Licenses in,shop,alcohol,in,Y 
+Off License near,shop,alcohol,near,N 
+Off Licenses near,shop,alcohol,near,Y 
+Art Shop,shop,art,-,N 
+Art Shops,shop,art,-,Y 
+Art Shop in,shop,art,in,N 
+Art Shops in,shop,art,in,Y 
+Art Shop near,shop,art,near,N 
+Art Shops near,shop,art,near,Y 
+Bakery,shop,bakery,-,N 
+Bakerys,shop,bakery,-,Y 
+Bakeries,shop,bakery,-,Y 
+Bakery in,shop,bakery,in,N 
+Bakerys in,shop,bakery,in,Y 
+Bakeries in,shop,bakery,in,Y 
+Bakery near,shop,bakery,near,N 
+Bakerys near,shop,bakery,near,Y 
+Bakeries near,shop,bakery,near,Y 
+Beauty Shop,shop,beauty,-,N 
+Beauty Shops,shop,beauty,-,Y 
+Beauty Shop in,shop,beauty,in,N 
+Beauty Shops in,shop,beauty,in,Y 
+Beauty Shop near,shop,beauty,near,N 
+Beauty Shops near,shop,beauty,near,Y 
+Beverages Shop,shop,beverages,-,N 
+Beverages Shops,shop,beverages,-,Y 
+Beverages Shop in,shop,beverages,in,N 
+Beverages Shops in,shop,beverages,in,Y 
+Beverages Shop near,shop,beverages,near,N 
+Beverages Shops near,shop,beverages,near,Y 
+Bicycle Shop,shop,bicycle,-,N 
+Bicycle Shops,shop,bicycle,-,Y 
+Bicycle Shop in,shop,bicycle,in,N 
+Bicycle Shops in,shop,bicycle,in,Y 
+Bicycle Shop near,shop,bicycle,near,N 
+Bicycle Shops near,shop,bicycle,near,Y 
+Book Shop,shop,books,-,N 
+Book Shops,shop,books,-,Y 
+Book Shop in,shop,books,in,N 
+Book Shops in,shop,books,in,Y 
+Book Shop near,shop,books,near,N 
+Book Shops near,shop,books,near,Y 
+Butcher,shop,butcher,-,N 
+Butchers,shop,butcher,-,Y 
+Butcher in,shop,butcher,in,N 
+Butchers in,shop,butcher,in,Y 
+Butcher near,shop,butcher,near,N 
+Butchers near,shop,butcher,near,Y 
+Car Shop,shop,car,-,N 
+Car Shops,shop,car,-,Y 
+Car Shop in,shop,car,in,N 
+Car Shops in,shop,car,in,Y 
+Car Shop near,shop,car,near,N 
+Car Shops near,shop,car,near,Y 
+Car Parts,shop,car_parts,-,N 
+Car Parts,shop,car_parts,-,Y 
+Car Parts in,shop,car_parts,in,N 
+Car Parts in,shop,car_parts,in,Y 
+Car Parts near,shop,car_parts,near,N 
+Car Parts near,shop,car_parts,near,Y 
+Carpet Shop,shop,carpet,-,N 
+Carpet Shops,shop,carpet,-,Y 
+Carpet Shop in,shop,carpet,in,N 
+Carpet Shops in,shop,carpet,in,Y 
+Carpet Shop near,shop,carpet,near,N 
+Carpet Shops near,shop,carpet,near,Y 
+Car Repair,shop,car_repair,-,N 
+Car Repairs,shop,car_repair,-,Y 
+Car Repair in,shop,car_repair,in,N 
+Car Repairs in,shop,car_repair,in,Y 
+Car Repair near,shop,car_repair,near,N 
+Car Repairs near,shop,car_repair,near,Y 
+Charity Shop,shop,charity,-,N 
+Charity Shops,shop,charity,-,Y 
+Charity Shop in,shop,charity,in,N 
+Charity Shops in,shop,charity,in,Y 
+Charity Shop near,shop,charity,near,N 
+Charity Shops near,shop,charity,near,Y 
+Chemist,shop,chemist,-,N 
+Chemists,shop,chemist,-,Y 
+Chemist in,shop,chemist,in,N 
+Chemists in,shop,chemist,in,Y 
+Chemist near,shop,chemist,near,N 
+Chemists near,shop,chemist,near,Y 
+Clothes Shop,shop,clothes,-,N 
+Clothes Shops,shop,clothes,-,Y 
+Clothes Shop in,shop,clothes,in,N 
+Clothes Shops in,shop,clothes,in,Y 
+Clothes Shop near,shop,clothes,near,N 
+Clothes Shops near,shop,clothes,near,Y 
+Computer Shop,shop,computer,-,N 
+Computer Shops,shop,computer,-,Y 
+Computer Shop in,shop,computer,in,N 
+Computer Shops in,shop,computer,in,Y 
+Computer Shop near,shop,computer,near,N 
+Computer Shops near,shop,computer,near,Y 
+Confectionery Shop,shop,confectionery,-,N 
+Confectionery Shops,shop,confectionery,-,Y 
+Confectionery Shop in,shop,confectionery,in,N 
+Confectionery Shops in,shop,confectionery,in,Y 
+Confectionery Shop near,shop,confectionery,near,N 
+Confectionery Shops near,shop,confectionery,near,Y 
+Convenience Store,shop,convenience,-,N 
+Convenience Stores,shop,convenience,-,Y 
+Convenience Store in,shop,convenience,in,N 
+Convenience Stores in,shop,convenience,in,Y 
+Convenience Store near,shop,convenience,near,N 
+Convenience Stores near,shop,convenience,near,Y 
+Copy Shop,shop,copyshop,-,N 
+Copy Shops,shop,copyshop,-,Y 
+Copy Shop in,shop,copyshop,in,N 
+Copy Shops in,shop,copyshop,in,Y 
+Copy Shop near,shop,copyshop,near,N 
+Copy Shops near,shop,copyshop,near,Y 
+Cosmetics,shop,copyshop,-,Y 
+Cosmetics in,shop,copyshop,in,Y 
+Cosmetics near,shop,copyshop,near,Y 
+Cosmetics Shop,shop,cosmetics,-,N 
+Cosmetics Shops,shop,cosmetics,-,Y 
+Cosmetics Shop in,shop,cosmetics,in,N 
+Cosmetics Shops in,shop,cosmetics,in,Y 
+Cosmetics Shop near,shop,cosmetics,near,N 
+Cosmetics Shops near,shop,cosmetics,near,Y 
+Delicatessen,shop,deli,-,N 
+Delicatessen,shop,deli,-,Y 
+Delicatessen in,shop,deli,in,N 
+Delicatessen in,shop,deli,in,Y 
+Delicatessen near,shop,deli,near,N 
+Delicatessen near,shop,deli,near,Y 
+Department Store,shop,department_store,-,N 
+Department Stores,shop,department_store,-,Y 
+Department Store in,shop,department_store,in,N 
+Department Stores in,shop,department_store,in,Y 
+Department Store near,shop,department_store,near,N 
+Department Stores near,shop,department_store,near,Y 
+Fish Shop,shop,seafood,-,N 
+Fish Shops,shop,seafood,-,Y 
+Fish Shop in,shop,seafood,in,N 
+Fish Shops in,shop,seafood,in,Y 
+Fish Shop near,shop,seafood,near,N 
+Fish Shops near,shop,seafood,near,Y 
+Seafood Shop,shop,seafood,-,N 
+Seafood Shops,shop,seafood,-,Y 
+Seafood Shop in,shop,seafood,in,N 
+Seafood Shops in,shop,seafood,in,Y 
+Seafood Shop near,shop,seafood,near,N 
+Seafood Shops near,shop,seafood,near,Y 
+Do-It-Yourself,shop,doityourself,-,N 
+Do-It-Yourselfs,shop,doityourself,-,Y 
+Do-It-Yourselves,shop,doityourself,-,Y 
+Do-It-Yourself in,shop,doityourself,in,N 
+Do-It-Yourselfs in,shop,doityourself,in,Y 
+Do-It-Yourselves in,shop,doityourself,in,Y 
+Do-It-Yourself near,shop,doityourself,near,N 
+Do-It-Yourselfs near,shop,doityourself,near,Y 
+Do-It-Yourselves near,shop,doityourself,near,Y 
+Dry Cleaning,shop,dry_cleaning,-,N 
+Dry Cleanings,shop,dry_cleaning,-,Y 
+Dry Cleaning in,shop,dry_cleaning,in,N 
+Dry Cleanings in,shop,dry_cleaning,in,Y 
+Dry Cleaning near,shop,dry_cleaning,near,N 
+Dry Cleanings near,shop,dry_cleaning,near,Y 
+Electronics Shop,shop,electronics,-,N 
+Electronics Shops,shop,electronics,-,Y 
+Electronics Shop in,shop,electronics,in,N 
+Electronics Shops in,shop,electronics,in,Y 
+Electronics Shop near,shop,electronics,near,N 
+Electronics Shops near,shop,electronics,near,Y 
+Erotic Shop,shop,erotic,-,N 
+Erotic Shops,shop,erotic,-,Y 
+Erotic Shop in,shop,erotic,in,N 
+Erotic Shops in,shop,erotic,in,Y 
+Erotic Shop near,shop,erotic,near,N 
+Erotic Shops near,shop,erotic,near,Y 
+Sex Shop,shop,erotic,-,N 
+Sex Shops,shop,erotic,-,Y 
+Sex Shop in,shop,erotic,in,N 
+Sex Shops in,shop,erotic,in,Y 
+Sex Shop near,shop,erotic,near,N 
+Sex Shops near,shop,erotic,near,Y 
+Estate Agent,shop,estate_agent,-,N 
+Estate Agents,shop,estate_agent,-,Y 
+Estate Agent in,shop,estate_agent,in,N 
+Estate Agents in,shop,estate_agent,in,Y 
+Estate Agent near,shop,estate_agent,near,N 
+Estate Agents near,shop,estate_agent,near,Y 
+Farm Shop,shop,farm,-,N 
+Farm Shops,shop,farm,-,Y 
+Farm Shop in,shop,farm,in,N 
+Farm Shops in,shop,farm,in,Y 
+Farm Shop near,shop,farm,near,N 
+Farm Shops near,shop,farm,near,Y 
+Fashion Shop,shop,fashion,-,N 
+Fashion Shops,shop,fashion,-,Y 
+Fashion Shop in,shop,fashion,in,N 
+Fashion Shops in,shop,fashion,in,Y 
+Fashion Shop near,shop,fashion,near,N 
+Fashion Shops near,shop,fashion,near,Y 
+Florist,shop,florist,-,N 
+Florists,shop,florist,-,Y 
+Florist in,shop,florist,in,N 
+Florists in,shop,florist,in,Y 
+Florist near,shop,florist,near,N 
+Florists near,shop,florist,near,Y 
+Food Shop,shop,food,-,N 
+Food Shops,shop,food,-,Y 
+Food Shop in,shop,food,in,N 
+Food Shops in,shop,food,in,Y 
+Food Shop near,shop,food,near,N 
+Food Shops near,shop,food,near,Y 
+Funeral Director,shop,funeral_directors,-,N 
+Funeral Directors,shop,funeral_directors,-,Y 
+Funeral Director in,shop,funeral_directors,in,N 
+Funeral Directors in,shop,funeral_directors,in,Y 
+Funeral Director near,shop,funeral_directors,near,N 
+Funeral Directors near,shop,funeral_directors,near,Y 
+Furniture,shop,furniture,-,N 
+Furnitures,shop,furniture,-,Y 
+Furniture in,shop,furniture,in,N 
+Furnitures in,shop,furniture,in,Y 
+Furniture near,shop,furniture,near,N 
+Furnitures near,shop,furniture,near,Y 
+Garden Centre,shop,garden_centre,-,N 
+Garden Centres,shop,garden_centre,-,Y 
+Garden Centre in,shop,garden_centre,in,N 
+Garden Centres in,shop,garden_centre,in,Y 
+Garden Centre near,shop,garden_centre,near,N 
+Garden Centres near,shop,garden_centre,near,Y 
+Garden Center,shop,garden_centre,-,N 
+Garden Centers,shop,garden_centre,-,Y 
+Garden Center in,shop,garden_centre,in,N 
+Garden Centers in,shop,garden_centre,in,Y 
+Garden Center near,shop,garden_centre,near,N 
+Garden Centers near,shop,garden_centre,near,Y 
+General Store,shop,general,-,N 
+General Stores,shop,general,-,Y 
+General Store in,shop,general,in,N 
+General Stores in,shop,general,in,Y 
+General Store near,shop,general,near,N 
+General Stores near,shop,general,near,Y 
+Gift Shop,shop,gift,-,N 
+Gift Shops,shop,gift,-,Y 
+Gift Shop in,shop,gift,in,N 
+Gift Shops in,shop,gift,in,Y 
+Gift Shop near,shop,gift,near,N 
+Gift Shops near,shop,gift,near,Y 
+Greengrocer,shop,greengrocer,-,N 
+Greengrocers,shop,greengrocer,-,Y 
+Greengrocer in,shop,greengrocer,in,N 
+Greengrocers in,shop,greengrocer,in,Y 
+Greengrocer near,shop,greengrocer,near,N 
+Greengrocers near,shop,greengrocer,near,Y 
+Hairdresser,shop,hairdresser,-,N 
+Hairdressers,shop,hairdresser,-,Y 
+Hairdresser in,shop,hairdresser,in,N 
+Hairdressers in,shop,hairdresser,in,Y 
+Hairdresser near,shop,hairdresser,near,N 
+Hairdressers near,shop,hairdresser,near,Y 
+Hardware Store,shop,hardware,-,N 
+Hardware Stores,shop,hardware,-,Y 
+Hardware Store in,shop,hardware,in,N 
+Hardware Stores in,shop,hardware,in,Y 
+Hardware Store near,shop,hardware,near,N 
+Hardware Stores near,shop,hardware,near,Y 
+Hi-Fi,shop,hifi,-,N 
+Hi-Fis,shop,hifi,-,Y 
+Hi-Fi in,shop,hifi,in,N 
+Hi-Fis in,shop,hifi,in,Y 
+Hi-Fi near,shop,hifi,near,N 
+Hi-Fis near,shop,hifi,near,Y 
+Insurance,office,insurance,-,N 
+Insurances,office,insurance,-,Y 
+Insurance in,office,insurance,in,N 
+Insurances in,office,insurance,in,Y 
+Insurance near,office,insurance,near,N 
+Insurances near,office,insurance,near,Y 
+Jewelry Shop,shop,jewelry,-,N 
+Jewelry Shops,shop,jewelry,-,Y 
+Jewelry Shop in,shop,jewelry,in,N 
+Jewelry Shops in,shop,jewelry,in,Y 
+Jewelry Shop near,shop,jewelry,near,N 
+Jewelry Shops near,shop,jewelry,near,Y 
+Kiosk Shop,shop,kiosk,-,N 
+Kiosk Shops,shop,kiosk,-,Y 
+Kiosk Shop in,shop,kiosk,in,N 
+Kiosk Shops in,shop,kiosk,in,Y 
+Kiosk Shop near,shop,kiosk,near,N 
+Kiosk Shops near,shop,kiosk,near,Y 
+Laundry,shop,laundry,-,N 
+Laundrys,shop,laundry,-,Y 
+Laundries,shop,laundry,-,Y 
+Laundry in,shop,laundry,in,N 
+Laundrys in,shop,laundry,in,Y 
+Laundries in,shop,laundry,in,Y 
+Laundry near,shop,laundry,near,N 
+Laundrys near,shop,laundry,near,Y 
+Laundries near,shop,laundry,near,Y 
+Mall,shop,mall,-,N 
+Malls,shop,mall,-,Y 
+Mall in,shop,mall,in,N 
+Malls in,shop,mall,in,Y 
+Mall near,shop,mall,near,N 
+Malls near,shop,mall,near,Y 
+Massage Shop,shop,massage,-,N 
+Massage Shops,shop,massage,-,Y 
+Massage Shop in,shop,massage,in,N 
+Massage Shops in,shop,massage,in,Y 
+Massage Shop near,shop,massage,near,N 
+Massage Shops near,shop,massage,near,Y 
+Mobile Phone Shop,shop,mobile_phone,-,N 
+Mobile Phone Shops,shop,mobile_phone,-,Y 
+Mobile Phone Shop in,shop,mobile_phone,in,N 
+Mobile Phone Shops in,shop,mobile_phone,in,Y 
+Mobile Phone Shop near,shop,mobile_phone,near,N 
+Mobile Phone Shops near,shop,mobile_phone,near,Y 
+Motorcycle Shop,shop,motorcycle,-,N 
+Motorcycle Shops,shop,motorcycle,-,Y 
+Motorcycle Shop in,shop,motorcycle,in,N 
+Motorcycle Shops in,shop,motorcycle,in,Y 
+Motorcycle Shop near,shop,motorcycle,near,N 
+Motorcycle Shops near,shop,motorcycle,near,Y 
+Music Shop,shop,music,-,N 
+Music Shops,shop,music,-,Y 
+Music Shop in,shop,music,in,N 
+Music Shops in,shop,music,in,Y 
+Music Shop near,shop,music,near,N 
+Music Shops near,shop,music,near,Y 
+Newsagent,shop,newsagent,-,N 
+Newsagents,shop,newsagent,-,Y 
+Newsagent in,shop,newsagent,in,N 
+Newsagents in,shop,newsagent,in,Y 
+Newsagent near,shop,newsagent,near,N 
+Newsagents near,shop,newsagent,near,Y 
+Optician,shop,optician,-,N 
+Opticians,shop,optician,-,Y 
+Optician in,shop,optician,in,N 
+Opticians in,shop,optician,in,Y 
+Optician near,shop,optician,near,N 
+Opticians near,shop,optician,near,Y 
+Organic Food Shop,shop,organic,-,N 
+Organic Food Shops,shop,organic,-,Y 
+Organic Food Shop in,shop,organic,in,N 
+Organic Food Shops in,shop,organic,in,Y 
+Organic Food Shop near,shop,organic,near,N 
+Organic Food Shops near,shop,organic,near,Y 
+Outdoor Shop,shop,outdoor,-,N 
+Outdoor Shops,shop,outdoor,-,Y 
+Outdoor Shop in,shop,outdoor,in,N 
+Outdoor Shops in,shop,outdoor,in,Y 
+Outdoor Shop near,shop,outdoor,near,N 
+Outdoor Shops near,shop,outdoor,near,Y 
+Pet Shop,shop,pet,-,N 
+Pet Shops,shop,pet,-,Y 
+Pet Shop in,shop,pet,in,N 
+Pet Shops in,shop,pet,in,Y 
+Pet Shop near,shop,pet,near,N 
+Pet Shops near,shop,pet,near,Y 
+Photo Shop,shop,photo,-,N 
+Photo Shops,shop,photo,-,Y 
+Photo Shop in,shop,photo,in,N 
+Photo Shops in,shop,photo,in,Y 
+Photo Shop near,shop,photo,near,N 
+Photo Shops near,shop,photo,near,Y 
+Salon,shop,salon,-,N 
+Salons,shop,salon,-,Y 
+Salon in,shop,salon,in,N 
+Salons in,shop,salon,in,Y 
+Salon near,shop,salon,near,N 
+Salons near,shop,salon,near,Y 
+Shoe Shop,shop,shoes,-,N 
+Shoe Shops,shop,shoes,-,Y 
+Shoe Shop in,shop,shoes,in,N 
+Shoe Shops in,shop,shoes,in,Y 
+Shoe Shop near,shop,shoes,near,N 
+Shoe Shops near,shop,shoes,near,Y 
+Shopping Centre,shop,shopping_centre,-,N 
+Shopping Centres,shop,shopping_centre,-,Y 
+Shopping Centre in,shop,shopping_centre,in,N 
+Shopping Centres in,shop,shopping_centre,in,Y 
+Shopping Centre near,shop,shopping_centre,near,N 
+Shopping Centres near,shop,shopping_centre,near,Y 
+Shopping Center,shop,shopping_centre,-,N 
+Shopping Centers,shop,shopping_centre,-,Y 
+Shopping Center in,shop,shopping_centre,in,N 
+Shopping Centers in,shop,shopping_centre,in,Y 
+Shopping Center near,shop,shopping_centre,near,N 
+Shopping Centers near,shop,shopping_centre,near,Y 
+Sports Shop,shop,sports,-,N 
+Sports Shops,shop,sports,-,Y 
+Sports Shop in,shop,sports,in,N 
+Sports Shops in,shop,sports,in,Y 
+Sports Shop near,shop,sports,near,N 
+Sports Shops near,shop,sports,near,Y 
+Stationery Shop,shop,stationery,-,N 
+Stationery Shops,shop,stationery,-,Y 
+Stationery Shop in,shop,stationery,in,N 
+Stationery Shops in,shop,stationery,in,Y 
+Stationery Shop near,shop,stationery,near,N 
+Stationery Shops near,shop,stationery,near,Y 
+Supermarket,shop,supermarket,-,N 
+Supermarkets,shop,supermarket,-,Y 
+Supermarket in,shop,supermarket,in,N 
+Supermarkets in,shop,supermarket,in,Y 
+Supermarket near,shop,supermarket,near,N 
+Supermarkets near,shop,supermarket,near,Y 
+Tattoo Studio,shop,tattoo,-,N 
+Tattoo Studios,shop,tattoo,-,Y 
+Tattoo Studio in,shop,tattoo,in,N 
+Tattoo Studios in,shop,tattoo,in,Y 
+Tattoo Studio near,shop,tattoo,near,N 
+Tattoo Studios near,shop,tattoo,near,Y 
+Tobacco Shop,shop,tobacco,-,N 
+Tobacco Shops,shop,tobacco,-,Y 
+Tobacco Shop in,shop,tobacco,in,N 
+Tobacco Shops in,shop,tobacco,in,Y 
+Tobacco Shop near,shop,tobacco,near,N 
+Tobacco Shops near,shop,tobacco,near,Y 
+Toy Shop,shop,toys,-,N 
+Toy Shops,shop,toys,-,Y 
+Toy Shop in,shop,toys,in,N 
+Toy Shops in,shop,toys,in,Y 
+Toy Shop near,shop,toys,near,N 
+Toy Shops near,shop,toys,near,Y 
+Travel Agency,shop,travel_agency,-,N 
+Travel Agencys,shop,travel_agency,-,Y 
+Travel Agencies,shop,travel_agency,-,Y 
+Travel Agency in,shop,travel_agency,in,N 
+Travel Agencys in,shop,travel_agency,in,Y 
+Travel Agencies in,shop,travel_agency,in,Y 
+Travel Agency near,shop,travel_agency,near,N 
+Travel Agencys near,shop,travel_agency,near,Y 
+Travel Agencies near,shop,travel_agency,near,Y 
+Video Shop,shop,video,-,N 
+Video Shops,shop,video,-,Y 
+Video Shop in,shop,video,in,N 
+Video Shops in,shop,video,in,Y 
+Video Shop near,shop,video,near,N 
+Video Shops near,shop,video,near,Y 
+Off Licence,shop,wine,-,N 
+Off Licences,shop,wine,-,Y 
+Off Licence in,shop,wine,in,N 
+Off Licences in,shop,wine,in,Y 
+Off Licence near,shop,wine,near,N 
+Off Licences near,shop,wine,near,Y 
+Off License,shop,wine,-,N 
+Off Licenses,shop,wine,-,Y 
+Off License in,shop,wine,in,N 
+Off Licenses in,shop,wine,in,Y 
+Off License near,shop,wine,near,N 
+Off Licenses near,shop,wine,near,Y 
+Wine Shop,shop,wine,-,N 
+Wine Shops,shop,wine,-,Y 
+Wine Shop in,shop,wine,in,N 
+Wine Shops in,shop,wine,in,Y 
+Wine Shop near,shop,wine,near,N 
+Wine Shops near,shop,wine,near,Y 
+Nursing Home,social_facility,nursing_home,-,N 
+Nursing Homes,social_facility,nursing_home,-,Y 
+Nursing Home in,social_facility,nursing_home,in,N 
+Nursing Homes in,social_facility,nursing_home,in,Y 
+Nursing Home near,social_facility,nursing_home,near,N 
+Nursing Homes near,social_facility,nursing_home,near,Y 
+Alpine Hut,tourism,alpine_hut,-,N 
+Alpine Huts,tourism,alpine_hut,-,Y 
+Alpine Hut in,tourism,alpine_hut,in,N 
+Alpine Huts in,tourism,alpine_hut,in,Y 
+Alpine Hut near,tourism,alpine_hut,near,N 
+Alpine Huts near,tourism,alpine_hut,near,Y 
+Aquarium,tourism,aquarium,-,N 
+Aquariums,tourism,aquarium,-,Y 
+Aquarium in,tourism,aquarium,in,N 
+Aquariums in,tourism,aquarium,in,Y 
+Aquarium near,tourism,aquarium,near,N 
+Aquariums near,tourism,aquarium,near,Y 
+Artwork,tourism,artwork,-,N 
+Artworks,tourism,artwork,-,Y 
+Artwork in,tourism,artwork,in,N 
+Artworks in,tourism,artwork,in,Y 
+Artwork near,tourism,artwork,near,N 
+Artworks near,tourism,artwork,near,Y 
+Attraction,tourism,attraction,-,N 
+Attractions,tourism,attraction,-,Y 
+Attraction in,tourism,attraction,in,N 
+Attractions in,tourism,attraction,in,Y 
+Attraction near,tourism,attraction,near,N 
+Attractions near,tourism,attraction,near,Y 
+Camp Site,tourism,camp_site,-,N 
+Camp Sites,tourism,camp_site,-,Y 
+Camp Site in,tourism,camp_site,in,N 
+Camp Sites in,tourism,camp_site,in,Y 
+Camp Site near,tourism,camp_site,near,N 
+Camp Sites near,tourism,camp_site,near,Y 
+Caravan Site,tourism,caravan_site,-,N 
+Caravan Sites,tourism,caravan_site,-,Y 
+Caravan Site in,tourism,caravan_site,in,N 
+Caravan Sites in,tourism,caravan_site,in,Y 
+Caravan Site near,tourism,caravan_site,near,N 
+Caravan Sites near,tourism,caravan_site,near,Y 
+Chalet,tourism,chalet,-,N 
+Chalets,tourism,chalet,-,Y 
+Chalet in,tourism,chalet,in,N 
+Chalets in,tourism,chalet,in,Y 
+Chalet near,tourism,chalet,near,N 
+Chalets near,tourism,chalet,near,Y 
+Guest House,tourism,guest_house,-,N 
+Guest Houses,tourism,guest_house,-,Y 
+Guest House in,tourism,guest_house,in,N 
+Guest Houses in,tourism,guest_house,in,Y 
+Guest House near,tourism,guest_house,near,N 
+Guest Houses near,tourism,guest_house,near,Y 
+Hostel,tourism,hostel,-,N 
+Hostels,tourism,hostel,-,Y 
+Hostel in,tourism,hostel,in,N 
+Hostels in,tourism,hostel,in,Y 
+Hostel near,tourism,hostel,near,N 
+Hostels near,tourism,hostel,near,Y 
+Hotel,tourism,hotel,-,N 
+Hotels,tourism,hotel,-,Y 
+Hotel in,tourism,hotel,in,N 
+Hotels in,tourism,hotel,in,Y 
+Hotel near,tourism,hotel,near,N 
+Hotels near,tourism,hotel,near,Y 
+Information,tourism,information,-,N 
+Informations,tourism,information,-,Y 
+Information in,tourism,information,in,N 
+Informations in,tourism,information,in,Y 
+Information near,tourism,information,near,N 
+Informations near,tourism,information,near,Y 
+Motel,tourism,motel,-,N 
+Motels,tourism,motel,-,Y 
+Motel in,tourism,motel,in,N 
+Motels in,tourism,motel,in,Y 
+Motel near,tourism,motel,near,N 
+Motels near,tourism,motel,near,Y 
+Museum,tourism,museum,-,N 
+Museums,tourism,museum,-,Y 
+Museum in,tourism,museum,in,N 
+Museums in,tourism,museum,in,Y 
+Museum near,tourism,museum,near,N 
+Museums near,tourism,museum,near,Y 
+Picnic Site,tourism,picnic_site,-,N 
+Picnic Sites,tourism,picnic_site,-,Y 
+Picnic Site in,tourism,picnic_site,in,N 
+Picnic Sites in,tourism,picnic_site,in,Y 
+Picnic Site near,tourism,picnic_site,near,N 
+Picnic Sites near,tourism,picnic_site,near,Y 
+Theme Park,tourism,theme_park,-,N 
+Theme Parks,tourism,theme_park,-,Y 
+Theme Park in,tourism,theme_park,in,N 
+Theme Parks in,tourism,theme_park,in,Y 
+Theme Park near,tourism,theme_park,near,N 
+Theme Parks near,tourism,theme_park,near,Y 
+Viewpoint,tourism,viewpoint,-,N 
+Viewpoints,tourism,viewpoint,-,Y 
+Viewpoint in,tourism,viewpoint,in,N 
+Viewpoints in,tourism,viewpoint,in,Y 
+Viewpoint near,tourism,viewpoint,near,N 
+Viewpoints near,tourism,viewpoint,near,Y 
+Zoo,tourism,zoo,-,N 
+Zoos,tourism,zoo,-,Y 
+Zoo in,tourism,zoo,in,N 
+Zoos in,tourism,zoo,in,Y 
+Zoo near,tourism,zoo,near,N 
+Zoos near,tourism,zoo,near,Y 
+Boatyard,waterway,boatyard,-,N 
+Boatyards,waterway,boatyard,-,Y 
+Boatyard in,waterway,boatyard,in,N 
+Boatyards in,waterway,boatyard,in,Y 
+Boatyard near,waterway,boatyard,near,N 
+Boatyards near,waterway,boatyard,near,Y 
+Boat Ramp,leisure,slipway,-,N 
+Boat Ramps,leisure,slipway,-,Y 
+Boat Ramp in,leisure,slipway,in,N 
+Boat Ramps in,leisure,slipway,in,Y 
+Boat Ramp near,leisure,slipway,near,N 
+Boat Ramps near,leisure,slipway,near,Y 
+Canal,waterway,canal,-,N 
+Canals,waterway,canal,-,Y 
+Canal in,waterway,canal,in,N 
+Canals in,waterway,canal,in,Y 
+Canal near,waterway,canal,near,N 
+Canals near,waterway,canal,near,Y 
+Dam,waterway,dam,-,N 
+Dams,waterway,dam,-,Y 
+Dam in,waterway,dam,in,N 
+Dams in,waterway,dam,in,Y 
+Dam near,waterway,dam,near,N 
+Dams near,waterway,dam,near,Y 
+Derelict Canal,waterway,derelict_canal,-,N 
+Derelict Canals,waterway,derelict_canal,-,Y 
+Derelict Canal in,waterway,derelict_canal,in,N 
+Derelict Canals in,waterway,derelict_canal,in,Y 
+Derelict Canal near,waterway,derelict_canal,near,N 
+Derelict Canals near,waterway,derelict_canal,near,Y 
+Ditch,waterway,ditch,-,N 
+Ditchs,waterway,ditch,-,Y 
+Ditches,waterway,ditch,-,Y 
+Ditch in,waterway,ditch,in,N 
+Ditchs in,waterway,ditch,in,Y 
+Ditches in,waterway,ditch,in,Y 
+Ditch near,waterway,ditch,near,N 
+Ditchs near,waterway,ditch,near,Y 
+Ditches near,waterway,ditch,near,Y 
+Dock,waterway,dock,-,N 
+Docks,waterway,dock,-,Y 
+Dock in,waterway,dock,in,N 
+Docks in,waterway,dock,in,Y 
+Dock near,waterway,dock,near,N 
+Docks near,waterway,dock,near,Y 
+Drain,waterway,drain,-,N 
+Drains,waterway,drain,-,Y 
+Drain in,waterway,drain,in,N 
+Drains in,waterway,drain,in,Y 
+Drain near,waterway,drain,near,N 
+Drains near,waterway,drain,near,Y 
+Rapids,waterway,rapids,-,N 
+Rapids,waterway,rapids,-,Y 
+Rapids in,waterway,rapids,in,N 
+Rapids in,waterway,rapids,in,Y 
+Rapids near,waterway,rapids,near,N 
+Rapids near,waterway,rapids,near,Y 
+River,waterway,river,-,N 
+Rivers,waterway,river,-,Y 
+River in,waterway,river,in,N 
+Rivers in,waterway,river,in,Y 
+River near,waterway,river,near,N 
+Rivers near,waterway,river,near,Y 
+Riverbank,waterway,riverbank,-,N 
+Riverbanks,waterway,riverbank,-,Y 
+Riverbank in,waterway,riverbank,in,N 
+Riverbanks in,waterway,riverbank,in,Y 
+Riverbank near,waterway,riverbank,near,N 
+Riverbanks near,waterway,riverbank,near,Y 
+Stream,waterway,stream,-,N 
+Streams,waterway,stream,-,Y 
+Stream in,waterway,stream,in,N 
+Streams in,waterway,stream,in,Y 
+Stream near,waterway,stream,near,N 
+Streams near,waterway,stream,near,Y 
+Wadi,waterway,wadi,-,N 
+Wadis,waterway,wadi,-,Y 
+Wadi in,waterway,wadi,in,N 
+Wadis in,waterway,wadi,in,Y 
+Wadi near,waterway,wadi,near,N 
+Wadis near,waterway,wadi,near,Y 
+Waterfall,waterway,waterfall,-,N 
+Waterfalls,waterway,waterfall,-,Y 
+Waterfall in,waterway,waterfall,in,N 
+Waterfalls in,waterway,waterfall,in,Y 
+Waterfall near,waterway,waterfall,near,N 
+Waterfalls near,waterway,waterfall,near,Y 
+Water Point,waterway,water_point,-,N 
+Water Points,waterway,water_point,-,Y 
+Water Point in,waterway,water_point,in,N 
+Water Points in,waterway,water_point,in,Y 
+Water Point near,waterway,water_point,near,N 
+Water Points near,waterway,water_point,near,Y 
+Weir,waterway,weir,-,N 
+Weirs,waterway,weir,-,Y 
+Weir in,waterway,weir,in,N 
+Weirs in,waterway,weir,in,Y 
+Weir near,waterway,weir,near,N 
+Weirs near,waterway,weir,near,Y 
+Coworking ,office ,coworking ,- ,N 
+Coworkings ,office ,coworking ,- ,Y 
+Coworking in ,office ,coworking ,in ,N 
+Coworkings in ,office ,coworking ,in ,Y 
+Coworking near ,office ,coworking ,near ,N 
+Coworkings near ,office ,coworking ,near ,Y 
+Coworking ,amenity ,coworking_space ,- ,N 
+Coworkings ,amenity ,coworking_space ,- ,Y 
+Coworking in ,amenity ,coworking_space ,in ,N 
+Coworkings in ,amenity ,coworking_space ,in ,Y 
+Coworking near ,amenity ,coworking_space ,near ,N 
+Coworkings near ,amenity ,coworking_space ,near ,Y 

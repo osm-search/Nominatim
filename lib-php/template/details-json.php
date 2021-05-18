@@ -81,10 +81,14 @@ if ($bIncludeKeywords) {
 
     if ($aPlaceSearchNameKeywords) {
         $aPlaceDetails['keywords']['name'] = array_map($funcMapKeyword, $aPlaceSearchNameKeywords);
+    } else {
+        $aPlaceDetails['keywords']['name'] = array();
     }
 
     if ($aPlaceSearchAddressKeywords) {
         $aPlaceDetails['keywords']['address'] = array_map($funcMapKeyword, $aPlaceSearchAddressKeywords);
+    } else {
+        $aPlaceDetails['keywords']['address'] = array();
     }
 }
 

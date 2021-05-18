@@ -15,6 +15,7 @@ normalizer module is installed, when the tokenizer is created.
 """
 import logging
 import importlib
+from pathlib import Path
 
 from ..errors import UsageError
 from ..db import properties
@@ -25,12 +26,13 @@ LOG = logging.getLogger()
 def _import_tokenizer(name):
     """ Load the tokenizer.py module from project directory.
     """
-    try:
-        return importlib.import_module('nominatim.tokenizer.' + name + '_tokenizer')
-    except ModuleNotFoundError as exp:
+    src_file = Path(__file__).parent / (name + '_tokenizer.py')
+    if not src_file.is_file():
         LOG.fatal("No tokenizer named '%s' available. "
                   "Check the setting of NOMINATIM_TOKENIZER.", name)
-        raise UsageError('Tokenizer not found') from exp
+        raise UsageError('Tokenizer not found')
+
+    return importlib.import_module('nominatim.tokenizer.' + name + '_tokenizer')
 
 
 def create_tokenizer(config, init_db=True, module_name=None):

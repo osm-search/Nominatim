@@ -17,6 +17,7 @@ from nominatim.config import Configuration
 from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.db import properties
+import nominatim.tokenizer.factory
 
 import dummy_tokenizer
 import mocks
@@ -273,7 +274,7 @@ def tokenizer_mock(monkeypatch, property_table, temp_db_conn, tmp_path):
     def _import_dummy(module, *args, **kwargs):
         return dummy_tokenizer
 
-    monkeypatch.setattr(importlib, "import_module", _import_dummy)
+    monkeypatch.setattr(nominatim.tokenizer.factory, "_import_tokenizer", _import_dummy)
     properties.set_property(temp_db_conn, 'tokenizer', 'dummy')
 
     def _create_tokenizer():

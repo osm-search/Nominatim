@@ -58,10 +58,8 @@ def test_set_status_empty_table(status_table, temp_db_conn, temp_db_cursor):
     date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date)
 
-    temp_db_cursor.execute("SELECT * FROM import_status")
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone() == [date, None, True]
+    assert temp_db_cursor.row_set("SELECT * FROM import_status") == \
+             {(date, None, True)}
 
 
 def test_set_status_filled_table(status_table, temp_db_conn, temp_db_cursor):
@@ -73,10 +71,8 @@ def test_set_status_filled_table(status_table, temp_db_conn, temp_db_cursor):
     date = dt.datetime.fromordinal(1000100).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date, seq=456, indexed=False)
 
-    temp_db_cursor.execute("SELECT * FROM import_status")
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone() == [date, 456, False]
+    assert temp_db_cursor.row_set("SELECT * FROM import_status") == \
+             {(date, 456, False)}
 
 
 def test_set_status_missing_date(status_table, temp_db_conn, temp_db_cursor):
@@ -87,10 +83,8 @@ def test_set_status_missing_date(status_table, temp_db_conn, temp_db_cursor):
 
     nominatim.db.status.set_status(temp_db_conn, date=None, seq=456, indexed=False)
 
-    temp_db_cursor.execute("SELECT * FROM import_status")
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone() == [date, 456, False]
+    assert temp_db_cursor.row_set("SELECT * FROM import_status") == \
+             {(date, 456, False)}
 
 
 def test_get_status_empty_table(status_table, temp_db_conn):

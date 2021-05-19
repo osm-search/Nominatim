@@ -20,7 +20,7 @@ OSM_NODE_DATA = """\
 
 ### init replication
 
-def test_init_replication_bad_base_url(monkeypatch, status_table, place_row, temp_db_conn, temp_db_cursor):
+def test_init_replication_bad_base_url(monkeypatch, status_table, place_row, temp_db_conn):
     place_row(osm_type='N', osm_id=100)
 
     monkeypatch.setattr(nominatim.db.status, "get_url", lambda u : OSM_NODE_DATA)
@@ -39,12 +39,11 @@ def test_init_replication_success(monkeypatch, status_table, place_row, temp_db_
 
     nominatim.tools.replication.init_replication(temp_db_conn, 'https://test.io')
 
-    temp_db_cursor.execute("SELECT * FROM import_status")
-
     expected_date = dt.datetime.strptime('2006-01-27T19:09:10', status.ISODATE_FORMAT)\
                         .replace(tzinfo=dt.timezone.utc)
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone() == [expected_date, 234, True]
+
+    assert temp_db_cursor.row_set("SELECT * FROM import_status") \
+             == {(expected_date, 234, True)}
 
 
 ### checking for updates

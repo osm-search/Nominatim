@@ -13,10 +13,7 @@ def test_execute_file_success(dsn, temp_db_cursor, tmp_path):
 
     db_utils.execute_file(dsn, tmpfile)
 
-    temp_db_cursor.execute('SELECT * FROM test')
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone()[0] == 56
+    assert temp_db_cursor.row_set('SELECT * FROM test') == {(56, )}
 
 def test_execute_file_bad_file(dsn, tmp_path):
     with pytest.raises(FileNotFoundError):
@@ -44,10 +41,7 @@ def test_execute_file_with_pre_code(dsn, tmp_path, temp_db_cursor):
 
     db_utils.execute_file(dsn, tmpfile, pre_code='CREATE TABLE test (id INT)')
 
-    temp_db_cursor.execute('SELECT * FROM test')
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone()[0] == 4
+    assert temp_db_cursor.row_set('SELECT * FROM test') == {(4, )}
 
 
 def test_execute_file_with_post_code(dsn, tmp_path, temp_db_cursor):
@@ -56,7 +50,4 @@ def test_execute_file_with_post_code(dsn, tmp_path, temp_db_cursor):
 
     db_utils.execute_file(dsn, tmpfile, post_code='INSERT INTO test VALUES(23)')
 
-    temp_db_cursor.execute('SELECT * FROM test')
-
-    assert temp_db_cursor.rowcount == 1
-    assert temp_db_cursor.fetchone()[0] == 23
+    assert temp_db_cursor.row_set('SELECT * FROM test') == {(23, )}

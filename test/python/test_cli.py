@@ -244,9 +244,9 @@ def test_add_data_command(mock_run_legacy, name, oid):
                           (['--boundaries-only'], 1, 0),
                           (['--no-boundaries'], 0, 1),
                           (['--boundaries-only', '--no-boundaries'], 0, 0)])
-def test_index_command(mock_func_factory, temp_db_cursor, tokenizer_mock,
+def test_index_command(mock_func_factory, table_factory, tokenizer_mock,
                        params, do_bnds, do_ranks):
-    temp_db_cursor.execute("CREATE TABLE import_status (indexed bool)")
+    table_factory('import_status', 'indexed bool')
     bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
     rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
 

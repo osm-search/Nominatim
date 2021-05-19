@@ -20,10 +20,10 @@ def test_connection_table_exists(db, table_factory):
     assert db.table_exists('foobar') == True
 
 
-def test_connection_index_exists(db, temp_db_cursor):
+def test_connection_index_exists(db, table_factory, temp_db_cursor):
     assert db.index_exists('some_index') == False
 
-    temp_db_cursor.execute('CREATE TABLE foobar (id INT)')
+    table_factory('foobar')
     temp_db_cursor.execute('CREATE INDEX some_index ON foobar(id)')
 
     assert db.index_exists('some_index') == True
@@ -55,9 +55,7 @@ def test_connection_server_version_tuple(db):
     assert ver[0] > 8
 
 
-def test_connection_postgis_version_tuple(db, temp_db_cursor):
-    temp_db_cursor.execute('CREATE EXTENSION postgis')
-
+def test_connection_postgis_version_tuple(db, temp_db_with_extensions):
     ver = db.postgis_version_tuple()
 
     assert isinstance(ver, tuple)

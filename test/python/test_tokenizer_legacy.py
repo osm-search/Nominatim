@@ -243,9 +243,8 @@ def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor,
 
 def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,
                                           make_standard_name):
-    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
-                              VALUES (' foo', 'foo', 'amenity', 'prison', 'in'),
-                                     (' bar', 'bar', 'highway', 'road', null)""")
+    word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' bar', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 

@@ -19,7 +19,7 @@ import nominatim.tokenizer.factory
 
 import dummy_tokenizer
 import mocks
-from cursor import TestingCursor
+from cursor import CursorForTesting
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ def temp_db_cursor(temp_db):
     """
     conn = psycopg2.connect('dbname=' + temp_db)
     conn.set_isolation_level(0)
-    with conn.cursor(cursor_factory=TestingCursor) as cur:
+    with conn.cursor(cursor_factory=CursorForTesting) as cur:
         yield cur
     conn.close()
 

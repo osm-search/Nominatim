@@ -3,7 +3,7 @@ Specialised psycopg2 cursor with shortcut functions useful for testing.
 """
 import psycopg2.extras
 
-class TestingCursor(psycopg2.extras.DictCursor):
+class CursorForTesting(psycopg2.extras.DictCursor):
     """ Extension to the DictCursor class that provides execution
         short-cuts that simplify writing assertions.
     """

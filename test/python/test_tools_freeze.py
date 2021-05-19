@@ -22,9 +22,9 @@ NOMINATIM_DROP_TABLES = [
     'wikipedia_article', 'wikipedia_redirect'
 ]
 
-def test_drop_tables(temp_db_conn, temp_db_cursor):
+def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
     for table in NOMINATIM_RUNTIME_TABLES + NOMINATIM_DROP_TABLES:
-        temp_db_cursor.execute('CREATE TABLE {} (id int)'.format(table))
+        table_factory(table)
 
     freeze.drop_update_tables(temp_db_conn)
 

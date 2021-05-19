@@ -67,10 +67,11 @@ def test_create_db_missing_ro_user(nonexistant_db):
         database_import.create_db('dbname=' + nonexistant_db, rouser='sdfwkjkjgdugu2;jgsafkljas;')
 
 
-def test_setup_extensions(temp_db_conn, temp_db_cursor):
+def test_setup_extensions(temp_db_conn, table_factory):
     database_import.setup_extensions(temp_db_conn)
 
-    temp_db_cursor.execute('CREATE TABLE t (h HSTORE, geom GEOMETRY(Geometry, 4326))')
+    # Use table creation to check that hstore and geometry types are available.
+    table_factory('t', 'h HSTORE, geom GEOMETRY(Geometry, 4326)')
 
 
 def test_setup_extensions_old_postgis(temp_db_conn, monkeypatch):
@@ -80,42 +81,36 @@ def test_setup_extensions_old_postgis(temp_db_conn, monkeypatch):
         database_import.setup_extensions(temp_db_conn)
 
 
-def test_import_base_data(src_dir, temp_db, temp_db_cursor):
-    temp_db_cursor.execute('CREATE EXTENSION hstore')
-    temp_db_cursor.execute('CREATE EXTENSION postgis')
-    database_import.import_base_data('dbname=' + temp_db, src_dir / 'data')
+def test_import_base_data(dsn, src_dir, temp_db_with_extensions, temp_db_cursor):
+    database_import.import_base_data(dsn, src_dir / 'data')
 
     assert temp_db_cursor.table_rows('country_name') > 0
 
 
-def test_import_base_data_ignore_partitions(src_dir, temp_db, temp_db_cursor):
-    temp_db_cursor.execute('CREATE EXTENSION hstore')
-    temp_db_cursor.execute('CREATE EXTENSION postgis')
-    database_import.import_base_data('dbname=' + temp_db, src_dir / 'data',
-                                     ignore_partitions=True)
+def test_import_base_data_ignore_partitions(dsn, src_dir, temp_db_with_extensions,
+                                            temp_db_cursor):
+    database_import.import_base_data(dsn, src_dir / 'data', ignore_partitions=True)
 
     assert temp_db_cursor.table_rows('country_name') > 0
     assert temp_db_cursor.table_rows('country_name', where='partition != 0') == 0
 
 
-def test_import_osm_data_simple(temp_db_cursor,osm2pgsql_options):
-    temp_db_cursor.execute('CREATE TABLE place (id INT)')
-    temp_db_cursor.execute('INSERT INTO place values (1)')
+def test_import_osm_data_simple(table_factory, osm2pgsql_options):
+    table_factory('place', content=((1, ), ))
 
     database_import.import_osm_data('file.pdf', osm2pgsql_options)
 
 
-def test_import_osm_data_simple_no_data(temp_db_cursor,osm2pgsql_options):
-    temp_db_cursor.execute('CREATE TABLE place (id INT)')
+def test_import_osm_data_simple_no_data(table_factory, osm2pgsql_options):
+    table_factory('place')
 
     with pytest.raises(UsageError, match='No data.*'):
         database_import.import_osm_data('file.pdf', osm2pgsql_options)
 
 
-def test_import_osm_data_drop(temp_db_conn, temp_db_cursor, tmp_path, osm2pgsql_options):
-    temp_db_cursor.execute('CREATE TABLE place (id INT)')
-    temp_db_cursor.execute('CREATE TABLE planet_osm_nodes (id INT)')
-    temp_db_cursor.execute('INSERT INTO place values (1)')
+def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_options):
+    table_factory('place', content=((1, ), ))
+    table_factory('planet_osm_nodes')
 
     flatfile = tmp_path / 'flatfile'
     flatfile.write_text('touch')
@@ -128,9 +123,8 @@ def test_import_osm_data_drop(temp_db_conn, temp_db_cursor, tmp_path, osm2pgsql_
     assert not temp_db_conn.table_exists('planet_osm_nodes')
 
 
-def test_import_osm_data_default_cache(temp_db_cursor,osm2pgsql_options):
-    temp_db_cursor.execute('CREATE TABLE place (id INT)')
-    temp_db_cursor.execute('INSERT INTO place values (1)')
+def test_import_osm_data_default_cache(table_factory, osm2pgsql_options):
+    table_factory('place', content=((1, ), ))
 
     osm2pgsql_options['osm2pgsql_cache'] = 0
 

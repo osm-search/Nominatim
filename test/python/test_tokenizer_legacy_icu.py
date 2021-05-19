@@ -180,10 +180,9 @@ def test_update_special_phrase_empty_table(analyzer, word_table, temp_db_cursor)
                        (' ST', 'street', 'highway', 'primary', 'in')))
 
 
-def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor):
-    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
-                              VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
-                                     (' BAR', 'bar', 'highway', 'road', null)""")
+def test_update_special_phrase_delete_all(analyzer, word_table):
+    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -193,10 +192,9 @@ def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor):
     assert word_table.count_special() == 0
 
 
-def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,):
-    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
-                              VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
-                                     (' BAR', 'bar', 'highway', 'road', null)""")
+def test_update_special_phrases_no_replace(analyzer, word_table):
+    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -206,10 +204,9 @@ def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,
     assert word_table.count_special() == 2
 
 
-def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
-    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
-                              VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
-                                     (' BAR', 'bar', 'highway', 'road', null)""")
+def test_update_special_phrase_modify(analyzer, word_table):
+    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 

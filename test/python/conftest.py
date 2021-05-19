@@ -135,43 +135,37 @@ def property_table(table_factory):
 
 
 @pytest.fixture
-def status_table(temp_db_conn):
+def status_table(table_factory):
     """ Create an empty version of the status table and
         the status logging table.
     """
-    with temp_db_conn.cursor() as cur:
-        cur.execute("""CREATE TABLE import_status (
-                           lastimportdate timestamp with time zone NOT NULL,
-                           sequence_id integer,
-                           indexed boolean
-                       )""")
-        cur.execute("""CREATE TABLE import_osmosis_log (
-                           batchend timestamp,
-                           batchseq integer,
-                           batchsize bigint,
-                           starttime timestamp,
-                           endtime timestamp,
-                           event text
-                           )""")
-    temp_db_conn.commit()
+    table_factory('import_status',
+                  """lastimportdate timestamp with time zone NOT NULL,
+                     sequence_id integer,
+                     indexed boolean""")
+    table_factory('import_osmosis_log',
+                  """batchend timestamp,
+                     batchseq integer,
+                     batchsize bigint,
+                     starttime timestamp,
+                     endtime timestamp,
+                     event text""")
 
 
 @pytest.fixture
-def place_table(temp_db_with_extensions, temp_db_conn):
+def place_table(temp_db_with_extensions, table_factory):
     """ Create an empty version of the place table.
     """
-    with temp_db_conn.cursor() as cur:
-        cur.execute("""CREATE TABLE place (
-                           osm_id int8 NOT NULL,
-                           osm_type char(1) NOT NULL,
-                           class text NOT NULL,
-                           type text NOT NULL,
-                           name hstore,
-                           admin_level smallint,
-                           address hstore,
-                           extratags hstore,
-                           geometry Geometry(Geometry,4326) NOT NULL)""")
-    temp_db_conn.commit()
+    table_factory('place',
+                  """osm_id int8 NOT NULL,
+                     osm_type char(1) NOT NULL,
+                     class text NOT NULL,
+                     type text NOT NULL,
+                     name hstore,
+                     admin_level smallint,
+                     address hstore,
+                     extratags hstore,
+                     geometry Geometry(Geometry,4326) NOT NULL""")
 
 
 @pytest.fixture
@@ -197,24 +191,22 @@ def placex_table(temp_db_with_extensions, temp_db_conn):
 
 
 @pytest.fixture
-def osmline_table(temp_db_with_extensions, temp_db_conn):
-    with temp_db_conn.cursor() as cur:
-        cur.execute("""CREATE TABLE location_property_osmline (
-                           place_id BIGINT,
-                           osm_id BIGINT,
-                           parent_place_id BIGINT,
-                           geometry_sector INTEGER,
-                           indexed_date TIMESTAMP,
-                           startnumber INTEGER,
-                           endnumber INTEGER,
-                           partition SMALLINT,
-                           indexed_status SMALLINT,
-                           linegeo GEOMETRY,
-                           interpolationtype TEXT,
-                           address HSTORE,
-                           postcode TEXT,
-                           country_code VARCHAR(2))""")
-    temp_db_conn.commit()
+def osmline_table(temp_db_with_extensions, table_factory):
+    table_factory('location_property_osmline',
+                  """place_id BIGINT,
+                     osm_id BIGINT,
+                     parent_place_id BIGINT,
+                     geometry_sector INTEGER,
+                     indexed_date TIMESTAMP,
+                     startnumber INTEGER,
+                     endnumber INTEGER,
+                     partition SMALLINT,
+                     indexed_status SMALLINT,
+                     linegeo GEOMETRY,
+                     interpolationtype TEXT,
+                     address HSTORE,
+                     postcode TEXT,
+                     country_code VARCHAR(2)""")
 
 
 @pytest.fixture

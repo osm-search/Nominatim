@@ -68,7 +68,7 @@ def test_set_status_filled_table(status_table, temp_db_conn, temp_db_cursor):
     date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date)
 
-    assert 1 == temp_db_cursor.scalar("SELECT count(*) FROM import_status")
+    assert temp_db_cursor.table_rows('import_status') == 1
 
     date = dt.datetime.fromordinal(1000100).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date, seq=456, indexed=False)
@@ -83,7 +83,7 @@ def test_set_status_missing_date(status_table, temp_db_conn, temp_db_cursor):
     date = dt.datetime.fromordinal(1000000).replace(tzinfo=dt.timezone.utc)
     nominatim.db.status.set_status(temp_db_conn, date=date)
 
-    assert 1 == temp_db_cursor.scalar("SELECT count(*) FROM import_status")
+    assert temp_db_cursor.table_rows('import_status') == 1
 
     nominatim.db.status.set_status(temp_db_conn, date=None, seq=456, indexed=False)
 
@@ -118,7 +118,7 @@ def test_set_indexed(status_table, temp_db_conn, temp_db_cursor, old_state, new_
 def test_set_indexed_empty_status(status_table, temp_db_conn, temp_db_cursor):
     nominatim.db.status.set_indexed(temp_db_conn, True)
 
-    assert temp_db_cursor.scalar("SELECT count(*) FROM import_status") == 0
+    assert temp_db_cursor.table_rows("import_status") == 0
 
 
 def text_log_status(status_table, temp_db_conn):
@@ -127,6 +127,6 @@ def text_log_status(status_table, temp_db_conn):
     nominatim.db.status.set_status(temp_db_conn, date=date, seq=56)
     nominatim.db.status.log_status(temp_db_conn, start, 'index')
 
-    assert temp_db_cursor.scalar("SELECT count(*) FROM import_osmosis_log") == 1
+    assert temp_db_cursor.table_rows("import_osmosis_log") == 1
     assert temp_db_cursor.scalar("SELECT seq FROM import_osmosis_log") == 56
     assert temp_db_cursor.scalar("SELECT date FROM import_osmosis_log") == date

@@ -185,12 +185,12 @@ def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor):
                               VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
                                      (' BAR', 'bar', 'highway', 'road', null)""")
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
     with analyzer() as a:
         a.update_special_phrases([], True)
 
-    assert 0 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 0
 
 
 def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,):
@@ -198,12 +198,12 @@ def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,
                               VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
                                      (' BAR', 'bar', 'highway', 'road', null)""")
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
     with analyzer() as a:
         a.update_special_phrases([], False)
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
 
 def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
@@ -211,7 +211,7 @@ def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
                               VALUES (' FOO', 'foo', 'amenity', 'prison', 'in'),
                                      (' BAR', 'bar', 'highway', 'road', null)""")
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
     with analyzer() as a:
         a.update_special_phrases([
@@ -220,11 +220,10 @@ def test_update_special_phrase_modify(analyzer, word_table, temp_db_cursor):
           ('garden', 'leisure', 'garden', 'near')
         ], True)
 
-    assert temp_db_cursor.row_set("""SELECT word_token, word, class, type, operator
-                                     FROM word WHERE class != 'place'""") \
-               == set(((' PRISON', 'prison', 'amenity', 'prison', 'in'),
-                       (' BAR', 'bar', 'highway', 'road', None),
-                       (' GARDEN', 'garden', 'leisure', 'garden', 'near')))
+    assert word_table.get_special() \
+               == {(' PRISON', 'prison', 'amenity', 'prison', 'in'),
+                   (' BAR', 'bar', 'highway', 'road', None),
+                   (' GARDEN', 'garden', 'leisure', 'garden', 'near')}
 
 
 def test_process_place_names(analyzer, getorcreate_term_id):

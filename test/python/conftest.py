@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import psycopg2
-import psycopg2.extras
 import pytest
 
 SRC_DIR = Path(__file__) / '..' / '..' / '..'
@@ -91,8 +90,7 @@ def table_factory(temp_db_cursor):
     def mk_table(name, definition='id INT', content=None):
         temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
         if content is not None:
-            psycopg2.extras.execute_values(
-                temp_db_cursor, "INSERT INTO {} VALUES %s".format(name), content)
+            temp_db_cursor.execute_values("INSERT INTO {} VALUES %s".format(name), content)
 
     return mk_table
 

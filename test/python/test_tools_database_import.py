@@ -85,7 +85,7 @@ def test_import_base_data(src_dir, temp_db, temp_db_cursor):
     temp_db_cursor.execute('CREATE EXTENSION postgis')
     database_import.import_base_data('dbname=' + temp_db, src_dir / 'data')
 
-    assert temp_db_cursor.scalar('SELECT count(*) FROM country_name') > 0
+    assert temp_db_cursor.table_rows('country_name') > 0
 
 
 def test_import_base_data_ignore_partitions(src_dir, temp_db, temp_db_cursor):
@@ -94,8 +94,8 @@ def test_import_base_data_ignore_partitions(src_dir, temp_db, temp_db_cursor):
     database_import.import_base_data('dbname=' + temp_db, src_dir / 'data',
                                      ignore_partitions=True)
 
-    assert temp_db_cursor.scalar('SELECT count(*) FROM country_name') > 0
-    assert temp_db_cursor.scalar('SELECT count(*) FROM country_name WHERE partition != 0') == 0
+    assert temp_db_cursor.table_rows('country_name') > 0
+    assert temp_db_cursor.table_rows('country_name', where='partition != 0') == 0
 
 
 def test_import_osm_data_simple(temp_db_cursor,osm2pgsql_options):

@@ -247,11 +247,11 @@ def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,
                               VALUES (' foo', 'foo', 'amenity', 'prison', 'in'),
                                      (' bar', 'bar', 'highway', 'road', null)""")
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
     analyzer.update_special_phrases([], False)
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
 
 def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):

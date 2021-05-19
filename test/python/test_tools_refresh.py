@@ -22,5 +22,5 @@ def test_refresh_import_wikipedia(dsn, table_factory, temp_db_cursor, replace):
     # use the small wikipedia file for the API testdb
     assert 0 == refresh.import_wikipedia_articles(dsn, TEST_DIR / 'testdb')
 
-    assert temp_db_cursor.scalar('SELECT count(*) FROM wikipedia_article') > 0
-    assert temp_db_cursor.scalar('SELECT count(*) FROM wikipedia_redirect') > 0
+    assert temp_db_cursor.table_rows('wikipedia_article') > 0
+    assert temp_db_cursor.table_rows('wikipedia_redirect') > 0

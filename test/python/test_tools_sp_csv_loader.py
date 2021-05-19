@@ -1,12 +1,10 @@
 """
     Tests for methods of the SPCsvLoader class.
 """
-from nominatim.errors import UsageError
 import pytest
-from pathlib import Path
-from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
 
-TEST_BASE_DIR = Path(__file__) / '..' / '..'
+from nominatim.errors import UsageError
+from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
 
 def test_parse_csv(sp_csv_loader):
     """
@@ -49,10 +47,10 @@ def check_phrases_content(phrases):
                     and p.p_operator == '-' for p in phrases)
 
 @pytest.fixture
-def sp_csv_loader():
+def sp_csv_loader(src_dir):
     """
         Return an instance of SPCsvLoader.
     """
-    csv_path = (TEST_BASE_DIR / 'testdata' / 'sp_csv_test.csv').resolve()
+    csv_path = (src_dir / 'test' / 'testdata' / 'sp_csv_test.csv').resolve()
     loader = SPCsvLoader(csv_path)
     return loader

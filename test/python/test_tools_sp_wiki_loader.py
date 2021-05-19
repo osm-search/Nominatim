@@ -2,18 +2,35 @@
     Tests for methods of the SPWikiLoader class.
 """
 import pytest
-from pathlib import Path
 from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 
-TEST_BASE_DIR = Path(__file__) / '..' / '..'
+@pytest.fixture
+def xml_wiki_content(src_dir):
+    """
+        return the content of the static xml test file.
+    """
+    xml_test_content_path = (src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt').resolve()
+    with open(xml_test_content_path) as xml_content_reader:
+        return xml_content_reader.read()
 
-def test_parse_xml(sp_wiki_loader):
+
+@pytest.fixture
+def sp_wiki_loader(monkeypatch, def_config, xml_wiki_content):
+    """
+        Return an instance of SPWikiLoader.
+    """
+    loader = SPWikiLoader(def_config, ['en'])
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
+                        lambda self, lang: xml_wiki_content)
+    return loader
+
+
+def test_parse_xml(sp_wiki_loader, xml_wiki_content):
     """
         Test method parse_xml()
         Should return the right SpecialPhrase objects.
     """
-    xml = get_test_xml_wiki_content()
-    phrases = sp_wiki_loader.parse_xml(xml)
+    phrases = sp_wiki_loader.parse_xml(xml_wiki_content)
     assert check_phrases_content(phrases)
 
 
@@ -37,27 +54,3 @@ def check_phrases_content(phrases):
             and any(p.p_label == 'Zip Line' and p.p_class == 'aerialway' and p.p_type == 'zip_line'
                     and p.p_operator == '-' for p in phrases)
 
-@pytest.fixture
-def sp_wiki_loader(monkeypatch, def_config):
-    """
-        Return an instance of SPWikiLoader.
-    """
-    loader = SPWikiLoader(def_config, ['en'])
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        mock_get_wiki_content)
-    return loader
-
-def mock_get_wiki_content(self, lang):
-    """
-        Mock the _get_wiki_content() method to return
-        static xml test file content.
-    """
-    return get_test_xml_wiki_content()
-
-def get_test_xml_wiki_content():
-    """
-        return the content of the static xml test file.
-    """
-    xml_test_content_path = (TEST_BASE_DIR / 'testdata' / 'special_phrases_test_content.txt').resolve()
-    with open(xml_test_content_path) as xml_content_reader:
-        return xml_content_reader.read()

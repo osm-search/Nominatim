@@ -14,7 +14,52 @@ from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 
 from cursor import CursorForTesting
 
-TEST_BASE_DIR = Path(__file__) / '..' / '..'
+@pytest.fixture
+def testfile_dir(src_dir):
+    return src_dir / 'test' / 'testfiles'
+
+
+@pytest.fixture
+def sp_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
+    """
+        Return an instance of SPImporter.
+    """
+    loader = SPWikiLoader(def_config, ['en'])
+    return SPImporter(def_config, temp_phplib_dir_with_migration, temp_db_conn, loader)
+
+
+@pytest.fixture
+def temp_phplib_dir_with_migration(src_dir, tmp_path):
+    """
+        Return temporary phpdir with migration subdirectory and
+        PhraseSettingsToJson.php script inside.
+    """
+    migration_file = (src_dir / 'lib-php' / 'migration' / 'PhraseSettingsToJson.php').resolve()
+
+    phpdir = tmp_path / 'tempphp'
+    phpdir.mkdir()
+
+    (phpdir / 'migration').mkdir()
+    migration_dest_path = (phpdir / 'migration' / 'PhraseSettingsToJson.php').resolve()
+    copyfile(str(migration_file), str(migration_dest_path))
+
+    return phpdir
+
+
+@pytest.fixture
+def xml_wiki_content(src_dir):
+    """
+        return the content of the static xml test file.
+    """
+    xml_test_content_path = (src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt').resolve()
+    return xml_test_content_path.read_text()
+
+
+@pytest.fixture
+def default_phrases(table_factory):
+    table_factory('place_classtype_testclasstypetable_to_delete')
+    table_factory('place_classtype_testclasstypetable_to_keep')
+
 
 def test_fetch_existing_place_classtype_tables(sp_importer, table_factory):
     """
@@ -48,12 +93,12 @@ def test_load_white_and_black_lists(sp_importer):
 
     assert isinstance(black_list, dict) and isinstance(white_list, dict)
 
-def test_convert_php_settings(sp_importer):
+def test_convert_php_settings(sp_importer, testfile_dir):
     """
         Test that _convert_php_settings_if_needed() convert the given
         php file to a json file.
     """
-    php_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.php').resolve()
+    php_file = (testfile_dir / 'phrase_settings.php').resolve()
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_settings = (Path(temp_dir) / 'phrase_settings.php').resolve()
@@ -70,24 +115,24 @@ def test_convert_settings_wrong_file(sp_importer):
     with pytest.raises(UsageError, match='random_file is not a valid file.'):
         sp_importer._convert_php_settings_if_needed('random_file')
 
-def test_convert_settings_json_already_exist(sp_importer):
+def test_convert_settings_json_already_exist(sp_importer, testfile_dir):
     """
         Test that if we give to '_convert_php_settings_if_needed' a php file path
         and that a the corresponding json file already exists, it is returned.
     """
-    php_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.php').resolve()
-    json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
+    php_file = (testfile_dir / 'phrase_settings.php').resolve()
+    json_file = (testfile_dir / 'phrase_settings.json').resolve()
 
     returned = sp_importer._convert_php_settings_if_needed(php_file)
 
     assert returned == json_file
 
-def test_convert_settings_giving_json(sp_importer):
+def test_convert_settings_giving_json(sp_importer, testfile_dir):
     """
         Test that if we give to '_convert_php_settings_if_needed' a json file path
         the same path is directly returned
     """
-    json_file = (TEST_BASE_DIR / 'testfiles' / 'phrase_settings.json').resolve()
+    json_file = (testfile_dir / 'phrase_settings.json').resolve()
 
     returned = sp_importer._convert_php_settings_if_needed(json_file)
 
@@ -186,7 +231,8 @@ def test_remove_non_existent_tables_from_db(sp_importer, default_phrases,
 
 @pytest.mark.parametrize("should_replace", [(True), (False)])
 def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
-                        placex_table, table_factory, tokenizer_mock, should_replace):
+                        placex_table, table_factory, tokenizer_mock,
+                        xml_wiki_content, should_replace):
     """
         Check that the main import_phrases() method is well executed.
         It should create the place_classtype table, the place_id and centroid indexes,
@@ -200,7 +246,7 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     table_factory('place_classtype_wrongclass_wrongtype')
 
     monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        mock_get_wiki_content)
+                        lambda self, lang: xml_wiki_content)
 
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer, should_replace)
@@ -220,22 +266,6 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     assert temp_db_conn.table_exists('place_classtype_amenity_animal_shelter')
     if should_replace:
         assert not temp_db_conn.table_exists('place_classtype_wrongclass_wrongtype')
-
-
-def mock_get_wiki_content(self, lang):
-    """
-        Mock the _get_wiki_content() method to return
-        static xml test file content.
-    """
-    return get_test_xml_wiki_content()
-
-def get_test_xml_wiki_content():
-    """
-        return the content of the static xml test file.
-    """
-    xml_test_content_path = (TEST_BASE_DIR / 'testdata' / 'special_phrases_test_content.txt').resolve()
-    with open(xml_test_content_path) as xml_content_reader:
-        return xml_content_reader.read()
 
 def check_table_exist(temp_db_conn, phrase_class, phrase_type):
     """
@@ -272,31 +302,3 @@ def check_placeid_and_centroid_indexes(temp_db_conn, phrase_class, phrase_type):
         and
         temp_db_conn.index_exists(index_prefix + 'place_id')
     )
-
-@pytest.fixture
-def sp_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
-    """
-        Return an instance of SPImporter.
-    """
-    loader = SPWikiLoader(def_config, ['en'])
-    return SPImporter(def_config, temp_phplib_dir_with_migration, temp_db_conn, loader)
-
-@pytest.fixture
-def temp_phplib_dir_with_migration():
-    """
-        Return temporary phpdir with migration subdirectory and
-        PhraseSettingsToJson.php script inside.
-    """
-    migration_file = (TEST_BASE_DIR / '..' / 'lib-php' / 'migration'
-                      / 'PhraseSettingsToJson.php').resolve()
-    with tempfile.TemporaryDirectory() as phpdir:
-        (Path(phpdir) / 'migration').mkdir()
-        migration_dest_path = (Path(phpdir) / 'migration' / 'PhraseSettingsToJson.php').resolve()
-        copyfile(migration_file, migration_dest_path)
-
-        yield Path(phpdir)
-
-@pytest.fixture
-def default_phrases(table_factory):
-    table_factory('place_classtype_testclasstypetable_to_delete')
-    table_factory('place_classtype_testclasstypetable_to_keep')

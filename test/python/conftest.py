@@ -16,6 +16,7 @@ from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.db import properties
 import nominatim.tokenizer.factory
+import nominatim.cli
 
 import dummy_tokenizer
 import mocks
@@ -104,9 +105,27 @@ def def_config():
                     data=SRC_DIR / 'data')
     return cfg
 
+
 @pytest.fixture
 def src_dir():
     return SRC_DIR.resolve()
+
+
+@pytest.fixture
+def cli_call():
+    def _call_nominatim(*args):
+        return nominatim.cli.nominatim(
+                   module_dir='MODULE NOT AVAILABLE',
+                   osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+                   phplib_dir=str(SRC_DIR / 'lib-php'),
+                   data_dir=str(SRC_DIR / 'data'),
+                   phpcgi_path='/usr/bin/php-cgi',
+                   sqllib_dir=str(SRC_DIR / 'lib-sql'),
+                   config_dir=str(SRC_DIR / 'settings'),
+                   cli_args=args)
+
+    return _call_nominatim
+
 
 @pytest.fixture
 def tmp_phplib_dir():

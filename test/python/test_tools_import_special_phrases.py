@@ -2,15 +2,13 @@
     Tests for import special phrases methods
     of the class SPImporter.
 """
-from nominatim.errors import UsageError
-from pathlib import Path
-import tempfile
 from shutil import copyfile
 import pytest
 from nominatim.tools.special_phrases.sp_importer import SPImporter
 from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
+from nominatim.errors import UsageError
 
 from cursor import CursorForTesting
 
@@ -93,19 +91,18 @@ def test_load_white_and_black_lists(sp_importer):
 
     assert isinstance(black_list, dict) and isinstance(white_list, dict)
 
-def test_convert_php_settings(sp_importer, testfile_dir):
+def test_convert_php_settings(sp_importer, testfile_dir, tmp_path):
     """
         Test that _convert_php_settings_if_needed() convert the given
         php file to a json file.
     """
     php_file = (testfile_dir / 'phrase_settings.php').resolve()
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_settings = (Path(temp_dir) / 'phrase_settings.php').resolve()
-        copyfile(php_file, temp_settings)
-        sp_importer._convert_php_settings_if_needed(temp_settings)
+    temp_settings = (tmp_path / 'phrase_settings.php').resolve()
+    copyfile(php_file, temp_settings)
+    sp_importer._convert_php_settings_if_needed(temp_settings)
 
-        assert (Path(temp_dir) / 'phrase_settings.json').is_file()
+    assert (tmp_path / 'phrase_settings.json').is_file()
 
 def test_convert_settings_wrong_file(sp_importer):
     """

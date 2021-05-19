@@ -1,6 +1,5 @@
 import itertools
 import sys
-import tempfile
 from pathlib import Path
 
 import psycopg2
@@ -88,6 +87,9 @@ def temp_db_cursor(temp_db):
 
 @pytest.fixture
 def table_factory(temp_db_cursor):
+    """ A fixture that creates new SQL tables, potentially filled with
+        content.
+    """
     def mk_table(name, definition='id INT', content=None):
         temp_db_cursor.execute('CREATE TABLE {} ({})'.format(name, definition))
         if content is not None:
@@ -128,16 +130,9 @@ def cli_call():
 
 
 @pytest.fixture
-def tmp_phplib_dir():
-    with tempfile.TemporaryDirectory() as phpdir:
-        (Path(phpdir) / 'admin').mkdir()
-
-        yield Path(phpdir)
-
-
-@pytest.fixture
 def property_table(table_factory):
     table_factory('nominatim_properties', 'property TEXT, value TEXT')
+
 
 @pytest.fixture
 def status_table(temp_db_conn):

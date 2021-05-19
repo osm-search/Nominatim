@@ -2,7 +2,6 @@
 Tests for running the indexing.
 """
 import itertools
-import psycopg2
 import pytest
 
 from nominatim.indexer import indexer
@@ -64,7 +63,8 @@ class IndexerTestDB:
                            END;
                            $$ LANGUAGE plpgsql STABLE;
                         """)
-            cur.execute("""CREATE OR REPLACE FUNCTION get_interpolation_address(in_address HSTORE, wayid BIGINT)
+            cur.execute("""CREATE OR REPLACE FUNCTION
+                             get_interpolation_address(in_address HSTORE, wayid BIGINT)
                            RETURNS HSTORE AS $$
                            BEGIN
                              RETURN in_address;
@@ -120,7 +120,8 @@ class IndexerTestDB:
         return self.scalar('SELECT count(*) from placex where indexed_status > 0')
 
     def osmline_unindexed(self):
-        return self.scalar('SELECT count(*) from location_property_osmline where indexed_status > 0')
+        return self.scalar("""SELECT count(*) from location_property_osmline
+                              WHERE indexed_status > 0""")
 
 
 @pytest.fixture
@@ -140,37 +141,41 @@ def test_index_all_by_rank(test_db, threads, test_tokenizer):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
 
-    assert 31 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 31
+    assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     idx.index_by_rank(0, 30)
 
-    assert 0 == test_db.placex_unindexed()
-    assert 0 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 0
+    assert test_db.osmline_unindexed() == 0
 
-    assert 0 == test_db.scalar("""SELECT count(*) from placex
-                               WHERE indexed_status = 0 and indexed_date is null""")
+    assert test_db.scalar("""SELECT count(*) from placex
+                             WHERE indexed_status = 0 and indexed_date is null""") == 0
     # ranks come in order of rank address
-    assert 0 == test_db.scalar("""
+    assert test_db.scalar("""
         SELECT count(*) FROM placex p WHERE rank_address > 0
           AND indexed_date >= (SELECT min(indexed_date) FROM placex o
-                               WHERE p.rank_address < o.rank_address)""")
+                               WHERE p.rank_address < o.rank_address)""") == 0
     # placex rank < 30 objects come before interpolations
-    assert 0 == test_db.scalar(
+    assert test_db.scalar(
         """SELECT count(*) FROM placex WHERE rank_address < 30
-             AND indexed_date > (SELECT min(indexed_date) FROM location_property_osmline)""")
+             AND indexed_date >
+                   (SELECT min(indexed_date) FROM location_property_osmline)""") == 0
     # placex rank = 30 objects come after interpolations
-    assert 0 == test_db.scalar(
+    assert test_db.scalar(
         """SELECT count(*) FROM placex WHERE rank_address = 30
-             AND indexed_date < (SELECT max(indexed_date) FROM location_property_osmline)""")
+             AND indexed_date <
+                   (SELECT max(indexed_date) FROM location_property_osmline)""") == 0
     # rank 0 comes after rank 29 and before rank 30
-    assert 0 == test_db.scalar(
+    assert test_db.scalar(
         """SELECT count(*) FROM placex WHERE rank_address < 30
-             AND indexed_date > (SELECT min(indexed_date) FROM placex WHERE rank_address = 0)""")
-    assert 0 == test_db.scalar(
+             AND indexed_date >
+                   (SELECT min(indexed_date) FROM placex WHERE rank_address = 0)""") == 0
+    assert test_db.scalar(
         """SELECT count(*) FROM placex WHERE rank_address = 30
-             AND indexed_date < (SELECT max(indexed_date) FROM placex WHERE rank_address = 0)""")
+             AND indexed_date <
+                   (SELECT max(indexed_date) FROM placex WHERE rank_address = 0)""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])
@@ -179,19 +184,19 @@ def test_index_partial_without_30(test_db, threads, test_tokenizer):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
 
-    assert 31 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 31
+    assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest',
                           test_tokenizer, threads)
     idx.index_by_rank(4, 15)
 
-    assert 19 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 19
+    assert test_db.osmline_unindexed() == 1
 
-    assert 0 == test_db.scalar("""
+    assert test_db.scalar("""
                     SELECT count(*) FROM placex
-                      WHERE indexed_status = 0 AND not rank_address between 4 and 15""")
+                      WHERE indexed_status = 0 AND not rank_address between 4 and 15""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])
@@ -200,18 +205,18 @@ def test_index_partial_with_30(test_db, threads, test_tokenizer):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
 
-    assert 31 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 31
+    assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     idx.index_by_rank(28, 30)
 
-    assert 27 == test_db.placex_unindexed()
-    assert 0 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 27
+    assert test_db.osmline_unindexed() == 0
 
-    assert 0 == test_db.scalar("""
+    assert test_db.scalar("""
                     SELECT count(*) FROM placex
-                      WHERE indexed_status = 0 AND rank_address between 1 and 27""")
+                      WHERE indexed_status = 0 AND rank_address between 1 and 27""") == 0
 
 @pytest.mark.parametrize("threads", [1, 15])
 def test_index_boundaries(test_db, threads, test_tokenizer):
@@ -221,18 +226,18 @@ def test_index_boundaries(test_db, threads, test_tokenizer):
         test_db.add_place(rank_address=rank, rank_search=rank)
     test_db.add_osmline()
 
-    assert 37 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 37
+    assert test_db.osmline_unindexed() == 1
 
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     idx.index_boundaries(0, 30)
 
-    assert 31 == test_db.placex_unindexed()
-    assert 1 == test_db.osmline_unindexed()
+    assert test_db.placex_unindexed() == 31
+    assert test_db.osmline_unindexed() == 1
 
-    assert 0 == test_db.scalar("""
+    assert test_db.scalar("""
                     SELECT count(*) FROM placex
-                      WHERE indexed_status = 0 AND class != 'boundary'""")
+                      WHERE indexed_status = 0 AND class != 'boundary'""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])
@@ -245,8 +250,8 @@ def test_index_postcodes(test_db, threads, test_tokenizer):
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     idx.index_postcodes()
 
-    assert 0 == test_db.scalar("""SELECT count(*) FROM location_postcode
-                                  WHERE indexed_status != 0""")
+    assert test_db.scalar("""SELECT count(*) FROM location_postcode
+                                  WHERE indexed_status != 0""") == 0
 
 
 @pytest.mark.parametrize("analyse", [True, False])
@@ -262,10 +267,10 @@ def test_index_full(test_db, analyse, test_tokenizer):
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, 4)
     idx.index_full(analyse=analyse)
 
-    assert 0 == test_db.placex_unindexed()
-    assert 0 == test_db.osmline_unindexed()
-    assert 0 == test_db.scalar("""SELECT count(*) FROM location_postcode
-                                  WHERE indexed_status != 0""")
+    assert test_db.placex_unindexed() == 0
+    assert test_db.osmline_unindexed() == 0
+    assert test_db.scalar("""SELECT count(*) FROM location_postcode
+                             WHERE indexed_status != 0""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])
@@ -278,4 +283,4 @@ def test_index_reopen_connection(test_db, threads, monkeypatch, test_tokenizer):
     idx = indexer.Indexer('dbname=test_nominatim_python_unittest', test_tokenizer, threads)
     idx.index_by_rank(28, 30)
 
-    assert 0 == test_db.placex_unindexed()
+    assert test_db.placex_unindexed() == 0

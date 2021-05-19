@@ -31,7 +31,8 @@ def test_create_functions(temp_db_cursor, conn, def_config, sql_tmp_path):
 
 
 @pytest.mark.parametrize("dbg,ret", ((True, 43), (False, 22)))
-def test_create_functions_with_template(temp_db_cursor, conn, def_config, sql_tmp_path, dbg, ret):
+def test_create_functions_with_template(temp_db_cursor, conn, def_config, sql_tmp_path,
+                                        dbg, ret):
     sqlfile = sql_tmp_path / 'functions.sql'
     sqlfile.write_text("""CREATE OR REPLACE FUNCTION test() RETURNS INTEGER
                           AS $$

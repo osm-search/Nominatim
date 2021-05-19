@@ -5,8 +5,6 @@ These tests just check that the various command line parameters route to the
 correct functionionality. They use a lot of monkeypatching to avoid executing
 the actual functions.
 """
-from pathlib import Path
-
 import pytest
 
 import nominatim.db.properties
@@ -55,7 +53,7 @@ class TestCli:
     def test_cli_help(self, capsys):
         """ Running nominatim tool without arguments prints help.
         """
-        assert 1 == self.call_nominatim()
+        assert self.call_nominatim() == 1
 
         captured = capsys.readouterr()
         assert captured.out.startswith('usage:')
@@ -66,7 +64,7 @@ class TestCli:
                              (('export',), 'export')
                              ])
     def test_legacy_commands_simple(self, mock_run_legacy, command, script):
-        assert 0 == self.call_nominatim(*command)
+        assert self.call_nominatim(*command) == 0
 
         assert mock_run_legacy.called == 1
         assert mock_run_legacy.last_args[0] == script + '.php'
@@ -78,7 +76,7 @@ class TestCli:
     def test_admin_command_legacy(self, mock_func_factory, params):
         mock_run_legacy = mock_func_factory(nominatim.clicmd.admin, 'run_legacy_script')
 
-        assert 0 == self.call_nominatim('admin', *params)
+        assert self.call_nominatim('admin', *params) == 0
 
         assert mock_run_legacy.called == 1
 
@@ -86,14 +84,14 @@ class TestCli:
     def test_admin_command_check_database(self, mock_func_factory):
         mock = mock_func_factory(nominatim.tools.check_database, 'check_database')
 
-        assert 0 == self.call_nominatim('admin', '--check-database')
+        assert self.call_nominatim('admin', '--check-database') == 0
         assert mock.called == 1
 
 
     @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
                                           ('node', 12), ('way', 8), ('relation', 32)])
     def test_add_data_command(self, mock_run_legacy, name, oid):
-        assert 0 == self.call_nominatim('add-data', '--' + name, str(oid))
+        assert self.call_nominatim('add-data', '--' + name, str(oid)) == 0
 
         assert mock_run_legacy.called == 1
         assert mock_run_legacy.last_args == ('update.php', '--import-' + name, oid)
@@ -107,20 +105,18 @@ class TestCli:
         assert func.called == 1
 
 
-    @pytest.mark.parametrize("params", [
-                             ('search', '--query', 'new'),
-                             ('reverse', '--lat', '0', '--lon', '0'),
-                             ('lookup', '--id', 'N1'),
-                             ('details', '--node', '1'),
-                             ('details', '--way', '1'),
-                             ('details', '--relation', '1'),
-                             ('details', '--place_id', '10001'),
-                             ('status',)
-                             ])
+    @pytest.mark.parametrize("params", [('search', '--query', 'new'),
+                                        ('reverse', '--lat', '0', '--lon', '0'),
+                                        ('lookup', '--id', 'N1'),
+                                        ('details', '--node', '1'),
+                                        ('details', '--way', '1'),
+                                        ('details', '--relation', '1'),
+                                        ('details', '--place_id', '10001'),
+                                        ('status',)])
     def test_api_commands_simple(self, mock_func_factory, params):
         mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
 
-        assert 0 == self.call_nominatim(*params)
+        assert self.call_nominatim(*params) == 0
 
         assert mock_run_api.called == 1
         assert mock_run_api.last_args[0] == params[0]
@@ -148,20 +144,20 @@ class TestCliWithDb:
                 self.finalize_import_called = True
 
         tok = DummyTokenizer()
-        monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db' ,
+        monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db',
                             lambda *args: tok)
-        monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer' ,
+        monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer',
                             lambda *args: tok)
 
         self.tokenizer_mock = tok
 
 
     def test_import_missing_file(self):
-        assert 1 == self.call_nominatim('import', '--osm-file', 'sfsafegweweggdgw.reh.erh')
+        assert self.call_nominatim('import', '--osm-file', 'sfsafegwedgw.reh.erh') == 1
 
 
     def test_import_bad_file(self):
-        assert 1 == self.call_nominatim('import', '--osm-file', '.')
+        assert self.call_nominatim('import', '--osm-file', '.') == 1
 
 
     def test_import_full(self, mock_func_factory):
@@ -185,7 +181,7 @@ class TestCliWithDb:
 
         cf_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
 
-        assert 0 == self.call_nominatim('import', '--osm-file', __file__)
+        assert self.call_nominatim('import', '--osm-file', __file__) == 0
         assert self.tokenizer_mock.finalize_import_called
 
         assert cf_mock.called > 1
@@ -206,7 +202,7 @@ class TestCliWithDb:
             mock_func_factory(nominatim.db.properties, 'set_property')
         ]
 
-        assert 0 == self.call_nominatim('import', '--continue', 'load-data')
+        assert self.call_nominatim('import', '--continue', 'load-data') == 0
         assert self.tokenizer_mock.finalize_import_called
 
         for mock in mocks:
@@ -223,7 +219,7 @@ class TestCliWithDb:
             mock_func_factory(nominatim.db.properties, 'set_property')
         ]
 
-        assert 0 == self.call_nominatim('import', '--continue', 'indexing')
+        assert self.call_nominatim('import', '--continue', 'indexing') == 0
 
         for mock in mocks:
             assert mock.called == 1, "Mock '{}' not called".format(mock.func_name)
@@ -231,7 +227,7 @@ class TestCliWithDb:
         assert temp_db_conn.index_exists('idx_placex_pendingsector')
 
         # Calling it again still works for the index
-        assert 0 == self.call_nominatim('import', '--continue', 'indexing')
+        assert self.call_nominatim('import', '--continue', 'indexing') == 0
         assert temp_db_conn.index_exists('idx_placex_pendingsector')
 
 
@@ -243,7 +239,7 @@ class TestCliWithDb:
             mock_func_factory(nominatim.db.properties, 'set_property')
         ]
 
-        assert 0 == self.call_nominatim('import', '--continue', 'db-postprocess')
+        assert self.call_nominatim('import', '--continue', 'db-postprocess') == 0
 
         assert self.tokenizer_mock.finalize_import_called
 
@@ -255,7 +251,7 @@ class TestCliWithDb:
         mock_drop = mock_func_factory(nominatim.tools.freeze, 'drop_update_tables')
         mock_flatnode = mock_func_factory(nominatim.tools.freeze, 'drop_flatnode_file')
 
-        assert 0 == self.call_nominatim('freeze')
+        assert self.call_nominatim('freeze') == 0
 
         assert mock_drop.called == 1
         assert mock_flatnode.called == 1
@@ -266,7 +262,7 @@ class TestCliWithDb:
     def test_admin_command_tool(self, mock_func_factory, func, params):
         mock = mock_func_factory(nominatim.tools.admin, func)
 
-        assert 0 == self.call_nominatim('admin', *params)
+        assert self.call_nominatim('admin', *params) == 0
         assert mock.called == 1
 
 
@@ -281,7 +277,7 @@ class TestCliWithDb:
         bnd_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_boundaries')
         rank_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_by_rank')
 
-        assert 0 == self.call_nominatim('index', *params)
+        assert self.call_nominatim('index', *params) == 0
 
         assert bnd_mock.called == do_bnds
         assert rank_mock.called == do_ranks
@@ -320,7 +316,7 @@ class TestCliWithDb:
     def test_refresh_command(self, mock_func_factory, command, func):
         func_mock = mock_func_factory(nominatim.tools.refresh, func)
 
-        assert 0 == self.call_nominatim('refresh', '--' + command)
+        assert self.call_nominatim('refresh', '--' + command) == 0
         assert func_mock.called == 1
 
 
@@ -328,13 +324,14 @@ class TestCliWithDb:
         func_mock = mock_func_factory(nominatim.tools.postcodes, 'update_postcodes')
         idx_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')
 
-        assert 0 == self.call_nominatim('refresh', '--postcodes')
+        assert self.call_nominatim('refresh', '--postcodes') == 0
         assert func_mock.called == 1
+        assert idx_mock.called == 1
 
     def test_refresh_create_functions(self, mock_func_factory):
         func_mock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
 
-        assert 0 == self.call_nominatim('refresh', '--functions')
+        assert self.call_nominatim('refresh', '--functions') == 0
         assert func_mock.called == 1
         assert self.tokenizer_mock.update_sql_functions_called
 
@@ -346,9 +343,6 @@ class TestCliWithDb:
         monkeypatch.setattr(nominatim.tools.refresh, 'recompute_importance',
                             lambda *args, **kwargs: calls.append('update'))
 
-        assert 0 == self.call_nominatim('refresh', '--importance', '--wiki-data')
+        assert self.call_nominatim('refresh', '--importance', '--wiki-data') == 0
 
         assert calls == ['import', 'update']
-
-
-

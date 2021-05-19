@@ -1,10 +1,10 @@
 """
 Tests for functions to import a new database.
 """
+from pathlib import Path
+
 import pytest
 import psycopg2
-import sys
-from pathlib import Path
 
 from nominatim.tools import database_import
 from nominatim.errors import UsageError
@@ -34,9 +34,9 @@ def test_setup_skeleton(src_dir, nonexistant_db, no_partitions):
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT distinct partition FROM country_name")
-            partitions = set([r[0] for r in list(cur)])
+            partitions = set((r[0] for r in list(cur)))
             if no_partitions:
-                assert partitions == set([0])
+                assert partitions == set((0, ))
             else:
                 assert len(partitions) > 10
     finally:
@@ -147,7 +147,7 @@ def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):
 
 
 @pytest.mark.parametrize("threads", (1, 5))
-def test_load_data(dsn, src_dir, place_row, placex_table, osmline_table,
+def test_load_data(dsn, place_row, placex_table, osmline_table,
                    word_table, temp_db_cursor, threads):
     for func in ('precompute_words', 'getorcreate_housenumber_id', 'make_standard_name'):
         temp_db_cursor.execute("""CREATE FUNCTION {} (src TEXT)

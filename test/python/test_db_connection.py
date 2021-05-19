@@ -7,28 +7,28 @@ import psycopg2
 from nominatim.db.connection import connect, get_pg_env
 
 @pytest.fixture
-def db(temp_db):
-    with connect('dbname=' + temp_db) as conn:
+def db(dsn):
+    with connect(dsn) as conn:
         yield conn
 
 
 def test_connection_table_exists(db, table_factory):
-    assert db.table_exists('foobar') == False
+    assert not db.table_exists('foobar')
 
     table_factory('foobar')
 
-    assert db.table_exists('foobar') == True
+    assert db.table_exists('foobar')
 
 
 def test_connection_index_exists(db, table_factory, temp_db_cursor):
-    assert db.index_exists('some_index') == False
+    assert not db.index_exists('some_index')
 
     table_factory('foobar')
     temp_db_cursor.execute('CREATE INDEX some_index ON foobar(id)')
 
-    assert db.index_exists('some_index') == True
-    assert db.index_exists('some_index', table='foobar') == True
-    assert db.index_exists('some_index', table='bar') == False
+    assert db.index_exists('some_index')
+    assert db.index_exists('some_index', table='foobar')
+    assert not db.index_exists('some_index', table='bar')
 
 
 def test_drop_table_existing(db, table_factory):

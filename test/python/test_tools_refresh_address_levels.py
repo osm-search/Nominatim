@@ -35,7 +35,7 @@ def test_load_ranks_country(temp_db_conn, temp_db_cursor):
                         [{"tags": {"place": {"village": 14}}},
                          {"countries": ['de'],
                           "tags": {"place": {"village": 15}}},
-                         {"countries": ['uk', 'us' ],
+                         {"countries": ['uk', 'us'],
                           "tags": {"place": {"village": 16}}}
                         ])
 
@@ -62,9 +62,8 @@ def test_load_ranks_default_value(temp_db_conn, temp_db_cursor):
 
 def test_load_ranks_multiple_keys(temp_db_conn, temp_db_cursor):
     load_address_levels(temp_db_conn, 'levels',
-                        [{"tags":
-                            {"place": {"city": 14},
-                             "boundary": {"administrative2" : 4}}
+                        [{"tags": {"place": {"city": 14},
+                                   "boundary": {"administrative2" : 4}}
                          }])
 
     assert temp_db_cursor.row_set('SELECT * FROM levels') == \
@@ -75,9 +74,8 @@ def test_load_ranks_multiple_keys(temp_db_conn, temp_db_cursor):
 
 def test_load_ranks_address(temp_db_conn, temp_db_cursor):
     load_address_levels(temp_db_conn, 'levels',
-                        [{"tags":
-                            {"place": {"city": 14,
-                                       "town" : [14, 13]}}
+                        [{"tags": {"place": {"city": 14,
+                                             "town" : [14, 13]}}
                          }])
 
     assert temp_db_cursor.row_set('SELECT * FROM levels') == \

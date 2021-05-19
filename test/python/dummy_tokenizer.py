@@ -17,16 +17,17 @@ class DummyTokenizer:
 
 
     def init_new_db(self, *args, **kwargs):
-        assert self.init_state == None
+        assert self.init_state is None
         self.init_state = "new"
 
 
     def init_from_project(self):
-        assert self.init_state == None
+        assert self.init_state is None
         self.init_state = "loaded"
 
 
-    def finalize_import(self, _):
+    @staticmethod
+    def finalize_import(_):
         pass
 
 
@@ -51,10 +52,12 @@ class DummyNameAnalyzer:
     def close(self):
         pass
 
-    def normalize_postcode(self, postcode):
+    @staticmethod
+    def normalize_postcode(postcode):
         return postcode
 
-    def update_postcodes_from_db(self):
+    @staticmethod
+    def update_postcodes_from_db():
         pass
 
     def update_special_phrases(self, phrases, should_replace):
@@ -63,5 +66,6 @@ class DummyNameAnalyzer:
     def add_country_names(self, code, names):
         self.analyser_cache['countries'].append((code, names))
 
-    def process_place(self, place):
+    @staticmethod
+    def process_place(place):
         return {}

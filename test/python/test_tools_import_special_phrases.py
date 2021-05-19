@@ -6,7 +6,6 @@ from shutil import copyfile
 import pytest
 from nominatim.tools.special_phrases.sp_importer import SPImporter
 from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
-from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 from nominatim.errors import UsageError
 
@@ -49,8 +48,8 @@ def xml_wiki_content(src_dir):
     """
         return the content of the static xml test file.
     """
-    xml_test_content_path = (src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt').resolve()
-    return xml_test_content_path.read_text()
+    xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
+    return xml_test_content.read_text()
 
 
 @pytest.fixture

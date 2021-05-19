@@ -9,9 +9,8 @@ def xml_wiki_content(src_dir):
     """
         return the content of the static xml test file.
     """
-    xml_test_content_path = (src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt').resolve()
-    with open(xml_test_content_path) as xml_content_reader:
-        return xml_content_reader.read()
+    xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
+    return xml_test_content.read_text()
 
 
 @pytest.fixture
@@ -53,4 +52,3 @@ def check_phrases_content(phrases):
                     and p.p_operator == '-' for p in phrases) \
             and any(p.p_label == 'Zip Line' and p.p_class == 'aerialway' and p.p_type == 'zip_line'
                     and p.p_operator == '-' for p in phrases)
-

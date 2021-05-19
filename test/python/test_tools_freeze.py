@@ -1,8 +1,6 @@
 """
 Tests for freeze functions (removing unused database parts).
 """
-import pytest
-
 from nominatim.tools import freeze
 
 NOMINATIM_RUNTIME_TABLES = [

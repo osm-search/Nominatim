@@ -13,7 +13,6 @@ sys.path.insert(0, str(SRC_DIR.resolve()))
 from nominatim.config import Configuration
 from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
-from nominatim.db import properties
 import nominatim.tokenizer.factory
 import nominatim.cli
 
@@ -116,22 +115,23 @@ def src_dir():
 @pytest.fixture
 def cli_call():
     def _call_nominatim(*args):
-        return nominatim.cli.nominatim(
-                   module_dir='MODULE NOT AVAILABLE',
-                   osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                   phplib_dir=str(SRC_DIR / 'lib-php'),
-                   data_dir=str(SRC_DIR / 'data'),
-                   phpcgi_path='/usr/bin/php-cgi',
-                   sqllib_dir=str(SRC_DIR / 'lib-sql'),
-                   config_dir=str(SRC_DIR / 'settings'),
-                   cli_args=args)
+        return nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
+                                       osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+                                       phplib_dir=str(SRC_DIR / 'lib-php'),
+                                       data_dir=str(SRC_DIR / 'data'),
+                                       phpcgi_path='/usr/bin/php-cgi',
+                                       sqllib_dir=str(SRC_DIR / 'lib-sql'),
+                                       config_dir=str(SRC_DIR / 'settings'),
+                                       cli_args=args)
 
     return _call_nominatim
 
 
 @pytest.fixture
-def property_table(table_factory):
+def property_table(table_factory, temp_db_conn):
     table_factory('nominatim_properties', 'property TEXT, value TEXT')
+
+    return mocks.MockPropertyTable(temp_db_conn)
 
 
 @pytest.fixture
@@ -226,7 +226,7 @@ def osm2pgsql_options(temp_db):
                                  main_data='', main_index=''))
 
 @pytest.fixture
-def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
+def sql_preprocessor(temp_db_conn, tmp_path, table_factory):
     table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',
@@ -236,18 +236,18 @@ def sql_preprocessor(temp_db_conn, tmp_path, monkeypatch, table_factory):
 
 
 @pytest.fixture
-def tokenizer_mock(monkeypatch, property_table, temp_db_conn, tmp_path):
+def tokenizer_mock(monkeypatch, property_table):
     """ Sets up the configuration so that the test dummy tokenizer will be
         loaded when the tokenizer factory is used. Also returns a factory
         with which a new dummy tokenizer may be created.
     """
     monkeypatch.setenv('NOMINATIM_TOKENIZER', 'dummy')
 
-    def _import_dummy(module, *args, **kwargs):
+    def _import_dummy(*args, **kwargs):
         return dummy_tokenizer
 
     monkeypatch.setattr(nominatim.tokenizer.factory, "_import_tokenizer", _import_dummy)
-    properties.set_property(temp_db_conn, 'tokenizer', 'dummy')
+    property_table.set('tokenizer', 'dummy')
 
     def _create_tokenizer():
         return dummy_tokenizer.DummyTokenizer(None, None)

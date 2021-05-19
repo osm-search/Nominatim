@@ -1,7 +1,6 @@
 """
 Tests for DB utility functions in db.utils
 """
-import psycopg2
 import pytest
 
 import nominatim.db.utils as db_utils

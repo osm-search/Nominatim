@@ -41,9 +41,13 @@ def check_phrases_content(phrases):
         the right phrases of the sp_csv_test.csv special phrases.
     """
     return  len(phrases) > 1 \
-            and any(p.p_label == 'Billboard' and p.p_class == 'advertising' and p.p_type == 'billboard'
+            and any(p.p_label == 'Billboard'
+                    and p.p_class == 'advertising'
+                    and p.p_type == 'billboard'
                     and p.p_operator == '-' for p in phrases) \
-            and any(p.p_label == 'Zip Lines' and p.p_class == 'aerialway' and p.p_type == 'zip_line'
+            and any(p.p_label == 'Zip Lines'
+                    and p.p_class == 'aerialway'
+                    and p.p_type == 'zip_line'
                     and p.p_operator == '-' for p in phrases)
 
 @pytest.fixture

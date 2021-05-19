@@ -1,8 +1,6 @@
 """
 Test for loading dotenv configuration.
 """
-from pathlib import Path
-
 import pytest
 
 from nominatim.config import Configuration
@@ -91,7 +89,7 @@ def test_get_libpq_dsn_convert_php_special_chars(make_config, monkeypatch, val, 
 def test_get_libpq_dsn_convert_libpq(make_config, monkeypatch):
     config = make_config()
 
-    monkeypatch.setenv('NOMINATIM_DATABASE_DSN', 
+    monkeypatch.setenv('NOMINATIM_DATABASE_DSN',
                        'host=localhost dbname=gis password=foo')
 
     assert config.get_libpq_dsn() == 'host=localhost dbname=gis password=foo'
@@ -111,7 +109,7 @@ def test_get_bool_empty(make_config):
     config = make_config()
 
     assert config.DATABASE_MODULE_PATH == ''
-    assert config.get_bool('DATABASE_MODULE_PATH') == False
+    assert not config.get_bool('DATABASE_MODULE_PATH')
 
 
 @pytest.mark.parametrize("value,result", [('0', 0), ('1', 1),
@@ -143,18 +141,18 @@ def test_get_int_empty(make_config):
         config.get_int('DATABASE_MODULE_PATH')
 
 
-def test_get_import_style_intern(make_config, monkeypatch):
+def test_get_import_style_intern(make_config, src_dir, monkeypatch):
     config = make_config()
 
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', 'street')
 
-    expected = DEFCFG_DIR / 'import-street.style'
+    expected = src_dir / 'settings' / 'import-street.style'
 
     assert config.get_import_style_file() == expected
 
 
 @pytest.mark.parametrize("value", ['custom', '/foo/bar.stye'])
-def test_get_import_style_intern(make_config, monkeypatch, value):
+def test_get_import_style_extern(make_config, monkeypatch, value):
     config = make_config()
 
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', value)

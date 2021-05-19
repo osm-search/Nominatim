@@ -12,4 +12,4 @@ ignored-modules=icu
 ignored-classes=NominatimArgs,closing
 disable=too-few-public-methods,duplicate-code
 
-good-names=i,x,y,fd
+good-names=i,x,y,fd,db

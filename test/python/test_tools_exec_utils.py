@@ -52,41 +52,45 @@ class TestRunLegacyScript:
 
     def test_run_legacy_return_dont_throw_on_success(self):
         fname = self.mk_script('exit(0);')
-        assert 0 == exec_utils.run_legacy_script(fname, nominatim_env=self.testenv,
-                                                 throw_on_fail=True)
+        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv,
+                                            throw_on_fail=True) == 0
 
     def test_run_legacy_use_given_module_path(self):
         fname = self.mk_script("exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == '' ? 0 : 23);")
 
-        assert 0 == exec_utils.run_legacy_script(fname, nominatim_env=self.testenv)
+        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
 
 
     def test_run_legacy_do_not_overwrite_module_path(self, monkeypatch):
         monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', 'other')
-        fname = self.mk_script("exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == 'other' ? 0 : 1);")
+        fname = self.mk_script(
+            "exit($_SERVER['NOMINATIM_DATABASE_MODULE_PATH'] == 'other' ? 0 : 1);")
 
-        assert 0 == exec_utils.run_legacy_script(fname, nominatim_env=self.testenv)
+        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
 
 
 class TestRunApiScript:
 
+    @staticmethod
     @pytest.fixture(autouse=True)
-    def setup_project_dir(self, tmp_path):
+    def setup_project_dir(tmp_path):
         webdir = tmp_path / 'website'
         webdir.mkdir()
         (webdir / 'test.php').write_text("<?php\necho 'OK\n';")
 
 
-    def test_run_api(self, tmp_path):
-        assert 0 == exec_utils.run_api_script('test', tmp_path)
+    @staticmethod
+    def test_run_api(tmp_path):
+        assert exec_utils.run_api_script('test', tmp_path) == 0
 
-    def test_run_api_execution_error(self, tmp_path):
-        assert 0 != exec_utils.run_api_script('badname', tmp_path)
+    @staticmethod
+    def test_run_api_execution_error(tmp_path):
+        assert exec_utils.run_api_script('badname', tmp_path) != 0
 
-    def test_run_api_with_extra_env(self, tmp_path):
+    @staticmethod
+    def test_run_api_with_extra_env(tmp_path):
         extra_env = dict(SCRIPT_FILENAME=str(tmp_path / 'website' / 'test.php'))
-        assert 0 == exec_utils.run_api_script('badname', tmp_path,
-                                              extra_env=extra_env)
+        assert exec_utils.run_api_script('badname', tmp_path, extra_env=extra_env) == 0
 
 
 ### run_osm2pgsql

@@ -10,7 +10,6 @@ from nominatim.tools import admin
 def create_placex_table(placex_table):
     """ All tests in this module require the placex table to be set up.
     """
-    pass
 
 
 def test_analyse_indexing_no_objects(temp_db_conn):

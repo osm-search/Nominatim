@@ -66,12 +66,14 @@ if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
     $aMoreParams['accept-language'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
 }
 
+$documentURI = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
 if (isset($_SERVER['REQUEST_SCHEME'])
     && isset($_SERVER['HTTP_HOST'])
-    && isset($_SERVER['DOCUMENT_URI'])
+    && isset($documentURI)
 ) {
     $sMoreURL = $_SERVER['REQUEST_SCHEME'].'://'
-                .$_SERVER['HTTP_HOST'].$_SERVER['DOCUMENT_URI'].'/?'
+                .$_SERVER['HTTP_HOST'].$documentURI.'/?'
                 .http_build_query($aMoreParams);
 } else {
     $sMoreURL = '/search.php'.http_build_query($aMoreParams);

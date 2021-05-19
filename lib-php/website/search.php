@@ -74,7 +74,7 @@ if (isset($_SERVER['REQUEST_SCHEME'])
                 .$_SERVER['HTTP_HOST'].$_SERVER['DOCUMENT_URI'].'/?'
                 .http_build_query($aMoreParams);
 } else {
-    $sMoreURL = '/search.php'.http_build_query($aMoreParams);
+    $sMoreURL = '/search.php?'.http_build_query($aMoreParams);
 }
 
 if (CONST_Debug) exit;

@@ -58,13 +58,13 @@ def postcode_table(temp_db_conn, placex_table, word_table):
     return MockPostcodeTable(temp_db_conn)
 
 
-def test_import_postcodes_empty(dsn, postcode_table, tmp_path, tokenizer):
+def test_postcodes_empty(dsn, postcode_table, tmp_path, tokenizer):
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
 
     assert not postcode_table.row_set
 
 
-def test_import_postcodes_add_new(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_add_new(dsn, placex_table, postcode_table, tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='9486'))
     postcode_table.add('yy', '9486', 99, 34)
@@ -74,7 +74,8 @@ def test_import_postcodes_add_new(dsn, placex_table, postcode_table, tmp_path, t
     assert postcode_table.row_set == {('xx', '9486', 10, 12), }
 
 
-def test_import_postcodes_replace_coordinates(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_replace_coordinates(dsn, placex_table, postcode_table,
+                                       tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
     postcode_table.add('xx', 'AB 4511', 99, 34)
@@ -84,7 +85,8 @@ def test_import_postcodes_replace_coordinates(dsn, placex_table, postcode_table,
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
 
 
-def test_import_postcodes_replace_coordinates_close(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_replace_coordinates_close(dsn, placex_table, postcode_table,
+                                             tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
     postcode_table.add('xx', 'AB 4511', 10, 11.99999)
@@ -94,7 +96,7 @@ def test_import_postcodes_replace_coordinates_close(dsn, placex_table, postcode_
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 11.99999)}
 
 
-def test_import_postcodes_remove(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_remove(dsn, placex_table, postcode_table, tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
     postcode_table.add('xx', 'badname', 10, 12)
@@ -104,7 +106,7 @@ def test_import_postcodes_remove(dsn, placex_table, postcode_table, tmp_path, to
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
 
 
-def test_import_postcodes_ignore_empty_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_ignore_empty_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):
     placex_table.add(country=None, geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
 
@@ -113,7 +115,7 @@ def test_import_postcodes_ignore_empty_country(dsn, placex_table, postcode_table
     assert not postcode_table.row_set
 
 
-def test_import_postcodes_remove_all(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_remove_all(dsn, postcode_table, tmp_path, tokenizer):
     postcode_table.add('ch', '5613', 10, 12)
 
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
@@ -121,7 +123,7 @@ def test_import_postcodes_remove_all(dsn, placex_table, postcode_table, tmp_path
     assert not postcode_table.row_set
 
 
-def test_import_postcodes_multi_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):
+def test_postcodes_multi_country(dsn, placex_table, postcode_table, tmp_path, tokenizer):
     placex_table.add(country='de', geom='POINT(10 12)',
                      address=dict(postcode='54451'))
     placex_table.add(country='cc', geom='POINT(100 56)',
@@ -140,8 +142,8 @@ def test_import_postcodes_multi_country(dsn, placex_table, postcode_table, tmp_p
 
 
 @pytest.mark.parametrize("gzipped", [True, False])
-def test_import_postcodes_extern(dsn, placex_table, postcode_table, tmp_path,
-                                 tokenizer, gzipped):
+def test_postcodes_extern(dsn, placex_table, postcode_table, tmp_path,
+                          tokenizer, gzipped):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
 
@@ -158,8 +160,8 @@ def test_import_postcodes_extern(dsn, placex_table, postcode_table, tmp_path,
                                       ('xx', 'CD 4511', -10, -5)}
 
 
-def test_import_postcodes_extern_bad_column(dsn, placex_table, postcode_table,
-                                            tmp_path, tokenizer):
+def test_postcodes_extern_bad_column(dsn, placex_table, postcode_table,
+                                     tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
 
@@ -171,8 +173,8 @@ def test_import_postcodes_extern_bad_column(dsn, placex_table, postcode_table,
     assert postcode_table.row_set == {('xx', 'AB 4511', 10, 12)}
 
 
-def test_import_postcodes_extern_bad_number(dsn, placex_table, postcode_table,
-                                            tmp_path, tokenizer):
+def test_postcodes_extern_bad_number(dsn, placex_table, postcode_table,
+                                     tmp_path, tokenizer):
     placex_table.add(country='xx', geom='POINT(10 12)',
                      address=dict(postcode='AB 4511'))
 

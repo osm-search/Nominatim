@@ -46,7 +46,7 @@ def tokenizer_factory(dsn, tmp_path, property_table):
 
 @pytest.fixture
 def tokenizer_setup(tokenizer_factory, test_config, monkeypatch, sql_preprocessor):
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
@@ -60,7 +60,7 @@ def analyzer(tokenizer_factory, test_config, monkeypatch, sql_preprocessor,
           RETURNS INTEGER AS $$ SELECT 342; $$ LANGUAGE SQL;
         """)
 
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
@@ -87,16 +87,6 @@ def create_postcode_id(temp_db_cursor):
 
 
 @pytest.fixture
-def create_housenumbers(temp_db_cursor):
-    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION create_housenumbers(
-                                  housenumbers TEXT[],
-                                  OUT tokens TEXT, OUT normtext TEXT)
-                              AS $$
-                              SELECT housenumbers::TEXT, array_to_string(housenumbers, ';')
-                              $$ LANGUAGE SQL""")
-
-
-@pytest.fixture
 def make_keywords(temp_db_cursor, temp_db_with_extensions):
     temp_db_cursor.execute(
         """CREATE OR REPLACE FUNCTION make_keywords(names HSTORE)
@@ -105,7 +95,7 @@ def make_keywords(temp_db_cursor, temp_db_with_extensions):
 def test_init_new(tokenizer_factory, test_config, monkeypatch,
                   temp_db_conn, sql_preprocessor):
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', 'xxvv')
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
 
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
@@ -119,8 +109,7 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch,
     assert outfile.stat().st_mode == 33261
 
 
-def test_init_module_load_failed(tokenizer_factory, test_config,
-                                 monkeypatch, temp_db_conn):
+def test_init_module_load_failed(tokenizer_factory, test_config):
     tok = tokenizer_factory()
 
     with pytest.raises(UsageError):
@@ -134,7 +123,7 @@ def test_init_module_custom(tokenizer_factory, test_config,
     (module_dir/ 'nominatim.so').write_text('CUSTOM nomiantim.so')
 
     monkeypatch.setenv('NOMINATIM_DATABASE_MODULE_PATH', str(module_dir))
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
 
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
@@ -154,7 +143,7 @@ def test_update_sql_functions(sql_preprocessor, temp_db_conn,
                               tokenizer_factory, test_config, table_factory,
                               monkeypatch, temp_db_cursor):
     monkeypatch.setenv('NOMINATIM_MAX_WORD_FREQUENCY', '1133')
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
     monkeypatch.undo()
@@ -174,7 +163,7 @@ def test_update_sql_functions(sql_preprocessor, temp_db_conn,
 
 
 def test_migrate_database(tokenizer_factory, test_config, temp_db_conn, monkeypatch):
-    monkeypatch.setattr(legacy_tokenizer, '_check_module' , lambda m, c: None)
+    monkeypatch.setattr(legacy_tokenizer, '_check_module', lambda m, c: None)
     tok = tokenizer_factory()
     tok.migrate_database(test_config)
 
@@ -229,8 +218,7 @@ def test_update_special_phrase_empty_table(analyzer, word_table, make_standard_n
                        (' strasse', 'strasse', 'highway', 'primary', 'in')))
 
 
-def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor,
-                                          make_standard_name):
+def test_update_special_phrase_delete_all(analyzer, word_table, make_standard_name):
     word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
     word_table.add_special(' bar', 'bar', 'highway', 'road', None)
 
@@ -241,17 +229,15 @@ def test_update_special_phrase_delete_all(analyzer, word_table, temp_db_cursor,
     assert word_table.count_special() == 0
 
 
-def test_update_special_phrases_no_replace(analyzer, word_table, temp_db_cursor,
-                                          make_standard_name):
-    temp_db_cursor.execute("""INSERT INTO word (word_token, word, class, type, operator)
-                              VALUES (' foo', 'foo', 'amenity', 'prison', 'in'),
-                                     (' bar', 'bar', 'highway', 'road', null)""")
+def test_update_special_phrases_no_replace(analyzer, word_table, make_standard_name):
+    word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' bar', 'bar', 'highway', 'road', None)
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
     analyzer.update_special_phrases([], False)
 
-    assert 2 == temp_db_cursor.scalar("SELECT count(*) FROM word WHERE class != 'place'""")
+    assert word_table.count_special() == 2
 
 
 def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
@@ -261,9 +247,9 @@ def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
     assert word_table.count_special() == 2
 
     analyzer.update_special_phrases([
-      ('prison', 'amenity', 'prison', 'in'),
-      ('bar', 'highway', 'road', '-'),
-      ('garden', 'leisure', 'garden', 'near')
+        ('prison', 'amenity', 'prison', 'in'),
+        ('bar', 'highway', 'road', '-'),
+        ('garden', 'leisure', 'garden', 'near')
     ], True)
 
     assert word_table.get_special() \
@@ -273,43 +259,58 @@ def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
 
 
 def test_process_place_names(analyzer, make_keywords):
-
     info = analyzer.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
 
     assert info['names'] == '{1,2,3}'
 
 
-@pytest.mark.parametrize('pc', ['12345', 'AB 123', '34-345'])
-def test_process_place_postcode(analyzer, create_postcode_id, word_table, pc):
-    info = analyzer.process_place({'address': {'postcode' : pc}})
+@pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])
+def test_process_place_postcode(analyzer, create_postcode_id, word_table, pcode):
+    analyzer.process_place({'address': {'postcode' : pcode}})
 
-    assert word_table.get_postcodes() == {pc, }
+    assert word_table.get_postcodes() == {pcode, }
 
 
-@pytest.mark.parametrize('pc', ['12:23', 'ab;cd;f', '123;836'])
-def test_process_place_bad_postcode(analyzer, create_postcode_id, word_table, pc):
-    info = analyzer.process_place({'address': {'postcode' : pc}})
+@pytest.mark.parametrize('pcode', ['12:23', 'ab;cd;f', '123;836'])
+def test_process_place_bad_postcode(analyzer, create_postcode_id, word_table, pcode):
+    analyzer.process_place({'address': {'postcode' : pcode}})
 
     assert not word_table.get_postcodes()
 
 
-@pytest.mark.parametrize('hnr', ['123a', '1', '101'])
-def test_process_place_housenumbers_simple(analyzer, create_housenumbers, hnr):
-    info = analyzer.process_place({'address': {'housenumber' : hnr}})
+class TestHousenumberName:
 
-    assert info['hnr'] == hnr
-    assert info['hnr_tokens'].startswith("{")
+    @staticmethod
+    @pytest.fixture(autouse=True)
+    def setup_create_housenumbers(temp_db_cursor):
+        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION create_housenumbers(
+                                      housenumbers TEXT[],
+                                      OUT tokens TEXT, OUT normtext TEXT)
+                                  AS $$
+                                  SELECT housenumbers::TEXT, array_to_string(housenumbers, ';')
+                                  $$ LANGUAGE SQL""")
 
 
-def test_process_place_housenumbers_lists(analyzer, create_housenumbers):
-    info = analyzer.process_place({'address': {'conscriptionnumber' : '1; 2;3'}})
+    @staticmethod
+    @pytest.mark.parametrize('hnr', ['123a', '1', '101'])
+    def test_process_place_housenumbers_simple(analyzer, hnr):
+        info = analyzer.process_place({'address': {'housenumber' : hnr}})
 
-    assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
+        assert info['hnr'] == hnr
+        assert info['hnr_tokens'].startswith("{")
 
 
-def test_process_place_housenumbers_duplicates(analyzer, create_housenumbers):
-    info = analyzer.process_place({'address': {'housenumber' : '134',
-                                               'conscriptionnumber' : '134',
-                                               'streetnumber' : '99a'}})
+    @staticmethod
+    def test_process_place_housenumbers_lists(analyzer):
+        info = analyzer.process_place({'address': {'conscriptionnumber' : '1; 2;3'}})
 
-    assert set(info['hnr'].split(';')) == set(('134', '99a'))
+        assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
+
+
+    @staticmethod
+    def test_process_place_housenumbers_duplicates(analyzer):
+        info = analyzer.process_place({'address': {'housenumber' : '134',
+                                                   'conscriptionnumber' : '134',
+                                                   'streetnumber' : '99a'}})
+
+        assert set(info['hnr'].split(';')) == set(('134', '99a'))

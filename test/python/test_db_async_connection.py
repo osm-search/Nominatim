@@ -6,15 +6,14 @@ import concurrent.futures
 
 import pytest
 import psycopg2
-from psycopg2.extras import wait_select
 
 from nominatim.db.async_connection import DBConnection, DeadlockHandler
 
 
 @pytest.fixture
 def conn(temp_db):
-    with closing(DBConnection('dbname=' + temp_db)) as c:
-        yield c
+    with closing(DBConnection('dbname=' + temp_db)) as connection:
+        yield connection
 
 
 @pytest.fixture
@@ -106,5 +105,3 @@ def test_deadlock(simple_conns):
         future.result()
 
         assert len(deadlock_check) == 1
-
-

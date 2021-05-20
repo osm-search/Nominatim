@@ -1,13 +1,12 @@
 """
 Test for tiger data function
 """
-from pathlib import Path
+import tarfile
 from textwrap import dedent
 
 import pytest
-import tarfile
 
-from nominatim.tools import tiger_data, database_import
+from nominatim.tools import tiger_data
 from nominatim.errors import UsageError
 
 class MockTigerTable:
@@ -42,7 +41,8 @@ def tiger_table(def_config, temp_db_conn, sql_preprocessor,
                                                         stop INTEGER, interpol TEXT,
                                                         token_info JSONB, postcode TEXT)
            RETURNS INTEGER AS $$
-            INSERT INTO tiger VALUES(linegeo, start, stop, interpol, token_info, postcode) RETURNING 1
+            INSERT INTO tiger VALUES(linegeo, start, stop, interpol, token_info, postcode)
+            RETURNING 1
            $$ LANGUAGE SQL;""")
     (def_config.lib_dir.sql / 'tiger_import_finish.sql').write_text(
         """DROP FUNCTION tiger_line_import (linegeo GEOMETRY, in_startnumber INTEGER,
@@ -110,7 +110,7 @@ def test_add_tiger_data_tarfile(def_config, tiger_table, tokenizer_mock,
     tar.add(str(src_dir / 'test' / 'testdb' / 'tiger' / '01001.csv'))
     tar.close()
 
-    tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, 1,
+    tiger_data.add_tiger_data(str(tmp_path / 'sample.tar.gz'), def_config, threads,
                               tokenizer_mock())
 
     assert tiger_table.count() == 6213
@@ -126,7 +126,7 @@ def test_add_tiger_data_bad_tarfile(def_config, tiger_table, tokenizer_mock,
 
 
 def test_add_tiger_data_empty_tarfile(def_config, tiger_table, tokenizer_mock,
-                                      tmp_path, src_dir):
+                                      tmp_path):
     tar = tarfile.open(str(tmp_path / 'sample.tar.gz'), "w:gz")
     tar.add(__file__)
     tar.close()
@@ -135,4 +135,3 @@ def test_add_tiger_data_empty_tarfile(def_config, tiger_table, tokenizer_mock,
                               tokenizer_mock())
 
     assert tiger_table.count() == 0
-

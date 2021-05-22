@@ -71,6 +71,11 @@ jobs:
                   vendor/bin/phpcov merge --clover ../../coverage-bdd.xml ./cov
               working-directory: Nominatim/test/bdd
 
+            - name: BDD tests (legacy_icu tokenizer)
+              run: |
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=legacy_icu --format=progress3
+              working-directory: Nominatim/test/bdd
+
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v1
               with:

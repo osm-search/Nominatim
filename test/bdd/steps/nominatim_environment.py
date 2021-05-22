@@ -198,8 +198,7 @@ class NominatimEnvironment:
 
                 try:
                     self.run_nominatim('import', '--osm-file', str(self.api_test_file))
-                    if self.tokenizer != 'legacy_icu':
-                        self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
+                    self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
                     self.run_nominatim('freeze')
 
                     if self.tokenizer != 'legacy_icu':

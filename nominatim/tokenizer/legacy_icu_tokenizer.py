@@ -423,8 +423,7 @@ class LegacyICUNameAnalyzer:
         names = place.get('name')
 
         if names:
-            full_names = set((self.make_standard_word(name) for name in names.values()))
-            full_names.discard('')
+            full_names = self._compute_full_names(names)
 
             token_info.add_names(self.conn, full_names)
 
@@ -459,6 +458,25 @@ class LegacyICUNameAnalyzer:
                 token_info.add_address_terms(self.conn, addr_terms)
 
         return token_info.data
+
+
+    def _compute_full_names(self, names):
+        """ Return the set of all full name word ids to be used with the
+            given dictionary of names.
+        """
+        full_names = set()
+        for name in (n for ns in names.values() for n in re.split('[;,]', ns)):
+            word = self.make_standard_word(name)
+            if word:
+                full_names.add(word)
+
+                brace_split = name.split('(', 2)
+                if len(brace_split) > 1:
+                    word = self.make_standard_word(brace_split[0])
+                    if word:
+                        full_names.add(word)
+
+        return full_names
 
 
     def _add_postcode(self, postcode):

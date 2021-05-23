@@ -2,6 +2,29 @@
 Feature: Creation of search terms
     Tests that search_name table is filled correctly
 
+    Scenario Outline: Comma- and semicolon separated names appear as full names
+        Given the places
+         | osm | class   | type | name+alt_name |
+         | N1  | place   | city | New York<sep>Big Apple |
+        When importing
+        Then search_name contains
+         | object | name_vector |
+         | N1     | #New York, #Big Apple |
+
+    Examples:
+         | sep |
+         | ,   |
+         | ;   |
+
+    Scenario Outline: Name parts before brackets appear as full names
+        Given the places
+         | osm | class   | type | name+name |
+         | N1  | place   | city | Halle (Saale) |
+        When importing
+        Then search_name contains
+         | object | name_vector |
+         | N1     | #Halle Saale, #Halle |
+
     Scenario: Unnamed POIs have no search entry
         Given the scene roads-with-pois
         And the places
@@ -49,7 +72,7 @@ Feature: Creation of search terms
         When importing
         Then search_name contains
          | object | nameaddress_vector |
-         | N1     | Rose Street, Little, Big, Town |
+         | N1     | #Rose Street, rose, Little, Big, Town |
         When searching for "23 Rose Street, Little Big Town"
         Then results contain
          | osm_type | osm_id | name |

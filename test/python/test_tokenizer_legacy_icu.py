@@ -232,23 +232,16 @@ def test_process_place_names(analyzer, getorcreate_term_id):
 @pytest.mark.parametrize('sep', [',' , ';'])
 def test_full_names_with_separator(analyzer, getorcreate_term_id, sep):
     with analyzer() as anl:
-        full_names =
-            anl._compute_full_names({'name' : sep.join(('New York', 'Big Apple'))})
+        names = anl._compute_full_names({'name' : sep.join(('New York', 'Big Apple'))})
 
-        expect = set((anl.make_standard_word(w) for w in ('New York', 'Big Apple')))
-
-    assert full_names == expect
+    assert names == set(('NEW YORK', 'BIG APPLE'))
 
 
-def test_process_place_names_with_bracket(analyzer, getorcreate_term_id):
+def test_full_names_with_bracket(analyzer, getorcreate_term_id):
     with analyzer() as anl:
-        info = anl.process_place({'name' :
-                                   {'name' : 'Houseboat (left)'}})
+        names = anl._compute_full_names({'name' : 'Houseboat (left)'})
 
-        expect = set((anl.make_standard_word(w) for w in
-                       (' houseboat', ' houseboat left', 'houseboat', 'left')))
-
-    assert eval(info['names']) == expect
+    assert names == set(('HOUSEBOAT (LEFT)', 'HOUSEBOAT'))
 
 
 @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])

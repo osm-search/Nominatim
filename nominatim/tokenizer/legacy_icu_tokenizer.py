@@ -537,8 +537,6 @@ class _TokenInfo:
         """
         # Start with all partial names
         terms = set((part for ns in names for part in ns.split()))
-        # Add partials for the full terms (TO BE REMOVED)
-        terms.update((n for n in names))
         # Add the full names
         terms.update((' ' + n for n in names))
 

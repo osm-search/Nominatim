@@ -223,11 +223,25 @@ def test_update_special_phrase_modify(analyzer, word_table):
 
 
 def test_process_place_names(analyzer, getorcreate_term_id):
-
     with analyzer() as anl:
         info = anl.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
 
-    assert info['names'] == '{1,2,3,4,5,6}'
+    assert info['names'] == '{1,2,3,4,5}'
+
+
+@pytest.mark.parametrize('sep', [',' , ';'])
+def test_full_names_with_separator(analyzer, getorcreate_term_id, sep):
+    with analyzer() as anl:
+        names = anl._compute_full_names({'name' : sep.join(('New York', 'Big Apple'))})
+
+    assert names == set(('NEW YORK', 'BIG APPLE'))
+
+
+def test_full_names_with_bracket(analyzer, getorcreate_term_id):
+    with analyzer() as anl:
+        names = anl._compute_full_names({'name' : 'Houseboat (left)'})
+
+    assert names == set(('HOUSEBOAT (LEFT)', 'HOUSEBOAT'))
 
 
 @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])

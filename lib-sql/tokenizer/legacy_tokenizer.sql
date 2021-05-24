@@ -287,26 +287,21 @@ DECLARE
   s TEXT;
   w INTEGER;
   words TEXT[];
-  item RECORD;
+  value TEXT;
   j INTEGER;
 BEGIN
   result := '{}'::INTEGER[];
 
-  FOR item IN SELECT (each(src)).* LOOP
-
-    s := make_standard_name(item.value);
-    w := getorcreate_name_id(s, item.value);
+  FOR value IN SELECT unnest(regexp_split_to_array(svals(src), E'[,;]')) LOOP
+    -- full name
+    s := make_standard_name(value);
+    w := getorcreate_name_id(s, value);
 
     IF not(ARRAY[w] <@ result) THEN
       result := result || w;
     END IF;
 
-    w := getorcreate_word_id(s);
-
-    IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
-      result := result || w;
-    END IF;
-
+    -- partial single-word terms
     words := string_to_array(s, ' ');
     IF array_upper(words, 1) IS NOT NULL THEN
       FOR j IN 1..array_upper(words, 1) LOOP
@@ -319,24 +314,23 @@ BEGIN
       END LOOP;
     END IF;
 
-    words := regexp_split_to_array(item.value, E'[,;()]');
-    IF array_upper(words, 1) != 1 THEN
-      FOR j IN 1..array_upper(words, 1) LOOP
-        s := make_standard_name(words[j]);
-        IF s != '' THEN
-          w := getorcreate_word_id(s);
-          IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
-            result := result || w;
-          END IF;
+    -- consider parts before an opening braket a full word as well
+    words := regexp_split_to_array(value, E'[(]');
+    IF array_upper(words, 1) > 1 THEN
+      s := make_standard_name(words[1]);
+      IF s != '' THEN
+        w := getorcreate_name_id(s, words[1]);
+        IF w IS NOT NULL AND NOT (ARRAY[w] <@ result) THEN
+          result := result || w;
         END IF;
-      END LOOP;
+      END IF;
     END IF;
 
-    s := regexp_replace(item.value, '市$', '');
-    IF s != item.value THEN
+    s := regexp_replace(value, '市$', '');
+    IF s != value THEN
       s := make_standard_name(s);
       IF s != '' THEN
-        w := getorcreate_name_id(s, item.value);
+        w := getorcreate_name_id(s, value);
         IF NOT (ARRAY[w] <@ result) THEN
           result := result || w;
         END IF;

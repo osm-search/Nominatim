@@ -513,10 +513,9 @@ class _TokenInfo:
         """
         def _get_place(name):
             with conn.cursor() as cur:
-                cur.execute("""SELECT (addr_ids_from_name(%s)
-                                       || getorcreate_name_id(make_standard_name(%s), ''))::text,
+                cur.execute("""SELECT make_keywords(hstore('name' , %s))::text,
                                       word_ids_from_name(%s)::text""",
-                            (name, name, name))
+                            (name, name))
                 return cur.fetchone()
 
         self.data['place_search'], self.data['place_match'] = \

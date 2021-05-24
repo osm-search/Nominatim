@@ -333,7 +333,9 @@ class SearchDescription
     public function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
     {
         // Only allow name terms.
-        if (!(is_a($oSearchTerm, '\Nominatim\Token\Word'))) {
+        if (!(is_a($oSearchTerm, '\Nominatim\Token\Word'))
+            || strpos($sToken, ' ') !== false
+        ) {
             return array();
         }
 
@@ -361,7 +363,6 @@ class SearchDescription
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
             && ((empty($this->aName) && empty($this->aNameNonSearch)) || $this->iNamePhrase == $iPhrase)
-            && strpos($sToken, ' ') === false
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank++;

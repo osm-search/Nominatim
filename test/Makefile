@@ -4,8 +4,8 @@ no-test-db: bdd-no-test-db php
 bdd:
 	cd bdd && behave -DREMOVE_TEMPLATE=1
 
-bdd-no-test-db:
-	cd bdd && behave -DREMOVE_TEMPLATE=1 db osm2pgsql
+icu:
+	cd bdd && behave -DREMOVE_TEMPLATE=1 -DTOKENIZER=legacy_icu
 
 php:
 	cd php && phpunit ./

@@ -263,7 +263,7 @@ def get_set_parser(**kwargs):
 
     parser.add_subcommand('add-data', UpdateAddData)
     parser.add_subcommand('index', clicmd.UpdateIndex)
-    parser.add_subcommand('refresh', clicmd.UpdateRefresh)
+    parser.add_subcommand('refresh', clicmd.UpdateRefresh())
 
     parser.add_subcommand('admin', clicmd.AdminFuncs)
 

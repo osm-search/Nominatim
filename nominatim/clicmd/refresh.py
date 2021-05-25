@@ -19,6 +19,8 @@ class UpdateRefresh:
 
     These functions must not be run in parallel with other update commands.
     """
+    def __init__(self):
+        self.tokenizer = None
 
     @staticmethod
     def add_args(parser):
@@ -43,16 +45,15 @@ class UpdateRefresh:
         group.add_argument('--enable-debug-statements', action='store_true',
                            help='Enable debug warning statements in functions')
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args):
         from ..tools import refresh, postcodes
-        from ..tokenizer import factory as tokenizer_factory
         from ..indexer.indexer import Indexer
 
-        tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
 
         if args.postcodes:
             LOG.warning("Update postcodes centroid")
+            tokenizer = self._get_tokenizer(args.config)
             postcodes.update_postcodes(args.config.get_libpq_dsn(),
                                        args.project_dir, tokenizer)
             indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
@@ -74,7 +75,7 @@ class UpdateRefresh:
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.create_functions(conn, args.config,
                                          args.diffs, args.enable_debug_statements)
-                tokenizer.update_sql_functions(args.config)
+                self._get_tokenizer(args.config).update_sql_functions(args.config)
 
         if args.wiki_data:
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH
@@ -96,4 +97,14 @@ class UpdateRefresh:
             LOG.warning('Setting up website directory at %s', webdir)
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.setup_website(webdir, args.config, conn)
+
         return 0
+
+
+    def _get_tokenizer(self, config):
+        if self.tokenizer is None:
+            from ..tokenizer import factory as tokenizer_factory
+
+            self.tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+
+        return self.tokenizer

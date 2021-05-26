@@ -911,7 +911,7 @@ BEGIN
       -- determine postcode
       NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
                                location.postcode,
-                               get_nearest_postcode(NEW.country_code, NEW.geometry));
+                               get_nearest_postcode(NEW.country_code, NEW.centroid));
 
       IF NEW.name is not NULL THEN
           NEW.name := add_default_place_name(NEW.country_code, NEW.name);

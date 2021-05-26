@@ -58,7 +58,7 @@ class LegacyICUTokenizer:
             cfgfile = config.config_dir / 'legacy_icu_tokenizer.json'
 
         rules = json.loads(cfgfile.read_text())
-        self.transliteration = ';'.join(rules['normalization']) + ';'
+        self._load_transliteration(rules['normalization'], cfgfile.parent)
         self.abbreviations = rules["abbreviations"]
         self.normalization = config.TERM_NORMALIZATION
 
@@ -69,6 +69,12 @@ class LegacyICUTokenizer:
             self.update_sql_functions(config)
             self._init_db_tables(config)
 
+
+    def _load_transliteration(self, rules, cfg_path):
+        if isinstance(rules, str):
+            self.transliteration = (cfg_path / rules).read_text().replace('\n', ' ')
+        else:
+            self.transliteration = ';'.join(rules) + ';'
 
     def init_from_project(self):
         """ Initialise the tokenizer from the project directory.

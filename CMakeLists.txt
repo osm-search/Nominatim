@@ -259,4 +259,5 @@ install(FILES settings/env.defaults
               settings/import-full.style
               settings/import-extratags.style
               settings/legacy_icu_tokenizer.json
+              settings/icu_transliteration.rules
         DESTINATION ${NOMINATIM_CONFIGDIR})

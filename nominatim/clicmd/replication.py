@@ -114,6 +114,7 @@ class UpdateReplication:
                 if state is not replication.UpdateState.NO_CHANGES:
                     status.log_status(conn, start, 'import')
                 batchdate, _, _ = status.get_status(conn)
+                conn.commit()
 
             if state is not replication.UpdateState.NO_CHANGES and args.do_index:
                 index_start = dt.datetime.now(dt.timezone.utc)
@@ -125,6 +126,7 @@ class UpdateReplication:
                 with connect(args.config.get_libpq_dsn()) as conn:
                     status.set_indexed(conn, True)
                     status.log_status(conn, index_start, 'index')
+                    conn.commit()
             else:
                 index_start = None
 

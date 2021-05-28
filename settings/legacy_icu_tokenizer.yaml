@@ -1,0 +1,116 @@
+normalization:
+    - ":: NFD ()"
+    - "[[:Nonspacing Mark:] [:Cf:]] >"
+    - ":: lower ()"
+    - "ß > 'ss'" # German szet is unimbigiously equal to double ss
+    - "[[:Punctuation:][:Space:]]+ > ' '"
+    - ":: NFC ()"
+transliteration: icu_transliteration.rules
+compound_suffixes:
+    # Danish
+    - hal
+    - hallen
+    - hallerne
+    # German
+    - berg
+    - brücke
+    - fabrik
+    - gasse
+    - graben
+    - haus
+    - höhle
+    - hütte
+    - kapelle
+    - kogel
+    - pfad
+    - platz
+    - quelle
+    - spitze
+    - stiege
+    - strasse
+    - teich
+    - universität
+    - wald
+    - weg
+    - wiese
+    # Dutch
+    - gracht
+    - laan
+    - markt
+    - plein
+    - straat
+    - vliet
+    - weg
+    # Norwegian
+    - vei
+    - veien
+    - veg
+    - vegen
+    - gate
+    - gaten
+    - gata
+    - plass
+    - plassen
+    - sving
+    - svingen
+    # Finnish
+    - alue
+    - asema
+    - aukio
+    - kaari
+    - katu
+    - kuja
+    - kylä
+    - penger
+    - polku
+    - puistikko
+    - puisto
+    - raitti
+    - ranta
+    - rinne
+    - taival
+    - tie
+    - tori
+    - väylä
+    # Swedish
+    - väg
+    - vägen
+    - gatan
+    - gata
+    - gränd
+    - gränden
+    - stig
+    - stigen
+    - plats
+    - platsen
+abbreviations:
+    # German
+    - am => a
+    - an der => a d
+    - allgemeines krankenhaus => akh
+    - altstoffsammelzentrum => asz
+    - auf der => a d
+    - bach => b
+    - bad => b
+    - bahnhof => bhf,bf
+    - berg => bg
+    - bezirk => bez
+    - brücke => br
+    - burg => bg
+    - chaussee => ch
+    - deutsche,deutscher,deutsches => dt
+    - dorf => df
+    - doktor => dr
+    - fachhochschule => fh
+    - Freiwillige Feuerwehr => ff
+    - sankt => st
+    - strasse => str
+    - weg => wg
+    # English
+    - alley => al
+    - beach => bch
+    - street => st
+    - road => rd
+    - bridge => brdg
+
+

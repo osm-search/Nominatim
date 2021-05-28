@@ -404,7 +404,7 @@ class LegacyNameAnalyzer:
                             FROM unnest(%s)n) y
                       WHERE NOT EXISTS(SELECT * FROM word
                                        WHERE word_token = lookup_token and country_code = %s))
-                """, (country_code, names, country_code))
+                """, (country_code, list(names.values()), country_code))
 
 
     def process_place(self, place):
@@ -422,7 +422,7 @@ class LegacyNameAnalyzer:
 
             country_feature = place.get('country_feature')
             if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
-                self.add_country_names(country_feature.lower(), list(names.values()))
+                self.add_country_names(country_feature.lower(), names)
 
         address = place.get('address')
 

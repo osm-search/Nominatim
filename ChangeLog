@@ -1,3 +1,11 @@
+3.7.2
+
+ * fix database check for reverse-only imports
+ * do not error out in status API result when import date is missing
+ * add array_key_last function for PHP < 7.3 (thanks to @woodpack)
+ * fix more url when server name is unknown (thanks to @mogita)
+ * commit changes to replication log table
+
 3.7.1
 
  * fix smaller issues with special phrases import

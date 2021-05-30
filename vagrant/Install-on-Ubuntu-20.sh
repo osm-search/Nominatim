@@ -99,8 +99,8 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    wget https://nominatim.org/release/Nominatim-3.7.1.tar.bz2
-    tar xf Nominatim-3.7.1.tar.bz2
+    wget https://nominatim.org/release/Nominatim-3.7.2.tar.bz2
+    tar xf Nominatim-3.7.2.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
@@ -110,7 +110,7 @@ fi                                 #DOCS:
 
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim-3.7.1
+    cmake $USERHOME/Nominatim-3.7.2
     make
     sudo make install
 

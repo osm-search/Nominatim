@@ -85,7 +85,7 @@ To do so, you have access to the following command:
 nominatim special-phrases --import-from-csv <csv file>
 ```
 
-Note that the 2 previous import commands will update the phrases from your database.
+Note that the two previous import commands will update the phrases from your database.
 This means that if you import some phrases from a csv file, only the phrases
 present in the csv file will be kept into the database. All other phrases will
 be removed.

@@ -124,6 +124,14 @@ configuration file, run the following command after updating:
 ./utils/setup.php --setup-website
 ```
 
+### Update SQL code
+
+To update the SQL code to the leatest version run:
+
+```
+./utils/setup.php --create-functions --enable-diff-updates --create-partition-functions
+```
+
 ## 3.4.0 -> 3.5.0
 
 ### New Wikipedia/Wikidata importance tables

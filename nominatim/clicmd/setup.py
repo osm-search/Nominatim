@@ -52,10 +52,8 @@ class SetupAll:
 
     @staticmethod
     def run(args): # pylint: disable=too-many-statements
-        from ..tools import database_import
-        from ..tools import refresh
+        from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
-        from ..tools import postcodes
         from ..tokenizer import factory as tokenizer_factory
 
         if args.osm_file and not Path(args.osm_file).is_file():
@@ -135,7 +133,11 @@ class SetupAll:
             LOG.warning('Create search index for default country names.')
             database_import.create_country_names(conn, tokenizer,
                                                  args.config.LANGUAGES)
+            conn.commit()
+            if args.no_updates:
+                freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)
+
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

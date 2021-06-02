@@ -49,6 +49,13 @@ class MockWordTable:
         self.conn.commit()
 
 
+    def add_country(self, country_code, word_token):
+        with self.conn.cursor() as cur:
+            cur.execute("INSERT INTO word (word_token, country_code) VALUES(%s, %s)",
+                        (word_token, country_code))
+        self.conn.commit()
+
+
     def add_postcode(self, word_token, postcode):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, word, class, type)
@@ -71,7 +78,18 @@ class MockWordTable:
         with self.conn.cursor() as cur:
             cur.execute("""SELECT word_token, word, class, type, operator
                            FROM word WHERE class != 'place'""")
-            return set((tuple(row) for row in cur))
+            result = set((tuple(row) for row in cur))
+            assert len(result) == cur.rowcount, "Word table has duplicates."
+            return result
+
+
+    def get_country(self):
+        with self.conn.cursor() as cur:
+            cur.execute("""SELECT country_code, word_token
+                           FROM word WHERE country_code is not null""")
+            result = set((tuple(row) for row in cur))
+            assert len(result) == cur.rowcount, "Word table has duplicates."
+            return result
 
 
     def get_postcodes(self):

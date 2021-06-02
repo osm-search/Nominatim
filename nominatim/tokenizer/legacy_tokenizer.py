@@ -375,7 +375,7 @@ class LegacyNameAnalyzer:
                     cur,
                     """ INSERT INTO word (word_id, word_token, word, class, type,
                                           search_name_count, operator)
-                        (SELECT nextval('seq_word'), make_standard_name(name), name,
+                        (SELECT nextval('seq_word'), ' ' || make_standard_name(name), name,
                                 class, type, 0,
                                 CASE WHEN op in ('in', 'near') THEN op ELSE null END
                            FROM (VALUES %s) as v(name, class, type, op))""",
@@ -400,7 +400,7 @@ class LegacyNameAnalyzer:
             cur.execute(
                 """INSERT INTO word (word_id, word_token, country_code)
                    (SELECT nextval('seq_word'), lookup_token, %s
-                      FROM (SELECT ' ' || make_standard_name(n) as lookup_token
+                      FROM (SELECT DISTINCT ' ' || make_standard_name(n) as lookup_token
                             FROM unnest(%s)n) y
                       WHERE NOT EXISTS(SELECT * FROM word
                                        WHERE word_token = lookup_token and country_code = %s))

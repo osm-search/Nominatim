@@ -73,7 +73,7 @@ def analyzer(tokenizer_factory, test_config, monkeypatch, sql_preprocessor,
 @pytest.fixture
 def make_standard_name(temp_db_cursor):
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION make_standard_name(name TEXT)
-                              RETURNS TEXT AS $$ SELECT ' ' || name; $$ LANGUAGE SQL""")
+                              RETURNS TEXT AS $$ SELECT '#' || lower(name) || '#'; $$ LANGUAGE SQL""")
 
 
 @pytest.fixture
@@ -209,18 +209,19 @@ def test_update_special_phrase_empty_table(analyzer, word_table, make_standard_n
     analyzer.update_special_phrases([
         ("König bei", "amenity", "royal", "near"),
         ("Könige", "amenity", "royal", "-"),
+        ("könige", "amenity", "royal", "-"),
         ("strasse", "highway", "primary", "in")
     ], True)
 
     assert word_table.get_special() \
-               == set(((' könig bei', 'könig bei', 'amenity', 'royal', 'near'),
-                       (' könige', 'könige', 'amenity', 'royal', None),
-                       (' strasse', 'strasse', 'highway', 'primary', 'in')))
+               == set(((' #könig bei#', 'könig bei', 'amenity', 'royal', 'near'),
+                       (' #könige#', 'könige', 'amenity', 'royal', None),
+                       (' #strasse#', 'strasse', 'highway', 'primary', 'in')))
 
 
 def test_update_special_phrase_delete_all(analyzer, word_table, make_standard_name):
-    word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' bar', 'bar', 'highway', 'road', None)
+    word_table.add_special(' #foo#', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' #bar#', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -230,8 +231,8 @@ def test_update_special_phrase_delete_all(analyzer, word_table, make_standard_na
 
 
 def test_update_special_phrases_no_replace(analyzer, word_table, make_standard_name):
-    word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' bar', 'bar', 'highway', 'road', None)
+    word_table.add_special(' #foo#', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' #bar#', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -241,8 +242,8 @@ def test_update_special_phrases_no_replace(analyzer, word_table, make_standard_n
 
 
 def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
-    word_table.add_special(' foo', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' bar', 'bar', 'highway', 'road', None)
+    word_table.add_special(' #foo#', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special(' #bar#', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -253,9 +254,31 @@ def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
     ], True)
 
     assert word_table.get_special() \
-               == set(((' prison', 'prison', 'amenity', 'prison', 'in'),
-                       (' bar', 'bar', 'highway', 'road', None),
-                       (' garden', 'garden', 'leisure', 'garden', 'near')))
+               == set(((' #prison#', 'prison', 'amenity', 'prison', 'in'),
+                       (' #bar#', 'bar', 'highway', 'road', None),
+                       (' #garden#', 'garden', 'leisure', 'garden', 'near')))
+
+
+def test_add_country_names(analyzer, word_table, make_standard_name):
+    analyzer.add_country_names('de', ['Germany', 'Deutschland', 'germany'])
+
+    assert word_table.get_country() \
+               == {('de', ' #germany#'),
+                   ('de', ' #deutschland#')}
+
+
+def test_add_more_country_names(analyzer, word_table, make_standard_name):
+    word_table.add_country('fr', ' #france#')
+    word_table.add_country('it', ' #italy#')
+    word_table.add_country('it', ' #itala#')
+
+    analyzer.add_country_names('it', ['Italy', 'IT'])
+
+    assert word_table.get_country() \
+               == {('fr', ' #france#'),
+                   ('it', ' #italy#'),
+                   ('it', ' #itala#'),
+                   ('it', ' #it#')}
 
 
 def test_process_place_names(analyzer, make_keywords):

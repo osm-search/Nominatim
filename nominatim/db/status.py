@@ -17,7 +17,10 @@ def compute_database_date(conn):
     """
     # First, find the node with the highest ID in the database
     with conn.cursor() as cur:
-        osmid = cur.scalar("SELECT max(osm_id) FROM place WHERE osm_type='N'")
+        if conn.table_exists('place'):
+            osmid = cur.scalar("SELECT max(osm_id) FROM place WHERE osm_type='N'")
+        else:
+            osmid = cur.scalar("SELECT max(osm_id) FROM placex WHERE osm_type='N'")
 
         if osmid is None:
             LOG.fatal("No data found in the database.")

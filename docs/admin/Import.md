@@ -40,7 +40,7 @@ all commands from the project directory.
 
 ### Configuration setup in `.env`
 
-The Nominatim server can be customized via an `.env` configuration file in the
+The Nominatim server can be customized via an `.env` configuration file in the 
 project directory. This is a file in [dotenv](https://github.com/theskumar/python-dotenv)
 format which looks the same as variable settings in a standard shell environment.
 You can also set the same configuration via environment variables. All
@@ -48,7 +48,7 @@ settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
 variables.
 
 There are lots of configuration settings you can tweak. Have a look
-at `settings/env.default` for a full list. Most should have a sensible default.
+at `Nominatim/settings/env.default` for a full list. Most should have a sensible default.
 
 #### Flatnode files
 
@@ -193,11 +193,14 @@ can be found in the development section.
     [Geofabrik](https://download.geofabrik.de).
 
 Download the data to import. Then issue the following command
-from the **build directory** to start the import:
+from the **project directory** to start the import:
 
 ```sh
 nominatim import --osm-file <data file> 2>&1 | tee setup.log
 ```
+
+The **project directory** is the one that you have set up at the beginning.
+See [creating the project directory](Import#creating-the-project-directory).
 
 ### Notes on full planet imports
 

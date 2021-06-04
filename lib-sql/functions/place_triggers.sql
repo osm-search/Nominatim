@@ -77,6 +77,12 @@ BEGIN
 
   ELSE -- insert to placex
 
+    -- Pure postcodes are never queried from placex so we don't add them.
+    -- location_postcodes is filled from the place table directly.
+    IF NEW.class = 'place' AND NEW.type = 'postcode' THEN
+      RETURN NEW;
+    END IF;
+
     -- Patch in additional country names
     IF NEW.admin_level = 2 AND NEW.type = 'administrative'
           AND NEW.address is not NULL AND NEW.address ? 'country' THEN

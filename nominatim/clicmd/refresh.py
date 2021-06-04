@@ -52,13 +52,17 @@ class UpdateRefresh:
 
 
         if args.postcodes:
-            LOG.warning("Update postcodes centroid")
-            tokenizer = self._get_tokenizer(args.config)
-            postcodes.update_postcodes(args.config.get_libpq_dsn(),
-                                       args.project_dir, tokenizer)
-            indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
-                              args.threads or 1)
-            indexer.index_postcodes()
+            if postcodes.can_compute(args.config.get_libpq_dsn()):
+                LOG.warning("Update postcodes centroid")
+                tokenizer = self._get_tokenizer(args.config)
+                postcodes.update_postcodes(args.config.get_libpq_dsn(),
+                                           args.project_dir, tokenizer)
+                indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
+                                  args.threads or 1)
+                indexer.index_postcodes()
+            else:
+                LOG.error("The place table doesn\'t exists. " \
+                          "Postcode updates on a frozen database is not possible.")
 
         if args.word_counts:
             LOG.warning('Recompute frequency of full-word search terms')

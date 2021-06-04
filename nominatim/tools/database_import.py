@@ -199,7 +199,7 @@ def load_data(dsn, threads):
         conn.perform("""INSERT INTO placex ({0})
                          SELECT {0} FROM place
                          WHERE osm_id % {1} = {2}
-                           AND NOT (class='place' and type='houses')
+                           AND NOT (class='place' and (type='houses' or type='postcode'))
                            AND ST_IsValid(geometry)
                      """.format(_COPY_COLUMNS, place_threads, imod))
         sel.register(conn, selectors.EVENT_READ, conn)

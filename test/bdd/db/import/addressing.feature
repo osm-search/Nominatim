@@ -17,10 +17,10 @@ Feature: Address computation
         Then place_addressline doesn't contain
             | object | address |
             | N1     | N2      |
-        When searching for "Square"
+        When sending search query "Square"
         Then results contain
-           | osm_type | osm_id | name              |
-           | N        | 1      | Square, East Farm |
+           | osm | display_name      |
+           | N1  | Square, East Farm |
 
     Scenario: given two place nodes, the closer one wins for the address
         Given the grid
@@ -347,10 +347,10 @@ Feature: Address computation
         And place_addressline doesn't contain
            | object | address |
            | W1     | R1      |
-        When searching for "Bolder"
+        When sending search query "Bolder"
         Then results contain
-           | osm_type | osm_id | name                    |
-           | N        | 1      | Bolder, Wonderway, Left |
+           | osm | display_name            |
+           | N1  | Bolder, Wonderway, Left |
 
     Scenario: addr:* tags do not produce addresslines when the parent has the address part
         Given the grid
@@ -371,10 +371,10 @@ Feature: Address computation
         And place_addressline doesn't contain
            | object | address |
            | N1     | R1      |
-        When searching for "Bolder"
+        When sending search query "Bolder"
         Then results contain
-           | osm_type | osm_id | name                     |
-           | N        | 1      | Bolder, Wonderway, Outer |
+           | osm | display_name             |
+           | N1  | Bolder, Wonderway, Outer |
 
     Scenario: addr:* tags on outside do not produce addresslines when the parent has the address part
         Given the grid
@@ -397,10 +397,10 @@ Feature: Address computation
         And place_addressline doesn't contain
            | object | address |
            | N1     | R1      |
-        When searching for "Bolder"
+        When sending search query "Bolder"
         Then results contain
-           | osm_type | osm_id | name                    |
-           | N        | 1      | Bolder, Wonderway, Left |
+           | osm | display_name            |
+           | N1  | Bolder, Wonderway, Left |
 
     Scenario: POIs can correct address parts on the fly
         Given the grid
@@ -425,11 +425,11 @@ Feature: Address computation
            | object | address |
            | N1     | R1      |
            | N2     | R2      |
-        When searching for "Bolder"
+        When sending search query "Bolder"
         Then results contain
-           | osm_type | osm_id | name                    |
-           | N        | 1      | Bolder, Wonderway, Left |
-        When searching for "Leftside"
+           | osm | display_name            |
+           | N1  | Bolder, Wonderway, Left |
+        When sending search query "Leftside"
         Then results contain
-           | osm_type | osm_id | name                       |
-           | N        | 2      | Leftside, Wonderway, Right |
+           | osm | display_name               |
+           | N2  | Leftside, Wonderway, Right |

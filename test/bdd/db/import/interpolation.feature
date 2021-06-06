@@ -240,11 +240,11 @@ Feature: Import of address interpolations
         Then W11 expands to interpolation
           | parent_place_id | start | end |
           | W3              | 12    | 16 |
-        When searching for "16 Cloud Street"
+        When sending search query "16 Cloud Street"
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | N        | 4 |
-        When searching for "14 Cloud Street"
+        When sending search query "14 Cloud Street"
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | W        | 11 |
@@ -282,11 +282,11 @@ Feature: Import of address interpolations
         Then W11 expands to interpolation
           | parent_place_id | start | end |
           | W3              | 12    | 16 |
-        When searching for "16 Cloud Street"
+        When sending search query "16 Cloud Street"
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | N        | 4 |
-        When searching for "14 Cloud Street"
+        When sending search query "14 Cloud Street"
         Then results contain
          | ID | osm_type | osm_id |
          | 0  | W        | 11 |

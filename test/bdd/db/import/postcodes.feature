@@ -148,11 +148,11 @@ Feature: Import of postcodes
            | country | postcode | geometry |
            | gb      | EH4 7EA  | country:gb |
            | gb      | E4 7EA   | country:gb |
-        When searching for "EH4 7EA"
+        When sending search query "EH4 7EA"
         Then results contain
-           | type     | placename |
+           | type     | display_name |
            | postcode | EH4 7EA      |
-        When searching for "E4 7EA"
+        When sending search query "E4 7EA"
         Then results contain
-           | type     | placename |
+           | type     | display_name |
            | postcode | E4 7EA      |

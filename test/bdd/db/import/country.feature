@@ -10,16 +10,16 @@ Feature: Country handling
             | osm  | class    | type          | name  | geometry   |
             | N1   | place    | town          | Wenig | country:de |
         When importing
-        When searching for "Wenig, Loudou"
+        When sending search query "Wenig, Loudou"
         Then results contain
-            | osm_type | osm_id | name |
-            | N        | 1      | Wenig, Deutschland |
-        When searching for "Wenig"
+            | osm | display_name |
+            | N1  | Wenig, Deutschland |
+        When sending search query "Wenig"
             | accept-language |
             | xy,en |
         Then results contain
-            | osm_type | osm_id | name |
-            | N        | 1      | Wenig, Loudou |
+            | osm | display_name |
+            | N1  | Wenig, Loudou |
     Scenario: OSM country relations outside expected boundaries are ignored
         Given the places
             | osm  | class    | type           | admin | name+name:xy | country | geometry |
@@ -28,20 +28,20 @@ Feature: Country handling
             | osm  | class    | type          | name  | geometry   |
             | N1   | place    | town          | Wenig | country:de |
         When importing
-        When searching for "Wenig"
+        When sending search query "Wenig"
             | accept-language |
             | xy,en |
         Then results contain
-            | osm_type | osm_id | name |
-            | N        | 1      | Wenig, Germany |
+            | osm | display_name |
+            | N1  | Wenig, Germany |
     Scenario: Pre-defined country names are used
         Given the places
             | osm  | class    | type          | name  | geometry   |
             | N1   | place    | town          | Ingb  | country:ch |
         When importing
-        And searching for "Ingb"
+        And sending search query "Ingb"
             | accept-language |
             | en,de |
         Then results contain
-            | osm_type | osm_id | name |
-            | N        | 1      | Ingb, Switzerland |
+            | osm | display_name |
+            | N1  | Ingb, Switzerland |

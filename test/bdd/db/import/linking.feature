@@ -47,7 +47,7 @@ Feature: Linking of places
          | W2     | R13 |
          | R13    | -   |
          | R23    | -   |
-        When searching for "rhein"
+        When sending search query "rhein"
         Then results contain
          | osm_type |
          | R |
@@ -98,7 +98,7 @@ Feature: Linking of places
          | object | linked_place_id |
          | W1     | - |
          | R1     | - |
-        When searching for "rhein"
+        When sending search query "rhein"
         Then results contain
           | ID | osm_type |
           |  0 | R |
@@ -119,7 +119,7 @@ Feature: Linking of places
          | object | linked_place_id |
          | W1     | -  |
          | W2     | R1 |
-        When searching for "rhein2"
+        When sending search query "rhein2"
         Then results contain
          | osm_type |
          | W |
@@ -172,13 +172,13 @@ Feature: Linking of places
         And placex contains
          | object | rank_address |
          | R13    | 16 |
-        When searching for ""
+        When sending search query ""
          | city |
          | Berlin |
         Then results contain
           | ID | osm_type | osm_id |
           |  0 | R | 13 |
-        When searching for ""
+        When sending search query ""
          | state |
          | Berlin |
         Then results contain
@@ -200,13 +200,13 @@ Feature: Linking of places
         And placex contains
          | object | rank_address |
          | R13    | 8 |
-        When searching for ""
+        When sending search query ""
          | state |
          | Berlin |
         Then results contain
           | ID | osm_type | osm_id |
           |  0 | R | 13 |
-        When searching for ""
+        When sending search query ""
          | city |
          | Berlin |
         Then results contain

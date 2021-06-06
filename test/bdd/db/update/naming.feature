@@ -7,10 +7,10 @@ Feature: Update of names in place objects
           | osm | class    | type        | postcode | geometry |
           | R1  | boundary | postal_code | 12345    | poly-area:0.5 |
         When importing
-        And searching for "12345"
+        And sending search query "12345"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | R        | 1 |
+         | ID | osm |
+         | 0  | R1 |
         When updating places
           | osm | class    | type        | geometry |
           | R1  | boundary | postal_code | poly-area:0.5 |

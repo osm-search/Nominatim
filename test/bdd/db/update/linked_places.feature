@@ -10,7 +10,9 @@ Feature: Updates of linked places
             | osm | class    | type           | name | admin | geometry |
             | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
         When importing
-        And searching for "foo" with dups
+        And sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | R |
@@ -20,7 +22,9 @@ Feature: Updates of linked places
         Then placex contains
          | object | linked_place_id |
          | N1     | - |
-        When searching for "foo" with dups
+        When sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | N |
@@ -33,7 +37,9 @@ Feature: Updates of linked places
             | osm | class    | type           | name | admin | geometry |
             | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
         When importing
-        And searching for "foo" with dups
+        And sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | R |
@@ -41,7 +47,9 @@ Feature: Updates of linked places
         Then placex contains
          | object | linked_place_id |
          | N1     | - |
-        When searching for "foo" with dups
+        When sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | N |
@@ -51,7 +59,9 @@ Feature: Updates of linked places
             | osm | class | type | name | geometry |
             | N1  | place | city | foo  | 0 0 |
         When importing
-        And searching for "foo" with dups
+        And sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | N |
@@ -61,7 +71,9 @@ Feature: Updates of linked places
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
-        When searching for "foo" with dups
+        When sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | R |
@@ -74,7 +86,9 @@ Feature: Updates of linked places
          | osm | class    | type           | name   | admin | geometry |
          | R1  | boundary | administrative | foobar | 8     | poly-area:0.1 |
         When importing
-        And searching for "foo" with dups
+        And sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | N |
@@ -84,7 +98,9 @@ Feature: Updates of linked places
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
-        When searching for "foo" with dups
+        When sending search query "foo"
+         | dups |
+         | 1    |
         Then results contain
          | osm_type |
          | R |

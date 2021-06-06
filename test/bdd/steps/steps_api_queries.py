@@ -55,29 +55,6 @@ def compare(operator, op1, op2):
         raise Exception("unknown operator '%s'" % operator)
 
 
-@when(u'searching for "(?P<query>.*)"(?P<dups> with dups)?')
-def query_cmd(context, query, dups):
-    """ Query directly via PHP script.
-    """
-    cmd = ['/usr/bin/env', 'php']
-    cmd.append(context.nominatim.src_dir  / 'lib-php' / 'admin' / 'query.php')
-    if query:
-        cmd.extend(['--search', query])
-    # add more parameters in table form
-    if context.table:
-        for h in context.table.headings:
-            value = context.table[0][h].strip()
-            if value:
-                cmd.extend(('--' + h, value))
-
-    if dups:
-        cmd.extend(('--dedupe', '0'))
-
-    outp, err = run_script(cmd, cwd=context.nominatim.website_dir.name,
-                           env=context.nominatim.test_env)
-
-    context.response = SearchResponse(outp, 'json')
-
 def send_api_query(endpoint, params, fmt, context):
     if fmt is not None and fmt.strip() != 'debug':
         params['format'] = fmt.strip()

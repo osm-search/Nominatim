@@ -11,44 +11,44 @@ Feature: Import and search of names
         Then placex contains
           | object | class  | type     | name+name |
           | N1     | place  | locality | FooBar |
-        When searching for "FooBar"
+        When sending search query "FooBar"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "foobar"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "foobar"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "fOObar"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "fOObar"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "FOOBAR"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "FOOBAR"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
+         | ID | osm |
+         | 0  | N1 |
 
     Scenario: Multiple spaces in name
         Given the places
           | osm | class | type      | name |
           | N1  | place | locality  | one two  three |
         When importing
-        When searching for "one two three"
+        When sending search query "one two three"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "one   two three"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "one   two three"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "one two  three"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "one two  three"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "    one two three"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "    one two three"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
+         | ID | osm |
+         | 0  | N1 |
 
     Scenario: Special characters in name
         Given the places
@@ -59,58 +59,58 @@ Feature: Import and search of names
           | N4  | place | locality  | space |
           | N5  | place | locality  | mountain |
         When importing
-        When searching for "Jim-Knopf-Str"
+        When sending search query "Jim-Knopf-Str"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "Jim Knopf-Str"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Jim Knopf-Str"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "Jim Knopf Str"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Jim Knopf Str"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "Jim/Knopf-Str"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Jim/Knopf-Str"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "Jim-Knopfstr"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Jim-Knopfstr"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 1 |
-        When searching for "Smith/Weston"
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Smith/Weston"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 2 |
-        When searching for "Smith Weston"
+         | ID | osm |
+         | 0  | N2 |
+        When sending search query "Smith Weston"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 2 |
-        When searching for "Smith-Weston"
+         | ID | osm |
+         | 0  | N2 |
+        When sending search query "Smith-Weston"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 2 |
-        When searching for "space mountain"
+         | ID | osm |
+         | 0  | N2 |
+        When sending search query "space mountain"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 3 |
-        When searching for "space-mountain"
+         | ID | osm |
+         | 0  | N3 |
+        When sending search query "space-mountain"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 3 |
-        When searching for "space/mountain"
+         | ID | osm |
+         | 0  | N3 |
+        When sending search query "space/mountain"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 3 |
-        When searching for "space\mountain"
+         | ID | osm |
+         | 0  | N3 |
+        When sending search query "space\mountain"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 3 |
-        When searching for "space(mountain)"
+         | ID | osm |
+         | 0  | N3 |
+        When sending search query "space(mountain)"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | N        | 3 |
+         | ID | osm |
+         | 0  | N3 |
 
     Scenario: Landuse with name are found
         Given the places
@@ -118,34 +118,32 @@ Feature: Import and search of names
           | R1  | natural  | meadow      | landuse1 | (0 0, 1 0, 1 1, 0 1, 0 0) |
           | R2  | landuse  | industrial  | landuse2 | (0 0, -1 0, -1 -1, 0 -1, 0 0) |
         When importing
-        When searching for "landuse1"
+        When sending search query "landuse1"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | R        | 1 |
-        When searching for "landuse2"
+         | ID | osm |
+         | 0  | R1 |
+        When sending search query "landuse2"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | R        | 2 |
+         | ID | osm |
+         | 0  | R2 |
 
     Scenario: Postcode boundaries without ref
         Given the places
           | osm | class    | type        | postcode | geometry |
           | R1  | boundary | postal_code | 12345    | (0 0, 1 0, 1 1, 0 1, 0 0) |
         When importing
-        When searching for "12345"
+        When sending search query "12345"
         Then results contain
-         | ID | osm_type | osm_id |
-         | 0  | R        | 1 |
+         | ID | osm |
+         | 0  | R1 |
 
     Scenario: Unprintable characters in postcodes are ignored
         Given the named places
             | osm  | class   | type   | address |
             | N234 | amenity | prison | 'postcode' : u'1234\u200e' |
         When importing
-        And searching for "1234"
-        Then results contain
-         | ID | osm_type |
-         | 0  | P        |
+        And sending search query "1234"
+        Then result 0 has not attributes osm_type
 
     Scenario Outline: Housenumbers with special characters are found
         Given the grid
@@ -158,10 +156,10 @@ Feature: Import and search of names
             | osm | class    | type | housenr | geometry |
             | N1  | building | yes  | <nr>    | 9        |
         When importing
-        And searching for "Main St <nr>"
+        And sending search query "Main St <nr>"
         Then results contain
-         | osm_type | osm_id | name |
-         | N        | 1      | <nr>, Main St |
+         | osm | display_name |
+         | N1  | <nr>, Main St |
 
     Examples:
         | nr |
@@ -186,10 +184,10 @@ Feature: Import and search of names
             | osm | class    | type | housenr   | geometry |
             | N1  | building | yes  | <nr-list> | 9        |
         When importing
-        And searching for "Main St <nr>"
+        And sending search query "Main St <nr>"
         Then results contain
-         | osm_type | osm_id | name |
-         | N        | 1      | <nr-list>, Main St |
+         | osm | display_name |
+         | N1  | <nr-list>, Main St |
 
     Examples:
         | nr-list    | nr |

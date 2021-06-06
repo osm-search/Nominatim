@@ -69,7 +69,10 @@ def test_get_synonym_pairs(cfgfile):
 
     repl = loader.get_replacement_pairs()
 
-    assert repl == [(' strasse ', {' strasse ', ' str ', ' st '}),
-                    ('strasse ', {' strasse ', ' str ', ' st '}),
-                    ('weg ', {' weg '})]
+    assert sorted(((a, sorted(b)) for a, b in repl)) == \
+             sorted([(' strasse ', [' st ', ' str ', ' strasse ']),
+                     ('strasse ', [' st ', ' str ', ' strasse ']),
+                     ('st ' , [' st ']),
+                     ('str ' , [' str ']),
+                     ('weg ', [' weg '])])
 

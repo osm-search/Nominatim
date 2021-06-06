@@ -28,7 +28,7 @@ class ICURuleLoader:
 
 
     def get_search_rules(self):
-        """ Returns the ICU rules to be used during search.
+        """ Return the ICU rules to be used during search.
             The rules combine normalization, compound decomposition (including
             abbreviated compounds) and transliteration.
         """
@@ -60,7 +60,7 @@ class ICURuleLoader:
         return self.transliteration_rules
 
     def get_replacement_pairs(self):
-        """ Returns the list of possible compound decompositions with
+        """ Return the list of possible compound decompositions with
             application of abbreviations included.
             The result is a list of pairs: the first item is the sequence to
             replace, the second is a list of replacements.

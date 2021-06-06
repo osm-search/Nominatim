@@ -219,7 +219,7 @@ class LegacyICUNameAnalyzer:
             self.conn = None
 
 
-    def get_word_token_info(self, conn, words):
+    def get_word_token_info(self, words):
         """ Return token information for the given list of words.
             If a word starts with # it is assumed to be a full name
             otherwise is a partial name.
@@ -233,11 +233,11 @@ class LegacyICUNameAnalyzer:
         tokens = {}
         for word in words:
             if word.startswith('#'):
-                tokens[word] = ' ' + self.name_processor.get_normalized(word[1:])
+                tokens[word] = ' ' + self.name_processor.get_search_normalized(word[1:])
             else:
-                tokens[word] = self.name_processor.get_normalized(word)
+                tokens[word] = self.name_processor.get_search_normalized(word)
 
-        with conn.cursor() as cur:
+        with self.conn.cursor() as cur:
             cur.execute("""SELECT word_token, word_id
                            FROM word, (SELECT unnest(%s::TEXT[]) as term) t
                            WHERE word_token = t.term
@@ -245,7 +245,7 @@ class LegacyICUNameAnalyzer:
                         (list(tokens.values()), ))
             ids = {r[0]: r[1] for r in cur}
 
-        return [(k, v, ids[v]) for k, v in tokens.items()]
+        return [(k, v, ids.get(v, None)) for k, v in tokens.items()]
 
 
     @staticmethod
@@ -308,7 +308,7 @@ class LegacyICUNameAnalyzer:
     def update_special_phrases(self, phrases, should_replace):
         """ Replace the search index for special phrases with the new phrases.
         """
-        norm_phrases = set(((self.name_processor.get_search_normalized(p[0]), p[1], p[2], p[3])
+        norm_phrases = set(((self.name_processor.get_normalized(p[0]), p[1], p[2], p[3])
                             for p in phrases))
 
         with self.conn.cursor() as cur:

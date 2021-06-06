@@ -76,7 +76,7 @@ class ICUNameProcessor:
         """ Normalize the given name, i.e. remove all elements not relevant
             for search.
         """
-        return self.normalizer.transliterate(name)
+        return self.normalizer.transliterate(name).strip()
 
     def get_variants_ascii(self, norm_name):
         """ Compute the spelling variants for the given normalized name
@@ -108,4 +108,4 @@ class ICUNameProcessor:
         """ Return the normalized version of the name (including transliteration)
             to be applied at search time.
         """
-        return self.search.transliterate(name)
+        return self.search.transliterate(' ' + name + ' ').strip()

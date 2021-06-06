@@ -34,6 +34,9 @@ def cfgfile(tmp_path, suffix='.yaml'):
     return _create_config
 
 
+def get_normalized_variants(proc, name):
+    return proc.get_variants_ascii(proc.get_normalized(name))
+
 def test_simple_variants(cfgfile):
     fpath = cfgfile(['strasse', 'straße', 'weg'],
                     ['strasse,straße => str',
@@ -42,11 +45,11 @@ def test_simple_variants(cfgfile):
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
 
-    assert set(proc.get_normalized_variants("Bauwegstraße")) \
+    assert set(get_normalized_variants(proc, "Bauwegstraße")) \
             == {'bauweg straße', 'bauweg str'}
-    assert proc.get_normalized_variants("Bauwegstr") == ['bauweg str']
-    assert proc.get_normalized_variants("holzweg") == ['holz weg']
-    assert proc.get_normalized_variants("hallo") == ['hallo']
+    assert get_normalized_variants(proc, "Bauwegstr") == ['bauweg str']
+    assert get_normalized_variants(proc, "holzweg") == ['holz weg']
+    assert get_normalized_variants(proc, "hallo") == ['hallo']
 
 
 def test_multiple_replacements(cfgfile):
@@ -55,6 +58,17 @@ def test_multiple_replacements(cfgfile):
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
 
-    assert set(proc.get_normalized_variants("Saint Johns Street")) == \
+    assert set(get_normalized_variants(proc, "Saint Johns Street")) == \
             {'saint johns street', 's johns street', 'st johns street',
              'saint johns st', 's johns st', 'st johns st'}
+
+
+def test_search_normalized(cfgfile):
+    fpath = cfgfile(['street'], ['street => s,st', 'master => mstr'])
+
+    rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
+    proc = ICUNameProcessor(rules)
+
+    assert proc.get_search_normalized('Master Street') == 'master  street'
+    assert proc.get_search_normalized('Earnes St') == 'earne s  st'
+    assert proc.get_search_normalized('Nostreet') == 'no street'

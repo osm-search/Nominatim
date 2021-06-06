@@ -2,10 +2,13 @@
 Tests for Legacy ICU tokenizer.
 """
 import shutil
+import yaml
 
 import pytest
 
 from nominatim.tokenizer import legacy_icu_tokenizer
+from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
+from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
 
 
@@ -40,15 +43,9 @@ def tokenizer_factory(dsn, tmp_path, property_table,
 @pytest.fixture
 def db_prop(temp_db_conn):
     def _get_db_property(name):
-        return properties.get_property(temp_db_conn,
-                                       getattr(legacy_icu_tokenizer, name))
+        return properties.get_property(temp_db_conn, name)
 
     return _get_db_property
-
-@pytest.fixture
-def tokenizer_setup(tokenizer_factory, test_config):
-    tok = tokenizer_factory()
-    tok.init_new_db(test_config)
 
 
 @pytest.fixture
@@ -62,9 +59,16 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
     tok.init_new_db(test_config)
     monkeypatch.undo()
 
-    def _mk_analyser(trans=':: upper();', abbr=(('STREET', 'ST'), )):
-        tok.transliteration = trans
-        tok.abbreviations = abbr
+    def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
+                     suffixes=('gasse', ), abbr=('street => st', )):
+        cfgfile = tmp_path / 'analyser_test_config.yaml'
+        with cfgfile.open('w') as stream:
+            cfgstr = {'normalization' : list(norm),
+                       'transliteration' : list(trans),
+                       'compound_suffixes' : list(suffixes),
+                       'abbreviations' : list(abbr)}
+            yaml.dump(cfgstr, stream)
+        tok.naming_rules = ICUNameProcessorRules(loader=ICURuleLoader(cfgfile))
 
         return tok.name_analyzer()
 
@@ -72,10 +76,54 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
 
 @pytest.fixture
-def getorcreate_term_id(temp_db_cursor):
-    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_term_id(lookup_term TEXT)
-                              RETURNS INTEGER AS $$
-                                SELECT nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
+def getorcreate_full_word(temp_db_cursor):
+    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_full_word(
+                                                 norm_term TEXT, lookup_terms TEXT[],
+                                                 OUT full_token INT,
+                                                 OUT partial_tokens INT[])
+  AS $$
+DECLARE
+  partial_terms TEXT[] = '{}'::TEXT[];
+  term TEXT;
+  term_id INTEGER;
+  term_count INTEGER;
+BEGIN
+  SELECT min(word_id) INTO full_token
+    FROM word WHERE word = norm_term and class is null and country_code is null;
+
+  IF full_token IS NULL THEN
+    full_token := nextval('seq_word');
+    INSERT INTO word (word_id, word_token, word, search_name_count)
+      SELECT full_token, ' ' || lookup_term, norm_term, 0 FROM unnest(lookup_terms) as lookup_term;
+  END IF;
+
+  FOR term IN SELECT unnest(string_to_array(unnest(lookup_terms), ' ')) LOOP
+    term := trim(term);
+    IF NOT (ARRAY[term] <@ partial_terms) THEN
+      partial_terms := partial_terms || term;
+    END IF;
+  END LOOP;
+
+  partial_tokens := '{}'::INT[];
+  FOR term IN SELECT unnest(partial_terms) LOOP
+    SELECT min(word_id), max(search_name_count) INTO term_id, term_count
+      FROM word WHERE word_token = term and class is null and country_code is null;
+
+    IF term_id IS NULL THEN
+      term_id := nextval('seq_word');
+      term_count := 0;
+      INSERT INTO word (word_id, word_token, search_name_count)
+        VALUES (term_id, term, 0);
+    END IF;
+
+    IF NOT (ARRAY[term_id] <@ partial_tokens) THEN
+        partial_tokens := partial_tokens || term_id;
+    END IF;
+  END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+                              """)
 
 
 @pytest.fixture
@@ -91,19 +139,23 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert db_prop('DBCFG_NORMALIZATION') == ':: lower();'
-    assert db_prop('DBCFG_TRANSLITERATION') is not None
-    assert db_prop('DBCFG_ABBREVIATIONS') is not None
+    assert db_prop(legacy_icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
+    assert db_prop(legacy_icu_tokenizer.DBCFG_MAXWORDFREQ) is not None
 
 
-def test_init_from_project(tokenizer_setup, tokenizer_factory):
+def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
+    monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
+    monkeypatch.setenv('NOMINATIM_MAX_WORD_FREQUENCY', '90300')
     tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+    monkeypatch.undo()
 
+    tok = tokenizer_factory()
     tok.init_from_project()
 
-    assert tok.normalization is not None
-    assert tok.transliteration is not None
-    assert tok.abbreviations is not None
+    assert tok.naming_rules is not None
+    assert tok.term_normalization == ':: lower();'
+    assert tok.max_word_frequency == '90300'
 
 
 def test_update_sql_functions(db_prop, temp_db_cursor,
@@ -114,7 +166,7 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     tok.init_new_db(test_config)
     monkeypatch.undo()
 
-    assert db_prop('DBCFG_MAXWORDFREQ') == '1133'
+    assert db_prop(legacy_icu_tokenizer.DBCFG_MAXWORDFREQ) == '1133'
 
     table_factory('test', 'txt TEXT')
 
@@ -127,16 +179,8 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     assert test_content == set((('1133', ), ))
 
 
-def test_make_standard_word(analyzer):
-    with analyzer(abbr=(('STREET', 'ST'), ('tiny', 't'))) as anl:
-        assert anl.make_standard_word('tiny street') == 'TINY ST'
-
-    with analyzer(abbr=(('STRASSE', 'STR'), ('STR', 'ST'))) as anl:
-        assert anl.make_standard_word('Hauptstrasse') == 'HAUPTST'
-
-
 def test_make_standard_hnr(analyzer):
-    with analyzer(abbr=(('IV', '4'),)) as anl:
+    with analyzer(abbr=('IV => 4',)) as anl:
         assert anl._make_standard_hnr('345') == '345'
         assert anl._make_standard_hnr('iv') == 'IV'
 
@@ -176,7 +220,7 @@ def test_update_special_phrase_empty_table(analyzer, word_table):
     assert word_table.get_special() \
                == {(' KÖNIG BEI', 'könig bei', 'amenity', 'royal', 'near'),
                    (' KÖNIGE', 'könige', 'amenity', 'royal', None),
-                   (' ST', 'street', 'highway', 'primary', 'in')}
+                   (' STREET', 'street', 'highway', 'primary', 'in')}
 
 
 def test_update_special_phrase_delete_all(analyzer, word_table):
@@ -222,26 +266,42 @@ def test_update_special_phrase_modify(analyzer, word_table):
                    (' GARDEN', 'garden', 'leisure', 'garden', 'near')}
 
 
-def test_process_place_names(analyzer, getorcreate_term_id):
-    with analyzer() as anl:
-        info = anl.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
+class TestPlaceNames:
 
-    assert info['names'] == '{1,2,3,4,5}'
-
-
-@pytest.mark.parametrize('sep', [',' , ';'])
-def test_full_names_with_separator(analyzer, getorcreate_term_id, sep):
-    with analyzer() as anl:
-        names = anl._compute_full_names({'name' : sep.join(('New York', 'Big Apple'))})
-
-    assert names == set(('NEW YORK', 'BIG APPLE'))
+    @pytest.fixture(autouse=True)
+    def setup(self, analyzer, getorcreate_full_word):
+        with analyzer() as anl:
+            self.analyzer = anl
+            yield anl
 
 
-def test_full_names_with_bracket(analyzer, getorcreate_term_id):
-    with analyzer() as anl:
-        names = anl._compute_full_names({'name' : 'Houseboat (left)'})
+    def expect_name_terms(self, info, *expected_terms):
+        tokens = self.analyzer.get_word_token_info(expected_terms)
+        for token in tokens:
+            assert token[2] is not None, "No token for {0}".format(token)
 
-    assert names == set(('HOUSEBOAT (LEFT)', 'HOUSEBOAT'))
+        assert eval(info['names']) == set((t[2] for t in tokens))
+
+
+    def test_simple_names(self):
+        info = self.analyzer.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
+
+        self.expect_name_terms(info, '#Soft bAr', '#34','Soft', 'bAr', '34')
+
+
+    @pytest.mark.parametrize('sep', [',' , ';'])
+    def test_names_with_separator(self, sep):
+        info = self.analyzer.process_place({'name' : {'name' : sep.join(('New York', 'Big Apple'))}})
+
+        self.expect_name_terms(info, '#New York', '#Big Apple',
+                                     'new', 'york', 'big', 'apple')
+
+
+    def test_full_names_with_bracket(self):
+        info = self.analyzer.process_place({'name' : {'name' : 'Houseboat (left)'}})
+
+        self.expect_name_terms(info, '#Houseboat (left)', '#Houseboat',
+                                     'houseboat', 'left')
 
 
 @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])

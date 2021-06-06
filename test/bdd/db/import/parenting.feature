@@ -18,13 +18,13 @@ Feature: Parenting of objects
          | object | parent_place_id |
          | N1     | W1 |
          | N2     | W1 |
-        When searching for "4 galoo"
+        When sending search query "4 galoo"
         Then results contain
-         | ID | osm_type | osm_id | langaddress |
+         | ID | osm_type | osm_id | display_name |
          | 0  | N        | 1      | 4, galoo, 12345 |
-        When searching for "5 galoo"
+        When sending search query "5 galoo"
         Then results contain
-         | ID | osm_type | osm_id | langaddress |
+         | ID | osm_type | osm_id | display_name |
          | 0  | N        | 2      | 5, galoo, 99999 |
 
     Scenario: Address without tags, closest street

@@ -9,7 +9,7 @@ from math import isfinite
 
 from psycopg2.extras import execute_values
 
-from nominatim.db.connection import _Connection, connect
+from nominatim.db.connection import connect
 
 LOG = logging.getLogger()
 
@@ -169,7 +169,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
                     SELECT 
                         COALESCE(plx.country_code, get_country_code(ST_Centroid(pl.geometry))) as cc,
                         token_normalized_postcode(pl.address->'postcode') as pc,
-                        ST_Centroid(ST_Collect(ST_Centroid(pl.geometry))) as centroid
+                        COALESCE(ST_Centroid(ST_Collect(plx.centroid)), ST_Centroid(ST_Collect(ST_Centroid(pl.geometry)))) as centroid
                     FROM place AS pl LEFT OUTER JOIN placex AS plx ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
                     WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
                     GROUP BY cc, pc
@@ -203,5 +203,5 @@ def can_compute(dsn):
         Check that the place table exists so that
         postcodes can be computed.
     """
-    with _Connection(dsn) as conn:
+    with connect(dsn) as conn:
         return conn.table_exists('place')

@@ -9,7 +9,7 @@ from math import isfinite
 
 from psycopg2.extras import execute_values
 
-from nominatim.db.connection import connect
+from nominatim.db.connection import _Connection, connect
 
 LOG = logging.getLogger()
 
@@ -203,9 +203,5 @@ def can_compute(dsn):
         Check that the place table exists so that
         postcodes can be computed.
     """
-    with connect(dsn) as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                select exists(select 1 from information_schema.tables where table_name='place')
-            """)
-            return cur.fetchone()[0]
+    with _Connection(dsn) as conn:
+        return conn.table_exists('place')

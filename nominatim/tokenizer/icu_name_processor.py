@@ -58,6 +58,9 @@ class ICUNameProcessorRules:
 
 
 class ICUNameProcessor:
+    """ Collects the different transformation rules for normalisation of names
+        and provides the functions to aply the transformations.
+    """
 
     def __init__(self, rules):
         self.normalizer = Transliterator.createFromRules("icu_normalization",

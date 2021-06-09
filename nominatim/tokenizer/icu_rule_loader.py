@@ -2,11 +2,11 @@
 Helper class to create ICU rules from a configuration file.
 """
 import io
-import yaml
 import logging
 from collections import defaultdict
 import itertools
 
+import yaml
 from icu import Transliterator
 
 from nominatim.errors import UsageError
@@ -20,6 +20,8 @@ class ICURuleLoader:
 
     def __init__(self, configfile):
         self.configfile = configfile
+        self.compound_suffixes = set()
+        self.abbreviations = defaultdict()
 
         if configfile.suffix == '.yaml':
             self._load_from_yaml()
@@ -42,7 +44,7 @@ class ICURuleLoader:
             suffixes.add(suffix)
             suffixes.update(self.abbreviations.get(suffix, []))
 
-        for suffix in sorted(suffixes, key=lambda x:len(x), reverse=True):
+        for suffix in sorted(suffixes, key=len, reverse=True):
             rules.write("'{0} ' > ' {0} ';".format(suffix))
 
         # Finally add transliteration.
@@ -85,7 +87,7 @@ class ICURuleLoader:
                 synonyms[abbr + ' '].add(' ' + abbr + ' ')
 
         # sort the resulting list by descending length (longer matches are prefered).
-        sorted_keys = sorted(synonyms.keys(), key=lambda x: len(x), reverse=True)
+        sorted_keys = sorted(synonyms.keys(), key=len, reverse=True)
 
         return [(k, list(synonyms[k])) for k in sorted_keys]
 

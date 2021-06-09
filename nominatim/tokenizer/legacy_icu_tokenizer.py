@@ -3,16 +3,13 @@ Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
 """
 from collections import Counter
-import functools
 import io
 import itertools
-import json
 import logging
 import re
 from textwrap import dedent
 from pathlib import Path
 
-from icu import Transliterator
 import psycopg2.extras
 
 from nominatim.db.connection import connect
@@ -103,9 +100,7 @@ class LegacyICUTokenizer:
         """
         self.init_from_project()
 
-        if self.normalization is None\
-           or self.transliteration is None\
-           or self.abbreviations is None:
+        if self.naming_rules is None:
             return "Configuration for tokenizer 'legacy_icu' are missing."
 
         return None
@@ -320,40 +315,64 @@ class LegacyICUNameAnalyzer:
             for label, cls, typ, oper in cur:
                 existing_phrases.add((label, cls, typ, oper or '-'))
 
-            to_add = norm_phrases - existing_phrases
-            to_delete = existing_phrases - norm_phrases
-
-            if to_add:
-                copystr = io.StringIO()
-                for word, cls, typ, oper in to_add:
-                    term = self.name_processor.get_search_normalized(word)
-                    if term:
-                        copystr.write(word)
-                        copystr.write('\t ')
-                        copystr.write(term)
-                        copystr.write('\t')
-                        copystr.write(cls)
-                        copystr.write('\t')
-                        copystr.write(typ)
-                        copystr.write('\t')
-                        copystr.write(oper if oper in ('in', 'near')  else '\\N')
-                        copystr.write('\t0\n')
-
-                copystr.seek(0)
-                cur.copy_from(copystr, 'word',
-                              columns=['word', 'word_token', 'class', 'type',
-                                       'operator', 'search_name_count'])
-
-            if to_delete and should_replace:
-                psycopg2.extras.execute_values(
-                    cur,
-                    """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
-                        WHERE word = name and class = in_class and type = in_type
-                              and ((op = '-' and operator is null) or op = operator)""",
-                    to_delete)
+            added = self._add_special_phrases(cur, norm_phrases, existing_phrases)
+            if should_replace:
+                deleted = self._remove_special_phrases(cur, norm_phrases,
+                                                       existing_phrases)
+            else:
+                deleted = 0
 
         LOG.info("Total phrases: %s. Added: %s. Deleted: %s",
-                 len(norm_phrases), len(to_add), len(to_delete))
+                 len(norm_phrases), added, deleted)
+
+
+    def _add_special_phrases(self, cursor, new_phrases, existing_phrases):
+        """ Add all phrases to the database that are not yet there.
+        """
+        to_add = new_phrases - existing_phrases
+
+        copystr = io.StringIO()
+        added = 0
+        for word, cls, typ, oper in to_add:
+            term = self.name_processor.get_search_normalized(word)
+            if term:
+                copystr.write(word)
+                copystr.write('\t ')
+                copystr.write(term)
+                copystr.write('\t')
+                copystr.write(cls)
+                copystr.write('\t')
+                copystr.write(typ)
+                copystr.write('\t')
+                copystr.write(oper if oper in ('in', 'near')  else '\\N')
+                copystr.write('\t0\n')
+                added += 1
+
+
+        if copystr.tell() > 0:
+            copystr.seek(0)
+            cursor.copy_from(copystr, 'word',
+                             columns=['word', 'word_token', 'class', 'type',
+                                      'operator', 'search_name_count'])
+
+        return added
+
+
+    def _remove_special_phrases(self, cursor, new_phrases, existing_phrases):
+        """ Remove all phrases from the databse that are no longer in the
+            new phrase list.
+        """
+        to_delete = existing_phrases - new_phrases
+
+        if to_delete:
+            psycopg2.extras.execute_values(
+                cursor,
+                """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
+                    WHERE word = name and class = in_class and type = in_type
+                          and ((op = '-' and operator is null) or op = operator)""",
+                to_delete)
+
+        return len(to_delete)
 
 
     def add_country_names(self, country_code, names):
@@ -451,7 +470,8 @@ class LegacyICUNameAnalyzer:
         return full_tokens, partial_tokens
 
 
-    def _compute_full_names(self, names):
+    @staticmethod
+    def _compute_full_names(names):
         """ Return the set of all full name word ids to be used with the
             given dictionary of names.
         """
@@ -534,7 +554,7 @@ class _TokenInfo:
         self.data['hnr'] = ';'.join(hnrs)
 
 
-    def add_street(self, fulls, partials):
+    def add_street(self, fulls, _):
         """ Add addr:street match terms.
         """
         if fulls:

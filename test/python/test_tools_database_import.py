@@ -180,7 +180,7 @@ def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cur
 
     assert len(tokenizer.analyser_cache['countries']) == 2
 
-    result_set = {k: set(v) for k, v in tokenizer.analyser_cache['countries']}
+    result_set = {k: set(v.values()) for k, v in tokenizer.analyser_cache['countries']}
 
     if languages:
         assert result_set == {'us' : set(('us', 'us1', 'United States')),

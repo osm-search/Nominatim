@@ -212,14 +212,14 @@ def test_update_postcodes_from_db_add_and_remove(analyzer, table_factory, word_t
 def test_update_special_phrase_empty_table(analyzer, word_table):
     with analyzer() as anl:
         anl.update_special_phrases([
-            ("König bei", "amenity", "royal", "near"),
-            ("Könige", "amenity", "royal", "-"),
+            ("König  bei", "amenity", "royal", "near"),
+            ("Könige ", "amenity", "royal", "-"),
             ("street", "highway", "primary", "in")
         ], True)
 
     assert word_table.get_special() \
-               == {(' KÖNIG BEI', 'könig bei', 'amenity', 'royal', 'near'),
-                   (' KÖNIGE', 'könige', 'amenity', 'royal', None),
+               == {(' KÖNIG BEI', 'König bei', 'amenity', 'royal', 'near'),
+                   (' KÖNIGE', 'Könige', 'amenity', 'royal', None),
                    (' STREET', 'street', 'highway', 'primary', 'in')}
 
 

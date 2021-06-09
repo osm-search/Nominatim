@@ -260,7 +260,9 @@ def test_update_special_phrase_modify(analyzer, word_table, make_standard_name):
 
 
 def test_add_country_names(analyzer, word_table, make_standard_name):
-    analyzer.add_country_names('de', ['Germany', 'Deutschland', 'germany'])
+    analyzer.add_country_names('de', {'name': 'Germany',
+                                      'name:de': 'Deutschland',
+                                      'short_name': 'germany'})
 
     assert word_table.get_country() \
                == {('de', ' #germany#'),
@@ -272,7 +274,7 @@ def test_add_more_country_names(analyzer, word_table, make_standard_name):
     word_table.add_country('it', ' #italy#')
     word_table.add_country('it', ' #itala#')
 
-    analyzer.add_country_names('it', ['Italy', 'IT'])
+    analyzer.add_country_names('it', {'name': 'Italy', 'ref': 'IT'})
 
     assert word_table.get_country() \
                == {('fr', ' #france#'),

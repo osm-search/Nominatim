@@ -63,6 +63,22 @@ def test_missing_normalization(tmp_path, section):
     with pytest.raises(UsageError):
         ICURuleLoader(fpath)
 
+@pytest.mark.parametrize("abbr", ["simple",
+                                  "double => arrow => bad",
+                                  "bad = > arrow"])
+def test_bad_abbreviation_syntax(tmp_path, abbr):
+    fpath = tmp_path / ('test_config.yaml')
+    fpath.write_text(dedent("""\
+        normalization:
+        transliteration:
+        compound_suffixes:
+        abbreviations:
+         - {}
+        """.format(abbr)))
+
+    with pytest.raises(UsageError):
+        rules = ICURuleLoader(fpath)
+
 
 def test_get_search_rules(cfgfile):
     fpath = cfgfile(['strasse', 'straße', 'weg'],
@@ -105,18 +121,54 @@ def test_get_transliteration_rules(cfgfile):
     assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
 
 
-def test_get_synonym_pairs(cfgfile):
-    fpath = cfgfile(['Weg', 'Strasse'],
+def test_get_replacement_pairs_multi_to(cfgfile):
+    fpath = cfgfile(['Pfad', 'Strasse'],
                     ['Strasse => str,st'])
 
-    loader = ICURuleLoader(fpath)
+    repl = ICURuleLoader(fpath).get_replacement_pairs()
 
-    repl = loader.get_replacement_pairs()
+    assert [(a, sorted(b)) for a, b in repl] == \
+             [(' strasse ', [' st ', ' str ', ' strasse ']),
+              ('strasse ', [' st ', ' str ', ' strasse ']),
+              ('pfad ', [' pfad ']),
+              ('str ' , [' str ']),
+              ('st ' , [' st '])]
 
-    assert sorted(((a, sorted(b)) for a, b in repl)) == \
-             sorted([(' strasse ', [' st ', ' str ', ' strasse ']),
-                     ('strasse ', [' st ', ' str ', ' strasse ']),
-                     ('st ' , [' st ']),
-                     ('str ' , [' str ']),
-                     ('weg ', [' weg '])])
 
+def test_get_replacement_pairs_multi_from(cfgfile):
+    fpath = cfgfile([], ['saint,Sainte => st'])
+
+    repl = ICURuleLoader(fpath).get_replacement_pairs()
+
+    assert [(a, sorted(b)) for a, b in repl] == \
+             [(' sainte ', [' sainte ', ' st ']),
+              (' saint ', [' saint ', ' st '])]
+
+
+def test_get_replacement_pairs_cross_abbreviations(cfgfile):
+    fpath = cfgfile([], ['saint,Sainte => st',
+                         'sainte => ste'])
+
+    repl = ICURuleLoader(fpath).get_replacement_pairs()
+
+    assert [(a, sorted(b)) for a, b in repl] == \
+             [(' sainte ', [' sainte ', ' st ', ' ste ']),
+              (' saint ', [' saint ', ' st '])]
+
+
+@pytest.mark.parametrize("abbr", ["missing to =>",
+                                  "  => missing from",
+                                  "=>"])
+def test_bad_abbreviation_syntax(tmp_path, abbr):
+    fpath = tmp_path / ('test_config.yaml')
+    fpath.write_text(dedent("""\
+        normalization:
+        transliteration:
+        compound_suffixes:
+        abbreviations:
+         - {}
+        """.format(abbr)))
+
+    repl = ICURuleLoader(fpath).get_replacement_pairs()
+
+    assert repl == []

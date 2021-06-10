@@ -3,7 +3,6 @@ Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
 """
 from collections import Counter
-import io
 import itertools
 import logging
 import re
@@ -178,7 +177,7 @@ class LegacyICUTokenizer:
 
                 with conn.cursor() as cur:
                     copystr.copy_out(cur, 'word',
-                                      columns=['word_token', 'search_name_count'])
+                                     columns=['word_token', 'search_name_count'])
                     cur.execute("""UPDATE word SET word_id = nextval('seq_word')
                                    WHERE word_id is null""")
 

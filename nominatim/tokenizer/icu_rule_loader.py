@@ -93,7 +93,7 @@ class ICURuleLoader:
 
 
     def _load_from_yaml(self):
-        rules = yaml.load(self.configfile.read_text())
+        rules = yaml.safe_load(self.configfile.read_text())
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
@@ -121,6 +121,9 @@ class ICURuleLoader:
             each line is assumed to be a rule. All rules are concatenated and returned.
         """
         content = self._get_section(rules, section)
+
+        if content is None:
+            return ''
 
         if isinstance(content, str):
             return (self.configfile.parent / content).read_text().replace('\n', ' ')
@@ -160,4 +163,5 @@ class ICURuleLoader:
             abbrterms = (norm.transliterate(t.strip()) for t in parts[1].split(','))
 
             for full, abbr in itertools.product(fullterms, abbrterms):
-                self.abbreviations[full].append(abbr)
+                if full and abbr:
+                    self.abbreviations[full].append(abbr)

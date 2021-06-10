@@ -14,6 +14,7 @@ import psycopg2.extras
 
 from nominatim.db.connection import connect
 from nominatim.db.properties import set_property, get_property
+from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProcessorRules
@@ -134,7 +135,7 @@ class LegacyICUTokenizer:
             @define('CONST_Term_Normalization_Rules', "{0.term_normalization}");
             @define('CONST_Transliteration', "{0.naming_rules.search_rules}");
             require_once('{1}/tokenizer/legacy_icu_tokenizer.php');
-            """.format(self, phpdir)))
+            """.format(self, phpdir))) # pylint: disable=missing-format-attribute
 
 
     def _save_config(self, config):
@@ -171,14 +172,15 @@ class LegacyICUTokenizer:
                             words[term] += cnt
 
             # copy them back into the word table
-            copystr = io.StringIO(''.join(('{}\t{}\n'.format(*args) for args in words.items())))
+            with CopyBuffer() as copystr:
+                for args in words.items():
+                    copystr.add(*args)
 
-
-            with conn.cursor() as cur:
-                copystr.seek(0)
-                cur.copy_from(copystr, 'word', columns=['word_token', 'search_name_count'])
-                cur.execute("""UPDATE word SET word_id = nextval('seq_word')
-                               WHERE word_id is null""")
+                with conn.cursor() as cur:
+                    copystr.copy_out(cur, 'word',
+                                      columns=['word_token', 'search_name_count'])
+                    cur.execute("""UPDATE word SET word_id = nextval('seq_word')
+                                   WHERE word_id is null""")
 
             conn.commit()
 
@@ -265,7 +267,6 @@ class LegacyICUNameAnalyzer:
             table.
         """
         to_delete = []
-        copystr = io.StringIO()
         with self.conn.cursor() as cur:
             # This finds us the rows in location_postcode and word that are
             # missing in the other table.
@@ -278,26 +279,25 @@ class LegacyICUNameAnalyzer:
                               ON pc = word) x
                            WHERE pc is null or word is null""")
 
-            for postcode, word in cur:
-                if postcode is None:
-                    to_delete.append(word)
-                else:
-                    copystr.write(postcode)
-                    copystr.write('\t ')
-                    copystr.write(self.name_processor.get_search_normalized(postcode))
-                    copystr.write('\tplace\tpostcode\t0\n')
+            with CopyBuffer() as copystr:
+                for postcode, word in cur:
+                    if postcode is None:
+                        to_delete.append(word)
+                    else:
+                        copystr.add(
+                            postcode,
+                            ' ' + self.name_processor.get_search_normalized(postcode),
+                            'place', 'postcode', 0)
 
-            if to_delete:
-                cur.execute("""DELETE FROM WORD
-                               WHERE class ='place' and type = 'postcode'
-                                     and word = any(%s)
-                            """, (to_delete, ))
+                if to_delete:
+                    cur.execute("""DELETE FROM WORD
+                                   WHERE class ='place' and type = 'postcode'
+                                         and word = any(%s)
+                                """, (to_delete, ))
 
-            if copystr.getvalue():
-                copystr.seek(0)
-                cur.copy_from(copystr, 'word',
-                              columns=['word', 'word_token', 'class', 'type',
-                                       'search_name_count'])
+                copystr.copy_out(cur, 'word',
+                                 columns=['word', 'word_token', 'class', 'type',
+                                          'search_name_count'])
 
 
     def update_special_phrases(self, phrases, should_replace):
@@ -331,34 +331,24 @@ class LegacyICUNameAnalyzer:
         """
         to_add = new_phrases - existing_phrases
 
-        copystr = io.StringIO()
         added = 0
-        for word, cls, typ, oper in to_add:
-            term = self.name_processor.get_search_normalized(word)
-            if term:
-                copystr.write(word)
-                copystr.write('\t ')
-                copystr.write(term)
-                copystr.write('\t')
-                copystr.write(cls)
-                copystr.write('\t')
-                copystr.write(typ)
-                copystr.write('\t')
-                copystr.write(oper if oper in ('in', 'near')  else '\\N')
-                copystr.write('\t0\n')
-                added += 1
+        with CopyBuffer() as copystr:
+            for word, cls, typ, oper in to_add:
+                term = self.name_processor.get_search_normalized(word)
+                if term:
+                    copystr.add(word, term, cls, typ,
+                                oper if oper in ('in', 'near')  else None, 0)
+                    added += 1
 
-
-        if copystr.tell() > 0:
-            copystr.seek(0)
-            cursor.copy_from(copystr, 'word',
+            copystr.copy_out(cursor, 'word',
                              columns=['word', 'word_token', 'class', 'type',
                                       'operator', 'search_name_count'])
 
         return added
 
 
-    def _remove_special_phrases(self, cursor, new_phrases, existing_phrases):
+    @staticmethod
+    def _remove_special_phrases(cursor, new_phrases, existing_phrases):
         """ Remove all phrases from the databse that are no longer in the
             new phrase list.
         """

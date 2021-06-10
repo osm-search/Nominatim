@@ -21,6 +21,7 @@ def cfgfile(tmp_path, suffix='.yaml'):
             - ":: NFC ()"
         transliteration:
             - "::  Latin ()"
+            - "[[:Punctuation:][:Space:]]+ > ' '"
         """)
         content += "compound_suffixes:\n"
         content += '\n'.join(("    - " + s for s in suffixes)) + '\n'
@@ -32,12 +33,32 @@ def cfgfile(tmp_path, suffix='.yaml'):
 
     return _create_config
 
-def test_missing_normalization(tmp_path):
+
+def test_empty_rule_file(tmp_path):
     fpath = tmp_path / ('test_config.yaml')
     fpath.write_text(dedent("""\
-        normalizatio:
-            - ":: NFD ()"
+        normalization:
+        transliteration:
+        compound_suffixes:
+        abbreviations:
         """))
+
+    rules = ICURuleLoader(fpath)
+    assert rules.get_search_rules() == ''
+    assert rules.get_normalization_rules() == ''
+    assert rules.get_transliteration_rules() == ''
+    assert rules.get_replacement_pairs() == []
+
+CONFIG_SECTIONS = ('normalization', 'transliteration',
+                   'compound_suffixes', 'abbreviations')
+
+@pytest.mark.parametrize("section", CONFIG_SECTIONS)
+def test_missing_normalization(tmp_path, section):
+    fpath = tmp_path / ('test_config.yaml')
+    with fpath.open('w') as fd:
+        for name in CONFIG_SECTIONS:
+            if name != section:
+                fd.write(name + ':\n')
 
     with pytest.raises(UsageError):
         ICURuleLoader(fpath)
@@ -53,12 +74,35 @@ def test_get_search_rules(cfgfile):
     rules = loader.get_search_rules()
     trans = Transliterator.createFromRules("test", rules)
 
+    assert trans.transliterate(" Baum straße ") == " baum straße "
     assert trans.transliterate(" Baumstraße ") == " baum straße "
     assert trans.transliterate(" Baumstrasse ") == " baum strasse "
     assert trans.transliterate(" Baumstr ") == " baum str "
     assert trans.transliterate(" Baumwegstr ") == " baumweg str "
     assert trans.transliterate(" Αθήνα ") == " athēna "
     assert trans.transliterate(" проспект ") == " prospekt "
+
+
+def test_get_normalization_rules(cfgfile):
+    fpath = cfgfile(['strasse', 'straße', 'weg'],
+                    ['strasse,straße => str'])
+
+    loader = ICURuleLoader(fpath)
+    rules = loader.get_normalization_rules()
+    trans = Transliterator.createFromRules("test", rules)
+
+    assert trans.transliterate(" проспект-Prospekt ") == " проспект prospekt "
+
+
+def test_get_transliteration_rules(cfgfile):
+    fpath = cfgfile(['strasse', 'straße', 'weg'],
+                    ['strasse,straße => str'])
+
+    loader = ICURuleLoader(fpath)
+    rules = loader.get_transliteration_rules()
+    trans = Transliterator.createFromRules("test", rules)
+
+    assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
 
 
 def test_get_synonym_pairs(cfgfile):

@@ -16,12 +16,14 @@ def cfgfile(tmp_path, suffix='.yaml'):
         content = dedent("""\
         normalization:
             - ":: NFD ()"
+            - "'🜳' > ' '"
             - "[[:Nonspacing Mark:] [:Cf:]] >"
             - ":: lower ()"
             - "[[:Punctuation:][:Space:]]+ > ' '"
             - ":: NFC ()"
         transliteration:
             - "::  Latin ()"
+            - "'🜵' > ' '"
         """)
         content += "compound_suffixes:\n"
         content += '\n'.join(("    - " + s for s in suffixes)) + '\n'
@@ -50,6 +52,17 @@ def test_simple_variants(cfgfile):
     assert get_normalized_variants(proc, "Bauwegstr") == ['bauweg str']
     assert get_normalized_variants(proc, "holzweg") == ['holz weg']
     assert get_normalized_variants(proc, "hallo") == ['hallo']
+
+
+def test_variants_empty(cfgfile):
+    fpath = cfgfile([], ['saint => 🜵', 'street => st'])
+
+    rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
+    proc = ICUNameProcessor(rules)
+
+    assert get_normalized_variants(proc, '🜵') == []
+    assert get_normalized_variants(proc, '🜳') == []
+    assert get_normalized_variants(proc, 'saint') == ['saint']
 
 
 def test_multiple_replacements(cfgfile):

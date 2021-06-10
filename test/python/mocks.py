@@ -98,6 +98,13 @@ class MockWordTable:
                            WHERE class = 'place' and type = 'postcode'""")
             return set((row[0] for row in cur))
 
+    def get_partial_words(self):
+        with self.conn.cursor() as cur:
+            cur.execute("""SELECT word_token, search_name_count FROM word
+                           WHERE class is null and country_code is null
+                                 and not word_token like ' %'""")
+            return set((tuple(row) for row in cur))
+
 
 class MockPlacexTable:
     """ A placex table for testing.

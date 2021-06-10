@@ -143,6 +143,20 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
     assert db_prop(legacy_icu_tokenizer.DBCFG_MAXWORDFREQ) is not None
 
 
+def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
+    place_row(names={'name' : 'Test Area', 'ref' : '52'})
+    place_row(names={'name' : 'No Area'})
+    place_row(names={'name' : 'Holzstrasse'})
+
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+
+    assert word_table.get_partial_words() == {('te', 1), ('st', 1), ('52', 1),
+                                              ('no', 1), ('area', 2),
+                                              ('holz', 1), ('strasse', 1),
+                                              ('str', 1)}
+
+
 def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
     monkeypatch.setenv('NOMINATIM_MAX_WORD_FREQUENCY', '90300')
@@ -179,10 +193,11 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     assert test_content == set((('1133', ), ))
 
 
-def test_make_standard_hnr(analyzer):
-    with analyzer(abbr=('IV => 4',)) as anl:
-        assert anl._make_standard_hnr('345') == '345'
-        assert anl._make_standard_hnr('iv') == 'IV'
+def test_normalize_postcode(analyzer):
+    with analyzer() as anl:
+        anl.normalize_postcode('123') == '123'
+        anl.normalize_postcode('ab-34 ') == 'AB-34'
+        anl.normalize_postcode('38 Б') == '38 Б'
 
 
 def test_update_postcodes_from_db_empty(analyzer, table_factory, word_table):
@@ -266,6 +281,22 @@ def test_update_special_phrase_modify(analyzer, word_table):
                    (' GARDEN', 'garden', 'leisure', 'garden', 'near')}
 
 
+def test_add_country_names_new(analyzer, word_table):
+    with analyzer() as anl:
+        anl.add_country_names('es', {'name': 'Espagña', 'name:en': 'Spain'})
+
+    assert word_table.get_country() == {('es', ' ESPAGÑA'), ('es', ' SPAIN')}
+
+
+def test_add_country_names_extend(analyzer, word_table):
+    word_table.add_country('ch', ' SCHWEIZ')
+
+    with analyzer() as anl:
+        anl.add_country_names('ch', {'name': 'Schweiz', 'name:fr': 'Suisse'})
+
+    assert word_table.get_country() == {('ch', ' SCHWEIZ'), ('ch', ' SUISSE')}
+
+
 class TestPlaceNames:
 
     @pytest.fixture(autouse=True)
@@ -284,64 +315,154 @@ class TestPlaceNames:
 
 
     def test_simple_names(self):
-        info = self.analyzer.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
+        info = self.analyzer.process_place({'name': {'name': 'Soft bAr', 'ref': '34'}})
 
         self.expect_name_terms(info, '#Soft bAr', '#34','Soft', 'bAr', '34')
 
 
     @pytest.mark.parametrize('sep', [',' , ';'])
     def test_names_with_separator(self, sep):
-        info = self.analyzer.process_place({'name' : {'name' : sep.join(('New York', 'Big Apple'))}})
+        info = self.analyzer.process_place({'name': {'name': sep.join(('New York', 'Big Apple'))}})
 
         self.expect_name_terms(info, '#New York', '#Big Apple',
                                      'new', 'york', 'big', 'apple')
 
 
     def test_full_names_with_bracket(self):
-        info = self.analyzer.process_place({'name' : {'name' : 'Houseboat (left)'}})
+        info = self.analyzer.process_place({'name': {'name': 'Houseboat (left)'}})
 
         self.expect_name_terms(info, '#Houseboat (left)', '#Houseboat',
                                      'houseboat', 'left')
 
 
-@pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])
-def test_process_place_postcode(analyzer, word_table, pcode):
-    with analyzer() as anl:
-        anl.process_place({'address': {'postcode' : pcode}})
+    def test_country_name(self, word_table):
+        info = self.analyzer.process_place({'name': {'name': 'Norge'},
+                                           'country_feature': 'no'})
 
-    assert word_table.get_postcodes() == {pcode, }
-
-
-@pytest.mark.parametrize('pcode', ['12:23', 'ab;cd;f', '123;836'])
-def test_process_place_bad_postcode(analyzer, word_table, pcode):
-    with analyzer() as anl:
-        anl.process_place({'address': {'postcode' : pcode}})
-
-    assert not word_table.get_postcodes()
+        self.expect_name_terms(info, '#norge', 'norge')
+        assert word_table.get_country() == {('no', ' NORGE')}
 
 
-@pytest.mark.parametrize('hnr', ['123a', '1', '101'])
-def test_process_place_housenumbers_simple(analyzer, hnr, getorcreate_hnr_id):
-    with analyzer() as anl:
-        info = anl.process_place({'address': {'housenumber' : hnr}})
+class TestPlaceAddress:
 
-    assert info['hnr'] == hnr.upper()
-    assert info['hnr_tokens'] == "{-1}"
-
-
-def test_process_place_housenumbers_lists(analyzer, getorcreate_hnr_id):
-    with analyzer() as anl:
-        info = anl.process_place({'address': {'conscriptionnumber' : '1; 2;3'}})
-
-    assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
-    assert info['hnr_tokens'] == "{-1,-2,-3}"
+    @pytest.fixture(autouse=True)
+    def setup(self, analyzer, getorcreate_full_word):
+        with analyzer(trans=(":: upper()", "'🜵' > ' '")) as anl:
+            self.analyzer = anl
+            yield anl
 
 
-def test_process_place_housenumbers_duplicates(analyzer, getorcreate_hnr_id):
-    with analyzer() as anl:
-        info = anl.process_place({'address': {'housenumber' : '134',
-                                              'conscriptionnumber' : '134',
-                                              'streetnumber' : '99a'}})
+    def process_address(self, **kwargs):
+        return self.analyzer.process_place({'address': kwargs})
 
-    assert set(info['hnr'].split(';')) == set(('134', '99A'))
-    assert info['hnr_tokens'] == "{-1,-2}"
+
+    def name_token_set(self, *expected_terms):
+        tokens = self.analyzer.get_word_token_info(expected_terms)
+        for token in tokens:
+            assert token[2] is not None, "No token for {0}".format(token)
+
+        return set((t[2] for t in tokens))
+
+
+    @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])
+    def test_process_place_postcode(self, word_table, pcode):
+        self.process_address(postcode=pcode)
+
+        assert word_table.get_postcodes() == {pcode, }
+
+
+    @pytest.mark.parametrize('pcode', ['12:23', 'ab;cd;f', '123;836'])
+    def test_process_place_bad_postcode(self, word_table, pcode):
+        self.process_address(postcode=pcode)
+
+        assert not word_table.get_postcodes()
+
+
+    @pytest.mark.parametrize('hnr', ['123a', '1', '101'])
+    def test_process_place_housenumbers_simple(self, hnr, getorcreate_hnr_id):
+        info = self.process_address(housenumber=hnr)
+
+        assert info['hnr'] == hnr.upper()
+        assert info['hnr_tokens'] == "{-1}"
+
+
+    def test_process_place_housenumbers_lists(self, getorcreate_hnr_id):
+        info = self.process_address(conscriptionnumber='1; 2;3')
+
+        assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
+        assert info['hnr_tokens'] == "{-1,-2,-3}"
+
+
+    def test_process_place_housenumbers_duplicates(self, getorcreate_hnr_id):
+        info = self.process_address(housenumber='134',
+                                    conscriptionnumber='134',
+                                    streetnumber='99a')
+
+        assert set(info['hnr'].split(';')) == set(('134', '99A'))
+        assert info['hnr_tokens'] == "{-1,-2}"
+
+
+    def test_process_place_housenumbers_cached(self, getorcreate_hnr_id):
+        info = self.process_address(housenumber="45")
+        assert info['hnr_tokens'] == "{-1}"
+
+        info = self.process_address(housenumber="46")
+        assert info['hnr_tokens'] == "{-2}"
+
+        info = self.process_address(housenumber="41;45")
+        assert eval(info['hnr_tokens']) == {-1, -3}
+
+        info = self.process_address(housenumber="41")
+        assert eval(info['hnr_tokens']) == {-3}
+
+
+    def test_process_place_street(self):
+        info = self.process_address(street='Grand Road')
+
+        assert eval(info['street']) == self.name_token_set('#GRAND ROAD')
+
+
+    def test_process_place_street_empty(self):
+        info = self.process_address(street='🜵')
+
+        assert 'street' not in info
+
+
+    def test_process_place_place(self):
+        info = self.process_address(place='Honu Lulu')
+
+        assert eval(info['place_search']) == self.name_token_set('#HONU LULU',
+                                                                 'HONU', 'LULU')
+        assert eval(info['place_match']) == self.name_token_set('#HONU LULU')
+
+
+    def test_process_place_place_empty(self):
+        info = self.process_address(place='🜵')
+
+        assert 'place_search' not in info
+        assert 'place_match' not in info
+
+
+    def test_process_place_address_terms(self):
+        info = self.process_address(country='de', city='Zwickau', state='Sachsen',
+                                    suburb='Zwickau', street='Hauptstr',
+                                    full='right behind the church')
+
+        city_full = self.name_token_set('#ZWICKAU')
+        city_all = self.name_token_set('#ZWICKAU', 'ZWICKAU')
+        state_full = self.name_token_set('#SACHSEN')
+        state_all = self.name_token_set('#SACHSEN', 'SACHSEN')
+
+        result = {k: [eval(v[0]), eval(v[1])] for k,v in info['addr'].items()}
+
+        assert result == {'city': [city_all, city_full],
+                          'suburb': [city_all, city_full],
+                          'state': [state_all, state_full]}
+
+
+    def test_process_place_address_terms_empty(self):
+        info = self.process_address(country='de', city=' ', street='Hauptstr',
+                                    full='right behind the church')
+
+        assert 'addr' not in info
+

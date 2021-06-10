@@ -101,10 +101,19 @@ class ICUNameProcessor:
             else:
                 pos += 1
 
-        if startpos == 0:
-            return [self.to_ascii.transliterate(norm_name)]
+        results = []
 
-        return [self.to_ascii.transliterate(v + baseform[startpos:pos]).strip() for v in variants]
+        if startpos == 0:
+            trans_name = self.to_ascii.transliterate(norm_name).strip()
+            if trans_name:
+                results.append(trans_name)
+        else:
+            for variant in variants:
+                trans_name = self.to_ascii.transliterate(variant + baseform[startpos:pos]).strip()
+                if trans_name:
+                    results.append(trans_name)
+
+        return results
 
 
     def get_search_normalized(self, name):

@@ -123,7 +123,7 @@ class LegacyICUTokenizer:
         """
         return LegacyICUNameAnalyzer(self.dsn, ICUNameProcessor(self.naming_rules))
 
-
+    # pylint: disable=missing-format-attribute
     def _install_php(self, phpdir):
         """ Install the php script for the tokenizer.
         """
@@ -134,7 +134,7 @@ class LegacyICUTokenizer:
             @define('CONST_Term_Normalization_Rules', "{0.term_normalization}");
             @define('CONST_Transliteration', "{0.naming_rules.search_rules}");
             require_once('{1}/tokenizer/legacy_icu_tokenizer.php');
-            """.format(self, phpdir))) # pylint: disable=missing-format-attribute
+            """.format(self, phpdir)))
 
 
     def _save_config(self, config):
@@ -166,9 +166,11 @@ class LegacyICUTokenizer:
                 cur.execute("SELECT svals(name) as v, count(*) FROM place GROUP BY v")
 
                 for name, cnt in cur:
+                    terms = set()
                     for word in name_proc.get_variants_ascii(name_proc.get_normalized(name)):
-                        for term in word.split():
-                            words[term] += cnt
+                        terms.update(word.split())
+                    for term in terms:
+                        words[term] += cnt
 
             # copy them back into the word table
             with CopyBuffer() as copystr:
@@ -446,6 +448,9 @@ class LegacyICUNameAnalyzer:
             full, part = self._cache.names.get(norm_name, (None, None))
             if full is None:
                 variants = self.name_processor.get_variants_ascii(norm_name)
+                if not variants:
+                    continue
+
                 with self.conn.cursor() as cur:
                     cur.execute("SELECT (getorcreate_full_word(%s, %s)).*",
                                 (norm_name, variants))
@@ -465,12 +470,13 @@ class LegacyICUNameAnalyzer:
             given dictionary of names.
         """
         full_names = set()
-        for name in (n for ns in names.values() for n in re.split('[;,]', ns)):
-            full_names.add(name.strip())
+        for name in (n.strip() for ns in names.values() for n in re.split('[;,]', ns)):
+            if name:
+                full_names.add(name)
 
-            brace_idx = name.find('(')
-            if brace_idx >= 0:
-                full_names.add(name[:brace_idx].strip())
+                brace_idx = name.find('(')
+                if brace_idx >= 0:
+                    full_names.add(name[:brace_idx].strip())
 
         return full_names
 

@@ -91,10 +91,10 @@ def test_get_search_rules(cfgfile):
     trans = Transliterator.createFromRules("test", rules)
 
     assert trans.transliterate(" Baum straße ") == " baum straße "
-    assert trans.transliterate(" Baumstraße ") == " baum straße "
-    assert trans.transliterate(" Baumstrasse ") == " baum strasse "
-    assert trans.transliterate(" Baumstr ") == " baum str "
-    assert trans.transliterate(" Baumwegstr ") == " baumweg str "
+    assert trans.transliterate(" Baumstraße ") == " baumstraße "
+    assert trans.transliterate(" Baumstrasse ") == " baumstrasse "
+    assert trans.transliterate(" Baumstr ") == " baumstr "
+    assert trans.transliterate(" Baumwegstr ") == " baumwegstr "
     assert trans.transliterate(" Αθήνα ") == " athēna "
     assert trans.transliterate(" проспект ") == " prospekt "
 
@@ -128,11 +128,10 @@ def test_get_replacement_pairs_multi_to(cfgfile):
     repl = ICURuleLoader(fpath).get_replacement_pairs()
 
     assert [(a, sorted(b)) for a, b in repl] == \
-             [(' strasse ', [' st ', ' str ', ' strasse ']),
-              ('strasse ', [' st ', ' str ', ' strasse ']),
-              ('pfad ', [' pfad ']),
-              ('str ' , [' str ']),
-              ('st ' , [' st '])]
+             [(' strasse ', [' st ', ' str ', ' strasse ', 'st ', 'str ', 'strasse ']),
+              ('strasse ', [' st ', ' str ', ' strasse ', 'st ', 'str ', 'strasse ']),
+              (' pfad ', [' pfad ', 'pfad ']),
+              ('pfad ', [' pfad ', 'pfad '])]
 
 
 def test_get_replacement_pairs_multi_from(cfgfile):

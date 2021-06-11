@@ -31,23 +31,13 @@ class ICURuleLoader:
 
     def get_search_rules(self):
         """ Return the ICU rules to be used during search.
-            The rules combine normalization, compound decomposition (including
-            abbreviated compounds) and transliteration.
+            The rules combine normalization and transliteration.
         """
         # First apply the normalization rules.
         rules = io.StringIO()
         rules.write(self.normalization_rules)
 
-        # For all compound suffixes: add them in their full and any abbreviated form.
-        suffixes = set()
-        for suffix in self.compound_suffixes:
-            suffixes.add(suffix)
-            suffixes.update(self.abbreviations.get(suffix, []))
-
-        for suffix in sorted(suffixes, key=len, reverse=True):
-            rules.write("'{0} ' > ' {0} ';".format(suffix))
-
-        # Finally add transliteration.
+        # Then add transliteration.
         rules.write(self.transliteration_rules)
         return rules.getvalue()
 
@@ -69,6 +59,12 @@ class ICURuleLoader:
         """
         synonyms = defaultdict(set)
 
+        # First add entries for compound decomposition.
+        for suffix in self.compound_suffixes:
+            variants = (suffix + ' ', ' ' + suffix + ' ')
+            for key in variants:
+                synonyms[key].update(variants)
+
         for full, abbr in self.abbreviations.items():
             key = ' ' + full + ' '
             # Entries in the abbreviation list always apply to full words:
@@ -76,15 +72,15 @@ class ICURuleLoader:
             # Replacements are optional, so add a noop
             synonyms[key].add(key)
 
-        # Entries in the compound list expand to themselves and to
-        # abbreviations.
-        for suffix in self.compound_suffixes:
-            keyset = synonyms[suffix + ' ']
-            keyset.add(' ' + suffix + ' ')
-            keyset.update((' ' + a + ' ' for a in self.abbreviations.get(suffix, [])))
-            # The terms the entries are shortended to, need to be decompunded as well.
-            for abbr in self.abbreviations.get(suffix, []):
-                synonyms[abbr + ' '].add(' ' + abbr + ' ')
+            if full in self.compound_suffixes:
+                # Full word abbreviating to compunded version.
+                synonyms[key].update((a + ' ' for a in abbr))
+
+                key = full + ' '
+                # Uncompunded suffix abbrevitating to decompounded version.
+                synonyms[key].update((' ' + a + ' ' for a in abbr))
+                # Uncompunded suffix abbrevitating to compunded version.
+                synonyms[key].update((a + ' ' for a in abbr))
 
         # sort the resulting list by descending length (longer matches are prefered).
         sorted_keys = sorted(synonyms.keys(), key=len, reverse=True)

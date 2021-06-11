@@ -48,9 +48,10 @@ def test_simple_variants(cfgfile):
     proc = ICUNameProcessor(rules)
 
     assert set(get_normalized_variants(proc, "Bauwegstraße")) \
-            == {'bauweg straße', 'bauweg str'}
-    assert get_normalized_variants(proc, "Bauwegstr") == ['bauweg str']
-    assert get_normalized_variants(proc, "holzweg") == ['holz weg']
+            == {'bauweg straße', 'bauweg str', 'bauwegstraße', 'bauwegstr'}
+    assert get_normalized_variants(proc, "Bauwegstr") == ['bauwegstr']
+    assert set(get_normalized_variants(proc, "holzweg")) \
+            == {'holz weg', 'holzweg'}
     assert get_normalized_variants(proc, "hallo") == ['hallo']
 
 
@@ -82,6 +83,6 @@ def test_search_normalized(cfgfile):
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
 
-    assert proc.get_search_normalized('Master Street') == 'master  street'
-    assert proc.get_search_normalized('Earnes St') == 'earne s  st'
-    assert proc.get_search_normalized('Nostreet') == 'no street'
+    assert proc.get_search_normalized('Master Street') == 'master street'
+    assert proc.get_search_normalized('Earnes St') == 'earnes st'
+    assert proc.get_search_normalized('Nostreet') == 'nostreet'

@@ -165,15 +165,13 @@ def update_postcodes(dsn, project_dir, tokenizer):
             with conn.cursor(name="placex_postcodes") as cur:
                 cur.execute("""
                 SELECT cc as country_code, pc, ST_X(centroid), ST_Y(centroid)
-                FROM (
-                    SELECT 
+                FROM (SELECT 
                         COALESCE(plx.country_code, get_country_code(ST_Centroid(pl.geometry))) as cc,
                         token_normalized_postcode(pl.address->'postcode') as pc,
-                        COALESCE(ST_Centroid(ST_Collect(plx.centroid)), ST_Centroid(ST_Collect(ST_Centroid(pl.geometry)))) as centroid
-                    FROM place AS pl LEFT OUTER JOIN placex AS plx ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
+                        ST_Centroid(ST_Collect(COALESCE(plx.centroid, ST_Centroid(pl.geometry)))) as centroid 
+                        FROM place AS pl LEFT OUTER JOIN placex AS plx ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
                     WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
-                    GROUP BY cc, pc
-                ) xx
+                    GROUP BY cc, pc) xx
                 WHERE pc IS NOT null AND cc IS NOT null
                 ORDER BY country_code, pc""")
 

@@ -114,7 +114,6 @@ def test_postcodes_ignore_empty_country(dsn, postcode_table, tmp_path,
                                         insert_implicit_postcode, tokenizer):
     insert_implicit_postcode(1, None, 'POINT(10 12)', dict(postcode='AB 4511'))
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
-    print(postcode_table.row_set)
     assert not postcode_table.row_set
 
 

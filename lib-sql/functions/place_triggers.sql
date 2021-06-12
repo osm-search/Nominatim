@@ -95,10 +95,8 @@ BEGIN
     -- Pure postcodes are never queried from placex so we don't add them.
     -- location_postcodes is filled from the place table directly.
     IF NEW.class = 'place' AND NEW.type = 'postcode' THEN
-      -- Remove old placex entry if the type changed to postcode.
-      IF existingplacex.type IS NOT NULL AND existingplacex.type != 'postcode' THEN
-        DELETE FROM placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
-      END IF;
+      -- Remove old placex entry.
+      DELETE FROM placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
       RETURN NEW;
     END IF;
 

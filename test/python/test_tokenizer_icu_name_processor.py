@@ -52,6 +52,8 @@ def test_simple_variants(cfgfile):
     assert get_normalized_variants(proc, "Bauwegstr") == ['bauwegstr']
     assert set(get_normalized_variants(proc, "holzweg")) \
             == {'holz weg', 'holzweg'}
+    assert set(get_normalized_variants(proc, "Meier Weg")) \
+            == {'meier weg', 'meierweg'}
     assert get_normalized_variants(proc, "hallo") == ['hallo']
 
 

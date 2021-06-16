@@ -163,17 +163,17 @@ def update_postcodes(dsn, project_dir, tokenizer):
 
             # Recompute the list of valid postcodes from placex.
             with conn.cursor(name="placex_postcodes") as cur:
-                cur.execute("""SELECT country_code, pc, ST_X(centroid), ST_Y(centroid)
-                               FROM (
-                                 SELECT country_code,
-                                        token_normalized_postcode(address->'postcode') as pc,
-                                        ST_Centroid(ST_Collect(ST_Centroid(geometry))) as centroid
-                                 FROM placex
-                                 WHERE address ? 'postcode' and geometry IS NOT null
-                                       and country_code is not null
-                                 GROUP BY country_code, pc) xx
-                               WHERE pc is not null
-                               ORDER BY country_code, pc""")
+                cur.execute("""
+                SELECT cc as country_code, pc, ST_X(centroid), ST_Y(centroid)
+                FROM (SELECT 
+                        COALESCE(plx.country_code, get_country_code(ST_Centroid(pl.geometry))) as cc,
+                        token_normalized_postcode(pl.address->'postcode') as pc,
+                        ST_Centroid(ST_Collect(COALESCE(plx.centroid, ST_Centroid(pl.geometry)))) as centroid 
+                        FROM place AS pl LEFT OUTER JOIN placex AS plx ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
+                    WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
+                    GROUP BY cc, pc) xx
+                WHERE pc IS NOT null AND cc IS NOT null
+                ORDER BY country_code, pc""")
 
                 collector = None
 
@@ -195,3 +195,11 @@ def update_postcodes(dsn, project_dir, tokenizer):
             conn.commit()
 
         analyzer.update_postcodes_from_db()
+
+def can_compute(dsn):
+    """
+        Check that the place table exists so that
+        postcodes can be computed.
+    """
+    with connect(dsn) as conn:
+        return conn.table_exists('place')

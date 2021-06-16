@@ -320,7 +320,7 @@ class TestCliWithDb:
         assert func_mock.called == 1
 
 
-    def test_refresh_postcodes(self, mock_func_factory):
+    def test_refresh_postcodes(self, mock_func_factory, place_table):
         func_mock = mock_func_factory(nominatim.tools.postcodes, 'update_postcodes')
         idx_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')
 

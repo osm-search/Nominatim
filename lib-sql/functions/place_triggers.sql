@@ -97,6 +97,19 @@ BEGIN
     IF NEW.class = 'place' AND NEW.type = 'postcode' THEN
       -- Remove old placex entry.
       DELETE FROM placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id;
+
+      IF existing.osm_type IS NOT NULL THEN
+        IF coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+           OR existing.geometry::text != NEW.geometry::text
+        THEN
+
+          update place set address = NEW.address, geometry = NEW.geometry
+            where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type;
+        END IF;
+
+        RETURN NULL;
+      END IF;
+
       RETURN NEW;
     END IF;
 

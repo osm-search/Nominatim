@@ -56,3 +56,51 @@ Feature: Update of postcode
            | word  | class | type |
            | 01982 | place | postcode |
 
+     Scenario: Updating a postcode is reflected in postcode table
+        Given the places
+           | osm | class | type     | addr+postcode |  geometry |
+           | N34 | place | postcode | 01982         | country:de |
+        When importing
+        And updating places
+           | osm | class | type     | addr+postcode |  geometry |
+           | N34 | place | postcode | 20453         | country:de |
+        And updating postcodes
+        Then location_postcode contains exactly
+           | country | postcode | geometry |
+           | de      | 20453    | country:de |
+        And word contains
+           | word  | class | type |
+           | 20453 | place | postcode |
+
+     Scenario: When changing from a postcode type, the entry appears in placex
+        When importing
+        And updating places
+           | osm | class | type     | addr+postcode |  geometry |
+           | N34 | place | postcode | 01982         | country:de |
+        Then placex has no entry for N34
+        When updating places
+           | osm | class | type  | addr+postcode | housenr |  geometry |
+           | N34 | place | house | 20453         | 1       | country:de |
+        Then placex contains
+           | object | addr+housenumber | geometry |
+           | N34    | 1                | country:de|
+        When updating postcodes
+        Then location_postcode contains exactly
+           | country | postcode | geometry |
+           | de      | 20453    | country:de |
+        And word contains
+           | word  | class | type |
+           | 20453 | place | postcode |
+
+     Scenario: When changing to a postcode type, the entry disappears from placex
+        When importing
+        And updating places
+           | osm | class | type  | addr+postcode | housenr |  geometry |
+           | N34 | place | house | 20453         | 1       | country:de |
+        Then placex contains
+           | object | addr+housenumber | geometry |
+           | N34    | 1                | country:de|
+        When updating places
+           | osm | class | type     | addr+postcode |  geometry |
+           | N34 | place | postcode | 01982         | country:de |
+        Then placex has no entry for N34

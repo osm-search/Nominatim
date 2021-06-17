@@ -55,6 +55,27 @@ class Result
             }
         )));
     }
+
+    public static function joinIdsByTableMinRank($aResults, $iTable, $iMinAddressRank)
+    {
+        return join(',', array_keys(array_filter(
+            $aResults,
+            function ($aValue) use ($iTable, $iMinAddressRank) {
+                return $aValue->iTable == $iTable && $aValue->iAddressRank >= $iMinAddressRank;
+            }
+        )));
+    }
+
+    public static function joinIdsByTableMaxRank($aResults, $iTable, $iMaxAddressRank)
+    {
+        return join(',', array_keys(array_filter(
+            $aResults,
+            function ($aValue) use ($iTable, $iMaxAddressRank) {
+                return $aValue->iTable == $iTable && $aValue->iAddressRank <= $iMaxAddressRank;
+            }
+        )));
+    }
+
     public static function sqlHouseNumberTable($aResults, $iTable)
     {
         $sHousenumbers = '';

@@ -447,23 +447,24 @@ class SearchDescription
 
             // Now search for housenumber, if housenumber provided. Can be zero.
             if (($this->sHouseNumber || $this->sHouseNumber === '0') && !empty($aResults)) {
-                // Downgrade the rank of the street results, they are missing
-                // the housenumber.
-                foreach ($aResults as $oRes) {
-                    if ($oRes->iAddressRank >= 26) {
-                        $oRes->iResultRank++;
-                    } else {
-                        $oRes->iResultRank += 2;
-                    }
-                }
-
                 $aHnResults = $this->queryHouseNumber($oDB, $aResults);
 
-                if (!empty($aHnResults)) {
-                    foreach ($aHnResults as $oRes) {
-                        $aResults[$oRes->iId] = $oRes;
+                // Downgrade the rank of the street results, they are missing
+                // the housenumber. Also drop POI places (rank 30) here, they
+                // cannot be a parent place and therefore must not be shown
+                // as a result for a search with a missing housenumber.
+                foreach ($aResults as $oRes) {
+                    if ($oRes->iAddressRank < 28) {
+                        if ($oRes->iAddressRank >= 26) {
+                            $oRes->iResultRank++;
+                        } else {
+                            $oRes->iResultRank += 2;
+                        }
+                        $aHnResults[$oRes->iId] = $oRes;
                     }
                 }
+
+                $aResults = $aHnResults;
             }
 
             // finally get POIs if requested
@@ -743,16 +744,33 @@ class SearchDescription
     private function queryHouseNumber(&$oDB, $aRoadPlaceIDs)
     {
         $aResults = array();
-        $sPlaceIDs = Result::joinIdsByTable($aRoadPlaceIDs, Result::TABLE_PLACEX);
+        $sRoadPlaceIDs = Result::joinIdsByTableMaxRank(
+            $aRoadPlaceIDs,
+            Result::TABLE_PLACEX,
+            27
+        );
+        $sPOIPlaceIDs = Result::joinIdsByTableMinRank(
+            $aRoadPlaceIDs,
+            Result::TABLE_PLACEX,
+            30
+        );
 
-        if (!$sPlaceIDs) {
+        $aIDCondition = array();
+        if ($sRoadPlaceIDs) {
+            $aIDCondition[] = 'parent_place_id in ('.$sRoadPlaceIDs.')';
+        }
+        if ($sPOIPlaceIDs) {
+            $aIDCondition[] = 'place_id in ('.$sPOIPlaceIDs.')';
+        }
+
+        if (empty($aIDCondition)) {
             return $aResults;
         }
 
         $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
-        $sSQL = 'SELECT place_id FROM placex ';
-        $sSQL .= 'WHERE parent_place_id in ('.$sPlaceIDs.')';
-        $sSQL .= "  AND housenumber ~* E'".$sHouseNumberRegex."'";
+        $sSQL = 'SELECT place_id FROM placex WHERE';
+        $sSQL .= "  housenumber ~* E'".$sHouseNumberRegex."'";
+        $sSQL .= ' AND ('.join(' OR ', $aIDCondition).')';
         $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
         Debug::printSQL($sSQL);
@@ -764,11 +782,11 @@ class SearchDescription
 
         $bIsIntHouseNumber= (bool) preg_match('/[0-9]+/', $this->sHouseNumber);
         $iHousenumber = intval($this->sHouseNumber);
-        if ($bIsIntHouseNumber && empty($aResults)) {
+        if ($bIsIntHouseNumber && $sRoadPlaceIDs && empty($aResults)) {
             // if nothing found, search in the interpolation line table
             $sSQL = 'SELECT distinct place_id FROM location_property_osmline';
             $sSQL .= ' WHERE startnumber is not NULL';
-            $sSQL .= '  AND parent_place_id in ('.$sPlaceIDs.') AND (';
+            $sSQL .= '  AND parent_place_id in ('.$sRoadPlaceIDs.') AND (';
             if ($iHousenumber % 2 == 0) {
                 // If housenumber is even, look for housenumber in streets
                 // with interpolationtype even or all.
@@ -792,9 +810,9 @@ class SearchDescription
         }
 
         // If nothing found then search in Tiger data (location_property_tiger)
-        if (CONST_Use_US_Tiger_Data && $bIsIntHouseNumber && empty($aResults)) {
+        if (CONST_Use_US_Tiger_Data && $sRoadPlaceIDs && $bIsIntHouseNumber && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_tiger';
-            $sSQL .= ' WHERE parent_place_id in ('.$sPlaceIDs.') and (';
+            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.') and (';
             if ($iHousenumber % 2 == 0) {
                 $sSQL .= "interpolationtype='even'";
             } else {

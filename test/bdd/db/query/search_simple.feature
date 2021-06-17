@@ -45,3 +45,30 @@ Feature: Searching of simple objects
         Then result addresses contain
          | amenity | road |
          | Bean    | The build |
+
+    Scenario: when missing housenumbers in search don't return a POI
+        Given the places
+         | osm | class   | type       | name        |
+         | N3  | amenity | restaurant | Wood Street |
+        And the places
+         | osm | class   | type       | name        | housenr |
+         | N20 | amenity | restaurant | Red Way     | 34      |
+        When importing
+        And sending search query "Wood Street 45"
+        Then exactly 0 results are returned
+        When sending search query "Red Way 34"
+        Then results contain
+         | osm |
+         | N20 |
+
+     Scenario: when the housenumber is missing the stret is still returned
+        Given the grid
+         | 1 |  | 2 |
+        Given the places
+         | osm | class   | type        | name        | geometry |
+         | W1  | highway | residential | Wood Street | 1, 2     |
+        When importing
+        And sending search query "Wood Street"
+        Then results contain
+         | osm |
+         | W1  |

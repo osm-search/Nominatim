@@ -92,6 +92,13 @@ BEGIN
     -- Get the existing place_id
     select * from placex where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class and type = NEW.type INTO existingplacex;
 
+    -- Handle a place changing type by removing the old data
+    -- My generated 'place' types are causing havok because they overlap with real keys
+    -- TODO: move them to their own special purpose key/class to avoid collisions
+    IF existing.osm_type IS NULL THEN
+      DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
+    END IF;
+
     -- Pure postcodes are never queried from placex so we don't add them.
     -- location_postcodes is filled from the place table directly.
     IF NEW.class = 'place' AND NEW.type = 'postcode' THEN
@@ -111,13 +118,6 @@ BEGIN
       END IF;
 
       RETURN NEW;
-    END IF;
-
-    -- Handle a place changing type by removing the old data
-    -- My generated 'place' types are causing havok because they overlap with real keys
-    -- TODO: move them to their own special purpose key/class to avoid collisions
-    IF existing.osm_type IS NULL THEN
-      DELETE FROM place where osm_type = NEW.osm_type and osm_id = NEW.osm_id and class = NEW.class;
     END IF;
 
     {% if debug %}RAISE WARNING 'Existing: %',existing.osm_id;{% endif %}

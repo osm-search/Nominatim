@@ -84,6 +84,9 @@ Feature: Update of postcode
         Then placex contains
            | object | addr+housenumber | geometry |
            | N34    | 1                | country:de|
+        And place contains exactly
+           | object | class | type  |
+           | N34    | place | house |
         When updating postcodes
         Then location_postcode contains exactly
            | country | postcode | geometry |
@@ -104,3 +107,13 @@ Feature: Update of postcode
            | osm | class | type     | addr+postcode |  geometry |
            | N34 | place | postcode | 01982         | country:de |
         Then placex has no entry for N34
+        And place contains exactly
+           | object | class | type     |
+           | N34    | place | postcode |
+        When updating postcodes
+        Then location_postcode contains exactly
+           | country | postcode | geometry |
+           | de      | 01982    | country:de |
+        And word contains
+           | word  | class | type |
+           | 01982 | place | postcode |

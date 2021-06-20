@@ -121,6 +121,26 @@ def test_get_transliteration_rules(cfgfile):
     assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
 
 
+def test_transliteration_rules_from_file(tmp_path):
+    cfgpath = tmp_path / ('test_config.yaml')
+    cfgpath.write_text(dedent("""\
+        normalization:
+        transliteration:
+            - "'ax' > 'b'"
+            - !include transliteration.yaml
+        compound_suffixes:
+        abbreviations:
+        """))
+    transpath = tmp_path / ('transliteration.yaml')
+    transpath.write_text('- "x > y"')
+
+    loader = ICURuleLoader(cfgpath)
+    rules = loader.get_transliteration_rules()
+    trans = Transliterator.createFromRules("test", rules)
+
+    assert trans.transliterate(" axxt ") == " byt "
+
+
 def test_get_replacement_pairs_multi_to(cfgfile):
     fpath = cfgfile(['Pfad', 'Strasse'],
                     ['Strasse => str,st'])

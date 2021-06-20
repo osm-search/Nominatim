@@ -5,7 +5,16 @@ normalization:
     - "ß > 'ss'" # German szet is unimbigiously equal to double ss
     - "[[:Punctuation:][:Space:]]+ > ' '"
     - ":: NFC ()"
-transliteration: icu_transliteration.rules
+transliteration:
+    - !include icu-rules/extended-unicode-to-asccii.yaml
+    - ":: Ascii ()"
+    - ":: NFD ()"
+    - "'' >"
+    - "[[:Nonspacing Mark:] [:Cf:]] >"
+    - "[^[:Ascii:]] >"
+    - ":: lower ()"
+    - "[[:Punctuation:][:Space:]]+ > ' '"
+    - ":: NFC ()"
 compound_suffixes:
     # Danish
     - hal

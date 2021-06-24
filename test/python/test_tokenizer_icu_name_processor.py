@@ -12,7 +12,7 @@ from nominatim.errors import UsageError
 
 @pytest.fixture
 def cfgfile(tmp_path, suffix='.yaml'):
-    def _create_config(suffixes, abbr):
+    def _create_config(*variants, **kwargs):
         content = dedent("""\
         normalization:
             - ":: NFD ()"
@@ -25,10 +25,10 @@ def cfgfile(tmp_path, suffix='.yaml'):
             - "::  Latin ()"
             - "'🜵' > ' '"
         """)
-        content += "compound_suffixes:\n"
-        content += '\n'.join(("    - " + s for s in suffixes)) + '\n'
-        content += "abbreviations:\n"
-        content += '\n'.join(("    - " + s for s in abbr)) + '\n'
+        content += "variants:\n  - words:\n"
+        content += '\n'.join(("      - " + s for s in variants)) + '\n'
+        for k, v in kwargs:
+            content += "    {}: {}\n".format(k, v)
         fpath = tmp_path / ('test_config' + suffix)
         fpath.write_text(dedent(content))
         return fpath
@@ -40,9 +40,9 @@ def get_normalized_variants(proc, name):
     return proc.get_variants_ascii(proc.get_normalized(name))
 
 def test_simple_variants(cfgfile):
-    fpath = cfgfile(['strasse', 'straße', 'weg'],
-                    ['strasse,straße => str',
-                     'prospekt => pr'])
+    fpath = cfgfile('~strasse,~straße -> str',
+                    '~weg => weg',
+                    'prospekt -> pr')
 
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
@@ -58,7 +58,7 @@ def test_simple_variants(cfgfile):
 
 
 def test_variants_empty(cfgfile):
-    fpath = cfgfile([], ['saint => 🜵', 'street => st'])
+    fpath = cfgfile('saint -> 🜵', 'street -> st')
 
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
@@ -69,7 +69,7 @@ def test_variants_empty(cfgfile):
 
 
 def test_multiple_replacements(cfgfile):
-    fpath = cfgfile([], ['saint => s,st', 'street => st'])
+    fpath = cfgfile('saint -> s,st', 'street -> st')
 
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)
@@ -80,7 +80,7 @@ def test_multiple_replacements(cfgfile):
 
 
 def test_search_normalized(cfgfile):
-    fpath = cfgfile(['street'], ['street => s,st', 'master => mstr'])
+    fpath = cfgfile('~street => s,st', 'master => mstr')
 
     rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
     proc = ICUNameProcessor(rules)

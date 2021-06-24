@@ -3,14 +3,15 @@ Helper class to create ICU rules from a configuration file.
 """
 import io
 import logging
-from collections import defaultdict
 import itertools
 from pathlib import Path
+import re
 
 import yaml
 from icu import Transliterator
 
 from nominatim.errors import UsageError
+import nominatim.tokenizer.icu_variants as variants
 
 LOG = logging.getLogger()
 
@@ -31,14 +32,25 @@ def _flatten_yaml_list(content):
     return output
 
 
+class VariantRule:
+    """ Saves a single variant expansion.
+
+        An expansion consists of the normalized replacement term and
+        a dicitonary of properties that describe when the expansion applies.
+    """
+
+    def __init__(self, replacement, properties):
+        self.replacement = replacement
+        self.properties = properties or {}
+
+
 class ICURuleLoader:
     """ Compiler for ICU rules from a tokenizer configuration file.
     """
 
     def __init__(self, configfile):
         self.configfile = configfile
-        self.compound_suffixes = set()
-        self.abbreviations = defaultdict()
+        self.variants = set()
 
         if configfile.suffix == '.yaml':
             self._load_from_yaml()
@@ -74,35 +86,7 @@ class ICURuleLoader:
             The result is a list of pairs: the first item is the sequence to
             replace, the second is a list of replacements.
         """
-        synonyms = defaultdict(set)
-
-        # First add entries for compound decomposition.
-        for suffix in self.compound_suffixes:
-            variants = (suffix + ' ', ' ' + suffix + ' ')
-            for key in variants:
-                synonyms[key].update(variants)
-
-        for full, abbr in self.abbreviations.items():
-            key = ' ' + full + ' '
-            # Entries in the abbreviation list always apply to full words:
-            synonyms[key].update((' ' + a + ' ' for a in abbr))
-            # Replacements are optional, so add a noop
-            synonyms[key].add(key)
-
-            if full in self.compound_suffixes:
-                # Full word abbreviating to compunded version.
-                synonyms[key].update((a + ' ' for a in abbr))
-
-                key = full + ' '
-                # Uncompunded suffix abbrevitating to decompounded version.
-                synonyms[key].update((' ' + a + ' ' for a in abbr))
-                # Uncompunded suffix abbrevitating to compunded version.
-                synonyms[key].update((a + ' ' for a in abbr))
-
-        # sort the resulting list by descending length (longer matches are prefered).
-        sorted_keys = sorted(synonyms.keys(), key=len, reverse=True)
-
-        return [(k, list(synonyms[k])) for k in sorted_keys]
+        return self.variants
 
     def _yaml_include_representer(self, loader, node):
         value = loader.construct_scalar(node)
@@ -122,8 +106,7 @@ class ICURuleLoader:
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
-        self._parse_compound_suffix_list(self._get_section(rules, 'compound_suffixes'))
-        self._parse_abbreviation_list(self._get_section(rules, 'abbreviations'))
+        self._parse_variant_list(self._get_section(rules, 'variants'))
 
 
     def _get_section(self, rules, section):
@@ -153,38 +136,111 @@ class ICURuleLoader:
         return ';'.join(_flatten_yaml_list(content)) + ';'
 
 
-
-    def _parse_compound_suffix_list(self, rules):
-        if not rules:
-            self.compound_suffixes = set()
-            return
-
-        norm = Transliterator.createFromRules("rule_loader_normalization",
-                                              self.normalization_rules)
-
-        # Make sure all suffixes are in their normalised form.
-        self.compound_suffixes = set((norm.transliterate(s) for s in rules))
-
-
-    def _parse_abbreviation_list(self, rules):
-        self.abbreviations = defaultdict(list)
+    def _parse_variant_list(self, rules):
+        self.variants.clear()
 
         if not rules:
             return
 
-        norm = Transliterator.createFromRules("rule_loader_normalization",
-                                              self.normalization_rules)
+        rules = _flatten_yaml_list(rules)
 
-        for rule in rules:
-            parts = rule.split('=>')
-            if len(parts) != 2:
-                LOG.fatal("Syntax error in abbreviation section, line: %s", rule)
-                raise UsageError("Syntax error in tokenizer configuration file.")
+        vmaker = _VariantMaker(self.normalization_rules)
 
-            # Make sure all terms match the normalised version.
-            fullterms = (norm.transliterate(t.strip()) for t in parts[0].split(','))
-            abbrterms = (norm.transliterate(t.strip()) for t in parts[1].split(','))
+        properties = []
+        for section in rules:
+            # Create the property field and deduplicate against existing
+            # instances.
+            props = variants.ICUVariantProperties.from_rules(section)
+            for existing in properties:
+                if existing == props:
+                    props = existing
+                    break
+            else:
+                properties.append(props)
 
-            for full, abbr in itertools.product(fullterms, abbrterms):
-                if full and abbr:
-                    self.abbreviations[full].append(abbr)
+            for rule in (section.get('words') or []):
+                self.variants.update(vmaker.compute(rule, props))
+
+
+class _VariantMaker:
+    """ Generater for all necessary ICUVariants from a single variant rule.
+
+        All text in rules is normalized to make sure the variants match later.
+    """
+
+    def __init__(self, norm_rules):
+        self.norm = Transliterator.createFromRules("rule_loader_normalization",
+                                                   norm_rules)
+
+
+    def compute(self, rule, props):
+        """ Generator for all ICUVariant tuples from a single variant rule.
+        """
+        parts = re.split(r'(\|)?([=-])>', rule)
+        if len(parts) != 4:
+            raise UsageError("Syntax error in variant rule: " + rule)
+
+        decompose = parts[1] is None
+        src_terms = [self._parse_variant_word(t) for t in parts[0].split(',')]
+        repl_terms = (self.norm.transliterate(t.strip()) for t in parts[3].split(','))
+
+        # If the source should be kept, add a 1:1 replacement
+        if parts[2] == '-':
+            for src in src_terms:
+                if src:
+                    for froms, tos in _create_variants(*src, src[0], decompose):
+                        yield variants.ICUVariant(froms, tos, props)
+
+        for src, repl in itertools.product(src_terms, repl_terms):
+            if src and repl:
+                for froms, tos in _create_variants(*src, repl, decompose):
+                    yield variants.ICUVariant(froms, tos, props)
+
+
+    def _parse_variant_word(self, name):
+        name = name.strip()
+        match = re.fullmatch(r'([~^]?)([^~$^]*)([~$]?)', name)
+        if match is None or (match.group(1) == '~' and match.group(3) == '~'):
+            raise UsageError("Invalid variant word descriptor '{}'".format(name))
+        norm_name = self.norm.transliterate(match.group(2))
+        if not norm_name:
+            return None
+
+        return norm_name, match.group(1), match.group(3)
+
+
+_FLAG_MATCH = {'^': '^ ',
+               '$': ' ^',
+               '': ' '}
+
+
+def _create_variants(src, preflag, postflag, repl, decompose):
+    if preflag == '~':
+        postfix = _FLAG_MATCH[postflag]
+        # suffix decomposition
+        src = src + postfix
+        repl = repl + postfix
+
+        yield src, repl
+        yield ' ' + src, ' ' + repl
+
+        if decompose:
+            yield src, ' ' + repl
+            yield ' ' + src, repl
+    elif postflag == '~':
+        # prefix decomposition
+        prefix = _FLAG_MATCH[preflag]
+        src = prefix + src
+        repl = prefix + repl
+
+        yield src, repl
+        yield src + ' ', repl + ' '
+
+        if decompose:
+            yield src, repl + ' '
+            yield src + ' ', repl
+    else:
+        prefix = _FLAG_MATCH[preflag]
+        postfix = _FLAG_MATCH[postflag]
+
+        yield prefix + src + postfix, prefix + repl + postfix

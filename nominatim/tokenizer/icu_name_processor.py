@@ -2,13 +2,14 @@
 Processor for names that are imported into the database based on the
 ICU library.
 """
-import json
+from collections import defaultdict
 import itertools
 
 from icu import Transliterator
 import datrie
 
 from nominatim.db.properties import set_property, get_property
+from nominatim.tokenizer import icu_variants as variants
 
 DBCFG_IMPORT_NORM_RULES = "tokenizer_import_normalisation"
 DBCFG_IMPORT_TRANS_RULES = "tokenizer_import_transliteration"
@@ -31,19 +32,11 @@ class ICUNameProcessorRules:
         elif conn is not None:
             self.norm_rules = get_property(conn, DBCFG_IMPORT_NORM_RULES)
             self.trans_rules = get_property(conn, DBCFG_IMPORT_TRANS_RULES)
-            self.replacements = json.loads(get_property(conn, DBCFG_IMPORT_REPLACEMENTS))
+            self.replacements = \
+                variants.unpickle_variant_set(get_property(conn, DBCFG_IMPORT_REPLACEMENTS))
             self.search_rules = get_property(conn, DBCFG_SEARCH_STD_RULES)
         else:
             assert False, "Parameter loader or conn required."
-
-        # Compute the set of characters used in the replacement list.
-        # We need this later when computing the tree.
-        chars = set()
-        for full, repl in self.replacements:
-            chars.update(full)
-            for word in repl:
-                chars.update(word)
-        self.replacement_charset = ''.join(chars)
 
 
     def save_rules(self, conn):
@@ -53,7 +46,8 @@ class ICUNameProcessorRules:
         """
         set_property(conn, DBCFG_IMPORT_NORM_RULES, self.norm_rules)
         set_property(conn, DBCFG_IMPORT_TRANS_RULES, self.trans_rules)
-        set_property(conn, DBCFG_IMPORT_REPLACEMENTS, json.dumps(self.replacements))
+        set_property(conn, DBCFG_IMPORT_REPLACEMENTS,
+                     variants.pickle_variant_set(self.replacements))
         set_property(conn, DBCFG_SEARCH_STD_RULES, self.search_rules)
 
 
@@ -70,9 +64,16 @@ class ICUNameProcessor:
         self.search = Transliterator.createFromRules("icu_search",
                                                      rules.search_rules)
 
-        self.replacements = datrie.Trie(rules.replacement_charset)
-        for full, repl in rules.replacements:
-            self.replacements[full] = repl
+        # Intermediate reorder by source. Also compute required character set.
+        immediate = defaultdict(list)
+        chars = set()
+        for variant in rules.replacements:
+            immediate[variant.source].append(variant)
+            chars.update(variant.source)
+        # Then copy to datrie
+        self.replacements = datrie.Trie(''.join(chars))
+        for src, repllist in immediate.items():
+            self.replacements[src] = repllist
 
 
     def get_normalized(self, name):
@@ -85,8 +86,8 @@ class ICUNameProcessor:
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """
-        baseform = ' ' + norm_name + ' '
-        variants = ['']
+        baseform = '^ ' + norm_name + ' ^'
+        partials = ['']
 
         startpos = 0
         pos = 0
@@ -95,7 +96,8 @@ class ICUNameProcessor:
                                                                (None, None))
             if full is not None:
                 done = baseform[startpos:pos]
-                variants = [v + done + r for v, r in itertools.product(variants, repl)]
+                partials = [v + done + r.replacement
+                            for v, r in itertools.product(partials, repl)]
                 startpos = pos + len(full)
                 pos = startpos
             else:
@@ -108,8 +110,9 @@ class ICUNameProcessor:
             if trans_name:
                 results.append(trans_name)
         else:
-            for variant in variants:
-                trans_name = self.to_ascii.transliterate(variant + baseform[startpos:pos]).strip()
+            for variant in partials:
+                name = variant[1:] + baseform[startpos:-1]
+                trans_name = self.to_ascii.transliterate(name).strip()
                 if trans_name:
                     results.append(trans_name)
 

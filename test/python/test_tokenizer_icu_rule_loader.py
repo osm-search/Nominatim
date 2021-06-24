@@ -11,7 +11,7 @@ from icu import Transliterator
 
 @pytest.fixture
 def cfgfile(tmp_path, suffix='.yaml'):
-    def _create_config(suffixes, abbr):
+    def _create_config(*variants, **kwargs):
         content = dedent("""\
         normalization:
             - ":: NFD ()"
@@ -23,10 +23,10 @@ def cfgfile(tmp_path, suffix='.yaml'):
             - "::  Latin ()"
             - "[[:Punctuation:][:Space:]]+ > ' '"
         """)
-        content += "compound_suffixes:\n"
-        content += '\n'.join(("    - " + s for s in suffixes)) + '\n'
-        content += "abbreviations:\n"
-        content += '\n'.join(("    - " + s for s in abbr)) + '\n'
+        content += "variants:\n  - words:\n"
+        content += '\n'.join(("      - " + s for s in variants)) + '\n'
+        for k, v in kwargs:
+            content += "    {}: {}\n".format(k, v)
         fpath = tmp_path / ('test_config' + suffix)
         fpath.write_text(dedent(content))
         return fpath
@@ -39,18 +39,16 @@ def test_empty_rule_file(tmp_path):
     fpath.write_text(dedent("""\
         normalization:
         transliteration:
-        compound_suffixes:
-        abbreviations:
+        variants:
         """))
 
     rules = ICURuleLoader(fpath)
     assert rules.get_search_rules() == ''
     assert rules.get_normalization_rules() == ''
     assert rules.get_transliteration_rules() == ''
-    assert rules.get_replacement_pairs() == []
+    assert list(rules.get_replacement_pairs()) == []
 
-CONFIG_SECTIONS = ('normalization', 'transliteration',
-                   'compound_suffixes', 'abbreviations')
+CONFIG_SECTIONS = ('normalization', 'transliteration', 'variants')
 
 @pytest.mark.parametrize("section", CONFIG_SECTIONS)
 def test_missing_normalization(tmp_path, section):
@@ -63,29 +61,9 @@ def test_missing_normalization(tmp_path, section):
     with pytest.raises(UsageError):
         ICURuleLoader(fpath)
 
-@pytest.mark.parametrize("abbr", ["simple",
-                                  "double => arrow => bad",
-                                  "bad = > arrow"])
-def test_bad_abbreviation_syntax(tmp_path, abbr):
-    fpath = tmp_path / ('test_config.yaml')
-    fpath.write_text(dedent("""\
-        normalization:
-        transliteration:
-        compound_suffixes:
-        abbreviations:
-         - {}
-        """.format(abbr)))
-
-    with pytest.raises(UsageError):
-        rules = ICURuleLoader(fpath)
-
 
 def test_get_search_rules(cfgfile):
-    fpath = cfgfile(['strasse', 'straße', 'weg'],
-                    ['strasse,straße => str',
-                     'prospekt => pr'])
-
-    loader = ICURuleLoader(fpath)
+    loader = ICURuleLoader(cfgfile())
 
     rules = loader.get_search_rules()
     trans = Transliterator.createFromRules("test", rules)
@@ -100,10 +78,7 @@ def test_get_search_rules(cfgfile):
 
 
 def test_get_normalization_rules(cfgfile):
-    fpath = cfgfile(['strasse', 'straße', 'weg'],
-                    ['strasse,straße => str'])
-
-    loader = ICURuleLoader(fpath)
+    loader = ICURuleLoader(cfgfile())
     rules = loader.get_normalization_rules()
     trans = Transliterator.createFromRules("test", rules)
 
@@ -111,10 +86,7 @@ def test_get_normalization_rules(cfgfile):
 
 
 def test_get_transliteration_rules(cfgfile):
-    fpath = cfgfile(['strasse', 'straße', 'weg'],
-                    ['strasse,straße => str'])
-
-    loader = ICURuleLoader(fpath)
+    loader = ICURuleLoader(cfgfile())
     rules = loader.get_transliteration_rules()
     trans = Transliterator.createFromRules("test", rules)
 
@@ -128,8 +100,7 @@ def test_transliteration_rules_from_file(tmp_path):
         transliteration:
             - "'ax' > 'b'"
             - !include transliteration.yaml
-        compound_suffixes:
-        abbreviations:
+        variants:
         """))
     transpath = tmp_path / ('transliteration.yaml')
     transpath.write_text('- "x > y"')
@@ -141,53 +112,153 @@ def test_transliteration_rules_from_file(tmp_path):
     assert trans.transliterate(" axxt ") == " byt "
 
 
-def test_get_replacement_pairs_multi_to(cfgfile):
-    fpath = cfgfile(['Pfad', 'Strasse'],
-                    ['Strasse => str,st'])
+class TestGetReplacements:
 
-    repl = ICURuleLoader(fpath).get_replacement_pairs()
+    @pytest.fixture(autouse=True)
+    def setup_cfg(self, cfgfile):
+        self.cfgfile = cfgfile
 
-    assert [(a, sorted(b)) for a, b in repl] == \
-             [(' strasse ', [' st ', ' str ', ' strasse ', 'st ', 'str ', 'strasse ']),
-              ('strasse ', [' st ', ' str ', ' strasse ', 'st ', 'str ', 'strasse ']),
-              (' pfad ', [' pfad ', 'pfad ']),
-              ('pfad ', [' pfad ', 'pfad '])]
+    def get_replacements(self, *variants):
+        loader = ICURuleLoader(self.cfgfile(*variants))
+        rules = loader.get_replacement_pairs()
 
-
-def test_get_replacement_pairs_multi_from(cfgfile):
-    fpath = cfgfile([], ['saint,Sainte => st'])
-
-    repl = ICURuleLoader(fpath).get_replacement_pairs()
-
-    assert [(a, sorted(b)) for a, b in repl] == \
-             [(' sainte ', [' sainte ', ' st ']),
-              (' saint ', [' saint ', ' st '])]
+        return set((v.source, v.replacement) for v in rules)
 
 
-def test_get_replacement_pairs_cross_abbreviations(cfgfile):
-    fpath = cfgfile([], ['saint,Sainte => st',
-                         'sainte => ste'])
+    @pytest.mark.parametrize("variant", ['foo > bar', 'foo -> bar -> bar',
+                                         '~foo~ -> bar', 'fo~ o -> bar'])
+    def test_invalid_variant_description(self, variant):
+        with pytest.raises(UsageError):
+            ICURuleLoader(self.cfgfile(variant))
 
-    repl = ICURuleLoader(fpath).get_replacement_pairs()
+    def test_add_full(self):
+        repl = self.get_replacements("foo -> bar")
 
-    assert [(a, sorted(b)) for a, b in repl] == \
-             [(' sainte ', [' sainte ', ' st ', ' ste ']),
-              (' saint ', [' saint ', ' st '])]
+        assert repl == {(' foo ', ' bar '), (' foo ', ' foo ')}
 
 
-@pytest.mark.parametrize("abbr", ["missing to =>",
-                                  "  => missing from",
-                                  "=>"])
-def test_bad_abbreviation_syntax(tmp_path, abbr):
-    fpath = tmp_path / ('test_config.yaml')
-    fpath.write_text(dedent("""\
-        normalization:
-        transliteration:
-        compound_suffixes:
-        abbreviations:
-         - {}
-        """.format(abbr)))
+    def test_replace_full(self):
+        repl = self.get_replacements("foo => bar")
 
-    repl = ICURuleLoader(fpath).get_replacement_pairs()
+        assert repl == {(' foo ', ' bar ')}
 
-    assert repl == []
+
+    def test_add_suffix_no_decompose(self):
+        repl = self.get_replacements("~berg |-> bg")
+
+        assert repl == {('berg ', 'berg '), ('berg ', 'bg '),
+                        (' berg ', ' berg '), (' berg ', ' bg ')}
+
+
+    def test_replace_suffix_no_decompose(self):
+        repl = self.get_replacements("~berg |=> bg")
+
+        assert repl == {('berg ', 'bg '), (' berg ', ' bg ')}
+
+
+    def test_add_suffix_decompose(self):
+        repl = self.get_replacements("~berg -> bg")
+
+        assert repl == {('berg ', 'berg '), ('berg ', ' berg '),
+                        (' berg ', ' berg '), (' berg ', 'berg '),
+                        ('berg ', 'bg '), ('berg ', ' bg '),
+                        (' berg ', 'bg '), (' berg ', ' bg ')}
+
+
+    def test_replace_suffix_decompose(self):
+        repl = self.get_replacements("~berg => bg")
+
+        assert repl == {('berg ', 'bg '), ('berg ', ' bg '),
+                        (' berg ', 'bg '), (' berg ', ' bg ')}
+
+
+    def test_add_prefix_no_compose(self):
+        repl = self.get_replacements("hinter~ |-> hnt")
+
+        assert repl == {(' hinter', ' hinter'), (' hinter ', ' hinter '),
+                        (' hinter', ' hnt'), (' hinter ', ' hnt ')}
+
+
+    def test_replace_prefix_no_compose(self):
+        repl = self.get_replacements("hinter~ |=> hnt")
+
+        assert repl ==  {(' hinter', ' hnt'), (' hinter ', ' hnt ')}
+
+
+    def test_add_prefix_compose(self):
+        repl = self.get_replacements("hinter~-> h")
+
+        assert repl == {(' hinter', ' hinter'), (' hinter', ' hinter '),
+                        (' hinter', ' h'), (' hinter', ' h '),
+                        (' hinter ', ' hinter '), (' hinter ', ' hinter'),
+                        (' hinter ', ' h '), (' hinter ', ' h')}
+
+
+    def test_replace_prefix_compose(self):
+        repl = self.get_replacements("hinter~=> h")
+
+        assert repl == {(' hinter', ' h'), (' hinter', ' h '),
+                        (' hinter ', ' h '), (' hinter ', ' h')}
+
+
+    def test_add_beginning_only(self):
+        repl = self.get_replacements("^Premier -> Pr")
+
+        assert repl == {('^ premier ', '^ premier '), ('^ premier ', '^ pr ')}
+
+
+    def test_replace_beginning_only(self):
+        repl = self.get_replacements("^Premier => Pr")
+
+        assert repl == {('^ premier ', '^ pr ')}
+
+
+    def test_add_final_only(self):
+        repl = self.get_replacements("road$ -> rd")
+
+        assert repl == {(' road ^', ' road ^'), (' road ^', ' rd ^')}
+
+
+    def test_replace_final_only(self):
+        repl = self.get_replacements("road$ => rd")
+
+        assert repl == {(' road ^', ' rd ^')}
+
+
+    def test_decompose_only(self):
+        repl = self.get_replacements("~foo -> foo")
+
+        assert repl == {('foo ', 'foo '), ('foo ', ' foo '),
+                        (' foo ', 'foo '), (' foo ', ' foo ')}
+
+
+    def test_add_suffix_decompose_end_only(self):
+        repl = self.get_replacements("~berg |-> bg", "~berg$ -> bg")
+
+        assert repl == {('berg ', 'berg '), ('berg ', 'bg '),
+                        (' berg ', ' berg '), (' berg ', ' bg '),
+                        ('berg ^', 'berg ^'), ('berg ^', ' berg ^'),
+                        ('berg ^', 'bg ^'), ('berg ^', ' bg ^'),
+                        (' berg ^', 'berg ^'), (' berg ^', 'bg ^'),
+                        (' berg ^', ' berg ^'), (' berg ^', ' bg ^')}
+
+
+    def test_replace_suffix_decompose_end_only(self):
+        repl = self.get_replacements("~berg |=> bg", "~berg$ => bg")
+
+        assert repl == {('berg ', 'bg '), (' berg ', ' bg '),
+                        ('berg ^', 'bg ^'), ('berg ^', ' bg ^'),
+                        (' berg ^', 'bg ^'), (' berg ^', ' bg ^')}
+
+
+    def test_add_multiple_suffix(self):
+        repl = self.get_replacements("~berg,~burg -> bg")
+
+        assert repl == {('berg ', 'berg '), ('berg ', ' berg '),
+                        (' berg ', ' berg '), (' berg ', 'berg '),
+                        ('berg ', 'bg '), ('berg ', ' bg '),
+                        (' berg ', 'bg '), (' berg ', ' bg '),
+                        ('burg ', 'burg '), ('burg ', ' burg '),
+                        (' burg ', ' burg '), (' burg ', 'burg '),
+                        ('burg ', 'bg '), ('burg ', ' bg '),
+                        (' burg ', 'bg '), (' burg ', ' bg ')}

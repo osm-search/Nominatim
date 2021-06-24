@@ -15,880 +15,825 @@ transliteration:
     - ":: lower ()"
     - "[[:Punctuation:][:Space:]]+ > ' '"
     - ":: NFC ()"
-compound_suffixes:
-    # Danish
-    - hal
-    - hallen
-    - hallerne
-    # German
-    - berg
-    - brücke
-    - fabrik
-    - gasse
-    - graben
-    - haus
-    - höhle
-    - hütte
-    - kapelle
-    - kogel
-    - markt
-    - pfad
-    - platz
-    - quelle
-    - spitze
-    - stiege
-    - strasse
-    - teich
-    - universität
-    - wald
-    - weg
-    - wiese
-    # Dutch
-    - gracht
-    - laan
-    - markt
-    - plein
-    - straat
-    - vliet
-    - weg
-    # Norwegian
-    - vei
-    - veien
-    - veg
-    - vegen
-    - gate
-    - gaten
-    - gata
-    - plass
-    - plassen
-    - sving
-    - svingen
-    # Finnish
-    - alue
-    - asema
-    - aukio
-    - kaari
-    - katu
-    - kuja
-    - kylä
-    - penger
-    - polku
-    - puistikko
-    - puisto
-    - raitti
-    - ranta
-    - rinne
-    - taival
-    - tie
-    - tori
-    - väylä
-    # Swedish
-    - väg
-    - vägen
-    - gatan
-    - gata
-    - gränd
-    - gränden
-    - stig
-    - stigen
-    - plats
-    - platsen
-abbreviations:
-    - acceso => acces
-    - access => accs
-    - acequia => aceq
-    - air force base => afb
-    - air national guard base => angb
-    - alameda => alam
-    - ale => al
-    - alea => al
-    - aleea => al
-    - aleja => al
-    - alejach => al
-    - aleje => al
-    - aleji => al
-    - all => al
-    - allee => al
-    - alley => al
-    - alleyway => alwy
-    - ally => al
-    - alqueria => alque
-    - alue => al
-    - aly => al
-    - am => a
-    - amble => ambl
-    - an der => a d
-    - andador => andad
-    - angosta => angta
-    - apartamentos => aptos
-    - apartments => apts
-    - apch => app
-    - apeadero => apdro
-    - approach => app
-    - arboleda => arb
-    - arcade => arc
-    - arrabal => arral
-    - arroyo => arry
-    - arterial => artl
-    - artery => arty
-    - auf der => a d
-    - aukio => auk
-    - autopista => auto
-    - autovia => autov
-    - avd => av
-    - avda => av
-    - ave => av
-    - avenida => av
-    - avenue => av
-    - avinguda => av
-    - b dul => bd
-    - back => bk
-    - bad => b
-    - bahnhof => bf
-    - bajada => bjada
-    - balneario => balnr
-    - banan => ba
-    - banda => b
-    - barranco => branc
-    - barranquil => bqllo
-    - barriada => barda
-    - barrio => bo
-    - barro => bo
-    - basin => basn
-    - bda => b
-    - bdge => bri
-    - bdul => bd
-    - bdwy => bway
-    - beach => bch
-    - berg => bg
-    - bgm => bgm
-    - bhf => bf
-    - bldngs => bldgs
-    - block => blk
-    - blok => bl
-    - bloque => blque
-    - blv => bd
-    - blvd => bd
-    - boardwalk => bwlk
-    - boulevard => bd
-    - boundary => bdy
-    - brace => br
-    - brazal => brzal
-    - brdg => bri
-    - break => brk
-    - bridge => bri
-    - broadway => bway
-    - broeder => br
-    - brücke => br
-    - buildings => bldgs
-    - bul => bd
-    - bulev => bd
-    - bulevar => bd
-    - bulevard => bd
-    - bulevardu => bd
-    - bulevardul => bd
-    - bulievard => bd
-    - bulvar => bl
-    - bulvari => bl
-    - burg => bg
-    - burgemeester => bg
-    - burgermeister => bgm
-    - business => bus
-    - buu dien => bd
-    - bvd => bd
-    - bypa => byp
-    - bypass => byp
-    - byway => bywy
-    - c le => c
-    - cadde => cd
-    - caddesi => cd
-    - calle => c
-    - callej => cjon
-    - calleja => cllja
-    - callejon => cjon
-    - callejuela => cjla
-    - callizo => cllzo
-    - calzada => czada
-    - camino => cno
-    - camino hondo => c h
-    - camino nuevo => c n
-    - camino viejo => c v
-    - camping => campg
-    - campo => c po
-    - can cu khong quan => cckq
-    - cantera => cantr
-    - cantina => canti
-    - canton => cant
-    - cao dang => cd
-    - caravan => cvn
-    - carrer => c
-    - carrera => cra
-    - carrero => cro
-    - carretera => ctra
-    - carreterin => ctrin
-    - carretil => crtil
-    - carril => crril
-    - caserio => csrio
-    - cau ldhc bo => clb
-    - caus => cway
-    - causeway => cway
-    - ce => cv
-    - cen => ctr
-    - center => ctr
-    - centre => ctr
-    - centreway => cnwy
-    - cesta => c
-    - chalet => chlet
-    - chase => ch
-    - che => ch
-    - chemin => ch
-    - cinturon => cint
-    - circle => cir
-    - circuit => cct
-    - circunvalacion => ccvcn
-    - circus => crcs
-    - city => cty
-    - cl => c
-    - cllon => cjon
-    - close => c
-    - cmno => cno
-    - cobertizo => cbtiz
-    - colonia => col
-    - commandant => cmdt
-    - common => comm
-    - community => comm
-    - complejo => compj
-    - concourse => con
-    - cong truong => ct
-    - cong ty => cty
-    - cong ty co phyn => ctcp
-    - cong vien => cv
-    - cong vien van hoa => cvvh
-    - conjunto => cjto
-    - convento => cnvto
-    - cooperativa => coop
-    - copse => cps
-    - corner => cnr
-    - corral => crral
-    - corralillo => crrlo
-    - corredor => crrdo
-    - corso => c so
-    - corte => c te
-    - cortijo => crtjo
-    - costanilla => cstan
-    - costera => coste
-    - cottages => cotts
-    - county => co
-    - county route => cr
-    - cours => crs
-    - court => ct
-    - courtyard => ctyd
-    - cove => cv
-    - creek => cr
-    - cres => cr
-    - crescent => cr
-    - crest => crst
-    - crk => cr
-    - croft => cft
-    - cross => crss
-    - crossing => xing
-    - crossroad => crd
-    - crossway => cowy
-    - crsg => xing
-    - crt => ct
-    - csac => cds
-    - cswy => cway
-    - cty cp => ctcp
-    - cuadra => cuadr
-    - cuesta => custa
-    - cul de sac => cds
-    - cutting => cutt
-    - ddhi hoc => dh
-    - ddhi lo => dl
-    - dehesa => dhsa
-    - demarcacion => demar
-    - deviation => devn
-    - diagonal => diag
-    - diseminado => disem
-    - distributor => dstr
-    - doctor => dr
-    - dokter => dr
-    - doktor => d r
-    - dolna => dln
-    - dolne => dln
-    - dolny => dln
-    - dominee => ds
-    - dorf => df
-    - dotsient => dots
-    - drive => dr
-    - driveway => dvwy
-    - druga => 2
-    - drugi => 2
-    - drugie => 2
-    - drv => dr
-    - drwy => dvwy
-    - duong => d
-    - duong sat => ds
-    - duza => dz
-    - duze => dz
-    - duzy => dz
-    - east => e
-    - edificio => edifc
-    - elbow => elb
-    - empresa => empr
-    - entrada => entd
-    - entrance => ent
-    - errepidea => err
-    - escalera => esca
-    - escalinata => escal
-    - espalda => eslda
-    - esplanade => esp
-    - estacion => estcn
-    - estate => est
-    - estrada => estda
-    - etorbidea => etorb
-    - explanada => expla
-    - expressway => exp
-    - expy => exp
-    - extension => ex
-    - extramuros => extrm
-    - extrarradio => extrr
-    - fabrica => fca
-    - fairway => fawy
-    - faubourg => fg
-    - fbrca => fca
-    - ferry => fy
-    - fire track => ftrk
-    - firetrail => fit
-    - follow => folw
-    - fondamenta => f ta
-    - footway => ftwy
-    - foreshore => fshr
-    - formation => form
-    - fort => ft
-    - freeway => fwy
-    - front => frnt
-    - frontage => frtg
-    - frwy => fwy
-    - fundacul => fdc
-    - fundatura => fnd
-    - ga => g
-    - galeria => gale
-    - gamla => gla
-    - garden => gdn
-    - gardens => gdn
-    - gata => g
-    - gatan => g
-    - gate => g
-    - gaten => g
-    - gdns => gdn
-    - gebroeders => gebr
-    - generaal => gen
-    - gienieral => ghien
-    - glade => gl
-    - gld => gl
-    - glde => gl
-    - glorieta => gta
-    - gorna => gn
-    - gorne => gn
-    - gorny => gn
-    - gracht => gr
-    - grad => ghr
-    - gran via => g v
-    - grand => gr
-    - granden => gr
-    - grange => gra
-    - granja => granj
-    - green => gn
-    - grn => gn
-    - gro => gr
-    - grosse => gr
-    - grosser => gr
-    - grosses => gr
-    - ground => grnd
-    - grove => gr
-    - gt => g
-    - gte => g
-    - gully => gly
-    - hauptbahnhof => hbf
-    - heights => hts
-    - heiligen => hl
-    - hgts => hts
-    - high school => hs
-    - highroad => hrd
-    - highway => hwy
-    - hipodromo => hipod
-    - hird => hrd
-    - hospital => hosp
-    - house => ho
-    - hse => ho
-    - i => 1
-    - ii => 2
-    - iii => 3
-    - im => 1
-    - impasse => imp
-    - in => 1
-    - in der => i d
-    - industrial => ind
-    - ingenieur => ir
-    - interchange => intg
-    - international => intl
-    - intr => int
-    - intrarea => int
-    - island => is
-    - jardin => jdin
-    - jonkheer => jhr
-    - junction => jnc
-    - k s => ks
-    - kaari => kri
-    - kalea => k
-    - kanunnik => kan
-    - kapitan => kap
-    - kardinaal => kard
-    - katu => k
-    - khach sdhn => ks
-    - khu cong nghiep => kcn
-    - khu du lich => kdl
-    - khu nghi mat => knm
-    - kleine => kl
-    - kleiner => kl
-    - kleines => kl
-    - kolo => k
-    - kolonel => kol
-    - kolonia => kol
-    - koning => kon
-    - koningin => kon
-    - kort e => k
-    - kri => kri
-    - kte => k
-    - kuja => kj
-    - kvartal => kv
-    - kyla => kl
-    - laan => ln
-    - ladera => ldera
-    - landing => ldg
-    - lane => ln
-    - laneway => lnwy
-    - lange => l
-    - largo => l go
-    - lille => ll
-    - line => ln
-    - link => lk
-    - lit => lt
-    - little => lt
-    - llanura => llnra
-    - lookout => lkt
-    - loop => lp
-    - low => lr
-    - lower => lr
-    - luitenant => luit
-    - lwr => lr
-    - m te => mt
-    - m tele => mt
-    - maantee => mt
-    - mala => ml
-    - male => ml
-    - malecon => malec
-    - maly => ml
-    - manor => mnr
-    - mansions => mans
-    - market => mkt
-    - markt => mkt
-    - mazowiecka => maz
-    - mazowiecki => maz
-    - mazowieckie => maz
-    - meadows => mdws
-    - meander => mr
-    - medical => med
-    - meester => mr
-    - mercado => merc
-    - mevrouw => mevr
-    - mews => m
-    - miasto => m
-    - middle => mid
-    - middle school => ms
-    - mile => mi
-    - military => mil
-    - mirador => mrdor
-    - mitropolit => mit
-    - mkt => mkt
-    - mndr => mr
-    - mnt => mt
-    - monasterio => mtrio
-    - monseigneur => mgr
-    - mont => mt
-    - motorway => mwy
-    - mount => mt
-    - mountain => mtn
-    - mtwy => mwy
-    - muelle => muell
-    - municipal => mun
-    - muntele => mt
-    - museum => mus
-    - mw => m
-    - na => n
-    - namesti => nam
-    - namestie => nam
-    - national park => np
-    - national recreation area => nra
-    - national wildlife refuge area => nwra
-    - nha hat => nh
-    - nha thi dzu => ntd
-    - nha tho => nt
-    - nordre => ndr
-    - norra => n
-    - north => n
-    - north east => ne
-    - north west => n
-    - northeast => ne
-    - northwest => n
-    - nowa => n
-    - nowe => n
-    - nowy => n
-    - nucleo => ncleo
-    - nw => n
-    - oa => o
-    - ob => o
-    - obere => o
-    - oberer => o
-    - oberes => o
-    - olv => olv
-    - onze lieve vrouw e => olv
-    - osiedle => os
-    - osiedlu => os
-    - ostra => o
-    - outlook => otlk
-    - p k => pk
-    - p ta => pta
-    - p zza => p za
-    - palacio => palac
-    - pantano => pant
-    - parade => pde
-    - paraje => praje
-    - park => pk
-    - parklands => pkld
-    - parkway => pwy
-    - parque => pque
-    - particular => parti
-    - partida => ptda
-    - pas => ps
-    - pasadizo => pzo
-    - pasaje => psaje
-    - paseo => po
-    - paseo maritimo => psmar
-    - pasillo => psllo
-    - pass => ps
-    - passage => ps
-    - passatge => ptge
-    - passeig => pg
-    - pastoor => past
-    - pathway => pway
-    - penger => pgr
-    - pfad => p
-    - pgr => pgr
-    - ph => p
-    - phi truong => pt
-    - phuong => p
-    - phwy => pway
-    - piata => pta
-    - piaz => p za
-    - piazza => p za
-    - piazzale => p le
-    - piazzetta => pta
-    - pierwsza => 1
-    - pierwsze => 1
-    - pierwszy => 1
-    - pike => pk
-    - pko => pko
-    - pkwy => pwy
-    - pky => pwy
-    - plac => pl
-    - placa => pl
-    - place => pl
-    - placem => pl
-    - placu => pl
-    - plass => pl
-    - plassen => pl
-    - plateau => plat
-    - plats => pl
-    - platsen => pl
-    - platz => pl
-    - plaza => pl
-    - plazoleta => pzta
-    - plazuela => plzla
-    - plein => pln
-    - pln => pln
-    - ploshchad => pl
-    - plz => pl
-    - plza => pl
-    - pnt => pt
-    - poblado => pbdo
-    - pocket => pkt
-    - point => pt
-    - poligono => polig
-    - poligono industrial => pgind
-    - polku => p
-    - ponte => p te
-    - porta => pta
-    - portal => prtal
-    - portico => prtco
-    - portillo => ptilo
-    - prazuela => przla
-    - precinct => pct
-    - pres => pres
-    - president => pres
-    - prins => pr
-    - prinses => pr
-    - professor => prof
-    - profiesor => prof
-    - prolongacion => prol
-    - promenade => prom
-    - psge => ps
-    - pueblo => pblo
-    - puente => pnte
-    - puerta => pta
-    - puerto => pto
-    - puistikko => pko
-    - puisto => ps
-    - punto kilometrico => pk
-    - pza => pl
-    - quadrangle => qdgl
-    - quadrant => qdrt
-    - quai => qu
-    - quan => q
-    - quay => qy
-    - quays => qys
-    - qucyng truong => qt
-    - quelle => qu
-    - quoc lo => ql
-    - raitti => r
-    - rambla => rbla
-    - ramble => rmbl
-    - rampla => rampa
-    - range => rnge
-    - ranta => rt
-    - rdhp hat => rh
-    - reach => rch
-    - reservation => res
-    - reserve => res
-    - reservoir => res
-    - residencial => resid
-    - retreat => rtt
-    - rhein => rh
-    - ribera => rbra
-    - ridge => rdge
-    - ridgeway => rgwy
-    - right of way => rowy
-    - rincon => rcon
-    - rinconada => rcda
-    - rinne => rn
-    - rise => ri
-    - riv => r
-    - river => r
-    - riverway => rvwy
-    - riviera => rvra
-    - road => rd
-    - roads => rds
-    - roadside => rdsd
-    - roadway => rdwy
-    - ronde => rnde
-    - rosebowl => rsbl
-    - rotary => rty
-    - rotonda => rtda
-    - round => rnd
-    - route => rt
-    - rte => rt
-    - rue => r
-    - rvr => r
-    - sa => s
-    - saint => st
-    - sainte => ste
-    - salizada => s da
-    - san => s
-    - san bay => sb
-    - san bay quoc te => sbqt
-    - san van dong => svd
-    - sanatorio => sanat
-    - sankt => st
-    - santa => sta
-    - santuario => santu
-    - sector => sect
-    - sendera => sedra
-    - sendero => send
-    - serviceway => swy
-    - shunt => shun
-    - shwy => sh
-    - siding => sdng
-    - sielo => s
-    - sint => st
-    - slope => slpe
-    - sodra => s
-    - sok => sk
-    - sokagi => sk
-    - sokak => sk
-    - sondre => sdr
-    - soseaua => sos
-    - sound => snd
-    - south => s
-    - south east => se
-    - south west => sw
-    - south-east => se
-    - south-west => sw
-    - southeast => se
-    - southwest => sw
-    - spl => sp
-    - splaiul => sp
-    - spodnja => sp
-    - spodnje => sp
-    - spodnji => sp
-    - square => sq
-    - srednja => sr
-    - srednje => sr
-    - srednji => sr
-    - stara => st
-    - stare => st
-    - stary => st
-    - state highway => sh
-    - state route => sr
-    - station => stn
-    - stazione => staz
-    - ste => ste
-    - steenweg => stwg
-    - sth => s
-    - stig => st
-    - stigen => st
-    - store => st
-    - str la => sdla
-    - stra => st
-    - straat => st
-    - strada => st
-    - strada comunale => sc
-    - strada provinciale => sp
-    - strada regionale => sr
-    - strada statale => ss
-    - stradela => sdla
-    - strand => st
-    - strasse => str
-    - street => st
-    - strip => strp
-    - stwg => stwg
-    - subida => sbida
-    - subway => sbwy
-    - sveta => sv
-    - sveti => sv
-    - svieti => sv
-    - sving => sv
-    - svingen => sv
-    - svwy => swy
-    - taival => tvl
-    - tanav => tn
-    - tce => ter
-    - tcty => tct
-    - terr => ter
-    - terrace => ter
-    - thanh pho => tp
-    - thfr => thor
-    - thi trzn => tt
-    - thi xa => tx
-    - thoroughfare => thor
-    - tie => t
-    - tieu hoc => th
-    - tinh lo => tl
-    - tollway => tlwy
-    - tong cong ty => tct
-    - tori => tr
-    - torrente => trrnt
-    - towers => twrs
-    - township => twp
-    - tpke => tpk
-    - track => trk
-    - trail => trl
-    - trailer => trlr
-    - transito => trans
-    - transversal => trval
-    - trasera => tras
-    - travesia => trva
-    - triangle => tri
-    - trung hoc co so => thcs
-    - trung hoc pho thong => thpt
-    - trung tam => tt
-    - trung tam thuong mdhi => tttm
-    - trunkway => tkwy
-    - trzeci => 3
-    - trzecia => 3
-    - trzecie => 3
-    - tunnel => tun
-    - turn => tn
-    - turnpike => tpk
-    - tvl => tvl
-    - ulica => ul
-    - ulice => ul
-    - ulicy => ul
-    - ulitsa => ul
-    - underpass => upas
-    - university => univ
-    - untere => u
-    - unterer => u
-    - unteres => u
-    - upper => up
-    - upr => up
-    - urbanizacion => urb
-    - utca => u
-    - v d => vd
-    - va => v
-    - vag => v
-    - vagen => v
-    - vale => v
-    - van => v
-    - van de => vd
-    - varf => vf
-    - varful => vf
-    - vastra => v
-    - vayla => vla
-    - vdct => via
-    - vecindario => vecin
-    - vei => v
-    - veien => v
-    - velika => v
-    - velike => v
-    - veliki => v
-    - veliko => v
-    - vereda => vreda
-    - via => v
-    - viad => via
-    - viaduct => via
-    - viaducto => vcto
-    - viale => v le
-    - vicolo => v lo
-    - vien bcyo tang => vbt
-    - view => vw
-    - villas => vlls
-    - virf => vf
-    - virful => vf
-    - vista => vsta
-    - viviendas => vvdas
-    - vkhod => vkh
-    - vla => vla
-    - vliet => vlt
-    - vlt => vlt
-    - vn => v
-    - vuon quoc gia => vqg
-    - walk => wlk
-    - walkway => wkwy
-    - way => wy
-    - west => w
-    - wharf => whrf
-    - wielka => wlk
-    - wielki => wlk
-    - wielkie => wlk
-    - wielkopolska => wlkp
-    - wielkopolski => wlkp
-    - wielkopolskie => wlkp
-    - wojewodztwie => woj
-    - wojewodztwo => woj
-    - yard => yd
-    - zgornja => zg
-    - zgornje => zg
-    - zgornji => zg
-    - zhilishchien komplieks => zh k
-    - zum => z
+variants:
+  - words:
+    - ~hal => hal
+    - ~hallen => hallen
+    - ~hallerne => hallerne
+    - ~fabrik => fabrik
+    - ~gasse => gasse
+    - ~graben => graben
+    - ~haus => haus
+    - ~höhle => höhle
+    - ~hütte => hütte
+    - ~kapelle => kapelle
+    - ~kogel => kogel
+    - ~spitze => spitze
+    - ~stiege => stiege
+    - ~teich => teich
+    - ~universität => universität
+    - ~wald => wald
+    - ~weg => weg
+    - ~wiese => wiese
+    - ~veg => veg
+    - ~vegen => vegen
+    - ~asema => asema
+    - ~väylä => väylä
+    - acceso -> acces
+    - access -> accs
+    - acequia -> aceq
+    - air force base -> afb
+    - air national guard base -> angb
+    - alameda -> alam
+    - ale -> al
+    - alea -> al
+    - aleea -> al
+    - aleja -> al
+    - alejach -> al
+    - aleje -> al
+    - aleji -> al
+    - all -> al
+    - allee -> al
+    - alley -> al
+    - alleyway -> alwy
+    - ally -> al
+    - alqueria -> alque
+    - ~alue -> al
+    - aly -> al
+    - am -> a
+    - amble -> ambl
+    - an der -> a d
+    - andador -> andad
+    - angosta -> angta
+    - apartamentos -> aptos
+    - apartments -> apts
+    - apch -> app
+    - apeadero -> apdro
+    - approach -> app
+    - arboleda -> arb
+    - arcade -> arc
+    - arrabal -> arral
+    - arroyo -> arry
+    - arterial -> artl
+    - artery -> arty
+    - auf der -> a d
+    - ~aukio -> auk
+    - autopista -> auto
+    - autovia -> autov
+    - avd -> av
+    - avda -> av
+    - ave -> av
+    - avenida -> av
+    - avenue -> av
+    - avinguda -> av
+    - b dul -> bd
+    - back -> bk
+    - bad -> b
+    - bahnhof -> bf
+    - bajada -> bjada
+    - balneario -> balnr
+    - banan -> ba
+    - banda -> b
+    - barranco -> branc
+    - barranquil -> bqllo
+    - barriada -> barda
+    - barrio -> bo
+    - barro -> bo
+    - basin -> basn
+    - bda -> b
+    - bdge -> bri
+    - bdul -> bd
+    - bdwy -> bway
+    - beach -> bch
+    - ~berg -> bg
+    - bgm -> bgm
+    - bhf -> bf
+    - bldngs -> bldgs
+    - block -> blk
+    - blok -> bl
+    - bloque -> blque
+    - blv -> bd
+    - blvd -> bd
+    - boardwalk -> bwlk
+    - boulevard -> bd
+    - boundary -> bdy
+    - brace -> br
+    - brazal -> brzal
+    - brdg -> bri
+    - break -> brk
+    - bridge -> bri
+    - broadway -> bway
+    - broeder -> br
+    - ~brücke -> br
+    - buildings -> bldgs
+    - bul -> bd
+    - bulev -> bd
+    - bulevar -> bd
+    - bulevard -> bd
+    - bulevardu -> bd
+    - bulevardul -> bd
+    - bulievard -> bd
+    - bulvar -> bl
+    - bulvari -> bl
+    - burg -> bg
+    - burgemeester -> bg
+    - burgermeister -> bgm
+    - business -> bus
+    - buu dien -> bd
+    - bvd -> bd
+    - bypa -> byp
+    - bypass -> byp
+    - byway -> bywy
+    - c le -> c
+    - cadde -> cd
+    - caddesi -> cd
+    - calle -> c
+    - callej -> cjon
+    - calleja -> cllja
+    - callejon -> cjon
+    - callejuela -> cjla
+    - callizo -> cllzo
+    - calzada -> czada
+    - camino -> cno
+    - camino hondo -> c h
+    - camino nuevo -> c n
+    - camino viejo -> c v
+    - camping -> campg
+    - campo -> c po
+    - can cu khong quan -> cckq
+    - cantera -> cantr
+    - cantina -> canti
+    - canton -> cant
+    - cao dang -> cd
+    - caravan -> cvn
+    - carrer -> c
+    - carrera -> cra
+    - carrero -> cro
+    - carretera -> ctra
+    - carreterin -> ctrin
+    - carretil -> crtil
+    - carril -> crril
+    - caserio -> csrio
+    - cau ldhc bo -> clb
+    - caus -> cway
+    - causeway -> cway
+    - ce -> cv
+    - cen -> ctr
+    - center -> ctr
+    - centre -> ctr
+    - centreway -> cnwy
+    - cesta -> c
+    - chalet -> chlet
+    - chase -> ch
+    - che -> ch
+    - chemin -> ch
+    - cinturon -> cint
+    - circle -> cir
+    - circuit -> cct
+    - circunvalacion -> ccvcn
+    - circus -> crcs
+    - city -> cty
+    - cl -> c
+    - cllon -> cjon
+    - close -> c
+    - cmno -> cno
+    - cobertizo -> cbtiz
+    - colonia -> col
+    - commandant -> cmdt
+    - common -> comm
+    - community -> comm
+    - complejo -> compj
+    - concourse -> con
+    - cong truong -> ct
+    - cong ty -> cty
+    - cong ty co phyn -> ctcp
+    - cong vien -> cv
+    - cong vien van hoa -> cvvh
+    - conjunto -> cjto
+    - convento -> cnvto
+    - cooperativa -> coop
+    - copse -> cps
+    - corner -> cnr
+    - corral -> crral
+    - corralillo -> crrlo
+    - corredor -> crrdo
+    - corso -> c so
+    - corte -> c te
+    - cortijo -> crtjo
+    - costanilla -> cstan
+    - costera -> coste
+    - cottages -> cotts
+    - county -> co
+    - county route -> cr
+    - cours -> crs
+    - court -> ct
+    - courtyard -> ctyd
+    - cove -> cv
+    - creek -> cr
+    - cres -> cr
+    - crescent -> cr
+    - crest -> crst
+    - crk -> cr
+    - croft -> cft
+    - cross -> crss
+    - crossing -> xing
+    - crossroad -> crd
+    - crossway -> cowy
+    - crsg -> xing
+    - crt -> ct
+    - csac -> cds
+    - cswy -> cway
+    - cty cp -> ctcp
+    - cuadra -> cuadr
+    - cuesta -> custa
+    - cul de sac -> cds
+    - cutting -> cutt
+    - ddhi hoc -> dh
+    - ddhi lo -> dl
+    - dehesa -> dhsa
+    - demarcacion -> demar
+    - deviation -> devn
+    - diagonal -> diag
+    - diseminado -> disem
+    - distributor -> dstr
+    - doctor -> dr
+    - dokter -> dr
+    - doktor -> d r
+    - dolna -> dln
+    - dolne -> dln
+    - dolny -> dln
+    - dominee -> ds
+    - dorf -> df
+    - dotsient -> dots
+    - drive -> dr
+    - driveway -> dvwy
+    - druga -> 2
+    - drugi -> 2
+    - drugie -> 2
+    - drv -> dr
+    - drwy -> dvwy
+    - duong -> d
+    - duong sat -> ds
+    - duza -> dz
+    - duze -> dz
+    - duzy -> dz
+    - east -> e
+    - edificio -> edifc
+    - elbow -> elb
+    - empresa -> empr
+    - entrada -> entd
+    - entrance -> ent
+    - errepidea -> err
+    - escalera -> esca
+    - escalinata -> escal
+    - espalda -> eslda
+    - esplanade -> esp
+    - estacion -> estcn
+    - estate -> est
+    - estrada -> estda
+    - etorbidea -> etorb
+    - explanada -> expla
+    - expressway -> exp
+    - expy -> exp
+    - extension -> ex
+    - extramuros -> extrm
+    - extrarradio -> extrr
+    - fabrica -> fca
+    - fairway -> fawy
+    - faubourg -> fg
+    - fbrca -> fca
+    - ferry -> fy
+    - fire track -> ftrk
+    - firetrail -> fit
+    - follow -> folw
+    - fondamenta -> f ta
+    - footway -> ftwy
+    - foreshore -> fshr
+    - formation -> form
+    - fort -> ft
+    - freeway -> fwy
+    - front -> frnt
+    - frontage -> frtg
+    - frwy -> fwy
+    - fundacul -> fdc
+    - fundatura -> fnd
+    - ga -> g
+    - galeria -> gale
+    - gamla -> gla
+    - garden -> gdn
+    - gardens -> gdn
+    - ~gata -> g
+    - ~gatan -> g
+    - ~gate -> g
+    - ~gaten -> g
+    - gdns -> gdn
+    - gebroeders -> gebr
+    - generaal -> gen
+    - gienieral -> ghien
+    - glade -> gl
+    - gld -> gl
+    - glde -> gl
+    - glorieta -> gta
+    - gorna -> gn
+    - gorne -> gn
+    - gorny -> gn
+    - ~gracht -> gr
+    - grad -> ghr
+    - gran via -> g v
+    - ~gränd -> gr
+    - ~gränden -> gr
+    - grange -> gra
+    - granja -> granj
+    - green -> gn
+    - grn -> gn
+    - gro -> gr
+    - grosse -> gr
+    - grosser -> gr
+    - grosses -> gr
+    - ground -> grnd
+    - grove -> gr
+    - gt -> g
+    - gte -> g
+    - gully -> gly
+    - hauptbahnhof -> hbf
+    - heights -> hts
+    - heiligen -> hl
+    - hgts -> hts
+    - high school -> hs
+    - highroad -> hrd
+    - highway -> hwy
+    - hipodromo -> hipod
+    - hird -> hrd
+    - hospital -> hosp
+    - house -> ho
+    - hse -> ho
+    - i -> 1
+    - ii -> 2
+    - iii -> 3
+    - im -> i
+    - impasse -> imp
+    - in -> i
+    - in der -> i d
+    - industrial -> ind
+    - ingenieur -> ir
+    - interchange -> intg
+    - international -> intl
+    - intr -> int
+    - intrarea -> int
+    - island -> is
+    - jardin -> jdin
+    - jonkheer -> jhr
+    - junction -> jnc
+    - k s -> ks
+    - ~kaari -> kri
+    - kalea -> k
+    - kanunnik -> kan
+    - kapitan -> kap
+    - kardinaal -> kard
+    - ~katu -> k
+    - khach sdhn -> ks
+    - khu cong nghiep -> kcn
+    - khu du lich -> kdl
+    - khu nghi mat -> knm
+    - kleine -> kl
+    - kleiner -> kl
+    - kleines -> kl
+    - kolo -> k
+    - kolonel -> kol
+    - kolonia -> kol
+    - koning -> kon
+    - koningin -> kon
+    - kort e -> k
+    - kri -> kri
+    - kte -> k
+    - ~kuja -> kj
+    - kvartal -> kv
+    - ~kylä -> kl
+    - ~laan -> ln
+    - ladera -> ldera
+    - landing -> ldg
+    - lane -> ln
+    - laneway -> lnwy
+    - lange -> l
+    - largo -> l go
+    - lille -> ll
+    - line -> ln
+    - link -> lk
+    - lit -> lt
+    - little -> lt
+    - llanura -> llnra
+    - lookout -> lkt
+    - loop -> lp
+    - low -> lr
+    - lower -> lr
+    - luitenant -> luit
+    - lwr -> lr
+    - m te -> mt
+    - m tele -> mt
+    - maantee -> mt
+    - mala -> ml
+    - male -> ml
+    - malecon -> malec
+    - maly -> ml
+    - manor -> mnr
+    - mansions -> mans
+    - market -> mkt
+    - ~markt -> mkt
+    - mazowiecka -> maz
+    - mazowiecki -> maz
+    - mazowieckie -> maz
+    - meadows -> mdws
+    - meander -> mr
+    - medical -> med
+    - meester -> mr
+    - mercado -> merc
+    - mevrouw -> mevr
+    - mews -> m
+    - miasto -> m
+    - middle -> mid
+    - middle school -> ms
+    - mile -> mi
+    - military -> mil
+    - mirador -> mrdor
+    - mitropolit -> mit
+    - mkt -> mkt
+    - mndr -> mr
+    - mnt -> mt
+    - monasterio -> mtrio
+    - monseigneur -> mgr
+    - mont -> mt
+    - motorway -> mwy
+    - mount -> mt
+    - mountain -> mtn
+    - mtwy -> mwy
+    - muelle -> muell
+    - municipal -> mun
+    - muntele -> mt
+    - museum -> mus
+    - mw -> m
+    - na -> n
+    - namesti -> nam
+    - namestie -> nam
+    - national park -> np
+    - national recreation area -> nra
+    - national wildlife refuge area -> nwra
+    - nha hat -> nh
+    - nha thi dzu -> ntd
+    - nha tho -> nt
+    - nordre -> ndr
+    - norra -> n
+    - north -> n
+    - north east -> ne
+    - north west -> n
+    - northeast -> ne
+    - northwest -> n
+    - nowa -> n
+    - nowe -> n
+    - nowy -> n
+    - nucleo -> ncleo
+    - nw -> n
+    - oa -> o
+    - ob -> o
+    - obere -> o
+    - oberer -> o
+    - oberes -> o
+    - olv -> olv
+    - onze lieve vrouw e -> olv
+    - osiedle -> os
+    - osiedlu -> os
+    - ostra -> o
+    - outlook -> otlk
+    - p k -> pk
+    - p ta -> pta
+    - p zza -> p za
+    - palacio -> palac
+    - pantano -> pant
+    - parade -> pde
+    - paraje -> praje
+    - park -> pk
+    - parklands -> pkld
+    - parkway -> pwy
+    - parque -> pque
+    - particular -> parti
+    - partida -> ptda
+    - pas -> ps
+    - pasadizo -> pzo
+    - pasaje -> psaje
+    - paseo -> po
+    - paseo maritimo -> psmar
+    - pasillo -> psllo
+    - pass -> ps
+    - passage -> ps
+    - passatge -> ptge
+    - passeig -> pg
+    - pastoor -> past
+    - pathway -> pway
+    - ~penger -> pgr
+    - ~pfad -> p
+    - pgr -> pgr
+    - ph -> p
+    - phi truong -> pt
+    - phuong -> p
+    - phwy -> pway
+    - piata -> pta
+    - piaz -> p za
+    - piazza -> p za
+    - piazzale -> p le
+    - piazzetta -> pta
+    - pierwsza -> 1
+    - pierwsze -> 1
+    - pierwszy -> 1
+    - pike -> pk
+    - pko -> pko
+    - pkwy -> pwy
+    - pky -> pwy
+    - plac -> pl
+    - placa -> pl
+    - place -> pl
+    - placem -> pl
+    - placu -> pl
+    - ~plass -> pl
+    - ~plassen -> pl
+    - plateau -> plat
+    - ~plats -> pl
+    - ~platsen -> pl
+    - ~platz -> pl
+    - plaza -> pl
+    - plazoleta -> pzta
+    - plazuela -> plzla
+    - ~plein -> pln
+    - pln -> pln
+    - ploshchad -> pl
+    - plz -> pl
+    - plza -> pl
+    - pnt -> pt
+    - poblado -> pbdo
+    - pocket -> pkt
+    - point -> pt
+    - poligono -> polig
+    - poligono industrial -> pgind
+    - ~polku -> p
+    - ponte -> p te
+    - porta -> pta
+    - portal -> prtal
+    - portico -> prtco
+    - portillo -> ptilo
+    - prazuela -> przla
+    - precinct -> pct
+    - pres -> pres
+    - president -> pres
+    - prins -> pr
+    - prinses -> pr
+    - professor -> prof
+    - profiesor -> prof
+    - prolongacion -> prol
+    - promenade -> prom
+    - psge -> ps
+    - pueblo -> pblo
+    - puente -> pnte
+    - puerta -> pta
+    - puerto -> pto
+    - ~puistikko -> pko
+    - ~puisto -> ps
+    - punto kilometrico -> pk
+    - pza -> pl
+    - quadrangle -> qdgl
+    - quadrant -> qdrt
+    - quai -> qu
+    - quan -> q
+    - quay -> qy
+    - quays -> qys
+    - qucyng truong -> qt
+    - ~quelle -> qu
+    - quoc lo -> ql
+    - ~raitti -> r
+    - rambla -> rbla
+    - ramble -> rmbl
+    - rampla -> rampa
+    - range -> rnge
+    - ~ranta -> rt
+    - rdhp hat -> rh
+    - reach -> rch
+    - reservation -> res
+    - reserve -> res
+    - reservoir -> res
+    - residencial -> resid
+    - retreat -> rtt
+    - rhein -> rh
+    - ribera -> rbra
+    - ridge -> rdge
+    - ridgeway -> rgwy
+    - right of way -> rowy
+    - rincon -> rcon
+    - rinconada -> rcda
+    - ~rinne -> rn
+    - rise -> ri
+    - riv -> r
+    - river -> r
+    - riverway -> rvwy
+    - riviera -> rvra
+    - road -> rd
+    - roads -> rds
+    - roadside -> rdsd
+    - roadway -> rdwy
+    - ronde -> rnde
+    - rosebowl -> rsbl
+    - rotary -> rty
+    - rotonda -> rtda
+    - round -> rnd
+    - route -> rt
+    - rte -> rt
+    - rue -> r
+    - rvr -> r
+    - sa -> s
+    - saint -> st
+    - sainte -> ste
+    - salizada -> s da
+    - san -> s
+    - san bay -> sb
+    - san bay quoc te -> sbqt
+    - san van dong -> svd
+    - sanatorio -> sanat
+    - sankt -> st
+    - santa -> sta
+    - santuario -> santu
+    - sector -> sect
+    - sendera -> sedra
+    - sendero -> send
+    - serviceway -> swy
+    - shunt -> shun
+    - shwy -> sh
+    - siding -> sdng
+    - sielo -> s
+    - sint -> st
+    - slope -> slpe
+    - sodra -> s
+    - sok -> sk
+    - sokagi -> sk
+    - sokak -> sk
+    - sondre -> sdr
+    - soseaua -> sos
+    - sound -> snd
+    - south -> s
+    - south east -> se
+    - south west -> sw
+    - south-east -> se
+    - south-west -> sw
+    - southeast -> se
+    - southwest -> sw
+    - spl -> sp
+    - splaiul -> sp
+    - spodnja -> sp
+    - spodnje -> sp
+    - spodnji -> sp
+    - square -> sq
+    - srednja -> sr
+    - srednje -> sr
+    - srednji -> sr
+    - stara -> st
+    - stare -> st
+    - stary -> st
+    - state highway -> sh
+    - state route -> sr
+    - station -> stn
+    - stazione -> staz
+    - ste -> ste
+    - steenweg -> stwg
+    - sth -> s
+    - ~stig -> st
+    - ~stigen -> st
+    - store -> st
+    - str la -> sdla
+    - stra -> st
+    - ~straat -> st
+    - strada -> st
+    - strada comunale -> sc
+    - strada provinciale -> sp
+    - strada regionale -> sr
+    - strada statale -> ss
+    - stradela -> sdla
+    - strand -> st
+    - ~strasse -> str
+    - street -> st
+    - strip -> strp
+    - stwg -> stwg
+    - subida -> sbida
+    - subway -> sbwy
+    - sveta -> sv
+    - sveti -> sv
+    - svieti -> sv
+    - ~sving -> sv
+    - ~svingen -> sv
+    - svwy -> swy
+    - ~taival -> tvl
+    - tanav -> tn
+    - tce -> ter
+    - tcty -> tct
+    - terr -> ter
+    - terrace -> ter
+    - thanh pho -> tp
+    - thfr -> thor
+    - thi trzn -> tt
+    - thi xa -> tx
+    - thoroughfare -> thor
+    - ~tie -> t
+    - tieu hoc -> th
+    - tinh lo -> tl
+    - tollway -> tlwy
+    - tong cong ty -> tct
+    - ~tori -> tr
+    - torrente -> trrnt
+    - towers -> twrs
+    - township -> twp
+    - tpke -> tpk
+    - track -> trk
+    - trail -> trl
+    - trailer -> trlr
+    - transito -> trans
+    - transversal -> trval
+    - trasera -> tras
+    - travesia -> trva
+    - triangle -> tri
+    - trung hoc co so -> thcs
+    - trung hoc pho thong -> thpt
+    - trung tam -> tt
+    - trung tam thuong mdhi -> tttm
+    - trunkway -> tkwy
+    - trzeci -> 3
+    - trzecia -> 3
+    - trzecie -> 3
+    - tunnel -> tun
+    - turn -> tn
+    - turnpike -> tpk
+    - tvl -> tvl
+    - ulica -> ul
+    - ulice -> ul
+    - ulicy -> ul
+    - ulitsa -> ul
+    - underpass -> upas
+    - university -> univ
+    - untere -> u
+    - unterer -> u
+    - unteres -> u
+    - upper -> up
+    - upr -> up
+    - urbanizacion -> urb
+    - utca -> u
+    - v d -> vd
+    - va -> v
+    - ~väg -> v
+    - ~vägen -> v
+    - vale -> v
+    - van -> v
+    - van de -> vd
+    - varf -> vf
+    - varful -> vf
+    - vastra -> v
+    - vayla -> vla
+    - vdct -> via
+    - vecindario -> vecin
+    - ~vei -> v
+    - ~veien -> v
+    - velika -> v
+    - velike -> v
+    - veliki -> v
+    - veliko -> v
+    - vereda -> vreda
+    - via -> v
+    - viad -> via
+    - viaduct -> via
+    - viaducto -> vcto
+    - viale -> v le
+    - vicolo -> v lo
+    - vien bcyo tang -> vbt
+    - view -> vw
+    - villas -> vlls
+    - virf -> vf
+    - virful -> vf
+    - vista -> vsta
+    - viviendas -> vvdas
+    - vkhod -> vkh
+    - vla -> vla
+    - ~vliet -> vlt
+    - vlt -> vlt
+    - vn -> v
+    - vuon quoc gia -> vqg
+    - walk -> wlk
+    - walkway -> wkwy
+    - way -> wy
+    - west -> w
+    - wharf -> whrf
+    - wielka -> wlk
+    - wielki -> wlk
+    - wielkie -> wlk
+    - wielkopolska -> wlkp
+    - wielkopolski -> wlkp
+    - wielkopolskie -> wlkp
+    - wojewodztwie -> woj
+    - wojewodztwo -> woj
+    - yard -> yd
+    - zgornja -> zg
+    - zgornje -> zg
+    - zgornji -> zg
+    - zhilishchien komplieks -> zh k
+    - zum -> z

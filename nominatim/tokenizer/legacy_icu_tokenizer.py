@@ -168,7 +168,8 @@ class LegacyICUTokenizer:
                 for name, cnt in cur:
                     terms = set()
                     for word in name_proc.get_variants_ascii(name_proc.get_normalized(name)):
-                        terms.update(word.split())
+                        if ' ' in word:
+                            terms.update(word.split())
                     for term in terms:
                         words[term] += cnt
 

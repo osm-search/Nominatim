@@ -150,9 +150,8 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert word_table.get_partial_words() == {('test', 1), ('52', 1),
+    assert word_table.get_partial_words() == {('test', 1),
                                               ('no', 1), ('area', 2),
-                                              ('holzstrasse', 1), ('holzstr', 1),
                                               ('holz', 1), ('strasse', 1),
                                               ('str', 1)}
 

@@ -153,8 +153,6 @@ class SearchDescription
      * Derive new searches by adding a full term to the existing search.
      *
      * @param object $oSearchTerm  Description of the token.
-     * @param bool   $bHasPartial  True if there are also tokens of partial terms
-     *                             with the same name.
      * @param string $sPhraseType  Type of phrase the token is contained in.
      * @param bool   $bFirstToken  True if the token is at the beginning of the
      *                             query.
@@ -164,7 +162,7 @@ class SearchDescription
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($oSearchTerm, $bHasPartial, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
+    public function extendWithFullTerm($oSearchTerm, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
     {
         $aNewSearches = array();
 
@@ -218,30 +216,33 @@ class SearchDescription
                  && is_a($oSearchTerm, '\Nominatim\Token\HouseNumber')
         ) {
             if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank++;
-                $oSearch->iNamePhrase = -1;
-                $oSearch->sHouseNumber = $oSearchTerm->sToken;
-                if ($this->iOperator != Operator::NONE) {
-                    $oSearch->iSearchRank++;
-                }
                 // sanity check: if the housenumber is not mainly made
                 // up of numbers, add a penalty
-                if (preg_match('/\\d/', $oSearch->sHouseNumber) === 0
-                    || preg_match_all('/[^0-9]/', $oSearch->sHouseNumber, $aMatches) > 2) {
-                    $oSearch->iSearchRank++;
+                $iSearchCost = 1;
+                if (preg_match('/\\d/', $oSearchTerm->sToken) === 0
+                    || preg_match_all('/[^0-9]/', $oSearchTerm->sToken, $aMatches) > 2) {
+                    $iSearchCost++;
+                }
+                if ($this->iOperator != Operator::NONE) {
+                    $iSearchCost++;
                 }
                 if (empty($oSearchTerm->iId)) {
-                    $oSearch->iSearchRank++;
+                    $iSearchCost++;
                 }
                 // also must not appear in the middle of the address
                 if (!empty($this->aAddress)
                     || (!empty($this->aAddressNonSearch))
                     || $this->sPostcode
                 ) {
-                    $oSearch->iSearchRank++;
+                    $iSearchCost++;
                 }
+
+                $oSearch = clone $this;
+                $oSearch->iSearchRank += $iSearchCost;
+                $oSearch->iNamePhrase = -1;
+                $oSearch->sHouseNumber = $oSearchTerm->sToken;
                 $aNewSearches[] = $oSearch;
+
                 // Housenumbers may appear in the name when the place has its own
                 // address terms.
                 if ($oSearchTerm->iId !== null
@@ -249,7 +250,7 @@ class SearchDescription
                     && empty($this->aAddress)
                    ) {
                     $oSearch = clone $this;
-                    $oSearch->iSearchRank++;
+                    $oSearch->iSearchRank += $iSearchCost;
                     $oSearch->aAddress = $this->aName;
                     $oSearch->bRareName = false;
                     $oSearch->aName = array($oSearchTerm->iId => $oSearchTerm->iId);
@@ -295,10 +296,10 @@ class SearchDescription
             // the first phrase. In unstructured search it may be in a later
             // phrase when the first phrase is a house number.
             if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
-                if (($sPhraseType == '' || !$bFirstPhrase) && !$bHasPartial) {
+                if (($sPhraseType == '' || !$bFirstPhrase) && $oSearchTerm->iTermCount > 1) {
                     $oSearch = clone $this;
                     $oSearch->iNamePhrase = -1;
-                    $oSearch->iSearchRank += 3 * $oSearchTerm->iTermCount;
+                    $oSearch->iSearchRank += 1;
                     $oSearch->aAddress[$iWordID] = $iWordID;
                     $aNewSearches[] = $oSearch;
                 }

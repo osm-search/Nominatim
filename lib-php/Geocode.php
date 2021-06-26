@@ -348,8 +348,6 @@ class Geocode
                         foreach ($oValidTokens->get(' '.$sToken) as $oSearchTerm) {
                             $aNewSearches = $oCurrentSearch->extendWithFullTerm(
                                 $oSearchTerm,
-                                $oValidTokens->contains($sToken)
-                                  && strpos($sToken, ' ') === false,
                                 $sPhraseType,
                                 $iToken == 0 && $iPhrase == 0,
                                 $iPhrase == 0,

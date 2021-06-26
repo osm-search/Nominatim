@@ -1,20 +1,29 @@
 normalization:
-    - ":: NFD ()"
-    - "[[:Nonspacing Mark:] [:Cf:]] >"
     - ":: lower ()"
+    - !include icu-rules/unicode-digits-to-decimal.yaml
+    - "'№' > 'no'"
+    - "'n°' > 'no'"
+    - "'nº' > 'no'"
+    - "ª > a"
+    - "º > o"
+    - "[[:Punctuation:][:Symbol:]]  > ' '"
     - "ß > 'ss'" # German szet is unimbigiously equal to double ss
-    - "[[:Punctuation:][:Space:]]+ > ' '"
-    - ":: NFC ()"
+    - "[^[:Letter:] [:Number:] [:Space:]] >"
+    - "[:Lm:] >"
+    - ":: [[:Number:]] Latin ()"
+    - ":: [[:Number:]] Ascii ();"
+    - ":: [[:Number:]] NFD ();"
+    - "[[:Nonspacing Mark:] [:Cf:]] >;"
+    - "[:Space:]+ > ' '"
 transliteration:
+    - ":: Latin ()"
     - !include icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
     - ":: NFD ()"
-    - "'' >"
-    - "[[:Nonspacing Mark:] [:Cf:]] >"
     - "[^[:Ascii:]] >"
     - ":: lower ()"
-    - "[[:Punctuation:][:Space:]]+ > ' '"
     - ":: NFC ()"
+    - "[:Space:]+ > ' '"
 variants:
   - words:
     - ~hal => hal

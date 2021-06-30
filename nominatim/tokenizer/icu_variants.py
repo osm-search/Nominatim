@@ -4,30 +4,7 @@ Data structures for saving variant expansions for ICU tokenizer.
 from collections import namedtuple
 import json
 
-from nominatim.errors import UsageError
-
 _ICU_VARIANT_PORPERTY_FIELDS = ['lang']
-
-def _get_strtuple_prop(rules, field):
-    """ Return the given field of the rules dictionary as a list.
-
-        If the field is not defined or empty, returns None. If the field is
-        a singe string, it is converted into a tuple with a single element.
-        If the field is a list of strings, return as a string tuple.
-        Raise a usage error in all other cases.
-    """
-    value = rules.get(field)
-
-    if not value:
-        return None
-
-    if isinstance(value, str):
-        return (value,)
-
-    if not isinstance(value, list) or any(not isinstance(x, str) for x in value):
-        raise UsageError("YAML variant property '{}' should be a list.".format(field))
-
-    return tuple(value)
 
 
 class ICUVariantProperties(namedtuple('_ICUVariantProperties', _ICU_VARIANT_PORPERTY_FIELDS,
@@ -38,16 +15,17 @@ class ICUVariantProperties(namedtuple('_ICUVariantProperties', _ICU_VARIANT_PORP
         Porperty instances are hashable.
     """
     @classmethod
-    def from_rules(cls, rules):
+    def from_rules(cls, _):
         """ Create a new property type from a generic dictionary.
 
             The function only takes into account the properties that are
             understood presently and ignores all others.
         """
-        return cls(lang=_get_strtuple_prop(rules, 'lang'))
+        return cls(lang=None)
 
 
 ICUVariant = namedtuple('ICUVariant', ['source', 'replacement', 'properties'])
+
 
 def pickle_variant_set(variants):
     """ Serializes an iterable of variant rules to a string.

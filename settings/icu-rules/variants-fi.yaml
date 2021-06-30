@@ -1,0 +1,23 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Suomi_-_Finnish
+- lang: fi
+  words:
+    -  ~alue -> al
+    -  ~asema -> as
+    -  ~aukio -> auk
+    -  ~kaari -> kri
+    -  ~katu -> k
+    -  ~kuja -> kj
+    -  ~kylä -> kl
+    -  ~penger -> pgr
+    -  ~polku -> p
+    -  ~puistikko -> pko
+    -  ~puisto -> ps
+    -  ~raitti -> r
+    -  ~rautatieasema -> ras
+    -  ~ranta -> rt
+    -  ~rinne -> rn
+    -  ~taival -> tvl
+    -  ~tie -> t
+    -  tienhaara -> th
+    -  ~tori -> tr
+    -  ~väylä -> vlä

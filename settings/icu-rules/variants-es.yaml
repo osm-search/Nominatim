@@ -1,0 +1,163 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Espa.C3.B1ol_-_Spanish
+- lang: es
+  words:
+    -  Acequia -> Aceq
+    -  Alameda -> Alam
+    -  Alquería -> Alque
+    -  Andador -> Andad
+    -  Angosta -> Angta
+    -  Apartamento -> Apto
+    -  Apartamentos -> Aptos
+    -  Apeadero -> Apdro
+    -  Arboleda -> Arb
+    -  Arrabal -> Arral
+    -  Arroyo -> Arry
+    -  Asociación de Vecinos -> A VV
+    -  Asociación Vecinal -> A V
+    -  Autopista -> Auto
+    -  Autovía -> Autov
+    -  Avenida -> Av
+    -  Avenida -> Avd
+    -  Avenida -> Avda
+    -  Balneario -> Balnr
+    -  Banda -> B
+    -  Banda -> Bda
+    -  Barranco -> Branc
+    -  Barranquil -> Bqllo
+    -  Barriada -> Barda
+    -  Barrio -> B.º
+    -  Barrio -> Bo
+    -  Bloque -> Blq
+    -  Bulevar -> Blvr
+    -  Boulevard -> Blvd
+    -  Calle -> C/
+    -  Calle -> C
+    -  Calle -> Cl
+    -  Calleja -> Cllja
+    -  Callejón -> Callej
+    -  Callejón -> Cjón
+    -  Callejón -> Cllón
+    -  Callejuela -> Cjla
+    -  Callizo -> Cllzo
+    -  Calzada -> Czada
+    -  Camino -> Cno
+    -  Camino -> Cmno
+    -  Camino hondo -> C H
+    -  Camino nuevo -> C N
+    -  Camino viejo -> C V
+    -  Camping -> Campg
+    -  Cantera -> Cantr
+    -  Cantina -> Canti
+    -  Cantón -> Cant
+    -  Carrera -> Cra
+    -  Carrero -> Cro
+    -  Carretera -> Ctra
+    -  Carreterín -> Ctrin
+    -  Carretil -> Crtil
+    -  Caserío -> Csrio
+    -  Centro Integrado de Formación Profesional -> CIFP
+    -  Cinturón -> Cint
+    -  Circunvalación -> Ccvcn
+    -  Cobertizo -> Cbtiz
+    -  Colegio de Educación Especial -> CEE
+    -  Colegio de Educación Infantil -> CEI
+    -  Colegio de Educación Infantil y Primaria -> CEIP
+    -  Colegio Rural Agrupado -> CRA
+    -  Colonia -> Col
+    -  Complejo -> Compj
+    -  Conjunto -> Cjto
+    -  Convento -> Cnvto
+    -  Cooperativa -> Coop
+    -  Corralillo -> Crrlo
+    -  Corredor -> Crrdo
+    -  Cortijo -> Crtjo
+    -  Costanilla -> Cstan
+    -  Costera -> Coste
+    -  Dehesa -> Dhsa
+    -  Demarcación -> Demar
+    -  Diagonal -> Diag
+    -  Diseminado -> Disem
+    -  Doctor -> Dr
+    -  Doctora -> Dra
+    -  Edificio -> Edif
+    -  Empresa -> Empr
+    -  Entrada -> Entd
+    -  Escalera -> Esca
+    -  Escalinata -> Escal
+    -  Espalda -> Eslda
+    -  Estación -> Estcn
+    -  Estrada -> Estda
+    -  Explanada -> Expla
+    -  Extramuros -> Extrm
+    -  Extrarradio -> Extrr
+    -  Fábrica -> Fca
+    -  Fábrica -> Fbrca
+    -  Ferrocarril -> F C
+    -  Ferrocarriles -> FF CC
+    -  Galería -> Gale
+    -  Glorieta -> Gta
+    -  Gran Vía -> G V
+    -  Hipódromo -> Hipód
+    -  Instituto de Educación Secundaria -> IES
+    -  Jardín -> Jdín
+    -  Llanura -> Llnra
+    -  Lote -> Lt
+    -  Malecón -> Malec
+    -  Manzana -> Mz
+    -  Mercado -> Merc
+    -  Mirador -> Mrdor
+    -  Monasterio -> Mtrio
+    -  Nuestra Señora -> N.ª S.ª
+    -  Nuestra Señora -> Ntr.ª Sr.ª
+    -  Nuestra Señora -> Ntra Sra
+    -  Palacio -> Palac
+    -  Pantano -> Pant
+    -  Parque -> Pque
+    -  Particular -> Parti
+    -  Partida -> Ptda
+    -  Pasadizo -> Pzo
+    -  Pasaje -> Psje
+    -  Paseo -> P.º
+    -  Paseo marítimo -> P.º mar
+    -  Pasillo -> Psllo
+    -  Plaza -> Pl
+    -  Plaza -> Pza
+    -  Plazoleta -> Pzta
+    -  Plazuela -> Plzla
+    -  Poblado -> Pbdo
+    -  Polígono -> Políg
+    -  Polígono industrial -> Pg ind
+    -  Pórtico -> Prtco
+    -  Portillo -> Ptilo
+    -  Prazuela -> Przla
+    -  Prolongación -> Prol
+    -  Pueblo -> Pblo
+    -  Puente -> Pte
+    -  Puerta -> Pta
+    -  Puerto -> Pto
+    -  Punto kilométrico -> P k
+    -  Rambla -> Rbla
+    -  Residencial -> Resid
+    -  Ribera -> Rbra
+    -  Rincón -> Rcón
+    -  Rinconada -> Rcda
+    -  Rotonda -> Rtda
+    -  San -> S
+    -  Sanatorio -> Sanat
+    -  Santa -> Sta
+    -  Santo -> Sto
+    -  Santas -> Stas
+    -  Santos -> Stos
+    -  Santuario -> Santu
+    -  Sector -> Sect
+    -  Sendera -> Sedra
+    -  Sendero -> Send
+    -  Torrente -> Trrnt
+    -  Tránsito -> Tráns
+    -  Transversal -> Trval
+    -  Trasera -> Tras
+    -  Travesía -> Trva
+    -  Urbanización -> Urb
+    -  Vecindario -> Vecin
+    -  Viaducto -> Vcto
+    -  Viviendas -> Vvdas

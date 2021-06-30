@@ -1,0 +1,66 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Polski_.E2.80.93_Polish
+- lang: pl
+  words:
+    -  Aleja, Aleje, Alei, Alejach, Aleją -> al
+    -  Ulica, Ulice, Ulicą, Ulicy -> ul
+    -  Plac, Placu, Placem -> pl
+    -  Wybrzeże, Wybrzeża, Wybrzeżem -> wyb
+    -  Bulwar -> bulw
+    -  Dolny, Dolna, Dolne -> Dln
+    -  Drugi, Druga, Drugie -> 2
+    -  Drugi, Druga, Drugie -> II
+    -  Duży, Duża, Duże -> Dz
+    -  Duży, Duża, Duże -> Dż
+    -  Górny, Górna, Górne -> Grn
+    -  Kolonia -> kol
+    -  koło, kolo -> k
+    -  Mały, Mała, Małe -> Ml
+    -  Mały, Mała, Małe -> Mł
+    -  Mazowiecka, Mazowiecki, Mazowieckie -> maz
+    -  Miasto -> m
+    -  Nowy, Nowa, Nowe -> Nw
+    -  Nowy, Nowa, Nowe -> N
+    -  Osiedle, Osiedlu -> os
+    -  Pierwszy, Pierwsza, Pierwsze -> 1
+    -  Pierwszy, Pierwsza, Pierwsze -> I
+    -  Szkoła Podstawowa -> SP
+    -  Stary, Stara, Stare -> St
+    -  Stary, Stara, Stare -> Str
+    -  Trzeci, Trzecia, Trzecie -> III
+    -  Trzeci, Trzecia, Trzecie -> 3
+    -  Wielki, Wielka, Wielkie -> Wlk
+    -  Wielkopolski, Wielkopolska, Wielkopolskie -> wlkp
+    -  Województwo, Województwie -> woj
+    -  kardynała, kardynał -> kard
+    -  pułkownika, pułkownik -> płk
+    -  marszałka, marszałek -> marsz
+    -  generała, generał -> gen
+    -  Świętego, Świętej, Świętych, święty, święta, święci -> św
+    -  Świętych, święci -> śś
+    -  Ojców -> oo
+    -  Błogosławionego, Błogosławionej, Błogosławionych, błogosławiony, błogosławiona, błogosławieni -> bł
+    -  księdza, ksiądz -> ks
+    -  księcia, książe -> ks
+    -  doktora, doktor -> dr
+    -  majora, major -> mjr
+    -  biskupa, biskup -> bpa
+    -  biskupa, biskup -> bp
+    -  rotmistrza, rotmistrz -> rotm
+    -  profesora, profesor -> prof
+    -  hrabiego, hrabiny, hrabia, hrabina -> hr
+    -  porucznika, porucznik -> por
+    -  podpułkownika, podpułkownik -> ppłk
+    -  pułkownika, pułkownik -> płk
+    -  podporucznika, podporucznik -> ppor
+    -  porucznika, porucznik -> por
+    -  marszałka, marszałek -> marsz
+    -  chorążego, chorąży -> chor
+    -  szeregowego, szeregowego -> szer
+    -  kaprala, kapral -> kpr
+    -  plutonowego, plutonowy -> plut
+    -  kapitana, kapitan -> kpt
+    -  admirała, admirał -> adm
+    -  wiceadmirała, wiceadmirał -> wadm
+    -  kontradmirała, kontradmirał -> kontradm
+    -  batalionów, bataliony -> bat
+    -  batalionu, batalion -> bat

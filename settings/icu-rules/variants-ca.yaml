@@ -1,0 +1,90 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Catal.C3.A0_-_Catalan
+- lang: ca
+  words:
+    -  aparcament -> aparc
+    -  apartament -> apmt
+    -  apartat -> apt
+    - àtic -> àt
+    -  autopista -> auto
+    -  autopista -> autop
+    -  autovia -> autov
+    -  avinguda -> av
+    -  avinguda -> avd
+    -  avinguda -> avda
+    -  baixada -> bda
+    -  baixos -> bxs
+    -  barranc -> bnc
+    -  barri -> b
+    -  barriada -> b
+    -  biblioteca -> bibl
+    -  bloc -> bl
+    -  carrer -> c
+    -  carrer -> c/
+    -  carreró -> cró
+    -  carretera -> ctra
+    -  cantonada -> cant
+    -  cementiri -> cem
+    -  cinturó -> cint
+    -  codi postal -> CP
+    -  collegi -> coll
+    -  collegi públic -> CP
+    -  comissaria -> com
+    -  convent -> convt
+    -  correus -> corr
+    -  districte -> distr
+    -  drecera -> drec
+    -  dreta -> dta
+    -  entrada -> entr
+    -  entresòl -> entl
+    -  escala -> esc
+    -  escola -> esc
+    -  escola universitària -> EU
+    -  església -> esgl
+    -  estació -> est
+    -  estacionament -> estac
+    -  facultat -> fac
+    -  finca -> fca
+    -  habitació -> hab
+    -  hospital -> hosp
+    -  hotel -> H
+    -  monestir -> mtir
+    -  monument -> mon
+    -  mossèn -> Mn
+    -  municipal -> mpal
+    -  museu -> mus
+    -  nacional -> nac
+    -  nombre -> nre
+    -  número -> núm
+    -  número -> n
+    -  sense número -> s/n
+    -  parada -> par
+    -  parcel·la -> parc
+    -  passadís -> pdís
+    -  passatge -> ptge
+    -  passeig -> pg
+    -  pavelló -> pav
+    -  plaça -> pl
+    -  plaça -> pça
+    -  planta -> pl
+    -  població -> pobl
+    -  polígon -> pol
+    -  polígon industrial -> PI
+    -  polígon industrial -> pol ind
+    -  porta -> pta
+    -  portal -> ptal
+    -  principal -> pral
+    -  pujada -> pda
+    -  punt quilomètric -> PK
+    -  rambla -> rbla
+    -  ronda -> rda
+    -  sagrada -> sgda
+    -  sagrat -> sgt
+    -  sant -> st
+    -  santa -> sta
+    -  sobreàtic -> s/àt
+    -  travessera -> trav
+    -  travessia -> trv
+    -  travessia -> trav
+    -  urbanització -> urb
+    -  sortida -> sort
+    -  via -> v

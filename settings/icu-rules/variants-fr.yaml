@@ -1,0 +1,297 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Fran.C3.A7ais_-_French
+- lang: fr
+  words:
+    -  Abbaye -> ABE
+    -  Agglomération -> AGL
+    -  Aire -> AIRE
+    -  Aires -> AIRE
+    -  Allée -> ALL
+    -  Allée -> All
+    -  Allées -> ALL
+    -  Ancien chemin -> ACH
+    -  Ancienne route -> ART
+    -  Anciennes routes -> ART
+    -  Anse -> ANSE
+    -  Arcade -> ARC
+    -  Arcades -> ARC
+    -  Autoroute -> AUT
+    -  Avenue -> AV
+    -  Avenue -> Av
+    -  Barrière -> BRE
+    -  Barrières -> BRE
+    -  Bas chemin -> BCH
+    -  Bastide -> BSTD
+    -  Baston -> BAST
+    -  Béguinage -> BEGI
+    -  Béguinages -> BEGI
+    -  Berge -> BER
+    -  Berges -> BER
+    -  Bois -> BOIS
+    -  Boucle -> BCLE
+    -  Boulevard -> Bd
+    -  Boulevard -> BD
+    -  Bourg -> BRG
+    -  Butte -> BUT
+    -  Cité -> CITE
+    -  Cités -> CITE
+    -  Côte -> COTE
+    -  Côteau -> COTE
+    -  Cale -> CALE
+    -  Camp -> CAMP
+    -  Campagne -> CGNE
+    -  Camping -> CPG
+    -  Carreau -> CAU
+    -  Carrefour -> CAR
+    -  Carrière -> CARE
+    -  Carrières -> CARE
+    -  Carré -> CARR
+    -  Castel -> CST
+    -  Cavée -> CAV
+    -  Central -> CTRE
+    -  Centre -> CTRE
+    -  Chalet -> CHL
+    -  Chapelle -> CHP
+    -  Charmille -> CHI
+    -  Chaussée -> CHS
+    -  Chaussées -> CHS
+    -  Chemin -> Ch
+    -  Chemin -> CHE
+    -  Chemin -> Che
+    -  Chemin vicinal -> CHV
+    -  Cheminement -> CHEM
+    -  Cheminements -> CHEM
+    -  Chemins -> CHE
+    -  Chemins vicinaux -> CHV
+    -  Chez -> CHEZ
+    -  Château -> CHT
+    -  Cloître -> CLOI
+    -  Clos -> CLOS
+    -  Col -> COL
+    -  Colline -> COLI
+    -  Collines -> COLI
+    -  Contour -> CTR
+    -  Corniche -> COR
+    -  Corniches -> COR
+    -  Cottage -> COTT
+    -  Cottages -> COTT
+    -  Cour -> COUR
+    -  Cours -> CRS
+    -  Cours -> Crs
+    -  Darse -> DARS
+    -  Degré -> DEG
+    -  Degrés -> DEG
+    -  Descente -> DSG
+    -  Descentes -> DSG
+    -  Digue -> DIG
+    -  Digues -> DIG
+    -  Domaine -> DOM
+    -  Domaines -> DOM
+    -  Écluse -> ECL
+    -  Écluse -> ÉCL
+    -  Écluses -> ECL
+    -  Écluses -> ÉCL
+    -  Église -> EGL
+    -  Église -> ÉGL
+    -  Enceinte -> EN
+    -  Enclave -> ENV
+    -  Enclos -> ENC
+    -  Escalier -> ESC
+    -  Escaliers -> ESC
+    -  Espace -> ESPA
+    -  Esplanade -> ESP
+    -  Esplanades -> ESP
+    -  Étang -> ETANG
+    -  Étang -> ÉTANG
+    -  Faubourg -> FG
+    -  Faubourg -> Fg
+    -  Ferme -> FRM
+    -  Fermes -> FRM
+    -  Fontaine -> FON
+    -  Fort -> FORT
+    -  Forum -> FORM
+    -  Fosse -> FOS
+    -  Fosses -> FOS
+    -  Foyer -> FOYR
+    -  Galerie -> GAL
+    -  Galeries -> GAL
+    -  Gare -> GARE
+    -  Garenne -> GARN
+    -  Grand boulevard -> GBD
+    -  Grand ensemble -> GDEN
+    -  Grand’rue -> GR
+    -  Grande rue -> GR
+    -  Grandes rues -> GR
+    -  Grands ensembles -> GDEN
+    -  Grille -> GRI
+    -  Grimpette -> GRIM
+    -  Groupe -> GPE
+    -  Groupement -> GPT
+    -  Groupes -> GPE
+    -  Halle -> HLE
+    -  Halles -> HLE
+    -  Hameau -> HAM
+    -  Hameaux -> HAM
+    -  Haut chemin -> HCH
+    -  Hauts chemins -> HCH
+    -  Hippodrome -> HIP
+    -  HLM -> HLM
+    -  Île -> ILE
+    -  Île -> ÎLE
+    -  Immeuble -> IMM
+    -  Immeubles -> IMM
+    -  Impasse -> IMP
+    -  Impasse -> Imp
+    -  Impasses -> IMP
+    -  Jardin -> JARD
+    -  Jardins -> JARD
+    -  Jetée -> JTE
+    -  Jetées -> JTE
+    -  Levée -> LEVE
+    -  Lieu-dit -> LD
+    -  Lotissement -> LOT
+    -  Lotissements -> LOT
+    -  Mail -> MAIL
+    -  Maison forestière -> MF
+    -  Manoir -> MAN
+    -  Marche -> MAR
+    -  Marches -> MAR
+    -  Maréchal -> MAL
+    -  Mas -> MAS
+    -  Monseigneur -> Mgr
+    -  Mont -> Mt
+    -  Montée -> MTE
+    -  Montées -> MTE
+    -  Moulin -> MLN
+    -  Moulins -> MLN
+    -  Musée -> MUS
+    -  Métro -> MET
+    -  Métro -> MÉT
+    -  Nouvelle route -> NTE
+    -  Palais -> PAL
+    -  Parc -> PARC
+    -  Parcs -> PARC
+    -  Parking -> PKG
+    -  Parvis -> PRV
+    -  Passage -> PAS
+    -  Passage -> Pas
+    -  Passage -> Pass
+    -  Passage à niveau -> PN
+    -  Passe -> PASS
+    -  Passerelle -> PLE
+    -  Passerelles -> PLE
+    -  Passes -> PASS
+    -  Patio -> PAT
+    -  Pavillon -> PAV
+    -  Pavillons -> PAV
+    -  Petit chemin -> PCH
+    -  Petite allée -> PTA
+    -  Petite avenue -> PAE
+    -  Petite impasse -> PIM
+    -  Petite route -> PRT
+    -  Petite rue -> PTR
+    -  Petites allées -> PTA
+    -  Place -> PL
+    -  Place -> Pl
+    -  Placis -> PLCI
+    -  Plage -> PLAG
+    -  Plages -> PLAG
+    -  Plaine -> PLN
+    -  Plan -> PLAN
+    -  Plateau -> PLT
+    -  Plateaux -> PLT
+    -  Pointe -> PNT
+    -  Pont -> PONT
+    -  Ponts -> PONT
+    -  Porche -> PCH
+    -  Port -> PORT
+    -  Porte -> PTE
+    -  Portique -> PORQ
+    -  Portiques -> PORQ
+    -  Poterne -> POT
+    -  Pourtour -> POUR
+    -  Presqu’île -> PRQ
+    -  Promenade -> PROM
+    -  Promenade -> Prom
+    -  Pré -> PRE
+    -  Pré -> PRÉ
+    -  Périphérique -> PERI
+    -  Péristyle -> PSTY
+    -  Quai -> QU
+    -  Quai -> Qu
+    -  Quartier -> QUA
+    -  Raccourci -> RAC
+    -  Raidillon -> RAID
+    -  Rampe -> RPE
+    -  Rempart -> REM
+    -  Roc -> ROC
+    -  Rocade -> ROC
+    -  Rond point -> RPT
+    -  Roquet -> ROQT
+    -  Rotonde -> RTD
+    -  Route -> RTE
+    -  Route -> Rte
+    -  Routes -> RTE
+    -  Rue -> R
+    -  Rue -> R
+    -  Ruelle -> RLE
+    -  Ruelles -> RLE
+    -  Rues -> R
+    -  Résidence -> RES
+    -  Résidences -> RES
+    -  Saint -> St
+    -  Sainte -> Ste
+    -  Sente -> SEN
+    -  Sentes -> SEN
+    -  Sentier -> SEN
+    -  Sentiers -> SEN
+    -  Square -> SQ
+    -  Square -> Sq
+    -  Stade -> STDE
+    -  Station -> STA
+    -  Terrain -> TRN
+    -  Terrasse -> TSSE
+    -  Terrasses -> TSSE
+    -  Terre plein -> TPL
+    -  Tertre -> TRT
+    -  Tertres -> TRT
+    -  Tour -> TOUR
+    -  Traverse -> TRA
+    -  Vallon -> VAL
+    -  Vallée -> VAL
+    -  Venelle -> VEN
+    -  Venelles -> VEN
+    -  Via -> VIA
+    -  Vieille route -> VTE
+    -  Vieux chemin -> VCHE
+    -  Villa -> VLA
+    -  Village -> VGE
+    -  Villages -> VGE
+    -  Villas -> VLA
+    -  Voie -> VOI
+    -  Voies -> VOI
+    -  Zone -> ZONE
+    -  Zone artisanale -> ZA
+    -  Zone d'aménagement concerté -> ZAC
+    -  Zone d'aménagement différé -> ZAD
+    -  Zone industrielle -> ZI
+    -  Zone à urbaniser en priorité -> ZUP
+- lang: fr
+  country: ca
+  words:
+    -  Boulevard -> BOUL
+    -  Carré -> CAR
+    -  Carrefour -> CARREF
+    -  Centre -> C
+    -  Chemin -> CH
+    -  Croissant -> CROIS
+    -  Diversion -> DIVERS
+    -  Échangeur -> ÉCH
+    -  Esplanade -> ESPL
+    -  Passage -> PASS
+    -  Plateau -> PLAT
+    -  Rang -> RANG
+    -  Rond-point -> RDPT
+    -  Sentier -> SENT
+    -  Subdivision -> SUBDIV
+    -  Terrasse -> TSSE
+    -  Village -> VILLGE

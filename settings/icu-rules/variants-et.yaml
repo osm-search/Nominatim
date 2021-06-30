@@ -1,0 +1,8 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Eesti_-_Estonian
+- lang: et
+  words:
+    -  Maantee -> mnt
+    -  Puiestee -> pst
+    -  Raudtee -> rdt
+    -  Raudteejaam -> rdtj
+    -  Tänav -> tn

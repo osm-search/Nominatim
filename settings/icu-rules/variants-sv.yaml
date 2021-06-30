@@ -1,0 +1,21 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Svenska_-_Swedish
+- lang: sv
+  words:
+    -  ~väg, ~vägen -> v
+    -  ~gatan, ~gata -> g
+    -  ~gränd, ~gränden -> gr
+    -  gamla -> G:la
+    -  södra -> s
+    -  södra -> s:a
+    -  norra -> n
+    -  norra -> n:a
+    -  östra -> ö
+    -  östra -> ö:a
+    -  västra -> v
+    -  västra -> v:a
+    -  ~stig, ~stigen -> st
+    -  sankt -> s:t
+    -  sankta -> s:ta
+    -  ~plats, ~platsen -> pl
+    -  lilla -> l
+    -  stora -> st

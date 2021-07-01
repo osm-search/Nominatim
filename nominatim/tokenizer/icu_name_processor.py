@@ -60,7 +60,8 @@ class ICUNameProcessor:
         self.normalizer = Transliterator.createFromRules("icu_normalization",
                                                          rules.norm_rules)
         self.to_ascii = Transliterator.createFromRules("icu_to_ascii",
-                                                       rules.trans_rules)
+                                                       rules.trans_rules +
+                                                       ";[:Space:]+ > ' '")
         self.search = Transliterator.createFromRules("icu_search",
                                                      rules.search_rules)
 
@@ -68,7 +69,11 @@ class ICUNameProcessor:
         immediate = defaultdict(list)
         chars = set()
         for variant in rules.replacements:
-            immediate[variant.source].append(variant)
+            if variant.source[-1] == ' ' and variant.replacement[-1] == ' ':
+                replstr = variant.replacement[:-1]
+            else:
+                replstr = variant.replacement
+            immediate[variant.source].append(replstr)
             chars.update(variant.source)
         # Then copy to datrie
         self.replacements = datrie.Trie(''.join(chars))
@@ -91,32 +96,38 @@ class ICUNameProcessor:
 
         startpos = 0
         pos = 0
+        force_space = False
         while pos < len(baseform):
             full, repl = self.replacements.longest_prefix_item(baseform[pos:],
                                                                (None, None))
             if full is not None:
                 done = baseform[startpos:pos]
-                partials = [v + done + r.replacement
-                            for v, r in itertools.product(partials, repl)]
+                partials = [v + done + r
+                            for v, r in itertools.product(partials, repl)
+                            if not force_space or r.startswith(' ')]
                 startpos = pos + len(full)
+                if full[-1] == ' ':
+                    startpos -= 1
+                    force_space = True
                 pos = startpos
             else:
                 pos += 1
+                force_space = False
 
-        results = []
+        results = set()
 
         if startpos == 0:
             trans_name = self.to_ascii.transliterate(norm_name).strip()
             if trans_name:
-                results.append(trans_name)
+                results.add(trans_name)
         else:
             for variant in partials:
-                name = variant[1:] + baseform[startpos:-1]
-                trans_name = self.to_ascii.transliterate(name).strip()
+                name = variant + baseform[startpos:]
+                trans_name = self.to_ascii.transliterate(name[1:-1]).strip()
                 if trans_name:
-                    results.append(trans_name)
+                    results.add(trans_name)
 
-        return results
+        return list(results)
 
 
     def get_search_normalized(self, name):

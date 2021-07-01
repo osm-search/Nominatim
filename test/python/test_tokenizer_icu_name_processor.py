@@ -39,23 +39,6 @@ def cfgfile(tmp_path, suffix='.yaml'):
 def get_normalized_variants(proc, name):
     return proc.get_variants_ascii(proc.get_normalized(name))
 
-def test_simple_variants(cfgfile):
-    fpath = cfgfile('~strasse,~straße -> str',
-                    '~weg => weg',
-                    'prospekt -> pr')
-
-    rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
-    proc = ICUNameProcessor(rules)
-
-    assert set(get_normalized_variants(proc, "Bauwegstraße")) \
-            == {'bauweg straße', 'bauweg str', 'bauwegstraße', 'bauwegstr'}
-    assert get_normalized_variants(proc, "Bauwegstr") == ['bauwegstr']
-    assert set(get_normalized_variants(proc, "holzweg")) \
-            == {'holz weg', 'holzweg'}
-    assert set(get_normalized_variants(proc, "Meier Weg")) \
-            == {'meier weg', 'meierweg'}
-    assert get_normalized_variants(proc, "hallo") == ['hallo']
-
 
 def test_variants_empty(cfgfile):
     fpath = cfgfile('saint -> 🜵', 'street -> st')
@@ -68,15 +51,44 @@ def test_variants_empty(cfgfile):
     assert get_normalized_variants(proc, 'saint') == ['saint']
 
 
-def test_multiple_replacements(cfgfile):
-    fpath = cfgfile('saint -> s,st', 'street -> st')
+VARIANT_TESTS = [
+(('~strasse,~straße -> str', '~weg => weg'), "hallo", {'hallo'}),
+(('weg => wg',), "holzweg", {'holzweg'}),
+(('weg -> wg',), "holzweg", {'holzweg'}),
+(('~weg => weg',), "holzweg", {'holz weg', 'holzweg'}),
+(('~weg -> weg',), "holzweg",  {'holz weg', 'holzweg'}),
+(('~weg => w',), "holzweg", {'holz w', 'holzw'}),
+(('~weg -> w',), "holzweg",  {'holz weg', 'holzweg', 'holz w', 'holzw'}),
+(('~weg => weg',), "Meier Weg", {'meier weg', 'meierweg'}),
+(('~weg -> weg',), "Meier Weg", {'meier weg', 'meierweg'}),
+(('~weg => w',), "Meier Weg", {'meier w', 'meierw'}),
+(('~weg -> w',), "Meier Weg", {'meier weg', 'meierweg', 'meier w', 'meierw'}),
+(('weg => wg',), "Meier Weg", {'meier wg'}),
+(('weg -> wg',), "Meier Weg", {'meier weg', 'meier wg'}),
+(('~strasse,~straße -> str', '~weg => weg'), "Bauwegstraße",
+     {'bauweg straße', 'bauweg str', 'bauwegstraße', 'bauwegstr'}),
+(('am => a', 'bach => b'), "am bach", {'a b'}),
+(('am => a', '~bach => b'), "am bach", {'a b'}),
+(('am -> a', '~bach -> b'), "am bach", {'am bach', 'a bach', 'am b', 'a b'}),
+(('am -> a', '~bach -> b'), "ambach", {'ambach', 'am bach', 'amb', 'am b'}),
+(('saint -> s,st', 'street -> st'), "Saint Johns Street",
+     {'saint johns street', 's johns street', 'st johns street',
+      'saint johns st', 's johns st', 'st johns st'}),
+(('river$ -> r',), "River Bend Road", {'river bend road'}),
+(('river$ -> r',), "Bent River", {'bent river', 'bent r'}),
+(('^north => n',), "North 2nd Street", {'n 2nd street'}),
+(('^north => n',), "Airport North", {'airport north'}),
+]
 
-    rules = ICUNameProcessorRules(loader=ICURuleLoader(fpath))
-    proc = ICUNameProcessor(rules)
+@pytest.mark.parametrize("rules,name,variants", VARIANT_TESTS)
+def test_variants(cfgfile, rules, name, variants):
+    fpath = cfgfile(*rules)
+    proc = ICUNameProcessor(ICUNameProcessorRules(loader=ICURuleLoader(fpath)))
 
-    assert set(get_normalized_variants(proc, "Saint Johns Street")) == \
-            {'saint johns street', 's johns street', 'st johns street',
-             'saint johns st', 's johns st', 'st johns st'}
+    result = get_normalized_variants(proc, name)
+
+    assert len(result) == len(set(result))
+    assert set(get_normalized_variants(proc, name)) == variants
 
 
 def test_search_normalized(cfgfile):

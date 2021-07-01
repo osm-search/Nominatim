@@ -23,7 +23,6 @@ transliteration:
     - "[^[:Ascii:]] >"
     - ":: lower ()"
     - ":: NFC ()"
-    - "[:Space:]+ > ' '"
 variants:
     - !include icu-rules/variants-bg.yaml
     - !include icu-rules/variants-ca.yaml

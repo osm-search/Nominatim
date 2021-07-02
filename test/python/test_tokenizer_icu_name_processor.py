@@ -78,6 +78,8 @@ VARIANT_TESTS = [
 (('river$ -> r',), "Bent River", {'bent river', 'bent r'}),
 (('^north => n',), "North 2nd Street", {'n 2nd street'}),
 (('^north => n',), "Airport North", {'airport north'}),
+(('am -> a',), "am am am am am am am am", {'am am am am am am am am'}),
+(('am => a',), "am am am am am am am am", {'a a a a a a a a'})
 ]
 
 @pytest.mark.parametrize("rules,name,variants", VARIANT_TESTS)

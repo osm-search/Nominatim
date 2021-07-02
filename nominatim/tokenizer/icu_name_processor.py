@@ -105,6 +105,11 @@ class ICUNameProcessor:
                 partials = [v + done + r
                             for v, r in itertools.product(partials, repl)
                             if not force_space or r.startswith(' ')]
+                if len(partials) > 128:
+                    # If too many variants are produced, they are unlikely
+                    # to be helpful. Only use the original term.
+                    startpos = 0
+                    break
                 startpos = pos + len(full)
                 if full[-1] == ' ':
                     startpos -= 1

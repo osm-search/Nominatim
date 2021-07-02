@@ -163,7 +163,9 @@ class LegacyICUTokenizer:
             words = Counter()
             name_proc = ICUNameProcessor(self.naming_rules)
             with conn.cursor(name="words") as cur:
-                cur.execute("SELECT svals(name) as v, count(*) FROM place GROUP BY v")
+                cur.execute(""" SELECT v, count(*) FROM
+                                  (SELECT svals(name) as v FROM place)x
+                                WHERE length(v) < 75 GROUP BY v""")
 
                 for name, cnt in cur:
                     terms = set()

@@ -10,12 +10,11 @@ installation. For more details, please also have a look at the
 
 ## Installing nominatim-ui
 
-nominatim-ui does not need any special installation, just download, configure
-and run it.
-
-Clone the source from github:
-
-    git clone https://github.com/osm-search/nominatim-ui
+We provide regular releases of nominatim-ui that contain the packaged website.
+They do not need any special installation. Just download, configure
+and run it. Grab the latest release from
+[nominatim-ui's Github release page](https://github.com/osm-search/nominatim-ui/releases)
+and unpack it. You can use `nominatim-ui-x.x.x.tar.gz` or `nominatim-ui-x.x.x.zip`.
 
 Copy the example configuration into the right place:
 

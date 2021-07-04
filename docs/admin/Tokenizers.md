@@ -9,11 +9,11 @@ different configuration options. This sections describes the tokenizers and how
 they can be configured.
 
 !!! important
-The use of a tokenizer is tied to a database installation. You need to choose
-and configure the tokenizer before starting the initial import. Once the import
-is done, you cannot switch to another tokenizer anymore. Reconfiguring the
-chosen tokenizer is very limited as well. See the comments in each tokenizer
-section.
+    The use of a tokenizer is tied to a database installation. You need to choose
+    and configure the tokenizer before starting the initial import. Once the import
+    is done, you cannot switch to another tokenizer anymore. Reconfiguring the
+    chosen tokenizer is very limited as well. See the comments in each tokenizer
+    section.
 
 ## Legacy tokenizer
 
@@ -43,6 +43,10 @@ There are no other configuration options for the legacy tokenizer. All
 normalization functions are hard-coded.
 
 ## ICU tokenizer
+
+!!! danger
+    This tokenizer is currently in active development and still subject
+    to backwards-incompatible changes.
 
 The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to
 normalize names and queries. It also offers configurable decomposition and

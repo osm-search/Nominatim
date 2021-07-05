@@ -1,0 +1,12 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Dansk_-_Danish
+- lang: da
+  words:
+    -  Lille -> Ll
+    -  Nordre -> Ndr
+    -  Nørre -> Nr
+    -  Søndre, Sønder -> Sdr
+    -  Store -> St
+    -  Gammel,Gamle -> Gl
+    -  ~hal => hal
+    -  ~hallen => hallen
+    -  ~hallerne => hallerne

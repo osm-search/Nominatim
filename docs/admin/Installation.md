@@ -45,6 +45,7 @@ For running Nominatim:
   * [psutil](https://github.com/giampaolo/psutil)
   * [Jinja2](https://palletsprojects.com/p/jinja/)
   * [PyICU](https://pypi.org/project/PyICU/)
+  * [datrie](https://github.com/pytries/datrie)
   * [PHP](https://php.net) (7.0 or later)
   * PHP-pgsql
   * PHP-intl (bundled with PHP)

@@ -1,0 +1,136 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Deutsch_-_German
+- lang: de
+  words:
+    -  am -> a
+    -  an der -> a d
+    -  Allgemeines Krankenhaus -> AKH
+    -  Altstoffsammelzentrum -> ASZ
+    -  auf der -> a d
+    -  ~bach -> B
+    -  Bad -> B
+    -  Bahnhof -> Bhf
+    -  Bayerisch, Bayerische, Bayerischer, Bayerisches -> Bayer
+    -  Berg -> B
+    -  ~berg |-> bg
+    -  Bezirk -> Bez
+    -  ~brücke -> Br
+    -  Bundesgymnasium -> BG
+    -  Bundespolizeidirektion -> BPD
+    -  Bundesrealgymnasium -> BRG
+    -  ~burg |-> bg
+    -  burgenländische,burgenländischer,burgenländisches -> bgld
+    -  Bürgermeister -> Bgm
+    -  Chaussee -> Ch
+    -  Deutsche, Deutscher, Deutsches -> dt
+    -  Deutscher Alpenverein -> DAV
+    -  Deutsch -> Dt
+    -  ~denkmal -> Dkm
+    -  Dorf -> Df
+    -  ~dorf |-> df
+    -  Doktor -> Dr
+    -  ehemalige, ehemaliger, ehemaliges -> ehem
+    -  Fabrik -> Fb
+    -  Fachhochschule -> FH
+    -  Freiwillige Feuerwehr -> FF
+    -  Forsthaus -> Fh
+    -  ~gasse |-> g
+    -  Gasthaus -> Gh
+    -  Gasthof -> Ghf
+    -  Gemeinde -> Gde
+    -  Graben -> Gr
+    -  Großer, Große, Großes -> Gr, G
+    -  Gymnasium und Realgymnasium -> GRG
+    -  Handelsakademie -> HAK
+    -  Handelsschule -> HASCH
+    -  Haltestelle -> Hst
+    -  Hauptbahnhof -> Hbf
+    -  Haus -> Hs
+    -  Heilige, Heiliger, Heiliges -> Hl
+    -  Hintere, Hinterer, Hinteres -> Ht, Hint
+    -  Hohe, Hoher, Hohes -> H
+    -  ~höhle -> H
+    -  Höhere Technische Lehranstalt -> HTL
+    -  ~hütte -> Htt
+    -  im -> i
+    -  in -> i
+    -  in der -> i d
+    -  Ingenieur -> Ing
+    -  Internationale, Internationaler, Internationales -> Int
+    -  Jagdhaus -> Jh
+    -  Jagdhütte -> Jhtt
+    -  Kapelle -> Kap, Kpl
+    -  Katastralgemeinde -> KG
+    -  Kläranlage -> KA
+    -  Kleiner, Kleine, Kleines -> kl
+    -  Klein~ -> Kl.
+    -  Kleingartenanlage -> KGA
+    -  Kleingartenverein -> KGV
+    -  Kogel -> Kg
+    -  ~kogel |-> kg
+    -  Konzentrationslager -> KZ, KL
+    -  Krankenhaus -> KH
+    -  ~kreuz |-> kz
+    -  Landeskrankenhaus -> LKH
+    -  Maria -> Ma
+    -  Magister -> Mag
+    -  Magistratsabteilung -> MA
+    -  Markt -> Mkt
+    -  Müllverbrennungsanlage -> MVA
+    -  Nationalpark -> NP
+    -  Naturschutzgebiet -> NSG
+    -  Neue Mittelschule -> NMS
+    -  Niedere, Niederer, Niederes -> Nd
+    -  Niederösterreich -> NÖ
+    -  nördliche, nördlicher, nördliches -> nördl
+    -  Nummer -> Nr
+    -  ob -> o
+    -  Oberer, Obere, Oberes -> ob
+    -  Ober~ -> Ob
+    -  Österreichischer Alpenverein -> ÖAV
+    -  Österreichischer Gebirgsverein -> ÖGV
+    -  Österreichischer Touristenklub -> ÖTK
+    -  östliche, östlicher, östliches -> östl
+    -  Pater -> P
+    -  Pfad -> P
+    -  Platz -> Pl
+    -  ~platz$ -> pl
+    -  Professor -> Prof
+    -  Quelle -> Q, Qu
+    -  Reservoir -> Res
+    -  Rhein -> Rh
+    -  Rundwanderweg -> RWW
+    -  Ruine -> R
+    -  Sandgrube, Schottergrube -> SG
+    -  Sankt -> St
+    -  Schloss -> Schl
+    -  See -> S
+    -  ~siedlung -> sdlg
+    -  Sozialmedizinisches Zentrum -> SMZ
+    -  ~Spitze -> Sp
+    -  Steinbruch -> Stb
+    -  ~stiege -> stg
+    -  ~strasse -> str
+    -  südliche, südlicher, südliches -> südl
+    -  Unterer, Untere, Unteres -> u, unt
+    -  Unter~ -> U
+    -  Teich -> T
+    -  Technische Universität -> TU
+    -  Truppenübungsplatz -> TÜPL, TÜPl
+    -  Unfallkrankenhaus -> UKH
+    -  ~universität -> uni
+    -  verfallen -> verf
+    -  von -> v
+    -  Vordere, Vorderer, Vorderes -> Vd, Vord
+    -  Vorder… -> Vd, Vord
+    -  von der -> v d
+    -  vor der -> v d
+    -  Volksschule -> VS
+    -  Wald -> W
+    -  Wasserfall -> Wsf, Wssf
+    -  ~weg$ -> w
+    -  westliche, westlicher, westliches -> westl
+    -  Wiener -> Wr
+    -  ~wiese$ -> ws
+    -  Wirtschaftsuniversität -> WU
+    -  Wirtshaus -> Wh
+    -  zum -> z

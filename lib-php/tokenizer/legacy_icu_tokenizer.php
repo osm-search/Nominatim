@@ -47,9 +47,7 @@ class Tokenizer
 
     private function makeStandardWord($sTerm)
     {
-        $sNorm = ' '.$this->oTransliterator->transliterate($sTerm).' ';
-
-        return trim(str_replace(CONST_Abbreviations[0], CONST_Abbreviations[1], $sNorm));
+        return trim($this->oTransliterator->transliterate(' '.$sTerm.' '));
     }
 
 
@@ -90,6 +88,7 @@ class Tokenizer
         foreach ($aPhrases as $iPhrase => $oPhrase) {
             $sNormQuery .= ','.$this->normalizeString($oPhrase->getPhrase());
             $sPhrase = $this->makeStandardWord($oPhrase->getPhrase());
+            Debug::printVar('Phrase', $sPhrase);
             if (strlen($sPhrase) > 0) {
                 $aWords = explode(' ', $sPhrase);
                 Tokenizer::addTokens($aTokens, $aWords);

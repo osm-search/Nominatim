@@ -20,6 +20,7 @@ pages:
         - 'Update' : 'admin/Update.md'
         - 'Deploy' : 'admin/Deployment.md'
         - 'Customize Imports' : 'admin/Customization.md'
+        - 'Tokenizers' : 'admin/Tokenizers.md'
         - 'Nominatim UI'  : 'admin/Setup-Nominatim-UI.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
         - 'Migration from older Versions' : 'admin/Migration.md'

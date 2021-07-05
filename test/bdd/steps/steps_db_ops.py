@@ -214,7 +214,7 @@ def check_search_name_contents(context, exclude):
                     for name, value in zip(row.headings, row.cells):
                         if name in ('name_vector', 'nameaddress_vector'):
                             items = [x.strip() for x in value.split(',')]
-                            tokens = analyzer.get_word_token_info(context.db, items)
+                            tokens = analyzer.get_word_token_info(items)
 
                             if not exclude:
                                 assert len(tokens) >= len(items), \

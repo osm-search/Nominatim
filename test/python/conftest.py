@@ -173,6 +173,7 @@ def place_row(place_table, temp_db_cursor):
     """ A factory for rows in the place table. The table is created as a
         prerequisite to the fixture.
     """
+    psycopg2.extras.register_hstore(temp_db_cursor)
     idseq = itertools.count(1001)
     def _insert(osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
                 admin_level=None, address=None, extratags=None, geom=None):

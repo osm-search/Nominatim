@@ -1,0 +1,53 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Nederlands_-_Dutch
+- lang: nl
+  words:
+    -  Broeder -> Br
+    -  Burgemeester -> Burg
+    -  Commandant -> Cmdt
+    -  Doctor -> dr
+    -  Dokter -> Dr
+    -  Dominee -> ds
+    -  Gebroeders -> Gebr
+    -  Generaal -> Gen
+    -  ~gracht -> gr
+    -  Ingenieur -> ir
+    -  Jonkheer -> Jhr
+    -  Kolonel -> Kol
+    -  Kanunnik -> Kan
+    -  Kardinaal -> Kard
+    -  Kort(e) -> Kte, K
+    -  Koning -> Kon
+    -  Koningin -> Kon
+    -  ~laan -> ln
+    -  Lange -> L
+    -  Luitenant -> Luit
+    -  ~markt -> mkt
+    -  Meester -> Mr, mr
+    -  Mejuffrouw -> Mej
+    -  Mevrouw -> Mevr
+    -  Minister -> Min
+    -  Monseigneur -> Mgr
+    -  Noordzijde -> NZ, N Z
+    -  Oostzijde -> OZ, O Z
+    -  Onze-Lieve-Vrouw,Onze-Lieve-Vrouwe -> O L V, OLV
+    -  Pastoor -> Past
+    -  ~plein -> pln
+    -  President -> Pres
+    -  Prins -> Pr
+    -  Prinses -> Pr
+    -  Professor -> Prof
+    -  ~singel -> sngl
+    -  ~straat -> str
+    -  ~steenweg -> stwg
+    -  Sint -> St
+    -  Van -> V
+    -  Van De -> V D, vd
+    -  Van Den -> V D, vd
+    -  Van Der -> V D, vd
+    -  Verlengde -> Verl
+    -  ~vliet -> vlt
+    -  Vrouwe -> Vr
+    -  ~weg -> wg
+    -  Westzijde -> WZ, W Z
+    -  Zuidzijde -> ZZ, Z Z
+    -  Zuster -> Zr

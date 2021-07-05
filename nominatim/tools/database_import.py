@@ -272,15 +272,15 @@ def create_country_names(conn, tokenizer, languages=None):
 
         with tokenizer.name_analyzer() as analyzer:
             for code, name in cur:
-                names = [code]
+                names = {'countrycode' : code}
                 if code == 'gb':
-                    names.append('UK')
+                    names['short_name'] = 'UK'
                 if code == 'us':
-                    names.append('United States')
+                    names['short_name'] = 'United States'
 
                 # country names (only in languages as provided)
                 if name:
-                    names.extend((v for k, v in name.items() if _include_key(k)))
+                    names.update(((k, v) for k, v in name.items() if _include_key(k)))
 
                 analyzer.add_country_names(code, names)
 

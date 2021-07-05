@@ -258,5 +258,6 @@ install(FILES settings/env.defaults
               settings/import-address.style
               settings/import-full.style
               settings/import-extratags.style
-              settings/legacy_icu_tokenizer.json
+              settings/legacy_icu_tokenizer.yaml
+              settings/icu-rules/extended-unicode-to-asccii.yaml
         DESTINATION ${NOMINATIM_CONFIGDIR})

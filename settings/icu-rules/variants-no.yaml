@@ -1,0 +1,11 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Norsk_-_Norwegian
+- lang: no
+  words:
+    # convert between Nynorsk and Bookmal here
+    -  vei, veg => v,vn,vei,veg
+    -  veien, vegen -> v,vn,veien,vegen
+    -  gate -> g,gt
+    # convert between the two female forms
+    -  gaten, gata => g,gt,gaten,gata
+    -  plass, plassen -> pl
+    -  sving, svingen -> sv

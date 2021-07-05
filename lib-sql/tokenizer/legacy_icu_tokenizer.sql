@@ -87,25 +87,48 @@ $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 --------------- private functions ----------------------------------------------
 
-CREATE OR REPLACE FUNCTION getorcreate_term_id(lookup_term TEXT)
-  RETURNS INTEGER
+CREATE OR REPLACE FUNCTION getorcreate_full_word(norm_term TEXT, lookup_terms TEXT[],
+                                                 OUT full_token INT,
+                                                 OUT partial_tokens INT[])
   AS $$
 DECLARE
-  return_id INTEGER;
+  partial_terms TEXT[] = '{}'::TEXT[];
+  term TEXT;
+  term_id INTEGER;
   term_count INTEGER;
 BEGIN
-  SELECT min(word_id), max(search_name_count) INTO return_id, term_count
-    FROM word WHERE word_token = lookup_term and class is null and type is null;
+  SELECT min(word_id) INTO full_token
+    FROM word WHERE word = norm_term and class is null and country_code is null;
 
-  IF return_id IS NULL THEN
-    return_id := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, search_name_count)
-      VALUES (return_id, lookup_term, 0);
-  ELSEIF left(lookup_term, 1) = ' ' and term_count > {{ max_word_freq }} THEN
-    return_id := 0;
+  IF full_token IS NULL THEN
+    full_token := nextval('seq_word');
+    INSERT INTO word (word_id, word_token, word, search_name_count)
+      SELECT full_token, ' ' || lookup_term, norm_term, 0 FROM unnest(lookup_terms) as lookup_term;
   END IF;
 
-  RETURN return_id;
+  FOR term IN SELECT unnest(string_to_array(unnest(lookup_terms), ' ')) LOOP
+    term := trim(term);
+    IF NOT (ARRAY[term] <@ partial_terms) THEN
+      partial_terms := partial_terms || term;
+    END IF;
+  END LOOP;
+
+  partial_tokens := '{}'::INT[];
+  FOR term IN SELECT unnest(partial_terms) LOOP
+    SELECT min(word_id), max(search_name_count) INTO term_id, term_count
+      FROM word WHERE word_token = term and class is null and country_code is null;
+
+    IF term_id IS NULL THEN
+      term_id := nextval('seq_word');
+      term_count := 0;
+      INSERT INTO word (word_id, word_token, search_name_count)
+        VALUES (term_id, term, 0);
+    END IF;
+
+    IF term_count < {{ max_word_freq }} THEN
+      partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);
+    END IF;
+  END LOOP;
 END;
 $$
 LANGUAGE plpgsql;

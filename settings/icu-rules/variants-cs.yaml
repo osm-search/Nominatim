@@ -1,0 +1,6 @@
+# Source: https://wiki.openstreetmap.org/wiki/Name_finder:Abbreviations#Cesky_-_Czech
+- lang: cs
+  words:
+    -  Ulice -> Ul
+    -  Třída -> Tř
+    -  Náměstí -> Nám

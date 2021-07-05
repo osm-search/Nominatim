@@ -12,7 +12,7 @@
 },
 {
     "keys" : ["name:prefix", "name:suffix", "name:prefix:*", "name:suffix:*",
-              "name:botanical", "*wikidata"],
+              "name:etymology", "name:signed", "name:botanical", "*wikidata"],
     "values" : {
         "" : "skip"
     }

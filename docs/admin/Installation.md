@@ -39,7 +39,7 @@ For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.3+ will work, 11+ strongly recommended)
   * [PostGIS](https://postgis.net) (2.2+)
-  * [Python 3](https://www.python.org/) (3.5+)
+  * [Python 3](https://www.python.org/) (3.6+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)
   * [psutil](https://github.com/giampaolo/psutil)

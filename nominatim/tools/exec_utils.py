@@ -70,7 +70,9 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     else:
         cmd = [str(phpcgi_bin)]
 
-    proc = subprocess.run(cmd, cwd=str(project_dir), env=env, capture_output=True,
+    proc = subprocess.run(cmd, cwd=str(project_dir), env=env,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
                           check=False)
 
     if proc.returncode != 0 or proc.stderr:

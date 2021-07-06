@@ -29,7 +29,7 @@ The Nominatim test suite consists of behavioural tests (using behave) and
 unit tests (using PHPUnit for PHP code and pytest for Python code).
 It has the following additional requirements:
 
-* [behave test framework](https://behave.readthedocs.io) >= 1.2.5
+* [behave test framework](https://behave.readthedocs.io) >= 1.2.6
 * [phpunit](https://phpunit.de) >= 7.3
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 * [Pylint](https://pylint.org/) (2.6.0 is used for the CI)

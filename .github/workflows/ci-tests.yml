@@ -12,10 +12,12 @@ jobs:
                       postgresql: 9.5
                       postgis: 2.5
                       pytest: pytest
+                      php: 7.2
                     - ubuntu: 20
                       postgresql: 13
                       postgis: 3
                       pytest: py.test-3
+                      php: 7.4
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
@@ -28,7 +30,8 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '7.4'
+                  php-version: ${{ matrix.php }}
+                  coverage: xdebug
                   tools: phpunit, phpcs, composer
 
             - uses: actions/setup-python@v2
@@ -58,12 +61,11 @@ jobs:
                   ubuntu: ${{ matrix.ubuntu }}
 
             - name: Install test prerequsites
-              run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave python3-pytest-cov php-codecoverage php-xdebug
+              run: sudo apt-get install -y -qq pylint python3-pytest python3-behave python3-pytest-cov php-codecoverage
               if: matrix.ubuntu == 20
 
             - name: Install test prerequsites
               run: |
-                   sudo apt-get install -y -qq php-codesniffer php-codecoverage php-xdebug
                    pip3 install pylint==2.6.0 pytest pytest-cov behave==1.2.6
               if: matrix.ubuntu == 18
 
@@ -78,6 +80,7 @@ jobs:
             - name: PHP unit tests
               run: phpunit --coverage-clover ../../coverage-php.xml ./
               working-directory: Nominatim/test/php
+              if: matrix.ubuntu == 20
 
             - name: Python unit tests
               run: $PYTEST --cov=nominatim --cov-report=xml test/python
@@ -92,6 +95,13 @@ jobs:
                   composer require phpunit/phpcov:7.0.2
                   vendor/bin/phpcov merge --clover ../../coverage-bdd.xml ./cov
               working-directory: Nominatim/test/bdd
+              if: matrix.ubuntu == 20
+
+            - name: BDD tests
+              run: |
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+              working-directory: Nominatim/test/bdd
+              if: matrix.ubuntu == 18
 
             - name: BDD tests (legacy_icu tokenizer)
               run: |
@@ -107,6 +117,7 @@ jobs:
                 fail_ci_if_error: false
                 path_to_write_report: ./coverage/codecov_report.txt
                 verbose: true
+              if: matrix.ubuntu == 20
 
     import:
         strategy:

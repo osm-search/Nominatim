@@ -7,12 +7,11 @@ import json
 _ICU_VARIANT_PORPERTY_FIELDS = ['lang']
 
 
-class ICUVariantProperties(namedtuple('_ICUVariantProperties', _ICU_VARIANT_PORPERTY_FIELDS,
-                                      defaults=(None, )*len(_ICU_VARIANT_PORPERTY_FIELDS))):
+class ICUVariantProperties(namedtuple('_ICUVariantProperties', _ICU_VARIANT_PORPERTY_FIELDS)):
     """ Data container for saving properties that describe when a variant
         should be applied.
 
-        Porperty instances are hashable.
+        Property instances are hashable.
     """
     @classmethod
     def from_rules(cls, _):
@@ -52,7 +51,7 @@ def unpickle_variant_set(variant_string):
     """
     data = json.loads(variant_string)
 
-    properties = {int(k): ICUVariantProperties(**v) for k, v in data['properties'].items()}
-    print(properties)
+    properties = {int(k): ICUVariantProperties.from_rules(v)
+                  for k, v in data['properties'].items()}
 
     return set((ICUVariant(src, repl, properties[pid]) for src, repl, pid in data['variants']))

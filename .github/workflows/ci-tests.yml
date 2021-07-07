@@ -4,16 +4,22 @@ on: [ push, pull_request ]
 
 jobs:
     tests:
-        runs-on: ubuntu-20.04
-
         strategy:
             matrix:
-                postgresql: [9.5, 13]
+                ubuntu: [18, 20]
                 include:
-                    - postgresql: 9.5
+                    - ubuntu: 18
+                      postgresql: 9.5
                       postgis: 2.5
-                    - postgresql: 13
+                      pytest: pytest
+                      php: 7.2
+                    - ubuntu: 20
+                      postgresql: 13
                       postgis: 3
+                      pytest: py.test-3
+                      php: 7.4
+
+        runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
             - uses: actions/checkout@v2
@@ -24,8 +30,14 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '7.4'
+                  php-version: ${{ matrix.php }}
+                  coverage: xdebug
                   tools: phpunit, phpcs, composer
+
+            - uses: actions/setup-python@v2
+              with:
+                python-version: 3.6
+              if: matrix.ubuntu == 18
 
             - name: Get Date
               id: get-date
@@ -43,33 +55,53 @@ jobs:
               with:
                   postgresql-version: ${{ matrix.postgresql }}
                   postgis-version: ${{ matrix.postgis }}
+
             - uses: ./Nominatim/.github/actions/build-nominatim
+              with:
+                  ubuntu: ${{ matrix.ubuntu }}
 
             - name: Install test prerequsites
-              run: sudo apt-get install -y -qq php-codesniffer pylint python3-pytest python3-behave python3-pytest-cov php-codecoverage php-xdebug
+              run: sudo apt-get install -y -qq pylint python3-pytest python3-behave python3-pytest-cov php-codecoverage
+              if: matrix.ubuntu == 20
+
+            - name: Install test prerequsites
+              run: |
+                   pip3 install pylint==2.6.0 pytest pytest-cov behave==1.2.6
+              if: matrix.ubuntu == 18
 
             - name: PHP linting
               run: phpcs --report-width=120 .
               working-directory: Nominatim
 
             - name: Python linting
-              run: pylint --extension-pkg-whitelist=osmium nominatim
+              run: pylint nominatim
               working-directory: Nominatim
 
             - name: PHP unit tests
               run: phpunit --coverage-clover ../../coverage-php.xml ./
               working-directory: Nominatim/test/php
+              if: matrix.ubuntu == 20
 
             - name: Python unit tests
-              run: py.test-3 --cov=nominatim --cov-report=xml test/python
+              run: $PYTEST --cov=nominatim --cov-report=xml test/python
               working-directory: Nominatim
+              env:
+                PYTEST: ${{ matrix.pytest }}
 
             - name: BDD tests
               run: |
+                  mkdir cov
                   behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3 -DPHPCOV=./cov
                   composer require phpunit/phpcov:7.0.2
                   vendor/bin/phpcov merge --clover ../../coverage-bdd.xml ./cov
               working-directory: Nominatim/test/bdd
+              if: matrix.ubuntu == 20
+
+            - name: BDD tests
+              run: |
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build --format=progress3
+              working-directory: Nominatim/test/bdd
+              if: matrix.ubuntu == 18
 
             - name: BDD tests (legacy_icu tokenizer)
               run: |
@@ -85,6 +117,7 @@ jobs:
                 fail_ci_if_error: false
                 path_to_write_report: ./coverage/codecov_report.txt
                 verbose: true
+              if: matrix.ubuntu == 20
 
     import:
         strategy:

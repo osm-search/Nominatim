@@ -32,10 +32,10 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         php php-pgsql php-intl libicu-dev python3-pip \
                         python3-psycopg2 python3-psutil python3-jinja2 python3-icu git
 
-# The python-dotenv adn datrie package that comes with Ubuntu 18.04 is too old, so
+# Some of the Python packages that come with Ubuntu 18.04 are too old, so
 # install the latest version from pip:
 
-    pip3 install python-dotenv datrie
+    pip3 install python-dotenv datrie pyyaml
 
 #
 # System Configuration

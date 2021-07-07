@@ -68,9 +68,9 @@ class Configuration:
         """
         try:
             return int(self.__getattr__(name))
-        except ValueError:
+        except ValueError as exp:
             LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
-            raise UsageError("Configuration error.")
+            raise UsageError("Configuration error.") from exp
 
 
     def get_libpq_dsn(self):

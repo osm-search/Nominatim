@@ -61,7 +61,7 @@ class AddressDetails
         return join(', ', $aParts);
     }
 
-    public function getAddressNames($sCountry = null)
+    public function getAddressNames()
     {
         $aAddress = array();
 

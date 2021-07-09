@@ -74,8 +74,6 @@ class ReverseGeocode
 
     protected function lookupLargeArea($sPointSQL, $iMaxRank)
     {
-        $oResult = null;
-
         if ($iMaxRank > 4) {
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
@@ -190,7 +188,6 @@ class ReverseGeocode
 
         if ($aPoly) {
         // if a polygon is found, search for placenodes begins ...
-            $iParentPlaceID = $aPoly['parent_place_id'];
             $iRankAddress = $aPoly['rank_address'];
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
@@ -356,7 +353,6 @@ class ReverseGeocode
                     $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
                     $oResult->iHouseNumber = closestHouseNumber($aHouse);
                     $aPlace = $aHouse;
-                    $iRankAddress = 30;
                 }
             }
 

@@ -78,7 +78,7 @@ class Debug
         echo '<th>Address Tokens</th><th>Address Not</th>';
         echo '<th>country</th><th>operator</th>';
         echo '<th>class</th><th>type</th><th>postcode</th><th>housenumber</th></tr>';
-        foreach ($aSearches as $iRank => $aRankedSet) {
+        foreach ($aSearches as $aRankedSet) {
             foreach ($aRankedSet as $aRow) {
                 $aRow->dumpAsHtmlTableRow($aWordsIDs);
             }

@@ -417,7 +417,7 @@ class Geocode
 
             $iSearchCount = 0;
             $aSearches = array();
-            foreach ($aGroupedSearches as $iScore => $aNewSearches) {
+            foreach ($aGroupedSearches as $aNewSearches) {
                 $iSearchCount += count($aNewSearches);
                 $aSearches = array_merge($aSearches, $aNewSearches);
                 if ($iSearchCount > 50) break;
@@ -502,10 +502,6 @@ class Geocode
         $this->oTokenizer->setCountryRestriction($this->aCountryCodes);
 
         Debug::newSection('Query Preprocessing');
-
-        $sLanguagePrefArraySQL = $this->oDB->getArraySQL(
-            $this->oDB->getDBQuotedList($this->aLangPrefOrder)
-        );
 
         $sQuery = $this->sQuery;
         if (!preg_match('//u', $sQuery)) {
@@ -891,15 +887,8 @@ class Geocode
         $aToFilter = $aSearchResults;
         $aSearchResults = array();
 
-        $bFirst = true;
         foreach ($aToFilter as $aResult) {
             $this->aExcludePlaceIDs[$aResult['place_id']] = $aResult['place_id'];
-            if ($bFirst) {
-                $fLat = $aResult['lat'];
-                $fLon = $aResult['lon'];
-                if (isset($aResult['zoom'])) $iZoom = $aResult['zoom'];
-                $bFirst = false;
-            }
             if (!$this->oPlaceLookup->doDeDupe() || (!isset($aOSMIDDone[$aResult['osm_type'].$aResult['osm_id']])
                 && !isset($aClassTypeNameDone[$aResult['osm_type'].$aResult['class'].$aResult['type'].$aResult['name'].$aResult['admin_level']]))
             ) {

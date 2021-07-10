@@ -49,7 +49,9 @@
     $oDB->connect();
 
     if (isset($aCMDResult['output-type'])) {
-        if (!isset($aRankmap[$aCMDResult['output-type']])) fail('unknown output-type: '.$aCMDResult['output-type']);
+        if (!isset($aRankmap[$aCMDResult['output-type']])) {
+            fail('unknown output-type: '.$aCMDResult['output-type']);
+        }
         $iOutputRank = $aRankmap[$aCMDResult['output-type']];
     } else {
         $iOutputRank = $aRankmap['street'];
@@ -58,14 +60,18 @@
 
     // Preferred language
     $oParams = new Nominatim\ParameterParser();
-    if (!isset($aCMDResult['language'])) $aCMDResult['language'] = 'xx';
+    if (!isset($aCMDResult['language'])) {
+        $aCMDResult['language'] = 'xx';
+    }
     $aLangPrefOrder = $oParams->getPreferredLanguages($aCMDResult['language']);
     $sLanguagePrefArraySQL = $oDB->getArraySQL($oDB->getDBQuotedList($aLangPrefOrder));
 
     // output formatting: build up a lookup table that maps address ranks to columns
     $aColumnMapping = array();
     $iNumCol = 0;
-    if (!isset($aCMDResult['output-format'])) $aCMDResult['output-format'] = 'street;suburb;city;county;state;country';
+    if (!isset($aCMDResult['output-format'])) {
+        $aCMDResult['output-format'] = 'street;suburb;city;county;state;country';
+    }
     foreach (preg_split('/\s*;\s*/', $aCMDResult['output-format']) as $sColumn) {
         $bHasData = false;
         foreach (preg_split('/\s*,\s*/', $sColumn) as $sRank) {
@@ -80,7 +86,9 @@
                 }
             }
         }
-        if ($bHasData) $iNumCol++;
+        if ($bHasData) {
+            $iNumCol++;
+        }
     }
 
     // build the query for objects
@@ -122,7 +130,9 @@
     if ($sOsmType) {
         $sSQL = 'select place_id from placex where osm_type = :osm_type and osm_id = :osm_id';
         $sParentId = $oDB->getOne($sSQL, array('osm_type' => $sOsmType, 'osm_id' => $sOsmId));
-        if (!$sParentId) fail('Could not find place '.$sOsmType.' '.$sOsmId);
+        if (!$sParentId) {
+            fail('Could not find place '.$sOsmType.' '.$sOsmId);
+        }
     }
     if ($sParentId) {
         $sPlacexSQL .= ' and place_id in (select place_id from place_addressline where address_place_id = '.$sParentId.' and isaddress)';

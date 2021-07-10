@@ -45,7 +45,9 @@ function getSettingConfig($sConfName, $sSystemConfig)
 
 function fail($sError, $sUserError = false)
 {
-    if (!$sUserError) $sUserError = $sError;
+    if (!$sUserError) {
+        $sUserError = $sError;
+    }
     error_log('ERROR: '.$sError);
     var_dump($sUserError);
     echo "\n";
@@ -96,8 +98,9 @@ function getDatabaseDate(&$oDB)
 
 function byImportance($a, $b)
 {
-    if ($a['importance'] != $b['importance'])
+    if ($a['importance'] != $b['importance']) {
         return ($a['importance'] > $b['importance']?-1:1);
+    }
 
     return $a['foundorder'] <=> $b['foundorder'];
 }

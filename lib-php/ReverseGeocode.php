@@ -165,9 +165,13 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupPolygon');
         // polygon search begins at suburb-level
-        if ($iMaxRank > 25) $iMaxRank = 25;
+        if ($iMaxRank > 25) {
+            $iMaxRank = 25;
+        }
         // no polygon search over country-level
-        if ($iMaxRank < 5) $iMaxRank = 5;
+        if ($iMaxRank < 5) {
+            $iMaxRank = 5;
+        }
         // search for polygon
         $sSQL = 'SELECT place_id, parent_place_id, rank_address, rank_search FROM';
         $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';

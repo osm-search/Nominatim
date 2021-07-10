@@ -8,7 +8,7 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
                                 'place_id'=>$aPointDetails['place_id'],
                                )
               );
-    
+
     $sOSMType = formatOSMType($aPointDetails['osm_type']);
     if ($sOSMType) {
         $aPlace['properties']['osm_type'] = $sOSMType;
@@ -58,8 +58,12 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
     }
 
 
-    if (isset($aPointDetails['sExtraTags'])) $aPlace['properties']['extratags'] = $aPointDetails['sExtraTags'];
-    if (isset($aPointDetails['sNameDetails'])) $aPlace['properties']['namedetails'] = $aPointDetails['sNameDetails'];
+    if (isset($aPointDetails['sExtraTags'])) {
+        $aPlace['properties']['extratags'] = $aPointDetails['sExtraTags'];
+    }
+    if (isset($aPointDetails['sNameDetails'])) {
+        $aPlace['properties']['namedetails'] = $aPointDetails['sNameDetails'];
+    }
 
     $aFilteredPlaces[] = $aPlace;
 }

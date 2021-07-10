@@ -30,8 +30,12 @@ while ($iTotalBroken && empty($aPolygons)) {
         $iDays++;
     }
 
-    if ($bReduced) $aWhere[] = "errormessage like 'Area reduced%'";
-    if ($sClass) $sWhere[] = "class = '".pg_escape_string($sClass)."'";
+    if ($bReduced) {
+        $aWhere[] = "errormessage like 'Area reduced%'";
+    }
+    if ($sClass) {
+        $sWhere[] = "class = '".pg_escape_string($sClass)."'";
+    }
 
     if (!empty($aWhere)) {
         $sSQL .= ' WHERE '.join(' and ', $aWhere);

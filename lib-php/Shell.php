@@ -33,7 +33,9 @@ class Shell
     public function addEnvPair($sKey, $sVal)
     {
         if (isset($sKey) && $sKey && isset($sVal)) {
-            if (!isset($this->aEnv)) $this->aEnv = $_ENV;
+            if (!isset($this->aEnv)) {
+                $this->aEnv = $_ENV;
+            }
             $this->aEnv = array_merge($this->aEnv, array($sKey => $sVal), $_ENV);
         }
         return $this;
@@ -75,11 +77,8 @@ class Shell
         return $iStat;
     }
 
-
-
     private function escapeParam($sParam)
     {
-        if (preg_match('/^-*\w+$/', $sParam)) return $sParam;
-        return escapeshellarg($sParam);
+        return (preg_match('/^-*\w+$/', $sParam)) ? $sParam : escapeshellarg($sParam);
     }
 }

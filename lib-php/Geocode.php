@@ -70,7 +70,9 @@ class Geocode
             $aParams['exclude_place_ids'] = implode(',', $this->aExcludePlaceIDs);
         }
 
-        if ($this->bBoundedSearch) $aParams['bounded'] = '1';
+        if ($this->bBoundedSearch) {
+            $aParams['bounded'] = '1';
+        }
 
         if ($this->aCountryCodes) {
             $aParams['countrycodes'] = implode(',', $this->aCountryCodes);
@@ -85,8 +87,11 @@ class Geocode
 
     public function setLimit($iLimit = 10)
     {
-        if ($iLimit > 50) $iLimit = 50;
-        if ($iLimit < 1) $iLimit = 1;
+        if ($iLimit > 50) {
+            $iLimit = 50;
+        } elseif ($iLimit < 1) {
+            $iLimit = 1;
+        }
 
         $this->iFinalLimit = $iLimit;
         $this->iLimit = $iLimit + min($iLimit, 10);
@@ -181,18 +186,24 @@ class Geocode
         if ($sExcluded) {
             foreach ($sExcluded as $iExcludedPlaceID) {
                 $iExcludedPlaceID = (int)$iExcludedPlaceID;
-                if ($iExcludedPlaceID)
+                if ($iExcludedPlaceID) {
                     $aExcludePlaceIDs[$iExcludedPlaceID] = $iExcludedPlaceID;
+                }
             }
 
-            if (isset($aExcludePlaceIDs))
+            if (isset($aExcludePlaceIDs)) {
                 $this->aExcludePlaceIDs = $aExcludePlaceIDs;
+            }
         }
 
         // Only certain ranks of feature
         $sFeatureType = $oParams->getString('featureType');
-        if (!$sFeatureType) $sFeatureType = $oParams->getString('featuretype');
-        if ($sFeatureType) $this->setFeatureType($sFeatureType);
+        if (!$sFeatureType) {
+            $sFeatureType = $oParams->getString('featuretype');
+        }
+        if ($sFeatureType) {
+            $this->setFeatureType($sFeatureType);
+        }
 
         // Country code list
         $sCountries = $oParams->getStringList('countrycodes');
@@ -202,8 +213,9 @@ class Geocode
                     $aCountries[] = strtolower($sCountryCode);
                 }
             }
-            if (isset($aCountries))
+            if (isset($aCountries)) {
                 $this->aCountryCodes = $aCountries;
+            }
         }
 
         $aViewbox = $oParams->getStringList('viewboxlbrt');
@@ -255,13 +267,17 @@ class Geocode
     public function loadStructuredAddressElement($sValue, $sKey, $iNewMinAddressRank, $iNewMaxAddressRank, $aItemListValues)
     {
         $sValue = trim($sValue);
-        if (!$sValue) return false;
+        if (!$sValue) {
+            return false;
+        }
         $this->aStructuredQuery[$sKey] = $sValue;
         if ($this->iMinAddressRank == 0 && $this->iMaxAddressRank == 30) {
             $this->iMinAddressRank = $iNewMinAddressRank;
             $this->iMaxAddressRank = $iNewMaxAddressRank;
         }
-        if ($aItemListValues) $this->aAddressRankList = array_merge($this->aAddressRankList, $aItemListValues);
+        if ($aItemListValues) {
+            $this->aAddressRankList = array_merge($this->aAddressRankList, $aItemListValues);
+        }
         return true;
     }
 
@@ -295,11 +311,11 @@ class Geocode
 
     public function fallbackStructuredQuery()
     {
-        if (!$this->aStructuredQuery) return false;
-
         $aParams = $this->aStructuredQuery;
 
-        if (count($aParams) == 1) return false;
+        if (!$aParams || count($aParams) == 1) {
+            return false;
+        }
 
         $aOrderToFallback = array('postalcode', 'street', 'city', 'county', 'state');
 
@@ -395,8 +411,11 @@ class Geocode
                 $aSearchHash = array();
                 foreach ($aNewPhraseSearches as $iSearch => $aSearch) {
                     $sHash = serialize($aSearch);
-                    if (isset($aSearchHash[$sHash])) unset($aNewPhraseSearches[$iSearch]);
-                    else $aSearchHash[$sHash] = 1;
+                    if (isset($aSearchHash[$sHash])) {
+                        unset($aNewPhraseSearches[$iSearch]);
+                    } else {
+                        $aSearchHash[$sHash] = 1;
+                    }
                 }
 
                 $aNewPhraseSearches = array_slice($aNewPhraseSearches, 0, 50);
@@ -420,7 +439,9 @@ class Geocode
             foreach ($aGroupedSearches as $aNewSearches) {
                 $iSearchCount += count($aNewSearches);
                 $aSearches = array_merge($aSearches, $aNewSearches);
-                if ($iSearchCount > 50) break;
+                if ($iSearchCount > 50) {
+                    break;
+                }
             }
         }
 
@@ -477,7 +498,9 @@ class Geocode
     public function lookup()
     {
         Debug::newFunction('Geocode::lookup');
-        if (!$this->sQuery && !$this->aStructuredQuery) return array();
+        if (!$this->sQuery && !$this->aStructuredQuery) {
+            return array();
+        }
 
         Debug::printDebugArray('Geocode', $this);
 
@@ -635,7 +658,9 @@ class Geocode
                 $aGroupedSearches = array();
                 foreach ($aSearches as $aSearch) {
                     if ($aSearch->getRank() < $this->iMaxRank) {
-                        if (!isset($aGroupedSearches[$aSearch->getRank()])) $aGroupedSearches[$aSearch->getRank()] = array();
+                        if (!isset($aGroupedSearches[$aSearch->getRank()])) {
+                            $aGroupedSearches[$aSearch->getRank()] = array();
+                        }
                         $aGroupedSearches[$aSearch->getRank()][] = $aSearch;
                     }
                 }
@@ -649,7 +674,9 @@ class Geocode
                     $sHash = serialize($aSearch);
                     if (isset($aSearchHash[$sHash])) {
                         unset($aGroupedSearches[$iGroup][$iSearch]);
-                        if (empty($aGroupedSearches[$iGroup])) unset($aGroupedSearches[$iGroup]);
+                        if (empty($aGroupedSearches[$iGroup])) {
+                            unset($aGroupedSearches[$iGroup]);
+                        }
                     } else {
                         $aSearchHash[$sHash] = 1;
                     }
@@ -693,7 +720,9 @@ class Geocode
                         }
                     }
 
-                    if ($iQueryLoop > 20) break;
+                    if ($iQueryLoop > 20) {
+                        break;
+                    }
                 }
 
                 if (!empty($aResults)) {
@@ -768,9 +797,9 @@ class Geocode
                     $aResults = $tempIDs;
                 }
 
-                if (!empty($aResults)) break;
-                if ($iGroupLoop > 4) break;
-                if ($iQueryLoop > 30) break;
+                if (!empty($aResults) || $iGroupLoop > 4 || $iQueryLoop > 30) {
+                    break;
+                }
             }
         } else {
             // Just interpret as a reverse geocode
@@ -810,7 +839,9 @@ class Geocode
 
         $aRecheckWords = preg_split('/\b[\s,\\-]*/u', $sQuery);
         foreach ($aRecheckWords as $i => $sWord) {
-            if (!preg_match('/[\pL\pN]/', $sWord)) unset($aRecheckWords[$i]);
+            if (!preg_match('/[\pL\pN]/', $sWord)) {
+                unset($aRecheckWords[$i]);
+            }
         }
 
         Debug::printVar('Recheck words', $aRecheckWords);
@@ -870,7 +901,9 @@ class Geocode
                 foreach ($aRecheckWords as $i => $sWord) {
                     if (stripos($sAddress, $sWord)!==false) {
                         $iCountWords++;
-                        if (preg_match('/(^|,)\s*'.preg_quote($sWord, '/').'\s*(,|$)/', $sAddress)) $iCountWords += 0.1;
+                        if (preg_match('/(^|,)\s*'.preg_quote($sWord, '/').'\s*(,|$)/', $sAddress)) {
+                            $iCountWords += 0.1;
+                        }
                     }
                 }
 
@@ -898,7 +931,9 @@ class Geocode
             }
 
             // Absolute limit on number of results
-            if (count($aSearchResults) >= $this->iFinalLimit) break;
+            if (count($aSearchResults) >= $this->iFinalLimit) {
+                break;
+            }
         }
 
         Debug::printVar('Post-filter results', $aSearchResults);

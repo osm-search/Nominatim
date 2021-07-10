@@ -96,11 +96,15 @@ if ($bIncludeHierarchy) {
     if ($bGroupHierarchy) {
         $aPlaceDetails['hierarchy'] = array();
         foreach ($aHierarchyLines as $aAddressLine) {
-            if ($aAddressLine['type'] == 'yes') $sType = $aAddressLine['class'];
-            else $sType = $aAddressLine['type'];
+            if ($aAddressLine['type'] == 'yes') {
+                $sType = $aAddressLine['class'];
+            } else {
+                $sType = $aAddressLine['type'];
+            }
 
-            if (!isset($aPlaceDetails['hierarchy'][$sType]))
+            if (!isset($aPlaceDetails['hierarchy'][$sType])) {
                 $aPlaceDetails['hierarchy'][$sType] = array();
+            }
             $aPlaceDetails['hierarchy'][$sType][] = $funcMapAddressLine($aAddressLine);
         }
     } else {

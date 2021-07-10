@@ -81,6 +81,10 @@ if (CONST_NoAccessControl) {
         header('Access-Control-Allow-Headers: '.$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']);
     }
 }
-if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit;
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit;
+}
 
-if (CONST_Debug) header('Content-type: text/html; charset=utf-8');
+if (CONST_Debug) {
+    header('Content-type: text/html; charset=utf-8');
+}

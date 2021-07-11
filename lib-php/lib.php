@@ -6,10 +6,7 @@ function loadSettings($sProjectDir)
     // Temporary hack to set the direcory via environment instead of
     // the installed scripts. Neither setting is part of the official
     // set of settings.
-    defined('CONST_DataDir') or define('CONST_DataDir', $_SERVER['NOMINATIM_DATADIR']);
-    defined('CONST_SqlDir') or define('CONST_SqlDir', $_SERVER['NOMINATIM_SQLDIR']);
     defined('CONST_ConfigDir') or define('CONST_ConfigDir', $_SERVER['NOMINATIM_CONFIGDIR']);
-    defined('CONST_Default_ModulePath') or define('CONST_Default_ModulePath', $_SERVER['NOMINATIM_DATABASE_MODULE_SRC_PATH']);
 }
 
 function getSetting($sConfName, $sDefault = null)
@@ -30,17 +27,6 @@ function getSettingBool($sConfName)
     return strcmp($sVal, 'yes') == 0
            || strcmp($sVal, 'true') == 0
            || strcmp($sVal, '1') == 0;
-}
-
-function getSettingConfig($sConfName, $sSystemConfig)
-{
-    $sValue = $_SERVER['NOMINATIM_'.$sConfName];
-
-    if (!$sValue) {
-        return CONST_ConfigDir.'/'.$sSystemConfig;
-    }
-
-    return $sValue;
 }
 
 function fail($sError, $sUserError = false)

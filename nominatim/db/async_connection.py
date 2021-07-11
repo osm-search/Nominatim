@@ -40,11 +40,10 @@ class DeadlockHandler:
             if exc_type == psycopg2.errors.DeadlockDetected: # pylint: disable=E1101
                 self.handler()
                 return True
-        else:
-            if exc_type == psycopg2.extensions.TransactionRollbackError:
-                if exc_value.pgcode == '40P01':
-                    self.handler()
-                    return True
+        elif exc_type == psycopg2.extensions.TransactionRollbackError \
+             and exc_value.pgcode == '40P01':
+            self.handler()
+            return True
 
         if self.ignore_sql_errors and isinstance(exc_value, psycopg2.Error):
             LOG.info("SQL error ignored: %s", exc_value)

@@ -130,9 +130,8 @@ def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
         if drop:
             conn.drop_table('planet_osm_nodes')
 
-    if drop:
-        if options['flatnode_file']:
-            Path(options['flatnode_file']).unlink()
+    if drop and options['flatnode_file']:
+        Path(options['flatnode_file']).unlink()
 
 
 def create_tables(conn, config, reverse_only=False):

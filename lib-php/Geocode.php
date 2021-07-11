@@ -352,14 +352,9 @@ class Geocode
 
                 // Add all words from this wordset
                 foreach ($aWordset as $iToken => $sToken) {
-                    //echo "<br><b>$sToken</b>";
                     $aNewWordsetSearches = array();
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
-                        //echo "<i>";
-                        //var_dump($oCurrentSearch);
-                        //echo "</i>";
-
                         // Tokens with full name matches.
                         foreach ($oValidTokens->get(' '.$sToken) as $oSearchTerm) {
                             $aNewSearches = $oCurrentSearch->extendWithFullTerm(
@@ -403,7 +398,6 @@ class Geocode
                     usort($aNewWordsetSearches, array('Nominatim\SearchDescription', 'bySearchRank'));
                     $aWordsetSearches = array_slice($aNewWordsetSearches, 0, 50);
                 }
-                //var_Dump('<hr>',count($aWordsetSearches)); exit;
 
                 $aNewPhraseSearches = array_merge($aNewPhraseSearches, $aNewWordsetSearches);
                 usort($aNewPhraseSearches, array('Nominatim\SearchDescription', 'bySearchRank'));

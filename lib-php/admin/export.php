@@ -146,7 +146,6 @@
     $oResults = $oDB->getQueryStatement($sPlacexSQL);
     $fOutstream = fopen('php://output', 'w');
     while ($aRow = $oResults->fetch()) {
-        //var_dump($aRow);
         $iPlaceID = $aRow['place_id'];
         $sSQL = "select rank_address,get_name_by_language(name,$sLanguagePrefArraySQL) as localname from get_addressdata(:place_id, -1)";
         $sSQL .= ' WHERE isaddress';

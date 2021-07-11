@@ -100,12 +100,8 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
             if ($aCounts[$aLine[0]] > $aLine[3]) {
                 showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is pressent too many times');
             }
-            switch ($aLine[6]) {
-                case 'bool':
-                    if (!array_key_exists($aLine[0], $aResult)) {
-                        $aResult[$aLine[0]] = false;
-                    }
-                    break;
+            if ($aLine[6] == 'bool' && !array_key_exists($aLine[0], $aResult)) {
+                $aResult[$aLine[0]] = false;
             }
         }
     }

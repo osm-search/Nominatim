@@ -43,29 +43,26 @@ $aPlaceDetails['centroid'] = array(
 $aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
 
 $funcMapAddressLine = function ($aFull) {
-    $aMapped = array(
-                'localname' => $aFull['localname'],
-                'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
-                'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
-                'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
-                'place_type' => isset($aFull['place_type']) ? $aFull['place_type'] : null,
-                'class' => $aFull['class'],
-                'type' => $aFull['type'],
-                'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
-                'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
-                'distance' => (float) $aFull['distance'],
-                'isaddress' => isset($aFull['isaddress']) ? (bool) $aFull['isaddress'] : null
-               );
-
-    return $aMapped;
+    return array(
+            'localname' => $aFull['localname'],
+            'place_id' => isset($aFull['place_id']) ? (int) $aFull['place_id'] : null,
+            'osm_id' => isset($aFull['osm_id']) ? (int) $aFull['osm_id'] : null,
+            'osm_type' => isset($aFull['osm_type']) ? $aFull['osm_type'] : null,
+            'place_type' => isset($aFull['place_type']) ? $aFull['place_type'] : null,
+            'class' => $aFull['class'],
+            'type' => $aFull['type'],
+            'admin_level' => isset($aFull['admin_level']) ? (int) $aFull['admin_level'] : null,
+            'rank_address' => $aFull['rank_address'] ? (int) $aFull['rank_address'] : null,
+            'distance' => (float) $aFull['distance'],
+            'isaddress' => isset($aFull['isaddress']) ? (bool) $aFull['isaddress'] : null
+           );
 };
 
 $funcMapKeyword = function ($aFull) {
-    $aMapped = array(
-                'id' => (int) $aFull['word_id'],
-                'token' => $aFull['word_token']
-               );
-    return $aMapped;
+    return array(
+            'id' => (int) $aFull['word_id'],
+            'token' => $aFull['word_token']
+           );
 };
 
 if ($aAddressLines) {

@@ -90,16 +90,16 @@ class ParameterParser
         $aLanguages = array();
         $sLangString = $this->getString('accept-language', $sFallback);
 
-        if ($sLangString) {
-            if (preg_match_all('/(([a-z]{1,8})([-_][a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER)) {
-                foreach ($aLanguagesParse as $iLang => $aLanguage) {
-                    $aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
-                    if (!isset($aLanguages[$aLanguage[2]])) {
-                        $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
-                    }
+        if ($sLangString
+            && preg_match_all('/(([a-z]{1,8})([-_][a-z]{1,8})?)\s*(;\s*q\s*=\s*(1|0\.[0-9]+))?/i', $sLangString, $aLanguagesParse, PREG_SET_ORDER)
+        ) {
+            foreach ($aLanguagesParse as $iLang => $aLanguage) {
+                $aLanguages[$aLanguage[1]] = isset($aLanguage[5])?(float)$aLanguage[5]:1 - ($iLang/100);
+                if (!isset($aLanguages[$aLanguage[2]])) {
+                    $aLanguages[$aLanguage[2]] = $aLanguages[$aLanguage[1]]/10;
                 }
-                arsort($aLanguages);
             }
+            arsort($aLanguages);
         }
         if (empty($aLanguages) && CONST_Default_Language) {
             $aLanguages[CONST_Default_Language] = 1;

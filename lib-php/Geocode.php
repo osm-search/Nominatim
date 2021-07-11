@@ -817,10 +817,8 @@ class Geocode
 
         // No results? Done
         if (empty($aResults)) {
-            if ($this->bFallback) {
-                if ($this->fallbackStructuredQuery()) {
-                    return $this->lookup();
-                }
+            if ($this->bFallback && $this->fallbackStructuredQuery()) {
+                return $this->lookup();
             }
 
             return array();

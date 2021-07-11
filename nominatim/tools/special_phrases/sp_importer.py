@@ -274,9 +274,8 @@ class SPImporter():
                                 (self.phplib_dir / 'migration/PhraseSettingsToJson.php').resolve(),
                                 file_path], check=True)
                 LOG.warning('special_phrase configuration file has been converted to json.')
-                return json_file_path
             except subprocess.CalledProcessError:
                 LOG.error('Error while converting %s to json.', file_path)
                 raise
-        else:
-            return json_file_path
+
+        return json_file_path

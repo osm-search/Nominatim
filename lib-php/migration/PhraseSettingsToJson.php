@@ -8,10 +8,12 @@ if (file_exists($phpPhraseSettingsFile) && !file_exists($jsonPhraseSettingsFile)
 
     $data = array();
 
-    if (isset($aTagsBlacklist))
+    if (isset($aTagsBlacklist)) {
         $data['blackList'] = $aTagsBlacklist;
-    if (isset($aTagsWhitelist))
+    }
+    if (isset($aTagsWhitelist)) {
         $data['whiteList'] = $aTagsWhitelist;
+    }
 
     $jsonFile = fopen($jsonPhraseSettingsFile, 'w');
     fwrite($jsonFile, json_encode($data));

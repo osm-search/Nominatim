@@ -62,11 +62,15 @@ if (!$aResult['search-only']) {
     $oPlaceLookup->setLanguagePreference(array('en'));
 
     echo 'Warm reverse: ';
-    if ($bVerbose) echo "\n";
+    if ($bVerbose) {
+        echo "\n";
+    }
     for ($i = 0; $i < 1000; $i++) {
         $fLat = rand(-9000, 9000) / 100;
         $fLon = rand(-18000, 18000) / 100;
-        if ($bVerbose) echo "$fLat, $fLon = ";
+        if ($bVerbose) {
+            echo "$fLat, $fLon = ";
+        }
 
         $oLookup = $oReverseGeocode->lookup($fLat, $fLon);
         $aSearchResults = $oLookup ? $oPlaceLookup->lookup(array($oLookup->iId => $oLookup)) : null;
@@ -79,10 +83,14 @@ if (!$aResult['reverse-only']) {
     $oGeocode = new Nominatim\Geocode($oDB);
 
     echo 'Warm search: ';
-    if ($bVerbose) echo "\n";
+    if ($bVerbose) {
+        echo "\n";
+    }
     $sSQL = 'SELECT word FROM word WHERE word is not null ORDER BY search_name_count DESC LIMIT 1000';
     foreach ($oDB->getCol($sSQL) as $sWord) {
-        if ($bVerbose) echo "$sWord = ";
+        if ($bVerbose) {
+            echo "$sWord = ";
+        }
 
         $oGeocode->setLanguagePreference(array('en'));
         $oGeocode->setQuery($sWord);

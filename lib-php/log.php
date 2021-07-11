@@ -16,8 +16,12 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 
     if ($sType == 'reverse') {
         $sOutQuery = (isset($_GET['lat'])?$_GET['lat']:'').'/';
-        if (isset($_GET['lon'])) $sOutQuery .= $_GET['lon'];
-        if (isset($_GET['zoom'])) $sOutQuery .= '/'.$_GET['zoom'];
+        if (isset($_GET['lon'])) {
+            $sOutQuery .= $_GET['lon'];
+        }
+        if (isset($_GET['zoom'])) {
+            $sOutQuery .= '/'.$_GET['zoom'];
+        }
     } else {
         $sOutQuery = $sQuery;
     }

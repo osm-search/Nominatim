@@ -15,7 +15,9 @@ if (empty($aPlace)) {
                         'properties' => array()
                        );
 
-    if (isset($aPlace['place_id'])) $aFilteredPlaces['properties']['place_id'] = $aPlace['place_id'];
+    if (isset($aPlace['place_id'])) {
+        $aFilteredPlaces['properties']['place_id'] = $aPlace['place_id'];
+    }
     $sOSMType = formatOSMType($aPlace['osm_type']);
     if ($sOSMType) {
         $aFilteredPlaces['properties']['osm_type'] = $sOSMType;

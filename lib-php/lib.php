@@ -221,6 +221,8 @@ function closestHouseNumber($aRow)
 if (!function_exists('array_key_last')) {
     function array_key_last(array $array)
     {
-        if (!empty($array)) return key(array_slice($array, -1, 1, true));
+        if (!empty($array)) {
+            return key(array_slice($array, -1, 1, true));
+        }
     }
 }

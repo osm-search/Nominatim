@@ -341,7 +341,7 @@ class LegacyICUNameAnalyzer:
                 term = self.name_processor.get_search_normalized(word)
                 if term:
                     copystr.add(word, ' ' + term, cls, typ,
-                                oper if oper in ('in', 'near')  else None, 0)
+                                oper if oper in ('in', 'near') else None, 0)
                     added += 1
 
             copystr.copy_out(cursor, 'word',

@@ -44,8 +44,8 @@ class SPImporter():
         # This set will contain all existing phrases to be added.
         # It contains tuples with the following format: (lable, class, type, operator)
         self.word_phrases = set()
-        #This set will contain all existing place_classtype tables which doesn't match any
-        #special phrases class/type on the wiki.
+        # This set will contain all existing place_classtype tables which doesn't match any
+        # special phrases class/type on the wiki.
         self.table_phrases_to_delete = set()
 
     def import_phrases(self, tokenizer, should_replace):
@@ -60,7 +60,7 @@ class SPImporter():
         LOG.warning('Special phrases importation starting')
         self._fetch_existing_place_classtype_tables()
 
-        #Store pairs of class/type for further processing
+        # Store pairs of class/type for further processing
         class_type_pairs = set()
 
         for loaded_phrases in self.sp_loader:
@@ -131,17 +131,17 @@ class SPImporter():
             Return the class/type pair corresponding to the phrase.
         """
 
-        #blacklisting: disallow certain class/type combinations
+        # blacklisting: disallow certain class/type combinations
         if phrase.p_class in self.black_list.keys() \
            and phrase.p_type in self.black_list[phrase.p_class]:
             return None
 
-        #whitelisting: if class is in whitelist, allow only tags in the list
+        # whitelisting: if class is in whitelist, allow only tags in the list
         if phrase.p_class in self.white_list.keys() \
            and phrase.p_type not in self.white_list[phrase.p_class]:
             return None
 
-        #sanity check, in case somebody added garbage in the wiki
+        # sanity check, in case somebody added garbage in the wiki
         if not self._check_sanity(phrase):
             self.statistics_handler.notify_one_phrase_invalid()
             return None
@@ -161,7 +161,7 @@ class SPImporter():
 
         sql_tablespace = self.config.TABLESPACE_AUX_DATA
         if sql_tablespace:
-            sql_tablespace = ' TABLESPACE '+sql_tablespace
+            sql_tablespace = ' TABLESPACE ' + sql_tablespace
 
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute("CREATE INDEX idx_placex_classtype ON placex (class, type)")
@@ -174,19 +174,19 @@ class SPImporter():
 
             if table_name in self.table_phrases_to_delete:
                 self.statistics_handler.notify_one_table_ignored()
-                #Remove this table from the ones to delete as it match a class/type
-                #still existing on the special phrases of the wiki.
+                # Remove this table from the ones to delete as it match a
+                # class/type still existing on the special phrases of the wiki.
                 self.table_phrases_to_delete.remove(table_name)
-                #So dont need to create the table and indexes.
+                # So don't need to create the table and indexes.
                 continue
 
-            #Table creation
+            # Table creation
             self._create_place_classtype_table(sql_tablespace, phrase_class, phrase_type)
 
-            #Indexes creation
+            # Indexes creation
             self._create_place_classtype_indexes(sql_tablespace, phrase_class, phrase_type)
 
-            #Grant access on read to the web user.
+            # Grant access on read to the web user.
             self._grant_access_to_webuser(phrase_class, phrase_type)
 
             self.statistics_handler.notify_one_table_created()
@@ -202,8 +202,8 @@ class SPImporter():
         table_name = _classtype_table(phrase_class, phrase_type)
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute(SQL("""
-                    CREATE TABLE IF NOT EXISTS {{}} {} 
-                    AS SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex 
+                    CREATE TABLE IF NOT EXISTS {{}} {}
+                    AS SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex
                     WHERE class = {{}} AND type = {{}}""".format(sql_tablespace))
                               .format(Identifier(table_name), Literal(phrase_class),
                                       Literal(phrase_type)))
@@ -215,7 +215,7 @@ class SPImporter():
         """
         index_prefix = 'idx_place_classtype_{}_{}_'.format(phrase_class, phrase_type)
         base_table = _classtype_table(phrase_class, phrase_type)
-        #Index on centroid
+        # Index on centroid
         if not self.db_connection.index_exists(index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL("""
@@ -223,7 +223,7 @@ class SPImporter():
                                   .format(Identifier(index_prefix + 'centroid'),
                                           Identifier(base_table)), sql_tablespace)
 
-        #Index on place_id
+        # Index on place_id
         if not self.db_connection.index_exists(index_prefix + 'place_id'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL(
@@ -248,10 +248,12 @@ class SPImporter():
             Delete the place_classtype tables.
         """
         LOG.warning('Cleaning database...')
-        #Array containing all queries to execute. Contain tuples of format (query, parameters)
+        # Array containing all queries to execute.
+        # Contains tuples of format (query, parameters)
         queries_parameters = []
 
-        #Delete place_classtype tables corresponding to class/type which are not on the wiki anymore
+        # Delete place_classtype tables corresponding to class/type which
+        # are not on the wiki anymore.
         for table in self.table_phrases_to_delete:
             self.statistics_handler.notify_one_table_deleted()
             query = SQL('DROP TABLE IF EXISTS {}').format(Identifier(table))
@@ -271,7 +273,7 @@ class SPImporter():
         file, extension = os.path.splitext(file_path)
         json_file_path = Path(file + '.json').resolve()
 
-        if extension not in('.php', '.json'):
+        if extension not in ('.php', '.json'):
             raise UsageError('The custom NOMINATIM_PHRASE_CONFIG file has not a valid extension.')
 
         if extension == '.php' and not isfile(json_file_path):

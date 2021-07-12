@@ -103,7 +103,7 @@ class CommandlineParser:
         return 1
 
 
-##### Subcommand classes
+# Subcommand classes
 #
 # Each class needs to implement two functions: add_args() adds the CLI parameters
 # for the subfunction, run() executes the subcommand.

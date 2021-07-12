@@ -582,7 +582,7 @@ class _TokenCache:
         with conn.cursor() as cur:
             cur.execute("""SELECT i, ARRAY[getorcreate_housenumber_id(i::text)]::text
                            FROM generate_series(1, 100) as i""")
-            self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
+            self._cached_housenumbers = {str(r[0]): r[1] for r in cur}
 
         # For postcodes remember the ones that have already been added
         self.postcodes = set()

@@ -24,6 +24,7 @@ def _check(hint=None):
     """
     def decorator(func):
         title = func.__doc__.split('\n', 1)[0].strip()
+
         def run_check(conn, config):
             print(title, end=' ... ')
             ret = func(conn, config)
@@ -98,13 +99,12 @@ def _get_indexes(conn):
     if conn.table_exists('place'):
         indexes.extend(('idx_placex_pendingsector',
                         'idx_location_area_country_place_id',
-                        'idx_place_osm_unique'
-                       ))
+                        'idx_place_osm_unique'))
 
     return indexes
 
 
-### CHECK FUNCTIONS
+# CHECK FUNCTIONS
 #
 # Functions are exectured in the order they appear here.
 

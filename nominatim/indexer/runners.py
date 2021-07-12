@@ -25,7 +25,7 @@ class AbstractPlacexRunner:
                    SET indexed_status = 0, address = v.addr, token_info = v.ti
                    FROM (VALUES {}) as v(id, addr, ti)
                    WHERE place_id = v.id
-               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"] * num_places))
 
 
     @staticmethod
@@ -124,7 +124,7 @@ class InterpolationRunner:
                    SET indexed_status = 0, address = v.addr, token_info = v.ti
                    FROM (VALUES {}) as v(id, addr, ti)
                    WHERE place_id = v.id
-               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"] * num_places))
 
 
     def index_places(self, worker, places):

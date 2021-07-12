@@ -142,7 +142,8 @@ def change_housenumber_transliteration(conn, **_):
                        BEGIN
                          SELECT array_to_string(array_agg(trans), ';')
                            INTO normtext
-                           FROM (SELECT lookup_word as trans, getorcreate_housenumber_id(lookup_word)
+                           FROM (SELECT lookup_word as trans,
+                                        getorcreate_housenumber_id(lookup_word)
                                  FROM (SELECT make_standard_name(h) as lookup_word
                                        FROM regexp_split_to_table(housenumber, '[,;]') h) x) y;
                          return normtext;

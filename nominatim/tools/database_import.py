@@ -184,7 +184,9 @@ def truncate_data_tables(conn):
 
     conn.commit()
 
+
 _COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
+
 
 def load_data(dsn, threads):
     """ Copy data into the word and placex table.
@@ -250,6 +252,7 @@ def create_search_indices(conn, config, drop=False):
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
 
+
 def create_country_names(conn, tokenizer, languages=None):
     """ Add default country names to search index. `languages` is a comma-
         separated list of language codes as used in OSM. If `languages` is not
@@ -261,8 +264,7 @@ def create_country_names(conn, tokenizer, languages=None):
 
     def _include_key(key):
         return key == 'name' or \
-               (key.startswith('name:') \
-                and (not languages or key[5:] in languages))
+               (key.startswith('name:') and (not languages or key[5:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)
@@ -271,7 +273,7 @@ def create_country_names(conn, tokenizer, languages=None):
 
         with tokenizer.name_analyzer() as analyzer:
             for code, name in cur:
-                names = {'countrycode' : code}
+                names = {'countrycode': code}
                 if code == 'gb':
                     names['short_name'] = 'UK'
                 if code == 'us':

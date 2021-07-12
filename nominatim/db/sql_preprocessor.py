@@ -61,7 +61,7 @@ def _setup_postgresql_features(conn):
     """
     pg_version = conn.server_version_tuple()
     return {
-        'has_index_non_key_column' : pg_version >= (11, 0, 0)
+        'has_index_non_key_column': pg_version >= (11, 0, 0)
     }
 
 class SQLPreprocessor:

@@ -58,7 +58,7 @@ def load_address_levels(conn, table, levels):
                                         rank_address SMALLINT)""".format(table))
 
         cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
-                                .format(pysql.Identifier(table)), rows)
+                           .format(pysql.Identifier(table)), rows)
 
         cur.execute('CREATE UNIQUE INDEX ON {} (country_code, class, type)'.format(table))
 

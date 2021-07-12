@@ -383,9 +383,9 @@ class LegacyICUNameAnalyzer:
             if word_tokens:
                 cur.execute("""INSERT INTO word (word_id, word_token, country_code,
                                                  search_name_count)
-                               (SELECT nextval('seq_word'), token, '{}', 0
+                               (SELECT nextval('seq_word'), token, %s, 0
                                 FROM unnest(%s) as token)
-                            """.format(country_code), (list(word_tokens),))
+                            """, (country_code, list(word_tokens)))
 
 
     def process_place(self, place):

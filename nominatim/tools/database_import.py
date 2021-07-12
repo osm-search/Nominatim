@@ -9,6 +9,7 @@ from pathlib import Path
 
 import psutil
 import psycopg2.extras
+from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect, get_pg_env
 from nominatim.db import utils as db_utils
@@ -185,7 +186,10 @@ def truncate_data_tables(conn):
     conn.commit()
 
 
-_COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
+_COPY_COLUMNS = pysql.SQL(',').join(map(pysql.Identifier,
+                                        ('osm_type', 'osm_id', 'class', 'type',
+                                         'name', 'admin_level', 'address',
+                                         'extratags', 'geometry')))
 
 
 def load_data(dsn, threads):
@@ -197,12 +201,15 @@ def load_data(dsn, threads):
     for imod in range(place_threads):
         conn = DBConnection(dsn)
         conn.connect()
-        conn.perform("""INSERT INTO placex ({0})
-                         SELECT {0} FROM place
-                         WHERE osm_id % {1} = {2}
-                           AND NOT (class='place' and (type='houses' or type='postcode'))
-                           AND ST_IsValid(geometry)
-                     """.format(_COPY_COLUMNS, place_threads, imod))
+        conn.perform(
+            pysql.SQL("""INSERT INTO placex ({columns})
+                           SELECT {columns} FROM place
+                           WHERE osm_id % {total} = {mod}
+                             AND NOT (class='place' and (type='houses' or type='postcode'))
+                             AND ST_IsValid(geometry)
+                      """).format(columns=_COPY_COLUMNS,
+                                  total=pysql.Literal(place_threads),
+                                  mod=pysql.Literal(imod)))
         sel.register(conn, selectors.EVENT_READ, conn)
 
     # Address interpolations go into another table.

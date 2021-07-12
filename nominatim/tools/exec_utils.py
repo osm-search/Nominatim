@@ -141,6 +141,6 @@ def get_url(url):
     try:
         with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
             return response.read().decode('utf-8')
-    except:
+    except Exception:
         LOG.fatal('Failed to load URL: %s', url)
         raise

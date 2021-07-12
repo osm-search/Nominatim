@@ -49,7 +49,7 @@ def load_address_levels(conn, table, levels):
         _add_address_level_rows_from_entry(rows, entry)
 
     with conn.cursor() as cur:
-        cur.execute('DROP TABLE IF EXISTS {}'.format(table))
+        cur.drop_table(table)
 
         cur.execute("""CREATE TABLE {} (country_code varchar(2),
                                         class TEXT,

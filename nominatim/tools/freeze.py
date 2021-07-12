@@ -29,7 +29,7 @@ def drop_update_tables(conn):
         tables = [r[0] for r in cur]
 
         for table in tables:
-            cur.execute('DROP TABLE IF EXISTS "{}" CASCADE'.format(table))
+            cur.drop_table(table, cascade=True)
 
     conn.commit()
 

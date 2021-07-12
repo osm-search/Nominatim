@@ -248,20 +248,14 @@ class SPImporter():
             Delete the place_classtype tables.
         """
         LOG.warning('Cleaning database...')
-        # Array containing all queries to execute.
-        # Contains tuples of format (query, parameters)
-        queries_parameters = []
 
         # Delete place_classtype tables corresponding to class/type which
         # are not on the wiki anymore.
-        for table in self.table_phrases_to_delete:
-            self.statistics_handler.notify_one_table_deleted()
-            query = SQL('DROP TABLE IF EXISTS {}').format(Identifier(table))
-            queries_parameters.append((query, ()))
-
         with self.db_connection.cursor() as db_cursor:
-            for query, parameters in queries_parameters:
-                db_cursor.execute(query, parameters)
+            for table in self.table_phrases_to_delete:
+                self.statistics_handler.notify_one_table_deleted()
+                db_cursor.drop_table(table)
+
 
     def _convert_php_settings_if_needed(self, file_path):
         """

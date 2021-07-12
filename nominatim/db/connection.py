@@ -26,6 +26,16 @@ class _Cursor(psycopg2.extras.DictCursor):
 
         super().execute(query, args)
 
+
+    def execute_values(self, sql, argslist, template=None):
+        """ Wrapper for the psycopg2 convenience function to execute
+            SQL for a list of values.
+        """
+        LOG.debug("SQL execute_values(%s, %s)", sql, argslist)
+
+        psycopg2.extras.execute_values(self, sql, argslist, template=template)
+
+
     def scalar(self, sql, args=None):
         """ Execute query that returns a single value. The value is returned.
             If the query yields more than one row, a ValueError is raised.

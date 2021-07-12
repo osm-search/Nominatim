@@ -9,8 +9,6 @@ import re
 from textwrap import dedent
 from pathlib import Path
 
-import psycopg2.extras
-
 from nominatim.db.connection import connect
 from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
@@ -359,8 +357,7 @@ class LegacyICUNameAnalyzer:
         to_delete = existing_phrases - new_phrases
 
         if to_delete:
-            psycopg2.extras.execute_values(
-                cursor,
+            cursor.execute_values(
                 """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
                     WHERE word = name and class = in_class and type = in_type
                           and ((op = '-' and operator is null) or op = operator)""",

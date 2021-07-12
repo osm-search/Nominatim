@@ -5,7 +5,7 @@ import json
 import logging
 from textwrap import dedent
 
-from psycopg2.extras import execute_values
+from psycopg2 import sql as pysql
 
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
@@ -57,7 +57,8 @@ def load_address_levels(conn, table, levels):
                                         rank_search SMALLINT,
                                         rank_address SMALLINT)""".format(table))
 
-        execute_values(cur, "INSERT INTO {} VALUES %s".format(table), rows)
+        cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
+                                .format(pysql.Identifier(table)), rows)
 
         cur.execute('CREATE UNIQUE INDEX ON {} (country_code, class, type)'.format(table))
 

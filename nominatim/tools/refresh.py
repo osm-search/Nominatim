@@ -155,6 +155,20 @@ def recompute_importance(conn):
     conn.commit()
 
 
+def _quote_php_variable(var_type, config, conf_name):
+    if var_type == bool:
+        return 'true' if config.get_bool(conf_name) else 'false'
+
+    if var_type == int:
+        return getattr(config, conf_name)
+
+    if not getattr(config, conf_name):
+        return 'false'
+
+    quoted = getattr(config, conf_name).replace("'", "\\'")
+    return f"'{quoted}'"
+
+
 def setup_website(basedir, config, conn):
     """ Create the website script stubs.
     """
@@ -174,18 +188,11 @@ def setup_website(basedir, config, conn):
                                  config.project_dir / 'tokenizer'))
 
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
-        if var_type == bool:
-            varout = 'true' if config.get_bool(conf_name) else 'false'
-        elif var_type == int:
-            varout = getattr(config, conf_name)
-        elif not getattr(config, conf_name):
-            varout = 'false'
-        else:
-            varout = "'{}'".format(getattr(config, conf_name).replace("'", "\\'"))
+        varout = _quote_php_variable(var_type, config, conf_name)
 
-        template += "@define('CONST_{}', {});\n".format(php_name, varout)
+        template += f"@define('CONST_{php_name}', {varout});\n"
 
-    template += "\nrequire_once('{}/website/{{}}');\n".format(config.lib_dir.php)
+    template += f"\nrequire_once('{config.lib_dir.php}/website/{{}}');\n"
 
     search_name_table_exists = bool(conn and conn.table_exists('search_name'))
 

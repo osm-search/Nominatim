@@ -424,37 +424,37 @@ class LegacyNameAnalyzer:
                 self.add_country_names(country_feature.lower(), names)
 
         address = place.get('address')
-
         if address:
-            hnrs = []
-            addr_terms = []
-            for key, value in address.items():
-                if key == 'postcode':
-                    self._add_postcode(value)
-                elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
-                    hnrs.append(value)
-                elif key == 'street':
-                    token_info.add_street(self.conn, value)
-                elif key == 'place':
-                    token_info.add_place(self.conn, value)
-                elif not key.startswith('_') and \
-                     key not in ('country', 'full'):
-                    addr_terms.append((key, value))
-
-            if hnrs:
-                token_info.add_housenumbers(self.conn, hnrs)
-
-            if addr_terms:
-                token_info.add_address_terms(self.conn, addr_terms)
+            self._process_place_address(token_info, address)
 
         return token_info.data
 
 
-    def _add_postcode(self, postcode):
-        """ Make sure the normalized postcode is present in the word table.
-        """
-        if re.search(r'[:,;]', postcode) is None:
-            self._cache.add_postcode(self.conn, self.normalize_postcode(postcode))
+    def _process_place_address(self, token_info, address):
+        hnrs = []
+        addr_terms = []
+
+        for key, value in address.items():
+            if key == 'postcode':
+                # Make sure the normalized postcode is present in the word table.
+                if re.search(r'[:,;]', value) is None:
+                    self._cache.add_postcode(self.conn,
+                                             self.normalize_postcode(value))
+            elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
+                hnrs.append(value)
+            elif key == 'street':
+                token_info.add_street(self.conn, value)
+            elif key == 'place':
+                token_info.add_place(self.conn, value)
+            elif not key.startswith('_') and key not in ('country', 'full'):
+                addr_terms.append((key, value))
+
+        if hnrs:
+            token_info.add_housenumbers(self.conn, hnrs)
+
+        if addr_terms:
+            token_info.add_address_terms(self.conn, addr_terms)
+
 
 
 class _TokenInfo:

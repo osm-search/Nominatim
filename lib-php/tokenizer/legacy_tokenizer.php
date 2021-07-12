@@ -105,7 +105,7 @@ class Tokenizer
         // now compute all possible tokens
         $aWordLists = array();
         $aTokens = array();
-        foreach ($aNormPhrases as $sTitle => $sPhrase) {
+        foreach ($aNormPhrases as $sPhrase) {
             if (strlen($sPhrase) > 0) {
                 $aWords = explode(' ', $sPhrase);
                 Tokenizer::addTokens($aTokens, $aWords);

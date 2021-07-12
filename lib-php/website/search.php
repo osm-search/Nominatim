@@ -77,7 +77,9 @@ if (isset($_SERVER['REQUEST_SCHEME'])
     $sMoreURL = '/search.php?'.http_build_query($aMoreParams);
 }
 
-if (CONST_Debug) exit;
+if (CONST_Debug) {
+    exit;
+}
 
 $sOutputTemplate = ($sOutputFormat == 'jsonv2') ? 'json' : $sOutputFormat;
 include(CONST_LibDir.'/template/search-'.$sOutputTemplate.'.php');

@@ -20,6 +20,12 @@ from nominatim.errors import UsageError
 from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 
 LOG = logging.getLogger()
+
+def _classtype_table(phrase_class, phrase_type):
+    """ Return the name of the table for the given class and type.
+    """
+    return f'place_classtype_{phrase_class}_{phrase_type}'
+
 class SPImporter():
     # pylint: disable-msg=too-many-instance-attributes
     """
@@ -164,7 +170,7 @@ class SPImporter():
             phrase_class = pair[0]
             phrase_type = pair[1]
 
-            table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
+            table_name = _classtype_table(phrase_class, phrase_type)
 
             if table_name in self.table_phrases_to_delete:
                 self.statistics_handler.notify_one_table_ignored()
@@ -193,7 +199,7 @@ class SPImporter():
         """
             Create table place_classtype of the given phrase_class/phrase_type if doesn't exit.
         """
-        table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
+        table_name = _classtype_table(phrase_class, phrase_type)
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute(SQL("""
                     CREATE TABLE IF NOT EXISTS {{}} {} 
@@ -208,7 +214,7 @@ class SPImporter():
             Create indexes on centroid and place_id for the place_classtype table.
         """
         index_prefix = 'idx_place_classtype_{}_{}_'.format(phrase_class, phrase_type)
-        base_table = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
+        base_table = _classtype_table(phrase_class, phrase_type)
         #Index on centroid
         if not self.db_connection.index_exists(index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
@@ -230,7 +236,7 @@ class SPImporter():
         """
             Grant access on read to the table place_classtype for the webuser.
         """
-        table_name = 'place_classtype_{}_{}'.format(phrase_class, phrase_type)
+        table_name = _classtype_table(phrase_class, phrase_type)
         with self.db_connection.cursor() as db_cursor:
             db_cursor.execute(SQL("""GRANT SELECT ON {} TO {}""")
                               .format(Identifier(table_name),
@@ -274,9 +280,8 @@ class SPImporter():
                                 (self.phplib_dir / 'migration/PhraseSettingsToJson.php').resolve(),
                                 file_path], check=True)
                 LOG.warning('special_phrase configuration file has been converted to json.')
-                return json_file_path
             except subprocess.CalledProcessError:
                 LOG.error('Error while converting %s to json.', file_path)
                 raise
-        else:
-            return json_file_path
+
+        return json_file_path

@@ -92,7 +92,7 @@ class Indexer:
 
 
     def index_full(self, analyse=True):
-        """ Index the complete database. This will first index boudnaries
+        """ Index the complete database. This will first index boundaries
             followed by all other objects. When `analyse` is True, then the
             database will be analysed at the appropriate places to
             ensure that database statistics are updated.
@@ -100,13 +100,10 @@ class Indexer:
         with connect(self.dsn) as conn:
             conn.autocommit = True
 
-            if analyse:
-                def _analyze():
+            def _analyze():
+                if analyse:
                     with conn.cursor() as cur:
                         cur.execute('ANALYZE')
-            else:
-                def _analyze():
-                    pass
 
             self.index_by_rank(0, 4)
             _analyze()

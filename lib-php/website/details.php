@@ -95,16 +95,22 @@ $iPlaceID = (int)$sPlaceId;
 
 if (CONST_Use_US_Tiger_Data) {
     $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_tiger WHERE place_id = '.$iPlaceID);
-    if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+    if ($iParentPlaceID) {
+        $iPlaceID = $iParentPlaceID;
+    }
 }
 
 // interpolated house numbers
 $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_property_osmline WHERE place_id = '.$iPlaceID);
-if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+if ($iParentPlaceID) {
+    $iPlaceID = $iParentPlaceID;
+}
 
 // artificial postcodes
 $iParentPlaceID = $oDB->getOne('SELECT parent_place_id FROM location_postcode WHERE place_id = '.$iPlaceID);
-if ($iParentPlaceID) $iPlaceID = $iParentPlaceID;
+if ($iParentPlaceID) {
+    $iPlaceID = $iParentPlaceID;
+}
 
 $hLog = logStart($oDB, 'details', $_SERVER['QUERY_STRING'], $aLangPrefOrder);
 

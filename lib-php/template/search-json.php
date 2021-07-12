@@ -6,7 +6,7 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
                'place_id'=>$aPointDetails['place_id'],
                'licence'=>'Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright',
               );
-    
+
     $sOSMType = formatOSMType($aPointDetails['osm_type']);
     if ($sOSMType) {
         $aPlace['osm_type'] = $sOSMType;
@@ -60,8 +60,12 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
         $aPlace['geokml'] = $aPointDetails['askml'];
     }
 
-    if (isset($aPointDetails['sExtraTags'])) $aPlace['extratags'] = $aPointDetails['sExtraTags'];
-    if (isset($aPointDetails['sNameDetails'])) $aPlace['namedetails'] = $aPointDetails['sNameDetails'];
+    if (isset($aPointDetails['sExtraTags'])) {
+        $aPlace['extratags'] = $aPointDetails['sExtraTags'];
+    }
+    if (isset($aPointDetails['sNameDetails'])) {
+        $aPlace['namedetails'] = $aPointDetails['sNameDetails'];
+    }
 
     $aFilteredPlaces[] = $aPlace;
 }

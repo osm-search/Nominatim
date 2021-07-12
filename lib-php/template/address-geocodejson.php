@@ -5,9 +5,11 @@
 $aFilteredPlaces = array();
 
 if (empty($aPlace)) {
-    if (isset($sError))
+    if (isset($sError)) {
         $aFilteredPlaces['error'] = $sError;
-    else $aFilteredPlaces['error'] = 'Unable to geocode';
+    } else {
+        $aFilteredPlaces['error'] = 'Unable to geocode';
+    }
     javascript_renderData($aFilteredPlaces);
 } else {
     $aFilteredPlaces = array(
@@ -17,7 +19,9 @@ if (empty($aPlace)) {
                                         )
                        );
 
-    if (isset($aPlace['place_id'])) $aFilteredPlaces['properties']['geocoding']['place_id'] = $aPlace['place_id'];
+    if (isset($aPlace['place_id'])) {
+        $aFilteredPlaces['properties']['geocoding']['place_id'] = $aPlace['place_id'];
+    }
     $sOSMType = formatOSMType($aPlace['osm_type']);
     if ($sOSMType) {
         $aFilteredPlaces['properties']['geocoding']['osm_type'] = $sOSMType;

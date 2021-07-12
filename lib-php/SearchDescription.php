@@ -415,7 +415,6 @@ class SearchDescription
     public function query(&$oDB, $iMinRank, $iMaxRank, $iLimit)
     {
         $aResults = array();
-        $iHousenumber = -1;
 
         if ($this->sCountryCode
             && empty($this->aName)

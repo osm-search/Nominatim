@@ -6,10 +6,7 @@ function loadSettings($sProjectDir)
     // Temporary hack to set the direcory via environment instead of
     // the installed scripts. Neither setting is part of the official
     // set of settings.
-    defined('CONST_DataDir') or define('CONST_DataDir', $_SERVER['NOMINATIM_DATADIR']);
-    defined('CONST_SqlDir') or define('CONST_SqlDir', $_SERVER['NOMINATIM_SQLDIR']);
     defined('CONST_ConfigDir') or define('CONST_ConfigDir', $_SERVER['NOMINATIM_CONFIGDIR']);
-    defined('CONST_Default_ModulePath') or define('CONST_Default_ModulePath', $_SERVER['NOMINATIM_DATABASE_MODULE_SRC_PATH']);
 }
 
 function getSetting($sConfName, $sDefault = null)
@@ -32,22 +29,14 @@ function getSettingBool($sConfName)
            || strcmp($sVal, '1') == 0;
 }
 
-function getSettingConfig($sConfName, $sSystemConfig)
-{
-    $sValue = $_SERVER['NOMINATIM_'.$sConfName];
-
-    if (!$sValue) {
-        return CONST_ConfigDir.'/'.$sSystemConfig;
-    }
-
-    return $sValue;
-}
-
 function fail($sError, $sUserError = false)
 {
-    if (!$sUserError) $sUserError = $sError;
+    if (!$sUserError) {
+        $sUserError = $sError;
+    }
     error_log('ERROR: '.$sError);
-    var_dump($sUserError)."\n";
+    var_dump($sUserError);
+    echo "\n";
     exit(-1);
 }
 
@@ -95,8 +84,9 @@ function getDatabaseDate(&$oDB)
 
 function byImportance($a, $b)
 {
-    if ($a['importance'] != $b['importance'])
+    if ($a['importance'] != $b['importance']) {
         return ($a['importance'] > $b['importance']?-1:1);
+    }
 
     return $a['foundorder'] <=> $b['foundorder'];
 }
@@ -231,6 +221,8 @@ function closestHouseNumber($aRow)
 if (!function_exists('array_key_last')) {
     function array_key_last(array $array)
     {
-        if (!empty($array)) return key(array_slice($array, -1, 1, true));
+        if (!empty($array)) {
+            return key(array_slice($array, -1, 1, true));
+        }
     }
 }

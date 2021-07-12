@@ -9,8 +9,12 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
 
     foreach ($aSpec as $aLine) {
         if (is_array($aLine)) {
-            if ($aLine[0]) $aQuick['--'.$aLine[0]] = $aLine;
-            if ($aLine[1]) $aQuick['-'.$aLine[1]] = $aLine;
+            if ($aLine[0]) {
+                $aQuick['--'.$aLine[0]] = $aLine;
+            }
+            if ($aLine[1]) {
+                $aQuick['-'.$aLine[1]] = $aLine;
+            }
             $aCounts[$aLine[0]] = 0;
         }
     }
@@ -28,7 +32,9 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
                     $xVal = array();
                     for ($n = $aLine[4]; $i < $iSize && $n; $n--) {
                         $i++;
-                        if ($i >= $iSize || $aArg[$i][0] == '-') showUsage($aSpec, $bExitOnError, 'Parameter of  \''.$aLine[0].'\' is missing');
+                        if ($i >= $iSize || $aArg[$i][0] == '-') {
+                            showUsage($aSpec, $bExitOnError, 'Parameter of  \''.$aLine[0].'\' is missing');
+                        }
 
                         switch ($aLine[6]) {
                             case 'realpath':
@@ -56,7 +62,9 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
                                 break;
                         }
                     }
-                    if ($aLine[4] == 1) $xVal = $xVal[0];
+                    if ($aLine[4] == 1) {
+                        $xVal = $xVal[0];
+                    }
                 } else {
                     $xVal = true;
                 }
@@ -65,7 +73,9 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
             }
 
             if ($aLine[3] > 1) {
-                if (!array_key_exists($aLine[0], $aResult)) $aResult[$aLine[0]] = array();
+                if (!array_key_exists($aLine[0], $aResult)) {
+                    $aResult[$aLine[0]] = array();
+                }
                 $aResult[$aLine[0]][] = $xVal;
             } else {
                 $aResult[$aLine[0]] = $xVal;
@@ -75,18 +85,23 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
         }
     }
 
-    if (array_key_exists('help', $aResult)) showUsage($aSpec);
-    if ($bUnknown && $bExitOnUnknown) showUsage($aSpec, $bExitOnError, 'Unknown option \''.$bUnknown.'\'');
+    if (array_key_exists('help', $aResult)) {
+        showUsage($aSpec);
+    }
+    if ($bUnknown && $bExitOnUnknown) {
+        showUsage($aSpec, $bExitOnError, 'Unknown option \''.$bUnknown.'\'');
+    }
 
     foreach ($aSpec as $aLine) {
         if (is_array($aLine)) {
-            if ($aCounts[$aLine[0]] < $aLine[2]) showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is missing');
-            if ($aCounts[$aLine[0]] > $aLine[3]) showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is pressent too many times');
-            switch ($aLine[6]) {
-                case 'bool':
-                    if (!array_key_exists($aLine[0], $aResult))
-                        $aResult[$aLine[0]] = false;
-                    break;
+            if ($aCounts[$aLine[0]] < $aLine[2]) {
+                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is missing');
+            }
+            if ($aCounts[$aLine[0]] > $aLine[3]) {
+                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is pressent too many times');
+            }
+            if ($aLine[6] == 'bool' && !array_key_exists($aLine[0], $aResult)) {
+                $aResult[$aLine[0]] = false;
             }
         }
     }
@@ -109,8 +124,12 @@ function showUsage($aSpec, $bExit = false, $sError = false)
                 echo "\n";
             }
             $aNames = array();
-            if ($aLine[1]) $aNames[] = '-'.$aLine[1];
-            if ($aLine[0]) $aNames[] = '--'.$aLine[0];
+            if ($aLine[1]) {
+                $aNames[] = '-'.$aLine[1];
+            }
+            if ($aLine[0]) {
+                $aNames[] = '--'.$aLine[0];
+            }
             $sName = join(', ', $aNames);
             echo '  '.$sName.str_repeat(' ', 30-strlen($sName)).$aLine[7]."\n";
         } else {

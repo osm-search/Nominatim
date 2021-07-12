@@ -39,7 +39,9 @@ class DB
         $conn->exec("SET DateStyle TO 'sql,european'");
         $conn->exec("SET client_encoding TO 'utf-8'");
         $iMaxExecution = ini_get('max_execution_time');
-        if ($iMaxExecution > 0) $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds
+        if ($iMaxExecution > 0) {
+            $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds
+        }
 
         $this->connection = $conn;
         return true;
@@ -95,7 +97,9 @@ class DB
         try {
             $stmt = $this->getQueryStatement($sSQL, $aInputVars, $sErrMessage);
             $row = $stmt->fetch(\PDO::FETCH_NUM);
-            if ($row === false) return false;
+            if ($row === false) {
+                return false;
+            }
         } catch (\PDOException $e) {
             throw new \Nominatim\DatabaseError($sErrMessage, 500, null, $e, $sSQL);
         }
@@ -306,9 +310,13 @@ class DB
         if (preg_match('/^pgsql:(.+)$/', $sDSN, $aMatches)) {
             foreach (explode(';', $aMatches[1]) as $sKeyVal) {
                 list($sKey, $sVal) = explode('=', $sKeyVal, 2);
-                if ($sKey == 'host') $sKey = 'hostspec';
-                if ($sKey == 'dbname') $sKey = 'database';
-                if ($sKey == 'user') $sKey = 'username';
+                if ($sKey == 'host') {
+                    $sKey = 'hostspec';
+                } elseif ($sKey == 'dbname') {
+                    $sKey = 'database';
+                } elseif ($sKey == 'user') {
+                    $sKey = 'username';
+                }
                 $aInfo[$sKey] = $sVal;
             }
         }

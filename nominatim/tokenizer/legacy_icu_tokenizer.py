@@ -411,31 +411,34 @@ class LegacyICUNameAnalyzer:
                 self.add_country_names(country_feature.lower(), names)
 
         address = place.get('address')
-
         if address:
-            hnrs = []
-            addr_terms = []
-            for key, value in address.items():
-                if key == 'postcode':
-                    self._add_postcode(value)
-                elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
-                    hnrs.append(value)
-                elif key == 'street':
-                    token_info.add_street(*self._compute_name_tokens({'name': value}))
-                elif key == 'place':
-                    token_info.add_place(*self._compute_name_tokens({'name': value}))
-                elif not key.startswith('_') and \
-                     key not in ('country', 'full'):
-                    addr_terms.append((key, *self._compute_name_tokens({'name': value})))
-
-            if hnrs:
-                hnrs = self._split_housenumbers(hnrs)
-                token_info.add_housenumbers(self.conn, [self._make_standard_hnr(n) for n in hnrs])
-
-            if addr_terms:
-                token_info.add_address_terms(addr_terms)
+            self._process_place_address(token_info, address)
 
         return token_info.data
+
+
+    def _process_place_address(self, token_info, address):
+        hnrs = []
+        addr_terms = []
+        for key, value in address.items():
+            if key == 'postcode':
+                self._add_postcode(value)
+            elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
+                hnrs.append(value)
+            elif key == 'street':
+                token_info.add_street(*self._compute_name_tokens({'name': value}))
+            elif key == 'place':
+                token_info.add_place(*self._compute_name_tokens({'name': value}))
+            elif not key.startswith('_') and \
+                 key not in ('country', 'full'):
+                addr_terms.append((key, *self._compute_name_tokens({'name': value})))
+
+        if hnrs:
+            hnrs = self._split_housenumbers(hnrs)
+            token_info.add_housenumbers(self.conn, [self._make_standard_hnr(n) for n in hnrs])
+
+        if addr_terms:
+            token_info.add_address_terms(addr_terms)
 
 
     def _compute_name_tokens(self, names):

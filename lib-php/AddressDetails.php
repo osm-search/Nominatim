@@ -61,7 +61,7 @@ class AddressDetails
         return join(', ', $aParts);
     }
 
-    public function getAddressNames($sCountry = null)
+    public function getAddressNames()
     {
         $aAddress = array();
 
@@ -79,12 +79,11 @@ class AddressDetails
                 $sName = $aLine['housenumber'];
             }
 
-            if (isset($sName)) {
-                if (!isset($aAddress[$sTypeLabel])
-                    || $aLine['class'] == 'place'
-                ) {
-                    $aAddress[$sTypeLabel] = $sName;
-                }
+            if (isset($sName)
+                && (!isset($aAddress[$sTypeLabel])
+                    || $aLine['class'] == 'place')
+            ) {
+                $aAddress[$sTypeLabel] = $sName;
             }
         }
 

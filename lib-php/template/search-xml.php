@@ -10,7 +10,9 @@ echo (isset($sXmlRootTag)?$sXmlRootTag:'searchresults');
 echo " timestamp='".date(DATE_RFC822)."'";
 echo " attribution='Data © OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright'";
 echo " querystring='".htmlspecialchars($sQuery, ENT_QUOTES)."'";
-if (isset($aMoreParams['viewbox'])) echo " viewbox='".htmlspecialchars($aMoreParams['viewbox'], ENT_QUOTES)."'";
+if (isset($aMoreParams['viewbox'])) {
+    echo " viewbox='".htmlspecialchars($aMoreParams['viewbox'], ENT_QUOTES)."'";
+}
 if (isset($aMoreParams['exclude_place_ids'])) {
     echo " exclude_place_ids='".htmlspecialchars($aMoreParams['exclude_place_ids'])."'";
 }

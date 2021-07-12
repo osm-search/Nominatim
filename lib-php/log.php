@@ -5,15 +5,23 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
 {
     $fStartTime = microtime(true);
     $aStartTime = explode('.', $fStartTime);
-    if (!isset($aStartTime[1])) $aStartTime[1] = '0';
+    if (!isset($aStartTime[1])) {
+        $aStartTime[1] = '0';
+    }
 
     $sOutputFormat = '';
-    if (isset($_GET['format'])) $sOutputFormat = $_GET['format'];
+    if (isset($_GET['format'])) {
+        $sOutputFormat = $_GET['format'];
+    }
 
     if ($sType == 'reverse') {
         $sOutQuery = (isset($_GET['lat'])?$_GET['lat']:'').'/';
-        if (isset($_GET['lon'])) $sOutQuery .= $_GET['lon'];
-        if (isset($_GET['zoom'])) $sOutQuery .= '/'.$_GET['zoom'];
+        if (isset($_GET['lon'])) {
+            $sOutQuery .= $_GET['lon'];
+        }
+        if (isset($_GET['zoom'])) {
+            $sOutQuery .= '/'.$_GET['zoom'];
+        }
     } else {
         $sOutQuery = $sQuery;
     }
@@ -28,13 +36,15 @@ function logStart(&$oDB, $sType = '', $sQuery = '', $aLanguageList = array())
             );
 
     if (CONST_Log_DB) {
-        if (isset($_GET['email']))
+        if (isset($_GET['email'])) {
             $sUserAgent = $_GET['email'];
-        elseif (isset($_SERVER['HTTP_REFERER']))
+        } elseif (isset($_SERVER['HTTP_REFERER'])) {
             $sUserAgent = $_SERVER['HTTP_REFERER'];
-        elseif (isset($_SERVER['HTTP_USER_AGENT']))
+        } elseif (isset($_SERVER['HTTP_USER_AGENT'])) {
             $sUserAgent = $_SERVER['HTTP_USER_AGENT'];
-        else $sUserAgent = '';
+        } else {
+            $sUserAgent = '';
+        }
         $sSQL = 'insert into new_query_log (type,starttime,query,ipaddress,useragent,language,format,searchterm)';
         $sSQL .= ' values (';
         $sSQL .= join(',', $oDB->getDBQuotedList(array(
@@ -60,7 +70,9 @@ function logEnd(&$oDB, $hLog, $iNumResults)
 
     if (CONST_Log_DB) {
         $aEndTime = explode('.', $fEndTime);
-        if (!$aEndTime[1]) $aEndTime[1] = '0';
+        if (!$aEndTime[1]) {
+            $aEndTime[1] = '0';
+        }
         $sEndTime = date('Y-m-d H:i:s', $aEndTime[0]).'.'.$aEndTime[1];
 
         $sSQL = 'update new_query_log set endtime = '.$oDB->getDBQuoted($sEndTime).', results = '.$iNumResults;

@@ -33,18 +33,17 @@ class DeadlockHandler:
         self.ignore_sql_errors = ignore_sql_errors
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if __has_psycopg2_errors__:
             if exc_type == psycopg2.errors.DeadlockDetected: # pylint: disable=E1101
                 self.handler()
                 return True
-        else:
-            if exc_type == psycopg2.extensions.TransactionRollbackError:
-                if exc_value.pgcode == '40P01':
-                    self.handler()
-                    return True
+        elif exc_type == psycopg2.extensions.TransactionRollbackError \
+             and exc_value.pgcode == '40P01':
+            self.handler()
+            return True
 
         if self.ignore_sql_errors and isinstance(exc_value, psycopg2.Error):
             LOG.info("SQL error ignored: %s", exc_value)
@@ -191,16 +190,20 @@ class WorkerPool:
                     yield thread
 
             if command_stat > self.REOPEN_CONNECTIONS_AFTER:
-                for thread in self.threads:
-                    while not thread.is_done():
-                        thread.wait()
-                    thread.connect()
+                self._reconnect_threads()
                 ready = self.threads
                 command_stat = 0
             else:
                 tstart = time.time()
                 _, ready, _ = select.select([], self.threads, [])
                 self.wait_time += time.time() - tstart
+
+
+    def _reconnect_threads(self):
+        for thread in self.threads:
+            while not thread.is_done():
+                thread.wait()
+            thread.connect()
 
 
     def __enter__(self):

@@ -8,4 +8,4 @@
         $error['details'] = $exception->getFile() . '('. $exception->getLine() . ')';
     }
 
-    echo javascript_renderData(array('error' => $error));
+    javascript_renderData(array('error' => $error));

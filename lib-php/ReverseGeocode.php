@@ -74,8 +74,6 @@ class ReverseGeocode
 
     protected function lookupLargeArea($sPointSQL, $iMaxRank)
     {
-        $oResult = null;
-
         if ($iMaxRank > 4) {
             $aPlace = $this->lookupPolygon($sPointSQL, $iMaxRank);
             if ($aPlace) {
@@ -167,9 +165,13 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupPolygon');
         // polygon search begins at suburb-level
-        if ($iMaxRank > 25) $iMaxRank = 25;
+        if ($iMaxRank > 25) {
+            $iMaxRank = 25;
+        }
         // no polygon search over country-level
-        if ($iMaxRank < 5) $iMaxRank = 5;
+        if ($iMaxRank < 5) {
+            $iMaxRank = 5;
+        }
         // search for polygon
         $sSQL = 'SELECT place_id, parent_place_id, rank_address, rank_search FROM';
         $sSQL .= '(select place_id, parent_place_id, rank_address, rank_search, country_code, geometry';
@@ -190,7 +192,6 @@ class ReverseGeocode
 
         if ($aPoly) {
         // if a polygon is found, search for placenodes begins ...
-            $iParentPlaceID = $aPoly['parent_place_id'];
             $iRankAddress = $aPoly['rank_address'];
             $iRankSearch = $aPoly['rank_search'];
             $iPlaceID = $aPoly['place_id'];
@@ -242,26 +243,24 @@ class ReverseGeocode
     public function lookupPoint($sPointSQL, $bDoInterpolation = true)
     {
         Debug::newFunction('lookupPoint');
-        // starts if the search is on POI or street level,
-        // searches for the nearest POI or street,
-        // if a street is found and a POI is searched for,
-        // the nearest POI which the found street is a parent of is choosen.
-        $iMaxRank = $this->iMaxRank;
-
         // Find the nearest point
         $fSearchDiam = 0.006;
         $oResult = null;
         $aPlace = null;
 
         // for POI or street level
-        if ($iMaxRank >= 26) {
+        if ($this->iMaxRank >= 26) {
+            // starts if the search is on POI or street level,
+            // searches for the nearest POI or street,
+            // if a street is found and a POI is searched for,
+            // the nearest POI which the found street is a parent of is choosen.
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
             $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM ';
             $sSQL .= ' placex';
             $sSQL .= '   WHERE ST_DWithin('.$sPointSQL.', geometry, '.$fSearchDiam.')';
             $sSQL .= '   AND';
-            $sSQL .= ' rank_address between 26 and '.$iMaxRank;
+            $sSQL .= ' rank_address between 26 and '.$this->iMaxRank;
             $sSQL .= ' and (name is not null or housenumber is not null';
             $sSQL .= ' or rank_address between 26 and 27)';
             $sSQL .= ' and (rank_address between 26 and 27';
@@ -284,7 +283,7 @@ class ReverseGeocode
 
             if ($aPlace) {
                 // if street and maxrank > streetlevel
-                if ($iRankAddress <= 27 && $iMaxRank > 27) {
+                if ($iRankAddress <= 27 && $this->iMaxRank > 27) {
                     // find the closest object (up to a certain radius) of which the street is a parent of
                     $sSQL = ' select place_id,';
                     $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
@@ -338,7 +337,7 @@ class ReverseGeocode
                 }
             }
 
-            if ($bDoInterpolation && $iMaxRank >= 30) {
+            if ($bDoInterpolation && $this->iMaxRank >= 30) {
                 $fDistance = $fSearchDiam;
                 if ($aPlace) {
                     // We can't reliably go from the closest street to an
@@ -356,7 +355,6 @@ class ReverseGeocode
                     $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
                     $oResult->iHouseNumber = closestHouseNumber($aHouse);
                     $aPlace = $aHouse;
-                    $iRankAddress = 30;
                 }
             }
 
@@ -366,7 +364,7 @@ class ReverseGeocode
             }
         } else {
             // lower than street level ($iMaxRank < 26 )
-            $oResult = $this->lookupLargeArea($sPointSQL, $iMaxRank);
+            $oResult = $this->lookupLargeArea($sPointSQL, $this->iMaxRank);
         }
 
         Debug::printVar('Final result', $oResult);

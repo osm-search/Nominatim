@@ -5,7 +5,7 @@ namespace Nominatim;
 class DatabaseError extends \Exception
 {
 
-    public function __construct($message, $code = 500, Exception $previous = null, $oPDOErr, $sSql = null)
+    public function __construct($message, $code, $previous, $oPDOErr, $sSql = null)
     {
         parent::__construct($message, $code, $previous);
         // https://secure.php.net/manual/en/class.pdoexception.php

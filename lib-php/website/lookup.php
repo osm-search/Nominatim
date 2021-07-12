@@ -35,8 +35,10 @@ if (count($aOsmIds) > CONST_Places_Max_ID_count) {
 
 foreach ($aOsmIds as $sItem) {
     // Skip empty sItem
-    if (empty($sItem)) continue;
-    
+    if (empty($sItem)) {
+        continue;
+    }
+
     $sType = $sItem[0];
     $iId = (int) substr($sItem, 1);
     if ($iId > 0 && ($sType == 'N' || $sType == 'W' || $sType == 'R')) {
@@ -48,7 +50,9 @@ foreach ($aOsmIds as $sItem) {
             // key names
             $oResult = $oPlace;
             unset($oResult['aAddress']);
-            if (isset($oPlace['aAddress'])) $oResult['address'] = $oPlace['aAddress'];
+            if (isset($oPlace['aAddress'])) {
+                $oResult['address'] = $oPlace['aAddress'];
+            }
             if ($sOutputFormat != 'geocodejson') {
                 unset($oResult['langaddress']);
                 $oResult['name'] = $oPlace['langaddress'];
@@ -71,7 +75,9 @@ foreach ($aOsmIds as $sItem) {
 }
 
 
-if (CONST_Debug) exit;
+if (CONST_Debug) {
+    exit;
+}
 
 $sXmlRootTag = 'lookupresults';
 $sQuery = join(',', $aCleanedQueryParts);

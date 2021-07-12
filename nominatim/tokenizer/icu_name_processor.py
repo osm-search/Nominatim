@@ -119,18 +119,22 @@ class ICUNameProcessor:
                 pos += 1
                 force_space = False
 
-        results = set()
-
+        # No variants detected? Fast return.
         if startpos == 0:
             trans_name = self.to_ascii.transliterate(norm_name).strip()
+            return [trans_name] if trans_name else []
+
+        return self._compute_result_set(partials, baseform[startpos:])
+
+
+    def _compute_result_set(self, partials, prefix):
+        results = set()
+
+        for variant in partials:
+            vname = variant + prefix
+            trans_name = self.to_ascii.transliterate(vname[1:-1]).strip()
             if trans_name:
                 results.add(trans_name)
-        else:
-            for variant in partials:
-                name = variant + baseform[startpos:]
-                trans_name = self.to_ascii.transliterate(name[1:-1]).strip()
-                if trans_name:
-                    results.add(trans_name)
 
         return list(results)
 

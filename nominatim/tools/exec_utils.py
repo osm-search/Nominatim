@@ -136,11 +136,11 @@ def run_osm2pgsql(options):
 def get_url(url):
     """ Get the contents from the given URL and return it as a UTF-8 string.
     """
-    headers = {"User-Agent" : "Nominatim/{0[0]}.{0[1]}.{0[2]}-{0[3]}".format(NOMINATIM_VERSION)}
+    headers = {"User-Agent": "Nominatim/{0[0]}.{0[1]}.{0[2]}-{0[3]}".format(NOMINATIM_VERSION)}
 
     try:
         with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
             return response.read().decode('utf-8')
-    except:
+    except Exception:
         LOG.fatal('Failed to load URL: %s', url)
         raise

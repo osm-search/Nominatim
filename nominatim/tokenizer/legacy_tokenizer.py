@@ -370,8 +370,7 @@ class LegacyNameAnalyzer:
             to_delete = existing_phrases - norm_phrases
 
             if to_add:
-                psycopg2.extras.execute_values(
-                    cur,
+                cur.execute_values(
                     """ INSERT INTO word (word_id, word_token, word, class, type,
                                           search_name_count, operator)
                         (SELECT nextval('seq_word'), ' ' || make_standard_name(name), name,
@@ -381,8 +380,7 @@ class LegacyNameAnalyzer:
                     to_add)
 
             if to_delete and should_replace:
-                psycopg2.extras.execute_values(
-                    cur,
+                cur.execute_values(
                     """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
                         WHERE word = name and class = in_class and type = in_type
                               and ((op = '-' and operator is null) or op = operator)""",
@@ -582,7 +580,7 @@ class _TokenCache:
         with conn.cursor() as cur:
             cur.execute("""SELECT i, ARRAY[getorcreate_housenumber_id(i::text)]::text
                            FROM generate_series(1, 100) as i""")
-            self._cached_housenumbers = {str(r[0]) : r[1] for r in cur}
+            self._cached_housenumbers = {str(r[0]): r[1] for r in cur}
 
         # For postcodes remember the ones that have already been added
         self.postcodes = set()

@@ -203,7 +203,7 @@ class Indexer:
 
                                 # And insert the curent batch
                                 for idx in range(0, len(places), batch):
-                                    part = places[idx:idx+batch]
+                                    part = places[idx:idx + batch]
                                     LOG.debug("Processing places: %s", str(part))
                                     runner.index_places(pool.next_free_worker(), part)
                                     progress.add(len(part))

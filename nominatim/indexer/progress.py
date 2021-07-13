@@ -63,7 +63,7 @@ class ProgressLogger:
             places_per_sec = self.done_places
         else:
             diff_seconds = (rank_end_time - self.rank_start_time).total_seconds()
-            places_per_sec = self.done_places/diff_seconds
+            places_per_sec = self.done_places / diff_seconds
 
         LOG.warning("Done %d/%d in %d @ %.3f per second - FINISHED %s\n",
                     self.done_places, self.total_places, int(diff_seconds),

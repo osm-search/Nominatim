@@ -8,6 +8,7 @@ import os
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
+from psycopg2 import sql as pysql
 
 from nominatim.errors import UsageError
 
@@ -25,6 +26,16 @@ class _Cursor(psycopg2.extras.DictCursor):
 
         super().execute(query, args)
 
+
+    def execute_values(self, sql, argslist, template=None):
+        """ Wrapper for the psycopg2 convenience function to execute
+            SQL for a list of values.
+        """
+        LOG.debug("SQL execute_values(%s, %s)", sql, argslist)
+
+        psycopg2.extras.execute_values(self, sql, argslist, template=template)
+
+
     def scalar(self, sql, args=None):
         """ Execute query that returns a single value. The value is returned.
             If the query yields more than one row, a ValueError is raised.
@@ -35,6 +46,22 @@ class _Cursor(psycopg2.extras.DictCursor):
             raise RuntimeError("Query did not return a single row.")
 
         return self.fetchone()[0]
+
+
+    def drop_table(self, name, if_exists=True, cascade=False):
+        """ Drop the table with the given name.
+            Set `if_exists` to False if a non-existant table should raise
+            an exception instead of just being ignored. If 'cascade' is set
+            to True then all dependent tables are deleted as well.
+        """
+        sql = 'DROP TABLE '
+        if if_exists:
+            sql += 'IF EXISTS '
+        sql += '{}'
+        if cascade:
+            sql += ' CASCADE'
+
+        self.execute(pysql.SQL(sql).format(pysql.Identifier(name)))
 
 
 class _Connection(psycopg2.extensions.connection):
@@ -75,14 +102,13 @@ class _Connection(psycopg2.extensions.connection):
         return True
 
 
-    def drop_table(self, name, if_exists=True):
+    def drop_table(self, name, if_exists=True, cascade=False):
         """ Drop the table with the given name.
             Set `if_exists` to False if a non-existant table should raise
             an exception instead of just being ignored.
         """
         with self.cursor() as cur:
-            cur.execute("""DROP TABLE {} "{}"
-                        """.format('IF EXISTS' if if_exists else '', name))
+            cur.drop_table(name, if_exists, cascade)
         self.commit()
 
 

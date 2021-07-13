@@ -61,9 +61,9 @@ def execute_file(dsn, fname, ignore_errors=False, pre_code=None, post_code=None)
 
 
 # List of characters that need to be quoted for the copy command.
-_SQL_TRANSLATION = {ord(u'\\') : u'\\\\',
-                    ord(u'\t') : u'\\t',
-                    ord(u'\n') : u'\\n'}
+_SQL_TRANSLATION = {ord(u'\\'): u'\\\\',
+                    ord(u'\t'): u'\\t',
+                    ord(u'\n'): u'\\n'}
 
 class CopyBuffer:
     """ Data collector for the copy_from command.

@@ -9,8 +9,6 @@ import re
 from textwrap import dedent
 from pathlib import Path
 
-import psycopg2.extras
-
 from nominatim.db.connection import connect
 from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
@@ -341,7 +339,7 @@ class LegacyICUNameAnalyzer:
                 term = self.name_processor.get_search_normalized(word)
                 if term:
                     copystr.add(word, ' ' + term, cls, typ,
-                                oper if oper in ('in', 'near')  else None, 0)
+                                oper if oper in ('in', 'near') else None, 0)
                     added += 1
 
             copystr.copy_out(cursor, 'word',
@@ -359,8 +357,7 @@ class LegacyICUNameAnalyzer:
         to_delete = existing_phrases - new_phrases
 
         if to_delete:
-            psycopg2.extras.execute_values(
-                cursor,
+            cursor.execute_values(
                 """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
                     WHERE word = name and class = in_class and type = in_type
                           and ((op = '-' and operator is null) or op = operator)""",
@@ -386,9 +383,9 @@ class LegacyICUNameAnalyzer:
             if word_tokens:
                 cur.execute("""INSERT INTO word (word_id, word_token, country_code,
                                                  search_name_count)
-                               (SELECT nextval('seq_word'), token, '{}', 0
+                               (SELECT nextval('seq_word'), token, %s, 0
                                 FROM unnest(%s) as token)
-                            """.format(country_code), (list(word_tokens),))
+                            """, (country_code, list(word_tokens)))
 
 
     def process_place(self, place):

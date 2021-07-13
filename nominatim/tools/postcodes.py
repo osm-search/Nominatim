@@ -7,7 +7,7 @@ import gzip
 import logging
 from math import isfinite
 
-from psycopg2.extras import execute_values
+from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect
 
@@ -52,27 +52,26 @@ class _CountryPostcodesCollector:
 
         with conn.cursor() as cur:
             if to_add:
-                execute_values(cur,
-                               """INSERT INTO location_postcode
-                                      (place_id, indexed_status, country_code,
-                                       postcode, geometry) VALUES %s""",
-                               to_add,
-                               template="""(nextval('seq_place'), 1, '{}',
-                                           %s, 'SRID=4326;POINT(%s %s)')
-                                        """.format(self.country))
+                cur.execute_values(
+                    """INSERT INTO location_postcode
+                         (place_id, indexed_status, country_code,
+                          postcode, geometry) VALUES %s""",
+                    to_add,
+                    template=pysql.SQL("""(nextval('seq_place'), 1, {},
+                                          %s, 'SRID=4326;POINT(%s %s)')
+                                       """).format(pysql.Literal(self.country)))
             if to_delete:
                 cur.execute("""DELETE FROM location_postcode
                                WHERE country_code = %s and postcode = any(%s)
                             """, (self.country, to_delete))
             if to_update:
-                execute_values(cur,
-                               """UPDATE location_postcode
-                                  SET indexed_status = 2,
-                                      geometry = ST_SetSRID(ST_Point(v.x, v.y), 4326)
-                                  FROM (VALUES %s) AS v (pc, x, y)
-                                  WHERE country_code = '{}' and postcode = pc
-                               """.format(self.country),
-                               to_update)
+                cur.execute_values(
+                    pysql.SQL("""UPDATE location_postcode
+                                 SET indexed_status = 2,
+                                     geometry = ST_SetSRID(ST_Point(v.x, v.y), 4326)
+                                 FROM (VALUES %s) AS v (pc, x, y)
+                                 WHERE country_code = {} and postcode = pc
+                              """).format(pysql.Literal(self.country)), to_update)
 
 
     def _compute_changes(self, conn):
@@ -165,11 +164,14 @@ def update_postcodes(dsn, project_dir, tokenizer):
             with conn.cursor(name="placex_postcodes") as cur:
                 cur.execute("""
                 SELECT cc as country_code, pc, ST_X(centroid), ST_Y(centroid)
-                FROM (SELECT 
-                        COALESCE(plx.country_code, get_country_code(ST_Centroid(pl.geometry))) as cc,
+                FROM (SELECT
+                        COALESCE(plx.country_code,
+                                 get_country_code(ST_Centroid(pl.geometry))) as cc,
                         token_normalized_postcode(pl.address->'postcode') as pc,
-                        ST_Centroid(ST_Collect(COALESCE(plx.centroid, ST_Centroid(pl.geometry)))) as centroid 
-                        FROM place AS pl LEFT OUTER JOIN placex AS plx ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
+                        ST_Centroid(ST_Collect(COALESCE(plx.centroid,
+                                                        ST_Centroid(pl.geometry)))) as centroid
+                      FROM place AS pl LEFT OUTER JOIN placex AS plx
+                             ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
                     WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
                     GROUP BY cc, pc) xx
                 WHERE pc IS NOT null AND cc IS NOT null

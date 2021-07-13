@@ -93,7 +93,7 @@ class UpdateReplication:
                       indexed_only=not args.once)
 
         # Sanity check to not overwhelm the Geofabrik servers.
-        if 'download.geofabrik.de'in params['base_url']\
+        if 'download.geofabrik.de' in params['base_url']\
            and params['update_interval'] < 86400:
             LOG.fatal("Update interval too low for download.geofabrik.de.\n"
                       "Please check install documentation "

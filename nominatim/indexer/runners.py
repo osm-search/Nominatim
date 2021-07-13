@@ -5,13 +5,17 @@ tasks.
 import functools
 
 import psycopg2.extras
+from psycopg2 import sql as pysql
 
 # pylint: disable=C0111
+
+def _mk_valuelist(template, num):
+    return pysql.SQL(',').join([pysql.SQL(template)] * num)
 
 class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
     """
-    SELECT_SQL = 'SELECT place_id FROM placex'
+    SELECT_SQL = pysql.SQL('SELECT place_id FROM placex ')
 
     def __init__(self, rank, analyzer):
         self.rank = rank
@@ -21,11 +25,12 @@ class AbstractPlacexRunner:
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _index_sql(num_places):
-        return """ UPDATE placex
-                   SET indexed_status = 0, address = v.addr, token_info = v.ti
-                   FROM (VALUES {}) as v(id, addr, ti)
-                   WHERE place_id = v.id
-               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+        return pysql.SQL(
+            """ UPDATE placex
+                SET indexed_status = 0, address = v.addr, token_info = v.ti
+                FROM (VALUES {}) as v(id, addr, ti)
+                WHERE place_id = v.id
+            """).format(_mk_valuelist("(%s, %s::hstore, %s::jsonb)", num_places))
 
 
     @staticmethod
@@ -52,14 +57,15 @@ class RankRunner(AbstractPlacexRunner):
         return "rank {}".format(self.rank)
 
     def sql_count_objects(self):
-        return """SELECT count(*) FROM placex
-                  WHERE rank_address = {} and indexed_status > 0
-               """.format(self.rank)
+        return pysql.SQL("""SELECT count(*) FROM placex
+                            WHERE rank_address = {} and indexed_status > 0
+                         """).format(pysql.Literal(self.rank))
 
     def sql_get_objects(self):
-        return """{} WHERE indexed_status > 0 and rank_address = {}
-                     ORDER BY geometry_sector
-               """.format(self.SELECT_SQL, self.rank)
+        return self.SELECT_SQL + pysql.SQL(
+            """WHERE indexed_status > 0 and rank_address = {}
+               ORDER BY geometry_sector
+            """).format(pysql.Literal(self.rank))
 
 
 class BoundaryRunner(AbstractPlacexRunner):
@@ -71,17 +77,18 @@ class BoundaryRunner(AbstractPlacexRunner):
         return "boundaries rank {}".format(self.rank)
 
     def sql_count_objects(self):
-        return """SELECT count(*) FROM placex
-                  WHERE indexed_status > 0
-                    AND rank_search = {}
-                    AND class = 'boundary' and type = 'administrative'
-               """.format(self.rank)
+        return pysql.SQL("""SELECT count(*) FROM placex
+                            WHERE indexed_status > 0
+                              AND rank_search = {}
+                              AND class = 'boundary' and type = 'administrative'
+                         """).format(pysql.Literal(self.rank))
 
     def sql_get_objects(self):
-        return """{} WHERE indexed_status > 0 and rank_search = {}
-                           and class = 'boundary' and type = 'administrative'
-                     ORDER BY partition, admin_level
-               """.format(self.SELECT_SQL, self.rank)
+        return self.SELECT_SQL + pysql.SQL(
+            """WHERE indexed_status > 0 and rank_search = {}
+                     and class = 'boundary' and type = 'administrative'
+               ORDER BY partition, admin_level
+            """).format(pysql.Literal(self.rank))
 
 
 class InterpolationRunner:
@@ -120,11 +127,11 @@ class InterpolationRunner:
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _index_sql(num_places):
-        return """ UPDATE location_property_osmline
-                   SET indexed_status = 0, address = v.addr, token_info = v.ti
-                   FROM (VALUES {}) as v(id, addr, ti)
-                   WHERE place_id = v.id
-               """.format(','.join(["(%s, %s::hstore, %s::jsonb)"]  * num_places))
+        return pysql.SQL("""UPDATE location_property_osmline
+                            SET indexed_status = 0, address = v.addr, token_info = v.ti
+                            FROM (VALUES {}) as v(id, addr, ti)
+                            WHERE place_id = v.id
+                         """).format(_mk_valuelist("(%s, %s::hstore, %s::jsonb)", num_places))
 
 
     def index_places(self, worker, places):
@@ -157,6 +164,6 @@ class PostcodeRunner:
 
     @staticmethod
     def index_places(worker, ids):
-        worker.perform(""" UPDATE location_postcode SET indexed_status = 0
-                           WHERE place_id IN ({})
-                       """.format(','.join((str(i[0]) for i in ids))))
+        worker.perform(pysql.SQL("""UPDATE location_postcode SET indexed_status = 0
+                                    WHERE place_id IN ({})""")
+                       .format(pysql.SQL(',').join((pysql.Literal(i[0]) for i in ids))))

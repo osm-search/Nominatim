@@ -90,7 +90,7 @@ class APISearch:
         if args.query:
             params = dict(q=args.query)
         else:
-            params = {k : getattr(args, k) for k, _ in STRUCTURED_QUERY if getattr(args, k)}
+            params = {k: getattr(args, k) for k, _ in STRUCTURED_QUERY if getattr(args, k)}
 
         for param, _ in EXTRADATA_PARAMS:
             if getattr(args, param):

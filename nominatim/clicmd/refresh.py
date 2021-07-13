@@ -61,7 +61,7 @@ class UpdateRefresh:
                                   args.threads or 1)
                 indexer.index_postcodes()
             else:
-                LOG.error("The place table doesn\'t exist. " \
+                LOG.error("The place table doesn't exist. "
                           "Postcode updates on a frozen database is not possible.")
 
         if args.word_counts:

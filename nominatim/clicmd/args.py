@@ -24,4 +24,4 @@ class NominatimArgs:
                                      main_data=self.config.TABLESPACE_PLACE_DATA,
                                      main_index=self.config.TABLESPACE_PLACE_INDEX
                                     )
-                    )
+                   )

@@ -3,6 +3,8 @@ Functions for removing unnecessary data from the database.
 """
 from pathlib import Path
 
+from psycopg2 import sql as pysql
+
 UPDATE_TABLES = [
     'address_levels',
     'gb_postcode',
@@ -21,15 +23,15 @@ def drop_update_tables(conn):
     """ Drop all tables only necessary for updating the database from
         OSM replication data.
     """
-
-    where = ' or '.join(["(tablename LIKE '{}')".format(t) for t in UPDATE_TABLES])
+    parts = (pysql.SQL("(tablename LIKE {})").format(pysql.Literal(t)) for t in UPDATE_TABLES)
 
     with conn.cursor() as cur:
-        cur.execute("SELECT tablename FROM pg_tables WHERE " + where)
+        cur.execute(pysql.SQL("SELECT tablename FROM pg_tables WHERE ")
+                    + pysql.SQL(' or ').join(parts))
         tables = [r[0] for r in cur]
 
         for table in tables:
-            cur.execute('DROP TABLE IF EXISTS "{}" CASCADE'.format(table))
+            cur.drop_table(table, cascade=True)
 
     conn.commit()
 

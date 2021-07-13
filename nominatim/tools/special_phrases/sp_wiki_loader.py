@@ -15,7 +15,7 @@ class SPWikiLoader(Iterator):
     def __init__(self, config, languages=None):
         super().__init__()
         self.config = config
-        #Compile the regex here to increase performances.
+        # Compile the regex here to increase performances.
         self.occurence_pattern = re.compile(
             r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
         )
@@ -35,7 +35,7 @@ class SPWikiLoader(Iterator):
             Parses XML content and extracts special phrases from it.
             Return a list of SpecialPhrase.
         """
-        #One match will be of format [label, class, type, operator, plural]
+        # One match will be of format [label, class, type, operator, plural]
         matches = self.occurence_pattern.findall(xml)
         returned_phrases = set()
         for match in matches:
@@ -65,5 +65,6 @@ class SPWikiLoader(Iterator):
             Requested URL Example :
                 https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/EN
         """
-        url = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/' + lang.upper() # pylint: disable=line-too-long
+        url = 'https://wiki.openstreetmap.org/wiki/Special:Export/Nominatim/Special_Phrases/' \
+              + lang.upper()
         return get_url(url)

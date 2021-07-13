@@ -9,6 +9,7 @@ from pathlib import Path
 
 import psutil
 import psycopg2.extras
+from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect, get_pg_env
 from nominatim.db import utils as db_utils
@@ -184,7 +185,12 @@ def truncate_data_tables(conn):
 
     conn.commit()
 
-_COPY_COLUMNS = 'osm_type, osm_id, class, type, name, admin_level, address, extratags, geometry'
+
+_COPY_COLUMNS = pysql.SQL(',').join(map(pysql.Identifier,
+                                        ('osm_type', 'osm_id', 'class', 'type',
+                                         'name', 'admin_level', 'address',
+                                         'extratags', 'geometry')))
+
 
 def load_data(dsn, threads):
     """ Copy data into the word and placex table.
@@ -195,12 +201,15 @@ def load_data(dsn, threads):
     for imod in range(place_threads):
         conn = DBConnection(dsn)
         conn.connect()
-        conn.perform("""INSERT INTO placex ({0})
-                         SELECT {0} FROM place
-                         WHERE osm_id % {1} = {2}
-                           AND NOT (class='place' and (type='houses' or type='postcode'))
-                           AND ST_IsValid(geometry)
-                     """.format(_COPY_COLUMNS, place_threads, imod))
+        conn.perform(
+            pysql.SQL("""INSERT INTO placex ({columns})
+                           SELECT {columns} FROM place
+                           WHERE osm_id % {total} = {mod}
+                             AND NOT (class='place' and (type='houses' or type='postcode'))
+                             AND ST_IsValid(geometry)
+                      """).format(columns=_COPY_COLUMNS,
+                                  total=pysql.Literal(place_threads),
+                                  mod=pysql.Literal(imod)))
         sel.register(conn, selectors.EVENT_READ, conn)
 
     # Address interpolations go into another table.
@@ -250,6 +259,7 @@ def create_search_indices(conn, config, drop=False):
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
 
+
 def create_country_names(conn, tokenizer, languages=None):
     """ Add default country names to search index. `languages` is a comma-
         separated list of language codes as used in OSM. If `languages` is not
@@ -261,8 +271,7 @@ def create_country_names(conn, tokenizer, languages=None):
 
     def _include_key(key):
         return key == 'name' or \
-               (key.startswith('name:') \
-                and (not languages or key[5:] in languages))
+               (key.startswith('name:') and (not languages or key[5:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)
@@ -271,7 +280,7 @@ def create_country_names(conn, tokenizer, languages=None):
 
         with tokenizer.name_analyzer() as analyzer:
             for code, name in cur:
-                names = {'countrycode' : code}
+                names = {'countrycode': code}
                 if code == 'gb':
                     names['short_name'] = 'UK'
                 if code == 'us':

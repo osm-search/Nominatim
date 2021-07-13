@@ -5,30 +5,26 @@ namespace Nominatim\Token;
 /**
  * A standard word token.
  */
-class Word
+class Partial
 {
     /// Database word id, if applicable.
     public $iId;
     /// Number of appearances in the database.
     public $iSearchNameCount;
-    /// Number of terms in the word.
-    public $iTermCount;
 
-    public function __construct($iId, $iSearchNameCount, $iTermCount)
+    public function __construct($iId, $iSearchNameCount)
     {
         $this->iId = $iId;
         $this->iSearchNameCount = $iSearchNameCount;
-        $this->iTermCount = $iTermCount;
     }
 
     public function debugInfo()
     {
         return array(
                 'ID' => $this->iId,
-                'Type' => 'word',
+                'Type' => 'partial',
                 'Info' => array(
-                           'count' => $this->iSearchNameCount,
-                           'terms' => $this->iTermCount
+                           'count' => $this->iSearchNameCount
                           )
                );
     }

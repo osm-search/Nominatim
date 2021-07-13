@@ -212,17 +212,26 @@ class Tokenizer
                 ) {
                     $oToken = new Token\Country($iId, $aWord['country_code']);
                 }
-            } else {
+            } elseif ($aWord['word_token'][0] == ' ') {
                 $oToken = new Token\Word(
                     $iId,
-                    $aWord['word_token'][0] != ' ',
                     (int) $aWord['count'],
                     substr_count($aWord['word_token'], ' ')
+                );
+            } else {
+                $oToken = new Token\Partial(
+                    $iId,
+                    (int) $aWord['count']
                 );
             }
 
             if ($oToken) {
-                $oValidTokens->addToken($aWord['word_token'], $oToken);
+                // remove any leading spaces
+                if ($aWord['word_token'][0] == ' ') {
+                    $oValidTokens->addToken(substr($aWord['word_token'], 1), $oToken);
+                } else {
+                    $oValidTokens->addToken($aWord['word_token'], $oToken);
+                }
             }
         }
     }

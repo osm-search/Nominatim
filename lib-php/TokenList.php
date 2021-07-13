@@ -7,6 +7,7 @@ require_once(CONST_LibDir.'/TokenHousenumber.php');
 require_once(CONST_LibDir.'/TokenPostcode.php');
 require_once(CONST_LibDir.'/TokenSpecialTerm.php');
 require_once(CONST_LibDir.'/TokenWord.php');
+require_once(CONST_LibDir.'/TokenPartial.php');
 require_once(CONST_LibDir.'/SpecialSearchOperator.php');
 
 /**

@@ -355,41 +355,20 @@ class Geocode
                     $aNewWordsetSearches = array();
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
-                        // Tokens with full name matches.
-                        foreach ($oValidTokens->get(' '.$sToken) as $oSearchTerm) {
-                            $aNewSearches = $oCurrentSearch->extendWithFullTerm(
+                        foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
+                            $aNewSearches = $oCurrentSearch->extendWithSearchTerm(
+                                $sToken,
                                 $oSearchTerm,
                                 $sPhraseType,
                                 $iToken == 0 && $iPhrase == 0,
-                                $iPhrase == 0,
                                 $iToken + 1 == count($aWordset)
-                                  && $iPhrase + 1 == count($aPhrases)
+                                  && $iPhrase + 1 == count($aPhrases),
+                                $iPhrase
                             );
 
                             foreach ($aNewSearches as $oSearch) {
                                 if ($oSearch->getRank() < $this->iMaxRank) {
                                     $aNewWordsetSearches[] = $oSearch;
-                                }
-                            }
-                        }
-                        // Look for partial matches.
-                        // Note that there is no point in adding country terms here
-                        // because country is omitted in the address.
-                        if ($sPhraseType != 'country') {
-                            // Allow searching for a word - but at extra cost
-                            foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
-                                $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
-                                    $sToken,
-                                    $oSearchTerm,
-                                    (bool) $sPhraseType,
-                                    $iPhrase,
-                                    $oValidTokens->get(' '.$sToken)
-                                );
-
-                                foreach ($aNewSearches as $oSearch) {
-                                    if ($oSearch->getRank() < $this->iMaxRank) {
-                                        $aNewWordsetSearches[] = $oSearch;
-                                    }
                                 }
                             }
                         }

@@ -152,17 +152,17 @@ class SearchDescription
     /**
      * Derive new searches by adding a full term to the existing search.
      *
-     * @param object $oSearchTerm  Description of the token.
-     * @param string $sPhraseType  Type of phrase the token is contained in.
-     * @param bool   $bFirstToken  True if the token is at the beginning of the
-     *                             query.
-     * @param bool   $bFirstPhrase True if the token is in the first phrase of
-     *                             the query.
-     * @param bool   $bLastToken   True if the token is at the end of the query.
+     * @param string  $sToken       Term for the token.
+     * @param object  $oSearchTerm  Description of the token.
+     * @param string  $sPhraseType  Type of phrase the token is contained in.
+     * @param bool    $bFirstToken  True if the token is at the beginning of the
+     *                              query.
+     * @param bool    $bLastToken   True if the token is at the end of the query.
+     * @param integer $iPhrase      Number of the phrase the token is in.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithFullTerm($oSearchTerm, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
+    public function extendWithSearchTerm($sToken, $oSearchTerm, $sPhraseType, $bFirstToken, $bLastToken, $iPhrase)
     {
         $aNewSearches = array();
 
@@ -295,8 +295,8 @@ class SearchDescription
             // of the phrase. In structured search the name must forcably in
             // the first phrase. In unstructured search it may be in a later
             // phrase when the first phrase is a house number.
-            if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
-                if (($sPhraseType == '' || !$bFirstPhrase) && $oSearchTerm->iTermCount > 1) {
+            if (!empty($this->aName) || !($iPhrase == 0 || $sPhraseType == '')) {
+                if (($sPhraseType == '' || $iPhrase > 0) && $oSearchTerm->iTermCount > 1) {
                     $oSearch = clone $this;
                     $oSearch->iNamePhrase = -1;
                     $oSearch->iSearchRank += 1;
@@ -314,6 +314,16 @@ class SearchDescription
                 }
                 $aNewSearches[] = $oSearch;
             }
+        } elseif ($sPhraseType != 'country'
+                  && is_a($oSearchTerm, '\Nominatim\Token\Partial')
+                  && strpos($sToken, ' ') === false
+        ) {
+            $aNewSearches = $this->extendWithPartialTerm(
+                $sToken,
+                $oSearchTerm,
+                (bool) $sPhraseType,
+                $iPhrase
+            );
         }
 
         return $aNewSearches;
@@ -326,20 +336,11 @@ class SearchDescription
      * @param object  $oSearchTerm        Description of the token.
      * @param bool    $bStructuredPhrases True if the search is structured.
      * @param integer $iPhrase            Number of the phrase the token is in.
-     * @param array[] $aFullTokens        List of full term tokens with the
-     *                                    same name.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
+    private function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase)
     {
-        // Only allow name terms.
-        if (!(is_a($oSearchTerm, '\Nominatim\Token\Word'))
-            || strpos($sToken, ' ') !== false
-        ) {
-            return array();
-        }
-
         $aNewSearches = array();
         $iWordID = $oSearchTerm->iId;
 
@@ -355,9 +356,6 @@ class SearchDescription
                 $oSearch->aAddress[$iWordID] = $iWordID;
             } else {
                 $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
-                if (!empty($aFullTokens)) {
-                    $oSearch->iSearchRank++;
-                }
             }
             $aNewSearches[] = $oSearch;
         }
@@ -385,9 +383,6 @@ class SearchDescription
                 }
                 $oSearch->aName[$iWordID] = $iWordID;
             } else {
-                if (!empty($aFullTokens)) {
-                    $oSearch->iSearchRank++;
-                }
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;
             }
             $oSearch->iNamePhrase = $iPhrase;

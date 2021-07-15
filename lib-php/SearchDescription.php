@@ -152,14 +152,13 @@ class SearchDescription
     /**
      * Derive new searches by adding a full term to the existing search.
      *
-     * @param string  $sToken       Term for the token.
      * @param object  $oSearchTerm  Description of the token.
      * @param object  $oPosition    Description of the token position within
                                     the query.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithSearchTerm($sToken, $oSearchTerm, $oPosition)
+    public function extendWithSearchTerm($oSearchTerm, $oPosition)
     {
         $aNewSearches = array();
 
@@ -315,10 +314,8 @@ class SearchDescription
             }
         } elseif (!$oPosition->isPhrase('country')
                   && is_a($oSearchTerm, '\Nominatim\Token\Partial')
-                  && strpos($sToken, ' ') === false
         ) {
             $aNewSearches = $this->extendWithPartialTerm(
-                $sToken,
                 $oSearchTerm,
                 $oPosition
             );
@@ -330,14 +327,13 @@ class SearchDescription
     /**
      * Derive new searches by adding a partial term to the existing search.
      *
-     * @param string  $sToken       Term for the token.
      * @param object  $oSearchTerm  Description of the token.
      * @param object  $oPosition    Description of the token position within
                                     the query.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    private function extendWithPartialTerm($sToken, $oSearchTerm, $oPosition)
+    private function extendWithPartialTerm($oSearchTerm, $oPosition)
     {
         $aNewSearches = array();
         $iWordID = $oSearchTerm->iId;
@@ -347,7 +343,7 @@ class SearchDescription
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank++;
-            if (preg_match('#^[0-9 ]+$#', $sToken)) {
+            if (preg_match('#^[0-9 ]+$#', $oSearchTerm->sToken)) {
                 $oSearch->iSearchRank++;
             }
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
@@ -367,7 +363,7 @@ class SearchDescription
             if (empty($this->aName) && empty($this->aNameNonSearch)) {
                 $oSearch->iSearchRank++;
             }
-            if (preg_match('#^[0-9 ]+$#', $sToken)) {
+            if (preg_match('#^[0-9 ]+$#', $oSearchTerm->sToken)) {
                 $oSearch->iSearchRank++;
             }
             if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {

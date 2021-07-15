@@ -205,6 +205,7 @@ class Tokenizer
             } else {
                 $oToken = new Token\Partial(
                     $iId,
+                    $aWord['word_token'],
                     (int) $aWord['count']
                 );
             }

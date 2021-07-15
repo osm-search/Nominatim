@@ -218,9 +218,12 @@ class Tokenizer
                     (int) $aWord['count'],
                     substr_count($aWord['word_token'], ' ')
                 );
-            } else {
+            // For backward compatibility: ignore all partial tokens with more
+            // than one word.
+            } elseif (strpos($aWord['word_token'], ' ') === false) {
                 $oToken = new Token\Partial(
                     $iId,
+                    $aWord['word_token'],
                     (int) $aWord['count']
                 );
             }

@@ -154,19 +154,16 @@ class SearchDescription
      *
      * @param string  $sToken       Term for the token.
      * @param object  $oSearchTerm  Description of the token.
-     * @param string  $sPhraseType  Type of phrase the token is contained in.
-     * @param bool    $bFirstToken  True if the token is at the beginning of the
-     *                              query.
-     * @param bool    $bLastToken   True if the token is at the end of the query.
-     * @param integer $iPhrase      Number of the phrase the token is in.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    public function extendWithSearchTerm($sToken, $oSearchTerm, $sPhraseType, $bFirstToken, $bLastToken, $iPhrase)
+    public function extendWithSearchTerm($sToken, $oSearchTerm, $oPosition)
     {
         $aNewSearches = array();
 
-        if (($sPhraseType == '' || $sPhraseType == 'country')
+        if ($oPosition->maybePhrase('country')
             && is_a($oSearchTerm, '\Nominatim\Token\Country')
         ) {
             if (!$this->sCountryCode) {
@@ -175,19 +172,19 @@ class SearchDescription
                 $oSearch->sCountryCode = $oSearchTerm->sCountryCode;
                 // Country is almost always at the end of the string
                 // - increase score for finding it anywhere else (optimisation)
-                if (!$bLastToken) {
+                if (!$oPosition->isLastToken()) {
                     $oSearch->iSearchRank += 5;
                     $oSearch->iNamePhrase = -1;
                 }
                 $aNewSearches[] = $oSearch;
             }
-        } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
+        } elseif ($oPosition->maybePhrase('postalcode')
                   && is_a($oSearchTerm, '\Nominatim\Token\Postcode')
         ) {
             if (!$this->sPostcode) {
                 // If we have structured search or this is the first term,
                 // make the postcode the primary search element.
-                if ($this->iOperator == Operator::NONE && $bFirstToken) {
+                if ($this->iOperator == Operator::NONE && $oPosition->isFirstToken()) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
                     $oSearch->iOperator = Operator::POSTCODE;
@@ -200,7 +197,7 @@ class SearchDescription
                 // If we have a structured search or this is not the first term,
                 // add the postcode as an addendum.
                 if ($this->iOperator != Operator::POSTCODE
-                    && ($sPhraseType == 'postalcode' || !empty($this->aName))
+                    && ($oPosition->isPhrase('postalcode') || !empty($this->aName))
                 ) {
                     $oSearch = clone $this;
                     $oSearch->iSearchRank++;
@@ -212,7 +209,7 @@ class SearchDescription
                     $aNewSearches[] = $oSearch;
                 }
             }
-        } elseif (($sPhraseType == '' || $sPhraseType == 'street')
+        } elseif ($oPosition->maybePhrase('street')
                  && is_a($oSearchTerm, '\Nominatim\Token\HouseNumber')
         ) {
             if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
@@ -257,7 +254,7 @@ class SearchDescription
                     $aNewSearches[] = $oSearch;
                 }
             }
-        } elseif ($sPhraseType == ''
+        } elseif ($oPosition->isPhrase('')
                   && is_a($oSearchTerm, '\Nominatim\Token\SpecialTerm')
         ) {
             if ($this->iOperator == Operator::NONE) {
@@ -273,7 +270,7 @@ class SearchDescription
                         $iOp = Operator::NEAR;
                     }
                     $oSearch->iSearchRank += 2;
-                } elseif (!$bFirstToken && !$bLastToken) {
+                } elseif (!$oPosition->isFirstToken() && !$oPosition->isLastToken()) {
                     $oSearch->iSearchRank += 2;
                 }
                 if ($this->sHouseNumber) {
@@ -287,7 +284,7 @@ class SearchDescription
                 );
                 $aNewSearches[] = $oSearch;
             }
-        } elseif ($sPhraseType != 'country'
+        } elseif (!$oPosition->isPhrase('country')
                   && is_a($oSearchTerm, '\Nominatim\Token\Word')
         ) {
             $iWordID = $oSearchTerm->iId;
@@ -295,8 +292,10 @@ class SearchDescription
             // of the phrase. In structured search the name must forcably in
             // the first phrase. In unstructured search it may be in a later
             // phrase when the first phrase is a house number.
-            if (!empty($this->aName) || !($iPhrase == 0 || $sPhraseType == '')) {
-                if (($sPhraseType == '' || $iPhrase > 0) && $oSearchTerm->iTermCount > 1) {
+            if (!empty($this->aName) || !($oPosition->isFirstPhrase() || $oPosition->isPhrase(''))) {
+                if (($oPosition->isPhrase('') || !$oPosition->isFirstPhrase())
+                    && $oSearchTerm->iTermCount > 1
+                ) {
                     $oSearch = clone $this;
                     $oSearch->iNamePhrase = -1;
                     $oSearch->iSearchRank += 1;
@@ -314,15 +313,14 @@ class SearchDescription
                 }
                 $aNewSearches[] = $oSearch;
             }
-        } elseif ($sPhraseType != 'country'
+        } elseif (!$oPosition->isPhrase('country')
                   && is_a($oSearchTerm, '\Nominatim\Token\Partial')
                   && strpos($sToken, ' ') === false
         ) {
             $aNewSearches = $this->extendWithPartialTerm(
                 $sToken,
                 $oSearchTerm,
-                (bool) $sPhraseType,
-                $iPhrase
+                $oPosition
             );
         }
 
@@ -332,19 +330,19 @@ class SearchDescription
     /**
      * Derive new searches by adding a partial term to the existing search.
      *
-     * @param string  $sToken             Term for the token.
-     * @param object  $oSearchTerm        Description of the token.
-     * @param bool    $bStructuredPhrases True if the search is structured.
-     * @param integer $iPhrase            Number of the phrase the token is in.
+     * @param string  $sToken       Term for the token.
+     * @param object  $oSearchTerm  Description of the token.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
      *
      * @return SearchDescription[] List of derived search descriptions.
      */
-    private function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase)
+    private function extendWithPartialTerm($sToken, $oSearchTerm, $oPosition)
     {
         $aNewSearches = array();
         $iWordID = $oSearchTerm->iId;
 
-        if ((!$bStructuredPhrases || $iPhrase > 0)
+        if (($oPosition->isPhrase('') || !$oPosition->isFirstPhrase())
             && (!empty($this->aName))
         ) {
             $oSearch = clone $this;
@@ -361,7 +359,8 @@ class SearchDescription
         }
 
         if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
-            && ((empty($this->aName) && empty($this->aNameNonSearch)) || $this->iNamePhrase == $iPhrase)
+            && ((empty($this->aName) && empty($this->aNameNonSearch))
+                || $this->iNamePhrase == $oPosition->getPhrase())
         ) {
             $oSearch = clone $this;
             $oSearch->iSearchRank++;
@@ -385,7 +384,7 @@ class SearchDescription
             } else {
                 $oSearch->aNameNonSearch[$iWordID] = $iWordID;
             }
-            $oSearch->iNamePhrase = $iPhrase;
+            $oSearch->iNamePhrase = $oPosition->getPhrase();
             $aNewSearches[] = $oSearch;
         }
 

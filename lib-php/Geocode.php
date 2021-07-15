@@ -7,6 +7,7 @@ require_once(CONST_LibDir.'/Phrase.php');
 require_once(CONST_LibDir.'/ReverseGeocode.php');
 require_once(CONST_LibDir.'/SearchDescription.php');
 require_once(CONST_LibDir.'/SearchContext.php');
+require_once(CONST_LibDir.'/SearchPosition.php');
 require_once(CONST_LibDir.'/TokenList.php');
 require_once(CONST_TokenizerDir.'/tokenizer.php');
 
@@ -345,7 +346,11 @@ class Geocode
          */
         foreach ($aPhrases as $iPhrase => $oPhrase) {
             $aNewPhraseSearches = array();
-            $sPhraseType = $oPhrase->getPhraseType();
+            $oPosition = new SearchPosition(
+                $oPhrase->getPhraseType(),
+                $iPhrase,
+                count($aPhrases)
+            );
 
             foreach ($oPhrase->getWordSets() as $aWordset) {
                 $aWordsetSearches = $aSearches;
@@ -353,17 +358,14 @@ class Geocode
                 // Add all words from this wordset
                 foreach ($aWordset as $iToken => $sToken) {
                     $aNewWordsetSearches = array();
+                    $oPosition->setTokenPosition($iToken, count($aWordset));
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
                         foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
                             $aNewSearches = $oCurrentSearch->extendWithSearchTerm(
                                 $sToken,
                                 $oSearchTerm,
-                                $sPhraseType,
-                                $iToken == 0 && $iPhrase == 0,
-                                $iToken + 1 == count($aWordset)
-                                  && $iPhrase + 1 == count($aPhrases),
-                                $iPhrase
+                                $oPosition
                             );
 
                             foreach ($aNewSearches as $oSearch) {

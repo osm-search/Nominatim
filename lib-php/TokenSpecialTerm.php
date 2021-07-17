@@ -26,6 +26,50 @@ class SpecialTerm
         $this->iOperator = $iOperator;
     }
 
+    public function getId()
+    {
+        return $this->iId;
+    }
+
+    /**
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return SearchDescription[] List of derived search descriptions.
+     */
+    public function extendSearch($oSearch, $oPosition)
+    {
+        if ($oSearch->hasOperator() || !$oPosition->isPhrase('')) {
+            return array();
+        }
+
+        $iSearchCost = 2;
+
+        $iOp = $this->iOperator;
+        if ($iOp == \Nominatim\Operator::NONE) {
+            if ($oSearch->hasName() || $oSearch->getContext()->isBoundedSearch()) {
+                $iOp = \Nominatim\Operator::NAME;
+            } else {
+                $iOp = \Nominatim\Operator::NEAR;
+            }
+            $iSearchCost += 2;
+        } elseif (!$oPosition->isFirstToken() && !$oPosition->isLastToken()) {
+            $iSearchCost += 2;
+        }
+        if ($oSearch->hasHousenumber()) {
+            $iSearchCost ++;
+        }
+
+        $oNewSearch = $oSearch->clone($iSearchCost);
+        $oNewSearch->setPoiSearch($iOp, $this->sClass, $this->sType);
+
+        return array($oNewSearch);
+    }
+
+
     public function debugInfo()
     {
         return array(
@@ -37,5 +81,10 @@ class SpecialTerm
                            'operator' => \Nominatim\Operator::toString($this->iOperator)
                           )
                );
+    }
+
+    public function debugCode()
+    {
+        return 'S';
     }
 }

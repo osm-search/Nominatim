@@ -362,8 +362,8 @@ class Geocode
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
                         foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
-                            $aNewSearches = $oCurrentSearch->extendWithSearchTerm(
-                                $oSearchTerm,
+                            $aNewSearches = $oSearchTerm->extendSearch(
+                                $oCurrentSearch,
                                 $oPosition
                             );
 

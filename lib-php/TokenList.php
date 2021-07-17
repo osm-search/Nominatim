@@ -79,7 +79,7 @@ class TokenList
         foreach ($this->aTokens as $aTokenList) {
             foreach ($aTokenList as $oToken) {
                 if (is_a($oToken, '\Nominatim\Token\Word')) {
-                    $ids[$oToken->iId] = $oToken->iId;
+                    $ids[$oToken->getId()] = $oToken->getId();
                 }
             }
         }
@@ -109,9 +109,9 @@ class TokenList
         $aWordsIDs = array();
         foreach ($this->aTokens as $sToken => $aWords) {
             foreach ($aWords as $aToken) {
-                if ($aToken->iId !== null) {
-                    $aWordsIDs[$aToken->iId] =
-                        '#'.$sToken.'('.$aToken->iId.')#';
+                $iId = $aToken->getId();
+                if ($iId !== null) {
+                    $aWordsIDs[$iId] = '#'.$sToken.'('.$aToken->debugCode().' '.$iId.')#';
                 }
             }
         }

@@ -24,6 +24,22 @@ class Country
     }
 
     /**
+     * Check if the token can be added to the given search.
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return True if the token is compatible with the search configuration
+     *         given the position.
+     */
+    public function isExtendable($oSearch, $oPosition)
+    {
+        return !$oSearch->hasCountry() && $oPosition->maybePhrase('country');
+    }
+
+    /**
      * Derive new searches by adding this token to an existing search.
      *
      * @param object  $oSearch      Partial search description derived so far.
@@ -34,10 +50,6 @@ class Country
      */
     public function extendSearch($oSearch, $oPosition)
     {
-        if ($oSearch->hasCountry() || !$oPosition->maybePhrase('country')) {
-            return array();
-        }
-
         $oNewSearch = $oSearch->clone($oPosition->isLastToken() ? 1 : 6);
         $oNewSearch->setCountry($this->sCountryCode);
 

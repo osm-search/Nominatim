@@ -27,6 +27,22 @@ class Postcode
     }
 
     /**
+     * Check if the token can be added to the given search.
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return True if the token is compatible with the search configuration
+     *         given the position.
+     */
+    public function isExtendable($oSearch, $oPosition)
+    {
+        return !$oSearch->hasPostcode() && $oPosition->maybePhrase('postalcode');
+    }
+
+    /**
      * Derive new searches by adding this token to an existing search.
      *
      * @param object  $oSearch      Partial search description derived so far.
@@ -38,10 +54,6 @@ class Postcode
     public function extendSearch($oSearch, $oPosition)
     {
         $aNewSearches = array();
-
-        if ($oSearch->hasPostcode() || !$oPosition->maybePhrase('postalcode')) {
-            return $aNewSearches;
-        }
 
         // If we have structured search or this is the first term,
         // make the postcode the primary search element.

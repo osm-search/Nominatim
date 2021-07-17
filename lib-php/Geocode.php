@@ -362,14 +362,16 @@ class Geocode
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
                         foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
-                            $aNewSearches = $oSearchTerm->extendSearch(
-                                $oCurrentSearch,
-                                $oPosition
-                            );
+                            if ($oSearchTerm->isExtendable($oCurrentSearch, $oPosition)) {
+                                $aNewSearches = $oSearchTerm->extendSearch(
+                                    $oCurrentSearch,
+                                    $oPosition
+                                );
 
-                            foreach ($aNewSearches as $oSearch) {
-                                if ($oSearch->getRank() < $this->iMaxRank) {
-                                    $aNewWordsetSearches[] = $oSearch;
+                                foreach ($aNewSearches as $oSearch) {
+                                    if ($oSearch->getRank() < $this->iMaxRank) {
+                                        $aNewWordsetSearches[] = $oSearch;
+                                    }
                                 }
                             }
                         }

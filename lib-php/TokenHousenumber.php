@@ -24,6 +24,24 @@ class HouseNumber
     }
 
     /**
+     * Check if the token can be added to the given search.
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return True if the token is compatible with the search configuration
+     *         given the position.
+     */
+    public function isExtendable($oSearch, $oPosition)
+    {
+        return !$oSearch->hasHousenumber()
+               && !$oSearch->hasOperator(\Nominatim\Operator::POSTCODE)
+               && $oPosition->maybePhrase('street');
+    }
+
+    /**
      * Derive new searches by adding this token to an existing search.
      *
      * @param object  $oSearch      Partial search description derived so far.
@@ -35,13 +53,6 @@ class HouseNumber
     public function extendSearch($oSearch, $oPosition)
     {
         $aNewSearches = array();
-
-        if ($oSearch->hasHousenumber()
-            || $oSearch->hasOperator(\Nominatim\Operator::POSTCODE)
-            || !$oPosition->maybePhrase('street')
-        ) {
-            return $aNewSearches;
-        }
 
         // sanity check: if the housenumber is not mainly made
         // up of numbers, add a penalty

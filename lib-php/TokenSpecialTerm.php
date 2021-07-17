@@ -32,6 +32,22 @@ class SpecialTerm
     }
 
     /**
+     * Check if the token can be added to the given search.
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return True if the token is compatible with the search configuration
+     *         given the position.
+     */
+    public function isExtendable($oSearch, $oPosition)
+    {
+        return !$oSearch->hasOperator() && $oPosition->isPhrase('');
+    }
+
+    /**
      * Derive new searches by adding this token to an existing search.
      *
      * @param object  $oSearch      Partial search description derived so far.
@@ -42,10 +58,6 @@ class SpecialTerm
      */
     public function extendSearch($oSearch, $oPosition)
     {
-        if ($oSearch->hasOperator() || !$oPosition->isPhrase('')) {
-            return array();
-        }
-
         $iSearchCost = 2;
 
         $iOp = $this->iOperator;

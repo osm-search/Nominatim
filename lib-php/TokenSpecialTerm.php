@@ -10,13 +10,13 @@ require_once(CONST_LibDir.'/SpecialSearchOperator.php');
 class SpecialTerm
 {
     /// Database word id, if applicable.
-    public $iId;
+    private $iId;
     /// Class (or OSM tag key) of the place to look for.
-    public $sClass;
+    private $sClass;
     /// Type (or OSM tag value) of the place to look for.
-    public $sType;
+    private $sType;
     /// Relationship of the operator to the object (see Operator class).
-    public $iOperator;
+    private $iOperator;
 
     public function __construct($iID, $sClass, $sType, $iOperator)
     {

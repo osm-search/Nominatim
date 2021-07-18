@@ -555,15 +555,15 @@ class Geocode
 
                 if (!empty($aTokens)) {
                     $aNewSearches = array();
+                    $oPosition = new SearchPosition('', 0, 1);
+                    $oPosition->setTokenPosition(0, 1);
+
                     foreach ($aSearches as $oSearch) {
                         foreach ($aTokens as $oToken) {
-                            $oNewSearch = clone $oSearch;
-                            $oNewSearch->setPoiSearch(
-                                $oToken->iOperator,
-                                $oToken->sClass,
-                                $oToken->sType
+                            $aNewSearches = array_merge(
+                                $aNewSearches,
+                                $oToken->extendSearch($oSearch, $oPosition)
                             );
-                            $aNewSearches[] = $oNewSearch;
                         }
                     }
                     $aSearches = $aNewSearches;

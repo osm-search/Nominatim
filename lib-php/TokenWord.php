@@ -70,13 +70,12 @@ class Word
             }
         } elseif (!$oSearch->hasName(true)) {
             $oNewSearch = $oSearch->clone(1);
-            $oNewSearch->addNameToken($this->iId);
-            if (CONST_Search_NameOnlySearchFrequencyThreshold
+            $oNewSearch->addNameToken(
+                $this->iId,
+                CONST_Search_NameOnlySearchFrequencyThreshold
                 && $this->iSearchNameCount
                           < CONST_Search_NameOnlySearchFrequencyThreshold
-            ) {
-                $oNewSearch->markRareName();
-            }
+            );
 
             return array($oNewSearch);
         }

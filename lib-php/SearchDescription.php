@@ -223,11 +223,14 @@ class SearchDescription
      * Add the given full-word token to the list of terms to search for in the
      * name.
      *
-     * @param interger iId  ID of term to add.
+     * @param interger iId    ID of term to add.
+     * @param bool bRareName  True if the term is infrequent enough to not
+     *                        require other constraints for efficient search.
      */
-    public function addNameToken($iId)
+    public function addNameToken($iId, $bRareName)
     {
         $this->aName[$iId] = $iId;
+        $this->bRareName = $bRareName;
     }
 
     /**
@@ -248,11 +251,6 @@ class SearchDescription
             $this->aNameNonSearch[$iId] = $iId;
         }
         $this->iNamePhrase = $iPhraseNumber;
-    }
-
-    public function markRareName()
-    {
-        $this->bRareName = true;
     }
 
     /**

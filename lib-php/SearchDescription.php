@@ -118,6 +118,14 @@ class SearchDescription
     }
 
     /////////// Search building functions
+
+    /**
+     * Create a copy of this search description adding to search rank.
+     *
+     * @param integer $iTermCost  Cost to add to the current search rank.
+     *
+     * @return object Cloned search description.
+     */
     public function clone($iTermCost)
     {
         $oSearch = clone $this;
@@ -126,37 +134,82 @@ class SearchDescription
         return $oSearch;
     }
 
+    /**
+     * Check if the search currently includes a name.
+     *
+     * @param bool bIncludeNonNames  If true stop-word tokens are taken into
+     *                               account, too.
+     *
+     * @return bool True, if search has a name.
+     */
     public function hasName($bIncludeNonNames = false)
     {
         return !empty($this->aName)
                || (!empty($this->aNameNonSearch) && $bIncludeNonNames);
     }
 
+    /**
+     * Check if the search currently includes an address term.
+     *
+     * @return bool True, if any address term is included, including stop-word
+     *              terms.
+     */
     public function hasAddress()
     {
         return !empty($this->aAddress) || !empty($this->aAddressNonSearch);
     }
 
+    /**
+     * Check if a country restriction is currently included in the search.
+     *
+     * @return bool True, if a country restriction is set.
+     */
     public function hasCountry()
     {
         return $this->sCountryCode !== '';
     }
 
+    /**
+     * Check if a postcode is currently included in the search.
+     *
+     * @return bool True, if a postcode is set.
+     */
     public function hasPostcode()
     {
         return $this->sPostcode !== '';
     }
 
+    /**
+     * Check if a house number is set for the search.
+     *
+     * @return bool True, if a house number is set.
+     */
     public function hasHousenumber()
     {
         return $this->sHouseNumber !== '';
     }
 
+    /**
+     * Check if a special type of place is requested.
+     *
+     * param integer iOperator  When set, check for the particular
+     *                          operator used for the special type.
+     *
+     * @return bool True, if speial type is requested or, if requested,
+     *              a special type with the given operator.
+     */
     public function hasOperator($iOperator = null)
     {
         return $iOperator === null ? $this->iOperator != Operator::NONE : $this->iOperator == $iOperator;
     }
 
+    /**
+     * Add the given token to the list of terms to search for in the address.
+     *
+     * @param integer iID       ID of term to add.
+     * @param bool bSearchable  Term should be used to search for result
+     *                          (i.e. term is not a stop word).
+     */
     public function addAddressToken($iId, $bSearchable = true)
     {
         if ($bSearchable) {
@@ -166,11 +219,27 @@ class SearchDescription
         }
     }
 
+    /**
+     * Add the given full-word token to the list of terms to search for in the
+     * name.
+     *
+     * @param interger iId  ID of term to add.
+     */
     public function addNameToken($iId)
     {
         $this->aName[$iId] = $iId;
     }
 
+    /**
+     * Add the given partial token to the list of terms to search for in
+     * the name.
+     *
+     * @param integer iID            ID of term to add.
+     * @param bool bSearchable       Term should be used to search for result
+     *                               (i.e. term is not a stop word).
+     * @param integer iPhraseNumber  Index of phrase, where the partial term
+     *                               appears.
+     */
     public function addPartialNameToken($iId, $bSearchable, $iPhraseNumber)
     {
         if ($bSearchable) {
@@ -186,18 +255,34 @@ class SearchDescription
         $this->bRareName = true;
     }
 
+    /**
+     * Set country restriction for the search.
+     *
+     * @param string sCountryCode  Country code of country to restrict search to.
+     */
     public function setCountry($sCountryCode)
     {
         $this->sCountryCode = $sCountryCode;
         $this->iNamePhrase = -1;
     }
 
+    /**
+     * Set postcode search constraint.
+     *
+     * @param string sPostcode  Postcode the result should have.
+     */
     public function setPostcode($sPostcode)
     {
         $this->sPostcode = $sPostcode;
         $this->iNamePhrase = -1;
     }
 
+    /**
+     * Make this search a search for a postcode object.
+     *
+     * @param integer iId       Token Id for the postcode.
+     * @param string sPostcode  Postcode to look for.
+     */
     public function setPostcodeAsName($iId, $sPostcode)
     {
         $this->iOperator = Operator::POSTCODE;
@@ -207,12 +292,22 @@ class SearchDescription
         $this->iNamePhrase = -1;
     }
 
+    /**
+     * Set house number search cnstraint.
+     *
+     * @param string sNumber  House number the result should have.
+     */
     public function setHousenumber($sNumber)
     {
         $this->sHouseNumber = $sNumber;
         $this->iNamePhrase = -1;
     }
 
+    /**
+     * Make this search a search for a house number.
+     *
+     * @param integer iId  Token Id for the house number.
+     */
     public function setHousenumberAsName($iId)
     {
         $this->aAddress = array_merge($this->aAddress, $this->aName);
@@ -246,6 +341,11 @@ class SearchDescription
         return $this->iNamePhrase;
     }
 
+    /**
+     * Get the global search context.
+     *
+     * @return object  Objects of global search constraints.
+     */
     public function getContext()
     {
         return $this->oContext;

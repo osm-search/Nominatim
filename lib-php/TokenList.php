@@ -7,6 +7,7 @@ require_once(CONST_LibDir.'/TokenHousenumber.php');
 require_once(CONST_LibDir.'/TokenPostcode.php');
 require_once(CONST_LibDir.'/TokenSpecialTerm.php');
 require_once(CONST_LibDir.'/TokenWord.php');
+require_once(CONST_LibDir.'/TokenPartial.php');
 require_once(CONST_LibDir.'/SpecialSearchOperator.php');
 
 /**
@@ -17,15 +18,6 @@ require_once(CONST_LibDir.'/SpecialSearchOperator.php');
  * tokens do not have a common base class. All tokens need to have a field
  * with the word id that points to an entry in the `word` database table
  * but otherwise the information saved about a token can be very different.
- *
- * There are two different kinds of token words: full words and partial terms.
- *
- * Full words start with a space. They represent a complete name of a place.
- * All special tokens are normally full words.
- *
- * Partial terms have no space at the beginning. They may represent a part of
- * a name of a place (e.g. in the name 'World Trade Center' a partial term
- * would be 'Trade' or 'Trade Center'). They are only used in TokenWord.
  */
 class TokenList
 {
@@ -64,7 +56,7 @@ class TokenList
      */
     public function containsAny($sWord)
     {
-        return isset($this->aTokens[$sWord]) || isset($this->aTokens[' '.$sWord]);
+        return isset($this->aTokens[$sWord]);
     }
 
     /**
@@ -86,8 +78,8 @@ class TokenList
 
         foreach ($this->aTokens as $aTokenList) {
             foreach ($aTokenList as $oToken) {
-                if (is_a($oToken, '\Nominatim\Token\Word') && !$oToken->bPartial) {
-                    $ids[$oToken->iId] = $oToken->iId;
+                if (is_a($oToken, '\Nominatim\Token\Word')) {
+                    $ids[$oToken->getId()] = $oToken->getId();
                 }
             }
         }
@@ -117,9 +109,9 @@ class TokenList
         $aWordsIDs = array();
         foreach ($this->aTokens as $sToken => $aWords) {
             foreach ($aWords as $aToken) {
-                if ($aToken->iId !== null) {
-                    $aWordsIDs[$aToken->iId] =
-                        '#'.$sToken.'('.$aToken->iId.')#';
+                $iId = $aToken->getId();
+                if ($iId !== null) {
+                    $aWordsIDs[$iId] = '#'.$sToken.'('.$aToken->debugCode().' '.$iId.')#';
                 }
             }
         }

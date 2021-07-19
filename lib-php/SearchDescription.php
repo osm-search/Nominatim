@@ -68,35 +68,6 @@ class SearchDescription
     }
 
     /**
-     * Make this search a POI search.
-     *
-     * In a POI search, objects are not (only) searched by their name
-     * but also by the primary OSM key/value pair (class and type in Nominatim).
-     *
-     * @param integer $iOperator Type of POI search
-     * @param string  $sClass    Class (or OSM tag key) of POI.
-     * @param string  $sType     Type (or OSM tag value) of POI.
-     *
-     * @return void
-     */
-    public function setPoiSearch($iOperator, $sClass, $sType)
-    {
-        $this->iOperator = $iOperator;
-        $this->sClass = $sClass;
-        $this->sType = $sType;
-    }
-
-    /**
-     * Check if any operator is set.
-     *
-     * @return bool True, if this is a special search operation.
-     */
-    public function hasOperator()
-    {
-        return $this->iOperator != Operator::NONE;
-    }
-
-    /**
      * Extract key/value pairs from a query.
      *
      * Key/value pairs are recognised if they are of the form [<key>=<value>].
@@ -148,253 +119,234 @@ class SearchDescription
 
     /////////// Search building functions
 
-
     /**
-     * Derive new searches by adding a full term to the existing search.
+     * Create a copy of this search description adding to search rank.
      *
-     * @param object $oSearchTerm  Description of the token.
-     * @param string $sPhraseType  Type of phrase the token is contained in.
-     * @param bool   $bFirstToken  True if the token is at the beginning of the
-     *                             query.
-     * @param bool   $bFirstPhrase True if the token is in the first phrase of
-     *                             the query.
-     * @param bool   $bLastToken   True if the token is at the end of the query.
+     * @param integer $iTermCost  Cost to add to the current search rank.
      *
-     * @return SearchDescription[] List of derived search descriptions.
+     * @return object Cloned search description.
      */
-    public function extendWithFullTerm($oSearchTerm, $sPhraseType, $bFirstToken, $bFirstPhrase, $bLastToken)
+    public function clone($iTermCost)
     {
-        $aNewSearches = array();
+        $oSearch = clone $this;
+        $oSearch->iSearchRank += $iTermCost;
 
-        if (($sPhraseType == '' || $sPhraseType == 'country')
-            && is_a($oSearchTerm, '\Nominatim\Token\Country')
-        ) {
-            if (!$this->sCountryCode) {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank++;
-                $oSearch->sCountryCode = $oSearchTerm->sCountryCode;
-                // Country is almost always at the end of the string
-                // - increase score for finding it anywhere else (optimisation)
-                if (!$bLastToken) {
-                    $oSearch->iSearchRank += 5;
-                    $oSearch->iNamePhrase = -1;
-                }
-                $aNewSearches[] = $oSearch;
-            }
-        } elseif (($sPhraseType == '' || $sPhraseType == 'postalcode')
-                  && is_a($oSearchTerm, '\Nominatim\Token\Postcode')
-        ) {
-            if (!$this->sPostcode) {
-                // If we have structured search or this is the first term,
-                // make the postcode the primary search element.
-                if ($this->iOperator == Operator::NONE && $bFirstToken) {
-                    $oSearch = clone $this;
-                    $oSearch->iSearchRank++;
-                    $oSearch->iOperator = Operator::POSTCODE;
-                    $oSearch->aAddress = array_merge($this->aAddress, $this->aName);
-                    $oSearch->aName =
-                        array($oSearchTerm->iId => $oSearchTerm->sPostcode);
-                    $aNewSearches[] = $oSearch;
-                }
-
-                // If we have a structured search or this is not the first term,
-                // add the postcode as an addendum.
-                if ($this->iOperator != Operator::POSTCODE
-                    && ($sPhraseType == 'postalcode' || !empty($this->aName))
-                ) {
-                    $oSearch = clone $this;
-                    $oSearch->iSearchRank++;
-                    $oSearch->iNamePhrase = -1;
-                    if (strlen($oSearchTerm->sPostcode) < 4) {
-                        $oSearch->iSearchRank += 4 - strlen($oSearchTerm->sPostcode);
-                    }
-                    $oSearch->sPostcode = $oSearchTerm->sPostcode;
-                    $aNewSearches[] = $oSearch;
-                }
-            }
-        } elseif (($sPhraseType == '' || $sPhraseType == 'street')
-                 && is_a($oSearchTerm, '\Nominatim\Token\HouseNumber')
-        ) {
-            if (!$this->sHouseNumber && $this->iOperator != Operator::POSTCODE) {
-                // sanity check: if the housenumber is not mainly made
-                // up of numbers, add a penalty
-                $iSearchCost = 1;
-                if (preg_match('/\\d/', $oSearchTerm->sToken) === 0
-                    || preg_match_all('/[^0-9]/', $oSearchTerm->sToken, $aMatches) > 2) {
-                    $iSearchCost++;
-                }
-                if ($this->iOperator != Operator::NONE) {
-                    $iSearchCost++;
-                }
-                if (empty($oSearchTerm->iId)) {
-                    $iSearchCost++;
-                }
-                // also must not appear in the middle of the address
-                if (!empty($this->aAddress)
-                    || (!empty($this->aAddressNonSearch))
-                    || $this->sPostcode
-                ) {
-                    $iSearchCost++;
-                }
-
-                $oSearch = clone $this;
-                $oSearch->iSearchRank += $iSearchCost;
-                $oSearch->iNamePhrase = -1;
-                $oSearch->sHouseNumber = $oSearchTerm->sToken;
-                $aNewSearches[] = $oSearch;
-
-                // Housenumbers may appear in the name when the place has its own
-                // address terms.
-                if ($oSearchTerm->iId !== null
-                    && ($this->iNamePhrase >= 0 || empty($this->aName))
-                    && empty($this->aAddress)
-                   ) {
-                    $oSearch = clone $this;
-                    $oSearch->iSearchRank += $iSearchCost;
-                    $oSearch->aAddress = $this->aName;
-                    $oSearch->bRareName = false;
-                    $oSearch->aName = array($oSearchTerm->iId => $oSearchTerm->iId);
-                    $aNewSearches[] = $oSearch;
-                }
-            }
-        } elseif ($sPhraseType == ''
-                  && is_a($oSearchTerm, '\Nominatim\Token\SpecialTerm')
-        ) {
-            if ($this->iOperator == Operator::NONE) {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank += 2;
-                $oSearch->iNamePhrase = -1;
-
-                $iOp = $oSearchTerm->iOperator;
-                if ($iOp == Operator::NONE) {
-                    if (!empty($this->aName) || $this->oContext->isBoundedSearch()) {
-                        $iOp = Operator::NAME;
-                    } else {
-                        $iOp = Operator::NEAR;
-                    }
-                    $oSearch->iSearchRank += 2;
-                } elseif (!$bFirstToken && !$bLastToken) {
-                    $oSearch->iSearchRank += 2;
-                }
-                if ($this->sHouseNumber) {
-                    $oSearch->iSearchRank++;
-                }
-
-                $oSearch->setPoiSearch(
-                    $iOp,
-                    $oSearchTerm->sClass,
-                    $oSearchTerm->sType
-                );
-                $aNewSearches[] = $oSearch;
-            }
-        } elseif ($sPhraseType != 'country'
-                  && is_a($oSearchTerm, '\Nominatim\Token\Word')
-        ) {
-            $iWordID = $oSearchTerm->iId;
-            // Full words can only be a name if they appear at the beginning
-            // of the phrase. In structured search the name must forcably in
-            // the first phrase. In unstructured search it may be in a later
-            // phrase when the first phrase is a house number.
-            if (!empty($this->aName) || !($bFirstPhrase || $sPhraseType == '')) {
-                if (($sPhraseType == '' || !$bFirstPhrase) && $oSearchTerm->iTermCount > 1) {
-                    $oSearch = clone $this;
-                    $oSearch->iNamePhrase = -1;
-                    $oSearch->iSearchRank += 1;
-                    $oSearch->aAddress[$iWordID] = $iWordID;
-                    $aNewSearches[] = $oSearch;
-                }
-            } elseif (empty($this->aNameNonSearch)) {
-                $oSearch = clone $this;
-                $oSearch->iSearchRank++;
-                $oSearch->aName = array($iWordID => $iWordID);
-                if (CONST_Search_NameOnlySearchFrequencyThreshold) {
-                    $oSearch->bRareName =
-                        $oSearchTerm->iSearchNameCount
-                          < CONST_Search_NameOnlySearchFrequencyThreshold;
-                }
-                $aNewSearches[] = $oSearch;
-            }
-        }
-
-        return $aNewSearches;
+        return $oSearch;
     }
 
     /**
-     * Derive new searches by adding a partial term to the existing search.
+     * Check if the search currently includes a name.
      *
-     * @param string  $sToken             Term for the token.
-     * @param object  $oSearchTerm        Description of the token.
-     * @param bool    $bStructuredPhrases True if the search is structured.
-     * @param integer $iPhrase            Number of the phrase the token is in.
-     * @param array[] $aFullTokens        List of full term tokens with the
-     *                                    same name.
+     * @param bool bIncludeNonNames  If true stop-word tokens are taken into
+     *                               account, too.
      *
-     * @return SearchDescription[] List of derived search descriptions.
+     * @return bool True, if search has a name.
      */
-    public function extendWithPartialTerm($sToken, $oSearchTerm, $bStructuredPhrases, $iPhrase, $aFullTokens)
+    public function hasName($bIncludeNonNames = false)
     {
-        // Only allow name terms.
-        if (!(is_a($oSearchTerm, '\Nominatim\Token\Word'))
-            || strpos($sToken, ' ') !== false
-        ) {
-            return array();
+        return !empty($this->aName)
+               || (!empty($this->aNameNonSearch) && $bIncludeNonNames);
+    }
+
+    /**
+     * Check if the search currently includes an address term.
+     *
+     * @return bool True, if any address term is included, including stop-word
+     *              terms.
+     */
+    public function hasAddress()
+    {
+        return !empty($this->aAddress) || !empty($this->aAddressNonSearch);
+    }
+
+    /**
+     * Check if a country restriction is currently included in the search.
+     *
+     * @return bool True, if a country restriction is set.
+     */
+    public function hasCountry()
+    {
+        return $this->sCountryCode !== '';
+    }
+
+    /**
+     * Check if a postcode is currently included in the search.
+     *
+     * @return bool True, if a postcode is set.
+     */
+    public function hasPostcode()
+    {
+        return $this->sPostcode !== '';
+    }
+
+    /**
+     * Check if a house number is set for the search.
+     *
+     * @return bool True, if a house number is set.
+     */
+    public function hasHousenumber()
+    {
+        return $this->sHouseNumber !== '';
+    }
+
+    /**
+     * Check if a special type of place is requested.
+     *
+     * param integer iOperator  When set, check for the particular
+     *                          operator used for the special type.
+     *
+     * @return bool True, if speial type is requested or, if requested,
+     *              a special type with the given operator.
+     */
+    public function hasOperator($iOperator = null)
+    {
+        return $iOperator === null ? $this->iOperator != Operator::NONE : $this->iOperator == $iOperator;
+    }
+
+    /**
+     * Add the given token to the list of terms to search for in the address.
+     *
+     * @param integer iID       ID of term to add.
+     * @param bool bSearchable  Term should be used to search for result
+     *                          (i.e. term is not a stop word).
+     */
+    public function addAddressToken($iId, $bSearchable = true)
+    {
+        if ($bSearchable) {
+            $this->aAddress[$iId] = $iId;
+        } else {
+            $this->aAddressNonSearch[$iId] = $iId;
         }
+    }
 
-        $aNewSearches = array();
-        $iWordID = $oSearchTerm->iId;
+    /**
+     * Add the given full-word token to the list of terms to search for in the
+     * name.
+     *
+     * @param interger iId    ID of term to add.
+     * @param bool bRareName  True if the term is infrequent enough to not
+     *                        require other constraints for efficient search.
+     */
+    public function addNameToken($iId, $bRareName)
+    {
+        $this->aName[$iId] = $iId;
+        $this->bRareName = $bRareName;
+    }
 
-        if ((!$bStructuredPhrases || $iPhrase > 0)
-            && (!empty($this->aName))
-        ) {
-            $oSearch = clone $this;
-            $oSearch->iSearchRank++;
-            if (preg_match('#^[0-9 ]+$#', $sToken)) {
-                $oSearch->iSearchRank++;
-            }
-            if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
-                $oSearch->aAddress[$iWordID] = $iWordID;
-            } else {
-                $oSearch->aAddressNonSearch[$iWordID] = $iWordID;
-                if (!empty($aFullTokens)) {
-                    $oSearch->iSearchRank++;
-                }
-            }
-            $aNewSearches[] = $oSearch;
+    /**
+     * Add the given partial token to the list of terms to search for in
+     * the name.
+     *
+     * @param integer iID            ID of term to add.
+     * @param bool bSearchable       Term should be used to search for result
+     *                               (i.e. term is not a stop word).
+     * @param integer iPhraseNumber  Index of phrase, where the partial term
+     *                               appears.
+     */
+    public function addPartialNameToken($iId, $bSearchable, $iPhraseNumber)
+    {
+        if ($bSearchable) {
+            $this->aName[$iId] = $iId;
+        } else {
+            $this->aNameNonSearch[$iId] = $iId;
         }
+        $this->iNamePhrase = $iPhraseNumber;
+    }
 
-        if ((!$this->sPostcode && !$this->aAddress && !$this->aAddressNonSearch)
-            && ((empty($this->aName) && empty($this->aNameNonSearch)) || $this->iNamePhrase == $iPhrase)
-        ) {
-            $oSearch = clone $this;
-            $oSearch->iSearchRank++;
-            if (empty($this->aName) && empty($this->aNameNonSearch)) {
-                $oSearch->iSearchRank++;
-            }
-            if (preg_match('#^[0-9 ]+$#', $sToken)) {
-                $oSearch->iSearchRank++;
-            }
-            if ($oSearchTerm->iSearchNameCount < CONST_Max_Word_Frequency) {
-                if (empty($this->aName)
-                    && CONST_Search_NameOnlySearchFrequencyThreshold
-                ) {
-                    $oSearch->bRareName =
-                        $oSearchTerm->iSearchNameCount
-                          < CONST_Search_NameOnlySearchFrequencyThreshold;
-                } else {
-                    $oSearch->bRareName = false;
-                }
-                $oSearch->aName[$iWordID] = $iWordID;
-            } else {
-                if (!empty($aFullTokens)) {
-                    $oSearch->iSearchRank++;
-                }
-                $oSearch->aNameNonSearch[$iWordID] = $iWordID;
-            }
-            $oSearch->iNamePhrase = $iPhrase;
-            $aNewSearches[] = $oSearch;
-        }
+    /**
+     * Set country restriction for the search.
+     *
+     * @param string sCountryCode  Country code of country to restrict search to.
+     */
+    public function setCountry($sCountryCode)
+    {
+        $this->sCountryCode = $sCountryCode;
+        $this->iNamePhrase = -1;
+    }
 
-        return $aNewSearches;
+    /**
+     * Set postcode search constraint.
+     *
+     * @param string sPostcode  Postcode the result should have.
+     */
+    public function setPostcode($sPostcode)
+    {
+        $this->sPostcode = $sPostcode;
+        $this->iNamePhrase = -1;
+    }
+
+    /**
+     * Make this search a search for a postcode object.
+     *
+     * @param integer iId       Token Id for the postcode.
+     * @param string sPostcode  Postcode to look for.
+     */
+    public function setPostcodeAsName($iId, $sPostcode)
+    {
+        $this->iOperator = Operator::POSTCODE;
+        $this->aAddress = array_merge($this->aAddress, $this->aName);
+        $this->aName = array($iId => $sPostcode);
+        $this->bRareName = true;
+        $this->iNamePhrase = -1;
+    }
+
+    /**
+     * Set house number search cnstraint.
+     *
+     * @param string sNumber  House number the result should have.
+     */
+    public function setHousenumber($sNumber)
+    {
+        $this->sHouseNumber = $sNumber;
+        $this->iNamePhrase = -1;
+    }
+
+    /**
+     * Make this search a search for a house number.
+     *
+     * @param integer iId  Token Id for the house number.
+     */
+    public function setHousenumberAsName($iId)
+    {
+        $this->aAddress = array_merge($this->aAddress, $this->aName);
+        $this->bRareName = false;
+        $this->aName = array($iId => $iId);
+        $this->iNamePhrase = -1;
+    }
+
+    /**
+     * Make this search a POI search.
+     *
+     * In a POI search, objects are not (only) searched by their name
+     * but also by the primary OSM key/value pair (class and type in Nominatim).
+     *
+     * @param integer $iOperator Type of POI search
+     * @param string  $sClass    Class (or OSM tag key) of POI.
+     * @param string  $sType     Type (or OSM tag value) of POI.
+     *
+     * @return void
+     */
+    public function setPoiSearch($iOperator, $sClass, $sType)
+    {
+        $this->iOperator = $iOperator;
+        $this->sClass = $sClass;
+        $this->sType = $sType;
+        $this->iNamePhrase = -1;
+    }
+
+    public function getNamePhrase()
+    {
+        return $this->iNamePhrase;
+    }
+
+    /**
+     * Get the global search context.
+     *
+     * @return object  Objects of global search constraints.
+     */
+    public function getContext()
+    {
+        return $this->oContext;
     }
 
     /////////// Query functions

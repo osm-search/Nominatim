@@ -8,17 +8,78 @@ namespace Nominatim\Token;
 class Postcode
 {
     /// Database word id, if available.
-    public $iId;
+    private $iId;
     /// Full nomralized postcode (upper cased).
-    public $sPostcode;
+    private $sPostcode;
     // Optional country code the postcode belongs to (currently unused).
-    public $sCountryCode;
+    private $sCountryCode;
 
     public function __construct($iId, $sPostcode, $sCountryCode = '')
     {
         $this->iId = $iId;
         $this->sPostcode = $sPostcode;
         $this->sCountryCode = empty($sCountryCode) ? '' : $sCountryCode;
+    }
+
+    public function getId()
+    {
+        return $this->iId;
+    }
+
+    /**
+     * Check if the token can be added to the given search.
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return True if the token is compatible with the search configuration
+     *         given the position.
+     */
+    public function isExtendable($oSearch, $oPosition)
+    {
+        return !$oSearch->hasPostcode() && $oPosition->maybePhrase('postalcode');
+    }
+
+    /**
+     * Derive new searches by adding this token to an existing search.
+     *
+     * @param object  $oSearch      Partial search description derived so far.
+     * @param object  $oPosition    Description of the token position within
+                                    the query.
+     *
+     * @return SearchDescription[] List of derived search descriptions.
+     */
+    public function extendSearch($oSearch, $oPosition)
+    {
+        $aNewSearches = array();
+
+        // If we have structured search or this is the first term,
+        // make the postcode the primary search element.
+        if ($oSearch->hasOperator(\Nominatim\Operator::NONE) && $oPosition->isFirstToken()) {
+            $oNewSearch = $oSearch->clone(1);
+            $oNewSearch->setPostcodeAsName($this->iId, $this->sPostcode);
+
+            $aNewSearches[] = $oNewSearch;
+        }
+
+        // If we have a structured search or this is not the first term,
+        // add the postcode as an addendum.
+        if (!$oSearch->hasOperator(\Nominatim\Operator::POSTCODE)
+            && ($oPosition->isPhrase('postalcode') || $oSearch->hasName())
+        ) {
+            $iPenalty = 1;
+            if (strlen($this->sPostcode) < 4) {
+                $iPenalty += 4 - strlen($this->sPostcode);
+            }
+            $oNewSearch = $oSearch->clone($iPenalty);
+            $oNewSearch->setPostcode($this->sPostcode);
+
+            $aNewSearches[] = $oNewSearch;
+        }
+
+        return $aNewSearches;
     }
 
     public function debugInfo()
@@ -28,5 +89,10 @@ class Postcode
                 'Type' => 'postcode',
                 'Info' => $this->sPostcode.'('.$this->sCountryCode.')'
                );
+    }
+
+    public function debugCode()
+    {
+        return 'P';
     }
 }

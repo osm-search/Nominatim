@@ -5,20 +5,20 @@ namespace Nominatim\Token;
 /**
  * A standard word token.
  */
-class Word
+class Partial
 {
     /// Database word id, if applicable.
     private $iId;
     /// Number of appearances in the database.
     private $iSearchNameCount;
-    /// Number of terms in the word.
-    private $iTermCount;
+    /// True, if the token consists exclusively of digits and spaces.
+    private $bNumberToken;
 
-    public function __construct($iId, $iSearchNameCount, $iTermCount)
+    public function __construct($iId, $sToken, $iSearchNameCount)
     {
         $this->iId = $iId;
+        $this->bNumberToken = (bool) preg_match('#^[0-9 ]+$#', $sToken);
         $this->iSearchNameCount = $iSearchNameCount;
-        $this->iTermCount = $iTermCount;
     }
 
     public function getId()
@@ -53,50 +53,66 @@ class Word
      */
     public function extendSearch($oSearch, $oPosition)
     {
-        // Full words can only be a name if they appear at the beginning
-        // of the phrase. In structured search the name must forcably in
-        // the first phrase. In unstructured search it may be in a later
-        // phrase when the first phrase is a house number.
-        if ($oSearch->hasName()
-            || !($oPosition->isFirstPhrase() || $oPosition->isPhrase(''))
-        ) {
-            if ($this->iTermCount > 1
-                && ($oPosition->isPhrase('') || !$oPosition->isFirstPhrase())
-            ) {
-                $oNewSearch = $oSearch->clone(1);
-                $oNewSearch->addAddressToken($this->iId);
+        $aNewSearches = array();
 
-                return array($oNewSearch);
+        // Partial token in Address.
+        if (($oPosition->isPhrase('') || !$oPosition->isFirstPhrase())
+            && $oSearch->hasName()
+        ) {
+            $iSearchCost = $this->bNumberToken ? 2 : 1;
+            if ($this->iSearchNameCount >= CONST_Max_Word_Frequency) {
+                $iSearchCost += 1;
             }
-        } elseif (!$oSearch->hasName(true)) {
-            $oNewSearch = $oSearch->clone(1);
-            $oNewSearch->addNameToken(
+
+            $oNewSearch = $oSearch->clone($iSearchCost);
+            $oNewSearch->addAddressToken(
                 $this->iId,
-                CONST_Search_NameOnlySearchFrequencyThreshold
-                && $this->iSearchNameCount
-                          < CONST_Search_NameOnlySearchFrequencyThreshold
+                $this->iSearchNameCount < CONST_Max_Word_Frequency
             );
 
-            return array($oNewSearch);
+            $aNewSearches[] = $oNewSearch;
         }
 
-        return array();
+        // Partial token in Name.
+        if ((!$oSearch->hasPostcode() && !$oSearch->hasAddress())
+            && (!$oSearch->hasName(true)
+                || $oSearch->getNamePhrase() == $oPosition->getPhrase())
+        ) {
+            $iSearchCost = 1;
+            if (!$oSearch->hasName(true)) {
+                $iSearchCost += 1;
+            }
+            if ($this->bNumberToken) {
+                $iSearchCost += 1;
+            }
+
+            $oNewSearch = $oSearch->clone($iSearchCost);
+            $oNewSearch->addPartialNameToken(
+                $this->iId,
+                $this->iSearchNameCount < CONST_Max_Word_Frequency,
+                $oPosition->getPhrase()
+            );
+
+            $aNewSearches[] = $oNewSearch;
+        }
+
+        return $aNewSearches;
     }
+
 
     public function debugInfo()
     {
         return array(
                 'ID' => $this->iId,
-                'Type' => 'word',
+                'Type' => 'partial',
                 'Info' => array(
-                           'count' => $this->iSearchNameCount,
-                           'terms' => $this->iTermCount
+                           'count' => $this->iSearchNameCount
                           )
                );
     }
 
     public function debugCode()
     {
-        return 'W';
+        return 'w';
     }
 }

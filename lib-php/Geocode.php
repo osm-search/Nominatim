@@ -7,6 +7,7 @@ require_once(CONST_LibDir.'/Phrase.php');
 require_once(CONST_LibDir.'/ReverseGeocode.php');
 require_once(CONST_LibDir.'/SearchDescription.php');
 require_once(CONST_LibDir.'/SearchContext.php');
+require_once(CONST_LibDir.'/SearchPosition.php');
 require_once(CONST_LibDir.'/TokenList.php');
 require_once(CONST_TokenizerDir.'/tokenizer.php');
 
@@ -345,7 +346,11 @@ class Geocode
          */
         foreach ($aPhrases as $iPhrase => $oPhrase) {
             $aNewPhraseSearches = array();
-            $sPhraseType = $oPhrase->getPhraseType();
+            $oPosition = new SearchPosition(
+                $oPhrase->getPhraseType(),
+                $iPhrase,
+                count($aPhrases)
+            );
 
             foreach ($oPhrase->getWordSets() as $aWordset) {
                 $aWordsetSearches = $aSearches;
@@ -353,37 +358,14 @@ class Geocode
                 // Add all words from this wordset
                 foreach ($aWordset as $iToken => $sToken) {
                     $aNewWordsetSearches = array();
+                    $oPosition->setTokenPosition($iToken, count($aWordset));
 
                     foreach ($aWordsetSearches as $oCurrentSearch) {
-                        // Tokens with full name matches.
-                        foreach ($oValidTokens->get(' '.$sToken) as $oSearchTerm) {
-                            $aNewSearches = $oCurrentSearch->extendWithFullTerm(
-                                $oSearchTerm,
-                                $sPhraseType,
-                                $iToken == 0 && $iPhrase == 0,
-                                $iPhrase == 0,
-                                $iToken + 1 == count($aWordset)
-                                  && $iPhrase + 1 == count($aPhrases)
-                            );
-
-                            foreach ($aNewSearches as $oSearch) {
-                                if ($oSearch->getRank() < $this->iMaxRank) {
-                                    $aNewWordsetSearches[] = $oSearch;
-                                }
-                            }
-                        }
-                        // Look for partial matches.
-                        // Note that there is no point in adding country terms here
-                        // because country is omitted in the address.
-                        if ($sPhraseType != 'country') {
-                            // Allow searching for a word - but at extra cost
-                            foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
-                                $aNewSearches = $oCurrentSearch->extendWithPartialTerm(
-                                    $sToken,
-                                    $oSearchTerm,
-                                    (bool) $sPhraseType,
-                                    $iPhrase,
-                                    $oValidTokens->get(' '.$sToken)
+                        foreach ($oValidTokens->get($sToken) as $oSearchTerm) {
+                            if ($oSearchTerm->isExtendable($oCurrentSearch, $oPosition)) {
+                                $aNewSearches = $oSearchTerm->extendSearch(
+                                    $oCurrentSearch,
+                                    $oPosition
                                 );
 
                                 foreach ($aNewSearches as $oSearch) {
@@ -573,15 +555,15 @@ class Geocode
 
                 if (!empty($aTokens)) {
                     $aNewSearches = array();
+                    $oPosition = new SearchPosition('', 0, 1);
+                    $oPosition->setTokenPosition(0, 1);
+
                     foreach ($aSearches as $oSearch) {
                         foreach ($aTokens as $oToken) {
-                            $oNewSearch = clone $oSearch;
-                            $oNewSearch->setPoiSearch(
-                                $oToken->iOperator,
-                                $oToken->sClass,
-                                $oToken->sType
+                            $aNewSearches = array_merge(
+                                $aNewSearches,
+                                $oToken->extendSearch($oSearch, $oPosition)
                             );
-                            $aNewSearches[] = $oNewSearch;
                         }
                     }
                     $aSearches = $aNewSearches;

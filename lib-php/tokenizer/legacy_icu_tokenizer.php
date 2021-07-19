@@ -120,14 +120,14 @@ class Tokenizer
 
             // Try more interpretations for Tokens that could not be matched.
             foreach ($aTokens as $sToken) {
-                if ($sToken[0] == ' ' && !$oValidTokens->contains($sToken)) {
-                    if (preg_match('/^ ([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
+                if ($sToken[0] != ' ' && !$oValidTokens->contains($sToken)) {
+                    if (preg_match('/^([0-9]{5}) [0-9]{4}$/', $sToken, $aData)) {
                         // US ZIP+4 codes - merge in the 5-digit ZIP code
                         $oValidTokens->addToken(
                             $sToken,
                             new Token\Postcode(null, $aData[1], 'us')
                         );
-                    } elseif (preg_match('/^ [0-9]+$/', $sToken)) {
+                    } elseif (preg_match('/^[0-9]+$/', $sToken)) {
                         // Unknown single word token with a number.
                         // Assume it is a house number.
                         $oValidTokens->addToken(
@@ -195,17 +195,28 @@ class Tokenizer
                 ) {
                     $oToken = new Token\Country($iId, $aWord['country_code']);
                 }
+            } elseif ($aWord['word_token'][0] == ' ') {
+                 $oToken = new Token\Word(
+                     $iId,
+                     $aWord['word_token'][0] != ' ',
+                     (int) $aWord['count'],
+                     substr_count($aWord['word_token'], ' ')
+                 );
             } else {
-                $oToken = new Token\Word(
+                $oToken = new Token\Partial(
                     $iId,
-                    $aWord['word_token'][0] != ' ',
-                    (int) $aWord['count'],
-                    substr_count($aWord['word_token'], ' ')
+                    $aWord['word_token'],
+                    (int) $aWord['count']
                 );
             }
 
             if ($oToken) {
-                $oValidTokens->addToken($aWord['word_token'], $oToken);
+                // remove any leading spaces
+                if ($aWord['word_token'][0] == ' ') {
+                    $oValidTokens->addToken(substr($aWord['word_token'], 1), $oToken);
+                } else {
+                    $oValidTokens->addToken($aWord['word_token'], $oToken);
+                }
             }
         }
     }

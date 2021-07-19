@@ -41,20 +41,6 @@ def _setup_tablespace_sql(config):
     return out
 
 
-def _setup_postgres_sql(conn):
-    """ Set up a dictionary with various Postgresql/Postgis SQL terms which
-        are dependent on the database version in use.
-    """
-    out = {}
-    pg_version = conn.server_version_tuple()
-    # CREATE INDEX IF NOT EXISTS was introduced in PG9.5.
-    # Note that you need to ignore failures on older versions when
-    # using this construct.
-    out['if_index_not_exists'] = ' IF NOT EXISTS ' if pg_version >= (9, 5, 0) else ''
-
-    return out
-
-
 def _setup_postgresql_features(conn):
     """ Set up a dictionary with various optional Postgresql/Postgis features that
         depend on the database version.
@@ -87,7 +73,6 @@ class SQLPreprocessor:
 
         self.env.globals['config'] = config
         self.env.globals['db'] = db_info
-        self.env.globals['sql'] = _setup_postgres_sql(conn)
         self.env.globals['postgres'] = _setup_postgresql_features(conn)
 
 

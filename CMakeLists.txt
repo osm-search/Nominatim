@@ -62,7 +62,7 @@ endif()
 #-----------------------------------------------------------------------------
 
 if (BUILD_IMPORTER)
-    find_package(PythonInterp 3.5 REQUIRED)
+    find_package(PythonInterp 3.6 REQUIRED)
 endif()
 
 #-----------------------------------------------------------------------------

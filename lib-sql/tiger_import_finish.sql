@@ -1,7 +1,7 @@
 --index only on parent_place_id
-CREATE INDEX {{sql.if_index_not_exists}} idx_location_property_tiger_parent_place_id_imp
+CREATE INDEX IF NOT EXISTS idx_location_property_tiger_parent_place_id_imp
   ON location_property_tiger_import (parent_place_id) {{db.tablespace.aux_index}};
-CREATE UNIQUE INDEX {{sql.if_index_not_exists}} idx_location_property_tiger_place_id_imp
+CREATE UNIQUE INDEX IF NOT EXISTS idx_location_property_tiger_place_id_imp
   ON location_property_tiger_import (place_id) {{db.tablespace.aux_index}};
 
 GRANT SELECT ON location_property_tiger_import TO "{{config.DATABASE_WEBUSER}}";

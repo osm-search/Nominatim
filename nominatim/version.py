@@ -12,5 +12,5 @@ Version information for Nominatim.
 # Released versions always have a database patch level of 0.
 NOMINATIM_VERSION = (3, 7, 0, 2)
 
-POSTGRESQL_REQUIRED_VERSION = (9, 3)
+POSTGRESQL_REQUIRED_VERSION = (9, 5)
 POSTGIS_REQUIRED_VERSION = (2, 2)

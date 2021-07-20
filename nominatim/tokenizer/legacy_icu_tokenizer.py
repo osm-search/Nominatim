@@ -371,21 +371,27 @@ class LegacyICUNameAnalyzer:
         """
         word_tokens = set()
         for name in self._compute_full_names(names):
-            if name:
-                word_tokens.add(' ' + self.name_processor.get_search_normalized(name))
+            norm_name = self.name_processor.get_search_normalized(name)
+            if norm_name:
+                word_tokens.add(norm_name)
 
         with self.conn.cursor() as cur:
             # Get existing names
-            cur.execute("SELECT word_token FROM word WHERE country_code = %s",
+            cur.execute("""SELECT word_token FROM word
+                            WHERE type = 'C' and info->>'cc'= %s""",
                         (country_code, ))
             word_tokens.difference_update((t[0] for t in cur))
 
+            # Only add those names that are not yet in the list.
             if word_tokens:
-                cur.execute("""INSERT INTO word (word_id, word_token, country_code,
-                                                 search_name_count)
-                               (SELECT nextval('seq_word'), token, %s, 0
+                cur.execute("""INSERT INTO word (word_token, type, info)
+                               (SELECT token, 'C', json_build_object('cc', %s)
                                 FROM unnest(%s) as token)
                             """, (country_code, list(word_tokens)))
+
+            # No names are deleted at the moment.
+            # If deletion is made possible, then the static names from the
+            # initial 'country_name' table should be kept.
 
 
     def process_place(self, place):

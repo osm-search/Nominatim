@@ -146,8 +146,8 @@ class Tokenizer
     private function addTokensFromDB(&$oValidTokens, $aTokens, $sNormQuery)
     {
         // Check which tokens we have, get the ID numbers
-        $sSQL = 'SELECT word_id, word_token, word, class, type, country_code,';
-        $sSQL .= ' operator, coalesce(search_name_count, 0) as count';
+        $sSQL = 'SELECT word_id, word_token, type';
+        $sSQL .= "      info->>'cc' as country";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -156,8 +156,20 @@ class Tokenizer
         $aDBWords = $this->oDB->getAll($sSQL, null, 'Could not get word tokens.');
 
         foreach ($aDBWords as $aWord) {
-            $oToken = null;
-            $iId = (int) $aWord['word_id'];
+            switch ($aWord['type']) {
+                'C':  // country name tokens
+                    if ($aWord['country'] === null
+                        || ($this->aCountryRestriction
+                            && !in_array($aWord['country'], $this->aCountryRestriction))
+                    ) {
+                        continue;
+                    }
+                    $oToken = new Token\Country($iId, $aWord['country'])
+                    break;
+                default:
+                    continue;
+            }
+/*            $iId = (int) $aWord['word_id'];
 
             if ($aWord['class']) {
                 // Special terms need to appear in their normalized form.
@@ -207,16 +219,9 @@ class Tokenizer
                     $aWord['word_token'],
                     (int) $aWord['count']
                 );
-            }
+            }*/
 
-            if ($oToken) {
-                // remove any leading spaces
-                if ($aWord['word_token'][0] == ' ') {
-                    $oValidTokens->addToken(substr($aWord['word_token'], 1), $oToken);
-                } else {
-                    $oValidTokens->addToken($aWord['word_token'], $oToken);
-                }
-            }
+            $oValidTokens->addToken($aWord['word_token'], $oToken);
         }
     }
 
@@ -234,12 +239,10 @@ class Tokenizer
 
         for ($i = 0; $i < $iNumWords; $i++) {
             $sPhrase = $aWords[$i];
-            $aTokens[' '.$sPhrase] = ' '.$sPhrase;
             $aTokens[$sPhrase] = $sPhrase;
 
             for ($j = $i + 1; $j < $iNumWords; $j++) {
                 $sPhrase .= ' '.$aWords[$j];
-                $aTokens[' '.$sPhrase] = ' '.$sPhrase;
                 $aTokens[$sPhrase] = $sPhrase;
             }
         }

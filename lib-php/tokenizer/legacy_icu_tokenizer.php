@@ -198,7 +198,6 @@ class Tokenizer
             } elseif ($aWord['word_token'][0] == ' ') {
                  $oToken = new Token\Word(
                      $iId,
-                     $aWord['word_token'][0] != ' ',
                      (int) $aWord['count'],
                      substr_count($aWord['word_token'], ' ')
                  );

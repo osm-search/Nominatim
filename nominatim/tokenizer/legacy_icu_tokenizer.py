@@ -276,8 +276,7 @@ class LegacyICUNameAnalyzer:
                             (SELECT pc, word FROM
                               (SELECT distinct(postcode) as pc FROM location_postcode) p
                               FULL JOIN
-                              (SELECT word FROM word
-                                WHERE class ='place' and type = 'postcode') w
+                              (SELECT info->>'postcode' as word FROM word WHERE type = 'P') w
                               ON pc = word) x
                            WHERE pc is null or word is null""")
 
@@ -286,20 +285,16 @@ class LegacyICUNameAnalyzer:
                     if postcode is None:
                         to_delete.append(word)
                     else:
-                        copystr.add(
-                            postcode,
-                            ' ' + self.name_processor.get_search_normalized(postcode),
-                            'place', 'postcode', 0)
+                        copystr.add(self.name_processor.get_search_normalized(postcode),
+                                    'P', {'postcode': postcode})
 
                 if to_delete:
                     cur.execute("""DELETE FROM WORD
-                                   WHERE class ='place' and type = 'postcode'
-                                         and word = any(%s)
+                                   WHERE class ='P' and info->>'postcode' = any(%s)
                                 """, (to_delete, ))
 
                 copystr.copy_out(cur, 'word',
-                                 columns=['word', 'word_token', 'class', 'type',
-                                          'search_name_count'])
+                                 columns=['word_token', 'type', 'info'])
 
 
     def update_special_phrases(self, phrases, should_replace):
@@ -503,14 +498,13 @@ class LegacyICUNameAnalyzer:
 
                 with self.conn.cursor() as cur:
                     # no word_id needed for postcodes
-                    cur.execute("""INSERT INTO word (word, word_token, class, type,
-                                                     search_name_count)
-                                   (SELECT pc, %s, 'place', 'postcode', 0
+                    cur.execute("""INSERT INTO word (word_token, type, info)
+                                   (SELECT %s, 'P', json_build_object('postcode', pc)
                                     FROM (VALUES (%s)) as v(pc)
                                     WHERE NOT EXISTS
                                      (SELECT * FROM word
-                                      WHERE word = pc and class='place' and type='postcode'))
-                                """, (' ' + term, postcode))
+                                      WHERE type = 'P' and info->>postcode = pc))
+                                """, (term, postcode))
                 self._cache.postcodes.add(postcode)
 
 

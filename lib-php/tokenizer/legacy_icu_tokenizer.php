@@ -147,7 +147,7 @@ class Tokenizer
     {
         // Check which tokens we have, get the ID numbers
         $sSQL = 'SELECT word_id, word_token, type';
-        $sSQL .= "      info->>'cc' as country";
+        $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -171,6 +171,16 @@ class Tokenizer
                 'H':  // house number tokens
                     $oToken = new Token\HouseNumber($iId, $aWord['word_token']);
                     break;
+                'P':  // postcode tokens
+                    // Postcodes are not normalized, so they may have content
+                    // that makes SQL injection possible. Reject postcodes
+                    // that would need special escaping.
+                    if ($aWord['postcode'] === null
+                        || pg_escape_string($aWord['postcode']) == $aWord['postcode']
+                    ) {
+                       continue;
+                    }
+                    $oToken = new Token\Postcode($iId, $aWord['postcode'], null);
                 default:
                     continue;
             }

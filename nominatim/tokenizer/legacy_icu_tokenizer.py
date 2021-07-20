@@ -152,7 +152,7 @@ class LegacyICUTokenizer:
         """
         with connect(self.dsn) as conn:
             sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_tables.sql')
+            sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer_tables.sql')
             conn.commit()
 
             LOG.warning("Precomputing word tokens")

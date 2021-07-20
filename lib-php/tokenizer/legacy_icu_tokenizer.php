@@ -147,7 +147,9 @@ class Tokenizer
     {
         // Check which tokens we have, get the ID numbers
         $sSQL = 'SELECT word_id, word_token, type';
-        $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode";
+        $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode,";
+        $sSQL .= "      info->>'word' as word, info->>'op' as operator,";
+        $sSQL .= "      info->>'class' as class, info->>'type' as type";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -180,7 +182,26 @@ class Tokenizer
                     ) {
                        continue;
                     }
+                    $sNormPostcode = $this->normalizeString($aWord['postcode']);
+                    if (strpos($sNormQuery, $sNormPostcode) === false) {
+                        continue;
+                    }
                     $oToken = new Token\Postcode($iId, $aWord['postcode'], null);
+                    break;
+                'S':  // tokens for classification terms (special phrases)
+                    if ($aWord['class'] === null || $aWord['type'] === null
+                        || $aWord['word'] === null
+                        || strpos($sNormQuery, $aWord['word']) === false
+                    ) {
+                        continue;
+                    }
+                    $oToken = new Token\SpecialTerm(
+                        $iId,
+                        $aWord['class'],
+                        $aWord['type'],
+                        $aWord['op'] ? Operator::NEAR : Operator::NONE
+                    );
+                    break;
                 default:
                     continue;
             }

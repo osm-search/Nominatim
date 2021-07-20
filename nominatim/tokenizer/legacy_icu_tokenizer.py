@@ -299,6 +299,9 @@ class LegacyICUNameAnalyzer:
 
     def update_special_phrases(self, phrases, should_replace):
         """ Replace the search index for special phrases with the new phrases.
+            If `should_replace` is True, then the previous set of will be
+            completely replaced. Otherwise the phrases are added to the
+            already existing ones.
         """
         norm_phrases = set(((self.name_processor.get_normalized(p[0]), p[1], p[2], p[3])
                             for p in phrases))
@@ -306,11 +309,10 @@ class LegacyICUNameAnalyzer:
         with self.conn.cursor() as cur:
             # Get the old phrases.
             existing_phrases = set()
-            cur.execute("""SELECT word, class, type, operator FROM word
-                           WHERE class != 'place'
-                                 OR (type != 'house' AND type != 'postcode')""")
-            for label, cls, typ, oper in cur:
-                existing_phrases.add((label, cls, typ, oper or '-'))
+            cur.execute("SELECT info FROM word WHERE type = 'S'")
+            for (info, ) in cur:
+                existing_phrases.add((info['word'], info['class'], info['type'],
+                                      info.get('op') or '-'))
 
             added = self._add_special_phrases(cur, norm_phrases, existing_phrases)
             if should_replace:
@@ -333,13 +335,13 @@ class LegacyICUNameAnalyzer:
             for word, cls, typ, oper in to_add:
                 term = self.name_processor.get_search_normalized(word)
                 if term:
-                    copystr.add(word, ' ' + term, cls, typ,
-                                oper if oper in ('in', 'near') else None, 0)
+                    copystr.add(term, 'S',
+                                {'word': word, 'class': cls, 'type': typ,
+                                 'op': oper if oper in ('in', 'near') else None})
                     added += 1
 
             copystr.copy_out(cursor, 'word',
-                             columns=['word', 'word_token', 'class', 'type',
-                                      'operator', 'search_name_count'])
+                             columns=['word_token', 'type', 'info'])
 
         return added
 
@@ -354,9 +356,10 @@ class LegacyICUNameAnalyzer:
         if to_delete:
             cursor.execute_values(
                 """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
-                    WHERE word = name and class = in_class and type = in_type
-                          and ((op = '-' and operator is null) or op = operator)""",
-                to_delete)
+                    WHERE info->>'word' = name
+                          and info->>'class' = in_class and info->>'type' = in_type
+                          and ((op = '-' and info->>'op' is null) or op = info->>'op')
+                """, to_delete)
 
         return len(to_delete)
 

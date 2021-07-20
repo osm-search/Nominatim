@@ -156,6 +156,8 @@ class Tokenizer
         $aDBWords = $this->oDB->getAll($sSQL, null, 'Could not get word tokens.');
 
         foreach ($aDBWords as $aWord) {
+            $iId = (int) $aWord['word_id'];
+
             switch ($aWord['type']) {
                 'C':  // country name tokens
                     if ($aWord['country'] === null
@@ -166,12 +168,13 @@ class Tokenizer
                     }
                     $oToken = new Token\Country($iId, $aWord['country'])
                     break;
+                'H':  // house number tokens
+                    $oToken = new Token\HouseNumber($iId, $aWord['word_token']);
+                    break;
                 default:
                     continue;
             }
-/*            $iId = (int) $aWord['word_id'];
-
-            if ($aWord['class']) {
+/*          if ($aWord['class']) {
                 // Special terms need to appear in their normalized form.
                 // (postcodes are not normalized in the word table)
                 $sNormWord = $this->normalizeString($aWord['word']);

@@ -140,15 +140,13 @@ CREATE OR REPLACE FUNCTION getorcreate_hnr_id(lookup_term TEXT)
 DECLARE
   return_id INTEGER;
 BEGIN
-  SELECT min(word_id) INTO return_id
-    FROM word
-    WHERE word_token = '  '  || lookup_term
-          and class = 'place' and type = 'house';
+  SELECT min(word_id) INTO return_id FROM word
+    WHERE word_token = lookup_term and type = 'H';
 
   IF return_id IS NULL THEN
     return_id := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, class, type, search_name_count)
-      VALUES (return_id, ' ' || lookup_term, 'place', 'house', 0);
+    INSERT INTO word (word_id, word_token, type)
+      VALUES (return_id, lookup_term, 'H');
   END IF;
 
   RETURN return_id;

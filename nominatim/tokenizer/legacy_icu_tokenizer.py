@@ -601,7 +601,8 @@ class _TokenCache:
 
     def get_hnr_tokens(self, conn, terms):
         """ Get token ids for a list of housenumbers, looking them up in the
-            database if necessary.
+            database if necessary. `terms` is an iterable of normalized
+            housenumbers.
         """
         tokens = []
         askdb = []

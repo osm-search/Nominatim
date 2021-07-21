@@ -19,7 +19,7 @@ class Tokenizer
 
     public function checkStatus()
     {
-        $sSQL = "SELECT word_id FROM word WHERE word_token IN (' a')";
+        $sSQL = "SELECT word_id FROM word WHERE word_token == 'a'";
         $iWordID = $this->oDB->getOne($sSQL);
         if ($iWordID === false) {
             throw new Exception('Query failed', 703);
@@ -55,9 +55,8 @@ class Tokenizer
     {
         $aResults = array();
 
-        $sSQL = 'SELECT word_id, class, type FROM word ';
-        $sSQL .= '   WHERE word_token = \' \' || :term';
-        $sSQL .= '   AND class is not null AND class not in (\'place\')';
+        $sSQL = "SELECT word_id, info->>'class' as class, info->>'type' as type ";
+        $sSQL .= '   FROM word WHERE word_token = :term and type = \'S\'';
 
         Debug::printVar('Term', $sTerm);
         Debug::printSQL($sSQL);

@@ -15,7 +15,12 @@ CREATE INDEX idx_word_country_names ON word
 -- Used when inserting new postcodes on updates.
 CREATE INDEX idx_word_postcodes ON word
     USING btree((info->>'postcode')) {{db.tablespace.address_index}}
-    WHERE type = 'P'
+    WHERE type = 'P';
+-- Used when inserting full words.
+CREATE INDEX idx_word_full_word ON word
+    USING btree((info->>'word')) {{db.tablespace.address_index}}
+    WHERE type = 'W';
+
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 
 DROP SEQUENCE IF EXISTS seq_word;

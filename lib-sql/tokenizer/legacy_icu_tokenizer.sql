@@ -98,12 +98,14 @@ DECLARE
   term_count INTEGER;
 BEGIN
   SELECT min(word_id) INTO full_token
-    FROM word WHERE word = norm_term and class is null and country_code is null;
+    FROM word WHERE info->>'word' = norm_term and type = 'W';
 
   IF full_token IS NULL THEN
     full_token := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, word, search_name_count)
-      SELECT full_token, ' ' || lookup_term, norm_term, 0 FROM unnest(lookup_terms) as lookup_term;
+    INSERT INTO word (word_id, word_token, info)
+      SELECT full_token, lookup_term,
+             json_build_object('word', norm_term, 'count', 0)
+        FROM unnest(lookup_terms) as lookup_term;
   END IF;
 
   FOR term IN SELECT unnest(string_to_array(unnest(lookup_terms), ' ')) LOOP
@@ -115,14 +117,14 @@ BEGIN
 
   partial_tokens := '{}'::INT[];
   FOR term IN SELECT unnest(partial_terms) LOOP
-    SELECT min(word_id), max(search_name_count) INTO term_id, term_count
-      FROM word WHERE word_token = term and class is null and country_code is null;
+    SELECT min(word_id), max(info->>'count') INTO term_id, term_count
+      FROM word WHERE word_token = term and type = 'w';
 
     IF term_id IS NULL THEN
       term_id := nextval('seq_word');
       term_count := 0;
-      INSERT INTO word (word_id, word_token, search_name_count)
-        VALUES (term_id, term, 0);
+      INSERT INTO word (word_id, word_token, info)
+        VALUES (term_id, term, json_build_object('count', term_count));
     END IF;
 
     IF term_count < {{ max_word_freq }} THEN

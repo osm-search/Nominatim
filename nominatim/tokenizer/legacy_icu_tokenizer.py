@@ -74,13 +74,11 @@ class LegacyICUTokenizer:
             self.max_word_frequency = get_property(conn, DBCFG_MAXWORDFREQ)
 
 
-    def finalize_import(self, config):
+    def finalize_import(self, _):
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
-        with connect(self.dsn) as conn:
-            sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_indices.sql')
+        pass
 
 
     def update_sql_functions(self, config):
@@ -121,18 +119,17 @@ class LegacyICUTokenizer:
         """
         return LegacyICUNameAnalyzer(self.dsn, ICUNameProcessor(self.naming_rules))
 
-    # pylint: disable=missing-format-attribute
+
     def _install_php(self, phpdir):
         """ Install the php script for the tokenizer.
         """
         php_file = self.data_dir / "tokenizer.php"
-        php_file.write_text(dedent("""\
+        php_file.write_text(dedent(f"""\
             <?php
-            @define('CONST_Max_Word_Frequency', {0.max_word_frequency});
-            @define('CONST_Term_Normalization_Rules', "{0.term_normalization}");
-            @define('CONST_Transliteration', "{0.naming_rules.search_rules}");
-            require_once('{1}/tokenizer/legacy_icu_tokenizer.php');
-            """.format(self, phpdir)))
+            @define('CONST_Max_Word_Frequency', {self.max_word_frequency});
+            @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
+            @define('CONST_Transliteration', "{self.naming_rules.search_rules}");
+            require_once('{phpdir}/tokenizer/legacy_icu_tokenizer.php');"""))
 
 
     def _save_config(self, config):
@@ -175,14 +172,14 @@ class LegacyICUTokenizer:
 
             # copy them back into the word table
             with CopyBuffer() as copystr:
-                for args in words.items():
-                    copystr.add(*args)
+                for k, v in words.items():
+                    copystr.add('w', k, {'count': v})
 
                 with conn.cursor() as cur:
                     copystr.copy_out(cur, 'word',
-                                     columns=['word_token', 'search_name_count'])
+                                     columns=['type', 'word_token', 'info'])
                     cur.execute("""UPDATE word SET word_id = nextval('seq_word')
-                                   WHERE word_id is null""")
+                                   WHERE word_id is null and type = 'w'""")
 
             conn.commit()
 
@@ -229,22 +226,26 @@ class LegacyICUNameAnalyzer:
             The function is used for testing and debugging only
             and not necessarily efficient.
         """
-        tokens = {}
+        full_tokens = {}
+        partial_tokens = {}
         for word in words:
             if word.startswith('#'):
-                tokens[word] = ' ' + self.name_processor.get_search_normalized(word[1:])
+                full_tokens[word] = self.name_processor.get_search_normalized(word[1:])
             else:
-                tokens[word] = self.name_processor.get_search_normalized(word)
+                partial_tokens[word] = self.name_processor.get_search_normalized(word)
 
         with self.conn.cursor() as cur:
-            cur.execute("""SELECT word_token, word_id
-                           FROM word, (SELECT unnest(%s::TEXT[]) as term) t
-                           WHERE word_token = t.term
-                                 and class is null and country_code is null""",
-                        (list(tokens.values()), ))
+            cur.execute("""(SELECT word_token, word_id
+                            FROM word WHERE word_token = ANY(%s) and type = 'W')
+                           UNION
+                           (SELECT word_token, word_id
+                            FROM word WHERE word_token = ANY(%s) and type = 'w')""",
+                        (list(full_tokens.values()),
+                         list(partial_tokens.values())))
             ids = {r[0]: r[1] for r in cur}
 
-        return [(k, v, ids.get(v, None)) for k, v in tokens.items()]
+        return [(k, v, ids.get(v, None)) for k, v in full_tokens.items()] \
+               + [(k, v, ids.get(v, None)) for k, v in partial_tokens.items()]
 
 
     @staticmethod
@@ -290,7 +291,7 @@ class LegacyICUNameAnalyzer:
 
                 if to_delete:
                     cur.execute("""DELETE FROM WORD
-                                   WHERE class ='P' and info->>'postcode' = any(%s)
+                                   WHERE type ='P' and info->>'postcode' = any(%s)
                                 """, (to_delete, ))
 
                 copystr.copy_out(cur, 'word',

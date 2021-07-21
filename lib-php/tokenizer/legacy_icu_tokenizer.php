@@ -148,8 +148,9 @@ class Tokenizer
         // Check which tokens we have, get the ID numbers
         $sSQL = 'SELECT word_id, word_token, type';
         $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode,";
-        $sSQL .= "      info->>'word' as word, info->>'op' as operator,";
-        $sSQL .= "      info->>'class' as class, info->>'type' as type";
+        $sSQL .= "      info->>'op' as operator,";
+        $sSQL .= "      info->>'class' as class, info->>'type' as type,";
+        $sSQL .= "      info->>'count' as count";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -190,8 +191,6 @@ class Tokenizer
                     break;
                 'S':  // tokens for classification terms (special phrases)
                     if ($aWord['class'] === null || $aWord['type'] === null
-                        || $aWord['word'] === null
-                        || strpos($sNormQuery, $aWord['word']) === false
                     ) {
                         continue;
                     }
@@ -202,58 +201,23 @@ class Tokenizer
                         $aWord['op'] ? Operator::NEAR : Operator::NONE
                     );
                     break;
+                'W': // full-word tokens
+                    $oToken = new Token\Word(
+                        $iId,
+                        (int) $aWord['count'],
+                        substr_count($aWord['word_token'], ' ')
+                    );
+                    break;
+                'w':  // partial word terms
+                    $oToken = new Token\Partial(
+                        $iId,
+                        $aWord['word_token'],
+                        (int) $aWord['count']
+                    );
+                    break;
                 default:
                     continue;
             }
-/*          if ($aWord['class']) {
-                // Special terms need to appear in their normalized form.
-                // (postcodes are not normalized in the word table)
-                $sNormWord = $this->normalizeString($aWord['word']);
-                if ($aWord['word'] && strpos($sNormQuery, $sNormWord) === false) {
-                    continue;
-                }
-
-                if ($aWord['class'] == 'place' && $aWord['type'] == 'house') {
-                    $oToken = new Token\HouseNumber($iId, trim($aWord['word_token']));
-                } elseif ($aWord['class'] == 'place' && $aWord['type'] == 'postcode') {
-                    if ($aWord['word']
-                        && pg_escape_string($aWord['word']) == $aWord['word']
-                    ) {
-                        $oToken = new Token\Postcode(
-                            $iId,
-                            $aWord['word'],
-                            $aWord['country_code']
-                        );
-                    }
-                } else {
-                    // near and in operator the same at the moment
-                    $oToken = new Token\SpecialTerm(
-                        $iId,
-                        $aWord['class'],
-                        $aWord['type'],
-                        $aWord['operator'] ? Operator::NEAR : Operator::NONE
-                    );
-                }
-            } elseif ($aWord['country_code']) {
-                // Filter country tokens that do not match restricted countries.
-                if (!$this->aCountryRestriction
-                    || in_array($aWord['country_code'], $this->aCountryRestriction)
-                ) {
-                    $oToken = new Token\Country($iId, $aWord['country_code']);
-                }
-            } elseif ($aWord['word_token'][0] == ' ') {
-                 $oToken = new Token\Word(
-                     $iId,
-                     (int) $aWord['count'],
-                     substr_count($aWord['word_token'], ' ')
-                 );
-            } else {
-                $oToken = new Token\Partial(
-                    $iId,
-                    $aWord['word_token'],
-                    (int) $aWord['count']
-                );
-            }*/
 
             $oValidTokens->addToken($aWord['word_token'], $oToken);
         }

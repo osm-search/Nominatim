@@ -4,6 +4,7 @@ libICU instead of the PostgreSQL module.
 """
 from collections import Counter
 import itertools
+import json
 import logging
 import re
 from textwrap import dedent
@@ -173,7 +174,7 @@ class LegacyICUTokenizer:
             # copy them back into the word table
             with CopyBuffer() as copystr:
                 for k, v in words.items():
-                    copystr.add('w', k, {'count': v})
+                    copystr.add('w', k, json.dumps({'count': v}))
 
                 with conn.cursor() as cur:
                     copystr.copy_out(cur, 'word',
@@ -287,7 +288,7 @@ class LegacyICUNameAnalyzer:
                         to_delete.append(word)
                     else:
                         copystr.add(self.name_processor.get_search_normalized(postcode),
-                                    'P', {'postcode': postcode})
+                                    'P', json.dumps({'postcode': postcode}))
 
                 if to_delete:
                     cur.execute("""DELETE FROM WORD
@@ -337,8 +338,8 @@ class LegacyICUNameAnalyzer:
                 term = self.name_processor.get_search_normalized(word)
                 if term:
                     copystr.add(term, 'S',
-                                {'word': word, 'class': cls, 'type': typ,
-                                 'op': oper if oper in ('in', 'near') else None})
+                                json.dumps({'word': word, 'class': cls, 'type': typ,
+                                            'op': oper if oper in ('in', 'near') else None}))
                     added += 1
 
             copystr.copy_out(cursor, 'word',

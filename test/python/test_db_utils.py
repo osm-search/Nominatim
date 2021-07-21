@@ -1,6 +1,8 @@
 """
 Tests for DB utility functions in db.utils
 """
+import json
+
 import pytest
 
 import nominatim.db.utils as db_utils
@@ -115,3 +117,38 @@ class TestCopyBuffer:
 
 
 
+class TestCopyBufferJson:
+    TABLE_NAME = 'copytable'
+
+    @pytest.fixture(autouse=True)
+    def setup_test_table(self, table_factory):
+        table_factory(self.TABLE_NAME, 'colA INT, colB JSONB')
+
+
+    def table_rows(self, cursor):
+        cursor.execute('SELECT * FROM ' + self.TABLE_NAME)
+        results = {k: v for k,v in cursor}
+
+        assert len(results) == cursor.rowcount
+
+        return results
+
+
+    def test_json_object(self, temp_db_cursor):
+        with db_utils.CopyBuffer() as buf:
+            buf.add(1, json.dumps({'test': 'value', 'number': 1}))
+
+            buf.copy_out(temp_db_cursor, self.TABLE_NAME)
+
+        assert self.table_rows(temp_db_cursor) == \
+                   {1: {'test': 'value', 'number': 1}}
+
+
+    def test_json_object_special_chras(self, temp_db_cursor):
+        with db_utils.CopyBuffer() as buf:
+            buf.add(1, json.dumps({'te\tst': 'va\nlue', 'nu"mber': None}))
+
+            buf.copy_out(temp_db_cursor, self.TABLE_NAME)
+
+        assert self.table_rows(temp_db_cursor) == \
+                   {1: {'te\tst': 'va\nlue', 'nu"mber': None}}

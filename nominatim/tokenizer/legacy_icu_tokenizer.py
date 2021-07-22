@@ -236,17 +236,17 @@ class LegacyICUNameAnalyzer:
                 partial_tokens[word] = self.name_processor.get_search_normalized(word)
 
         with self.conn.cursor() as cur:
-            cur.execute("""(SELECT word_token, word_id
-                            FROM word WHERE word_token = ANY(%s) and type = 'W')
-                           UNION
-                           (SELECT word_token, word_id
-                            FROM word WHERE word_token = ANY(%s) and type = 'w')""",
-                        (list(full_tokens.values()),
-                         list(partial_tokens.values())))
-            ids = {r[0]: r[1] for r in cur}
+            cur.execute("""SELECT word_token, word_id
+                            FROM word WHERE word_token = ANY(%s) and type = 'W'
+                        """, (list(full_tokens.values()),))
+            full_ids = {r[0]: r[1] for r in cur}
+            cur.execute("""SELECT word_token, word_id
+                            FROM word WHERE word_token = ANY(%s) and type = 'w'""",
+                        (list(partial_tokens.values()),))
+            part_ids = {r[0]: r[1] for r in cur}
 
-        return [(k, v, ids.get(v, None)) for k, v in full_tokens.items()] \
-               + [(k, v, ids.get(v, None)) for k, v in partial_tokens.items()]
+        return [(k, v, full_ids.get(v, None)) for k, v in full_tokens.items()] \
+               + [(k, v, part_ids.get(v, None)) for k, v in partial_tokens.items()]
 
 
     @staticmethod
@@ -508,7 +508,7 @@ class LegacyICUNameAnalyzer:
                                     FROM (VALUES (%s)) as v(pc)
                                     WHERE NOT EXISTS
                                      (SELECT * FROM word
-                                      WHERE type = 'P' and info->>postcode = pc))
+                                      WHERE type = 'P' and info->>'postcode' = pc))
                                 """, (term, postcode))
                 self._cache.postcodes.add(postcode)
 

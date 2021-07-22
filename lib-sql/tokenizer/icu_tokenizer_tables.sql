@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS word;
-CREATE TABLE word_icu (
+CREATE TABLE word (
   word_id INTEGER,
   word_token text NOT NULL,
   type text NOT NULL,

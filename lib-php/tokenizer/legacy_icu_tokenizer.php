@@ -19,7 +19,7 @@ class Tokenizer
 
     public function checkStatus()
     {
-        $sSQL = "SELECT word_id FROM word WHERE word_token == 'a'";
+        $sSQL = "SELECT word_id FROM word limit 1";
         $iWordID = $this->oDB->getOne($sSQL);
         if ($iWordID === false) {
             throw new Exception('Query failed', 703);
@@ -145,10 +145,10 @@ class Tokenizer
     private function addTokensFromDB(&$oValidTokens, $aTokens, $sNormQuery)
     {
         // Check which tokens we have, get the ID numbers
-        $sSQL = 'SELECT word_id, word_token, type';
+        $sSQL = 'SELECT word_id, word_token, type,';
         $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode,";
         $sSQL .= "      info->>'op' as operator,";
-        $sSQL .= "      info->>'class' as class, info->>'type' as type,";
+        $sSQL .= "      info->>'class' as class, info->>'type' as ctype,";
         $sSQL .= "      info->>'count' as count";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
@@ -159,66 +159,60 @@ class Tokenizer
 
         foreach ($aDBWords as $aWord) {
             $iId = (int) $aWord['word_id'];
+            $sTok = $aWord['word_token'];
 
             switch ($aWord['type']) {
-                'C':  // country name tokens
-                    if ($aWord['country'] === null
-                        || ($this->aCountryRestriction
-                            && !in_array($aWord['country'], $this->aCountryRestriction))
+                case 'C':  // country name tokens
+                    if ($aWord['country'] !== null
+                        && (!$this->aCountryRestriction
+                            || in_array($aWord['country'], $this->aCountryRestriction))
                     ) {
-                        continue;
+                        $oValidTokens->addToken($sTok, new Token\Country($iId, $aWord['country']));
                     }
-                    $oToken = new Token\Country($iId, $aWord['country'])
                     break;
-                'H':  // house number tokens
-                    $oToken = new Token\HouseNumber($iId, $aWord['word_token']);
+                case 'H':  // house number tokens
+                    $oValidTokens->addToken($sTok, new Token\HouseNumber($iId, $aWord['word_token']));
                     break;
-                'P':  // postcode tokens
+                case 'P':  // postcode tokens
                     // Postcodes are not normalized, so they may have content
                     // that makes SQL injection possible. Reject postcodes
                     // that would need special escaping.
-                    if ($aWord['postcode'] === null
-                        || pg_escape_string($aWord['postcode']) == $aWord['postcode']
+                    if ($aWord['postcode'] !== null
+                        && pg_escape_string($aWord['postcode']) == $aWord['postcode']
                     ) {
-                       continue;
+                        $sNormPostcode = $this->normalizeString($aWord['postcode']);
+                        if (strpos($sNormQuery, $sNormPostcode) !== false) {
+                            $oValidTokens->addToken($sTok, new Token\Postcode($iId, $aWord['postcode'], null));
+                        }
                     }
-                    $sNormPostcode = $this->normalizeString($aWord['postcode']);
-                    if (strpos($sNormQuery, $sNormPostcode) === false) {
-                        continue;
-                    }
-                    $oToken = new Token\Postcode($iId, $aWord['postcode'], null);
                     break;
-                'S':  // tokens for classification terms (special phrases)
-                    if ($aWord['class'] === null || $aWord['type'] === null
-                    ) {
-                        continue;
+                case 'S':  // tokens for classification terms (special phrases)
+                    if ($aWord['class'] !== null && $aWord['ctype'] !== null) {
+                        $oValidTokens->addToken($sTok, new Token\SpecialTerm(
+                            $iId,
+                            $aWord['class'],
+                            $aWord['ctype'],
+                            (isset($aWord['op'])) ? Operator::NEAR : Operator::NONE
+                        ));
                     }
-                    $oToken = new Token\SpecialTerm(
-                        $iId,
-                        $aWord['class'],
-                        $aWord['type'],
-                        $aWord['op'] ? Operator::NEAR : Operator::NONE
-                    );
                     break;
-                'W': // full-word tokens
-                    $oToken = new Token\Word(
+                case 'W': // full-word tokens
+                    $oValidTokens->addToken($sTok, new Token\Word(
                         $iId,
                         (int) $aWord['count'],
                         substr_count($aWord['word_token'], ' ')
-                    );
+                    ));
                     break;
-                'w':  // partial word terms
-                    $oToken = new Token\Partial(
+                case 'w':  // partial word terms
+                    $oValidTokens->addToken($sTok, new Token\Partial(
                         $iId,
                         $aWord['word_token'],
                         (int) $aWord['count']
-                    );
+                    ));
                     break;
                 default:
-                    continue;
+                    break;
             }
-
-            $oValidTokens->addToken($aWord['word_token'], $oToken);
         }
     }
 

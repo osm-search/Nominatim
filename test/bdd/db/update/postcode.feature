@@ -18,10 +18,7 @@ Feature: Update of postcode
            | country | postcode | geometry |
            | de      | 01982    | country:de |
            | ch      | 4567     | country:ch |
-        And word contains
-           | word  | class | type |
-           | 01982 | place | postcode |
-           | 4567  | place | postcode |
+        And there are word tokens for postcodes 01982,4567
 
      Scenario: When the last postcode is deleted, it is deleted from postcode and word
         Given the places
@@ -34,12 +31,8 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | ch      | 4567     | country:ch |
-        And word contains not
-           | word  | class | type |
-           | 01982 | place | postcode |
-        And word contains
-           | word  | class | type |
-           | 4567  | place | postcode |
+        And there are word tokens for postcodes 4567
+        And there are no word tokens for postcodes 01982
 
      Scenario: A postcode is not deleted from postcode and word when it exist in another country
         Given the places
@@ -52,9 +45,7 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | ch      | 01982    | country:ch |
-        And word contains
-           | word  | class | type |
-           | 01982 | place | postcode |
+        And there are word tokens for postcodes 01982
 
      Scenario: Updating a postcode is reflected in postcode table
         Given the places
@@ -68,9 +59,7 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 20453    | country:de |
-        And word contains
-           | word  | class | type |
-           | 20453 | place | postcode |
+        And there are word tokens for postcodes 20453
 
      Scenario: When changing from a postcode type, the entry appears in placex
         When importing
@@ -91,9 +80,7 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 20453    | country:de |
-        And word contains
-           | word  | class | type |
-           | 20453 | place | postcode |
+        And there are word tokens for postcodes 20453
 
      Scenario: When changing to a postcode type, the entry disappears from placex
         When importing
@@ -114,6 +101,4 @@ Feature: Update of postcode
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 01982    | country:de |
-        And word contains
-           | word  | class | type |
-           | 01982 | place | postcode |
+        And there are word tokens for postcodes 01982

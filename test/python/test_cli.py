@@ -15,6 +15,7 @@ import nominatim.clicmd.admin
 import nominatim.clicmd.setup
 import nominatim.indexer.indexer
 import nominatim.tools.admin
+import nominatim.tools.add_osm_data
 import nominatim.tools.check_database
 import nominatim.tools.database_import
 import nominatim.tools.freeze
@@ -87,14 +88,20 @@ class TestCli:
         assert mock.called == 1
 
 
-    @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
-                                          ('node', 12), ('way', 8), ('relation', 32)])
-    def test_add_data_command(self, mock_func_factory, name, oid):
-        mock_run_legacy = mock_func_factory(nominatim.clicmd.add_data, 'run_legacy_script')
+    @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc')])
+    def test_add_data_file_command(self, mock_func_factory, name, oid):
+        mock_run_legacy = mock_func_factory(nominatim.tools.add_osm_data, 'add_data_from_file')
         assert self.call_nominatim('add-data', '--' + name, str(oid)) == 0
 
         assert mock_run_legacy.called == 1
-        assert mock_run_legacy.last_args == ('update.php', '--import-' + name, oid)
+
+
+    @pytest.mark.parametrize("name,oid", [('node', 12), ('way', 8), ('relation', 32)])
+    def test_add_data_object_command(self, mock_func_factory, name, oid):
+        mock_run_legacy = mock_func_factory(nominatim.tools.add_osm_data, 'add_osm_object')
+        assert self.call_nominatim('add-data', '--' + name, str(oid)) == 0
+
+        assert mock_run_legacy.called == 1
 
 
     def test_serve_command(self, mock_func_factory):

@@ -3,8 +3,6 @@ Implementation of the 'add-data' subcommand.
 """
 import logging
 
-from nominatim.tools.exec_utils import run_legacy_script
-
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
@@ -25,9 +23,9 @@ class UpdateAddData:
         group_name = parser.add_argument_group('Source')
         group = group_name.add_mutually_exclusive_group(required=True)
         group.add_argument('--file', metavar='FILE',
-                           help='Import data from an OSM file')
+                           help='Import data from an OSM file or diff file')
         group.add_argument('--diff', metavar='FILE',
-                           help='Import data from an OSM diff file')
+                           help='Import data from an OSM diff file (deprecated: use --file)')
         group.add_argument('--node', metavar='ID', type=int,
                            help='Import a single node from the API')
         group.add_argument('--way', metavar='ID', type=int,
@@ -39,11 +37,15 @@ class UpdateAddData:
         group = parser.add_argument_group('Extra arguments')
         group.add_argument('--use-main-api', action='store_true',
                            help='Use OSM API instead of Overpass to download objects')
+        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
+                           help='Size of cache to be used by osm2pgsql (in MB)')
+        group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
+                           help='Set timeout for file downloads.')
 
     @staticmethod
     def run(args):
         from nominatim.tokenizer import factory as tokenizer_factory
-        from nominatim.tools import tiger_data
+        from nominatim.tools import tiger_data, add_osm_data
 
         if args.tiger_data:
             tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
@@ -51,17 +53,24 @@ class UpdateAddData:
                                              args.config, args.threads or 1,
                                              tokenizer)
 
-        params = ['update.php']
-        if args.file:
-            params.extend(('--import-file', args.file))
-        elif args.diff:
-            params.extend(('--import-diff', args.diff))
-        elif args.node:
-            params.extend(('--import-node', args.node))
-        elif args.way:
-            params.extend(('--import-way', args.way))
-        elif args.relation:
-            params.extend(('--import-relation', args.relation))
-        if args.use_main_api:
-            params.append('--use-main-api')
-        return run_legacy_script(*params, nominatim_env=args)
+        osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)
+        if args.file or args.diff:
+            return add_osm_data.add_data_from_file(args.file or args.diff,
+                                                   osm2pgsql_params)
+
+        if args.node:
+            return add_osm_data.add_osm_object('node', args.node,
+                                               args.use_main_api,
+                                               osm2pgsql_params)
+
+        if args.way:
+            return add_osm_data.add_osm_object('way', args.way,
+                                               args.use_main_api,
+                                               osm2pgsql_params)
+
+        if args.relation:
+            return add_osm_data.add_osm_object('relation', args.relation,
+                                               args.use_main_api,
+                                               osm2pgsql_params)
+
+        return 0

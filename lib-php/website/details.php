@@ -83,7 +83,7 @@ if ($sOsmType && $iOsmId > 0) {
     }
 
     if ($sPlaceId === false) {
-        throw new Exception('No place with that OSM ID found.', 404);
+        throw new \Exception('No place with that OSM ID found.', 404);
     }
 } else {
     if ($sPlaceId === false) {
@@ -146,7 +146,7 @@ $sSQL .= " WHERE place_id = $iPlaceID";
 $aPointDetails = $oDB->getRow($sSQL, null, 'Could not get details of place object.');
 
 if (!$aPointDetails) {
-    throw new Exception('No place with that place ID found.', 404);
+    throw new \Exception('No place with that place ID found.', 404);
 }
 
 $aPointDetails['localname'] = $aPointDetails['localname']?$aPointDetails['localname']:$aPointDetails['housenumber'];

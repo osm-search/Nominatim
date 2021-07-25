@@ -22,10 +22,10 @@ class Tokenizer
         $sSQL = 'SELECT word_id FROM word limit 1';
         $iWordID = $this->oDB->getOne($sSQL);
         if ($iWordID === false) {
-            throw new Exception('Query failed', 703);
+            throw new \Exception('Query failed', 703);
         }
         if (!$iWordID) {
-            throw new Exception('No value', 704);
+            throw new \Exception('No value', 704);
         }
     }
 

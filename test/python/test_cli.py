@@ -60,7 +60,6 @@ class TestCli:
 
 
     @pytest.mark.parametrize("command,script", [
-                             (('add-data', '--file', 'foo.osm'), 'update'),
                              (('export',), 'export')
                              ])
     def test_legacy_commands_simple(self, mock_run_legacy, command, script):
@@ -90,7 +89,8 @@ class TestCli:
 
     @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc'),
                                           ('node', 12), ('way', 8), ('relation', 32)])
-    def test_add_data_command(self, mock_run_legacy, name, oid):
+    def test_add_data_command(self, mock_func_factory, name, oid):
+        mock_run_legacy = mock_func_factory(nominatim.clicmd.add_data, 'run_legacy_script')
         assert self.call_nominatim('add-data', '--' + name, str(oid)) == 0
 
         assert mock_run_legacy.called == 1

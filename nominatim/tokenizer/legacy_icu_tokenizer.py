@@ -278,7 +278,7 @@ class LegacyICUNameAnalyzer:
                             (SELECT pc, word FROM
                               (SELECT distinct(postcode) as pc FROM location_postcode) p
                               FULL JOIN
-                              (SELECT info->>'postcode' as word FROM word WHERE type = 'P') w
+                              (SELECT word FROM word WHERE type = 'P') w
                               ON pc = word) x
                            WHERE pc is null or word is null""")
 
@@ -288,15 +288,15 @@ class LegacyICUNameAnalyzer:
                         to_delete.append(word)
                     else:
                         copystr.add(self.name_processor.get_search_normalized(postcode),
-                                    'P', json.dumps({'postcode': postcode}))
+                                    'P', postcode)
 
                 if to_delete:
                     cur.execute("""DELETE FROM WORD
-                                   WHERE type ='P' and info->>'postcode' = any(%s)
+                                   WHERE type ='P' and word = any(%s)
                                 """, (to_delete, ))
 
                 copystr.copy_out(cur, 'word',
-                                 columns=['word_token', 'type', 'info'])
+                                 columns=['word_token', 'type', 'word'])
 
 
     def update_special_phrases(self, phrases, should_replace):
@@ -311,9 +311,9 @@ class LegacyICUNameAnalyzer:
         with self.conn.cursor() as cur:
             # Get the old phrases.
             existing_phrases = set()
-            cur.execute("SELECT info FROM word WHERE type = 'S'")
-            for (info, ) in cur:
-                existing_phrases.add((info['word'], info['class'], info['type'],
+            cur.execute("SELECT word, info FROM word WHERE type = 'S'")
+            for word, info in cur:
+                existing_phrases.add((word, info['class'], info['type'],
                                       info.get('op') or '-'))
 
             added = self._add_special_phrases(cur, norm_phrases, existing_phrases)
@@ -337,13 +337,13 @@ class LegacyICUNameAnalyzer:
             for word, cls, typ, oper in to_add:
                 term = self.name_processor.get_search_normalized(word)
                 if term:
-                    copystr.add(term, 'S',
-                                json.dumps({'word': word, 'class': cls, 'type': typ,
+                    copystr.add(term, 'S', word,
+                                json.dumps({'class': cls, 'type': typ,
                                             'op': oper if oper in ('in', 'near') else None}))
                     added += 1
 
             copystr.copy_out(cursor, 'word',
-                             columns=['word_token', 'type', 'info'])
+                             columns=['word_token', 'type', 'word', 'info'])
 
         return added
 
@@ -358,7 +358,7 @@ class LegacyICUNameAnalyzer:
         if to_delete:
             cursor.execute_values(
                 """ DELETE FROM word USING (VALUES %s) as v(name, in_class, in_type, op)
-                    WHERE info->>'word' = name
+                    WHERE type = 'S' and word = name
                           and info->>'class' = in_class and info->>'type' = in_type
                           and ((op = '-' and info->>'op' is null) or op = info->>'op')
                 """, to_delete)
@@ -378,14 +378,14 @@ class LegacyICUNameAnalyzer:
         with self.conn.cursor() as cur:
             # Get existing names
             cur.execute("""SELECT word_token FROM word
-                            WHERE type = 'C' and info->>'cc'= %s""",
+                            WHERE type = 'C' and word = %s""",
                         (country_code, ))
             word_tokens.difference_update((t[0] for t in cur))
 
             # Only add those names that are not yet in the list.
             if word_tokens:
-                cur.execute("""INSERT INTO word (word_token, type, info)
-                               (SELECT token, 'C', json_build_object('cc', %s)
+                cur.execute("""INSERT INTO word (word_token, type, word)
+                               (SELECT token, 'C', %s
                                 FROM unnest(%s) as token)
                             """, (country_code, list(word_tokens)))
 
@@ -503,12 +503,11 @@ class LegacyICUNameAnalyzer:
 
                 with self.conn.cursor() as cur:
                     # no word_id needed for postcodes
-                    cur.execute("""INSERT INTO word (word_token, type, info)
-                                   (SELECT %s, 'P', json_build_object('postcode', pc)
-                                    FROM (VALUES (%s)) as v(pc)
+                    cur.execute("""INSERT INTO word (word_token, type, word)
+                                   (SELECT %s, 'P', pc FROM (VALUES (%s)) as v(pc)
                                     WHERE NOT EXISTS
                                      (SELECT * FROM word
-                                      WHERE type = 'P' and info->>'postcode' = pc))
+                                      WHERE type = 'P' and word = pc))
                                 """, (term, postcode))
                 self._cache.postcodes.add(postcode)
 

@@ -266,22 +266,6 @@ def check_location_postcode(context):
 
             db_row.assert_row(row, ('country', 'postcode'))
 
-@then("word contains(?P<exclude> not)?")
-def check_word_table(context, exclude):
-    """ Check the contents of the word table. Each row represents a table row
-        and all data must match. Data not present in the expected table, may
-        be arbitry. The rows are identified via all given columns.
-    """
-    with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-        for row in context.table:
-            wheres = ' AND '.join(["{} = %s".format(h) for h in row.headings])
-            cur.execute("SELECT * from word WHERE " + wheres, list(row.cells))
-            if exclude:
-                assert cur.rowcount == 0, "Row still in word table: %s" % '/'.join(values)
-            else:
-                assert cur.rowcount > 0, "Row not in word table: %s" % '/'.join(values)
-
-
 @then("there are(?P<exclude> no)? word tokens for postcodes (?P<postcodes>.*)")
 def check_word_table_for_postcodes(context, exclude, postcodes):
     """ Check that the tokenizer produces postcode tokens for the given
@@ -297,8 +281,7 @@ def check_word_table_for_postcodes(context, exclude, postcodes):
 
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         if nctx.tokenizer == 'legacy_icu':
-            cur.execute("""SELECT info->>'postcode' FROM word
-                           WHERE type = 'P' and info->>'postcode' = any(%s)""",
+            cur.execute("SELECT word FROM word WHERE type = 'P' and word = any(%s)",
                         (plist,))
         else:
             cur.execute("""SELECT word FROM word WHERE word = any(%s)

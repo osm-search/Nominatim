@@ -12,16 +12,16 @@ class MockIcuWordTable:
             cur.execute("""CREATE TABLE word (word_id INTEGER,
                                               word_token text NOT NULL,
                                               type text NOT NULL,
+                                              word text,
                                               info jsonb)""")
 
         conn.commit()
 
     def add_special(self, word_token, word, cls, typ, oper):
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO word (word_token, type, info)
-                              VALUES (%s, 'S',
-                                      json_build_object('word', %s,
-                                                        'class', %s,
+            cur.execute("""INSERT INTO word (word_token, type, word, info)
+                              VALUES (%s, 'S', %s,
+                                      json_build_object('class', %s,
                                                         'type', %s,
                                                         'op', %s))
                         """, (word_token, word, cls, typ, oper))
@@ -30,16 +30,16 @@ class MockIcuWordTable:
 
     def add_country(self, country_code, word_token):
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO word (word_token, type, info)
-                           VALUES(%s, 'C', json_build_object('cc', %s))""",
+            cur.execute("""INSERT INTO word (word_token, type, word)
+                           VALUES(%s, 'C', %s)""",
                         (word_token, country_code))
         self.conn.commit()
 
 
     def add_postcode(self, word_token, postcode):
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO word (word_token, type, info)
-                              VALUES (%s, 'P', json_build_object('postcode', %s))
+            cur.execute("""INSERT INTO word (word_token, type, word)
+                              VALUES (%s, 'P', %s)
                         """, (word_token, postcode))
         self.conn.commit()
 
@@ -56,8 +56,8 @@ class MockIcuWordTable:
 
     def get_special(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT word_token, info FROM word WHERE type = 'S'")
-            result = set(((row[0], row[1]['word'], row[1]['class'],
+            cur.execute("SELECT word_token, info, word FROM word WHERE type = 'S'")
+            result = set(((row[0], row[2], row[1]['class'],
                            row[1]['type'], row[1]['op']) for row in cur))
             assert len(result) == cur.rowcount, "Word table has duplicates."
             return result
@@ -65,7 +65,7 @@ class MockIcuWordTable:
 
     def get_country(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT info->>'cc', word_token FROM word WHERE type = 'C'")
+            cur.execute("SELECT word, word_token FROM word WHERE type = 'C'")
             result = set((tuple(row) for row in cur))
             assert len(result) == cur.rowcount, "Word table has duplicates."
             return result
@@ -73,7 +73,7 @@ class MockIcuWordTable:
 
     def get_postcodes(self):
         with self.conn.cursor() as cur:
-            cur.execute("SELECT info->>'postcode' FROM word WHERE type = 'P'")
+            cur.execute("SELECT word FROM word WHERE type = 'P'")
             return set((row[0] for row in cur))
 
 

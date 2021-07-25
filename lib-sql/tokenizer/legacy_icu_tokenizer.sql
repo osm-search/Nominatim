@@ -98,13 +98,13 @@ DECLARE
   term_count INTEGER;
 BEGIN
   SELECT min(word_id) INTO full_token
-    FROM word WHERE info->>'word' = norm_term and type = 'W';
+    FROM word WHERE word = norm_term and type = 'W';
 
   IF full_token IS NULL THEN
     full_token := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, type, info)
-      SELECT full_token, lookup_term, 'W',
-             json_build_object('word', norm_term, 'count', 0)
+    INSERT INTO word (word_id, word_token, type, word, info)
+      SELECT full_token, lookup_term, 'W', norm_term,
+             json_build_object('count', 0)
         FROM unnest(lookup_terms) as lookup_term;
   END IF;
 

@@ -145,8 +145,7 @@ class Tokenizer
     private function addTokensFromDB(&$oValidTokens, $aTokens, $sNormQuery)
     {
         // Check which tokens we have, get the ID numbers
-        $sSQL = 'SELECT word_id, word_token, type,';
-        $sSQL .= "      info->>'cc' as country, info->>'postcode' as postcode,";
+        $sSQL = 'SELECT word_id, word_token, type, word,';
         $sSQL .= "      info->>'op' as operator,";
         $sSQL .= "      info->>'class' as class, info->>'type' as ctype,";
         $sSQL .= "      info->>'count' as count";
@@ -163,11 +162,14 @@ class Tokenizer
 
             switch ($aWord['type']) {
                 case 'C':  // country name tokens
-                    if ($aWord['country'] !== null
+                    if ($aWord['word'] !== null
                         && (!$this->aCountryRestriction
-                            || in_array($aWord['country'], $this->aCountryRestriction))
+                            || in_array($aWord['word'], $this->aCountryRestriction))
                     ) {
-                        $oValidTokens->addToken($sTok, new Token\Country($iId, $aWord['country']));
+                        $oValidTokens->addToken(
+                            $sTok,
+                            new Token\Country($iId, $aWord['word'])
+                        );
                     }
                     break;
                 case 'H':  // house number tokens
@@ -177,12 +179,15 @@ class Tokenizer
                     // Postcodes are not normalized, so they may have content
                     // that makes SQL injection possible. Reject postcodes
                     // that would need special escaping.
-                    if ($aWord['postcode'] !== null
-                        && pg_escape_string($aWord['postcode']) == $aWord['postcode']
+                    if ($aWord['word'] !== null
+                        && pg_escape_string($aWord['word']) == $aWord['word']
                     ) {
-                        $sNormPostcode = $this->normalizeString($aWord['postcode']);
+                        $sNormPostcode = $this->normalizeString($aWord['word']);
                         if (strpos($sNormQuery, $sNormPostcode) !== false) {
-                            $oValidTokens->addToken($sTok, new Token\Postcode($iId, $aWord['postcode'], null));
+                            $oValidTokens->addToken(
+                                $sTok,
+                                new Token\Postcode($iId, $aWord['word'], null)
+                            );
                         }
                     }
                     break;
@@ -192,7 +197,7 @@ class Tokenizer
                             $iId,
                             $aWord['class'],
                             $aWord['ctype'],
-                            (isset($aWord['op'])) ? Operator::NEAR : Operator::NONE
+                            (isset($aWord['operator'])) ? Operator::NEAR : Operator::NONE
                         ));
                     }
                     break;

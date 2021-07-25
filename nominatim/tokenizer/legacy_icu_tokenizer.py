@@ -79,7 +79,6 @@ class LegacyICUTokenizer:
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
-        pass
 
 
     def update_sql_functions(self, config):
@@ -156,25 +155,12 @@ class LegacyICUTokenizer:
             LOG.warning("Precomputing word tokens")
 
             # get partial words and their frequencies
-            words = Counter()
-            name_proc = ICUNameProcessor(self.naming_rules)
-            with conn.cursor(name="words") as cur:
-                cur.execute(""" SELECT v, count(*) FROM
-                                  (SELECT svals(name) as v FROM place)x
-                                WHERE length(v) < 75 GROUP BY v""")
-
-                for name, cnt in cur:
-                    terms = set()
-                    for word in name_proc.get_variants_ascii(name_proc.get_normalized(name)):
-                        if ' ' in word:
-                            terms.update(word.split())
-                    for term in terms:
-                        words[term] += cnt
+            words = self._count_partial_terms(conn)
 
             # copy them back into the word table
             with CopyBuffer() as copystr:
-                for k, v in words.items():
-                    copystr.add('w', k, json.dumps({'count': v}))
+                for term, cnt in words.items():
+                    copystr.add('w', term, json.dumps({'count': cnt}))
 
                 with conn.cursor() as cur:
                     copystr.copy_out(cur, 'word',
@@ -183,6 +169,27 @@ class LegacyICUTokenizer:
                                    WHERE word_id is null and type = 'w'""")
 
             conn.commit()
+
+    def _count_partial_terms(self, conn):
+        """ Count the partial terms from the names in the place table.
+        """
+        words = Counter()
+        name_proc = ICUNameProcessor(self.naming_rules)
+
+        with conn.cursor(name="words") as cur:
+            cur.execute(""" SELECT v, count(*) FROM
+                              (SELECT svals(name) as v FROM place)x
+                            WHERE length(v) < 75 GROUP BY v""")
+
+            for name, cnt in cur:
+                terms = set()
+                for word in name_proc.get_variants_ascii(name_proc.get_normalized(name)):
+                    if ' ' in word:
+                        terms.update(word.split())
+                for term in terms:
+                    words[term] += cnt
+
+        return words
 
 
 class LegacyICUNameAnalyzer:

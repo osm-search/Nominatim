@@ -128,9 +128,14 @@ def run_osm2pgsql(options):
     if options.get('disable_jit', False):
         env['PGOPTIONS'] = '-c jit=off -c max_parallel_workers_per_gather=0'
 
-    cmd.append(str(options['import_file']))
+    if 'import_data' in options:
+        cmd.extend(('-r', 'xml', '-'))
+    else:
+        cmd.append(str(options['import_file']))
 
-    subprocess.run(cmd, cwd=options.get('cwd', '.'), env=env, check=True)
+    subprocess.run(cmd, cwd=options.get('cwd', '.'),
+                   input=options.get('import_data'),
+                   env=env, check=True)
 
 
 def get_url(url):

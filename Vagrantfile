@@ -30,7 +30,7 @@ Vagrant.configure("2") do |config|
     lv.memory = 2048
     lv.nested = true
     if ENV['CHECKOUT'] != 'y' then
-      override.vm.synced_folder ".", "/home/vagrant/Nominatim", type: 'nfs'
+      override.vm.synced_folder ".", "/home/vagrant/Nominatim", type: 'rsync'
     end
   end
 

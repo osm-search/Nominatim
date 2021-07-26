@@ -22,6 +22,7 @@
 
     sudo dnf -qy module disable postgresql
     sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    export PATH=/usr/pgsql-12/bin/:$PATH
 
 # Now you can install all packages needed for Nominatim:
 
@@ -33,9 +34,9 @@
                         php-pgsql php php-intl php-json libpq-devel \
                         bzip2-devel proj-devel boost-devel \
                         python3-pip python3-setuptools python3-devel \
-                        expat-devel zlib-devel libicu-dev
+                        expat-devel zlib-devel libicu-devel
 
-    pip3 install --user psycopg2 python-dotenv psutil Jinja2 PyICU
+    pip3 install --user psycopg2-binary python-dotenv psutil Jinja2 PyICU
 
 
 #
@@ -113,8 +114,6 @@ if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
     wget https://nominatim.org/release/Nominatim-3.7.2.tar.bz2
     tar xf Nominatim-3.7.2.tar.bz2
-else                               #DOCS:
-    cd $USERHOME/Nominatim         #DOCS:
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -123,7 +122,11 @@ fi                                 #DOCS:
 #DOCS:    :::sh
     mkdir $USERHOME/build
     cd $USERHOME/build
+if [ "x$1" == "xyes" ]; then  #DOCS:
     cmake $USERHOME/Nominatim-3.7.2
+else                               #DOCS:
+    cmake /home/vagrant/Nominatim
+fi                                 #DOCS:
     make
     sudo make install
 
@@ -172,10 +175,10 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
-    sudo semanage fcontext -a -t httpd_sys_content_t "/usr/local/nominatim/lib/lib-php(/.*)?"
+    sudo semanage fcontext -a -t httpd_sys_content_t "/usr/local/lib/nominatim/lib-php(/.*)?"
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/nominatim-project/website(/.*)?"
     sudo semanage fcontext -a -t lib_t "$USERHOME/nominatim-project/module/nominatim.so"
-    sudo restorecon -R -v /usr/local/lib/nominatim
+    sudo restorecon -R -v /usr/local/lib64/nominatim
     sudo restorecon -R -v $USERHOME/nominatim-project
 
 

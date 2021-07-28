@@ -171,7 +171,7 @@ It is also possible to restrict replacements to the beginning and end of a
 name:
 
 ``` yaml
-- ^south => n  # matches only at the beginning of the name
+- ^south => s  # matches only at the beginning of the name
 - road$ => rd  # matches only at the end of the name
 ```
 
@@ -192,8 +192,8 @@ a shortcut notation for it:
 The simple arrow causes an additional variant to be added. Note that
 decomposition has an effect here on the source as well. So a rule
 
-```yaml
-- ~strasse => str
+``` yaml
+- "~strasse -> str"
 ```
 
 means that for a word like `hauptstrasse` four variants are created:

@@ -12,7 +12,7 @@ require_once(CONST_Debug ? 'DebugHtml.php' : 'DebugNone.php');
 
 function userError($sMsg)
 {
-    throw new Exception($sMsg, 400);
+    throw new \Exception($sMsg, 400);
 }
 
 
@@ -37,7 +37,7 @@ function shutdown_exception_handler_xml()
 {
     $error = error_get_last();
     if ($error !== null && $error['type'] === E_ERROR) {
-        exception_handler_xml(new Exception($error['message'], 500));
+        exception_handler_xml(new \Exception($error['message'], 500));
     }
 }
 
@@ -45,7 +45,7 @@ function shutdown_exception_handler_json()
 {
     $error = error_get_last();
     if ($error !== null && $error['type'] === E_ERROR) {
-        exception_handler_json(new Exception($error['message'], 500));
+        exception_handler_json(new \Exception($error['message'], 500));
     }
 }
 

@@ -134,9 +134,7 @@ Feature: Import of postcodes
         Then location_postcode contains exactly
            | country | postcode | geometry |
            | de      | 01982    | country:de |
-        And word contains
-           | word  | class | type |
-           | 01982 | place | postcode |
+        And there are word tokens for postcodes 01982
 
     Scenario: Different postcodes with the same normalization can both be found
         Given the places

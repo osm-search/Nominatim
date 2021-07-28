@@ -11,6 +11,12 @@ from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
 
+from mock_icu_word_table import MockIcuWordTable
+
+@pytest.fixture
+def word_table(temp_db_conn):
+    return MockIcuWordTable(temp_db_conn)
+
 
 @pytest.fixture
 def test_config(def_config, tmp_path):
@@ -21,8 +27,8 @@ def test_config(def_config, tmp_path):
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
     (sqldir / 'tokenizer' / 'legacy_icu_tokenizer.sql').write_text("SELECT 'a'")
-    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_tables.sql'),
-                str(sqldir / 'tokenizer' / 'legacy_tokenizer_tables.sql'))
+    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
+                str(sqldir / 'tokenizer' / 'icu_tokenizer_tables.sql'))
 
     def_config.lib_dir.sql = sqldir
 
@@ -88,12 +94,14 @@ DECLARE
   term_count INTEGER;
 BEGIN
   SELECT min(word_id) INTO full_token
-    FROM word WHERE word = norm_term and class is null and country_code is null;
+    FROM word WHERE info->>'word' = norm_term and type = 'W';
 
   IF full_token IS NULL THEN
     full_token := nextval('seq_word');
-    INSERT INTO word (word_id, word_token, word, search_name_count)
-      SELECT full_token, ' ' || lookup_term, norm_term, 0 FROM unnest(lookup_terms) as lookup_term;
+    INSERT INTO word (word_id, word_token, type, info)
+      SELECT full_token, lookup_term, 'W',
+             json_build_object('word', norm_term, 'count', 0)
+        FROM unnest(lookup_terms) as lookup_term;
   END IF;
 
   FOR term IN SELECT unnest(string_to_array(unnest(lookup_terms), ' ')) LOOP
@@ -105,18 +113,18 @@ BEGIN
 
   partial_tokens := '{}'::INT[];
   FOR term IN SELECT unnest(partial_terms) LOOP
-    SELECT min(word_id), max(search_name_count) INTO term_id, term_count
-      FROM word WHERE word_token = term and class is null and country_code is null;
+    SELECT min(word_id), max(info->>'count') INTO term_id, term_count
+      FROM word WHERE word_token = term and type = 'w';
 
     IF term_id IS NULL THEN
       term_id := nextval('seq_word');
       term_count := 0;
-      INSERT INTO word (word_id, word_token, search_name_count)
-        VALUES (term_id, term, 0);
+      INSERT INTO word (word_id, word_token, type, info)
+        VALUES (term_id, term, 'w', json_build_object('count', term_count));
     END IF;
 
     IF NOT (ARRAY[term_id] <@ partial_tokens) THEN
-        partial_tokens := partial_tokens || term_id;
+      partial_tokens := partial_tokens || term_id;
     END IF;
   END LOOP;
 END;
@@ -232,14 +240,14 @@ def test_update_special_phrase_empty_table(analyzer, word_table):
         ], True)
 
     assert word_table.get_special() \
-               == {(' KÖNIG BEI', 'König bei', 'amenity', 'royal', 'near'),
-                   (' KÖNIGE', 'Könige', 'amenity', 'royal', None),
-                   (' STREET', 'street', 'highway', 'primary', 'in')}
+               == {('KÖNIG BEI', 'König bei', 'amenity', 'royal', 'near'),
+                   ('KÖNIGE', 'Könige', 'amenity', 'royal', None),
+                   ('STREET', 'street', 'highway', 'primary', 'in')}
 
 
 def test_update_special_phrase_delete_all(analyzer, word_table):
-    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
+    word_table.add_special('FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special('BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -250,8 +258,8 @@ def test_update_special_phrase_delete_all(analyzer, word_table):
 
 
 def test_update_special_phrases_no_replace(analyzer, word_table):
-    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
+    word_table.add_special('FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special('BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -262,8 +270,8 @@ def test_update_special_phrases_no_replace(analyzer, word_table):
 
 
 def test_update_special_phrase_modify(analyzer, word_table):
-    word_table.add_special(' FOO', 'foo', 'amenity', 'prison', 'in')
-    word_table.add_special(' BAR', 'bar', 'highway', 'road', None)
+    word_table.add_special('FOO', 'foo', 'amenity', 'prison', 'in')
+    word_table.add_special('BAR', 'bar', 'highway', 'road', None)
 
     assert word_table.count_special() == 2
 
@@ -275,25 +283,25 @@ def test_update_special_phrase_modify(analyzer, word_table):
         ], True)
 
     assert word_table.get_special() \
-               == {(' PRISON', 'prison', 'amenity', 'prison', 'in'),
-                   (' BAR', 'bar', 'highway', 'road', None),
-                   (' GARDEN', 'garden', 'leisure', 'garden', 'near')}
+               == {('PRISON', 'prison', 'amenity', 'prison', 'in'),
+                   ('BAR', 'bar', 'highway', 'road', None),
+                   ('GARDEN', 'garden', 'leisure', 'garden', 'near')}
 
 
 def test_add_country_names_new(analyzer, word_table):
     with analyzer() as anl:
         anl.add_country_names('es', {'name': 'Espagña', 'name:en': 'Spain'})
 
-    assert word_table.get_country() == {('es', ' ESPAGÑA'), ('es', ' SPAIN')}
+    assert word_table.get_country() == {('es', 'ESPAGÑA'), ('es', 'SPAIN')}
 
 
 def test_add_country_names_extend(analyzer, word_table):
-    word_table.add_country('ch', ' SCHWEIZ')
+    word_table.add_country('ch', 'SCHWEIZ')
 
     with analyzer() as anl:
         anl.add_country_names('ch', {'name': 'Schweiz', 'name:fr': 'Suisse'})
 
-    assert word_table.get_country() == {('ch', ' SCHWEIZ'), ('ch', ' SUISSE')}
+    assert word_table.get_country() == {('ch', 'SCHWEIZ'), ('ch', 'SUISSE')}
 
 
 class TestPlaceNames:
@@ -307,6 +315,7 @@ class TestPlaceNames:
 
     def expect_name_terms(self, info, *expected_terms):
         tokens = self.analyzer.get_word_token_info(expected_terms)
+        print (tokens)
         for token in tokens:
             assert token[2] is not None, "No token for {0}".format(token)
 
@@ -316,7 +325,7 @@ class TestPlaceNames:
     def test_simple_names(self):
         info = self.analyzer.process_place({'name': {'name': 'Soft bAr', 'ref': '34'}})
 
-        self.expect_name_terms(info, '#Soft bAr', '#34','Soft', 'bAr', '34')
+        self.expect_name_terms(info, '#Soft bAr', '#34', 'Soft', 'bAr', '34')
 
 
     @pytest.mark.parametrize('sep', [',' , ';'])
@@ -339,7 +348,7 @@ class TestPlaceNames:
                                            'country_feature': 'no'})
 
         self.expect_name_terms(info, '#norge', 'norge')
-        assert word_table.get_country() == {('no', ' NORGE')}
+        assert word_table.get_country() == {('no', 'NORGE')}
 
 
 class TestPlaceAddress:

@@ -65,6 +65,7 @@ _SQL_TRANSLATION = {ord(u'\\'): u'\\\\',
                     ord(u'\t'): u'\\t',
                     ord(u'\n'): u'\\n'}
 
+
 class CopyBuffer:
     """ Data collector for the copy_from command.
     """

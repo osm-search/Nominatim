@@ -7,7 +7,6 @@ class Tokenizer
     private $oDB;
 
     private $oNormalizer = null;
-    private $aCountryRestriction = null;
 
     public function __construct(&$oDB)
     {
@@ -34,12 +33,6 @@ class Tokenizer
         if (!$iWordID) {
             throw new \Exception('No value', 704);
         }
-    }
-
-
-    public function setCountryRestriction($aCountries)
-    {
-        $this->aCountryRestriction = $aCountries;
     }
 
 
@@ -206,12 +199,7 @@ class Tokenizer
                     );
                 }
             } elseif ($aWord['country_code']) {
-                // Filter country tokens that do not match restricted countries.
-                if (!$this->aCountryRestriction
-                    || in_array($aWord['country_code'], $this->aCountryRestriction)
-                ) {
-                    $oToken = new Token\Country($iId, $aWord['country_code']);
-                }
+                $oToken = new Token\Country($iId, $aWord['country_code']);
             } elseif ($aWord['word_token'][0] == ' ') {
                 $oToken = new Token\Word(
                     $iId,

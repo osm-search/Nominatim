@@ -28,6 +28,8 @@ class SearchContext
     public $sqlViewboxLarge = '';
     /// Reference along a route (as SQL).
     public $sqlViewboxCentre = '';
+    /// List of countries to restrict search to (as array).
+    public $aCountryList = null;
     /// List of countries to restrict search to (as SQL).
     public $sqlCountryList = '';
     /// List of place IDs to exclude (as SQL).
@@ -187,6 +189,7 @@ class SearchContext
     public function setCountryList($aCountries)
     {
         $this->sqlCountryList = '('.join(',', array_map('addQuotes', $aCountries)).')';
+        $this->aCountryList = $aCountries;
     }
 
     /**
@@ -277,6 +280,19 @@ class SearchContext
         }
 
         return '';
+    }
+
+    /**
+     * Check if the given country is covered by the search context.
+     *
+     * @param string $sCountryCode  Country code of the country to check.
+     *
+     * @return True, if no country code restrictions are set or the
+     *         country is included in the country list.
+     */
+    public function isCountryApplicable($sCountryCode)
+    {
+        return $this->aCountryList === null || in_array($sCountryCode, $this->aCountryList);
     }
 
     public function debugInfo()

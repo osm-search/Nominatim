@@ -8,7 +8,6 @@ class Tokenizer
 
     private $oNormalizer;
     private $oTransliterator;
-    private $aCountryRestriction;
 
     public function __construct(&$oDB)
     {
@@ -27,12 +26,6 @@ class Tokenizer
         if (!$iWordID) {
             throw new \Exception('No value', 704);
         }
-    }
-
-
-    public function setCountryRestriction($aCountries)
-    {
-        $this->aCountryRestriction = $aCountries;
     }
 
 
@@ -162,10 +155,7 @@ class Tokenizer
 
             switch ($aWord['type']) {
                 case 'C':  // country name tokens
-                    if ($aWord['word'] !== null
-                        && (!$this->aCountryRestriction
-                            || in_array($aWord['word'], $this->aCountryRestriction))
-                    ) {
+                    if ($aWord['word'] !== null) {
                         $oValidTokens->addToken(
                             $sTok,
                             new Token\Country($iId, $aWord['word'])

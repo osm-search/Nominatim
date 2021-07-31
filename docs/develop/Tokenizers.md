@@ -67,4 +67,9 @@ consequently not create any special indexes on it.
 
 ### Querying
 
-
+The tokenizer is responsible for the initial parsing of the query. It needs
+to split the query into appropriate words and terms and match them against
+the saved tokens in the database. It then returns the list of possibly matching
+tokens and the list of possible splits to the query parser. The parser uses
+this information to compute all possible interpretations of the query and
+rank them accordingly.

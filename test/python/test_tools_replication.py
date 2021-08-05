@@ -90,6 +90,7 @@ def test_check_for_updates_no_new_data(monkeypatch, temp_db_conn,
 def update_options(tmpdir):
     return dict(base_url='https://test.io',
                 indexed_only=False,
+                sleep_between_intervals=True,
                 update_interval=3600,
                 import_file=tmpdir / 'foo.osm',
                 max_diff_size=1)

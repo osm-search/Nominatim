@@ -90,6 +90,7 @@ class UpdateReplication:
                       update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
                       import_file=args.project_dir / 'osmosischange.osc',
                       max_diff_size=args.config.get_int('REPLICATION_MAX_DIFF'),
+                      sleep_between_intervals=not args.once,
                       indexed_only=not args.once)
 
         # Sanity check to not overwhelm the Geofabrik servers.

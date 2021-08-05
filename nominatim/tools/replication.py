@@ -92,12 +92,13 @@ def update(conn, options):
         LOG.info("Skipping update. There is data that needs indexing.")
         return UpdateState.MORE_PENDING
 
-    last_since_update = dt.datetime.now(dt.timezone.utc) - startdate
-    update_interval = dt.timedelta(seconds=options['update_interval'])
-    if last_since_update < update_interval:
-        duration = (update_interval - last_since_update).seconds
-        LOG.warning("Sleeping for %s sec before next update.", duration)
-        time.sleep(duration)
+    if options['sleep_between_intervals']:
+        last_since_update = dt.datetime.now(dt.timezone.utc) - startdate
+        update_interval = dt.timedelta(seconds=options['update_interval'])
+        if last_since_update < update_interval:
+            duration = (update_interval - last_since_update).seconds
+            LOG.warning("Sleeping for %s sec before next update.", duration)
+            time.sleep(duration)
 
     if options['import_file'].exists():
         options['import_file'].unlink()

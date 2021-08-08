@@ -17,6 +17,7 @@ and can't offer support.
 
   * [Docker](https://github.com/mediagis/nominatim-docker)
   * [Docker on Kubernetes](https://github.com/peter-evans/nominatim-k8s)
+  * [Kubernetes with Helm](https://github.com/robjuz/helm-charts/blob/master/charts/nominatim/README.md)
   * [Ansible](https://github.com/synthesio/infra-ansible-nominatim)
 
 ## Prerequisites

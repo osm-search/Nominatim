@@ -88,7 +88,7 @@ for a custom tokenizer implementation.
 
 Nominatim expects two files for a tokenizer:
 
-* `nominiatim/tokenizer/<NAME>_tokenizer.py` containing the Pythonpart of the
+* `nominiatim/tokenizer/<NAME>_tokenizer.py` containing the Python part of the
   implementation
 * `lib-php/tokenizer/<NAME>_tokenizer.php` with the PHP part of the
   implementation
@@ -137,3 +137,114 @@ and implement the abstract functions defined there.
 ::: nominatim.tokenizer.base.AbstractAnalyzer
     rendering:
         heading_level: 4
+
+### PL/pgSQL Functions
+
+The tokenizer must provide access functions for the `token_info` column
+to the indexer which extracts the necessary information for the global
+search tables. If the tokenizer needs additional SQL functions for private
+use, then these functions must be prefixed with `token_` in order to ensure
+that there are no naming conflicts with the SQL indexer code.
+
+The following functions are expected:
+
+```sql
+FUNCTION token_get_name_search_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return an array of token IDs of search terms that should match
+the name(s) for the given place. These tokens are used to look up the place
+by name and, where the place functions as part of an address for another place,
+by address. Must return NULL when the place has no name.
+
+```sql
+FUNCTION token_get_name_match_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return an array of token IDs of full names of the place that should be used
+to match addresses. The list of match tokens is usually more strict than
+search tokens as it is used to find a match between two OSM tag values which
+are expected to contain matching full names. Partial terms should not be
+used for match tokens. Must return NULL when the place has no name.
+
+```sql
+FUNCTION token_get_housenumber_search_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return an array of token IDs of house number tokens that apply to the place.
+Note that a place may have multiple house numbers, for example when apartments
+each have their own number. Must be NULL when the place has no house numbers.
+
+```sql
+FUNCTION token_normalized_housenumber(info JSONB) RETURNS TEXT
+```
+
+Return the house number(s) in the normalized form that can be matched against
+a house number token text. If a place has multiple house numbers they must
+be listed with a semicolon as delimiter. Must be NULL when the place has no
+house numbers.
+
+```sql
+FUNCTION token_addr_street_match_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return the match token IDs by which to search a matching street from the
+`addr:street` tag. These IDs will be matched against the IDs supplied by
+`token_get_name_match_tokens`. Must be NULL when the place has no `addr:street`
+tag.
+
+```sql
+FUNCTION token_addr_place_match_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return the match token IDs by which to search a matching place from the
+`addr:place` tag. These IDs will be matched against the IDs supplied by
+`token_get_name_match_tokens`. Must be NULL when the place has no `addr:place`
+tag.
+
+```sql
+FUNCTION token_addr_place_search_tokens(info JSONB) RETURNS INTEGER[]
+```
+
+Return the search token IDs extracted from the `addr:place` tag. These tokens
+are used for searches by address when no matching place can be found in the
+database. Must be NULL when the place has no `addr:place` tag.
+
+```sql
+CREATE TYPE token_addresstoken AS (
+  key TEXT,
+  match_tokens INT[],
+  search_tokens INT[]
+);
+
+FUNCTION token_get_address_tokens(info JSONB) RETURNS SETOF token_addresstoken
+```
+
+Return the match and search token IDs for explicit `addr:*` tags for the place
+other than `addr:street` and `addr:place`. For each address item there are
+three pieces of information returned:
+
+ * _key_ contains the type of address item (city, county, etc.). This is the
+   key handed in with the `address` dictionary.
+ * *match_tokens* is the list of token IDs used to find the corresponding
+   place object for the address part. The list is matched against the IDs
+   from `token_get_name_match_tokens`.
+ * *search_tokens* is the list of token IDs under which to search the address
+   item. It is used when no corresponding place object was found.
+
+```sql
+FUNCTION token_normalized_postcode(postcode TEXT) RETURNS TEXT
+```
+
+Return the normalized version of the given postcode. This function must return
+the same value as the Python function `AbstractAnalyzer->normalize_postcode()`.
+
+```sql
+FUNCTION token_strip_info(info JSONB) RETURNS JSONB
+```
+
+Return the part of the `token_info` field that should be stored in the database
+permanently. The indexer calls this function when all processing is done and
+replaces the content of the `token_info` column with the returned value before
+the trigger stores the information in the database. May return NULL if no
+information should be stored permanently.

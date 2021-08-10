@@ -30,6 +30,7 @@ pages:
         - 'Architecture Overview' : 'develop/overview.md'
         - 'OSM Data Import' : 'develop/Import.md'
         - 'Place Ranking' : 'develop/Ranking.md'
+        - 'Tokenizers' : 'develop/Tokenizers.md'
         - 'Postcodes' : 'develop/Postcodes.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
@@ -44,3 +45,11 @@ markdown_extensions:
     - toc:
         permalink: 
 extra_css: [extra.css, styles.css]
+plugins:
+    - search
+    - mkdocstrings:
+        handlers:
+          python:
+            rendering:
+              show_source: false
+              show_signature_annotations: false

@@ -16,6 +16,7 @@ from nominatim.db import properties
 from nominatim.db import utils as db_utils
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.errors import UsageError
+from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
 DBCFG_NORMALIZATION = "tokenizer_normalization"
 DBCFG_MAXWORDFREQ = "tokenizer_maxwordfreq"
@@ -76,7 +77,7 @@ def _check_module(module_dir, conn):
             raise UsageError("Database module cannot be accessed.") from err
 
 
-class LegacyTokenizer:
+class LegacyTokenizer(AbstractTokenizer):
     """ The legacy tokenizer uses a special PostgreSQL module to normalize
         names and queries. The tokenizer thus implements normalization through
         calls to the database.
@@ -238,7 +239,7 @@ class LegacyTokenizer:
         properties.set_property(conn, DBCFG_MAXWORDFREQ, config.MAX_WORD_FREQUENCY)
 
 
-class LegacyNameAnalyzer:
+class LegacyNameAnalyzer(AbstractAnalyzer):
     """ The legacy analyzer uses the special Postgresql module for
         splitting names.
 
@@ -253,14 +254,6 @@ class LegacyNameAnalyzer:
         psycopg2.extras.register_hstore(self.conn)
 
         self._cache = _TokenCache(self.conn)
-
-
-    def __enter__(self):
-        return self
-
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
 
     def close(self):

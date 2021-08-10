@@ -73,3 +73,67 @@ the saved tokens in the database. It then returns the list of possibly matching
 tokens and the list of possible splits to the query parser. The parser uses
 this information to compute all possible interpretations of the query and
 rank them accordingly.
+
+## Tokenizer API
+
+The following section describes the functions that need to be implemented
+for a custom tokenizer implementation.
+
+!!! warning
+    This API is currently in early alpha status. While this API is meant to
+    be a public API on which other tokenizers may be implemented, the API is
+    far away from being stable at the moment.
+
+### Directory Structure
+
+Nominatim expects two files for a tokenizer:
+
+* `nominiatim/tokenizer/<NAME>_tokenizer.py` containing the Pythonpart of the
+  implementation
+* `lib-php/tokenizer/<NAME>_tokenizer.php` with the PHP part of the
+  implementation
+
+where `<NAME>` is a unique name for the tokenizer consisting of only lower-case
+letters, digits and underscore. A tokenizer also needs to install some SQL
+functions. By convention, these should be placed in `lib-sql/tokenizer`.
+
+If the tokenizer has a default configuration file, this should be saved in
+the `settings/<NAME>_tokenizer.<SUFFIX>`.
+
+### Configuration and Persistance
+
+Tokenizers may define custom settings for their configuration. All settings
+must be prefixed with `NOMINATIM_TOKENIZER_`. Settings may be transient or
+persistent. Transient settings are loaded from the configuration file when
+Nominatim is started and may thus be changed at any time. Persistent settings
+are tied to a database installation and must only be read during installation
+time. If they are needed for the runtime then they must be saved into the
+`nominatim_properties` table and later loaded from there.
+
+### The Python module
+
+The Python module is expect to export a single factory function:
+
+```python
+def create(dsn: str, data_dir: Path) -> AbstractTokenizer
+```
+
+The `dsn` parameter contains the DSN of the Nominatim database. The `data_dir`
+is a directory in the project directory that the tokenizer may use to save
+database-specific data. The function must return the instance of the tokenizer
+class as defined below.
+
+### Python Tokenizer Class
+
+All tokenizers must inherit from `nominatim.tokenizer.base.AbstractTokenizer`
+and implement the abstract functions defined there.
+
+::: nominatim.tokenizer.base.AbstractTokenizer
+    rendering:
+        heading_level: 4
+
+### Python Analyzer Class
+
+::: nominatim.tokenizer.base.AbstractAnalyzer
+    rendering:
+        heading_level: 4

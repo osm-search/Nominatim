@@ -2,6 +2,8 @@
 
 namespace Nominatim;
 
+require_once(CONST_LibDir.'/SimpleWordList.php');
+
 class Tokenizer
 {
     private $oDB;
@@ -99,13 +101,14 @@ class Tokenizer
         $aWordLists = array();
         $aTokens = array();
         foreach ($aNormPhrases as $sPhrase) {
-            if (strlen($sPhrase) > 0) {
-                $aWords = explode(' ', $sPhrase);
-                Tokenizer::addTokens($aTokens, $aWords);
-                $aWordLists[] = $aWords;
-            } else {
-                $aWordLists[] = array();
+            $oWordList = new SimpleWordList($sPhrase);
+
+            foreach ($oWordList->getTokens() as $sToken) {
+                $aTokens[' '.$sToken] = ' '.$sToken;
+                $aTokens[$sToken] = $sToken;
             }
+
+            $aWordLists[] = $oWordList;
         }
 
         Debug::printVar('Tokens', $aTokens);
@@ -114,7 +117,7 @@ class Tokenizer
         $oValidTokens = $this->computeValidTokens($aTokens, $sNormQuery);
 
         foreach ($aPhrases as $iPhrase => $oPhrase) {
-            $oPhrase->computeWordSets($aWordLists[$iPhrase], $oValidTokens);
+            $oPhrase->setWordSets($aWordLists[$iPhrase]->getWordSets($oValidTokens));
         }
 
         return $oValidTokens;
@@ -223,31 +226,6 @@ class Tokenizer
                 } else {
                     $oValidTokens->addToken($aWord['word_token'], $oToken);
                 }
-            }
-        }
-    }
-
-
-    /**
-     * Add the tokens from this phrase to the given list of tokens.
-     *
-     * @param string[] $aTokens List of tokens to append.
-     *
-     * @return void
-     */
-    private static function addTokens(&$aTokens, $aWords)
-    {
-        $iNumWords = count($aWords);
-
-        for ($i = 0; $i < $iNumWords; $i++) {
-            $sPhrase = $aWords[$i];
-            $aTokens[' '.$sPhrase] = ' '.$sPhrase;
-            $aTokens[$sPhrase] = $sPhrase;
-
-            for ($j = $i + 1; $j < $iNumWords; $j++) {
-                $sPhrase .= ' '.$aWords[$j];
-                $aTokens[' '.$sPhrase] = ' '.$sPhrase;
-                $aTokens[$sPhrase] = $sPhrase;
             }
         }
     }

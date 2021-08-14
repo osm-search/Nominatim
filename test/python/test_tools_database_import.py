@@ -98,14 +98,25 @@ def test_import_base_data_ignore_partitions(dsn, src_dir, temp_db_with_extension
 def test_import_osm_data_simple(table_factory, osm2pgsql_options):
     table_factory('place', content=((1, ), ))
 
-    database_import.import_osm_data('file.pdf', osm2pgsql_options)
+    database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options)
+
+
+def test_import_osm_data_multifile(table_factory, tmp_path, osm2pgsql_options):
+    table_factory('place', content=((1, ), ))
+    osm2pgsql_options['osm2pgsql_cache'] = 0
+
+    files = [tmp_path / 'file1.osm', tmp_path / 'file2.osm']
+    for f in files:
+        f.write_text('test')
+
+    database_import.import_osm_data(files, osm2pgsql_options)
 
 
 def test_import_osm_data_simple_no_data(table_factory, osm2pgsql_options):
     table_factory('place')
 
     with pytest.raises(UsageError, match='No data.*'):
-        database_import.import_osm_data('file.pdf', osm2pgsql_options)
+        database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options)
 
 
 def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_options):
@@ -117,7 +128,7 @@ def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_o
 
     osm2pgsql_options['flatnode_file'] = str(flatfile.resolve())
 
-    database_import.import_osm_data('file.pdf', osm2pgsql_options, drop=True)
+    database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options, drop=True)
 
     assert not flatfile.exists()
     assert not temp_db_conn.table_exists('planet_osm_nodes')

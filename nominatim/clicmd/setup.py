@@ -27,8 +27,9 @@ class SetupAll:
     def add_args(parser):
         group_name = parser.add_argument_group('Required arguments')
         group = group_name.add_mutually_exclusive_group(required=True)
-        group.add_argument('--osm-file', metavar='FILE',
-                           help='OSM file to be imported.')
+        group.add_argument('--osm-file', metavar='FILE', action='append',
+                           help='OSM file to be imported'
+                                ' (repeat for importing multiple files.')
         group.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
@@ -56,9 +57,12 @@ class SetupAll:
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory
 
-        if args.osm_file and not Path(args.osm_file).is_file():
-            LOG.fatal("OSM file '%s' does not exist.", args.osm_file)
-            raise UsageError('Cannot access file.')
+        if args.osm_file:
+            files = [Path(f) for f in args.osm_file]
+            for fname in files:
+                if not fname.is_file():
+                    LOG.fatal("OSM file '%s' does not exist.", fname)
+                    raise UsageError('Cannot access file.')
 
         if args.continue_at is None:
             database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
@@ -67,7 +71,7 @@ class SetupAll:
                                                     rouser=args.config.DATABASE_WEBUSER)
 
             LOG.warning('Importing OSM data file')
-            database_import.import_osm_data(Path(args.osm_file),
+            database_import.import_osm_data(files,
                                             args.osm2pgsql_options(0, 1),
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)

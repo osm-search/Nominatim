@@ -130,6 +130,9 @@ def run_osm2pgsql(options):
 
     if 'import_data' in options:
         cmd.extend(('-r', 'xml', '-'))
+    elif isinstance(options['import_file'], list):
+        for fname in options['import_file']:
+            cmd.append(str(fname))
     else:
         cmd.append(str(options['import_file']))
 

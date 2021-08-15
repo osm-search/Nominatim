@@ -153,7 +153,7 @@ if (BUILD_TESTS)
     if (PHPCS)
         message(STATUS "Using phpcs binary ${PHPCS}")
         add_test(NAME phpcs
-                 COMMAND ${PHPCS} --report-width=120 --colors lib website utils
+                 COMMAND ${PHPCS} --report-width=120 --colors lib-php
                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     else()
         message(WARNING "phpcs not found. PHP linting tests disabled." )

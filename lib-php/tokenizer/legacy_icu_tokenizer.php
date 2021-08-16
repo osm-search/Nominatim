@@ -19,7 +19,7 @@ class Tokenizer
 
     public function checkStatus()
     {
-        $sSQL = 'SELECT word_id FROM word limit 1';
+        $sSQL = 'SELECT word_id FROM word WHERE word_id is not null limit 1';
         $iWordID = $this->oDB->getOne($sSQL);
         if ($iWordID === false) {
             throw new \Exception('Query failed', 703);

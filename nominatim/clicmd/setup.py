@@ -9,7 +9,6 @@ import psutil
 from nominatim.db.connection import connect
 from nominatim.db import status, properties
 from nominatim.version import NOMINATIM_VERSION
-from nominatim.errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -27,8 +26,9 @@ class SetupAll:
     def add_args(parser):
         group_name = parser.add_argument_group('Required arguments')
         group = group_name.add_mutually_exclusive_group(required=True)
-        group.add_argument('--osm-file', metavar='FILE',
-                           help='OSM file to be imported.')
+        group.add_argument('--osm-file', metavar='FILE', action='append',
+                           help='OSM file to be imported'
+                                ' (repeat for importing multiple files.')
         group.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
@@ -51,42 +51,25 @@ class SetupAll:
 
 
     @staticmethod
-    def run(args): # pylint: disable=too-many-statements
+    def run(args):
         from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
-        from ..tokenizer import factory as tokenizer_factory
-
-        if args.osm_file and not Path(args.osm_file).is_file():
-            LOG.fatal("OSM file '%s' does not exist.", args.osm_file)
-            raise UsageError('Cannot access file.')
 
         if args.continue_at is None:
+            files = args.get_osm_file_list()
+
             database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
                                                     args.data_dir,
                                                     args.no_partitions,
                                                     rouser=args.config.DATABASE_WEBUSER)
 
             LOG.warning('Importing OSM data file')
-            database_import.import_osm_data(Path(args.osm_file),
+            database_import.import_osm_data(files,
                                             args.osm2pgsql_options(0, 1),
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)
 
-            with connect(args.config.get_libpq_dsn()) as conn:
-                LOG.warning('Create functions (1st pass)')
-                refresh.create_functions(conn, args.config, False, False)
-                LOG.warning('Create tables')
-                database_import.create_tables(conn, args.config,
-                                              reverse_only=args.reverse_only)
-                refresh.load_address_levels_from_file(conn, Path(args.config.ADDRESS_LEVEL_CONFIG))
-                LOG.warning('Create functions (2nd pass)')
-                refresh.create_functions(conn, args.config, False, False)
-                LOG.warning('Create table triggers')
-                database_import.create_table_triggers(conn, args.config)
-                LOG.warning('Create partition tables')
-                database_import.create_partition_tables(conn, args.config)
-                LOG.warning('Create functions (3rd pass)')
-                refresh.create_functions(conn, args.config, False, False)
+            SetupAll._setup_tables(args.config, args.reverse_only)
 
             LOG.warning('Importing wikipedia importance data')
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
@@ -105,12 +88,7 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
         LOG.warning("Setting up tokenizer")
-        if args.continue_at is None or args.continue_at == 'load-data':
-            # (re)initialise the tokenizer data
-            tokenizer = tokenizer_factory.create_tokenizer(args.config)
-        else:
-            # just load the tokenizer
-            tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
+        tokenizer = SetupAll._get_tokenizer(args.continue_at, args.config)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')
@@ -145,18 +123,47 @@ class SetupAll:
             refresh.setup_website(webdir, args.config, conn)
 
         with connect(args.config.get_libpq_dsn()) as conn:
-            try:
-                dbdate = status.compute_database_date(conn)
-                status.set_status(conn, dbdate)
-                LOG.info('Database is at %s.', dbdate)
-            except Exception as exc: # pylint: disable=broad-except
-                LOG.error('Cannot determine date of database: %s', exc)
-
+            SetupAll._set_database_date(conn)
             properties.set_property(conn, 'database_version',
                                     '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
 
         return 0
 
+
+    @staticmethod
+    def _setup_tables(config, reverse_only):
+        """ Set up the basic database layout: tables, indexes and functions.
+        """
+        from ..tools import database_import, refresh
+
+        with connect(config.get_libpq_dsn()) as conn:
+            LOG.warning('Create functions (1st pass)')
+            refresh.create_functions(conn, config, False, False)
+            LOG.warning('Create tables')
+            database_import.create_tables(conn, config, reverse_only=reverse_only)
+            refresh.load_address_levels_from_file(conn, Path(config.ADDRESS_LEVEL_CONFIG))
+            LOG.warning('Create functions (2nd pass)')
+            refresh.create_functions(conn, config, False, False)
+            LOG.warning('Create table triggers')
+            database_import.create_table_triggers(conn, config)
+            LOG.warning('Create partition tables')
+            database_import.create_partition_tables(conn, config)
+            LOG.warning('Create functions (3rd pass)')
+            refresh.create_functions(conn, config, False, False)
+
+
+    @staticmethod
+    def _get_tokenizer(continue_at, config):
+        """ Set up a new tokenizer or load an already initialised one.
+        """
+        from ..tokenizer import factory as tokenizer_factory
+
+        if continue_at is None or continue_at == 'load-data':
+            # (re)initialise the tokenizer data
+            return tokenizer_factory.create_tokenizer(config)
+
+        # just load the tokenizer
+        return tokenizer_factory.get_tokenizer_for_db(config)
 
     @staticmethod
     def _create_pending_index(conn, tablespace):
@@ -178,3 +185,15 @@ class SetupAll:
                            {} WHERE indexed_status > 0
                         """.format(tablespace))
         conn.commit()
+
+
+    @staticmethod
+    def _set_database_date(conn):
+        """ Determine the database date and set the status accordingly.
+        """
+        try:
+            dbdate = status.compute_database_date(conn)
+            status.set_status(conn, dbdate)
+            LOG.info('Database is at %s.', dbdate)
+        except Exception as exc: # pylint: disable=broad-except
+            LOG.error('Cannot determine date of database: %s', exc)

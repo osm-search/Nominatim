@@ -5,9 +5,34 @@ your Nominatim database. It is assumed that you have already successfully
 installed the Nominatim software itself, if not return to the 
 [installation page](Installation.md).
 
-## Importing multiple regions
+## Importing multiple regions (without updates)
 
-To import multiple regions in your database, you need to configure and run `utils/import_multiple_regions.sh` file. This script will set up the update directory which has the following structure:
+To import multiple regions in your database you can simply give multiple
+OSM files to the import command:
+
+```
+nominatim import --osm-file file1.pbf --osm-file file2.pbf
+```
+
+If you already have imported a file and want to add another one, you can
+use the add-data function to import the additional data as follows:
+
+```
+nominatim add-data --file <FILE>
+nominatim refresh --postcodes
+nominatim index -j <NUMBER OF THREADS>
+```
+
+Please note that adding additional data is always significantly slower than
+the original import.
+
+## Importing multiple regions (with updates)
+
+If you want to import multiple regions _and_ be able to keep them up-to-date
+with updates, then you can use the scripts provided in the `utils` directory.
+
+These scripts will set up an `update` directory in your project directory,
+which has the following structure:
 
 ```bash
 update
@@ -17,7 +42,6 @@ update
     │   └── monaco
     │       └── sequence.state
     └── tmp
-        ├── combined.osm.pbf
         └── europe
                 ├── andorra-latest.osm.pbf
                 └── monaco-latest.osm.pbf
@@ -25,85 +49,57 @@ update
 
 ```
 
-The `sequence.state` files will contain the sequence ID, which will be used by pyosmium to get updates. The tmp folder is used for import dump.
+The `sequence.state` files contain the sequence ID for each region. They will
+be used by pyosmium to get updates. The `tmp` folder is used for import dump and
+can be deleted once the import is complete.
 
-### Configuring multiple regions
-
-The file `import_multiple_regions.sh` needs to be edited as per your requirement:
-
-1. List of countries. eg:
-
-        COUNTRIES="europe/monaco europe/andorra"
-
-2. Path to Build directory. eg:
-
-        NOMINATIMBUILD="/srv/nominatim/build"
-
-3. Path to Update directory. eg:
-        
-        UPDATEDIR="/srv/nominatim/update"
-
-4. Replication URL. eg:
-    
-        BASEURL="https://download.geofabrik.de"
-        DOWNCOUNTRYPOSTFIX="-latest.osm.pbf"
 
 ### Setting up multiple regions
 
-!!! tip
-    If your database already exists and you want to add more countries,
-    replace the setting up part
-    `${SETUPFILE} --osm-file ${UPDATEDIR}/tmp/combined.osm.pbf --all 2>&1`
-    with `${UPDATEFILE} --import-file ${UPDATEDIR}/tmp/combined.osm.pbf --index --index-instances N 2>&1`
-    where N is the numbers of CPUs in your system.
+Create a project directory as described for the
+[simple import](Import.md#creating-the-project-directory). If necessary,
+you can also add an `.env` configuration with customized options. In particular,
+you need to make sure that `NOMINATIM_REPLICATION_UPDATE_INTERVAL` and
+`NOMINATIM_REPLICATION_RECHECK_INTERVAL` are set according to the update
+interval of the extract server you use.
 
-Run the following command from your Nominatim directory after configuring the file.
+Copy the scripts `utils/import_multiple_regions.sh` and `utils/update_database.sh`
+into the project directory.
 
-    bash ./utils/import_multiple_regions.sh
+Now customize both files as per your requirements
 
-!!! danger "Important"
-        This file uses osmium-tool. It must be installed before executing the import script.
-        Installation instructions can be found [here](https://osmcode.org/osmium-tool/manual.html#installation).
-
-### Updating multiple regions
-
-To import multiple regions in your database, you need to configure and run ```utils/update_database.sh```.
-This uses the update directory set up while setting up the DB.   
-
-### Configuring multiple regions
-
-The file `update_database.sh` needs to be edited as per your requirement:
-
-1. List of countries. eg:
+1. List of countries. e.g.
 
         COUNTRIES="europe/monaco europe/andorra"
 
-2. Path to Build directory. eg:
+2. URL to the service providing the extracts and updates. eg:
 
-        NOMINATIMBUILD="/srv/nominatim/build"
-
-3. Path to Update directory. eg:
-        
-        UPDATEDIR="/srv/nominatim/update"
-
-4. Replication URL. eg:
-    
         BASEURL="https://download.geofabrik.de"
-        DOWNCOUNTRYPOSTFIX="-updates"
+        DOWNCOUNTRYPOSTFIX="-latest.osm.pbf"
 
-5. Followup can be set according to your installation. eg: For Photon,
+5. Followup in the update script can be set according to your installation.
+   E.g. for Photon,
 
         FOLLOWUP="curl http://localhost:2322/nominatim-update"
 
     will handle the indexing.
 
+
+To start the initial import, change into the project directory and run
+
+```
+    bash import_multiple_regions.sh
+```
+
 ### Updating the database
 
-Run the following command from your Nominatim directory after configuring the file.
+Change into the project directory and run the following command:
 
-    bash ./utils/update_database.sh
+    bash update_database.sh
 
-This will get diffs from the replication server, import diffs and index the database. The default replication server in the script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
+This will get diffs from the replication server, import diffs and index
+the database. The default replication server in the
+script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
 ## Importing Nominatim to an external PostgreSQL database
 

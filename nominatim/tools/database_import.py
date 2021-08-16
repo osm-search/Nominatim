@@ -103,11 +103,11 @@ def import_base_data(dsn, sql_dir, ignore_partitions=False):
             conn.commit()
 
 
-def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
-    """ Import the given OSM file. 'options' contains the list of
+def import_osm_data(osm_files, options, drop=False, ignore_errors=False):
+    """ Import the given OSM files. 'options' contains the list of
         default settings for osm2pgsql.
     """
-    options['import_file'] = osm_file
+    options['import_file'] = osm_files
     options['append'] = False
     options['threads'] = 1
 
@@ -115,7 +115,12 @@ def import_osm_data(osm_file, options, drop=False, ignore_errors=False):
         # Make some educated guesses about cache size based on the size
         # of the import file and the available memory.
         mem = psutil.virtual_memory()
-        fsize = os.stat(str(osm_file)).st_size
+        fsize = 0
+        if isinstance(osm_files, list):
+            for fname in osm_files:
+                fsize += os.stat(str(fname)).st_size
+        else:
+            fsize = os.stat(str(osm_files)).st_size
         options['osm2pgsql_cache'] = int(min((mem.available + mem.cached) * 0.75,
                                              fsize * 2) / 1024 / 1024) + 1
 

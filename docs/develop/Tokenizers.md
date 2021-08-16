@@ -50,7 +50,7 @@ tokenizer's internal token lists and creating a list of all token IDs for
 the specific place. This list is later needed in the PL/pgSQL part where the
 indexer needs to add the token IDs to the appropriate search tables. To be
 able to communicate the list between the Python part and the pl/pgSQL trigger,
-the placex table contains a special JSONB column `token_info` which is there
+the `placex` table contains a special JSONB column `token_info` which is there
 for the exclusive use of the tokenizer.
 
 The Python part of the tokenizer returns a structured information about the
@@ -67,12 +67,17 @@ consequently not create any special indexes on it.
 
 ### Querying
 
-The tokenizer is responsible for the initial parsing of the query. It needs
-to split the query into appropriate words and terms and match them against
-the saved tokens in the database. It then returns the list of possibly matching
-tokens and the list of possible splits to the query parser. The parser uses
-this information to compute all possible interpretations of the query and
-rank them accordingly.
+At query time, Nominatim builds up multiple _interpretations_ of the search
+query. Each of these interpretations is tried against the database in order
+of the likelihood with which they match to the search query. The first
+interpretation that yields results wins.
+
+The interpretations are encapsulated in the `SearchDescription` class. An
+instance of this class is created by applying a sequence of
+_search tokens_ to an initially empty SearchDescription. It is the
+responsibility of the tokenizer to parse the search query and derive all
+possible sequences of search tokens. To that end the tokenizer needs to parse
+the search query and look up matching words in its own data structures.
 
 ## Tokenizer API
 
@@ -300,6 +305,14 @@ public function extractTokensFromPhrases(array &$aPhrases) : TokenList
 
 Parse the given phrases, splitting them into word lists and retrieve the
 matching tokens.
+
+The phrase array may take on two forms. In unstructured searches (using `q=`
+parameter) the search query is split at the commas and the elements are
+put into a sorted list. For structured searches the phrase array is an
+associative array where the key designates the type of the term (street, city,
+county etc.) The tokenizer may ignore the phrase type at this stage in parsing.
+Matching phrase type and appropriate search token type will be done later
+when the SearchDescription is built.
 
 For each phrase in the list of phrases, the function must analyse the phrase
 string and then call `setWordSets()` to communicate the result of the analysis.

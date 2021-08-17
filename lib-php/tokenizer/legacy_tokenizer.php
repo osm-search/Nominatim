@@ -87,6 +87,23 @@ class Tokenizer
             $sNormQuery .= ','.$this->normalizeString($oPhrase->getPhrase());
             $sSQL .= 'make_standard_name(:' .$iPhrase.') as p'.$iPhrase.',';
             $aParams[':'.$iPhrase] = $oPhrase->getPhrase();
+
+            // Conflicts between US state abbreviations and various words
+            // for 'the' in different languages
+            switch (strtolower($oPhrase->getPhrase())) {
+                case 'il':
+                    $aParams[':'.$iPhrase] = 'illinois';
+                    break;
+                case 'al':
+                    $aParams[':'.$iPhrase] = 'alabama';
+                    break;
+                case 'la':
+                    $aParams[':'.$iPhrase] = 'louisiana';
+                    break;
+                default:
+                    $aParams[':'.$iPhrase] = $oPhrase->getPhrase();
+                    break;
+            }
         }
         $sSQL = substr($sSQL, 0, -1);
 

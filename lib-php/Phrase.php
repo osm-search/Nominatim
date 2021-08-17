@@ -9,7 +9,8 @@ namespace Nominatim;
  */
 class Phrase
 {
-    // Complete phrase as a string.
+    // Complete phrase as a string (guaranteed to have no leading or trailing
+    // spaces).
     private $sPhrase;
     // Element type for structured searches.
     private $sPhraseType;

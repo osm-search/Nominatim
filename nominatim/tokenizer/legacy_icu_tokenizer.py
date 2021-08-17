@@ -16,6 +16,7 @@ from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProcessorRules
+from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
 DBCFG_MAXWORDFREQ = "tokenizer_maxwordfreq"
 DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
@@ -28,7 +29,7 @@ def create(dsn, data_dir):
     return LegacyICUTokenizer(dsn, data_dir)
 
 
-class LegacyICUTokenizer:
+class LegacyICUTokenizer(AbstractTokenizer):
     """ This tokenizer uses libICU to covert names and queries to ASCII.
         Otherwise it uses the same algorithms and data structures as the
         normalization routines in Nominatim 3.
@@ -192,7 +193,7 @@ class LegacyICUTokenizer:
         return words
 
 
-class LegacyICUNameAnalyzer:
+class LegacyICUNameAnalyzer(AbstractAnalyzer):
     """ The legacy analyzer uses the ICU library for splitting names.
 
         Each instance opens a connection to the database to request the
@@ -205,14 +206,6 @@ class LegacyICUNameAnalyzer:
         self.name_processor = name_proc
 
         self._cache = _TokenCache()
-
-
-    def __enter__(self):
-        return self
-
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
 
     def close(self):

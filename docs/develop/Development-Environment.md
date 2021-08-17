@@ -38,6 +38,7 @@ It has the following additional requirements:
 The documentation is built with mkdocs:
 
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
+* [mkdocstrings](https://mkdocstrings.github.io/)
 
 ### Installing prerequisites on Ubuntu/Debian
 
@@ -51,7 +52,7 @@ To install all necessary packages run:
 sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev pylint
 
-pip3 install --user behave mkdocs pytest
+pip3 install --user behave mkdocs mkdocstrings pytest
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add
@@ -113,7 +114,7 @@ symlinks (see `CMakeLists.txt` for the exact steps).
 Now you can start webserver for local testing
 
 ```
-build> mkdocs serve
+build> mame serve-doc
 [server:296] Serving on http://127.0.0.1:8000
 [handlers:62] Start watching changes
 ```
@@ -122,7 +123,7 @@ If you develop inside a Vagrant virtual machine, use a port that is forwarded
 to your host:
 
 ```
-build> mkdocs serve --dev-addr 0.0.0.0:8088
+build> PYTHONPATH=$SRCDIR mkdocs serve --dev-addr 0.0.0.0:8088
 [server:296] Serving on http://0.0.0.0:8088
 [handlers:62] Start watching changes
 ```

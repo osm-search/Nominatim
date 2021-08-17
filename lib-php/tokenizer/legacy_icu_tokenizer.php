@@ -2,13 +2,14 @@
 
 namespace Nominatim;
 
+require_once(CONST_LibDir.'/SimpleWordList.php');
+
 class Tokenizer
 {
     private $oDB;
 
     private $oNormalizer;
     private $oTransliterator;
-    private $aCountryRestriction;
 
     public function __construct(&$oDB)
     {
@@ -27,12 +28,6 @@ class Tokenizer
         if (!$iWordID) {
             throw new \Exception('No value', 704);
         }
-    }
-
-
-    public function setCountryRestriction($aCountries)
-    {
-        $this->aCountryRestriction = $aCountries;
     }
 
 
@@ -88,13 +83,10 @@ class Tokenizer
             $sNormQuery .= ','.$this->normalizeString($oPhrase->getPhrase());
             $sPhrase = $this->makeStandardWord($oPhrase->getPhrase());
             Debug::printVar('Phrase', $sPhrase);
-            if (strlen($sPhrase) > 0) {
-                $aWords = explode(' ', $sPhrase);
-                Tokenizer::addTokens($aTokens, $aWords);
-                $aWordLists[] = $aWords;
-            } else {
-                $aWordLists[] = array();
-            }
+
+            $oWordList = new SimpleWordList($sPhrase);
+            $aTokens = array_merge($aTokens, $oWordList->getTokens());
+            $aWordLists[] = $oWordList;
         }
 
         Debug::printVar('Tokens', $aTokens);
@@ -103,7 +95,7 @@ class Tokenizer
         $oValidTokens = $this->computeValidTokens($aTokens, $sNormQuery);
 
         foreach ($aPhrases as $iPhrase => $oPhrase) {
-            $oPhrase->computeWordSets($aWordLists[$iPhrase], $oValidTokens);
+            $oPhrase->setWordSets($aWordLists[$iPhrase]->getWordSets($oValidTokens));
         }
 
         return $oValidTokens;
@@ -162,10 +154,7 @@ class Tokenizer
 
             switch ($aWord['type']) {
                 case 'C':  // country name tokens
-                    if ($aWord['word'] !== null
-                        && (!$this->aCountryRestriction
-                            || in_array($aWord['word'], $this->aCountryRestriction))
-                    ) {
+                    if ($aWord['word'] !== null) {
                         $oValidTokens->addToken(
                             $sTok,
                             new Token\Country($iId, $aWord['word'])
@@ -217,29 +206,6 @@ class Tokenizer
                     break;
                 default:
                     break;
-            }
-        }
-    }
-
-
-    /**
-     * Add the tokens from this phrase to the given list of tokens.
-     *
-     * @param string[] $aTokens List of tokens to append.
-     *
-     * @return void
-     */
-    private static function addTokens(&$aTokens, $aWords)
-    {
-        $iNumWords = count($aWords);
-
-        for ($i = 0; $i < $iNumWords; $i++) {
-            $sPhrase = $aWords[$i];
-            $aTokens[$sPhrase] = $sPhrase;
-
-            for ($j = $i + 1; $j < $iNumWords; $j++) {
-                $sPhrase .= ' '.$aWords[$j];
-                $aTokens[$sPhrase] = $sPhrase;
             }
         }
     }

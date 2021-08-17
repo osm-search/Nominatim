@@ -36,7 +36,9 @@ class Country
      */
     public function isExtendable($oSearch, $oPosition)
     {
-        return !$oSearch->hasCountry() && $oPosition->maybePhrase('country');
+        return !$oSearch->hasCountry()
+               && $oPosition->maybePhrase('country')
+               && $oSearch->getContext()->isCountryApplicable($this->sCountryCode);
     }
 
     /**

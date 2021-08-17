@@ -498,7 +498,6 @@ class Geocode
         if ($this->aCountryCodes) {
             $oCtx->setCountryList($this->aCountryCodes);
         }
-        $this->oTokenizer->setCountryRestriction($this->aCountryCodes);
 
         Debug::newSection('Query Preprocessing');
 

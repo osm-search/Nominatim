@@ -5,7 +5,7 @@ bdd:
 	cd bdd && behave -DREMOVE_TEMPLATE=1
 
 icu:
-	cd bdd && behave -DREMOVE_TEMPLATE=1 -DTOKENIZER=legacy_icu
+	cd bdd && behave -DREMOVE_TEMPLATE=1 -DTOKENIZER=icu
 
 php:
 	cd php && phpunit ./

@@ -6,7 +6,7 @@ import yaml
 
 import pytest
 
-from nominatim.tokenizer import legacy_icu_tokenizer
+from nominatim.tokenizer import icu_tokenizer
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
@@ -26,7 +26,7 @@ def test_config(def_config, tmp_path):
     sqldir = tmp_path / 'sql'
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
-    (sqldir / 'tokenizer' / 'legacy_icu_tokenizer.sql').write_text("SELECT 'a'")
+    (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'")
     shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
                 str(sqldir / 'tokenizer' / 'icu_tokenizer_tables.sql'))
 
@@ -41,7 +41,7 @@ def tokenizer_factory(dsn, tmp_path, property_table,
     (tmp_path / 'tokenizer').mkdir()
 
     def _maker():
-        return legacy_icu_tokenizer.create(dsn, tmp_path / 'tokenizer')
+        return icu_tokenizer.create(dsn, tmp_path / 'tokenizer')
 
     return _maker
 
@@ -57,7 +57,7 @@ def db_prop(temp_db_conn):
 @pytest.fixture
 def analyzer(tokenizer_factory, test_config, monkeypatch,
              temp_db_with_extensions, tmp_path):
-    sql = tmp_path / 'sql' / 'tokenizer' / 'legacy_icu_tokenizer.sql'
+    sql = tmp_path / 'sql' / 'tokenizer' / 'icu_tokenizer.sql'
     sql.write_text("SELECT 'a';")
 
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
@@ -146,8 +146,8 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert db_prop(legacy_icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
-    assert db_prop(legacy_icu_tokenizer.DBCFG_MAXWORDFREQ) is not None
+    assert db_prop(icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
+    assert db_prop(icu_tokenizer.DBCFG_MAXWORDFREQ) is not None
 
 
 def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
@@ -187,11 +187,11 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
     tok.init_new_db(test_config)
     monkeypatch.undo()
 
-    assert db_prop(legacy_icu_tokenizer.DBCFG_MAXWORDFREQ) == '1133'
+    assert db_prop(icu_tokenizer.DBCFG_MAXWORDFREQ) == '1133'
 
     table_factory('test', 'txt TEXT')
 
-    func_file = test_config.lib_dir.sql / 'tokenizer' / 'legacy_icu_tokenizer.sql'
+    func_file = test_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer.sql'
     func_file.write_text("""INSERT INTO test VALUES ('{{max_word_freq}}')""")
 
     tok.update_sql_functions(test_config)

@@ -52,7 +52,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         if config.TOKENIZER_CONFIG:
             cfgfile = Path(config.TOKENIZER_CONFIG)
         else:
-            cfgfile = config.config_dir / 'legacy_icu_tokenizer.yaml'
+            cfgfile = config.config_dir / 'icu_tokenizer.yaml'
 
         loader = ICURuleLoader(cfgfile)
         self.naming_rules = ICUNameProcessorRules(loader=loader)
@@ -88,7 +88,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             max_word_freq = get_property(conn, DBCFG_MAXWORDFREQ)
             sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/legacy_icu_tokenizer.sql',
+            sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer.sql',
                               max_word_freq=max_word_freq)
 
 
@@ -98,7 +98,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         self.init_from_project()
 
         if self.naming_rules is None:
-            return "Configuration for tokenizer 'legacy_icu' are missing."
+            return "Configuration for tokenizer 'icu' are missing."
 
         return None
 
@@ -130,7 +130,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
             @define('CONST_Max_Word_Frequency', {self.max_word_frequency});
             @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
             @define('CONST_Transliteration', "{self.naming_rules.search_rules}");
-            require_once('{phpdir}/tokenizer/legacy_icu_tokenizer.php');"""))
+            require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
 
     def _save_config(self, config):

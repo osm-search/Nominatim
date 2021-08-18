@@ -52,6 +52,12 @@ The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to
 normalize names and queries. It also offers configurable decomposition and
 abbreviation handling.
 
+To enable the tokenizer add the following line to your project configuration:
+
+```
+NOMINATIM_TOKENIZER=icu
+```
+
 ### How it works
 
 On import the tokenizer processes names in the following four stages:

@@ -103,9 +103,9 @@ jobs:
               working-directory: Nominatim/test/bdd
               if: matrix.ubuntu == 18
 
-            - name: BDD tests (legacy_icu tokenizer)
+            - name: BDD tests (icu tokenizer)
               run: |
-                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=legacy_icu --format=progress3
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=icu --format=progress3
               working-directory: Nominatim/test/bdd
 
             - name: Upload coverage to Codecov

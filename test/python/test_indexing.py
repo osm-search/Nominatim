@@ -19,8 +19,10 @@ class IndexerTestDB:
         with self.conn.cursor() as cur:
             cur.execute('CREATE EXTENSION hstore')
             cur.execute("""CREATE TABLE placex (place_id BIGINT,
+                                                name HSTORE,
                                                 class TEXT,
                                                 type TEXT,
+                                                linked_place_id BIGINT,
                                                 rank_address SMALLINT,
                                                 rank_search SMALLINT,
                                                 indexed_status SMALLINT,
@@ -55,11 +57,12 @@ class IndexerTestDB:
             cur.execute("""CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
                                                       OUT name HSTORE,
                                                       OUT address HSTORE,
-                                                      OUT country_feature VARCHAR)
+                                                      OUT country_feature VARCHAR,
+                                                      OUT linked_place_id BIGINT)
                            AS $$
                            BEGIN
                             address := p.address;
-                            name := p.address;
+                            name := p.name;
                            END;
                            $$ LANGUAGE plpgsql STABLE;
                         """)

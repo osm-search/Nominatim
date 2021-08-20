@@ -11,8 +11,11 @@
 CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
                                                  OUT name HSTORE,
                                                  OUT address HSTORE,
-                                                 OUT country_feature VARCHAR)
+                                                 OUT country_feature VARCHAR,
+                                                 OUT linked_place_id BIGINT)
   AS $$
+DECLARE
+  location RECORD;
 BEGIN
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
@@ -33,6 +36,18 @@ BEGIN
 
   address := address - '_unlisted_place'::TEXT;
   name := p.name;
+
+  -- Names of linked places need to be merged in, so search for a linkable
+  -- place already here.
+  SELECT * INTO location FROM find_linked_place(p);
+
+  IF location.place_id is not NULL THEN
+    linked_place_id := location.place_id;
+
+    IF NOT location.name IS NULL THEN
+      name := location.name || name;
+    END IF;
+  END IF;
 
   country_feature := CASE WHEN p.admin_level = 2
                                and p.class = 'boundary' and p.type = 'administrative'
@@ -683,6 +698,8 @@ DECLARE
   nameaddress_vector INTEGER[];
   addr_nameaddress_vector INTEGER[];
 
+  linked_place BIGINT;
+
   linked_node_id BIGINT;
   linked_importance FLOAT;
   linked_wikipedia TEXT;
@@ -718,9 +735,14 @@ BEGIN
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
 
+  -- NEW.linked_place_id contains the precomputed linkee. Save this and restore
+  -- the previous link status.
+  linked_place := NEW.linked_place_id;
+  NEW.linked_place_id := OLD.linked_place_id;
+
   IF NEW.linked_place_id is not null THEN
     NEW.token_info := null;
-    {% if debug %}RAISE WARNING 'place already linked to %', NEW.linked_place_id;{% endif %}
+    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
     RETURN NEW;
   END IF;
 
@@ -956,8 +978,9 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- Full indexing
   {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
-  SELECT * INTO location FROM find_linked_place(NEW);
-  IF location.place_id is not null THEN
+  IF linked_place is not null THEN
+    SELECT * INTO location FROM placex WHERE place_id = linked_place;
+
     {% if debug %}RAISE WARNING 'Linked %', location;{% endif %}
 
     -- Use the linked point as the centre point of the geometry,
@@ -972,11 +995,6 @@ BEGIN
        and location.rank_address < 26
     THEN
       NEW.rank_address := location.rank_address;
-    END IF;
-
-    -- merge in the label name
-    IF NOT location.name IS NULL THEN
-      NEW.name := location.name || NEW.name;
     END IF;
 
     -- merge in extra tags

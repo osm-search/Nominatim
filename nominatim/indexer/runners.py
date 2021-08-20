@@ -16,6 +16,7 @@ class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
     """
     SELECT_SQL = pysql.SQL('SELECT place_id FROM placex ')
+    UPDATE_LINE = "(%s, %s::hstore, %s::hstore, %s::int, %s::jsonb)"
 
     def __init__(self, rank, analyzer):
         self.rank = rank
@@ -27,10 +28,11 @@ class AbstractPlacexRunner:
     def _index_sql(num_places):
         return pysql.SQL(
             """ UPDATE placex
-                SET indexed_status = 0, address = v.addr, token_info = v.ti
-                FROM (VALUES {}) as v(id, addr, ti)
+                SET indexed_status = 0, address = v.addr, token_info = v.ti,
+                    name = v.name, linked_place_id = v.linked_place_id
+                FROM (VALUES {}) as v(id, name, addr, linked_place_id, ti)
                 WHERE place_id = v.id
-            """).format(_mk_valuelist("(%s, %s::hstore, %s::jsonb)", num_places))
+            """).format(_mk_valuelist(AbstractPlacexRunner.UPDATE_LINE, num_places))
 
 
     @staticmethod
@@ -43,7 +45,8 @@ class AbstractPlacexRunner:
     def index_places(self, worker, places):
         values = []
         for place in places:
-            values.extend((place[x] for x in ('place_id', 'address')))
+            for field in ('place_id', 'name', 'address', 'linked_place_id'):
+                values.append(place[field])
             values.append(psycopg2.extras.Json(self.analyzer.process_place(place)))
 
         worker.perform(self._index_sql(len(places)), values)

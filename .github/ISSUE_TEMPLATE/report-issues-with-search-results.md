@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+<!-- Note: this template is for reporting problems with searching. If you have found an issue with the data, you need to report/fix the issue directly in OpenStreetMap. See https://www.openstreetmap.org/fixthemap for details. -->
+
 ## What did you search for?
 
 <!-- Please try to provide a link to your search. You  can go to https://nominatim.openstreetmap.org and repeat your search there. If you originally found the issue somewhere else, please tell us what software/website you were using. -->
@@ -15,11 +17,11 @@ assignees: ''
 
 ## What result did you expect?
 
-**Is the result in the right place and just named wrongly?** 
+**When the result in the right place and just named wrongly:** 
 
 <!-- Please tell us the display name you expected. -->
 
-**Is the result missing completely?**
+**When the result missing completely:**
 
 <!-- Make sure that the data you are looking for is in OpenStreetMap. Provide a link to the OpenStreetMap object or if you cannot get it, a link to the map on https://openstreetmap.org where you expect the result to be.
 

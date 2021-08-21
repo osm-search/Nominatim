@@ -4,6 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
     tests:
+        if: False
         strategy:
             matrix:
                 ubuntu: [18, 20]
@@ -120,6 +121,7 @@ jobs:
               if: matrix.ubuntu == 20
 
     import:
+        if: False
         strategy:
             matrix:
                 ubuntu: [18, 20]

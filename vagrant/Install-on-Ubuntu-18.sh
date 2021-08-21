@@ -1,8 +1,7 @@
-#!/bin/bash
+#!/bin/bash -e
 #
 # hacks for broken vagrant box      #DOCS:
 sudo rm -f /var/lib/dpkg/lock       #DOCS:
-sudo update-locale LANG=en_US.UTF-8 #DOCS:
 export APT_LISTCHANGES_FRONTEND=none #DOCS:
 export DEBIAN_FRONTEND=noninteractive #DOCS:
 
@@ -15,10 +14,9 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 # These instructions expect that you have a freshly installed Ubuntu 18.04.
 #
-# Make sure all packages are are up-to-date by running:
+# Make sure all packages are up-to-date by running:
 #
 
-    sudo apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" --force-yes -fuy install grub-pc #DOCS:
     sudo apt update -qq
 
 # Now you can install all packages needed for Nominatim:
@@ -30,12 +28,12 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
                         php php-pgsql php-intl libicu-dev python3-pip \
-                        python3-psycopg2 python3-psutil python3-jinja2 python3-icu git
+                        python3-psutil python3-jinja2 python3-icu git
 
 # Some of the Python packages that come with Ubuntu 18.04 are too old, so
 # install the latest version from pip:
 
-    pip3 install python-dotenv datrie pyyaml
+    pip3 install --user python-dotenv datrie pyyaml psycopg2
 
 #
 # System Configuration
@@ -60,8 +58,10 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # To be able to copy and paste instructions from this manual, export
 # user name and home directory now like this:
 #
+if [ "x$USERNAME" == "x" ]; then   #DOCS:
     export USERNAME=vagrant        #DOCS:    export USERNAME=nominatim
     export USERHOME=/home/vagrant  #DOCS:    export USERHOME=/srv/nominatim
+fi                                 #DOCS:
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
@@ -79,7 +79,11 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 # Restart the postgresql service after updating this config file.
 
-    sudo systemctl restart postgresql
+if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
+    sudo pg_ctlcluster 10 main start
+else                                  #DOCS:
+    sudo systemctl restart postgresql #DOCS:
+fi                                    #DOCS:
 
 #
 # Finally, we need to add two postgres users: one for the user that does
@@ -133,11 +137,13 @@ fi                                 #DOCS:
 #
 # The webserver should serve the php scripts from the website directory of your
 # [project directory](../admin/Import.md#creating-the-project-directory).
-# Therefore set up a project directory and populate the website directory:
+# This directory needs to exist when being configured.
+# Therefore set up a project directory and create the website directory:
 
     mkdir $USERHOME/nominatim-project
-    cd $USERHOME/nominatim-project
-    nominatim refresh --website
+    mkdir $USERHOME/nominatim-project/website
+
+# The import process will populate the directory later.
 #
 # Option 1: Using Apache
 # ----------------------
@@ -170,7 +176,11 @@ EOFAPACHECONF
 #
 
     sudo a2enconf nominatim
+if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
+    sudo apache2ctl start             #DOCS:
+else                                  #DOCS:
     sudo systemctl restart apache2
+fi                                    #DOCS:
 
 # The Nominatim API is now available at `http://localhost/nominatim/`.
 
@@ -250,7 +260,12 @@ EOF_NGINX_CONF
 # Enable the configuration and restart Nginx
 #
 
+if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
+    sudo /usr/sbin/php-fpm7.2 --nodaemonize --fpm-config /etc/php/7.2/fpm/php-fpm.conf & #DOCS:
+    sudo /usr/sbin/nginx &            #DOCS:
+else                                  #DOCS:
     sudo systemctl restart php7.2-fpm nginx
+fi                                    #DOCS:
 
 # The Nominatim API is now available at `http://localhost/`.
 

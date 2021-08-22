@@ -290,6 +290,7 @@ with a designation label. Per default the following labels may appear:
  * emergency, historic, military, natural, landuse, place, railway,
    man_made, aerialway, boundary, amenity, aeroway, club, craft, leisure,
    office, mountain_pass, shop, tourism, bridge, tunnel, waterway
+ * postcode
 
 They roughly correspond to the classification of the OpenStreetMap data
 according to either the `place` tag or the main key of the object.

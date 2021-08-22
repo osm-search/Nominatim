@@ -1,4 +1,4 @@
-name: Install scripts
+name: Install and Import
 
 on: [ push, pull_request ]
 
@@ -11,25 +11,19 @@ jobs:
               with:
                 submodules: true
 
-            - name: Get Date
-              id: get-date
-              run: |
-                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
-              shell: bash
-
             - uses: actions/cache@v2
               with:
                   path: |
-                     data/country_grid.sql.gz
-                  key: nominatim-country-data-${{ steps.get-date.outputs.date }}
+                     data/country_osm_grid.sql.gz
+                  key: nominatim-country-data-1
 
             - name: Package tarball
               run: |
-                  if [ ! -f data/country_grid.sql.gz ]; then
-                      wget --no-verbose -O data/country_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+                  if [ ! -f data/country_osm_grid.sql.gz ]; then
+                      wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
                   fi
                   cd ..
-                  tar cjf nominatim-src.tar.bz2 Nominatim
+                  tar czf nominatim-src.tar.bz2 Nominatim
                   mv nominatim-src.tar.bz2 Nominatim
 
             - name: 'Upload Artifact'
@@ -39,8 +33,8 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
-
     ubuntu:
+        if: false
         runs-on: ubuntu-latest
         needs: create-archive
 
@@ -100,6 +94,7 @@ jobs:
                 . vagrant.sh
               working-directory: /home/nominatim
 
+
             - uses: actions/cache@v2
               with:
                   path: |
@@ -143,6 +138,111 @@ jobs:
               run : |
                   echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' > .env
                   nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only --no-updates
+              working-directory: data-env-reverse
+              env:
+                  NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse
+
+            - name: Check reverse import
+              run: nominatim admin --check-database
+              working-directory: data-env-reverse
+
+
+    centos:
+        runs-on: ubuntu-latest
+        needs: create-archive
+
+        strategy:
+            matrix:
+                centos: [8]
+
+        container:
+            image: centos:${{ matrix.centos }}
+            env:
+                LANG: en_US.UTF-8
+
+        defaults:
+            run:
+                shell: sudo -Hu nominatim bash --noprofile --norc -eo pipefail {0}
+
+        steps:
+            - name: Prepare container
+              run: |
+                  dnf update -y
+                  dnf install -y sudo
+              shell: bash
+
+            - name: Setup import user
+              run: |
+                  useradd -m nominatim
+                  echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
+                  echo "/home/nominatim/Nominatim/vagrant/Install-on-Centos-$CENTOS.sh no" > /home/nominatim/vagrant.sh
+              shell: bash
+              env:
+                CENTOS: ${{ matrix.centos }}
+
+            - uses: actions/download-artifact@v2
+              with:
+                  name: full-source
+                  path: /home/nominatim
+
+            - name: Get Date
+              id: get-date
+              run: |
+                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
+              shell: bash
+
+            - name: Install Nominatim
+              run: |
+                export USERNAME=nominatim
+                export USERHOME=/home/nominatim
+                export NOSYSTEMD=yes
+                export HAVE_SELINUX=no
+                tar xf nominatim-src.tar.bz2
+                ls -al /home/nominatim/Nominatim/data
+                . vagrant.sh
+              working-directory: /home/nominatim
+
+            - name: Prepare import environment
+              run: |
+                  mv /home/nominatim/Nominatim/test/testdb/apidb-test-data.pbf test.pbf
+                  rm -rf /home/nominatim/Nominatim
+                  mkdir data-env data-env-reverse
+                  chown nominatim. data-env data-env-reverse
+              shell: bash
+
+            - name: Prepare import environment (CentOS)
+              run: |
+                  sudo ln -s /usr/local/bin/nominatim /usr/bin/nominatim
+                  echo NOMINATIM_DATABASE_WEBUSER="apache" > data-env/.env
+                  cp data-env/.env data-env-reverse/.env
+
+            - name: Import
+              run: nominatim import --osm-file ../test.pbf
+              working-directory: data-env
+
+            - name: Import special phrases
+              run: nominatim special-phrases --import-from-wiki
+              working-directory: data-env
+
+            - name: Check full import
+              run: nominatim admin --check-database
+              working-directory: data-env
+
+            - name: Warm up database
+              run: nominatim admin --warm
+              working-directory: data-env
+
+            - name: Run update
+              run: |
+                  pip3 install --user osmium
+                  nominatim replication --init
+                  NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
+              working-directory: data-env
+
+            - name: Run reverse-only import
+              run : |
+                  echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' >> .env
+                  nominatim import --osm-file ../test.pbf --reverse-only --no-updates
               working-directory: data-env-reverse
               env:
                   NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse

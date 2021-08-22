@@ -75,9 +75,9 @@ fi                                 #DOCS:
 # Restart the postgresql service after updating this config file.
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
-    sudo pg_ctlcluster 12 main start
+    sudo pg_ctlcluster 12 main start  #DOCS:
 else                                  #DOCS:
-    sudo systemctl restart postgresql #DOCS:
+    sudo systemctl restart postgresql
 fi                                    #DOCS:
 #
 # Finally, we need to add two postgres users: one for the user that does

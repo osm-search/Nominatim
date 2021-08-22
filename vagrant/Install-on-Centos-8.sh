@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 #
 # *Note:* these installation instructions are also available in executable
 #         form for use with vagrant under `vagrant/Install-on-Centos-8.sh`.
@@ -18,10 +18,12 @@
     sudo dnf install -y epel-release redhat-rpm-config
 
 # EPEL contains Postgres 9.6 and 10, but not PostGIS. Postgres 9.4+/10/11/12
-# and PostGIS 2.4/2.5/3.0 are availble from postgresql.org
+# and PostGIS 2.4/2.5/3.0 are availble from postgresql.org. Enable these
+# repositories and make sure, the binaries can be found:
 
     sudo dnf -qy module disable postgresql
     sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    export PATH=/usr/pgsql-12/bin:$PATH
 
 # Now you can install all packages needed for Nominatim:
 
@@ -33,9 +35,10 @@
                         php-pgsql php php-intl php-json libpq-devel \
                         bzip2-devel proj-devel boost-devel \
                         python3-pip python3-setuptools python3-devel \
-                        expat-devel zlib-devel libicu-dev
+                        python3-psycopg2 \
+                        expat-devel zlib-devel libicu-devel
 
-    pip3 install --user psycopg2 python-dotenv psutil Jinja2 PyICU datrie pyyaml
+    pip3 install --user python-dotenv psutil Jinja2 PyICU datrie pyyaml
 
 
 #
@@ -54,16 +57,19 @@
 # we assume this user is called nominatim and the installation will be in
 # /srv/nominatim. To create the user and directory run:
 #
-sudo mkdir -p /srv/nominatim       #DOCS:    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
-sudo chown vagrant /srv/nominatim  #DOCS:
+#    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
 #
 # You may find a more suitable location if you wish.
 #
 # To be able to copy and paste instructions from this manual, export
 # user name and home directory now like this:
 #
-    export USERNAME=vagrant        #DOCS:    export USERNAME=nominatim
+if [ "x$USERNAME" == "x" ]; then       #DOCS:
+    export USERNAME=vagrant            #DOCS:    export USERNAME=nominatim
     export USERHOME=/srv/nominatim
+    sudo mkdir -p /srv/nominatim       #DOCS:
+    sudo chown vagrant /srv/nominatim  #DOCS:
+fi                                     #DOCS:
 #
 # **Never, ever run the installation as a root user.** You have been warned.
 #
@@ -75,21 +81,29 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 # ---------------------
 #
 # CentOS does not automatically create a database cluster. Therefore, start
-# with initializing the database, then enable the server to start at boot:
+# with initializing the database:
 
-
+if [ "x$NOSYSTEMD" == "xyes" ]; then                               #DOCS:
+    sudo -u postgres /usr/pgsql-12/bin/pg_ctl initdb -D /var/lib/pgsql/12/data     #DOCS:
+    sudo mkdir /var/log/postgresql
+    sudo chown postgres. /var/log/postgresql
+else                                                               #DOCS:
     sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
-    sudo systemctl enable postgresql-12
-
+fi                                                                 #DOCS:
 #
-# Next tune the postgresql configuration, which is located in 
-# `/var/lib/pgsql/data/postgresql.conf`. See section *Postgres Tuning* in
+# Next tune the postgresql configuration, which is located in
+# `/var/lib/pgsql/12/data/postgresql.conf`. See section *Postgres Tuning* in
 # [the installation page](../admin/Installation.md#postgresql-tuning)
 # for the parameters to change.
 #
-# Now start the postgresql service after updating this config file.
+# Now start the postgresql service after updating this config file:
 
+if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
+    sudo -u postgres /usr/pgsql-12/bin/pg_ctl -D /var/lib/pgsql/12/data -l /var/log/postgresql/postgresql-12.log start  #DOCS:
+else                                  #DOCS:
+    sudo systemctl enable postgresql-12
     sudo systemctl restart postgresql-12
+fi                                    #DOCS:
 
 #
 # Finally, we need to add two postgres users: one for the user that does
@@ -140,11 +154,11 @@ fi                                 #DOCS:
 #
 # The webserver should serve the php scripts from the website directory of your
 # [project directory](../admin/Import.md#creating-the-project-directory).
-# Therefore set up a project directory and populate the website directory:
+# This directory needs to exist when the webserver is configured.
+# Therefore set up a project directory and create the website directory:
 #
     mkdir $USERHOME/nominatim-project
-    cd $USERHOME/nominatim-project
-    nominatim refresh --website
+    mkdir $USERHOME/nominatim-project/website
 #
 # You need to create an alias to the website directory in your apache
 # configuration. Add a separate nominatim configuration to your webserver:
@@ -165,11 +179,15 @@ EOFAPACHECONF
 sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 
 #
-# Then reload apache
+# Then reload apache:
 #
 
+if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
+    sudo httpd                        #DOCS:
+else                                  #DOCS:
     sudo systemctl enable httpd
     sudo systemctl restart httpd
+fi                                    #DOCS:
 
 #
 # Adding SELinux Security Settings
@@ -179,18 +197,19 @@ sudo sed -i 's:#.*::' /etc/httpd/conf.d/nominatim.conf #DOCS:
 # with a web server accessible from the Internet. At a minimum the
 # following SELinux labeling should be done for Nominatim:
 
+if [ "x$HAVE_SELINUX" != "xno" ]; then  #DOCS:
     sudo semanage fcontext -a -t httpd_sys_content_t "/usr/local/nominatim/lib/lib-php(/.*)?"
     sudo semanage fcontext -a -t httpd_sys_content_t "$USERHOME/nominatim-project/website(/.*)?"
     sudo semanage fcontext -a -t lib_t "$USERHOME/nominatim-project/module/nominatim.so"
     sudo restorecon -R -v /usr/local/lib/nominatim
     sudo restorecon -R -v $USERHOME/nominatim-project
-
+fi                                 #DOCS:
 
 # You need to create a minimal configuration file that tells nominatim
 # the name of your webserver user:
 
 #DOCS:```sh
-echo NOMINATIM_DATABASE_WEBUSER="apache" | tee .env
+echo NOMINATIM_DATABASE_WEBUSER="apache" | tee $USERHOME/nominatim-project/.env
 #DOCS:```
 
 

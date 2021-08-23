@@ -33,130 +33,30 @@ jobs:
                   path: nominatim-src.tar.bz2
                   retention-days: 1
 
-    ubuntu:
-        if: false
+    install:
         runs-on: ubuntu-latest
         needs: create-archive
 
         strategy:
             matrix:
-                ubuntu: [18, 20]
+                name: [Ubuntu-18, Ubuntu-20, Centos-8]
                 include:
-                    - ubuntu: 18
-                      install_mode:
-                    - ubuntu: 20
+                    - name: Ubuntu-18
+                      flavour: ubuntu
+                      image: "ubuntu:18.04"
+                      ubuntu: 18
+                      install_mode: install-nginx
+                    - name: Ubuntu-20
+                      flavour: ubuntu
+                      image: "ubuntu:20.04"
+                      ubuntu: 20
                       install_mode: install-apache
+                    - name: Centos-8
+                      flavour: centos
+                      image: "centos:8"
 
         container:
-            image: ubuntu:${{ matrix.ubuntu }}.04
-
-        defaults:
-            run:
-                shell: sudo -Hu nominatim bash --noprofile --norc -eo pipefail {0}
-
-        steps:
-            - name: Prepare container
-              run: |
-                  export APT_LISTCHANGES_FRONTEND=none
-                  export DEBIAN_FRONTEND=noninteractive
-                  apt-get update -qq
-                  apt-get install -y git sudo wget
-                  ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
-              shell: bash
-
-            - name: Setup import user
-              run: |
-                  useradd -m nominatim -G sudo
-                  echo '%sudo   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nopasswd
-                  echo "/home/nominatim/Nominatim/vagrant/Install-on-Ubuntu-$UBUNTU.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
-              shell: bash
-              env:
-                UBUNTU: ${{ matrix.ubuntu }}
-                INSTALL_MODE: ${{ matrix.install_mode }}
-
-            - uses: actions/download-artifact@v2
-              with:
-                  name: full-source
-                  path: /home/nominatim
-
-            - name: Get Date
-              id: get-date
-              run: |
-                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
-              shell: bash
-
-            - name: Install Nominatim
-              run: |
-                export USERNAME=nominatim
-                export USERHOME=/home/nominatim
-                export NOSYSTEMD=yes
-                tar xf nominatim-src.tar.bz2
-                . vagrant.sh
-              working-directory: /home/nominatim
-
-
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                     monaco-latest.osm.pbf
-                  key: nominatim-test-data-${{ steps.get-date.outputs.date }}
-
-            - name: Prepare import environment
-              run: |
-                  if [ ! -f monaco-latest.osm.pbf ]; then
-                      wget --no-verbose https://download.geofabrik.de/europe/monaco-latest.osm.pbf
-                  fi
-                  mkdir data-env data-env-reverse
-                  chown nominatim. data-env data-env-reverse
-              shell: bash
-
-            - name: Import
-              run: nominatim import --osm-file ../monaco-latest.osm.pbf
-              working-directory: data-env
-
-            - name: Import special phrases
-              run: nominatim special-phrases --import-from-wiki
-              working-directory: data-env
-
-            - name: Check full import
-              run: nominatim admin --check-database
-              working-directory: data-env
-
-            - name: Warm up database
-              run: nominatim admin --warm
-              working-directory: data-env
-
-            - name: Run update
-              run: |
-                  sudo apt-get install -y python3-pip
-                  pip3 install --user osmium
-                  nominatim replication --init
-                  NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
-              working-directory: data-env
-
-            - name: Run reverse-only import
-              run : |
-                  echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' > .env
-                  nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only --no-updates
-              working-directory: data-env-reverse
-              env:
-                  NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse
-
-            - name: Check reverse import
-              run: nominatim admin --check-database
-              working-directory: data-env-reverse
-
-
-    centos:
-        runs-on: ubuntu-latest
-        needs: create-archive
-
-        strategy:
-            matrix:
-                centos: [8]
-
-        container:
-            image: centos:${{ matrix.centos }}
+            image: ${{ matrix.image }}
             env:
                 LANG: en_US.UTF-8
 
@@ -165,31 +65,37 @@ jobs:
                 shell: sudo -Hu nominatim bash --noprofile --norc -eo pipefail {0}
 
         steps:
-            - name: Prepare container
+            - name: Prepare container (Ubuntu)
+              run: |
+                  export APT_LISTCHANGES_FRONTEND=none
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update -qq
+                  apt-get install -y git sudo wget
+                  ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+              shell: bash
+              if: matrix.flavour == 'ubuntu'
+
+            - name: Prepare container (CentOS)
               run: |
                   dnf update -y
                   dnf install -y sudo
               shell: bash
+              if: matrix.flavour == 'centos'
 
             - name: Setup import user
               run: |
                   useradd -m nominatim
                   echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
-                  echo "/home/nominatim/Nominatim/vagrant/Install-on-Centos-$CENTOS.sh no" > /home/nominatim/vagrant.sh
+                  echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
               shell: bash
               env:
-                CENTOS: ${{ matrix.centos }}
+                OS: ${{ matrix.name }}
+                INSTALL_MODE: ${{ matrix.install_mode }}
 
             - uses: actions/download-artifact@v2
               with:
                   name: full-source
                   path: /home/nominatim
-
-            - name: Get Date
-              id: get-date
-              run: |
-                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
-              shell: bash
 
             - name: Install Nominatim
               run: |
@@ -204,49 +110,53 @@ jobs:
 
             - name: Prepare import environment
               run: |
-                  mv /home/nominatim/Nominatim/test/testdb/apidb-test-data.pbf test.pbf
-                  rm -rf /home/nominatim/Nominatim
-                  mkdir data-env data-env-reverse
-                  chown nominatim. data-env data-env-reverse
-              shell: bash
+                  mv Nominatim/test/testdb/apidb-test-data.pbf test.pbf
+                  rm -rf Nominatim
+                  mkdir data-env-reverse
+              working-directory: /home/nominatim
 
             - name: Prepare import environment (CentOS)
               run: |
                   sudo ln -s /usr/local/bin/nominatim /usr/bin/nominatim
-                  echo NOMINATIM_DATABASE_WEBUSER="apache" > data-env/.env
-                  cp data-env/.env data-env-reverse/.env
+                  echo NOMINATIM_DATABASE_WEBUSER="apache" > nominatim-project/.env
+                  cp nominatim-project/.env data-env-reverse/.env
+              working-directory: /home/nominatim
+              if: matrix.flavour == 'centos'
 
             - name: Import
               run: nominatim import --osm-file ../test.pbf
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Import special phrases
               run: nominatim special-phrases --import-from-wiki
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Check full import
               run: nominatim admin --check-database
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Warm up database
               run: nominatim admin --warm
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Prepare update (Ubuntu)
+              run: apt-get install -y python3-pip
+              shell: bash
+              if: matrix.flavour == 'ubuntu'
 
             - name: Run update
               run: |
                   pip3 install --user osmium
                   nominatim replication --init
                   NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Run reverse-only import
               run : |
                   echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' >> .env
                   nominatim import --osm-file ../test.pbf --reverse-only --no-updates
-              working-directory: data-env-reverse
-              env:
-                  NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse
+              working-directory: /home/nominatim/data-env-reverse
 
             - name: Check reverse import
               run: nominatim admin --check-database
-              working-directory: data-env-reverse
+              working-directory: /home/nominatim/data-env-reverse

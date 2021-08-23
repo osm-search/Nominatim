@@ -80,9 +80,9 @@ fi                                 #DOCS:
 # Restart the postgresql service after updating this config file.
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
-    sudo pg_ctlcluster 10 main start
+    sudo pg_ctlcluster 10 main start  #DOCS:
 else                                  #DOCS:
-    sudo systemctl restart postgresql #DOCS:
+    sudo systemctl restart postgresql
 fi                                    #DOCS:
 
 #
@@ -172,10 +172,13 @@ EOFAPACHECONF
 #DOCS:```
 
 #
-# Then enable the configuration and restart apache
+# Then enable the configuration with
 #
 
     sudo a2enconf nominatim
+
+# and restart apache:
+
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
     sudo apache2ctl start             #DOCS:
 else                                  #DOCS:

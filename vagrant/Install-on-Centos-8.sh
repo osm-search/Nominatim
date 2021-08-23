@@ -57,7 +57,7 @@
 # we assume this user is called nominatim and the installation will be in
 # /srv/nominatim. To create the user and directory run:
 #
-#    sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
+#     sudo useradd -d /srv/nominatim -s /bin/bash -m nominatim
 #
 # You may find a more suitable location if you wish.
 #
@@ -85,8 +85,8 @@ fi                                     #DOCS:
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then                               #DOCS:
     sudo -u postgres /usr/pgsql-12/bin/pg_ctl initdb -D /var/lib/pgsql/12/data     #DOCS:
-    sudo mkdir /var/log/postgresql
-    sudo chown postgres. /var/log/postgresql
+    sudo mkdir /var/log/postgresql                                 #DOCS:
+    sudo chown postgres. /var/log/postgresql                       #DOCS:
 else                                                               #DOCS:
     sudo /usr/pgsql-12/bin/postgresql-12-setup initdb
 fi                                                                 #DOCS:

@@ -3,7 +3,38 @@ name: CI Tests
 on: [ push, pull_request ]
 
 jobs:
+    create-archive:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                submodules: true
+
+            - uses: actions/cache@v2
+              with:
+                  path: |
+                     data/country_osm_grid.sql.gz
+                  key: nominatim-country-data-1
+
+            - name: Package tarball
+              run: |
+                  if [ ! -f data/country_osm_grid.sql.gz ]; then
+                      wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
+                  fi
+                  cd ..
+                  tar czf nominatim-src.tar.bz2 Nominatim
+                  mv nominatim-src.tar.bz2 Nominatim
+
+            - name: 'Upload Artifact'
+              uses: actions/upload-artifact@v2
+              with:
+                  name: full-source
+                  path: nominatim-src.tar.bz2
+                  retention-days: 1
+
     tests:
+        needs: create-archive
         strategy:
             matrix:
                 ubuntu: [18, 20]
@@ -22,10 +53,12 @@ jobs:
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/download-artifact@v2
               with:
-                  submodules: true
-                  path: Nominatim
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -38,18 +71,6 @@ jobs:
               with:
                 python-version: 3.6
               if: matrix.ubuntu == 18
-
-            - name: Get Date
-              id: get-date
-              run: |
-                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
-              shell: bash
-
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                     country_grid.sql.gz
-                  key: nominatim-country-data-${{ steps.get-date.outputs.date }}
 
             - uses: ./Nominatim/.github/actions/setup-postgresql
               with:
@@ -65,8 +86,7 @@ jobs:
               if: matrix.ubuntu == 20
 
             - name: Install test prerequsites
-              run: |
-                   pip3 install pylint==2.6.0 pytest pytest-cov behave==1.2.6
+              run: pip3 install pylint==2.6.0 pytest pytest-cov behave==1.2.6
               if: matrix.ubuntu == 18
 
             - name: PHP linting
@@ -119,99 +139,130 @@ jobs:
                 verbose: true
               if: matrix.ubuntu == 20
 
-    import:
+
+    install:
+        runs-on: ubuntu-latest
+        needs: create-archive
+
         strategy:
             matrix:
-                ubuntu: [18, 20]
+                name: [Ubuntu-18, Ubuntu-20, Centos-8]
                 include:
-                    - ubuntu: 18
-                      postgresql: 9.5
-                      postgis: 2.5
-                    - ubuntu: 20
-                      postgresql: 13
-                      postgis: 3
+                    - name: Ubuntu-18
+                      flavour: ubuntu
+                      image: "ubuntu:18.04"
+                      ubuntu: 18
+                      install_mode: install-nginx
+                    - name: Ubuntu-20
+                      flavour: ubuntu
+                      image: "ubuntu:20.04"
+                      ubuntu: 20
+                      install_mode: install-apache
+                    - name: Centos-8
+                      flavour: centos
+                      image: "centos:8"
 
-        runs-on: ubuntu-${{ matrix.ubuntu }}.04
+        container:
+            image: ${{ matrix.image }}
+            env:
+                LANG: en_US.UTF-8
+
+        defaults:
+            run:
+                shell: sudo -Hu nominatim bash --noprofile --norc -eo pipefail {0}
 
         steps:
-            - uses: actions/checkout@v2
-              with:
-                  submodules: true
-                  path: Nominatim
-
-            - name: Get Date
-              id: get-date
+            - name: Prepare container (Ubuntu)
               run: |
-                  echo "::set-output name=date::$(/bin/date -u "+%Y%W")"
+                  export APT_LISTCHANGES_FRONTEND=none
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update -qq
+                  apt-get install -y git sudo wget
+                  ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
               shell: bash
+              if: matrix.flavour == 'ubuntu'
 
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                     country_grid.sql.gz
-                  key: nominatim-country-data-${{ steps.get-date.outputs.date }}
-
-            - uses: actions/cache@v2
-              with:
-                  path: |
-                     monaco-latest.osm.pbf
-                  key: nominatim-test-data-${{ steps.get-date.outputs.date }}
-
-            - uses: actions/setup-python@v2
-              with:
-                python-version: 3.6
-              if: matrix.ubuntu == 18
-
-            - uses: ./Nominatim/.github/actions/setup-postgresql
-              with:
-                  postgresql-version: ${{ matrix.postgresql }}
-                  postgis-version: ${{ matrix.postgis }}
-            - uses: ./Nominatim/.github/actions/build-nominatim
-              with:
-                  ubuntu: ${{ matrix.ubuntu }}
-
-            - name: Clean installation
-              run: rm -rf Nominatim build
+            - name: Prepare container (CentOS)
+              run: |
+                  dnf update -y
+                  dnf install -y sudo
               shell: bash
+              if: matrix.flavour == 'centos'
+
+            - name: Setup import user
+              run: |
+                  useradd -m nominatim
+                  echo 'nominatim   ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/nominiatim
+                  echo "/home/nominatim/Nominatim/vagrant/Install-on-${OS}.sh no $INSTALL_MODE" > /home/nominatim/vagrant.sh
+              shell: bash
+              env:
+                OS: ${{ matrix.name }}
+                INSTALL_MODE: ${{ matrix.install_mode }}
+
+            - uses: actions/download-artifact@v2
+              with:
+                  name: full-source
+                  path: /home/nominatim
+
+            - name: Install Nominatim
+              run: |
+                export USERNAME=nominatim
+                export USERHOME=/home/nominatim
+                export NOSYSTEMD=yes
+                export HAVE_SELINUX=no
+                tar xf nominatim-src.tar.bz2
+                . vagrant.sh
+              working-directory: /home/nominatim
 
             - name: Prepare import environment
               run: |
-                  if [ ! -f monaco-latest.osm.pbf ]; then
-                      wget --no-verbose https://download.geofabrik.de/europe/monaco-latest.osm.pbf
-                  fi
-                  mkdir data-env
-                  cd data-env
-              shell: bash
+                  mv Nominatim/test/testdb/apidb-test-data.pbf test.pbf
+                  rm -rf Nominatim
+                  mkdir data-env-reverse
+              working-directory: /home/nominatim
+
+            - name: Prepare import environment (CentOS)
+              run: |
+                  sudo ln -s /usr/local/bin/nominatim /usr/bin/nominatim
+                  echo NOMINATIM_DATABASE_WEBUSER="apache" > nominatim-project/.env
+                  cp nominatim-project/.env data-env-reverse/.env
+              working-directory: /home/nominatim
+              if: matrix.flavour == 'centos'
 
             - name: Import
-              run: nominatim import --osm-file ../monaco-latest.osm.pbf
-              shell: bash
-              working-directory: data-env
+              run: nominatim import --osm-file ../test.pbf
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Import special phrases
               run: nominatim special-phrases --import-from-wiki
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Check full import
               run: nominatim admin --check-database
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Warm up database
               run: nominatim admin --warm
-              working-directory: data-env
+              working-directory: /home/nominatim/nominatim-project
+
+            - name: Prepare update (Ubuntu)
+              run: apt-get install -y python3-pip
+              shell: bash
+              if: matrix.flavour == 'ubuntu'
 
             - name: Run update
               run: |
-                   nominatim replication --init
-                   nominatim replication --once
-              working-directory: data-env
+                  pip3 install --user osmium
+                  nominatim replication --init
+                  NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
+              working-directory: /home/nominatim/nominatim-project
 
             - name: Run reverse-only import
-              run : nominatim import --osm-file ../monaco-latest.osm.pbf --reverse-only --no-updates
-              working-directory: data-env
-              env:
-                  NOMINATIM_DATABASE_DSN: pgsql:dbname=reverse
+              run : |
+                  echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' >> .env
+                  nominatim import --osm-file ../test.pbf --reverse-only --no-updates
+              working-directory: /home/nominatim/data-env-reverse
 
             - name: Check reverse import
               run: nominatim admin --check-database
-              working-directory: data-env
+              working-directory: /home/nominatim/data-env-reverse

@@ -1,5 +1,6 @@
 normalization:
     - ":: lower ()"
+    - ":: Hans-Hant"
     - !include icu-rules/unicode-digits-to-decimal.yaml
     - "'№' > 'no'"
     - "'n°' > 'no'"

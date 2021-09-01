@@ -55,6 +55,8 @@ class SetupAll:
         from ..tools import database_import, refresh, postcodes, freeze, country_info
         from ..indexer.indexer import Indexer
 
+        country_info.setup_country_config(args.config.config_dir / 'country_settings.yaml')
+
         if args.continue_at is None:
             files = args.get_osm_file_list()
 

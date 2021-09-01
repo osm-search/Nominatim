@@ -2,9 +2,36 @@
 Functions for importing and managing static country information.
 """
 import psycopg2.extras
+import yaml
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
+
+class _CountryInfo:
+    """ Caches country-specific properties from the configuration file.
+    """
+
+    def __init__(self):
+        self._info = {}
+
+    def load(self, configfile):
+        if not self._info:
+            self._info = yaml.safe_load(configfile.read_text())
+
+    def items(self):
+        return self._info.items()
+
+
+_COUNTRY_INFO = _CountryInfo()
+
+def setup_country_config(configfile):
+    """ Load country properties from the configuration file.
+        Needs to be called before using any other functions in this
+        file.
+    """
+    _COUNTRY_INFO.load(configfile)
+    print(_COUNTRY_INFO._info)
+
 
 def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """ Create and populate the tables with basic static data that provides
@@ -13,11 +40,27 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     db_utils.execute_file(dsn, sql_dir / 'country_name.sql')
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
-    if ignore_partitions:
-        with connect(dsn) as conn:
-            with conn.cursor() as cur:
-                cur.execute('UPDATE country_name SET partition = 0')
-            conn.commit()
+    params = []
+    for ccode, props in _COUNTRY_INFO.items():
+        if ccode is not None and props is not None:
+            if ignore_partitions:
+                partition = 0
+            else:
+                partition = props.get('partition')
+            if ',' in (props.get('languages', ',') or ','):
+                lang = None
+            else:
+                lang = props['languages']
+            params.append((ccode, partition, lang))
+
+    with connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute_values(
+                """ UPDATE country_name
+                    SET partition = part, country_default_language_code = lang
+                    FROM (VALUES %s) AS v (cc, part, lang)
+                    WHERE country_code = v.cc""", params)
+        conn.commit()
 
 
 def create_country_names(conn, tokenizer, languages=None):

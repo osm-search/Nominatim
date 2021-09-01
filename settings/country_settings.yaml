@@ -36,7 +36,7 @@ am:
 # Netherlands Antilles (De Nederlandse Antillen)
 an:
     partition: 58
-    languages: 
+    languages: nl, en, pap
 
 # Angola (Angola)
 ao:
@@ -834,7 +834,7 @@ nl:
     languages: nl
 
 # Norway (Norge)
-no:
+"no":
     partition: 60
     languages: nb, nn, no, se
 
@@ -1226,7 +1226,7 @@ ws:
 # Kosovo (Kosova / Kosovo)
 xk:
     partition: 59
-    languages:sq, sr
+    languages: sq, sr
 
 # Yemen (اليمن)
 ye:

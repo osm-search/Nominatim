@@ -8,7 +8,6 @@ import subprocess
 from pathlib import Path
 
 import psutil
-import psycopg2.extras
 from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect, get_pg_env
@@ -235,38 +234,3 @@ def create_search_indices(conn, config, drop=False):
     sql = SQLPreprocessor(conn, config)
 
     sql.run_sql_file(conn, 'indices.sql', drop=drop)
-
-
-def create_country_names(conn, tokenizer, languages=None):
-    """ Add default country names to search index. `languages` is a comma-
-        separated list of language codes as used in OSM. If `languages` is not
-        empty then only name translations for the given languages are added
-        to the index.
-    """
-    if languages:
-        languages = languages.split(',')
-
-    def _include_key(key):
-        return key == 'name' or \
-               (key.startswith('name:') and (not languages or key[5:] in languages))
-
-    with conn.cursor() as cur:
-        psycopg2.extras.register_hstore(cur)
-        cur.execute("""SELECT country_code, name FROM country_name
-                       WHERE country_code is not null""")
-
-        with tokenizer.name_analyzer() as analyzer:
-            for code, name in cur:
-                names = {'countrycode': code}
-                if code == 'gb':
-                    names['short_name'] = 'UK'
-                if code == 'us':
-                    names['short_name'] = 'United States'
-
-                # country names (only in languages as provided)
-                if name:
-                    names.update(((k, v) for k, v in name.items() if _include_key(k)))
-
-                analyzer.add_country_names(code, names)
-
-    conn.commit()

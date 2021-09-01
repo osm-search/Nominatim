@@ -156,29 +156,3 @@ def test_load_data(dsn, place_row, placex_table, osmline_table,
 
     assert temp_db_cursor.table_rows('placex') == 30
     assert temp_db_cursor.table_rows('location_property_osmline') == 1
-
-
-@pytest.mark.parametrize("languages", (None, ' fr,en'))
-def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cursor,
-                              table_factory, tokenizer_mock, languages):
-
-    table_factory('country_name', 'country_code varchar(2), name hstore',
-                  content=(('us', '"name"=>"us1","name:af"=>"us2"'),
-                           ('fr', '"name"=>"Fra", "name:en"=>"Fren"')))
-
-    assert temp_db_cursor.scalar("SELECT count(*) FROM country_name") == 2
-
-    tokenizer = tokenizer_mock()
-
-    database_import.create_country_names(temp_db_conn, tokenizer, languages)
-
-    assert len(tokenizer.analyser_cache['countries']) == 2
-
-    result_set = {k: set(v.values()) for k, v in tokenizer.analyser_cache['countries']}
-
-    if languages:
-        assert result_set == {'us' : set(('us', 'us1', 'United States')),
-                              'fr' : set(('fr', 'Fra', 'Fren'))}
-    else:
-        assert result_set == {'us' : set(('us', 'us1', 'us2', 'United States')),
-                              'fr' : set(('fr', 'Fra', 'Fren'))}

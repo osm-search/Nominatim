@@ -117,7 +117,6 @@ class SetupAll:
             LOG.warning('Create search index for default country names.')
             country_info.create_country_names(conn, tokenizer,
                                               args.config.LANGUAGES)
-            conn.commit()
             if args.no_updates:
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)

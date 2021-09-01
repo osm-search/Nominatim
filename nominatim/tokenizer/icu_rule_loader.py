@@ -92,17 +92,17 @@ class ICURuleLoader:
         value = loader.construct_scalar(node)
 
         if Path(value).is_absolute():
-            content = Path(value).read_text()
+            content = Path(value)
         else:
-            content = (self.configfile.parent / value).read_text()
+            content = (self.configfile.parent / value)
 
-        return yaml.safe_load(content)
+        return yaml.safe_load(content.read_text(encoding='utf-8'))
 
 
     def _load_from_yaml(self):
         yaml.add_constructor('!include', self._yaml_include_representer,
                              Loader=yaml.SafeLoader)
-        rules = yaml.safe_load(self.configfile.read_text())
+        rules = yaml.safe_load(self.configfile.read_text(encoding='utf-8'))
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')

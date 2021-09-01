@@ -15,10 +15,15 @@ class _CountryInfo:
         self._info = {}
 
     def load(self, configfile):
+        """ Load the country properties from the configuration files,
+            if they are not loaded yet.
+        """
         if not self._info:
-            self._info = yaml.safe_load(configfile.read_text())
+            self._info = yaml.safe_load(configfile.read_text(encoding='utf-8'))
 
     def items(self):
+        """ Return tuples of (country_code, property dict) as iterable.
+        """
         return self._info.items()
 
 
@@ -30,7 +35,6 @@ def setup_country_config(configfile):
         file.
     """
     _COUNTRY_INFO.load(configfile)
-    print(_COUNTRY_INFO._info)
 
 
 def setup_country_tables(dsn, sql_dir, ignore_partitions=False):

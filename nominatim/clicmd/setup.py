@@ -52,16 +52,20 @@ class SetupAll:
 
     @staticmethod
     def run(args):
-        from ..tools import database_import, refresh, postcodes, freeze
+        from ..tools import database_import, refresh, postcodes, freeze, country_info
         from ..indexer.indexer import Indexer
 
         if args.continue_at is None:
             files = args.get_osm_file_list()
 
+            LOG.warning('Creating database')
             database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
-                                                    args.data_dir,
-                                                    args.no_partitions,
                                                     rouser=args.config.DATABASE_WEBUSER)
+
+            LOG.warning('Setting up country tables')
+            country_info.setup_country_tables(args.config.get_libpq_dsn(),
+                                              args.data_dir,
+                                              args.no_partitions)
 
             LOG.warning('Importing OSM data file')
             database_import.import_osm_data(files,

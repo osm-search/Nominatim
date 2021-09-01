@@ -18,6 +18,7 @@ import nominatim.tools.admin
 import nominatim.tools.add_osm_data
 import nominatim.tools.check_database
 import nominatim.tools.database_import
+import nominatim.tools.country_info
 import nominatim.tools.freeze
 import nominatim.tools.refresh
 import nominatim.tools.postcodes
@@ -170,6 +171,7 @@ class TestCliWithDb:
     def test_import_full(self, mock_func_factory):
         mocks = [
             mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
+            mock_func_factory(nominatim.tools.country_info, 'setup_country_tables'),
             mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
             mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
             mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),

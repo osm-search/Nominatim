@@ -12,7 +12,6 @@ import psycopg2.extras
 from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect, get_pg_env
-from nominatim.db import utils as db_utils
 from nominatim.db.async_connection import DBConnection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tools.exec_utils import run_osm2pgsql
@@ -21,24 +20,24 @@ from nominatim.version import POSTGRESQL_REQUIRED_VERSION, POSTGIS_REQUIRED_VERS
 
 LOG = logging.getLogger()
 
-def setup_database_skeleton(dsn, data_dir, no_partitions, rouser=None):
-    """ Create a new database for Nominatim and populate it with the
-        essential extensions and data.
+def _require_version(module, actual, expected):
+    """ Compares the version for the given module and raises an exception
+        if the actual version is too old.
     """
-    LOG.warning('Creating database')
-    create_db(dsn, rouser)
-
-    LOG.warning('Setting up database')
-    with connect(dsn) as conn:
-        setup_extensions(conn)
-
-    LOG.warning('Loading basic data')
-    import_base_data(dsn, data_dir, no_partitions)
+    if actual < expected:
+        LOG.fatal('Minimum supported version of %s is %d.%d. '
+                  'Found version %d.%d.',
+                  module, expected[0], expected[1], actual[0], actual[1])
+        raise UsageError(f'{module} is too old.')
 
 
-def create_db(dsn, rouser=None):
-    """ Create a new database for the given DSN. Fails when the database
-        already exists or the PostgreSQL version is too old.
+def setup_database_skeleton(dsn, rouser=None):
+    """ Create a new database for Nominatim and populate it with the
+        essential extensions.
+
+        The function fails when the database already exists or Postgresql or
+        PostGIS versions are too old.
+
         Uses `createdb` to create the database.
 
         If 'rouser' is given, then the function also checks that the user
@@ -52,13 +51,9 @@ def create_db(dsn, rouser=None):
         raise UsageError('Creating new database failed.')
 
     with connect(dsn) as conn:
-        postgres_version = conn.server_version_tuple()
-        if postgres_version < POSTGRESQL_REQUIRED_VERSION:
-            LOG.fatal('Minimum supported version of Postgresql is %d.%d. '
-                      'Found version %d.%d.',
-                      POSTGRESQL_REQUIRED_VERSION[0], POSTGRESQL_REQUIRED_VERSION[1],
-                      postgres_version[0], postgres_version[1])
-            raise UsageError('PostgreSQL server is too old.')
+        _require_version('PostgreSQL server',
+                         conn.server_version_tuple(),
+                         POSTGRESQL_REQUIRED_VERSION)
 
         if rouser is not None:
             with conn.cursor() as cur:
@@ -69,38 +64,15 @@ def create_db(dsn, rouser=None):
                               "\n      createuser %s", rouser, rouser)
                     raise UsageError('Missing read-only user.')
 
+        # Create extensions.
+        with conn.cursor() as cur:
+            cur.execute('CREATE EXTENSION IF NOT EXISTS hstore')
+            cur.execute('CREATE EXTENSION IF NOT EXISTS postgis')
+        conn.commit()
 
-
-def setup_extensions(conn):
-    """ Set up all extensions needed for Nominatim. Also checks that the
-        versions of the extensions are sufficient.
-    """
-    with conn.cursor() as cur:
-        cur.execute('CREATE EXTENSION IF NOT EXISTS hstore')
-        cur.execute('CREATE EXTENSION IF NOT EXISTS postgis')
-    conn.commit()
-
-    postgis_version = conn.postgis_version_tuple()
-    if postgis_version < POSTGIS_REQUIRED_VERSION:
-        LOG.fatal('Minimum supported version of PostGIS is %d.%d. '
-                  'Found version %d.%d.',
-                  POSTGIS_REQUIRED_VERSION[0], POSTGIS_REQUIRED_VERSION[1],
-                  postgis_version[0], postgis_version[1])
-        raise UsageError('PostGIS version is too old.')
-
-
-def import_base_data(dsn, sql_dir, ignore_partitions=False):
-    """ Create and populate the tables with basic static data that provides
-        the background for geocoding. Data is assumed to not yet exist.
-    """
-    db_utils.execute_file(dsn, sql_dir / 'country_name.sql')
-    db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
-
-    if ignore_partitions:
-        with connect(dsn) as conn:
-            with conn.cursor() as cur:
-                cur.execute('UPDATE country_name SET partition = 0')
-            conn.commit()
+        _require_version('PostGIS',
+                         conn.postgis_version_tuple(),
+                         POSTGIS_REQUIRED_VERSION)
 
 
 def import_osm_data(osm_files, options, drop=False, ignore_errors=False):

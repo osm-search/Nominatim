@@ -2,6 +2,7 @@
 Tests for functions to import a new database.
 """
 from pathlib import Path
+from contextlib import closing
 
 import pytest
 import psycopg2
@@ -9,90 +10,72 @@ import psycopg2
 from nominatim.tools import database_import
 from nominatim.errors import UsageError
 
-@pytest.fixture
-def nonexistant_db():
-    dbname = 'test_nominatim_python_unittest'
+class TestDatabaseSetup:
+    DBNAME = 'test_nominatim_python_unittest'
 
-    conn = psycopg2.connect(database='postgres')
+    @pytest.fixture(autouse=True)
+    def setup_nonexistant_db(self):
+        conn = psycopg2.connect(database='postgres')
 
-    conn.set_isolation_level(0)
-    with conn.cursor() as cur:
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(dbname))
+        try:
+            conn.set_isolation_level(0)
+            with conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
 
-    yield dbname
+            yield True
 
-    with conn.cursor() as cur:
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(dbname))
+            with conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE IF EXISTS {self.DBNAME}')
+        finally:
+            conn.close()
 
-@pytest.mark.parametrize("no_partitions", (True, False))
-def test_setup_skeleton(src_dir, nonexistant_db, no_partitions):
-    database_import.setup_database_skeleton('dbname=' + nonexistant_db,
-                                            src_dir / 'data', no_partitions)
+    @pytest.fixture
+    def cursor(self):
+        conn = psycopg2.connect(database=self.DBNAME)
 
-    conn = psycopg2.connect(database=nonexistant_db)
-
-    try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT distinct partition FROM country_name")
-            partitions = set((r[0] for r in list(cur)))
-            if no_partitions:
-                assert partitions == set((0, ))
-            else:
-                assert len(partitions) > 10
-    finally:
-        conn.close()
+        try:
+            with conn.cursor() as cur:
+                yield cur
+        finally:
+            conn.close()
 
 
-def test_create_db_success(nonexistant_db):
-    database_import.create_db('dbname=' + nonexistant_db, rouser='www-data')
-
-    conn = psycopg2.connect(database=nonexistant_db)
-    conn.close()
+    def conn(self):
+        return closing(psycopg2.connect(database=self.DBNAME))
 
 
-def test_create_db_already_exists(temp_db):
+    def test_setup_skeleton(self):
+        database_import.setup_database_skeleton(f'dbname={self.DBNAME}')
+
+        # Check that all extensions are set up.
+        with self.conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute('CREATE TABLE t (h HSTORE, geom GEOMETRY(Geometry, 4326))')
+
+
+    def test_unsupported_pg_version(self, monkeypatch):
+        monkeypatch.setattr(database_import, 'POSTGRESQL_REQUIRED_VERSION', (100, 4))
+
+        with pytest.raises(UsageError, match='PostgreSQL server is too old.'):
+            database_import.setup_database_skeleton(f'dbname={self.DBNAME}')
+
+
+    def test_create_db_missing_ro_user(self):
+        with pytest.raises(UsageError, match='Missing read-only user.'):
+            database_import.setup_database_skeleton(f'dbname={self.DBNAME}',
+                                                    rouser='sdfwkjkjgdugu2;jgsafkljas;')
+
+
+    def test_setup_extensions_old_postgis(self, monkeypatch):
+        monkeypatch.setattr(database_import, 'POSTGIS_REQUIRED_VERSION', (50, 50))
+
+        with pytest.raises(UsageError, match='PostGIS is too old.'):
+            database_import.setup_database_skeleton(f'dbname={self.DBNAME}')
+
+
+def test_setup_skeleton_already_exists(temp_db):
     with pytest.raises(UsageError):
-        database_import.create_db('dbname=' + temp_db)
-
-
-def test_create_db_unsupported_version(nonexistant_db, monkeypatch):
-    monkeypatch.setattr(database_import, 'POSTGRESQL_REQUIRED_VERSION', (100, 4))
-
-    with pytest.raises(UsageError, match='PostgreSQL server is too old.'):
-        database_import.create_db('dbname=' + nonexistant_db)
-
-
-def test_create_db_missing_ro_user(nonexistant_db):
-    with pytest.raises(UsageError, match='Missing read-only user.'):
-        database_import.create_db('dbname=' + nonexistant_db, rouser='sdfwkjkjgdugu2;jgsafkljas;')
-
-
-def test_setup_extensions(temp_db_conn, table_factory):
-    database_import.setup_extensions(temp_db_conn)
-
-    # Use table creation to check that hstore and geometry types are available.
-    table_factory('t', 'h HSTORE, geom GEOMETRY(Geometry, 4326)')
-
-
-def test_setup_extensions_old_postgis(temp_db_conn, monkeypatch):
-    monkeypatch.setattr(database_import, 'POSTGIS_REQUIRED_VERSION', (50, 50))
-
-    with pytest.raises(UsageError, match='PostGIS version is too old.'):
-        database_import.setup_extensions(temp_db_conn)
-
-
-def test_import_base_data(dsn, src_dir, temp_db_with_extensions, temp_db_cursor):
-    database_import.import_base_data(dsn, src_dir / 'data')
-
-    assert temp_db_cursor.table_rows('country_name') > 0
-
-
-def test_import_base_data_ignore_partitions(dsn, src_dir, temp_db_with_extensions,
-                                            temp_db_cursor):
-    database_import.import_base_data(dsn, src_dir / 'data', ignore_partitions=True)
-
-    assert temp_db_cursor.table_rows('country_name') > 0
-    assert temp_db_cursor.table_rows('country_name', where='partition != 0') == 0
+        database_import.setup_database_skeleton(f'dbname={temp_db}')
 
 
 def test_import_osm_data_simple(table_factory, osm2pgsql_options):

@@ -260,4 +260,5 @@ install(FILES settings/env.defaults
               settings/import-extratags.style
               settings/icu_tokenizer.yaml
               settings/icu-rules/extended-unicode-to-asccii.yaml
+              settings/country_settings.yaml
         DESTINATION ${NOMINATIM_CONFIGDIR})

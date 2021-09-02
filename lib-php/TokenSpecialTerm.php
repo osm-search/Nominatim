@@ -44,7 +44,10 @@ class SpecialTerm
      */
     public function isExtendable($oSearch, $oPosition)
     {
-        return !$oSearch->hasOperator() && $oPosition->isPhrase('');
+        return !$oSearch->hasOperator()
+               && $oPosition->isPhrase('')
+               && ($this->iOperator != \Nominatim\Operator::NONE
+                  || (!$oSearch->hasAddress() && !$oSearch->hasHousenumber() && !$oSearch->hasCountry()));
     }
 
     /**
@@ -66,8 +69,8 @@ class SpecialTerm
                 $iOp = \Nominatim\Operator::NAME;
             } else {
                 $iOp = \Nominatim\Operator::NEAR;
+                $iSearchCost += 2;
             }
-            $iSearchCost += 2;
         } elseif (!$oPosition->isFirstToken() && !$oPosition->isLastToken()) {
             $iSearchCost += 2;
         }

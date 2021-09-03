@@ -59,7 +59,7 @@ class HouseNumber
         $iSearchCost = 1;
         if (preg_match('/\\d/', $this->sToken) === 0
             || preg_match_all('/[^0-9]/', $this->sToken, $aMatches) > 2) {
-            $iSearchCost++;
+            $iSearchCost += strlen($this->sToken) - 1;
         }
         if (!$oSearch->hasOperator(\Nominatim\Operator::NONE)) {
             $iSearchCost++;

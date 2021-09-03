@@ -8,7 +8,7 @@ from nominatim.tools import country_info
 
 @pytest.fixture(autouse=True)
 def read_config(def_config):
-    country_info.setup_country_config(def_config.config_dir / 'country_settings.yaml')
+    country_info.setup_country_config(def_config)
 
 @pytest.mark.parametrize("no_partitions", (True, False))
 def test_setup_country_tables(src_dir, temp_db_with_extensions, dsn, temp_db_cursor,

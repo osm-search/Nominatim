@@ -172,7 +172,7 @@ class Configuration:
 
         search_paths = [self.project_dir, self.config_dir]
         for path in search_paths:
-            if (path / filename).is_file():
+            if path is not None and (path / filename).is_file():
                 return path / filename
 
         LOG.fatal("Configuration file '%s' not found.\nDirectories searched: %s",

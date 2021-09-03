@@ -1,0 +1,1255 @@
+# Andorra (Andorra)
+ad:
+    partition: 35
+    languages: ca
+
+# United Arab Emirates (الإمارات العربية المتحدة)
+ae:
+    partition: 83
+    languages: ar
+
+# Afghanistan (افغانستان)
+af:
+    partition: 30
+    languages: fa, ps
+
+# Antigua and Barbuda (Antigua and Barbuda)
+ag:
+    partition: 205
+    languages: en
+
+# Anguilla (Anguilla)
+ai:
+    partition: 175
+    languages: en
+
+# Albania (Shqipëria)
+al:
+    partition: 9
+    languages: sq
+
+# Armenia (Հայաստան)
+am:
+    partition: 33
+    languages: hy
+
+# Netherlands Antilles (De Nederlandse Antillen)
+an:
+    partition: 58
+    languages: nl, en, pap
+
+# Angola (Angola)
+ao:
+    partition: 85
+    languages: pt
+
+#  (Antarctica)
+aq:
+    partition: 181
+    languages: en, es, fr, ru
+
+# Argentina (Argentina)
+ar:
+    partition: 39
+    languages: es
+
+#  (American Samoa)
+as:
+    partition: 182
+    languages: en, sm
+
+# Austria (Österreich)
+at:
+    partition: 245
+    languages: de
+
+# Australia (Australia)
+au:
+    partition: 139
+    languages: en
+
+#  (Aruba)
+aw:
+    partition: 183
+    languages: nl, pap
+
+#  (Aland Islands)
+ax:
+    partition: 184
+    languages: sv
+
+# Azerbaijan (Azərbaycan)
+az:
+    partition: 119
+    languages: az
+
+# Bosnia and Herzegovina (Bosna i Hercegovina / Босна и Херцеговина)
+ba:
+    partition: 6
+    languages: bs, hr, sr
+
+# Barbados (Barbados)
+bb:
+    partition: 206
+    languages: en
+
+# Bangladesh (Bangladesh)
+bd:
+    partition: 158
+    languages: bn
+
+# Belgium (België / Belgique / Belgien)
+be:
+    partition: 15
+    languages: nl, fr, de
+
+# Burkina Faso (Burkina Faso)
+bf:
+    partition: 225
+    languages: fr
+
+# Bulgaria (Бългaрия)
+bg:
+    partition: 140
+    languages: bg
+
+# Bahrain (البحرين)
+bh:
+    partition: 62
+    languages: ar
+
+# Burundi (Burundi)
+bi:
+    partition: 61
+    languages: fr
+
+# Benin (Bénin)
+bj:
+    partition: 224
+    languages: fr
+
+#  (Saint Barthélemy)
+bl:
+    partition: 204
+    languages: fr
+
+# Bermuda (Bermuda)
+bm:
+    partition: 176
+    languages: en
+
+# Brunei (Brunei)
+bn:
+    partition: 86
+    languages: ms
+
+# Bolivia (Bolivia)
+bo:
+    partition: 120
+    languages: es, qu, gn, ay
+
+# Caribbean Netherlands (Caribisch Nederland)
+bq:
+    partition: 250
+    languages: nl
+
+# Brazil (Brasil)
+br:
+    partition: 121
+    languages: pt
+
+# The Bahamas (The Bahamas)
+bs:
+    partition: 207
+    languages: en
+
+# Bhutan (འབྲུག་ཡུལ་)
+bt:
+    partition: 87
+    languages: dz
+
+#  (Bouvet Island)
+bv:
+    partition: 185
+    languages: no
+
+# Botswana (Botswana)
+bw:
+    partition: 122
+    languages: en, tn
+
+# Belarus (Беларусь)
+by:
+    partition: 40
+    languages: be, ru
+
+# Belize (Belize)
+bz:
+    partition: 208
+    languages: en
+
+# Canada (Canada)
+ca:
+    partition: 244
+    languages: en, fr
+
+# Cocos (Keeling) Islands (Cocos (Keeling) Islands)
+cc:
+    partition: 118
+    languages: en
+
+# Democratic Republic of the Congo (République démocratique du Congo)
+cd:
+    partition: 229
+    languages: fr
+
+# Central African Republic (Ködörösêse tî Bêafrîka - République Centrafricaine)
+cf:
+    partition: 227
+    languages: fr,sg
+
+# Congo-Brazzaville (Congo)
+cg:
+    partition: 230
+    languages: fr
+
+# Switzerland (Schweiz/Suisse/Svizzera/Svizra)
+ch:
+    partition: 5
+    languages: de, fr, it, rm
+
+# Côte d'Ivoire (Côte d’Ivoire)
+ci:
+    partition: 228
+    languages: fr
+
+# Cook Islands (Kūki 'Āirani)
+ck:
+    partition: 41
+    languages: en, rar
+
+# Chile (Chile)
+cl:
+    partition: 88
+    languages: es
+
+# Cameroon (Cameroun)
+cm:
+    partition: 141
+    languages: fr, en
+
+# China (中国)
+cn:
+    partition: 117
+    languages: zh
+
+# Colombia (Colombia)
+co:
+    partition: 133
+    languages: es
+
+# Costa Rica (Costa Rica)
+cr:
+    partition: 64
+    languages: es
+
+# Cuba (Cuba)
+cu:
+    partition: 42
+    languages: es
+
+# Cape Verde (Cabo Verde)
+cv:
+    partition: 89
+    languages: pt
+
+# Curaçao (Curaçao)
+cw:
+    partition: 248
+    languages: nl, en
+
+# Christmas Island (Christmas Island)
+cx:
+    partition: 177
+    languages: en
+
+# Cyprus (Κύπρος - Kıbrıs)
+cy:
+    partition: 114
+    languages: el, tr
+
+# Czechia (Česko)
+cz:
+    partition: 124
+    languages: cs
+
+# Germany (Deutschland)
+de:
+    partition: 3
+    languages: de
+
+# Djibouti (Djibouti جيبوتي)
+dj:
+    partition: 43
+    languages: fr, ar, so, aa
+
+# Denmark (Danmark)
+dk:
+    partition: 160
+    languages: da
+
+# Dominica (Dominica)
+dm:
+    partition: 209
+    languages: en
+
+# Dominican Republic (República Dominicana)
+do:
+    partition: 37
+    languages: es
+
+# Algeria (Algérie / ⵍⵣⵣⴰⵢⴻⵔ / الجزائر)
+dz:
+    partition: 19
+    languages: ar, ber, fr
+
+# Ecuador (Ecuador)
+ec:
+    partition: 78
+    languages: es
+
+# Estonia (Eesti)
+ee:
+    partition: 125
+    languages: et
+
+# Egypt (مصر)
+eg:
+    partition: 16
+    languages: ar
+
+# Sahrawi Arab Democratic Republic (الجمهورية العربية الصحراوية الديمقراطية)
+eh:
+    partition: 186
+    languages: ar, es, fr
+
+# Eritrea (ኤርትራ Eritrea إرتريا)
+er:
+    partition: 142
+    languages: ti, ar, en
+
+# Spain (España)
+es:
+    partition: 31
+    languages: es, ast, ca, eu, gl
+
+# Ethiopia (ኢትዮጵያ)
+et:
+    partition: 90
+    languages: am, om
+
+# Finland (Suomi)
+fi:
+    partition: 20
+    languages: fi, sv, se
+
+# Fiji (Viti)
+fj:
+    partition: 210
+    languages: en
+
+# Falkland Islands (Falkland Islands)
+fk:
+    partition: 91
+    languages: en
+
+# Federated States of Micronesia (Micronesia)
+fm:
+    partition: 217
+    languages: en
+
+# Faroe Islands (Føroyar)
+fo:
+    partition: 10
+    languages: fo, da
+
+# France (France)
+fr:
+    partition: 4
+    languages: fr
+
+# Gabon (Gabon)
+ga:
+    partition: 239
+    languages: fr
+
+# United Kingdom (United Kingdom)
+gb:
+    partition: 1
+    languages: en
+
+# Grenada (Grenada)
+gd:
+    partition: 143
+    languages: en
+
+# Georgia (საქართველო)
+ge:
+    partition: 21
+    languages: ka
+
+# French Guiana (Guyane Française)
+gf:
+    partition: 231
+    languages: fr
+
+# Guernsey (Guernsey)
+gg:
+    partition: 77
+    languages: en
+
+# Ghana (Ghana)
+gh:
+    partition: 211
+    languages: en
+
+# Gibraltar (Gibraltar)
+gi:
+    partition: 138
+    languages: en
+
+# Greenland (Kalaallit Nunaat)
+gl:
+    partition: 111
+    languages: kl, da
+
+# The Gambia (Gambia)
+gm:
+    partition: 212
+    languages: en
+
+# Guinea (Guinée)
+gn:
+    partition: 240
+    languages: fr
+
+# Guadeloupe (Guadeloupe)
+gp:
+    partition: 232
+    languages: fr
+
+# Equatorial Guinea (Guinea Ecuatorial)
+gq:
+    partition: 12
+    languages: es, fr, pt
+
+# Greece (Ελλάς)
+gr:
+    partition: 22
+    languages: el
+
+# South Georgia and the South Sandwich Islands (South Georgia and the South Sandwich Islands)
+gs:
+    partition: 44
+    languages: en
+
+# Guatemala (Guatemala)
+gt:
+    partition: 57
+    languages: es
+
+# Guam (Guam)
+gu:
+    partition: 187
+    languages: en, ch
+
+# Guinea-Bissau (Guiné-Bissau)
+gw:
+    partition: 8
+    languages: pt
+
+# Guyana (Guyana)
+gy:
+    partition: 213
+    languages: en
+
+#  (Hong Kong)
+hk:
+    partition: 188
+    languages: zh-hant, en
+
+#  (Heard Island and MaxDonald Islands)
+hm:
+    partition: 189
+    languages: en
+
+# Honduras (Honduras)
+hn:
+    partition: 56
+    languages: es
+
+# Croatia (Hrvatska)
+hr:
+    partition: 92
+    languages: hr
+
+# Haiti (Ayiti)
+ht:
+    partition: 29
+    languages: fr, ht
+
+# Hungary (Magyarország)
+hu:
+    partition: 45
+    languages: hu
+
+# Indonesia (Indonesia)
+id:
+    partition: 110
+    languages: id
+
+# Ireland (Éire / Ireland)
+ie:
+    partition: 46
+    languages: en, ga
+
+# Israel (ישראל)
+il:
+    partition: 65
+    languages: he
+
+# Isle of Man (Isle of Man)
+im:
+    partition: 190
+    languages: en
+
+# India (India)
+in:
+    partition: 128
+    languages: hi, en
+
+# British Indian Ocean Territory (British Indian Ocean Territory)
+io:
+    partition: 13
+    languages: en
+
+# Iraq (العراق)
+iq:
+    partition: 144
+    languages: ar, ku
+
+# Iran (ایران)
+ir:
+    partition: 80
+    languages: fa
+
+# Iceland (Ísland)
+is:
+    partition: 134
+    languages: is
+
+# Italy (Italia)
+it:
+    partition: 28
+    languages: it, de, fr
+
+# Jersey (Jersey)
+je:
+    partition: 123
+    languages: en
+
+# Jamaica (Jamaica)
+jm:
+    partition: 214
+    languages: en
+
+# Jordan (الأردن)
+jo:
+    partition: 17
+    languages: ar
+
+# Japan (日本)
+jp:
+    partition: 11
+    languages: ja
+
+# Kenya (Kenya)
+ke:
+    partition: 126
+    languages: sw, en
+
+# Kyrgyzstan (Кыргызстан)
+kg:
+    partition: 93
+    languages: ky, ru
+
+# Cambodia (ព្រះរាជាណាចក្រ​កម្ពុជា)
+kh:
+    partition: 159
+    languages: km
+
+# Kiribati (Kiribati)
+ki:
+    partition: 215
+    languages: en
+
+# Comoros (Comores Komori جزر القمر)
+km:
+    partition: 47
+    languages: ar, fr, sw
+
+# Saint Kitts and Nevis (Saint Kitts and Nevis)
+kn:
+    partition: 84
+    languages: en
+
+# North Korea (조선민주주의인민공화국)
+kp:
+    partition: 48
+    languages: ko
+
+# South Korea (대한민국)
+kr:
+    partition: 49
+    languages: ko, en
+
+# Kuwait (الكويت)
+kw:
+    partition: 127
+    languages: ar
+
+# Cayman Islands (Cayman Islands)
+ky:
+    partition: 38
+    languages: en
+
+# Kazakhstan (Қазақстан)
+kz:
+    partition: 94
+    languages: kk, ru
+
+# Laos (ປະເທດລາວ)
+la:
+    partition: 145
+    languages: lo
+
+# Lebanon (لبنان)
+lb:
+    partition: 66
+    languages: ar, fr
+
+# Saint Lucia (Saint Lucia)
+lc:
+    partition: 146
+    languages: en
+
+# Liechtenstein (Liechtenstein)
+li:
+    partition: 246
+    languages: de
+
+# Sri Lanka (ශ්‍රී ලංකාව இலங்கை)
+lk:
+    partition: 95
+    languages: si, ta
+
+# Liberia (Liberia)
+lr:
+    partition: 216
+    languages: en
+
+# Lesotho (Lesotho)
+ls:
+    partition: 136
+    languages: en, st
+
+# Lithuania (Lietuva)
+lt:
+    partition: 67
+    languages: lt
+
+# Luxembourg (Lëtzebuerg)
+lu:
+    partition: 74
+    languages: lb, fr, de
+
+# Latvia (Latvija)
+lv:
+    partition: 162
+    languages: lv
+
+# Libya (ليبيا)
+ly:
+    partition: 163
+    languages: ar
+
+# Morocco (Maroc ⵍⵎⵖⵔⵉⴱ المغرب)
+ma:
+    partition: 23
+    languages: fr, zgh, ar
+
+# Monaco (Monaco)
+mc:
+    partition: 242
+    languages: fr
+
+# Moldova (Moldova)
+md:
+    partition: 147
+    languages: ro, ru, uk
+
+# Montenegro (Crna Gora / Црна Гора)
+me:
+    partition: 180
+    languages: srp, sr, hr, bs, sq
+
+# Saint Martin (Saint Martin)
+mf:
+    partition: 203
+    languages: fr
+
+# Madagascar (Madagasikara)
+mg:
+    partition: 164
+    languages: mg, fr
+
+# Marshall Islands (Ṃajeḷ)
+mh:
+    partition: 105
+    languages: en, mh
+
+# North Macedonia (Северна Македонија)
+mk:
+    partition: 69
+    languages: mk
+
+# Mali (Mali)
+ml:
+    partition: 241
+    languages: fr
+
+# Myanmar (မြန်မာ)
+mm:
+    partition: 148
+    languages: my
+
+# Mongolia (Монгол улс ᠮᠤᠩᠭᠤᠯ ᠤᠯᠤᠰ)
+mn:
+    partition: 167
+    languages: mn
+
+# Macao (Macao)
+mo:
+    partition: 191
+    languages: zh-hant, pt
+
+# Northern Mariana Islands (Northern Mariana Islands)
+mp:
+    partition: 192
+    languages: ch, en
+
+# Martinique (Martinique)
+mq:
+    partition: 233
+    languages: fr
+
+# Mauritania (موريتانيا)
+mr:
+    partition: 149
+    languages: ar, fr
+
+# Montserrat (Montserrat)
+ms:
+    partition: 73
+    languages: en
+
+# Malta (Malta)
+mt:
+    partition: 165
+    languages: mt, en
+
+# Mauritius (Mauritius)
+mu:
+    partition: 150
+    languages: mfe, fr, en
+
+# Maldives (ދިވެހިރާއްޖެ)
+mv:
+    partition: 96
+    languages: dv
+
+# Malawi (Malawi)
+mw:
+    partition: 97
+    languages: en, ny
+
+# Mexico (México)
+mx:
+    partition: 166
+    languages: es
+
+# Malaysia (Malaysia)
+my:
+    partition: 7
+    languages: ms
+
+# Mozambique (Moçambique)
+mz:
+    partition: 98
+    languages: pt
+
+# Namibia (Namibia)
+na:
+    partition: 99
+    languages: en, sf, de
+
+# New Caledonia (Nouvelle-Calédonie)
+nc:
+    partition: 234
+    languages: fr
+
+# Niger (Niger)
+ne:
+    partition: 226
+    languages: fr
+
+# Norfolk Island (Norfolk Island)
+nf:
+    partition: 100
+    languages: en, pih
+
+# Nigeria (Nigeria)
+ng:
+    partition: 218
+    languages: en
+
+# Nicaragua (Nicaragua)
+ni:
+    partition: 151
+    languages: es
+
+# Netherlands (Nederland)
+nl:
+    partition: 63
+    languages: nl
+
+# Norway (Norge)
+"no":
+    partition: 60
+    languages: nb, nn, no, se
+
+# Nepal (Nepal)
+np:
+    partition: 50
+    languages: ne
+
+# Nauru (Naoero)
+nr:
+    partition: 70
+    languages: na, en
+
+# Niue (Niuē)
+nu:
+    partition: 178
+    languages: niu, en
+
+# New Zealand (New Zealand / Aotearoa)
+nz:
+    partition: 27
+    languages: mi, en
+
+# Oman (عمان)
+om:
+    partition: 137
+    languages: ar
+
+# Panama (Panamá)
+pa:
+    partition: 152
+    languages: es
+
+# Peru (Perú)
+pe:
+    partition: 51
+    languages: es
+
+# French Polynesia (Polynésie française)
+pf:
+    partition: 202
+    languages: fr
+
+# Papua New Guinea (Papua Niugini)
+pg:
+    partition: 71
+    languages: en, tpi, ho
+
+# Philippines (Philippines)
+ph:
+    partition: 26
+    languages: en, tl
+
+# Pakistan (پاکستان)
+pk:
+    partition: 14
+    languages: en, ur
+
+# Poland (Polska)
+pl:
+    partition: 168
+    languages: pl
+
+# Saint Pierre and Miquelon (Saint-Pierre-et-Miquelon)
+pm:
+    partition: 236
+    languages: fr
+
+# Pitcairn Islands (Pitcairn Islands)
+pn:
+    partition: 113
+    languages: en, pih
+
+# Puerto Rico (Puerto Rico)
+pr:
+    partition: 193
+    languages: es, en
+
+# Palestinian Territory (Palestinian Territory)
+ps:
+    partition: 194
+    languages: ar, he
+
+# Portugal (Portugal)
+pt:
+    partition: 34
+    languages: pt
+
+# Palau (Belau)
+pw:
+    partition: 195
+    languages: en, pau, ja, sov, tox
+
+# Paraguay (Paraguay)
+py:
+    partition: 101
+    languages: es, gn
+
+# Qatar (قطر)
+qa:
+    partition: 169
+    languages: ar
+
+#  (Réunion)
+re:
+    partition: 235
+    languages: fr
+
+# Romania (România)
+ro:
+    partition: 170
+    languages: ro
+
+# Serbia (Србија)
+rs:
+    partition: 59
+    languages: sr
+
+# Russia (Россия)
+ru:
+    partition: 135
+    languages: ru
+
+# Rwanda (Rwanda)
+rw:
+    partition: 102
+    languages: rw, fr, en
+
+# Saudi Arabia (السعودية)
+sa:
+    partition: 52
+    languages: ar
+
+# Solomon Islands (Solomon Islands)
+sb:
+    partition: 201
+    languages: en
+
+# Seychelles (Sesel)
+sc:
+    partition: 79
+    languages: fr, en, crs
+
+# Sudan (السودان)
+sd:
+    partition: 72
+    languages: ar, en
+
+# Sweden (Sverige)
+se:
+    partition: 112
+    languages: sv
+
+# Singapore (Singapore)
+sg:
+    partition: 115
+    languages: zh-hans, en, ms, ta
+
+# Saint Helena, Ascension and Tristan da Cunha (Saint Helena, Ascension and Tristan da Cunha)
+sh:
+    partition: 196
+    languages: en
+
+# Slovenia (Slovenija)
+si:
+    partition: 36
+    languages: sl
+
+#  (Svalbard and Jan Mayen)
+sj:
+    partition: 197
+    languages: no
+
+# Slovakia (Slovensko)
+sk:
+    partition: 172
+    languages: sk
+
+# Sierra Leone (Sierra Leone)
+sl:
+    partition: 219
+    languages: en
+
+# San Marino (San Marino)
+sm:
+    partition: 153
+    languages: it
+
+# Senegal (Sénégal)
+sn:
+    partition: 237
+    languages: fr
+
+# Somalia (Soomaaliya الصومال)
+so:
+    partition: 154
+    languages: so, ar
+
+# Suriname (Suriname)
+sr:
+    partition: 24
+    languages: nl
+
+# South Sudan (South Sudan)
+ss:
+    partition: 247
+    languages: en
+
+# São Tomé and Príncipe (São Tomé e Príncipe)
+st:
+    partition: 53
+    languages: pt
+
+# El Salvador (El Salvador)
+sv:
+    partition: 103
+    languages: es
+
+#  (Sint Maarten)
+sx:
+    partition: 249
+    languages: nl, en
+
+# Syria (سوريا)
+sy:
+    partition: 104
+    languages: ar
+
+# Eswatini (eSwatini)
+sz:
+    partition: 82
+    languages: en, ss
+
+# Turks and Caicos Islands (Turks and Caicos Islands)
+tc:
+    partition: 106
+    languages: en
+
+# Chad (Tchad تشاد)
+td:
+    partition: 68
+    languages: fr, ar
+
+# French Southern Lands (Terres australes et antarctiques françaises)
+tf:
+    partition: 132
+    languages: fr
+
+# Togo (Togo)
+tg:
+    partition: 243
+    languages: fr
+
+# Thailand (ประเทศไทย)
+th:
+    partition: 32
+    languages: th
+
+# Tajikistan (Тоҷикистон)
+tj:
+    partition: 129
+    languages: tg, ru
+
+# Tokelau (Tokelau)
+tk:
+    partition: 179
+    languages: tkl, en, sm
+
+# East Timor (Timór Lorosa'e)
+tl:
+    partition: 161
+    languages: pt, tet
+
+# Turkmenistan (Türkmenistan)
+tm:
+    partition: 54
+    languages: tk
+
+# Tunisia (تونس)
+tn:
+    partition: 18
+    languages: ar, fr
+
+# Tonga (Tonga)
+to:
+    partition: 220
+    languages: en
+
+# Turkey (Türkiye)
+tr:
+    partition: 81
+    languages: tr
+
+# Trinidad and Tobago (Trinidad and Tobago)
+tt:
+    partition: 221
+    languages: en
+
+# Tuvalu (Tuvalu)
+tv:
+    partition: 156
+    languages: en
+
+# Taiwan (臺灣)
+tw:
+    partition: 25
+    languages: zh-hant
+
+# Tanzania (Tanzania)
+tz:
+    partition: 130
+    languages: sw, en
+
+# Ukraine (Україна)
+ua:
+    partition: 173
+    languages: uk
+
+# Uganda (Uganda)
+ug:
+    partition: 155
+    languages: en, sw
+
+#  (United States Minor Outlying Islands)
+um:
+    partition: 198
+    languages: en
+
+# United States (United States)
+us:
+    partition: 2
+    languages: en
+
+# Uruguay (Uruguay)
+uy:
+    partition: 174
+    languages: es
+
+# Uzbekistan (Oʻzbekiston)
+uz:
+    partition: 157
+    languages: uz, kaa
+
+# Vatican City (Civitas Vaticana)
+va:
+    partition: 107
+    languages: it
+
+# Saint Vincent and the Grenadines (Saint Vincent and the Grenadines)
+vc:
+    partition: 171
+    languages: en
+
+# Venezuela (Venezuela)
+ve:
+    partition: 108
+    languages: es
+
+# British Virgin Islands (British Virgin Islands)
+vg:
+    partition: 109
+    languages: en
+
+#  (United States Virgin Islands)
+vi:
+    partition: 199
+    languages: en
+
+# Vietnam (Việt Nam)
+vn:
+    partition: 75
+    languages: vi
+
+# Vanuatu (Vanuatu)
+vu:
+    partition: 116
+    languages: bi, en, fr
+
+# Wallis and Futuna Islands (Wallis-et-Futuna)
+wf:
+    partition: 238
+    languages: fr
+
+# Samoa (Sāmoa)
+ws:
+    partition: 131
+    languages: sm, en
+
+# Kosovo (Kosova / Kosovo)
+xk:
+    partition: 59
+    languages: sq, sr
+
+# Yemen (اليمن)
+ye:
+    partition: 55
+    languages: ar
+
+# Mayotte (Mayotte)
+yt:
+    partition: 200
+    languages: fr
+
+# South Africa (South Africa)
+za:
+    partition: 76
+    languages: en, af, st, tn, xh, zu
+
+# Zambia (Zambia)
+zm:
+    partition: 222
+    languages: en
+
+# Zimbabwe (Zimbabwe)
+zw:
+    partition: 223
+    languages: en, sn, nd
+

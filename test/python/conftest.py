@@ -5,7 +5,7 @@ from pathlib import Path
 import psycopg2
 import pytest
 
-SRC_DIR = Path(__file__) / '..' / '..' / '..'
+SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
 
 # always test against the source
 sys.path.insert(0, str(SRC_DIR.resolve()))

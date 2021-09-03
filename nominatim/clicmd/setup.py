@@ -52,16 +52,22 @@ class SetupAll:
 
     @staticmethod
     def run(args):
-        from ..tools import database_import, refresh, postcodes, freeze
+        from ..tools import database_import, refresh, postcodes, freeze, country_info
         from ..indexer.indexer import Indexer
+
+        country_info.setup_country_config(args.config.config_dir / 'country_settings.yaml')
 
         if args.continue_at is None:
             files = args.get_osm_file_list()
 
+            LOG.warning('Creating database')
             database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
-                                                    args.data_dir,
-                                                    args.no_partitions,
                                                     rouser=args.config.DATABASE_WEBUSER)
+
+            LOG.warning('Setting up country tables')
+            country_info.setup_country_tables(args.config.get_libpq_dsn(),
+                                              args.data_dir,
+                                              args.no_partitions)
 
             LOG.warning('Importing OSM data file')
             database_import.import_osm_data(files,
@@ -109,9 +115,8 @@ class SetupAll:
             database_import.create_search_indices(conn, args.config,
                                                   drop=args.no_updates)
             LOG.warning('Create search index for default country names.')
-            database_import.create_country_names(conn, tokenizer,
-                                                 args.config.LANGUAGES)
-            conn.commit()
+            country_info.create_country_names(conn, tokenizer,
+                                              args.config.LANGUAGES)
             if args.no_updates:
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)

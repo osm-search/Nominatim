@@ -54,7 +54,10 @@ class Configuration:
     def __getattr__(self, name):
         name = 'NOMINATIM_' + name
 
-        return self.environ.get(name) or self._config[name]
+        if name in self.environ:
+            return self.environ[name]
+
+        return self._config[name]
 
     def get_bool(self, name):
         """ Return the given configuration parameter as a boolean.
@@ -137,12 +140,9 @@ class Configuration:
             is loaded using this function and added at the position in the
             configuration tree.
         """
-        configfile = self._find_config_file(filename, config)
+        assert Path(filename).suffix == '.yaml'
 
-        if configfile.suffix != '.yaml':
-            LOG.format("Format error while reading '%s': only YAML format supported.",
-                       configfile)
-            raise UsageError("Cannot handle config file format.")
+        configfile = self._find_config_file(filename, config)
 
         return self._load_from_yaml(configfile)
 
@@ -158,16 +158,16 @@ class Configuration:
             if cfg_filename:
                 cfg_filename = Path(cfg_filename)
 
-                if not cfg_filename.is_absolute():
-                    cfg_filename = self.project_dir / cfg_filename
+                if cfg_filename.is_absolute():
+                    cfg_filename = cfg_filename.resolve()
 
-                cfg_filename = cfg_filename.resolve()
+                    if not cfg_filename.is_file():
+                        LOG.fatal("Cannot find config file '%s'.", cfg_filename)
+                        raise UsageError("Config file not found.")
 
-                if not cfg_filename.is_file():
-                    LOG.fatal("Cannot find config file '%s'.", cfg_filename)
-                    raise UsageError("Config file not found.")
+                    return cfg_filename
 
-                return cfg_filename
+                filename = cfg_filename
 
 
         search_paths = [self.project_dir, self.config_dir]
@@ -203,8 +203,8 @@ class Configuration:
             configfile = self._find_config_file(loader.construct_scalar(node))
 
         if configfile.suffix != '.yaml':
-            LOG.format("Format error while reading '%s': only YAML format supported.",
-                       configfile)
+            LOG.fatal("Format error while reading '%s': only YAML format supported.",
+                      configfile)
             raise UsageError("Cannot handle config file format.")
 
         return yaml.safe_load(configfile.read_text(encoding='utf-8'))

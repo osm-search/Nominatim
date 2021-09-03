@@ -15,6 +15,20 @@ def make_config(src_dir):
 
     return _mk_config
 
+@pytest.fixture
+def make_config_path(src_dir, tmp_path):
+    """ Create a configuration object with project and config directories
+        in a temporary directory.
+    """
+    def _mk_config():
+        (tmp_path / 'project').mkdir()
+        (tmp_path / 'config').mkdir()
+        conf = Configuration(tmp_path / 'project', src_dir / 'settings')
+        conf.config_dir = tmp_path / 'config'
+        return conf
+
+    return _mk_config
+
 
 def test_no_project_dir(make_config):
     config = make_config()
@@ -41,6 +55,17 @@ def test_prefer_os_environ_over_project_setting(make_config, monkeypatch, tmp_pa
     config = make_config(tmp_path)
 
     assert config.DATABASE_WEBUSER == 'nobody'
+
+
+def test_prefer_os_environ_can_unset_project_setting(make_config, monkeypatch, tmp_path):
+    envfile = tmp_path / '.env'
+    envfile.write_text('NOMINATIM_DATABASE_WEBUSER=apache\n')
+
+    monkeypatch.setenv('NOMINATIM_DATABASE_WEBUSER', '')
+
+    config = make_config(tmp_path)
+
+    assert config.DATABASE_WEBUSER == ''
 
 
 def test_get_os_env_add_defaults(make_config, monkeypatch):
@@ -158,3 +183,151 @@ def test_get_import_style_extern(make_config, monkeypatch, value):
     monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', value)
 
     assert str(config.get_import_style_file()) == value
+
+
+def test_load_subconf_from_project_dir(make_config_path):
+    config = make_config_path()
+
+    testfile = config.project_dir / 'test.yaml'
+    testfile.write_text('cow: muh\ncat: miau\n')
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text('cow: miau\ncat: muh\n')
+
+    rules = config.load_sub_configuration('test.yaml')
+
+    assert rules == dict(cow='muh', cat='miau')
+
+
+def test_load_subconf_from_settings_dir(make_config_path):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text('cow: muh\ncat: miau\n')
+
+    rules = config.load_sub_configuration('test.yaml')
+
+    assert rules == dict(cow='muh', cat='miau')
+
+
+def test_load_subconf_empty_env_conf(make_config_path, monkeypatch):
+    monkeypatch.setenv('NOMINATIM_MY_CONFIG', '')
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text('cow: muh\ncat: miau\n')
+
+    rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+
+    assert rules == dict(cow='muh', cat='miau')
+
+
+def test_load_subconf_env_absolute_found(make_config_path, monkeypatch, tmp_path):
+    monkeypatch.setenv('NOMINATIM_MY_CONFIG', str(tmp_path / 'other.yaml'))
+    config = make_config_path()
+
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+    (tmp_path / 'other.yaml').write_text('dog: muh\nfrog: miau\n')
+
+    rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+
+    assert rules == dict(dog='muh', frog='miau')
+
+
+def test_load_subconf_env_absolute_not_found(make_config_path, monkeypatch, tmp_path):
+    monkeypatch.setenv('NOMINATIM_MY_CONFIG', str(tmp_path / 'other.yaml'))
+    config = make_config_path()
+
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+
+    with pytest.raises(UsageError, match='Config file not found.'):
+        rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+
+
+@pytest.mark.parametrize("location", ['project_dir', 'config_dir'])
+def test_load_subconf_env_relative_found(make_config_path, monkeypatch, location):
+    monkeypatch.setenv('NOMINATIM_MY_CONFIG', 'other.yaml')
+    config = make_config_path()
+
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+    (getattr(config, location) / 'other.yaml').write_text('dog: bark\n')
+
+    rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+
+    assert rules == dict(dog='bark')
+
+
+def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
+    monkeypatch.setenv('NOMINATIM_MY_CONFIG', 'other.yaml')
+    config = make_config_path()
+
+    (config.config_dir / 'test.yaml').write_text('cow: muh\ncat: miau\n')
+
+    with pytest.raises(UsageError, match='Config file not found.'):
+        rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
+
+
+def test_load_subconf_not_found(make_config_path):
+    config = make_config_path()
+
+    with pytest.raises(UsageError, match='Config file not found.'):
+        rules = config.load_sub_configuration('test.yaml')
+
+
+def test_load_subconf_include_absolute(make_config_path, tmp_path):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text(f'base: !include {tmp_path}/inc.yaml\n')
+    (tmp_path / 'inc.yaml').write_text('first: 1\nsecond: 2\n')
+
+    rules = config.load_sub_configuration('test.yaml')
+
+    assert rules == dict(base=dict(first=1, second=2))
+
+
+@pytest.mark.parametrize("location", ['project_dir', 'config_dir'])
+def test_load_subconf_include_relative(make_config_path, tmp_path, location):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text(f'base: !include inc.yaml\n')
+    (getattr(config, location) / 'inc.yaml').write_text('first: 1\nsecond: 2\n')
+
+    rules = config.load_sub_configuration('test.yaml')
+
+    assert rules == dict(base=dict(first=1, second=2))
+
+
+def test_load_subconf_include_bad_format(make_config_path):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text(f'base: !include inc.txt\n')
+    (config.config_dir / 'inc.txt').write_text('first: 1\nsecond: 2\n')
+
+    with pytest.raises(UsageError, match='Cannot handle config file format.'):
+        rules = config.load_sub_configuration('test.yaml')
+
+
+def test_load_subconf_include_not_found(make_config_path):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text(f'base: !include inc.txt\n')
+
+    with pytest.raises(UsageError, match='Config file not found.'):
+        rules = config.load_sub_configuration('test.yaml')
+
+
+def test_load_subconf_include_recursive(make_config_path):
+    config = make_config_path()
+
+    testfile = config.config_dir / 'test.yaml'
+    testfile.write_text(f'base: !include inc.yaml\n')
+    (config.config_dir / 'inc.yaml').write_text('- !include more.yaml\n- upper\n')
+    (config.config_dir / 'more.yaml').write_text('- the end\n')
+
+    rules = config.load_sub_configuration('test.yaml')
+
+    assert rules == dict(base=[['the end'], 'upper'])

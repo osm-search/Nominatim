@@ -4,6 +4,7 @@ Nominatim configuration accessor.
 import logging
 import os
 from pathlib import Path
+import yaml
 
 from dotenv import dotenv_values
 
@@ -114,3 +115,96 @@ class Configuration:
         env.update(self.environ)
 
         return env
+
+
+    def load_sub_configuration(self, filename, config=None):
+        """ Load additional configuration from a file. `filename` is the name
+            of the configuration file. The file is first searched in the
+            project directory and then in the global settings dirctory.
+
+            If `config` is set, then the name of the configuration file can
+            be additionally given through a .env configuration option. When
+            the option is set, then the file will be exclusively loaded as set:
+            if the name is an absolute path, the file name is taken as is,
+            if the name is relative, it is taken to be relative to the
+            project directory.
+
+            The format of the file is determined from the filename suffix.
+            Currently only files with extension '.yaml' are supported.
+
+            YAML files support a special '!include' construct. When the
+            directive is given, the value is taken to be a filename, the file
+            is loaded using this function and added at the position in the
+            configuration tree.
+        """
+        configfile = self._find_config_file(filename, config)
+
+        if configfile.suffix != '.yaml':
+            LOG.format("Format error while reading '%s': only YAML format supported.",
+                       configfile)
+            raise UsageError("Cannot handle config file format.")
+
+        return self._load_from_yaml(configfile)
+
+
+    def _find_config_file(self, filename, config=None):
+        """ Resolve the location of a configuration file given a filename and
+            an optional configuration option with the file name.
+            Raises a UsageError when the file cannot be found or is not
+            a regular file.
+        """
+        if config is not None:
+            cfg_filename = self.__getattr__(config)
+            if cfg_filename:
+                cfg_filename = Path(cfg_filename)
+
+                if not cfg_filename.is_absolute():
+                    cfg_filename = self.project_dir / cfg_filename
+
+                cfg_filename = cfg_filename.resolve()
+
+                if not cfg_filename.is_file():
+                    LOG.fatal("Cannot find config file '%s'.", cfg_filename)
+                    raise UsageError("Config file not found.")
+
+                return cfg_filename
+
+
+        search_paths = [self.project_dir, self.config_dir]
+        for path in search_paths:
+            if (path / filename).is_file():
+                return path / filename
+
+        LOG.fatal("Configuration file '%s' not found.\nDirectories searched: %s",
+                  filename, search_paths)
+        raise UsageError("Config file not found.")
+
+
+    def _load_from_yaml(self, cfgfile):
+        """ Load a YAML configuration file. This installs a special handler that
+            allows to include other YAML files using the '!include' operator.
+        """
+        yaml.add_constructor('!include', self._yaml_include_representer,
+                             Loader=yaml.SafeLoader)
+        return yaml.safe_load(cfgfile.read_text(encoding='utf-8'))
+
+
+    def _yaml_include_representer(self, loader, node):
+        """ Handler for the '!include' operator in YAML files.
+
+            When the filename is relative, then the file is first searched in the
+            project directory and then in the global settings dirctory.
+        """
+        fname = loader.construct_scalar(node)
+
+        if Path(fname).is_absolute():
+            configfile = Path(fname)
+        else:
+            configfile = self._find_config_file(loader.construct_scalar(node))
+
+        if configfile.suffix != '.yaml':
+            LOG.format("Format error while reading '%s': only YAML format supported.",
+                       configfile)
+            raise UsageError("Cannot handle config file format.")
+
+        return yaml.safe_load(configfile.read_text(encoding='utf-8'))

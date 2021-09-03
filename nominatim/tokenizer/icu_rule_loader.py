@@ -4,10 +4,8 @@ Helper class to create ICU rules from a configuration file.
 import io
 import logging
 import itertools
-from pathlib import Path
 import re
 
-import yaml
 from icu import Transliterator
 
 from nominatim.errors import UsageError
@@ -15,17 +13,17 @@ import nominatim.tokenizer.icu_variants as variants
 
 LOG = logging.getLogger()
 
-def _flatten_yaml_list(content):
+def _flatten_config_list(content):
     if not content:
         return []
 
     if not isinstance(content, list):
-        raise UsageError("List expected in ICU yaml configuration.")
+        raise UsageError("List expected in ICU configuration.")
 
     output = []
     for ele in content:
         if isinstance(ele, list):
-            output.extend(_flatten_yaml_list(ele))
+            output.extend(_flatten_config_list(ele))
         else:
             output.append(ele)
 
@@ -48,14 +46,12 @@ class ICURuleLoader:
     """ Compiler for ICU rules from a tokenizer configuration file.
     """
 
-    def __init__(self, configfile):
-        self.configfile = configfile
+    def __init__(self, rules):
         self.variants = set()
 
-        if configfile.suffix == '.yaml':
-            self._load_from_yaml()
-        else:
-            raise UsageError("Unknown format of tokenizer configuration.")
+        self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
+        self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
+        self._parse_variant_list(self._get_section(rules, 'variants'))
 
 
     def get_search_rules(self):
@@ -88,34 +84,14 @@ class ICURuleLoader:
         """
         return self.variants
 
-    def _yaml_include_representer(self, loader, node):
-        value = loader.construct_scalar(node)
 
-        if Path(value).is_absolute():
-            content = Path(value)
-        else:
-            content = (self.configfile.parent / value)
-
-        return yaml.safe_load(content.read_text(encoding='utf-8'))
-
-
-    def _load_from_yaml(self):
-        yaml.add_constructor('!include', self._yaml_include_representer,
-                             Loader=yaml.SafeLoader)
-        rules = yaml.safe_load(self.configfile.read_text(encoding='utf-8'))
-
-        self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
-        self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
-        self._parse_variant_list(self._get_section(rules, 'variants'))
-
-
-    def _get_section(self, rules, section):
+    @staticmethod
+    def _get_section(rules, section):
         """ Get the section named 'section' from the rules. If the section does
             not exist, raise a usage error with a meaningful message.
         """
         if section not in rules:
-            LOG.fatal("Section '%s' not found in tokenizer config '%s'.",
-                      section, str(self.configfile))
+            LOG.fatal("Section '%s' not found in tokenizer config.", section)
             raise UsageError("Syntax error in tokenizer configuration file.")
 
         return rules[section]
@@ -133,7 +109,7 @@ class ICURuleLoader:
         if content is None:
             return ''
 
-        return ';'.join(_flatten_yaml_list(content)) + ';'
+        return ';'.join(_flatten_config_list(content)) + ';'
 
 
     def _parse_variant_list(self, rules):
@@ -142,7 +118,7 @@ class ICURuleLoader:
         if not rules:
             return
 
-        rules = _flatten_yaml_list(rules)
+        rules = _flatten_config_list(rules)
 
         vmaker = _VariantMaker(self.normalization_rules)
 

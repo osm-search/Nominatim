@@ -1,8 +1,10 @@
 """
 Tests for converting a config file to ICU rules.
 """
-import pytest
 from textwrap import dedent
+
+import pytest
+import yaml
 
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.errors import UsageError
@@ -10,7 +12,7 @@ from nominatim.errors import UsageError
 from icu import Transliterator
 
 @pytest.fixture
-def cfgfile(tmp_path, suffix='.yaml'):
+def cfgrules():
     def _create_config(*variants, **kwargs):
         content = dedent("""\
         normalization:
@@ -27,22 +29,19 @@ def cfgfile(tmp_path, suffix='.yaml'):
         content += '\n'.join(("      - " + s for s in variants)) + '\n'
         for k, v in kwargs:
             content += "    {}: {}\n".format(k, v)
-        fpath = tmp_path / ('test_config' + suffix)
-        fpath.write_text(dedent(content))
-        return fpath
+        return yaml.safe_load(content)
 
     return _create_config
 
 
-def test_empty_rule_file(tmp_path):
-    fpath = tmp_path / ('test_config.yaml')
-    fpath.write_text(dedent("""\
+def test_empty_rule_set():
+    rule_cfg = yaml.safe_load(dedent("""\
         normalization:
         transliteration:
         variants:
         """))
 
-    rules = ICURuleLoader(fpath)
+    rules = ICURuleLoader(rule_cfg)
     assert rules.get_search_rules() == ''
     assert rules.get_normalization_rules() == ''
     assert rules.get_transliteration_rules() == ''
@@ -51,19 +50,15 @@ def test_empty_rule_file(tmp_path):
 CONFIG_SECTIONS = ('normalization', 'transliteration', 'variants')
 
 @pytest.mark.parametrize("section", CONFIG_SECTIONS)
-def test_missing_normalization(tmp_path, section):
-    fpath = tmp_path / ('test_config.yaml')
-    with fpath.open('w') as fd:
-        for name in CONFIG_SECTIONS:
-            if name != section:
-                fd.write(name + ':\n')
+def test_missing_section(section):
+    rule_cfg = { s: {} for s in CONFIG_SECTIONS if s != section}
 
     with pytest.raises(UsageError):
-        ICURuleLoader(fpath)
+        ICURuleLoader(rule_cfg)
 
 
-def test_get_search_rules(cfgfile):
-    loader = ICURuleLoader(cfgfile())
+def test_get_search_rules(cfgrules):
+    loader = ICURuleLoader(cfgrules())
 
     rules = loader.get_search_rules()
     trans = Transliterator.createFromRules("test", rules)
@@ -77,23 +72,24 @@ def test_get_search_rules(cfgfile):
     assert trans.transliterate(" проспект ") == " prospekt "
 
 
-def test_get_normalization_rules(cfgfile):
-    loader = ICURuleLoader(cfgfile())
+def test_get_normalization_rules(cfgrules):
+    loader = ICURuleLoader(cfgrules())
     rules = loader.get_normalization_rules()
     trans = Transliterator.createFromRules("test", rules)
 
     assert trans.transliterate(" проспект-Prospekt ") == " проспект prospekt "
 
 
-def test_get_transliteration_rules(cfgfile):
-    loader = ICURuleLoader(cfgfile())
+def test_get_transliteration_rules(cfgrules):
+    loader = ICURuleLoader(cfgrules())
     rules = loader.get_transliteration_rules()
     trans = Transliterator.createFromRules("test", rules)
 
     assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
 
 
-def test_transliteration_rules_from_file(tmp_path):
+def test_transliteration_rules_from_file(def_config, tmp_path):
+    def_config.project_dir = tmp_path
     cfgpath = tmp_path / ('test_config.yaml')
     cfgpath.write_text(dedent("""\
         normalization:
@@ -105,7 +101,7 @@ def test_transliteration_rules_from_file(tmp_path):
     transpath = tmp_path / ('transliteration.yaml')
     transpath.write_text('- "x > y"')
 
-    loader = ICURuleLoader(cfgpath)
+    loader = ICURuleLoader(def_config.load_sub_configuration('test_config.yaml'))
     rules = loader.get_transliteration_rules()
     trans = Transliterator.createFromRules("test", rules)
 
@@ -115,11 +111,11 @@ def test_transliteration_rules_from_file(tmp_path):
 class TestGetReplacements:
 
     @pytest.fixture(autouse=True)
-    def setup_cfg(self, cfgfile):
-        self.cfgfile = cfgfile
+    def setup_cfg(self, cfgrules):
+        self.cfgrules = cfgrules
 
     def get_replacements(self, *variants):
-        loader = ICURuleLoader(self.cfgfile(*variants))
+        loader = ICURuleLoader(self.cfgrules(*variants))
         rules = loader.get_replacement_pairs()
 
         return set((v.source, v.replacement) for v in rules)
@@ -129,7 +125,7 @@ class TestGetReplacements:
                                          '~foo~ -> bar', 'fo~ o -> bar'])
     def test_invalid_variant_description(self, variant):
         with pytest.raises(UsageError):
-            ICURuleLoader(self.cfgfile(variant))
+            ICURuleLoader(self.cfgrules(variant))
 
     def test_add_full(self):
         repl = self.get_replacements("foo -> bar")

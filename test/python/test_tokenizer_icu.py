@@ -67,13 +67,10 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', )):
-        cfgfile = tmp_path / 'analyser_test_config.yaml'
-        with cfgfile.open('w') as stream:
-            cfgstr = {'normalization' : list(norm),
-                       'transliteration' : list(trans),
-                       'variants' : [ {'words': list(variants)}]}
-            yaml.dump(cfgstr, stream)
-        tok.naming_rules = ICUNameProcessorRules(loader=ICURuleLoader(cfgfile))
+        cfgstr = {'normalization' : list(norm),
+                   'transliteration' : list(trans),
+                   'variants' : [ {'words': list(variants)}]}
+        tok.naming_rules = ICUNameProcessorRules(loader=ICURuleLoader(cfgstr))
 
         return tok.name_analyzer()
 

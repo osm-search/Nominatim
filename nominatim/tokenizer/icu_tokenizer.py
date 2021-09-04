@@ -8,7 +8,6 @@ import json
 import logging
 import re
 from textwrap import dedent
-from pathlib import Path
 
 from nominatim.db.connection import connect
 from nominatim.db.properties import set_property, get_property
@@ -49,12 +48,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
             This copies all necessary data in the project directory to make
             sure the tokenizer remains stable even over updates.
         """
-        if config.TOKENIZER_CONFIG:
-            cfgfile = Path(config.TOKENIZER_CONFIG)
-        else:
-            cfgfile = config.config_dir / 'icu_tokenizer.yaml'
-
-        loader = ICURuleLoader(cfgfile)
+        loader = ICURuleLoader(config.load_sub_configuration('icu_tokenizer.yaml',
+                                                             config='TOKENIZER_CONFIG'))
         self.naming_rules = ICUNameProcessorRules(loader=loader)
         self.term_normalization = config.TERM_NORMALIZATION
         self.max_word_frequency = config.MAX_WORD_FREQUENCY

@@ -4,6 +4,7 @@ Tests for import name normalisation and variant generation.
 from textwrap import dedent
 
 import pytest
+import yaml
 
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProcessorRules
@@ -11,7 +12,7 @@ from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProc
 from nominatim.errors import UsageError
 
 @pytest.fixture
-def cfgfile(tmp_path, suffix='.yaml'):
+def cfgfile():
     def _create_config(*variants, **kwargs):
         content = dedent("""\
         normalization:
@@ -29,9 +30,7 @@ def cfgfile(tmp_path, suffix='.yaml'):
         content += '\n'.join(("      - " + s for s in variants)) + '\n'
         for k, v in kwargs:
             content += "    {}: {}\n".format(k, v)
-        fpath = tmp_path / ('test_config' + suffix)
-        fpath.write_text(dedent(content))
-        return fpath
+        return yaml.safe_load(content)
 
     return _create_config
 

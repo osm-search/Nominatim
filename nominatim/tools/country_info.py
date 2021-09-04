@@ -2,7 +2,6 @@
 Functions for importing and managing static country information.
 """
 import psycopg2.extras
-import yaml
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
@@ -14,12 +13,12 @@ class _CountryInfo:
     def __init__(self):
         self._info = {}
 
-    def load(self, configfile):
+    def load(self, config):
         """ Load the country properties from the configuration files,
             if they are not loaded yet.
         """
         if not self._info:
-            self._info = yaml.safe_load(configfile.read_text(encoding='utf-8'))
+            self._info = config.load_sub_configuration('country_settings.yaml')
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.
@@ -29,12 +28,12 @@ class _CountryInfo:
 
 _COUNTRY_INFO = _CountryInfo()
 
-def setup_country_config(configfile):
+def setup_country_config(config):
     """ Load country properties from the configuration file.
         Needs to be called before using any other functions in this
         file.
     """
-    _COUNTRY_INFO.load(configfile)
+    _COUNTRY_INFO.load(config)
 
 
 def setup_country_tables(dsn, sql_dir, ignore_partitions=False):

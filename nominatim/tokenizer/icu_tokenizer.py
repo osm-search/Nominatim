@@ -49,7 +49,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sure the tokenizer remains stable even over updates.
         """
         loader = ICURuleLoader(config.load_sub_configuration('icu_tokenizer.yaml',
-                                              config='TOKENIZER_CONFIG'))
+                                                             config='TOKENIZER_CONFIG'))
         self.naming_rules = ICUNameProcessorRules(loader=loader)
         self.term_normalization = config.TERM_NORMALIZATION
         self.max_word_frequency = config.MAX_WORD_FREQUENCY

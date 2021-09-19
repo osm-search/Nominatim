@@ -185,7 +185,7 @@ jobs:
             - name: Prepare container (CentOS)
               run: |
                   dnf update -y
-                  dnf install -y sudo
+                  dnf install -y sudo glibc-langpack-en
               shell: bash
               if: matrix.flavour == 'centos'
 

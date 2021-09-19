@@ -433,3 +433,76 @@ Feature: Address computation
         Then results contain
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Right |
+
+
+    Scenario: POIs can correct address parts on the fly (with partial unmatching address)
+        Given the grid
+            | 1 |   |   |   |  2 |   | 5 |
+            |   |   |   | 9 |    | 8 |   |
+            |   | 10| 11|   |    | 12|   |
+            | 4 |   |   |   |  3 |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | geometry |
+            | W1  | highway | primary | Wonderway | 10,11,12 |
+        And the places
+            | osm | class   | type    | name      | addr+suburb | geometry |
+            | N1  | amenity | cafe    | Bolder    | Boring      | 9        |
+            | N2  | amenity | cafe    | Leftside  | Boring      | 8        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+           | W1     | R2      | False     |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+           | N2     | R2      |
+        When sending search query "Bolder"
+        Then results contain
+           | osm | display_name            |
+           | N1  | Bolder, Wonderway, Left |
+        When sending search query "Leftside"
+        Then results contain
+           | osm | display_name               |
+           | N2  | Leftside, Wonderway, Right |
+
+
+
+    Scenario: POIs can correct address parts on the fly (with partial matching address)
+        Given the grid
+            | 1 |   |   |   |  2 |   | 5 |
+            |   |   |   | 9 |    | 8 |   |
+            |   | 10| 11|   |    | 12|   |
+            | 4 |   |   |   |  3 |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Right | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | geometry |
+            | W1  | highway | primary | Wonderway | 10,11,12 |
+        And the places
+            | osm | class   | type    | name      | addr+state | geometry |
+            | N1  | amenity | cafe    | Bolder    | Left       | 9        |
+            | N2  | amenity | cafe    | Leftside  | Left       | 8        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R1      | True      |
+           | W1     | R2      | False     |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+           | N2     | R2      |
+        When sending search query "Bolder"
+        Then results contain
+           | osm | display_name            |
+           | N1  | Bolder, Wonderway, Left |
+        When sending search query "Leftside"
+        Then results contain
+           | osm | display_name               |
+           | N2  | Leftside, Wonderway, Left |

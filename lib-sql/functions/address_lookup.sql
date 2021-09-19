@@ -223,11 +223,13 @@ BEGIN
                  OR placex.country_code = place.country_code)
       ORDER BY rank_address desc,
                (place_addressline.place_id = in_place_id) desc,
-               (fromarea and place.centroid is not null and not isaddress
-                and (place.address is null or avals(name) && avals(place.address))
-                and ST_Contains(geometry, place.centroid)) desc,
-               isaddress desc, fromarea desc,
-               distance asc, rank_search desc
+               (CASE WHEN coalesce((avals(name) && avals(place.address)), False) THEN 2
+                     WHEN isaddress THEN 0
+                     WHEN fromarea
+                          and place.centroid is not null
+                          and ST_Contains(geometry, place.centroid) THEN 1
+                     ELSE -1 END) desc,
+               fromarea desc, distance asc, rank_search desc
   LOOP
     -- RAISE WARNING '%',location;
     location_isaddress := location.rank_address != current_rank_address;

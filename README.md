@@ -20,14 +20,6 @@ https://nominatim.org/release-docs/develop/ .
 Installation
 ============
 
-**Nominatim is a complex piece of software and runs in a complex environment.
-Installing and running Nominatim is something for experienced system
-administrators only who can do some trouble-shooting themselves. We are sorry,
-but we can not provide installation support. We are all doing this in our free
-time and there is just so much of that time to go around. Do not open issues in
-our bug tracker if you need help. Use the discussions forum
-or ask for help on [help.openstreetmap.org](https://help.openstreetmap.org/).**
-
 The latest stable release can be downloaded from https://nominatim.org.
 There you can also find [installation instructions for the release](https://nominatim.org/release-docs/latest/admin/Installation), as well as an extensive [Troubleshooting/FAQ section](https://nominatim.org/release-docs/latest/admin/Faq/).
 

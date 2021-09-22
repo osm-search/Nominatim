@@ -215,13 +215,12 @@ LANGUAGE plpgsql STABLE;
 
 -- Find the parent of an address with addr:street/addr:place tag.
 --
--- \param street     Value of addr:street or NULL if tag is missing.
--- \param place      Value of addr:place or NULL if tag is missing.
+-- \param token_info Naming info with the address information.
 -- \param partition  Partition where to search the parent.
 -- \param centroid   Location of the address.
 --
 -- \return Place ID of the parent if one was found, NULL otherwise.
-CREATE OR REPLACE FUNCTION find_parent_for_address(street INTEGER[], place INTEGER[],
+CREATE OR REPLACE FUNCTION find_parent_for_address(token_info JSONB,
                                                    partition SMALLINT,
                                                    centroid GEOMETRY)
   RETURNS BIGINT
@@ -229,29 +228,21 @@ CREATE OR REPLACE FUNCTION find_parent_for_address(street INTEGER[], place INTEG
 DECLARE
   parent_place_id BIGINT;
 BEGIN
-  IF street is not null THEN
-    -- Check for addr:street attributes
-    -- Note that addr:street links can only be indexed, once the street itself is indexed
-    parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, street);
-    IF parent_place_id is not null THEN
-      {% if debug %}RAISE WARNING 'Get parent form addr:street: %', parent_place_id;{% endif %}
-      RETURN parent_place_id;
-    END IF;
+  -- Check for addr:street attributes
+  parent_place_id := getNearestNamedRoadPlaceId(partition, centroid, token_info);
+  IF parent_place_id is not null THEN
+    {% if debug %}RAISE WARNING 'Get parent from addr:street: %', parent_place_id;{% endif %}
+    RETURN parent_place_id;
   END IF;
 
   -- Check for addr:place attributes.
-  IF place is not null THEN
-    parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, place);
-    IF parent_place_id is not null THEN
-      {% if debug %}RAISE WARNING 'Get parent form addr:place: %', parent_place_id;{% endif %}
-      RETURN parent_place_id;
-    END IF;
-  END IF;
-
-  RETURN NULL;
+  parent_place_id := getNearestNamedPlacePlaceId(partition, centroid, token_info);
+  {% if debug %}RAISE WARNING 'Get parent from addr:place: %', parent_place_id;{% endif %}
+  RETURN parent_place_id;
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
 
 CREATE OR REPLACE FUNCTION delete_location(OLD_place_id BIGINT)
   RETURNS BOOLEAN

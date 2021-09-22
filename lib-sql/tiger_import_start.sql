@@ -14,7 +14,6 @@ DECLARE
   out_partition INTEGER;
   out_parent_place_id BIGINT;
   location RECORD;
-  address_street_word_ids INTEGER[];
 
 BEGIN
 
@@ -54,13 +53,9 @@ BEGIN
 
   place_centroid := ST_Centroid(linegeo);
   out_partition := get_partition('us');
-  out_parent_place_id := null;
 
-  address_street_word_ids := token_addr_street_match_tokens(token_info);
-  IF address_street_word_ids IS NOT NULL THEN
-    out_parent_place_id := getNearestNamedRoadPlaceId(out_partition, place_centroid,
-                                                      address_street_word_ids);
-  END IF;
+  out_parent_place_id := getNearestNamedRoadPlaceId(out_partition, place_centroid,
+                                                    token_info);
 
   IF out_parent_place_id IS NULL THEN
     SELECT getNearestParallelRoadFeature(out_partition, linegeo)

@@ -125,9 +125,6 @@ Feature: Creation of search terms
         Then placex contains
          | object | parent_place_id |
          | N1     | N2              |
-        Then search_name contains
-         | object | name_vector | nameaddress_vector |
-         | N1     | #Walltown   | Strange, Town |
         When sending search query "23 Rose Street"
         Then exactly 1 results are returned
         And results contain
@@ -156,9 +153,6 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street  | :w-north |
          | N2  | place   | city        | Strange Town | :p-N1 |
         When importing
-        Then search_name contains
-         | object | name_vector      | nameaddress_vector      |
-         | N1     | #Walltown, #Blue house | Walltown, Strange, Town |
         When sending search query "23 Walltown, Strange Town"
         Then results contain
          | osm | display_name |
@@ -190,9 +184,6 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street  | :w-north |
          | N2  | place   | city        | Strange Town | :p-N1 |
         When importing
-        Then search_name contains
-         | object | name_vector      | nameaddress_vector      |
-         | N1     | #Moon sun, #Blue house | Moon, Sun, Strange, Town |
         When sending search query "23 Moon Sun, Strange Town"
         Then results contain
          | osm | display_name |
@@ -212,9 +203,6 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street  | Walltown  | :w-north |
          | N2  | place   | suburb      | Strange Town | Walltown  | :p-N1 |
         When importing
-        Then search_name contains
-         | object | name_vector | nameaddress_vector |
-         | N1     | #Walltown   | Strange, Town      |
         When sending search query "23 Rose Street, Walltown"
         Then exactly 1 result is returned
         And results contain
@@ -303,9 +291,6 @@ Feature: Creation of search terms
          | W1  | highway | residential | Rose Street  | :w-north |
          | N2  | place   | suburb      | Strange Town | :p-N1 |
         When importing
-        Then search_name contains
-         | object | name_vector | nameaddress_vector |
-         | N1     | #Green Moss | Walltown |
         When sending search query "Green Moss, Rose Street, Walltown"
         Then exactly 0 result is returned
         When sending search query "Green Moss, Walltown"

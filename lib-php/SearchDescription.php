@@ -624,7 +624,7 @@ class SearchDescription
             $aOrder[] = $this->oContext->distanceSQL('centroid');
         } elseif ($this->sPostcode) {
             if (empty($this->aAddress)) {
-                $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."' AND ST_DWithin(search_name.centroid, p.geometry, 0.1))";
+                $aTerms[] = "EXISTS(SELECT place_id FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."' AND ST_DWithin(search_name.centroid, p.geometry, 0.12))";
             } else {
                 $aOrder[] = "(SELECT min(ST_Distance(search_name.centroid, p.geometry)) FROM location_postcode p WHERE p.postcode = '".$this->sPostcode."')";
             }

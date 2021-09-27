@@ -188,6 +188,20 @@
           "administrative10" : 22
       }
   }
+},
+{ "countries" : ["sk"],
+  "tags" : {
+      "boundary" : {
+          "administrative5" : [10, 0],
+          "administrative6" : 11,
+          "administrative7" : [11, 0],
+          "administrative8" : 12,
+          "administrative9" : 16,
+          "administrative10" : 18,
+          "administrative11" : 20
+      }
+  }
 }
+
 ]
 

@@ -247,6 +247,7 @@ BEGIN
         indexed_status = 2,
         geometry = NEW.geometry
         where place_id = existingplacex.place_id;
+
       -- if a node(=>house), which is part of a interpolation line, changes (e.g. the street attribute) => mark this line for reparenting 
       -- (already here, because interpolation lines are reindexed before nodes, so in the second call it would be too late)
       IF NEW.osm_type='N'
@@ -268,6 +269,18 @@ BEGIN
               and x.osm_type = p.osm_type
               and x.osm_id = p.osm_id
               and x.class = p.class;
+      END IF;
+
+      -- When streets change their name, the parenting of rank30 objects may change.
+      IF existingplacex.rank_address between 26 and 27
+         and coalesce(existing.name::text, '') != coalesce(NEW.name::text, '')
+      THEN
+        UPDATE placex SET indexed_status = 2
+        WHERE indexed_status = 0 and address ? 'street'
+              and parent_place_id = existingplacex.place_id;
+        UPDATE placex SET indexed_status = 2
+        WHERE indexed_status = 0 and rank_search = 30 and address ? 'street'
+              and ST_DWithin(NEW.geometry, geometry, 0.002);
       END IF;
 
     END IF;

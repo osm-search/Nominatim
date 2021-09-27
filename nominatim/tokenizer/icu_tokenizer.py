@@ -52,7 +52,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         self.term_normalization = config.TERM_NORMALIZATION
 
         self._install_php(config.lib_dir.php)
-        self._save_config(config)
+        self._save_config()
 
         if init_db:
             self.update_sql_functions(config)
@@ -122,7 +122,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
             require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
 
-    def _save_config(self, config):
+    def _save_config(self):
         """ Save the configuration that needs to remain stable for the given
             database as database properties.
         """

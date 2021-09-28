@@ -104,8 +104,7 @@ CREATE OR REPLACE FUNCTION find_parent_for_poi(poi_osm_type CHAR(1),
                                                poi_osm_id BIGINT,
                                                poi_partition SMALLINT,
                                                bbox GEOMETRY,
-                                               addr_street INTEGER[],
-                                               addr_place INTEGER[],
+                                               token_info JSONB,
                                                is_place_addr BOOLEAN)
   RETURNS BIGINT
   AS $$
@@ -119,8 +118,7 @@ BEGIN
   parent_place_id := find_associated_street(poi_osm_type, poi_osm_id);
 
   IF parent_place_id is null THEN
-    parent_place_id := find_parent_for_address(addr_street, addr_place,
-                                               poi_partition, bbox);
+    parent_place_id := find_parent_for_address(token_info, poi_partition, bbox);
   END IF;
 
   IF parent_place_id is null and poi_osm_type = 'N' THEN
@@ -333,13 +331,14 @@ BEGIN
     WHERE s.place_id = parent_place_id;
 
   FOR addr_item IN
-    SELECT (get_addr_tag_rank(key, country)).*, match_tokens, search_tokens
-      FROM token_get_address_tokens(token_info)
-      WHERE not search_tokens <@ parent_address_vector
+    SELECT (get_addr_tag_rank(key, country)).*, key,
+           token_get_address_search_tokens(token_info, key) as search_tokens
+      FROM token_get_address_keys(token_info) as key
+      WHERE not token_get_address_search_tokens(token_info, key) <@ parent_address_vector
   LOOP
     addr_place := get_address_place(in_partition, geometry,
                                     addr_item.from_rank, addr_item.to_rank,
-                                    addr_item.extent, addr_item.match_tokens);
+                                    addr_item.extent, token_info, addr_item.key);
 
     IF addr_place is null THEN
       -- No place found in OSM that matches. Make it at least searchable.
@@ -447,14 +446,16 @@ BEGIN
 
   FOR location IN
     SELECT (get_address_place(partition, geometry, from_rank, to_rank,
-                              extent, match_tokens)).*, search_tokens
-      FROM (SELECT (get_addr_tag_rank(key, country)).*, match_tokens, search_tokens
-              FROM token_get_address_tokens(token_info)) x
+                              extent, token_info, key)).*, key
+      FROM (SELECT (get_addr_tag_rank(key, country)).*, key
+              FROM token_get_address_keys(token_info) as key) x
       ORDER BY rank_address, distance, isguess desc
   LOOP
     IF location.place_id is null THEN
       {% if not db.reverse_only %}
-      nameaddress_vector := array_merge(nameaddress_vector, location.search_tokens);
+      nameaddress_vector := array_merge(nameaddress_vector,
+                                        token_get_address_search_tokens(token_info,
+                                                                        location.key));
       {% endif %}
     ELSE
       {% if not db.reverse_only %}
@@ -689,9 +690,6 @@ DECLARE
   parent_address_level SMALLINT;
   place_address_level SMALLINT;
 
-  addr_street INTEGER[];
-  addr_place INTEGER[];
-
   max_rank SMALLINT;
 
   name_vector INTEGER[];
@@ -860,8 +858,6 @@ BEGIN
   END IF;
 
   NEW.housenumber := token_normalized_housenumber(NEW.token_info);
-  addr_street := token_addr_street_match_tokens(NEW.token_info);
-  addr_place := token_addr_place_match_tokens(NEW.token_info);
 
   NEW.postcode := null;
 
@@ -907,7 +903,7 @@ BEGIN
     NEW.parent_place_id := find_parent_for_poi(NEW.osm_type, NEW.osm_id,
                                                NEW.partition,
                                                ST_Envelope(NEW.geometry),
-                                               addr_street, addr_place,
+                                               NEW.token_info,
                                                is_place_address);
 
     -- If we found the road take a shortcut here.

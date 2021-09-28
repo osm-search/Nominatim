@@ -10,6 +10,7 @@ from nominatim.tokenizer import icu_tokenizer
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
+from nominatim.db.sql_preprocessor import SQLPreprocessor
 
 from mock_icu_word_table import MockIcuWordTable
 
@@ -75,6 +76,15 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         return tok.name_analyzer()
 
     return _mk_analyser
+
+@pytest.fixture
+def sql_functions(temp_db_conn, def_config, src_dir):
+    orig_sql = def_config.lib_dir.sql
+    def_config.lib_dir.sql = src_dir / 'lib-sql'
+    sqlproc = SQLPreprocessor(temp_db_conn, def_config)
+    sqlproc.run_sql_file(temp_db_conn, 'functions/utils.sql')
+    sqlproc.run_sql_file(temp_db_conn, 'tokenizer/icu_tokenizer.sql')
+    def_config.lib_dir.sql = orig_sql
 
 
 @pytest.fixture
@@ -144,7 +154,6 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
     tok.init_new_db(test_config)
 
     assert db_prop(icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
-    assert db_prop(icu_tokenizer.DBCFG_MAXWORDFREQ) is not None
 
 
 def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
@@ -163,7 +172,6 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
 
 def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
     monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
-    monkeypatch.setenv('NOMINATIM_MAX_WORD_FREQUENCY', '90300')
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
     monkeypatch.undo()
@@ -173,23 +181,18 @@ def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
 
     assert tok.naming_rules is not None
     assert tok.term_normalization == ':: lower();'
-    assert tok.max_word_frequency == '90300'
 
 
 def test_update_sql_functions(db_prop, temp_db_cursor,
                               tokenizer_factory, test_config, table_factory,
                               monkeypatch):
-    monkeypatch.setenv('NOMINATIM_MAX_WORD_FREQUENCY', '1133')
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
-    monkeypatch.undo()
-
-    assert db_prop(icu_tokenizer.DBCFG_MAXWORDFREQ) == '1133'
 
     table_factory('test', 'txt TEXT')
 
     func_file = test_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer.sql'
-    func_file.write_text("""INSERT INTO test VALUES ('{{max_word_freq}}')""")
+    func_file.write_text("""INSERT INTO test VALUES (1133)""")
 
     tok.update_sql_functions(test_config)
 
@@ -304,7 +307,7 @@ def test_add_country_names_extend(analyzer, word_table):
 class TestPlaceNames:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, getorcreate_full_word):
+    def setup(self, analyzer, sql_functions):
         with analyzer() as anl:
             self.analyzer = anl
             yield anl
@@ -351,7 +354,7 @@ class TestPlaceNames:
 class TestPlaceAddress:
 
     @pytest.fixture(autouse=True)
-    def setup(self, analyzer, getorcreate_full_word):
+    def setup(self, analyzer, sql_functions):
         with analyzer(trans=(":: upper()", "'🜵' > ' '")) as anl:
             self.analyzer = anl
             yield anl
@@ -424,7 +427,7 @@ class TestPlaceAddress:
     def test_process_place_street(self):
         info = self.process_address(street='Grand Road')
 
-        assert eval(info['street']) == self.name_token_set('#GRAND ROAD')
+        assert eval(info['street']) == self.name_token_set('GRAND', 'ROAD')
 
 
     def test_process_place_street_empty(self):
@@ -436,16 +439,13 @@ class TestPlaceAddress:
     def test_process_place_place(self):
         info = self.process_address(place='Honu Lulu')
 
-        assert eval(info['place_search']) == self.name_token_set('#HONU LULU',
-                                                                 'HONU', 'LULU')
-        assert eval(info['place_match']) == self.name_token_set('#HONU LULU')
+        assert eval(info['place']) == self.name_token_set('HONU', 'LULU')
 
 
     def test_process_place_place_empty(self):
         info = self.process_address(place='🜵')
 
-        assert 'place_search' not in info
-        assert 'place_match' not in info
+        assert 'place' not in info
 
 
     def test_process_place_address_terms(self):
@@ -453,16 +453,12 @@ class TestPlaceAddress:
                                     suburb='Zwickau', street='Hauptstr',
                                     full='right behind the church')
 
-        city_full = self.name_token_set('#ZWICKAU')
-        city_all = self.name_token_set('#ZWICKAU', 'ZWICKAU')
-        state_full = self.name_token_set('#SACHSEN')
-        state_all = self.name_token_set('#SACHSEN', 'SACHSEN')
+        city = self.name_token_set('ZWICKAU')
+        state = self.name_token_set('SACHSEN')
 
-        result = {k: [eval(v[0]), eval(v[1])] for k,v in info['addr'].items()}
+        result = {k: eval(v) for k,v in info['addr'].items()}
 
-        assert result == {'city': [city_all, city_full],
-                          'suburb': [city_all, city_full],
-                          'state': [state_all, state_full]}
+        assert result == {'city': city, 'suburb': city, 'state': state}
 
 
     def test_process_place_address_terms_empty(self):

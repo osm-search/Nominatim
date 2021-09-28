@@ -43,7 +43,7 @@ LANGUAGE plpgsql STABLE;
 
 
 -- find the parent road of the cut road parts
-CREATE OR REPLACE FUNCTION get_interpolation_parent(street INTEGER[], place INTEGER[],
+CREATE OR REPLACE FUNCTION get_interpolation_parent(token_info JSONB,
                                                     partition SMALLINT,
                                                     centroid GEOMETRY, geom GEOMETRY)
   RETURNS BIGINT
@@ -52,7 +52,7 @@ DECLARE
   parent_place_id BIGINT;
   location RECORD;
 BEGIN
-  parent_place_id := find_parent_for_address(street, place, partition, centroid);
+  parent_place_id := find_parent_for_address(token_info, partition, centroid);
 
   IF parent_place_id is null THEN
     FOR location IN SELECT place_id FROM placex
@@ -155,9 +155,8 @@ BEGIN
   NEW.interpolationtype = NEW.address->'interpolation';
 
   place_centroid := ST_PointOnSurface(NEW.linegeo);
-  NEW.parent_place_id = get_interpolation_parent(token_addr_street_match_tokens(NEW.token_info),
-                                                 token_addr_place_match_tokens(NEW.token_info),
-                                                 NEW.partition, place_centroid, NEW.linegeo);
+  NEW.parent_place_id = get_interpolation_parent(NEW.token_info, NEW.partition,
+                                                 place_centroid, NEW.linegeo);
 
   interpol_postcode := token_normalized_postcode(NEW.address->'postcode');
 

@@ -17,7 +17,6 @@ from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProcessorRules
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
-DBCFG_MAXWORDFREQ = "tokenizer_maxwordfreq"
 DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
 
 LOG = logging.getLogger()
@@ -39,7 +38,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         self.data_dir = data_dir
         self.naming_rules = None
         self.term_normalization = None
-        self.max_word_frequency = None
 
 
     def init_new_db(self, config, init_db=True):
@@ -52,10 +50,9 @@ class LegacyICUTokenizer(AbstractTokenizer):
                                                              config='TOKENIZER_CONFIG'))
         self.naming_rules = ICUNameProcessorRules(loader=loader)
         self.term_normalization = config.TERM_NORMALIZATION
-        self.max_word_frequency = config.MAX_WORD_FREQUENCY
 
         self._install_php(config.lib_dir.php)
-        self._save_config(config)
+        self._save_config()
 
         if init_db:
             self.update_sql_functions(config)
@@ -68,7 +65,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         with connect(self.dsn) as conn:
             self.naming_rules = ICUNameProcessorRules(conn=conn)
             self.term_normalization = get_property(conn, DBCFG_TERM_NORMALIZATION)
-            self.max_word_frequency = get_property(conn, DBCFG_MAXWORDFREQ)
 
 
     def finalize_import(self, _):
@@ -81,10 +77,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """ Reimport the SQL functions for this tokenizer.
         """
         with connect(self.dsn) as conn:
-            max_word_freq = get_property(conn, DBCFG_MAXWORDFREQ)
             sqlp = SQLPreprocessor(conn, config)
-            sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer.sql',
-                              max_word_freq=max_word_freq)
+            sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer.sql')
 
 
     def check_database(self):
@@ -122,20 +116,19 @@ class LegacyICUTokenizer(AbstractTokenizer):
         php_file = self.data_dir / "tokenizer.php"
         php_file.write_text(dedent(f"""\
             <?php
-            @define('CONST_Max_Word_Frequency', {self.max_word_frequency});
+            @define('CONST_Max_Word_Frequency', 10000000);
             @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
             @define('CONST_Transliteration', "{self.naming_rules.search_rules}");
             require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
 
-    def _save_config(self, config):
+    def _save_config(self):
         """ Save the configuration that needs to remain stable for the given
             database as database properties.
         """
         with connect(self.dsn) as conn:
             self.naming_rules.save_rules(conn)
 
-            set_property(conn, DBCFG_MAXWORDFREQ, config.MAX_WORD_FREQUENCY)
             set_property(conn, DBCFG_TERM_NORMALIZATION, self.term_normalization)
 
 
@@ -424,12 +417,12 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
                 hnrs.append(value)
             elif key == 'street':
-                token_info.add_street(*self._compute_name_tokens({'name': value}))
+                token_info.add_street(self._compute_partial_tokens(value))
             elif key == 'place':
-                token_info.add_place(*self._compute_name_tokens({'name': value}))
+                token_info.add_place(self._compute_partial_tokens(value))
             elif not key.startswith('_') and \
                  key not in ('country', 'full'):
-                addr_terms.append((key, *self._compute_name_tokens({'name': value})))
+                addr_terms.append((key, self._compute_partial_tokens(value)))
 
         if hnrs:
             hnrs = self._split_housenumbers(hnrs)
@@ -438,6 +431,32 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if addr_terms:
             token_info.add_address_terms(addr_terms)
 
+    def _compute_partial_tokens(self, name):
+        """ Normalize the given term, split it into partial words and return
+            then token list for them.
+        """
+        norm_name = self.name_processor.get_search_normalized(name)
+
+        tokens = []
+        need_lookup = []
+        for partial in norm_name.split():
+            token = self._cache.partials.get(partial)
+            if token:
+                tokens.append(token)
+            else:
+                need_lookup.append(partial)
+
+        if need_lookup:
+            with self.conn.cursor() as cur:
+                cur.execute("""SELECT word, getorcreate_partial_word(word)
+                               FROM unnest(%s) word""",
+                            (need_lookup, ))
+
+                for partial, token in cur:
+                    tokens.append(token)
+                    self._cache.partials[partial] = token
+
+        return tokens
 
     def _compute_name_tokens(self, names):
         """ Computes the full name and partial name tokens for the given
@@ -551,30 +570,25 @@ class _TokenInfo:
         self.data['hnr'] = ';'.join(hnrs)
 
 
-    def add_street(self, fulls, _):
+    def add_street(self, tokens):
         """ Add addr:street match terms.
         """
-        if fulls:
-            self.data['street'] = self._mk_array(fulls)
+        if tokens:
+            self.data['street'] = self._mk_array(tokens)
 
 
-    def add_place(self, fulls, partials):
+    def add_place(self, tokens):
         """ Add addr:place search and match terms.
         """
-        if fulls:
-            self.data['place_search'] = self._mk_array(itertools.chain(fulls, partials))
-            self.data['place_match'] = self._mk_array(fulls)
+        if tokens:
+            self.data['place'] = self._mk_array(tokens)
 
 
     def add_address_terms(self, terms):
         """ Add additional address terms.
         """
-        tokens = {}
-
-        for key, fulls, partials in terms:
-            if fulls:
-                tokens[key] = [self._mk_array(itertools.chain(fulls, partials)),
-                               self._mk_array(fulls)]
+        tokens = {key: self._mk_array(partials)
+                  for key, partials in terms if partials}
 
         if tokens:
             self.data['addr'] = tokens
@@ -588,6 +602,7 @@ class _TokenCache:
     """
     def __init__(self):
         self.names = {}
+        self.partials = {}
         self.postcodes = set()
         self.housenumbers = {}
 

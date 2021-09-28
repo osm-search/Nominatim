@@ -190,22 +190,21 @@ be listed with a semicolon as delimiter. Must be NULL when the place has no
 house numbers.
 
 ```sql
-FUNCTION token_addr_street_match_tokens(info JSONB) RETURNS INTEGER[]
+FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[]) RETURNS BOOLEAN
 ```
 
-Return the match token IDs by which to search a matching street from the
-`addr:street` tag. These IDs will be matched against the IDs supplied by
-`token_get_name_match_tokens`. Must be NULL when the place has no `addr:street`
-tag.
+Check if the given tokens (previously saved from `token_get_name_match_tokens()`)
+match against the `addr:street` tag name. Must return either NULL or FALSE
+when the place has no `addr:street` tag.
 
 ```sql
-FUNCTION token_addr_place_match_tokens(info JSONB) RETURNS INTEGER[]
+FUNCTION token_matches_place(info JSONB, place_tokens INTEGER[]) RETURNS BOOLEAN
 ```
 
-Return the match token IDs by which to search a matching place from the
-`addr:place` tag. These IDs will be matched against the IDs supplied by
-`token_get_name_match_tokens`. Must be NULL when the place has no `addr:place`
-tag.
+Check if the given tokens (previously saved from `token_get_name_match_tokens()`)
+match against the `addr:place` tag name. Must return either NULL or FALSE
+when the place has no `addr:place` tag.
+
 
 ```sql
 FUNCTION token_addr_place_search_tokens(info JSONB) RETURNS INTEGER[]
@@ -216,26 +215,34 @@ are used for searches by address when no matching place can be found in the
 database. Must be NULL when the place has no `addr:place` tag.
 
 ```sql
-CREATE TYPE token_addresstoken AS (
-  key TEXT,
-  match_tokens INT[],
-  search_tokens INT[]
-);
-
-FUNCTION token_get_address_tokens(info JSONB) RETURNS SETOF token_addresstoken
+FUNCTION token_get_address_keys(info JSONB) RETURNS SETOF TEXT
 ```
 
-Return the match and search token IDs for explicit `addr:*` tags for the place
-other than `addr:street` and `addr:place`. For each address item there are
-three pieces of information returned:
+Return the set of keys for which address information is provided. This
+should correspond to the list of (relevant) `addr:*` tags with the `addr:`
+prefix removed or the keys used in the `address` dictionary of the place info.
 
- * _key_ contains the type of address item (city, county, etc.). This is the
-   key handed in with the `address` dictionary.
- * *match_tokens* is the list of token IDs used to find the corresponding
-   place object for the address part. The list is matched against the IDs
-   from `token_get_name_match_tokens`.
- * *search_tokens* is the list of token IDs under which to search the address
-   item. It is used when no corresponding place object was found.
+```sql
+FUNCTION token_get_address_search_tokens(info JSONB, key TEXT) RETURNS INTEGER[]
+```
+
+Return the array of search tokens for the given address part. `key` can be
+expected to be one of those returned with `token_get_address_keys()`. The
+search tokens are added to the address search vector of the place, when no
+corresponding OSM object could be found for the given address part from which
+to copy the name information.
+
+```sql
+FUNCTION token_matches_address(info JSONB, key TEXT, tokens INTEGER[])
+```
+
+Check if the given tokens match against the address part `key`.
+
+__Warning:__ the tokens that are handed in are the lists previously saved
+from `token_get_name_search_tokens()`, _not_ from the match token list. This
+is an historical oddity which will be fixed at some point in the future.
+Currently, tokenizers are encouraged to make sure that matching works against
+both the search token list and the match token list.
 
 ```sql
 FUNCTION token_normalized_postcode(postcode TEXT) RETURNS TEXT

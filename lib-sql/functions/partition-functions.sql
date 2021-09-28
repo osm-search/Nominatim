@@ -66,7 +66,7 @@ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION get_address_place(in_partition SMALLINT, feature GEOMETRY,
                                              from_rank SMALLINT, to_rank SMALLINT,
-                                             extent FLOAT, tokens INT[])
+                                             extent FLOAT, token_info JSONB, key TEXT)
   RETURNS nearfeaturecentr
   AS $$
 DECLARE
@@ -80,7 +80,7 @@ BEGIN
         FROM location_area_large_{{ partition }}
         WHERE geometry && ST_Expand(feature, extent)
               AND rank_address between from_rank and to_rank
-              AND tokens && keywords
+              AND token_matches_address(token_info, key, keywords)
         GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
         ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
       RETURN r;
@@ -148,18 +148,21 @@ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION getNearestNamedRoadPlaceId(in_partition INTEGER,
                                                       point GEOMETRY,
-                                                      isin_token INTEGER[])
+                                                      token_info JSONB)
   RETURNS BIGINT
   AS $$
 DECLARE
   parent BIGINT;
 BEGIN
+  IF not token_has_addr_street(token_info) THEN
+    RETURN NULL;
+  END IF;
 
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
     SELECT place_id FROM search_name_{{ partition }}
       INTO parent
-      WHERE name_vector && isin_token
+      WHERE token_matches_street(token_info, name_vector)
             AND centroid && ST_Expand(point, 0.015)
             AND address_rank between 26 and 27
       ORDER BY ST_Distance(centroid, point) ASC limit 1;
@@ -174,19 +177,22 @@ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION getNearestNamedPlacePlaceId(in_partition INTEGER,
                                                        point GEOMETRY,
-                                                       isin_token INTEGER[])
+                                                       token_info JSONB)
   RETURNS BIGINT
   AS $$
 DECLARE
   parent BIGINT;
 BEGIN
+  IF not token_has_addr_place(token_info) THEN
+    RETURN NULL;
+  END IF;
 
 {% for partition in db.partitions %}
   IF in_partition = {{ partition }} THEN
     SELECT place_id
       INTO parent
       FROM search_name_{{ partition }}
-      WHERE name_vector && isin_token
+      WHERE token_matches_place(token_info, name_vector)
             AND centroid && ST_Expand(point, 0.04)
             AND address_rank between 16 and 25
       ORDER BY ST_Distance(centroid, point) ASC limit 1;

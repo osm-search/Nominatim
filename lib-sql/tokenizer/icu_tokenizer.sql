@@ -34,40 +34,59 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION token_addr_street_match_tokens(info JSONB)
-  RETURNS INTEGER[]
+CREATE OR REPLACE FUNCTION token_has_addr_street(info JSONB)
+  RETURNS BOOLEAN
 AS $$
-  SELECT (info->>'street')::INTEGER[]
+  SELECT info->>'street' is not null;
+$$ LANGUAGE SQL IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION token_has_addr_place(info JSONB)
+  RETURNS BOOLEAN
+AS $$
+  SELECT info->>'place' is not null;
+$$ LANGUAGE SQL IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[])
+  RETURNS BOOLEAN
+AS $$
+  SELECT (info->>'street')::INTEGER[] <@ street_tokens
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION token_addr_place_match_tokens(info JSONB)
-  RETURNS INTEGER[]
+CREATE OR REPLACE FUNCTION token_matches_place(info JSONB, place_tokens INTEGER[])
+  RETURNS BOOLEAN
 AS $$
-  SELECT (info->>'place_match')::INTEGER[]
+  SELECT (info->>'place')::INTEGER[] <@ place_tokens
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
 CREATE OR REPLACE FUNCTION token_addr_place_search_tokens(info JSONB)
   RETURNS INTEGER[]
 AS $$
-  SELECT (info->>'place_search')::INTEGER[]
+  SELECT (info->>'place')::INTEGER[]
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-DROP TYPE IF EXISTS token_addresstoken CASCADE;
-CREATE TYPE token_addresstoken AS (
-  key TEXT,
-  match_tokens INT[],
-  search_tokens INT[]
-);
-
-CREATE OR REPLACE FUNCTION token_get_address_tokens(info JSONB)
-  RETURNS SETOF token_addresstoken
+CREATE OR REPLACE FUNCTION token_get_address_keys(info JSONB)
+  RETURNS SETOF TEXT
 AS $$
-  SELECT key, (value->>1)::int[] as match_tokens,
-         (value->>0)::int[] as search_tokens
-  FROM jsonb_each(info->'addr');
+  SELECT * FROM jsonb_object_keys(info->'addr');
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION token_get_address_search_tokens(info JSONB, key TEXT)
+  RETURNS INTEGER[]
+AS $$
+  SELECT (info->'addr'->>key)::INTEGER[];
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION token_matches_address(info JSONB, key TEXT, tokens INTEGER[])
+  RETURNS BOOLEAN
+AS $$
+  SELECT (info->'addr'->>key)::INTEGER[] <@ tokens;
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
@@ -127,10 +146,29 @@ BEGIN
         VALUES (term_id, term, 'w', json_build_object('count', term_count));
     END IF;
 
-    IF term_count < {{ max_word_freq }} THEN
-      partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);
-    END IF;
+    partial_tokens := array_merge(partial_tokens, ARRAY[term_id]);
   END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION getorcreate_partial_word(partial TEXT)
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  token INTEGER;
+BEGIN
+  SELECT min(word_id) INTO token
+    FROM word WHERE word_token = partial and type = 'w';
+
+  IF token IS NULL THEN
+    token := nextval('seq_word');
+    INSERT INTO word (word_id, word_token, type, info)
+        VALUES (token, partial, 'w', json_build_object('count', 0));
+  END IF;
+
+  RETURN token;
 END;
 $$
 LANGUAGE plpgsql;

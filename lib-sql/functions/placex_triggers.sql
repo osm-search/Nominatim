@@ -1,30 +1,33 @@
 -- Trigger functions for the placex table.
 
+-- Information returned by update preparation.
+DROP TYPE IF EXISTS prepare_update_info CASCADE;
+CREATE TYPE prepare_update_info AS (
+  name HSTORE,
+  address HSTORE,
+  rank_address SMALLINT,
+  country_code TEXT,
+  class TEXT,
+  type TEXT,
+  linked_place_id BIGINT
+);
+
 -- Retrieve the data needed by the indexer for updating the place.
---
--- Return parameters:
---  name            list of names
---  address         list of address tags, either from the object or a surrounding
---                  building
---  country_feature If the place is a country feature, this contains the
---                  country code, otherwise it is null.
-CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
-                                                 OUT name HSTORE,
-                                                 OUT address HSTORE,
-                                                 OUT country_feature VARCHAR,
-                                                 OUT linked_place_id BIGINT)
+CREATE OR REPLACE FUNCTION placex_indexing_prepare(p placex)
+  RETURNS prepare_update_info
   AS $$
 DECLARE
   location RECORD;
+  result prepare_update_info;
 BEGIN
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
   IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
-    address := p.address;
+    result.address := p.address;
   ELSE
     -- The additional && condition works around the misguided query
     -- planner of postgis 3.0.
-    SELECT placex.address || hstore('_inherited', '') INTO address
+    SELECT placex.address || hstore('_inherited', '') INTO result.address
       FROM placex
      WHERE ST_Covers(geometry, p.centroid)
            and geometry && p.centroid
@@ -34,27 +37,26 @@ BEGIN
      LIMIT 1;
   END IF;
 
-  address := address - '_unlisted_place'::TEXT;
-  name := p.name;
+  result.address := result.address - '_unlisted_place'::TEXT;
+  result.name := p.name;
+  result.class := p.class;
+  result.type := p.type;
+  result.country_code := p.country_code;
+  result.rank_address := p.rank_address;
 
   -- Names of linked places need to be merged in, so search for a linkable
   -- place already here.
   SELECT * INTO location FROM find_linked_place(p);
 
   IF location.place_id is not NULL THEN
-    linked_place_id := location.place_id;
+    result.linked_place_id := location.place_id;
 
     IF NOT location.name IS NULL THEN
-      name := location.name || name;
+      result.name := location.name || result.name;
     END IF;
   END IF;
 
-  country_feature := CASE WHEN p.admin_level = 2
-                               and p.class = 'boundary' and p.type = 'administrative'
-                               and p.osm_type = 'R'
-                          THEN p.country_code
-                          ELSE null
-                     END;
+  RETURN result;
 END;
 $$
 LANGUAGE plpgsql STABLE;

@@ -410,9 +410,8 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
         if names:
             token_info.add_names(self.conn, names)
 
-            country_feature = place.country_feature
-            if country_feature and re.fullmatch(r'[A-Za-z][A-Za-z]', country_feature):
-                self.add_country_names(country_feature.lower(), names)
+            if place.is_country():
+                self.add_country_names(place.country_code, names)
 
         address = place.address
         if address:

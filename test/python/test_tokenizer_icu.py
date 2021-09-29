@@ -323,10 +323,8 @@ class TestPlaceNames:
         assert eval(info['names']) == set((t[2] for t in tokens))
 
 
-    def process_named_place(self, names, country_feature=None):
+    def process_named_place(self, names):
         place = {'name': names}
-        if country_feature:
-            place['country_feature'] = country_feature
 
         return self.analyzer.process_place(PlaceInfo(place))
 
@@ -353,7 +351,13 @@ class TestPlaceNames:
 
 
     def test_country_name(self, word_table):
-        info = self.process_named_place({'name': 'Norge'}, country_feature='no')
+        place = PlaceInfo({'name' : {'name': 'Norge'},
+                           'country_code': 'no',
+                           'rank_address': 4,
+                           'class': 'boundary',
+                           'type': 'administrative'})
+
+        info = self.analyzer.process_place(place)
 
         self.expect_name_terms(info, '#norge', 'norge')
         assert word_table.get_country() == {('no', 'NORGE')}

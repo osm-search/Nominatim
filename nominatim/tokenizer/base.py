@@ -136,7 +136,7 @@ class AbstractTokenizer(ABC):
             the tokenizer remains stable over updates.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
 
               init_db: When set to False, then initialisation of database
                 tables should be skipped. This option is only required for
@@ -166,7 +166,7 @@ class AbstractTokenizer(ABC):
             during query time.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
         """
         pass
 
@@ -181,7 +181,7 @@ class AbstractTokenizer(ABC):
             data structures or data itself must not be changed by this function.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
         """
         pass
 

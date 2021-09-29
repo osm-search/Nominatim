@@ -149,11 +149,14 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def init_from_project(self) -> None:
+    def init_from_project(self, config: Configuration) -> None:
         """ Initialise the tokenizer from an existing database setup.
 
             The function should load all previously saved configuration from
             the project directory and/or the property table.
+
+            Arguments:
+              config: Read-only object with configuration options.
         """
         pass
 
@@ -187,7 +190,7 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def check_database(self) -> str:
+    def check_database(self, config: Configuration) -> str:
         """ Check that the database is set up correctly and ready for being
             queried.
 
@@ -195,6 +198,9 @@ class AbstractTokenizer(ABC):
               If an issue was found, return an error message with the
               description of the issue as well as hints for the user on
               how to resolve the issue.
+
+            Arguments:
+              config: Read-only object with configuration options.
 
               Return `None`, if no issue was found.
         """

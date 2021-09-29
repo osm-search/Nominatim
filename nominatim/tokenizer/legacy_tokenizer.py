@@ -113,7 +113,7 @@ class LegacyTokenizer(AbstractTokenizer):
             self._init_db_tables(config)
 
 
-    def init_from_project(self):
+    def init_from_project(self, _):
         """ Initialise the tokenizer from the project directory.
         """
         with connect(self.dsn) as conn:
@@ -142,7 +142,7 @@ class LegacyTokenizer(AbstractTokenizer):
                               modulepath=modulepath)
 
 
-    def check_database(self):
+    def check_database(self, _):
         """ Check that the tokenizer is set up correctly.
         """
         hint = """\

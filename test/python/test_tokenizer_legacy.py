@@ -132,10 +132,10 @@ def test_init_module_custom(tokenizer_factory, test_config,
     assert not (test_config.project_dir / 'module').exists()
 
 
-def test_init_from_project(tokenizer_setup, tokenizer_factory):
+def test_init_from_project(tokenizer_setup, tokenizer_factory, test_config):
     tok = tokenizer_factory()
 
-    tok.init_from_project()
+    tok.init_from_project(test_config)
 
     assert tok.normalization is not None
 

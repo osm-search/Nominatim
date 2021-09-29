@@ -14,7 +14,6 @@ from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
-from nominatim.tokenizer.icu_name_processor import ICUNameProcessor, ICUNameProcessorRules
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
 DBCFG_TERM_NORMALIZATION = "tokenizer_term_normalization"
@@ -36,7 +35,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
     def __init__(self, dsn, data_dir):
         self.dsn = dsn
         self.data_dir = data_dir
-        self.naming_rules = None
+        self.loader = None
         self.term_normalization = None
 
 
@@ -46,9 +45,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
             This copies all necessary data in the project directory to make
             sure the tokenizer remains stable even over updates.
         """
-        loader = ICURuleLoader(config.load_sub_configuration('icu_tokenizer.yaml',
-                                                             config='TOKENIZER_CONFIG'))
-        self.naming_rules = ICUNameProcessorRules(loader=loader)
+        self.loader = ICURuleLoader(config)
+
         self.term_normalization = config.TERM_NORMALIZATION
 
         self._install_php(config.lib_dir.php)
@@ -59,11 +57,13 @@ class LegacyICUTokenizer(AbstractTokenizer):
             self._init_db_tables(config)
 
 
-    def init_from_project(self):
+    def init_from_project(self, config):
         """ Initialise the tokenizer from the project directory.
         """
+        self.loader = ICURuleLoader(config)
+
         with connect(self.dsn) as conn:
-            self.naming_rules = ICUNameProcessorRules(conn=conn)
+            self.loader.load_config_from_db(conn)
             self.term_normalization = get_property(conn, DBCFG_TERM_NORMALIZATION)
 
 
@@ -81,12 +81,12 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer.sql')
 
 
-    def check_database(self):
+    def check_database(self, config):
         """ Check that the tokenizer is set up correctly.
         """
-        self.init_from_project()
+        self.init_from_project(config)
 
-        if self.naming_rules is None:
+        if self.term_normalization is None:
             return "Configuration for tokenizer 'icu' are missing."
 
         return None
@@ -107,7 +107,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
 
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
-        return LegacyICUNameAnalyzer(self.dsn, ICUNameProcessor(self.naming_rules))
+        return LegacyICUNameAnalyzer(self.dsn, self.loader.make_token_analysis())
 
 
     def _install_php(self, phpdir):
@@ -118,7 +118,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
             <?php
             @define('CONST_Max_Word_Frequency', 10000000);
             @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
-            @define('CONST_Transliteration', "{self.naming_rules.search_rules}");
+            @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
             require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
 
@@ -127,8 +127,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
             database as database properties.
         """
         with connect(self.dsn) as conn:
-            self.naming_rules.save_rules(conn)
-
+            self.loader.save_config_to_db(conn)
             set_property(conn, DBCFG_TERM_NORMALIZATION, self.term_normalization)
 
 
@@ -163,7 +162,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """ Count the partial terms from the names in the place table.
         """
         words = Counter()
-        name_proc = ICUNameProcessor(self.naming_rules)
+        name_proc = self.loader.make_token_analysis()
 
         with conn.cursor(name="words") as cur:
             cur.execute(""" SELECT v, count(*) FROM

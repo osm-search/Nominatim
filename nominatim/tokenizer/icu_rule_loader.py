@@ -2,16 +2,24 @@
 Helper class to create ICU rules from a configuration file.
 """
 import io
+import json
 import logging
 import itertools
 import re
 
 from icu import Transliterator
 
+from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
+from nominatim.tokenizer.icu_name_processor import ICUNameProcessor
 import nominatim.tokenizer.icu_variants as variants
 
 LOG = logging.getLogger()
+
+DBCFG_IMPORT_NORM_RULES = "tokenizer_import_normalisation"
+DBCFG_IMPORT_TRANS_RULES = "tokenizer_import_transliteration"
+DBCFG_IMPORT_ANALYSIS_RULES = "tokenizer_import_analysis_rules"
+
 
 def _flatten_config_list(content):
     if not content:
@@ -46,12 +54,43 @@ class ICURuleLoader:
     """ Compiler for ICU rules from a tokenizer configuration file.
     """
 
-    def __init__(self, rules):
+    def __init__(self, config):
+        rules = config.load_sub_configuration('icu_tokenizer.yaml',
+                                              config='TOKENIZER_CONFIG')
+
         self.variants = set()
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
-        self._parse_variant_list(self._get_section(rules, 'variants'))
+        self.analysis_rules = self._get_section(rules, 'variants')
+        self._parse_variant_list()
+
+
+    def load_config_from_db(self, conn):
+        """ Get previously saved parts of the configuration from the
+            database.
+        """
+        self.normalization_rules = get_property(conn, DBCFG_IMPORT_NORM_RULES)
+        self.transliteration_rules = get_property(conn, DBCFG_IMPORT_TRANS_RULES)
+        self.analysis_rules = json.loads(get_property(conn, DBCFG_IMPORT_ANALYSIS_RULES))
+        self._parse_variant_list()
+
+
+    def save_config_to_db(self, conn):
+        """ Save the part of the configuration that cannot be changed into
+            the database.
+        """
+        set_property(conn, DBCFG_IMPORT_NORM_RULES, self.normalization_rules)
+        set_property(conn, DBCFG_IMPORT_TRANS_RULES, self.transliteration_rules)
+        set_property(conn, DBCFG_IMPORT_ANALYSIS_RULES, json.dumps(self.analysis_rules))
+
+
+    def make_token_analysis(self):
+        """ Create a token analyser from the reviouly loaded rules.
+        """
+        return ICUNameProcessor(self.normalization_rules,
+                                self.transliteration_rules,
+                                self.variants)
 
 
     def get_search_rules(self):
@@ -112,7 +151,9 @@ class ICURuleLoader:
         return ';'.join(_flatten_config_list(content)) + ';'
 
 
-    def _parse_variant_list(self, rules):
+    def _parse_variant_list(self):
+        rules = self.analysis_rules
+
         self.variants.clear()
 
         if not rules:

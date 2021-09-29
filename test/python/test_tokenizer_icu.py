@@ -7,7 +7,6 @@ import yaml
 import pytest
 
 from nominatim.tokenizer import icu_tokenizer
-from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
 from nominatim.db.sql_preprocessor import SQLPreprocessor
@@ -72,7 +71,8 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         cfgstr = {'normalization' : list(norm),
                    'transliteration' : list(trans),
                    'variants' : [ {'words': list(variants)}]}
-        tok.naming_rules = ICUNameProcessorRules(loader=ICURuleLoader(cfgstr))
+        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
+        tok.loader = ICURuleLoader(test_config)
 
         return tok.name_analyzer()
 
@@ -178,9 +178,9 @@ def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
     monkeypatch.undo()
 
     tok = tokenizer_factory()
-    tok.init_from_project()
+    tok.init_from_project(test_config)
 
-    assert tok.naming_rules is not None
+    assert tok.loader is not None
     assert tok.term_normalization == ':: lower();'
 
 

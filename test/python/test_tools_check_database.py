@@ -53,7 +53,7 @@ def test_check_tokenizer(temp_db_conn, def_config, monkeypatch,
                          check_result, state):
     class _TestTokenizer:
         @staticmethod
-        def check_database():
+        def check_database(_):
             return check_result
 
     monkeypatch.setattr(chkdb.tokenizer_factory, 'get_tokenizer_for_db',

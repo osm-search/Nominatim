@@ -1,6 +1,7 @@
 """
 Tokenizer for testing.
 """
+from nominatim.indexer.place_info import PlaceInfo
 
 def create(dsn, data_dir):
     """ Create a new instance of the tokenizer provided by this module.
@@ -68,4 +69,5 @@ class DummyNameAnalyzer:
 
     @staticmethod
     def process_place(place):
+        assert isinstance(place, PlaceInfo)
         return {}

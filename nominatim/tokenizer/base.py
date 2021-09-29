@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 
 from nominatim.config import Configuration
+from nominatim.indexer.place_info import PlaceInfo
 
 # pylint: disable=unnecessary-pass
 
@@ -105,20 +106,13 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def process_place(self, place: Dict) -> Any:
+    def process_place(self, place: PlaceInfo) -> Any:
         """ Extract tokens for the given place and compute the
             information to be handed to the PL/pgSQL processor for building
             the search index.
 
             Arguments:
-                place: Dictionary with the information about the place. Currently
-                       the following fields may be present:
-
-                       - *name* is a dictionary of names for the place together
-                         with the designation of the name.
-                       - *address* is a dictionary of address terms.
-                       - *country_feature* is set to a country code when the
-                         place describes a country.
+                place: Place information retrived from the database.
 
             Returns:
                 A JSON-serialisable structure that will be handed into

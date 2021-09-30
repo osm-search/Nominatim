@@ -67,10 +67,12 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
     monkeypatch.undo()
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
-                     variants=('~gasse -> gasse', 'street => st', )):
+                     variants=('~gasse -> gasse', 'street => st', ),
+                     sanitizers=[]):
         cfgstr = {'normalization' : list(norm),
-                   'transliteration' : list(trans),
-                   'variants' : [ {'words': list(variants)}]}
+                  'sanitizers' : sanitizers,
+                  'transliteration' : list(trans),
+                  'variants' : [ {'words': list(variants)}]}
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
         tok.loader = ICURuleLoader(test_config)
 
@@ -309,14 +311,15 @@ class TestPlaceNames:
 
     @pytest.fixture(autouse=True)
     def setup(self, analyzer, sql_functions):
-        with analyzer() as anl:
+        sanitizers = [{'step': 'split-name-list'},
+                      {'step': 'strip-brace-terms'}]
+        with analyzer(sanitizers=sanitizers) as anl:
             self.analyzer = anl
             yield anl
 
 
     def expect_name_terms(self, info, *expected_terms):
         tokens = self.analyzer.get_word_token_info(expected_terms)
-        print (tokens)
         for token in tokens:
             assert token[2] is not None, "No token for {0}".format(token)
 
@@ -324,9 +327,7 @@ class TestPlaceNames:
 
 
     def process_named_place(self, names):
-        place = {'name': names}
-
-        return self.analyzer.process_place(PlaceInfo(place))
+        return self.analyzer.process_place(PlaceInfo({'name': names}))
 
 
     def test_simple_names(self):

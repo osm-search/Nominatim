@@ -24,6 +24,9 @@ transliteration:
     - "[^[:Ascii:]] >"
     - ":: lower ()"
     - ":: NFC ()"
+sanitizers:
+    - step: split-name-list
+    - step: strip-brace-terms
 variants:
     - !include icu-rules/variants-bg.yaml
     - !include icu-rules/variants-ca.yaml

@@ -12,6 +12,7 @@ from icu import Transliterator
 from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor
+from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 import nominatim.tokenizer.icu_variants as variants
 
 LOG = logging.getLogger()
@@ -65,6 +66,9 @@ class ICURuleLoader:
         self.analysis_rules = self._get_section(rules, 'variants')
         self._parse_variant_list()
 
+        # Load optional sanitizer rule set.
+        self.sanitizer_rules = rules.get('sanitizers', [])
+
 
     def load_config_from_db(self, conn):
         """ Get previously saved parts of the configuration from the
@@ -83,6 +87,12 @@ class ICURuleLoader:
         set_property(conn, DBCFG_IMPORT_NORM_RULES, self.normalization_rules)
         set_property(conn, DBCFG_IMPORT_TRANS_RULES, self.transliteration_rules)
         set_property(conn, DBCFG_IMPORT_ANALYSIS_RULES, json.dumps(self.analysis_rules))
+
+
+    def make_sanitizer(self):
+        """ Create a place sanitizer from the configured rules.
+        """
+        return PlaceSanitizer(self.sanitizer_rules)
 
 
     def make_token_analysis(self):

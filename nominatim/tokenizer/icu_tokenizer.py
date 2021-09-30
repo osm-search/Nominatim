@@ -13,6 +13,7 @@ from nominatim.db.connection import connect
 from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.indexer.place_info import PlaceInfo
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
@@ -107,7 +108,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
 
             Analyzers are not thread-safe. You need to instantiate one per thread.
         """
-        return LegacyICUNameAnalyzer(self.dsn, self.loader.make_token_analysis())
+        return LegacyICUNameAnalyzer(self.dsn, self.loader.make_sanitizer(),
+                                     self.loader.make_token_analysis())
 
 
     def _install_php(self, phpdir):
@@ -187,10 +189,11 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         normalization.
     """
 
-    def __init__(self, dsn, name_proc):
+    def __init__(self, dsn, sanitizer, token_analysis):
         self.conn = connect(dsn).connection
         self.conn.autocommit = True
-        self.name_processor = name_proc
+        self.sanitizer = sanitizer
+        self.token_analysis = token_analysis
 
         self._cache = _TokenCache()
 
@@ -201,6 +204,19 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if self.conn:
             self.conn.close()
             self.conn = None
+
+
+    def _search_normalized(self, name):
+        """ Return the search token transliteration of the given name.
+        """
+        return self.token_analysis.get_search_normalized(name)
+
+
+    def _normalized(self, name):
+        """ Return the normalized version of the given name with all
+            non-relevant information removed.
+        """
+        return self.token_analysis.get_normalized(name)
 
 
     def get_word_token_info(self, words):
@@ -218,9 +234,9 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         partial_tokens = {}
         for word in words:
             if word.startswith('#'):
-                full_tokens[word] = self.name_processor.get_search_normalized(word[1:])
+                full_tokens[word] = self._search_normalized(word[1:])
             else:
-                partial_tokens[word] = self.name_processor.get_search_normalized(word)
+                partial_tokens[word] = self._search_normalized(word)
 
         with self.conn.cursor() as cur:
             cur.execute("""SELECT word_token, word_id
@@ -251,7 +267,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
             This function takes minor shortcuts on transliteration.
         """
-        return self.name_processor.get_search_normalized(hnr)
+        return self._search_normalized(hnr)
 
     def update_postcodes_from_db(self):
         """ Update postcode tokens in the word table from the location_postcode
@@ -274,7 +290,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                     if postcode is None:
                         to_delete.append(word)
                     else:
-                        copystr.add(self.name_processor.get_search_normalized(postcode),
+                        copystr.add(self._search_normalized(postcode),
                                     'P', postcode)
 
                 if to_delete:
@@ -292,7 +308,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             completely replaced. Otherwise the phrases are added to the
             already existing ones.
         """
-        norm_phrases = set(((self.name_processor.get_normalized(p[0]), p[1], p[2], p[3])
+        norm_phrases = set(((self._normalized(p[0]), p[1], p[2], p[3])
                             for p in phrases))
 
         with self.conn.cursor() as cur:
@@ -322,7 +338,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         added = 0
         with CopyBuffer() as copystr:
             for word, cls, typ, oper in to_add:
-                term = self.name_processor.get_search_normalized(word)
+                term = self._search_normalized(word)
                 if term:
                     copystr.add(term, 'S', word,
                                 json.dumps({'class': cls, 'type': typ,
@@ -356,9 +372,21 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def add_country_names(self, country_code, names):
         """ Add names for the given country to the search index.
         """
+        # Make sure any name preprocessing for country names applies.
+        info = PlaceInfo({'name': names, 'country_code': country_code,
+                          'rank_address': 4, 'class': 'boundary',
+                          'type': 'administrative'})
+        self._add_country_full_names(country_code,
+                                     self.sanitizer.process_names(info)[0])
+
+
+    def _add_country_full_names(self, country_code, names):
+        """ Add names for the given country from an already sanitized
+            name list.
+        """
         word_tokens = set()
-        for name in self._compute_full_names(names):
-            norm_name = self.name_processor.get_search_normalized(name)
+        for name in names:
+            norm_name = self._search_normalized(name.name)
             if norm_name:
                 word_tokens.add(norm_name)
 
@@ -384,12 +412,12 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def process_place(self, place):
         """ Determine tokenizer information about the given place.
 
-            Returns a JSON-serialisable structure that will be handed into
+            Returns a JSON-serializable structure that will be handed into
             the database via the token_info field.
         """
         token_info = _TokenInfo(self._cache)
 
-        names = place.name
+        names, address = self.sanitizer.process_names(place)
 
         if names:
             fulls, partials = self._compute_name_tokens(names)
@@ -397,9 +425,8 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             token_info.add_names(fulls, partials)
 
             if place.is_country():
-                self.add_country_names(place.country_code, names)
+                self._add_country_full_names(place.country_code, names)
 
-        address = place.address
         if address:
             self._process_place_address(token_info, address)
 
@@ -409,18 +436,18 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def _process_place_address(self, token_info, address):
         hnrs = []
         addr_terms = []
-        for key, value in address.items():
-            if key == 'postcode':
-                self._add_postcode(value)
-            elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
-                hnrs.append(value)
-            elif key == 'street':
-                token_info.add_street(self._compute_partial_tokens(value))
-            elif key == 'place':
-                token_info.add_place(self._compute_partial_tokens(value))
-            elif not key.startswith('_') and \
-                 key not in ('country', 'full'):
-                addr_terms.append((key, self._compute_partial_tokens(value)))
+        for item in address:
+            if item.kind == 'postcode':
+                self._add_postcode(item.name)
+            elif item.kind in ('housenumber', 'streetnumber', 'conscriptionnumber'):
+                hnrs.append(item.name)
+            elif item.kind == 'street':
+                token_info.add_street(self._compute_partial_tokens(item.name))
+            elif item.kind == 'place':
+                token_info.add_place(self._compute_partial_tokens(item.name))
+            elif not item.kind.startswith('_') and \
+                 item.kind not in ('country', 'full'):
+                addr_terms.append((item.kind, self._compute_partial_tokens(item.name)))
 
         if hnrs:
             hnrs = self._split_housenumbers(hnrs)
@@ -433,7 +460,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         """ Normalize the given term, split it into partial words and return
             then token list for them.
         """
-        norm_name = self.name_processor.get_search_normalized(name)
+        norm_name = self._search_normalized(name)
 
         tokens = []
         need_lookup = []
@@ -456,19 +483,19 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         return tokens
 
+
     def _compute_name_tokens(self, names):
         """ Computes the full name and partial name tokens for the given
             dictionary of names.
         """
-        full_names = self._compute_full_names(names)
         full_tokens = set()
         partial_tokens = set()
 
-        for name in full_names:
-            norm_name = self.name_processor.get_normalized(name)
+        for name in names:
+            norm_name = self._normalized(name.name)
             full, part = self._cache.names.get(norm_name, (None, None))
             if full is None:
-                variants = self.name_processor.get_variants_ascii(norm_name)
+                variants = self.token_analysis.get_variants_ascii(norm_name)
                 if not variants:
                     continue
 
@@ -485,23 +512,6 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         return full_tokens, partial_tokens
 
 
-    @staticmethod
-    def _compute_full_names(names):
-        """ Return the set of all full name word ids to be used with the
-            given dictionary of names.
-        """
-        full_names = set()
-        for name in (n.strip() for ns in names.values() for n in re.split('[;,]', ns)):
-            if name:
-                full_names.add(name)
-
-                brace_idx = name.find('(')
-                if brace_idx >= 0:
-                    full_names.add(name[:brace_idx].strip())
-
-        return full_names
-
-
     def _add_postcode(self, postcode):
         """ Make sure the normalized postcode is present in the word table.
         """
@@ -509,7 +519,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             postcode = self.normalize_postcode(postcode)
 
             if postcode not in self._cache.postcodes:
-                term = self.name_processor.get_search_normalized(postcode)
+                term = self._search_normalized(postcode)
                 if not term:
                     return
 

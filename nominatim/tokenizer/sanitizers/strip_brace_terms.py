@@ -10,13 +10,13 @@ def create(_):
     def _process(obj):
         """ Add variants for names that have a bracket extension.
         """
-        new_names = []
         if obj.names:
+            new_names = []
             for name in (n for n in obj.names if '(' in n.name):
                 new_name = name.name.split('(')[0].strip()
                 if new_name:
                     new_names.append(name.clone(name=new_name))
 
-        obj.names.extend(new_names)
+            obj.names.extend(new_names)
 
     return _process

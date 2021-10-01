@@ -166,7 +166,7 @@ def check_tokenizer(_, config):
         return CheckState.FAIL, dict(msg="""\
             Cannot load tokenizer. Did the import finish sucessfully?""")
 
-    result = tokenizer.check_database()
+    result = tokenizer.check_database(config)
 
     if result is None:
         return CheckState.OK

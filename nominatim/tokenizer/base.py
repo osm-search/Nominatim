@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 
 from nominatim.config import Configuration
+from nominatim.indexer.place_info import PlaceInfo
 
 # pylint: disable=unnecessary-pass
 
@@ -105,20 +106,13 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def process_place(self, place: Dict) -> Any:
+    def process_place(self, place: PlaceInfo) -> Any:
         """ Extract tokens for the given place and compute the
             information to be handed to the PL/pgSQL processor for building
             the search index.
 
             Arguments:
-                place: Dictionary with the information about the place. Currently
-                       the following fields may be present:
-
-                       - *name* is a dictionary of names for the place together
-                         with the designation of the name.
-                       - *address* is a dictionary of address terms.
-                       - *country_feature* is set to a country code when the
-                         place describes a country.
+                place: Place information retrived from the database.
 
             Returns:
                 A JSON-serialisable structure that will be handed into
@@ -142,7 +136,7 @@ class AbstractTokenizer(ABC):
             the tokenizer remains stable over updates.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
 
               init_db: When set to False, then initialisation of database
                 tables should be skipped. This option is only required for
@@ -155,11 +149,14 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def init_from_project(self) -> None:
+    def init_from_project(self, config: Configuration) -> None:
         """ Initialise the tokenizer from an existing database setup.
 
             The function should load all previously saved configuration from
             the project directory and/or the property table.
+
+            Arguments:
+              config: Read-only object with configuration options.
         """
         pass
 
@@ -172,7 +169,7 @@ class AbstractTokenizer(ABC):
             during query time.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
         """
         pass
 
@@ -187,13 +184,13 @@ class AbstractTokenizer(ABC):
             data structures or data itself must not be changed by this function.
 
             Arguments:
-              config: Read-only object with configuration obtions.
+              config: Read-only object with configuration options.
         """
         pass
 
 
     @abstractmethod
-    def check_database(self) -> str:
+    def check_database(self, config: Configuration) -> str:
         """ Check that the database is set up correctly and ready for being
             queried.
 
@@ -201,6 +198,9 @@ class AbstractTokenizer(ABC):
               If an issue was found, return an error message with the
               description of the issue as well as hints for the user on
               how to resolve the issue.
+
+            Arguments:
+              config: Read-only object with configuration options.
 
               Return `None`, if no issue was found.
         """

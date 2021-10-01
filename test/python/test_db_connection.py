@@ -100,6 +100,6 @@ def test_get_pg_env_overwrite_variable(monkeypatch):
 
 
 def test_get_pg_env_ignore_unknown():
-    env = get_pg_env('tty=stuff', base_env={})
+    env = get_pg_env('client_encoding=stuff', base_env={})
 
     assert env == {}

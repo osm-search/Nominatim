@@ -2,7 +2,6 @@
 Data structures for saving variant expansions for ICU tokenizer.
 """
 from collections import namedtuple
-import json
 
 _ICU_VARIANT_PORPERTY_FIELDS = ['lang']
 
@@ -24,34 +23,3 @@ class ICUVariantProperties(namedtuple('_ICUVariantProperties', _ICU_VARIANT_PORP
 
 
 ICUVariant = namedtuple('ICUVariant', ['source', 'replacement', 'properties'])
-
-
-def pickle_variant_set(variants):
-    """ Serializes an iterable of variant rules to a string.
-    """
-    # Create a list of property sets. So they don't need to be duplicated
-    properties = {}
-    pid = 1
-    for variant in variants:
-        if variant.properties not in properties:
-            properties[variant.properties] = pid
-            pid += 1
-
-    # Convert the variants into a simple list.
-    variants = [(v.source, v.replacement, properties[v.properties]) for v in variants]
-
-    # Convert everythin to json.
-    return json.dumps({'properties': {v: k._asdict() for k, v in properties.items()},
-                       'variants': variants})
-
-
-def unpickle_variant_set(variant_string):
-    """ Deserializes a variant string that was previously created with
-        pickle_variant_set() into a set of ICUVariants.
-    """
-    data = json.loads(variant_string)
-
-    properties = {int(k): ICUVariantProperties.from_rules(v)
-                  for k, v in data['properties'].items()}
-
-    return set((ICUVariant(src, repl, properties[pid]) for src, repl, pid in data['variants']))

@@ -5,6 +5,7 @@ import shutil
 
 import pytest
 
+from nominatim.indexer.place_info import PlaceInfo
 from nominatim.tokenizer import legacy_tokenizer
 from nominatim.db import properties
 from nominatim.errors import UsageError
@@ -131,10 +132,10 @@ def test_init_module_custom(tokenizer_factory, test_config,
     assert not (test_config.project_dir / 'module').exists()
 
 
-def test_init_from_project(tokenizer_setup, tokenizer_factory):
+def test_init_from_project(tokenizer_setup, tokenizer_factory, test_config):
     tok = tokenizer_factory()
 
-    tok.init_from_project()
+    tok.init_from_project(test_config)
 
     assert tok.normalization is not None
 
@@ -284,21 +285,21 @@ def test_add_more_country_names(analyzer, word_table, make_standard_name):
 
 
 def test_process_place_names(analyzer, make_keywords):
-    info = analyzer.process_place({'name' : {'name' : 'Soft bAr', 'ref': '34'}})
+    info = analyzer.process_place(PlaceInfo({'name' : {'name' : 'Soft bAr', 'ref': '34'}}))
 
     assert info['names'] == '{1,2,3}'
 
 
 @pytest.mark.parametrize('pcode', ['12345', 'AB 123', '34-345'])
 def test_process_place_postcode(analyzer, create_postcode_id, word_table, pcode):
-    analyzer.process_place({'address': {'postcode' : pcode}})
+    analyzer.process_place(PlaceInfo({'address': {'postcode' : pcode}}))
 
     assert word_table.get_postcodes() == {pcode, }
 
 
 @pytest.mark.parametrize('pcode', ['12:23', 'ab;cd;f', '123;836'])
 def test_process_place_bad_postcode(analyzer, create_postcode_id, word_table, pcode):
-    analyzer.process_place({'address': {'postcode' : pcode}})
+    analyzer.process_place(PlaceInfo({'address': {'postcode' : pcode}}))
 
     assert not word_table.get_postcodes()
 
@@ -319,7 +320,7 @@ class TestHousenumberName:
     @staticmethod
     @pytest.mark.parametrize('hnr', ['123a', '1', '101'])
     def test_process_place_housenumbers_simple(analyzer, hnr):
-        info = analyzer.process_place({'address': {'housenumber' : hnr}})
+        info = analyzer.process_place(PlaceInfo({'address': {'housenumber' : hnr}}))
 
         assert info['hnr'] == hnr
         assert info['hnr_tokens'].startswith("{")
@@ -327,15 +328,15 @@ class TestHousenumberName:
 
     @staticmethod
     def test_process_place_housenumbers_lists(analyzer):
-        info = analyzer.process_place({'address': {'conscriptionnumber' : '1; 2;3'}})
+        info = analyzer.process_place(PlaceInfo({'address': {'conscriptionnumber' : '1; 2;3'}}))
 
         assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
 
 
     @staticmethod
     def test_process_place_housenumbers_duplicates(analyzer):
-        info = analyzer.process_place({'address': {'housenumber' : '134',
+        info = analyzer.process_place(PlaceInfo({'address': {'housenumber' : '134',
                                                    'conscriptionnumber' : '134',
-                                                   'streetnumber' : '99a'}})
+                                                   'streetnumber' : '99a'}}))
 
         assert set(info['hnr'].split(';')) == set(('134', '99a'))

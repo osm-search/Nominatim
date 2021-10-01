@@ -7,10 +7,10 @@ import yaml
 import pytest
 
 from nominatim.tokenizer import icu_tokenizer
-from nominatim.tokenizer.icu_name_processor import ICUNameProcessorRules
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.db import properties
 from nominatim.db.sql_preprocessor import SQLPreprocessor
+from nominatim.indexer.place_info import PlaceInfo
 
 from mock_icu_word_table import MockIcuWordTable
 
@@ -67,11 +67,14 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
     monkeypatch.undo()
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
-                     variants=('~gasse -> gasse', 'street => st', )):
+                     variants=('~gasse -> gasse', 'street => st', ),
+                     sanitizers=[]):
         cfgstr = {'normalization' : list(norm),
-                   'transliteration' : list(trans),
-                   'variants' : [ {'words': list(variants)}]}
-        tok.naming_rules = ICUNameProcessorRules(loader=ICURuleLoader(cfgstr))
+                  'sanitizers' : sanitizers,
+                  'transliteration' : list(trans),
+                  'variants' : [ {'words': list(variants)}]}
+        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
+        tok.loader = ICURuleLoader(test_config)
 
         return tok.name_analyzer()
 
@@ -177,9 +180,9 @@ def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
     monkeypatch.undo()
 
     tok = tokenizer_factory()
-    tok.init_from_project()
+    tok.init_from_project(test_config)
 
-    assert tok.naming_rules is not None
+    assert tok.loader is not None
     assert tok.term_normalization == ':: lower();'
 
 
@@ -308,44 +311,54 @@ class TestPlaceNames:
 
     @pytest.fixture(autouse=True)
     def setup(self, analyzer, sql_functions):
-        with analyzer() as anl:
+        sanitizers = [{'step': 'split-name-list'},
+                      {'step': 'strip-brace-terms'}]
+        with analyzer(sanitizers=sanitizers) as anl:
             self.analyzer = anl
             yield anl
 
 
     def expect_name_terms(self, info, *expected_terms):
         tokens = self.analyzer.get_word_token_info(expected_terms)
-        print (tokens)
         for token in tokens:
             assert token[2] is not None, "No token for {0}".format(token)
 
         assert eval(info['names']) == set((t[2] for t in tokens))
 
 
+    def process_named_place(self, names):
+        return self.analyzer.process_place(PlaceInfo({'name': names}))
+
+
     def test_simple_names(self):
-        info = self.analyzer.process_place({'name': {'name': 'Soft bAr', 'ref': '34'}})
+        info = self.process_named_place({'name': 'Soft bAr', 'ref': '34'})
 
         self.expect_name_terms(info, '#Soft bAr', '#34', 'Soft', 'bAr', '34')
 
 
     @pytest.mark.parametrize('sep', [',' , ';'])
     def test_names_with_separator(self, sep):
-        info = self.analyzer.process_place({'name': {'name': sep.join(('New York', 'Big Apple'))}})
+        info = self.process_named_place({'name': sep.join(('New York', 'Big Apple'))})
 
         self.expect_name_terms(info, '#New York', '#Big Apple',
                                      'new', 'york', 'big', 'apple')
 
 
     def test_full_names_with_bracket(self):
-        info = self.analyzer.process_place({'name': {'name': 'Houseboat (left)'}})
+        info = self.process_named_place({'name': 'Houseboat (left)'})
 
         self.expect_name_terms(info, '#Houseboat (left)', '#Houseboat',
                                      'houseboat', 'left')
 
 
     def test_country_name(self, word_table):
-        info = self.analyzer.process_place({'name': {'name': 'Norge'},
-                                           'country_feature': 'no'})
+        place = PlaceInfo({'name' : {'name': 'Norge'},
+                           'country_code': 'no',
+                           'rank_address': 4,
+                           'class': 'boundary',
+                           'type': 'administrative'})
+
+        info = self.analyzer.process_place(place)
 
         self.expect_name_terms(info, '#norge', 'norge')
         assert word_table.get_country() == {('no', 'NORGE')}
@@ -361,7 +374,7 @@ class TestPlaceAddress:
 
 
     def process_address(self, **kwargs):
-        return self.analyzer.process_place({'address': kwargs})
+        return self.analyzer.process_place(PlaceInfo({'address': kwargs}))
 
 
     def name_token_set(self, *expected_terms):

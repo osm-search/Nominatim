@@ -29,6 +29,7 @@ class IndexerTestDB:
                                                 indexed_date TIMESTAMP,
                                                 partition SMALLINT,
                                                 admin_level SMALLINT,
+                                                country_code TEXT,
                                                 address HSTORE,
                                                 token_info JSONB,
                                                 geometry_sector INTEGER)""")
@@ -54,15 +55,26 @@ class IndexerTestDB:
                              END IF;
                              RETURN NEW;
                            END; $$ LANGUAGE plpgsql;""")
-            cur.execute("""CREATE OR REPLACE FUNCTION placex_prepare_update(p placex,
-                                                      OUT name HSTORE,
-                                                      OUT address HSTORE,
-                                                      OUT country_feature VARCHAR,
-                                                      OUT linked_place_id BIGINT)
+            cur.execute("DROP TYPE IF EXISTS prepare_update_info CASCADE")
+            cur.execute("""CREATE TYPE prepare_update_info AS (
+                             name HSTORE,
+                             address HSTORE,
+                             rank_address SMALLINT,
+                             country_code TEXT,
+                             class TEXT,
+                             type TEXT,
+                             linked_place_id BIGINT
+                           )""")
+            cur.execute("""CREATE OR REPLACE FUNCTION placex_indexing_prepare(p placex,
+                                                     OUT result prepare_update_info)
                            AS $$
                            BEGIN
-                            address := p.address;
-                            name := p.name;
+                             result.address := p.address;
+                             result.name := p.name;
+                             result.class := p.class;
+                             result.type := p.type;
+                             result.country_code := p.country_code;
+                             result.rank_address := p.rank_address;
                            END;
                            $$ LANGUAGE plpgsql STABLE;
                         """)

@@ -85,6 +85,6 @@ def get_tokenizer_for_db(config):
     tokenizer_module = _import_tokenizer(name)
 
     tokenizer = tokenizer_module.create(config.get_libpq_dsn(), basedir)
-    tokenizer.init_from_project()
+    tokenizer.init_from_project(config)
 
     return tokenizer

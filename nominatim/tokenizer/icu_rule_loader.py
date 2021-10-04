@@ -5,16 +5,11 @@ import importlib
 import io
 import json
 import logging
-import itertools
-import re
-
-from icu import Transliterator
 
 from nominatim.config import flatten_config_list
 from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-import nominatim.tokenizer.icu_variants as variants
 
 LOG = logging.getLogger()
 
@@ -32,18 +27,6 @@ def _get_section(rules, section):
         raise UsageError("Syntax error in tokenizer configuration file.")
 
     return rules[section]
-
-
-class VariantRule:
-    """ Saves a single variant expansion.
-
-        An expansion consists of the normalized replacement term and
-        a dicitonary of properties that describe when the expansion applies.
-    """
-
-    def __init__(self, replacement, properties):
-        self.replacement = replacement
-        self.properties = properties or {}
 
 
 class ICURuleLoader:
@@ -169,8 +152,7 @@ class TokenAnalyzerRule:
         self._mod_create = analysis_mod.create
 
         # Load the configuration.
-        self.config = {}
-        self._parse_variant_list(rules.get('variants'), normalization_rules)
+        self.config = analysis_mod.configure(rules, normalization_rules)
 
 
     def create(self, normalization_rules, transliteration_rules):
@@ -179,115 +161,3 @@ class TokenAnalyzerRule:
         return self._mod_create(normalization_rules,
                                 transliteration_rules,
                                 self.config)
-
-
-    def _parse_variant_list(self, rules, normalization_rules):
-        vset = set()
-
-        if not rules:
-            return
-
-        rules = flatten_config_list(rules, 'variants')
-
-        vmaker = _VariantMaker(normalization_rules)
-
-        properties = []
-        for section in rules:
-            # Create the property field and deduplicate against existing
-            # instances.
-            props = variants.ICUVariantProperties.from_rules(section)
-            for existing in properties:
-                if existing == props:
-                    props = existing
-                    break
-            else:
-                properties.append(props)
-
-            for rule in (section.get('words') or []):
-                vset.update(vmaker.compute(rule, props))
-
-        self.config['variants'] = vset
-
-
-class _VariantMaker:
-    """ Generater for all necessary ICUVariants from a single variant rule.
-
-        All text in rules is normalized to make sure the variants match later.
-    """
-
-    def __init__(self, norm_rules):
-        self.norm = Transliterator.createFromRules("rule_loader_normalization",
-                                                   norm_rules)
-
-
-    def compute(self, rule, props):
-        """ Generator for all ICUVariant tuples from a single variant rule.
-        """
-        parts = re.split(r'(\|)?([=-])>', rule)
-        if len(parts) != 4:
-            raise UsageError("Syntax error in variant rule: " + rule)
-
-        decompose = parts[1] is None
-        src_terms = [self._parse_variant_word(t) for t in parts[0].split(',')]
-        repl_terms = (self.norm.transliterate(t.strip()) for t in parts[3].split(','))
-
-        # If the source should be kept, add a 1:1 replacement
-        if parts[2] == '-':
-            for src in src_terms:
-                if src:
-                    for froms, tos in _create_variants(*src, src[0], decompose):
-                        yield variants.ICUVariant(froms, tos, props)
-
-        for src, repl in itertools.product(src_terms, repl_terms):
-            if src and repl:
-                for froms, tos in _create_variants(*src, repl, decompose):
-                    yield variants.ICUVariant(froms, tos, props)
-
-
-    def _parse_variant_word(self, name):
-        name = name.strip()
-        match = re.fullmatch(r'([~^]?)([^~$^]*)([~$]?)', name)
-        if match is None or (match.group(1) == '~' and match.group(3) == '~'):
-            raise UsageError("Invalid variant word descriptor '{}'".format(name))
-        norm_name = self.norm.transliterate(match.group(2))
-        if not norm_name:
-            return None
-
-        return norm_name, match.group(1), match.group(3)
-
-
-_FLAG_MATCH = {'^': '^ ',
-               '$': ' ^',
-               '': ' '}
-
-
-def _create_variants(src, preflag, postflag, repl, decompose):
-    if preflag == '~':
-        postfix = _FLAG_MATCH[postflag]
-        # suffix decomposition
-        src = src + postfix
-        repl = repl + postfix
-
-        yield src, repl
-        yield ' ' + src, ' ' + repl
-
-        if decompose:
-            yield src, ' ' + repl
-            yield ' ' + src, repl
-    elif postflag == '~':
-        # prefix decomposition
-        prefix = _FLAG_MATCH[preflag]
-        src = prefix + src
-        repl = prefix + repl
-
-        yield src, repl
-        yield src + ' ', repl + ' '
-
-        if decompose:
-            yield src, repl + ' '
-            yield src + ' ', repl
-    else:
-        prefix = _FLAG_MATCH[preflag]
-        postfix = _FLAG_MATCH[postflag]
-
-        yield prefix + src + postfix, prefix + repl + postfix

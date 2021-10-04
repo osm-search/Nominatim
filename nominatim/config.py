@@ -12,6 +12,27 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
+
+def flatten_config_list(content, section=''):
+    """ Flatten YAML configuration lists that contain include sections
+        which are lists themselves.
+    """
+    if not content:
+        return []
+
+    if not isinstance(content, list):
+        raise UsageError(f"List expected in section '{section}'.")
+
+    output = []
+    for ele in content:
+        if isinstance(ele, list):
+            output.extend(flatten_config_list(ele, section))
+        else:
+            output.append(ele)
+
+    return output
+
+
 class Configuration:
     """ Load and manage the project configuration.
 

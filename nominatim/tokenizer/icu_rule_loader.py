@@ -9,6 +9,7 @@ import re
 
 from icu import Transliterator
 
+from nominatim.config import flatten_config_list
 from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
 from nominatim.tokenizer.icu_name_processor import ICUNameProcessor
@@ -20,23 +21,6 @@ LOG = logging.getLogger()
 DBCFG_IMPORT_NORM_RULES = "tokenizer_import_normalisation"
 DBCFG_IMPORT_TRANS_RULES = "tokenizer_import_transliteration"
 DBCFG_IMPORT_ANALYSIS_RULES = "tokenizer_import_analysis_rules"
-
-
-def _flatten_config_list(content):
-    if not content:
-        return []
-
-    if not isinstance(content, list):
-        raise UsageError("List expected in ICU configuration.")
-
-    output = []
-    for ele in content:
-        if isinstance(ele, list):
-            output.extend(_flatten_config_list(ele))
-        else:
-            output.append(ele)
-
-    return output
 
 
 class VariantRule:
@@ -158,7 +142,7 @@ class ICURuleLoader:
         if content is None:
             return ''
 
-        return ';'.join(_flatten_config_list(content)) + ';'
+        return ';'.join(flatten_config_list(content, section)) + ';'
 
 
     def _parse_variant_list(self):
@@ -169,7 +153,7 @@ class ICURuleLoader:
         if not rules:
             return
 
-        rules = _flatten_config_list(rules)
+        rules = flatten_config_list(rules, 'variants')
 
         vmaker = _VariantMaker(self.normalization_rules)
 

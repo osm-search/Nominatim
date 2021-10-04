@@ -28,7 +28,8 @@ sanitizers:
     - step: split-name-list
     - step: strip-brace-terms
 token-analysis:
-    - variants:
+    - analyzer: generic
+      variants:
           - !include icu-rules/variants-bg.yaml
           - !include icu-rules/variants-ca.yaml
           - !include icu-rules/variants-cs.yaml

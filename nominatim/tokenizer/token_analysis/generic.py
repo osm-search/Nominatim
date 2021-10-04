@@ -1,6 +1,5 @@
 """
-Processor for names that are imported into the database based on the
-ICU library.
+Generic processor for names that creates abbreviation variants.
 """
 from collections import defaultdict
 import itertools
@@ -8,8 +7,15 @@ import itertools
 from icu import Transliterator
 import datrie
 
+### Analysis section
 
-class ICUNameProcessor:
+def create(norm_rules, trans_rules, config):
+    """ Create a new token analysis instance for this module.
+    """
+    return GenericTokenAnalysis(norm_rules, trans_rules, config['variants'])
+
+
+class GenericTokenAnalysis:
     """ Collects the different transformation rules for normalisation of names
         and provides the functions to apply the transformations.
     """

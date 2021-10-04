@@ -72,7 +72,8 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
         cfgstr = {'normalization': list(norm),
                   'sanitizers': sanitizers,
                   'transliteration': list(trans),
-                  'token-analysis': [{'variants': [{'words': list(variants)}]}]}
+                  'token-analysis': [{'analyzer': 'generic',
+                                      'variants': [{'words': list(variants)}]}]}
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
         tok.loader = ICURuleLoader(test_config)
 

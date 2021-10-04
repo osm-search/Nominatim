@@ -34,7 +34,7 @@ def cfgrules(test_config):
             - "::  Latin ()"
             - "[[:Punctuation:][:Space:]]+ > ' '"
         """)
-        content += "token-analysis:\n  - variants:\n     - words:\n"
+        content += "token-analysis:\n  - analyzer: generic\n    variants:\n     - words:\n"
         content += '\n'.join(("         - " + s for s in variants)) + '\n'
         for k, v in kwargs:
             content += "    {}: {}\n".format(k, v)
@@ -50,7 +50,8 @@ def test_empty_rule_set(test_config):
         normalization:
         transliteration:
         token-analysis:
-          - variants:
+          - analyzer: generic
+            variants:
         """))
 
     rules = ICURuleLoader(test_config)
@@ -108,7 +109,8 @@ def test_transliteration_rules_from_file(test_config):
             - "'ax' > 'b'"
             - !include transliteration.yaml
         token-analysis:
-            - variants:
+            - analyzer: generic
+              variants:
         """))
     transpath = test_config.project_dir / ('transliteration.yaml')
     transpath.write_text('- "x > y"')
@@ -128,7 +130,7 @@ class TestGetReplacements:
 
     def get_replacements(self, *variants):
         loader = ICURuleLoader(self.cfgrules(*variants))
-        rules = loader.analysis[None].variants
+        rules = loader.analysis[None].config['variants']
 
         return set((v.source, v.replacement) for v in rules)
 

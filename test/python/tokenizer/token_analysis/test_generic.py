@@ -28,7 +28,7 @@ def cfgfile(def_config, tmp_path):
             - "::  Latin ()"
             - "'🜵' > ' '"
         """)
-        content += "token-analysis:\n  - variants:\n      - words:\n"
+        content += "token-analysis:\n  - analyzer: generic\n    variants:\n      - words:\n"
         content += '\n'.join(("          - " + s for s in variants)) + '\n'
         for k, v in kwargs:
             content += "        {}: {}\n".format(k, v)

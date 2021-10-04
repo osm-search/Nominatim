@@ -1,6 +1,7 @@
 """
 Helper class to create ICU rules from a configuration file.
 """
+import importlib
 import io
 import json
 import logging
@@ -12,7 +13,6 @@ from icu import Transliterator
 from nominatim.config import flatten_config_list
 from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
-from nominatim.tokenizer.icu_name_processor import ICUNameProcessor
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 import nominatim.tokenizer.icu_variants as variants
 
@@ -21,6 +21,17 @@ LOG = logging.getLogger()
 DBCFG_IMPORT_NORM_RULES = "tokenizer_import_normalisation"
 DBCFG_IMPORT_TRANS_RULES = "tokenizer_import_transliteration"
 DBCFG_IMPORT_ANALYSIS_RULES = "tokenizer_import_analysis_rules"
+
+
+def _get_section(rules, section):
+    """ Get the section named 'section' from the rules. If the section does
+        not exist, raise a usage error with a meaningful message.
+    """
+    if section not in rules:
+        LOG.fatal("Section '%s' not found in tokenizer config.", section)
+        raise UsageError("Syntax error in tokenizer configuration file.")
+
+    return rules[section]
 
 
 class VariantRule:
@@ -45,7 +56,7 @@ class ICURuleLoader:
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
-        self.analysis_rules = self._get_section(rules, 'token-analysis')
+        self.analysis_rules = _get_section(rules, 'token-analysis')
         self._setup_analysis()
 
         # Load optional sanitizer rule set.
@@ -130,25 +141,14 @@ class ICURuleLoader:
 
 
     @staticmethod
-    def _get_section(rules, section):
-        """ Get the section named 'section' from the rules. If the section does
-            not exist, raise a usage error with a meaningful message.
-        """
-        if section not in rules:
-            LOG.fatal("Section '%s' not found in tokenizer config.", section)
-            raise UsageError("Syntax error in tokenizer configuration file.")
-
-        return rules[section]
-
-
-    def _cfg_to_icu_rules(self, rules, section):
+    def _cfg_to_icu_rules(rules, section):
         """ Load an ICU ruleset from the given section. If the section is a
             simple string, it is interpreted as a file name and the rules are
             loaded verbatim from the given file. The filename is expected to be
             relative to the tokenizer rule file. If the section is a list then
             each line is assumed to be a rule. All rules are concatenated and returned.
         """
-        content = self._get_section(rules, section)
+        content = _get_section(rules, section)
 
         if content is None:
             return ''
@@ -162,19 +162,27 @@ class TokenAnalyzerRule:
     """
 
     def __init__(self, rules, normalization_rules):
+        # Find the analysis module
+        module_name = 'nominatim.tokenizer.token_analysis.' \
+                      + _get_section(rules, 'analyzer').replace('-', '_')
+        analysis_mod = importlib.import_module(module_name)
+        self._mod_create = analysis_mod.create
+
+        # Load the configuration.
+        self.config = {}
         self._parse_variant_list(rules.get('variants'), normalization_rules)
 
 
     def create(self, normalization_rules, transliteration_rules):
         """ Create an analyzer from the given rules.
         """
-        return ICUNameProcessor(normalization_rules,
+        return self._mod_create(normalization_rules,
                                 transliteration_rules,
-                                self.variants)
+                                self.config)
 
 
     def _parse_variant_list(self, rules, normalization_rules):
-        self.variants = set()
+        vset = set()
 
         if not rules:
             return
@@ -196,7 +204,9 @@ class TokenAnalyzerRule:
                 properties.append(props)
 
             for rule in (section.get('words') or []):
-                self.variants.update(vmaker.compute(rule, props))
+                vset.update(vmaker.compute(rule, props))
+
+        self.config['variants'] = vset
 
 
 class _VariantMaker:

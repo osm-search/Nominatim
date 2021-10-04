@@ -43,12 +43,10 @@ class ICURuleLoader:
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
-        self.variants = set()
-
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
-        self.analysis_rules = self._get_section(rules, 'variants')
-        self._parse_variant_list()
+        self.analysis_rules = self._get_section(rules, 'token-analysis')
+        self._setup_analysis()
 
         # Load optional sanitizer rule set.
         self.sanitizer_rules = rules.get('sanitizers', [])
@@ -61,7 +59,7 @@ class ICURuleLoader:
         self.normalization_rules = get_property(conn, DBCFG_IMPORT_NORM_RULES)
         self.transliteration_rules = get_property(conn, DBCFG_IMPORT_TRANS_RULES)
         self.analysis_rules = json.loads(get_property(conn, DBCFG_IMPORT_ANALYSIS_RULES))
-        self._parse_variant_list()
+        self._setup_analysis()
 
 
     def save_config_to_db(self, conn):
@@ -82,9 +80,8 @@ class ICURuleLoader:
     def make_token_analysis(self):
         """ Create a token analyser from the reviouly loaded rules.
         """
-        return ICUNameProcessor(self.normalization_rules,
-                                self.transliteration_rules,
-                                self.variants)
+        return self.analysis[None].create(self.normalization_rules,
+                                          self.transliteration_rules)
 
 
     def get_search_rules(self):
@@ -99,23 +96,37 @@ class ICURuleLoader:
         rules.write(self.transliteration_rules)
         return rules.getvalue()
 
+
     def get_normalization_rules(self):
         """ Return rules for normalisation of a term.
         """
         return self.normalization_rules
+
 
     def get_transliteration_rules(self):
         """ Return the rules for converting a string into its asciii representation.
         """
         return self.transliteration_rules
 
-    def get_replacement_pairs(self):
-        """ Return the list of possible compound decompositions with
-            application of abbreviations included.
-            The result is a list of pairs: the first item is the sequence to
-            replace, the second is a list of replacements.
+
+    def _setup_analysis(self):
+        """ Process the rules used for creating the various token analyzers.
         """
-        return self.variants
+        self.analysis = {}
+
+        if not isinstance(self.analysis_rules, list):
+            raise UsageError("Configuration section 'token-analysis' must be a list.")
+
+        for section in self.analysis_rules:
+            name = section.get('id', None)
+            if name in self.analysis:
+                if name is None:
+                    LOG.fatal("ICU tokenizer configuration has two default token analyzers.")
+                else:
+                    LOG.fatal("ICU tokenizer configuration has two token "
+                              "analyzers with id '%s'.", name)
+                UsageError("Syntax error in ICU tokenizer config.")
+            self.analysis[name] = TokenAnalyzerRule(section, self.normalization_rules)
 
 
     @staticmethod
@@ -145,17 +156,32 @@ class ICURuleLoader:
         return ';'.join(flatten_config_list(content, section)) + ';'
 
 
-    def _parse_variant_list(self):
-        rules = self.analysis_rules
+class TokenAnalyzerRule:
+    """ Factory for a single analysis module. The class saves the configuration
+        and creates a new token analyzer on request.
+    """
 
-        self.variants.clear()
+    def __init__(self, rules, normalization_rules):
+        self._parse_variant_list(rules.get('variants'), normalization_rules)
+
+
+    def create(self, normalization_rules, transliteration_rules):
+        """ Create an analyzer from the given rules.
+        """
+        return ICUNameProcessor(normalization_rules,
+                                transliteration_rules,
+                                self.variants)
+
+
+    def _parse_variant_list(self, rules, normalization_rules):
+        self.variants = set()
 
         if not rules:
             return
 
         rules = flatten_config_list(rules, 'variants')
 
-        vmaker = _VariantMaker(self.normalization_rules)
+        vmaker = _VariantMaker(normalization_rules)
 
         properties = []
         for section in rules:

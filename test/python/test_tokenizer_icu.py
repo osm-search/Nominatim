@@ -69,10 +69,10 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', ),
                      sanitizers=[]):
-        cfgstr = {'normalization' : list(norm),
-                  'sanitizers' : sanitizers,
-                  'transliteration' : list(trans),
-                  'variants' : [ {'words': list(variants)}]}
+        cfgstr = {'normalization': list(norm),
+                  'sanitizers': sanitizers,
+                  'transliteration': list(trans),
+                  'token-analysis': [{'variants': [{'words': list(variants)}]}]}
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
         tok.loader = ICURuleLoader(test_config)
 

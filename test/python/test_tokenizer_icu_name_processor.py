@@ -28,10 +28,10 @@ def cfgfile(def_config, tmp_path):
             - "::  Latin ()"
             - "'🜵' > ' '"
         """)
-        content += "variants:\n  - words:\n"
-        content += '\n'.join(("      - " + s for s in variants)) + '\n'
+        content += "token-analysis:\n  - variants:\n      - words:\n"
+        content += '\n'.join(("          - " + s for s in variants)) + '\n'
         for k, v in kwargs:
-            content += "    {}: {}\n".format(k, v)
+            content += "        {}: {}\n".format(k, v)
         (project_dir / 'icu_tokenizer.yaml').write_text(content)
 
         return def_config

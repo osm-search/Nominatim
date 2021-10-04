@@ -34,8 +34,8 @@ def cfgrules(test_config):
             - "::  Latin ()"
             - "[[:Punctuation:][:Space:]]+ > ' '"
         """)
-        content += "variants:\n  - words:\n"
-        content += '\n'.join(("      - " + s for s in variants)) + '\n'
+        content += "token-analysis:\n  - variants:\n     - words:\n"
+        content += '\n'.join(("         - " + s for s in variants)) + '\n'
         for k, v in kwargs:
             content += "    {}: {}\n".format(k, v)
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(content)
@@ -49,20 +49,20 @@ def test_empty_rule_set(test_config):
     (test_config.project_dir / 'icu_tokenizer.yaml').write_text(dedent("""\
         normalization:
         transliteration:
-        variants:
+        token-analysis:
+          - variants:
         """))
 
     rules = ICURuleLoader(test_config)
     assert rules.get_search_rules() == ''
     assert rules.get_normalization_rules() == ''
     assert rules.get_transliteration_rules() == ''
-    assert list(rules.get_replacement_pairs()) == []
 
-CONFIG_SECTIONS = ('normalization', 'transliteration', 'variants')
+CONFIG_SECTIONS = ('normalization', 'transliteration', 'token-analysis')
 
 @pytest.mark.parametrize("section", CONFIG_SECTIONS)
 def test_missing_section(section, test_config):
-    rule_cfg = { s: {} for s in CONFIG_SECTIONS if s != section}
+    rule_cfg = { s: [] for s in CONFIG_SECTIONS if s != section}
     (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(rule_cfg))
 
     with pytest.raises(UsageError):
@@ -107,7 +107,8 @@ def test_transliteration_rules_from_file(test_config):
         transliteration:
             - "'ax' > 'b'"
             - !include transliteration.yaml
-        variants:
+        token-analysis:
+            - variants:
         """))
     transpath = test_config.project_dir / ('transliteration.yaml')
     transpath.write_text('- "x > y"')
@@ -127,7 +128,7 @@ class TestGetReplacements:
 
     def get_replacements(self, *variants):
         loader = ICURuleLoader(self.cfgrules(*variants))
-        rules = loader.get_replacement_pairs()
+        rules = loader.analysis[None].variants
 
         return set((v.source, v.replacement) for v in rules)
 

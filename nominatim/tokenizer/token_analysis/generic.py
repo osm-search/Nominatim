@@ -17,14 +17,12 @@ import nominatim.tokenizer.icu_variants as variants
 def configure(rules, normalization_rules):
     """ Extract and preprocess the configuration for this module.
     """
-    return {'variants': _parse_variant_list(rules.get('variants'),
-                                            normalization_rules)}
-
-
-def _parse_variant_list(rules, normalization_rules):
-    vset = set()
+    rules = rules.get('variants')
+    immediate = defaultdict(list)
+    chars = set()
 
     if rules:
+        vset = set()
         rules = flatten_config_list(rules, 'variants')
 
         vmaker = _VariantMaker(normalization_rules)
@@ -44,7 +42,17 @@ def _parse_variant_list(rules, normalization_rules):
             for rule in (section.get('words') or []):
                 vset.update(vmaker.compute(rule, props))
 
-    return vset
+        # Intermediate reorder by source. Also compute required character set.
+        for variant in vset:
+            if variant.source[-1] == ' ' and variant.replacement[-1] == ' ':
+                replstr = variant.replacement[:-1]
+            else:
+                replstr = variant.replacement
+            immediate[variant.source].append(replstr)
+            chars.update(variant.source)
+
+    return {'replacements': list(immediate.items()),
+            'chars': ''.join(chars)}
 
 
 class _VariantMaker:
@@ -136,7 +144,7 @@ def _create_variants(src, preflag, postflag, repl, decompose):
 def create(norm_rules, trans_rules, config):
     """ Create a new token analysis instance for this module.
     """
-    return GenericTokenAnalysis(norm_rules, trans_rules, config['variants'])
+    return GenericTokenAnalysis(norm_rules, trans_rules, config)
 
 
 class GenericTokenAnalysis:
@@ -144,7 +152,7 @@ class GenericTokenAnalysis:
         and provides the functions to apply the transformations.
     """
 
-    def __init__(self, norm_rules, trans_rules, replacements):
+    def __init__(self, norm_rules, trans_rules, config):
         self.normalizer = Transliterator.createFromRules("icu_normalization",
                                                          norm_rules)
         self.to_ascii = Transliterator.createFromRules("icu_to_ascii",
@@ -153,19 +161,9 @@ class GenericTokenAnalysis:
         self.search = Transliterator.createFromRules("icu_search",
                                                      norm_rules + trans_rules)
 
-        # Intermediate reorder by source. Also compute required character set.
-        immediate = defaultdict(list)
-        chars = set()
-        for variant in replacements:
-            if variant.source[-1] == ' ' and variant.replacement[-1] == ' ':
-                replstr = variant.replacement[:-1]
-            else:
-                replstr = variant.replacement
-            immediate[variant.source].append(replstr)
-            chars.update(variant.source)
-        # Then copy to datrie
-        self.replacements = datrie.Trie(''.join(chars))
-        for src, repllist in immediate.items():
+        # Set up datrie
+        self.replacements = datrie.Trie(config['chars'])
+        for src, repllist in config['replacements']:
             self.replacements[src] = repllist
 
 

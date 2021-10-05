@@ -130,9 +130,9 @@ class TestGetReplacements:
 
     def get_replacements(self, *variants):
         loader = ICURuleLoader(self.cfgrules(*variants))
-        rules = loader.analysis[None].config['variants']
+        rules = loader.analysis[None].config['replacements']
 
-        return set((v.source, v.replacement) for v in rules)
+        return sorted((k, sorted(v)) for k,v in rules)
 
 
     @pytest.mark.parametrize("variant", ['foo > bar', 'foo -> bar -> bar',
@@ -144,131 +144,122 @@ class TestGetReplacements:
     def test_add_full(self):
         repl = self.get_replacements("foo -> bar")
 
-        assert repl == {(' foo ', ' bar '), (' foo ', ' foo ')}
+        assert repl == [(' foo ', [' bar', ' foo'])]
 
 
     def test_replace_full(self):
         repl = self.get_replacements("foo => bar")
 
-        assert repl == {(' foo ', ' bar ')}
+        assert repl == [(' foo ', [' bar'])]
 
 
     def test_add_suffix_no_decompose(self):
         repl = self.get_replacements("~berg |-> bg")
 
-        assert repl == {('berg ', 'berg '), ('berg ', 'bg '),
-                        (' berg ', ' berg '), (' berg ', ' bg ')}
+        assert repl == [(' berg ', [' berg', ' bg']),
+                        ('berg ', ['berg', 'bg'])]
 
 
     def test_replace_suffix_no_decompose(self):
         repl = self.get_replacements("~berg |=> bg")
 
-        assert repl == {('berg ', 'bg '), (' berg ', ' bg ')}
+        assert repl == [(' berg ', [' bg']),('berg ', ['bg'])]
 
 
     def test_add_suffix_decompose(self):
         repl = self.get_replacements("~berg -> bg")
 
-        assert repl == {('berg ', 'berg '), ('berg ', ' berg '),
-                        (' berg ', ' berg '), (' berg ', 'berg '),
-                        ('berg ', 'bg '), ('berg ', ' bg '),
-                        (' berg ', 'bg '), (' berg ', ' bg ')}
+        assert repl == [(' berg ', [' berg', ' bg', 'berg', 'bg']),
+                        ('berg ', [' berg', ' bg', 'berg', 'bg'])]
 
 
     def test_replace_suffix_decompose(self):
         repl = self.get_replacements("~berg => bg")
 
-        assert repl == {('berg ', 'bg '), ('berg ', ' bg '),
-                        (' berg ', 'bg '), (' berg ', ' bg ')}
+        assert repl == [(' berg ', [' bg', 'bg']),
+                        ('berg ', [' bg', 'bg'])]
 
 
     def test_add_prefix_no_compose(self):
         repl = self.get_replacements("hinter~ |-> hnt")
 
-        assert repl == {(' hinter', ' hinter'), (' hinter ', ' hinter '),
-                        (' hinter', ' hnt'), (' hinter ', ' hnt ')}
+        assert repl == [(' hinter', [' hinter', ' hnt']),
+                        (' hinter ', [' hinter', ' hnt'])]
 
 
     def test_replace_prefix_no_compose(self):
         repl = self.get_replacements("hinter~ |=> hnt")
 
-        assert repl ==  {(' hinter', ' hnt'), (' hinter ', ' hnt ')}
+        assert repl ==  [(' hinter', [' hnt']), (' hinter ', [' hnt'])]
 
 
     def test_add_prefix_compose(self):
         repl = self.get_replacements("hinter~-> h")
 
-        assert repl == {(' hinter', ' hinter'), (' hinter', ' hinter '),
-                        (' hinter', ' h'), (' hinter', ' h '),
-                        (' hinter ', ' hinter '), (' hinter ', ' hinter'),
-                        (' hinter ', ' h '), (' hinter ', ' h')}
+        assert repl == [(' hinter', [' h', ' h ', ' hinter', ' hinter ']),
+                        (' hinter ', [' h', ' h', ' hinter', ' hinter'])]
 
 
     def test_replace_prefix_compose(self):
         repl = self.get_replacements("hinter~=> h")
 
-        assert repl == {(' hinter', ' h'), (' hinter', ' h '),
-                        (' hinter ', ' h '), (' hinter ', ' h')}
+        assert repl == [(' hinter', [' h', ' h ']),
+                        (' hinter ', [' h', ' h'])]
 
 
     def test_add_beginning_only(self):
         repl = self.get_replacements("^Premier -> Pr")
 
-        assert repl == {('^ premier ', '^ premier '), ('^ premier ', '^ pr ')}
+        assert repl == [('^ premier ', ['^ pr', '^ premier'])]
 
 
     def test_replace_beginning_only(self):
         repl = self.get_replacements("^Premier => Pr")
 
-        assert repl == {('^ premier ', '^ pr ')}
+        assert repl == [('^ premier ', ['^ pr'])]
 
 
     def test_add_final_only(self):
         repl = self.get_replacements("road$ -> rd")
 
-        assert repl == {(' road ^', ' road ^'), (' road ^', ' rd ^')}
+        assert repl == [(' road ^', [' rd ^', ' road ^'])]
 
 
     def test_replace_final_only(self):
         repl = self.get_replacements("road$ => rd")
 
-        assert repl == {(' road ^', ' rd ^')}
+        assert repl == [(' road ^', [' rd ^'])]
 
 
     def test_decompose_only(self):
         repl = self.get_replacements("~foo -> foo")
 
-        assert repl == {('foo ', 'foo '), ('foo ', ' foo '),
-                        (' foo ', 'foo '), (' foo ', ' foo ')}
+        assert repl == [(' foo ', [' foo', 'foo']),
+                        ('foo ', [' foo', 'foo'])]
 
 
     def test_add_suffix_decompose_end_only(self):
         repl = self.get_replacements("~berg |-> bg", "~berg$ -> bg")
 
-        assert repl == {('berg ', 'berg '), ('berg ', 'bg '),
-                        (' berg ', ' berg '), (' berg ', ' bg '),
-                        ('berg ^', 'berg ^'), ('berg ^', ' berg ^'),
-                        ('berg ^', 'bg ^'), ('berg ^', ' bg ^'),
-                        (' berg ^', 'berg ^'), (' berg ^', 'bg ^'),
-                        (' berg ^', ' berg ^'), (' berg ^', ' bg ^')}
+        assert repl == [(' berg ', [' berg', ' bg']),
+                        (' berg ^', [' berg ^', ' bg ^', 'berg ^', 'bg ^']),
+                        ('berg ', ['berg', 'bg']),
+                        ('berg ^', [' berg ^', ' bg ^', 'berg ^', 'bg ^'])]
 
 
     def test_replace_suffix_decompose_end_only(self):
         repl = self.get_replacements("~berg |=> bg", "~berg$ => bg")
 
-        assert repl == {('berg ', 'bg '), (' berg ', ' bg '),
-                        ('berg ^', 'bg ^'), ('berg ^', ' bg ^'),
-                        (' berg ^', 'bg ^'), (' berg ^', ' bg ^')}
+        assert repl == [(' berg ', [' bg']),
+                        (' berg ^', [' bg ^', 'bg ^']),
+                        ('berg ', ['bg']),
+                        ('berg ^', [' bg ^', 'bg ^'])]
 
 
     def test_add_multiple_suffix(self):
         repl = self.get_replacements("~berg,~burg -> bg")
 
-        assert repl == {('berg ', 'berg '), ('berg ', ' berg '),
-                        (' berg ', ' berg '), (' berg ', 'berg '),
-                        ('berg ', 'bg '), ('berg ', ' bg '),
-                        (' berg ', 'bg '), (' berg ', ' bg '),
-                        ('burg ', 'burg '), ('burg ', ' burg '),
-                        (' burg ', ' burg '), (' burg ', 'burg '),
-                        ('burg ', 'bg '), ('burg ', ' bg '),
-                        (' burg ', 'bg '), (' burg ', ' bg ')}
+        assert repl == [(' berg ', [' berg', ' bg', 'berg', 'bg']),
+                        (' burg ', [' bg', ' burg', 'bg', 'burg']),
+                        ('berg ', [' berg', ' bg', 'berg', 'bg']),
+                        ('burg ', [' bg', ' burg', 'bg', 'burg'])]

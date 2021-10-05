@@ -10,6 +10,7 @@ from nominatim.config import flatten_config_list
 from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
+from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
 
 LOG = logging.getLogger()
 
@@ -74,8 +75,8 @@ class ICURuleLoader:
     def make_token_analysis(self):
         """ Create a token analyser from the reviouly loaded rules.
         """
-        return self.analysis[None].create(self.normalization_rules,
-                                          self.transliteration_rules)
+        return ICUTokenAnalysis(self.normalization_rules,
+                                self.transliteration_rules, self.analysis)
 
 
     def get_search_rules(self):
@@ -149,15 +150,7 @@ class TokenAnalyzerRule:
         module_name = 'nominatim.tokenizer.token_analysis.' \
                       + _get_section(rules, 'analyzer').replace('-', '_')
         analysis_mod = importlib.import_module(module_name)
-        self._mod_create = analysis_mod.create
+        self.create = analysis_mod.create
 
         # Load the configuration.
         self.config = analysis_mod.configure(rules, normalization_rules)
-
-
-    def create(self, normalization_rules, transliteration_rules):
-        """ Create an analyzer from the given rules.
-        """
-        return self._mod_create(normalization_rules,
-                                transliteration_rules,
-                                self.config)

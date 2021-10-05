@@ -131,10 +131,10 @@ def _create_variants(src, preflag, postflag, repl, decompose):
 
 ### Analysis section
 
-def create(norm_rules, trans_rules, config):
+def create(trans_rules, config):
     """ Create a new token analysis instance for this module.
     """
-    return GenericTokenAnalysis(norm_rules, trans_rules, config)
+    return GenericTokenAnalysis(trans_rules, config)
 
 
 class GenericTokenAnalysis:
@@ -142,26 +142,14 @@ class GenericTokenAnalysis:
         and provides the functions to apply the transformations.
     """
 
-    def __init__(self, norm_rules, trans_rules, config):
-        self.normalizer = Transliterator.createFromRules("icu_normalization",
-                                                         norm_rules)
-        self.to_ascii = Transliterator.createFromRules("icu_to_ascii",
-                                                       trans_rules +
-                                                       ";[:Space:]+ > ' '")
-        self.search = Transliterator.createFromRules("icu_search",
-                                                     norm_rules + trans_rules)
+    def __init__(self, to_ascii, config):
+        self.to_ascii = to_ascii
 
         # Set up datrie
         self.replacements = datrie.Trie(config['chars'])
         for src, repllist in config['replacements']:
             self.replacements[src] = repllist
 
-
-    def get_normalized(self, name):
-        """ Normalize the given name, i.e. remove all elements not relevant
-            for search.
-        """
-        return self.normalizer.transliterate(name).strip()
 
     def get_variants_ascii(self, norm_name):
         """ Compute the spelling variants for the given normalized name
@@ -213,10 +201,3 @@ class GenericTokenAnalysis:
                 results.add(trans_name)
 
         return list(results)
-
-
-    def get_search_normalized(self, name):
-        """ Return the normalized version of the name (including transliteration)
-            to be applied at search time.
-        """
-        return self.search.transliterate(' ' + name + ' ').strip()

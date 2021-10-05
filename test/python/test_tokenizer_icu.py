@@ -169,9 +169,7 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
     tok.init_new_db(test_config)
 
     assert word_table.get_partial_words() == {('test', 1),
-                                              ('no', 1), ('area', 2),
-                                              ('holz', 1), ('strasse', 1),
-                                              ('str', 1)}
+                                              ('no', 1), ('area', 2)}
 
 
 def test_init_from_project(monkeypatch, test_config, tokenizer_factory):

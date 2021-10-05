@@ -164,7 +164,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """ Count the partial terms from the names in the place table.
         """
         words = Counter()
-        name_proc = self.loader.make_token_analysis()
+        analysis = self.loader.make_token_analysis()
 
         with conn.cursor(name="words") as cur:
             cur.execute(""" SELECT v, count(*) FROM
@@ -172,12 +172,10 @@ class LegacyICUTokenizer(AbstractTokenizer):
                             WHERE length(v) < 75 GROUP BY v""")
 
             for name, cnt in cur:
-                terms = set()
-                for word in name_proc.get_variants_ascii(name_proc.get_normalized(name)):
-                    if ' ' in word:
-                        terms.update(word.split())
-                for term in terms:
-                    words[term] += cnt
+                word = analysis.search.transliterate(name)
+                if word and ' ' in word:
+                    for term in set(word.split()):
+                        words[term] += cnt
 
         return words
 
@@ -209,14 +207,14 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def _search_normalized(self, name):
         """ Return the search token transliteration of the given name.
         """
-        return self.token_analysis.get_search_normalized(name)
+        return self.token_analysis.search.transliterate(name).strip()
 
 
     def _normalized(self, name):
         """ Return the normalized version of the given name with all
             non-relevant information removed.
         """
-        return self.token_analysis.get_normalized(name)
+        return self.token_analysis.normalizer.transliterate(name).strip()
 
 
     def get_word_token_info(self, words):
@@ -456,6 +454,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if addr_terms:
             token_info.add_address_terms(addr_terms)
 
+
     def _compute_partial_tokens(self, name):
         """ Normalize the given term, split it into partial words and return
             then token list for them.
@@ -492,19 +491,25 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         partial_tokens = set()
 
         for name in names:
+            analyzer_id = name.get_attr('analyzer')
             norm_name = self._normalized(name.name)
-            full, part = self._cache.names.get(norm_name, (None, None))
+            if analyzer_id is None:
+                token_id = norm_name
+            else:
+                token_id = f'{norm_name}@{analyzer_id}'
+
+            full, part = self._cache.names.get(token_id, (None, None))
             if full is None:
-                variants = self.token_analysis.get_variants_ascii(norm_name)
+                variants = self.token_analysis.analysis[analyzer_id].get_variants_ascii(norm_name)
                 if not variants:
                     continue
 
                 with self.conn.cursor() as cur:
                     cur.execute("SELECT (getorcreate_full_word(%s, %s)).*",
-                                (norm_name, variants))
+                                (token_id, variants))
                     full, part = cur.fetchone()
 
-                self._cache.names[norm_name] = (full, part)
+                self._cache.names[token_id] = (full, part)
 
             full_tokens.add(full)
             partial_tokens.update(part)

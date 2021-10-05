@@ -24,7 +24,6 @@ def create(func):
         new_names = []
         for name in obj.names:
             split_names = regexp.split(name.name)
-            print(split_names)
             if len(split_names) == 1:
                 new_names.append(name)
             else:

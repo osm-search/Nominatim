@@ -18,7 +18,19 @@ ICUVariant = namedtuple('ICUVariant', ['source', 'replacement'])
 def configure(rules, normalization_rules):
     """ Extract and preprocess the configuration for this module.
     """
-    rules = rules.get('variants')
+    config = {}
+
+    config['replacements'], config['chars'] = _get_variant_config(rules.get('variants'),
+                                                                  normalization_rules)
+    config['variant_only'] = rules.get('mode', '') == 'variant-only'
+
+    return config
+
+
+def _get_variant_config(rules, normalization_rules):
+    """ Convert the variant definition from the configuration into
+        replacement sets.
+    """
     immediate = defaultdict(list)
     chars = set()
 
@@ -41,8 +53,7 @@ def configure(rules, normalization_rules):
             immediate[variant.source].append(replstr)
             chars.update(variant.source)
 
-    return {'replacements': list(immediate.items()),
-            'chars': ''.join(chars)}
+    return list(immediate.items()), ''.join(chars)
 
 
 class _VariantMaker:
@@ -144,11 +155,15 @@ class GenericTokenAnalysis:
 
     def __init__(self, to_ascii, config):
         self.to_ascii = to_ascii
+        self.variant_only = config['variant_only']
 
         # Set up datrie
-        self.replacements = datrie.Trie(config['chars'])
-        for src, repllist in config['replacements']:
-            self.replacements[src] = repllist
+        if config['replacements']:
+            self.replacements = datrie.Trie(config['chars'])
+            for src, repllist in config['replacements']:
+                self.replacements[src] = repllist
+        else:
+            self.replacements = None
 
 
     def get_variants_ascii(self, norm_name):
@@ -159,45 +174,51 @@ class GenericTokenAnalysis:
         partials = ['']
 
         startpos = 0
-        pos = 0
-        force_space = False
-        while pos < len(baseform):
-            full, repl = self.replacements.longest_prefix_item(baseform[pos:],
-                                                               (None, None))
-            if full is not None:
-                done = baseform[startpos:pos]
-                partials = [v + done + r
-                            for v, r in itertools.product(partials, repl)
-                            if not force_space or r.startswith(' ')]
-                if len(partials) > 128:
-                    # If too many variants are produced, they are unlikely
-                    # to be helpful. Only use the original term.
-                    startpos = 0
-                    break
-                startpos = pos + len(full)
-                if full[-1] == ' ':
-                    startpos -= 1
-                    force_space = True
-                pos = startpos
-            else:
-                pos += 1
-                force_space = False
+        if self.replacements is not None:
+            pos = 0
+            force_space = False
+            while pos < len(baseform):
+                full, repl = self.replacements.longest_prefix_item(baseform[pos:],
+                                                                   (None, None))
+                if full is not None:
+                    done = baseform[startpos:pos]
+                    partials = [v + done + r
+                                for v, r in itertools.product(partials, repl)
+                                if not force_space or r.startswith(' ')]
+                    if len(partials) > 128:
+                        # If too many variants are produced, they are unlikely
+                        # to be helpful. Only use the original term.
+                        startpos = 0
+                        break
+                    startpos = pos + len(full)
+                    if full[-1] == ' ':
+                        startpos -= 1
+                        force_space = True
+                    pos = startpos
+                else:
+                    pos += 1
+                    force_space = False
 
         # No variants detected? Fast return.
         if startpos == 0:
+            if self.variant_only:
+                return []
+
             trans_name = self.to_ascii.transliterate(norm_name).strip()
             return [trans_name] if trans_name else []
 
-        return self._compute_result_set(partials, baseform[startpos:])
+        return self._compute_result_set(partials, baseform[startpos:],
+                                        norm_name if self.variant_only else '')
 
 
-    def _compute_result_set(self, partials, prefix):
+    def _compute_result_set(self, partials, prefix, exclude):
         results = set()
 
         for variant in partials:
-            vname = variant + prefix
-            trans_name = self.to_ascii.transliterate(vname[1:-1]).strip()
-            if trans_name:
-                results.add(trans_name)
+            vname = (variant + prefix)[1:-1].strip()
+            if vname != exclude:
+                trans_name = self.to_ascii.transliterate(vname).strip()
+                if trans_name:
+                    results.add(trans_name)
 
         return list(results)

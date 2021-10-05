@@ -27,36 +27,160 @@ transliteration:
 sanitizers:
     - step: split-name-list
     - step: strip-brace-terms
+    - step: tag-analyzer-by-language
+      filter-kind: [".*name.*"]
+      whitelist: [bg,ca,cs,da,de,el,en,es,et,eu,fi,fr,gl,hu,it,ja,mg,ms,nl,no,pl,pt,ro,ru,sk,sl,sv,tr,uk,vi]
+      use-defaults: all
+      mode: append
 token-analysis:
     - analyzer: generic
+    - id: bg
+      analyzer: generic
+      mode: variant-only
       variants:
           - !include icu-rules/variants-bg.yaml
+    - id: ca
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-ca.yaml
+    - id: cs
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-cs.yaml
+    - id: da
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-da.yaml
+    - id: de
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-de.yaml
+    - id: el
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-el.yaml
+    - id: en
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-en.yaml
+    - id: es
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-es.yaml
+    - id: et
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-et.yaml
+    - id: eu
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-eu.yaml
+    - id: fi
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-fi.yaml
+    - id: fr
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-fr.yaml
+    - id: gl
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-gl.yaml
+    - id: hu
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-hu.yaml
+    - id: it
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-it.yaml
+    - id: ja
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-ja.yaml
+    - id: mg
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-mg.yaml
+    - id: ms
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-ms.yaml
+    - id: nl
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-nl.yaml
+    - id: no
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-no.yaml
+    - id: pl
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-pl.yaml
+    - id: pt
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-pt.yaml
+    - id: ro
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-ro.yaml
+    - id: ru
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-ru.yaml
+    - id: sk
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-sk.yaml
+    - id: sl
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-sl.yaml
+    - id: sv
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-sv.yaml
+    - id: tr
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-tr.yaml
+    - id: uk
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-uk.yaml
+    - id: vi
+      analyzer: generic
+      mode: variant-only
+      variants:
           - !include icu-rules/variants-vi.yaml

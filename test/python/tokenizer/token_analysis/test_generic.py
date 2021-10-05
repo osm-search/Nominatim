@@ -40,7 +40,7 @@ def cfgfile(def_config, tmp_path):
 
 
 def get_normalized_variants(proc, name):
-    return proc.get_variants_ascii(proc.get_normalized(name))
+    return proc.analysis[None].get_variants_ascii(proc.normalizer.transliterate(name).strip())
 
 
 def test_variants_empty(cfgfile):
@@ -99,6 +99,6 @@ def test_search_normalized(cfgfile):
     config = cfgfile('~street => s,st', 'master => mstr')
     proc = ICURuleLoader(config).make_token_analysis()
 
-    assert proc.get_search_normalized('Master Street') == 'master street'
-    assert proc.get_search_normalized('Earnes St') == 'earnes st'
-    assert proc.get_search_normalized('Nostreet') == 'nostreet'
+    assert proc.search.transliterate('Master Street').strip() == 'master street'
+    assert proc.search.transliterate('Earnes St').strip() == 'earnes st'
+    assert proc.search.transliterate('Nostreet').strip() == 'nostreet'

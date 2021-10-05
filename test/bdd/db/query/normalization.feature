@@ -52,7 +52,7 @@ Feature: Import and search of names
 
     Scenario: Special characters in name
         Given the places
-          | osm | class | type      | name |
+          | osm | class | type      | name+name:de |
           | N1  | place | locality  | Jim-Knopf-Straße |
           | N2  | place | locality  | Smith/Weston |
           | N3  | place | locality  | space mountain |

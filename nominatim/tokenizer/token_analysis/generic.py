@@ -1,7 +1,7 @@
 """
 Generic processor for names that creates abbreviation variants.
 """
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import itertools
 import re
 
@@ -10,9 +10,10 @@ import datrie
 
 from nominatim.config import flatten_config_list
 from nominatim.errors import UsageError
-import nominatim.tokenizer.icu_variants as variants
 
 ### Configuration section
+
+ICUVariant = namedtuple('ICUVariant', ['source', 'replacement'])
 
 def configure(rules, normalization_rules):
     """ Extract and preprocess the configuration for this module.
@@ -27,20 +28,9 @@ def configure(rules, normalization_rules):
 
         vmaker = _VariantMaker(normalization_rules)
 
-        properties = []
         for section in rules:
-            # Create the property field and deduplicate against existing
-            # instances.
-            props = variants.ICUVariantProperties.from_rules(section)
-            for existing in properties:
-                if existing == props:
-                    props = existing
-                    break
-            else:
-                properties.append(props)
-
             for rule in (section.get('words') or []):
-                vset.update(vmaker.compute(rule, props))
+                vset.update(vmaker.compute(rule))
 
         # Intermediate reorder by source. Also compute required character set.
         for variant in vset:
@@ -66,7 +56,7 @@ class _VariantMaker:
                                                    norm_rules)
 
 
-    def compute(self, rule, props):
+    def compute(self, rule):
         """ Generator for all ICUVariant tuples from a single variant rule.
         """
         parts = re.split(r'(\|)?([=-])>', rule)
@@ -82,12 +72,12 @@ class _VariantMaker:
             for src in src_terms:
                 if src:
                     for froms, tos in _create_variants(*src, src[0], decompose):
-                        yield variants.ICUVariant(froms, tos, props)
+                        yield ICUVariant(froms, tos)
 
         for src, repl in itertools.product(src_terms, repl_terms):
             if src and repl:
                 for froms, tos in _create_variants(*src, repl, decompose):
-                    yield variants.ICUVariant(froms, tos, props)
+                    yield ICUVariant(froms, tos)
 
 
     def _parse_variant_word(self, name):

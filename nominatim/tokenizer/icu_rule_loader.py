@@ -124,7 +124,7 @@ class ICURuleLoader:
                 else:
                     LOG.fatal("ICU tokenizer configuration has two token "
                               "analyzers with id '%s'.", name)
-                UsageError("Syntax error in ICU tokenizer config.")
+                raise UsageError("Syntax error in ICU tokenizer config.")
             self.analysis[name] = TokenAnalyzerRule(section, self.normalization_rules)
 
 

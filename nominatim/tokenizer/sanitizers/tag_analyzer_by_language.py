@@ -15,30 +15,30 @@ class _AnalyzerByLanguage:
         else:
             self.regexes = None
 
-        self.use_defaults = config.get('use-defaults', 'no')
-        if self.use_defaults not in ('mono', 'all'):
-            self.use_defaults = False
-
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
 
-        # Compute the languages to use when no suffix is given.
-        self.deflangs = {}
-        for ccode, prop in country_info.iterate():
-            clangs = prop['languages']
-            if len(clangs) == 1 or self.use_defaults == 'all':
-                if self.whitelist:
-                    self.deflangs[ccode] = [l for l in clangs if l in self.whitelist]
-                else:
-                    self.deflangs[ccode] = clangs
+        self.__compute_default_languages(config.get('use-defaults', 'no'))
 
+
+    def __compute_default_languages(self, use_defaults):
+        self.deflangs = {}
+
+        if use_defaults in ('mono', 'all'):
+            for ccode, prop in country_info.iterate():
+                clangs = prop['languages']
+                if len(clangs) == 1 or use_defaults == 'all':
+                    if self.whitelist:
+                        self.deflangs[ccode] = [l for l in clangs if l in self.whitelist]
+                    else:
+                        self.deflangs[ccode] = clangs
 
 
     def _kind_matches(self, kind):
         if self.regexes is None:
             return True
 
-        return any(regex.search(kind) for regex in self.regexes)
+        return any(regex.fullmatch(kind) for regex in self.regexes)
 
 
     def _suffix_matches(self, suffix):
@@ -59,10 +59,8 @@ class _AnalyzerByLanguage:
             if name.suffix:
                 langs = [name.suffix] if self._suffix_matches(name.suffix) else None
             else:
-                if self.use_defaults:
-                    langs = self.deflangs.get(obj.place.country_code)
-                    if self.use_defaults == 'mono' and len(langs) > 1:
-                        langs = None
+                langs = self.deflangs.get(obj.place.country_code)
+
 
             if langs:
                 if self.replace:

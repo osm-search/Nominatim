@@ -122,6 +122,15 @@ def test_transliteration_rules_from_file(test_config):
     assert trans.transliterate(" axxt ") == " byt "
 
 
+def test_search_rules(cfgrules):
+    config = cfgrules('~street => s,st', 'master => mstr')
+    proc = ICURuleLoader(config).make_token_analysis()
+
+    assert proc.search.transliterate('Master Street').strip() == 'master street'
+    assert proc.search.transliterate('Earnes St').strip() == 'earnes st'
+    assert proc.search.transliterate('Nostreet').strip() == 'nostreet'
+
+
 class TestGetReplacements:
 
     @pytest.fixture(autouse=True)

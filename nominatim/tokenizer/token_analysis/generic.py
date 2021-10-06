@@ -76,7 +76,7 @@ class _VariantMaker:
 
         decompose = parts[1] is None
         src_terms = [self._parse_variant_word(t) for t in parts[0].split(',')]
-        repl_terms = (self.norm.transliterate(t.strip()) for t in parts[3].split(','))
+        repl_terms = (self.norm.transliterate(t).strip() for t in parts[3].split(','))
 
         # If the source should be kept, add a 1:1 replacement
         if parts[2] == '-':
@@ -96,7 +96,7 @@ class _VariantMaker:
         match = re.fullmatch(r'([~^]?)([^~$^]*)([~$]?)', name)
         if match is None or (match.group(1) == '~' and match.group(3) == '~'):
             raise UsageError("Invalid variant word descriptor '{}'".format(name))
-        norm_name = self.norm.transliterate(match.group(2))
+        norm_name = self.norm.transliterate(match.group(2)).strip()
         if not norm_name:
             return None
 
@@ -142,10 +142,10 @@ def _create_variants(src, preflag, postflag, repl, decompose):
 
 ### Analysis section
 
-def create(trans_rules, config):
+def create(transliterator, config):
     """ Create a new token analysis instance for this module.
     """
-    return GenericTokenAnalysis(trans_rules, config)
+    return GenericTokenAnalysis(transliterator, config)
 
 
 class GenericTokenAnalysis:

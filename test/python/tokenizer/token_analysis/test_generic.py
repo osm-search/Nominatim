@@ -1,52 +1,52 @@
 """
 Tests for import name normalisation and variant generation.
 """
-from textwrap import dedent
-
 import pytest
 
-from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
+from icu import Transliterator
 
+import nominatim.tokenizer.token_analysis.generic as module
 from nominatim.errors import UsageError
 
-@pytest.fixture
-def cfgfile(def_config, tmp_path):
-    project_dir = tmp_path / 'project_dir'
-    project_dir.mkdir()
-    def_config.project_dir = project_dir
+DEFAULT_NORMALIZATION = """ :: NFD ();
+                            '🜳' > ' ';
+                            [[:Nonspacing Mark:] [:Cf:]] >;
+                            :: lower ();
+                            [[:Punctuation:][:Space:]]+ > ' ';
+                            :: NFC ();
+                        """
 
-    def _create_config(*variants, **kwargs):
-        content = dedent("""\
-        normalization:
-            - ":: NFD ()"
-            - "'🜳' > ' '"
-            - "[[:Nonspacing Mark:] [:Cf:]] >"
-            - ":: lower ()"
-            - "[[:Punctuation:][:Space:]]+ > ' '"
-            - ":: NFC ()"
-        transliteration:
-            - "::  Latin ()"
-            - "'🜵' > ' '"
-        """)
-        content += "token-analysis:\n  - analyzer: generic\n    variants:\n      - words:\n"
-        content += '\n'.join(("          - " + s for s in variants)) + '\n'
-        for k, v in kwargs:
-            content += "        {}: {}\n".format(k, v)
-        (project_dir / 'icu_tokenizer.yaml').write_text(content)
+DEFAULT_TRANSLITERATION = """ ::  Latin ();
+                              '🜵' > ' ';
+                          """
 
-        return def_config
+def make_analyser(*variants, variant_only=False):
+    rules = { 'analyzer': 'generic', 'variants': [{'words': variants}]}
+    if variant_only:
+        rules['mode'] = 'variant-only'
+    config = module.configure(rules, DEFAULT_NORMALIZATION)
+    trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
 
-    return _create_config
+    return module.create(trans, config)
 
 
 def get_normalized_variants(proc, name):
-    return proc.analysis[None].get_variants_ascii(proc.normalizer.transliterate(name).strip())
+    norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+    return proc.get_variants_ascii(norm.transliterate(name).strip())
 
 
-def test_variants_empty(cfgfile):
-    config = cfgfile('saint -> 🜵', 'street -> st')
+def test_no_variants():
+    rules = { 'analyzer': 'generic' }
+    config = module.configure(rules, DEFAULT_NORMALIZATION)
+    trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
 
-    proc = ICURuleLoader(config).make_token_analysis()
+    proc = module.create(trans, config)
+
+    assert get_normalized_variants(proc, '大德!') == ['dà dé']
+
+
+def test_variants_empty():
+    proc = make_analyser('saint -> 🜵', 'street -> st')
 
     assert get_normalized_variants(proc, '🜵') == []
     assert get_normalized_variants(proc, '🜳') == []
@@ -85,9 +85,8 @@ VARIANT_TESTS = [
 ]
 
 @pytest.mark.parametrize("rules,name,variants", VARIANT_TESTS)
-def test_variants(cfgfile, rules, name, variants):
-    config = cfgfile(*rules)
-    proc = ICURuleLoader(config).make_token_analysis()
+def test_variants(rules, name, variants):
+    proc = make_analyser(*rules)
 
     result = get_normalized_variants(proc, name)
 
@@ -95,10 +94,172 @@ def test_variants(cfgfile, rules, name, variants):
     assert set(get_normalized_variants(proc, name)) == variants
 
 
-def test_search_normalized(cfgfile):
-    config = cfgfile('~street => s,st', 'master => mstr')
-    proc = ICURuleLoader(config).make_token_analysis()
+VARIANT_ONLY_TESTS = [
+(('weg => wg',), "hallo", set()),
+(('weg => wg',), "Meier Weg", {'meier wg'}),
+(('weg -> wg',), "Meier Weg", {'meier wg'}),
+]
 
-    assert proc.search.transliterate('Master Street').strip() == 'master street'
-    assert proc.search.transliterate('Earnes St').strip() == 'earnes st'
-    assert proc.search.transliterate('Nostreet').strip() == 'nostreet'
+@pytest.mark.parametrize("rules,name,variants", VARIANT_ONLY_TESTS)
+def test_variants_only(rules, name, variants):
+    proc = make_analyser(*rules, variant_only=True)
+
+    result = get_normalized_variants(proc, name)
+
+    assert len(result) == len(set(result))
+    assert set(get_normalized_variants(proc, name)) == variants
+
+
+class TestGetReplacements:
+
+    @staticmethod
+    def configure_rules(*variants):
+        rules = { 'analyzer': 'generic', 'variants': [{'words': variants}]}
+        return module.configure(rules, DEFAULT_NORMALIZATION)
+
+
+    def get_replacements(self, *variants):
+        config = self.configure_rules(*variants)
+
+        return sorted((k, sorted(v)) for k,v in config['replacements'])
+
+
+    @pytest.mark.parametrize("variant", ['foo > bar', 'foo -> bar -> bar',
+                                         '~foo~ -> bar', 'fo~ o -> bar'])
+    def test_invalid_variant_description(self, variant):
+        with pytest.raises(UsageError):
+            self.configure_rules(variant)
+
+
+    @pytest.mark.parametrize("rule", ["!!! -> bar", "bar => !!!"])
+    def test_ignore_unnormalizable_terms(self, rule):
+        repl = self.get_replacements(rule)
+
+        assert repl == []
+
+
+    def test_add_full(self):
+        repl = self.get_replacements("foo -> bar")
+
+        assert repl == [(' foo ', [' bar', ' foo'])]
+
+
+    def test_replace_full(self):
+        repl = self.get_replacements("foo => bar")
+
+        assert repl == [(' foo ', [' bar'])]
+
+
+    def test_add_suffix_no_decompose(self):
+        repl = self.get_replacements("~berg |-> bg")
+
+        assert repl == [(' berg ', [' berg', ' bg']),
+                        ('berg ', ['berg', 'bg'])]
+
+
+    def test_replace_suffix_no_decompose(self):
+        repl = self.get_replacements("~berg |=> bg")
+
+        assert repl == [(' berg ', [' bg']),('berg ', ['bg'])]
+
+
+    def test_add_suffix_decompose(self):
+        repl = self.get_replacements("~berg -> bg")
+
+        assert repl == [(' berg ', [' berg', ' bg', 'berg', 'bg']),
+                        ('berg ', [' berg', ' bg', 'berg', 'bg'])]
+
+
+    def test_replace_suffix_decompose(self):
+        repl = self.get_replacements("~berg => bg")
+
+        assert repl == [(' berg ', [' bg', 'bg']),
+                        ('berg ', [' bg', 'bg'])]
+
+
+    def test_add_prefix_no_compose(self):
+        repl = self.get_replacements("hinter~ |-> hnt")
+
+        assert repl == [(' hinter', [' hinter', ' hnt']),
+                        (' hinter ', [' hinter', ' hnt'])]
+
+
+    def test_replace_prefix_no_compose(self):
+        repl = self.get_replacements("hinter~ |=> hnt")
+
+        assert repl ==  [(' hinter', [' hnt']), (' hinter ', [' hnt'])]
+
+
+    def test_add_prefix_compose(self):
+        repl = self.get_replacements("hinter~-> h")
+
+        assert repl == [(' hinter', [' h', ' h ', ' hinter', ' hinter ']),
+                        (' hinter ', [' h', ' h', ' hinter', ' hinter'])]
+
+
+    def test_replace_prefix_compose(self):
+        repl = self.get_replacements("hinter~=> h")
+
+        assert repl == [(' hinter', [' h', ' h ']),
+                        (' hinter ', [' h', ' h'])]
+
+
+    def test_add_beginning_only(self):
+        repl = self.get_replacements("^Premier -> Pr")
+
+        assert repl == [('^ premier ', ['^ pr', '^ premier'])]
+
+
+    def test_replace_beginning_only(self):
+        repl = self.get_replacements("^Premier => Pr")
+
+        assert repl == [('^ premier ', ['^ pr'])]
+
+
+    def test_add_final_only(self):
+        repl = self.get_replacements("road$ -> rd")
+
+        assert repl == [(' road ^', [' rd ^', ' road ^'])]
+
+
+    def test_replace_final_only(self):
+        repl = self.get_replacements("road$ => rd")
+
+        assert repl == [(' road ^', [' rd ^'])]
+
+
+    def test_decompose_only(self):
+        repl = self.get_replacements("~foo -> foo")
+
+        assert repl == [(' foo ', [' foo', 'foo']),
+                        ('foo ', [' foo', 'foo'])]
+
+
+    def test_add_suffix_decompose_end_only(self):
+        repl = self.get_replacements("~berg |-> bg", "~berg$ -> bg")
+
+        assert repl == [(' berg ', [' berg', ' bg']),
+                        (' berg ^', [' berg ^', ' bg ^', 'berg ^', 'bg ^']),
+                        ('berg ', ['berg', 'bg']),
+                        ('berg ^', [' berg ^', ' bg ^', 'berg ^', 'bg ^'])]
+
+
+    def test_replace_suffix_decompose_end_only(self):
+        repl = self.get_replacements("~berg |=> bg", "~berg$ => bg")
+
+        assert repl == [(' berg ', [' bg']),
+                        (' berg ^', [' bg ^', 'bg ^']),
+                        ('berg ', ['bg']),
+                        ('berg ^', [' bg ^', 'bg ^'])]
+
+
+    @pytest.mark.parametrize('rule', ["~berg,~burg -> bg",
+                                      "~berg, ~burg -> bg",
+                                      "~berg,,~burg -> bg"])
+    def test_add_multiple_suffix(self, rule):
+        repl = self.get_replacements(rule)
+
+        assert repl == [(' berg ', [' berg', ' bg', 'berg', 'bg']),
+                        (' burg ', [' bg', ' burg', 'bg', 'burg']),
+                        ('berg ', [' berg', ' bg', 'berg', 'bg']),
+                        ('burg ', [' bg', ' burg', 'bg', 'burg'])]

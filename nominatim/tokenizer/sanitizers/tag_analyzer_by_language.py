@@ -1,5 +1,28 @@
 """
-Name processor for tagging the langauge of the name
+This sanitizer sets the `analyzer` property depending on the
+language of the tag. The language is taken from the suffix of the name.
+If a name already has an analyzer tagged, then this is kept.
+
+Arguments:
+
+    filter-kind: Restrict the names the sanitizer should be applied to
+                 to the given tags. The parameter expects a list of
+                 regular expressions which are matched against `kind`.
+                 Note that a match against the full string is expected.
+    whitelist: Restrict the set of languages that should be tagged.
+               Expects a list of acceptable suffixes. When unset,
+               all 2- and 3-letter lower-case codes are accepted.
+    use-defaults:  Configure what happens when the name has no suffix.
+                   When set to 'all', a variant is created for
+                   each of the default languages in the country
+                   the feature is in. When set to 'mono', a variant is
+                   only created, when exactly one language is spoken
+                   in the country. The default is to do nothing with
+                   the default languages of a country.
+    mode: Define how the variants are created and may be 'replace' or
+          'append'. When set to 'append' the original name (without
+          any analyzer tagged) is retained. (default: replace)
+
 """
 import re
 
@@ -75,24 +98,6 @@ class _AnalyzerByLanguage:
 
 def create(config):
     """ Create a function that sets the analyzer property depending on the
-        language of the tag. The language is taken from the suffix.
-
-        To restrict the set of languages that should be tagged, use
-        'whitelist'. A list of acceptable suffixes. When unset, all 2- and
-        3-letter codes are accepted.
-
-        'use-defaults' configures what happens when the name has no suffix
-        with a language tag. When set to 'all', a variant is created for
-        each on the spoken languages in the country the feature is in. When
-        set to 'mono', a variant is created, when only one language is spoken
-        in the country. The default is, to do nothing with the default languages
-        of a country.
-
-        'mode' hay be 'replace' (the default) or 'append' and configures if
-        the original name (without any analyzer tagged) is retained.
-
-        With 'filter-kind' the set of names the sanitizer should be applied
-        to can be retricted to the given patterns of 'kind'. It expects a
-        list of regular expression to be matched against 'kind'.
+        language of the tag.
     """
     return _AnalyzerByLanguage(config)

@@ -60,22 +60,23 @@ NOMINATIM_TOKENIZER=icu
 
 ### How it works
 
-On import the tokenizer processes names in the following four stages:
+On import the tokenizer processes names in the following three stages:
 
-1. The **Normalization** part removes all non-relevant information from the
-   input.
-2. Incoming names are now converted to **full names**. This process is currently
-   hard coded and mostly serves to handle name tags from OSM that contain
-   multiple names (e.g. [Biel/Bienne](https://www.openstreetmap.org/node/240097197)).
-3. Next the tokenizer creates **variants** from the full names. These variants
-   cover decomposition and abbreviation handling. Variants are saved to the
-   database, so that it is not necessary to create the variants for a search
-   query.
-4. The final **Tokenization** step converts the names to a simple ASCII form,
-   potentially removing further spelling variants for better matching.
+1. During the **Sanitizer step** incoming names are cleaned up and converted to
+   **full names**. This step can be used to regularize spelling, split multi-name
+   tags into their parts and tag names with additional attributes. See the
+   [Sanitizers section](#sanitizers) below for available cleaning routines.
+2. The **Normalization** part removes all information from the full names
+   that are not relevant for search.
+3. The **Token analysis** step takes the normalized full names and creates
+   all transliterated variants under which the name should be searchable.
+   See the [Token analysis](#token-analysis) section below for more
+   information.
 
-At query time only stage 1) and 4) are used. The query is normalized and
-tokenized and the resulting string used for searching in the database.
+During query time, only normalization and transliteration are relevant.
+An incoming query is first split into name chunks (this usually means splitting
+the string at the commas) and the each part is normalised and transliterated.
+The result is used to look up places in the search index.
 
 ### Configuration
 
@@ -93,21 +94,36 @@ normalization:
 transliteration:
     - !include /etc/nominatim/icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
-variants:
-    - language: de
-      words:
-        - ~haus => haus
-        - ~strasse -> str
-    - language: en
-      words: 
-        - road -> rd
-        - bridge -> bdge,br,brdg,bri,brg
+sanitizers:
+    - step: split-name-list
+token-analysis:
+    - analyzer: generic
+      variants:
+          - !include icu-rules/variants-ca.yaml
+          - words:
+              - road -> rd
+              - bridge -> bdge,br,brdg,bri,brg
 ```
 
-The configuration file contains three sections:
-`normalization`, `transliteration`, `variants`.
+The configuration file contains four sections:
+`normalization`, `transliteration`, `sanitizers` and `token-analysis`.
 
-The normalization and transliteration sections each must contain a list of
+#### Normalization and Transliteration
+
+The normalization and transliteration sections each define a set of
+ICU rules that are applied to the names.
+
+The **normalisation** rules are applied after sanitation. They should remove
+any information that is not relevant for search at all. Usual rules to be
+applied here are: lower-casing, removing of special characters, cleanup of
+spaces.
+
+The **transliteration** rules are applied at the end of the tokenization
+process to transfer the name into an ASCII representation. Transliteration can
+be useful to allow for further fuzzy matching, especially between different
+scripts.
+
+Each section must contain a list of
 [ICU transformation rules](https://unicode-org.github.io/icu/userguide/transforms/general/rules.html).
 The rules are applied in the order in which they appear in the file.
 You can also include additional rules from external yaml file using the
@@ -118,6 +134,85 @@ and may again include other files.
     The ICU rule syntax contains special characters that conflict with the
     YAML syntax. You should therefore always enclose the ICU rules in
     double-quotes.
+
+#### Sanitizers
+
+The sanitizers section defines an ordered list of functions that are applied
+to the name and address tags before they are further processed by the tokenizer.
+They allows to clean up the tagging and bring it to a standardized form more
+suitable for building the search index.
+
+!!! hint
+    Sanitizers only have an effect on how the search index is built. They
+    do not change the information about each place that is saved in the
+    database. In particular, they have no influence on how the results are
+    displayed. The returned results always show the original information as
+    stored in the OpenStreetMap database.
+
+Each entry contains information of a sanitizer to be applied. It has a
+mandatory parameter `step` which gives the name of the sanitizer. Depending
+on the type, it may have additional parameters to configure its operation.
+
+The order of the list matters. The sanitizers are applied exactly in the order
+that is configured. Each sanitizer works on the results of the previous one.
+
+The following is a list of sanitizers that are shipped with Nominatim.
+
+##### split-name-list
+
+::: nominatim.tokenizer.sanitizers.split_name_list
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
+##### strip-brace-terms
+
+::: nominatim.tokenizer.sanitizers.strip_brace_terms
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
+##### tag-analyzer-by-language
+
+::: nominatim.tokenizer.sanitizers.tag_analyzer_by_language
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
+
+
+#### Token Analysis
+
+Token analyzers take a full name and transform it into one or more normalized
+form that are then saved in the search index. In its simplest form, the
+analyzer only applies the transliteration rules. More complex analyzers
+create additional spelling variants of a name. This is useful to handle
+decomposition and abbreviation.
+
+The ICU tokenizer may use different analyzers for different names. To select
+the analyzer to be used, the name must be tagged with the `analyzer` attribute
+by a sanitizer (see for example the
+[tag-analyzer-by-language sanitizer](#tag-analyzer-by-language)).
+
+The token-analysis section contains the list of configured analyzers. Each
+analyzer must have an `id` parameter that uniquely identifies the analyzer.
+The only exception is the default analyzer that is used when no special
+analyzer was selected.
+
+Different analyzer implementations may exist. To select the implementation,
+the `analyzer` parameter must be set. Currently there is only one implementation
+`generic` which is described in the following.
+
+##### Generic token analyzer
+
+The generic analyzer is able to create variants from a list of given
+abbreviation and decomposition replacements. It takes one optional parameter
+`variants` which lists the replacements to apply. If the section is
+omitted, then the generic analyzer becomes a simple analyzer that only
+applies the transliteration.
 
 The variants section defines lists of replacements which create alternative
 spellings of a name. To create the variants, a name is scanned from left to
@@ -144,7 +239,7 @@ term.
     words in the configuration because then it is possible to change the
     rules for normalization later without having to adapt the variant rules.
 
-#### Decomposition
+###### Decomposition
 
 In its standard form, only full words match against the source. There
 is a special notation to match the prefix and suffix of a word:
@@ -171,7 +266,7 @@ To avoid automatic decomposition, use the '|' notation:
 
 simply changes "hauptstrasse" to "hauptstr" and "rote strasse" to "rote str".
 
-#### Initial and final terms
+###### Initial and final terms
 
 It is also possible to restrict replacements to the beginning and end of a
 name:
@@ -184,7 +279,7 @@ name:
 So the first example would trigger a replacement for "south 45th street" but
 not for "the south beach restaurant".
 
-#### Replacements vs. variants
+###### Replacements vs. variants
 
 The replacement syntax `source => target` works as a pure replacement. It changes
 the name instead of creating a variant. To create an additional version, you'd

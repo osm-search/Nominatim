@@ -1,5 +1,9 @@
 """
-Name processor that splits name values with multiple values into their components.
+Sanitizer that splits lists of names into their components.
+
+Arguments:
+    delimiters: Define the set of characters to be used for
+                splitting the list. (default: `,;`)
 """
 import re
 
@@ -7,9 +11,7 @@ from nominatim.errors import UsageError
 
 def create(func):
     """ Create a name processing function that splits name values with
-        multiple values into their components. The optional parameter
-        'delimiters' can be used to define the characters that should be used
-        for splitting. The default is ',;'.
+        multiple values into their components.
     """
     delimiter_set = set(func.get('delimiters', ',;'))
     if not delimiter_set:
@@ -24,7 +26,6 @@ def create(func):
         new_names = []
         for name in obj.names:
             split_names = regexp.split(name.name)
-            print(split_names)
             if len(split_names) == 1:
                 new_names.append(name)
             else:

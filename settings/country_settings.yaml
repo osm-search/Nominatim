@@ -171,7 +171,7 @@ bt:
 #  (Bouvet Island)
 bv:
     partition: 185
-    languages: no
+    languages: "no"
 
 # Botswana (Botswana)
 bw:
@@ -1006,7 +1006,7 @@ si:
 #  (Svalbard and Jan Mayen)
 sj:
     partition: 197
-    languages: no
+    languages: "no"
 
 # Slovakia (Slovensko)
 sk:

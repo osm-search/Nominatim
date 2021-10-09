@@ -1,11 +1,12 @@
 """
-Sanitizer handling names with addendums in braces.
+This sanitizer creates additional name variants for names that have
+addendums in brackets (e.g. "Halle (Saale)"). The additional variant contains
+only the main name part with the bracket part removed.
 """
 
 def create(_):
     """ Create a name processing function that creates additional name variants
-        when a name has an addendum in brackets (e.g. "Halle (Saale)"). The
-        additional variant only contains the main name without the bracket part.
+        for bracket addendums.
     """
     def _process(obj):
         """ Add variants for names that have a bracket extension.

@@ -69,10 +69,11 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', ),
                      sanitizers=[]):
-        cfgstr = {'normalization' : list(norm),
-                  'sanitizers' : sanitizers,
-                  'transliteration' : list(trans),
-                  'variants' : [ {'words': list(variants)}]}
+        cfgstr = {'normalization': list(norm),
+                  'sanitizers': sanitizers,
+                  'transliteration': list(trans),
+                  'token-analysis': [{'analyzer': 'generic',
+                                      'variants': [{'words': list(variants)}]}]}
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
         tok.loader = ICURuleLoader(test_config)
 
@@ -168,9 +169,7 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
     tok.init_new_db(test_config)
 
     assert word_table.get_partial_words() == {('test', 1),
-                                              ('no', 1), ('area', 2),
-                                              ('holz', 1), ('strasse', 1),
-                                              ('str', 1)}
+                                              ('no', 1), ('area', 2)}
 
 
 def test_init_from_project(monkeypatch, test_config, tokenizer_factory):

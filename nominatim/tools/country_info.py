@@ -13,12 +13,21 @@ class _CountryInfo:
     def __init__(self):
         self._info = {}
 
+
     def load(self, config):
         """ Load the country properties from the configuration files,
             if they are not loaded yet.
         """
         if not self._info:
             self._info = config.load_sub_configuration('country_settings.yaml')
+            # Convert languages into a list for simpler handling.
+            for prop in self._info.values():
+                if 'languages' not in prop:
+                    prop['languages'] = []
+                elif not isinstance(prop['languages'], list):
+                    prop['languages'] = [x.strip()
+                                         for x in prop['languages'].split(',')]
+
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.
@@ -36,6 +45,12 @@ def setup_country_config(config):
     _COUNTRY_INFO.load(config)
 
 
+def iterate():
+    """ Iterate over country code and properties.
+    """
+    return _COUNTRY_INFO.items()
+
+
 def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """ Create and populate the tables with basic static data that provides
         the background for geocoding. Data is assumed to not yet exist.
@@ -50,10 +65,7 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
                 partition = 0
             else:
                 partition = props.get('partition')
-            if ',' in (props.get('languages', ',') or ','):
-                lang = None
-            else:
-                lang = props['languages']
+            lang = props['languages'][0] if len(props['languages']) == 1 else None
             params.append((ccode, partition, lang))
 
     with connect(dsn) as conn:

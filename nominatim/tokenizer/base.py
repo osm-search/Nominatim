@@ -194,15 +194,13 @@ class AbstractTokenizer(ABC):
         """ Check that the database is set up correctly and ready for being
             queried.
 
-            Returns:
-              If an issue was found, return an error message with the
-              description of the issue as well as hints for the user on
-              how to resolve the issue.
-
             Arguments:
               config: Read-only object with configuration options.
 
-              Return `None`, if no issue was found.
+            Returns:
+              If an issue was found, return an error message with the
+              description of the issue as well as hints for the user on
+              how to resolve the issue. If everything is okay, return `None`.
         """
         pass
 

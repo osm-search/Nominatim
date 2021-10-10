@@ -24,6 +24,10 @@ and can't offer support.
 
 ### Software
 
+!!! Warning
+    For larger installations you **must have** PostgreSQL 11+ and Postgis 3+
+    otherwise import and queries will be slow to the point of being unusable.
+
 For compiling:
 
   * [cmake](https://cmake.org/)
@@ -39,7 +43,7 @@ For compiling:
 For running Nominatim:
 
   * [PostgreSQL](https://www.postgresql.org) (9.5+ will work, 11+ strongly recommended)
-  * [PostGIS](https://postgis.net) (2.2+)
+  * [PostGIS](https://postgis.net) (2.2+ will work, 3.0+ strongly recommended)
   * [Python 3](https://www.python.org/) (3.6+)
   * [Psycopg2](https://www.psycopg.org) (2.7+)
   * [Python Dotenv](https://github.com/theskumar/python-dotenv)

@@ -1,6 +1,6 @@
 # Creates and installs manual page
 
-configure_file(${PROJECT_SOURCE_DIR}/manual/create-manpage.tmpl create_manpage.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/create-manpage.tmpl create_manpage.py)
 
 find_program(ARGPARSEMANPAGE argparse-manpage)
 

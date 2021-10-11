@@ -38,6 +38,7 @@ set(BUILD_TESTS on CACHE BOOL "Build test suite")
 set(BUILD_DOCS on CACHE BOOL "Build documentation")
 set(BUILD_MANPAGE on CACHE BOOL "Build Manual Page")
 set(BUILD_OSM2PGSQL on CACHE BOOL "Build osm2pgsql (expert only)")
+set(INSTALL_MUNIN_PLUGINS on CACHE BOOL "Install Munin plugins for supervising Nominatim")
 
 #-----------------------------------------------------------------------------
 #  osm2pgsql (imports/updates only)
@@ -211,6 +212,7 @@ include(GNUInstallDirs)
 set(NOMINATIM_DATADIR ${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME})
 set(NOMINATIM_LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR}/${PROJECT_NAME})
 set(NOMINATIM_CONFIGDIR ${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME})
+set(NOMINATIM_MUNINDIR ${CMAKE_INSTALL_FULL_DATADIR}/munin/plugins)
 
 if (BUILD_IMPORTER)
     configure_file(${PROJECT_SOURCE_DIR}/cmake/tool-installed.tmpl installed.bin)
@@ -259,6 +261,15 @@ install(FILES settings/env.defaults
               settings/import-full.style
               settings/import-extratags.style
               settings/icu_tokenizer.yaml
-              settings/icu-rules/extended-unicode-to-asccii.yaml
               settings/country_settings.yaml
         DESTINATION ${NOMINATIM_CONFIGDIR})
+
+install(DIRECTORY settings/icu-rules
+        DESTINATION ${NOMINATIM_CONFIGDIR})
+
+if (INSTALL_MUNIN_PLUGINS)
+    install(FILES munin/nominatim_importlag
+                  munin/nominatim_query_speed
+                  munin/nominatim_requests
+            DESTINATION ${NOMINATIM_MUNINDIR})
+endif()

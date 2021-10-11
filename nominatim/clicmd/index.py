@@ -15,6 +15,11 @@ from nominatim.db.connection import connect
 class UpdateIndex:
     """\
     Reindex all new and modified data.
+
+    Indexing is the process of computing the address and search terms for
+    the places in the database. Every time data is added or changed, indexing
+    needs to be run. Imports and replication updates automatically take care
+    of indexing. For other cases, this function allows to run indexing manually.
     """
 
     @staticmethod

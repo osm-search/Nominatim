@@ -176,7 +176,7 @@ class AdminServe:
 
     This command starts the built-in PHP webserver to serve the website
     from the current project directory. This webserver is only suitable
-    for testing and develop. Do not use it in production setups!
+    for testing and development. Do not use it in production setups!
 
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
     """

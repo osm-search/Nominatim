@@ -19,16 +19,32 @@ LOG = logging.getLogger()
 class ImportSpecialPhrases:
     """\
     Import special phrases.
+
+    Special phrases are search terms that narrow down the type of object
+    that should be searched. For example, you might want to search for
+    'Hotels in Barcelona'. The OSM wiki has a selection of special phrases
+    in many languages, which can be imported with this command.
+
+    You can also provide your own phrases in a CSV file. The file needs to have
+    the following five columns:
+     * phrase - the term expected for searching
+     * class - the OSM tag key of the object type
+     * type - the OSM tag value of the object type
+     * operator - the kind of search to be done (one of: in, near, name, -)
+     * plural - whether the term is a plural or not (Y/N)
+
+    An example file can be found in the Nominatim sources at
+    'test/testdb/full_en_phrases_test.csv'.
     """
     @staticmethod
     def add_args(parser):
         group = parser.add_argument_group('Input arguments')
         group.add_argument('--import-from-wiki', action='store_true',
-                           help='Import special phrases from the OSM wiki to the database.')
+                           help='Import special phrases from the OSM wiki to the database')
         group.add_argument('--import-from-csv', metavar='FILE',
-                           help='Import special phrases from a CSV file.')
+                           help='Import special phrases from a CSV file')
         group.add_argument('--no-replace', action='store_true',
-                           help='Keep the old phrases and only add the new ones.')
+                           help='Keep the old phrases and only add the new ones')
 
     @staticmethod
     def run(args):

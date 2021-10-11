@@ -20,6 +20,10 @@ LOG = logging.getLogger()
 class SetupAll:
     """\
     Create a new Nominatim database from an OSM file.
+
+    This sub-command sets up a new Nominatim database from scratch starting
+    with creating a new database in Postgresql. The user running this command
+    needs superuser rights on the database.
     """
 
     @staticmethod
@@ -28,7 +32,7 @@ class SetupAll:
         group = group_name.add_mutually_exclusive_group(required=True)
         group.add_argument('--osm-file', metavar='FILE', action='append',
                            help='OSM file to be imported'
-                                ' (repeat for importing multiple files.')
+                                ' (repeat for importing multiple files)')
         group.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
@@ -47,7 +51,7 @@ class SetupAll:
         group.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
         group.add_argument('--index-noanalyse', action='store_true',
-                           help='Do not perform analyse operations during index')
+                           help='Do not perform analyse operations during index (expert only)')
 
 
     @staticmethod

@@ -20,6 +20,19 @@ LOG = logging.getLogger()
 class UpdateReplication:
     """\
     Update the database using an online replication service.
+
+    An OSM replication service is an online service that provides regular
+    updates (OSM diff files) for the planet or update they provide. The OSMF
+    provides the primary replication service for the full planet at
+    https://planet.osm.org/replication/ but there are other providers of
+    extracts of OSM data who provide such a service as well.
+
+    This sub-command allows to set up such a replication service and download
+    and import updates at regular intervals. You need to call '--init' once to
+    set up the process or whenever you change the replication configuration
+    parameters. Without any arguments, the sub-command will go into a loop and
+    continuously apply updates as they become available. Giving `--once` just
+    downloads and imports the next batch of updates.
     """
 
     @staticmethod
@@ -38,13 +51,13 @@ class UpdateReplication:
                            help=("Download and apply updates only once. When "
                                  "not set, updates are continuously applied"))
         group.add_argument('--no-index', action='store_false', dest='do_index',
-                           help=("Do not index the new data. Only applicable "
+                           help=("Do not index the new data. Only usable "
                                  "together with --once"))
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
         group = parser.add_argument_group('Download parameters')
         group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
-                           help='Set timeout for file downloads.')
+                           help='Set timeout for file downloads')
 
     @staticmethod
     def _init_replication(args):

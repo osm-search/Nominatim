@@ -160,15 +160,15 @@ Nominatim normally sets up a full search database containing administrative
 boundaries, places, streets, addresses and POI data. There are also other
 import styles available which only read selected data:
 
-* **settings/import-admin.style**
+* **admin**
   Only import administrative boundaries and places.
-* **settings/import-street.style**
+* **street**
   Like the admin style but also adds streets.
-* **settings/import-address.style**
+* **address**
   Import all data necessary to compute addresses down to house number level.
-* **settings/import-full.style**
+* **full**
   Default style that also includes points of interest.
-* **settings/import-extratags.style**
+* **extratags**
   Like the full style but also adds most of the OSM tags into the extratags
   column.
 
@@ -191,8 +191,8 @@ full      |   54h        |  640 GB    |  330 GB
 extratags |   54h        |  650 GB    |  340 GB
 
 You can also customize the styles further.
-A [description of the style format](../develop/Import.md#configuring-the-import) 
-can be found in the development section.
+A [description of the style format](../customize/Import-Styles.md) 
+can be found in the customization guide.
 
 ## Initial import of the data
 

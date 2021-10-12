@@ -25,9 +25,10 @@ pages:
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Customization Guide':
         - 'Overview': 'customize/Overview.md'
+        - 'Import Styles': 'customize/Import-Styles.md'
         - 'Configuration Settings': 'customize/Settings.md'
-        - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'Tokenizers' : 'customize/Tokenizers.md'
+        - 'Special Phrases': 'customize/Special-Phrases.md'
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
     - 'Developers Guide':

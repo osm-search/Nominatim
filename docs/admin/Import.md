@@ -137,6 +137,14 @@ Note that you still need to provide for sufficient disk space for the initial
 import. So this option is particularly interesting if you plan to transfer the
 database or reuse the space later.
 
+!!! warning
+    The datastructure for updates are also required when adding additional data
+    after the import, for example [TIGER housenumber data](Customization#installing-tiger-housenumber-data-for-the-us).
+    If you plan to use those, you must not use the `--no-updates` parameter.
+    Do a normal import, add the external data and once you are done with
+    everything run `nominatim freeze`.
+
+
 ### Reverse-only Imports
 
 If you only want to use the Nominatim database for reverse lookups or
@@ -238,7 +246,8 @@ reduce the cache size or even consider using a flatnode file.
 
 ### Testing the installation
 
-Run this script to verify all required tables and indices got created successfully.
+Run this script to verify that all required tables and indices got created
+successfully.
 
 ```sh
 nominatim admin --check-database

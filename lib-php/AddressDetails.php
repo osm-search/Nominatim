@@ -92,6 +92,10 @@ class AddressDetails
                     || $aLine['class'] == 'place')
             ) {
                 $aAddress[$sTypeLabel] = $sName;
+
+                if ('state' === $sTypeLabel && !empty($aLine['name'])) {
+                    $this->addStateCode($aAddress, $aLine['name']);
+                }
             }
         }
 
@@ -173,5 +177,19 @@ class AddressDetails
     public function debugInfo()
     {
         return $this->aAddressLines;
+    }
+
+    /**
+     * Add `state_code` field to address details to represent second part of ISO 3166-2 country subdivision code
+     */
+    private function addStateCode(&$aAddress, $nameDetails)
+    {
+        if (is_string($nameDetails)) {
+            $nameDetails = json_decode('{' . str_replace('"=>"', '":"', $nameDetails) . '}', true);
+        }
+
+        if (!empty($nameDetails['ref'])) {
+            $aAddress['state_code'] = $nameDetails['ref'];
+        }
     }
 }

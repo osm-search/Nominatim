@@ -44,10 +44,6 @@ normalization functions are hard-coded.
 
 ## ICU tokenizer
 
-!!! danger
-    This tokenizer is currently in active development and still subject
-    to backwards-incompatible changes.
-
 The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to
 normalize names and queries. It also offers configurable decomposition and
 abbreviation handling.

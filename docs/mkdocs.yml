@@ -48,6 +48,7 @@ pages:
 markdown_extensions:
     - codehilite
     - admonition
+    - def_list
     - toc:
         permalink: 
 extra_css: [extra.css, styles.css]

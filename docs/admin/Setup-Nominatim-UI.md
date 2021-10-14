@@ -16,13 +16,14 @@ and run it. Grab the latest release from
 [nominatim-ui's Github release page](https://github.com/osm-search/nominatim-ui/releases)
 and unpack it. You can use `nominatim-ui-x.x.x.tar.gz` or `nominatim-ui-x.x.x.zip`.
 
-Copy the example configuration into the right place:
+Next you need to adapt the UI yo your installation. Custom settings need to be
+put into `dist/theme/config.theme.js`. At a minimum you need to
+set `Nominatim_API_Endpoint` to point to your Nominatim installation:
 
     cd nominatim-ui
-    cp dist/config.example.js dist/config.js
+    echo "Nominatim_Config.Nominatim_API_Endpoint='https:\\myserver.org\nominatim';" > dist/theme/config.theme.js
 
-Now adapt the configuration to your needs. You need at least
-to change the `Nominatim_API_Endpoint` to point to your Nominatim installation.
+For the full set of available settings, have a look at `dist/config.defaults.js`.
 
 Then you can just test it locally by spinning up a webserver in the `dist`
 directory. For example, with Python:

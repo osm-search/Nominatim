@@ -226,14 +226,19 @@ def osm2pgsql_options(temp_db):
                 tablespaces=dict(slim_data='', slim_index='',
                                  main_data='', main_index=''))
 
+
 @pytest.fixture
-def sql_preprocessor(temp_db_conn, tmp_path, table_factory, temp_db_with_extensions):
+def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions):
     table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.', php=SRC_DIR / 'lib-php',
                     sql=tmp_path, data=SRC_DIR / 'data')
+    return cfg
 
-    return SQLPreprocessor(temp_db_conn, cfg)
+
+@pytest.fixture
+def sql_preprocessor(sql_preprocessor_cfg, temp_db_conn):
+    return SQLPreprocessor(temp_db_conn, sql_preprocessor_cfg)
 
 
 @pytest.fixture

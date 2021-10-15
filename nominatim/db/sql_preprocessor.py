@@ -36,7 +36,7 @@ def _setup_tablespace_sql(config):
             tspace = getattr(config, 'TABLESPACE_{}_{}'.format(subset, kind))
             if tspace:
                 tspace = 'TABLESPACE "{}"'.format(tspace)
-            out['{}_{}'.format(subset.lower, kind.lower())] = tspace
+            out['{}_{}'.format(subset.lower(), kind.lower())] = tspace
 
     return out
 

@@ -1141,7 +1141,7 @@ tv:
 # Taiwan (臺灣)
 tw:
     partition: 25
-    languages: zh-hant
+    languages: zh-hant, zh, nan, hak
 
 # Tanzania (Tanzania)
 tz:

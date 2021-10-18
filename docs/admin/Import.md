@@ -47,8 +47,9 @@ You can also set the same configuration via environment variables. All
 settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
 variables.
 
-There are lots of configuration settings you can tweak. Have a look
-at `Nominatim/settings/env.default` for a full list. Most should have a sensible default.
+There are lots of configuration settings you can tweak. A full reference
+can be found in the chapter [Configuration Settings](../customize/Settings.md).
+Most should have a sensible default.
 
 #### Flatnode files
 

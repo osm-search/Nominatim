@@ -80,7 +80,7 @@ done
 
 The debugging UI is no longer directly provided with Nominatim. Instead we
 now provide a simple Javascript application. Please refer to
-[Setting up the Nominatim UI](../Setup-Nominatim-UI) for details on how to
+[Setting up the Nominatim UI](Setup-Nominatim-UI.md) for details on how to
 set up the UI.
 
 The icons served together with the API responses have been moved to the

@@ -111,7 +111,7 @@ If you only need geocoding for a smaller region, then precomputed OSM extracts
 are a good way to reduce the database size and import time.
 [Geofabrik](https://download.geofabrik.de) offers extracts for most countries.
 They even have daily updates which can be used with the update process described
-[in the next section](../Update). There are also
+[in the next section](Update.md). There are also
 [other providers for extracts](https://wiki.openstreetmap.org/wiki/Planet.osm#Downloading).
 
 Please be aware that some extracts are not cut exactly along the country
@@ -139,7 +139,7 @@ database or reuse the space later.
 
 !!! warning
     The datastructure for updates are also required when adding additional data
-    after the import, for example [TIGER housenumber data](Customization#installing-tiger-housenumber-data-for-the-us).
+    after the import, for example [TIGER housenumber data](../customize/Tiger.md).
     If you plan to use those, you must not use the `--no-updates` parameter.
     Do a normal import, add the external data and once you are done with
     everything run `nominatim freeze`.
@@ -191,7 +191,7 @@ full      |   54h        |  640 GB    |  330 GB
 extratags |   54h        |  650 GB    |  340 GB
 
 You can also customize the styles further.
-A [description of the style format](../customize/Import-Styles.md) 
+A [description of the style format](../customize/Import-Styles.md)
 can be found in the customization guide.
 
 ## Initial import of the data
@@ -208,7 +208,7 @@ nominatim import --osm-file <data file> 2>&1 | tee setup.log
 ```
 
 The **project directory** is the one that you have set up at the beginning.
-See [creating the project directory](Import#creating-the-project-directory).
+See [creating the project directory](#creating-the-project-directory).
 
 ### Notes on full planet imports
 
@@ -227,7 +227,7 @@ to load the OSM data into the PostgreSQL database. This step is very demanding
 in terms of RAM usage. osm2pgsql and PostgreSQL are running in parallel at 
 this point. PostgreSQL blocks at least the part of RAM that has been configured
 with the `shared_buffers` parameter during
-[PostgreSQL tuning](Installation#postgresql-tuning)
+[PostgreSQL tuning](Installation.md#postgresql-tuning)
 and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
 its internal data structures, potentially more when it has to process very large
 relations. In addition it needs to maintain a cache for node locations. The size
@@ -286,7 +286,7 @@ performance becomes an issue. Just make sure that updates are stopped before
 running this function.
 
 If you want to be able to search for places by their type through
-[special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
+[special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 
 ```sh
@@ -297,4 +297,4 @@ Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
 
 You can also import special phrases from a csv file, for more 
-information please read the [Customization chapter](Customization.md).
+information please see the [Customization part](../customize/Special-Phrases.md).

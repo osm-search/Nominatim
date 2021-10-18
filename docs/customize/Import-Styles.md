@@ -7,8 +7,8 @@ tag of every object and then assign the tag its specific role.
 
 The style to use is given by the `NOMINATIM_IMPORT_STYLE` configuration
 option. There are a number of default styles, which are explained in detail
-in the [Import section](../admin/Import/#filtering-imported-data). These
-standard styles may be reference by their name.
+in the [Import section](../admin/Import.md#filtering-imported-data). These
+standard styles may be referenced by their name.
 
 You can also create your own custom syle. Put the style file into your
 project directory and then set `NOMINATIM_IMPORT_STYLE` to the name of the file.

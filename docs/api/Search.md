@@ -27,8 +27,8 @@ The search term may be specified with two different sets of parameters:
 
     Free-form query string to search for.
     Free-form queries are processed first left-to-right and then right-to-left if that fails. So you may search for
-    [pilkington avenue, birmingham](//nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
-    [birmingham, pilkington avenue](//nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
+    [pilkington avenue, birmingham](https://nominatim.openstreetmap.org/search?q=pilkington+avenue,birmingham) as well as for
+    [birmingham, pilkington avenue](https://nominatim.openstreetmap.org/search?q=birmingham,+pilkington+avenue).
     Commas are optional, but improve performance by reducing the complexity of the search.
 
 

@@ -37,7 +37,7 @@ NOMINATIM_DATABASE_MODULE_PATH=<path to directory where nominatim.so resides>
 ```
 
 This is in particular useful when the database runs on a different server.
-See [Advanced installations](Advanced-Installations.md#importing-nominatim-to-an-external-postgresql-database) for details.
+See [Advanced installations](../admin/Advanced-Installations.md#importing-nominatim-to-an-external-postgresql-database) for details.
 
 There are no other configuration options for the legacy tokenizer. All
 normalization functions are hard-coded.

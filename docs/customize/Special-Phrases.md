@@ -2,7 +2,7 @@
 
 ## Importing OSM user-maintained special phrases
 
-As described in the [Import section](Import.md), it is possible to
+As described in the [Import section](../admin/Import.md), it is possible to
 import special phrases from the wiki with the following command:
 
 ```sh

@@ -96,7 +96,7 @@ This data can be optionally downloaded into the project directory:
     wget https://www.nominatim.org/data/us_postcodes.csv.gz
 
 You can also add your own custom postcode sources, see
-[Customization of postcodes](Customization.md#external-postcode-data).
+[Customization of postcodes](../customize/Postcodes.md).
 
 ## Choosing the data to import
 

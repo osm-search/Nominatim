@@ -27,7 +27,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-10 postgresql-10-postgis-2.4 \
                         postgresql-contrib-10 postgresql-10-postgis-scripts \
-                        php php-pgsql php-intl libicu-dev python3-pip \
+                        php php-pgsql php-intl php-symfony-dotenv libicu-dev python3-pip \
                         python3-psutil python3-jinja2 python3-icu git
 
 # Some of the Python packages that come with Ubuntu 18.04 are too old, so
@@ -72,7 +72,7 @@ fi                                 #DOCS:
 # Setting up PostgreSQL
 # ---------------------
 #
-# Tune the postgresql configuration, which is located in 
+# Tune the postgresql configuration, which is located in
 # `/etc/postgresql/10/main/postgresql.conf`. See section *Postgres Tuning* in
 # [the installation page](../admin/Installation.md#postgresql-tuning)
 # for the parameters to change.

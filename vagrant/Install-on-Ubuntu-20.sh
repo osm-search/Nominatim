@@ -26,7 +26,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         libbz2-dev libpq-dev libproj-dev \
                         postgresql-server-dev-12 postgresql-12-postgis-3 \
                         postgresql-contrib-12 postgresql-12-postgis-3-scripts \
-                        php php-pgsql php-intl libicu-dev python3-dotenv \
+                        php php-pgsql php-intl php-symfony-dotenv libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
                         python3-icu python3-datrie git
 
@@ -67,7 +67,7 @@ fi                                 #DOCS:
 # Setting up PostgreSQL
 # ---------------------
 #
-# Tune the postgresql configuration, which is located in 
+# Tune the postgresql configuration, which is located in
 # `/etc/postgresql/12/main/postgresql.conf`. See section *Postgres Tuning* in
 # [the installation page](../admin/Installation.md#postgresql-tuning)
 # for the parameters to change.

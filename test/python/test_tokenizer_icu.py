@@ -160,7 +160,7 @@ def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
     assert db_prop(icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
 
 
-def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
+def test_init_word_table(tokenizer_factory, test_config, place_row, temp_db_cursor):
     place_row(names={'name' : 'Test Area', 'ref' : '52'})
     place_row(names={'name' : 'No Area'})
     place_row(names={'name' : 'Holzstrasse'})
@@ -168,8 +168,7 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert word_table.get_partial_words() == {('test', 1),
-                                              ('no', 1), ('area', 2)}
+    assert temp_db_cursor.table_exists('word')
 
 
 def test_init_from_project(monkeypatch, test_config, tokenizer_factory):

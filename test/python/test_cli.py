@@ -144,12 +144,17 @@ class TestCliWithDb:
             def __init__(self, *args, **kwargs):
                 self.update_sql_functions_called = False
                 self.finalize_import_called = False
+                self.update_statistics_called = False
 
             def update_sql_functions(self, *args):
                 self.update_sql_functions_called = True
 
             def finalize_import(self, *args):
                 self.finalize_import_called = True
+
+            def update_statistics(self):
+                self.update_statistics_called = True
+
 
         tok = DummyTokenizer()
         monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db',
@@ -316,7 +321,6 @@ class TestCliWithDb:
         assert func.called == 1
 
     @pytest.mark.parametrize("command,func", [
-                             ('word-counts', 'recompute_word_counts'),
                              ('address-levels', 'load_address_levels_from_file'),
                              ('wiki-data', 'import_wikipedia_articles'),
                              ('importance', 'recompute_importance'),
@@ -327,6 +331,11 @@ class TestCliWithDb:
 
         assert self.call_nominatim('refresh', '--' + command) == 0
         assert func_mock.called == 1
+
+
+    def test_refresh_word_count(self):
+        assert self.call_nominatim('refresh', '--word-count') == 0
+        assert self.tokenizer_mock.update_statistics_called
 
 
     def test_refresh_postcodes(self, mock_func_factory, place_table):

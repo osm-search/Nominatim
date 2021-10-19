@@ -3,6 +3,8 @@ Implementation of the 'add-data' subcommand.
 """
 import logging
 
+import psutil
+
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
@@ -59,7 +61,8 @@ class UpdateAddData:
         if args.tiger_data:
             tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
             return tiger_data.add_tiger_data(args.tiger_data,
-                                             args.config, args.threads or 1,
+                                             args.config,
+                                             args.threads or psutil.cpu_count()  or 1,
                                              tokenizer)
 
         osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)

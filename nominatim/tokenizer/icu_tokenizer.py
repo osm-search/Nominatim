@@ -93,6 +93,25 @@ class LegacyICUTokenizer(AbstractTokenizer):
         return None
 
 
+    def update_statistics(self):
+        """ Recompute frequencies for all name words.
+        """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.drop_table("word_frequencies")
+                LOG.info("Computing word frequencies")
+                cur.execute("""CREATE TEMP TABLE word_frequencies AS
+                                 SELECT unnest(name_vector) as id, count(*)
+                                 FROM search_name GROUP BY id""")
+                cur.execute("CREATE INDEX ON word_frequencies(id)")
+                LOG.info("Update word table with recomputed frequencies")
+                cur.execute("""UPDATE word
+                               SET info = info || jsonb_build_object('count', count)
+                               FROM word_frequencies WHERE word_id = id""")
+                cur.drop_table("word_frequencies")
+            conn.commit()
+
+
     def name_analyzer(self):
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should

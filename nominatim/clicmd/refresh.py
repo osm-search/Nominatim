@@ -71,8 +71,8 @@ class UpdateRefresh:
                           "Postcode updates on a frozen database is not possible.")
 
         if args.word_counts:
-            LOG.warning('Recompute frequency of full-word search terms')
-            refresh.recompute_word_counts(args.config.get_libpq_dsn(), args.sqllib_dir)
+            LOG.warning('Recompute word statistics')
+            self._get_tokenizer(args.config).update_statistics()
 
         if args.address_levels:
             cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)

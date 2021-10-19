@@ -10,6 +10,7 @@ set (DOC_SOURCES
      admin
      develop
      api
+     customize
      index.md
      extra.css
      styles.css

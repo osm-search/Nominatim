@@ -17,7 +17,13 @@ class UpdateRefresh:
     """\
     Recompute auxiliary data used by the indexing process.
 
-    These functions must not be run in parallel with other update commands.
+    This sub-commands updates various static data and functions in the database.
+    It usually needs to be run after changing various aspects of the
+    configuration. The configuration documentation will mention the exact
+    command to use in such case.
+
+    Warning: the 'update' command must not be run in parallel with other update
+             commands like 'replication' or 'add-data'.
     """
     def __init__(self):
         self.tokenizer = None
@@ -34,7 +40,7 @@ class UpdateRefresh:
         group.add_argument('--functions', action='store_true',
                            help='Update the PL/pgSQL functions in the database')
         group.add_argument('--wiki-data', action='store_true',
-                           help='Update Wikipedia/data importance numbers.')
+                           help='Update Wikipedia/data importance numbers')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',

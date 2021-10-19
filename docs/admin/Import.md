@@ -47,8 +47,9 @@ You can also set the same configuration via environment variables. All
 settings have a `NOMINATIM_` prefix to avoid conflicts with other environment
 variables.
 
-There are lots of configuration settings you can tweak. Have a look
-at `Nominatim/settings/env.default` for a full list. Most should have a sensible default.
+There are lots of configuration settings you can tweak. A full reference
+can be found in the chapter [Configuration Settings](../customize/Settings.md).
+Most should have a sensible default.
 
 #### Flatnode files
 
@@ -95,7 +96,7 @@ This data can be optionally downloaded into the project directory:
     wget https://www.nominatim.org/data/us_postcodes.csv.gz
 
 You can also add your own custom postcode sources, see
-[Customization of postcodes](Customization.md#external-postcode-data).
+[Customization of postcodes](../customize/Postcodes.md).
 
 ## Choosing the data to import
 
@@ -111,7 +112,7 @@ If you only need geocoding for a smaller region, then precomputed OSM extracts
 are a good way to reduce the database size and import time.
 [Geofabrik](https://download.geofabrik.de) offers extracts for most countries.
 They even have daily updates which can be used with the update process described
-[in the next section](../Update). There are also
+[in the next section](Update.md). There are also
 [other providers for extracts](https://wiki.openstreetmap.org/wiki/Planet.osm#Downloading).
 
 Please be aware that some extracts are not cut exactly along the country
@@ -137,6 +138,14 @@ Note that you still need to provide for sufficient disk space for the initial
 import. So this option is particularly interesting if you plan to transfer the
 database or reuse the space later.
 
+!!! warning
+    The datastructure for updates are also required when adding additional data
+    after the import, for example [TIGER housenumber data](../customize/Tiger.md).
+    If you plan to use those, you must not use the `--no-updates` parameter.
+    Do a normal import, add the external data and once you are done with
+    everything run `nominatim freeze`.
+
+
 ### Reverse-only Imports
 
 If you only want to use the Nominatim database for reverse lookups or
@@ -152,15 +161,15 @@ Nominatim normally sets up a full search database containing administrative
 boundaries, places, streets, addresses and POI data. There are also other
 import styles available which only read selected data:
 
-* **settings/import-admin.style**
+* **admin**
   Only import administrative boundaries and places.
-* **settings/import-street.style**
+* **street**
   Like the admin style but also adds streets.
-* **settings/import-address.style**
+* **address**
   Import all data necessary to compute addresses down to house number level.
-* **settings/import-full.style**
+* **full**
   Default style that also includes points of interest.
-* **settings/import-extratags.style**
+* **extratags**
   Like the full style but also adds most of the OSM tags into the extratags
   column.
 
@@ -183,8 +192,8 @@ full      |   54h        |  640 GB    |  330 GB
 extratags |   54h        |  650 GB    |  340 GB
 
 You can also customize the styles further.
-A [description of the style format](../develop/Import.md#configuring-the-import) 
-can be found in the development section.
+A [description of the style format](../customize/Import-Styles.md)
+can be found in the customization guide.
 
 ## Initial import of the data
 
@@ -200,7 +209,7 @@ nominatim import --osm-file <data file> 2>&1 | tee setup.log
 ```
 
 The **project directory** is the one that you have set up at the beginning.
-See [creating the project directory](Import#creating-the-project-directory).
+See [creating the project directory](#creating-the-project-directory).
 
 ### Notes on full planet imports
 
@@ -219,7 +228,7 @@ to load the OSM data into the PostgreSQL database. This step is very demanding
 in terms of RAM usage. osm2pgsql and PostgreSQL are running in parallel at 
 this point. PostgreSQL blocks at least the part of RAM that has been configured
 with the `shared_buffers` parameter during
-[PostgreSQL tuning](Installation#postgresql-tuning)
+[PostgreSQL tuning](Installation.md#postgresql-tuning)
 and needs some memory on top of that. osm2pgsql needs at least 2GB of RAM for
 its internal data structures, potentially more when it has to process very large
 relations. In addition it needs to maintain a cache for node locations. The size
@@ -238,7 +247,8 @@ reduce the cache size or even consider using a flatnode file.
 
 ### Testing the installation
 
-Run this script to verify all required tables and indices got created successfully.
+Run this script to verify that all required tables and indices got created
+successfully.
 
 ```sh
 nominatim admin --check-database
@@ -277,7 +287,7 @@ performance becomes an issue. Just make sure that updates are stopped before
 running this function.
 
 If you want to be able to search for places by their type through
-[special key phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
+[special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)
 you also need to import these key phrases like this:
 
 ```sh
@@ -288,4 +298,4 @@ Note that this command downloads the phrases from the wiki link above. You
 need internet access for the step.
 
 You can also import special phrases from a csv file, for more 
-information please read the [Customization chapter](Customization.md).
+information please see the [Customization part](../customize/Special-Phrases.md).

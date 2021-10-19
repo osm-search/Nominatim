@@ -1,8 +1,7 @@
 # Place Ranking in Nominatim
 
 Nominatim uses two metrics to rank a place: search rank and address rank.
-Both can be assigned a value between 0 and 30. They serve slightly
-different purposes, which are explained in this chapter.
+This chapter explains what place ranking means and how it can be customized.
 
 ## Search rank
 

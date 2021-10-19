@@ -166,4 +166,4 @@ NOMINATIM_DATABASE_MODULE_PATH="<directory on the database server where nominati
 ```
 
 Now change the `NOMINATIM_DATABASE_DSN` to point to your remote server and continue
-to follow the [standard instructions for importing](/admin/Import).
+to follow the [standard instructions for importing](Import.md).

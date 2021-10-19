@@ -6,7 +6,9 @@ nominatim
 [-h] {import,freeze,replication,special-phrases,add-data,index,refresh,admin,export,serve,search,reverse,lookup,details,status} ...
 .SH DESCRIPTION
     Command\-line tools for importing, updating, administrating and
+.br
     querying the Nominatim database.
+.br
     
 .SH OPTIONS
 
@@ -45,7 +47,7 @@ nominatim
     Start a simple web server for serving the API.
 .TP
 \fBnominatim\fR \fI\,search\/\fR
-    Execute API search query.
+    Execute a search query.
 .TP
 \fBnominatim\fR \fI\,reverse\/\fR
     Execute API reverse query.
@@ -66,6 +68,15 @@ usage: nominatim import [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--index-noanalyse]
 
     Create a new Nominatim database from an OSM file.
+.br
+
+.br
+    This sub\-command sets up a new Nominatim database from scratch starting
+.br
+    with creating a new database in Postgresql. The user running this command
+.br
+    needs superuser rights on the database.
+.br
     
 
 
@@ -88,7 +99,7 @@ Number of parallel threads to use
 
 .TP
 \fB\-\-osm\-file\fR FILE
-OSM file to be imported.
+OSM file to be imported (repeat for importing multiple files)
 
 .TP
 \fB\-\-continue\fR {load\-data,indexing,db\-postprocess}
@@ -116,19 +127,27 @@ Continue import even when errors in SQL are present
 
 .TP
 \fB\-\-index\-noanalyse\fR
-Do not perform analyse operations during index
+Do not perform analyse operations during index (expert only)
 
 .SH OPTIONS 'nominatim freeze'
 usage: nominatim freeze [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
 
     Make database read\-only.
+.br
 
+.br
     About half of data in the Nominatim database is kept only to be able to
+.br
     keep the data up\-to\-date with new changes made in OpenStreetMap. This
+.br
     command drops all this data and only keeps the part needed for geocoding
+.br
     itself.
+.br
 
+.br
     This command has the same effect as the `\-\-no\-updates` option for imports.
+.br
     
 
 
@@ -157,6 +176,33 @@ usage: nominatim replication [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                              [--socket-timeout SOCKET_TIMEOUT]
 
     Update the database using an online replication service.
+.br
+
+.br
+    An OSM replication service is an online service that provides regular
+.br
+    updates (OSM diff files) for the planet or update they provide. The OSMF
+.br
+    provides the primary replication service for the full planet at
+.br
+    https://planet.osm.org/replication/ but there are other providers of
+.br
+    extracts of OSM data who provide such a service as well.
+.br
+
+.br
+    This sub\-command allows to set up such a replication service and download
+.br
+    and import updates at regular intervals. You need to call '\-\-init' once to
+.br
+    set up the process or whenever you change the replication configuration
+.br
+    parameters. Without any arguments, the sub\-command will go into a loop and
+.br
+    continuously apply updates as they become available. Giving `\-\-once` just
+.br
+    downloads and imports the next batch of updates.
+.br
     
 
 
@@ -195,7 +241,7 @@ Download and apply updates only once. When not set, updates are continuously app
 
 .TP
 \fB\-\-no\-index\fR
-Do not index the new data. Only applicable together with \-\-once
+Do not index the new data. Only usable together with \-\-once
 
 .TP
 \fB\-\-osm2pgsql\-cache\fR SIZE
@@ -203,13 +249,47 @@ Size of cache to be used by osm2pgsql (in MB)
 
 .TP
 \fB\-\-socket\-timeout\fR \fI\,SOCKET_TIMEOUT\/\fR
-Set timeout for file downloads.
+Set timeout for file downloads
 
 .SH OPTIONS 'nominatim special-phrases'
 usage: nominatim special-phrases [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
-                                 [--import-from-wiki]
+                                 [--import-from-wiki] [--import-from-csv FILE]
+                                 [--no-replace]
 
     Import special phrases.
+.br
+
+.br
+    Special phrases are search terms that narrow down the type of object
+.br
+    that should be searched. For example, you might want to search for
+.br
+    'Hotels in Barcelona'. The OSM wiki has a selection of special phrases
+.br
+    in many languages, which can be imported with this command.
+.br
+
+.br
+    You can also provide your own phrases in a CSV file. The file needs to have
+.br
+    the following five columns:
+.br
+     * phrase \- the term expected for searching
+.br
+     * class \- the OSM tag key of the object type
+.br
+     * type \- the OSM tag value of the object type
+.br
+     * operator \- the kind of search to be done (one of: in, near, name, \-)
+.br
+     * plural \- whether the term is a plural or not (Y/N)
+.br
+
+.br
+    An example file can be found in the Nominatim sources at
+.br
+    'test/testdb/full_en_phrases_test.csv'.
+.br
     
 
 
@@ -232,17 +312,48 @@ Number of parallel threads to use
 
 .TP
 \fB\-\-import\-from\-wiki\fR
-Import special phrases from the OSM wiki to the database.
+Import special phrases from the OSM wiki to the database
+
+.TP
+\fB\-\-import\-from\-csv\fR FILE
+Import special phrases from a CSV file
+
+.TP
+\fB\-\-no\-replace\fR
+Keep the old phrases and only add the new ones
 
 .SH OPTIONS 'nominatim add-data'
 usage: nominatim add-data [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                           (--file FILE | --diff FILE | --node ID | --way ID | --relation ID | --tiger-data DIR)
-                          [--use-main-api]
+                          [--use-main-api] [--osm2pgsql-cache SIZE]
+                          [--socket-timeout SOCKET_TIMEOUT]
 
     Add additional data from a file or an online source.
+.br
 
-    Data is only imported, not indexed. You need to call `nominatim index`
-    to complete the process.
+.br
+    This command allows to add or update the search data in the database.
+.br
+    The data can come either from an OSM file or single OSM objects can
+.br
+    directly be downloaded from the OSM API. This function only loads the
+.br
+    data into the database. Afterwards it still needs to be integrated
+.br
+    in the search index. Use the `nominatim index` command for that.
+.br
+
+.br
+    The command can also be used to add external non\-OSM data to the
+.br
+    database. At the moment the only supported format is TIGER housenumber
+.br
+    data. See the online documentation at
+.br
+    https://nominatim.org/release\-docs/latest/admin/Import/#installing\-tiger\-housenumber\-data\-for\-the\-us
+.br
+    for more information.
+.br
     
 
 
@@ -265,11 +376,11 @@ Number of parallel threads to use
 
 .TP
 \fB\-\-file\fR FILE
-Import data from an OSM file
+Import data from an OSM file or diff file
 
 .TP
 \fB\-\-diff\fR FILE
-Import data from an OSM diff file
+Import data from an OSM diff file (deprecated: use \-\-file)
 
 .TP
 \fB\-\-node\fR ID
@@ -285,11 +396,19 @@ Import a single relation from the API
 
 .TP
 \fB\-\-tiger\-data\fR DIR
-Add housenumbers from the US TIGER census database.
+Add housenumbers from the US TIGER census database
 
 .TP
 \fB\-\-use\-main\-api\fR
 Use OSM API instead of Overpass to download objects
+
+.TP
+\fB\-\-osm2pgsql\-cache\fR SIZE
+Size of cache to be used by osm2pgsql (in MB)
+
+.TP
+\fB\-\-socket\-timeout\fR \fI\,SOCKET_TIMEOUT\/\fR
+Set timeout for file downloads
 
 .SH OPTIONS 'nominatim index'
 usage: nominatim index [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
@@ -297,6 +416,17 @@ usage: nominatim index [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--maxrank RANK]
 
     Reindex all new and modified data.
+.br
+
+.br
+    Indexing is the process of computing the address and search terms for
+.br
+    the places in the database. Every time data is added or changed, indexing
+.br
+    needs to be run. Imports and replication updates automatically take care
+.br
+    of indexing. For other cases, this function allows to run indexing manually.
+.br
     
 
 
@@ -341,8 +471,23 @@ usage: nominatim refresh [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                          [--enable-debug-statements]
 
     Recompute auxiliary data used by the indexing process.
+.br
 
-    These functions must not be run in parallel with other update commands.
+.br
+    This sub\-commands updates various static data and functions in the database.
+.br
+    It usually needs to be run after changing various aspects of the
+.br
+    configuration. The configuration documentation will mention the exact
+.br
+    command to use in such case.
+.br
+
+.br
+    Warning: the 'update' command must not be run in parallel with other update
+.br
+             commands like 'replication' or 'add\-data'.
+.br
     
 
 
@@ -381,7 +526,7 @@ Update the PL/pgSQL functions in the database
 
 .TP
 \fB\-\-wiki\-data\fR
-Update Wikipedia/data importance numbers.
+Update Wikipedia/data importance numbers
 
 .TP
 \fB\-\-importance\fR
@@ -406,6 +551,7 @@ usage: nominatim admin [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--osm-id OSM_ID | --place-id PLACE_ID]
 
     Analyse and maintain the database.
+.br
     
 
 
@@ -428,19 +574,19 @@ Number of parallel threads to use
 
 .TP
 \fB\-\-warm\fR
-Warm database caches for search and reverse queries.
+Warm database caches for search and reverse queries
 
 .TP
 \fB\-\-check\-database\fR
-Check that the database is complete and operational.
+Check that the database is complete and operational
 
 .TP
 \fB\-\-migrate\fR
-Migrate the database to a new software version.
+Migrate the database to a new software version
 
 .TP
 \fB\-\-analyse\-indexing\fR
-Print performance analysis of the indexing process.
+Print performance analysis of the indexing process
 
 .TP
 \fB\-\-search\-only\fR
@@ -468,6 +614,7 @@ usage: nominatim export [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--restrict-to-osm-relation ID]
 
     Export addresses as CSV file from the database.
+.br
     
 
 
@@ -525,12 +672,19 @@ usage: nominatim serve [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                        [--server SERVER]
 
     Start a simple web server for serving the API.
+.br
 
+.br
     This command starts the built\-in PHP webserver to serve the website
+.br
     from the current project directory. This webserver is only suitable
-    for testing and develop. Do not use it in production setups!
+.br
+    for testing and development. Do not use it in production setups!
+.br
 
+.br
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
+.br
     
 
 
@@ -568,7 +722,18 @@ usage: nominatim search [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--exclude_place_ids ID,..] [--limit LIMIT]
                         [--viewbox X1,Y1,X2,Y2] [--bounded] [--no-dedupe]
 
-    Execute API search query.
+    Execute a search query.
+.br
+
+.br
+    This command works exactly the same as if calling the /search endpoint on
+.br
+    the web API. See the online documentation for more details on the
+.br
+    various parameters:
+.br
+    https://nominatim.org/release\-docs/latest/api/Search/
+.br
     
 
 
@@ -623,15 +788,15 @@ Format of result
 
 .TP
 \fB\-\-addressdetails\fR
-Include a breakdown of the address into elements.
+Include a breakdown of the address into elements
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours)
 
 .TP
 \fB\-\-namedetails\fR
-Include a list of alternative names.
+Include a list of alternative names
 
 .TP
 \fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
@@ -639,7 +804,7 @@ Preferred language order for presenting search results
 
 .TP
 \fB\-\-polygon\-output\fR {geojson,kml,svg,text}
-Output geometry of results as a GeoJSON, KML, SVG or WKT.
+Output geometry of results as a GeoJSON, KML, SVG or WKT
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
@@ -647,7 +812,7 @@ Simplify output geometry.Parameter is difference tolerance in degrees.
 
 .TP
 \fB\-\-countrycodes\fR CC,..
-Limit search results to one or more countries.
+Limit search results to one or more countries
 
 .TP
 \fB\-\-exclude_place_ids\fR ID,..
@@ -679,6 +844,17 @@ usage: nominatim reverse [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --lat LAT
                          [--polygon-threshold TOLERANCE]
 
     Execute API reverse query.
+.br
+
+.br
+    This command works exactly the same as if calling the /reverse endpoint on
+.br
+    the web API. See the online documentation for more details on the
+.br
+    various parameters:
+.br
+    https://nominatim.org/release\-docs/latest/api/Reverse/
+.br
     
 
 
@@ -717,15 +893,15 @@ Format of result
 
 .TP
 \fB\-\-addressdetails\fR
-Include a breakdown of the address into elements.
+Include a breakdown of the address into elements
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours)
 
 .TP
 \fB\-\-namedetails\fR
-Include a list of alternative names.
+Include a list of alternative names
 
 .TP
 \fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
@@ -733,7 +909,7 @@ Preferred language order for presenting search results
 
 .TP
 \fB\-\-polygon\-output\fR {geojson,kml,svg,text}
-Output geometry of results as a GeoJSON, KML, SVG or WKT.
+Output geometry of results as a GeoJSON, KML, SVG or WKT
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
@@ -748,6 +924,17 @@ usage: nominatim lookup [-h] [-q] [-v] [--project-dir DIR] [-j NUM] --id OSMID
                         [--polygon-threshold TOLERANCE]
 
     Execute API lookup query.
+.br
+
+.br
+    This command works exactly the same as if calling the /lookup endpoint on
+.br
+    the web API. See the online documentation for more details on the
+.br
+    various parameters:
+.br
+    https://nominatim.org/release\-docs/latest/api/Lookup/
+.br
     
 
 
@@ -778,15 +965,15 @@ Format of result
 
 .TP
 \fB\-\-addressdetails\fR
-Include a breakdown of the address into elements.
+Include a breakdown of the address into elements
 
 .TP
 \fB\-\-extratags\fR
-Include additional information if available (e.g. wikipedia link, opening hours).
+Include additional information if available (e.g. wikipedia link, opening hours)
 
 .TP
 \fB\-\-namedetails\fR
-Include a list of alternative names.
+Include a list of alternative names
 
 .TP
 \fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
@@ -794,7 +981,7 @@ Preferred language order for presenting search results
 
 .TP
 \fB\-\-polygon\-output\fR {geojson,kml,svg,text}
-Output geometry of results as a GeoJSON, KML, SVG or WKT.
+Output geometry of results as a GeoJSON, KML, SVG or WKT
 
 .TP
 \fB\-\-polygon\-threshold\fR TOLERANCE
@@ -809,6 +996,17 @@ usage: nominatim details [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                          [--lang LANGS]
 
     Execute API details query.
+.br
+
+.br
+    This command works exactly the same as if calling the /details endpoint on
+.br
+    the web API. See the online documentation for more details on the
+.br
+    various parameters:
+.br
+    https://nominatim.org/release\-docs/latest/api/Details/
+.br
     
 
 
@@ -843,7 +1041,7 @@ Look up the OSM relation with the given ID.
 
 .TP
 \fB\-\-place_id\fR \fI\,PLACE_ID\/\fR, \fB\-p\fR \fI\,PLACE_ID\/\fR
-Database internal identifier of the OSM object to look up.
+Database internal identifier of the OSM object to look up
 
 .TP
 \fB\-\-class\fR \fI\,OBJECT_CLASS\/\fR
@@ -851,27 +1049,27 @@ Class type to disambiguated multiple entries of the same object.
 
 .TP
 \fB\-\-addressdetails\fR
-Include a breakdown of the address into elements.
+Include a breakdown of the address into elements
 
 .TP
 \fB\-\-keywords\fR
-Include a list of name keywords and address keywords.
+Include a list of name keywords and address keywords
 
 .TP
 \fB\-\-linkedplaces\fR
-Include a details of places that are linked with this one.
+Include a details of places that are linked with this one
 
 .TP
 \fB\-\-hierarchy\fR
-Include details of places lower in the address hierarchy.
+Include details of places lower in the address hierarchy
 
 .TP
 \fB\-\-group_hierarchy\fR
-Group the places by type.
+Group the places by type
 
 .TP
 \fB\-\-polygon_geojson\fR
-Include geometry of result.
+Include geometry of result
 
 .TP
 \fB\-\-lang\fR LANGS, \fB\-\-accept\-language\fR LANGS
@@ -882,6 +1080,17 @@ usage: nominatim status [-h] [-q] [-v] [--project-dir DIR] [-j NUM]
                         [--format {text,json}]
 
     Execute API status query.
+.br
+
+.br
+    This command works exactly the same as if calling the /status endpoint on
+.br
+    the web API. See the online documentation for more details on the
+.br
+    various parameters:
+.br
+    https://nominatim.org/release\-docs/latest/api/Status/
+.br
     
 
 
@@ -906,6 +1115,9 @@ Number of parallel threads to use
 \fB\-\-format\fR {text,json}
 Format of result
 
+.SH AUTHORS
+.B Nominatim
+was written by the Nominatim developer community <info@nominatim.org>.
 .SH DISTRIBUTION
 The latest version of Nominatim may be downloaded from
 .UR https://nominatim.org

@@ -6,7 +6,7 @@ tokenizers that use different strategies for normalisation. This page describes
 how tokenizers are expected to work and the public API that needs to be
 implemented when creating a new tokenizer. For information on how to configure
 a specific tokenizer for a database see the
-[tokenizer chapter in the administration guide](../admin/Tokenizers.md).
+[tokenizer chapter in the Customization Guide](../customize/Tokenizers.md).
 
 ## Generic Architecture
 

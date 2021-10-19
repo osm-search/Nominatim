@@ -114,7 +114,7 @@ symlinks (see `CMakeLists.txt` for the exact steps).
 Now you can start webserver for local testing
 
 ```
-build> mame serve-doc
+build> make serve-doc
 [server:296] Serving on http://127.0.0.1:8000
 [handlers:62] Start watching changes
 ```

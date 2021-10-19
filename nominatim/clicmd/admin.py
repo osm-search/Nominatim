@@ -23,13 +23,13 @@ class AdminFuncs:
         group = parser.add_argument_group('Admin tasks')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--warm', action='store_true',
-                          help='Warm database caches for search and reverse queries.')
+                          help='Warm database caches for search and reverse queries')
         objs.add_argument('--check-database', action='store_true',
-                          help='Check that the database is complete and operational.')
+                          help='Check that the database is complete and operational')
         objs.add_argument('--migrate', action='store_true',
-                          help='Migrate the database to a new software version.')
+                          help='Migrate the database to a new software version')
         objs.add_argument('--analyse-indexing', action='store_true',
-                          help='Print performance analysis of the indexing process.')
+                          help='Print performance analysis of the indexing process')
         group = parser.add_argument_group('Arguments for cache warming')
         group.add_argument('--search-only', action='store_const', dest='target',
                            const='search',

@@ -35,7 +35,7 @@ it contains the county/state/country across the border.
 #### 3. I get different counties/states/countries when I change the zoom parameter in the reverse query. How is that possible?
 
 This is basically the same problem as in the previous answer.
-The zoom level influences at which [search rank](https://wiki.openstreetmap.org/wiki/Nominatim/Development_overview#Country_to_street_level) Nominatim starts looking
+The zoom level influences at which [search rank](../customize/Ranking.md#search-rank) Nominatim starts looking
 for the closest object. So the closest house number maybe on one side of the
 border while the closest street is on the other. As the address details contain
 the address of the closest object found, you might sometimes get one result,

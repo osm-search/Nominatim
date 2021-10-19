@@ -20,19 +20,19 @@ STRUCTURED_QUERY = (
 )
 
 EXTRADATA_PARAMS = (
-    ('addressdetails', 'Include a breakdown of the address into elements.'),
+    ('addressdetails', 'Include a breakdown of the address into elements'),
     ('extratags', ("Include additional information if available "
-                   "(e.g. wikipedia link, opening hours).")),
-    ('namedetails', 'Include a list of alternative names.')
+                   "(e.g. wikipedia link, opening hours)")),
+    ('namedetails', 'Include a list of alternative names')
 )
 
 DETAILS_SWITCHES = (
-    ('addressdetails', 'Include a breakdown of the address into elements.'),
-    ('keywords', 'Include a list of name keywords and address keywords.'),
-    ('linkedplaces', 'Include a details of places that are linked with this one.'),
-    ('hierarchy', 'Include details of places lower in the address hierarchy.'),
-    ('group_hierarchy', 'Group the places by type.'),
-    ('polygon_geojson', 'Include geometry of result.')
+    ('addressdetails', 'Include a breakdown of the address into elements'),
+    ('keywords', 'Include a list of name keywords and address keywords'),
+    ('linkedplaces', 'Include a details of places that are linked with this one'),
+    ('hierarchy', 'Include details of places lower in the address hierarchy'),
+    ('group_hierarchy', 'Group the places by type'),
+    ('polygon_geojson', 'Include geometry of result')
 )
 
 def _add_api_output_arguments(parser):
@@ -47,7 +47,7 @@ def _add_api_output_arguments(parser):
                        help='Preferred language order for presenting search results')
     group.add_argument('--polygon-output',
                        choices=['geojson', 'kml', 'svg', 'text'],
-                       help='Output geometry of results as a GeoJSON, KML, SVG or WKT.')
+                       help='Output geometry of results as a GeoJSON, KML, SVG or WKT')
     group.add_argument('--polygon-threshold', type=float, metavar='TOLERANCE',
                        help=("Simplify output geometry."
                              "Parameter is difference tolerance in degrees."))
@@ -55,7 +55,12 @@ def _add_api_output_arguments(parser):
 
 class APISearch:
     """\
-    Execute API search query.
+    Execute a search query.
+
+    This command works exactly the same as if calling the /search endpoint on
+    the web API. See the online documentation for more details on the
+    various parameters:
+    https://nominatim.org/release-docs/latest/api/Search/
     """
 
     @staticmethod
@@ -70,7 +75,7 @@ class APISearch:
 
         group = parser.add_argument_group('Result limitation')
         group.add_argument('--countrycodes', metavar='CC,..',
-                           help='Limit search results to one or more countries.')
+                           help='Limit search results to one or more countries')
         group.add_argument('--exclude_place_ids', metavar='ID,..',
                            help='List of search object to be excluded')
         group.add_argument('--limit', type=int,
@@ -115,6 +120,11 @@ class APISearch:
 class APIReverse:
     """\
     Execute API reverse query.
+
+    This command works exactly the same as if calling the /reverse endpoint on
+    the web API. See the online documentation for more details on the
+    various parameters:
+    https://nominatim.org/release-docs/latest/api/Reverse/
     """
 
     @staticmethod
@@ -155,6 +165,11 @@ class APIReverse:
 class APILookup:
     """\
     Execute API lookup query.
+
+    This command works exactly the same as if calling the /lookup endpoint on
+    the web API. See the online documentation for more details on the
+    various parameters:
+    https://nominatim.org/release-docs/latest/api/Lookup/
     """
 
     @staticmethod
@@ -190,6 +205,11 @@ class APILookup:
 class APIDetails:
     """\
     Execute API details query.
+
+    This command works exactly the same as if calling the /details endpoint on
+    the web API. See the online documentation for more details on the
+    various parameters:
+    https://nominatim.org/release-docs/latest/api/Details/
     """
 
     @staticmethod
@@ -203,7 +223,7 @@ class APIDetails:
         objs.add_argument('--relation', '-r', type=int,
                           help="Look up the OSM relation with the given ID.")
         objs.add_argument('--place_id', '-p', type=int,
-                          help='Database internal identifier of the OSM object to look up.')
+                          help='Database internal identifier of the OSM object to look up')
         group.add_argument('--class', dest='object_class',
                            help=("Class type to disambiguated multiple entries "
                                  "of the same object."))
@@ -236,6 +256,11 @@ class APIDetails:
 class APIStatus:
     """\
     Execute API status query.
+
+    This command works exactly the same as if calling the /status endpoint on
+    the web API. See the online documentation for more details on the
+    various parameters:
+    https://nominatim.org/release-docs/latest/api/Status/
     """
 
     @staticmethod

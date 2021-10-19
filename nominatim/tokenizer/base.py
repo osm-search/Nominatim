@@ -206,6 +206,16 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
+    def update_statistics(self) -> None:
+        """ Recompute any tokenizer statistics necessary for efficient lookup.
+            This function is meant to be called from time to time by the user
+            to improve performance. However, the tokenizer must not depend on
+            it to be called in order to work.
+        """
+        pass
+
+
+    @abstractmethod
     def name_analyzer(self) -> AbstractAnalyzer:
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should

@@ -14,12 +14,6 @@ from nominatim.version import NOMINATIM_VERSION
 LOG = logging.getLogger()
 
 
-def recompute_word_counts(dsn, sql_dir):
-    """ Compute the frequency of full-word search terms.
-    """
-    execute_file(dsn, sql_dir / 'words_from_search_name.sql')
-
-
 def _add_address_level_rows_from_entry(rows, entry):
     """ Converts a single entry from the JSON format for address rank
         descriptions into a flat format suitable for inserting into a

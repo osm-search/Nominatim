@@ -2,7 +2,6 @@
 Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
 """
-from collections import Counter
 import itertools
 import json
 import logging
@@ -93,6 +92,25 @@ class LegacyICUTokenizer(AbstractTokenizer):
         return None
 
 
+    def update_statistics(self):
+        """ Recompute frequencies for all name words.
+        """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.drop_table("word_frequencies")
+                LOG.info("Computing word frequencies")
+                cur.execute("""CREATE TEMP TABLE word_frequencies AS
+                                 SELECT unnest(name_vector) as id, count(*)
+                                 FROM search_name GROUP BY id""")
+                cur.execute("CREATE INDEX ON word_frequencies(id)")
+                LOG.info("Update word table with recomputed frequencies")
+                cur.execute("""UPDATE word
+                               SET info = info || jsonb_build_object('count', count)
+                               FROM word_frequencies WHERE word_id = id""")
+                cur.drop_table("word_frequencies")
+            conn.commit()
+
+
     def name_analyzer(self):
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should
@@ -141,43 +159,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sqlp = SQLPreprocessor(conn, config)
             sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer_tables.sql')
             conn.commit()
-
-            LOG.warning("Precomputing word tokens")
-
-            # get partial words and their frequencies
-            words = self._count_partial_terms(conn)
-
-            # copy them back into the word table
-            with CopyBuffer() as copystr:
-                for term, cnt in words.items():
-                    copystr.add('w', term, json.dumps({'count': cnt}))
-
-                with conn.cursor() as cur:
-                    copystr.copy_out(cur, 'word',
-                                     columns=['type', 'word_token', 'info'])
-                    cur.execute("""UPDATE word SET word_id = nextval('seq_word')
-                                   WHERE word_id is null and type = 'w'""")
-
-            conn.commit()
-
-    def _count_partial_terms(self, conn):
-        """ Count the partial terms from the names in the place table.
-        """
-        words = Counter()
-        analysis = self.loader.make_token_analysis()
-
-        with conn.cursor(name="words") as cur:
-            cur.execute(""" SELECT v, count(*) FROM
-                              (SELECT svals(name) as v FROM place)x
-                            WHERE length(v) < 75 GROUP BY v""")
-
-            for name, cnt in cur:
-                word = analysis.search.transliterate(name)
-                if word and ' ' in word:
-                    for term in set(word.split()):
-                        words[term] += cnt
-
-        return words
 
 
 class LegacyICUNameAnalyzer(AbstractAnalyzer):

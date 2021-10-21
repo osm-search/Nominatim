@@ -112,6 +112,9 @@ Points to the file with additional configuration for the tokenizer.
 See the [Tokenizer](../customize/Tokenizers.md) descriptions for details
 on the file format.
 
+If a relative path is given, then the file is searched first relative to the
+project directory and then in the global settings directory.
+
 #### NOMINATIM_MAX_WORD_FREQUENCY
 
 | Summary            |                                                     |
@@ -150,7 +153,7 @@ objects when the area becomes too large.
 | Summary            |                                                     |
 | --------------     | --------------------------------------------------- |
 | **Description:**   | Restrict search languages |
-| **Format:**        | comma,separated list of language codes |
+| **Format:**        | string: comma-separated list of language codes |
 | **Default:**       | _empty_ |
 
 Normally Nominatim will include all language variants of name:XX
@@ -283,7 +286,7 @@ setting to define the password for proxies that require a login.
 Nominatim uses [osm2pgsql](https://osm2pgsql.org) to load the OSM data
 initially into the database. Nominatim comes bundled with a version of
 osm2pgsql that is guaranteed to be compatible. Use this setting to use
-a different binary instead. You should do this only, when you know exactly
+a different binary instead. You should do this only when you know exactly
 what you are doing. If the osm2pgsql version is not compatible, then the
 result is undefined.
 

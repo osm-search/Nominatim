@@ -5,6 +5,7 @@ your Nominatim database. It is assumed that you have already successfully
 installed the Nominatim software itself, if not return to the 
 [installation page](Installation.md).
 
+
 ## Importing multiple regions
 
 To import multiple regions in your database, you need to configure and run `utils/import_multiple_regions.sh` file. This script will set up the update directory which has the following structure:
@@ -26,6 +27,14 @@ update
 ```
 
 The `sequence.state` files will contain the sequence ID, which will be used by pyosmium to get updates. The tmp folder is used for import dump.
+
+### Installing PHP prerequisites
+
+The scripts this section still use the old PHP utils. They require
+the [Symphony dotenv](https://symfony.com/doc/4.1/components/dotenv.html)
+parser to work. To install it on Ubuntu/Debian, run:
+
+    sudo apt install php-symfony-dotenv
 
 ### Configuring multiple regions
 

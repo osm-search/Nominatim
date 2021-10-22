@@ -150,7 +150,7 @@ class SetupAll:
             refresh.create_functions(conn, config, False, False)
             LOG.warning('Create tables')
             database_import.create_tables(conn, config, reverse_only=reverse_only)
-            refresh.load_address_levels_from_file(conn, Path(config.ADDRESS_LEVEL_CONFIG))
+            refresh.load_address_levels_from_config(conn, config)
             LOG.warning('Create functions (2nd pass)')
             refresh.create_functions(conn, config, False, False)
             LOG.warning('Create table triggers')

@@ -309,12 +309,15 @@ unset, Nominatim expects the data to be saved in the project directory.
 | --------------     | --------------------------------------------------- |
 | **Description:**   | Configuration file for rank assignments |
 | **Format:**        | path |
-| **Default:**       | _empty_ (use default settings) |
+| **Default:**       | address-levels.json |
 
-The _address level config_ configures rank assignments for places. See
+The _address level configuration_ defines the rank assignments for places. See
 [Place Ranking](Ranking.md) for a detailed explanation what rank assignments
-are and what the configuration file must look like. The default configuration
-can be found in the configuration directory as `address-levels.json`.
+are and what the configuration file must look like.
+
+When a relative path is given, then the file is searched first relative to the
+project directory and then in the global settings directory.
+
 
 #### NOMINATIM_IMPORT_STYLE
 

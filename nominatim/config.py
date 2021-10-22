@@ -56,12 +56,6 @@ class Configuration:
         if project_dir is not None and (project_dir / '.env').is_file():
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
-        # Add defaults for variables that are left empty to set the default.
-        # They may still be overwritten by environment variables.
-        if not self._config['NOMINATIM_ADDRESS_LEVEL_CONFIG']:
-            self._config['NOMINATIM_ADDRESS_LEVEL_CONFIG'] = \
-                str(config_dir / 'address-levels.json')
-
         class _LibDirs:
             pass
 

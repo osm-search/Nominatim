@@ -1,7 +1,6 @@
 """
 Functions for bringing auxiliary data in the database up-to-date.
 """
-import json
 import logging
 from textwrap import dedent
 
@@ -58,12 +57,15 @@ def load_address_levels(conn, table, levels):
 
     conn.commit()
 
-def load_address_levels_from_file(conn, config_file):
-    """ Replace the `address_levels` table with the contents of the config
-        file.
+
+def load_address_levels_from_config(conn, config):
+    """ Replace the `address_levels` table with the content as
+        defined in the given configuration. Uses the parameter
+        NOMINATIM_ADDRESS_LEVEL_CONFIG to determine the location of the
+        configuration file.
     """
-    with config_file.open('r') as fdesc:
-        load_address_levels(conn, 'address_levels', json.load(fdesc))
+    cfg = config.load_sub_configuration('', config='ADDRESS_LEVEL_CONFIG')
+    load_address_levels(conn, 'address_levels', cfg)
 
 
 def create_functions(conn, config, enable_diff_updates=True, enable_debug=False):

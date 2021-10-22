@@ -176,13 +176,24 @@ def test_get_import_style_intern(make_config, src_dir, monkeypatch):
     assert config.get_import_style_file() == expected
 
 
-@pytest.mark.parametrize("value", ['custom', '/foo/bar.stye'])
-def test_get_import_style_extern(make_config, monkeypatch, value):
+def test_get_import_style_extern_relative(make_config_path, monkeypatch):
+    config = make_config_path()
+    (config.project_dir / 'custom.style').write_text('x')
+
+    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', 'custom.style')
+
+    assert str(config.get_import_style_file()) == str(config.project_dir / 'custom.style')
+
+
+def test_get_import_style_extern_absolute(make_config, tmp_path, monkeypatch):
     config = make_config()
+    cfgfile = tmp_path / 'test.style'
 
-    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', value)
+    cfgfile.write_text('x')
 
-    assert str(config.get_import_style_file()) == value
+    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', str(cfgfile))
+
+    assert str(config.get_import_style_file()) == str(cfgfile)
 
 
 def test_load_subconf_from_project_dir(make_config_path):

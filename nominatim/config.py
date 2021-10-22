@@ -123,7 +123,7 @@ class Configuration:
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
             return self.config_dir / 'import-{}.style'.format(style)
 
-        return Path(style)
+        return self.find_config_file('', 'IMPORT_STYLE')
 
 
     def get_os_env(self):

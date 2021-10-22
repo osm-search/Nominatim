@@ -328,9 +328,13 @@ project directory and then in the global settings directory.
 | **Default:**       | extratags |
 
 The _style configuration_ describes which OSM objects and tags are taken
-into consideration for the search database. This setting may either
-be a string pointing to one of the internal styles or it may be a path
-pointing to a custom style.
+into consideration for the search database. Nominatim comes with a set
+of pre-configured styles, that may be configured here.
+
+You can also write your own custom style and point the setting to the file
+with the style. When a relative path is given, then the style file is searched
+first relative to the project directory and then in the global settings
+directory.
 
 See [Import Styles](Import-Styles.md)
 for more information on the available internal styles and the format of the

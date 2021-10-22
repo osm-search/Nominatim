@@ -93,6 +93,23 @@ class Configuration:
             raise UsageError("Configuration error.") from exp
 
 
+    def get_path(self, name):
+        """ Return the given configuration parameter as a Path.
+            If a relative path is configured, then the function converts this
+            into an absolute path with the project directory as root path.
+            If the configuration is unset, a falsy value is returned.
+        """
+        value = self.__getattr__(name)
+        if value:
+            value = Path(value)
+
+            if not value.is_absolute():
+                value = self.project_dir / value
+
+            value = value.resolve()
+
+        return value
+
     def get_libpq_dsn(self):
         """ Get configured database DSN converted into the key/value format
             understood by libpq and psycopg.

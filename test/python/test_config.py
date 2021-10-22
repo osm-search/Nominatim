@@ -1,6 +1,7 @@
 """
 Test for loading dotenv configuration.
 """
+from pathlib import Path
 import pytest
 
 from nominatim.config import Configuration
@@ -164,6 +165,33 @@ def test_get_int_empty(make_config):
 
     with pytest.raises(UsageError):
         config.get_int('DATABASE_MODULE_PATH')
+
+
+def test_get_path_empty(make_config):
+    config = make_config()
+
+    assert config.DATABASE_MODULE_PATH == ''
+    assert not config.get_path('DATABASE_MODULE_PATH')
+
+
+def test_get_path_absolute(make_config, monkeypatch):
+    config = make_config()
+
+    monkeypatch.setenv('NOMINATIM_FOOBAR', '/dont/care')
+    result = config.get_path('FOOBAR')
+
+    assert isinstance(result, Path)
+    assert str(result) == '/dont/care'
+
+
+def test_get_path_relative(make_config, monkeypatch, tmp_path):
+    config = make_config(tmp_path)
+
+    monkeypatch.setenv('NOMINATIM_FOOBAR', 'an/oyster')
+    result = config.get_path('FOOBAR')
+
+    assert isinstance(result, Path)
+    assert str(result) == str(tmp_path / 'an/oyster')
 
 
 def test_get_import_style_intern(make_config, src_dir, monkeypatch):

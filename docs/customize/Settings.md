@@ -354,6 +354,9 @@ location for OSM nodes. For larger imports it can significantly speed up
 the import. When this option is unset, then osm2pgsql uses a PsotgreSQL table
 to store the locations.
 
+When a relative path is given, then the flatnode file is created/searched
+relative to the project directory.
+
 !!! warning
 
     The flatnode file is not only used during the initial import but also

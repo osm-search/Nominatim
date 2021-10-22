@@ -17,30 +17,12 @@ def testfile_dir(src_dir):
 
 
 @pytest.fixture
-def sp_importer(temp_db_conn, def_config, temp_phplib_dir_with_migration):
+def sp_importer(temp_db_conn, def_config):
     """
         Return an instance of SPImporter.
     """
     loader = SPWikiLoader(def_config, ['en'])
-    return SPImporter(def_config, temp_phplib_dir_with_migration, temp_db_conn, loader)
-
-
-@pytest.fixture
-def temp_phplib_dir_with_migration(src_dir, tmp_path):
-    """
-        Return temporary phpdir with migration subdirectory and
-        PhraseSettingsToJson.php script inside.
-    """
-    migration_file = (src_dir / 'lib-php' / 'migration' / 'PhraseSettingsToJson.php').resolve()
-
-    phpdir = tmp_path / 'tempphp'
-    phpdir.mkdir()
-
-    (phpdir / 'migration').mkdir()
-    migration_dest_path = (phpdir / 'migration' / 'PhraseSettingsToJson.php').resolve()
-    copyfile(str(migration_file), str(migration_dest_path))
-
-    return phpdir
+    return SPImporter(def_config, temp_db_conn, loader)
 
 
 @pytest.fixture
@@ -90,49 +72,6 @@ def test_load_white_and_black_lists(sp_importer):
 
     assert isinstance(black_list, dict) and isinstance(white_list, dict)
 
-def test_convert_php_settings(sp_importer, testfile_dir, tmp_path):
-    """
-        Test that _convert_php_settings_if_needed() convert the given
-        php file to a json file.
-    """
-    php_file = (testfile_dir / 'phrase_settings.php').resolve()
-
-    temp_settings = (tmp_path / 'phrase_settings.php').resolve()
-    copyfile(php_file, temp_settings)
-    sp_importer._convert_php_settings_if_needed(temp_settings)
-
-    assert (tmp_path / 'phrase_settings.json').is_file()
-
-def test_convert_settings_wrong_file(sp_importer):
-    """
-        Test that _convert_php_settings_if_needed() raise an exception
-        if the given file is not a valid file.
-    """
-    with pytest.raises(UsageError, match='random_file is not a valid file.'):
-        sp_importer._convert_php_settings_if_needed('random_file')
-
-def test_convert_settings_json_already_exist(sp_importer, testfile_dir):
-    """
-        Test that if we give to '_convert_php_settings_if_needed' a php file path
-        and that a the corresponding json file already exists, it is returned.
-    """
-    php_file = (testfile_dir / 'phrase_settings.php').resolve()
-    json_file = (testfile_dir / 'phrase_settings.json').resolve()
-
-    returned = sp_importer._convert_php_settings_if_needed(php_file)
-
-    assert returned == json_file
-
-def test_convert_settings_giving_json(sp_importer, testfile_dir):
-    """
-        Test that if we give to '_convert_php_settings_if_needed' a json file path
-        the same path is directly returned
-    """
-    json_file = (testfile_dir / 'phrase_settings.json').resolve()
-
-    returned = sp_importer._convert_php_settings_if_needed(json_file)
-
-    assert returned == json_file
 
 def test_create_place_classtype_indexes(temp_db_with_extensions, temp_db_conn,
                                         table_factory, sp_importer):

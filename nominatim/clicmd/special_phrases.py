@@ -35,6 +35,13 @@ class ImportSpecialPhrases:
 
     An example file can be found in the Nominatim sources at
     'test/testdb/full_en_phrases_test.csv'.
+
+    The import can be further configured to ignore specific key/value pairs.
+    This is particularly useful when importing phrases from the wiki. The
+    default configuration excludes some very common tags like building=yes.
+    The configuration can be customized by putting a file `phrase-settings.json`
+    with custom rules into the project directory or by using the `--config`
+    option to point to another configuration file.
     """
     @staticmethod
     def add_args(parser):
@@ -45,6 +52,9 @@ class ImportSpecialPhrases:
                            help='Import special phrases from a CSV file')
         group.add_argument('--no-replace', action='store_true',
                            help='Keep the old phrases and only add the new ones')
+        group.add_argument('--config', action='store',
+                           help='Configuration file for black/white listing '
+                                '(default: phrase-settings.json)')
 
     @staticmethod
     def run(args):
@@ -72,5 +82,5 @@ class ImportSpecialPhrases:
         should_replace = not args.no_replace
         with connect(args.config.get_libpq_dsn()) as db_connection:
             SPImporter(
-                args.config, args.phplib_dir, db_connection, loader
+                args.config, db_connection, loader
             ).import_phrases(tokenizer, should_replace)

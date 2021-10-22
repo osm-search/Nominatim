@@ -303,19 +303,6 @@ Set a custom location for the
 [wikipedia ranking file](../admin/Import.md#wikipediawikidata-rankings). When
 unset, Nominatim expects the data to be saved in the project directory.
 
-#### NOMINATIM_PHRASE_CONFIG
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Configuration file for special phrase imports |
-| **Format:**        | path |
-| **Default:**       | _empty_ (use default settings) |
-
-The _phrase_config_ file configures black and white lists of tag types,
-so that some of them can be ignored, when loading special phrases from
-the OSM wiki. The default settings can be found in the configuration
-directory as `phrase-settings.json`.
-
 #### NOMINATIM_ADDRESS_LEVEL_CONFIG
 
 | Summary            |                                                     |

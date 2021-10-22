@@ -4,6 +4,7 @@ Nominatim configuration accessor.
 import logging
 import os
 from pathlib import Path
+import json
 import yaml
 
 from dotenv import dotenv_values
@@ -161,14 +162,19 @@ class Configuration:
             is loaded using this function and added at the position in the
             configuration tree.
         """
-        assert Path(filename).suffix == '.yaml'
+        configfile = self.find_config_file(filename, config)
 
-        configfile = self._find_config_file(filename, config)
+        if configfile.suffix in ('.yaml', '.yml'):
+            return self._load_from_yaml(configfile)
 
-        return self._load_from_yaml(configfile)
+        if configfile.suffix == '.json':
+            with configfile.open('r') as cfg:
+                return json.load(cfg)
+
+        raise UsageError(f"Config file '{configfile}' has unknown format.")
 
 
-    def _find_config_file(self, filename, config=None):
+    def find_config_file(self, filename, config=None):
         """ Resolve the location of a configuration file given a filename and
             an optional configuration option with the file name.
             Raises a UsageError when the file cannot be found or is not
@@ -221,7 +227,7 @@ class Configuration:
         if Path(fname).is_absolute():
             configfile = Path(fname)
         else:
-            configfile = self._find_config_file(loader.construct_scalar(node))
+            configfile = self.find_config_file(loader.construct_scalar(node))
 
         if configfile.suffix != '.yaml':
             LOG.fatal("Format error while reading '%s': only YAML format supported.",

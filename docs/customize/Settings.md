@@ -112,6 +112,9 @@ Points to the file with additional configuration for the tokenizer.
 See the [Tokenizer](../customize/Tokenizers.md) descriptions for details
 on the file format.
 
+If a relative path is given, then the file is searched first relative to the
+project directory and then in the global settings directory.
+
 #### NOMINATIM_MAX_WORD_FREQUENCY
 
 | Summary            |                                                     |
@@ -150,7 +153,7 @@ objects when the area becomes too large.
 | Summary            |                                                     |
 | --------------     | --------------------------------------------------- |
 | **Description:**   | Restrict search languages |
-| **Format:**        | comma,separated list of language codes |
+| **Format:**        | string: comma-separated list of language codes |
 | **Default:**       | _empty_ |
 
 Normally Nominatim will include all language variants of name:XX
@@ -283,7 +286,7 @@ setting to define the password for proxies that require a login.
 Nominatim uses [osm2pgsql](https://osm2pgsql.org) to load the OSM data
 initially into the database. Nominatim comes bundled with a version of
 osm2pgsql that is guaranteed to be compatible. Use this setting to use
-a different binary instead. You should do this only, when you know exactly
+a different binary instead. You should do this only when you know exactly
 what you are doing. If the osm2pgsql version is not compatible, then the
 result is undefined.
 
@@ -300,31 +303,21 @@ Set a custom location for the
 [wikipedia ranking file](../admin/Import.md#wikipediawikidata-rankings). When
 unset, Nominatim expects the data to be saved in the project directory.
 
-#### NOMINATIM_PHRASE_CONFIG
-
-| Summary            |                                                     |
-| --------------     | --------------------------------------------------- |
-| **Description:**   | Configuration file for special phrase imports |
-| **Format:**        | path |
-| **Default:**       | _empty_ (use default settings) |
-
-The _phrase_config_ file configures black and white lists of tag types,
-so that some of them can be ignored, when loading special phrases from
-the OSM wiki. The default settings can be found in the configuration
-directory as `phrase-settings.json`.
-
 #### NOMINATIM_ADDRESS_LEVEL_CONFIG
 
 | Summary            |                                                     |
 | --------------     | --------------------------------------------------- |
 | **Description:**   | Configuration file for rank assignments |
 | **Format:**        | path |
-| **Default:**       | _empty_ (use default settings) |
+| **Default:**       | address-levels.json |
 
-The _address level config_ configures rank assignments for places. See
+The _address level configuration_ defines the rank assignments for places. See
 [Place Ranking](Ranking.md) for a detailed explanation what rank assignments
-are and what the configuration file must look like. The default configuration
-can be found in the configuration directory as `address-levels.json`.
+are and what the configuration file must look like.
+
+When a relative path is given, then the file is searched first relative to the
+project directory and then in the global settings directory.
+
 
 #### NOMINATIM_IMPORT_STYLE
 
@@ -335,9 +328,13 @@ can be found in the configuration directory as `address-levels.json`.
 | **Default:**       | extratags |
 
 The _style configuration_ describes which OSM objects and tags are taken
-into consideration for the search database. This setting may either
-be a string pointing to one of the internal styles or it may be a path
-pointing to a custom style.
+into consideration for the search database. Nominatim comes with a set
+of pre-configured styles, that may be configured here.
+
+You can also write your own custom style and point the setting to the file
+with the style. When a relative path is given, then the style file is searched
+first relative to the project directory and then in the global settings
+directory.
 
 See [Import Styles](Import-Styles.md)
 for more information on the available internal styles and the format of the
@@ -356,6 +353,9 @@ The `osm2pgsql flatnode file` is file that efficiently stores geographic
 location for OSM nodes. For larger imports it can significantly speed up
 the import. When this option is unset, then osm2pgsql uses a PsotgreSQL table
 to store the locations.
+
+When a relative path is given, then the flatnode file is created/searched
+relative to the project directory.
 
 !!! warning
 

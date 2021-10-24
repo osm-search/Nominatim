@@ -4,6 +4,7 @@ Nominatim configuration accessor.
 import logging
 import os
 from pathlib import Path
+import json
 import yaml
 
 from dotenv import dotenv_values
@@ -55,12 +56,6 @@ class Configuration:
         if project_dir is not None and (project_dir / '.env').is_file():
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
-        # Add defaults for variables that are left empty to set the default.
-        # They may still be overwritten by environment variables.
-        if not self._config['NOMINATIM_ADDRESS_LEVEL_CONFIG']:
-            self._config['NOMINATIM_ADDRESS_LEVEL_CONFIG'] = \
-                str(config_dir / 'address-levels.json')
-
         class _LibDirs:
             pass
 
@@ -98,6 +93,23 @@ class Configuration:
             raise UsageError("Configuration error.") from exp
 
 
+    def get_path(self, name):
+        """ Return the given configuration parameter as a Path.
+            If a relative path is configured, then the function converts this
+            into an absolute path with the project directory as root path.
+            If the configuration is unset, a falsy value is returned.
+        """
+        value = self.__getattr__(name)
+        if value:
+            value = Path(value)
+
+            if not value.is_absolute():
+                value = self.project_dir / value
+
+            value = value.resolve()
+
+        return value
+
     def get_libpq_dsn(self):
         """ Get configured database DSN converted into the key/value format
             understood by libpq and psycopg.
@@ -128,7 +140,7 @@ class Configuration:
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
             return self.config_dir / 'import-{}.style'.format(style)
 
-        return Path(style)
+        return self.find_config_file('', 'IMPORT_STYLE')
 
 
     def get_os_env(self):
@@ -161,14 +173,19 @@ class Configuration:
             is loaded using this function and added at the position in the
             configuration tree.
         """
-        assert Path(filename).suffix == '.yaml'
+        configfile = self.find_config_file(filename, config)
 
-        configfile = self._find_config_file(filename, config)
+        if configfile.suffix in ('.yaml', '.yml'):
+            return self._load_from_yaml(configfile)
 
-        return self._load_from_yaml(configfile)
+        if configfile.suffix == '.json':
+            with configfile.open('r') as cfg:
+                return json.load(cfg)
+
+        raise UsageError(f"Config file '{configfile}' has unknown format.")
 
 
-    def _find_config_file(self, filename, config=None):
+    def find_config_file(self, filename, config=None):
         """ Resolve the location of a configuration file given a filename and
             an optional configuration option with the file name.
             Raises a UsageError when the file cannot be found or is not
@@ -221,7 +238,7 @@ class Configuration:
         if Path(fname).is_absolute():
             configfile = Path(fname)
         else:
-            configfile = self._find_config_file(loader.construct_scalar(node))
+            configfile = self.find_config_file(loader.construct_scalar(node))
 
         if configfile.suffix != '.yaml':
             LOG.fatal("Format error while reading '%s': only YAML format supported.",

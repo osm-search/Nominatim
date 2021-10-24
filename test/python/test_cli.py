@@ -186,7 +186,7 @@ class TestCliWithDb:
             mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
             mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
             mock_func_factory(nominatim.tools.country_info, 'create_country_names'),
-            mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_file'),
+            mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_config'),
             mock_func_factory(nominatim.tools.postcodes, 'update_postcodes'),
             mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim.tools.refresh, 'setup_website'),
@@ -321,7 +321,7 @@ class TestCliWithDb:
         assert func.called == 1
 
     @pytest.mark.parametrize("command,func", [
-                             ('address-levels', 'load_address_levels_from_file'),
+                             ('address-levels', 'load_address_levels_from_config'),
                              ('wiki-data', 'import_wikipedia_articles'),
                              ('importance', 'recompute_importance'),
                              ('website', 'setup_website'),

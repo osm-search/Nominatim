@@ -75,10 +75,9 @@ class UpdateRefresh:
             self._get_tokenizer(args.config).update_statistics()
 
         if args.address_levels:
-            cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
-            LOG.warning('Updating address levels from %s', cfg)
+            LOG.warning('Updating address levels')
             with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.load_address_levels_from_file(conn, cfg)
+                refresh.load_address_levels_from_config(conn, args.config)
 
         if args.functions:
             LOG.warning('Create functions')

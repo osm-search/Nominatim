@@ -6,28 +6,31 @@ from pathlib import Path
 
 import pytest
 
-from nominatim.tools.refresh import load_address_levels, load_address_levels_from_file
+from nominatim.tools.refresh import load_address_levels, load_address_levels_from_config
 
 def test_load_ranks_def_config(temp_db_conn, temp_db_cursor, def_config):
-    load_address_levels_from_file(temp_db_conn, Path(def_config.ADDRESS_LEVEL_CONFIG))
+    load_address_levels_from_config(temp_db_conn, def_config)
 
     assert temp_db_cursor.table_rows('address_levels') > 0
 
-def test_load_ranks_from_file(temp_db_conn, temp_db_cursor, tmp_path):
-    test_file = tmp_path / 'test_levels.json'
+def test_load_ranks_from_project_dir(def_config, temp_db_conn, temp_db_cursor,
+                                     tmp_path):
+    test_file = tmp_path / 'address-levels.json'
     test_file.write_text('[{"tags":{"place":{"sea":2}}}]')
+    def_config.project_dir = tmp_path
 
-    load_address_levels_from_file(temp_db_conn, test_file)
+    load_address_levels_from_config(temp_db_conn, def_config)
 
-    assert temp_db_cursor.table_rows('address_levels') > 0
+    assert temp_db_cursor.table_rows('address_levels') == 1
 
 
-def test_load_ranks_from_broken_file(temp_db_conn, tmp_path):
-    test_file = tmp_path / 'test_levels.json'
+def test_load_ranks_from_broken_file(def_config, temp_db_conn, tmp_path):
+    test_file = tmp_path / 'address-levels.json'
     test_file.write_text('[{"tags":"place":{"sea":2}}}]')
+    def_config.project_dir = tmp_path
 
     with pytest.raises(json.decoder.JSONDecodeError):
-        load_address_levels_from_file(temp_db_conn, test_file)
+        load_address_levels_from_config(temp_db_conn, def_config)
 
 
 def test_load_ranks_country(temp_db_conn, temp_db_cursor):

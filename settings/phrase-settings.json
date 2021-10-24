@@ -6,7 +6,7 @@
         "Also use this list to exclude an entire class from special phrases."
     ],
     "blackList": {
-        "bounday": [
+        "boundary": [
             "administrative"
         ],
         "place": [

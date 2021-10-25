@@ -3,6 +3,7 @@ Functions for bringing auxiliary data in the database up-to-date.
 """
 import logging
 from textwrap import dedent
+from pathlib import Path
 
 from psycopg2 import sql as pysql
 
@@ -94,7 +95,7 @@ PHP_CONST_DEFS = (
     ('Database_DSN', 'DATABASE_DSN', str),
     ('Default_Language', 'DEFAULT_LANGUAGE', str),
     ('Log_DB', 'LOG_DB', bool),
-    ('Log_File', 'LOG_FILE', str),
+    ('Log_File', 'LOG_FILE', Path),
     ('NoAccessControl', 'CORS_NOACCESSCONTROL', bool),
     ('Places_Max_ID_count', 'LOOKUP_MAX_COUNT', int),
     ('PolygonOutput_MaximumTypes', 'POLYGON_OUTPUT_MAX_TYPES', int),
@@ -162,7 +163,12 @@ def _quote_php_variable(var_type, config, conf_name):
     if not getattr(config, conf_name):
         return 'false'
 
-    quoted = getattr(config, conf_name).replace("'", "\\'")
+    if var_type == Path:
+        value = str(config.get_path(conf_name))
+    else:
+        value = getattr(config, conf_name)
+
+    quoted = value.replace("'", "\\'")
     return f"'{quoted}'"
 
 

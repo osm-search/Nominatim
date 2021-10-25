@@ -634,7 +634,11 @@ Can be used as the same time as NOMINATIM_LOG_FILE.
 | **After Changes:** | run `nominatim refresh --website` |
 
 Enable logging of requests into a file with this setting by setting the log
-file where to log to. The entries in the log file have the following format:
+file where to log to. A relative file name is assumed to be relative to
+the project directory.
+
+
+The entries in the log file have the following format:
 
     <request time> <execution time in s> <number of results> <type> "<query string>"
 

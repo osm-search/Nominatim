@@ -40,6 +40,15 @@ class Tokenizer
         return $this->oNormalizer->transliterate($sTerm);
     }
 
+
+    public function mostFrequentWords($iNum)
+    {
+        $sSQL = "SELECT word FROM word WHERE type = 'W'";
+        $sSQL .= "ORDER BY info->'count' DESC LIMIT ".$iNum;
+        return $this->oDB->getCol($sSQL);
+    }
+
+
     private function makeStandardWord($sTerm)
     {
         return trim($this->oTransliterator->transliterate(' '.$sTerm.' '));

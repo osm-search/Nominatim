@@ -86,8 +86,13 @@ if (!$aResult['reverse-only']) {
     if ($bVerbose) {
         echo "\n";
     }
+
+    $oTokenizer = new \Nominatim\Tokenizer($oDB);
+
+    $aWords = $oTokenizer->mostFrequentWords(1000);
+
     $sSQL = 'SELECT word FROM word WHERE word is not null ORDER BY search_name_count DESC LIMIT 1000';
-    foreach ($oDB->getCol($sSQL) as $sWord) {
+    foreach ($aWords as $sWord) {
         if ($bVerbose) {
             echo "$sWord = ";
         }

@@ -67,10 +67,13 @@ class LegacyICUTokenizer(AbstractTokenizer):
             self.term_normalization = get_property(conn, DBCFG_TERM_NORMALIZATION)
 
 
-    def finalize_import(self, _):
+    def finalize_import(self, config):
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
+        with connect(self.dsn) as conn:
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_indices.sql')
 
 
     def update_sql_functions(self, config):

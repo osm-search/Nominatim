@@ -271,20 +271,7 @@ reverse query, e.g. `http://localhost:8088/reverse.php?lat=27.1750090510034&lon=
 To run Nominatim via webservers like Apache or nginx, please read the
 [Deployment chapter](Deployment.md).
 
-## Tuning the database
-
-Accurate word frequency information for search terms helps PostgreSQL's query
-planner to make the right decisions. Recomputing them can improve the performance
-of forward geocoding in particular under high load. To recompute word counts run:
-
-```sh
-nominatim refresh --word-counts
-```
-
-This will take a couple of hours for a full planet installation. You can
-also defer that step to a later point in time when you realise that
-performance becomes an issue. Just make sure that updates are stopped before
-running this function.
+## Adding search through category phrases
 
 If you want to be able to search for places by their type through
 [special phrases](https://wiki.openstreetmap.org/wiki/Nominatim/Special_Phrases)

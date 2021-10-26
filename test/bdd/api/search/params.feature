@@ -169,9 +169,9 @@ Feature: Search queries
         Then at most 50 results are returned
 
     Scenario: Limit number of search results
-        When sending json search query "schloss"
+        When sending json search query "landstr"
         Then more than 4 results are returned
-        When sending json search query "schloss"
+        When sending json search query "landstr"
           | limit |
           | 4 |
         Then exactly 4 results are returned
@@ -227,7 +227,7 @@ Feature: Search queries
           | place | village |
 
     Scenario Outline: Search with polygon threshold (json)
-        When sending json search query "switzerland"
+        When sending json search query "triesenberg"
           | polygon_geojson | polygon_threshold |
           | 1               | <th> |
         Then at least 1 result is returned
@@ -241,7 +241,7 @@ Feature: Search queries
         | 999 |
 
     Scenario Outline: Search with polygon threshold (xml)
-        When sending xml search query "switzerland"
+        When sending xml search query "triesenberg"
           | polygon_geojson | polygon_threshold |
           | 1               | <th> |
         Then at least 1 result is returned
@@ -255,7 +255,7 @@ Feature: Search queries
         | 999 |
 
     Scenario Outline: Search with invalid polygon threshold (xml)
-        When sending xml search query "switzerland"
+        When sending xml search query "triesenberg"
           | polygon_geojson | polygon_threshold |
           | 1               | <th> |
         Then a HTTP 400 is returned
@@ -355,11 +355,11 @@ Feature: Search queries
         | geokml             |
 
     Scenario: Search along a route
-        When sending json search query "schloss" with address
+        When sending json search query "rathaus" with address
         Then result addresses contain
           | ID | town |
-          | 0  | Vaduz |
-        When sending json search query "schloss" with address
+          | 0  | Schaan |
+        When sending json search query "rathaus" with address
           | bounded | routewidth | route                              |
           | 1       | 0.1        |  9.54353,47.11772,9.54314,47.11894 |
         Then result addresses contain

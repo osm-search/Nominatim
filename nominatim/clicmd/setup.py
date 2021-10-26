@@ -125,16 +125,15 @@ class SetupAll:
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)
 
+        LOG.warning('Recompute word counts')
+        tokenizer.update_statistics()
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)
         with connect(args.config.get_libpq_dsn()) as conn:
             refresh.setup_website(webdir, args.config, conn)
 
-        with connect(args.config.get_libpq_dsn()) as conn:
-            SetupAll._set_database_date(conn)
-            properties.set_property(conn, 'database_version',
-                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+        SetupAll._set_database_date(args.config.get_libpq_dsn())
 
         return 0
 
@@ -197,12 +196,16 @@ class SetupAll:
 
 
     @staticmethod
-    def _set_database_date(conn):
+    def _set_database_date(dsn):
         """ Determine the database date and set the status accordingly.
         """
-        try:
-            dbdate = status.compute_database_date(conn)
-            status.set_status(conn, dbdate)
-            LOG.info('Database is at %s.', dbdate)
-        except Exception as exc: # pylint: disable=broad-except
-            LOG.error('Cannot determine date of database: %s', exc)
+        with connect(dsn) as conn:
+            try:
+                dbdate = status.compute_database_date(conn)
+                status.set_status(conn, dbdate)
+                LOG.info('Database is at %s.', dbdate)
+            except Exception as exc: # pylint: disable=broad-except
+                LOG.error('Cannot determine date of database: %s', exc)
+
+            properties.set_property(conn, 'database_version',
+                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))

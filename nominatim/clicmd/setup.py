@@ -125,6 +125,8 @@ class SetupAll:
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)
 
+        LOG.warning('Recompute word counts')
+        tokenizer.update_statistics()
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)

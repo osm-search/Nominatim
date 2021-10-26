@@ -236,7 +236,7 @@ class SearchDescription
     {
         $this->aName[$iId] = $iId;
         $this->bRareName = $bRareName;
-        $this->bNeedsAddress = false;
+        $this->bNameNeedsAddress = false;
     }
 
     /**
@@ -324,6 +324,7 @@ class SearchDescription
     {
         $this->aAddress = array_merge($this->aAddress, $this->aName);
         $this->bRareName = false;
+        $this->bNameNeedsAddress = true;
         $this->aName = array($iId => $iId);
         $this->iNamePhrase = -1;
     }

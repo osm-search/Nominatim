@@ -19,6 +19,8 @@ class SearchDescription
     private $aName = array();
     /// True if the name is rare enough to force index use on name.
     private $bRareName = false;
+    /// True if the name requires to be accompanied by address terms.
+    private $bNameNeedsAddress = false;
     /// List of word ids making up the address of the object.
     private $aAddress = array();
     /// List of word ids that appear in the name but should be ignored.
@@ -112,6 +114,9 @@ class SearchDescription
             if (!$this->sClass && !$this->sCountryCode) {
                 return false;
             }
+        }
+        if ($this->bNameNeedsAddress && empty($this->aAddress)) {
+            return false;
         }
 
         return true;
@@ -231,6 +236,7 @@ class SearchDescription
     {
         $this->aName[$iId] = $iId;
         $this->bRareName = $bRareName;
+        $this->bNeedsAddress = false;
     }
 
     /**
@@ -240,11 +246,19 @@ class SearchDescription
      * @param integer iID            ID of term to add.
      * @param bool bSearchable       Term should be used to search for result
      *                               (i.e. term is not a stop word).
+     * @param bool bNeedsAddress     True if the term is too unspecific to be used
+     *                               in a stand-alone search without an address
+     *                               to narrow down the search.
      * @param integer iPhraseNumber  Index of phrase, where the partial term
      *                               appears.
      */
-    public function addPartialNameToken($iId, $bSearchable, $iPhraseNumber)
+    public function addPartialNameToken($iId, $bSearchable, $bNeedsAddress, $iPhraseNumber)
     {
+        if (empty($this->aName)) {
+            $this->bNameNeedsAddress = $bNeedsAddress;
+        } else {
+            $this->bNameNeedsAddress |= $bNeedsAddress;
+        }
         if ($bSearchable) {
             $this->aName[$iId] = $iId;
         } else {

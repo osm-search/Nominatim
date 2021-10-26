@@ -123,11 +123,6 @@ jobs:
               working-directory: Nominatim/test/bdd
               if: matrix.ubuntu == 18
 
-            - name: BDD tests (icu tokenizer)
-              run: |
-                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=icu --format=progress3
-              working-directory: Nominatim/test/bdd
-
             - name: Upload coverage to Codecov
               uses: codecov/codecov-action@v1
               with:
@@ -138,6 +133,63 @@ jobs:
                 path_to_write_report: ./coverage/codecov_report.txt
                 verbose: true
               if: matrix.ubuntu == 20
+
+
+    icu-test:
+        needs: create-archive
+        strategy:
+            matrix:
+                ubuntu: [20]
+                include:
+                    - ubuntu: 20
+                      postgresql: 13
+                      postgis: 3
+                      pytest: py.test-3
+                      php: 7.4
+
+        runs-on: ubuntu-${{ matrix.ubuntu }}.04
+
+        steps:
+            - uses: actions/download-artifact@v2
+              with:
+                  name: full-source
+
+            - name: Unpack Nominatim
+              run: tar xf nominatim-src.tar.bz2
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+                  coverage: xdebug
+                  tools: phpunit, phpcs, composer
+
+            - uses: actions/setup-python@v2
+              with:
+                python-version: 3.6
+              if: matrix.ubuntu == 18
+
+            - uses: ./Nominatim/.github/actions/setup-postgresql
+              with:
+                  postgresql-version: ${{ matrix.postgresql }}
+                  postgis-version: ${{ matrix.postgis }}
+
+            - uses: ./Nominatim/.github/actions/build-nominatim
+              with:
+                  ubuntu: ${{ matrix.ubuntu }}
+
+            - name: Install test prerequsites
+              run: sudo apt-get install -y -qq python3-behave
+              if: matrix.ubuntu == 20
+
+            - name: Install test prerequsites
+              run: pip3 install behave==1.2.6
+              if: matrix.ubuntu == 18
+
+            - name: BDD tests (icu tokenizer)
+              run: |
+                  behave -DREMOVE_TEMPLATE=1 -DBUILDDIR=$GITHUB_WORKSPACE/build -DTOKENIZER=icu --format=progress3
+              working-directory: Nominatim/test/bdd
 
 
     install:

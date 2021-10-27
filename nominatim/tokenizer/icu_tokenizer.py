@@ -9,7 +9,6 @@ import re
 from textwrap import dedent
 
 from nominatim.db.connection import connect
-from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.indexer.place_info import PlaceInfo
@@ -36,7 +35,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         self.dsn = dsn
         self.data_dir = data_dir
         self.loader = None
-        self.term_normalization = None
 
 
     def init_new_db(self, config, init_db=True):
@@ -46,8 +44,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sure the tokenizer remains stable even over updates.
         """
         self.loader = ICURuleLoader(config)
-
-        self.term_normalization = config.TERM_NORMALIZATION
 
         self._install_php(config.lib_dir.php)
         self._save_config()
@@ -64,7 +60,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
 
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
-            self.term_normalization = get_property(conn, DBCFG_TERM_NORMALIZATION)
 
 
     def finalize_import(self, config):
@@ -87,12 +82,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
     def check_database(self, config):
         """ Check that the tokenizer is set up correctly.
         """
+        # Will throw an error if there is an issue.
         self.init_from_project(config)
-
-        if self.term_normalization is None:
-            return "Configuration for tokenizer 'icu' are missing."
-
-        return None
 
 
     def update_statistics(self):
@@ -141,7 +132,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         php_file.write_text(dedent(f"""\
             <?php
             @define('CONST_Max_Word_Frequency', 10000000);
-            @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
+            @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
             @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
             require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
@@ -152,7 +143,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """
         with connect(self.dsn) as conn:
             self.loader.save_config_to_db(conn)
-            set_property(conn, DBCFG_TERM_NORMALIZATION, self.term_normalization)
 
 
     def _init_db_tables(self, config):

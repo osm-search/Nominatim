@@ -21,6 +21,7 @@ pages:
         - 'Deploy' : 'admin/Deployment.md'
         - 'Nominatim UI'  : 'admin/Setup-Nominatim-UI.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
+        - 'Maintenance' : 'admin/Maintenance.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
     - 'Customization Guide':
@@ -37,7 +38,6 @@ pages:
         - 'Architecture Overview' : 'develop/overview.md'
         - 'OSM Data Import' : 'develop/Import.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
-        - 'Postcodes' : 'develop/Postcodes.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':

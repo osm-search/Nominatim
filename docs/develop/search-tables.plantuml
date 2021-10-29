@@ -1,0 +1,99 @@
+@startuml
+skinparam monochrome true
+skinparam ObjectFontStyle bold
+
+left to right direction
+
+map placex {
+  place_id => BIGINT
+  osm_type => CHAR(1)
+  osm_id => BIGINT
+  class => TEXT
+  type => TEXT
+  name => HSTORE
+  address => HSTORE
+  extratags => HSTORE
+  admin_level => SMALLINT
+  partition => SMALLINT
+  geometry_sector => INT
+  parent_place_id => BIGINT
+  linked_place_id => BIGINT
+  importance => DOUBLE
+  rank_search => SMALLINT
+  rank_address => SMALLINT
+  wikipedia => TEXT
+  country_code => VARCHAR(2)
+  housenumber => TEXT
+  postcode => TEXT
+  indexed_status => SMALLINT
+  indexed_date => TIMESTAMP
+  centroid => GEOMETRY
+  geometry => GEOMETRY
+}
+
+map search_name {
+  place_id => BIGINT
+  importance => DOUBLE
+  search_rank => SMALLINT
+  address_rank => SMALLINT
+  name_vector => INT[]
+  nameaddress_vector => INT[]
+  country_code => VARCHAR(2)
+  centroid => GEOMETRY
+}
+
+map word {
+  word_id => INT
+  word_token => TEXT
+  ... =>
+}
+
+map location_property_osmline {
+  place_id => BIGINT
+  osm_id => BIGINT
+  startnumber => INT
+  endnumber => INT
+  interpolationtype => TEXT
+  address => HSTORE
+  partition => SMALLINT
+  geometry_sector => INT
+  parent_place_id => BIGINT
+  country_code => VARCHAR(2)
+  postcode => text
+  indexed_status => SMALLINT
+  indexed_date => TIMESTAMP
+  linegeo => GEOMETRY
+}
+
+map place_addressline {
+  place_id => BIGINT
+  address_place_id => BIGINT
+  distance => DOUBLE
+  cached_rank_address => SMALLINT
+  fromarea => BOOLEAN
+  isaddress => BOOLEAN
+}
+
+map location_postcode {
+  place_id => BIGINT
+  postcode => TEXT
+  parent_place_id => BIGINT
+  rank_search => SMALLINT
+  rank_address => SMALLINT
+  indexed_status => SMALLINT
+  indexed_date => TIMESTAMP
+  geometry => GEOMETRY
+}
+
+placex::place_id <-- search_name::place_id
+placex::place_id <-- place_addressline::place_id
+placex::place_id <-- place_addressline::address_place_id
+
+search_name::name_vector --> word::word_id
+search_name::nameaddress_vector --> word::word_id
+
+place_addressline -[hidden]> location_property_osmline
+search_name -[hidden]> place_addressline
+location_property_osmline -[hidden]-> location_postcode
+
+@enduml

@@ -15,7 +15,7 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
-## 3.7.0 -> master
+## 3.7.0 -> 4.0.0
 
 ### NOMINATIM_PHRASE_CONFIG removed
 
@@ -28,6 +28,13 @@ Version 3.8 also removes the automatic converter for the php format of
 the configuration in older versions. If you are updating from Nominatim < 3.7
 and still work with a custom `phrase-settings.php`, you need to manually
 convert it into a json format.
+
+### PHP utils removed
+
+The old PHP utils have now been removed completely. You need to switch to
+the appropriate functions of the nominatim  command line tool. See
+[Introducing `nominatim` command line tool](#introducing-nominatim-command-line-tool)
+below.
 
 ## 3.6.0 -> 3.7.0
 

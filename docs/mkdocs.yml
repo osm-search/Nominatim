@@ -36,6 +36,7 @@ pages:
     - 'Developers Guide':
         - 'Architecture Overview' : 'develop/overview.md'
         - 'Database Layout' : 'develop/Database-Layout.md'
+        - 'Indexing' : 'develop/Indexing.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
         - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'

@@ -34,10 +34,11 @@ pages:
         - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
         - 'External data: Postcodes': 'customize/Postcodes.md'
     - 'Developers Guide':
-        - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Architecture Overview' : 'develop/overview.md'
-        - 'OSM Data Import' : 'develop/Import.md'
+        - 'Database Layout' : 'develop/Database-Layout.md'
+        - 'Indexing' : 'develop/Indexing.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
+        - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':

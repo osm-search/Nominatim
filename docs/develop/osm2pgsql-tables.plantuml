@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome true
+skinparam ObjectFontStyle bold
+
+map planet_osm_nodes #eee {
+  id => BIGINT
+  lat => INT
+  lon => INT
+}
+
+map planet_osm_ways #eee {
+  id => BIGINT
+  nodes => BIGINT[]
+  tags => TEXT[]
+}
+
+map planet_osm_rels #eee {
+  id => BIGINT
+  parts => BIGINT[]
+  members => TEXT[]
+  tags => TEXT[]
+  way_off => SMALLINT
+  rel_off => SMALLINT
+}
+
+map place {
+  osm_type => CHAR(1)
+  osm_id => BIGINT
+  class => TEXT
+  type => TEXT
+  name => HSTORE
+  address => HSTORE
+  extratags => HSTORE
+  admin_level => SMALLINT
+  geometry => GEOMETRY
+}
+
+planet_osm_nodes  -[hidden]> planet_osm_ways
+planet_osm_ways  -[hidden]> planet_osm_rels
+planet_osm_ways -[hidden]-> place
+
+planet_osm_nodes::id <- planet_osm_ways::nodes
+
+@enduml

@@ -15,6 +15,20 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 3.7.0 -> master
+
+### NOMINATIM_PHRASE_CONFIG removed
+
+Custom blacklist configurations for special phrases now need to be handed
+with the `--config` parameter to `nominatim special-phrases`. Alternatively
+you can put your custom configuration in the project directory in a file
+named `phrase-settings.json`.
+
+Version 3.8 also removes the automatic converter for the php format of
+the configuration in older versions. If you are updating from Nominatim < 3.7
+and still work with a custom `phrase-settings.php`, you need to manually
+convert it into a json format.
+
 ## 3.6.0 -> 3.7.0
 
 ### New format and name of configuration file
@@ -80,7 +94,7 @@ done
 
 The debugging UI is no longer directly provided with Nominatim. Instead we
 now provide a simple Javascript application. Please refer to
-[Setting up the Nominatim UI](../Setup-Nominatim-UI) for details on how to
+[Setting up the Nominatim UI](Setup-Nominatim-UI.md) for details on how to
 set up the UI.
 
 The icons served together with the API responses have been moved to the

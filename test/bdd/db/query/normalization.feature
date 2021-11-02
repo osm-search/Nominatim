@@ -3,6 +3,31 @@ Feature: Import and search of names
     Tests all naming related issues: normalisation,
     abbreviations, internationalisation, etc.
 
+    Scenario: non-latin scripts can be found
+        Given the places
+          | osm | class | type      | name |
+          | N1  | place | locality  | Речицкий район |
+          | N2  | place | locality  | Refugio de montaña |
+          | N3  | place | locality  | 高槻市|
+          | N4  | place | locality  | الدوحة |
+        When importing
+        When sending search query "Речицкий район"
+        Then results contain
+         | ID | osm |
+         | 0  | N1 |
+        When sending search query "Refugio de montaña"
+        Then results contain
+         | ID | osm |
+         | 0  | N2 |
+        When sending search query "高槻市"
+        Then results contain
+         | ID | osm |
+         | 0  | N3 |
+        When sending search query "الدوحة"
+        Then results contain
+         | ID | osm |
+         | 0  | N4 |
+
     Scenario: Case-insensitivity of search
         Given the places
           | osm | class | type      | name |

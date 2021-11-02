@@ -48,6 +48,14 @@ class Tokenizer
     }
 
 
+    public function mostFrequentWords($iNum)
+    {
+        $sSQL = 'SELECT word FROM word WHERE word is not null ';
+        $sSQL .= 'ORDER BY search_name_count DESC LIMIT '.$iNum;
+        return $this->oDB->getCol($sSQL);
+    }
+
+
     public function tokensForSpecialTerm($sTerm)
     {
         $aResults = array();

@@ -19,6 +19,8 @@ class SearchDescription
     private $aName = array();
     /// True if the name is rare enough to force index use on name.
     private $bRareName = false;
+    /// True if the name requires to be accompanied by address terms.
+    private $bNameNeedsAddress = false;
     /// List of word ids making up the address of the object.
     private $aAddress = array();
     /// List of word ids that appear in the name but should be ignored.
@@ -112,6 +114,9 @@ class SearchDescription
             if (!$this->sClass && !$this->sCountryCode) {
                 return false;
             }
+        }
+        if ($this->bNameNeedsAddress && empty($this->aAddress)) {
+            return false;
         }
 
         return true;
@@ -231,6 +236,7 @@ class SearchDescription
     {
         $this->aName[$iId] = $iId;
         $this->bRareName = $bRareName;
+        $this->bNameNeedsAddress = false;
     }
 
     /**
@@ -240,11 +246,19 @@ class SearchDescription
      * @param integer iID            ID of term to add.
      * @param bool bSearchable       Term should be used to search for result
      *                               (i.e. term is not a stop word).
+     * @param bool bNeedsAddress     True if the term is too unspecific to be used
+     *                               in a stand-alone search without an address
+     *                               to narrow down the search.
      * @param integer iPhraseNumber  Index of phrase, where the partial term
      *                               appears.
      */
-    public function addPartialNameToken($iId, $bSearchable, $iPhraseNumber)
+    public function addPartialNameToken($iId, $bSearchable, $bNeedsAddress, $iPhraseNumber)
     {
+        if (empty($this->aName)) {
+            $this->bNameNeedsAddress = $bNeedsAddress;
+        } else {
+            $this->bNameNeedsAddress |= $bNeedsAddress;
+        }
         if ($bSearchable) {
             $this->aName[$iId] = $iId;
         } else {
@@ -310,6 +324,7 @@ class SearchDescription
     {
         $this->aAddress = array_merge($this->aAddress, $this->aName);
         $this->bRareName = false;
+        $this->bNameNeedsAddress = true;
         $this->aName = array($iId => $iId);
         $this->iNamePhrase = -1;
     }
@@ -566,32 +581,37 @@ class SearchDescription
 
         // Sort by existence of the requested house number but only if not
         // too many results are expected for the street, i.e. if the result
-        // will be narrowed down by an address. Remeber that with ordering
+        // will be narrowed down by an address. Remember that with ordering
         // every single result has to be checked.
         if ($this->sHouseNumber && ($this->bRareName || !empty($this->aAddress) || $this->sPostcode)) {
             $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
-            $aOrder[] = ' (';
-            $aOrder[0] .= 'EXISTS(';
-            $aOrder[0] .= '  SELECT place_id';
-            $aOrder[0] .= '  FROM placex';
-            $aOrder[0] .= '  WHERE parent_place_id = search_name.place_id';
-            $aOrder[0] .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
-            $aOrder[0] .= '  LIMIT 1';
-            $aOrder[0] .= ') ';
-            // also housenumbers from interpolation lines table are needed
-            if (preg_match('/[0-9]+/', $this->sHouseNumber)) {
-                $iHouseNumber = intval($this->sHouseNumber);
-                $aOrder[0] .= 'OR EXISTS(';
-                $aOrder[0] .= '  SELECT place_id ';
-                $aOrder[0] .= '  FROM location_property_osmline ';
-                $aOrder[0] .= '  WHERE parent_place_id = search_name.place_id';
-                $aOrder[0] .= '    AND startnumber is not NULL';
-                $aOrder[0] .= '    AND '.$iHouseNumber.'>=startnumber ';
-                $aOrder[0] .= '    AND '.$iHouseNumber.'<=endnumber ';
-                $aOrder[0] .= '  LIMIT 1';
-                $aOrder[0] .= ')';
+
+            // Housenumbers on streets and places.
+            $sChildHnr = 'SELECT * FROM placex WHERE parent_place_id = search_name.place_id';
+            $sChildHnr .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
+            // Interpolations on streets and places.
+            if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
+                $sIpolHnr = 'SELECT * FROM location_property_osmline ';
+                $sIpolHnr .= 'WHERE parent_place_id = search_name.place_id ';
+                $sIpolHnr .= '  AND startnumber is not NULL';
+                $sIpolHnr .= '    AND '.$this->sHouseNumber.'>=startnumber ';
+                $sIpolHnr .= '    AND '.$this->sHouseNumber.'<=endnumber ';
+            } else {
+                $sIpolHnr = false;
             }
-            $aOrder[0] .= ') DESC';
+            // Housenumbers on the object iteself for unlisted places.
+            $sSelfHnr = 'SELECT * FROM placex WHERE place_id = search_name.place_id';
+            $sSelfHnr .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
+
+            $sSql = '(CASE WHEN address_rank = 30 THEN EXISTS('.$sSelfHnr.') ';
+            $sSql .= ' ELSE EXISTS('.$sChildHnr.') ';
+            if ($sIpolHnr) {
+                $sSql .= 'OR EXISTS('.$sIpolHnr.') ';
+            }
+            $sSql .= 'END) DESC';
+
+
+            $aOrder[] = $sSql;
         }
 
         if (!empty($this->aName)) {

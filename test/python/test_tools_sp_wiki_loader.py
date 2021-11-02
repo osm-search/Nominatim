@@ -30,7 +30,7 @@ def test_parse_xml(sp_wiki_loader, xml_wiki_content):
         Should return the right SpecialPhrase objects.
     """
     phrases = sp_wiki_loader.parse_xml(xml_wiki_content)
-    assert check_phrases_content(phrases)
+    check_phrases_content(phrases)
 
 
 def test_next(sp_wiki_loader):
@@ -40,15 +40,29 @@ def test_next(sp_wiki_loader):
         the 'en' special phrases.
     """
     phrases = next(sp_wiki_loader)
-    assert check_phrases_content(phrases)
+    check_phrases_content(phrases)
 
 def check_phrases_content(phrases):
     """
         Asserts that the given phrases list contains
         the right phrases of the 'en' special phrases.
     """
-    return  len(phrases) > 1 \
-            and any(p.p_label == 'Embassies' and p.p_class == 'amenity' and p.p_type == 'embassy'
-                    and p.p_operator == '-' for p in phrases) \
-            and any(p.p_label == 'Zip Line' and p.p_class == 'aerialway' and p.p_type == 'zip_line'
-                    and p.p_operator == '-' for p in phrases)
+    assert set((p.p_label, p.p_class, p.p_type, p.p_operator) for p in phrases) ==\
+              {('Zip Line', 'aerialway', 'zip_line', '-'),
+               ('Zip Lines', 'aerialway', 'zip_line', '-'),
+               ('Zip Line in', 'aerialway', 'zip_line', 'in'),
+               ('Zip Lines in', 'aerialway', 'zip_line', 'in'),
+               ('Zip Line near', 'aerialway', 'zip_line', 'near'),
+               ('Animal shelter', 'amenity', 'animal_shelter', '-'),
+               ('Animal shelters', 'amenity', 'animal_shelter', '-'),
+               ('Animal shelter in', 'amenity', 'animal_shelter', 'in'),
+               ('Animal shelters in', 'amenity', 'animal_shelter', 'in'),
+               ('Animal shelter near', 'amenity', 'animal_shelter', 'near'),
+               ('Animal shelters near', 'amenity', 'animal_shelter', 'near'),
+               ('Drinking Water near', 'amenity', 'drinking_water', 'near'),
+               ('Water', 'amenity', 'drinking_water', '-'),
+               ('Water in', 'amenity', 'drinking_water', 'in'),
+               ('Water near', 'amenity', 'drinking_water', 'near'),
+               ('Embassy', 'amenity', 'embassy', '-'),
+               ('Embassys', 'amenity', 'embassy', '-'),
+               ('Embassies', 'amenity', 'embassy', '-')}

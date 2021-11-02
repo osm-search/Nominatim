@@ -53,8 +53,7 @@ def init_status(temp_db_conn, status_table):
 @pytest.fixture
 def index_mock(monkeypatch, tokenizer_mock, init_status):
     mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_boundaries', mock)
-    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_by_rank', mock)
+    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_full', mock)
 
     return mock
 
@@ -122,7 +121,7 @@ class TestCliReplication:
         with pytest.raises(IndexError):
             self.call_nominatim()
 
-        assert index_mock.called == 4
+        assert index_mock.called == 2
 
 
     def test_replication_update_continuous_no_change(self, monkeypatch, index_mock):
@@ -137,6 +136,6 @@ class TestCliReplication:
         with pytest.raises(IndexError):
             self.call_nominatim()
 
-        assert index_mock.called == 2
+        assert index_mock.called == 1
         assert sleep_mock.called == 1
         assert sleep_mock.last_args[0] == 60

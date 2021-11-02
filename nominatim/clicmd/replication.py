@@ -20,6 +20,19 @@ LOG = logging.getLogger()
 class UpdateReplication:
     """\
     Update the database using an online replication service.
+
+    An OSM replication service is an online service that provides regular
+    updates (OSM diff files) for the planet or update they provide. The OSMF
+    provides the primary replication service for the full planet at
+    https://planet.osm.org/replication/ but there are other providers of
+    extracts of OSM data who provide such a service as well.
+
+    This sub-command allows to set up such a replication service and download
+    and import updates at regular intervals. You need to call '--init' once to
+    set up the process or whenever you change the replication configuration
+    parameters. Without any arguments, the sub-command will go into a loop and
+    continuously apply updates as they become available. Giving `--once` just
+    downloads and imports the next batch of updates.
     """
 
     @staticmethod
@@ -29,22 +42,25 @@ class UpdateReplication:
                            help='Initialise the update process')
         group.add_argument('--no-update-functions', dest='update_functions',
                            action='store_false',
-                           help=("Do not update the trigger function to "
-                                 "support differential updates."))
+                           help="Do not update the trigger function to "
+                                "support differential updates (EXPERT)")
         group = parser.add_argument_group('Arguments for updates')
         group.add_argument('--check-for-updates', action='store_true',
                            help='Check if new updates are available and exit')
         group.add_argument('--once', action='store_true',
-                           help=("Download and apply updates only once. When "
-                                 "not set, updates are continuously applied"))
+                           help="Download and apply updates only once. When "
+                                "not set, updates are continuously applied")
+        group.add_argument('--catch-up', action='store_true',
+                           help="Download and apply updates until no new "
+                                "data is available on the server")
         group.add_argument('--no-index', action='store_false', dest='do_index',
-                           help=("Do not index the new data. Only applicable "
+                           help=("Do not index the new data. Only usable "
                                  "together with --once"))
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
         group = parser.add_argument_group('Download parameters')
         group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
-                           help='Set timeout for file downloads.')
+                           help='Set timeout for file downloads')
 
     @staticmethod
     def _init_replication(args):
@@ -79,27 +95,39 @@ class UpdateReplication:
                     round_time(end - start_import),
                     round_time(end - batchdate))
 
+
+    @staticmethod
+    def _compute_update_interval(args):
+        if args.catch_up:
+            return 0
+
+        update_interval = args.config.get_int('REPLICATION_UPDATE_INTERVAL')
+        # Sanity check to not overwhelm the Geofabrik servers.
+        if 'download.geofabrik.de' in args.config.REPLICATION_URL\
+           and update_interval < 86400:
+            LOG.fatal("Update interval too low for download.geofabrik.de.\n"
+                      "Please check install documentation "
+                      "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
+                      "setting-up-the-update-process).")
+            raise UsageError("Invalid replication update interval setting.")
+
+        return update_interval
+
+
     @staticmethod
     def _update(args):
         from ..tools import replication
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory
 
+        update_interval = UpdateReplication._compute_update_interval(args)
+
         params = args.osm2pgsql_options(default_cache=2000, default_threads=1)
         params.update(base_url=args.config.REPLICATION_URL,
-                      update_interval=args.config.get_int('REPLICATION_UPDATE_INTERVAL'),
+                      update_interval=update_interval,
                       import_file=args.project_dir / 'osmosischange.osc',
                       max_diff_size=args.config.get_int('REPLICATION_MAX_DIFF'),
                       indexed_only=not args.once)
-
-        # Sanity check to not overwhelm the Geofabrik servers.
-        if 'download.geofabrik.de' in params['base_url']\
-           and params['update_interval'] < 86400:
-            LOG.fatal("Update interval too low for download.geofabrik.de.\n"
-                      "Please check install documentation "
-                      "(https://nominatim.org/release-docs/latest/admin/Import-and-Update#"
-                      "setting-up-the-update-process).")
-            raise UsageError("Invalid replication update interval setting.")
 
         if not args.once:
             if not args.do_index:
@@ -122,8 +150,7 @@ class UpdateReplication:
                 index_start = dt.datetime.now(dt.timezone.utc)
                 indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                                   args.threads or 1)
-                indexer.index_boundaries(0, 30)
-                indexer.index_by_rank(0, 30)
+                indexer.index_full(analyse=False)
 
                 with connect(args.config.get_libpq_dsn()) as conn:
                     status.set_indexed(conn, True)
@@ -132,10 +159,15 @@ class UpdateReplication:
             else:
                 index_start = None
 
+            if state is replication.UpdateState.NO_CHANGES and \
+               args.catch_up or update_interval > 40*60:
+                while indexer.has_pending():
+                    indexer.index_full(analyse=False)
+
             if LOG.isEnabledFor(logging.WARNING):
                 UpdateReplication._report_update(batchdate, start, index_start)
 
-            if args.once:
+            if args.once or (args.catch_up and state is replication.UpdateState.NO_CHANGES):
                 break
 
             if state is replication.UpdateState.NO_CHANGES:

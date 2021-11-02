@@ -17,7 +17,13 @@ class UpdateRefresh:
     """\
     Recompute auxiliary data used by the indexing process.
 
-    These functions must not be run in parallel with other update commands.
+    This sub-commands updates various static data and functions in the database.
+    It usually needs to be run after changing various aspects of the
+    configuration. The configuration documentation will mention the exact
+    command to use in such case.
+
+    Warning: the 'update' command must not be run in parallel with other update
+             commands like 'replication' or 'add-data'.
     """
     def __init__(self):
         self.tokenizer = None
@@ -34,7 +40,7 @@ class UpdateRefresh:
         group.add_argument('--functions', action='store_true',
                            help='Update the PL/pgSQL functions in the database')
         group.add_argument('--wiki-data', action='store_true',
-                           help='Update Wikipedia/data importance numbers.')
+                           help='Update Wikipedia/data importance numbers')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
@@ -65,14 +71,13 @@ class UpdateRefresh:
                           "Postcode updates on a frozen database is not possible.")
 
         if args.word_counts:
-            LOG.warning('Recompute frequency of full-word search terms')
-            refresh.recompute_word_counts(args.config.get_libpq_dsn(), args.sqllib_dir)
+            LOG.warning('Recompute word statistics')
+            self._get_tokenizer(args.config).update_statistics()
 
         if args.address_levels:
-            cfg = Path(args.config.ADDRESS_LEVEL_CONFIG)
-            LOG.warning('Updating address levels from %s', cfg)
+            LOG.warning('Updating address levels')
             with connect(args.config.get_libpq_dsn()) as conn:
-                refresh.load_address_levels_from_file(conn, cfg)
+                refresh.load_address_levels_from_config(conn, args.config)
 
         if args.functions:
             LOG.warning('Create functions')

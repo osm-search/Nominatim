@@ -7,7 +7,7 @@ import yaml
 import pytest
 
 from nominatim.tokenizer import icu_tokenizer
-from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
+import nominatim.tokenizer.icu_rule_loader
 from nominatim.db import properties
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.indexer.place_info import PlaceInfo
@@ -75,7 +75,7 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
                   'token-analysis': [{'analyzer': 'generic',
                                       'variants': [{'words': list(variants)}]}]}
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
-        tok.loader = ICURuleLoader(test_config)
+        tok.loader = nominatim.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
 
         return tok.name_analyzer()
 
@@ -151,16 +151,15 @@ def getorcreate_hnr_id(temp_db_cursor):
                                 SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
 
 
-def test_init_new(tokenizer_factory, test_config, monkeypatch, db_prop):
-    monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
-
+def test_init_new(tokenizer_factory, test_config, db_prop):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert db_prop(icu_tokenizer.DBCFG_TERM_NORMALIZATION) == ':: lower();'
+    assert db_prop(nominatim.tokenizer.icu_rule_loader.DBCFG_IMPORT_NORM_RULES) \
+            .startswith(':: lower ();')
 
 
-def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
+def test_init_word_table(tokenizer_factory, test_config, place_row, temp_db_cursor):
     place_row(names={'name' : 'Test Area', 'ref' : '52'})
     place_row(names={'name' : 'No Area'})
     place_row(names={'name' : 'Holzstrasse'})
@@ -168,21 +167,17 @@ def test_init_word_table(tokenizer_factory, test_config, place_row, word_table):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
 
-    assert word_table.get_partial_words() == {('test', 1),
-                                              ('no', 1), ('area', 2)}
+    assert temp_db_cursor.table_exists('word')
 
 
-def test_init_from_project(monkeypatch, test_config, tokenizer_factory):
-    monkeypatch.setenv('NOMINATIM_TERM_NORMALIZATION', ':: lower();')
+def test_init_from_project(test_config, tokenizer_factory):
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
-    monkeypatch.undo()
 
     tok = tokenizer_factory()
     tok.init_from_project(test_config)
 
     assert tok.loader is not None
-    assert tok.term_normalization == ':: lower();'
 
 
 def test_update_sql_functions(db_prop, temp_db_cursor,

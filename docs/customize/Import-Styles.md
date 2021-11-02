@@ -1,37 +1,23 @@
-# OSM Data Import
-
-OSM data is initially imported using [osm2pgsql](https://osm2pgsql.org).
-Nominatim uses its own data output style 'gazetteer', which differs from the
-output style created for map rendering.
-
-## Database Layout
-
-The gazetteer style produces a single table `place` with the following rows:
-
- * `osm_type` - kind of OSM object (**N** - node, **W** - way, **R** - relation)
- * `osm_id` - original OSM ID
- * `class` - key of principal tag defining the object type
- * `type` - value of principal tag defining the object type
- * `name` - collection of tags that contain a name or reference
- * `admin_level` - numerical value of the tagged administrative level
- * `address` - collection of tags defining the address of an object
- * `extratags` - collection of additional interesting tags that are not
-                 directly relevant for searching
- * `geometry` - geometry of the object (in WGS84)
-
-A single OSM object may appear multiple times in this table when it is tagged
-with multiple tags that may constitute a principal tag. Take for example a
-motorway bridge. In OSM, this would be a way which is tagged with
-`highway=motorway` and `bridge=yes`. This way would appear in the `place` table
-once with `class` of `highway` and once with a `class` of `bridge`. Thus the
-*unique key* for `place` is (`osm_type`, `osm_id`, `class`).
-
 ## Configuring the Import
 
-How tags are interpreted and assigned to the different `place` columns can be
-configured via the import style configuration file (`NOMINATIM_IMPORT_STYLE`). This
+Which OSM objects are added to the database and which of the tags are used
+can be configured via the import style configuration file. This
 is a JSON file which contains a list of rules which are matched against every
 tag of every object and then assign the tag its specific role.
+
+The style to use is given by the `NOMINATIM_IMPORT_STYLE` configuration
+option. There are a number of default styles, which are explained in detail
+in the [Import section](../admin/Import.md#filtering-imported-data). These
+standard styles may be referenced by their name.
+
+You can also create your own custom syle. Put the style file into your
+project directory and then set `NOMINATIM_IMPORT_STYLE` to the name of the file.
+It is always recommended to start with one of the standard styles and customize
+those. You find the standard styles under the name `import-<stylename>.style`
+in the standard Nominatim configuration path (usually `/etc/nominatim` or
+`/usr/local/etc/nominatim`).
+
+The remainder of the page describes the format of the file.
 
 ### Configuration Rules
 
@@ -158,9 +144,6 @@ One or more of the following properties may be given for each tag:
 A rule can define as many of these properties for one match as it likes. For
 example, if the property is `"main,extra"` then the tag will open a new row
 but also have the tag appear in the list of extra tags.
-
-There are a number of pre-defined styles in the `settings/` directory. It is
-advisable to start from one of these styles when defining your own.
 
 ### Changing the Style of Existing Databases
 

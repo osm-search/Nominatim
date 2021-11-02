@@ -1,0 +1,35 @@
+@startuml
+skinparam monochrome true
+skinparam ObjectFontStyle bold
+
+map search_name_X {
+  place_id => BIGINT
+  address_rank => SMALLINT
+  name_vector => INT[]
+  centroid => GEOMETRY
+}
+
+map location_area_large_X {
+  place_id => BIGINT
+  keywords => INT[]
+  partition => SMALLINT
+  rank_search => SMALLINT
+  rank_address => SMALLINT
+  country_code => VARCHR(2)
+  isguess => BOOLEAN
+  postcode => TEXT
+  centroid => POINT
+  geometry => GEOMETRY
+}
+
+map location_road_X {
+  place_id => BIGINT
+  partition => SMALLINT
+  country_code => VARCHR(2)
+  geometry => GEOMETRY
+}
+
+search_name_X -[hidden]> location_area_large_X
+location_area_large_X -[hidden]> location_road_X
+
+@enduml

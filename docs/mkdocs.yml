@@ -19,19 +19,26 @@ pages:
         - 'Import' : 'admin/Import.md'
         - 'Update' : 'admin/Update.md'
         - 'Deploy' : 'admin/Deployment.md'
-        - 'Customize Imports' : 'admin/Customization.md'
-        - 'Tokenizers' : 'admin/Tokenizers.md'
         - 'Nominatim UI'  : 'admin/Setup-Nominatim-UI.md'
         - 'Advanced Installations' : 'admin/Advanced-Installations.md'
+        - 'Maintenance' : 'admin/Maintenance.md'
         - 'Migration from older Versions' : 'admin/Migration.md'
         - 'Troubleshooting' : 'admin/Faq.md'
+    - 'Customization Guide':
+        - 'Overview': 'customize/Overview.md'
+        - 'Import Styles': 'customize/Import-Styles.md'
+        - 'Configuration Settings': 'customize/Settings.md'
+        - 'Place Ranking' : 'customize/Ranking.md'
+        - 'Tokenizers' : 'customize/Tokenizers.md'
+        - 'Special Phrases': 'customize/Special-Phrases.md'
+        - 'External data: US housenumbers from TIGER': 'customize/Tiger.md'
+        - 'External data: Postcodes': 'customize/Postcodes.md'
     - 'Developers Guide':
-        - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Architecture Overview' : 'develop/overview.md'
-        - 'OSM Data Import' : 'develop/Import.md'
-        - 'Place Ranking' : 'develop/Ranking.md'
+        - 'Database Layout' : 'develop/Database-Layout.md'
+        - 'Indexing' : 'develop/Indexing.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
-        - 'Postcodes' : 'develop/Postcodes.md'
+        - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
     - 'Appendix':
@@ -42,6 +49,7 @@ pages:
 markdown_extensions:
     - codehilite
     - admonition
+    - def_list
     - toc:
         permalink: 
 extra_css: [extra.css, styles.css]

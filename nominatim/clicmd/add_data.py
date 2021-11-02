@@ -3,6 +3,8 @@ Implementation of the 'add-data' subcommand.
 """
 import logging
 
+import psutil
+
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
@@ -14,8 +16,17 @@ class UpdateAddData:
     """\
     Add additional data from a file or an online source.
 
-    Data is only imported, not indexed. You need to call `nominatim index`
-    to complete the process.
+    This command allows to add or update the search data in the database.
+    The data can come either from an OSM file or single OSM objects can
+    directly be downloaded from the OSM API. This function only loads the
+    data into the database. Afterwards it still needs to be integrated
+    in the search index. Use the `nominatim index` command for that.
+
+    The command can also be used to add external non-OSM data to the
+    database. At the moment the only supported format is TIGER housenumber
+    data. See the online documentation at
+    https://nominatim.org/release-docs/latest/admin/Import/#installing-tiger-housenumber-data-for-the-us
+    for more information.
     """
 
     @staticmethod
@@ -33,14 +44,14 @@ class UpdateAddData:
         group.add_argument('--relation', metavar='ID', type=int,
                            help='Import a single relation from the API')
         group.add_argument('--tiger-data', metavar='DIR',
-                           help='Add housenumbers from the US TIGER census database.')
+                           help='Add housenumbers from the US TIGER census database')
         group = parser.add_argument_group('Extra arguments')
         group.add_argument('--use-main-api', action='store_true',
                            help='Use OSM API instead of Overpass to download objects')
         group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
         group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
-                           help='Set timeout for file downloads.')
+                           help='Set timeout for file downloads')
 
     @staticmethod
     def run(args):
@@ -50,7 +61,8 @@ class UpdateAddData:
         if args.tiger_data:
             tokenizer = tokenizer_factory.get_tokenizer_for_db(args.config)
             return tiger_data.add_tiger_data(args.tiger_data,
-                                             args.config, args.threads or 1,
+                                             args.config,
+                                             args.threads or psutil.cpu_count()  or 1,
                                              tokenizer)
 
         osm2pgsql_params = args.osm2pgsql_options(default_cache=1000, default_threads=1)

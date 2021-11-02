@@ -66,7 +66,7 @@ Feature: Search queries
          | way      | ^697,.* |
 
     Scenario: Search with class-type feature
-        When sending jsonv2 search query "Hotel in California"
+        When sending jsonv2 search query "bars in ebenholz"
         Then results contain
           | place_rank |
           | 30 |

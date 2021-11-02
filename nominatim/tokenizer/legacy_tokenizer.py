@@ -186,6 +186,25 @@ class LegacyTokenizer(AbstractTokenizer):
             self._save_config(conn, config)
 
 
+    def update_statistics(self):
+        """ Recompute the frequency of full words.
+        """
+        with connect(self.dsn) as conn:
+            if conn.table_exists('search_name'):
+                with conn.cursor() as cur:
+                    cur.drop_table("word_frequencies")
+                    LOG.info("Computing word frequencies")
+                    cur.execute("""CREATE TEMP TABLE word_frequencies AS
+                                     SELECT unnest(name_vector) as id, count(*)
+                                     FROM search_name GROUP BY id""")
+                    cur.execute("CREATE INDEX ON word_frequencies(id)")
+                    LOG.info("Update word table with recomputed frequencies")
+                    cur.execute("""UPDATE word SET search_name_count = count
+                                   FROM word_frequencies
+                                   WHERE word_token like ' %' and word_id = id""")
+                    cur.drop_table("word_frequencies")
+            conn.commit()
+
     def name_analyzer(self):
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should

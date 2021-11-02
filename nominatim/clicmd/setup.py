@@ -20,6 +20,10 @@ LOG = logging.getLogger()
 class SetupAll:
     """\
     Create a new Nominatim database from an OSM file.
+
+    This sub-command sets up a new Nominatim database from scratch starting
+    with creating a new database in Postgresql. The user running this command
+    needs superuser rights on the database.
     """
 
     @staticmethod
@@ -28,7 +32,7 @@ class SetupAll:
         group = group_name.add_mutually_exclusive_group(required=True)
         group.add_argument('--osm-file', metavar='FILE', action='append',
                            help='OSM file to be imported'
-                                ' (repeat for importing multiple files.')
+                                ' (repeat for importing multiple files)')
         group.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
@@ -47,7 +51,7 @@ class SetupAll:
         group.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
         group.add_argument('--index-noanalyse', action='store_true',
-                           help='Do not perform analyse operations during index')
+                           help='Do not perform analyse operations during index (expert only)')
 
 
     @staticmethod
@@ -121,16 +125,15 @@ class SetupAll:
                 freeze.drop_update_tables(conn)
         tokenizer.finalize_import(args.config)
 
+        LOG.warning('Recompute word counts')
+        tokenizer.update_statistics()
 
         webdir = args.project_dir / 'website'
         LOG.warning('Setup website at %s', webdir)
         with connect(args.config.get_libpq_dsn()) as conn:
             refresh.setup_website(webdir, args.config, conn)
 
-        with connect(args.config.get_libpq_dsn()) as conn:
-            SetupAll._set_database_date(conn)
-            properties.set_property(conn, 'database_version',
-                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+        SetupAll._set_database_date(args.config.get_libpq_dsn())
 
         return 0
 
@@ -146,7 +149,7 @@ class SetupAll:
             refresh.create_functions(conn, config, False, False)
             LOG.warning('Create tables')
             database_import.create_tables(conn, config, reverse_only=reverse_only)
-            refresh.load_address_levels_from_file(conn, Path(config.ADDRESS_LEVEL_CONFIG))
+            refresh.load_address_levels_from_config(conn, config)
             LOG.warning('Create functions (2nd pass)')
             refresh.create_functions(conn, config, False, False)
             LOG.warning('Create table triggers')
@@ -193,12 +196,16 @@ class SetupAll:
 
 
     @staticmethod
-    def _set_database_date(conn):
+    def _set_database_date(dsn):
         """ Determine the database date and set the status accordingly.
         """
-        try:
-            dbdate = status.compute_database_date(conn)
-            status.set_status(conn, dbdate)
-            LOG.info('Database is at %s.', dbdate)
-        except Exception as exc: # pylint: disable=broad-except
-            LOG.error('Cannot determine date of database: %s', exc)
+        with connect(dsn) as conn:
+            try:
+                dbdate = status.compute_database_date(conn)
+                status.set_status(conn, dbdate)
+                LOG.info('Database is at %s.', dbdate)
+            except Exception as exc: # pylint: disable=broad-except
+                LOG.error('Cannot determine date of database: %s', exc)
+
+            properties.set_property(conn, 'database_version',
+                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))

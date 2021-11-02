@@ -1,0 +1,31 @@
+@startuml
+skinparam monochrome true
+
+start
+
+if (has 'addr:street'?) then (yes)
+  if (street with that name\n nearby?) then (yes)
+    :**Use closest street**
+     **with same name**;
+     kill
+  else (no)
+    :** Use closest**\n**street**;
+     kill
+  endif
+elseif (has 'addr:place'?) then (yes)
+  if (place with that name\n nearby?) then (yes)
+    :**Use closest place**
+     **with same name**;
+     kill
+  else (no)
+    :add addr:place to adress;
+    :**Use closest place**\n**rank 16 to 25**;
+     kill
+  endif
+else (otherwise)
+ :**Use closest**\n**street**;
+ kill
+endif
+
+
+@enduml

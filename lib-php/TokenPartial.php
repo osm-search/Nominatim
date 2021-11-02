@@ -90,6 +90,7 @@ class Partial
             $oNewSearch->addPartialNameToken(
                 $this->iId,
                 $this->iSearchNameCount < CONST_Max_Word_Frequency,
+                $this->iSearchNameCount > CONST_Search_NameOnlySearchFrequencyThreshold,
                 $oPosition->getPhrase()
             );
 

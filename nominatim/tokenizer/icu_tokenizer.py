@@ -2,7 +2,6 @@
 Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
 """
-from collections import Counter
 import itertools
 import json
 import logging
@@ -10,7 +9,6 @@ import re
 from textwrap import dedent
 
 from nominatim.db.connection import connect
-from nominatim.db.properties import set_property, get_property
 from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.indexer.place_info import PlaceInfo
@@ -37,7 +35,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         self.dsn = dsn
         self.data_dir = data_dir
         self.loader = None
-        self.term_normalization = None
 
 
     def init_new_db(self, config, init_db=True):
@@ -47,8 +44,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sure the tokenizer remains stable even over updates.
         """
         self.loader = ICURuleLoader(config)
-
-        self.term_normalization = config.TERM_NORMALIZATION
 
         self._install_php(config.lib_dir.php)
         self._save_config()
@@ -65,13 +60,15 @@ class LegacyICUTokenizer(AbstractTokenizer):
 
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
-            self.term_normalization = get_property(conn, DBCFG_TERM_NORMALIZATION)
 
 
-    def finalize_import(self, _):
+    def finalize_import(self, config):
         """ Do any required postprocessing to make the tokenizer data ready
             for use.
         """
+        with connect(self.dsn) as conn:
+            sqlp = SQLPreprocessor(conn, config)
+            sqlp.run_sql_file(conn, 'tokenizer/legacy_tokenizer_indices.sql')
 
 
     def update_sql_functions(self, config):
@@ -85,12 +82,28 @@ class LegacyICUTokenizer(AbstractTokenizer):
     def check_database(self, config):
         """ Check that the tokenizer is set up correctly.
         """
+        # Will throw an error if there is an issue.
         self.init_from_project(config)
 
-        if self.term_normalization is None:
-            return "Configuration for tokenizer 'icu' are missing."
 
-        return None
+    def update_statistics(self):
+        """ Recompute frequencies for all name words.
+        """
+        with connect(self.dsn) as conn:
+            if conn.table_exists('search_name'):
+                with conn.cursor() as cur:
+                    cur.drop_table("word_frequencies")
+                    LOG.info("Computing word frequencies")
+                    cur.execute("""CREATE TEMP TABLE word_frequencies AS
+                                     SELECT unnest(name_vector) as id, count(*)
+                                     FROM search_name GROUP BY id""")
+                    cur.execute("CREATE INDEX ON word_frequencies(id)")
+                    LOG.info("Update word table with recomputed frequencies")
+                    cur.execute("""UPDATE word
+                                   SET info = info || jsonb_build_object('count', count)
+                                   FROM word_frequencies WHERE word_id = id""")
+                    cur.drop_table("word_frequencies")
+            conn.commit()
 
 
     def name_analyzer(self):
@@ -119,7 +132,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         php_file.write_text(dedent(f"""\
             <?php
             @define('CONST_Max_Word_Frequency', 10000000);
-            @define('CONST_Term_Normalization_Rules', "{self.term_normalization}");
+            @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
             @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
             require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
@@ -130,7 +143,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """
         with connect(self.dsn) as conn:
             self.loader.save_config_to_db(conn)
-            set_property(conn, DBCFG_TERM_NORMALIZATION, self.term_normalization)
 
 
     def _init_db_tables(self, config):
@@ -141,43 +153,6 @@ class LegacyICUTokenizer(AbstractTokenizer):
             sqlp = SQLPreprocessor(conn, config)
             sqlp.run_sql_file(conn, 'tokenizer/icu_tokenizer_tables.sql')
             conn.commit()
-
-            LOG.warning("Precomputing word tokens")
-
-            # get partial words and their frequencies
-            words = self._count_partial_terms(conn)
-
-            # copy them back into the word table
-            with CopyBuffer() as copystr:
-                for term, cnt in words.items():
-                    copystr.add('w', term, json.dumps({'count': cnt}))
-
-                with conn.cursor() as cur:
-                    copystr.copy_out(cur, 'word',
-                                     columns=['type', 'word_token', 'info'])
-                    cur.execute("""UPDATE word SET word_id = nextval('seq_word')
-                                   WHERE word_id is null and type = 'w'""")
-
-            conn.commit()
-
-    def _count_partial_terms(self, conn):
-        """ Count the partial terms from the names in the place table.
-        """
-        words = Counter()
-        analysis = self.loader.make_token_analysis()
-
-        with conn.cursor(name="words") as cur:
-            cur.execute(""" SELECT v, count(*) FROM
-                              (SELECT svals(name) as v FROM place)x
-                            WHERE length(v) < 75 GROUP BY v""")
-
-            for name, cnt in cur:
-                word = analysis.search.transliterate(name)
-                if word and ' ' in word:
-                    for term in set(word.split()):
-                        words[term] += cnt
-
-        return words
 
 
 class LegacyICUNameAnalyzer(AbstractAnalyzer):

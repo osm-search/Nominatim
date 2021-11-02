@@ -16,4 +16,5 @@ class SpecialPhrase():
         # Hack around a bug where building=yes was imported with quotes into the wiki
         self.p_type = re.sub(r'\"|&quot;', '', p_type.strip())
         # Needed if some operator in the wiki are not written in english
+        p_operator = p_operator.strip().lower()
         self.p_operator = '-' if p_operator not in ('near', 'in') else p_operator

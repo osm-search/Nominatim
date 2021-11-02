@@ -1,12 +1,9 @@
 *.log
 *.pyc
 
-build
-settings/local.php
+docs/develop/*.png
 
-data/wiki_import.sql
-data/wiki_specialphrases.sql
-data/osmosischange.osc
+build
 
 .vagrant
 data/country_osm_grid.sql.gz

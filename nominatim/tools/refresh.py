@@ -1,9 +1,9 @@
 """
 Functions for bringing auxiliary data in the database up-to-date.
 """
-import json
 import logging
 from textwrap import dedent
+from pathlib import Path
 
 from psycopg2 import sql as pysql
 
@@ -12,12 +12,6 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
-
-
-def recompute_word_counts(dsn, sql_dir):
-    """ Compute the frequency of full-word search terms.
-    """
-    execute_file(dsn, sql_dir / 'words_from_search_name.sql')
 
 
 def _add_address_level_rows_from_entry(rows, entry):
@@ -64,12 +58,15 @@ def load_address_levels(conn, table, levels):
 
     conn.commit()
 
-def load_address_levels_from_file(conn, config_file):
-    """ Replace the `address_levels` table with the contents of the config
-        file.
+
+def load_address_levels_from_config(conn, config):
+    """ Replace the `address_levels` table with the content as
+        defined in the given configuration. Uses the parameter
+        NOMINATIM_ADDRESS_LEVEL_CONFIG to determine the location of the
+        configuration file.
     """
-    with config_file.open('r') as fdesc:
-        load_address_levels(conn, 'address_levels', json.load(fdesc))
+    cfg = config.load_sub_configuration('', config='ADDRESS_LEVEL_CONFIG')
+    load_address_levels(conn, 'address_levels', cfg)
 
 
 def create_functions(conn, config, enable_diff_updates=True, enable_debug=False):
@@ -98,7 +95,7 @@ PHP_CONST_DEFS = (
     ('Database_DSN', 'DATABASE_DSN', str),
     ('Default_Language', 'DEFAULT_LANGUAGE', str),
     ('Log_DB', 'LOG_DB', bool),
-    ('Log_File', 'LOG_FILE', str),
+    ('Log_File', 'LOG_FILE', Path),
     ('NoAccessControl', 'CORS_NOACCESSCONTROL', bool),
     ('Places_Max_ID_count', 'LOOKUP_MAX_COUNT', int),
     ('PolygonOutput_MaximumTypes', 'POLYGON_OUTPUT_MAX_TYPES', int),
@@ -166,7 +163,12 @@ def _quote_php_variable(var_type, config, conf_name):
     if not getattr(config, conf_name):
         return 'false'
 
-    quoted = getattr(config, conf_name).replace("'", "\\'")
+    if var_type == Path:
+        value = str(config.get_path(conf_name))
+    else:
+        value = getattr(config, conf_name)
+
+    quoted = value.replace("'", "\\'")
     return f"'{quoted}'"
 
 

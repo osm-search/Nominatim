@@ -1,6 +1,7 @@
 """
 Test for loading dotenv configuration.
 """
+from pathlib import Path
 import pytest
 
 from nominatim.config import Configuration
@@ -166,6 +167,33 @@ def test_get_int_empty(make_config):
         config.get_int('DATABASE_MODULE_PATH')
 
 
+def test_get_path_empty(make_config):
+    config = make_config()
+
+    assert config.DATABASE_MODULE_PATH == ''
+    assert not config.get_path('DATABASE_MODULE_PATH')
+
+
+def test_get_path_absolute(make_config, monkeypatch):
+    config = make_config()
+
+    monkeypatch.setenv('NOMINATIM_FOOBAR', '/dont/care')
+    result = config.get_path('FOOBAR')
+
+    assert isinstance(result, Path)
+    assert str(result) == '/dont/care'
+
+
+def test_get_path_relative(make_config, monkeypatch, tmp_path):
+    config = make_config(tmp_path)
+
+    monkeypatch.setenv('NOMINATIM_FOOBAR', 'an/oyster')
+    result = config.get_path('FOOBAR')
+
+    assert isinstance(result, Path)
+    assert str(result) == str(tmp_path / 'an/oyster')
+
+
 def test_get_import_style_intern(make_config, src_dir, monkeypatch):
     config = make_config()
 
@@ -176,13 +204,24 @@ def test_get_import_style_intern(make_config, src_dir, monkeypatch):
     assert config.get_import_style_file() == expected
 
 
-@pytest.mark.parametrize("value", ['custom', '/foo/bar.stye'])
-def test_get_import_style_extern(make_config, monkeypatch, value):
+def test_get_import_style_extern_relative(make_config_path, monkeypatch):
+    config = make_config_path()
+    (config.project_dir / 'custom.style').write_text('x')
+
+    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', 'custom.style')
+
+    assert str(config.get_import_style_file()) == str(config.project_dir / 'custom.style')
+
+
+def test_get_import_style_extern_absolute(make_config, tmp_path, monkeypatch):
     config = make_config()
+    cfgfile = tmp_path / 'test.style'
 
-    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', value)
+    cfgfile.write_text('x')
 
-    assert str(config.get_import_style_file()) == value
+    monkeypatch.setenv('NOMINATIM_IMPORT_STYLE', str(cfgfile))
+
+    assert str(config.get_import_style_file()) == str(cfgfile)
 
 
 def test_load_subconf_from_project_dir(make_config_path):

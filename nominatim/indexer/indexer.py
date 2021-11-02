@@ -91,6 +91,17 @@ class Indexer:
         self.num_threads = num_threads
 
 
+    def has_pending(self):
+        """ Check if any data still needs indexing.
+            This function must only be used after the import has finished.
+            Otherwise it will be very expensive.
+        """
+        with connect(self.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 'a' FROM placex WHERE indexed_status > 0 LIMIT 1")
+                return cur.rowcount > 0
+
+
     def index_full(self, analyse=True):
         """ Index the complete database. This will first index boundaries
             followed by all other objects. When `analyse` is True, then the

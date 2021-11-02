@@ -134,7 +134,7 @@ On CentOS v7 the PostgreSQL server is started with `systemd`. Check if
 `/usr/lib/systemd/system/httpd.service` contains a line `PrivateTmp=true`. If
 so then Apache cannot see the `/tmp/.s.PGSQL.5432` file. It's a good security
 feature, so use the
-[preferred solution](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
+[preferred solution](../appendix/Install-on-Centos-7.md#adding-selinux-security-settings).
 
 However, you can solve this the quick and dirty way by commenting out that line and then run
 
@@ -182,7 +182,7 @@ by everybody, e.g.
 Try `chmod a+r nominatim.so; chmod a+x nominatim.so`.
 
 When running SELinux, make sure that the
-[context is set up correctly](../appendix/Install-on-Centos-7/#adding-selinux-security-settings).
+[context is set up correctly](../appendix/Install-on-Centos-7.md#adding-selinux-security-settings).
 
 When you recently updated your operating system, updated PostgreSQL to
 a new version or moved files (e.g. the build directory) you should

@@ -8,15 +8,9 @@
     valids anymore are removed.
 """
 import logging
-import os
-from os.path import isfile
-from pathlib import Path
 import re
-import subprocess
-import json
 
 from psycopg2.sql import Identifier, Literal, SQL
-from nominatim.errors import UsageError
 from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 
 LOG = logging.getLogger()
@@ -33,9 +27,8 @@ class SPImporter():
 
         Take a sp loader which load the phrases from an external source.
     """
-    def __init__(self, config, phplib_dir, db_connection, sp_loader) -> None:
+    def __init__(self, config, db_connection, sp_loader) -> None:
         self.config = config
-        self.phplib_dir = phplib_dir
         self.db_connection = db_connection
         self.sp_loader = sp_loader
         self.statistics_handler = SpecialPhrasesImporterStatistics()
@@ -101,13 +94,8 @@ class SPImporter():
         """
             Load white and black lists from phrases-settings.json.
         """
-        settings_path = (self.config.config_dir / 'phrase-settings.json').resolve()
+        settings = self.config.load_sub_configuration('phrase-settings.json')
 
-        if self.config.PHRASE_CONFIG:
-            settings_path = self._convert_php_settings_if_needed(self.config.PHRASE_CONFIG)
-
-        with settings_path.open("r") as json_settings:
-            settings = json.load(json_settings)
         return settings['blackList'], settings['whiteList']
 
     def _check_sanity(self, phrase):
@@ -255,29 +243,3 @@ class SPImporter():
             for table in self.table_phrases_to_delete:
                 self.statistics_handler.notify_one_table_deleted()
                 db_cursor.drop_table(table)
-
-
-    def _convert_php_settings_if_needed(self, file_path):
-        """
-            Convert php settings file of special phrases to json file if it is still in php format.
-        """
-        if not isfile(file_path):
-            raise UsageError(str(file_path) + ' is not a valid file.')
-
-        file, extension = os.path.splitext(file_path)
-        json_file_path = Path(file + '.json').resolve()
-
-        if extension not in ('.php', '.json'):
-            raise UsageError('The custom NOMINATIM_PHRASE_CONFIG file has not a valid extension.')
-
-        if extension == '.php' and not isfile(json_file_path):
-            try:
-                subprocess.run(['/usr/bin/env', 'php', '-Cq',
-                                (self.phplib_dir / 'migration/PhraseSettingsToJson.php').resolve(),
-                                file_path], check=True)
-                LOG.warning('special_phrase configuration file has been converted to json.')
-            except subprocess.CalledProcessError:
-                LOG.error('Error while converting %s to json.', file_path)
-                raise
-
-        return json_file_path

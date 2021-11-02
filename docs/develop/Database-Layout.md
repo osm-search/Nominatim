@@ -124,14 +124,14 @@ It will be a little while before Nominatim drops support for older versions.
 
 ![address tables](address-tables.svg)
 
-The **search_name_X** table is used to look up streets that appear in the
+The **search_name_X** tables are used to look up streets that appear in the
 `addr:street` tag.
 
 The **location_area_large_X** tables are used to look up larger areas
 (administrative boundaries and place nodes) either through their geographic
 closeness or through `addr:*` entries.
 
-The **location_road** table is used to find the closest street for a
+The **location_road_X** tables are used to find the closest street for a
 dependent place.
 
 All three table cache specific information from the placex table for their

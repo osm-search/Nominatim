@@ -35,7 +35,7 @@
 
     sudo yum install -y postgresql11-server postgresql11-contrib postgresql11-devel \
                         postgis25_11 postgis25_11-utils \
-                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python \
+                        wget cmake make gcc gcc-c++ libtool policycoreutils-python \
                         devtoolset-7 llvm-toolset-7 \
                         php-pgsql php php-intl libpqxx-devel \
                         proj-epsg bzip2-devel proj-devel boost-devel \
@@ -117,17 +117,10 @@ sudo chown vagrant /srv/nominatim  #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-4.0.0.tar.bz2
+    tar xf Nominatim-4.0.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -136,7 +129,7 @@ fi                                 #DOCS:
 #DOCS:    :::sh
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-4.0.0
     make
     sudo make install
 

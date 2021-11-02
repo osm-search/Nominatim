@@ -30,7 +30,7 @@
 #DOCS:    :::sh
     sudo dnf --enablerepo=powertools install -y postgresql12-server \
                         postgresql12-contrib postgresql12-devel postgis30_12 \
-                        wget git cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
+                        wget cmake make gcc gcc-c++ libtool policycoreutils-python-utils \
                         llvm-toolset ccache clang-tools-extra \
                         php-pgsql php php-intl php-json libpq-devel \
                         bzip2-devel proj-devel boost-devel \
@@ -125,17 +125,10 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
-    cd Nominatim
+    wget https://nominatim.org/release/Nominatim-4.0.0.tar.bz2
+    tar xf Nominatim-4.0.0.tar.bz2
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:
-fi                                 #DOCS:
-
-# When installing the latest source from github, you also need to
-# download the country grid:
-
-if [ ! -f data/country_osm_grid.sql.gz ]; then       #DOCS:    :::sh
-    wget --no-verbose -O data/country_osm_grid.sql.gz https://www.nominatim.org/data/country_grid.sql.gz
 fi                                 #DOCS:
 
 # The code must be built in a separate directory. Create this directory,
@@ -144,7 +137,7 @@ fi                                 #DOCS:
 #DOCS:    :::sh
     mkdir $USERHOME/build
     cd $USERHOME/build
-    cmake $USERHOME/Nominatim
+    cmake $USERHOME/Nominatim-4.0.0
     make
     sudo make install
 

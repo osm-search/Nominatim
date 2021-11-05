@@ -257,7 +257,7 @@ class SearchDescription
         if (empty($this->aName)) {
             $this->bNameNeedsAddress = $bNeedsAddress;
         } else {
-            $this->bNameNeedsAddress |= $bNeedsAddress;
+            $this->bNameNeedsAddress &= $bNeedsAddress;
         }
         if ($bSearchable) {
             $this->aName[$iId] = $iId;

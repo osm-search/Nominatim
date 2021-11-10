@@ -113,22 +113,35 @@ class TestCli:
         assert func.called == 1
 
 
-    @pytest.mark.parametrize("params", [('search', '--query', 'new'),
-                                        ('reverse', '--lat', '0', '--lon', '0'),
-                                        ('lookup', '--id', 'N1'),
-                                        ('details', '--node', '1'),
-                                        ('details', '--way', '1'),
-                                        ('details', '--relation', '1'),
-                                        ('details', '--place_id', '10001'),
-                                        ('status',)])
-    def test_api_commands_simple(self, mock_func_factory, params):
+@pytest.mark.parametrize("params", [('search', '--query', 'new'),
+                                    ('reverse', '--lat', '0', '--lon', '0'),
+                                    ('lookup', '--id', 'N1'),
+                                    ('details', '--node', '1'),
+                                    ('details', '--way', '1'),
+                                    ('details', '--relation', '1'),
+                                    ('details', '--place_id', '10001'),
+                                    ('status',)])
+class TestCliApiCall:
+
+    @pytest.fixture(autouse=True)
+    def setup_cli_call(self, cli_call):
+        self.call_nominatim = cli_call
+
+    def test_api_commands_simple(self, mock_func_factory, params, tmp_path):
+        (tmp_path / 'website').mkdir()
+        (tmp_path / 'website' / (params[0] + '.php')).write_text('')
         mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
 
-        assert self.call_nominatim(*params) == 0
+        assert self.call_nominatim(*params, '--project-dir', str(tmp_path)) == 0
 
         assert mock_run_api.called == 1
         assert mock_run_api.last_args[0] == params[0]
 
+
+    def test_bad_project_idr(self, mock_func_factory, params):
+        mock_run_api = mock_func_factory(nominatim.clicmd.api, 'run_api_script')
+
+        assert self.call_nominatim(*params) == 1
 
 
 class TestCliWithDb:

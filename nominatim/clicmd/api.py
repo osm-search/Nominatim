@@ -4,6 +4,7 @@ Subcommand definitions for API calls from the command line.
 import logging
 
 from nominatim.tools.exec_utils import run_api_script
+from nominatim.errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -52,6 +53,18 @@ def _add_api_output_arguments(parser):
                        help=("Simplify output geometry."
                              "Parameter is difference tolerance in degrees."))
 
+
+def _run_api(endpoint, args, params):
+    script_file = args.project_dir / 'website' / (endpoint + '.php')
+
+    if not script_file.exists():
+        LOG.error("Cannot find API script file.\n\n"
+                  "Make sure to run 'nominatim' from the project directory \n"
+                  "or use the option --project-dir.")
+        raise UsageError("API script not found.")
+
+    return run_api_script(endpoint, args.project_dir,
+                          phpcgi_bin=args.phpcgi_path, params=params)
 
 class APISearch:
     """\
@@ -114,8 +127,7 @@ class APISearch:
         if not args.dedupe:
             params['dedupe'] = '0'
 
-        return run_api_script('search', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
+        return _run_api('search', args, params)
 
 class APIReverse:
     """\
@@ -158,8 +170,7 @@ class APIReverse:
         if args.polygon_threshold:
             params['polygon_threshold'] = args.polygon_threshold
 
-        return run_api_script('reverse', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
+        return _run_api('reverse', args, params)
 
 
 class APILookup:
@@ -198,8 +209,7 @@ class APILookup:
         if args.polygon_threshold:
             params['polygon_threshold'] = args.polygon_threshold
 
-        return run_api_script('lookup', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
+        return _run_api('lookup', args, params)
 
 
 class APIDetails:
@@ -249,8 +259,7 @@ class APIDetails:
         for name, _ in DETAILS_SWITCHES:
             params[name] = '1' if getattr(args, name) else '0'
 
-        return run_api_script('details', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path, params=params)
+        return _run_api('details', args, params)
 
 
 class APIStatus:
@@ -271,6 +280,4 @@ class APIStatus:
 
     @staticmethod
     def run(args):
-        return run_api_script('status', args.project_dir,
-                              phpcgi_bin=args.phpcgi_path,
-                              params=dict(format=args.format))
+        return _run_api('status', args, dict(format=args.format))

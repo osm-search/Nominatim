@@ -584,11 +584,11 @@ class SearchDescription
         // will be narrowed down by an address. Remember that with ordering
         // every single result has to be checked.
         if ($this->sHouseNumber && ($this->bRareName || !empty($this->aAddress) || $this->sPostcode)) {
-            $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
+            $sHouseNumberRegex = $oDB->getDBQuoted('\\\\m'.$this->sHouseNumber.'\\\\M');
 
             // Housenumbers on streets and places.
             $sChildHnr = 'SELECT * FROM placex WHERE parent_place_id = search_name.place_id';
-            $sChildHnr .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
+            $sChildHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
             // Interpolations on streets and places.
             if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
                 $sIpolHnr = 'SELECT * FROM location_property_osmline ';
@@ -601,7 +601,7 @@ class SearchDescription
             }
             // Housenumbers on the object iteself for unlisted places.
             $sSelfHnr = 'SELECT * FROM placex WHERE place_id = search_name.place_id';
-            $sSelfHnr .= "    AND housenumber ~* E'".$sHouseNumberRegex."'";
+            $sSelfHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
 
             $sSql = '(CASE WHEN address_rank = 30 THEN EXISTS('.$sSelfHnr.') ';
             $sSql .= ' ELSE EXISTS('.$sChildHnr.') ';
@@ -739,9 +739,9 @@ class SearchDescription
             return $aResults;
         }
 
-        $sHouseNumberRegex = '\\\\m'.$this->sHouseNumber.'\\\\M';
+        $sHouseNumberRegex = $oDB->getDBQuoted('\\\\m'.$this->sHouseNumber.'\\\\M');
         $sSQL = 'SELECT place_id FROM placex WHERE';
-        $sSQL .= "  housenumber ~* E'".$sHouseNumberRegex."'";
+        $sSQL .= '  housenumber ~* E'.$sHouseNumberRegex;
         $sSQL .= ' AND ('.join(' OR ', $aIDCondition).')';
         $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 

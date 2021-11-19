@@ -101,13 +101,18 @@ This will get diffs from the replication server, import diffs and index
 the database. The default replication server in the
 script([Geofabrik](https://download.geofabrik.de)) provides daily updates.
 
-## Importing Nominatim to an external PostgreSQL database
+## Using an external PostgreSQL database
 
 You can install Nominatim using a database that runs on a different server when
 you have physical access to the file system on the other server. Nominatim
 uses a custom normalization library that needs to be made accessible to the
 PostgreSQL server. This section explains how to set up the normalization
 library.
+
+!!! note
+    The external module is only needed when using the legacy tokenizer.
+    If you have choosen the ICU tokenizer, then you can ignore this section
+    and follow the standard import documentation.
 
 ### Option 1: Compiling the library on the database server
 
@@ -167,3 +172,44 @@ NOMINATIM_DATABASE_MODULE_PATH="<directory on the database server where nominati
 
 Now change the `NOMINATIM_DATABASE_DSN` to point to your remote server and continue
 to follow the [standard instructions for importing](Import.md).
+
+
+## Moving the database to another machine
+
+For some configurations it may be useful to run the import on one machine, then
+move the database to another machine and run the Nominatim service from there.
+For example, you might want to use a large machine to be able to run the import
+quickly but only want a smaller machine for production because there is not so
+much load. Or you might want to do the import once and then replicate the
+database to many machines.
+
+The important thing to keep in mind when transferring the Nominatim installation
+is that you need to transfer the database _and the project directory_. Both
+parts are essential for your installation.
+
+The Nominatim database can be transferred using the `pg_dump`/`pg_restore` tool.
+Make sure to use the same version of PostgreSQL and PostGIS on source and
+target machine.
+
+!!! note
+    Before creating a dump of your Nominatim database, consider running
+    `nominatim freeze` first. Your database looses the ability to receive further
+    data updates but the resulting database is only about a third of the size
+    of a full database.
+
+Next install Nominatim on the target machine by following the standard installation
+instructions. Again make sure to use the same version as the source machine.
+
+You can now copy the project directory from the source machine to the new machine.
+If necessary, edit the `.env` file to point it to the restored database.
+Finally run
+
+    nominatim refresh --website
+
+to make sure that the local installation of Nominatim will be used.
+
+If you are using the legacy tokenizer you might also have to switch to the
+PostgreSQL module that was compiled on your target machine. If you get errors
+that PostgreSQL cannot find or access `nominatim.so` then copy the installed
+version into the `module` directory of your project directory. The installed
+copy can usually be found under `/usr/local/lib/nominatim/module/nominatim.so`.

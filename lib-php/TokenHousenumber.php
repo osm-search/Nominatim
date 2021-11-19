@@ -58,7 +58,7 @@ class HouseNumber
         // up of numbers, add a penalty
         $iSearchCost = 1;
         if (preg_match('/\\d/', $this->sToken) === 0
-            || preg_match_all('/[^0-9]/', $this->sToken, $aMatches) > 2) {
+            || preg_match_all('/[^0-9 ]/', $this->sToken, $aMatches) > 3) {
             $iSearchCost += strlen($this->sToken) - 1;
         }
         if (!$oSearch->hasOperator(\Nominatim\Operator::NONE)) {

@@ -106,6 +106,16 @@ class TestCliReplication:
         assert str(update_mock.last_args[1]['osm2pgsql']) == '/secret/osm2pgsql'
 
 
+    @pytest.mark.parametrize("update_interval", [60, 3600])
+    def test_replication_catchup(self, monkeypatch, index_mock, update_interval, placex_table):
+        monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', str(update_interval))
+        states = [nominatim.tools.replication.UpdateState.NO_CHANGES]
+        monkeypatch.setattr(nominatim.tools.replication, 'update',
+                            lambda *args, **kwargs: states.pop())
+
+        assert self.call_nominatim('--catch-up') == 0
+
+
     def test_replication_update_custom_threads(self, update_mock):
         assert self.call_nominatim('--once', '--no-index', '--threads', '4') == 0
 

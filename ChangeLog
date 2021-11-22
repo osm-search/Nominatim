@@ -1,3 +1,12 @@
+4.0.1
+
+ * fix initialisation error in replication script
+ * ICU tokenizer: avoid any special characters in word tokens
+ * better error message when API php script does not exist
+ * fix quoting of house numbers in SQL queries
+ * small fixes and improvements in search query parsing
+ * add documentation for moving the database to a different machine
+
 4.0.0
 
  * refactor name token computation and introduce ICU tokenizer

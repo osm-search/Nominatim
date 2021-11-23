@@ -1,6 +1,10 @@
 --index only on parent_place_id
 CREATE INDEX IF NOT EXISTS idx_location_property_tiger_parent_place_id_imp
-  ON location_property_tiger_import (parent_place_id) {{db.tablespace.aux_index}};
+  ON location_property_tiger_import (parent_place_id)
+{% if postgres.has_index_non_key_column %}
+  INCLUDE (startnumber, endnumber)
+{% endif %}
+  {{db.tablespace.aux_index}};
 CREATE UNIQUE INDEX IF NOT EXISTS idx_location_property_tiger_place_id_imp
   ON location_property_tiger_import (place_id) {{db.tablespace.aux_index}};
 

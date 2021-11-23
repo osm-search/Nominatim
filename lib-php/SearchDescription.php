@@ -591,8 +591,7 @@ class SearchDescription
             $sChildHnr .= '    AND housenumber ~* E'.$sHouseNumberRegex;
             // Interpolations on streets and places.
             if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
-                $sIpolHnr = 'SELECT * FROM location_property_osmline ';
-                $sIpolHnr .= 'WHERE parent_place_id = search_name.place_id ';
+                $sIpolHnr = 'WHERE parent_place_id = search_name.place_id ';
                 $sIpolHnr .= '  AND startnumber is not NULL';
                 $sIpolHnr .= '    AND '.$this->sHouseNumber.'>=startnumber ';
                 $sIpolHnr .= '    AND '.$this->sHouseNumber.'<=endnumber ';
@@ -606,7 +605,11 @@ class SearchDescription
             $sSql = '(CASE WHEN address_rank = 30 THEN EXISTS('.$sSelfHnr.') ';
             $sSql .= ' ELSE EXISTS('.$sChildHnr.') ';
             if ($sIpolHnr) {
-                $sSql .= 'OR EXISTS('.$sIpolHnr.') ';
+                $sSql .= 'OR EXISTS(SELECT * FROM location_property_osmline '.$sIpolHnr.') ';
+                if (CONST_Use_US_Tiger_Data) {
+                    $sSql .= "OR (country_code = 'us' AND ";
+                    $sSql .= '    EXISTS(SELECT * FROM location_property_tiger '.$sIpolHnr.')) ';
+                }
             }
             $sSql .= 'END) DESC';
 

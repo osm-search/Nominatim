@@ -192,3 +192,20 @@ def install_legacy_tokenizer(conn, config, **_):
                                                        module_name='legacy')
 
         tokenizer.migrate_database(config)
+
+
+@_migration(4, 0, 99, 0)
+def create_tiger_housenumber_index(conn, _, **_):
+    """ Create idx_location_property_tiger_parent_place_id with included
+        house number.
+
+        The inclusion is needed for efficient lookup of housenumbers in
+        full address searches.
+    """
+    if conn.server_version_tuple() >= (11, 0, 0):
+        with conn.cursor() as cur:
+            cur.execute(""" CREATE INDEX IF NOT EXISTS
+                                idx_location_property_tiger_housenumber_migrated
+                            ON location_property_tiger
+                            USING btree(parent_place_id)
+                            INCLUDE (startnumber, endnumber) """)

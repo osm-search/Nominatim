@@ -82,7 +82,7 @@
           "" : [20, 0]
       },
       "highway" : {
-          "" : 26,
+          "" : 30,
           "service" : 27,
           "cycleway" : 27,
           "path" : 27,
@@ -93,7 +93,19 @@
           "primary_link" : 27,
           "trunk_link" : 27,
           "secondary_link" : 27,
-          "tertiary_link" : 27
+          "tertiary_link" : 27,
+          "residential" : 26,
+          "track" : 26,
+          "unclassified" : 26,
+          "tertiary" : 26,
+          "secondary" : 26,
+          "primary" : 26,
+          "living_street" : 26,
+          "trunk" : 26,
+          "motorway" : 26,
+          "pedestrian" : 26,
+          "road" : 26,
+          "construction" : 26
       },
       "mountain_pass" : {
           "" : [20, 0]

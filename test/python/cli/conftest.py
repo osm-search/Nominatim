@@ -2,6 +2,24 @@ import pytest
 
 import nominatim.cli
 
+class MockParamCapture:
+    """ Mock that records the parameters with which a function was called
+        as well as the number of calls.
+    """
+    def __init__(self, retval=0):
+        self.called = 0
+        self.return_value = retval
+        self.last_args = None
+        self.last_kwargs = None
+
+    def __call__(self, *args, **kwargs):
+        self.called += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        return self.return_value
+
+
+
 @pytest.fixture
 def cli_call(src_dir):
     """ Call the nominatim main function with the correct paths set.
@@ -19,3 +37,20 @@ def cli_call(src_dir):
 
     return _call_nominatim
 
+
+@pytest.fixture
+def mock_run_legacy(monkeypatch):
+    mock = MockParamCapture()
+    monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
+    return mock
+
+
+@pytest.fixture
+def mock_func_factory(monkeypatch):
+    def get_mock(module, func):
+        mock = MockParamCapture()
+        mock.func_name = func
+        monkeypatch.setattr(module, func, mock)
+        return mock
+
+    return get_mock

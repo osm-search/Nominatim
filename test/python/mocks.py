@@ -10,23 +10,6 @@ from nominatim.db import properties
 # This must always point to the mock word table for the default tokenizer.
 from mock_legacy_word_table import MockLegacyWordTable as MockWordTable
 
-class MockParamCapture:
-    """ Mock that records the parameters with which a function was called
-        as well as the number of calls.
-    """
-    def __init__(self, retval=0):
-        self.called = 0
-        self.return_value = retval
-        self.last_args = None
-        self.last_kwargs = None
-
-    def __call__(self, *args, **kwargs):
-        self.called += 1
-        self.last_args = args
-        self.last_kwargs = kwargs
-        return self.return_value
-
-
 class MockPlacexTable:
     """ A placex table for testing.
     """

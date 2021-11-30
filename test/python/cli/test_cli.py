@@ -24,26 +24,6 @@ import nominatim.tools.refresh
 import nominatim.tools.postcodes
 import nominatim.tokenizer.factory
 
-from mocks import MockParamCapture
-
-@pytest.fixture
-def mock_run_legacy(monkeypatch):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.cli, 'run_legacy_script', mock)
-    return mock
-
-
-@pytest.fixture
-def mock_func_factory(monkeypatch):
-    def get_mock(module, func):
-        mock = MockParamCapture()
-        mock.func_name = func
-        monkeypatch.setattr(module, func, mock)
-        return mock
-
-    return get_mock
-
-
 
 class TestCli:
 

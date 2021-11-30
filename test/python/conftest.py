@@ -14,7 +14,6 @@ from nominatim.config import Configuration
 from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 import nominatim.tokenizer.factory
-import nominatim.cli
 
 import dummy_tokenizer
 import mocks
@@ -113,21 +112,6 @@ def src_dir():
 
 
 @pytest.fixture
-def cli_call():
-    def _call_nominatim(*args):
-        return nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                       osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                       phplib_dir=str(SRC_DIR / 'lib-php'),
-                                       data_dir=str(SRC_DIR / 'data'),
-                                       phpcgi_path='/usr/bin/php-cgi',
-                                       sqllib_dir=str(SRC_DIR / 'lib-sql'),
-                                       config_dir=str(SRC_DIR / 'settings'),
-                                       cli_args=args)
-
-    return _call_nominatim
-
-
-@pytest.fixture
 def property_table(table_factory, temp_db_conn):
     table_factory('nominatim_properties', 'property TEXT, value TEXT')
 
@@ -213,18 +197,6 @@ def osmline_table(temp_db_with_extensions, table_factory):
 @pytest.fixture
 def word_table(temp_db_conn):
     return mocks.MockWordTable(temp_db_conn)
-
-
-@pytest.fixture
-def osm2pgsql_options(temp_db):
-    return dict(osm2pgsql='echo',
-                osm2pgsql_cache=10,
-                osm2pgsql_style='style.file',
-                threads=1,
-                dsn='dbname=' + temp_db,
-                flatnode_file='',
-                tablespaces=dict(slim_data='', slim_index='',
-                                 main_data='', main_index=''))
 
 
 @pytest.fixture

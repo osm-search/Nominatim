@@ -11,28 +11,25 @@ from nominatim.db import properties
 from nominatim.errors import UsageError
 
 @pytest.fixture
-def test_config(def_config, tmp_path):
-    def_config.project_dir = tmp_path / 'project'
-    def_config.project_dir.mkdir()
-
+def test_config(project_env, tmp_path):
     module_dir = tmp_path / 'module_src'
     module_dir.mkdir()
     (module_dir / 'nominatim.so').write_text('TEST nomiantim.so')
 
-    def_config.lib_dir.module = module_dir
+    project_env.lib_dir.module = module_dir
 
     sqldir = tmp_path / 'sql'
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
     (sqldir / 'tokenizer' / 'legacy_tokenizer.sql').write_text("SELECT 'a'")
     (sqldir / 'words.sql').write_text("SELECT 'a'")
-    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_tables.sql'),
+    shutil.copy(str(project_env.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_tables.sql'),
                 str(sqldir / 'tokenizer' / 'legacy_tokenizer_tables.sql'))
 
-    def_config.lib_dir.sql = sqldir
-    def_config.lib_dir.data = sqldir
+    project_env.lib_dir.sql = sqldir
+    project_env.lib_dir.data = sqldir
 
-    return def_config
+    return project_env
 
 
 @pytest.fixture

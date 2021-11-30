@@ -22,12 +22,11 @@ def test_script(tmp_path):
 
 
 @pytest.fixture
-def run_website_script(tmp_path, def_config, temp_db_conn):
-    def_config.lib_dir.php = tmp_path / 'php'
-    def_config.project_dir = tmp_path
+def run_website_script(tmp_path, project_env, temp_db_conn):
+    project_env.lib_dir.php = tmp_path / 'php'
 
     def _runner():
-        refresh.setup_website(tmp_path, def_config, temp_db_conn)
+        refresh.setup_website(tmp_path, project_env, temp_db_conn)
 
         proc = subprocess.run(['/usr/bin/env', 'php', '-Cq',
                                tmp_path / 'search.php'], check=False)

@@ -20,20 +20,17 @@ def word_table(temp_db_conn):
 
 
 @pytest.fixture
-def test_config(def_config, tmp_path):
-    def_config.project_dir = tmp_path / 'project'
-    def_config.project_dir.mkdir()
-
+def test_config(project_env, tmp_path):
     sqldir = tmp_path / 'sql'
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
     (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'")
-    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
+    shutil.copy(str(project_env.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
                 str(sqldir / 'tokenizer' / 'icu_tokenizer_tables.sql'))
 
-    def_config.lib_dir.sql = sqldir
+    project_env.lib_dir.sql = sqldir
 
-    return def_config
+    return project_env
 
 
 @pytest.fixture

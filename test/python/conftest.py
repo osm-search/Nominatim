@@ -5,10 +5,9 @@ from pathlib import Path
 import psycopg2
 import pytest
 
-SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
-
 # always test against the source
-sys.path.insert(0, str(SRC_DIR.resolve()))
+SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
+sys.path.insert(0, str(SRC_DIR))
 
 from nominatim.config import Configuration
 from nominatim.db import connection
@@ -18,6 +17,11 @@ import nominatim.tokenizer.factory
 import dummy_tokenizer
 import mocks
 from cursor import CursorForTesting
+
+
+@pytest.fixture
+def src_dir():
+    return SRC_DIR
 
 
 @pytest.fixture
@@ -97,18 +101,25 @@ def table_factory(temp_db_cursor):
 
 
 @pytest.fixture
-def def_config():
-    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
+def def_config(src_dir):
+    cfg = Configuration(None, src_dir / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.',
-                    php=SRC_DIR / 'lib-php',
-                    sql=SRC_DIR / 'lib-sql',
-                    data=SRC_DIR / 'data')
+                    php=src_dir / 'lib-php',
+                    sql=src_dir / 'lib-sql',
+                    data=src_dir / 'data')
     return cfg
 
 
 @pytest.fixture
-def src_dir():
-    return SRC_DIR.resolve()
+def project_env(src_dir, tmp_path):
+    projdir = tmp_path / 'project'
+    projdir.mkdir()
+    cfg = Configuration(projdir, src_dir / 'settings')
+    cfg.set_libdirs(module='.', osm2pgsql='.',
+                    php=src_dir / 'lib-php',
+                    sql=src_dir / 'lib-sql',
+                    data=src_dir / 'data')
+    return cfg
 
 
 @pytest.fixture

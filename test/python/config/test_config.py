@@ -4,7 +4,7 @@ Test for loading dotenv configuration.
 from pathlib import Path
 import pytest
 
-from nominatim.config import Configuration
+from nominatim.config import Configuration, flatten_config_list
 from nominatim.errors import UsageError
 
 @pytest.fixture
@@ -306,11 +306,29 @@ def test_load_subconf_env_relative_not_found(make_config_path, monkeypatch):
         rules = config.load_sub_configuration('test.yaml', config='MY_CONFIG')
 
 
+def test_load_subconf_json(make_config_path):
+    config = make_config_path()
+
+    (config.project_dir / 'test.json').write_text('{"cow": "muh", "cat": "miau"}')
+
+    rules = config.load_sub_configuration('test.json')
+
+    assert rules == dict(cow='muh', cat='miau')
+
 def test_load_subconf_not_found(make_config_path):
     config = make_config_path()
 
     with pytest.raises(UsageError, match='Config file not found.'):
-        rules = config.load_sub_configuration('test.yaml')
+        config.load_sub_configuration('test.yaml')
+
+
+def test_load_subconf_env_unknown_format(make_config_path):
+    config = make_config_path()
+
+    (config.project_dir / 'test.xml').write_text('<html></html>')
+
+    with pytest.raises(UsageError, match='unknown format'):
+        config.load_sub_configuration('test.xml')
 
 
 def test_load_subconf_include_absolute(make_config_path, tmp_path):
@@ -370,3 +388,30 @@ def test_load_subconf_include_recursive(make_config_path):
     rules = config.load_sub_configuration('test.yaml')
 
     assert rules == dict(base=[['the end'], 'upper'])
+
+
+@pytest.mark.parametrize("content", [[], None])
+def test_flatten_config_list_empty(content):
+    assert flatten_config_list(content) == []
+
+
+@pytest.mark.parametrize("content", [{'foo': 'bar'}, 'hello world', 3])
+def test_flatten_config_list_no_list(content):
+    with pytest.raises(UsageError):
+        flatten_config_list(content)
+
+
+def test_flatten_config_list_allready_flat():
+    assert flatten_config_list([1, 2, 456]) == [1, 2, 456]
+
+
+def test_flatten_config_list_nested():
+    content = [
+        34,
+        [{'first': '1st', 'second': '2nd'}, {}],
+        [[2, 3], [45, [56, 78], 66]],
+        'end'
+    ]
+    assert flatten_config_list(content) == \
+               [34, {'first': '1st', 'second': '2nd'}, {},
+                2, 3, 45, 56, 78, 66, 'end']

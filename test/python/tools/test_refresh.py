@@ -22,3 +22,14 @@ def test_refresh_import_wikipedia(dsn, src_dir, table_factory, temp_db_cursor, r
 
     assert temp_db_cursor.table_rows('wikipedia_article') > 0
     assert temp_db_cursor.table_rows('wikipedia_redirect') > 0
+
+
+def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db_cursor):
+    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
+                                              country_code varchar(2),
+                                              osm_type varchar(1), osm_id BIGINT,
+                                              OUT importance FLOAT,
+                                              OUT wikipedia TEXT)
+                               AS $$ SELECT 0.1, 'foo' $$ LANGUAGE SQL""")
+
+    refresh.recompute_importance(temp_db_conn)

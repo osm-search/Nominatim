@@ -37,6 +37,15 @@ class CursorForTesting(psycopg2.extras.DictCursor):
         return num == 1
 
 
+    def index_exists(self, table, index):
+        """ Check that an indexwith the given name exists on the given table.
+        """
+        num = self.scalar("""SELECT count(*) FROM pg_indexes
+                             WHERE tablename = %s and indexname = %s""",
+                          (table, index))
+        return num == 1
+
+
     def table_rows(self, table, where=None):
         """ Return the number of rows in the given table.
         """

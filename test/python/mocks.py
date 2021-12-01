@@ -47,15 +47,16 @@ class MockPlacexTable:
 
     def add(self, osm_type='N', osm_id=None, cls='amenity', typ='cafe', names=None,
             admin_level=None, address=None, extratags=None, geom='POINT(10 4)',
-            country=None):
+            country=None, housenumber=None):
         with self.conn.cursor() as cur:
             psycopg2.extras.register_hstore(cur)
             cur.execute("""INSERT INTO placex (place_id, osm_type, osm_id, class,
                                                type, name, admin_level, address,
+                                               housenumber,
                                                extratags, geometry, country_code)
-                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                            VALUES(nextval('seq_place'), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                         (osm_type, osm_id or next(self.idseq), cls, typ, names,
-                         admin_level, address, extratags, 'SRID=4326;' + geom,
+                         admin_level, address, housenumber, extratags, 'SRID=4326;' + geom,
                          country))
         self.conn.commit()
 
@@ -71,3 +72,9 @@ class MockPropertyTable:
         """ Set a property in the table to the given value.
         """
         properties.set_property(self.conn, name, value)
+
+
+    def get(self, name):
+        """ Set a property in the table to the given value.
+        """
+        return properties.get_property(self.conn, name)

@@ -69,6 +69,20 @@ class TestRunLegacyScript:
         assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
 
 
+    def test_run_legacy_default_osm2pgsql_binary(self, monkeypatch):
+        fname = self.mk_script("exit($_SERVER['NOMINATIM_OSM2PGSQL_BINARY'] == 'osm2pgsql' ? 0 : 23);")
+
+        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+
+
+    def test_run_legacy_override_osm2pgsql_binary(self, monkeypatch):
+        monkeypatch.setenv('NOMINATIM_OSM2PGSQL_BINARY', 'somethingelse')
+
+        fname = self.mk_script("exit($_SERVER['NOMINATIM_OSM2PGSQL_BINARY'] == 'somethingelse' ? 0 : 23);")
+
+        assert exec_utils.run_legacy_script(fname, nominatim_env=self.testenv) == 0
+
+
 class TestRunApiScript:
 
     @staticmethod
@@ -92,13 +106,26 @@ class TestRunApiScript:
         extra_env = dict(SCRIPT_FILENAME=str(tmp_path / 'website' / 'test.php'))
         assert exec_utils.run_api_script('badname', tmp_path, extra_env=extra_env) == 0
 
+    @staticmethod
+    def test_custom_phpcgi(tmp_path, capfd):
+        assert exec_utils.run_api_script('test', tmp_path, phpcgi_bin='env',
+                                         params={'q' : 'Berlin'}) == 0
+        captured = capfd.readouterr()
+
+        assert '?q=Berlin' in captured.out
+
+    @staticmethod
+    def test_fail_on_error_output(tmp_path):
+        (tmp_path / 'website' / 'bad.php').write_text("<?php\nfwrite(STDERR, 'WARNING'.PHP_EOL);")
+
+        assert exec_utils.run_api_script('bad', tmp_path) == 1
 
 ### run_osm2pgsql
 
 def test_run_osm2pgsql(osm2pgsql_options):
     osm2pgsql_options['append'] = False
     osm2pgsql_options['import_file'] = 'foo.bar'
-    osm2pgsql_options['tablespaces']['osm_data'] = 'extra'
+    osm2pgsql_options['tablespaces']['slim_data'] = 'extra'
     exec_utils.run_osm2pgsql(osm2pgsql_options)
 
 

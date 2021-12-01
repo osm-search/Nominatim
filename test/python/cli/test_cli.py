@@ -93,9 +93,12 @@ class TestCli:
         assert func.called == 1
 
 
-@pytest.mark.parametrize("params", [('search', '--query', 'new'),
-                                    ('reverse', '--lat', '0', '--lon', '0'),
-                                    ('lookup', '--id', 'N1'),
+@pytest.mark.parametrize("params", [('search', '--query', 'new', '--polygon-output', 'svg', '--polygon-threshold', '0.1'),
+                                    ('search', '--city', 'Berlin', '--format', 'xml', '--lang', 'de'),
+                                    ('reverse', '--lat', '0', '--lon', '0',
+                                     '--polygon-output', 'svg', '--polygon-threshold', '0.1', '--format', 'json', '--lang', 'en'),
+                                    ('lookup', '--id', 'N1',
+                                     '--polygon-output', 'svg', '--polygon-threshold', '0.1', '--format', 'json', '--lang', 'en'),
                                     ('details', '--node', '1'),
                                     ('details', '--way', '1'),
                                     ('details', '--relation', '1'),

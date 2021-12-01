@@ -78,13 +78,21 @@ def test_setup_skeleton_already_exists(temp_db):
         database_import.setup_database_skeleton(f'dbname={temp_db}')
 
 
-def test_import_osm_data_simple(table_factory, osm2pgsql_options):
+def test_import_osm_data_simple(table_factory, osm2pgsql_options, capfd):
     table_factory('place', content=((1, ), ))
 
     database_import.import_osm_data(Path('file.pbf'), osm2pgsql_options)
+    captured = capfd.readouterr()
+
+    assert '--create' in captured.out
+    assert '--output gazetteer' in captured.out
+    assert f'--style {osm2pgsql_options["osm2pgsql_style"]}' in captured.out
+    assert f'--number-processes {osm2pgsql_options["threads"]}' in captured.out
+    assert f'--cache {osm2pgsql_options["osm2pgsql_cache"]}' in captured.out
+    assert 'file.pbf' in captured.out
 
 
-def test_import_osm_data_multifile(table_factory, tmp_path, osm2pgsql_options):
+def test_import_osm_data_multifile(table_factory, tmp_path, osm2pgsql_options, capfd):
     table_factory('place', content=((1, ), ))
     osm2pgsql_options['osm2pgsql_cache'] = 0
 
@@ -93,6 +101,10 @@ def test_import_osm_data_multifile(table_factory, tmp_path, osm2pgsql_options):
         f.write_text('test')
 
     database_import.import_osm_data(files, osm2pgsql_options)
+    captured = capfd.readouterr()
+
+    assert 'file1.osm' in captured.out
+    assert 'file2.osm' in captured.out
 
 
 def test_import_osm_data_simple_no_data(table_factory, osm2pgsql_options):
@@ -117,12 +129,15 @@ def test_import_osm_data_drop(table_factory, temp_db_conn, tmp_path, osm2pgsql_o
     assert not temp_db_conn.table_exists('planet_osm_nodes')
 
 
-def test_import_osm_data_default_cache(table_factory, osm2pgsql_options):
+def test_import_osm_data_default_cache(table_factory, osm2pgsql_options, capfd):
     table_factory('place', content=((1, ), ))
 
     osm2pgsql_options['osm2pgsql_cache'] = 0
 
     database_import.import_osm_data(Path(__file__), osm2pgsql_options)
+    captured = capfd.readouterr()
+
+    assert f'--cache {osm2pgsql_options["osm2pgsql_cache"]}' in captured.out
 
 
 def test_truncate_database_tables(temp_db_conn, temp_db_cursor, table_factory):

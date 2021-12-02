@@ -66,14 +66,20 @@ class TestCliReplication:
 
 
     @pytest.mark.parametrize("params,func", [
+                             (('--init',), 'init_replication'),
                              (('--init', '--no-update-functions'), 'init_replication'),
                              (('--check-for-updates',), 'check_for_updates')
                              ])
     def test_replication_command(self, mock_func_factory, params, func):
         func_mock = mock_func_factory(nominatim.tools.replication, func)
 
+        if params == ('--init',):
+            umock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+
         assert self.call_nominatim(*params) == 0
         assert func_mock.called == 1
+        if params == ('--init',):
+            assert umock.called == 1
 
 
     def test_replication_update_bad_interval(self, monkeypatch):
@@ -88,6 +94,9 @@ class TestCliReplication:
 
         assert self.call_nominatim() == 1
 
+
+    def test_replication_update_continuous_no_index(self):
+        assert self.call_nominatim('--no-index') == 1
 
     def test_replication_update_once_no_index(self, update_mock):
         assert self.call_nominatim('--once', '--no-index') == 0

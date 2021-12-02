@@ -19,6 +19,21 @@ class MockParamCapture:
         return self.return_value
 
 
+class DummyTokenizer:
+    def __init__(self, *args, **kwargs):
+        self.update_sql_functions_called = False
+        self.finalize_import_called = False
+        self.update_statistics_called = False
+
+    def update_sql_functions(self, *args):
+        self.update_sql_functions_called = True
+
+    def finalize_import(self, *args):
+        self.finalize_import_called = True
+
+    def update_statistics(self):
+        self.update_statistics_called = True
+
 
 @pytest.fixture
 def cli_call(src_dir):
@@ -54,3 +69,14 @@ def mock_func_factory(monkeypatch):
         return mock
 
     return get_mock
+
+
+@pytest.fixture
+def cli_tokenizer_mock(monkeypatch):
+    tok = DummyTokenizer()
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'get_tokenizer_for_db',
+                        lambda *args: tok)
+    monkeypatch.setattr(nominatim.tokenizer.factory, 'create_tokenizer',
+                        lambda *args: tok)
+
+    return tok

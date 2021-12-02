@@ -17,6 +17,14 @@ class MockIcuWordTable:
 
         conn.commit()
 
+    def add_full_word(self, word_id, word, word_token=None):
+        with self.conn.cursor() as cur:
+            cur.execute("""INSERT INTO word (word_id, word_token, type, word, info)
+                           VALUES(%s, %s, 'W', %s, '{}'::jsonb)""",
+                        (word_id, word or word_token, word))
+        self.conn.commit()
+
+
     def add_special(self, word_token, word, cls, typ, oper):
         with self.conn.cursor() as cur:
             cur.execute("""INSERT INTO word (word_token, type, word, info)

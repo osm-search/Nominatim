@@ -30,7 +30,6 @@ class AbstractAnalyzer(ABC):
     def close(self) -> None:
         """ Free all resources used by the analyzer.
         """
-        pass
 
 
     @abstractmethod
@@ -50,7 +49,6 @@ class AbstractAnalyzer(ABC):
                 found for the given words. Each list entry is a tuple of
                 (original word, word token, word id).
         """
-        pass
 
 
     @abstractmethod
@@ -66,7 +64,6 @@ class AbstractAnalyzer(ABC):
             Returns:
                 The given postcode after normalization.
         """
-        pass
 
 
     @abstractmethod
@@ -74,7 +71,6 @@ class AbstractAnalyzer(ABC):
         """ Update the tokenizer's postcode tokens from the current content
             of the `location_postcode` table.
         """
-        pass
 
 
     @abstractmethod
@@ -90,7 +86,6 @@ class AbstractAnalyzer(ABC):
                                 When false, just add the given phrases to the
                                 ones that already exist.
         """
-        pass
 
 
     @abstractmethod
@@ -102,7 +97,6 @@ class AbstractAnalyzer(ABC):
                               refer to.
                 names: Dictionary of name type to name.
         """
-        pass
 
 
     @abstractmethod
@@ -145,7 +139,6 @@ class AbstractTokenizer(ABC):
 
             TODO: can we move the init_db parameter somewhere else?
         """
-        pass
 
 
     @abstractmethod
@@ -158,7 +151,6 @@ class AbstractTokenizer(ABC):
             Arguments:
               config: Read-only object with configuration options.
         """
-        pass
 
 
     @abstractmethod
@@ -171,7 +163,6 @@ class AbstractTokenizer(ABC):
             Arguments:
               config: Read-only object with configuration options.
         """
-        pass
 
 
     @abstractmethod
@@ -186,7 +177,6 @@ class AbstractTokenizer(ABC):
             Arguments:
               config: Read-only object with configuration options.
         """
-        pass
 
 
     @abstractmethod
@@ -202,7 +192,6 @@ class AbstractTokenizer(ABC):
               description of the issue as well as hints for the user on
               how to resolve the issue. If everything is okay, return `None`.
         """
-        pass
 
 
     @abstractmethod
@@ -212,7 +201,6 @@ class AbstractTokenizer(ABC):
             to improve performance. However, the tokenizer must not depend on
             it to be called in order to work.
         """
-        pass
 
 
     @abstractmethod
@@ -229,4 +217,3 @@ class AbstractTokenizer(ABC):
             When used outside the with construct, the caller must ensure to
             call the close() function before destructing the analyzer.
         """
-        pass

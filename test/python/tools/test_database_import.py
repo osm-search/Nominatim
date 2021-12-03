@@ -217,7 +217,7 @@ class TestSetupSQL:
     def test_create_table_triggers(self, temp_db_conn, temp_db_cursor):
         self.write_sql('table-triggers.sql',
                        """CREATE FUNCTION test() RETURNS TEXT
-                          AS $$ SELECT 'a' $$ LANGUAGE SQL""")
+                          AS $$ SELECT 'a'::text $$ LANGUAGE SQL""")
 
         database_import.create_table_triggers(temp_db_conn, self.config)
 
@@ -227,7 +227,7 @@ class TestSetupSQL:
     def test_create_partition_tables(self, temp_db_conn, temp_db_cursor):
         self.write_sql('partition-tables.src.sql',
                        """CREATE FUNCTION test() RETURNS TEXT
-                          AS $$ SELECT 'b' $$ LANGUAGE SQL""")
+                          AS $$ SELECT 'b'::text $$ LANGUAGE SQL""")
 
         database_import.create_partition_tables(temp_db_conn, self.config)
 

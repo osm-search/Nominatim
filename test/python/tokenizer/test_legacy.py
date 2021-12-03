@@ -179,7 +179,7 @@ def test_finalize_import(tokenizer_factory, temp_db_conn,
 
     func_file = test_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_indices.sql'
     func_file.write_text("""CREATE FUNCTION test() RETURNS TEXT
-                            AS $$ SELECT 'b' $$ LANGUAGE SQL""")
+                            AS $$ SELECT 'b'::text $$ LANGUAGE SQL""")
 
     tok = tokenizer_factory()
     tok.init_new_db(test_config)
@@ -227,7 +227,7 @@ def test_check_database_bad_setup(test_config, tokenizer_factory, monkeypatch,
 
     # Inject a bad transliteration.
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION make_standard_name(name TEXT)
-                              RETURNS TEXT AS $$ SELECT 'garbage'; $$ LANGUAGE SQL""")
+                              RETURNS TEXT AS $$ SELECT 'garbage'::text; $$ LANGUAGE SQL""")
 
     assert tok.check_database(False) is not None
 

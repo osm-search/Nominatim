@@ -192,7 +192,7 @@ def test_finalize_import(tokenizer_factory, temp_db_conn,
                          temp_db_cursor, test_config, sql_preprocessor_cfg):
     func_file = test_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_indices.sql'
     func_file.write_text("""CREATE FUNCTION test() RETURNS TEXT
-                            AS $$ SELECT 'b' $$ LANGUAGE SQL""")
+                            AS $$ SELECT 'b'::text $$ LANGUAGE SQL""")
 
     tok = tokenizer_factory()
     tok.init_new_db(test_config)

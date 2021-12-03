@@ -30,6 +30,6 @@ def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db
                                               osm_type varchar(1), osm_id BIGINT,
                                               OUT importance FLOAT,
                                               OUT wikipedia TEXT)
-                               AS $$ SELECT 0.1, 'foo' $$ LANGUAGE SQL""")
+                               AS $$ SELECT 0.1::float, 'foo'::text $$ LANGUAGE SQL""")
 
     refresh.recompute_importance(temp_db_conn)

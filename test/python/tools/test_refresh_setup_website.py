@@ -22,12 +22,11 @@ def test_script(tmp_path):
 
 
 @pytest.fixture
-def run_website_script(tmp_path, def_config, temp_db_conn):
-    def_config.lib_dir.php = tmp_path / 'php'
-    def_config.project_dir = tmp_path
+def run_website_script(tmp_path, project_env, temp_db_conn):
+    project_env.lib_dir.php = tmp_path / 'php'
 
     def _runner():
-        refresh.setup_website(tmp_path, def_config, temp_db_conn)
+        refresh.setup_website(tmp_path, project_env, temp_db_conn)
 
         proc = subprocess.run(['/usr/bin/env', 'php', '-Cq',
                                tmp_path / 'search.php'], check=False)
@@ -35,6 +34,16 @@ def run_website_script(tmp_path, def_config, temp_db_conn):
         return proc.returncode
 
     return _runner
+
+
+def test_basedir_created(tmp_path, project_env, temp_db_conn):
+    webdir = tmp_path / 'website'
+
+    assert not webdir.exists()
+
+    refresh.setup_website(webdir, project_env, temp_db_conn)
+
+    assert webdir.exists()
 
 
 @pytest.mark.parametrize("setting,retval", (('yes', 10), ('no', 20)))
@@ -70,3 +79,13 @@ def test_setup_website_check_str(monkeypatch, test_script, run_website_script):
     test_script('exit(CONST_Default_Language === "ffde 2" ? 10 : 20);')
 
     assert run_website_script() == 10
+
+
+def test_relative_log_file(project_env, monkeypatch, test_script, run_website_script):
+    monkeypatch.setenv('NOMINATIM_LOG_FILE', 'access.log')
+
+    expected_file = str(project_env.project_dir / 'access.log')
+    test_script(f'exit(CONST_Log_File === "{expected_file}" ? 10 : 20);')
+
+    assert run_website_script() == 10
+

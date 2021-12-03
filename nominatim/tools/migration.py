@@ -26,7 +26,7 @@ def migrate(config, paths):
 
         if db_version_str is not None:
             parts = db_version_str.split('.')
-            db_version = tuple([int(x) for x in parts[:2] + parts[2].split('-')])
+            db_version = tuple(int(x) for x in parts[:2] + parts[2].split('-'))
 
             if db_version == NOMINATIM_VERSION:
                 LOG.warning("Database already at latest version (%s)", db_version_str)
@@ -96,6 +96,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
     """
     def decorator(func):
         _MIGRATION_FUNCTIONS.append(((major, minor, patch, dbpatch), func))
+        return func
 
     return decorator
 
@@ -195,7 +196,7 @@ def install_legacy_tokenizer(conn, config, **_):
 
 
 @_migration(4, 0, 99, 0)
-def create_tiger_housenumber_index(conn, _, **_):
+def create_tiger_housenumber_index(conn, **_):
     """ Create idx_location_property_tiger_parent_place_id with included
         house number.
 

@@ -1,5 +1,5 @@
 """
-Tests for Legacy ICU tokenizer.
+Tests for ICU tokenizer.
 """
 import shutil
 import yaml
@@ -20,20 +20,17 @@ def word_table(temp_db_conn):
 
 
 @pytest.fixture
-def test_config(def_config, tmp_path):
-    def_config.project_dir = tmp_path / 'project'
-    def_config.project_dir.mkdir()
-
+def test_config(project_env, tmp_path):
     sqldir = tmp_path / 'sql'
     sqldir.mkdir()
     (sqldir / 'tokenizer').mkdir()
     (sqldir / 'tokenizer' / 'icu_tokenizer.sql').write_text("SELECT 'a'")
-    shutil.copy(str(def_config.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
+    shutil.copy(str(project_env.lib_dir.sql / 'tokenizer' / 'icu_tokenizer_tables.sql'),
                 str(sqldir / 'tokenizer' / 'icu_tokenizer_tables.sql'))
 
-    def_config.lib_dir.sql = sqldir
+    project_env.lib_dir.sql = sqldir
 
-    return def_config
+    return project_env
 
 
 @pytest.fixture
@@ -144,12 +141,6 @@ LANGUAGE plpgsql;
                               """)
 
 
-@pytest.fixture
-def getorcreate_hnr_id(temp_db_cursor):
-    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_hnr_id(lookup_term TEXT)
-                              RETURNS INTEGER AS $$
-                                SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
-
 
 def test_init_new(tokenizer_factory, test_config, db_prop):
     tok = tokenizer_factory()
@@ -195,6 +186,47 @@ def test_update_sql_functions(db_prop, temp_db_cursor,
 
     test_content = temp_db_cursor.row_set('SELECT * FROM test')
     assert test_content == set((('1133', ), ))
+
+
+def test_finalize_import(tokenizer_factory, temp_db_conn,
+                         temp_db_cursor, test_config, sql_preprocessor_cfg):
+    func_file = test_config.lib_dir.sql / 'tokenizer' / 'legacy_tokenizer_indices.sql'
+    func_file.write_text("""CREATE FUNCTION test() RETURNS TEXT
+                            AS $$ SELECT 'b'::text $$ LANGUAGE SQL""")
+
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+
+    tok.finalize_import(test_config)
+
+    temp_db_cursor.scalar('SELECT test()') == 'b'
+
+
+def test_check_database(test_config, tokenizer_factory,
+                        temp_db_cursor, sql_preprocessor_cfg):
+    tok = tokenizer_factory()
+    tok.init_new_db(test_config)
+
+    assert tok.check_database(test_config) is None
+
+
+def test_update_statistics_reverse_only(word_table, tokenizer_factory):
+    tok = tokenizer_factory()
+    tok.update_statistics()
+
+
+def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_factory):
+    word_table.add_full_word(1000, 'hello')
+    table_factory('search_name',
+                  'place_id BIGINT, name_vector INT[]',
+                  [(12, [1000])])
+    tok = tokenizer_factory()
+
+    tok.update_statistics()
+
+    assert temp_db_cursor.scalar("""SELECT count(*) FROM word
+                                    WHERE type = 'W' and
+                                          (info->>'count')::int > 0""") > 0
 
 
 def test_normalize_postcode(analyzer):
@@ -365,6 +397,13 @@ class TestPlaceAddress:
         with analyzer(trans=(":: upper()", "'🜵' > ' '")) as anl:
             self.analyzer = anl
             yield anl
+
+
+    @pytest.fixture
+    def getorcreate_hnr_id(self, temp_db_cursor):
+        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION getorcreate_hnr_id(lookup_term TEXT)
+                                  RETURNS INTEGER AS $$
+                                    SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
 
 
     def process_address(self, **kwargs):

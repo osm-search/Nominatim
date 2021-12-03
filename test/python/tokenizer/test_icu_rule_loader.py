@@ -11,18 +11,20 @@ from nominatim.errors import UsageError
 
 from icu import Transliterator
 
-@pytest.fixture
-def test_config(def_config, tmp_path):
-    project_dir = tmp_path / 'project_dir'
-    project_dir.mkdir()
-    def_config.project_dir = project_dir
+CONFIG_SECTIONS = ('normalization', 'transliteration', 'token-analysis')
 
-    return def_config
+class TestIcuRuleLoader:
+
+    @pytest.fixture(autouse=True)
+    def init_env(self, project_env):
+        self.project_env = project_env
 
 
-@pytest.fixture
-def cfgrules(test_config):
-    def _create_config(*variants, **kwargs):
+    def write_config(self, content):
+        (self.project_env.project_dir / 'icu_tokenizer.yaml').write_text(dedent(content))
+
+
+    def config_rules(self, *variants):
         content = dedent("""\
         normalization:
             - ":: NFD ()"
@@ -33,122 +35,116 @@ def cfgrules(test_config):
         transliteration:
             - "::  Latin ()"
             - "[[:Punctuation:][:Space:]]+ > ' '"
-        """)
-        content += "token-analysis:\n  - analyzer: generic\n    variants:\n     - words:\n"
-        content += '\n'.join(("         - " + s for s in variants)) + '\n'
-        for k, v in kwargs:
-            content += "    {}: {}\n".format(k, v)
-        (test_config.project_dir / 'icu_tokenizer.yaml').write_text(content)
-
-        return test_config
-
-    return _create_config
-
-
-def test_empty_rule_set(test_config):
-    (test_config.project_dir / 'icu_tokenizer.yaml').write_text(dedent("""\
-        normalization:
-        transliteration:
-        token-analysis:
-          - analyzer: generic
-            variants:
-        """))
-
-    rules = ICURuleLoader(test_config)
-    assert rules.get_search_rules() == ''
-    assert rules.get_normalization_rules() == ''
-    assert rules.get_transliteration_rules() == ''
-
-CONFIG_SECTIONS = ('normalization', 'transliteration', 'token-analysis')
-
-@pytest.mark.parametrize("section", CONFIG_SECTIONS)
-def test_missing_section(section, test_config):
-    rule_cfg = { s: [] for s in CONFIG_SECTIONS if s != section}
-    (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(rule_cfg))
-
-    with pytest.raises(UsageError):
-        ICURuleLoader(test_config)
-
-
-def test_get_search_rules(cfgrules):
-    loader = ICURuleLoader(cfgrules())
-
-    rules = loader.get_search_rules()
-    trans = Transliterator.createFromRules("test", rules)
-
-    assert trans.transliterate(" Baum straße ") == " baum straße "
-    assert trans.transliterate(" Baumstraße ") == " baumstraße "
-    assert trans.transliterate(" Baumstrasse ") == " baumstrasse "
-    assert trans.transliterate(" Baumstr ") == " baumstr "
-    assert trans.transliterate(" Baumwegstr ") == " baumwegstr "
-    assert trans.transliterate(" Αθήνα ") == " athēna "
-    assert trans.transliterate(" проспект ") == " prospekt "
-
-
-def test_get_normalization_rules(cfgrules):
-    loader = ICURuleLoader(cfgrules())
-    rules = loader.get_normalization_rules()
-    trans = Transliterator.createFromRules("test", rules)
-
-    assert trans.transliterate(" проспект-Prospekt ") == " проспект prospekt "
-
-
-def test_get_transliteration_rules(cfgrules):
-    loader = ICURuleLoader(cfgrules())
-    rules = loader.get_transliteration_rules()
-    trans = Transliterator.createFromRules("test", rules)
-
-    assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
-
-
-def test_transliteration_rules_from_file(test_config):
-    cfgpath = test_config.project_dir / ('icu_tokenizer.yaml')
-    cfgpath.write_text(dedent("""\
-        normalization:
-        transliteration:
-            - "'ax' > 'b'"
-            - !include transliteration.yaml
         token-analysis:
             - analyzer: generic
               variants:
-        """))
-    transpath = test_config.project_dir / ('transliteration.yaml')
-    transpath.write_text('- "x > y"')
+                  - words:
+        """)
+        content += '\n'.join(("             - " + s for s in variants)) + '\n'
+        self.write_config(content)
 
-    loader = ICURuleLoader(test_config)
-    rules = loader.get_transliteration_rules()
-    trans = Transliterator.createFromRules("test", rules)
-
-    assert trans.transliterate(" axxt ") == " byt "
-
-
-def test_search_rules(cfgrules):
-    config = cfgrules('~street => s,st', 'master => mstr')
-    proc = ICURuleLoader(config).make_token_analysis()
-
-    assert proc.search.transliterate('Master Street').strip() == 'master street'
-    assert proc.search.transliterate('Earnes St').strip() == 'earnes st'
-    assert proc.search.transliterate('Nostreet').strip() == 'nostreet'
-
-
-class TestGetReplacements:
-
-    @pytest.fixture(autouse=True)
-    def setup_cfg(self, cfgrules):
-        self.cfgrules = cfgrules
 
     def get_replacements(self, *variants):
-        loader = ICURuleLoader(self.cfgrules(*variants))
+        self.config_rules(*variants)
+        loader = ICURuleLoader(self.project_env)
         rules = loader.analysis[None].config['replacements']
 
         return sorted((k, sorted(v)) for k,v in rules)
 
 
+    def test_empty_rule_set(self):
+        self.write_config("""\
+            normalization:
+            transliteration:
+            token-analysis:
+              - analyzer: generic
+                variants:
+            """)
+
+        rules = ICURuleLoader(self.project_env)
+        assert rules.get_search_rules() == ''
+        assert rules.get_normalization_rules() == ''
+        assert rules.get_transliteration_rules() == ''
+
+
+    @pytest.mark.parametrize("section", CONFIG_SECTIONS)
+    def test_missing_section(self, section):
+        rule_cfg = { s: [] for s in CONFIG_SECTIONS if s != section}
+        self.write_config(yaml.dump(rule_cfg))
+
+        with pytest.raises(UsageError):
+            ICURuleLoader(self.project_env)
+
+
+    def test_get_search_rules(self):
+        self.config_rules()
+        loader = ICURuleLoader(self.project_env)
+
+        rules = loader.get_search_rules()
+        trans = Transliterator.createFromRules("test", rules)
+
+        assert trans.transliterate(" Baum straße ") == " baum straße "
+        assert trans.transliterate(" Baumstraße ") == " baumstraße "
+        assert trans.transliterate(" Baumstrasse ") == " baumstrasse "
+        assert trans.transliterate(" Baumstr ") == " baumstr "
+        assert trans.transliterate(" Baumwegstr ") == " baumwegstr "
+        assert trans.transliterate(" Αθήνα ") == " athēna "
+        assert trans.transliterate(" проспект ") == " prospekt "
+
+
+    def test_get_normalization_rules(self):
+        self.config_rules()
+        loader = ICURuleLoader(self.project_env)
+        rules = loader.get_normalization_rules()
+        trans = Transliterator.createFromRules("test", rules)
+
+        assert trans.transliterate(" проспект-Prospekt ") == " проспект prospekt "
+
+
+    def test_get_transliteration_rules(self):
+        self.config_rules()
+        loader = ICURuleLoader(self.project_env)
+        rules = loader.get_transliteration_rules()
+        trans = Transliterator.createFromRules("test", rules)
+
+        assert trans.transliterate(" проспект-Prospekt ") == " prospekt Prospekt "
+
+
+    def test_transliteration_rules_from_file(self):
+        self.write_config("""\
+            normalization:
+            transliteration:
+                - "'ax' > 'b'"
+                - !include transliteration.yaml
+            token-analysis:
+                - analyzer: generic
+                  variants:
+            """)
+        transpath = self.project_env.project_dir / ('transliteration.yaml')
+        transpath.write_text('- "x > y"')
+
+        loader = ICURuleLoader(self.project_env)
+        rules = loader.get_transliteration_rules()
+        trans = Transliterator.createFromRules("test", rules)
+
+        assert trans.transliterate(" axxt ") == " byt "
+
+
+    def test_search_rules(self):
+        self.config_rules('~street => s,st', 'master => mstr')
+        proc = ICURuleLoader(self.project_env).make_token_analysis()
+
+        assert proc.search.transliterate('Master Street').strip() == 'master street'
+        assert proc.search.transliterate('Earnes St').strip() == 'earnes st'
+        assert proc.search.transliterate('Nostreet').strip() == 'nostreet'
+
+
     @pytest.mark.parametrize("variant", ['foo > bar', 'foo -> bar -> bar',
                                          '~foo~ -> bar', 'fo~ o -> bar'])
     def test_invalid_variant_description(self, variant):
+        self.config_rules(variant)
         with pytest.raises(UsageError):
-            ICURuleLoader(self.cfgrules(variant))
+            ICURuleLoader(self.project_env)
 
     def test_add_full(self):
         repl = self.get_replacements("foo -> bar")

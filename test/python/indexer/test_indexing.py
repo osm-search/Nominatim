@@ -145,9 +145,8 @@ def test_db(temp_db_conn):
 
 
 @pytest.fixture
-def test_tokenizer(tokenizer_mock, def_config, tmp_path):
-    def_config.project_dir = tmp_path
-    return factory.create_tokenizer(def_config)
+def test_tokenizer(tokenizer_mock, project_env):
+    return factory.create_tokenizer(project_env)
 
 
 @pytest.mark.parametrize("threads", [1, 15])

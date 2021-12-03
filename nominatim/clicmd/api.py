@@ -154,15 +154,13 @@ class APIReverse:
 
     @staticmethod
     def run(args):
-        params = dict(lat=args.lat, lon=args.lon)
+        params = dict(lat=args.lat, lon=args.lon, format=args.format)
         if args.zoom is not None:
             params['zoom'] = args.zoom
 
         for param, _ in EXTRADATA_PARAMS:
             if getattr(args, param):
                 params[param] = '1'
-        if args.format:
-            params['format'] = args.format
         if args.lang:
             params['accept-language'] = args.lang
         if args.polygon_output:
@@ -195,13 +193,11 @@ class APILookup:
 
     @staticmethod
     def run(args):
-        params = dict(osm_ids=','.join(args.ids))
+        params = dict(osm_ids=','.join(args.ids), format=args.format)
 
         for param, _ in EXTRADATA_PARAMS:
             if getattr(args, param):
                 params[param] = '1'
-        if args.format:
-            params['format'] = args.format
         if args.lang:
             params['accept-language'] = args.lang
         if args.polygon_output:
@@ -258,6 +254,8 @@ class APIDetails:
             params['class'] = args.object_class
         for name, _ in DETAILS_SWITCHES:
             params[name] = '1' if getattr(args, name) else '0'
+        if args.lang:
+            params['accept-language'] = args.lang
 
         return _run_api('details', args, params)
 

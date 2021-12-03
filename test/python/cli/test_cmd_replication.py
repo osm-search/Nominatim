@@ -11,8 +11,6 @@ import nominatim.indexer.indexer
 import nominatim.tools.replication
 from nominatim.db import status
 
-from mocks import MockParamCapture
-
 @pytest.fixture
 def tokenizer_mock(monkeypatch):
     class DummyTokenizer:
@@ -35,15 +33,6 @@ def tokenizer_mock(monkeypatch):
     return tok
 
 
-@pytest.fixture
-def mock_func_factory(monkeypatch):
-    def get_mock(module, func):
-        mock = MockParamCapture()
-        monkeypatch.setattr(module, func, mock)
-        return mock
-
-    return get_mock
-
 
 @pytest.fixture
 def init_status(temp_db_conn, status_table):
@@ -51,11 +40,8 @@ def init_status(temp_db_conn, status_table):
 
 
 @pytest.fixture
-def index_mock(monkeypatch, tokenizer_mock, init_status):
-    mock = MockParamCapture()
-    monkeypatch.setattr(nominatim.indexer.indexer.Indexer, 'index_full', mock)
-
-    return mock
+def index_mock(mock_func_factory, tokenizer_mock, init_status):
+    return mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full')
 
 
 @pytest.fixture
@@ -69,15 +55,31 @@ class TestCliReplication:
     def setup_cli_call(self, cli_call, temp_db):
         self.call_nominatim = lambda *args: cli_call('replication', *args)
 
+
+    @pytest.fixture(autouse=True)
+    def setup_update_function(self, monkeypatch):
+        def _mock_updates(states):
+            monkeypatch.setattr(nominatim.tools.replication, 'update',
+                            lambda *args, **kwargs: states.pop())
+
+        self.update_states = _mock_updates
+
+
     @pytest.mark.parametrize("params,func", [
+                             (('--init',), 'init_replication'),
                              (('--init', '--no-update-functions'), 'init_replication'),
                              (('--check-for-updates',), 'check_for_updates')
                              ])
     def test_replication_command(self, mock_func_factory, params, func):
         func_mock = mock_func_factory(nominatim.tools.replication, func)
 
+        if params == ('--init',):
+            umock = mock_func_factory(nominatim.tools.refresh, 'create_functions')
+
         assert self.call_nominatim(*params) == 0
         assert func_mock.called == 1
+        if params == ('--init',):
+            assert umock.called == 1
 
 
     def test_replication_update_bad_interval(self, monkeypatch):
@@ -93,6 +95,9 @@ class TestCliReplication:
         assert self.call_nominatim() == 1
 
 
+    def test_replication_update_continuous_no_index(self):
+        assert self.call_nominatim('--no-index') == 1
+
     def test_replication_update_once_no_index(self, update_mock):
         assert self.call_nominatim('--once', '--no-index') == 0
 
@@ -107,11 +112,9 @@ class TestCliReplication:
 
 
     @pytest.mark.parametrize("update_interval", [60, 3600])
-    def test_replication_catchup(self, monkeypatch, index_mock, update_interval, placex_table):
+    def test_replication_catchup(self, placex_table, monkeypatch, index_mock, update_interval):
         monkeypatch.setenv('NOMINATIM_REPLICATION_UPDATE_INTERVAL', str(update_interval))
-        states = [nominatim.tools.replication.UpdateState.NO_CHANGES]
-        monkeypatch.setattr(nominatim.tools.replication, 'update',
-                            lambda *args, **kwargs: states.pop())
+        self.update_states([nominatim.tools.replication.UpdateState.NO_CHANGES])
 
         assert self.call_nominatim('--catch-up') == 0
 
@@ -122,11 +125,9 @@ class TestCliReplication:
         assert update_mock.last_args[1]['threads'] == 4
 
 
-    def test_replication_update_continuous(self, monkeypatch, index_mock):
-        states = [nominatim.tools.replication.UpdateState.UP_TO_DATE,
-                  nominatim.tools.replication.UpdateState.UP_TO_DATE]
-        monkeypatch.setattr(nominatim.tools.replication, 'update',
-                            lambda *args, **kwargs: states.pop())
+    def test_replication_update_continuous(self, index_mock):
+        self.update_states([nominatim.tools.replication.UpdateState.UP_TO_DATE,
+                            nominatim.tools.replication.UpdateState.UP_TO_DATE])
 
         with pytest.raises(IndexError):
             self.call_nominatim()
@@ -134,14 +135,12 @@ class TestCliReplication:
         assert index_mock.called == 2
 
 
-    def test_replication_update_continuous_no_change(self, monkeypatch, index_mock):
-        states = [nominatim.tools.replication.UpdateState.NO_CHANGES,
-                  nominatim.tools.replication.UpdateState.UP_TO_DATE]
-        monkeypatch.setattr(nominatim.tools.replication, 'update',
-                            lambda *args, **kwargs: states.pop())
+    def test_replication_update_continuous_no_change(self, mock_func_factory,
+                                                     index_mock):
+        self.update_states([nominatim.tools.replication.UpdateState.NO_CHANGES,
+                            nominatim.tools.replication.UpdateState.UP_TO_DATE])
 
-        sleep_mock = MockParamCapture()
-        monkeypatch.setattr(time, 'sleep', sleep_mock)
+        sleep_mock = mock_func_factory(time, 'sleep')
 
         with pytest.raises(IndexError):
             self.call_nominatim()

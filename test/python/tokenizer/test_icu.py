@@ -471,15 +471,41 @@ class TestPlaceAddress:
 
 
     def test_process_place_street(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road'}}))
         info = self.process_address(street='Grand Road')
 
-        assert eval(info['street']) == self.name_token_set('GRAND', 'ROAD')
+        assert eval(info['street']) == self.name_token_set('#Grand Road')
+
+
+    def test_process_place_nonexisting_street(self):
+        info = self.process_address(street='Grand Road')
+
+        assert 'street' not in info
+
+
+    def test_process_place_multiple_street_tags(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road',
+                                                        'ref': '05989'}}))
+        info = self.process_address(**{'street': 'Grand Road',
+                                      'street:sym_ul': '05989'})
+
+        assert eval(info['street']) == self.name_token_set('#Grand Road', '#05989')
 
 
     def test_process_place_street_empty(self):
         info = self.process_address(street='🜵')
 
         assert 'street' not in info
+
+
+    def test_process_place_street_from_cache(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road'}}))
+        self.process_address(street='Grand Road')
+
+        # request address again
+        info = self.process_address(street='Grand Road')
+
+        assert eval(info['street']) == self.name_token_set('#Grand Road')
 
 
     def test_process_place_place(self):

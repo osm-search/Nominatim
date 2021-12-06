@@ -87,6 +87,30 @@ Feature: Parenting of objects
          | N3     | W2 |
          | N4     | W1 |
 
+    @fail-legacy
+    Scenario: addr:street tag parents to appropriately named street, locale names
+        Given the scene roads-with-pois
+        And the places
+         | osm | class | type  | street| addr+street:de | geometry |
+         | N1  | place | house | south | Süd               | :p-N1 |
+         | N2  | place | house | north | Nord              | :p-N2 |
+         | N3  | place | house | south | Süd               | :p-S1 |
+         | N4  | place | house | north | Nord              | :p-S2 |
+        And the places
+         | osm | class   | type        | name  | geometry |
+         | W1  | highway | residential | Nord | :w-north |
+         | W2  | highway | residential | Süd | :w-south |
+        And the places
+         | osm | class | type   | name  | name+name:old |
+         | N5  | place | hamlet | south | north         |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W2 |
+         | N2     | W1 |
+         | N3     | W2 |
+         | N4     | W1 |
+
     Scenario: addr:street tag parents to next named street
         Given the scene roads-with-pois
         And the places

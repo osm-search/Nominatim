@@ -51,7 +51,7 @@ $$ LANGUAGE SQL IMMUTABLE;
 CREATE OR REPLACE FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[])
   RETURNS BOOLEAN
 AS $$
-  SELECT (info->>'street')::INTEGER[] <@ street_tokens
+  SELECT (info->>'street')::INTEGER[] && street_tokens
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 

@@ -82,6 +82,7 @@ def send_api_query(endpoint, params, fmt, context):
 
     cmd = ['/usr/bin/env', 'php-cgi', '-f']
     if context.nominatim.code_coverage_path:
+        env['XDEBUG_MODE'] = 'coverage'
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = context.nominatim.src_dir
         env['COV_TEST_NAME'] = '%s:%s' % (context.scenario.filename, context.scenario.line)

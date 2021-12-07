@@ -5,7 +5,7 @@ namespace Nominatim;
 require_once(CONST_LibDir.'/TokenList.php');
 
 
-class TokenTest extends \PHPUnit\Framework\TestCase
+class TokenListTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp(): void
     {

@@ -132,12 +132,6 @@ class DBTest extends \PHPUnit\Framework\TestCase
                             getenv('UNIT_TEST_DSN') :
                             'pgsql:dbname=nominatim_unit_tests';
 
-        $this->assertRegExp(
-            '/unit_test/',
-            $unit_test_dsn,
-            'Test database will get destroyed, thus should have a name like unit_test to be safe'
-        );
-
         ## Create the database.
         {
             $aDSNParsed = \Nominatim\DB::parseDSN($unit_test_dsn);

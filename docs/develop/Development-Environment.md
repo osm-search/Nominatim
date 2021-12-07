@@ -30,7 +30,7 @@ unit tests (using PHPUnit for PHP code and pytest for Python code).
 It has the following additional requirements:
 
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.6
-* [phpunit](https://phpunit.de) >= 7.3
+* [phpunit](https://phpunit.de) (9.5 is known to work)
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 * [Pylint](https://pylint.org/) (2.6.0 is used for the CI)
 * [pytest](https://pytest.org)

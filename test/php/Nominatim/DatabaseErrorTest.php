@@ -26,6 +26,6 @@ class DatabaseErrorTest extends \PHPUnit\Framework\TestCase
     public function testSqlObjectDump()
     {
         $oErr = new DatabaseError('Sql error', 123, null, array('one' => 'two'));
-        $this->assertRegExp('/two/', $oErr->getSqlDebugDump());
+        $this->assertStringContainsString('two', $oErr->getSqlDebugDump());
     }
 }

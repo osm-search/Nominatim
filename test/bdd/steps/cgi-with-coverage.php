@@ -10,9 +10,21 @@ function coverage_shutdown($oCoverage)
 }
 
 $covfilter = new SebastianBergmann\CodeCoverage\Filter();
-$covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/lib-php');
-$covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/website');
-$coverage = new SebastianBergmann\CodeCoverage\CodeCoverage(null, $covfilter);
+if (method_exists($covfilter, 'addDirectoryToWhitelist')) {
+    // pre PHPUnit 9
+    $covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/lib-php');
+    $covfilter->addDirectoryToWhitelist($_SERVER['COV_PHP_DIR'].'/website');
+    $coverage = new SebastianBergmann\CodeCoverage\CodeCoverage(null, $covfilter);
+} else {
+    // since PHP Uit 9
+    $covfilter->includeDirectory($_SERVER['COV_PHP_DIR'].'/lib-php');
+    $covfilter->includeDirectory($_SERVER['COV_PHP_DIR'].'/website');
+    $coverage = new SebastianBergmann\CodeCoverage\CodeCoverage(
+        (new SebastianBergmann\CodeCoverage\Driver\Selector)->forLineCoverage($covfilter),
+        $covfilter
+    );
+}
+
 $coverage->start($_SERVER['COV_TEST_NAME']);
 
 register_shutdown_function('coverage_shutdown', $coverage);

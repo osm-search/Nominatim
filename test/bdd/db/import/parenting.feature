@@ -111,6 +111,28 @@ Feature: Parenting of objects
          | N3     | W2 |
          | N4     | W1 |
 
+    Scenario: addr:street tag parents to appropriately named street with abbreviation
+        Given the scene roads-with-pois
+        And the places
+         | osm | class | type  | street| geometry |
+         | N1  | place | house | south st | :p-N1 |
+         | N2  | place | house | north st | :p-N2 |
+         | N3  | place | house | south st | :p-S1 |
+         | N4  | place | house | north st | :p-S2 |
+        And the places
+         | osm | class   | type        | name+name:en  | geometry |
+         | W1  | highway | residential | north street | :w-north |
+         | W2  | highway | residential | south street | :w-south |
+        When importing
+        Then placex contains
+         | object | parent_place_id |
+         | N1     | W2 |
+         | N2     | W1 |
+         | N3     | W2 |
+         | N4     | W1 |
+
+
+
     Scenario: addr:street tag parents to next named street
         Given the scene roads-with-pois
         And the places

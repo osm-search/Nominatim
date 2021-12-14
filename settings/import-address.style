@@ -11,8 +11,9 @@
     }
 },
 {
-    "keys" : ["name:prefix", "name:suffix", "name:prefix:*", "name:suffix:*",
-              "name:etymology", "name:signed", "name:botanical", "*wikidata"],
+    "keys" : ["*:prefix", "*:suffix", "name:prefix:*", "name:suffix:*",
+              "name:etymology", "name:signed", "name:botanical", "*:wikidata",
+              "addr:street:name", "addr:street:type"],
     "values" : {
         "" : "skip"
     }

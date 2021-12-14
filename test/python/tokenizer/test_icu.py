@@ -471,9 +471,25 @@ class TestPlaceAddress:
 
 
     def test_process_place_street(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road'}}))
         info = self.process_address(street='Grand Road')
 
-        assert eval(info['street']) == self.name_token_set('GRAND', 'ROAD')
+        assert eval(info['street']) == self.name_token_set('#Grand Road')
+
+
+    def test_process_place_nonexisting_street(self):
+        info = self.process_address(street='Grand Road')
+
+        assert 'street' not in info
+
+
+    def test_process_place_multiple_street_tags(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road',
+                                                        'ref': '05989'}}))
+        info = self.process_address(**{'street': 'Grand Road',
+                                      'street:sym_ul': '05989'})
+
+        assert eval(info['street']) == self.name_token_set('#Grand Road', '#05989')
 
 
     def test_process_place_street_empty(self):
@@ -482,10 +498,26 @@ class TestPlaceAddress:
         assert 'street' not in info
 
 
+    def test_process_place_street_from_cache(self):
+        self.analyzer.process_place(PlaceInfo({'name': {'name' : 'Grand Road'}}))
+        self.process_address(street='Grand Road')
+
+        # request address again
+        info = self.process_address(street='Grand Road')
+
+        assert eval(info['street']) == self.name_token_set('#Grand Road')
+
+
     def test_process_place_place(self):
         info = self.process_address(place='Honu Lulu')
 
         assert eval(info['place']) == self.name_token_set('HONU', 'LULU')
+
+
+    def test_process_place_place_extra(self):
+        info = self.process_address(**{'place:en': 'Honu Lulu'})
+
+        assert 'place' not in info
 
 
     def test_process_place_place_empty(self):
@@ -505,6 +537,14 @@ class TestPlaceAddress:
         result = {k: eval(v) for k,v in info['addr'].items()}
 
         assert result == {'city': city, 'suburb': city, 'state': state}
+
+
+    def test_process_place_multiple_address_terms(self):
+        info = self.process_address(**{'city': 'Bruxelles', 'city:de': 'Brüssel'})
+
+        result = {k: eval(v) for k,v in info['addr'].items()}
+
+        assert result == {'city': self.name_token_set('Bruxelles')}
 
 
     def test_process_place_address_terms_empty(self):

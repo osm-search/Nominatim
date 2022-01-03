@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- insert creates the location tables, creates location indexes if indexed == true
 CREATE TRIGGER placex_before_insert BEFORE INSERT ON placex
     FOR EACH ROW EXECUTE PROCEDURE placex_insert();

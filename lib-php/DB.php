@@ -38,6 +38,9 @@ class DB
 
         $conn->exec("SET DateStyle TO 'sql,european'");
         $conn->exec("SET client_encoding TO 'utf-8'");
+        // Disable JIT and parallel workers. They interfere badly with search SQL.
+        $conn->exec("UPDATE pg_settings SET setting = -1 WHERE name = 'jit_above_cost'");
+        $conn->exec("UPDATE pg_settings SET setting = 0 WHERE name = 'max_parallel_workers_per_gather'");
         $iMaxExecution = ini_get('max_execution_time');
         if ($iMaxExecution > 0) {
             $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds

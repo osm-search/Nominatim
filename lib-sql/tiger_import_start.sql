@@ -1,3 +1,9 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
 DROP TABLE IF EXISTS location_property_tiger_import;
 CREATE TABLE location_property_tiger_import (linegeo GEOMETRY, place_id BIGINT, partition INTEGER, parent_place_id BIGINT, startnumber INTEGER, endnumber INTEGER, interpolationtype TEXT, postcode TEXT);
 

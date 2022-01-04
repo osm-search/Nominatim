@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 --index only on parent_place_id
 CREATE INDEX IF NOT EXISTS idx_location_property_tiger_parent_place_id_imp
   ON location_property_tiger_import (parent_place_id)

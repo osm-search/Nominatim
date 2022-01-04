@@ -1,3 +1,11 @@
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 	str_replace(buffer, &len, &changes, " national wildlife refuge area ", 31, " nwra ", 6, 0);
 	str_replace(buffer, &len, &changes, " national recreation area ", 26, " nra ", 5, 0);
 	str_replace(buffer, &len, &changes, " air national guard base ", 25, " angb ", 6, 0);

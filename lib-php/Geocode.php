@@ -617,16 +617,15 @@ class Geocode
                     }
                     $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens);
 
-                    foreach ($aGroupedSearches as $aSearches) {
+                    foreach ($aReverseGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
-                            if (!isset($aReverseGroupedSearches[$aSearch->getRank()])) {
-                                $aReverseGroupedSearches[$aSearch->getRank()] = array();
+                            if (!isset($aGroupedSearches[$aSearch->getRank()])) {
+                                $aGroupedSearches[$aSearch->getRank()] = array();
                             }
-                            $aReverseGroupedSearches[$aSearch->getRank()][] = $aSearch;
+                            $aGroupedSearches[$aSearch->getRank()][] = $aSearch;
                         }
                     }
 
-                    $aGroupedSearches = $aReverseGroupedSearches;
                     ksort($aGroupedSearches);
                 }
             } else {

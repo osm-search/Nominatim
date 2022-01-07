@@ -140,3 +140,51 @@ location ~ [^/]\.php(/|$) {
 Restart the nginx and php-fpm services and the website should now be available
 at `http://localhost/`.
 
+## Nominatim with Caddy
+
+### Installing the required packages
+
+You need to install a PHP FastCGI server such as php-fpm to use with caddy.
+
+Follow caddy installation instructions: https://caddyserver.com/docs/install
+
+On Ubuntu/Debian install php-fpm with:
+
+``` sh
+sudo apt install php-fpm
+```
+
+### Configure php-fpm with Caddy
+
+By default php-fpm listens on a network socket. If you want it to listen to a
+Unix socket instead, change the pool configuration
+(`/etc/php/<php version>/fpm/pool.d/www.conf`) as follows:
+
+``` ini
+; Replace the tcp listener and add the unix socket
+listen = /var/run/php-fpm.sock
+
+; Ensure that the daemon runs as the correct user
+listen.owner = caddy
+listen.group = caddy
+listen.mode = 0666
+```
+
+Since caddy by default runs as user `caddy` and not as `www-root` this needs
+to be adjusted in the config as above accordingly.
+
+### Caddyfile
+
+Example caddyfile:
+
+``` Caddyfile
+nominatim.example.org {
+    # assuming /srv/nominatim/nominatim-planet is $PROJECT_DIR
+    root * /srv/nominatim/nominatim-planet/website
+
+    php_fastcgi unix//var/run/php-fpm.sock {
+        # make /search and /status run /search.php and /status.php respectively
+        try_files {path} {path}/index.php {path}.php index.php
+    }
+}
+```

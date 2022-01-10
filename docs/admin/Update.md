@@ -122,14 +122,14 @@ cd /srv/nominatim
 
 while true; do
   nominatim replication --once
-  if [ -f "/srv/nominatim/schedule-mainenance" ]; then
-    rm /srv/nominatim/schedule-mainenance
+  if [ -f "/srv/nominatim/schedule-maintenance" ]; then
+    rm /srv/nominatim/schedule-maintenance
     nominatim refresh --postcodes
   fi
 done
 ```
 
-A cron job then creates the file `/srv/nominatim/need-mainenance` once per night.
+A cron job then creates the file `/srv/nominatim/schedule-maintenance` once per night.
 
 
 #### Catch-up mode

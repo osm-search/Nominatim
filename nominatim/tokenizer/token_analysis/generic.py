@@ -176,14 +176,26 @@ class GenericTokenAnalysis:
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """
+        results = set()
+        for variant in self._generate_word_variants(norm_name):
+            if not self.variant_only or variant.strip() != norm_name:
+                trans_name = self.to_ascii.transliterate(variant).strip()
+                if trans_name:
+                    results.add(trans_name)
+
+        return list(results)
+
+
+    def _generate_word_variants(self, norm_name):
         baseform = '^ ' + norm_name + ' ^'
+        baselen = len(baseform)
         partials = ['']
 
         startpos = 0
         if self.replacements is not None:
             pos = 0
             force_space = False
-            while pos < len(baseform):
+            while pos < baselen:
                 full, repl = self.replacements.longest_prefix_item(baseform[pos:],
                                                                    (None, None))
                 if full is not None:
@@ -207,24 +219,9 @@ class GenericTokenAnalysis:
 
         # No variants detected? Fast return.
         if startpos == 0:
-            if self.variant_only:
-                return []
+            return (norm_name, )
 
-            trans_name = self.to_ascii.transliterate(norm_name).strip()
-            return [trans_name] if trans_name else []
+        if startpos < baselen:
+            return (part[1:] + baseform[startpos:-1] for part in partials)
 
-        return self._compute_result_set(partials, baseform[startpos:],
-                                        norm_name if self.variant_only else '')
-
-
-    def _compute_result_set(self, partials, prefix, exclude):
-        results = set()
-
-        for variant in partials:
-            vname = (variant + prefix)[1:-1].strip()
-            if vname != exclude:
-                trans_name = self.to_ascii.transliterate(vname).strip()
-                if trans_name:
-                    results.add(trans_name)
-
-        return list(results)
+        return (part[1:-1] for part in partials)

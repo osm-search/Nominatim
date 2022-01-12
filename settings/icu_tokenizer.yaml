@@ -59,6 +59,13 @@ token-analysis:
       mode: variant-only
       variants:
           - !include icu-rules/variants-de.yaml
+      mutations:
+          - pattern: ä
+            replacements: ["ä", "ae"]
+          - pattern: ö
+            replacements: ["ö", "oe"]
+          - pattern: ü
+            replacements: ["ü", "ue"]
     - id: el
       analyzer: generic
       mode: variant-only

@@ -11,7 +11,9 @@ import itertools
 
 import datrie
 
+from nominatim.errors import UsageError
 from nominatim.tokenizer.token_analysis.config_variants import get_variant_config
+from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
 
 ### Configuration section
 
@@ -23,6 +25,7 @@ def configure(rules, normalization_rules):
     config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
                                                                  normalization_rules)
     config['variant_only'] = rules.get('mode', '') == 'variant-only'
+    config['mutations'] = rules.get('mutations', [])
 
     return config
 
@@ -52,19 +55,45 @@ class GenericTokenAnalysis:
         else:
             self.replacements = None
 
+        # set up mutation rules
+        self.mutations = []
+        for cfg in config['mutations']:
+            if 'pattern' not in cfg:
+                raise UsageError("Missing field 'pattern' in mutation configuration.")
+            if not isinstance(cfg['pattern'], str):
+                raise UsageError("Field 'pattern' in mutation configuration "
+                                 "must be a simple text field.")
+            if 'replacements' not in cfg:
+                raise UsageError("Missing field 'replacements' in mutation configuration.")
+            if not isinstance(cfg['replacements'], list):
+                raise UsageError("Field 'replacements' in mutation configuration "
+                                 "must be a list of texts.")
+
+            self.mutations.append(MutationVariantGenerator(cfg['pattern'],
+                                                           cfg['replacements']))
+
 
     def get_variants_ascii(self, norm_name):
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """
-        results = set()
-        for variant in self._generate_word_variants(norm_name):
-            if not self.variant_only or variant.strip() != norm_name:
-                trans_name = self.to_ascii.transliterate(variant).strip()
-                if trans_name:
-                    results.add(trans_name)
+        variants = self._generate_word_variants(norm_name)
 
-        return list(results)
+        for mutation in self.mutations:
+            variants = mutation.generate(variants)
+
+        return [name for name in self._transliterate_unique_list(norm_name, variants) if name]
+
+
+    def _transliterate_unique_list(self, norm_name, iterable):
+        seen = set()
+        if self.variant_only:
+            seen.add(norm_name)
+
+        for variant in map(str.strip, iterable):
+            if variant not in seen:
+                seen.add(variant)
+                yield self.to_ascii.transliterate(variant).strip()
 
 
     def _generate_word_variants(self, norm_name):

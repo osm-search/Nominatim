@@ -25,7 +25,22 @@ def configure(rules, normalization_rules):
     config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
                                                                  normalization_rules)
     config['variant_only'] = rules.get('mode', '') == 'variant-only'
-    config['mutations'] = rules.get('mutations', [])
+
+    # parse mutation rules
+    config['mutations'] = []
+    for rule in rules.get('mutations', []):
+        if 'pattern' not in rule:
+            raise UsageError("Missing field 'pattern' in mutation configuration.")
+        if not isinstance(rule['pattern'], str):
+            raise UsageError("Field 'pattern' in mutation configuration "
+                             "must be a simple text field.")
+        if 'replacements' not in rule:
+            raise UsageError("Missing field 'replacements' in mutation configuration.")
+        if not isinstance(rule['replacements'], list):
+            raise UsageError("Field 'replacements' in mutation configuration "
+                                 "must be a list of texts.")
+
+        config['mutations'].append((rule['pattern'], rule['replacements']))
 
     return config
 
@@ -56,21 +71,7 @@ class GenericTokenAnalysis:
             self.replacements = None
 
         # set up mutation rules
-        self.mutations = []
-        for cfg in config['mutations']:
-            if 'pattern' not in cfg:
-                raise UsageError("Missing field 'pattern' in mutation configuration.")
-            if not isinstance(cfg['pattern'], str):
-                raise UsageError("Field 'pattern' in mutation configuration "
-                                 "must be a simple text field.")
-            if 'replacements' not in cfg:
-                raise UsageError("Missing field 'replacements' in mutation configuration.")
-            if not isinstance(cfg['replacements'], list):
-                raise UsageError("Field 'replacements' in mutation configuration "
-                                 "must be a list of texts.")
-
-            self.mutations.append(MutationVariantGenerator(cfg['pattern'],
-                                                           cfg['replacements']))
+        self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
 
 
     def get_variants_ascii(self, norm_name):

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Specialised psycopg2 cursor with shortcut functions useful for testing.
 """
@@ -34,6 +40,15 @@ class CursorForTesting(psycopg2.extras.DictCursor):
         """
         num = self.scalar("""SELECT count(*) FROM pg_tables
                              WHERE tablename = %s""", (table, ))
+        return num == 1
+
+
+    def index_exists(self, table, index):
+        """ Check that an indexwith the given name exists on the given table.
+        """
+        num = self.scalar("""SELECT count(*) FROM pg_indexes
+                             WHERE tablename = %s and indexname = %s""",
+                          (table, index))
         return num == 1
 
 

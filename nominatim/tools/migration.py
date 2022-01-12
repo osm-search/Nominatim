@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Functions for database migration to newer software versions.
 """
@@ -26,7 +32,7 @@ def migrate(config, paths):
 
         if db_version_str is not None:
             parts = db_version_str.split('.')
-            db_version = tuple([int(x) for x in parts[:2] + parts[2].split('-')])
+            db_version = tuple(int(x) for x in parts[:2] + parts[2].split('-'))
 
             if db_version == NOMINATIM_VERSION:
                 LOG.warning("Database already at latest version (%s)", db_version_str)
@@ -96,6 +102,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
     """
     def decorator(func):
         _MIGRATION_FUNCTIONS.append(((major, minor, patch, dbpatch), func))
+        return func
 
     return decorator
 
@@ -192,3 +199,20 @@ def install_legacy_tokenizer(conn, config, **_):
                                                        module_name='legacy')
 
         tokenizer.migrate_database(config)
+
+
+@_migration(4, 0, 99, 0)
+def create_tiger_housenumber_index(conn, **_):
+    """ Create idx_location_property_tiger_parent_place_id with included
+        house number.
+
+        The inclusion is needed for efficient lookup of housenumbers in
+        full address searches.
+    """
+    if conn.server_version_tuple() >= (11, 0, 0):
+        with conn.cursor() as cur:
+            cur.execute(""" CREATE INDEX IF NOT EXISTS
+                                idx_location_property_tiger_housenumber_migrated
+                            ON location_property_tiger
+                            USING btree(parent_place_id)
+                            INCLUDE (startnumber, endnumber) """)

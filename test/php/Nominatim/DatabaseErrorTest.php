@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -26,6 +34,6 @@ class DatabaseErrorTest extends \PHPUnit\Framework\TestCase
     public function testSqlObjectDump()
     {
         $oErr = new DatabaseError('Sql error', 123, null, array('one' => 'two'));
-        $this->assertRegExp('/two/', $oErr->getSqlDebugDump());
+        $this->assertStringContainsString('two', $oErr->getSqlDebugDump());
     }
 }

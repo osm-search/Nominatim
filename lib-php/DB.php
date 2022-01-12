@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -38,6 +46,9 @@ class DB
 
         $conn->exec("SET DateStyle TO 'sql,european'");
         $conn->exec("SET client_encoding TO 'utf-8'");
+        // Disable JIT and parallel workers. They interfere badly with search SQL.
+        $conn->exec("UPDATE pg_settings SET setting = -1 WHERE name = 'jit_above_cost'");
+        $conn->exec("UPDATE pg_settings SET setting = 0 WHERE name = 'max_parallel_workers_per_gather'");
         $iMaxExecution = ini_get('max_execution_time');
         if ($iMaxExecution > 0) {
             $conn->setAttribute(\PDO::ATTR_TIMEOUT, $iMaxExecution); // seconds

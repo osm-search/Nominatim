@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tokenizer implementing normalisation as used before Nominatim 4.
 """
@@ -513,7 +519,9 @@ class _TokenInfo:
             with conn.cursor() as cur:
                 return cur.scalar("SELECT word_ids_from_name(%s)::text", (name, ))
 
-        self.data['street'] = self.cache.streets.get(street, _get_street)
+        tokens = self.cache.streets.get(street, _get_street)
+        if tokens:
+            self.data['street'] = tokens
 
 
     def add_place(self, conn, place):
@@ -542,9 +550,12 @@ class _TokenInfo:
 
         tokens = {}
         for key, value in terms:
-            tokens[key] = self.cache.address_terms.get(value, _get_address_term)
+            items = self.cache.address_terms.get(value, _get_address_term)
+            if items[0] or items[1]:
+                tokens[key] = items
 
-        self.data['addr'] = tokens
+        if tokens:
+            self.data['addr'] = tokens
 
 
 class _LRU:

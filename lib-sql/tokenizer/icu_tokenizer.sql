@@ -1,3 +1,10 @@
+-- SPDX-License-Identifier: GPL-2.0-only
+--
+-- This file is part of Nominatim. (https://nominatim.org)
+--
+-- Copyright (C) 2022 by the Nominatim developer community.
+-- For a full list of authors see the git log.
+
 -- Get tokens used for searching the given place.
 --
 -- These are the tokens that will be saved in the search_name table.
@@ -51,7 +58,7 @@ $$ LANGUAGE SQL IMMUTABLE;
 CREATE OR REPLACE FUNCTION token_matches_street(info JSONB, street_tokens INTEGER[])
   RETURNS BOOLEAN
 AS $$
-  SELECT (info->>'street')::INTEGER[] <@ street_tokens
+  SELECT (info->>'street')::INTEGER[] && street_tokens
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 

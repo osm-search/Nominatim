@@ -176,7 +176,7 @@ Feature: Import into placex
           | W3     | 26          | 26 |
           | W4     | 26          | 26 |
           | W5     | 26          | 26 |
-          | W6     | 26          | 26 |
+          | W6     | 30          | 30 |
 
     Scenario: rank and inclusion of landuses
         Given the named places

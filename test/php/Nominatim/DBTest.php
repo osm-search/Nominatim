@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -131,12 +139,6 @@ class DBTest extends \PHPUnit\Framework\TestCase
         $unit_test_dsn = getenv('UNIT_TEST_DSN') != false ?
                             getenv('UNIT_TEST_DSN') :
                             'pgsql:dbname=nominatim_unit_tests';
-
-        $this->assertRegExp(
-            '/unit_test/',
-            $unit_test_dsn,
-            'Test database will get destroyed, thus should have a name like unit_test to be safe'
-        );
 
         ## Create the database.
         {

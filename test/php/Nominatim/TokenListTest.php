@@ -1,11 +1,19 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
 require_once(CONST_LibDir.'/TokenList.php');
 
 
-class TokenTest extends \PHPUnit\Framework\TestCase
+class TokenListTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp(): void
     {

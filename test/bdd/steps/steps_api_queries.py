@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """ Steps that run queries against the API.
 
     Queries may either be run directly via PHP using the query script
@@ -82,6 +88,7 @@ def send_api_query(endpoint, params, fmt, context):
 
     cmd = ['/usr/bin/env', 'php-cgi', '-f']
     if context.nominatim.code_coverage_path:
+        env['XDEBUG_MODE'] = 'coverage'
         env['COV_SCRIPT_FILENAME'] = env['SCRIPT_FILENAME']
         env['COV_PHP_DIR'] = context.nominatim.src_dir
         env['COV_TEST_NAME'] = '%s:%s' % (context.scenario.filename, context.scenario.line)

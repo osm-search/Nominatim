@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 import itertools
 import sys
 from pathlib import Path
@@ -5,20 +11,23 @@ from pathlib import Path
 import psycopg2
 import pytest
 
-SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
-
 # always test against the source
-sys.path.insert(0, str(SRC_DIR.resolve()))
+SRC_DIR = (Path(__file__) / '..' / '..' / '..').resolve()
+sys.path.insert(0, str(SRC_DIR))
 
 from nominatim.config import Configuration
 from nominatim.db import connection
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 import nominatim.tokenizer.factory
-import nominatim.cli
 
 import dummy_tokenizer
 import mocks
 from cursor import CursorForTesting
+
+
+@pytest.fixture
+def src_dir():
+    return SRC_DIR
 
 
 @pytest.fixture
@@ -98,33 +107,25 @@ def table_factory(temp_db_cursor):
 
 
 @pytest.fixture
-def def_config():
-    cfg = Configuration(None, SRC_DIR.resolve() / 'settings')
+def def_config(src_dir):
+    cfg = Configuration(None, src_dir / 'settings')
     cfg.set_libdirs(module='.', osm2pgsql='.',
-                    php=SRC_DIR / 'lib-php',
-                    sql=SRC_DIR / 'lib-sql',
-                    data=SRC_DIR / 'data')
+                    php=src_dir / 'lib-php',
+                    sql=src_dir / 'lib-sql',
+                    data=src_dir / 'data')
     return cfg
 
 
 @pytest.fixture
-def src_dir():
-    return SRC_DIR.resolve()
-
-
-@pytest.fixture
-def cli_call():
-    def _call_nominatim(*args):
-        return nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                       osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                       phplib_dir=str(SRC_DIR / 'lib-php'),
-                                       data_dir=str(SRC_DIR / 'data'),
-                                       phpcgi_path='/usr/bin/php-cgi',
-                                       sqllib_dir=str(SRC_DIR / 'lib-sql'),
-                                       config_dir=str(SRC_DIR / 'settings'),
-                                       cli_args=args)
-
-    return _call_nominatim
+def project_env(src_dir, tmp_path):
+    projdir = tmp_path / 'project'
+    projdir.mkdir()
+    cfg = Configuration(projdir, src_dir / 'settings')
+    cfg.set_libdirs(module='.', osm2pgsql='.',
+                    php=src_dir / 'lib-php',
+                    sql=src_dir / 'lib-sql',
+                    data=src_dir / 'data')
+    return cfg
 
 
 @pytest.fixture
@@ -213,18 +214,6 @@ def osmline_table(temp_db_with_extensions, table_factory):
 @pytest.fixture
 def word_table(temp_db_conn):
     return mocks.MockWordTable(temp_db_conn)
-
-
-@pytest.fixture
-def osm2pgsql_options(temp_db):
-    return dict(osm2pgsql='echo',
-                osm2pgsql_cache=10,
-                osm2pgsql_style='style.file',
-                threads=1,
-                dsn='dbname=' + temp_db,
-                flatnode_file='',
-                tablespaces=dict(slim_data='', slim_index='',
-                                 main_data='', main_index=''))
 
 
 @pytest.fixture

@@ -7,7 +7,7 @@ normalization:
     - "'nº' > 'no'"
     - "ª > a"
     - "º > o"
-    - "[[:Punctuation:][:Symbol:]]  > ' '"
+    - "[[:Punctuation:][:Symbol:]\u02bc]  > ' '"
     - "ß > 'ss'" # German szet is unimbigiously equal to double ss
     - "[^[:Letter:] [:Number:] [:Space:]] >"
     - "[:Lm:] >"
@@ -21,8 +21,8 @@ transliteration:
     - !include icu-rules/extended-unicode-to-asccii.yaml
     - ":: Ascii ()"
     - ":: NFD ()"
-    - "[^[:Ascii:]] >"
     - ":: lower ()"
+    - "[^a-z0-9[:Space:]] >"
     - ":: NFC ()"
 sanitizers:
     - step: split-name-list

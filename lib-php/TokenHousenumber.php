@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim\Token;
 
@@ -58,7 +66,7 @@ class HouseNumber
         // up of numbers, add a penalty
         $iSearchCost = 1;
         if (preg_match('/\\d/', $this->sToken) === 0
-            || preg_match_all('/[^0-9]/', $this->sToken, $aMatches) > 2) {
+            || preg_match_all('/[^0-9 ]/', $this->sToken, $aMatches) > 3) {
             $iSearchCost += strlen($this->sToken) - 1;
         }
         if (!$oSearch->hasOperator(\Nominatim\Operator::NONE)) {

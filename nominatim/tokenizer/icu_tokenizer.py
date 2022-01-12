@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Tokenizer implementing normalisation as used before Nominatim 4 but using
 libICU instead of the PostgreSQL module.
@@ -409,16 +415,18 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def _process_place_address(self, token_info, address):
         hnrs = []
         addr_terms = []
+        streets = []
         for item in address:
             if item.kind == 'postcode':
                 self._add_postcode(item.name)
             elif item.kind in ('housenumber', 'streetnumber', 'conscriptionnumber'):
                 hnrs.append(item.name)
             elif item.kind == 'street':
-                token_info.add_street(self._compute_partial_tokens(item.name))
+                streets.extend(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
-                token_info.add_place(self._compute_partial_tokens(item.name))
-            elif not item.kind.startswith('_') and \
+                if not item.suffix:
+                    token_info.add_place(self._compute_partial_tokens(item.name))
+            elif not item.kind.startswith('_') and not item.suffix and \
                  item.kind not in ('country', 'full'):
                 addr_terms.append((item.kind, self._compute_partial_tokens(item.name)))
 
@@ -428,6 +436,9 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         if addr_terms:
             token_info.add_address_terms(addr_terms)
+
+        if streets:
+            token_info.add_street(streets)
 
 
     def _compute_partial_tokens(self, name):
@@ -456,6 +467,26 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                     self._cache.partials[partial] = token
 
         return tokens
+
+
+    def _retrieve_full_tokens(self, name):
+        """ Get the full name token for the given name, if it exists.
+            The name is only retrived for the standard analyser.
+        """
+        norm_name = self._search_normalized(name)
+
+        # return cached if possible
+        if norm_name in self._cache.fulls:
+            return self._cache.fulls[norm_name]
+
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT word_id FROM word WHERE word_token = %s and type = 'W'",
+                        (norm_name, ))
+            full = [row[0] for row in cur]
+
+        self._cache.fulls[norm_name] = full
+
+        return full
 
 
     def _compute_name_tokens(self, names):
@@ -561,8 +592,7 @@ class _TokenInfo:
     def add_street(self, tokens):
         """ Add addr:street match terms.
         """
-        if tokens:
-            self.data['street'] = self._mk_array(tokens)
+        self.data['street'] = self._mk_array(tokens)
 
 
     def add_place(self, tokens):
@@ -591,6 +621,7 @@ class _TokenCache:
     def __init__(self):
         self.names = {}
         self.partials = {}
+        self.fulls = {}
         self.postcodes = set()
         self.housenumbers = {}
 

@@ -1,4 +1,12 @@
 <?php
+/**
+ * SPDX-License-Identifier: GPL-2.0-only
+ *
+ * This file is part of Nominatim. (https://nominatim.org)
+ *
+ * Copyright (C) 2022 by the Nominatim developer community.
+ * For a full list of authors see the git log.
+ */
 
 namespace Nominatim;
 
@@ -609,16 +617,15 @@ class Geocode
                     }
                     $aReverseGroupedSearches = $this->getGroupedSearches($aSearches, $aPhrases, $oValidTokens);
 
-                    foreach ($aGroupedSearches as $aSearches) {
+                    foreach ($aReverseGroupedSearches as $aSearches) {
                         foreach ($aSearches as $aSearch) {
-                            if (!isset($aReverseGroupedSearches[$aSearch->getRank()])) {
-                                $aReverseGroupedSearches[$aSearch->getRank()] = array();
+                            if (!isset($aGroupedSearches[$aSearch->getRank()])) {
+                                $aGroupedSearches[$aSearch->getRank()] = array();
                             }
-                            $aReverseGroupedSearches[$aSearch->getRank()][] = $aSearch;
+                            $aGroupedSearches[$aSearch->getRank()][] = $aSearch;
                         }
                     }
 
-                    $aGroupedSearches = $aReverseGroupedSearches;
                     ksort($aGroupedSearches);
                 }
             } else {

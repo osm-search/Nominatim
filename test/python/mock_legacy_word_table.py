@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# This file is part of Nominatim. (https://nominatim.org)
+#
+# Copyright (C) 2022 by the Nominatim developer community.
+# For a full list of authors see the git log.
 """
 Legacy word table for testing with functions to prefil and test contents
 of the table.
@@ -19,6 +25,14 @@ class MockLegacyWordTable:
                                               operator TEXT)""")
 
         conn.commit()
+
+    def add_full_word(self, word_id, word, word_token=None):
+        with self.conn.cursor() as cur:
+            cur.execute("""INSERT INTO word (word_id, word_token, word)
+                           VALUES (%s, %s, %s)
+                        """, (word_id, ' ' + (word_token or word), word))
+        self.conn.commit()
+
 
     def add_special(self, word_token, word, cls, typ, oper):
         with self.conn.cursor() as cur:

@@ -1,3 +1,48 @@
+4.0.0
+
+ * refactor name token computation and introduce ICU tokenizer
+   * name processing now happens in the indexer outside the DB
+   * reorganizes abbreviation handling and moves it to the indexing phases
+   * adds preprocessing of names
+ * add country-specific ranking for Spain, Slovakia
+ * partially switch to using SP-GIST indexes
+ * better updating of dependent addresses for name changes in streets
+ * remove unused/broken tables for external housenumbers
+ * move external postcodes to CSV format and no longer save them in tables
+   (adds support for postcodes for arbitrary countries)
+ * remove postcode helper entries from placex (thanks @AntoJvlt)
+ * change required format for TIGER data to CSV
+ * move configuration of default languages from wiki into config file
+ * expect customized configuration files in project directory by default
+ * disable search API for reverse-only import (thanks @darkshredder)
+ * port most of maintenance/import code to Python and remove PHP utils
+ * add catch-up mode for replication
+ * add updating of special phrases (thanks @AntoJvlt)
+ * add support for special phrases in CSV files (thanks @AntoJvlt)
+ * switch to case-independent matching between place and boundary names
+ * remove disabling of reverse query parsing
+ * minor tweaks to search algorithm to avoid more false positives
+ * major overhaul of the administrator and developer documentation
+ * add security disclosure policy
+ * add testing of installation scripts via CI
+ * drop support for Python < 3.6 and Postgresql < 9.5
+
+3.7.2
+
+ * fix database check for reverse-only imports
+ * do not error out in status API result when import date is missing
+ * add array_key_last function for PHP < 7.3 (thanks to @woodpeck)
+ * fix more url when server name is unknown (thanks to @mogita)
+ * commit changes to replication log table
+
+3.7.1
+
+ * fix smaller issues with special phrases import (thanks @AntoJvlt)
+ * add index to speed up continued indexing during import
+ * fix index on location_property_tiger(parent_place_id) (thanks @changpingc)
+ * make sure Python code is backward-compatible with Python 3.5
+ * various documentation fixes
+
 3.7.0
 
  * switch to dotenv for configuration file
@@ -19,7 +64,6 @@
  * parallelize indexing of postcodes
  * add non-key indexes to speed up housenumber + street searches
  * switch housenumber field in placex to save transliterated names
-
 
 3.6.0
 

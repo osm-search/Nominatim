@@ -99,6 +99,9 @@ token-analysis:
           - words:
               - road -> rd
               - bridge -> bdge,br,brdg,bri,brg
+      mutations:
+          - pattern: 'ä'
+            replacements: ['ä', 'ae']
 ```
 
 The configuration file contains four sections:
@@ -205,12 +208,11 @@ the `analyzer` parameter must be set. Currently there is only one implementation
 ##### Generic token analyzer
 
 The generic analyzer is able to create variants from a list of given
-abbreviation and decomposition replacements. It takes one optional parameter
-`variants` which lists the replacements to apply. If the section is
-omitted, then the generic analyzer becomes a simple analyzer that only
-applies the transliteration.
+abbreviation and decomposition replacements and introduce spelling variations.
 
-The variants section defines lists of replacements which create alternative
+###### Variants
+
+The optional 'variants' section defines lists of replacements which create alternative
 spellings of a name. To create the variants, a name is scanned from left to
 right and the longest matching replacement is applied until the end of the
 string is reached.
@@ -295,6 +297,32 @@ decomposition has an effect here on the source as well. So a rule
 
 means that for a word like `hauptstrasse` four variants are created:
 `hauptstrasse`, `haupt strasse`, `hauptstr` and `haupt str`.
+
+###### Mutations
+
+The 'mutation' section in the configuration describes an additional set of
+replacements to be applied after the variants have been computed.
+
+Each mutation is described by two parameters: `pattern` and `replacements`.
+The pattern must contain a single regular expression to search for in the
+variant name. The regular expressions need to follow the syntax for
+[Python regular expressions](file:///usr/share/doc/python3-doc/html/library/re.html#regular-expression-syntax).
+Capturing groups are not permitted.
+`replacements` must contain a list of strings that the pattern
+should be replaced with. Each occurrence of the pattern is replaced with
+all given replacements. Be mindful of combinatorial explosion of variants.
+
+###### Modes
+
+The generic analyser supports a special mode `variant-only`. When configured
+then it consumes the input token and emits only variants (if any exist). Enable
+the mode by adding:
+
+```
+  mode: variant-only
+```
+
+to the analyser configuration.
 
 ### Reconfiguration
 

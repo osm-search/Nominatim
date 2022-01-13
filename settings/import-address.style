@@ -20,7 +20,7 @@
 },
 {
     "keys" : ["ref", "int_ref", "nat_ref", "reg_ref", "loc_ref", "old_ref",
-              "iata", "icao", "pcode"],
+              "iata", "icao", "pcode", "ISO3166-2"],
     "values" : {
         "" : "ref"
     }

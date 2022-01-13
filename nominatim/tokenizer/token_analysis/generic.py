@@ -38,7 +38,7 @@ def configure(rules, normalization_rules):
             raise UsageError("Missing field 'replacements' in mutation configuration.")
         if not isinstance(rule['replacements'], list):
             raise UsageError("Field 'replacements' in mutation configuration "
-                                 "must be a list of texts.")
+                             "must be a list of texts.")
 
         config['mutations'].append((rule['pattern'], rule['replacements']))
 

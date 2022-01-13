@@ -70,7 +70,7 @@ The update application keeps running forever and retrieves and applies
 new updates from the server as they are published.
 
 You can run this command as a simple systemd service. Create a service
-description like that in `/etc/systemd/system/nominatim-update.service`:
+description like that in `/etc/systemd/system/nominatim-updates.service`:
 
 ```
 [Unit]

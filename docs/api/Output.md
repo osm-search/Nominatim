@@ -28,7 +28,7 @@ a single place (for reverse) of the following format:
       "city": "London",
       "state_district": "Greater London",
       "state": "England",
-      "state_code": "ENG",
+      "ISO3166-2": "GB-ENG",
       "postcode": "SW1A 2DU",
       "country": "United Kingdom",
       "country_code": "gb"

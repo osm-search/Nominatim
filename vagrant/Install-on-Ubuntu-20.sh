@@ -222,7 +222,7 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
 
-    root $USERHOME/nominatim-project/website;
+    root $USERHOME/nominatim/website;
     index search.php index.html;
     location / {
         try_files \$uri \$uri/ @php;

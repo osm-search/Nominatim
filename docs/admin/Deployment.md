@@ -140,3 +140,9 @@ location ~ [^/]\.php(/|$) {
 Restart the nginx and php-fpm services and the website should now be available
 at `http://localhost/`.
 
+## Nominatim with other webservers
+
+Users have created instructions for other webservers:
+
+* [Caddy](https://github.com/osm-search/Nominatim/discussions/2580)
+

@@ -5,19 +5,24 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Sanitizer that cleans and normalizes housenumbers.
+Sanitizer that cleans and normalizes house numbers.
 
 Arguments:
     delimiters: Define the set of characters to be used for
-                splitting a list of housenumbers into parts. (default: ',;')
+                splitting a list of house numbers into parts. (default: ',;')
+    filter-kind: Define the address tags that are considered to be a
+                 house number. Either takes a single string or a list of strings,
+                 where each string is a regular expression. An address item
+                 is considered a house number if the 'kind' fully matches any
+                 of the given regular expressions. (default: 'housenumber')
 
 """
-from nominatim.tokenizer.sanitizers.helpers import create_split_regex
+from nominatim.tokenizer.sanitizers.helpers import create_split_regex, create_kind_filter
 
 class _HousenumberSanitizer:
 
     def __init__(self, config):
-        self.kinds = config.get('filter-kind', ('housenumber', ))
+        self.filter_kind = create_kind_filter(config, 'housenumber')
         self.split_regexp = create_split_regex(config)
 
 
@@ -27,7 +32,7 @@ class _HousenumberSanitizer:
 
         new_address = []
         for item in obj.address:
-            if item.kind in self.kinds:
+            if self.filter_kind(item):
                 new_address.extend(item.clone(kind='housenumber', name=n) for n in self.sanitize(item.name))
             else:
                 # Don't touch other address items.

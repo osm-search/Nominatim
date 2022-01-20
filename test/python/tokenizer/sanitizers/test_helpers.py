@@ -10,6 +10,7 @@ Tests for sanitizer helper functions.
 import pytest
 
 from nominatim.errors import UsageError
+from nominatim.tokenizer.place_sanitizer import PlaceName
 import nominatim.tokenizer.sanitizers.helpers as helpers
 
 @pytest.mark.parametrize('inp', ('fg34', 'f\\f', 'morning [glory]', '56.78'))
@@ -41,3 +42,38 @@ def test_create_split_regex_custom(delimiter):
 def test_create_split_regex_empty_delimiter():
     with pytest.raises(UsageError):
         regex = helpers.create_split_regex({'delimiters': ''})
+
+
+@pytest.mark.parametrize('inp', ('name', 'name:de', 'na\\me', '.*'))
+def test_create_kind_filter_no_params(inp):
+    filt = helpers.create_kind_filter({})
+
+    assert filt(PlaceName('something', inp, ''))
+
+
+@pytest.mark.parametrize('kind', ('de', 'name:de', 'ende'))
+def test_create_kind_filter_custom_regex_positive(kind):
+    filt = helpers.create_kind_filter({'filter-kind': '.*de'})
+
+    assert filt(PlaceName('something', kind, ''))
+
+
+@pytest.mark.parametrize('kind', ('de ', '123', '', 'bedece'))
+def test_create_kind_filter_custom_regex_negative(kind):
+    filt = helpers.create_kind_filter({'filter-kind': '.*de'})
+
+    assert not filt(PlaceName('something', kind, ''))
+
+
+@pytest.mark.parametrize('kind', ('name', 'fr', 'name:fr', 'frfr', '34'))
+def test_create_kind_filter_many_positive(kind):
+    filt = helpers.create_kind_filter({'filter-kind': ['.*fr', 'name', r'\d+']})
+
+    assert filt(PlaceName('something', kind, ''))
+
+
+@pytest.mark.parametrize('kind', ('name:de', 'fridge', 'a34', '.*', '\\'))
+def test_create_kind_filter_many_negative(kind):
+    filt = helpers.create_kind_filter({'filter-kind': ['.*fr', 'name', r'\d+']})
+
+    assert not filt(PlaceName('something', kind, ''))

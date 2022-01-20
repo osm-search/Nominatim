@@ -27,3 +27,26 @@ def create_split_regex(config, default=',;'):
         raise UsageError("Empty 'delimiter' parameter not allowed for sanitizer.")
 
     return re.compile('\\s*[{}]+\\s*'.format(''.join('\\' + d for d in delimiter_set)))
+
+
+def create_kind_filter(config, default=None):
+    """ Create a filter function for the name kind from the 'filter-kind'
+        config parameter. The filter functions takes a name item and returns
+        True when the item passes the filter.
+
+        If the parameter is empty, the filter lets all items pass. If the
+        paramter is a string, it is interpreted as a single regular expression
+        that must match the full kind string. If the parameter is a list then
+        any of the regular expressions in the list must match to pass.
+    """
+    filters = config.get('filter-kind', default)
+
+    if not filters:
+        return lambda _: True
+
+    if isinstance(filters, str):
+        regex = re.compile(filters)
+        return lambda name: regex.fullmatch(name.kind)
+
+    regexes = [re.compile(regex) for regex in filters]
+    return lambda name: any(regex.fullmatch(name.kind) for regex in regexes)

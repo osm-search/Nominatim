@@ -5,7 +5,11 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Sanitizer that cleans and normalizes house numbers.
+Sanitizer that preprocesses address tags for house numbers. The sanitizer
+allows to
+
+* define which tags are to be considered house numbers (see 'filter-kind')
+* split house number lists into individual numbers (see 'delimiters')
 
 Arguments:
     delimiters: Define the set of characters to be used for

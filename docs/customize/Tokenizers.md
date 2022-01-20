@@ -181,6 +181,13 @@ The following is a list of sanitizers that are shipped with Nominatim.
     rendering:
         heading_level: 6
 
+##### clean-housenumbers
+
+::: nominatim.tokenizer.sanitizers.clean_housenumbers
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
 
 
 #### Token Analysis

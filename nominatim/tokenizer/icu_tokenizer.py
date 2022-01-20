@@ -116,20 +116,22 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """ Remove unused house numbers.
         """
         with connect(self.dsn) as conn:
+            if not conn.table_exists('search_name'):
+                return
             with conn.cursor(name="hnr_counter") as cur:
                 cur.execute("""SELECT word_id, word_token FROM word
                                WHERE type = 'H'
                                  AND NOT EXISTS(SELECT * FROM search_name
                                                 WHERE ARRAY[word.word_id] && name_vector)
                                  AND (char_length(word_token) > 6
-                                      OR word_token not similar to '\d+')
+                                      OR word_token not similar to '\\d+')
                             """)
                 candidates = {token: wid for wid, token in cur}
             with conn.cursor(name="hnr_counter") as cur:
                 cur.execute("""SELECT housenumber FROM placex
                                WHERE housenumber is not null
                                      AND (char_length(housenumber) > 6
-                                          OR housenumber not similar to '\d+')
+                                          OR housenumber not similar to '\\d+')
                             """)
                 for row in cur:
                     for hnr in row[0].split(';'):
@@ -146,9 +148,9 @@ class LegacyICUTokenizer(AbstractTokenizer):
     def update_word_tokens(self):
         """ Remove unused tokens.
         """
-        LOG.warn("Cleaning up housenumber tokens.")
+        LOG.warning("Cleaning up housenumber tokens.")
         self._cleanup_housenumbers()
-        LOG.warn("Tokenizer house-keeping done.")
+        LOG.warning("Tokenizer house-keeping done.")
 
 
     def name_analyzer(self):

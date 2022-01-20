@@ -30,8 +30,6 @@ Arguments:
           any analyzer tagged) is retained. (default: replace)
 
 """
-import re
-
 from nominatim.tools import country_info
 from nominatim.tokenizer.sanitizers.helpers import create_kind_filter
 

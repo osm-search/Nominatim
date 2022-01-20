@@ -11,7 +11,6 @@ Arguments:
     delimiters: Define the set of characters to be used for
                 splitting the list. (default: ',;')
 """
-from nominatim.errors import UsageError
 from nominatim.tokenizer.sanitizers.helpers import create_split_regex
 
 def create(func):

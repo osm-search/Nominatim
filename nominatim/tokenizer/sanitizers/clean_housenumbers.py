@@ -37,7 +37,8 @@ class _HousenumberSanitizer:
         new_address = []
         for item in obj.address:
             if self.filter_kind(item):
-                new_address.extend(item.clone(kind='housenumber', name=n) for n in self.sanitize(item.name))
+                new_address.extend(item.clone(kind='housenumber', name=n)
+                                   for n in self.sanitize(item.name))
             else:
                 # Don't touch other address items.
                 new_address.append(item)
@@ -56,7 +57,8 @@ class _HousenumberSanitizer:
                 yield from self._regularize(hnr)
 
 
-    def _regularize(self, hnr):
+    @staticmethod
+    def _regularize(hnr):
         yield hnr
 
 

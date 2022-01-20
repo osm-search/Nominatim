@@ -413,14 +413,16 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
 
     def _process_place_address(self, token_info, address):
-        hnrs = []
+        hnrs = set()
         addr_terms = []
         streets = []
         for item in address:
             if item.kind == 'postcode':
                 self._add_postcode(item.name)
-            elif item.kind in ('housenumber', 'streetnumber', 'conscriptionnumber'):
-                hnrs.append(item.name)
+            elif item.kind == 'housenumber':
+                norm_name = self._make_standard_hnr(item.name)
+                if norm_name:
+                    hnrs.add(norm_name)
             elif item.kind == 'street':
                 streets.extend(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
@@ -431,8 +433,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                 addr_terms.append((item.kind, self._compute_partial_tokens(item.name)))
 
         if hnrs:
-            hnrs = self._split_housenumbers(hnrs)
-            token_info.add_housenumbers(self.conn, [self._make_standard_hnr(n) for n in hnrs])
+            token_info.add_housenumbers(self.conn, hnrs)
 
         if addr_terms:
             token_info.add_address_terms(addr_terms)
@@ -543,24 +544,6 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                                       WHERE type = 'P' and word = pc))
                                 """, (term, postcode))
                 self._cache.postcodes.add(postcode)
-
-
-    @staticmethod
-    def _split_housenumbers(hnrs):
-        if len(hnrs) > 1 or ',' in hnrs[0] or ';' in hnrs[0]:
-            # split numbers if necessary
-            simple_list = []
-            for hnr in hnrs:
-                simple_list.extend((x.strip() for x in re.split(r'[;,]', hnr)))
-
-            if len(simple_list) > 1:
-                hnrs = list(set(simple_list))
-            else:
-                hnrs = simple_list
-
-        return hnrs
-
-
 
 
 class _TokenInfo:

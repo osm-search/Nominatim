@@ -13,7 +13,7 @@ Arguments:
 
     filter-kind: Restrict the names the sanitizer should be applied to
                  to the given tags. The parameter expects a list of
-                 regular expressions which are matched against `kind`.
+                 regular expressions which are matched against 'kind'.
                  Note that a match against the full string is expected.
     whitelist: Restrict the set of languages that should be tagged.
                Expects a list of acceptable suffixes. When unset,

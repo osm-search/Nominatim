@@ -5,7 +5,7 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Tests for the sanitizer that splitts multivalue lists.
+Tests for the sanitizer that splits multivalue lists.
 """
 import pytest
 

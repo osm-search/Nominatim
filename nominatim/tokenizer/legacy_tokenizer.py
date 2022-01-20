@@ -211,6 +211,13 @@ class LegacyTokenizer(AbstractTokenizer):
                     cur.drop_table("word_frequencies")
             conn.commit()
 
+
+    def update_word_tokens(self):
+        """ No house-keeping implemented for the legacy tokenizer.
+        """
+        LOG.info("No tokenizer clean-up available.")
+
+
     def name_analyzer(self):
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should

@@ -210,6 +210,13 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
+    def update_word_tokens(self) -> None:
+        """ Do house-keeping on the tokenizers internal data structures.
+            Remove unused word tokens, resort data etc.
+        """
+
+
+    @abstractmethod
     def name_analyzer(self) -> AbstractAnalyzer:
         """ Create a new analyzer for tokenizing names and queries
             using this tokinzer. Analyzers are context managers and should

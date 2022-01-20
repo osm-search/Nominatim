@@ -39,6 +39,8 @@ class UpdateRefresh:
         group = parser.add_argument_group('Data arguments')
         group.add_argument('--postcodes', action='store_true',
                            help='Update postcode centroid table')
+        group.add_argument('--word-tokens', action='store_true',
+                           help='Clean up search terms')
         group.add_argument('--word-counts', action='store_true',
                            help='Compute frequency of full-word search terms')
         group.add_argument('--address-levels', action='store_true',
@@ -75,6 +77,10 @@ class UpdateRefresh:
             else:
                 LOG.error("The place table doesn't exist. "
                           "Postcode updates on a frozen database is not possible.")
+
+        if args.word_tokens:
+            tokenizer = self._get_tokenizer(args.config)
+            tokenizer.update_word_tokens()
 
         if args.word_counts:
             LOG.warning('Recompute word statistics')

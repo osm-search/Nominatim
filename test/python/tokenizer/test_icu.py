@@ -400,7 +400,9 @@ class TestPlaceAddress:
 
     @pytest.fixture(autouse=True)
     def setup(self, analyzer, sql_functions):
-        with analyzer(trans=(":: upper()", "'🜵' > ' '")) as anl:
+        hnr = {'step': 'clean-housenumbers',
+               'filter-kind': ['housenumber', 'conscriptionnumber', 'streetnumber']}
+        with analyzer(trans=(":: upper()", "'🜵' > ' '"), sanitizers=[hnr]) as anl:
             self.analyzer = anl
             yield anl
 
@@ -444,13 +446,6 @@ class TestPlaceAddress:
 
         assert info['hnr'] == hnr.upper()
         assert info['hnr_tokens'] == "{-1}"
-
-
-    def test_process_place_housenumbers_lists(self, getorcreate_hnr_id):
-        info = self.process_address(conscriptionnumber='1; 2;3')
-
-        assert set(info['hnr'].split(';')) == set(('1', '2', '3'))
-        assert info['hnr_tokens'] == "{-1,-2,-3}"
 
 
     def test_process_place_housenumbers_duplicates(self, getorcreate_hnr_id):

@@ -79,6 +79,7 @@ class UpdateRefresh:
                           "Postcode updates on a frozen database is not possible.")
 
         if args.word_tokens:
+            LOG.warning('Updating word tokens')
             tokenizer = self._get_tokenizer(args.config)
             tokenizer.update_word_tokens()
 

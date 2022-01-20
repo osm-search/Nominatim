@@ -134,15 +134,21 @@ class LegacyICUTokenizer(AbstractTokenizer):
                 for row in cur:
                     for hnr in row[0].split(';'):
                         candidates.pop(hnr, None)
-        LOG.info("There are %s outdated housenumbers.", len(candidates))
+            LOG.info("There are %s outdated housenumbers.", len(candidates))
+            if candidates:
+                with conn.cursor() as cur:
+                    cur.execute("""DELETE FROM word WHERE word_id = any(%s)""",
+                                (list(candidates.values()), ))
+                conn.commit()
+
 
 
     def update_word_tokens(self):
         """ Remove unused tokens.
         """
-        LOG.info("Cleaning up housenumber tokens.")
+        LOG.warn("Cleaning up housenumber tokens.")
         self._cleanup_housenumbers()
-        LOG.info("Tokenizer house-keeping done.")
+        LOG.warn("Tokenizer house-keeping done.")
 
 
     def name_analyzer(self):

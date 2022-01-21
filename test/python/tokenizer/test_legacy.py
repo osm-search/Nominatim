@@ -257,6 +257,13 @@ def test_update_statistics(word_table, table_factory, temp_db_cursor, tokenizer_
                                           search_name_count > 0""") > 0
 
 
+def test_update_word_tokens(tokenizer_factory):
+    tok = tokenizer_factory()
+
+    # This is a noop and should just pass.
+    tok.update_word_tokens()
+
+
 def test_normalize(analyzer):
     assert analyzer.normalize('TEsT') == 'test'
 

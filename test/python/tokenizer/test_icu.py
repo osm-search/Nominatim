@@ -9,6 +9,7 @@ Tests for ICU tokenizer.
 """
 import shutil
 import yaml
+import itertools
 
 import pytest
 
@@ -554,3 +555,69 @@ class TestPlaceAddress:
 
         assert 'addr' not in info
 
+
+class TestUpdateWordTokens:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tokenizer_factory, table_factory, placex_table, word_table):
+        table_factory('search_name', 'place_id BIGINT, name_vector INT[]')
+        self.tok = tokenizer_factory()
+
+
+    @pytest.fixture
+    def search_entry(self, temp_db_cursor):
+        place_id = itertools.count(1000)
+
+        def _insert(*args):
+            temp_db_cursor.execute("INSERT INTO search_name VALUES (%s, %s)",
+                                   (next(place_id), list(args)))
+
+        return _insert
+
+
+    @pytest.mark.parametrize('hnr', ('1a', '1234567', '34 5'))
+    def test_remove_unused_housenumbers(self, word_table, hnr):
+        word_table.add_housenumber(1000, hnr)
+
+        assert word_table.count_housenumbers() == 1
+        self.tok.update_word_tokens()
+        assert word_table.count_housenumbers() == 0
+
+
+    def test_keep_unused_numeral_housenumbers(self, word_table):
+        word_table.add_housenumber(1000, '5432')
+
+        assert word_table.count_housenumbers() == 1
+        self.tok.update_word_tokens()
+        assert word_table.count_housenumbers() == 1
+
+
+    def test_keep_housenumbers_from_search_name_table(self, word_table, search_entry):
+        word_table.add_housenumber(9999, '5432a')
+        word_table.add_housenumber(9991, '9 a')
+        search_entry(123, 9999, 34)
+
+        assert word_table.count_housenumbers() == 2
+        self.tok.update_word_tokens()
+        assert word_table.count_housenumbers() == 1
+
+
+    def test_keep_housenumbers_from_placex_table(self, word_table, placex_table):
+        word_table.add_housenumber(9999, '5432a')
+        word_table.add_housenumber(9990, '34z')
+        placex_table.add(housenumber='34z')
+        placex_table.add(housenumber='25432a')
+
+        assert word_table.count_housenumbers() == 2
+        self.tok.update_word_tokens()
+        assert word_table.count_housenumbers() == 1
+
+
+    def test_keep_housenumbers_from_placex_table_hnr_list(self, word_table, placex_table):
+        word_table.add_housenumber(9991, '9 b')
+        word_table.add_housenumber(9990, '34z')
+        placex_table.add(housenumber='9 a;9 b;9 c')
+
+        assert word_table.count_housenumbers() == 2
+        self.tok.update_word_tokens()
+        assert word_table.count_housenumbers() == 1

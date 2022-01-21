@@ -309,12 +309,20 @@ jobs:
                   NOMINATIM_REPLICATION_MAX_DIFF=1 nominatim replication --once
               working-directory: /home/nominatim/nominatim-project
 
+            - name: Clean up database
+              run: nominatim refresh --postcodes --word-tokens
+              working-directory: /home/nominatim/nominatim-project
+
             - name: Run reverse-only import
               run : |
                   echo 'NOMINATIM_DATABASE_DSN="pgsql:dbname=reverse"' >> .env
                   nominatim import --osm-file ../test.pbf --reverse-only --no-updates
               working-directory: /home/nominatim/data-env-reverse
 
-            - name: Check reverse import
+            - name: Check reverse-only import
               run: nominatim admin --check-database
               working-directory: /home/nominatim/data-env-reverse
+
+            - name: Clean up database (reverse-only import)
+              run: nominatim refresh --postcodes --word-tokens
+              working-directory: /home/nominatim/nominatim-project

@@ -13,7 +13,7 @@ DECLARE
   country RECORD;
   existing RECORD;
   existingplacex RECORD;
-  existingline RECORD;
+  existingline BIGINT[];
   result BOOLEAN;
 BEGIN
   {% if debug %}
@@ -58,18 +58,28 @@ BEGIN
      and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString'
   THEN
     -- Get the existing entry from the interpolation table.
-    SELECT * INTO existingline
+    SELECT array_agg(place_id) INTO existingline
       FROM location_property_osmline WHERE osm_id = NEW.osm_id;
 
-    -- Update the interpolation table:
-    --   delete all old interpolation lines with same osm_id
-    --   and insert the new one(s) (they can be split up, if they have > 2 nodes)
-    IF existingline.osm_id IS NOT NULL THEN
-      DELETE FROM location_property_osmline where osm_id = NEW.osm_id;
+    IF existingline IS NULL or array_length(existingline, 1) = 0 THEN
+      INSERT INTO location_property_osmline (osm_id, address, linegeo)
+        VALUES (NEW.osm_id, NEW.address, NEW.geometry);
+    ELSE
+      -- Update the interpolation table:
+      --   The first entry gets the original data, all other entries
+      --   are removed and will be recreated on indexing.
+      --   (An interpolation can be split up, if it has more than 2 address nodes)
+      UPDATE location_property_osmline
+        SET address = NEW.address,
+            linegeo = NEW.geometry,
+            startnumber = null,
+            indexed_status = 1
+        WHERE place_id = existingline[1];
+      IF array_length(existingline, 1) > 1 THEN
+        DELETE FROM location_property_osmline
+          WHERE place_id = any(existingline[2:]);
+      END IF;
     END IF;
-
-    INSERT INTO location_property_osmline (osm_id, address, linegeo)
-      VALUES (NEW.osm_id, NEW.address, NEW.geometry);
 
     -- Now invalidate all address nodes on the line.
     -- They get their parent from the interpolation.

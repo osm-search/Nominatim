@@ -626,10 +626,7 @@ BEGIN
 {% if not disable_diff_updates %}
   -- The following is not needed until doing diff updates, and slows the main index process down
 
-  IF NEW.osm_type = 'N' and NEW.rank_search > 28 THEN
-      -- might be part of an interpolation
-      result := osmline_reinsert(NEW.osm_id, NEW.geometry);
-  ELSEIF NEW.rank_address > 0 THEN
+  IF NEW.rank_address > 0 THEN
     IF (ST_GeometryType(NEW.geometry) in ('ST_Polygon','ST_MultiPolygon') AND ST_IsValid(NEW.geometry)) THEN
       -- Performance: We just can't handle re-indexing for country level changes
       IF st_area(NEW.geometry) < 1 THEN

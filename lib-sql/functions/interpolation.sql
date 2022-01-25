@@ -82,24 +82,38 @@ $$
 LANGUAGE plpgsql STABLE;
 
 
-CREATE OR REPLACE FUNCTION osmline_reinsert(node_id BIGINT, geom GEOMETRY)
-  RETURNS BOOLEAN
+CREATE OR REPLACE FUNCTION reinsert_interpolation(way_id BIGINT, addr HSTORE,
+                                                  geom GEOMETRY)
+  RETURNS INT
   AS $$
 DECLARE
-  existingline RECORD;
+  existing BIGINT[];
 BEGIN
-   SELECT w.id FROM planet_osm_ways w, location_property_osmline p
-     WHERE p.linegeo && geom and p.osm_id = w.id and p.indexed_status = 0
-           and node_id = any(w.nodes) INTO existingline;
+  -- Get the existing entry from the interpolation table.
+  SELECT array_agg(place_id) INTO existing
+    FROM location_property_osmline WHERE osm_id = way_id;
 
-   IF existingline.id is not NULL THEN
-       DELETE FROM location_property_osmline WHERE osm_id = existingline.id;
-       INSERT INTO location_property_osmline (osm_id, address, linegeo)
-         SELECT osm_id, address, geometry FROM place
-           WHERE osm_type = 'W' and osm_id = existingline.id;
-   END IF;
+  IF existing IS NULL or array_length(existing, 1) = 0 THEN
+    INSERT INTO location_property_osmline (osm_id, address, linegeo)
+      VALUES (way_id, addr, geom);
+  ELSE
+    -- Update the interpolation table:
+    --   The first entry gets the original data, all other entries
+    --   are removed and will be recreated on indexing.
+    --   (An interpolation can be split up, if it has more than 2 address nodes)
+    UPDATE location_property_osmline
+      SET address = addr,
+          linegeo = geom,
+          startnumber = null,
+          indexed_status = 1
+      WHERE place_id = existing[1];
+    IF array_length(existing, 1) > 1 THEN
+      DELETE FROM location_property_osmline
+        WHERE place_id = any(existing[2:]);
+    END IF;
+  END IF;
 
-   RETURN true;
+  RETURN 1;
 END;
 $$
 LANGUAGE plpgsql;

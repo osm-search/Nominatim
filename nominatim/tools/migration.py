@@ -216,3 +216,14 @@ def create_tiger_housenumber_index(conn, **_):
                             ON location_property_tiger
                             USING btree(parent_place_id)
                             INCLUDE (startnumber, endnumber) """)
+
+
+@_migration(4, 0, 99, 1)
+def create_interpolation_index_on_place(conn, **_):
+    """ Create idx_place_interpolations for lookup of interpolation lines
+        on updates.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_place_interpolations
+                       ON place USING gist(geometry)
+                       WHERE osm_type = 'W' and address ? 'interpolation'""")

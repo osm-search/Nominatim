@@ -99,6 +99,7 @@ jobs:
             - name: PHP unit tests
               run: phpunit ./
               working-directory: Nominatim/test/php
+              if: matrix.ubuntu == 20
 
             - name: Python unit tests
               run: $PYTEST test/python

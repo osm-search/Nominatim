@@ -135,9 +135,8 @@ BEGIN
     FOR location IN
       SELECT q.parent_place_id
         FROM location_property_osmline q, planet_osm_ways x
-       WHERE q.linegeo && bbox and x.id = q.osm_id
-             and poi_osm_id = any(x.nodes)
-       LIMIT 1
+       WHERE q.linegeo && bbox and startnumber is not null
+             and x.id = q.osm_id and poi_osm_id = any(x.nodes)
     LOOP
       {% if debug %}RAISE WARNING 'Get parent from interpolation: %', location.parent_place_id;{% endif %}
       RETURN location.parent_place_id;
@@ -653,7 +652,7 @@ BEGIN
           -- roads may cause reparenting for >27 rank places
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter);
           -- reparenting also for OSM Interpolation Lines (and for Tiger?)
-          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
+          update location_property_osmline set indexed_status = 2 where indexed_status = 0 and startnumber is not null and ST_DWithin(location_property_osmline.linegeo, NEW.geometry, diameter);
         ELSEIF NEW.rank_search >= 16 THEN
           -- up to rank 16, street-less addresses may need reparenting
           update placex set indexed_status = 2 where indexed_status = 0 and rank_search > NEW.rank_search and ST_DWithin(placex.geometry, NEW.geometry, diameter) and (rank_search < 28 or name is not null or address ? 'place');

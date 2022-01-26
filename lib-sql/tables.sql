@@ -95,10 +95,10 @@ CREATE TABLE location_property_osmline (
     indexed_date TIMESTAMP,
     startnumber INTEGER,
     endnumber INTEGER,
+    step SMALLINT,
     partition SMALLINT,
     indexed_status SMALLINT,
     linegeo GEOMETRY,
-    interpolationtype TEXT,
     address HSTORE,
     token_info JSONB, -- custom column for tokenizer use only
     postcode TEXT,

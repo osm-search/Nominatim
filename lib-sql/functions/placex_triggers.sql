@@ -29,9 +29,9 @@ DECLARE
 BEGIN
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
-  IF p.rank_search < 30 OR p.osm_type != 'N' OR p.address is not null THEN
+  IF p.rank_search < 30 OR p.osm_type != 'N' THEN
     result.address := p.address;
-  ELSE
+  ELSEIF p.address is null THEN
     -- The additional && condition works around the misguided query
     -- planner of postgis 3.0.
     SELECT placex.address || hstore('_inherited', '') INTO result.address
@@ -42,6 +42,20 @@ BEGIN
            and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
            and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
      LIMIT 1;
+  ELSE
+    result.address := p.address;
+    -- See if we can inherit addtional address tags from an interpolation.
+    -- These will become permanent.
+    FOR location IN
+      SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
+        FROM place, planet_osm_ways w
+        WHERE place.osm_type = 'W' and place.address ? 'interpolation'
+              and place.geometry && p.geometry
+              and place.osm_id = w.id
+              and p.osm_id = any(w.nodes)
+    LOOP
+      result.address := location.address || result.address;
+    END LOOP;
   END IF;
 
   result.address := result.address - '_unlisted_place'::TEXT;
@@ -131,17 +145,6 @@ BEGIN
   END IF;
 
   IF parent_place_id is null and poi_osm_type = 'N' THEN
-    -- Is this node part of an interpolation?
-    FOR location IN
-      SELECT q.parent_place_id
-        FROM location_property_osmline q, planet_osm_ways x
-       WHERE q.linegeo && bbox and startnumber is not null
-             and x.id = q.osm_id and poi_osm_id = any(x.nodes)
-    LOOP
-      {% if debug %}RAISE WARNING 'Get parent from interpolation: %', location.parent_place_id;{% endif %}
-      RETURN location.parent_place_id;
-    END LOOP;
-
     FOR location IN
       SELECT p.place_id, p.osm_id, p.rank_search, p.address,
              coalesce(p.centroid, ST_Centroid(p.geometry)) as centroid

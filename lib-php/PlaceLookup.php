@@ -405,7 +405,7 @@ class PlaceLookup
                 $sSQL .= '         CASE ';             // interpolate the housenumbers here
                 $sSQL .= '           WHEN startnumber != endnumber ';
                 $sSQL .= '           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ';
-                $sSQL .= '           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ';
+                $sSQL .= '           ELSE linegeo ';
                 $sSQL .= '         END as centroid, ';
                 $sSQL .= '         parent_place_id, ';
                 $sSQL .= '         housenumber_for_place ';

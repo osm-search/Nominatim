@@ -64,8 +64,8 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupInterpolation');
         $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search,';
-        $sSQL .= '  ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
-        $sSQL .= '  startnumber, endnumber, interpolationtype,';
+        $sSQL .= '  (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fhnr,';
+        $sSQL .= '  startnumber, endnumber, step,';
         $sSQL .= '  ST_Distance(linegeo,'.$sPointSQL.') as distance';
         $sSQL .= ' FROM location_property_osmline';
         $sSQL .= ' WHERE ST_DWithin('.$sPointSQL.', linegeo, '.$fSearchDiam.')';
@@ -363,7 +363,11 @@ class ReverseGeocode
 
                 if ($aHouse) {
                     $oResult = new Result($aHouse['place_id'], Result::TABLE_OSMLINE);
-                    $oResult->iHouseNumber = closestHouseNumber($aHouse);
+                    $iRndNum = max(0, round($aHouse['fhnr'] / $aHouse['step']) * $aHouse['step']);
+                    $oResult->iHouseNumber = $aHouse['startnumber'] + $iRndNum;
+                    if ($oResult->iHouseNumber > $aHouse['endnumber']) {
+                        $oResult->iHouseNumber = $aHouse['endnumber'];
+                    }
                     $aPlace = $aHouse;
                 }
             }

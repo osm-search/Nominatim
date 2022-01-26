@@ -53,9 +53,13 @@ BEGIN
   IF parent_place_id is null THEN
     FOR location IN SELECT place_id FROM placex
         WHERE ST_DWithin(geom, placex.geometry, 0.001) and placex.rank_search = 26
-        ORDER BY (ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0))+
+        ORDER BY CASE WHEN ST_GeometryType(geom) = 'ST_Line' THEN
+                  (ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0))+
                   ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,0.5))+
-                  ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,1))) ASC limit 1
+                  ST_distance(placex.geometry, ST_LineInterpolatePoint(geom,1)))
+                 ELSE ST_distance(placex.geometry, geom) END
+              ASC
+        LIMIT 1
     LOOP
       parent_place_id := location.place_id;
     END LOOP;

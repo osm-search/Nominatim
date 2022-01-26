@@ -94,7 +94,7 @@ class AddressDetails
                 $aAddress[$sTypeLabel] = $sName;
 
                 if (!empty($aLine['name'])) {
-                    $this->addStateCode($aAddress, $sTypeLabel, $aLine['name']);
+                    $this->addSubdivisionCode($aAddress, $sTypeLabel, $aLine['name']);
                 }
             }
         }
@@ -179,16 +179,13 @@ class AddressDetails
         return $this->aAddressLines;
     }
 
-    /**
-     * Add `state_code` field to address details to represent second part of ISO 3166-2 country subdivision code
-     */
-    private function addStateCode(&$aAddress, $sTypeLabel, $nameDetails)
+    private function addSubdivisionCode(&$aAddress, $sTypeLabel, $nameDetails)
     {
         if (is_string($nameDetails)) {
             $nameDetails = json_decode('{' . str_replace('"=>"', '":"', $nameDetails) . '}', true);
         }
         if (!empty($nameDetails['ISO3166-2'])) {
-            $aAddress["$sTypeLabel:ISO3166-2"] = $nameDetails['ISO3166-2'];
+            $aAddress["$sTypeLabel-ISO3166-2"] = $nameDetails['ISO3166-2'];
         }
     }
 }

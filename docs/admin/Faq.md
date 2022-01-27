@@ -79,7 +79,7 @@ When running the import you may get a version mismatch:
 
 pg_config seems to use bad includes sometimes when multiple versions
 of PostgreSQL are available in the system. Make sure you remove the
-server development libraries (`postgresql-server-dev-9.5` on Ubuntu)
+server development libraries (`postgresql-server-dev-13` on Ubuntu)
 and recompile (`cmake .. && make`).
 
 

@@ -40,7 +40,7 @@ jobs:
                 ubuntu: [18, 20]
                 include:
                     - ubuntu: 18
-                      postgresql: 9.5
+                      postgresql: 9.6
                       postgis: 2.5
                       pytest: pytest
                       php: 7.2

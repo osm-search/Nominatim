@@ -24,7 +24,7 @@ Version information for Nominatim.
 # patch level when cherry-picking the commit with the migration.
 #
 # Released versions always have a database patch level of 0.
-NOMINATIM_VERSION = (4, 0, 99, 3)
+NOMINATIM_VERSION = (4, 0, 99, 4)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 5)
 POSTGIS_REQUIRED_VERSION = (2, 2)

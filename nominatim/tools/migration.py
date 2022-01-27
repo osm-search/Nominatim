@@ -231,7 +231,7 @@ def create_interpolation_index_on_place(conn, **_):
 
 @_migration(4, 0, 99, 2)
 def add_step_column_for_interpolation(conn, **_):
-    """ Add a new column 'step' to the interpolations table which will.
+    """ Add a new column 'step' to the interpolations table.
 
         Also convers the data into the stricter format which requires that
         startnumbers comply with the odd/even requirements.
@@ -256,6 +256,18 @@ def add_step_column_for_interpolation(conn, **_):
         # Finally add the new column and populate it.
         cur.execute("ALTER TABLE location_property_osmline ADD COLUMN step SMALLINT")
         cur.execute("""UPDATE location_property_osmline
+                         SET step = CASE WHEN interpolationtype = 'all'
+                                         THEN 1 ELSE 2 END
+                    """)
+
+
+@_migration(4, 0, 99, 3)
+def add_step_column_for_tiger(conn, **_):
+    """ Add a new column 'step' to the tiger data table.
+    """
+    with conn.cursor() as cur:
+        cur.execute("ALTER TABLE location_property_tiger ADD COLUMN step SMALLINT")
+        cur.execute("""UPDATE location_property_tiger
                          SET step = CASE WHEN interpolationtype = 'all'
                                          THEN 1 ELSE 2 END
                     """)

@@ -327,9 +327,9 @@ class ReverseGeocode
                     && $this->iMaxRank >= 28
                 ) {
                     $sSQL = 'SELECT place_id,parent_place_id,30 as rank_search,';
-                    $sSQL .= 'ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fraction,';
-                    $sSQL .= 'ST_distance('.$sPointSQL.', linegeo) as distance,';
-                    $sSQL .= 'startnumber,endnumber,interpolationtype';
+                    $sSQL .= '      (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fhnr,';
+                    $sSQL .= '      startnumber, endnumber, step,';
+                    $sSQL .= '      ST_Distance('.$sPointSQL.', linegeo) as distance';
                     $sSQL .= ' FROM location_property_tiger WHERE parent_place_id = '.$oResult->iId;
                     $sSQL .= ' AND ST_DWithin('.$sPointSQL.', linegeo, 0.001)';
                     $sSQL .= ' ORDER BY distance ASC limit 1';
@@ -341,7 +341,11 @@ class ReverseGeocode
                     if ($aPlaceTiger) {
                         $aPlace = $aPlaceTiger;
                         $oResult = new Result($aPlaceTiger['place_id'], Result::TABLE_TIGER);
-                        $oResult->iHouseNumber = closestHouseNumber($aPlaceTiger);
+                        $iRndNum = max(0, round($aPlaceTiger['fhnr'] / $aPlaceTiger['step']) * $aPlaceTiger['step']);
+                        $oResult->iHouseNumber = $aPlaceTiger['startnumber'] + $iRndNum;
+                        if ($oResult->iHouseNumber > $aPlaceTiger['endnumber']) {
+                            $oResult->iHouseNumber = $aPlaceTiger['endnumber'];
+                        }
                         $iRankAddress = 30;
                     }
                 }

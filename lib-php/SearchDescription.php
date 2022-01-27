@@ -786,15 +786,9 @@ class SearchDescription
         // If nothing found then search in Tiger data (location_property_tiger)
         if (CONST_Use_US_Tiger_Data && $sRoadPlaceIDs && $bIsIntHouseNumber && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_tiger';
-            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.') and (';
-            if ($iHousenumber % 2 == 0) {
-                $sSQL .= "interpolationtype='even'";
-            } else {
-                $sSQL .= "interpolationtype='odd'";
-            }
-            $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.'>=startnumber and ';
-            $sSQL .= $iHousenumber.'<=endnumber';
+            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.')';
+            $sSQL .= '  and ('.$iHousenumber.' - startnumber) % step = 0';
+            $sSQL .= '  and '.$iHousenumber.' between startnumber and endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
             Debug::printSQL($sSQL);

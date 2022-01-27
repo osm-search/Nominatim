@@ -80,9 +80,9 @@ CREATE TABLE location_property_tiger (
   parent_place_id BIGINT,
   startnumber INTEGER,
   endnumber INTEGER,
+  step SMALLINT,
   partition SMALLINT,
   linegeo GEOMETRY,
-  interpolationtype TEXT,
   postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
 

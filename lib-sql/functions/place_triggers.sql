@@ -13,8 +13,8 @@ DECLARE
   country RECORD;
   existing RECORD;
   existingplacex RECORD;
-  existingline RECORD;
-  result BOOLEAN;
+  existingline BIGINT[];
+  interpol RECORD;
 BEGIN
   {% if debug %}
     RAISE WARNING 'place_insert: % % % % %',NEW.osm_type,NEW.osm_id,NEW.class,NEW.type,st_area(NEW.geometry);
@@ -57,19 +57,7 @@ BEGIN
   IF NEW.class='place' and NEW.type='houses'
      and NEW.osm_type='W' and ST_GeometryType(NEW.geometry) = 'ST_LineString'
   THEN
-    -- Get the existing entry from the interpolation table.
-    SELECT * INTO existingline
-      FROM location_property_osmline WHERE osm_id = NEW.osm_id;
-
-    -- Update the interpolation table:
-    --   delete all old interpolation lines with same osm_id
-    --   and insert the new one(s) (they can be split up, if they have > 2 nodes)
-    IF existingline.osm_id IS NOT NULL THEN
-      DELETE FROM location_property_osmline where osm_id = NEW.osm_id;
-    END IF;
-
-    INSERT INTO location_property_osmline (osm_id, address, linegeo)
-      VALUES (NEW.osm_id, NEW.address, NEW.geometry);
+    PERFORM reinsert_interpolation(NEW.osm_id, NEW.address, NEW.geometry);
 
     -- Now invalidate all address nodes on the line.
     -- They get their parent from the interpolation.
@@ -154,6 +142,28 @@ BEGIN
               existing.geometry, NEW.geometry);
 
     RETURN null;
+  END IF;
+
+  -- If an address node is part of a interpolation line and changes or is
+  -- newly inserted (happens when the node already existed but now gets address
+  -- information), then mark the interpolation line for reparenting.
+  -- (Already here, because interpolation lines are reindexed before nodes,
+  --  so in the second call it would be too late.)
+  IF NEW.osm_type='N'
+     and coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
+  THEN
+      FOR interpol IN
+        SELECT DISTINCT osm_id, address, geometry FROM place, planet_osm_ways w
+        WHERE NEW.geometry && place.geometry
+              and place.osm_type = 'W'
+              and exists (SELECT * FROM location_property_osmline
+                          WHERE osm_id = place.osm_id
+                                and indexed_status in (0, 2))
+              and w.id = place.osm_id and NEW.osm_id = any (w.nodes)
+      LOOP
+        PERFORM reinsert_interpolation(interpol.osm_id, interpol.address,
+                                       interpol.geometry);
+      END LOOP;
   END IF;
 
   -- Get the existing placex entry.
@@ -277,16 +287,6 @@ BEGIN
           indexed_status = 2,
           geometry = NEW.geometry
       WHERE place_id = existingplacex.place_id;
-
-    -- If an address node which is part of a interpolation line changes
-    -- mark this line for reparenting.
-    -- (Already here, because interpolation lines are reindexed before nodes,
-    --  so in the second call it would be too late.)
-    IF NEW.osm_type='N'
-       and coalesce(existing.address, ''::hstore) != coalesce(NEW.address, ''::hstore)
-    THEN
-        result:= osmline_reinsert(NEW.osm_id, NEW.geometry);
-    END IF;
 
     -- Invalidate linked places: they potentially get a new name and addresses.
     IF existingplacex.linked_place_id is not NULL THEN

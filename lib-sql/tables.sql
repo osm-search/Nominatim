@@ -80,9 +80,9 @@ CREATE TABLE location_property_tiger (
   parent_place_id BIGINT,
   startnumber INTEGER,
   endnumber INTEGER,
+  step SMALLINT,
   partition SMALLINT,
   linegeo GEOMETRY,
-  interpolationtype TEXT,
   postcode TEXT);
 GRANT SELECT ON location_property_tiger TO "{{config.DATABASE_WEBUSER}}";
 
@@ -95,10 +95,10 @@ CREATE TABLE location_property_osmline (
     indexed_date TIMESTAMP,
     startnumber INTEGER,
     endnumber INTEGER,
+    step SMALLINT,
     partition SMALLINT,
     indexed_status SMALLINT,
     linegeo GEOMETRY,
-    interpolationtype TEXT,
     address HSTORE,
     token_info JSONB, -- custom column for tokenizer use only
     postcode TEXT,
@@ -106,7 +106,8 @@ CREATE TABLE location_property_osmline (
   ){{db.tablespace.search_data}};
 CREATE UNIQUE INDEX idx_osmline_place_id ON location_property_osmline USING BTREE (place_id) {{db.tablespace.search_index}};
 CREATE INDEX idx_osmline_geometry_sector ON location_property_osmline USING BTREE (geometry_sector) {{db.tablespace.address_index}};
-CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}};
+CREATE INDEX idx_osmline_linegeo ON location_property_osmline USING GIST (linegeo) {{db.tablespace.search_index}}
+  WHERE startnumber is not null;
 GRANT SELECT ON location_property_osmline TO "{{config.DATABASE_WEBUSER}}";
 
 drop table IF EXISTS search_name;

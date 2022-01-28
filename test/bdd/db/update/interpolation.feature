@@ -26,7 +26,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
 
     Scenario: addr:street added to interpolation
       Given the scene parallel-road
@@ -51,7 +51,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
       When updating places
           | osm | class   | type    | addr+interpolation | street       | geometry |
           | W10 | place   | houses  | even    | Cloud Street | :w-middle |
@@ -61,7 +61,7 @@ Feature: Update of address interpolations
           | N2     | W3 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W3              | 2     | 6 |
+          | W3              | 4     | 4   |
 
     Scenario: addr:street added to housenumbers
       Given the scene parallel-road
@@ -86,7 +86,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4 |
       When updating places
           | osm | class | type  | street      | housenr | geometry |
           | N1  | place | house | Cloud Street| 2       | :n-middle-w |
@@ -97,7 +97,7 @@ Feature: Update of address interpolations
           | N2     | W3 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W3              | 2     | 6 |
+          | W3              | 4     | 4   |
 
     Scenario: interpolation tag removed
       Given the scene parallel-road
@@ -122,7 +122,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
       When marking for delete W10
       Then W10 expands to no interpolation
       And placex contains
@@ -152,7 +152,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4 |
       When updating places
           | osm | class   | type         | name         | geometry |
           | W3  | highway | unclassified | Cloud Street | :w-south |
@@ -162,7 +162,7 @@ Feature: Update of address interpolations
           | N2     | W3 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W3              | 2     | 6 |
+          | W3              | 4     | 4   |
 
     Scenario: referenced road deleted
       Given the scene parallel-road
@@ -187,7 +187,7 @@ Feature: Update of address interpolations
           | N2     | W3 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W3              | 2     | 6 |
+          | W3              | 4     | 4   |
       When marking for delete W3
       Then placex contains
           | object | parent_place_id |
@@ -195,7 +195,7 @@ Feature: Update of address interpolations
           | N2     | W2 |
       And W10 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
 
     Scenario: building becomes interpolation
       Given the scene building-with-parallel-streets
@@ -222,7 +222,7 @@ Feature: Update of address interpolations
       Then placex has no entry for W1
       And W1 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
 
     Scenario: interpolation becomes building
       Given the scene building-with-parallel-streets
@@ -243,7 +243,7 @@ Feature: Update of address interpolations
       Then placex has no entry for W1
       And W1 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
       When updating places
           | osm | class    | type  | housenr | geometry |
           | W1  | place    | house | 3       | :w-building |
@@ -273,7 +273,7 @@ Feature: Update of address interpolations
           | W1  | place   | houses  | even    | Cloud Street| :w-north |
       Then W1 expands to interpolation
           | parent_place_id | start | end |
-          | W2              | 2     | 6 |
+          | W2              | 4     | 4   |
 
     Scenario: housenumber added in middle of interpolation
       Given the grid
@@ -294,15 +294,15 @@ Feature: Update of address interpolations
           | N5  | place | house | 10      |
       When importing
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 10  | 3,4,5    |
+          | parent_place_id | start | end |
+          | W1              | 4     | 8  |
       When updating places
           | osm | class | type  | housenr |
           | N4  | place | house | 6       |
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 6   | 3,4      |
-          | W1              | 6     | 10  | 4,5      |
+          | parent_place_id | start | end |
+          | W1              | 4     | 4   |
+          | W1              | 8     | 8   |
 
     @Fail
     Scenario: housenumber removed in middle of interpolation
@@ -325,13 +325,13 @@ Feature: Update of address interpolations
           | N5  | place | house | 10      |
       When importing
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 6   | 3,4      |
-          | W1              | 6     | 10  | 4,5      |
+          | parent_place_id | start | end |
+          | W1              | 4     | 4   |
+          | W1              | 8     | 8   |
       When marking for delete N4
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 10  | 3,4,5    |
+          | parent_place_id | start | end |
+          | W1              | 4     | 8   |
 
     Scenario: Change the start housenumber
       Given the grid
@@ -352,12 +352,12 @@ Feature: Update of address interpolations
           | N4  | place | house | 6       |
       When importing
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 6   | 3,4      |
+          | parent_place_id | start | end |
+          | W1              | 4     | 4   |
       When updating places
           | osm | class | type  | housenr |
           | N4  | place | house | 8       |
       Then W2 expands to interpolation
-          | parent_place_id | start | end | geometry |
-          | W1              | 2     | 8   | 3,4      |
+          | parent_place_id | start | end |
+          | W1              | 4     | 6   |
 

@@ -216,3 +216,58 @@ def create_tiger_housenumber_index(conn, **_):
                             ON location_property_tiger
                             USING btree(parent_place_id)
                             INCLUDE (startnumber, endnumber) """)
+
+
+@_migration(4, 0, 99, 1)
+def create_interpolation_index_on_place(conn, **_):
+    """ Create idx_place_interpolations for lookup of interpolation lines
+        on updates.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""CREATE INDEX IF NOT EXISTS idx_place_interpolations
+                       ON place USING gist(geometry)
+                       WHERE osm_type = 'W' and address ? 'interpolation'""")
+
+
+@_migration(4, 0, 99, 2)
+def add_step_column_for_interpolation(conn, **_):
+    """ Add a new column 'step' to the interpolations table.
+
+        Also convers the data into the stricter format which requires that
+        startnumbers comply with the odd/even requirements.
+    """
+    with conn.cursor() as cur:
+        # Mark invalid all interpolations with no intermediate numbers.
+        cur.execute("""UPDATE location_property_osmline SET startnumber = null
+                       WHERE endnumber - startnumber <= 1 """)
+        # Align the start numbers where odd/even does not match.
+        cur.execute("""UPDATE location_property_osmline
+                       SET startnumber = startnumber + 1,
+                           linegeo = ST_LineSubString(linegeo,
+                                                      1.0 / (endnumber - startnumber)::float,
+                                                      1)
+                       WHERE (interpolationtype = 'odd' and startnumber % 2 = 0)
+                              or (interpolationtype = 'even' and startnumber % 2 = 1)
+                    """)
+        # Mark invalid odd/even interpolations with no intermediate numbers.
+        cur.execute("""UPDATE location_property_osmline SET startnumber = null
+                       WHERE interpolationtype in ('odd', 'even')
+                             and endnumber - startnumber = 2""")
+        # Finally add the new column and populate it.
+        cur.execute("ALTER TABLE location_property_osmline ADD COLUMN step SMALLINT")
+        cur.execute("""UPDATE location_property_osmline
+                         SET step = CASE WHEN interpolationtype = 'all'
+                                         THEN 1 ELSE 2 END
+                    """)
+
+
+@_migration(4, 0, 99, 3)
+def add_step_column_for_tiger(conn, **_):
+    """ Add a new column 'step' to the tiger data table.
+    """
+    with conn.cursor() as cur:
+        cur.execute("ALTER TABLE location_property_tiger ADD COLUMN step SMALLINT")
+        cur.execute("""UPDATE location_property_tiger
+                         SET step = CASE WHEN interpolationtype = 'all'
+                                         THEN 1 ELSE 2 END
+                    """)

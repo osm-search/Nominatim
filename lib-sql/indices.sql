@@ -28,7 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_placex_geometry_reverse_lookupPolygon
     AND name is not null AND indexed_status = 0 AND linked_place_id is null;
 
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_place_id
-  ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}};
+  ON location_property_osmline USING BTREE (parent_place_id) {{db.tablespace.search_index}}
+  WHERE parent_place_id is not null;
 
 CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id
   ON location_property_osmline USING BTREE (osm_id) {{db.tablespace.search_index}};
@@ -48,6 +49,10 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 
   CREATE UNIQUE INDEX IF NOT EXISTS idx_place_osm_unique
     ON place USING btree(osm_id, osm_type, class, type) {{db.tablespace.address_index}};
+
+  CREATE INDEX IF NOT EXISTS idx_place_interpolations
+    ON place USING gist(geometry) {{db.tablespace.address_index}}
+    WHERE osm_type = 'W' and address ? 'interpolation';
 {% endif %}
 
 -- Indices only needed for search.
@@ -62,8 +67,12 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 
   {% if postgres.has_index_non_key_column %}
     CREATE INDEX IF NOT EXISTS idx_placex_housenumber
-      ON placex USING btree (parent_place_id) INCLUDE (housenumber) WHERE housenumber is not null;
+      ON placex USING btree (parent_place_id) {{db.tablespace.search_index}}
+      INCLUDE (housenumber)
+      WHERE housenumber is not null;
     CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id_with_hnr
-      ON location_property_osmline USING btree(parent_place_id) INCLUDE (startnumber, endnumber);
+      ON location_property_osmline USING btree(parent_place_id) {{db.tablespace.search_index}}
+      INCLUDE (startnumber, endnumber)
+      WHERE startnumber is not null;
   {% endif %}
 {% endif %}

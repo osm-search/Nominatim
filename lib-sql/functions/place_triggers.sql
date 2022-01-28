@@ -156,6 +156,7 @@ BEGIN
         SELECT DISTINCT osm_id, address, geometry FROM place, planet_osm_ways w
         WHERE NEW.geometry && place.geometry
               and place.osm_type = 'W'
+              and place.address ? 'interpolation'
               and exists (SELECT * FROM location_property_osmline
                           WHERE osm_id = place.osm_id
                                 and indexed_status in (0, 2))

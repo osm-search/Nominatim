@@ -58,6 +58,14 @@ class MockIcuWordTable:
         self.conn.commit()
 
 
+    def add_housenumber(self, word_id, word_token):
+        with self.conn.cursor() as cur:
+            cur.execute("""INSERT INTO word (word_id, word_token, type)
+                              VALUES (%s, %s, 'H')
+                        """, (word_id, word_token))
+        self.conn.commit()
+
+
     def count(self):
         with self.conn.cursor() as cur:
             return cur.scalar("SELECT count(*) FROM word")
@@ -66,6 +74,11 @@ class MockIcuWordTable:
     def count_special(self):
         with self.conn.cursor() as cur:
             return cur.scalar("SELECT count(*) FROM word WHERE type = 'S'")
+
+
+    def count_housenumbers(self):
+        with self.conn.cursor() as cur:
+            return cur.scalar("SELECT count(*) FROM word WHERE type = 'H'")
 
 
     def get_special(self):

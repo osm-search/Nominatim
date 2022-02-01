@@ -39,6 +39,11 @@ class TestRefresh:
         assert self.tokenizer_mock.update_statistics_called
 
 
+    def test_refresh_word_tokens(self):
+        assert self.call_nominatim('refresh', '--word-tokens') == 0
+        assert self.tokenizer_mock.update_word_tokens_called
+
+
     def test_refresh_postcodes(self, mock_func_factory, place_table):
         func_mock = mock_func_factory(nominatim.tools.postcodes, 'update_postcodes')
         idx_mock = mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_postcodes')

@@ -206,26 +206,6 @@ function parseLatLon($sQuery)
     return array($sFound, $fQueryLat, $fQueryLon);
 }
 
-function closestHouseNumber($aRow)
-{
-    $fHouse = $aRow['startnumber']
-                + ($aRow['endnumber'] - $aRow['startnumber']) * $aRow['fraction'];
-
-    switch ($aRow['interpolationtype']) {
-        case 'odd':
-            $iHn = (int)($fHouse/2) * 2 + 1;
-            break;
-        case 'even':
-            $iHn = (int)(round($fHouse/2)) * 2;
-            break;
-        default:
-            $iHn = (int)(round($fHouse));
-            break;
-    }
-
-    return max(min($aRow['endnumber'], $iHn), $aRow['startnumber']);
-}
-
 if (!function_exists('array_key_last')) {
     function array_key_last(array $array)
     {

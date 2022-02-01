@@ -13,7 +13,7 @@ Arguments:
 
     filter-kind: Restrict the names the sanitizer should be applied to
                  to the given tags. The parameter expects a list of
-                 regular expressions which are matched against `kind`.
+                 regular expressions which are matched against 'kind'.
                  Note that a match against the full string is expected.
     whitelist: Restrict the set of languages that should be tagged.
                Expects a list of acceptable suffixes. When unset,
@@ -30,20 +30,15 @@ Arguments:
           any analyzer tagged) is retained. (default: replace)
 
 """
-import re
-
 from nominatim.tools import country_info
+from nominatim.tokenizer.sanitizers.helpers import create_kind_filter
 
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.
     """
 
     def __init__(self, config):
-        if 'filter-kind' in config:
-            self.regexes = [re.compile(regex) for regex in config['filter-kind']]
-        else:
-            self.regexes = None
-
+        self.filter_kind = create_kind_filter(config)
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
 
@@ -63,13 +58,6 @@ class _AnalyzerByLanguage:
                         self.deflangs[ccode] = clangs
 
 
-    def _kind_matches(self, kind):
-        if self.regexes is None:
-            return True
-
-        return any(regex.fullmatch(kind) for regex in self.regexes)
-
-
     def _suffix_matches(self, suffix):
         if self.whitelist is None:
             return len(suffix) in (2, 3) and suffix.islower()
@@ -84,7 +72,7 @@ class _AnalyzerByLanguage:
         more_names = []
 
         for name in (n for n in obj.names
-                     if not n.has_attr('analyzer') and self._kind_matches(n.kind)):
+                     if not n.has_attr('analyzer') and self.filter_kind(n)):
             if name.suffix:
                 langs = [name.suffix] if self._suffix_matches(name.suffix) else None
             else:

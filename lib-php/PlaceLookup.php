@@ -348,7 +348,9 @@ class PlaceLookup
                     $sSQL .= '     null::text AS extra_place ';
                     $sSQL .= ' FROM (';
                     $sSQL .= '     SELECT place_id, ';    // interpolate the Tiger housenumbers here
-                    $sSQL .= '         ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) AS centroid, ';
+                    $sSQL .= '         CASE WHEN startnumber != endnumber';
+                    $sSQL .= '              THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float)';
+                    $sSQL .= '              ELSE ST_LineInterpolatePoint(linegeo, 0.5) END AS centroid, ';
                     $sSQL .= '         parent_place_id, ';
                     $sSQL .= '         housenumber_for_place';
                     $sSQL .= '     FROM (';
@@ -405,7 +407,7 @@ class PlaceLookup
                 $sSQL .= '         CASE ';             // interpolate the housenumbers here
                 $sSQL .= '           WHEN startnumber != endnumber ';
                 $sSQL .= '           THEN ST_LineInterpolatePoint(linegeo, (housenumber_for_place-startnumber::float)/(endnumber-startnumber)::float) ';
-                $sSQL .= '           ELSE ST_LineInterpolatePoint(linegeo, 0.5) ';
+                $sSQL .= '           ELSE linegeo ';
                 $sSQL .= '         END as centroid, ';
                 $sSQL .= '         parent_place_id, ';
                 $sSQL .= '         housenumber_for_place ';

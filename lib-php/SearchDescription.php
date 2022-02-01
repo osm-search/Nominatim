@@ -769,18 +769,9 @@ class SearchDescription
             // if nothing found, search in the interpolation line table
             $sSQL = 'SELECT distinct place_id FROM location_property_osmline';
             $sSQL .= ' WHERE startnumber is not NULL';
-            $sSQL .= '  AND parent_place_id in ('.$sRoadPlaceIDs.') AND (';
-            if ($iHousenumber % 2 == 0) {
-                // If housenumber is even, look for housenumber in streets
-                // with interpolationtype even or all.
-                $sSQL .= "interpolationtype='even'";
-            } else {
-                // Else look for housenumber with interpolationtype odd or all.
-                $sSQL .= "interpolationtype='odd'";
-            }
-            $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.'>=startnumber and ';
-            $sSQL .= $iHousenumber.'<=endnumber';
+            $sSQL .= '  and parent_place_id in ('.$sRoadPlaceIDs.')';
+            $sSQL .= '  and ('.$iHousenumber.' - startnumber) % step = 0';
+            $sSQL .= '  and '.$iHousenumber.' between startnumber and endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
             Debug::printSQL($sSQL);
@@ -795,15 +786,9 @@ class SearchDescription
         // If nothing found then search in Tiger data (location_property_tiger)
         if (CONST_Use_US_Tiger_Data && $sRoadPlaceIDs && $bIsIntHouseNumber && empty($aResults)) {
             $sSQL = 'SELECT place_id FROM location_property_tiger';
-            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.') and (';
-            if ($iHousenumber % 2 == 0) {
-                $sSQL .= "interpolationtype='even'";
-            } else {
-                $sSQL .= "interpolationtype='odd'";
-            }
-            $sSQL .= " or interpolationtype='all') and ";
-            $sSQL .= $iHousenumber.'>=startnumber and ';
-            $sSQL .= $iHousenumber.'<=endnumber';
+            $sSQL .= ' WHERE parent_place_id in ('.$sRoadPlaceIDs.')';
+            $sSQL .= '  and ('.$iHousenumber.' - startnumber) % step = 0';
+            $sSQL .= '  and '.$iHousenumber.' between startnumber and endnumber';
             $sSQL .= $this->oContext->excludeSQL(' AND place_id');
 
             Debug::printSQL($sSQL);

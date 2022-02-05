@@ -188,9 +188,6 @@ jobs:
                       image: "ubuntu:20.04"
                       ubuntu: 20
                       install_mode: install-apache
-                    - name: Centos-8
-                      flavour: centos
-                      image: "centos:8"
 
         container:
             image: ${{ matrix.image }}

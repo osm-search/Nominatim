@@ -29,6 +29,10 @@ class _HousenumberSanitizer:
         self.filter_kind = create_kind_filter(config, 'housenumber')
         self.split_regexp = create_split_regex(config)
 
+        nameregexps = config.get('is-a-name', [])
+        self.is_name_regexp = [re.compile(r) for r in nameregexps]
+
+
 
     def __call__(self, obj):
         if not obj.address:
@@ -37,8 +41,11 @@ class _HousenumberSanitizer:
         new_address = []
         for item in obj.address:
             if self.filter_kind(item):
-                new_address.extend(item.clone(kind='housenumber', name=n)
-                                   for n in self.sanitize(item.name))
+                if self.treat_as_name(item.name):
+                    obj.names.append(item.clone(kind='housenumber'))
+                else:
+                    new_address.extend(item.clone(kind='housenumber', name=n)
+                                       for n in self.sanitize(item.name))
             else:
                 # Don't touch other address items.
                 new_address.append(item)
@@ -60,6 +67,10 @@ class _HousenumberSanitizer:
     @staticmethod
     def _regularize(hnr):
         yield hnr
+
+
+    def _treat_as_name(self, housenumber):
+        return any(r.fullmatch(housenumber) is not None for r in self.is_name_regexp)
 
 
 def create(config):

@@ -53,3 +53,17 @@ Feature: Searching of house numbers
         | 2;4;12 |
         | 2,4,12 |
         | 2, 4, 12 |
+
+
+    Scenario: A name mapped as a housenumber is found
+        Given the places
+         | osm | class    | type | housenr | geometry |
+         | N1  | building | yes  | Warring | 9        |
+        And the places
+         | osm | class   | type | name       | geometry |
+         | W10 | highway | path | Chester St | 1,2,3    |
+        When importing
+        When sending search query "Chester St Warring"
+        Then results contain
+         | osm |
+         | N1  |

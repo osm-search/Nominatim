@@ -176,7 +176,7 @@ jobs:
 
         strategy:
             matrix:
-                name: [Ubuntu-18, Ubuntu-20, Centos-8]
+                name: [Ubuntu-18, Ubuntu-20]
                 include:
                     - name: Ubuntu-18
                       flavour: ubuntu

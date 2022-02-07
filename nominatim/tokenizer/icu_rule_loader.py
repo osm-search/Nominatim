@@ -45,7 +45,7 @@ class ICURuleLoader:
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
-        # Make sure country information is available to analyzers and sanatizers.
+        # Make sure country information is available to analyzers and sanitizers.
         nominatim.tools.country_info.setup_country_config(config)
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')

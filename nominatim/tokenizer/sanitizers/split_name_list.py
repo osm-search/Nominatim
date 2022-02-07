@@ -11,13 +11,11 @@ Arguments:
     delimiters: Define the set of characters to be used for
                 splitting the list. (default: ',;')
 """
-from nominatim.tokenizer.sanitizers.helpers import create_split_regex
-
-def create(func):
+def create(config):
     """ Create a name processing function that splits name values with
         multiple values into their components.
     """
-    regexp = create_split_regex(func)
+    regexp = config.get_delimiter()
 
     def _process(obj):
         if not obj.names:

@@ -42,3 +42,16 @@ def test_housenumber_lists(sanitize, number):
 def test_filter_kind(sanitize):
     assert sanitize(housenumber='34', number='4', badnumber='65') == \
             [('badnumber', '65'), ('housenumber', '34'), ('housenumber', '4')]
+
+
+@pytest.mark.parametrize('number', ('6523', 'n/a', '4'))
+def test_convert_to_name_converted(number):
+    sanitizer_args = {'step': 'clean-housenumbers',
+                      'convert-to-name': (r'\d+', 'n/a')}
+
+    place = PlaceInfo({'address': {'housenumber': number}})
+    names, address = PlaceSanitizer([sanitizer_args]).process_names(place)
+
+    assert ('housenumber', number) in set((p.kind, p.name) for p in names)
+    assert 'housenumber' not in set(p.kind for p in address)
+

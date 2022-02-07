@@ -19,17 +19,20 @@ Arguments:
                  where each string is a regular expression. An address item
                  is considered a house number if the 'kind' fully matches any
                  of the given regular expressions. (default: 'housenumber')
-
+    convert-to-name: Define house numbers that should be treated as a name
+                     instead of a house number. Either takes a single string
+                     or a list of strings, where each string is a regular
+                     expression that must match the full house number value.
 """
-from nominatim.tokenizer.sanitizers.helpers import create_split_regex, create_kind_filter
+import re
 
 class _HousenumberSanitizer:
 
     def __init__(self, config):
-        self.filter_kind = create_kind_filter(config, 'housenumber')
-        self.split_regexp = create_split_regex(config)
+        self.filter_kind = config.get_filter_kind('housenumber')
+        self.split_regexp = config.get_delimiter()
 
-        nameregexps = config.get('is-a-name', [])
+        nameregexps = config.get_string_list('convert-to-name', [])
         self.is_name_regexp = [re.compile(r) for r in nameregexps]
 
 
@@ -41,7 +44,7 @@ class _HousenumberSanitizer:
         new_address = []
         for item in obj.address:
             if self.filter_kind(item):
-                if self.treat_as_name(item.name):
+                if self._treat_as_name(item.name):
                     obj.names.append(item.clone(kind='housenumber'))
                 else:
                     new_address.extend(item.clone(kind='housenumber', name=n)

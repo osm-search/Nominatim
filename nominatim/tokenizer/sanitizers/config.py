@@ -33,7 +33,7 @@ class SanitizerConfig(UserDict):
             return None if default is None else list(default)
 
         if isinstance(values, str):
-            return [values]
+            return [values] if values else []
 
         if not isinstance(values, (list, tuple)):
             raise UsageError(f"Parameter '{param}' must be string or list of strings.")

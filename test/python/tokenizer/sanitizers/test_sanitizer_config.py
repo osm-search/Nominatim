@@ -13,6 +13,40 @@ from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceName
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
+def test_string_list_default_empty():
+    assert SanitizerConfig().get_string_list('op') == []
+
+
+def test_string_list_default_none():
+    assert SanitizerConfig().get_string_list('op', default=None) is None
+
+
+def test_string_list_default_something():
+    assert SanitizerConfig().get_string_list('op', default=['a', 'b']) == ['a', 'b']
+
+
+def test_string_list_value_string():
+    assert SanitizerConfig({'op': 't'}).get_string_list('op', default=['a', 'b']) == ['t']
+
+
+def test_string_list_value_list():
+    assert SanitizerConfig({'op': ['1', '2']}).get_string_list('op') == ['1', '2']
+
+
+def test_string_list_value_empty():
+    assert SanitizerConfig({'op': ''}).get_string_list('op', default=['a', 'b']) == []
+
+
+def test_string_list_value_dict():
+    with pytest.raises(UsageError):
+        SanitizerConfig({'op': {'1': 'a'}}).get_string_list('op')
+
+
+def test_string_list_value_int_list():
+    with pytest.raises(UsageError):
+        SanitizerConfig({'op': [1, 2]}).get_string_list('op')
+
+
 @pytest.mark.parametrize('inp', ('fg34', 'f\\f', 'morning [glory]', '56.78'))
 def test_create_split_regex_no_params_unsplit(inp):
     regex = SanitizerConfig().get_delimiter()

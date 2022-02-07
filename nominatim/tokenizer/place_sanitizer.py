@@ -11,6 +11,7 @@ is handed to the token analysis.
 import importlib
 
 from nominatim.errors import UsageError
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class PlaceName:
     """ A searchable name for a place together with properties.
@@ -117,7 +118,7 @@ class PlaceSanitizer:
                     raise UsageError("Sanitizer rule is missing the 'step' attribute.")
                 module_name = 'nominatim.tokenizer.sanitizers.' + func['step'].replace('-', '_')
                 handler_module = importlib.import_module(module_name)
-                self.handlers.append(handler_module.create(func))
+                self.handlers.append(handler_module.create(SanitizerConfig(func)))
 
 
     def process_names(self, place):

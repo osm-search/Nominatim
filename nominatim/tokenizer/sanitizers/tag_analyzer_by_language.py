@@ -31,21 +31,20 @@ Arguments:
 
 """
 from nominatim.tools import country_info
-from nominatim.tokenizer.sanitizers.helpers import create_kind_filter
 
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.
     """
 
     def __init__(self, config):
-        self.filter_kind = create_kind_filter(config)
+        self.filter_kind = config.get_filter_kind()
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
 
-        self.__compute_default_languages(config.get('use-defaults', 'no'))
+        self._compute_default_languages(config.get('use-defaults', 'no'))
 
 
-    def __compute_default_languages(self, use_defaults):
+    def _compute_default_languages(self, use_defaults):
         self.deflangs = {}
 
         if use_defaults in ('mono', 'all'):

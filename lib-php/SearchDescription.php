@@ -650,7 +650,8 @@ class SearchDescription
             if (preg_match('/^[0-9]+$/', $this->sHouseNumber)) {
                 $sIpolHnr = 'WHERE parent_place_id = sin.place_id ';
                 $sIpolHnr .= '  AND startnumber is not NULL AND sin.address_rank < 30';
-                $sIpolHnr .= '  AND '.$this->sHouseNumber.' between startnumber and endnumber ';
+                $sIpolHnr .= '  AND '.$this->sHouseNumber.' between startnumber and endnumber';
+                $sIpolHnr .= '  AND ('.$this->sHouseNumber.' - startnumber) % step = 0';
 
                 $sInterpolSql = 'SELECT array_agg(place_id) FROM location_property_osmline '.$sIpolHnr;
                 if (CONST_Use_US_Tiger_Data) {

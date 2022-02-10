@@ -67,3 +67,36 @@ Feature: Searching of house numbers
         Then results contain
          | osm |
          | N1  |
+
+
+    Scenario: Interpolations are found according to their type
+        Given the grid
+         | 10  |  | 11  |
+         | 100 |  | 101 |
+         | 20  |  | 21  |
+        And the places
+         | osm  | class   | type        | name    | geometry |
+         | W100 | highway | residential | Ringstr | 100, 101 |
+        And the places
+         | osm | class | type   | addr+interpolation | geometry |
+         | W10 | place | houses | even               | 10, 11   |
+         | W20 | place | houses | odd                | 20, 21   |
+        And the places
+         | osm | class | type  | housenr | geometry |
+         | N10 | place | house | 10      | 10 |
+         | N11 | place | house | 20      | 11 |
+         | N20 | place | house | 11      | 20 |
+         | N21 | place | house | 21      | 21 |
+        And the ways
+         | id | nodes |
+         | 10 | 10, 11 |
+         | 20 | 20, 21 |
+        When importing
+        When sending search query "Ringstr 12"
+        Then results contain
+         | osm |
+         | W10 |
+        When sending search query "Ringstr 13"
+        Then results contain
+         | osm |
+         | W20 |

@@ -561,7 +561,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
-            analyzer = self.token_analysis.analysis[analyzer_id]
+            analyzer = self.token_analysis.get_analyzer(analyzer_id)
             norm_name = analyzer.normalize(name.name)
             if analyzer_id is None:
                 token_id = norm_name

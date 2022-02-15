@@ -32,8 +32,9 @@ def make_analyser(*variants, variant_only=False):
         rules['mode'] = 'variant-only'
     config = module.configure(rules, DEFAULT_NORMALIZATION)
     trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
+    norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
 
-    return module.create(trans, config)
+    return module.create(norm, trans, config)
 
 
 def get_normalized_variants(proc, name):
@@ -45,8 +46,9 @@ def test_no_variants():
     rules = { 'analyzer': 'generic' }
     config = module.configure(rules, DEFAULT_NORMALIZATION)
     trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
+    norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
 
-    proc = module.create(trans, config)
+    proc = module.create(norm, trans, config)
 
     assert get_normalized_variants(proc, '大德!') == ['dà dé']
 

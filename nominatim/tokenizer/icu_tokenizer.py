@@ -561,7 +561,8 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
-            norm_name = self._normalized(name.name)
+            analyzer = self.token_analysis.analysis[analyzer_id]
+            norm_name = analyzer.normalize(name.name)
             if analyzer_id is None:
                 token_id = norm_name
             else:
@@ -569,7 +570,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
             full, part = self._cache.names.get(token_id, (None, None))
             if full is None:
-                variants = self.token_analysis.analysis[analyzer_id].get_variants_ascii(norm_name)
+                variants = analyzer.get_variants_ascii(norm_name)
                 if not variants:
                     continue
 

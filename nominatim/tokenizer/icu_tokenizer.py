@@ -454,9 +454,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         names, address = self.sanitizer.process_names(place)
 
         if names:
-            fulls, partials = self._compute_name_tokens(names)
-
-            token_info.add_names(fulls, partials)
+            token_info.set_names(*self._compute_name_tokens(names))
 
             if place.is_country():
                 self._add_country_full_names(place.country_code, names)
@@ -464,39 +462,23 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if address:
             self._process_place_address(token_info, address)
 
-        return token_info.data
+        return token_info.to_dict()
 
 
     def _process_place_address(self, token_info, address):
-        hnr_tokens = set()
-        hnrs = set()
-        addr_terms = []
-        streets = []
         for item in address:
             if item.kind == 'postcode':
                 self._add_postcode(item.name)
             elif item.kind == 'housenumber':
-                token, hnr = self._compute_housenumber_token(item)
-                if token is not None:
-                    hnr_tokens.add(token)
-                    hnrs.add(hnr)
+                token_info.add_housenumber(*self._compute_housenumber_token(item))
             elif item.kind == 'street':
-                streets.extend(self._retrieve_full_tokens(item.name))
+                token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
                 if not item.suffix:
                     token_info.add_place(self._compute_partial_tokens(item.name))
             elif not item.kind.startswith('_') and not item.suffix and \
                  item.kind not in ('country', 'full'):
-                addr_terms.append((item.kind, self._compute_partial_tokens(item.name)))
-
-        if hnrs:
-            token_info.add_housenumbers(hnr_tokens, hnrs)
-
-        if addr_terms:
-            token_info.add_address_terms(addr_terms)
-
-        if streets:
-            token_info.add_street(streets)
+                token_info.add_address_term(item.kind, self._compute_partial_tokens(item.name))
 
 
     def _compute_housenumber_token(self, hnr):
@@ -626,48 +608,75 @@ class _TokenInfo:
     """ Collect token information to be sent back to the database.
     """
     def __init__(self):
-        self.data = {}
+        self.names = None
+        self.housenumbers = set()
+        self.housenumber_tokens = set()
+        self.street_tokens = set()
+        self.place_tokens = set()
+        self.address_tokens = {}
+
 
     @staticmethod
     def _mk_array(tokens):
-        return '{%s}' % ','.join((str(s) for s in tokens))
+        return f"{{{','.join((str(s) for s in tokens))}}}"
 
 
-    def add_names(self, fulls, partials):
+    def to_dict(self):
+        """ Return the token information in database importable format.
+        """
+        out = {}
+
+        if self.names:
+            out['names'] = self.names
+
+        if self.housenumbers:
+            out['hnr'] = ';'.join(self.housenumbers)
+            out['hnr_tokens'] = self._mk_array(self.housenumber_tokens)
+
+        if self.street_tokens:
+            out['street'] = self._mk_array(self.street_tokens)
+
+        if self.place_tokens:
+            out['place'] = self._mk_array(self.place_tokens)
+
+        if self.address_tokens:
+            out['addr'] = self.address_tokens
+
+        return out
+
+
+    def set_names(self, fulls, partials):
         """ Adds token information for the normalised names.
         """
-        self.data['names'] = self._mk_array(itertools.chain(fulls, partials))
+        self.names = self._mk_array(itertools.chain(fulls, partials))
 
 
-    def add_housenumbers(self, tokens, hnrs):
+    def add_housenumber(self, token, hnr):
         """ Extract housenumber information from a list of normalised
             housenumbers.
         """
-        self.data['hnr_tokens'] = self._mk_array(tokens)
-        self.data['hnr'] = ';'.join(hnrs)
+        if token:
+            self.housenumbers.add(hnr)
+            self.housenumber_tokens.add(token)
 
 
     def add_street(self, tokens):
         """ Add addr:street match terms.
         """
-        self.data['street'] = self._mk_array(tokens)
+        self.street_tokens.update(tokens)
 
 
     def add_place(self, tokens):
         """ Add addr:place search and match terms.
         """
-        if tokens:
-            self.data['place'] = self._mk_array(tokens)
+        self.place_tokens.update(tokens)
 
 
-    def add_address_terms(self, terms):
+    def add_address_term(self, key, partials):
         """ Add additional address terms.
         """
-        tokens = {key: self._mk_array(partials)
-                  for key, partials in terms if partials}
-
-        if tokens:
-            self.data['addr'] = tokens
+        if partials:
+            self.address_tokens[key] = self._mk_array(partials)
 
 
 class _TokenCache:

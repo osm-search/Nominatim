@@ -213,7 +213,7 @@ BEGIN
               and address is not NULL and address ? 'housenumber'
         ORDER BY nodeidpos
     LOOP
-      RAISE WARNING 'processing point % (%)', nextnode.hnr, ST_AsText(nextnode.geometry);
+      {% if debug %}RAISE WARNING 'processing point % (%)', nextnode.hnr, ST_AsText(nextnode.geometry);{% endif %}
       IF linegeo is null THEN
         linegeo := NEW.linegeo;
       ELSE

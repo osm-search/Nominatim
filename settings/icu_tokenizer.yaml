@@ -25,13 +25,15 @@ transliteration:
     - "[^a-z0-9[:Space:]] >"
     - ":: NFC ()"
 sanitizers:
-    - step: split-name-list
-    - step: strip-brace-terms
     - step: clean-housenumbers
       filter-kind:
         - housenumber
         - conscriptionnumber
         - streetnumber
+      convert-to-name:
+        - (\A|.*,)[^\d,]{3,}(,.*|\Z)
+    - step: split-name-list
+    - step: strip-brace-terms
     - step: tag-analyzer-by-language
       filter-kind: [".*name.*"]
       whitelist: [bg,ca,cs,da,de,el,en,es,et,eu,fi,fr,gl,hu,it,ja,mg,ms,nl,no,pl,pt,ro,ru,sk,sl,sv,tr,uk,vi]

@@ -200,3 +200,26 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_analyzed_hnr_id(norm_term TEXT, lookup_terms TEXT[])
+  RETURNS INTEGER
+  AS $$
+DECLARE
+  return_id INTEGER;
+BEGIN
+  SELECT min(word_id) INTO return_id
+    FROM word WHERE word = norm_term and type = 'H';
+
+  IF return_id IS NULL THEN
+    return_id := nextval('seq_word');
+    INSERT INTO word (word_id, word_token, type, word, info)
+      SELECT return_id, lookup_term, 'H', norm_term,
+             json_build_object('lookup', lookup_terms[1])
+        FROM unnest(lookup_terms) as lookup_term;
+  END IF;
+
+  RETURN return_id;
+END;
+$$
+LANGUAGE plpgsql;

@@ -28,6 +28,10 @@ CREATE INDEX idx_word_postcodes ON word
 CREATE INDEX idx_word_full_word ON word
     USING btree(word) {{db.tablespace.address_index}}
     WHERE type = 'W';
+-- Used when inserting analyzed housenumbers (exclude old-style entries).
+CREATE INDEX idx_word_housenumbers ON word
+    USING btree(word) {{db.tablespace.address_index}}
+    WHERE type = 'H' and word is not null;
 
 GRANT SELECT ON word TO "{{config.DATABASE_WEBUSER}}";
 

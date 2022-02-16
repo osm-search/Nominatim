@@ -157,7 +157,8 @@ class Tokenizer
         $sSQL = 'SELECT word_id, word_token, type, word,';
         $sSQL .= "      info->>'op' as operator,";
         $sSQL .= "      info->>'class' as class, info->>'type' as ctype,";
-        $sSQL .= "      info->>'count' as count";
+        $sSQL .= "      info->>'count' as count,";
+        $sSQL .= "      info->>'lookup' as lookup";
         $sSQL .= ' FROM word WHERE word_token in (';
         $sSQL .= join(',', $this->oDB->getDBQuotedList($aTokens)).')';
 
@@ -179,7 +180,8 @@ class Tokenizer
                     }
                     break;
                 case 'H':  // house number tokens
-                    $oValidTokens->addToken($sTok, new Token\HouseNumber($iId, $aWord['word_token']));
+                    $sLookup = $aWord['lookup'] ?? $aWord['word_token'];
+                    $oValidTokens->addToken($sTok, new Token\HouseNumber($iId, $sLookup));
                     break;
                 case 'P':  // postcode tokens
                     // Postcodes are not normalized, so they may have content

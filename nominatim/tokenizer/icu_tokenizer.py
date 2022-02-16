@@ -485,18 +485,36 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         """ Normalize the housenumber and return the word token and the
             canonical form.
         """
-        norm_name = self._search_normalized(hnr.name)
-        if not norm_name:
-            return None, None
+        analyzer = self.token_analysis.analysis.get('@housenumber')
+        result = None, None
 
-        token = self._cache.housenumbers.get(norm_name)
-        if token is None:
-            with self.conn.cursor() as cur:
-                cur.execute("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
-                token = cur.fetchone()[0]
-                self._cache.housenumbers[norm_name] = token
+        if analyzer is None:
+            # When no custom analyzer is set, simply normalize and transliterate
+            norm_name = self._search_normalized(hnr.name)
+            if norm_name:
+                result = self._cache.housenumbers.get(norm_name, result)
+                if result[0] is None:
+                    with self.conn.cursor() as cur:
+                        cur.execute("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
+                        result = cur.fetchone()[0], norm_name
+                        self._cache.housenumbers[norm_name] = result
+        else:
+            # Otherwise use the analyzer to determine the canonical name.
+            # Per convention we use the first variant as the 'lookup name', the
+            # name that gets saved in the housenumber field of the place.
+            norm_name = analyzer.normalize(hnr.name)
+            if norm_name:
+                result = self._cache.housenumbers.get(norm_name, result)
+                if result[0] is None:
+                    variants = analyzer.get_variants_ascii(norm_name)
+                    if variants:
+                        with self.conn.cursor() as cur:
+                            cur.execute("SELECT create_analyzed_hnr_id(%s, %s)",
+                                        (norm_name, list(variants)))
+                            result = cur.fetchone()[0], variants[0]
+                            self._cache.housenumbers[norm_name] = result
 
-        return token, norm_name
+        return result
 
 
     def _compute_partial_tokens(self, name):

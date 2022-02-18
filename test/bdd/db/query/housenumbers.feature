@@ -27,6 +27,7 @@ Feature: Searching of house numbers
          | N1  |
 
 
+    @fail-legacy
     Scenario Outline: Numeral housenumbers in any script are found
         Given the places
          | osm | class    | type | housenr  | geometry |
@@ -83,6 +84,7 @@ Feature: Searching of house numbers
         | 2, 4, 12 |
 
 
+    @fail-legacy
     Scenario Outline: Housenumber - letter combinations are found
         Given the places
          | osm | class    | type | housenr | geometry |
@@ -148,6 +150,7 @@ Feature: Searching of house numbers
         | 34/10 |
 
 
+    @fail-legacy
     Scenario Outline: a bis housenumber is found
         Given the places
          | osm | class    | type | housenr | geometry |
@@ -180,6 +183,8 @@ Feature: Searching of house numbers
         | 45 BIS |
         | 45 bis |
 
+
+    @fail-legacy
     Scenario Outline: a ter housenumber is found
         Given the places
          | osm | class    | type | housenr | geometry |
@@ -213,6 +218,7 @@ Feature: Searching of house numbers
         | 45 TER |
 
 
+    @fail-legacy
     Scenario Outline: a number - letter - number combination housenumber is found
         Given the places
          | osm | class    | type | housenr | geometry |
@@ -246,6 +252,7 @@ Feature: Searching of house numbers
         | 501h1 |
 
 
+    @fail-legacy
     Scenario Outline: Russian housenumbers are found
         Given the places
          | osm | class    | type | housenr | geometry |

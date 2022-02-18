@@ -119,7 +119,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
             if not conn.table_exists('search_name'):
                 return
             with conn.cursor(name="hnr_counter") as cur:
-                cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token) FROM word
+                cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token)
+                               FROM word
                                WHERE type = 'H'
                                  AND NOT EXISTS(SELECT * FROM search_name
                                                 WHERE ARRAY[word.word_id] && name_vector)

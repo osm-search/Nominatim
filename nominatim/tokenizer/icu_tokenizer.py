@@ -119,12 +119,12 @@ class LegacyICUTokenizer(AbstractTokenizer):
             if not conn.table_exists('search_name'):
                 return
             with conn.cursor(name="hnr_counter") as cur:
-                cur.execute("""SELECT word_id, word_token FROM word
+                cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token) FROM word
                                WHERE type = 'H'
                                  AND NOT EXISTS(SELECT * FROM search_name
                                                 WHERE ARRAY[word.word_id] && name_vector)
-                                 AND (char_length(word_token) > 6
-                                      OR word_token not similar to '\\d+')
+                                 AND (char_length(coalesce(word, word_token)) > 6
+                                      OR coalesce(word, word_token) not similar to '\\d+')
                             """)
                 candidates = {token: wid for wid, token in cur}
             with conn.cursor(name="hnr_counter") as cur:
@@ -137,6 +137,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
                     for hnr in row[0].split(';'):
                         candidates.pop(hnr, None)
             LOG.info("There are %s outdated housenumbers.", len(candidates))
+            LOG.debug("Outdated housenumbers: %s", candidates.keys())
             if candidates:
                 with conn.cursor() as cur:
                     cur.execute("""DELETE FROM word WHERE word_id = any(%s)""",

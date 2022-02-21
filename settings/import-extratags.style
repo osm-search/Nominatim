@@ -180,7 +180,7 @@
     }
 },
 {
-    "keys" : ["junction"],
+    "keys" : ["junction", "healthcare"],
     "values" : {
         "" : "main,fallback,with_name"
     }

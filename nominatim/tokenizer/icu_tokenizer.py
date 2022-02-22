@@ -415,18 +415,24 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             cur.execute("""SELECT word_token FROM word
                             WHERE type = 'C' and word = %s""",
                         (country_code, ))
-            word_tokens.difference_update((t[0] for t in cur))
+            existing_tokens = {t[0] for t in cur}
 
             # Only add those names that are not yet in the list.
-            if word_tokens:
+            new_tokens = word_tokens - existing_tokens
+            if new_tokens:
                 cur.execute("""INSERT INTO word (word_token, type, word)
                                (SELECT token, 'C', %s
                                 FROM unnest(%s) as token)
-                            """, (country_code, list(word_tokens)))
+                            """, (country_code, list(new_tokens)))
 
-            # No names are deleted at the moment.
-            # If deletion is made possible, then the static names from the
-            # initial 'country_name' table should be kept.
+            # Delete names that no longer exist.
+            gone_tokens = existing_tokens - word_tokens
+            if gone_tokens:
+                cur.execute("""DELETE FROM word
+                               USING unnest(%s) as token
+                               WHERE type = 'C' and word = %s
+                                     and word_token = token""",
+                            (list(gone_tokens), country_code))
 
 
     def process_place(self, place):

@@ -1044,16 +1044,22 @@ BEGIN
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
-    -- Update the list of country names. Adding an additional sanity
-    -- check here: make sure the country does overlap with the area where
-    -- we expect it to be as per static country grid.
+    -- Update the list of country names.
+    -- Only take the name from the largest area for the given country code
+    -- in the hope that this is the authoritive one.
+    -- Also replace any old names so that all mapping mistakes can
+    -- be fixed through regular OSM updates.
     FOR location IN
-      SELECT country_code FROM country_osm_grid
-       WHERE ST_Covers(geometry, NEW.centroid) and country_code = NEW.country_code
+      SELECT osm_id FROM placex
+       WHERE rank_search = 4 and osm_type = 'R'
+             and country_code = NEW.country_code
+       ORDER BY ST_Area(geometry) desc
        LIMIT 1
     LOOP
-      {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
-      UPDATE country_name SET name = name || NEW.name WHERE country_code = NEW.country_code;
+      IF location.osm_id = NEW.osm_id THEN
+        {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
+        UPDATE country_name SET derived_name = NEW.name WHERE country_code = NEW.country_code;
+      END IF;
     END LOOP;
   END IF;
 

@@ -108,6 +108,7 @@ CREATE OR REPLACE FUNCTION get_addressdata(in_place_id BIGINT, in_housenumber IN
 DECLARE
   place addressdata_place;
   location RECORD;
+  country RECORD;
   current_rank_address INTEGER;
   location_isaddress BOOLEAN;
 BEGIN
@@ -198,6 +199,16 @@ BEGIN
       WHERE place_id = place.place_id
   LOOP
 --RAISE WARNING '%',location;
+    -- mix in default names for countries
+    IF location.rank_address = 4 and place.country_code is not NULL THEN
+      FOR country IN
+        SELECT coalesce(name, ''::hstore) as name FROM country_name
+          WHERE country_code = place.country_code LIMIT 1
+      LOOP
+        place.name := country.name || place.name;
+      END LOOP;
+    END IF;
+
     IF location.rank_address < 4 THEN
       -- no country locations for ranks higher than country
       place.country_code := NULL::varchar(2);
@@ -272,7 +283,8 @@ BEGIN
   -- If no country was included yet, add the name information from country_name.
   IF current_rank_address > 4 THEN
     FOR location IN
-      SELECT name FROM country_name WHERE country_code = place.country_code LIMIT 1
+      SELECT name || coalesce(derived_name, ''::hstore) as name FROM country_name
+        WHERE country_code = place.country_code LIMIT 1
     LOOP
 --RAISE WARNING '% % %',current_rank_address,searchcountrycode,countryname;
       RETURN NEXT ROW(null, null, null, location.name, 'place', 'country', NULL,

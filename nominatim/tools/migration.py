@@ -271,3 +271,12 @@ def add_step_column_for_tiger(conn, **_):
                          SET step = CASE WHEN interpolationtype = 'all'
                                          THEN 1 ELSE 2 END
                     """)
+
+
+@_migration(4, 0, 99, 4)
+def add_derived_name_column_for_country_names(conn, **_):
+    """ Add a new column 'derived_name' which in the future takes the
+        country names as imported from OSM data.
+    """
+    with conn.cursor() as cur:
+        cur.execute("ALTER TABLE country_name ADD COLUMN derived_name public.HSTORE")

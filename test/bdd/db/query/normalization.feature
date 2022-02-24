@@ -164,8 +164,8 @@ Feature: Import and search of names
 
     Scenario: Unprintable characters in postcodes are ignored
         Given the named places
-            | osm  | class   | type   | address |
-            | N234 | amenity | prison | 'postcode' : u'1234\u200e' |
+            | osm  | class   | type   | address                    | geometry   |
+            | N234 | amenity | prison | 'postcode' : u'1234\u200e' | country:de |
         When importing
         And sending search query "1234"
         Then result 0 has not attributes osm_type

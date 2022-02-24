@@ -93,29 +93,8 @@ def add_data_to_planet_ways(context):
 def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
-    nctx = context.nominatim
-
-    tokenizer = tokenizer_factory.create_tokenizer(nctx.get_test_config())
-    context.nominatim.copy_from_place(context.db)
-
-    # XXX use tool function as soon as it is ported
-    with context.db.cursor() as cur:
-        with (context.nominatim.src_dir / 'lib-sql' / 'postcode_tables.sql').open('r') as fd:
-            cur.execute(fd.read())
-        cur.execute("""
-            INSERT INTO location_postcode
-             (place_id, indexed_status, country_code, postcode, geometry)
-            SELECT nextval('seq_place'), 1, country_code,
-                   upper(trim (both ' ' from address->'postcode')) as pc,
-                   ST_Centroid(ST_Collect(ST_Centroid(geometry)))
-              FROM placex
-             WHERE address ? 'postcode' AND address->'postcode' NOT SIMILAR TO '%(,|;)%'
-                   AND geometry IS NOT null
-             GROUP BY country_code, pc""")
-
-    # Call directly as the refresh function does not include postcodes.
-    indexer.LOG.setLevel(logging.ERROR)
-    indexer.Indexer(context.nominatim.get_libpq_dsn(), tokenizer, 1).index_full(analyse=False)
+    context.nominatim.run_nominatim('import', '--continue', 'load-data',
+                                              '--index-noanalyse', '-q')
 
     check_database_integrity(context)
 
@@ -268,7 +247,7 @@ def check_location_postcode(context):
         for row in context.table:
             db_row = results.get((row['country'],row['postcode']))
             assert db_row is not None, \
-                "Missing row for country '{r['country']}' postcode '{r['postcode']}'.".format(r=row)
+                f"Missing row for country '{row['country']}' postcode '{row['postcode']}'."
 
             db_row.assert_row(row, ('country', 'postcode'))
 
@@ -333,12 +312,13 @@ def check_place_addressline_exclude(context):
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         for row in context.table:
             pid = NominatimID(row['object']).get_place_id(cur)
-            apid = NominatimID(row['address']).get_place_id(cur)
-            cur.execute(""" SELECT * FROM place_addressline
-                            WHERE place_id = %s AND address_place_id = %s""",
-                        (pid, apid))
-            assert cur.rowcount == 0, \
-                "Row found for place %s and address %s" % (row['object'], row['address'])
+            apid = NominatimID(row['address']).get_place_id(cur, allow_empty=True)
+            if apid is not None:
+                cur.execute(""" SELECT * FROM place_addressline
+                                WHERE place_id = %s AND address_place_id = %s""",
+                            (pid, apid))
+                assert cur.rowcount == 0, \
+                    "Row found for place %s and address %s" % (row['object'], row['address'])
 
 @then("W(?P<oid>\d+) expands to(?P<neg> no)? interpolation")
 def check_location_property_osmline(context, oid, neg):

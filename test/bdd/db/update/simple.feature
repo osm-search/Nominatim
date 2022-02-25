@@ -63,9 +63,7 @@ Feature: Update of simple objects
           | osm | class | type     | postcode | geometry |
           | N3  | place | postcode | 12345    | 1 -1 |
         When importing
-        Then placex contains
-          | object | class | type |
-          | N3     | place | postcode |
+        Then placex has no entry for N3
         When updating places
           | osm | class | type  | postcode | housenr | geometry |
           | N3  | place | house | 12345    | 13      | 1 -1 |

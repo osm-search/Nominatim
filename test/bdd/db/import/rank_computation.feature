@@ -16,7 +16,6 @@ Feature: Rank assignment
           | N18  | place     | city      | 0 0 |
           | N19  | place     | island    | 0 0 |
           | N36  | place     | house     | 0 0 |
-          | N38  | place     | houses    | 0 0 |
         And the named places
           | osm  | class     | type      | extra+capital | geometry |
           | N101 | place     | city      | yes           | 0 0 |
@@ -35,7 +34,6 @@ Feature: Rank assignment
           | N19    | 17          | 0 |
           | N101   | 15          | 16 |
           | N36    | 30          | 30 |
-          | N38    | 28          | 0 |
 
     Scenario: Ranks for boundaries are assigned according to admin level
         Given the named places

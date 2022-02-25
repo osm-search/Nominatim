@@ -390,17 +390,18 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
 
     def add_country_names(self, country_code, names):
-        """ Add names for the given country to the search index.
+        """ Add default names for the given country to the search index.
         """
         # Make sure any name preprocessing for country names applies.
         info = PlaceInfo({'name': names, 'country_code': country_code,
                           'rank_address': 4, 'class': 'boundary',
                           'type': 'administrative'})
         self._add_country_full_names(country_code,
-                                     self.sanitizer.process_names(info)[0])
+                                     self.sanitizer.process_names(info)[0],
+                                     internal=True)
 
 
-    def _add_country_full_names(self, country_code, names):
+    def _add_country_full_names(self, country_code, names, internal=False):
         """ Add names for the given country from an already sanitized
             name list.
         """
@@ -412,21 +413,41 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         with self.conn.cursor() as cur:
             # Get existing names
-            cur.execute("""SELECT word_token FROM word
-                            WHERE type = 'C' and word = %s""",
+            cur.execute("""SELECT word_token, coalesce(info ? 'internal', false) as is_internal
+                             FROM word
+                             WHERE type = 'C' and word = %s""",
                         (country_code, ))
-            word_tokens.difference_update((t[0] for t in cur))
+            existing_tokens = {True: set(), False: set()} # internal/external names
+            for word in cur:
+                existing_tokens[word[1]].add(word[0])
+
+            # Delete names that no longer exist.
+            gone_tokens = existing_tokens[internal] - word_tokens
+            if internal:
+                gone_tokens.update(existing_tokens[False] & word_tokens)
+            if gone_tokens:
+                cur.execute("""DELETE FROM word
+                               USING unnest(%s) as token
+                               WHERE type = 'C' and word = %s
+                                     and word_token = token""",
+                            (list(gone_tokens), country_code))
 
             # Only add those names that are not yet in the list.
-            if word_tokens:
-                cur.execute("""INSERT INTO word (word_token, type, word)
-                               (SELECT token, 'C', %s
-                                FROM unnest(%s) as token)
-                            """, (country_code, list(word_tokens)))
-
-            # No names are deleted at the moment.
-            # If deletion is made possible, then the static names from the
-            # initial 'country_name' table should be kept.
+            new_tokens = word_tokens - existing_tokens[True]
+            if not internal:
+                new_tokens -= existing_tokens[False]
+            if new_tokens:
+                if internal:
+                    sql = """INSERT INTO word (word_token, type, word, info)
+                               (SELECT token, 'C', %s, '{"internal": "yes"}'
+                                  FROM unnest(%s) as token)
+                           """
+                else:
+                    sql = """INSERT INTO word (word_token, type, word)
+                                   (SELECT token, 'C', %s
+                                    FROM unnest(%s) as token)
+                          """
+                cur.execute(sql, (country_code, list(new_tokens)))
 
 
     def process_place(self, place):

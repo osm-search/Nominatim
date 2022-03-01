@@ -45,8 +45,9 @@ class AbstractPlacexRunner:
 
     @staticmethod
     def get_place_details(worker, ids):
-        worker.perform("""SELECT place_id, (placex_indexing_prepare(placex)).*
-                          FROM placex WHERE place_id IN %s""",
+        worker.perform("""SELECT place_id, extra.*
+                          FROM placex, LATERAL placex_indexing_prepare(placex) as extra
+                          WHERE place_id IN %s""",
                        (tuple((p[0] for p in ids)), ))
 
 

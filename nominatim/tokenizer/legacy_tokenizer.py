@@ -515,7 +515,7 @@ class _TokenInfo:
             simple_list = list(set(simple_list))
 
         with conn.cursor() as cur:
-            cur.execute("SELECT (create_housenumbers(%s)).* ", (simple_list, ))
+            cur.execute("SELECT * FROM create_housenumbers(%s)", (simple_list, ))
             self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
 
 

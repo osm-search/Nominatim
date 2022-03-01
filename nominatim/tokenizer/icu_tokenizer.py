@@ -590,7 +590,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("SELECT (getorcreate_full_word(%s, %s)).*",
+                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s)",
                                 (token_id, variants))
                     full, part = cur.fetchone()
 

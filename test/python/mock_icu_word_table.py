@@ -58,11 +58,21 @@ class MockIcuWordTable:
         self.conn.commit()
 
 
-    def add_housenumber(self, word_id, word_token):
+    def add_housenumber(self, word_id, word_tokens, word=None):
         with self.conn.cursor() as cur:
-            cur.execute("""INSERT INTO word (word_id, word_token, type)
-                              VALUES (%s, %s, 'H')
-                        """, (word_id, word_token))
+            if isinstance(word_tokens, str):
+                # old style without analyser
+                cur.execute("""INSERT INTO word (word_id, word_token, type)
+                                  VALUES (%s, %s, 'H')
+                            """, (word_id, word_tokens))
+            else:
+                if word is None:
+                    word = word_tokens[0]
+                for token in word_tokens:
+                    cur.execute("""INSERT INTO word (word_id, word_token, type, word, info)
+                                      VALUES (%s, %s, 'H', %s, jsonb_build_object('lookup', %s))
+                                """, (word_id, token, word, word_tokens[0]))
+
         self.conn.commit()
 
 

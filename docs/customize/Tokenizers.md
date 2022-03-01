@@ -206,15 +206,16 @@ by a sanitizer (see for example the
 The token-analysis section contains the list of configured analyzers. Each
 analyzer must have an `id` parameter that uniquely identifies the analyzer.
 The only exception is the default analyzer that is used when no special
-analyzer was selected.
+analyzer was selected. There is one special id '@housenumber'. If an analyzer
+with that name is present, it is used for normalization of house numbers.
 
 Different analyzer implementations may exist. To select the implementation,
-the `analyzer` parameter must be set. Currently there is only one implementation
-`generic` which is described in the following.
+the `analyzer` parameter must be set. The different implementations are
+described in the following.
 
 ##### Generic token analyzer
 
-The generic analyzer is able to create variants from a list of given
+The generic analyzer `generic` is able to create variants from a list of given
 abbreviation and decomposition replacements and introduce spelling variations.
 
 ###### Variants
@@ -330,6 +331,14 @@ the mode by adding:
 ```
 
 to the analyser configuration.
+
+##### Housenumber token analyzer
+
+The analyzer `housenumbers` is purpose-made to analyze house numbers. It
+creates variants with optional spaces between numbers and letters. Thus,
+house numbers of the form '3 a', '3A', '3-A' etc. are all considered equivalent.
+
+The analyzer cannot be customized.
 
 ### Reconfiguration
 

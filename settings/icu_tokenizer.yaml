@@ -41,6 +41,8 @@ sanitizers:
       mode: append
 token-analysis:
     - analyzer: generic
+    - id: "@housenumber"
+      analyzer: housenumbers
     - id: bg
       analyzer: generic
       mode: variant-only

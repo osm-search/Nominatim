@@ -342,9 +342,10 @@ BEGIN
     WHERE s.place_id = parent_place_id;
 
   FOR addr_item IN
-    SELECT (get_addr_tag_rank(key, country)).*, key,
+    SELECT ranks.*, key,
            token_get_address_search_tokens(token_info, key) as search_tokens
-      FROM token_get_address_keys(token_info) as key
+      FROM token_get_address_keys(token_info) as key,
+           LATERAL get_addr_tag_rank(key, country) as ranks
       WHERE not token_get_address_search_tokens(token_info, key) <@ parent_address_vector
   LOOP
     addr_place := get_address_place(in_partition, geometry,
@@ -456,10 +457,12 @@ BEGIN
   address_havelevel := array_fill(false, ARRAY[maxrank]);
 
   FOR location IN
-    SELECT (get_address_place(partition, geometry, from_rank, to_rank,
-                              extent, token_info, key)).*, key
-      FROM (SELECT (get_addr_tag_rank(key, country)).*, key
-              FROM token_get_address_keys(token_info) as key) x
+    SELECT apl.*, key
+      FROM (SELECT extra.*, key
+              FROM token_get_address_keys(token_info) as key,
+                   LATERAL get_addr_tag_rank(key, country) as extra) x,
+           LATERAL get_address_place(partition, geometry, from_rank, to_rank,
+                              extent, token_info, key) as apl
       ORDER BY rank_address, distance, isguess desc
   LOOP
     IF location.place_id is null THEN

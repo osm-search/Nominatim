@@ -119,12 +119,13 @@ class LegacyICUTokenizer(AbstractTokenizer):
             if not conn.table_exists('search_name'):
                 return
             with conn.cursor(name="hnr_counter") as cur:
-                cur.execute("""SELECT word_id, word_token FROM word
+                cur.execute("""SELECT DISTINCT word_id, coalesce(info->>'lookup', word_token)
+                               FROM word
                                WHERE type = 'H'
                                  AND NOT EXISTS(SELECT * FROM search_name
                                                 WHERE ARRAY[word.word_id] && name_vector)
-                                 AND (char_length(word_token) > 6
-                                      OR word_token not similar to '\\d+')
+                                 AND (char_length(coalesce(word, word_token)) > 6
+                                      OR coalesce(word, word_token) not similar to '\\d+')
                             """)
                 candidates = {token: wid for wid, token in cur}
             with conn.cursor(name="hnr_counter") as cur:
@@ -137,6 +138,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
                     for hnr in row[0].split(';'):
                         candidates.pop(hnr, None)
             LOG.info("There are %s outdated housenumbers.", len(candidates))
+            LOG.debug("Outdated housenumbers: %s", candidates.keys())
             if candidates:
                 with conn.cursor() as cur:
                     cur.execute("""DELETE FROM word WHERE word_id = any(%s)""",
@@ -281,13 +283,6 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         """
         return postcode.strip().upper()
 
-
-    def _make_standard_hnr(self, hnr):
-        """ Create a normalised version of a housenumber.
-
-            This function takes minor shortcuts on transliteration.
-        """
-        return self._search_normalized(hnr)
 
     def update_postcodes_from_db(self):
         """ Update postcode tokens in the word table from the location_postcode
@@ -456,14 +451,12 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             Returns a JSON-serializable structure that will be handed into
             the database via the token_info field.
         """
-        token_info = _TokenInfo(self._cache)
+        token_info = _TokenInfo()
 
         names, address = self.sanitizer.process_names(place)
 
         if names:
-            fulls, partials = self._compute_name_tokens(names)
-
-            token_info.add_names(fulls, partials)
+            token_info.set_names(*self._compute_name_tokens(names))
 
             if place.is_country():
                 self._add_country_full_names(place.country_code, names)
@@ -471,37 +464,59 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if address:
             self._process_place_address(token_info, address)
 
-        return token_info.data
+        return token_info.to_dict()
 
 
     def _process_place_address(self, token_info, address):
-        hnrs = set()
-        addr_terms = []
-        streets = []
         for item in address:
             if item.kind == 'postcode':
                 self._add_postcode(item.name)
             elif item.kind == 'housenumber':
-                norm_name = self._make_standard_hnr(item.name)
-                if norm_name:
-                    hnrs.add(norm_name)
+                token_info.add_housenumber(*self._compute_housenumber_token(item))
             elif item.kind == 'street':
-                streets.extend(self._retrieve_full_tokens(item.name))
+                token_info.add_street(self._retrieve_full_tokens(item.name))
             elif item.kind == 'place':
                 if not item.suffix:
                     token_info.add_place(self._compute_partial_tokens(item.name))
             elif not item.kind.startswith('_') and not item.suffix and \
                  item.kind not in ('country', 'full'):
-                addr_terms.append((item.kind, self._compute_partial_tokens(item.name)))
+                token_info.add_address_term(item.kind, self._compute_partial_tokens(item.name))
 
-        if hnrs:
-            token_info.add_housenumbers(self.conn, hnrs)
 
-        if addr_terms:
-            token_info.add_address_terms(addr_terms)
+    def _compute_housenumber_token(self, hnr):
+        """ Normalize the housenumber and return the word token and the
+            canonical form.
+        """
+        analyzer = self.token_analysis.analysis.get('@housenumber')
+        result = None, None
 
-        if streets:
-            token_info.add_street(streets)
+        if analyzer is None:
+            # When no custom analyzer is set, simply normalize and transliterate
+            norm_name = self._search_normalized(hnr.name)
+            if norm_name:
+                result = self._cache.housenumbers.get(norm_name, result)
+                if result[0] is None:
+                    with self.conn.cursor() as cur:
+                        cur.execute("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
+                        result = cur.fetchone()[0], norm_name
+                        self._cache.housenumbers[norm_name] = result
+        else:
+            # Otherwise use the analyzer to determine the canonical name.
+            # Per convention we use the first variant as the 'lookup name', the
+            # name that gets saved in the housenumber field of the place.
+            norm_name = analyzer.normalize(hnr.name)
+            if norm_name:
+                result = self._cache.housenumbers.get(norm_name, result)
+                if result[0] is None:
+                    variants = analyzer.get_variants_ascii(norm_name)
+                    if variants:
+                        with self.conn.cursor() as cur:
+                            cur.execute("SELECT create_analyzed_hnr_id(%s, %s)",
+                                        (norm_name, list(variants)))
+                            result = cur.fetchone()[0], variants[0]
+                            self._cache.housenumbers[norm_name] = result
+
+        return result
 
 
     def _compute_partial_tokens(self, name):
@@ -561,7 +576,8 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
         for name in names:
             analyzer_id = name.get_attr('analyzer')
-            norm_name = self._normalized(name.name)
+            analyzer = self.token_analysis.get_analyzer(analyzer_id)
+            norm_name = analyzer.normalize(name.name)
             if analyzer_id is None:
                 token_id = norm_name
             else:
@@ -569,12 +585,12 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 
             full, part = self._cache.names.get(token_id, (None, None))
             if full is None:
-                variants = self.token_analysis.analysis[analyzer_id].get_variants_ascii(norm_name)
+                variants = analyzer.get_variants_ascii(norm_name)
                 if not variants:
                     continue
 
                 with self.conn.cursor() as cur:
-                    cur.execute("SELECT (getorcreate_full_word(%s, %s)).*",
+                    cur.execute("SELECT * FROM getorcreate_full_word(%s, %s)",
                                 (token_id, variants))
                     full, part = cur.fetchone()
 
@@ -611,50 +627,76 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
 class _TokenInfo:
     """ Collect token information to be sent back to the database.
     """
-    def __init__(self, cache):
-        self._cache = cache
-        self.data = {}
+    def __init__(self):
+        self.names = None
+        self.housenumbers = set()
+        self.housenumber_tokens = set()
+        self.street_tokens = set()
+        self.place_tokens = set()
+        self.address_tokens = {}
+
 
     @staticmethod
     def _mk_array(tokens):
-        return '{%s}' % ','.join((str(s) for s in tokens))
+        return f"{{{','.join((str(s) for s in tokens))}}}"
 
 
-    def add_names(self, fulls, partials):
+    def to_dict(self):
+        """ Return the token information in database importable format.
+        """
+        out = {}
+
+        if self.names:
+            out['names'] = self.names
+
+        if self.housenumbers:
+            out['hnr'] = ';'.join(self.housenumbers)
+            out['hnr_tokens'] = self._mk_array(self.housenumber_tokens)
+
+        if self.street_tokens:
+            out['street'] = self._mk_array(self.street_tokens)
+
+        if self.place_tokens:
+            out['place'] = self._mk_array(self.place_tokens)
+
+        if self.address_tokens:
+            out['addr'] = self.address_tokens
+
+        return out
+
+
+    def set_names(self, fulls, partials):
         """ Adds token information for the normalised names.
         """
-        self.data['names'] = self._mk_array(itertools.chain(fulls, partials))
+        self.names = self._mk_array(itertools.chain(fulls, partials))
 
 
-    def add_housenumbers(self, conn, hnrs):
+    def add_housenumber(self, token, hnr):
         """ Extract housenumber information from a list of normalised
             housenumbers.
         """
-        self.data['hnr_tokens'] = self._mk_array(self._cache.get_hnr_tokens(conn, hnrs))
-        self.data['hnr'] = ';'.join(hnrs)
+        if token:
+            self.housenumbers.add(hnr)
+            self.housenumber_tokens.add(token)
 
 
     def add_street(self, tokens):
         """ Add addr:street match terms.
         """
-        self.data['street'] = self._mk_array(tokens)
+        self.street_tokens.update(tokens)
 
 
     def add_place(self, tokens):
         """ Add addr:place search and match terms.
         """
-        if tokens:
-            self.data['place'] = self._mk_array(tokens)
+        self.place_tokens.update(tokens)
 
 
-    def add_address_terms(self, terms):
+    def add_address_term(self, key, partials):
         """ Add additional address terms.
         """
-        tokens = {key: self._mk_array(partials)
-                  for key, partials in terms if partials}
-
-        if tokens:
-            self.data['addr'] = tokens
+        if partials:
+            self.address_tokens[key] = self._mk_array(partials)
 
 
 class _TokenCache:
@@ -669,29 +711,3 @@ class _TokenCache:
         self.fulls = {}
         self.postcodes = set()
         self.housenumbers = {}
-
-
-    def get_hnr_tokens(self, conn, terms):
-        """ Get token ids for a list of housenumbers, looking them up in the
-            database if necessary. `terms` is an iterable of normalized
-            housenumbers.
-        """
-        tokens = []
-        askdb = []
-
-        for term in terms:
-            token = self.housenumbers.get(term)
-            if token is None:
-                askdb.append(term)
-            else:
-                tokens.append(token)
-
-        if askdb:
-            with conn.cursor() as cur:
-                cur.execute("SELECT nr, getorcreate_hnr_id(nr) FROM unnest(%s) as nr",
-                            (askdb, ))
-                for term, tid in cur:
-                    self.housenumbers[term] = tid
-                    tokens.append(tid)
-
-        return tokens

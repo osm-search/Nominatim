@@ -47,10 +47,10 @@ def configure(rules, normalization_rules):
 
 ### Analysis section
 
-def create(transliterator, config):
+def create(normalizer, transliterator, config):
     """ Create a new token analysis instance for this module.
     """
-    return GenericTokenAnalysis(transliterator, config)
+    return GenericTokenAnalysis(normalizer, transliterator, config)
 
 
 class GenericTokenAnalysis:
@@ -58,7 +58,8 @@ class GenericTokenAnalysis:
         and provides the functions to apply the transformations.
     """
 
-    def __init__(self, to_ascii, config):
+    def __init__(self, norm, to_ascii, config):
+        self.norm = norm
         self.to_ascii = to_ascii
         self.variant_only = config['variant_only']
 
@@ -72,6 +73,13 @@ class GenericTokenAnalysis:
 
         # set up mutation rules
         self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
+
+
+    def normalize(self, name):
+        """ Return the normalized form of the name. This is the standard form
+            from which possible variants for the name can be derived.
+        """
+        return self.norm.transliterate(name).strip()
 
 
     def get_variants_ascii(self, norm_name):

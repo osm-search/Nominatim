@@ -43,8 +43,8 @@ is.
       ```
       # inside the virtual machine:
       cd build
-      wget --no-verbose --output-document=/tmp/monaco.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
-      nominatim import --osm-file /tmp/monaco.osm.pbf
+      wget --no-verbose --output-document=/tmp/dump.osm.pbf http://download.geofabrik.de/europe/monaco-latest.osm.pbf
+      cd /nominatim && nominatim import --osm-file /tmp/dump.osm.pbf
       ```
 
     To repeat an import you'd need to delete the database first

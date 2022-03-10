@@ -127,7 +127,7 @@ formats depending on the API call.
   </result>
   <addressparts>
      <state>Bavaria</state>
-     <state_code>BY</state_code>
+     <state-ISO3166-2>DE-BY</state_code>
      <country>Germany</country>
      <country_code>de</country_code>
   </addressparts>

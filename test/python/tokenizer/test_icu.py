@@ -72,12 +72,15 @@ def analyzer(tokenizer_factory, test_config, monkeypatch,
 
     def _mk_analyser(norm=("[[:Punctuation:][:Space:]]+ > ' '",), trans=(':: upper()',),
                      variants=('~gasse -> gasse', 'street => st', ),
-                     sanitizers=[]):
+                     sanitizers=[], with_housenumber=False):
         cfgstr = {'normalization': list(norm),
                   'sanitizers': sanitizers,
                   'transliteration': list(trans),
                   'token-analysis': [{'analyzer': 'generic',
                                       'variants': [{'words': list(variants)}]}]}
+        if with_housenumber:
+            cfgstr['token-analysis'].append({'id': '@housenumber',
+                                             'analyzer': 'housenumbers'})
         (test_config.project_dir / 'icu_tokenizer.yaml').write_text(yaml.dump(cfgstr))
         tok.loader = nominatim.tokenizer.icu_rule_loader.ICURuleLoader(test_config)
 
@@ -556,6 +559,67 @@ class TestPlaceAddress:
         assert 'addr' not in info
 
 
+class TestPlaceHousenumberWithAnalyser:
+
+    @pytest.fixture(autouse=True)
+    def setup(self, analyzer, sql_functions):
+        hnr = {'step': 'clean-housenumbers',
+               'filter-kind': ['housenumber', 'conscriptionnumber', 'streetnumber']}
+        with analyzer(trans=(":: upper()", "'🜵' > ' '"), sanitizers=[hnr], with_housenumber=True) as anl:
+            self.analyzer = anl
+            yield anl
+
+
+    @pytest.fixture
+    def getorcreate_hnr_id(self, temp_db_cursor):
+        temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION create_analyzed_hnr_id(norm_term TEXT, lookup_terms TEXT[])
+                                  RETURNS INTEGER AS $$
+                                    SELECT -nextval('seq_word')::INTEGER; $$ LANGUAGE SQL""")
+
+
+    def process_address(self, **kwargs):
+        return self.analyzer.process_place(PlaceInfo({'address': kwargs}))
+
+
+    def name_token_set(self, *expected_terms):
+        tokens = self.analyzer.get_word_token_info(expected_terms)
+        for token in tokens:
+            assert token[2] is not None, "No token for {0}".format(token)
+
+        return set((t[2] for t in tokens))
+
+
+    @pytest.mark.parametrize('hnr', ['123 a', '1', '101'])
+    def test_process_place_housenumbers_simple(self, hnr, getorcreate_hnr_id):
+        info = self.process_address(housenumber=hnr)
+
+        assert info['hnr'] == hnr.upper()
+        assert info['hnr_tokens'] == "{-1}"
+
+
+    def test_process_place_housenumbers_duplicates(self, getorcreate_hnr_id):
+        info = self.process_address(housenumber='134',
+                                    conscriptionnumber='134',
+                                    streetnumber='99a')
+
+        assert set(info['hnr'].split(';')) == set(('134', '99 A'))
+        assert info['hnr_tokens'] == "{-1,-2}"
+
+
+    def test_process_place_housenumbers_cached(self, getorcreate_hnr_id):
+        info = self.process_address(housenumber="45")
+        assert info['hnr_tokens'] == "{-1}"
+
+        info = self.process_address(housenumber="46")
+        assert info['hnr_tokens'] == "{-2}"
+
+        info = self.process_address(housenumber="41;45")
+        assert eval(info['hnr_tokens']) == {-1, -3}
+
+        info = self.process_address(housenumber="41")
+        assert eval(info['hnr_tokens']) == {-3}
+
+
 class TestUpdateWordTokens:
 
     @pytest.fixture(autouse=True)
@@ -575,8 +639,20 @@ class TestUpdateWordTokens:
         return _insert
 
 
+    @pytest.fixture(params=['simple', 'analyzed'])
+    def add_housenumber(self, request, word_table):
+        if request.param == 'simple':
+            def _make(hid, hnr):
+                word_table.add_housenumber(hid, hnr)
+        elif request.param == 'analyzed':
+            def _make(hid, hnr):
+                word_table.add_housenumber(hid, [hnr])
+
+        return _make
+
+
     @pytest.mark.parametrize('hnr', ('1a', '1234567', '34 5'))
-    def test_remove_unused_housenumbers(self, word_table, hnr):
+    def test_remove_unused_housenumbers(self, add_housenumber, word_table, hnr):
         word_table.add_housenumber(1000, hnr)
 
         assert word_table.count_housenumbers() == 1
@@ -584,17 +660,17 @@ class TestUpdateWordTokens:
         assert word_table.count_housenumbers() == 0
 
 
-    def test_keep_unused_numeral_housenumbers(self, word_table):
-        word_table.add_housenumber(1000, '5432')
+    def test_keep_unused_numeral_housenumbers(self, add_housenumber, word_table):
+        add_housenumber(1000, '5432')
 
         assert word_table.count_housenumbers() == 1
         self.tok.update_word_tokens()
         assert word_table.count_housenumbers() == 1
 
 
-    def test_keep_housenumbers_from_search_name_table(self, word_table, search_entry):
-        word_table.add_housenumber(9999, '5432a')
-        word_table.add_housenumber(9991, '9 a')
+    def test_keep_housenumbers_from_search_name_table(self, add_housenumber, word_table, search_entry):
+        add_housenumber(9999, '5432a')
+        add_housenumber(9991, '9 a')
         search_entry(123, 9999, 34)
 
         assert word_table.count_housenumbers() == 2
@@ -602,9 +678,9 @@ class TestUpdateWordTokens:
         assert word_table.count_housenumbers() == 1
 
 
-    def test_keep_housenumbers_from_placex_table(self, word_table, placex_table):
-        word_table.add_housenumber(9999, '5432a')
-        word_table.add_housenumber(9990, '34z')
+    def test_keep_housenumbers_from_placex_table(self, add_housenumber, word_table, placex_table):
+        add_housenumber(9999, '5432a')
+        add_housenumber(9990, '34z')
         placex_table.add(housenumber='34z')
         placex_table.add(housenumber='25432a')
 
@@ -613,9 +689,9 @@ class TestUpdateWordTokens:
         assert word_table.count_housenumbers() == 1
 
 
-    def test_keep_housenumbers_from_placex_table_hnr_list(self, word_table, placex_table):
-        word_table.add_housenumber(9991, '9 b')
-        word_table.add_housenumber(9990, '34z')
+    def test_keep_housenumbers_from_placex_table_hnr_list(self, add_housenumber, word_table, placex_table):
+        add_housenumber(9991, '9 b')
+        add_housenumber(9990, '34z')
         placex_table.add(housenumber='9 a;9 b;9 c')
 
         assert word_table.count_housenumbers() == 2

@@ -342,9 +342,10 @@ BEGIN
     WHERE s.place_id = parent_place_id;
 
   FOR addr_item IN
-    SELECT (get_addr_tag_rank(key, country)).*, key,
+    SELECT ranks.*, key,
            token_get_address_search_tokens(token_info, key) as search_tokens
-      FROM token_get_address_keys(token_info) as key
+      FROM token_get_address_keys(token_info) as key,
+           LATERAL get_addr_tag_rank(key, country) as ranks
       WHERE not token_get_address_search_tokens(token_info, key) <@ parent_address_vector
   LOOP
     addr_place := get_address_place(in_partition, geometry,
@@ -456,10 +457,12 @@ BEGIN
   address_havelevel := array_fill(false, ARRAY[maxrank]);
 
   FOR location IN
-    SELECT (get_address_place(partition, geometry, from_rank, to_rank,
-                              extent, token_info, key)).*, key
-      FROM (SELECT (get_addr_tag_rank(key, country)).*, key
-              FROM token_get_address_keys(token_info) as key) x
+    SELECT apl.*, key
+      FROM (SELECT extra.*, key
+              FROM token_get_address_keys(token_info) as key,
+                   LATERAL get_addr_tag_rank(key, country) as extra) x,
+           LATERAL get_address_place(partition, geometry, from_rank, to_rank,
+                              extent, token_info, key) as apl
       ORDER BY rank_address, distance, isguess desc
   LOOP
     IF location.place_id is null THEN
@@ -1044,16 +1047,22 @@ BEGIN
      AND NEW.class = 'boundary' AND NEW.type = 'administrative'
      AND NEW.country_code IS NOT NULL AND NEW.osm_type = 'R'
   THEN
-    -- Update the list of country names. Adding an additional sanity
-    -- check here: make sure the country does overlap with the area where
-    -- we expect it to be as per static country grid.
+    -- Update the list of country names.
+    -- Only take the name from the largest area for the given country code
+    -- in the hope that this is the authoritive one.
+    -- Also replace any old names so that all mapping mistakes can
+    -- be fixed through regular OSM updates.
     FOR location IN
-      SELECT country_code FROM country_osm_grid
-       WHERE ST_Covers(geometry, NEW.centroid) and country_code = NEW.country_code
+      SELECT osm_id FROM placex
+       WHERE rank_search = 4 and osm_type = 'R'
+             and country_code = NEW.country_code
+       ORDER BY ST_Area(geometry) desc
        LIMIT 1
     LOOP
-      {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
-      UPDATE country_name SET name = name || NEW.name WHERE country_code = NEW.country_code;
+      IF location.osm_id = NEW.osm_id THEN
+        {% if debug %}RAISE WARNING 'Updating names for country '%' with: %', NEW.country_code, NEW.name;{% endif %}
+        UPDATE country_name SET derived_name = NEW.name WHERE country_code = NEW.country_code;
+      END IF;
     END LOOP;
   END IF;
 

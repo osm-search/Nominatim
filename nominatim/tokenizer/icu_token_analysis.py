@@ -25,5 +25,12 @@ class ICUTokenAnalysis:
         self.search = Transliterator.createFromRules("icu_search",
                                                      norm_rules + trans_rules)
 
-        self.analysis = {name: arules.create(self.to_ascii, arules.config)
+        self.analysis = {name: arules.create(self.normalizer, self.to_ascii, arules.config)
                          for name, arules in analysis_rules.items()}
+
+
+    def get_analyzer(self, name):
+        """ Return the given named analyzer. If no analyzer with that
+            name exists, return the default analyzer.
+        """
+        return self.analysis.get(name) or self.analysis[None]

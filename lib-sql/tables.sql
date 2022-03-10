@@ -256,4 +256,9 @@ ALTER TABLE ONLY wikipedia_redirect ADD CONSTRAINT wikipedia_redirect_pkey PRIMA
 -- Add one for lookup of associated street relations.
 CREATE INDEX planet_osm_rels_parts_associated_idx ON planet_osm_rels USING gin(parts) WHERE tags @> ARRAY['associatedStreet'];
 
+-- Needed for lookups if a node is part of an interpolation.
+CREATE INDEX IF NOT EXISTS idx_place_interpolations
+    ON place USING gist(geometry) {{db.tablespace.address_index}}
+    WHERE osm_type = 'W' and address ? 'interpolation';
+
 GRANT SELECT ON table country_osm_grid to "{{config.DATABASE_WEBUSER}}";

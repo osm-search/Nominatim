@@ -49,10 +49,6 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 
   CREATE UNIQUE INDEX IF NOT EXISTS idx_place_osm_unique
     ON place USING btree(osm_id, osm_type, class, type) {{db.tablespace.address_index}};
-
-  CREATE INDEX IF NOT EXISTS idx_place_interpolations
-    ON place USING gist(geometry) {{db.tablespace.address_index}}
-    WHERE osm_type = 'W' and address ? 'interpolation';
 {% endif %}
 
 -- Indices only needed for search.

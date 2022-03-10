@@ -117,16 +117,6 @@ BEGIN
 
   -- ---- All other place types.
 
-  -- Patch in additional country names
-  IF NEW.admin_level = 2 and NEW.type = 'administrative' and NEW.address ? 'country'
-  THEN
-    FOR country IN
-      SELECT name FROM country_name WHERE country_code = lower(NEW.address->'country')
-    LOOP
-      NEW.name = country.name || NEW.name;
-    END LOOP;
-  END IF;
-
   -- When an area is changed from large to small: log and discard change
   IF existing.geometry is not null AND ST_IsValid(existing.geometry)
     AND ST_Area(existing.geometry) > 0.02

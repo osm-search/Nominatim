@@ -11,6 +11,8 @@ import psycopg2.extras
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
+from io import StringIO
+import json
 
 class _CountryInfo:
     """ Caches country-specific properties from the configuration file.
@@ -33,7 +35,8 @@ class _CountryInfo:
                 elif not isinstance(prop['languages'], list):
                     prop['languages'] = [x.strip()
                                          for x in prop['languages'].split(',')]
-
+                if 'name' not in prop:
+                    prop['name'] = {}
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.
@@ -61,10 +64,9 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """ Create and populate the tables with basic static data that provides
         the background for geocoding. Data is assumed to not yet exist.
     """
-    db_utils.execute_file(dsn, sql_dir / 'country_name.sql')
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
-    params = []
+    params, country_names_data = [], ''
     for ccode, props in _COUNTRY_INFO.items():
         if ccode is not None and props is not None:
             if ignore_partitions:
@@ -74,8 +76,21 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             lang = props['languages'][0] if len(props['languages']) == 1 else None
             params.append((ccode, partition, lang))
 
+            name = json.dumps(props.get('name'), ensure_ascii=False, separators=(', ', '=>'))
+            country_names_data += ccode + '\t' + name[1:-1] + '\n'
+
     with connect(dsn) as conn:
         with conn.cursor() as cur:
+            cur.execute(
+                """CREATE TABLE public.country_name (
+                        country_code character varying(2),
+                        name public.hstore,
+                        derived_name public.hstore,
+                        country_default_language_code text,
+                        partition integer
+                );""")
+            data = StringIO(country_names_data)
+            cur.copy_from(data, 'country_name', columns=('country_code', 'name'))
             cur.execute_values(
                 """ UPDATE country_name
                     SET partition = part, country_default_language_code = lang
@@ -94,8 +109,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == 'name' or \
-               (key.startswith('name:') and (not languages or key[5:] in languages))
+        return key == 'default' or \
+            (not languages or key in languages)
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

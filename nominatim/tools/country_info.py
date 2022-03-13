@@ -7,12 +7,12 @@
 """
 Functions for importing and managing static country information.
 """
+import json
 import psycopg2.extras
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
 from io import StringIO
-import json
 
 class _CountryInfo:
     """ Caches country-specific properties from the configuration file.
@@ -109,8 +109,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == 'default' or \
-            (not languages or key in languages)
+        return key == 'name' or \
+               (key.startswith('name:') and (not languages or key[5:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

@@ -47,7 +47,7 @@ def init_replication(conn, base_url):
 
     status.set_status(conn, date=date, seq=seq)
 
-    LOG.warning("Updates intialised at sequence %s (%s)", seq, date)
+    LOG.warning("Updates initialised at sequence %s (%s)", seq, date)
 
 
 def check_for_updates(conn, base_url):

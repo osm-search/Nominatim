@@ -8,11 +8,11 @@
 Functions for importing and managing static country information.
 """
 import json
+from io import StringIO
 import psycopg2.extras
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
-from io import StringIO
 
 class _CountryInfo:
     """ Caches country-specific properties from the configuration file.

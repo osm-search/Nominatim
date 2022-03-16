@@ -64,7 +64,9 @@ class ReverseGeocode
     {
         Debug::newFunction('lookupInterpolation');
         $sSQL = 'SELECT place_id, parent_place_id, 30 as rank_search,';
-        $sSQL .= '  (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.') as fhnr,';
+        $sSQL .= '  (CASE WHEN endnumber != startnumber';
+        $sSQL .= '        THEN (endnumber - startnumber) * ST_LineLocatePoint(linegeo,'.$sPointSQL.')';
+        $sSQL .= '        ELSE startnumber END) as fhnr,';
         $sSQL .= '  startnumber, endnumber, step,';
         $sSQL .= '  ST_Distance(linegeo,'.$sPointSQL.') as distance';
         $sSQL .= ' FROM location_property_osmline';

@@ -26,6 +26,7 @@ CREATE OR REPLACE FUNCTION placex_indexing_prepare(p placex)
 DECLARE
   location RECORD;
   result prepare_update_info;
+  extra_names HSTORE;
 BEGIN
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
@@ -58,8 +59,11 @@ BEGIN
     END LOOP;
   END IF;
 
+  -- remove internal and derived names
   result.address := result.address - '_unlisted_place'::TEXT;
-  result.name := p.name;
+  SELECT hstore(array_agg(key), array_agg(value)) INTO result.name
+    FROM each(p.name) WHERE key not like '\_%';
+
   result.class := p.class;
   result.type := p.type;
   result.country_code := p.country_code;
@@ -72,8 +76,17 @@ BEGIN
   IF location.place_id is not NULL THEN
     result.linked_place_id := location.place_id;
 
-    IF NOT location.name IS NULL THEN
-      result.name := location.name || result.name;
+    IF location.name is not NULL THEN
+      {% if debug %}RAISE WARNING 'Names original: %, location: %', result.name, location.name;{% endif %}
+      -- Add all names from the place nodes that deviate from the name
+      -- in the relation with the prefix '_place_'. Deviation means that
+      -- either the value is different or a given key is missing completely
+      SELECT hstore(array_agg('_place_' || key), array_agg(value)) INTO extra_names
+        FROM each(location.name - result.name);
+      {% if debug %}RAISE WARNING 'Extra names: %', extra_names;{% endif %}
+
+      result.name := location.name || result.name || extra_names;
+      {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
     END IF;
   END IF;
 

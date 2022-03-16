@@ -62,6 +62,8 @@ class GenericResponse:
 
         if errorcode == 200 and fmt != 'debug':
             getattr(self, '_parse_' + fmt)()
+        else:
+            print("Bad response: ", page)
 
     def _parse_json(self):
         m = re.fullmatch(r'([\w$][^(]*)\((.*)\)', self.page)
@@ -128,7 +130,7 @@ class GenericResponse:
                    "\nBad value for row {} field '{}' in address. Expected: {}, got: {}.\nFull address: {}"""\
                        .format(idx, field, value, address[field], json.dumps(address, indent=4))
 
-    def match_row(self, row):
+    def match_row(self, row, context=None):
         """ Match the result fields against the given behave table row.
         """
         if 'ID' in row.headings:
@@ -151,7 +153,12 @@ class GenericResponse:
                     assert self.result[i]['osm_type'] in (OSM_TYPE[value[0]], value[0]), \
                            BadRowValueAssert(self, i, 'osm_type', value)
                 elif name == 'centroid':
-                    lon, lat = value.split(' ')
+                    if ' ' in value:
+                        lon, lat = value.split(' ')
+                    elif context is not None:
+                        lon, lat = context.osm.grid_node(int(value))
+                    else:
+                        raise RuntimeError("Context needed when using grid coordinates")
                     self.assert_field(i, 'lat', float(lat))
                     self.assert_field(i, 'lon', float(lon))
                 else:

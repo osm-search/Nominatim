@@ -18,8 +18,14 @@ Feature: Searching linked places
          | N2      | R13 |
         When sending search query "Vario"
         Then results contain
-         | osm |
-         | R13 |
+         | osm | display_name |
+         | R13 | Garbo |
+        When sending search query "Vario"
+         | accept-language |
+         | it |
+        Then results contain
+         | osm | display_name |
+         | R13 | Vario |
 
 
     Scenario: Differing names from linked places are searchable
@@ -38,5 +44,9 @@ Feature: Searching linked places
          | N2      | R13 |
         When sending search query "Vario"
         Then results contain
-         | osm |
-         | R13 |
+         | osm | display_name |
+         | R13 | Garbo |
+        When sending search query "Garbo"
+        Then results contain
+         | osm | display_name |
+         | R13 | Garbo |

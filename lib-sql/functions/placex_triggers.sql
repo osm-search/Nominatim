@@ -85,7 +85,10 @@ BEGIN
         FROM each(location.name - result.name);
       {% if debug %}RAISE WARNING 'Extra names: %', extra_names;{% endif %}
 
-      result.name := location.name || result.name || extra_names;
+      IF extra_names is not null THEN
+          result.name := result.name || extra_names;
+      END IF;
+
       {% if debug %}RAISE WARNING 'Final names: %', result.name;{% endif %}
     END IF;
   END IF;

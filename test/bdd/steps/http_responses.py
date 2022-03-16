@@ -62,8 +62,6 @@ class GenericResponse:
 
         if errorcode == 200 and fmt != 'debug':
             getattr(self, '_parse_' + fmt)()
-        else:
-            print("Bad response: ", page)
 
     def _parse_json(self):
         m = re.fullmatch(r'([\w$][^(]*)\((.*)\)', self.page)
@@ -74,13 +72,14 @@ class GenericResponse:
             self.header['json_func'] = m.group(1)
         self.result = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(code)
         if isinstance(self.result, OrderedDict):
-            self.result = [self.result]
+            if 'error' in self.result:
+                self.result = []
+            else:
+                self.result = [self.result]
 
     def _parse_geojson(self):
         self._parse_json()
-        if 'error' in self.result[0]:
-            self.result = []
-        else:
+        if self.result:
             self.result = list(map(_geojson_result_to_json_result, self.result[0]['features']))
 
     def _parse_geocodejson(self):

@@ -114,19 +114,24 @@ class ParameterParser
         }
 
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $aLangPrefOrder['name:'.$sLanguage] = 'name:'.$sLanguage;
+            $this->addNameTag($aLangPrefOrder, 'name:'.$sLanguage);
         }
-        $aLangPrefOrder['name'] = 'name';
-        $aLangPrefOrder['brand'] = 'brand';
+        $this->addNameTag($aLangPrefOrder, 'name');
+        $this->addNameTag($aLangPrefOrder, 'brand');
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $aLangPrefOrder['official_name:'.$sLanguage] = 'official_name:'.$sLanguage;
-            $aLangPrefOrder['short_name:'.$sLanguage] = 'short_name:'.$sLanguage;
+            $this->addNameTag($aLangPrefOrder, 'official_name:'.$sLanguage);
+            $this->addNameTag($aLangPrefOrder, 'short_name:'.$sLanguage);
         }
-        $aLangPrefOrder['official_name'] = 'official_name';
-        $aLangPrefOrder['short_name'] = 'short_name';
-        $aLangPrefOrder['ref'] = 'ref';
-        $aLangPrefOrder['type'] = 'type';
+        $this->addNameTag($aLangPrefOrder, 'official_name');
+        $this->addNameTag($aLangPrefOrder, 'short_name');
+        $this->addNameTag($aLangPrefOrder, 'ref');
+        $this->addNameTag($aLangPrefOrder, 'type');
         return $aLangPrefOrder;
+    }
+
+    private function addNameTag(&$aLangPrefOrder, $sTag) {
+        $aLangPrefOrder[$sTag] = $sTag;
+        $aLangPrefOrder['_place_'.$sTag] = '_place_'.$sTag;
     }
 
     public function hasSetAny($aParamNames)

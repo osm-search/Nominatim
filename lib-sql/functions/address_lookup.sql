@@ -43,8 +43,9 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- change this code below
   -- anything will do as a fallback - just take the first name type thing there is
-  RETURN trim((avals(name))[1]);
+  RETURN trim((avals(name))[array_length(avals(name), 1)]);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
@@ -56,6 +57,7 @@ CREATE OR REPLACE FUNCTION get_address_by_language(for_place_id BIGINT,
                                                    languagepref TEXT[])
   RETURNS TEXT
   AS $$
+  -- ARRAY['zh','default','brand','official_name:zh','short_name:zh','official_name','short_name','ref','type']
 DECLARE
   result TEXT[];
   currresult TEXT;

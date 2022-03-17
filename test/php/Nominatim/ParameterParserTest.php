@@ -183,8 +183,7 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
     {
         $oParams = new ParameterParser(array('accept-language' => ''));
         $this->assertSame(array(
-                           'name:default' => 'name:default',
-                           'name' => 'name',
+                           'default' => 'default',
                            'brand' => 'brand',
                            'official_name:default' => 'official_name:default',
                            'short_name:default' => 'short_name:default',
@@ -196,8 +195,8 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
         $oParams = new ParameterParser(array('accept-language' => 'de,en'));
         $this->assertSame(array(
-                           'name:de' => 'name:de',
-                           'name:en' => 'name:en',
+                           'de' => 'de',
+                           'en' => 'en',
                            'name' => 'name',
                            'brand' => 'brand',
                            'official_name:de' => 'official_name:de',
@@ -212,10 +211,10 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
         $oParams = new ParameterParser(array('accept-language' => 'fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3'));
         $this->assertSame(array(
-                           'name:fr-ca' => 'name:fr-ca',
-                           'name:fr' => 'name:fr',
-                           'name:en-ca' => 'name:en-ca',
-                           'name:en' => 'name:en',
+                           'fr-ca' => 'fr-ca',
+                           'fr' => 'fr',
+                           'en-ca' => 'en-ca',
+                           'en' => 'en',
                            'name' => 'name',
                            'brand' => 'brand',
                            'official_name:fr-ca' => 'official_name:fr-ca',
@@ -234,10 +233,10 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
         $oParams = new ParameterParser(array('accept-language' => 'ja_rm,zh_pinyin'));
         $this->assertSame(array(
-                           'name:ja_rm' => 'name:ja_rm',
-                           'name:zh_pinyin' => 'name:zh_pinyin',
-                           'name:ja' => 'name:ja',
-                           'name:zh' => 'name:zh',
+                           'ja_rm' => 'ja_rm',
+                           'zh_pinyin' => 'zh_pinyin',
+                           'ja' => 'ja',
+                           'zh' => 'zh',
                            'name' => 'name',
                            'brand' => 'brand',
                            'official_name:ja_rm' => 'official_name:ja_rm',

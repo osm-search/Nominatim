@@ -76,19 +76,20 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             lang = props['languages'][0] if len(props['languages']) == 1 else None
             params.append((ccode, partition, lang))
 
-            name = json.dumps(props.get('name'), ensure_ascii=False, separators=(', ', '=>'))
+            name = json.dumps(props.get('names').get('name'), ensure_ascii=False,
+             separators=(', ', '=>'))
             country_names_data += ccode + '\t' + name[1:-1] + '\n'
 
     with connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """CREATE TABLE public.country_name (
+                """ CREATE TABLE public.country_name (
                         country_code character varying(2),
                         name public.hstore,
                         derived_name public.hstore,
                         country_default_language_code text,
                         partition integer
-                );""")
+                    ); """)
             data = StringIO(country_names_data)
             cur.copy_from(data, 'country_name', columns=('country_code', 'name'))
             cur.execute_values(
@@ -109,8 +110,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == 'name' or \
-               (key.startswith('name:') and (not languages or key[5:] in languages))
+        return key == 'default' or \
+            (not languages or key in languages)
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

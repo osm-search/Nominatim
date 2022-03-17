@@ -93,6 +93,7 @@ def add_data_to_planet_ways(context):
 def import_and_index_data_from_place_table(context):
     """ Import data previously set up in the place table.
     """
+    context.nominatim.run_nominatim('refresh', '--functions')
     context.nominatim.run_nominatim('import', '--continue', 'load-data',
                                               '--index-noanalyse', '-q')
 

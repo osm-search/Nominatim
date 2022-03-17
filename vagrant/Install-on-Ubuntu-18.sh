@@ -105,7 +105,7 @@ fi                                    #DOCS:
 #
 if [ "x$1" == "xyes" ]; then  #DOCS:    :::sh
     cd $USERHOME
-    git clone --recursive git://github.com/openstreetmap/Nominatim.git
+    git clone --recursive https://github.com/openstreetmap/Nominatim.git
     cd Nominatim
 else                               #DOCS:
     cd $USERHOME/Nominatim         #DOCS:

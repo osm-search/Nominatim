@@ -66,8 +66,8 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
-    def prepend_name_to_keys(name):
-        return {'name:'+k: v for k, v in name.items()}
+    def add_prefix_to_keys(name, prefix):
+        return {prefix+k: v for k, v in name.items()}
 
     params, country_names_data = [], ''
     for ccode, props in _COUNTRY_INFO.items():
@@ -79,10 +79,9 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             lang = props['languages'][0] if len(props['languages']) == 1 else None
             params.append((ccode, partition, lang))
 
-            name = prepend_name_to_keys(props.get('names').get('name'))
+            name = add_prefix_to_keys(props.get('names').get('name'), 'name:')
             name = json.dumps(name , ensure_ascii=False, separators=(', ', '=>'))
             country_names_data += ccode + '\t' + name[1:-1] + '\n'
-
     with connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(

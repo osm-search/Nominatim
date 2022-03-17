@@ -102,6 +102,9 @@ class GenericResponse:
         elif value.startswith("^"):
             assert re.fullmatch(value, self.result[idx][field]), \
                    BadRowValueAssert(self, idx, field, value)
+        elif isinstance(self.result[idx][field], OrderedDict):
+            assert self.result[idx][field] == eval('{' + value + '}'), \
+                   BadRowValueAssert(self, idx, field, value)
         else:
             assert str(self.result[idx][field]) == str(value), \
                    BadRowValueAssert(self, idx, field, value)

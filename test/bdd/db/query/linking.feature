@@ -17,9 +17,11 @@ Feature: Searching linked places
          | object  | linked_place_id |
          | N2      | R13 |
         When sending search query "Vario"
+         | namedetails |
+         | 1 |
         Then results contain
-         | osm | display_name |
-         | R13 | Garbo |
+         | osm | display_name | namedetails |
+         | R13 | Garbo | "name": "Garbo", "name:it": "Vario" |
         When sending search query "Vario"
          | accept-language |
          | it |
@@ -43,9 +45,11 @@ Feature: Searching linked places
          | object  | linked_place_id |
          | N2      | R13 |
         When sending search query "Vario"
+         | namedetails |
+         | 1 |
         Then results contain
-         | osm | display_name |
-         | R13 | Garbo |
+         | osm | display_name | namedetails |
+         | R13 | Garbo        | "name": "Garbo", "_place_name": "Vario" |
         When sending search query "Garbo"
         Then results contain
          | osm | display_name |

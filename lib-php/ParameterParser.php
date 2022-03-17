@@ -114,11 +114,10 @@ class ParameterParser
         }
 
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
-            $this->addNameTag($aLangPrefOrder, $sLanguage);
+            $this->addNameTag($aLangPrefOrder, 'name:'.$sLanguage);
         }
-        $this->addNameTag($aLangPrefOrder, 'default');
+        $this->addNameTag($aLangPrefOrder, 'name');
         $this->addNameTag($aLangPrefOrder, 'brand');
-
         foreach ($aLanguages as $sLanguage => $fLanguagePref) {
             $this->addNameTag($aLangPrefOrder, 'official_name:'.$sLanguage);
             $this->addNameTag($aLangPrefOrder, 'short_name:'.$sLanguage);

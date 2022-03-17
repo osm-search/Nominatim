@@ -183,32 +183,48 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
     {
         $oParams = new ParameterParser(array('accept-language' => ''));
         $this->assertSame(array(
-                           'default' => 'default',
+                           'name:default' => 'name:default',
+                           '_place_name:default' => '_place_name:default',
+                           'name' => 'name',
+                           '_place_name' => '_place_name'
                           ), array_slice($oParams->getPreferredLanguages('default'), 0, 4));
 
         $oParams = new ParameterParser(array('accept-language' => 'de,en'));
         $this->assertSame(array(
-                           'de' => 'de',
-                           'en' => 'en',
-                           'default' => 'default',
+                           'name:de' => 'name:de',
+                           '_place_name:de' => '_place_name:de',
+                           'name:en' => 'name:en',
+                           '_place_name:en' => '_place_name:en',
+                           'name' => 'name',
+                           '_place_name' => '_place_name'
                           ), array_slice($oParams->getPreferredLanguages('default'), 0, 6));
 
         $oParams = new ParameterParser(array('accept-language' => 'fr-ca,fr;q=0.8,en-ca;q=0.5,en;q=0.3'));
         $this->assertSame(array(
-                           'fr-ca' => 'fr-ca',
-                           'fr' => 'fr',
-                           'en-ca' => 'en-ca',
-                           'en' => 'en',
-                           'default' => 'default',
+                           'name:fr-ca' => 'name:fr-ca',
+                           '_place_name:fr-ca' => '_place_name:fr-ca',
+                           'name:fr' => 'name:fr',
+                           '_place_name:fr' => '_place_name:fr',
+                           'name:en-ca' => 'name:en-ca',
+                           '_place_name:en-ca' => '_place_name:en-ca',
+                           'name:en' => 'name:en',
+                           '_place_name:en' => '_place_name:en',
+                           'name' => 'name',
+                           '_place_name' => '_place_name'
                           ), array_slice($oParams->getPreferredLanguages('default'), 0, 10));
 
         $oParams = new ParameterParser(array('accept-language' => 'ja_rm,zh_pinyin'));
         $this->assertSame(array(
-                           'ja_rm' => 'ja_rm',
-                           'zh_pinyin' => 'zh_pinyin',
-                           'ja' => 'ja',
-                           'zh' => 'zh',
-                           'default' => 'default',
+                           'name:ja_rm' => 'name:ja_rm',
+                           '_place_name:ja_rm' => '_place_name:ja_rm',
+                           'name:zh_pinyin' => 'name:zh_pinyin',
+                           '_place_name:zh_pinyin' => '_place_name:zh_pinyin',
+                           'name:ja' => 'name:ja',
+                           '_place_name:ja' => '_place_name:ja',
+                           'name:zh' => 'name:zh',
+                           '_place_name:zh' => '_place_name:zh',
+                           'name' => 'name',
+                           '_place_name' => '_place_name'
                           ), array_slice($oParams->getPreferredLanguages('default'), 0, 10));
     }
 

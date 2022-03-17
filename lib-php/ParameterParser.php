@@ -129,7 +129,8 @@ class ParameterParser
         return $aLangPrefOrder;
     }
 
-    private function addNameTag(&$aLangPrefOrder, $sTag) {
+    private function addNameTag(&$aLangPrefOrder, $sTag)
+    {
         $aLangPrefOrder[$sTag] = $sTag;
         $aLangPrefOrder['_place_'.$sTag] = '_place_'.$sTag;
     }

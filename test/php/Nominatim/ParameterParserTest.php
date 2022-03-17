@@ -197,7 +197,6 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
         $this->assertSame(array(
                            'fr-ca' => 'fr-ca',
                            'fr' => 'fr',
-                           'fr' => 'fr',
                            'en-ca' => 'en-ca',
                            'en' => 'en',
                            'default' => 'default',

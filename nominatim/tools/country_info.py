@@ -66,6 +66,9 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
+    def prepend_name_to_keys(name):
+        return {'name:'+k: v for k, v in name.items()}
+
     params, country_names_data = [], ''
     for ccode, props in _COUNTRY_INFO.items():
         if ccode is not None and props is not None:
@@ -76,8 +79,8 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             lang = props['languages'][0] if len(props['languages']) == 1 else None
             params.append((ccode, partition, lang))
 
-            name = json.dumps(props.get('names').get('name'), ensure_ascii=False,
-             separators=(', ', '=>'))
+            name = prepend_name_to_keys(props.get('names').get('name'))
+            name = json.dumps(name , ensure_ascii=False, separators=(', ', '=>'))
             country_names_data += ccode + '\t' + name[1:-1] + '\n'
 
     with connect(dsn) as conn:
@@ -110,8 +113,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == 'default' or \
-            (not languages or key in languages)
+        return key.startswith('name:') and \
+            key[5:] in languages or key[5:] == 'default'
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

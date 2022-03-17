@@ -117,8 +117,10 @@ Feature: Updates of linked places
          | 1  | N3:label |
         When importing
         Then placex contains
-         | object | linked_place_id | name+name:de |
+         | object | linked_place_id | name+_place_name:de |
          | R1     | -               | pnt  |
+        And placex contains
+         | object | linked_place_id | name+name:de |
          | N3     | R1              | pnt  |
         When updating places
          | osm | class    | type        | name+name:de | admin | geometry |
@@ -126,7 +128,42 @@ Feature: Updates of linked places
         Then placex contains
          | object | linked_place_id | name+name:de |
          | N3     | R1              | newname  |
+        And placex contains
+         | object | linked_place_id | name+_place_name:de |
          | R1     | -               | newname  |
+
+    Scenario: Update linking relation when linkee name is deleted
+        Given the places
+         | osm | class    | type           | name | admin | geometry |
+         | R1  | boundary | administrative | rel  | 8     | poly-area:0.1 |
+        And the places
+         | osm | class    | type           | name | admin | geometry |
+         | N3  | place    | city           | pnt  | 30    | 0.00001 0 |
+        And the relations
+         | id | members  |
+         | 1  | N3:label |
+        When importing
+        Then placex contains
+         | object | linked_place_id | name+_place_name | name+name |
+         | R1     | -               | pnt              | rel       |
+        And placex contains
+         | object | linked_place_id | name+name |
+         | N3     | R1              | pnt  |
+        When sending search query "pnt"
+        Then results contain
+          | osm |
+          | R1  |
+        When updating places
+         | osm | class    | type        | name+name:de | admin | geometry |
+         | N3  | place    | city        | depnt        | 30    | 0.00001 0 |
+        Then placex contains
+         | object | linked_place_id | name+name:de |
+         | N3     | R1              | depnt  |
+        And placex contains
+         | object | linked_place_id | name+_place_name:de | name+name |
+         | R1     | -               | depnt               | rel       |
+        When sending search query "pnt"
+        Then exactly 0 results are returned
 
     Scenario: Updating linkee extratags keeps linker's extratags
         Given the named places

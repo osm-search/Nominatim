@@ -80,7 +80,7 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             params.append((ccode, partition, lang))
 
             name = add_prefix_to_keys(props.get('names').get('name'), 'name:')
-            name = json.dumps(name , ensure_ascii=False, separators=(', ', '=>'))
+            name = json.dumps(name, ensure_ascii=False, separators=(', ', '=>'))
             country_names_data += ccode + '\t' + name[1:-1] + '\n'
     with connect(dsn) as conn:
         with conn.cursor() as cur:
@@ -111,9 +111,6 @@ def create_country_names(conn, tokenizer, languages=None):
     if languages:
         languages = languages.split(',')
 
-    # def _include_key(key):
-    #     return key.startswith('name:') and \
-    #         key[5:] in languages or key[5:] == 'default'
     def _include_key(key):
         return key == 'name' or \
                (key.startswith('name:') and (not languages or key[5:] in languages))

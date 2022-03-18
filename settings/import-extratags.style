@@ -131,13 +131,6 @@
     }
 },
 {
-    "keys" : ["amenity"],
-    "values" : {
-        "restaurant" : "main,operator",
-        "fuel" : "main,operator"
-    }
-},
-{
     "keys" : ["aeroway", "amenity", "club", "craft", "leisure",
               "office", "mountain_pass"],
     "values" : {
@@ -149,7 +142,7 @@
     "keys" : ["shop"],
     "values" : {
         "no" : "skip",
-        "" : "main,operator"
+        "" : "main"
     }
 },
 {
@@ -157,7 +150,7 @@
     "values" : {
         "yes" : "skip",
         "no" : "skip",
-        "" : "main,operator"
+        "" : "main"
     }
 },
 {

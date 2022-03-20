@@ -18,7 +18,7 @@ from dotenv import dotenv_values
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
-
+CONFIG_CACHE = {}
 
 def flatten_config_list(content, section=''):
     """ Flatten YAML configuration lists that contain include sections
@@ -181,14 +181,19 @@ class Configuration:
         """
         configfile = self.find_config_file(filename, config)
 
+        if str(configfile) in CONFIG_CACHE:
+            return CONFIG_CACHE[str(configfile)]
+
         if configfile.suffix in ('.yaml', '.yml'):
-            return self._load_from_yaml(configfile)
-
-        if configfile.suffix == '.json':
+            result = self._load_from_yaml(configfile)
+        elif configfile.suffix == '.json':
             with configfile.open('r') as cfg:
-                return json.load(cfg)
+                result = json.load(cfg)
+        else:
+            raise UsageError(f"Config file '{configfile}' has unknown format.")
 
-        raise UsageError(f"Config file '{configfile}' has unknown format.")
+        CONFIG_CACHE[str(configfile)] = result
+        return result
 
 
     def find_config_file(self, filename, config=None):

@@ -51,7 +51,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
         """
         self.loader = ICURuleLoader(config)
 
-        self._install_php(config.lib_dir.php)
+        self._install_php(config.lib_dir.php, overwrite=True)
         self._save_config()
 
         if init_db:
@@ -66,6 +66,8 @@ class LegacyICUTokenizer(AbstractTokenizer):
 
         with connect(self.dsn) as conn:
             self.loader.load_config_from_db(conn)
+
+        self._install_php(config.lib_dir.php, overwrite=False)
 
 
     def finalize_import(self, config):
@@ -174,16 +176,18 @@ class LegacyICUTokenizer(AbstractTokenizer):
                                      self.loader.make_token_analysis())
 
 
-    def _install_php(self, phpdir):
+    def _install_php(self, phpdir, overwrite=True):
         """ Install the php script for the tokenizer.
         """
         php_file = self.data_dir / "tokenizer.php"
-        php_file.write_text(dedent(f"""\
-            <?php
-            @define('CONST_Max_Word_Frequency', 10000000);
-            @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
-            @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
-            require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
+
+        if not php_file.exists() or overwrite:
+            php_file.write_text(dedent(f"""\
+                <?php
+                @define('CONST_Max_Word_Frequency', 10000000);
+                @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
+                @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
+                require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
 
 
     def _save_config(self):

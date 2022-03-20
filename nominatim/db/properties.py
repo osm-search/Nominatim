@@ -27,6 +27,9 @@ def get_property(conn, name):
     """ Return the current value of the given propery or None if the property
         is not set.
     """
+    if not conn.table_exists('nominatim_properties'):
+        return None
+
     with conn.cursor() as cur:
         cur.execute('SELECT value FROM nominatim_properties WHERE property = %s',
                     (name, ))

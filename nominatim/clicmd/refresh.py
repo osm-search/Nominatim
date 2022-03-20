@@ -117,6 +117,10 @@ class UpdateRefresh:
         if args.website:
             webdir = args.project_dir / 'website'
             LOG.warning('Setting up website directory at %s', webdir)
+            # This is a little bit hacky: call the tokenizer setup, so that
+            # the tokenizer directory gets repopulated as well, in case it
+            # wasn't there yet.
+            self._get_tokenizer(args.config)
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.setup_website(webdir, args.config, conn)
 

@@ -107,7 +107,7 @@ class LegacyTokenizer(AbstractTokenizer):
 
         self.normalization = config.TERM_NORMALIZATION
 
-        self._install_php(config)
+        self._install_php(config, overwrite=True)
 
         with connect(self.dsn) as conn:
             _check_module(module_dir, conn)
@@ -119,12 +119,18 @@ class LegacyTokenizer(AbstractTokenizer):
             self._init_db_tables(config)
 
 
-    def init_from_project(self, _):
+    def init_from_project(self, config):
         """ Initialise the tokenizer from the project directory.
         """
         with connect(self.dsn) as conn:
             self.normalization = properties.get_property(conn, DBCFG_NORMALIZATION)
 
+        if not (config.project_dir / 'module' / 'nominatim.so').exists():
+            _install_module(config.DATABASE_MODULE_PATH,
+                            config.lib_dir.module,
+                            config.project_dir / 'module')
+
+        self._install_php(config, overwrite=False)
 
     def finalize_import(self, config):
         """ Do any required postprocessing to make the tokenizer data ready
@@ -238,16 +244,18 @@ class LegacyTokenizer(AbstractTokenizer):
         return LegacyNameAnalyzer(self.dsn, normalizer)
 
 
-    def _install_php(self, config):
+    def _install_php(self, config, overwrite=True):
         """ Install the php script for the tokenizer.
         """
         php_file = self.data_dir / "tokenizer.php"
-        php_file.write_text(dedent("""\
-            <?php
-            @define('CONST_Max_Word_Frequency', {0.MAX_WORD_FREQUENCY});
-            @define('CONST_Term_Normalization_Rules', "{0.TERM_NORMALIZATION}");
-            require_once('{0.lib_dir.php}/tokenizer/legacy_tokenizer.php');
-            """.format(config)))
+
+        if not php_file.exists() or overwrite:
+            php_file.write_text(dedent("""\
+                <?php
+                @define('CONST_Max_Word_Frequency', {0.MAX_WORD_FREQUENCY});
+                @define('CONST_Term_Normalization_Rules', "{0.TERM_NORMALIZATION}");
+                require_once('{0.lib_dir.php}/tokenizer/legacy_tokenizer.php');
+                """.format(config)))
 
 
     def _init_db_tables(self, config):

@@ -78,8 +78,8 @@ def get_tokenizer_for_db(config):
     """
     basedir = config.project_dir / 'tokenizer'
     if not basedir.is_dir():
-        LOG.fatal("Cannot find tokenizer data in '%s'.", basedir)
-        raise UsageError('Cannot initialize tokenizer.')
+        # Directory will be repopulated by tokenizer below.
+        basedir.mkdir()
 
     with connect(config.get_libpq_dsn()) as conn:
         name = properties.get_property(conn, 'tokenizer')

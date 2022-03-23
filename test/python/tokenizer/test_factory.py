@@ -63,13 +63,13 @@ class TestFactory:
         assert tokenizer.init_state == "loaded"
 
 
-    def test_load_no_tokenizer_dir(self):
+    def test_load_repopulate_tokenizer_dir(self):
         factory.create_tokenizer(self.config)
 
-        self.config.project_dir = self.config.project_dir / 'foo'
+        self.config.project_dir = self.config.project_dir
 
-        with pytest.raises(UsageError):
-            factory.get_tokenizer_for_db(self.config)
+        factory.get_tokenizer_for_db(self.config)
+        assert (self.config.project_dir / 'tokenizer').exists()
 
 
     def test_load_missing_property(self, temp_db_cursor):

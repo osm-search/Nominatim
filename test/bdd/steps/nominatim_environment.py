@@ -217,7 +217,7 @@ class NominatimEnvironment:
                     self.db_drop_database(self.api_test_db)
                     raise
 
-        tokenizer_factory.create_tokenizer(self.get_test_config(), init_db=False)
+        tokenizer_factory.get_tokenizer_for_db(self.get_test_config())
 
 
     def setup_unknown_db(self):

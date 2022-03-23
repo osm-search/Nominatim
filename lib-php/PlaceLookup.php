@@ -452,11 +452,7 @@ class PlaceLookup
             }
 
             if ($this->bNameDetails) {
-                if ($aPlace['names']) {
-                    $aPlace['sNameDetails'] = json_decode($aPlace['names']);
-                } else {
-                    $aPlace['sNameDetails'] = (object) array();
-                }
+                $aPlace['sNameDetails'] = $this->extractNames($aPlace['names']);
             }
 
             $aPlace['addresstype'] = ClassTypes\getLabelTag(
@@ -479,6 +475,33 @@ class PlaceLookup
         return $aResults;
     }
 
+
+    private function extractNames($sNames)
+    {
+        if (!$sNames) {
+            return (object) array();
+        }
+
+        $aFullNames = json_decode($sNames);
+        $aNames = array();
+
+        foreach ($aFullNames as $sKey => $sValue) {
+            if (strpos($sKey, '_place_') === 0) {
+                $sSubKey = substr($sKey, 7);
+                if (array_key_exists($sSubKey, $aFullNames)) {
+                    $aNames[$sKey] = $sValue;
+                } else {
+                    $aNames[$sSubKey] = $sValue;
+                }
+            } else {
+                $aNames[$sKey] = $sValue;
+            }
+        }
+
+        return $aNames;
+    }
+
+
     /* returns an array which will contain the keys
      *   aBoundingBox
      * and may also contain one or more of the keys
@@ -489,8 +512,6 @@ class PlaceLookup
      *   lat
      *   lon
      */
-
-
     public function getOutlines($iPlaceID, $fLon = null, $fLat = null, $fRadius = null, $fLonReverse = null, $fLatReverse = null)
     {
 

@@ -8,9 +8,8 @@
 Functions for importing and managing static country information.
 """
 import json
-from io import StringIO
 import psycopg2.extras
-
+import sys
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
 
@@ -28,6 +27,7 @@ class _CountryInfo:
         """
         if not self._info:
             self._info = config.load_sub_configuration('country_settings.yaml')
+            self._key_prefix = 'name'
             # Convert languages into a list for simpler handling.
             for prop in self._info.values():
                 if 'languages' not in prop:
@@ -36,12 +36,18 @@ class _CountryInfo:
                     prop['languages'] = [x.strip()
                                          for x in prop['languages'].split(',')]
                 if 'names' not in prop:
-                    prop['names']['name'] = {}
+                    prop['names'][self._key_prefix] = {}
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.
         """
         return self._info.items()
+
+    def key_prefix(self):
+        """ Return the prefix that will be attached to the keys of the country 
+            names values when storing them in the database
+        """
+        return self._key_prefix
 
 
 _COUNTRY_INFO = _CountryInfo()
@@ -66,10 +72,10 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
-    def add_prefix_to_keys(name, prefix):
-        return {prefix+k: v for k, v in name.items()}
+    def add_prefix_to_keys(names, prefix):
+        return {prefix+':'+k: v for k, v in names.items()}
 
-    params, country_names_data = [], ''
+    params = []
     for ccode, props in _COUNTRY_INFO.items():
         if ccode is not None and props is not None:
             if ignore_partitions:
@@ -77,11 +83,9 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             else:
                 partition = props.get('partition')
             lang = props['languages'][0] if len(props['languages']) == 1 else None
-            params.append((ccode, partition, lang))
-
-            name = add_prefix_to_keys(props.get('names').get('name'), 'name:')
+            name = add_prefix_to_keys(props.get('names').get(_COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
             name = json.dumps(name, ensure_ascii=False, separators=(', ', '=>'))
-            country_names_data += ccode + '\t' + name[1:-1] + '\n'
+            params.append((ccode, name[1:-1], lang, partition))
     with connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -92,13 +96,10 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
                         country_default_language_code text,
                         partition integer
                     ); """)
-            data = StringIO(country_names_data)
-            cur.copy_from(data, 'country_name', columns=('country_code', 'name'))
             cur.execute_values(
-                """ UPDATE country_name
-                    SET partition = part, country_default_language_code = lang
-                    FROM (VALUES %s) AS v (cc, part, lang)
-                    WHERE country_code = v.cc""", params)
+                """ INSERT INTO public.country_name
+                    (country_code, name, country_default_language_code, partition) VALUES %s
+                """, params)
         conn.commit()
 
 
@@ -112,8 +113,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == 'name' or \
-               (key.startswith('name:') and (not languages or key[5:] in languages))
+        return key == _COUNTRY_INFO.key_prefix() or \
+               (key.startswith(_COUNTRY_INFO.key_prefix()+':') and (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

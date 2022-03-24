@@ -19,6 +19,7 @@ class _CountryInfo:
 
     def __init__(self):
         self._info = {}
+        self._key_prefix = 'name'
 
 
     def load(self, config):
@@ -27,7 +28,6 @@ class _CountryInfo:
         """
         if not self._info:
             self._info = config.load_sub_configuration('country_settings.yaml')
-            self._key_prefix = 'name'
             # Convert languages into a list for simpler handling.
             for prop in self._info.values():
                 if 'languages' not in prop:
@@ -44,7 +44,7 @@ class _CountryInfo:
         return self._info.items()
 
     def key_prefix(self):
-        """ Return the prefix that will be attached to the keys of the country 
+        """ Return the prefix that will be attached to the keys of the country
             names values when storing them in the database
         """
         return self._key_prefix
@@ -83,7 +83,8 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
             else:
                 partition = props.get('partition')
             lang = props['languages'][0] if len(props['languages']) == 1 else None
-            name = add_prefix_to_keys(props.get('names').get(_COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
+            name = add_prefix_to_keys(props.get('names')
+                 .get(_COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
             name = json.dumps(name, ensure_ascii=False, separators=(', ', '=>'))
             params.append((ccode, name[1:-1], lang, partition))
     with connect(dsn) as conn:
@@ -114,7 +115,8 @@ def create_country_names(conn, tokenizer, languages=None):
 
     def _include_key(key):
         return key == _COUNTRY_INFO.key_prefix() or \
-               (key.startswith(_COUNTRY_INFO.key_prefix()+':') and (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
+               (key.startswith(_COUNTRY_INFO.key_prefix()+':') and
+            (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

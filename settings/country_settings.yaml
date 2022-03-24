@@ -3596,7 +3596,7 @@ bq:
     languages: nl
     names: 
         name: 
-            default: \N
+            default: "\N"
 
 # Brazil (Brasil)
 br:

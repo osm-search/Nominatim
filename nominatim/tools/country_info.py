@@ -9,7 +9,7 @@ Functions for importing and managing static country information.
 """
 import json
 import psycopg2.extras
-import sys
+
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
 

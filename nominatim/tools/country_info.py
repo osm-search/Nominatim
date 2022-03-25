@@ -35,8 +35,8 @@ class _CountryInfo:
                 elif not isinstance(prop['languages'], list):
                     prop['languages'] = [x.strip()
                                          for x in prop['languages'].split(',')]
-                if 'names' not in prop:
-                    prop['names'][self._key_prefix] = {}
+                if 'names' not in prop or prop['names'] is None:
+                    prop['names'] = {self._key_prefix: {}}
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.

@@ -59,3 +59,39 @@ def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cur
     else:
         assert result_set == {'us' : set(('us', 'us1', 'us2', 'United States')),
                               'fr' : set(('fr', 'Fra', 'Fren'))}
+
+@pytest.mark.parametrize("yaml_file_content", (
+"""
+de:
+    partition: 3
+    names: 
+        name: 
+            default: Deutschland
+""",
+"""
+de:
+    partition: 3
+    languages: de
+    names:
+""",
+"""
+de:
+    partition: 3
+    languages: de
+"""
+))
+def test_load(project_env, def_config, yaml_file_content):
+    (project_env.project_dir / 'country_settings.yaml').write_text(yaml_file_content)
+    
+    country_info._COUNTRY_INFO._info = def_config.load_sub_configuration(
+        (project_env.project_dir / 'country_settings.yaml'))
+    
+    for prop in country_info._COUNTRY_INFO._info.values():
+        if 'languages' not in prop:
+            prop['languages'] = []
+            assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3,
+            'languages': [], 'names': {'name': {'default': 'Deutschland'}}}}
+        if 'names' not in prop or prop['names'] is None:
+            prop['names'] = {'name': {}}
+            assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3,
+            'languages': 'de', 'names': {'name': {}}}}

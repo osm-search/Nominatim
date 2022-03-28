@@ -90,11 +90,11 @@ This overrides the specified machine readable format. (Default: 0)
 
 ##### XML
 
-[https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189](https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189)
+[https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W104393803,N240109189](https://nominatim.openstreetmap.org/lookup?osm_ids=R146656,W50637691,N240109189)
 
 ```xml
-  <lookupresults timestamp="Mon, 29 Jun 15 18:01:33 +0000" attribution="Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright" querystring="R146656,W104393803,N240109189" polygon="false">
-    <place place_id="127761056" osm_type="relation" osm_id="146656" place_rank="16" lat="53.4791466" lon="-2.2447445" display_name="Manchester, Greater Manchester, North West England, England, United Kingdom" class="boundary" type="administrative" importance="0.704893333438333">
+  <lookupresults timestamp="Mon, 28 Mar 22 14:38:54 +0000" attribution="Data &#xA9; OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright" querystring="R146656,W50637691,N240109189" more_url="">
+    <place place_id="282236157" osm_type="relation" osm_id="146656" place_rank="16" address_rank="16" boundingbox="53.3401044,53.5445923,-2.3199185,-2.1468288" lat="53.44246175" lon="-2.2324547359718547" display_name="Manchester, Greater Manchester, North West England, England, United Kingdom" class="boundary" type="administrative" importance="0.35">
       <city>Manchester</city>
       <county>Greater Manchester</county>
       <state_district>North West England</state_district>
@@ -102,21 +102,20 @@ This overrides the specified machine readable format. (Default: 0)
       <country>United Kingdom</country>
       <country_code>gb</country_code>
     </place>
-    <place place_id="77769745" osm_type="way" osm_id="104393803" place_rank="30" lat="52.5162024" lon="13.3777343363579" display_name="Brandenburg Gate, 1, Pariser Platz, Mitte, Berlin, 10117, Germany" class="tourism" type="attraction" importance="0.443472858361592">
-      <attraction>Brandenburg Gate</attraction>
-      <house_number>1</house_number>
-      <pedestrian>Pariser Platz</pedestrian>
-      <suburb>Mitte</suburb>
-      <city_district>Mitte</city_district>
-      <city>Berlin</city>
-      <state>Berlin</state>
-      <postcode>10117</postcode>
+    <place place_id="115462561" osm_type="way" osm_id="50637691" place_rank="30" address_rank="30" boundingbox="52.3994612,52.3996426,13.0479574,13.0481754" lat="52.399550700000006" lon="13.048066846939687" display_name="Brandenburger Tor, Brandenburger Stra&#xDF;e, Historische Innenstadt, Innenstadt, Potsdam, Brandenburg, 14467, Germany" class="tourism" type="attraction" importance="0.29402874005524">
+      <tourism>Brandenburger Tor</tourism>
+      <road>Brandenburger Stra&#xDF;e</road>
+      <suburb>Historische Innenstadt</suburb>
+      <city>Potsdam</city>
+      <state>Brandenburg</state>
+      <postcode>14467</postcode>
       <country>Germany</country>
       <country_code>de</country_code>
     </place>
-    <place place_id="2570600569" osm_type="node" osm_id="240109189" place_rank="15" lat="52.5170365" lon="13.3888599" display_name="Berlin, Germany" class="place" type="city" importance="0.822149797630868">
+    <place place_id="567505" osm_type="node" osm_id="240109189" place_rank="15" address_rank="16" boundingbox="52.3586925,52.6786925,13.2396024,13.5596024" lat="52.5186925" lon="13.3996024" display_name="Berlin, 10178, Germany" class="place" type="city" importance="0.78753902824914">
       <city>Berlin</city>
       <state>Berlin</state>
+      <postcode>10178</postcode>
       <country>Germany</country>
       <country_code>de</country_code>
     </place>
@@ -125,38 +124,50 @@ This overrides the specified machine readable format. (Default: 0)
 
 ##### JSON with extratags
 
-[https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json](https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json)
+[https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json&extratags=1](https://nominatim.openstreetmap.org/lookup?osm_ids=W50637691&format=json&extratags=1)
 
 ```json
 [
-  {
-    "place_id": "84271358",
-    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
-    "osm_type": "way",
-    "osm_id": "50637691",
-    "lat": "52.39955055",
-    "lon": "13.04806574678",
-    "display_name": "Brandenburger Tor, Brandenburger Straße, Nördliche Innenstadt, Innenstadt, Potsdam, Brandenburg, 14467, Germany",
-    "class": "historic",
-    "type": "city_gate",
-    "importance": "0.221233780277011",
-    "address": {
-      "address29": "Brandenburger Tor",
-      "pedestrian": "Brandenburger Straße",
-      "suburb": "Nördliche Innenstadt",
-      "city": "Potsdam",
-      "state": "Brandenburg",
-      "postcode": "14467",
-      "country": "Germany",
-      "country_code": "de"
-    },
-    "extratags": {
-      "image": "http://commons.wikimedia.org/wiki/File:Potsdam_brandenburger_tor.jpg",
-      "wikidata": "Q695045",
-      "wikipedia": "de:Brandenburger Tor (Potsdam)",
-      "wheelchair": "yes",
-      "description": "Kleines Brandenburger Tor in Potsdam"
-    }
-  }
+   {
+      "place_id": 115462561,
+      "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+      "osm_type": "way",
+      "osm_id": 50637691,
+      "boundingbox": [
+        "52.3994612",
+        "52.3996426",
+        "13.0479574",
+        "13.0481754"
+      ],
+      "lat": "52.399550700000006",
+      "lon": "13.048066846939687",
+      "display_name": "Brandenburger Tor, Brandenburger Straße, Historische Innenstadt, Innenstadt, Potsdam, Brandenburg, 14467, Germany",
+      "class": "tourism",
+      "type": "attraction",
+      "importance": 0.2940287400552381,
+      "address": {
+        "tourism": "Brandenburger Tor",
+        "road": "Brandenburger Straße",
+        "suburb": "Historische Innenstadt",
+        "city": "Potsdam",
+        "state": "Brandenburg",
+        "postcode": "14467",
+        "country": "Germany",
+        "country_code": "de"
+      },
+      "extratags": {
+        "image": "http://commons.wikimedia.org/wiki/File:Potsdam_brandenburger_tor.jpg",
+        "heritage": "4",
+        "wikidata": "Q695045",
+        "architect": "Carl von Gontard;Georg Christian Unger",
+        "wikipedia": "de:Brandenburger Tor (Potsdam)",
+        "wheelchair": "yes",
+        "description": "Kleines Brandenburger Tor in Potsdam",
+        "heritage:website": "http://www.bldam-brandenburg.de/images/stories/PDF/DML%202012/04-p-internet-13.pdf",
+        "heritage:operator": "bldam",
+        "architect:wikidata": "Q68768;Q95223",
+        "year_of_construction": "1771"
+      }
+   }
 ]
 ```

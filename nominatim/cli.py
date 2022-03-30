@@ -20,6 +20,8 @@ from nominatim.errors import UsageError
 from nominatim import clicmd
 from nominatim.clicmd.args import NominatimArgs
 
+from .version import Version
+
 LOG = logging.getLogger()
 
 
@@ -218,6 +220,8 @@ def get_set_parser(**kwargs):
 
     parser.add_subcommand('export', QueryExport)
     parser.add_subcommand('serve', AdminServe)
+
+    parser.add_subcommand('version', Version)
 
     if kwargs.get('phpcgi_path'):
         parser.add_subcommand('search', clicmd.APISearch)

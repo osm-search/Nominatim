@@ -24,7 +24,46 @@ Version information for Nominatim.
 # patch level when cherry-picking the commit with the migration.
 #
 # Released versions always have a database patch level of 0.
+from nominatim.db import properties
+from nominatim.db.connection import connect
+
 NOMINATIM_VERSION = (4, 0, 99, 5)
 
 POSTGRESQL_REQUIRED_VERSION = (9, 5)
 POSTGIS_REQUIRED_VERSION = (2, 2)
+
+class Version:
+    """\
+    Display version information.
+    """
+
+    @staticmethod
+    def add_args(parser):
+        pass
+
+    @staticmethod
+    def run(args):
+        print(f'Nominatim {Version._format_tuple(NOMINATIM_VERSION)}',
+              f'PostgreSQL required version {Version._format_tuple(POSTGRESQL_REQUIRED_VERSION)}',
+              f'PostGIS required version {Version._format_tuple(POSTGIS_REQUIRED_VERSION)}',
+              sep="\n")
+        if args.verbose > 1:
+            with connect(args.config.get_libpq_dsn()) as conn:
+                if conn.table_exists('nominatim_properties'):
+                    db_version_str = properties.get_property(conn, 'database_version')
+                else:
+                    db_version_str = None
+
+                if db_version_str is not None:
+                    print(f'Current database version: {db_version_str}')
+                else:
+                    print('Could not detect current database version.')
+
+        return 0
+
+    @staticmethod
+    def _format_tuple(int_tuple):
+        """\
+        Formats a tuple of integers into a period-separated string version number.
+        """
+        return '.'.join([str(i) for i in int_tuple])

@@ -236,6 +236,9 @@ def add_step_column_for_interpolation(conn, **_):
         Also convers the data into the stricter format which requires that
         startnumbers comply with the odd/even requirements.
     """
+    if conn.table_has_column('location_property_osmline', 'step'):
+        return
+
     with conn.cursor() as cur:
         # Mark invalid all interpolations with no intermediate numbers.
         cur.execute("""UPDATE location_property_osmline SET startnumber = null
@@ -265,6 +268,9 @@ def add_step_column_for_interpolation(conn, **_):
 def add_step_column_for_tiger(conn, **_):
     """ Add a new column 'step' to the tiger data table.
     """
+    if conn.table_has_column('location_property_tiger', 'step'):
+        return
+
     with conn.cursor() as cur:
         cur.execute("ALTER TABLE location_property_tiger ADD COLUMN step SMALLINT")
         cur.execute("""UPDATE location_property_tiger
@@ -278,5 +284,26 @@ def add_derived_name_column_for_country_names(conn, **_):
     """ Add a new column 'derived_name' which in the future takes the
         country names as imported from OSM data.
     """
-    with conn.cursor() as cur:
-        cur.execute("ALTER TABLE country_name ADD COLUMN derived_name public.HSTORE")
+    if not conn.table_has_column('country_name', 'derived_name'):
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE country_name ADD COLUMN derived_name public.HSTORE")
+
+
+@_migration(4, 0, 99, 5)
+def mark_internal_country_names(conn, config, **_):
+    """ Names from the country table should be marked as internal to prevent
+        them from being deleted. Only necessary for ICU tokenizer.
+    """
+    import psycopg2.extras # pylint: disable=import-outside-toplevel
+
+    tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
+    with tokenizer.name_analyzer() as analyzer:
+        with conn.cursor() as cur:
+            psycopg2.extras.register_hstore(cur)
+            cur.execute("SELECT country_code, name FROM country_name")
+
+            for country_code, names in cur:
+                if not names:
+                    names = {}
+                names['countrycode'] = country_code
+                analyzer.add_country_names(country_code, names)

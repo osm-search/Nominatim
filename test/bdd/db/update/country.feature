@@ -56,10 +56,20 @@ Feature: Country handling
         Then results contain
             | osm |
             | N1  |
+        When sending search query "Wenig, de"
+        Then results contain
+            | osm |
+            | N1  |
         When updating places
             | osm  | class    | type           | admin | name+name:en | country | geometry |
             | R1   | boundary | administrative | 2     | Lilly        | de      | (9 52, 9 53, 10 52, 9 52) |
         When sending search query "Wenig, Germany"
+            | accept-language |
+            | en,de |
+        Then results contain
+            | osm | display_name |
+            | N1  | Wenig, Lilly |
+        When sending search query "Wenig, de"
             | accept-language |
             | en,de |
         Then results contain

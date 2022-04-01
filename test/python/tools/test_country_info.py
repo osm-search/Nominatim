@@ -71,6 +71,7 @@ de:
         name:
             default: Deutschland
 """)
+    country_info._COUNTRY_INFO._info = None
     country_info.setup_country_config(project_env)
     assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3, 
             'languages': [], 'names': {'name': {'default': 'Deutschland'}}}}

@@ -7,11 +7,11 @@
 """
 Functions for importing and managing static country information.
 """
-import json
 import psycopg2.extras
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
+
 
 class _CountryInfo:
     """ Caches country-specific properties from the configuration file.
@@ -20,7 +20,6 @@ class _CountryInfo:
     def __init__(self):
         self._info = {}
         self._key_prefix = 'name'
-
 
     def load(self, config):
         """ Load the country properties from the configuration files,
@@ -52,6 +51,7 @@ class _CountryInfo:
 
 _COUNTRY_INFO = _CountryInfo()
 
+
 def setup_country_config(config):
     """ Load country properties from the configuration file.
         Needs to be called before using any other functions in this
@@ -82,13 +82,14 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
                 partition = 0
             else:
                 partition = props.get('partition')
-            lang = props['languages'][0] if len(props['languages']) == 1 else None
-            name = add_prefix_to_keys(props.get('names')
-                 .get(_COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
-            name = json.dumps(name, ensure_ascii=False, separators=(', ', '=>'))
-            params.append((ccode, name[1:-1], lang, partition))
+            lang = props['languages'][0] if len(
+                props['languages']) == 1 else None
+            name = add_prefix_to_keys(props.get('names').get(
+                _COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
+            params.append((ccode, name, lang, partition))
     with connect(dsn) as conn:
         with conn.cursor() as cur:
+            psycopg2.extras.register_hstore(cur)
             cur.execute(
                 """ CREATE TABLE public.country_name (
                         country_code character varying(2),
@@ -115,8 +116,8 @@ def create_country_names(conn, tokenizer, languages=None):
 
     def _include_key(key):
         return key == _COUNTRY_INFO.key_prefix() or \
-               (key.startswith(_COUNTRY_INFO.key_prefix()+':') and
-            (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
+            (key.startswith(_COUNTRY_INFO.key_prefix()+':') and
+                (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)
@@ -133,7 +134,8 @@ def create_country_names(conn, tokenizer, languages=None):
 
                 # country names (only in languages as provided)
                 if name:
-                    names.update(((k, v) for k, v in name.items() if _include_key(k)))
+                    names.update(((k, v)
+                                  for k, v in name.items() if _include_key(k)))
 
                 analyzer.add_country_names(code, names)
 

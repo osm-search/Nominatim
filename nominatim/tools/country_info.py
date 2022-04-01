@@ -117,7 +117,7 @@ def create_country_names(conn, tokenizer, languages=None):
     def _include_key(key):
         return key == _COUNTRY_INFO.key_prefix() or \
             (key.startswith(_COUNTRY_INFO.key_prefix()+':') and
-                (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
+             (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)

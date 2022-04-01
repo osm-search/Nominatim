@@ -100,3 +100,18 @@ de:
     country_info.setup_country_config(project_env)
     assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3,
             'languages': ['de'], 'names': {'name': {}}}}
+
+@pytest.mark.custom_country_config
+def test_setup_country_config_special_character(project_env):
+    (project_env.project_dir / 'country_settings.yaml').write_text("""
+bq:
+    partition: 250
+    languages: nl
+    names: 
+        name: 
+            default: "\\N"
+""")
+    country_info._COUNTRY_INFO._info = None
+    country_info.setup_country_config(project_env)
+    assert country_info._COUNTRY_INFO._info == {'bq': {'partition': 250,
+            'languages': ['nl'], 'names': {'name': {'default': '\x85'}}}}

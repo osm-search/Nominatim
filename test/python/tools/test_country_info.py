@@ -13,7 +13,9 @@ import pytest
 from nominatim.tools import country_info
 
 @pytest.fixture(autouse=True)
-def read_config(def_config):
+def read_config(def_config, request):
+    if 'custom_country_config' in request.keywords:
+        return
     country_info.setup_country_config(def_config)
 
 @pytest.mark.parametrize("no_partitions", (True, False))
@@ -60,38 +62,40 @@ def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cur
         assert result_set == {'us' : set(('us', 'us1', 'us2', 'United States')),
                               'fr' : set(('fr', 'Fra', 'Fren'))}
 
-
-def test_setup_country_config_languages_not_loaded(project_env, def_config):
+@pytest.mark.custom_country_config
+def test_setup_country_config_languages_not_loaded(project_env):
     (project_env.project_dir / 'country_settings.yaml').write_text("""
 de:
     partition: 3
-    names: 
-        name: 
+    names:
+        name:
             default: Deutschland
 """)
-    country_info.setup_country_config(def_config)
-    assert country_info._COUNTRY_INFO._info.values() == {'de': {'partition': 3,
+    country_info.setup_country_config(project_env)
+    assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3, 
             'languages': [], 'names': {'name': {'default': 'Deutschland'}}}}
 
-
-def test_setup_country_config_name_not_loaded(project_env, def_config):
+@pytest.mark.custom_country_config
+def test_setup_country_config_name_not_loaded(project_env):
     (project_env.project_dir / 'country_settings.yaml').write_text("""
 de:
     partition: 3
     languages: de
     names:
-""",)
-    country_info.setup_country_config(def_config)
+""")
+    country_info._COUNTRY_INFO._info = None
+    country_info.setup_country_config(project_env)
     assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3,
-            'languages': 'de', 'names': {'name': {}}}}
+            'languages': ['de'], 'names': {'name': {}}}}
 
-
-def test_setup_country_config_names_not_loaded(project_env, def_config):
+@pytest.mark.custom_country_config
+def test_setup_country_config_names_not_loaded(project_env):
     (project_env.project_dir / 'country_settings.yaml').write_text("""
 de:
     partition: 3
     languages: de
 """)
-    country_info.setup_country_config(def_config)
+    country_info._COUNTRY_INFO._info = None
+    country_info.setup_country_config(project_env)
     assert country_info._COUNTRY_INFO._info == {'de': {'partition': 3,
-            'languages': 'de', 'names': {'name': {}}}}
+            'languages': ['de'], 'names': {'name': {}}}}

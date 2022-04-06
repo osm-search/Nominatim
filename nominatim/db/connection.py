@@ -90,6 +90,17 @@ class _Connection(psycopg2.extensions.connection):
             return num == 1
 
 
+    def table_has_column(self, table, column):
+        """ Check if the table 'table' exists and has a column with name 'column'.
+        """
+        with self.cursor() as cur:
+            has_column = cur.scalar("""SELECT count(*) FROM information_schema.columns
+                                       WHERE table_name = %s
+                                             and column_name = %s""",
+                                    (table, column))
+            return has_column > 0
+
+
     def index_exists(self, index, table=None):
         """ Check that an index with the given name exists in the database.
             If table is not None then the index must relate to the given

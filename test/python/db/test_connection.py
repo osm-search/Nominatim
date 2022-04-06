@@ -26,6 +26,16 @@ def test_connection_table_exists(db, table_factory):
     assert db.table_exists('foobar')
 
 
+def test_has_column_no_table(db):
+    assert not db.table_has_column('sometable', 'somecolumn')
+
+
+@pytest.mark.parametrize('name,result', [('tram', True), ('car', False)])
+def test_has_column(db, table_factory, name, result):
+    table_factory('stuff', 'tram TEXT')
+
+    assert db.table_has_column('stuff', name) == result
+
 def test_connection_index_exists(db, table_factory, temp_db_cursor):
     assert not db.index_exists('some_index')
 

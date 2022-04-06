@@ -226,8 +226,7 @@ if (BUILD_IMPORTER)
             PATTERN __pycache__ EXCLUDE)
     install(DIRECTORY lib-sql DESTINATION ${NOMINATIM_LIBDIR})
 
-    install(FILES data/country_name.sql
-                  ${COUNTRY_GRID_FILE}
+    install(FILES ${COUNTRY_GRID_FILE}
                   data/words.sql
             DESTINATION ${NOMINATIM_DATADIR})
 endif()

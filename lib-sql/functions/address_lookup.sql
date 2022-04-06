@@ -43,8 +43,8 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- anything will do as a fallback - just take the first name type thing there is
-  RETURN trim((avals(name))[1]);
+  -- as a fallback - take the last element since it is the default name
+  RETURN trim((avals(name))[array_length(avals(name), 1)]);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;

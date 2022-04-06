@@ -86,7 +86,8 @@ class AddressDetailsTest extends \PHPUnit\Framework\TestCase
                      'city' => 'London',
                      'state_district' => 'Greater London',
                      'state' => 'England',
-                     'state-ISO3166-2' => 'GB-ENG',
+                     'ISO3166-2-lvl4' => 'GB-ENG',
+                     'ISO3166-2-lvl6' => 'GB-LND',
                      'postcode' => 'SW1A 2AA',
                      'country' => 'United Kingdom',
                      'country_code' => 'gb'

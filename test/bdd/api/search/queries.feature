@@ -15,6 +15,7 @@ Feature: Search queries
           | postcode     | 9497 |
           | country      | Liechtenstein |
           | country_code | li |
+          | ISO3166-2-lvl10  | LI-10 |
 
     Scenario: House number interpolation
         When sending json search query "Grosssteg 1023, Triesenberg" with address
@@ -41,6 +42,7 @@ Feature: Search queries
           | town          | Triesenberg |
           | country       | Liechtenstein |
           | country_code  | li |
+          | ISO3166-2-lvl10  | LI-10 |
 
     Scenario Outline: Housenumber 0 can be found
         When sending <format> search query "Gnalpstrasse 0" with address

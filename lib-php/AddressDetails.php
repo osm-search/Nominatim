@@ -94,7 +94,7 @@ class AddressDetails
                 $aAddress[$sTypeLabel] = $sName;
 
                 if (!empty($aLine['name'])) {
-                    $this->addSubdivisionCode($aAddress, $sTypeLabel, $aLine['name']);
+                    $this->addSubdivisionCode($aAddress, $aLine['admin_level'], $aLine['name']);
                 }
             }
         }
@@ -179,13 +179,13 @@ class AddressDetails
         return $this->aAddressLines;
     }
 
-    private function addSubdivisionCode(&$aAddress, $sTypeLabel, $nameDetails)
+    private function addSubdivisionCode(&$aAddress, $iAdminLevel, $nameDetails)
     {
         if (is_string($nameDetails)) {
             $nameDetails = json_decode('{' . str_replace('"=>"', '":"', $nameDetails) . '}', true);
         }
         if (!empty($nameDetails['ISO3166-2'])) {
-            $aAddress["$sTypeLabel-ISO3166-2"] = $nameDetails['ISO3166-2'];
+            $aAddress["ISO3166-2-lvl$iAdminLevel"] = $nameDetails['ISO3166-2'];
         }
     }
 }

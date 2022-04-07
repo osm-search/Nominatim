@@ -7,6 +7,7 @@
 """
 Functions for updating a database from a replication source.
 """
+from contextlib import contextmanager
 import datetime as dt
 from enum import Enum
 import logging
@@ -109,24 +110,39 @@ def update(conn, options):
         options['import_file'].unlink()
 
     # Read updates into file.
-    repl = ReplicationServer(options['base_url'])
+    with _make_replication_server(options['base_url']) as repl:
+        outhandler = WriteHandler(str(options['import_file']))
+        endseq = repl.apply_diffs(outhandler, startseq + 1,
+                                  max_size=options['max_diff_size'] * 1024)
+        outhandler.close()
 
-    outhandler = WriteHandler(str(options['import_file']))
-    endseq = repl.apply_diffs(outhandler, startseq + 1,
-                              max_size=options['max_diff_size'] * 1024)
-    outhandler.close()
+        if endseq is None:
+            return UpdateState.NO_CHANGES
 
-    if endseq is None:
-        return UpdateState.NO_CHANGES
+        # Consume updates with osm2pgsql.
+        options['append'] = True
+        options['disable_jit'] = conn.server_version_tuple() >= (11, 0)
+        run_osm2pgsql(options)
 
-    # Consume updates with osm2pgsql.
-    options['append'] = True
-    options['disable_jit'] = conn.server_version_tuple() >= (11, 0)
-    run_osm2pgsql(options)
-
-    # Write the current status to the file
-    endstate = repl.get_state_info(endseq)
-    status.set_status(conn, endstate.timestamp if endstate else None,
-                      seq=endseq, indexed=False)
+        # Write the current status to the file
+        endstate = repl.get_state_info(endseq)
+        status.set_status(conn, endstate.timestamp if endstate else None,
+                          seq=endseq, indexed=False)
 
     return UpdateState.UP_TO_DATE
+
+
+def _make_replication_server(url):
+    """ Returns a ReplicationServer in form of a context manager.
+
+        Creates a light wrapper around older versions of pyosmium that did
+        not support the context manager interface.
+    """
+    if hasattr(ReplicationServer, '__enter__'):
+        return ReplicationServer(url)
+
+    @contextmanager
+    def get_cm():
+        yield ReplicationServer(url)
+
+    return get_cm()

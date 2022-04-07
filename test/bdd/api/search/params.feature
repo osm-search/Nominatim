@@ -34,6 +34,7 @@ Feature: Search queries
           | postcode     | 9495 |
           | country      | Liechtenstein |
           | country_code | li |
+          | ISO3166-2-lvl8 | LI-09 |
 
     Examples:
           | format |

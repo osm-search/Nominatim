@@ -28,6 +28,7 @@ a single place (for reverse) of the following format:
       "city": "London",
       "state_district": "Greater London",
       "state": "England",
+      "ISO3166-2-lvl4": "GB-ENG",
       "postcode": "SW1A 2DU",
       "country": "United Kingdom",
       "country_code": "gb"
@@ -126,6 +127,7 @@ formats depending on the API call.
   </result>
   <addressparts>
      <state>Bavaria</state>
+     <ISO3166-2-lvl4>DE-BY</ISO3166-2-lvl4>
      <country>Germany</country>
      <country_code>de</country_code>
   </addressparts>
@@ -179,6 +181,7 @@ Additional information requested with `addressdetails=1`, `extratags=1` and
     <city>London</city>
     <state_district>Greater London</state_district>
     <state>England</state>
+    <ISO3166-2-lvl4>GB-ENG</ISO3166-2-lvl4>
     <postcode>SW1A 2DU</postcode>
     <country>United Kingdom</country>
     <country_code>gb</country_code>
@@ -279,7 +282,7 @@ with a designation label. Per default the following labels may appear:
 
  * continent
  * country, country_code
- * region, state, state_district, county
+ * region, state, state_district, county, ISO3166-2-lvl<admin_level>
  * municipality, city, town, village
  * city_district, district, borough, suburb, subdivision
  * hamlet, croft, isolated_dwelling

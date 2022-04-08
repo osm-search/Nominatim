@@ -51,6 +51,12 @@ Both query forms accept the additional parameters listed below.
 
 See [Place Output Formats](Output.md) for details on each format. (Default: jsonv2)
 
+!!! note
+    The Nominatim service at
+    [https://nominatim.openstreetmap.org](https://nominatim.openstreetmap.org)
+    has a different default behaviour for historical reasons. When the
+    `format` parameter is omitted, the request will be forwarded to the Web UI.
+
 * `json_callback=<string>`
 
 Wrap JSON output in a callback function ([JSONP](https://en.wikipedia.org/wiki/JSONP)) i.e. `<string>(<json>)`.

@@ -19,6 +19,7 @@ from nominatim.version import NOMINATIM_VERSION
 
 LOG = logging.getLogger()
 
+OSM_TYPE = {'N': 'node', 'W': 'way', 'R': 'relation'}
 
 def _add_address_level_rows_from_entry(rows, entry):
     """ Converts a single entry from the JSON format for address rank
@@ -210,3 +211,28 @@ def setup_website(basedir, config, conn):
             (basedir / script).write_text(template.format('reverse-only-search.php'), 'utf-8')
         else:
             (basedir / script).write_text(template.format(script), 'utf-8')
+
+
+def invalidate_osm_object(osm_type, osm_id, conn, recursive=True):
+    """ Mark the given OSM object for reindexing. When 'recursive' is set
+        to True (the default), then all dependent objects are marked for
+        reindexing as well.
+
+        'osm_type' must be on of 'N' (node), 'W' (way) or 'R' (relation).
+        If the given object does not exist, then nothing happens.
+    """
+    assert osm_type in ('N', 'R', 'W')
+
+    LOG.warning("Invalidating OSM %s %s%s.",
+                OSM_TYPE[osm_type], osm_id,
+                ' and its dependent places' if recursive else '')
+
+    with conn.cursor() as cur:
+        if recursive:
+            sql = """SELECT place_force_update(place_id)
+                     FROM placex WHERE osm_type = %s and osm_id = %s"""
+        else:
+            sql = """UPDATE placex SET indexed_status = 2
+                     WHERE osm_type = %s and osm_id = %s"""
+
+        cur.execute(sql, (osm_type, osm_id))

@@ -26,6 +26,7 @@ and can't offer support.
 !!! Warning
     For larger installations you **must have** PostgreSQL 11+ and Postgis 3+
     otherwise import and queries will be slow to the point of being unusable.
+    Query performance has marked improvements with PostgrSQL 13+ and Postgis 3.2+.
 
 For compiling:
 

@@ -14,15 +14,14 @@ import nominatim.clicmd.api
 
 @pytest.mark.parametrize("endpoint", (('search', 'reverse', 'lookup', 'details', 'status')))
 def test_no_api_without_phpcgi(src_dir, endpoint):
-    with pytest.raises(SystemExit):
-        nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
-                                osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
-                                phplib_dir=str(src_dir / 'lib-php'),
-                                data_dir=str(src_dir / 'data'),
-                                phpcgi_path=None,
-                                sqllib_dir=str(src_dir / 'lib-sql'),
-                                config_dir=str(src_dir / 'settings'),
-                                cli_args=[endpoint])
+    assert nominatim.cli.nominatim(module_dir='MODULE NOT AVAILABLE',
+                                   osm2pgsql_path='OSM2PGSQL NOT AVAILABLE',
+                                   phplib_dir=str(src_dir / 'lib-php'),
+                                   data_dir=str(src_dir / 'data'),
+                                   phpcgi_path=None,
+                                   sqllib_dir=str(src_dir / 'lib-sql'),
+                                   config_dir=str(src_dir / 'settings'),
+                                   cli_args=[endpoint]) == 1
 
 
 @pytest.mark.parametrize("params", [('search', '--query', 'new'),

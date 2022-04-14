@@ -70,7 +70,10 @@ class CommandlineParser:
             appropriate subcommand.
         """
         args = NominatimArgs()
-        self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
+        try:
+            self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
+        except SystemExit:
+            return 1
 
         if args.subcommand is None:
             self.parser.print_help()

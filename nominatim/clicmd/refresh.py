@@ -7,6 +7,7 @@
 """
 Implementation of 'refresh' subcommand.
 """
+from argparse import ArgumentTypeError
 import logging
 from pathlib import Path
 
@@ -24,7 +25,7 @@ def _parse_osm_object(obj):
         Raises an ArgumentError if the format is not recognized.
     """
     if len(obj) < 2 or obj[0].lower() not in 'nrw' or not obj[1:].isdigit():
-        raise ArgumentError("Expect OSM object id of form [N|W|R]<id>.")
+        raise ArgumentTypeError("Cannot parse OSM ID. Expect format: [N|W|R]<id>.")
 
     return (obj[0].upper(), int(obj[1:]))
 
@@ -79,7 +80,7 @@ class UpdateRefresh:
                            help='Enable debug warning statements in functions')
 
 
-    def run(self, args):
+    def run(self, args): #pylint: disable=too-many-branches
         from ..tools import refresh, postcodes
         from ..indexer.indexer import Indexer
 

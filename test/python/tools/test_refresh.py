@@ -39,3 +39,47 @@ def test_recompute_importance(placex_table, table_factory, temp_db_conn, temp_db
                                AS $$ SELECT 0.1::float, 'foo'::text $$ LANGUAGE SQL""")
 
     refresh.recompute_importance(temp_db_conn)
+
+
+@pytest.mark.parametrize('osm_type', ('N', 'W', 'R'))
+def test_invalidate_osm_object_simple(placex_table, osm_type, temp_db_conn, temp_db_cursor):
+    placex_table.add(osm_type=osm_type, osm_id=57283)
+
+    refresh.invalidate_osm_object(osm_type, 57283, temp_db_conn, recursive=False)
+    temp_db_conn.commit()
+
+    assert 2 == temp_db_cursor.scalar("""SELECT indexed_status FROM placex
+                                         WHERE osm_type = %s and osm_id = %s""",
+                                      (osm_type, 57283))
+
+
+def test_invalidate_osm_object_nonexisting_simple(placex_table, temp_db_conn, temp_db_cursor):
+    placex_table.add(osm_type='W', osm_id=57283)
+
+    refresh.invalidate_osm_object('N', 57283, temp_db_conn, recursive=False)
+    temp_db_conn.commit()
+
+    assert 0 == temp_db_cursor.scalar("""SELECT count(*) FROM placex
+                                         WHERE indexed_status > 0""")
+
+
+@pytest.mark.parametrize('osm_type', ('N', 'W', 'R'))
+def test_invalidate_osm_object_recursive(placex_table, osm_type, temp_db_conn, temp_db_cursor):
+    placex_table.add(osm_type=osm_type, osm_id=57283)
+
+    temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION place_force_update(placeid BIGINT)
+                              RETURNS BOOLEAN AS $$
+                              BEGIN
+                                UPDATE placex SET indexed_status = 522
+                                WHERE place_id = placeid;
+                                RETURN TRUE;
+                              END;
+                              $$
+                              LANGUAGE plpgsql;""")
+
+    refresh.invalidate_osm_object(osm_type, 57283, temp_db_conn)
+    temp_db_conn.commit()
+
+    assert 522 == temp_db_cursor.scalar("""SELECT indexed_status FROM placex
+                                           WHERE osm_type = %s and osm_id = %s""",
+                                        (osm_type, 57283))

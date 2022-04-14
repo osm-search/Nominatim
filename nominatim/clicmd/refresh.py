@@ -7,6 +7,7 @@
 """
 Implementation of 'refresh' subcommand.
 """
+from argparse import ArgumentTypeError
 import logging
 from pathlib import Path
 
@@ -18,6 +19,16 @@ from nominatim.db.connection import connect
 # pylint: disable=E0012,C0415
 
 LOG = logging.getLogger()
+
+def _parse_osm_object(obj):
+    """ Parse the given argument into a tuple of OSM type and ID.
+        Raises an ArgumentError if the format is not recognized.
+    """
+    if len(obj) < 2 or obj[0].lower() not in 'nrw' or not obj[1:].isdigit():
+        raise ArgumentTypeError("Cannot parse OSM ID. Expect format: [N|W|R]<id>.")
+
+    return (obj[0].upper(), int(obj[1:]))
+
 
 class UpdateRefresh:
     """\
@@ -53,6 +64,15 @@ class UpdateRefresh:
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
                            help='Refresh the directory that serves the scripts for the web API')
+        group.add_argument('--data-object', action='append',
+                           type=_parse_osm_object, metavar='OBJECT',
+                           help='Mark the given OSM object as requiring an update'
+                                ' (format: [NWR]<id>)')
+        group.add_argument('--data-area', action='append',
+                           type=_parse_osm_object, metavar='OBJECT',
+                           help='Mark the area around the given OSM object as requiring an update'
+                                ' (format: [NWR]<id>)')
+
         group = parser.add_argument_group('Arguments for function refresh')
         group.add_argument('--no-diff-updates', action='store_false', dest='diffs',
                            help='Do not enable code for propagating updates')
@@ -60,7 +80,7 @@ class UpdateRefresh:
                            help='Enable debug warning statements in functions')
 
 
-    def run(self, args):
+    def run(self, args): #pylint: disable=too-many-branches
         from ..tools import refresh, postcodes
         from ..indexer.indexer import Indexer
 
@@ -123,6 +143,14 @@ class UpdateRefresh:
             self._get_tokenizer(args.config)
             with connect(args.config.get_libpq_dsn()) as conn:
                 refresh.setup_website(webdir, args.config, conn)
+
+        if args.data_object or args.data_area:
+            with connect(args.config.get_libpq_dsn()) as conn:
+                for obj in args.data_object or []:
+                    refresh.invalidate_osm_object(*obj, conn, recursive=False)
+                for obj in args.data_area or []:
+                    refresh.invalidate_osm_object(*obj, conn, recursive=True)
+                conn.commit()
 
         return 0
 

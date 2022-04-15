@@ -207,6 +207,7 @@ def get_set_parser(**kwargs):
     """
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
+    parser.add_subcommand('version', clicmd.Version)
     parser.add_subcommand('import', clicmd.SetupAll)
     parser.add_subcommand('freeze', clicmd.SetupFreeze)
     parser.add_subcommand('replication', clicmd.UpdateReplication)

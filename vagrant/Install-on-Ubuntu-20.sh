@@ -13,6 +13,15 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 #
 # These instructions expect that you have a freshly installed Ubuntu 20.04.
 #
+# *Warning:* if you're using prebuilt images (e.g. LXC containers from Proxmox),
+# make sure that the current locale is in UTF8 with
+
+
+    grep UTF-8 /etc/default/locale
+
+# If not, run `dpkg-reconfigure locales` before going ahead. Further information in
+# [this](https://github.com/osm-search/Nominatim/discussions/2343) community post.
+#
 # Make sure all packages are up-to-date by running:
 #
 

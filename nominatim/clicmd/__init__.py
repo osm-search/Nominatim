@@ -17,3 +17,4 @@ from nominatim.clicmd.add_data import UpdateAddData
 from nominatim.clicmd.admin import AdminFuncs
 from nominatim.clicmd.freeze import SetupFreeze
 from nominatim.clicmd.special_phrases import ImportSpecialPhrases
+from nominatim.clicmd.get_version import Version

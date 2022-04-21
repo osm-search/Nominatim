@@ -34,7 +34,7 @@ BEGIN
     NEW.parent_place_id = 0;
     FOR location IN
       SELECT place_id
-        FROM getNearFeatures(partition, NEW.geometry, NEW.rank_search)
+        FROM getNearFeatures(partition, NEW.geometry, NEW.geometry, NEW.rank_search)
         WHERE NOT isguess ORDER BY rank_address DESC, distance asc LIMIT 1
     LOOP
         NEW.parent_place_id = location.place_id;

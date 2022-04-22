@@ -449,6 +449,7 @@ CREATE OR REPLACE FUNCTION insert_addresslines(obj_place_id BIGINT,
                                                maxrank SMALLINT,
                                                token_info JSONB,
                                                geometry GEOMETRY,
+                                               centroid GEOMETRY,
                                                country TEXT,
                                                OUT parent_place_id BIGINT,
                                                OUT postcode TEXT,
@@ -511,7 +512,7 @@ BEGIN
   END LOOP;
 
   FOR location IN
-    SELECT * FROM getNearFeatures(partition, geometry, maxrank)
+    SELECT * FROM getNearFeatures(partition, geometry, centroid, maxrank)
     WHERE not addr_place_ids @> ARRAY[place_id]
     ORDER BY rank_address, isguess asc,
              distance *
@@ -1106,7 +1107,8 @@ BEGIN
   END IF;
 
   SELECT * FROM insert_addresslines(NEW.place_id, NEW.partition, max_rank,
-                                    NEW.token_info, geom, NEW.country_code)
+                                    NEW.token_info, geom, NEW.centroid,
+                                    NEW.country_code)
     INTO NEW.parent_place_id, NEW.postcode, nameaddress_vector;
 
   {% if debug %}RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;{% endif %}

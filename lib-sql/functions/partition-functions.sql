@@ -39,7 +39,10 @@ BEGIN
 END
 $$ LANGUAGE plpgsql IMMUTABLE;
 
-create or replace function getNearFeatures(in_partition INTEGER, feature GEOMETRY, maxrank INTEGER) RETURNS setof nearfeaturecentr AS $$
+CREATE OR REPLACE function getNearFeatures(in_partition INTEGER, feature GEOMETRY,
+                                           feature_centroid GEOMETRY,
+                                           maxrank INTEGER)
+RETURNS setof nearfeaturecentr AS $$
 DECLARE
   r nearfeaturecentr%rowtype;
 BEGIN
@@ -48,7 +51,11 @@ BEGIN
   IF in_partition = {{ partition }} THEN
     FOR r IN
       SELECT place_id, keywords, rank_address, rank_search,
-             min(ST_Distance(feature, centroid)) as distance,
+             CASE WHEN isguess THEN ST_Distance(feature, centroid)
+                  ELSE min(ST_Distance(feature_centroid, geometry))
+                       -- tie breaker when distance is the same (i.e. way is on boundary)
+                       + 0.00001 * ST_Distance(feature, centroid)
+             END as distance,
              isguess, postcode, centroid
       FROM location_area_large_{{ partition }}
       WHERE geometry && feature

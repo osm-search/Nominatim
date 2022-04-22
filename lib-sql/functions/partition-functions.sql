@@ -51,7 +51,11 @@ BEGIN
   IF in_partition = {{ partition }} THEN
     FOR r IN
       SELECT place_id, keywords, rank_address, rank_search,
-             min(ST_Distance(feature_centroid, geometry)) as distance,
+             CASE WHEN isguess THEN ST_Distance(feature, centroid)
+                  ELSE min(ST_Distance(feature_centroid, geometry))
+                       -- tie breaker when distance is the same (i.e. way is on boundary)
+                       + 0.00001 * ST_Distance(feature, centroid)
+             END as distance,
              isguess, postcode, centroid
       FROM location_area_large_{{ partition }}
       WHERE geometry && feature

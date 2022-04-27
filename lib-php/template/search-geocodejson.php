@@ -25,6 +25,8 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
         $aPlace['properties']['geocoding']['osm_type'] = $sOSMType;
         $aPlace['properties']['geocoding']['osm_id'] = $aPointDetails['osm_id'];
     }
+    $aPlace['properties']['geocoding']['osm_key'] = $aPointDetails['class'];
+    $aPlace['properties']['geocoding']['osm_value'] = $aPointDetails['type'];
 
     $aPlace['properties']['geocoding']['type'] = addressRankToGeocodeJsonType($aPointDetails['rank_address']);
 

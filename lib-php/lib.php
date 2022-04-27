@@ -206,6 +206,36 @@ function parseLatLon($sQuery)
     return array($sFound, $fQueryLat, $fQueryLon);
 }
 
+function addressRankToGeocodeJsonType($iAddressRank)
+{
+    if ($iAddressRank >= 29 && $iAddressRank <= 30) {
+        return 'house';
+    }
+    if ($iAddressRank >= 26 && $iAddressRank < 28) {
+        return 'street';
+    }
+    if ($iAddressRank >= 22 && $iAddressRank < 26) {
+        return 'locality';
+    }
+    if ($iAddressRank >= 17 && $iAddressRank < 22) {
+        return 'district';
+    }
+    if ($iAddressRank >= 13 && $iAddressRank < 17) {
+        return 'city';
+    }
+    if ($iAddressRank >= 10 && $iAddressRank < 13) {
+        return 'county';
+    }
+    if ($iAddressRank >= 5 && $iAddressRank < 10) {
+        return 'state';
+    }
+    if ($iAddressRank >= 4 && $iAddressRank < 5) {
+        return 'country';
+    }
+
+    return 'locality';
+}
+
 if (!function_exists('array_key_last')) {
     function array_key_last(array $array)
     {

@@ -8,8 +8,8 @@ normalization:
     - "ª > a"
     - "º > o"
     - "[[:Punctuation:][:Symbol:]\u02bc]  > ' '"
-    - "ß > 'ss'" # German szet is unimbigiously equal to double ss
-    - "[^[:Letter:] [:Number:] [:Space:]] >"
+    - "ß > 'ss'" # German szet is unambiguously equal to double ss
+    - "[^[:alnum:] [:Canonical_Combining_Class=Virama:] [:Space:]] >"
     - "[:Lm:] >"
     - ":: [[:Number:]] Latin ()"
     - ":: [[:Number:]] Ascii ();"

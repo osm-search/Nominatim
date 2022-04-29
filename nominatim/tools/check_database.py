@@ -194,6 +194,9 @@ def check_tokenizer(_, config):
 def check_existance_wikipedia(conn, _):
     """ Checking for wikipedia/wikidata data
     """
+    if not conn.table_exists('search_name'):
+        return CheckState.NOT_APPLICABLE
+
     with conn.cursor() as cur:
         cnt = cur.scalar('SELECT count(*) FROM wikipedia_article')
 

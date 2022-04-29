@@ -258,7 +258,7 @@ EOF_NGINX_CONF
 #
 
 if [ "x$NOSYSTEMD" == "xyes" ]; then  #DOCS:
-    sudo /usr/sbin/php-fpm7.3 --nodaemonize --fpm-config /etc/php/7.3/fpm/php-fpm.conf & #DOCS:
+    sudo /usr/sbin/php-fpm7.4 --nodaemonize --fpm-config /etc/php/7.4/fpm/php-fpm.conf & #DOCS:
     sudo /usr/sbin/nginx &            #DOCS:
 else                                  #DOCS:
     sudo systemctl restart php7.4-fpm nginx

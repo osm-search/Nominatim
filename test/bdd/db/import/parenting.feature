@@ -376,6 +376,10 @@ Feature: Parenting of objects
          | N1     | W3              | 3 |
          | N2     | W3              | 3 |
          | N3     | W3              | 3 |
+        When sending geocodejson search query "3, foo" with address
+        Then results contain
+         | housenumber |
+         | 3           |
 
     Scenario: POIs don't inherit from streets
         Given the scene building-on-street-corner

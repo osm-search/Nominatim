@@ -28,35 +28,38 @@ DECLARE
   result prepare_update_info;
   extra_names HSTORE;
 BEGIN
+  IF not p.address ? '_inherited' THEN
+    result.address := p.address;
+  END IF;
+
   -- For POI nodes, check if the address should be derived from a surrounding
   -- building.
-  IF p.rank_search < 30 OR p.osm_type != 'N' THEN
-    result.address := p.address;
-  ELSEIF p.address is null THEN
-    -- The additional && condition works around the misguided query
-    -- planner of postgis 3.0.
-    SELECT placex.address || hstore('_inherited', '') INTO result.address
-      FROM placex
-     WHERE ST_Covers(geometry, p.centroid)
-           and geometry && p.centroid
-           and placex.address is not null
-           and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
-           and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
-     LIMIT 1;
-  ELSE
-    result.address := p.address;
-    -- See if we can inherit addtional address tags from an interpolation.
-    -- These will become permanent.
-    FOR location IN
-      SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
-        FROM place, planet_osm_ways w
-        WHERE place.osm_type = 'W' and place.address ? 'interpolation'
-              and place.geometry && p.geometry
-              and place.osm_id = w.id
-              and p.osm_id = any(w.nodes)
-    LOOP
-      result.address := location.address || result.address;
-    END LOOP;
+  IF p.rank_search = 30 AND p.osm_type = 'N' THEN
+    IF p.address is null THEN
+        -- The additional && condition works around the misguided query
+        -- planner of postgis 3.0.
+        SELECT placex.address || hstore('_inherited', '') INTO result.address
+          FROM placex
+         WHERE ST_Covers(geometry, p.centroid)
+               and geometry && p.centroid
+               and placex.address is not null
+               and (placex.address ? 'housenumber' or placex.address ? 'street' or placex.address ? 'place')
+               and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
+         LIMIT 1;
+    ELSE
+      -- See if we can inherit addtional address tags from an interpolation.
+      -- These will become permanent.
+      FOR location IN
+        SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
+          FROM place, planet_osm_ways w
+          WHERE place.osm_type = 'W' and place.address ? 'interpolation'
+                and place.geometry && p.geometry
+                and place.osm_id = w.id
+                and p.osm_id = any(w.nodes)
+      LOOP
+        result.address := location.address || result.address;
+      END LOOP;
+    END IF;
   END IF;
 
   -- remove internal and derived names
@@ -984,15 +987,6 @@ BEGIN
       {% endif %}
 
       NEW.token_info := token_strip_info(NEW.token_info);
-      -- If the address was inherited from a surrounding building,
-      -- do not add it permanently to the table.
-      IF NEW.address ? '_inherited' THEN
-        IF NEW.address ? '_unlisted_place' THEN
-          NEW.address := hstore('_unlisted_place', NEW.address->'_unlisted_place');
-        ELSE
-          NEW.address := null;
-        END IF;
-      END IF;
 
       RETURN NEW;
     END IF;

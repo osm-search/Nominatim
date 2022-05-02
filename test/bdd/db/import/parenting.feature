@@ -355,6 +355,29 @@ Feature: Parenting of objects
          | object | parent_place_id |
          | N1     | W3 |
 
+
+    Scenario: street member in associatedStreet relation can be a relation
+        Given the grid
+          | 1 |   |   | 2 |
+          | 3 |   |   | 4 |
+          |   |   |   |   |
+          |   | 9 |   |   |
+          | 5 |   |   | 6 |
+        And the places
+          | osm | class | type  | housenr | geometry |
+          | N9  | place | house | 34      | 9        |
+        And the named places
+          | osm | class   | type       | name      | geometry    |
+          | R14 | highway | pedestrian | Right St  | (1,2,4,3,1) |
+          | W14 | highway | pedestrian | Left St   | 5,6         |
+        And the relations
+          | id | members             | tags+type |
+          | 1  | N9:house,R14:street | associatedStreet |
+        When importing
+        Then placex contains
+          | object | parent_place_id |
+          | N9     | R14             |
+
     Scenario: POIs in building inherit address
         Given the scene building-on-street-corner
         And the named places

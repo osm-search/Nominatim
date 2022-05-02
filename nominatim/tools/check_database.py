@@ -23,6 +23,7 @@ class CheckState(Enum):
     FAIL = 1
     FATAL = 2
     NOT_APPLICABLE = 3
+    WARN = 4
 
 def _check(hint=None):
     """ Decorator for checks. It adds the function to the list of
@@ -40,6 +41,11 @@ def _check(hint=None):
                 params = {}
             if ret == CheckState.OK:
                 print('\033[92mOK\033[0m')
+            elif ret == CheckState.WARN:
+                print('\033[93mWARNING\033[0m')
+                if hint:
+                    print('')
+                    print(dedent(hint.format(**params)))
             elif ret == CheckState.NOT_APPLICABLE:
                 print('not applicable')
             else:
@@ -178,6 +184,23 @@ def check_tokenizer(_, config):
         return CheckState.OK
 
     return CheckState.FAIL, dict(msg=result)
+
+
+@_check(hint="""\
+             Wikipedia/Wikidata importance tables missing.
+             Quality of search results may be degraded. Reverse geocoding is unaffected.
+             See https://nominatim.org/release-docs/latest/admin/Import/#wikipediawikidata-rankings
+             """)
+def check_existance_wikipedia(conn, _):
+    """ Checking for wikipedia/wikidata data
+    """
+    if not conn.table_exists('search_name'):
+        return CheckState.NOT_APPLICABLE
+
+    with conn.cursor() as cur:
+        cnt = cur.scalar('SELECT count(*) FROM wikipedia_article')
+
+        return CheckState.WARN if cnt == 0 else CheckState.OK
 
 
 @_check(hint="""\

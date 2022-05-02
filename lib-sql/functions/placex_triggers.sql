@@ -120,7 +120,8 @@ BEGIN
       IF location.members[i+1] = 'street' THEN
         FOR parent IN
           SELECT place_id from placex
-           WHERE osm_type = 'W' and osm_id = substring(location.members[i],2)::bigint
+           WHERE osm_type = upper(substring(location.members[i], 1, 1))
+                 and osm_id = substring(location.members[i], 2)::bigint
                  and name is not null
                  and rank_search between 26 and 27
         LOOP

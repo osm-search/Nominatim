@@ -642,6 +642,7 @@ class SearchDescription
             // Housenumbers on streets and places.
             $sPlacexSql = 'SELECT array_agg(place_id) FROM placex';
             $sPlacexSql .= ' WHERE parent_place_id = sin.place_id AND sin.address_rank < 30';
+            $sPlacexSql .= $this->oContext->excludeSQL(' AND place_id');
             $sPlacexSql .= '       and housenumber ~* E'.$sHouseNumberRegex;
 
             // Interpolations on streets and places.

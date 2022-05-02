@@ -98,7 +98,10 @@ The GeocodeJSON format follows the
 The following feature attributes are implemented:
 
  * `osm_type`, `osm_id` - reference to the OSM object (unofficial extension, [see notes](#osm-reference))
- * `type` - value of the main tag of the object (e.g. residential, restaurant, ...)
+ * `type` - the 'address level' of the object ('house', 'street', `district`, `city`,
+            `county`, `state`, `country`, `locality`)
+ * `osm_key`- key of the main tag of the OSM object (e.g. boundary, highway, amenity)
+ * `osm_value` - value of the main tag of the OSM object (e.g. residential, restaurant)
  * `label` - full comma-separated address
  * `name` - localised name of the place
  * `housenumber`, `street`, `locality`, `district`, `postcode`, `city`,

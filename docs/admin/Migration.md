@@ -15,6 +15,15 @@ breaking changes. **Please read them before running the migration.**
     If you are migrating from a version <3.6, then you still have to follow
     the manual migration steps up to 3.6.
 
+## 4.0.0 -> master
+
+### geocodejson output changed
+
+The `type` field of the geocodejson output has changed. It now contains
+the address class of the object instead of the value of the OSM tag. If
+your client has used the `type` field, switch them to read `osm_value`
+instead.
+
 ## 3.7.0 -> 4.0.0
 
 ### NOMINATIM_PHRASE_CONFIG removed

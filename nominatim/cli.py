@@ -18,6 +18,7 @@ from nominatim.config import Configuration
 from nominatim.tools.exec_utils import run_legacy_script, run_php_server
 from nominatim.errors import UsageError
 from nominatim import clicmd
+from nominatim import version
 from nominatim.clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
@@ -36,6 +37,11 @@ class CommandlineParser:
         self.subs = self.parser.add_subparsers(title='available commands',
                                                dest='subcommand')
 
+        # Global arguments that only work if no sub-command given
+        self.parser.add_argument('--version', action='version',
+                                 version=CommandlineParser.nominatim_version_text(),
+                                 help='Print Nominatim version and exit')
+
         # Arguments added to every sub-command
         self.default_args = argparse.ArgumentParser(add_help=False)
         group = self.default_args.add_argument_group('Default arguments')
@@ -51,6 +57,11 @@ class CommandlineParser:
         group.add_argument('-j', '--threads', metavar='NUM', type=int,
                            help='Number of parallel threads to use')
 
+    @staticmethod
+    def nominatim_version_text():
+        """ Program name and version number as string
+        """
+        return "Nominatim version %s.%s.%s.%s\n" % version.NOMINATIM_VERSION
 
     def add_subcommand(self, name, cmd):
         """ Add a subcommand to the parser. The subcommand must be a class

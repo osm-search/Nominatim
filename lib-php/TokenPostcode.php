@@ -17,7 +17,7 @@ class Postcode
 {
     /// Database word id, if available.
     private $iId;
-    /// Full nomralized postcode (upper cased).
+    /// Full normalized postcode (upper cased).
     private $sPostcode;
     // Optional country code the postcode belongs to (currently unused).
     private $sCountryCode;

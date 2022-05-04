@@ -26,6 +26,13 @@ def test_cli_help(cli_call, capsys):
     captured = capsys.readouterr()
     assert captured.out.startswith('usage:')
 
+def test_cli_version(cli_call, capsys):
+    """ Running nominatim tool --version prints a version string.
+    """
+    assert cli_call('--version') == 1
+
+    captured = capsys.readouterr()
+    assert captured.out.startswith('Nominatim version')
 
 @pytest.mark.parametrize("name,oid", [('file', 'foo.osm'), ('diff', 'foo.osc')])
 def test_cli_add_data_file_command(cli_call, mock_func_factory, name, oid):

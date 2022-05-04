@@ -256,6 +256,10 @@ jobs:
               working-directory: /home/nominatim
               if: matrix.flavour == 'centos'
 
+            - name: Print version
+              run: nominatim --version
+              working-directory: /home/nominatim/nominatim-project
+
             - name: Import
               run: nominatim import --osm-file ../test.pbf
               working-directory: /home/nominatim/nominatim-project

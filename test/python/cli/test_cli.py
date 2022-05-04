@@ -29,7 +29,7 @@ def test_cli_help(cli_call, capsys):
 def test_cli_version(cli_call, capsys):
     """ Running nominatim tool --version prints a version string.
     """
-    assert cli_call('--version') == 1
+    assert cli_call('--version') == 0
 
     captured = capsys.readouterr()
     assert captured.out.startswith('Nominatim version')

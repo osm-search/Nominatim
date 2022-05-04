@@ -38,8 +38,7 @@ class CommandlineParser:
                                                dest='subcommand')
 
         # Global arguments that only work if no sub-command given
-        self.parser.add_argument('--version', action='version',
-                                 version=CommandlineParser.nominatim_version_text(),
+        self.parser.add_argument('--version', action='store_true',
                                  help='Print Nominatim version and exit')
 
         # Arguments added to every sub-command
@@ -61,7 +60,10 @@ class CommandlineParser:
     def nominatim_version_text():
         """ Program name and version number as string
         """
-        return "Nominatim version %s.%s.%s.%s\n" % version.NOMINATIM_VERSION
+        text = 'Nominatim version %s.%s.%s.%s' % version.NOMINATIM_VERSION
+        if version.GIT_COMMIT_HASH is not None:
+            text += ' (%s)' % version.GIT_COMMIT_HASH
+        return text
 
     def add_subcommand(self, name, cmd):
         """ Add a subcommand to the parser. The subcommand must be a class
@@ -85,6 +87,10 @@ class CommandlineParser:
             self.parser.parse_args(args=kwargs.get('cli_args'), namespace=args)
         except SystemExit:
             return 1
+
+        if args.version:
+            print(CommandlineParser.nominatim_version_text())
+            return 0
 
         if args.subcommand is None:
             self.parser.print_help()

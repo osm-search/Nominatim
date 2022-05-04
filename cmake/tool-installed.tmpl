@@ -7,6 +7,9 @@ sys.path.insert(1, '@NOMINATIM_LIBDIR@/lib-python')
 os.environ['NOMINATIM_NOMINATIM_TOOL'] = os.path.abspath(__file__)
 
 from nominatim import cli
+from nominatim import version
+
+version.GIT_COMMIT_HASH = '@GIT_HASH@'
 
 exit(cli.nominatim(module_dir='@NOMINATIM_LIBDIR@/module',
                    osm2pgsql_path='@NOMINATIM_LIBDIR@/osm2pgsql',

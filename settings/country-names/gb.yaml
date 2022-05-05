@@ -1,4 +1,6 @@
-name: 
+short_name:
+    default: UK
+name:
     default: United Kingdom
     ab: Британиа Ду
     af: Verenigde Koninkryk

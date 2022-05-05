@@ -1,4 +1,6 @@
-name: 
+short_name:
+    default: USA
+name:
     default: United States
     ab: Америка Еиду Аштатқәа
     af: Verenigde State van Amerika

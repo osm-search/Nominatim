@@ -42,7 +42,7 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
 
 def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
                    params=None):
-    """ Execute a Nominiatim API function.
+    """ Execute a Nominatim API function.
 
         The function needs a project directory that contains the website
         directory with the scripts to be executed. The scripts will be run

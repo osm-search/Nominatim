@@ -93,7 +93,7 @@ for a custom tokenizer implementation.
 
 Nominatim expects two files for a tokenizer:
 
-* `nominiatim/tokenizer/<NAME>_tokenizer.py` containing the Python part of the
+* `nominatim/tokenizer/<NAME>_tokenizer.py` containing the Python part of the
   implementation
 * `lib-php/tokenizer/<NAME>_tokenizer.php` with the PHP part of the
   implementation

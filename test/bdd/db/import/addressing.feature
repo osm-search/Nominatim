@@ -402,6 +402,7 @@ Feature: Address computation
            | osm | display_name            |
            | N1  | Bolder, Wonderway, Left |
 
+    @testing
     Scenario: POIs can correct address parts on the fly
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -434,7 +435,7 @@ Feature: Address computation
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Right |
 
-
+    @testing
     Scenario: POIs can correct address parts on the fly (with partial unmatching address)
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -471,7 +472,7 @@ Feature: Address computation
            | N2  | Leftside, Wonderway, Right |
 
 
-
+    @testing
     Scenario: POIs can correct address parts on the fly (with partial matching address)
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -506,3 +507,38 @@ Feature: Address computation
         Then results contain
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Left |
+
+    @testing
+    Scenario: POIs can correct address parts on the fly (with area partially covering street)
+        Given the grid
+            | 1 |   | 2 |   |    |   | 5 |
+            |   |   |   |   |    | 8 |   |
+            |   | 10| 11|   |    |   | 12|
+            | 4 |   | 3 |   |    |   | 7 |
+            | 13|   |   |   |    |   | 6 |
+
+        And the places
+            | osm | class    | type           | admin | name    | geometry        |
+            | R1  | boundary | administrative | 22    | Left    | (1,2,3,4,1)     |
+            | R2  | boundary | administrative | 8     | Right   | (2,5,6,13,4,3,2)|
+            | R3  | boundary | administrative | 22    | Super   | (2,3,7,5,2)     |
+            | R4  | boundary | administrative | 8     | Boring  | (1,2,3,4,1)     |
+        And the places
+            | osm | class   | type        | name      | geometry |
+            | W1  | highway | residential | Wonderway | 10,11,12 |
+        And the places
+            | osm | class    | type    | name      | geometry |
+            | N1  | building | yes     | Bolder    | 8        |
+        When importing
+        Then place_addressline contains
+           | object | address | isaddress |
+           | W1     | R2      | True      |
+           | W1     | R4      | False     |
+        And place_addressline doesn't contain
+           | object | address |
+           | N1     | R1      |
+           | N1     | R3      |
+        When sending search query "Bolder"
+        Then results contain
+           | osm | display_name                      |
+           | N1  | Bolder, Wonderway, Central, Right |

@@ -402,7 +402,6 @@ Feature: Address computation
            | osm | display_name            |
            | N1  | Bolder, Wonderway, Left |
 
-    @testing
     Scenario: POIs can correct address parts on the fly
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -435,7 +434,6 @@ Feature: Address computation
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Right |
 
-    @testing
     Scenario: POIs can correct address parts on the fly (with partial unmatching address)
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -472,7 +470,6 @@ Feature: Address computation
            | N2  | Leftside, Wonderway, Right |
 
 
-    @testing
     Scenario: POIs can correct address parts on the fly (with partial matching address)
         Given the grid
             | 1 |   |   |   |  2 |   | 5 |
@@ -508,7 +505,6 @@ Feature: Address computation
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Left |
 
-    @testing
     Scenario: POIs can correct address parts on the fly (with area partially covering street)
         Given the grid
             | 1 |   | 2 |   |    |   | 5 |

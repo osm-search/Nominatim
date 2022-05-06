@@ -22,7 +22,8 @@
 
 # REPLACE WITH LIST OF YOUR "COUNTRIES":
 #
-COUNTRIES="europe/monaco europe/andorra"
+#COUNTRIES="europe/monaco europe/andorra"
+COUNTRIES="europe/germany/sachsen"
 
 UPDATEBASEURL="https://download.geofabrik.de"
 UPDATECOUNTRYPOSTFIX="-updates"
@@ -39,6 +40,7 @@ FOLLOWUP="nominatim index"
 
 # ******************************************************************************
 UPDATEDIR="update"
+DATEUPDATE="state.txt"
 
 for COUNTRY in $COUNTRIES;
 do
@@ -56,6 +58,12 @@ do
 
     echo "Attempting to import diffs"
     nominatim add-data --diff ${DIR}/${FILENAME}.osc.gz
+
+    echo "Attempting to update date of db"
+    zgrep timestamp ${DIR}/${FILENAME}.osc.gz | tee newtimestamps.txt
+    NEWTIME = $(python3 parsedate.py newtimestamps.txt)
+    psql -U postgres -d nominatim -c "UPDATE import_status SET lastimportdate = $NEWTIME"
+    rm newtimestamps.txt
 done
 
 echo "===================================================================="

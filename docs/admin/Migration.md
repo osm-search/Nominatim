@@ -17,6 +17,14 @@ breaking changes. **Please read them before running the migration.**
 
 ## 4.0.0 -> master
 
+### ICU tokenizer is the new default
+
+Nominatim now installs the [ICU tokenizer](../customize/Tokenizers.md#icu-tokenizer)
+by default. This only has an effect on newly installed databases. When
+updating older databases, it keeps its installed tokenizer. If you still
+run with the legacy tokenizer, make sure to compile Nominatim with the
+PostgreSQL module, see [Installation](Installation.md#building-nominatim).
+
 ### geocodejson output changed
 
 The `type` field of the geocodejson output has changed. It now contains

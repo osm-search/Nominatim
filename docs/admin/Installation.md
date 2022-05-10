@@ -158,6 +158,15 @@ make
 sudo make install
 ```
 
+!!! warning
+    The default installation no longer compiles the PostgreSQL module that
+    is needed for the legacy tokenizer from older Nominatim versions. If you
+    are upgrading an older database or want to run the
+    [legacy tokenizer](../customize/Tokenizers.md#legacy-tokenizer) for
+    some other reason, you need to enable the PostgreSQL module via
+    cmake: `cmake -DBUILD_MODULE=on ../Nominatim`
+
+
 Nominatim installs itself into `/usr/local` per default. To choose a different
 installation directory add `-DCMAKE_INSTALL_PREFIX=<install root>` to the
 cmake command. Make sure that the `bin` directory is available in your path

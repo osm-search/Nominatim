@@ -19,7 +19,22 @@ they can be configured.
 
 The legacy tokenizer implements the analysis algorithms of older Nominatim
 versions. It uses a special Postgresql module to normalize names and queries.
-This tokenizer is currently the default.
+This tokenizer is automatically installed and used when upgrading an older
+database. It should not be used for new installations anymore.
+
+### Compiling the PostgreSQL module
+
+The tokeinzer needs a special C module for PostgreSQL which is not compiled
+by default. If you need the legacy tokenizer, compile Nominatim as follows:
+
+```
+mkdir build
+cd build
+cmake -DBUILD_MODULE=on
+make
+```
+
+### Enabling the tokenizer
 
 To enable the tokenizer add the following line to your project configuration:
 
@@ -47,6 +62,7 @@ normalization functions are hard-coded.
 The ICU tokenizer uses the [ICU library](http://site.icu-project.org/) to
 normalize names and queries. It also offers configurable decomposition and
 abbreviation handling.
+This tokenizer is currently the default.
 
 To enable the tokenizer add the following line to your project configuration:
 

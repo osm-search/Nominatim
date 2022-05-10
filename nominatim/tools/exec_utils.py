@@ -12,7 +12,7 @@ import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import version_str
 from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
@@ -150,7 +150,7 @@ def run_osm2pgsql(options):
 def get_url(url):
     """ Get the contents from the given URL and return it as a UTF-8 string.
     """
-    headers = {"User-Agent": "Nominatim/{0[0]}.{0[1]}.{0[2]}-{0[3]}".format(NOMINATIM_VERSION)}
+    headers = {"User-Agent": f"Nominatim/{version_str()}"}
 
     try:
         with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:

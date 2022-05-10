@@ -15,7 +15,7 @@ from psycopg2 import sql as pysql
 
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import version_str
 
 LOG = logging.getLogger()
 
@@ -186,16 +186,15 @@ def setup_website(basedir, config, conn):
         LOG.info('Creating website directory.')
         basedir.mkdir()
 
-    template = dedent("""\
+    template = dedent(f"""\
                       <?php
 
                       @define('CONST_Debug', $_GET['debug'] ?? false);
-                      @define('CONST_LibDir', '{0}');
-                      @define('CONST_TokenizerDir', '{2}');
-                      @define('CONST_NominatimVersion', '{1[0]}.{1[1]}.{1[2]}-{1[3]}');
+                      @define('CONST_LibDir', '{config.lib_dir.php}');
+                      @define('CONST_TokenizerDir', '{config.project_dir / 'tokenizer'}');
+                      @define('CONST_NominatimVersion', '{version_str()}');
 
-                      """.format(config.lib_dir.php, NOMINATIM_VERSION,
-                                 config.project_dir / 'tokenizer'))
+                      """)
 
     for php_name, conf_name, var_type in PHP_CONST_DEFS:
         varout = _quote_php_variable(var_type, config, conf_name)

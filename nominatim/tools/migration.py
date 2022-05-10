@@ -11,7 +11,7 @@ import logging
 
 from nominatim.db import properties
 from nominatim.db.connection import connect
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import NOMINATIM_VERSION, version_str
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
@@ -47,7 +47,7 @@ def migrate(config, paths):
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
                 LOG.warning("Runnning: %s (%s)", func.__doc__.split('\n', 1)[0],
-                            '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(version))
+                            '{}.{}.{}-{}'.format(*version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
@@ -59,8 +59,7 @@ def migrate(config, paths):
             tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
             tokenizer.update_sql_functions(config)
 
-        properties.set_property(conn, 'database_version',
-                                '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+        properties.set_property(conn, 'database_version', version_str())
 
         conn.commit()
 

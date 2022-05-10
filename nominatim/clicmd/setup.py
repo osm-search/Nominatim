@@ -14,7 +14,7 @@ import psutil
 
 from nominatim.db.connection import connect
 from nominatim.db import status, properties
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import version_str
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -213,5 +213,4 @@ class SetupAll:
             except Exception as exc: # pylint: disable=broad-except
                 LOG.error('Cannot determine date of database: %s', exc)
 
-            properties.set_property(conn, 'database_version',
-                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+            properties.set_property(conn, 'database_version', version_str())

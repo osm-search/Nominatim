@@ -11,6 +11,30 @@ import psycopg2.extras
 
 from nominatim.db import utils as db_utils
 from nominatim.db.connection import connect
+from nominatim.errors import UsageError
+
+def _flatten_name_list(names):
+    if names is None:
+        return {}
+
+    if not isinstance(names, dict):
+        raise UsageError("Expected key-value list for names in country_settings.py")
+
+    flat = {}
+    for prefix, remain in names.items():
+        if isinstance(remain, str):
+            flat[prefix] = remain
+        elif not isinstance(remain, dict):
+            raise UsageError("Entries in names must be key-value lists.")
+        else:
+            for suffix, name in remain.items():
+                if suffix == 'default':
+                    flat[prefix] = name
+                else:
+                    flat[f'{prefix}:{suffix}'] = name
+
+    return flat
+
 
 
 class _CountryInfo:
@@ -19,7 +43,7 @@ class _CountryInfo:
 
     def __init__(self):
         self._info = {}
-        self._key_prefix = 'name'
+
 
     def load(self, config):
         """ Load the country properties from the configuration files,
@@ -27,26 +51,26 @@ class _CountryInfo:
         """
         if not self._info:
             self._info = config.load_sub_configuration('country_settings.yaml')
-            # Convert languages into a list for simpler handling.
             for prop in self._info.values():
+                # Convert languages into a list for simpler handling.
                 if 'languages' not in prop:
                     prop['languages'] = []
                 elif not isinstance(prop['languages'], list):
                     prop['languages'] = [x.strip()
                                          for x in prop['languages'].split(',')]
-                if 'names' not in prop or prop['names'] is None:
-                    prop['names'] = {self._key_prefix: {}}
+                prop['names'] = _flatten_name_list(prop.get('names'))
+
 
     def items(self):
         """ Return tuples of (country_code, property dict) as iterable.
         """
         return self._info.items()
 
-    def key_prefix(self):
-        """ Return the prefix that will be attached to the keys of the country
-            names values when storing them in the database
+    def get(self, country_code):
+        """ Get country information for the country with the given country code.
         """
-        return self._key_prefix
+        return self._info.get(country_code, {})
+
 
 
 _COUNTRY_INFO = _CountryInfo()
@@ -72,9 +96,6 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
     """
     db_utils.execute_file(dsn, sql_dir / 'country_osm_grid.sql.gz')
 
-    def add_prefix_to_keys(names, prefix):
-        return {prefix+':'+k: v for k, v in names.items()}
-
     params = []
     for ccode, props in _COUNTRY_INFO.items():
         if ccode is not None and props is not None:
@@ -84,9 +105,8 @@ def setup_country_tables(dsn, sql_dir, ignore_partitions=False):
                 partition = props.get('partition')
             lang = props['languages'][0] if len(
                 props['languages']) == 1 else None
-            name = add_prefix_to_keys(props.get('names').get(
-                _COUNTRY_INFO.key_prefix()), _COUNTRY_INFO.key_prefix())
-            params.append((ccode, name, lang, partition))
+
+            params.append((ccode, props['names'], lang, partition))
     with connect(dsn) as conn:
         with conn.cursor() as cur:
             psycopg2.extras.register_hstore(cur)
@@ -115,9 +135,8 @@ def create_country_names(conn, tokenizer, languages=None):
         languages = languages.split(',')
 
     def _include_key(key):
-        return key == _COUNTRY_INFO.key_prefix() or \
-            (key.startswith(_COUNTRY_INFO.key_prefix()+':') and
-             (not languages or key[len(_COUNTRY_INFO.key_prefix())+1:] in languages))
+        return ':' not in key or not languages or \
+               key[key.index(':') + 1:] in languages
 
     with conn.cursor() as cur:
         psycopg2.extras.register_hstore(cur)
@@ -127,15 +146,10 @@ def create_country_names(conn, tokenizer, languages=None):
         with tokenizer.name_analyzer() as analyzer:
             for code, name in cur:
                 names = {'countrycode': code}
-                if code == 'gb':
-                    names['short_name'] = 'UK'
-                if code == 'us':
-                    names['short_name'] = 'United States'
 
                 # country names (only in languages as provided)
                 if name:
-                    names.update(((k, v)
-                                  for k, v in name.items() if _include_key(k)))
+                    names.update({k : v for k, v in name.items() if _include_key(k)})
 
                 analyzer.add_country_names(code, names)
 

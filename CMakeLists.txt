@@ -276,6 +276,8 @@ install(FILES settings/env.defaults
 
 install(DIRECTORY settings/icu-rules
         DESTINATION ${NOMINATIM_CONFIGDIR})
+install(DIRECTORY settings/country-names
+        DESTINATION ${NOMINATIM_CONFIGDIR})
 
 if (INSTALL_MUNIN_PLUGINS)
     install(FILES munin/nominatim_importlag

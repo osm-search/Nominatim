@@ -187,7 +187,7 @@ class Configuration:
         if configfile.suffix in ('.yaml', '.yml'):
             result = self._load_from_yaml(configfile)
         elif configfile.suffix == '.json':
-            with configfile.open('r') as cfg:
+            with configfile.open('r', encoding='utf-8') as cfg:
                 result = json.load(cfg)
         else:
             raise UsageError(f"Config file '{configfile}' has unknown format.")

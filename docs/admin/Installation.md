@@ -164,7 +164,9 @@ sudo make install
     are upgrading an older database or want to run the
     [legacy tokenizer](../customize/Tokenizers.md#legacy-tokenizer) for
     some other reason, you need to enable the PostgreSQL module via
-    cmake: `cmake -DBUILD_MODULE=on ../Nominatim`
+    cmake: `cmake -DBUILD_MODULE=on ../Nominatim`. To compile the module
+    you need to have the server development headers for PostgreSQL installed.
+    On Ubuntu/Debian run: `sudo apt install postgresql-server-dev-<postgresql version>`
 
 
 Nominatim installs itself into `/usr/local` per default. To choose a different

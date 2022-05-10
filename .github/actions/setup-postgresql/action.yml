@@ -22,7 +22,7 @@ runs:
 
         - name: Install PostgreSQL
           run: |
-              sudo apt-get install -y -qq --no-install-suggests --no-install-recommends postgresql-client-${PGVER} postgresql-${PGVER}-postgis-${POSTGISVER} postgresql-${PGVER}-postgis-${POSTGISVER}-scripts postgresql-contrib-${PGVER} postgresql-${PGVER} postgresql-server-dev-${PGVER}
+              sudo apt-get install -y -qq --no-install-suggests --no-install-recommends postgresql-client-${PGVER} postgresql-${PGVER}-postgis-${POSTGISVER} postgresql-${PGVER}-postgis-${POSTGISVER}-scripts postgresql-contrib-${PGVER} postgresql-${PGVER}
           shell: bash
           env:
               PGVER: ${{ inputs.postgresql-version }}

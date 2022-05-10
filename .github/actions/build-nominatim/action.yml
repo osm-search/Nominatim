@@ -5,6 +5,10 @@ inputs:
         description: 'Version of Ubuntu to install on'
         required: false
         default: '20'
+    cmake-args:
+        description: 'Additional options to hand to cmake'
+        required: false
+        default: ''
 
 runs:
     using: "composite"
@@ -21,18 +25,13 @@ runs:
           shell: bash
           env:
             UBUNTUVER: ${{ inputs.ubuntu }}
-
-        - name: Download dependencies
-          run: |
-              if [ ! -f country_grid.sql.gz ]; then
-                  wget --no-verbose https://www.nominatim.org/data/country_grid.sql.gz
-              fi
-              cp country_grid.sql.gz Nominatim/data/country_osm_grid.sql.gz
-          shell: bash
+            CMAKE_ARGS: ${{ inputs.cmake-args }}
 
         - name: Configure
-          run: mkdir build && cd build && cmake ../Nominatim
+          run: mkdir build && cd build && cmake $CMAKE_ARGS ../Nominatim
           shell: bash
+          env:
+            CMAKE_ARGS: ${{ inputs.cmake-args }}
 
         - name: Build
           run: |

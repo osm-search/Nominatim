@@ -207,7 +207,7 @@ class NominatimEnvironment:
                     self.run_nominatim('add-data', '--tiger-data', str((testdata / 'tiger').resolve()))
                     self.run_nominatim('freeze')
 
-                    if self.tokenizer != 'icu':
+                    if self.tokenizer == 'legacy':
                         phrase_file = str((testdata / 'specialphrases_testdb.sql').resolve())
                         run_script(['psql', '-d', self.api_test_db, '-f', phrase_file])
                     else:

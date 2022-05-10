@@ -65,7 +65,7 @@ def tokenizer():
     return dummy_tokenizer.DummyTokenizer(None, None)
 
 @pytest.fixture
-def postcode_table(temp_db_conn, placex_table, word_table):
+def postcode_table(temp_db_conn, placex_table):
     return MockPostcodeTable(temp_db_conn)
 
 

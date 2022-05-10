@@ -14,6 +14,8 @@ from nominatim.tools import migration
 from nominatim.errors import UsageError
 import nominatim.version
 
+from mock_legacy_word_table import MockLegacyWordTable
+
 class DummyTokenizer:
 
     def update_sql_functions(self, config):
@@ -25,6 +27,10 @@ def postprocess_mock(monkeypatch):
     monkeypatch.setattr(migration.refresh, 'create_functions', lambda *args: args)
     monkeypatch.setattr(migration.tokenizer_factory, 'get_tokenizer_for_db',
                         lambda *args: DummyTokenizer())
+
+@pytest.fixture
+def legacy_word_table(temp_db_conn):
+    return MockLegacyWordTable(temp_db_conn)
 
 
 def test_no_migration_old_versions(temp_db_with_extensions, table_factory, def_config):
@@ -156,7 +162,7 @@ def test_add_nominatim_property_table_repeat(temp_db_conn, temp_db_cursor,
 
 
 def test_change_housenumber_transliteration(temp_db_conn, temp_db_cursor,
-                                            word_table, placex_table):
+                                            legacy_word_table, placex_table):
     placex_table.add(housenumber='3A')
 
     temp_db_cursor.execute("""CREATE OR REPLACE FUNCTION make_standard_name(name TEXT)

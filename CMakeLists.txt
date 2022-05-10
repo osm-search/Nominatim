@@ -26,6 +26,17 @@ set(NOMINATIM_VERSION "${NOMINATIM_VERSION_MAJOR}.${NOMINATIM_VERSION_MINOR}.${N
 
 add_definitions(-DNOMINATIM_VERSION="${NOMINATIM_VERSION}")
 
+# Setting GIT_HASH
+find_package(Git)
+if (GIT_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        )
+endif()
 
 #-----------------------------------------------------------------------------
 #  Configuration

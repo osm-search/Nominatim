@@ -278,8 +278,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                + [(k, v, part_ids.get(v, None)) for k, v in partial_tokens.items()]
 
 
-    @staticmethod
-    def normalize_postcode(postcode):
+    def normalize_postcode(self, postcode):
         """ Convert the postcode to a standardized form.
 
             This function must yield exactly the same result as the SQL function

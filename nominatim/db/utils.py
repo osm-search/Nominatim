@@ -40,36 +40,36 @@ def execute_file(dsn, fname, ignore_errors=False, pre_code=None, post_code=None)
         cmd.extend(('-v', 'ON_ERROR_STOP=1'))
     if not LOG.isEnabledFor(logging.INFO):
         cmd.append('--quiet')
-    proc = subprocess.Popen(cmd, env=get_pg_env(dsn), stdin=subprocess.PIPE)
 
-    try:
-        if not LOG.isEnabledFor(logging.INFO):
-            proc.stdin.write('set client_min_messages to WARNING;'.encode('utf-8'))
+    with subprocess.Popen(cmd, env=get_pg_env(dsn), stdin=subprocess.PIPE) as proc:
+        try:
+            if not LOG.isEnabledFor(logging.INFO):
+                proc.stdin.write('set client_min_messages to WARNING;'.encode('utf-8'))
 
-        if pre_code:
-            proc.stdin.write((pre_code + ';').encode('utf-8'))
+            if pre_code:
+                proc.stdin.write((pre_code + ';').encode('utf-8'))
 
-        if fname.suffix == '.gz':
-            with gzip.open(str(fname), 'rb') as fdesc:
-                remain = _pipe_to_proc(proc, fdesc)
-        else:
-            with fname.open('rb') as fdesc:
-                remain = _pipe_to_proc(proc, fdesc)
+            if fname.suffix == '.gz':
+                with gzip.open(str(fname), 'rb') as fdesc:
+                    remain = _pipe_to_proc(proc, fdesc)
+            else:
+                with fname.open('rb') as fdesc:
+                    remain = _pipe_to_proc(proc, fdesc)
 
-        if remain == 0 and post_code:
-            proc.stdin.write((';' + post_code).encode('utf-8'))
-    finally:
-        proc.stdin.close()
-        ret = proc.wait()
+            if remain == 0 and post_code:
+                proc.stdin.write((';' + post_code).encode('utf-8'))
+        finally:
+            proc.stdin.close()
+            ret = proc.wait()
 
     if ret != 0 or remain > 0:
         raise UsageError("Failed to execute SQL file.")
 
 
 # List of characters that need to be quoted for the copy command.
-_SQL_TRANSLATION = {ord(u'\\'): u'\\\\',
-                    ord(u'\t'): u'\\t',
-                    ord(u'\n'): u'\\n'}
+_SQL_TRANSLATION = {ord('\\'): '\\\\',
+                    ord('\t'): '\\t',
+                    ord('\n'): '\\n'}
 
 
 class CopyBuffer:

@@ -34,7 +34,7 @@ def compute_database_date(conn):
 
     LOG.info("Using node id %d for timestamp lookup", osmid)
     # Get the node from the API to find the timestamp when it was created.
-    node_url = 'https://www.openstreetmap.org/api/0.6/node/{}/1'.format(osmid)
+    node_url = f'https://www.openstreetmap.org/api/0.6/node/{osmid}/1'
     data = get_url(node_url)
 
     match = re.search(r'timestamp="((\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}))Z"', data)

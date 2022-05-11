@@ -66,7 +66,7 @@ class RankRunner(AbstractPlacexRunner):
     """
 
     def name(self):
-        return "rank {}".format(self.rank)
+        return f"rank {self.rank}"
 
     def sql_count_objects(self):
         return pysql.SQL("""SELECT count(*) FROM placex
@@ -86,7 +86,7 @@ class BoundaryRunner(AbstractPlacexRunner):
     """
 
     def name(self):
-        return "boundaries rank {}".format(self.rank)
+        return f"boundaries rank {self.rank}"
 
     def sql_count_objects(self):
         return pysql.SQL("""SELECT count(*) FROM placex

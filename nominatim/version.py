@@ -34,3 +34,11 @@ POSTGIS_REQUIRED_VERSION = (2, 2)
 # cmake/tool-installed.tmpl is used to build the binary 'nominatim'. Inside
 # there is a call to set the variable value below.
 GIT_COMMIT_HASH = None
+
+
+# pylint: disable=consider-using-f-string
+def version_str(version=NOMINATIM_VERSION):
+    """
+    Return a human-readable string of the version.
+    """
+    return '{}.{}.{}-{}'.format(*version)

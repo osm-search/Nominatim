@@ -12,7 +12,7 @@ import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import version_str
 from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
@@ -55,10 +55,10 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     query_string = urlencode(params or {})
 
     env = dict(QUERY_STRING=query_string,
-               SCRIPT_NAME='/{}.php'.format(endpoint),
-               REQUEST_URI='/{}.php?{}'.format(endpoint, query_string),
+               SCRIPT_NAME=f'/{endpoint}.php',
+               REQUEST_URI=f'/{endpoint}.php?{query_string}',
                CONTEXT_DOCUMENT_ROOT=webdir,
-               SCRIPT_FILENAME='{}/{}.php'.format(webdir, endpoint),
+               SCRIPT_FILENAME=f'{webdir}/{endpoint}.php',
                HTTP_HOST='localhost',
                HTTP_USER_AGENT='nominatim-tool',
                REMOTE_ADDR='0.0.0.0',
@@ -150,7 +150,7 @@ def run_osm2pgsql(options):
 def get_url(url):
     """ Get the contents from the given URL and return it as a UTF-8 string.
     """
-    headers = {"User-Agent": "Nominatim/{0[0]}.{0[1]}.{0[2]}-{0[3]}".format(NOMINATIM_VERSION)}
+    headers = {"User-Agent": f"Nominatim/{version_str()}"}
 
     try:
         with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:

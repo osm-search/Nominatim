@@ -9,9 +9,11 @@ Functions for database migration to newer software versions.
 """
 import logging
 
+from psycopg2 import sql as pysql
+
 from nominatim.db import properties
 from nominatim.db.connection import connect
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import NOMINATIM_VERSION, version_str
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
@@ -47,7 +49,7 @@ def migrate(config, paths):
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
                 LOG.warning("Runnning: %s (%s)", func.__doc__.split('\n', 1)[0],
-                            '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(version))
+                            version_str(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
@@ -59,8 +61,7 @@ def migrate(config, paths):
             tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
             tokenizer.update_sql_functions(config)
 
-        properties.set_property(conn, 'database_version',
-                                '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+        properties.set_property(conn, 'database_version', version_str())
 
         conn.commit()
 
@@ -125,11 +126,11 @@ def add_nominatim_property_table(conn, config, **_):
     """
     if not conn.table_exists('nominatim_properties'):
         with conn.cursor() as cur:
-            cur.execute("""CREATE TABLE nominatim_properties (
-                               property TEXT,
-                               value TEXT);
-                           GRANT SELECT ON TABLE nominatim_properties TO "{}";
-                        """.format(config.DATABASE_WEBUSER))
+            cur.execute(pysql.SQL("""CREATE TABLE nominatim_properties (
+                                        property TEXT,
+                                        value TEXT);
+                                     GRANT SELECT ON TABLE nominatim_properties TO {};
+                                  """).format(pysql.Identifier(config.DATABASE_WEBUSER)))
 
 @_migration(3, 6, 0, 0)
 def change_housenumber_transliteration(conn, **_):
@@ -194,7 +195,8 @@ def install_legacy_tokenizer(conn, config, **_):
                                            and column_name = 'token_info'""",
                                         (table, ))
                 if has_column == 0:
-                    cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
+                    cur.execute(pysql.SQL('ALTER TABLE {} ADD COLUMN token_info JSONB')
+                                .format(pysql.Identifier(table)))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 

@@ -144,7 +144,7 @@ class Configuration:
         style = self.__getattr__('IMPORT_STYLE')
 
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
-            return self.config_dir / 'import-{}.style'.format(style)
+            return self.config_dir / f'import-{style}.style'
 
         return self.find_config_file('', 'IMPORT_STYLE')
 

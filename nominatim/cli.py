@@ -60,9 +60,9 @@ class CommandlineParser:
     def nominatim_version_text():
         """ Program name and version number as string
         """
-        text = 'Nominatim version %s.%s.%s.%s' % version.NOMINATIM_VERSION
+        text = f'Nominatim version {version.version_str()}'
         if version.GIT_COMMIT_HASH is not None:
-            text += ' (%s)' % version.GIT_COMMIT_HASH
+            text += f' ({version.GIT_COMMIT_HASH})'
         return text
 
     def add_subcommand(self, name, cmd):

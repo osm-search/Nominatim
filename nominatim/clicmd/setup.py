@@ -14,12 +14,12 @@ import psutil
 
 from nominatim.db.connection import connect
 from nominatim.db import status, properties
-from nominatim.version import NOMINATIM_VERSION
+from nominatim.version import version_str
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
+# pylint: disable=C0415
 
 LOG = logging.getLogger()
 
@@ -194,10 +194,10 @@ class SetupAll:
             LOG.warning('Creating support index')
             if tablespace:
                 tablespace = 'TABLESPACE ' + tablespace
-            cur.execute("""CREATE INDEX idx_placex_pendingsector
-                           ON placex USING BTREE (rank_address,geometry_sector)
-                           {} WHERE indexed_status > 0
-                        """.format(tablespace))
+            cur.execute(f"""CREATE INDEX idx_placex_pendingsector
+                            ON placex USING BTREE (rank_address,geometry_sector)
+                            {tablespace} WHERE indexed_status > 0
+                         """)
         conn.commit()
 
 
@@ -213,5 +213,4 @@ class SetupAll:
             except Exception as exc: # pylint: disable=broad-except
                 LOG.error('Cannot determine date of database: %s', exc)
 
-            properties.set_property(conn, 'database_version',
-                                    '{0[0]}.{0[1]}.{0[2]}-{0[3]}'.format(NOMINATIM_VERSION))
+            properties.set_property(conn, 'database_version', version_str())

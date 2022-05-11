@@ -11,6 +11,6 @@ ignored-modules=icu,datrie
 # 'with' statements.
 ignored-classes=NominatimArgs,closing
 # 'too-many-ancestors' is triggered already by deriving from UserDict
-disable=too-few-public-methods,duplicate-code,too-many-ancestors
+disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use
 
 good-names=i,x,y,fd,db

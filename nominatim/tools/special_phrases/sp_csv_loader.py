@@ -39,8 +39,8 @@ class SPCsvLoader(Iterator):
         """
         phrases = set()
 
-        with open(self.csv_path) as file:
-            reader = csv.DictReader(file, delimiter=',')
+        with open(self.csv_path, encoding='utf-8') as fd:
+            reader = csv.DictReader(fd, delimiter=',')
             for row in reader:
                 phrases.add(
                     SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])
@@ -54,4 +54,4 @@ class SPCsvLoader(Iterator):
         _, extension = os.path.splitext(self.csv_path)
 
         if extension != '.csv':
-            raise UsageError('The file {} is not a csv file.'.format(self.csv_path))
+            raise UsageError(f'The file {self.csv_path} is not a csv file.')

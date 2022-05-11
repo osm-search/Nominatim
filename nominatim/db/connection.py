@@ -25,7 +25,8 @@ class _Cursor(psycopg2.extras.DictCursor):
         execution functions.
     """
 
-    def execute(self, query, args=None): # pylint: disable=W0221
+    # pylint: disable=arguments-renamed,arguments-differ
+    def execute(self, query, args=None):
         """ Query execution that logs the SQL query when debugging is enabled.
         """
         LOG.debug(self.mogrify(query, args).decode('utf-8'))
@@ -163,7 +164,7 @@ def connect(dsn):
         ctxmgr.connection = conn
         return ctxmgr
     except psycopg2.OperationalError as err:
-        raise UsageError("Cannot connect to database: {}".format(err)) from err
+        raise UsageError(f"Cannot connect to database: {err}") from err
 
 
 # Translation from PG connection string parameters to PG environment variables.

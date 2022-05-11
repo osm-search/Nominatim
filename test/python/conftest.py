@@ -212,11 +212,6 @@ def osmline_table(temp_db_with_extensions, table_factory):
 
 
 @pytest.fixture
-def word_table(temp_db_conn):
-    return mocks.MockWordTable(temp_db_conn)
-
-
-@pytest.fixture
 def sql_preprocessor_cfg(tmp_path, table_factory, temp_db_with_extensions):
     table_factory('country_name', 'partition INT', ((0, ), (1, ), (2, )))
     cfg = Configuration(None, SRC_DIR.resolve() / 'settings')

@@ -14,7 +14,7 @@ import psycopg2.extras
 from nominatim.db import properties
 
 # This must always point to the mock word table for the default tokenizer.
-from mock_legacy_word_table import MockLegacyWordTable as MockWordTable
+from mock_icu_word_table import MockIcuWordTable as MockWordTable
 
 class MockPlacexTable:
     """ A placex table for testing.

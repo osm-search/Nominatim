@@ -255,7 +255,7 @@ class LegacyTokenizer(AbstractTokenizer):
                 @define('CONST_Max_Word_Frequency', {0.MAX_WORD_FREQUENCY});
                 @define('CONST_Term_Normalization_Rules', "{0.TERM_NORMALIZATION}");
                 require_once('{0.lib_dir.php}/tokenizer/legacy_tokenizer.php');
-                """.format(config)))
+                """.format(config)), encoding='utf-8')
 
 
     def _init_db_tables(self, config):

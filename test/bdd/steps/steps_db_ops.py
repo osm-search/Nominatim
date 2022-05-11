@@ -266,7 +266,7 @@ def check_word_table_for_postcodes(context, exclude, postcodes):
     plist.sort()
 
     with context.db.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-        if nctx.tokenizer == 'icu':
+        if nctx.tokenizer != 'legacy':
             cur.execute("SELECT word FROM word WHERE type = 'P' and word = any(%s)",
                         (plist,))
         else:

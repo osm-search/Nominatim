@@ -59,5 +59,5 @@ def after_scenario(context, scenario):
 
 def before_tag(context, tag):
     if tag == 'fail-legacy':
-        if context.config.userdata['TOKENIZER'] in (None, 'legacy'):
+        if context.config.userdata['TOKENIZER'] == 'legacy':
             context.scenario.skip("Not implemented in legacy tokenizer")

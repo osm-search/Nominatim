@@ -187,7 +187,7 @@ class LegacyICUTokenizer(AbstractTokenizer):
                 @define('CONST_Max_Word_Frequency', 10000000);
                 @define('CONST_Term_Normalization_Rules', "{self.loader.normalization_rules}");
                 @define('CONST_Transliteration', "{self.loader.get_search_rules()}");
-                require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""))
+                require_once('{phpdir}/tokenizer/icu_tokenizer.php');"""), encoding='utf-8')
 
 
     def _save_config(self):

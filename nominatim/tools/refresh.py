@@ -57,14 +57,14 @@ def load_address_levels(conn, table, levels):
                                         class TEXT,
                                         type TEXT,
                                         rank_search SMALLINT,
-                                        rank_address SMALLINT)""")
-                         .format(pysql.Identifier(table)))
+                                        rank_address SMALLINT)
+                              """).format(pysql.Identifier(table)))
 
         cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
                            .format(pysql.Identifier(table)), rows)
 
         cur.execute(pysql.SQL('CREATE UNIQUE INDEX ON {} (country_code, class, type)')
-                         .format(pysql.Identifier(table)))
+                    .format(pysql.Identifier(table)))
 
     conn.commit()
 

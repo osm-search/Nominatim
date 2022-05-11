@@ -130,8 +130,7 @@ def add_nominatim_property_table(conn, config, **_):
                                         property TEXT,
                                         value TEXT);
                                      GRANT SELECT ON TABLE nominatim_properties TO {};
-                                  """)
-                             .format(pysql.Identifier(config.DATABASE_WEBUSER)))
+                                  """).format(pysql.Identifier(config.DATABASE_WEBUSER)))
 
 @_migration(3, 6, 0, 0)
 def change_housenumber_transliteration(conn, **_):
@@ -197,7 +196,7 @@ def install_legacy_tokenizer(conn, config, **_):
                                         (table, ))
                 if has_column == 0:
                     cur.execute(pysql.SQL('ALTER TABLE {} ADD COLUMN token_info JSONB')
-                                     .format(pysql.Identifier(table)))
+                                .format(pysql.Identifier(table)))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 

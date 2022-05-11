@@ -191,17 +191,18 @@ class SPImporter():
 
     def _create_place_classtype_table(self, sql_tablespace, phrase_class, phrase_type):
         """
-            Create table place_classtype of the given phrase_class/phrase_type if doesn't exit.
+            Create table place_classtype of the given phrase_class/phrase_type
+            if doesn't exit.
         """
         table_name = _classtype_table(phrase_class, phrase_type)
-        with self.db_connection.cursor() as db_cursor:
-            db_cursor.execute(SQL("""CREATE TABLE IF NOT EXISTS {} {} AS
-                                       SELECT place_id AS place_id,
-                                              st_centroid(geometry) AS centroid
-                                       FROM placex
-                                       WHERE class = %s AND type = %s""")
-                                 .format(Identifier(table_name), SQL(sql_tablespace)),
-                              (phrase_class, phrase_type))
+        with self.db_connection.cursor() as cur:
+            cur.execute(SQL("""CREATE TABLE IF NOT EXISTS {} {} AS
+                                 SELECT place_id AS place_id,
+                                        st_centroid(geometry) AS centroid
+                                 FROM placex
+                                 WHERE class = %s AND type = %s
+                             """).format(Identifier(table_name), SQL(sql_tablespace)),
+                        (phrase_class, phrase_type))
 
 
     def _create_place_classtype_indexes(self, sql_tablespace, phrase_class, phrase_type):
@@ -214,9 +215,9 @@ class SPImporter():
         if not self.db_connection.index_exists(index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
                 db_cursor.execute(SQL("CREATE INDEX {} ON {} USING GIST (centroid) {}")
-                                     .format(Identifier(index_prefix + 'centroid'),
-                                             Identifier(base_table),
-                                             SQL(sql_tablespace)))
+                                  .format(Identifier(index_prefix + 'centroid'),
+                                          Identifier(base_table),
+                                          SQL(sql_tablespace)))
 
         # Index on place_id
         if not self.db_connection.index_exists(index_prefix + 'place_id'):

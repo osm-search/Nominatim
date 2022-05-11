@@ -172,23 +172,23 @@ class NominatimEnvironment:
 
         self.template_db_done = True
 
-        if self._reuse_or_drop_db(self.template_db):
-            return
-
         self.write_nominatim_config(self.template_db)
 
-        try:
-            # execute nominatim import on an empty file to get the right tables
-            with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
-                fd.write(b'<osm version="0.6"></osm>')
-                fd.flush()
-                self.run_nominatim('import', '--osm-file', fd.name,
-                                             '--osm2pgsql-cache', '1',
-                                             '--ignore-errors',
-                                             '--offline', '--index-noanalyse')
-        except:
-            self.db_drop_database(self.template_db)
-            raise
+        if not self._reuse_or_drop_db(self.template_db):
+            try:
+                # execute nominatim import on an empty file to get the right tables
+                with tempfile.NamedTemporaryFile(dir='/tmp', suffix='.xml') as fd:
+                    fd.write(b'<osm version="0.6"></osm>')
+                    fd.flush()
+                    self.run_nominatim('import', '--osm-file', fd.name,
+                                                 '--osm2pgsql-cache', '1',
+                                                 '--ignore-errors',
+                                                 '--offline', '--index-noanalyse')
+            except:
+                self.db_drop_database(self.template_db)
+                raise
+
+        self.run_nominatim('refresh', '--functions')
 
 
     def setup_api_db(self):

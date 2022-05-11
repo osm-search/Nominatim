@@ -10,6 +10,7 @@ ae:
     partition: 83
     languages: ar
     names: !include country-names/ae.yaml
+    postcode: no
 
 
 # Afghanistan (افغانستان)
@@ -24,6 +25,7 @@ ag:
     partition: 205
     languages: en
     names: !include country-names/ag.yaml
+    postcode: no
 
 
 # Anguilla (Anguilla)
@@ -59,6 +61,7 @@ ao:
     partition: 85
     languages: pt
     names: !include country-names/ao.yaml
+    postcode: no
 
 
 #  (Antarctica)
@@ -101,6 +104,7 @@ aw:
     partition: 183
     languages: nl, pap
     names: !include country-names/aw.yaml
+    postcode: no
 
 
 #  (Aland Islands)
@@ -150,6 +154,7 @@ bf:
     partition: 225
     languages: fr
     names: !include country-names/bf.yaml
+    postcode: no
 
 
 # Bulgaria (Бългaрия)
@@ -171,6 +176,7 @@ bi:
     partition: 61
     languages: fr
     names: !include country-names/bi.yaml
+    postcode: no
 
 
 # Benin (Bénin)
@@ -178,6 +184,7 @@ bj:
     partition: 224
     languages: fr
     names: !include country-names/bj.yaml
+    postcode: no
 
 
 #  (Saint Barthélemy)
@@ -206,6 +213,7 @@ bo:
     partition: 120
     languages: es, qu, gn, ay
     names: !include country-names/bo.yaml
+    postcode: no
 
 
 # Caribbean Netherlands (Caribisch Nederland)
@@ -227,6 +235,7 @@ bs:
     partition: 207
     languages: en
     names: !include country-names/bs.yaml
+    postcode: no
 
 
 # Bhutan (འབྲུག་ཡུལ་)
@@ -248,6 +257,7 @@ bw:
     partition: 122
     languages: en, tn
     names: !include country-names/bw.yaml
+    postcode: no
 
 
 # Belarus (Беларусь)
@@ -262,6 +272,7 @@ bz:
     partition: 208
     languages: en
     names: !include country-names/bz.yaml
+    postcode: no
 
 
 # Canada (Canada)
@@ -283,6 +294,7 @@ cd:
     partition: 229
     languages: fr
     names: !include country-names/cd.yaml
+    postcode: no
 
 
 # Central African Republic (Ködörösêse tî Bêafrîka - République Centrafricaine)
@@ -290,6 +302,7 @@ cf:
     partition: 227
     languages: fr, sg
     names: !include country-names/cf.yaml
+    postcode: no
 
 
 # Congo-Brazzaville (Congo)
@@ -297,6 +310,7 @@ cg:
     partition: 230
     languages: fr
     names: !include country-names/cg.yaml
+    postcode: no
 
 
 # Switzerland (Schweiz/Suisse/Svizzera/Svizra)
@@ -311,6 +325,7 @@ ci:
     partition: 228
     languages: fr
     names: !include country-names/ci.yaml
+    postcode: no
 
 
 # Cook Islands (Kūki 'Āirani)
@@ -318,6 +333,7 @@ ck:
     partition: 41
     languages: en, rar
     names: !include country-names/ck.yaml
+    postcode: no
 
 
 # Chile (Chile)
@@ -332,6 +348,7 @@ cm:
     partition: 141
     languages: fr, en
     names: !include country-names/cm.yaml
+    postcode: no
 
 
 # China (中国)
@@ -409,6 +426,7 @@ dj:
     partition: 43
     languages: fr, ar, so, aa
     names: !include country-names/dj.yaml
+    postcode: no
 
 
 # Denmark (Danmark)
@@ -423,6 +441,7 @@ dm:
     partition: 209
     languages: en
     names: !include country-names/dm.yaml
+    postcode: no
 
 
 # Dominican Republic (República Dominicana)
@@ -472,6 +491,7 @@ er:
     partition: 142
     languages: ti, ar, en
     names: !include country-names/er.yaml
+    postcode: no
 
 
 # Spain (España)
@@ -500,6 +520,7 @@ fj:
     partition: 210
     languages: en
     names: !include country-names/fj.yaml
+    postcode: no
 
 
 # Falkland Islands (Falkland Islands)
@@ -535,6 +556,7 @@ ga:
     partition: 239
     languages: fr
     names: !include country-names/ga.yaml
+    postcode: no
 
 
 # United Kingdom (United Kingdom)
@@ -549,6 +571,7 @@ gd:
     partition: 143
     languages: en
     names: !include country-names/gd.yaml
+    postcode: no
 
 
 # Georgia (საქართველო)
@@ -598,6 +621,7 @@ gm:
     partition: 212
     languages: en
     names: !include country-names/gm.yaml
+    postcode: no
 
 
 # Guinea (Guinée)
@@ -619,6 +643,7 @@ gq:
     partition: 12
     languages: es, fr, pt
     names: !include country-names/gq.yaml
+    postcode: no
 
 
 # Greece (Ελλάς)
@@ -661,6 +686,7 @@ gy:
     partition: 213
     languages: en
     names: !include country-names/gy.yaml
+    postcode: no
 
 
 #  (Hong Kong)
@@ -829,6 +855,7 @@ ki:
     partition: 215
     languages: en
     names: !include country-names/ki.yaml
+    postcode: no
 
 
 # Comoros (Comores Komori جزر القمر)
@@ -836,6 +863,7 @@ km:
     partition: 47
     languages: ar, fr, sw
     names: !include country-names/km.yaml
+    postcode: no
 
 
 # Saint Kitts and Nevis (Saint Kitts and Nevis)
@@ -850,6 +878,7 @@ kp:
     partition: 48
     languages: ko
     names: !include country-names/kp.yaml
+    postcode: no
 
 
 # South Korea (대한민국)
@@ -955,6 +984,7 @@ ly:
     partition: 163
     languages: ar
     names: !include country-names/ly.yaml
+    postcode: no
 
 
 # Morocco (Maroc ⵍⵎⵖⵔⵉⴱ المغرب)
@@ -1018,6 +1048,7 @@ ml:
     partition: 241
     languages: fr
     names: !include country-names/ml.yaml
+    postcode: no
 
 
 # Myanmar (မြန်မာ)
@@ -1039,6 +1070,7 @@ mo:
     partition: 191
     languages: zh-hant, pt
     names: !include country-names/mo.yaml
+    postcode: no
 
 
 # Northern Mariana Islands (Northern Mariana Islands)
@@ -1060,6 +1092,7 @@ mr:
     partition: 149
     languages: ar, fr
     names: !include country-names/mr.yaml
+    postcode: no
 
 
 # Montserrat (Montserrat)
@@ -1095,6 +1128,7 @@ mw:
     partition: 97
     languages: en, ny
     names: !include country-names/mw.yaml
+    postcode: no
 
 
 # Mexico (México)
@@ -1186,6 +1220,7 @@ nr:
     partition: 70
     languages: na, en
     names: !include country-names/nr.yaml
+    postcode: no
 
 
 # Niue (Niuē)
@@ -1193,6 +1228,7 @@ nu:
     partition: 178
     languages: niu, en
     names: !include country-names/nu.yaml
+    postcode: no
 
 
 # New Zealand (New Zealand / Aotearoa)
@@ -1312,6 +1348,7 @@ qa:
     partition: 169
     languages: ar
     names: !include country-names/qa.yaml
+    postcode: no
 
 
 #  (Réunion)
@@ -1347,6 +1384,7 @@ rw:
     partition: 102
     languages: rw, fr, en
     names: !include country-names/rw.yaml
+    postcode: no
 
 
 # Saudi Arabia (السعودية)
@@ -1361,6 +1399,7 @@ sb:
     partition: 201
     languages: en
     names: !include country-names/sb.yaml
+    postcode: no
 
 
 # Seychelles (Sesel)
@@ -1368,6 +1407,7 @@ sc:
     partition: 79
     languages: fr, en, crs
     names: !include country-names/sc.yaml
+    postcode: no
 
 
 # Sudan (السودان)
@@ -1424,6 +1464,7 @@ sl:
     partition: 219
     languages: en
     names: !include country-names/sl.yaml
+    postcode: no
 
 
 # San Marino (San Marino)
@@ -1452,6 +1493,7 @@ sr:
     partition: 24
     languages: nl
     names: !include country-names/sr.yaml
+    postcode: no
 
 
 # South Sudan (South Sudan)
@@ -1459,6 +1501,7 @@ ss:
     partition: 247
     languages: en
     names: !include country-names/ss.yaml
+    postcode: no
 
 
 # São Tomé and Príncipe (São Tomé e Príncipe)
@@ -1466,6 +1509,7 @@ st:
     partition: 53
     languages: pt
     names: !include country-names/st.yaml
+    postcode: no
 
 
 # El Salvador (El Salvador)
@@ -1487,6 +1531,7 @@ sy:
     partition: 104
     languages: ar
     names: !include country-names/sy.yaml
+    postcode: no
 
 
 # Eswatini (eSwatini)
@@ -1508,6 +1553,7 @@ td:
     partition: 68
     languages: fr, ar
     names: !include country-names/td.yaml
+    postcode: no
 
 
 # French Southern Lands (Terres australes et antarctiques françaises)
@@ -1522,6 +1568,7 @@ tg:
     partition: 243
     languages: fr
     names: !include country-names/tg.yaml
+    postcode: no
 
 
 # Thailand (ประเทศไทย)
@@ -1543,6 +1590,7 @@ tk:
     partition: 179
     languages: tkl, en, sm
     names: !include country-names/tk.yaml
+    postcode: no
 
 
 # East Timor (Timór Lorosa'e)
@@ -1550,6 +1598,7 @@ tl:
     partition: 161
     languages: pt, tet
     names: !include country-names/tl.yaml
+    postcode: no
 
 
 # Turkmenistan (Türkmenistan)
@@ -1571,6 +1620,7 @@ to:
     partition: 220
     languages: en
     names: !include country-names/to.yaml
+    postcode: no
 
 
 # Turkey (Türkiye)
@@ -1592,6 +1642,7 @@ tv:
     partition: 156
     languages: en
     names: !include country-names/tv.yaml
+    postcode: no
 
 
 # Taiwan (臺灣)
@@ -1620,6 +1671,7 @@ ug:
     partition: 155
     languages: en, sw
     names: !include country-names/ug.yaml
+    postcode: no
 
 
 #  (United States Minor Outlying Islands)
@@ -1697,6 +1749,7 @@ vu:
     partition: 116
     languages: bi, en, fr
     names: !include country-names/vu.yaml
+    postcode: no
 
 
 # Wallis and Futuna Islands (Wallis-et-Futuna)
@@ -1725,6 +1778,7 @@ ye:
     partition: 55
     languages: ar
     names: !include country-names/ye.yaml
+    postcode: no
 
 
 # Mayotte (Mayotte)
@@ -1753,4 +1807,4 @@ zw:
     partition: 223
     languages: en, sn, nd
     names: !include country-names/zw.yaml
-
+    postcode: no

@@ -170,15 +170,6 @@ BEGIN
 
 -- RAISE WARNING 'near osm fallback: %', ST_AsText(place_centre);
 
-  -- 
-  FOR nearcountry IN
-    SELECT country_code from country_osm_grid
-    WHERE st_dwithin(geometry, place_centre, 0.5)
-    ORDER BY st_distance(geometry, place_centre) asc, area asc limit 1
-  LOOP
-    RETURN nearcountry.country_code;
-  END LOOP;
-
   RETURN NULL;
 END;
 $$

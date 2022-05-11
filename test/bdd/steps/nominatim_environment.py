@@ -95,6 +95,7 @@ class NominatimEnvironment:
 
         self.test_env = dict(self.default_config)
         self.test_env['NOMINATIM_DATABASE_DSN'] = dsn
+        self.test_env['NOMINATIM_LANGUAGES'] = 'en,de,fr,ja'
         self.test_env['NOMINATIM_FLATNODE_FILE'] = ''
         self.test_env['NOMINATIM_IMPORT_STYLE'] = 'full'
         self.test_env['NOMINATIM_USE_US_TIGER_DATA'] = 'yes'

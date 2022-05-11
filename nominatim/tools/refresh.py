@@ -52,16 +52,19 @@ def load_address_levels(conn, table, levels):
     with conn.cursor() as cur:
         cur.drop_table(table)
 
-        cur.execute("""CREATE TABLE {} (country_code varchar(2),
+        cur.execute(pysql.SQL("""CREATE TABLE {} (
+                                        country_code varchar(2),
                                         class TEXT,
                                         type TEXT,
                                         rank_search SMALLINT,
-                                        rank_address SMALLINT)""".format(table))
+                                        rank_address SMALLINT)""")
+                         .format(pysql.Identifier(table)))
 
         cur.execute_values(pysql.SQL("INSERT INTO {} VALUES %s")
                            .format(pysql.Identifier(table)), rows)
 
-        cur.execute('CREATE UNIQUE INDEX ON {} (country_code, class, type)'.format(table))
+        cur.execute(pysql.SQL('CREATE UNIQUE INDEX ON {} (country_code, class, type)')
+                         .format(pysql.Identifier(table)))
 
     conn.commit()
 

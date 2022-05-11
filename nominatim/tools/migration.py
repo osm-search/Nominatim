@@ -9,6 +9,8 @@ Functions for database migration to newer software versions.
 """
 import logging
 
+from psycopg2 import sql as pysql
+
 from nominatim.db import properties
 from nominatim.db.connection import connect
 from nominatim.version import NOMINATIM_VERSION, version_str
@@ -47,7 +49,7 @@ def migrate(config, paths):
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
                 LOG.warning("Runnning: %s (%s)", func.__doc__.split('\n', 1)[0],
-                            '{}.{}.{}-{}'.format(*version))
+                            version_str(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
                 conn.commit()
@@ -124,11 +126,12 @@ def add_nominatim_property_table(conn, config, **_):
     """
     if not conn.table_exists('nominatim_properties'):
         with conn.cursor() as cur:
-            cur.execute("""CREATE TABLE nominatim_properties (
-                               property TEXT,
-                               value TEXT);
-                           GRANT SELECT ON TABLE nominatim_properties TO "{}";
-                        """.format(config.DATABASE_WEBUSER))
+            cur.execute(pysql.SQL("""CREATE TABLE nominatim_properties (
+                                        property TEXT,
+                                        value TEXT);
+                                     GRANT SELECT ON TABLE nominatim_properties TO {};
+                                  """)
+                             .format(pysql.Identifier(config.DATABASE_WEBUSER)))
 
 @_migration(3, 6, 0, 0)
 def change_housenumber_transliteration(conn, **_):
@@ -193,7 +196,8 @@ def install_legacy_tokenizer(conn, config, **_):
                                            and column_name = 'token_info'""",
                                         (table, ))
                 if has_column == 0:
-                    cur.execute('ALTER TABLE {} ADD COLUMN token_info JSONB'.format(table))
+                    cur.execute(pysql.SQL('ALTER TABLE {} ADD COLUMN token_info JSONB')
+                                     .format(pysql.Identifier(table)))
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 

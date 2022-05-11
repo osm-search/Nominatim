@@ -55,10 +55,10 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     query_string = urlencode(params or {})
 
     env = dict(QUERY_STRING=query_string,
-               SCRIPT_NAME='/{}.php'.format(endpoint),
-               REQUEST_URI='/{}.php?{}'.format(endpoint, query_string),
+               SCRIPT_NAME=f'/{endpoint}.php',
+               REQUEST_URI=f'/{endpoint}.php?{query_string}',
                CONTEXT_DOCUMENT_ROOT=webdir,
-               SCRIPT_FILENAME='{}/{}.php'.format(webdir, endpoint),
+               SCRIPT_FILENAME=f'{webdir}/{endpoint}.php',
                HTTP_HOST='localhost',
                HTTP_USER_AGENT='nominatim-tool',
                REMOTE_ADDR='0.0.0.0',

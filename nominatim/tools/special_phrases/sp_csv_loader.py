@@ -54,4 +54,4 @@ class SPCsvLoader(Iterator):
         _, extension = os.path.splitext(self.csv_path)
 
         if extension != '.csv':
-            raise UsageError('The file {} is not a csv file.'.format(self.csv_path))
+            raise UsageError(f'The file {self.csv_path} is not a csv file.')

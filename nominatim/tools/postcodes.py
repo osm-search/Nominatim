@@ -136,13 +136,13 @@ class _CountryPostcodesCollector:
 
 
     def _open_external(self, project_dir):
-        fname = project_dir / '{}_postcodes.csv'.format(self.country)
+        fname = project_dir / f'{self.country}_postcodes.csv'
 
         if fname.is_file():
             LOG.info("Using external postcode file '%s'.", fname)
             return open(fname, 'r')
 
-        fname = project_dir / '{}_postcodes.csv.gz'.format(self.country)
+        fname = project_dir / f'{self.country}_postcodes.csv.gz'
 
         if fname.is_file():
             LOG.info("Using external postcode file '%s'.", fname)

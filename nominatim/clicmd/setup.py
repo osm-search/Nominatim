@@ -19,7 +19,7 @@ from nominatim.version import version_str
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to avoid eventually unused imports.
-# pylint: disable=E0012,C0415
+# pylint: disable=C0415
 
 LOG = logging.getLogger()
 
@@ -194,10 +194,10 @@ class SetupAll:
             LOG.warning('Creating support index')
             if tablespace:
                 tablespace = 'TABLESPACE ' + tablespace
-            cur.execute("""CREATE INDEX idx_placex_pendingsector
-                           ON placex USING BTREE (rank_address,geometry_sector)
-                           {} WHERE indexed_status > 0
-                        """.format(tablespace))
+            cur.execute(f"""CREATE INDEX idx_placex_pendingsector
+                            ON placex USING BTREE (rank_address,geometry_sector)
+                            {tablespace} WHERE indexed_status > 0
+                         """)
         conn.commit()
 
 

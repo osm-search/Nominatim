@@ -234,7 +234,7 @@ def create_search_indices(conn, config, drop=False):
         bad_indices = [row[0] for row in list(cur)]
         for idx in bad_indices:
             LOG.info("Drop invalid index %s.", idx)
-            cur.execute('DROP INDEX "{}"'.format(idx))
+            cur.execute(pysql.SQL('DROP INDEX {}').format(pysql.Identifier(idx)))
     conn.commit()
 
     sql = SQLPreprocessor(conn, config)

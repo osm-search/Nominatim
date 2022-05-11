@@ -16,7 +16,7 @@
 import logging
 import re
 
-from psycopg2.sql import Identifier, Literal, SQL
+from psycopg2.sql import Identifier, SQL
 from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 
 LOG = logging.getLogger()
@@ -195,35 +195,36 @@ class SPImporter():
         """
         table_name = _classtype_table(phrase_class, phrase_type)
         with self.db_connection.cursor() as db_cursor:
-            db_cursor.execute(SQL("""
-                    CREATE TABLE IF NOT EXISTS {{}} {}
-                    AS SELECT place_id AS place_id,st_centroid(geometry) AS centroid FROM placex
-                    WHERE class = {{}} AND type = {{}}""".format(sql_tablespace))
-                              .format(Identifier(table_name), Literal(phrase_class),
-                                      Literal(phrase_type)))
+            db_cursor.execute(SQL("""CREATE TABLE IF NOT EXISTS {} {} AS
+                                       SELECT place_id AS place_id,
+                                              st_centroid(geometry) AS centroid
+                                       FROM placex
+                                       WHERE class = %s AND type = %s""")
+                                 .format(Identifier(table_name), SQL(sql_tablespace)),
+                              (phrase_class, phrase_type))
 
 
     def _create_place_classtype_indexes(self, sql_tablespace, phrase_class, phrase_type):
         """
             Create indexes on centroid and place_id for the place_classtype table.
         """
-        index_prefix = 'idx_place_classtype_{}_{}_'.format(phrase_class, phrase_type)
+        index_prefix = f'idx_place_classtype_{phrase_class}_{phrase_type}_'
         base_table = _classtype_table(phrase_class, phrase_type)
         # Index on centroid
         if not self.db_connection.index_exists(index_prefix + 'centroid'):
             with self.db_connection.cursor() as db_cursor:
-                db_cursor.execute(SQL("""
-                    CREATE INDEX {{}} ON {{}} USING GIST (centroid) {}""".format(sql_tablespace))
-                                  .format(Identifier(index_prefix + 'centroid'),
-                                          Identifier(base_table)), sql_tablespace)
+                db_cursor.execute(SQL("CREATE INDEX {} ON {} USING GIST (centroid) {}")
+                                     .format(Identifier(index_prefix + 'centroid'),
+                                             Identifier(base_table),
+                                             SQL(sql_tablespace)))
 
         # Index on place_id
         if not self.db_connection.index_exists(index_prefix + 'place_id'):
             with self.db_connection.cursor() as db_cursor:
-                db_cursor.execute(SQL(
-                    """CREATE INDEX {{}} ON {{}} USING btree(place_id) {}""".format(sql_tablespace))
+                db_cursor.execute(SQL("CREATE INDEX {} ON {} USING btree(place_id) {}")
                                   .format(Identifier(index_prefix + 'place_id'),
-                                          Identifier(base_table)))
+                                          Identifier(base_table),
+                                          SQL(sql_tablespace)))
 
 
     def _grant_access_to_webuser(self, phrase_class, phrase_type):

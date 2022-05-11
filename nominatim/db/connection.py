@@ -163,7 +163,7 @@ def connect(dsn):
         ctxmgr.connection = conn
         return ctxmgr
     except psycopg2.OperationalError as err:
-        raise UsageError("Cannot connect to database: {}".format(err)) from err
+        raise UsageError(f"Cannot connect to database: {err}") from err
 
 
 # Translation from PG connection string parameters to PG environment variables.

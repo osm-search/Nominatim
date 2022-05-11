@@ -39,10 +39,10 @@ def _setup_tablespace_sql(config):
     out = {}
     for subset in ('ADDRESS', 'SEARCH', 'AUX'):
         for kind in ('DATA', 'INDEX'):
-            tspace = getattr(config, 'TABLESPACE_{}_{}'.format(subset, kind))
+            tspace = getattr(config, f'TABLESPACE_{subset}_{kind}')
             if tspace:
-                tspace = 'TABLESPACE "{}"'.format(tspace)
-            out['{}_{}'.format(subset.lower(), kind.lower())] = tspace
+                tspace = f'TABLESPACE "{tspace}"'
+            out[f'{subset.lower()}_{kind.lower()}'] = tspace
 
     return out
 

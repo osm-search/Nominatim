@@ -74,10 +74,10 @@ def _check_module(module_dir, conn):
     with conn.cursor() as cur:
         try:
             cur.execute("""CREATE FUNCTION nominatim_test_import_func(text)
-                           RETURNS text AS '{}/nominatim.so', 'transliteration'
+                           RETURNS text AS %s, 'transliteration'
                            LANGUAGE c IMMUTABLE STRICT;
                            DROP FUNCTION nominatim_test_import_func(text)
-                        """.format(module_dir))
+                        """, (f'{module_dir}/nominatim.so', ))
         except psycopg2.DatabaseError as err:
             LOG.fatal("Error accessing database module: %s", err)
             raise UsageError("Database module cannot be accessed.") from err
@@ -250,12 +250,12 @@ class LegacyTokenizer(AbstractTokenizer):
         php_file = self.data_dir / "tokenizer.php"
 
         if not php_file.exists() or overwrite:
-            php_file.write_text(dedent("""\
+            php_file.write_text(dedent(f"""\
                 <?php
-                @define('CONST_Max_Word_Frequency', {0.MAX_WORD_FREQUENCY});
-                @define('CONST_Term_Normalization_Rules', "{0.TERM_NORMALIZATION}");
-                require_once('{0.lib_dir.php}/tokenizer/legacy_tokenizer.php');
-                """.format(config)), encoding='utf-8')
+                @define('CONST_Max_Word_Frequency', {config.MAX_WORD_FREQUENCY});
+                @define('CONST_Term_Normalization_Rules', "{config.TERM_NORMALIZATION}");
+                require_once('{config.lib_dir.php}/tokenizer/legacy_tokenizer.php');
+                """), encoding='utf-8')
 
 
     def _init_db_tables(self, config):

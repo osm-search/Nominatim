@@ -37,8 +37,8 @@ GIT_COMMIT_HASH = None
 
 
 # pylint: disable=consider-using-f-string
-def version_str():
+def version_str(version=NOMINATIM_VERSION):
     """
     Return a human-readable string of the version.
     """
-    return '{}.{}.{}-{}'.format(*NOMINATIM_VERSION)
+    return '{}.{}.{}-{}'.format(*version)

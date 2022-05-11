@@ -21,7 +21,7 @@ LOG = logging.getLogger()
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
 # Using non-top-level imports to make pyosmium optional for replication only.
-# pylint: disable=E0012,C0415
+# pylint: disable=C0415
 
 class UpdateReplication:
     """\
@@ -96,8 +96,7 @@ class UpdateReplication:
         end = dt.datetime.now(dt.timezone.utc)
         LOG.warning("Update completed. Import: %s. %sTotal: %s. Remaining backlog: %s.",
                     round_time((start_index or end) - start_import),
-                    "Indexing: {} ".format(round_time(end - start_index))
-                    if start_index else '',
+                    f"Indexing: {round_time(end - start_index)} " if start_index else '',
                     round_time(end - start_import),
                     round_time(end - batchdate))
 

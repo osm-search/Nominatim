@@ -66,7 +66,7 @@ class _VariantMaker:
         """
         parts = re.split(r'(\|)?([=-])>', rule)
         if len(parts) != 4:
-            raise UsageError("Syntax error in variant rule: " + rule)
+            raise UsageError(f"Syntax error in variant rule: {rule}")
 
         decompose = parts[1] is None
         src_terms = [self._parse_variant_word(t) for t in parts[0].split(',')]
@@ -89,7 +89,7 @@ class _VariantMaker:
         name = name.strip()
         match = re.fullmatch(r'([~^]?)([^~$^]*)([~$]?)', name)
         if match is None or (match.group(1) == '~' and match.group(3) == '~'):
-            raise UsageError("Invalid variant word descriptor '{}'".format(name))
+            raise UsageError(f"Invalid variant word descriptor '{name}'")
         norm_name = self.norm.transliterate(match.group(2)).strip()
         if not norm_name:
             return None

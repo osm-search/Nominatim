@@ -39,8 +39,8 @@ class SPCsvLoader(Iterator):
         """
         phrases = set()
 
-        with open(self.csv_path) as file:
-            reader = csv.DictReader(file, delimiter=',')
+        with open(self.csv_path, encoding='utf-8') as fd:
+            reader = csv.DictReader(fd, delimiter=',')
             for row in reader:
                 phrases.add(
                     SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])

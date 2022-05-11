@@ -25,7 +25,8 @@ class _Cursor(psycopg2.extras.DictCursor):
         execution functions.
     """
 
-    def execute(self, query, args=None): # pylint: disable=W0221
+    # pylint: disable=arguments-renamed,arguments-differ
+    def execute(self, query, args=None):
         """ Query execution that logs the SQL query when debugging is enabled.
         """
         LOG.debug(self.mogrify(query, args).decode('utf-8'))

@@ -36,7 +36,7 @@ class _CountryPostcodesCollector:
 
     def __init__(self, country):
         self.country = country
-        self.collected = dict()
+        self.collected = {}
 
 
     def add(self, postcode, x, y):
@@ -140,7 +140,7 @@ class _CountryPostcodesCollector:
 
         if fname.is_file():
             LOG.info("Using external postcode file '%s'.", fname)
-            return open(fname, 'r')
+            return open(fname, 'r', encoding='utf-8')
 
         fname = project_dir / f'{self.country}_postcodes.csv.gz'
 

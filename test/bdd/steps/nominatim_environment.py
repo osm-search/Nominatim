@@ -184,7 +184,8 @@ class NominatimEnvironment:
                 fd.flush()
                 self.run_nominatim('import', '--osm-file', fd.name,
                                              '--osm2pgsql-cache', '1',
-                                             '--ignore-errors')
+                                             '--ignore-errors',
+                                             '--offline', '--index-noanalyse')
         except:
             self.db_drop_database(self.template_db)
             raise

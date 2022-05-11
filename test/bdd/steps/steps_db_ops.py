@@ -95,7 +95,8 @@ def import_and_index_data_from_place_table(context):
     """
     context.nominatim.run_nominatim('refresh', '--functions')
     context.nominatim.run_nominatim('import', '--continue', 'load-data',
-                                              '--index-noanalyse', '-q')
+                                              '--index-noanalyse', '-q',
+                                              '--offline')
 
     check_database_integrity(context)
 

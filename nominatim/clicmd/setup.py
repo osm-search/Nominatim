@@ -53,6 +53,8 @@ class SetupAll:
         group.add_argument('--no-updates', action='store_true',
                            help="Do not keep tables that are only needed for "
                                 "updating the database later")
+        group.add_argument('--offline', action='store_true',
+                           help="Do not attempt to load any additional data from the internet")
         group = parser.add_argument_group('Expert options')
         group.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
@@ -139,7 +141,7 @@ class SetupAll:
         with connect(args.config.get_libpq_dsn()) as conn:
             refresh.setup_website(webdir, args.config, conn)
 
-        SetupAll._set_database_date(args.config.get_libpq_dsn())
+        SetupAll._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
 
@@ -202,15 +204,16 @@ class SetupAll:
 
 
     @staticmethod
-    def _set_database_date(dsn):
+    def _finalize_database(dsn, offline):
         """ Determine the database date and set the status accordingly.
         """
         with connect(dsn) as conn:
-            try:
-                dbdate = status.compute_database_date(conn)
-                status.set_status(conn, dbdate)
-                LOG.info('Database is at %s.', dbdate)
-            except Exception as exc: # pylint: disable=broad-except
-                LOG.error('Cannot determine date of database: %s', exc)
+            if not offline:
+                try:
+                    dbdate = status.compute_database_date(conn)
+                    status.set_status(conn, dbdate)
+                    LOG.info('Database is at %s.', dbdate)
+                except Exception as exc: # pylint: disable=broad-except
+                    LOG.error('Cannot determine date of database: %s', exc)
 
             properties.set_property(conn, 'database_version', version_str())

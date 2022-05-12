@@ -84,10 +84,20 @@ def setup_country_config(config):
     _COUNTRY_INFO.load(config)
 
 
-def iterate():
+def iterate(prop=None):
     """ Iterate over country code and properties.
+
+        When `prop` is None, all countries are returned with their complete
+        set of properties.
+
+        If `prop` is given, then only countries are returned where the
+        given property is set. The second item of the tuple contains only
+        the content of the given property.
     """
-    return _COUNTRY_INFO.items()
+    if prop is None:
+        return _COUNTRY_INFO.items()
+
+    return ((c, p[prop]) for c, p in _COUNTRY_INFO.items() if prop in p)
 
 
 def setup_country_tables(dsn, sql_dir, ignore_partitions=False):

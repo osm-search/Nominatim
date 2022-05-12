@@ -48,8 +48,7 @@ class _AnalyzerByLanguage:
         self.deflangs = {}
 
         if use_defaults in ('mono', 'all'):
-            for ccode, prop in country_info.iterate():
-                clangs = prop['languages']
+            for ccode, clangs in country_info.iterate('languages'):
                 if len(clangs) == 1 or use_defaults == 'all':
                     if self.whitelist:
                         self.deflangs[ccode] = [l for l in clangs if l in self.whitelist]

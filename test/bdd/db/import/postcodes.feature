@@ -246,4 +246,18 @@ Feature: Import of postcodes
          | 12 445 4 | ca      | 25          | 11 |
          | A1:BC10  | ca      | 25          | 11 |
 
-
+    Scenario: Postcodes outside all countries are not added to the postcode and word table
+        Given the places
+            | osm | class | type  | addr+postcode | addr+housenumber | addr+place  | geometry  |
+            | N34 | place | house | 01982         | 111              | Null Island | 0 0.00001 |
+        And the places
+            | osm | class | type   | name        | geometry |
+            | N1  | place | hamlet | Null Island | 0 0      |
+        When importing
+        Then location_postcode contains exactly
+            | country | postcode | geometry |
+        And there are no word tokens for postcodes 01982
+        When sending search query "111, 01982 Null Island"
+        Then results contain
+            | osm | display_name |
+            | N34 | 111, Null Island, 01982 |

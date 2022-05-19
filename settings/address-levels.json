@@ -115,6 +115,13 @@
       }
   }
 },
+{ "countries" : [ "ca" ],
+  "tags" : {
+      "place" : {
+          "county" : [12, 0]
+      }
+  }
+},
 { "countries" : [ "de" ],
   "tags" : {
       "place" : {

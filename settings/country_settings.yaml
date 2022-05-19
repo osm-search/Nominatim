@@ -82,6 +82,8 @@ ar:
     partition: 39
     languages: es
     names: !include country-names/ar.yaml
+    postcode:
+      pattern: "l?dddd(?:lll)?"
 
 
 #  (American Samoa)
@@ -187,6 +189,8 @@ bh:
     partition: 62
     languages: ar
     names: !include country-names/bh.yaml
+    postcode:
+      pattern: "d?ddd"
 
 
 # Burundi (Burundi)
@@ -441,6 +445,8 @@ cy:
     partition: 114
     languages: el, tr
     names: !include country-names/cy.yaml
+    postcode:
+      pattern: "(?:99|d)ddd"
 
 
 # Czechia (Česko)
@@ -582,6 +588,8 @@ fk:
     partition: 91
     languages: en
     names: !include country-names/fk.yaml
+    postcode:
+      pattern: "FIQQ 1ZZ"
 
 
 # Federated States of Micronesia (Micronesia)
@@ -660,6 +668,8 @@ gh:
     partition: 211
     languages: en
     names: !include country-names/gh.yaml
+    postcode:
+      pattern: "ll-d?ddd-dddd"
 
 
 # Gibraltar (Gibraltar)
@@ -1005,6 +1015,8 @@ kz:
     partition: 94
     languages: kk, ru
     names: !include country-names/kz.yaml
+    postcode:
+      pattern: "(?:lddldld|dddddd)"
 
 
 # Laos (ປະເທດລາວ)
@@ -1111,6 +1123,8 @@ mc:
     partition: 242
     languages: fr
     names: !include country-names/mc.yaml
+    postcode:
+      pattern: "980dd"
 
 
 # Moldova (Moldova)
@@ -1494,6 +1508,8 @@ pw:
     partition: 195
     languages: en, pau, ja, sov, tox
     names: !include country-names/pw.yaml
+    postcode:
+      pattern: "969(39|40)"
 
 
 # Paraguay (Paraguay)
@@ -1646,6 +1662,8 @@ sm:
     partition: 153
     languages: it
     names: !include country-names/sm.yaml
+    postcode:
+      pattern: "4789d"
 
 
 # Senegal (Sénégal)
@@ -1717,6 +1735,8 @@ sz:
     partition: 82
     languages: en, ss
     names: !include country-names/sz.yaml
+    postcode:
+      pattern: "lddd"
 
 
 # Turks and Caicos Islands (Turks and Caicos Islands)
@@ -1873,6 +1893,8 @@ um:
     partition: 198
     languages: en
     names: !include country-names/um.yaml
+    postcode:
+      pattern: "96898"
 
 
 # United States (United States)
@@ -1905,6 +1927,8 @@ va:
     partition: 107
     languages: it
     names: !include country-names/va.yaml
+    postcode:
+      pattern: "00120"
 
 
 # Saint Vincent and the Grenadines (Saint Vincent and the Grenadines)

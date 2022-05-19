@@ -52,3 +52,26 @@ def test_postcode_pass_good_format(sanitize, postcode):
 @pytest.mark.sanitizer_params(convert_to_address=False)
 def test_postcode_drop_bad_format(sanitize, postcode):
     assert sanitize(country='de', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('1234', '9435', '99000'))
+def test_postcode_cyprus_pass(sanitize, postcode):
+    assert sanitize(country='cy', postcode=postcode) == [('postcode', postcode)]
+
+
+@pytest.mark.parametrize("postcode", ('91234', '99a45', '567'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_cyprus_fail(sanitize, postcode):
+    assert sanitize(country='cy', postcode=postcode) == []
+
+
+@pytest.mark.parametrize("postcode", ('123456', 'A33F2G7'))
+def test_postcode_kazakhstan_pass(sanitize, postcode):
+    assert sanitize(country='kz', postcode=postcode) == [('postcode', postcode)]
+
+
+@pytest.mark.parametrize("postcode", ('V34T6Y923456', '99345'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_kazakhstan_fail(sanitize, postcode):
+    assert sanitize(country='kz', postcode=postcode) == []
+

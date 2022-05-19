@@ -18,6 +18,8 @@ af:
     partition: 30
     languages: fa, ps
     names: !include country-names/af.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Antigua and Barbuda (Antigua and Barbuda)
@@ -40,6 +42,8 @@ al:
     partition: 9
     languages: sq
     names: !include country-names/al.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Armenia (Հայաստան)
@@ -47,6 +51,8 @@ am:
     partition: 33
     languages: hy
     names: !include country-names/am.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Netherlands Antilles (De Nederlandse Antillen)
@@ -90,6 +96,8 @@ at:
     partition: 245
     languages: de
     names: !include country-names/at.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Australia (Australia)
@@ -97,6 +105,8 @@ au:
     partition: 139
     languages: en
     names: !include country-names/au.yaml
+    postcode:
+      pattern: "dddd"
 
 
 #  (Aruba)
@@ -126,6 +136,8 @@ ba:
     partition: 6
     languages: bs, hr, sr
     names: !include country-names/ba.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Barbados (Barbados)
@@ -140,6 +152,8 @@ bd:
     partition: 158
     languages: bn
     names: !include country-names/bd.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Belgium (België / Belgique / Belgien)
@@ -147,6 +161,8 @@ be:
     partition: 15
     languages: nl, fr, de
     names: !include country-names/be.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Burkina Faso (Burkina Faso)
@@ -162,6 +178,8 @@ bg:
     partition: 140
     languages: bg
     names: !include country-names/bg.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Bahrain (البحرين)
@@ -243,6 +261,8 @@ bt:
     partition: 87
     languages: dz
     names: !include country-names/bt.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 #  (Bouvet Island)
@@ -265,6 +285,8 @@ by:
     partition: 40
     languages: be, ru
     names: !include country-names/by.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Belize (Belize)
@@ -318,6 +340,8 @@ ch:
     partition: 5
     languages: de, fr, it, rm
     names: !include country-names/ch.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Côte d'Ivoire (Côte d’Ivoire)
@@ -341,6 +365,8 @@ cl:
     partition: 88
     languages: es
     names: !include country-names/cl.yaml
+    postcode:
+      pattern: "ddddddd"
 
 
 # Cameroon (Cameroun)
@@ -356,6 +382,8 @@ cn:
     partition: 117
     languages: zh
     names: !include country-names/cn.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Colombia (Colombia)
@@ -363,6 +391,8 @@ co:
     partition: 133
     languages: es
     names: !include country-names/co.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Costa Rica (Costa Rica)
@@ -370,6 +400,8 @@ cr:
     partition: 64
     languages: es
     names: !include country-names/cr.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Cuba (Cuba)
@@ -377,6 +409,8 @@ cu:
     partition: 42
     languages: es
     names: !include country-names/cu.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Cape Verde (Cabo Verde)
@@ -384,6 +418,8 @@ cv:
     partition: 89
     languages: pt
     names: !include country-names/cv.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Curaçao (Curaçao)
@@ -419,6 +455,8 @@ de:
     partition: 3
     languages: de
     names: !include country-names/de.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Djibouti (Djibouti جيبوتي)
@@ -434,6 +472,8 @@ dk:
     partition: 160
     languages: da
     names: !include country-names/dk.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Dominica (Dominica)
@@ -449,6 +489,8 @@ do:
     partition: 37
     languages: es
     names: !include country-names/do.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Algeria (Algérie / ⵍⵣⵣⴰⵢⴻⵔ / الجزائر)
@@ -456,6 +498,8 @@ dz:
     partition: 19
     languages: ar, ber, fr
     names: !include country-names/dz.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Ecuador (Ecuador)
@@ -470,6 +514,8 @@ ee:
     partition: 125
     languages: et
     names: !include country-names/ee.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Egypt (مصر)
@@ -477,6 +523,8 @@ eg:
     partition: 16
     languages: ar
     names: !include country-names/eg.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Sahrawi Arab Democratic Republic (الجمهورية العربية الصحراوية الديمقراطية)
@@ -499,6 +547,8 @@ es:
     partition: 31
     languages: es, ast, ca, eu, gl
     names: !include country-names/es.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Ethiopia (ኢትዮጵያ)
@@ -506,6 +556,8 @@ et:
     partition: 90
     languages: am, om
     names: !include country-names/et.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Finland (Suomi)
@@ -513,6 +565,8 @@ fi:
     partition: 20
     languages: fi, sv, se
     names: !include country-names/fi.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Fiji (Viti)
@@ -535,6 +589,8 @@ fm:
     partition: 217
     languages: en
     names: !include country-names/fm.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Faroe Islands (Føroyar)
@@ -549,6 +605,8 @@ fr:
     partition: 4
     languages: fr
     names: !include country-names/fr.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Gabon (Gabon)
@@ -579,6 +637,8 @@ ge:
     partition: 21
     languages: ka
     names: !include country-names/ge.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # French Guiana (Guyane Française)
@@ -614,6 +674,8 @@ gl:
     partition: 111
     languages: kl, da
     names: !include country-names/gl.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # The Gambia (Gambia)
@@ -629,6 +691,8 @@ gn:
     partition: 240
     languages: fr
     names: !include country-names/gn.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Guadeloupe (Guadeloupe)
@@ -665,6 +729,8 @@ gt:
     partition: 57
     languages: es
     names: !include country-names/gt.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Guam (Guam)
@@ -679,6 +745,8 @@ gw:
     partition: 8
     languages: pt
     names: !include country-names/gw.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Guyana (Guyana)
@@ -708,6 +776,8 @@ hn:
     partition: 56
     languages: es
     names: !include country-names/hn.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Croatia (Hrvatska)
@@ -715,6 +785,8 @@ hr:
     partition: 92
     languages: hr
     names: !include country-names/hr.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Haiti (Ayiti)
@@ -729,6 +801,8 @@ hu:
     partition: 45
     languages: hu
     names: !include country-names/hu.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Indonesia (Indonesia)
@@ -736,6 +810,8 @@ id:
     partition: 110
     languages: id
     names: !include country-names/id.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Ireland (Éire / Ireland)
@@ -750,6 +826,8 @@ il:
     partition: 65
     languages: he
     names: !include country-names/il.yaml
+    postcode:
+      pattern: "ddddddd"
 
 
 # Isle of Man (Isle of Man)
@@ -778,6 +856,8 @@ iq:
     partition: 144
     languages: ar, ku
     names: !include country-names/iq.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Iran (ایران)
@@ -792,6 +872,8 @@ is:
     partition: 134
     languages: is
     names: !include country-names/is.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Italy (Italia)
@@ -799,6 +881,8 @@ it:
     partition: 28
     languages: it, de, fr
     names: !include country-names/it.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Jersey (Jersey)
@@ -820,6 +904,8 @@ jo:
     partition: 17
     languages: ar
     names: !include country-names/jo.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Japan (日本)
@@ -834,6 +920,8 @@ ke:
     partition: 126
     languages: sw, en
     names: !include country-names/ke.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Kyrgyzstan (Кыргызстан)
@@ -841,6 +929,8 @@ kg:
     partition: 93
     languages: ky, ru
     names: !include country-names/kg.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Cambodia (ព្រះរាជាណាចក្រ​កម្ពុជា)
@@ -848,6 +938,8 @@ kh:
     partition: 159
     languages: km
     names: !include country-names/kh.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Kiribati (Kiribati)
@@ -871,6 +963,8 @@ kn:
     partition: 84
     languages: en
     names: !include country-names/kn.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # North Korea (조선민주주의인민공화국)
@@ -886,6 +980,8 @@ kr:
     partition: 49
     languages: ko, en
     names: !include country-names/kr.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Kuwait (الكويت)
@@ -893,6 +989,8 @@ kw:
     partition: 127
     languages: ar
     names: !include country-names/kw.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Cayman Islands (Cayman Islands)
@@ -914,6 +1012,8 @@ la:
     partition: 145
     languages: lo
     names: !include country-names/la.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Lebanon (لبنان)
@@ -935,6 +1035,8 @@ li:
     partition: 246
     languages: de
     names: !include country-names/li.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Sri Lanka (ශ්‍රී ලංකාව இலங்கை)
@@ -942,6 +1044,8 @@ lk:
     partition: 95
     languages: si, ta
     names: !include country-names/lk.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Liberia (Liberia)
@@ -949,6 +1053,8 @@ lr:
     partition: 216
     languages: en
     names: !include country-names/lr.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Lesotho (Lesotho)
@@ -956,6 +1062,8 @@ ls:
     partition: 136
     languages: en, st
     names: !include country-names/ls.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Lithuania (Lietuva)
@@ -970,6 +1078,8 @@ lu:
     partition: 74
     languages: lb, fr, de
     names: !include country-names/lu.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Latvia (Latvija)
@@ -992,6 +1102,8 @@ ma:
     partition: 23
     languages: fr, zgh, ar
     names: !include country-names/ma.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Monaco (Monaco)
@@ -1013,6 +1125,8 @@ me:
     partition: 180
     languages: srp, sr, hr, bs, sq
     names: !include country-names/me.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Saint Martin (Saint Martin)
@@ -1027,6 +1141,8 @@ mg:
     partition: 164
     languages: mg, fr
     names: !include country-names/mg.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Marshall Islands (Ṃajeḷ)
@@ -1034,6 +1150,8 @@ mh:
     partition: 105
     languages: en, mh
     names: !include country-names/mh.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # North Macedonia (Северна Македонија)
@@ -1041,6 +1159,8 @@ mk:
     partition: 69
     languages: mk
     names: !include country-names/mk.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Mali (Mali)
@@ -1056,6 +1176,8 @@ mm:
     partition: 148
     languages: my
     names: !include country-names/mm.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Mongolia (Монгол улс ᠮᠤᠩᠭᠤᠯ ᠤᠯᠤᠰ)
@@ -1063,6 +1185,8 @@ mn:
     partition: 167
     languages: mn
     names: !include country-names/mn.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Macao (Macao)
@@ -1114,6 +1238,8 @@ mu:
     partition: 150
     languages: mfe, fr, en
     names: !include country-names/mu.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Maldives (ދިވެހިރާއްޖެ)
@@ -1121,6 +1247,8 @@ mv:
     partition: 96
     languages: dv
     names: !include country-names/mv.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Malawi (Malawi)
@@ -1136,6 +1264,8 @@ mx:
     partition: 166
     languages: es
     names: !include country-names/mx.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Malaysia (Malaysia)
@@ -1143,6 +1273,8 @@ my:
     partition: 7
     languages: ms
     names: !include country-names/my.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Mozambique (Moçambique)
@@ -1157,6 +1289,8 @@ na:
     partition: 99
     languages: en, sf, de
     names: !include country-names/na.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # New Caledonia (Nouvelle-Calédonie)
@@ -1171,6 +1305,8 @@ ne:
     partition: 226
     languages: fr
     names: !include country-names/ne.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Norfolk Island (Norfolk Island)
@@ -1185,6 +1321,8 @@ ng:
     partition: 218
     languages: en
     names: !include country-names/ng.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Nicaragua (Nicaragua)
@@ -1192,6 +1330,8 @@ ni:
     partition: 151
     languages: es
     names: !include country-names/ni.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Netherlands (Nederland)
@@ -1206,6 +1346,8 @@ nl:
     partition: 60
     languages: nb, nn, no, se
     names: !include country-names/no.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Nepal (Nepal)
@@ -1213,6 +1355,8 @@ np:
     partition: 50
     languages: ne
     names: !include country-names/np.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Nauru (Naoero)
@@ -1236,6 +1380,8 @@ nz:
     partition: 27
     languages: mi, en
     names: !include country-names/nz.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Oman (عمان)
@@ -1243,6 +1389,8 @@ om:
     partition: 137
     languages: ar
     names: !include country-names/om.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Panama (Panamá)
@@ -1250,6 +1398,8 @@ pa:
     partition: 152
     languages: es
     names: !include country-names/pa.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Peru (Perú)
@@ -1257,6 +1407,8 @@ pe:
     partition: 51
     languages: es
     names: !include country-names/pe.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # French Polynesia (Polynésie française)
@@ -1271,6 +1423,8 @@ pg:
     partition: 71
     languages: en, tpi, ho
     names: !include country-names/pg.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Philippines (Philippines)
@@ -1278,6 +1432,8 @@ ph:
     partition: 26
     languages: en, tl
     names: !include country-names/ph.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Pakistan (پاکستان)
@@ -1285,6 +1441,8 @@ pk:
     partition: 14
     languages: en, ur, pnb, sd, ps, bal
     names: !include country-names/pk.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Poland (Polska)
@@ -1320,6 +1478,8 @@ ps:
     partition: 194
     languages: ar, he
     names: !include country-names/ps.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # Portugal (Portugal)
@@ -1341,6 +1501,8 @@ py:
     partition: 101
     languages: es, gn
     names: !include country-names/py.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Qatar (قطر)
@@ -1363,6 +1525,8 @@ ro:
     partition: 170
     languages: ro
     names: !include country-names/ro.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Serbia (Србија)
@@ -1370,6 +1534,8 @@ rs:
     partition: 59
     languages: sr
     names: !include country-names/rs.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Russia (Россия)
@@ -1377,6 +1543,8 @@ ru:
     partition: 135
     languages: ru
     names: !include country-names/ru.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Rwanda (Rwanda)
@@ -1415,6 +1583,8 @@ sd:
     partition: 72
     languages: ar, en
     names: !include country-names/sd.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Sweden (Sverige)
@@ -1429,6 +1599,8 @@ sg:
     partition: 115
     languages: zh-hans, en, ms, ta
     names: !include country-names/sg.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Saint Helena, Ascension and Tristan da Cunha (Saint Helena, Ascension and Tristan da Cunha)
@@ -1443,6 +1615,8 @@ si:
     partition: 36
     languages: sl
     names: !include country-names/si.yaml
+    postcode:
+      pattern: "dddd"
 
 
 #  (Svalbard and Jan Mayen)
@@ -1479,6 +1653,8 @@ sn:
     partition: 237
     languages: fr
     names: !include country-names/sn.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Somalia (Soomaaliya الصومال)
@@ -1517,6 +1693,8 @@ sv:
     partition: 103
     languages: es
     names: !include country-names/sv.yaml
+    postcode:
+      pattern: "dddd"
 
 
 #  (Sint Maarten)
@@ -1576,6 +1754,8 @@ th:
     partition: 32
     languages: th
     names: !include country-names/th.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Tajikistan (Тоҷикистон)
@@ -1583,6 +1763,8 @@ tj:
     partition: 129
     languages: tg, ru
     names: !include country-names/tj.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Tokelau (Tokelau)
@@ -1606,6 +1788,8 @@ tm:
     partition: 54
     languages: tk
     names: !include country-names/tm.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Tunisia (تونس)
@@ -1613,6 +1797,8 @@ tn:
     partition: 18
     languages: ar, fr
     names: !include country-names/tn.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Tonga (Tonga)
@@ -1628,6 +1814,8 @@ tr:
     partition: 81
     languages: tr
     names: !include country-names/tr.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Trinidad and Tobago (Trinidad and Tobago)
@@ -1635,6 +1823,8 @@ tt:
     partition: 221
     languages: en
     names: !include country-names/tt.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Tuvalu (Tuvalu)
@@ -1657,6 +1847,8 @@ tz:
     partition: 130
     languages: sw, en
     names: !include country-names/tz.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Ukraine (Україна)
@@ -1664,6 +1856,8 @@ ua:
     partition: 173
     languages: uk
     names: !include country-names/ua.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Uganda (Uganda)
@@ -1693,6 +1887,8 @@ uy:
     partition: 174
     languages: es
     names: !include country-names/uy.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Uzbekistan (Oʻzbekiston)
@@ -1700,6 +1896,8 @@ uz:
     partition: 157
     languages: uz, kaa
     names: !include country-names/uz.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Vatican City (Civitas Vaticana)
@@ -1721,6 +1919,8 @@ ve:
     partition: 108
     languages: es
     names: !include country-names/ve.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # British Virgin Islands (British Virgin Islands)
@@ -1742,6 +1942,8 @@ vn:
     partition: 75
     languages: vi
     names: !include country-names/vn.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Vanuatu (Vanuatu)
@@ -1771,6 +1973,8 @@ xk:
     partition: 59
     languages: sq, sr
     names: !include country-names/xk.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Yemen (اليمن)
@@ -1793,6 +1997,8 @@ za:
     partition: 76
     languages: en, af, st, tn, xh, zu
     names: !include country-names/za.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Zambia (Zambia)
@@ -1800,6 +2006,8 @@ zm:
     partition: 222
     languages: en
     names: !include country-names/zm.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Zimbabwe (Zimbabwe)

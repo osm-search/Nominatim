@@ -270,7 +270,7 @@ function getIconFile($aPlace)
         return null;
     }
 
-    return CONST_MapIcon_URL.'/'.$sIcon.'.p.20.png';
+    return CONST_MapIcon_URL.$sIcon.'.p.20.png';
 }
 
 /**

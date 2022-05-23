@@ -131,6 +131,8 @@ az:
     partition: 119
     languages: az
     names: !include country-names/az.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Bosnia and Herzegovina (Bosna i Hercegovina / Босна и Херцеговина)
@@ -513,6 +515,8 @@ ec:
     partition: 78
     languages: es
     names: !include country-names/ec.yaml
+    postcode:
+      pattern: "dddddd"
 
 
 # Estonia (Eesti)
@@ -606,6 +610,8 @@ fo:
     partition: 10
     languages: fo, da
     names: !include country-names/fo.yaml
+    postcode:
+      pattern: "ddd"
 
 
 # France (France)
@@ -804,6 +810,8 @@ ht:
     partition: 29
     languages: fr, ht
     names: !include country-names/ht.yaml
+    postcode:
+      pattern: "dddd"
 
 
 # Hungary (Magyarország)
@@ -1083,6 +1091,8 @@ lt:
     partition: 67
     languages: lt
     names: !include country-names/lt.yaml
+    postcode:
+      pattern: "ddddd"
 
 
 # Luxembourg (Lëtzebuerg)

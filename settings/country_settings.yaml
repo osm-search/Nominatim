@@ -456,6 +456,9 @@ cz:
     partition: 124
     languages: cs
     names: !include country-names/cz.yaml
+    postcode:
+      pattern: "(ddd) ?(dd)"
+      output: \1 \2
 
 
 # Germany (Deutschland)
@@ -1618,6 +1621,9 @@ se:
     partition: 112
     languages: sv
     names: !include country-names/se.yaml
+    postcode:
+      pattern: "(ddd) ?(dd)"
+      output: \1 \2
 
 
 # Singapore (Singapore)
@@ -1657,6 +1663,9 @@ sk:
     partition: 172
     languages: sk
     names: !include country-names/sk.yaml
+    postcode:
+      pattern: "(ddd) ?(dd)"
+      output: \1 \2
 
 
 # Sierra Leone (Sierra Leone)

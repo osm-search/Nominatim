@@ -77,3 +77,14 @@ def test_postcode_kazakhstan_pass(sanitize, postcode):
 def test_postcode_kazakhstan_fail(sanitize, postcode):
     assert sanitize(country='kz', postcode=postcode) == []
 
+
+@pytest.mark.parametrize("postcode", ('675 34', '67534', 'SE-675 34', 'SE67534'))
+def test_postcode_sweden_pass(sanitize, postcode):
+    assert sanitize(country='se', postcode=postcode) == [('postcode', '675 34')]
+
+
+@pytest.mark.parametrize("postcode", ('67 345', '671123'))
+@pytest.mark.sanitizer_params(convert_to_address=False)
+def test_postcode_sweden_fail(sanitize, postcode):
+    assert sanitize(country='se', postcode=postcode) == []
+

@@ -31,18 +31,24 @@ class _PostcodeMatcher:
 
         pc_pattern = config['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
 
-        self.pattern = re.compile(f'(?:{country_code.upper()}[ -]?)?({pc_pattern})')
+        self.norm_pattern = re.compile(f'\\s*(?:{country_code.upper()}[ -]?)?(.*)\\s*')
+        self.pattern = re.compile(pc_pattern)
+
+        self.output = config.get('output', r'\g<0>')
 
 
     def normalize(self, postcode):
         """ Return the normalized version of the postcode. If the given postcode
             does not correspond to the usage-pattern, return null.
         """
-        normalized = postcode.strip().upper()
+        # Upper-case, strip spaces and leading country code.
+        normalized = self.norm_pattern.fullmatch(postcode.upper())
 
-        match = self.pattern.fullmatch(normalized)
+        if normalized:
+            match = self.pattern.fullmatch(normalized.group(1))
+            return match.expand(self.output) if match else None
 
-        return match.group(1) if match else None
+        return None
 
 
 class _PostcodeSanitizer:

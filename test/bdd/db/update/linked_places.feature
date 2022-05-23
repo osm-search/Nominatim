@@ -2,6 +2,25 @@
 Feature: Updates of linked places
     Tests that linked places are correctly added and deleted.
 
+    Scenario: Linking is kept when boundary is updated
+        Given the places
+            | osm | class | type | name | geometry |
+            | N1  | place | city | foo  | 0 0 |
+        And the places
+            | osm | class    | type           | name | admin | geometry |
+            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+        When importing
+        Then placex contains
+         | object | linked_place_id |
+         | N1     | R1 |
+        When updating places
+         | osm | class    | type           | name | name+name:de | admin | geometry |
+         | R1  | boundary | administrative | foo  | Dingens      | 8     | poly-area:0.1 |
+        Then placex contains
+         | object | linked_place_id |
+         | N1     | R1 |
+
+
     Scenario: Add linked place when linking relation is renamed
         Given the places
             | osm | class | type | name | geometry |

@@ -43,12 +43,14 @@ def test_postcode_no_country_drop(sanitize, country):
     assert sanitize(country=country, postcode='23231') == []
 
 
-@pytest.mark.parametrize("postcode", ('12345', '  34009  '))
+@pytest.mark.parametrize("postcode", ('12345', '  12345  ', 'de 12345',
+                                      'DE12345', 'DE 12345', 'DE-12345'))
 def test_postcode_pass_good_format(sanitize, postcode):
-    assert sanitize(country='de', postcode=postcode) == [('postcode', postcode.strip())]
+    assert sanitize(country='de', postcode=postcode) == [('postcode', '12345')]
 
 
-@pytest.mark.parametrize("postcode", ('123456', '', '   ', '.....'))
+@pytest.mark.parametrize("postcode", ('123456', '', '   ', '.....',
+                                      'DE  12345', 'DEF12345', 'CH 12345'))
 @pytest.mark.sanitizer_params(convert_to_address=False)
 def test_postcode_drop_bad_format(sanitize, postcode):
     assert sanitize(country='de', postcode=postcode) == []

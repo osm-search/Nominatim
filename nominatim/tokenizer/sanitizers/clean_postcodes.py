@@ -29,8 +29,9 @@ class _PostcodeMatcher:
             raise UsageError("Field 'pattern' required for 'postcode' "
                              f"for country '{country_code}'")
 
-        self.pattern = re.compile(config['pattern'].replace('d', '[0-9]')
-                                                   .replace('l', '[A-Z]'))
+        pc_pattern = config['pattern'].replace('d', '[0-9]').replace('l', '[A-Z]')
+
+        self.pattern = re.compile(f'(?:{country_code.upper()}[ -]?)?({pc_pattern})')
 
 
     def normalize(self, postcode):
@@ -39,7 +40,9 @@ class _PostcodeMatcher:
         """
         normalized = postcode.strip().upper()
 
-        return normalized if self.pattern.fullmatch(normalized) else None
+        match = self.pattern.fullmatch(normalized)
+
+        return match.group(1) if match else None
 
 
 class _PostcodeSanitizer:

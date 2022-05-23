@@ -278,7 +278,7 @@ BEGIN
              OR position(bnd_name in lower(name->'name')) > 0)
         AND placex.class = 'place' AND placex.type = bnd.extratags->'place'
         AND placex.osm_type = 'N'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
@@ -294,7 +294,7 @@ BEGIN
       WHERE placex.class = 'place' AND placex.osm_type = 'N'
         AND placex.extratags ? 'wikidata' -- needed to select right index
         AND placex.extratags->'wikidata' = bnd.extratags->'wikidata'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26
         AND _st_covers(bnd.geometry, placex.geometry)
       ORDER BY lower(name->'name') = bnd_name desc
@@ -318,7 +318,7 @@ BEGIN
              OR (bnd.rank_address = 0 and placex.rank_search = bnd.rank_search))
         AND placex.osm_type = 'N'
         AND placex.class = 'place'
-        AND placex.linked_place_id is null
+        AND (placex.linked_place_id is null or placex.linked_place_id = bnd.place_id)
         AND placex.rank_search < 26 -- needed to select the right index
         AND placex.type != 'postcode'
         AND ST_Covers(bnd.geometry, placex.geometry)
@@ -759,9 +759,6 @@ BEGIN
   DELETE FROM place_addressline WHERE place_id = NEW.place_id;
   result := deleteRoad(NEW.partition, NEW.place_id);
   result := deleteLocationArea(NEW.partition, NEW.place_id, NEW.rank_search);
-  UPDATE placex set linked_place_id = null, indexed_status = 2
-         where linked_place_id = NEW.place_id;
-  -- update not necessary for osmline, cause linked_place_id does not exist
 
   NEW.extratags := NEW.extratags - 'linked_place'::TEXT;
 
@@ -769,6 +766,12 @@ BEGIN
   -- the previous link status.
   linked_place := NEW.linked_place_id;
   NEW.linked_place_id := OLD.linked_place_id;
+
+  -- Remove linkage, if we have computed a different new linkee.
+  UPDATE placex SET linked_place_id = null, indexed_status = 2
+    WHERE linked_place_id = NEW.place_id
+          and (linked_place is null or linked_place_id != linked_place);
+  -- update not necessary for osmline, cause linked_place_id does not exist
 
   IF NEW.linked_place_id is not null THEN
     NEW.token_info := null;

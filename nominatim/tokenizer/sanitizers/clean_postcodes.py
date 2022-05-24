@@ -98,7 +98,7 @@ class _PostcodeSanitizer:
                     obj.address.pop(pos)
             else:
                 postcode.name = formatted[0]
-                postcode.set_attr('lookup', formatted[1])
+                postcode.set_attr('variant', formatted[1])
 
 
     def scan(self, postcode, country):

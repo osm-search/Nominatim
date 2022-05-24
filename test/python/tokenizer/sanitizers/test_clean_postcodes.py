@@ -88,3 +88,15 @@ def test_postcode_sweden_pass(sanitize, postcode):
 def test_postcode_sweden_fail(sanitize, postcode):
     assert sanitize(country='se', postcode=postcode) == []
 
+
+@pytest.mark.parametrize("postcode", ('AB1', '123-456-7890', '1 as 44'))
+@pytest.mark.sanitizer_params(default_pattern='[A-Z0-9- ]{3,12}')
+def test_postcode_default_pattern_pass(sanitize, postcode):
+    assert sanitize(country='an', postcode=postcode) == [('postcode', postcode.upper())]
+
+
+@pytest.mark.parametrize("postcode", ('C', '12', 'ABC123DEF 456', '1234,5678', '11223;11224'))
+@pytest.mark.sanitizer_params(convert_to_address=False, default_pattern='[A-Z0-9- ]{3,12}')
+def test_postcode_default_pattern_fail(sanitize, postcode):
+    assert sanitize(country='an', postcode=postcode) == []
+

@@ -223,3 +223,26 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION create_postcode_word(postcode TEXT, lookup_terms TEXT[])
+  RETURNS BOOLEAN
+  AS $$
+DECLARE
+  existing INTEGER;
+BEGIN
+  SELECT count(*) INTO existing
+    FROM word WHERE word = postcode and type = 'P';
+
+  IF existing > 0 THEN
+    RETURN TRUE;
+  END IF;
+
+  -- postcodes don't need word ids
+  INSERT INTO word (word_token, type, word)
+    SELECT lookup_term, 'P', postcode FROM unnest(lookup_terms) as lookup_term;
+
+  RETURN FALSE;
+END;
+$$
+LANGUAGE plpgsql;
+

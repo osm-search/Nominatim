@@ -11,7 +11,6 @@ libICU instead of the PostgreSQL module.
 import itertools
 import json
 import logging
-import re
 from textwrap import dedent
 
 from nominatim.db.connection import connect
@@ -473,7 +472,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def _process_place_address(self, token_info, address):
         for item in address:
             if item.kind == 'postcode':
-                self._add_postcode(item.name)
+                token_info.set_postcode(self._add_postcode(item))
             elif item.kind == 'housenumber':
                 token_info.add_housenumber(*self._compute_housenumber_token(item))
             elif item.kind == 'street':
@@ -605,26 +604,36 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         return full_tokens, partial_tokens
 
 
-    def _add_postcode(self, postcode):
+    def _add_postcode(self, item):
         """ Make sure the normalized postcode is present in the word table.
         """
-        if re.search(r'[:,;]', postcode) is None:
-            postcode = self.normalize_postcode(postcode)
+        analyzer = self.token_analysis.get_analyzer('@postcode')
 
-            if postcode not in self._cache.postcodes:
-                term = self._search_normalized(postcode)
-                if not term:
-                    return
+        if analyzer is None:
+            postcode_name = item.name.strip().upper()
+            variant_base = None
+        else:
+            postcode_name = analyzer.normalize(item.name)
+            variant_base = item.get_attr("variant")
 
-                with self.conn.cursor() as cur:
-                    # no word_id needed for postcodes
-                    cur.execute("""INSERT INTO word (word_token, type, word)
-                                   (SELECT %s, 'P', pc FROM (VALUES (%s)) as v(pc)
-                                    WHERE NOT EXISTS
-                                     (SELECT * FROM word
-                                      WHERE type = 'P' and word = pc))
-                                """, (term, postcode))
-                self._cache.postcodes.add(postcode)
+        if variant_base is not None:
+            postcode = f'{postcode_name}@{variant_base}'
+        else:
+            postcode = postcode_name
+
+        if postcode not in self._cache.postcodes:
+            term = self._search_normalized(postcode_name)
+            if not term:
+                return
+
+            variants = {term}
+            if analyzer is not None and variant_base is not None:
+                variants.update(analyzer.get_variants_ascii(variant_base))
+
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT create_postcode_word(%s, %s)",
+                            (postcode, list(variants)))
+            self._cache.postcodes.add(postcode)
 
 
 class _TokenInfo:
@@ -637,6 +646,7 @@ class _TokenInfo:
         self.street_tokens = set()
         self.place_tokens = set()
         self.address_tokens = {}
+        self.postcode = None
 
 
     @staticmethod
@@ -700,6 +710,11 @@ class _TokenInfo:
         """
         if partials:
             self.address_tokens[key] = self._mk_array(partials)
+
+    def set_postcode(self, postcode):
+        """ Set the postcode to the given one.
+        """
+        self.postcode = postcode
 
 
 class _TokenCache:

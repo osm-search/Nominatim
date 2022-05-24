@@ -34,7 +34,7 @@ sanitizers:
         - (\A|.*,)[^\d,]{3,}(,.*|\Z)
     - step: clean-postcodes
       convert-to-address: yes
-      default-pattern: [A-Z0-9- ]{3,12}
+      default-pattern: "[A-Z0-9- ]{3,12}"
     - step: split-name-list
     - step: strip-brace-terms
     - step: tag-analyzer-by-language
@@ -46,6 +46,8 @@ token-analysis:
     - analyzer: generic
     - id: "@housenumber"
       analyzer: housenumbers
+    - id: "@postcode"
+      analyzer: postcodes
     - id: bg
       analyzer: generic
       mode: variant-only

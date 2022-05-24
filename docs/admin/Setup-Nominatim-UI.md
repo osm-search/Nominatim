@@ -163,14 +163,14 @@ directory like this:
 
   # If format-html is explicity requested, forward to the UI.
   RewriteCond %{QUERY_STRING} "format=html"
-  RewriteRule ^([^/]+)(?:.php)? ui/$1.html [R,END]
+  RewriteRule ^([^/]+)(.php)? ui/$1.html [R,END]
 
   # If no format parameter is there then forward anything
   # but /reverse and /lookup to the UI.
   RewriteCond %{QUERY_STRING} "!format="
   RewriteCond %{REQUEST_URI}  "!/lookup"
   RewriteCond %{REQUEST_URI}  "!/reverse"
-  RewriteRule ^([^/]+)(?:.php)? ui/$1.html [R,END]
+  RewriteRule ^([^/]+)(.php)? ui/$1.html [R,END]
 </Directory>
 ```
 

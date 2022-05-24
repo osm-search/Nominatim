@@ -37,18 +37,26 @@ class _PostcodeMatcher:
         self.output = config.get('output', r'\g<0>')
 
 
-    def normalize(self, postcode):
-        """ Return the normalized version of the postcode. If the given postcode
-            does not correspond to the usage-pattern, return null.
+    def match(self, postcode):
+        """ Match the given postcode against the postcode pattern for this
+            matcher. Returns a `re.Match` object if the match was successful
+            and None otherwise.
         """
         # Upper-case, strip spaces and leading country code.
         normalized = self.norm_pattern.fullmatch(postcode.upper())
 
         if normalized:
-            match = self.pattern.fullmatch(normalized.group(1))
-            return match.expand(self.output) if match else None
+            return self.pattern.fullmatch(normalized.group(1))
 
         return None
+
+
+    def normalize(self, match):
+        """ Return the default format of the postcode for the given match.
+            `match` must be a `re.Match` object previously returned by
+            `match()`
+        """
+        return match.expand(self.output)
 
 
 class _PostcodeSanitizer:
@@ -83,7 +91,8 @@ class _PostcodeSanitizer:
                 else:
                     obj.address.pop(pos)
             else:
-                postcode.name = formatted
+                postcode.name = formatted[0]
+                postcode.set_attr('lookup', formatted[1])
 
 
     def scan(self, postcode, country):
@@ -94,10 +103,14 @@ class _PostcodeSanitizer:
         if country in self.country_without_postcode:
             return None
 
-        if country in self.country_matcher:
-            return self.country_matcher[country].normalize(postcode)
+        matcher = self.country_matcher.get(country)
+        if matcher is not None:
+            match = matcher.match(postcode)
+            if match is None:
+                return None
+            return matcher.normalize(match), ' '.join(match.groups())
 
-        return postcode.upper()
+        return postcode.upper(), ''
 
 
 

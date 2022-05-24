@@ -75,6 +75,12 @@ class _PostcodeSanitizer:
             else:
                 raise UsageError(f"Invalid entry 'postcode' for country '{ccode}'")
 
+        default_pattern = config.get('default-pattern')
+        if default_pattern is not None and isinstance(default_pattern, str):
+            self.default_matcher = _PostcodeMatcher('', {'pattern': default_pattern})
+        else:
+            self.default_matcher = None
+
 
     def __call__(self, obj):
         if not obj.address:
@@ -103,14 +109,16 @@ class _PostcodeSanitizer:
         if country in self.country_without_postcode:
             return None
 
-        matcher = self.country_matcher.get(country)
-        if matcher is not None:
-            match = matcher.match(postcode)
-            if match is None:
-                return None
-            return matcher.normalize(match), ' '.join(match.groups())
+        matcher = self.country_matcher.get(country, self.default_matcher)
+        if matcher is None:
+            return postcode.upper(), ''
 
-        return postcode.upper(), ''
+        match = matcher.match(postcode)
+        if match is None:
+            return None
+
+        return matcher.normalize(match), ' '.join(match.groups())
+
 
 
 

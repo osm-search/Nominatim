@@ -264,6 +264,8 @@ class SearchDescription
     {
         if (empty($this->aName)) {
             $this->bNameNeedsAddress = $bNeedsAddress;
+        } elseif ($bSearchable && count($this->aName) >= 2) {
+            $this->bNameNeedsAddress = false;
         } else {
             $this->bNameNeedsAddress &= $bNeedsAddress;
         }

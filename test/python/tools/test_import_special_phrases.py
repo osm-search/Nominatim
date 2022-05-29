@@ -23,11 +23,12 @@ def testfile_dir(src_dir):
 
 
 @pytest.fixture
-def sp_importer(temp_db_conn, def_config):
+def sp_importer(temp_db_conn, def_config, monkeypatch):
     """
         Return an instance of SPImporter.
     """
-    loader = SPWikiLoader(def_config, ['en'])
+    monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
+    loader = SPWikiLoader(def_config)
     return SPImporter(def_config, temp_db_conn, loader)
 
 

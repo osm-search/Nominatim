@@ -18,14 +18,14 @@ class SPWikiLoader(Iterator):
     """
         Handles loading of special phrases from the wiki.
     """
-    def __init__(self, config, languages=None):
+    def __init__(self, config):
         super().__init__()
         self.config = config
         # Compile the regex here to increase performances.
         self.occurence_pattern = re.compile(
             r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
         )
-        self.languages = self._load_languages() if not languages else list(languages)
+        self._load_languages()
 
     def __next__(self):
         if not self.languages:
@@ -56,12 +56,14 @@ class SPWikiLoader(Iterator):
             or default if there is no languages configured.
             The system will extract special phrases only from all specified languages.
         """
-        default_languages = [
+        if self.config.LANGUAGES:
+            self.languages = self.config.get_str_list('LANGUAGES')
+        else:
+            self.languages = [
             'af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
             'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
             'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
             'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']
-        return self.config.LANGUAGES.split(',') if self.config.LANGUAGES else default_languages
 
     @staticmethod
     def _get_wiki_content(lang):

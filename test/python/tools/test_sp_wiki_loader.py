@@ -24,7 +24,8 @@ def sp_wiki_loader(monkeypatch, def_config, xml_wiki_content):
     """
         Return an instance of SPWikiLoader.
     """
-    loader = SPWikiLoader(def_config, ['en'])
+    monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
+    loader = SPWikiLoader(def_config)
     monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
                         lambda self, lang: xml_wiki_content)
     return loader

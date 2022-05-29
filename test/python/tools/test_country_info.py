@@ -49,7 +49,7 @@ def test_setup_country_tables(src_dir, temp_db_with_extensions, dsn, temp_db_cur
     assert temp_db_cursor.table_rows('country_osm_grid') > 100
 
 
-@pytest.mark.parametrize("languages", (None, ' fr,en'))
+@pytest.mark.parametrize("languages", (None, ['fr', 'en']))
 def test_create_country_names(temp_db_with_extensions, temp_db_conn, temp_db_cursor,
                               table_factory, tokenizer_mock, languages, loaded_country):
 

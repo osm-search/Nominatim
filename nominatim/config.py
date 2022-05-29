@@ -99,6 +99,17 @@ class Configuration:
             raise UsageError("Configuration error.") from exp
 
 
+    def get_str_list(self, name):
+        """ Return the given configuration parameter as a list of strings.
+            The values are assumed to be given as a comma-sparated list and
+            will be stripped before returning them. On empty values None
+            is returned.
+        """
+        raw = self.__getattr__(name)
+
+        return [v.strip() for v in raw.split(',')] if raw else None
+
+
     def get_path(self, name):
         """ Return the given configuration parameter as a Path.
             If a relative path is configured, then the function converts this

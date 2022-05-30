@@ -18,11 +18,6 @@ from nominatim.errors import UsageError
 from cursor import CursorForTesting
 
 @pytest.fixture
-def testfile_dir(src_dir):
-    return src_dir / 'test' / 'testfiles'
-
-
-@pytest.fixture
 def sp_importer(temp_db_conn, def_config, monkeypatch):
     """
         Return an instance of SPImporter.

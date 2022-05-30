@@ -11,6 +11,7 @@ import pytest
 
 from nominatim.errors import UsageError
 from nominatim.tools.special_phrases.sp_csv_loader import SPCsvLoader
+from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 
 @pytest.fixture
 def sp_csv_loader(src_dir):
@@ -29,17 +30,11 @@ def test_generate_phrases(sp_csv_loader):
     """
     phrases = list(sp_csv_loader.generate_phrases())
 
-    assert len(phrases) == 41
+    assert len(phrases) == 42
     assert len(set(phrases)) == 41
 
-    assert any(p.p_label == 'Billboard'
-               and p.p_class == 'advertising'
-               and p.p_type == 'billboard'
-               and p.p_operator == '-' for p in phrases)
-    assert any(p.p_label == 'Zip Lines'
-               and p.p_class == 'aerialway'
-               and p.p_type == 'zip_line'
-               and p.p_operator == '-' for p in phrases)
+    assert SpecialPhrase('Billboard', 'advertising', 'billboard', '-') in phrases
+    assert SpecialPhrase('Zip Lines', 'aerialway', 'zip_line', '-') in phrases
 
 
 def test_invalid_cvs_file():

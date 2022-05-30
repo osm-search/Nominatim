@@ -10,7 +10,7 @@
     This class is a model used to transfer a special phrase through
     the process of load and importation.
 """
-class SpecialPhrase():
+class SpecialPhrase:
     """
         Model representing a special phrase.
     """
@@ -22,3 +22,15 @@ class SpecialPhrase():
         # Needed if some operator in the wiki are not written in english
         p_operator = p_operator.strip().lower()
         self.p_operator = '-' if p_operator not in ('near', 'in') else p_operator
+
+    def __eq__(self, other):
+        if not isinstance(other, SpecialPhrase):
+            return False
+
+        return self.p_label == other.p_label \
+               and self.p_class == other.p_class \
+               and self.p_type == other.p_type \
+               and self.p_operator == other.p_operator
+
+    def __hash__(self):
+        return hash((self.p_label, self.p_class, self.p_type, self.p_operator))

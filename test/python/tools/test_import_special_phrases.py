@@ -187,8 +187,8 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     table_factory('place_classtype_amenity_animal_shelter')
     table_factory('place_classtype_wrongclass_wrongtype')
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        lambda self, lang: xml_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+                        lambda lang: xml_wiki_content)
 
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer, should_replace)

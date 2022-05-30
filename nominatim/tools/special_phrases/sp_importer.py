@@ -62,11 +62,10 @@ class SPImporter():
         # Store pairs of class/type for further processing
         class_type_pairs = set()
 
-        for loaded_phrases in self.sp_loader:
-            for phrase in loaded_phrases:
-                result = self._process_phrase(phrase)
-                if result:
-                    class_type_pairs.add(result)
+        for phrase in self.sp_loader.generate_phrases():
+            result = self._process_phrase(phrase)
+            if result:
+                class_type_pairs.add(result)
 
         self._create_place_classtype_table_and_indexes(class_type_pairs)
         if should_replace:

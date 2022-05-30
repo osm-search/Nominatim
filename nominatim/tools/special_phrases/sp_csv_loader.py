@@ -11,43 +11,31 @@
 """
 import csv
 import os
-from collections.abc import Iterator
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 from nominatim.errors import UsageError
 
-class SPCsvLoader(Iterator):
+class SPCsvLoader:
     """
         Handles loading of special phrases from external csv file.
     """
     def __init__(self, csv_path):
         super().__init__()
         self.csv_path = csv_path
-        self.has_been_read = False
 
-    def __next__(self):
-        if self.has_been_read:
-            raise StopIteration()
 
-        self.has_been_read = True
-        self.check_csv_validity()
-        return self.parse_csv()
-
-    def parse_csv(self):
-        """
-            Open and parse the given csv file.
+    def generate_phrases(self):
+        """ Open and parse the given csv file.
             Create the corresponding SpecialPhrases.
         """
-        phrases = set()
+        self._check_csv_validity()
 
         with open(self.csv_path, encoding='utf-8') as fd:
             reader = csv.DictReader(fd, delimiter=',')
             for row in reader:
-                phrases.add(
-                    SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])
-                )
-        return phrases
+                yield SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])
 
-    def check_csv_validity(self):
+
+    def _check_csv_validity(self):
         """
             Check that the csv file has the right extension.
         """

@@ -26,27 +26,18 @@ def sp_wiki_loader(monkeypatch, def_config, xml_wiki_content):
     """
     monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
     loader = SPWikiLoader(def_config)
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        lambda self, lang: xml_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+                        lambda lang: xml_wiki_content)
     return loader
 
 
-def test_parse_xml(sp_wiki_loader, xml_wiki_content):
-    """
-        Test method parse_xml()
-        Should return the right SpecialPhrase objects.
-    """
-    phrases = sp_wiki_loader.parse_xml(xml_wiki_content)
-    check_phrases_content(phrases)
-
-
-def test_next(sp_wiki_loader):
+def test_generate_phrases(sp_wiki_loader):
     """
         Test objects returned from the next() method.
         It should return all SpecialPhrases objects of
         the 'en' special phrases.
     """
-    phrases = next(sp_wiki_loader)
+    phrases = list(sp_wiki_loader.generate_phrases())
     check_phrases_content(phrases)
 
 def check_phrases_content(phrases):

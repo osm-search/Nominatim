@@ -37,6 +37,8 @@ class SPWikiLoader:
         self.occurence_pattern = re.compile(
             r'\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([^\|]+) *\|\| *([\-YN])'
         )
+        # Hack around a bug where building=yes was imported with quotes into the wiki
+        self.type_fix_pattern = re.compile(r'\"|&quot;')
         self._load_languages()
 
 
@@ -52,7 +54,10 @@ class SPWikiLoader:
             matches = self.occurence_pattern.findall(loaded_xml)
 
             for match in matches:
-                yield SpecialPhrase(match[0], match[1], match[2], match[3])
+                yield SpecialPhrase(match[0],
+                                    match[1],
+                                    self.type_fix_pattern.sub('', match[2]),
+                                    match[3])
 
 
     def _load_languages(self):

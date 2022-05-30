@@ -10,24 +10,21 @@
 import pytest
 from nominatim.tools.special_phrases.sp_wiki_loader import SPWikiLoader
 
-@pytest.fixture
-def xml_wiki_content(src_dir):
-    """
-        return the content of the static xml test file.
-    """
-    xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
-    return xml_test_content.read_text()
-
 
 @pytest.fixture
-def sp_wiki_loader(monkeypatch, def_config, xml_wiki_content):
+def sp_wiki_loader(src_dir, monkeypatch, def_config):
     """
         Return an instance of SPWikiLoader.
     """
     monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
     loader = SPWikiLoader(def_config)
+
+    def _mock_wiki_content(lang):
+        xml_test_content = src_dir / 'test' / 'testdata' / 'special_phrases_test_content.txt'
+        return xml_test_content.read_text()
+
     monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
-                        lambda lang: xml_wiki_content)
+                        _mock_wiki_content)
     return loader
 
 
@@ -38,13 +35,7 @@ def test_generate_phrases(sp_wiki_loader):
         the 'en' special phrases.
     """
     phrases = list(sp_wiki_loader.generate_phrases())
-    check_phrases_content(phrases)
 
-def check_phrases_content(phrases):
-    """
-        Asserts that the given phrases list contains
-        the right phrases of the 'en' special phrases.
-    """
     assert set((p.p_label, p.p_class, p.p_type, p.p_operator) for p in phrases) ==\
               {('Zip Line', 'aerialway', 'zip_line', '-'),
                ('Zip Lines', 'aerialway', 'zip_line', '-'),

@@ -81,12 +81,15 @@ jobs:
                   ubuntu: ${{ matrix.ubuntu }}
 
             - name: Install test prerequsites
-              run: sudo apt-get install -y -qq pylint python3-pytest python3-behave
+              run: sudo apt-get install -y -qq python3-pytest python3-behave
               if: matrix.ubuntu == 20
 
             - name: Install test prerequsites
-              run: pip3 install pylint==2.6.0 pytest behave==1.2.6
+              run: pip3 install pytest behave==1.2.6
               if: matrix.ubuntu == 18
+
+            - name: Install latest pylint
+              run: pip3 install pylint
 
             - name: PHP linting
               run: phpcs --report-width=120 .

@@ -506,3 +506,23 @@ Feature: Address computation
         Then results contain
            | osm | display_name               |
            | N2  | Leftside, Wonderway, Left |
+
+
+    Scenario: addr:* tags always match the closer area
+        Given the grid
+            | 1 |   |   |   |  2 |   | 5 |
+            |   |   |   |   |    |   |   |
+            |   | 10| 11|   |    |   |   |
+            | 4 |   |   |   |  3 |   | 6 |
+        And the places
+            | osm | class    | type           | admin | name  | geometry    |
+            | R1  | boundary | administrative | 8     | Left  | (1,2,3,4,1) |
+            | R2  | boundary | administrative | 8     | Left  | (2,3,6,5,2) |
+        And the places
+            | osm | class   | type    | name      | addr+city | geometry |
+            | W1  | highway | primary | Wonderway | Left      | 10,11    |
+        When importing
+        Then place_addressline doesn't contain
+            | object | address |
+            | W1     | R2      |
+

@@ -96,7 +96,7 @@ BEGIN
               AND rank_address between from_rank and to_rank
               AND token_matches_address(token_info, key, keywords)
         GROUP BY place_id, keywords, rank_address, rank_search, isguess, postcode, centroid
-        ORDER BY bool_or(ST_Intersects(geometry, feature)), distance LIMIT 1;
+        ORDER BY bool_or(ST_Intersects(geometry, feature)) DESC, distance LIMIT 1;
       RETURN r;
   END IF;
 {% endfor %}

@@ -32,7 +32,7 @@ It has the following additional requirements:
 * [behave test framework](https://behave.readthedocs.io) >= 1.2.6
 * [phpunit](https://phpunit.de) (9.5 is known to work)
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
-* [Pylint](https://pylint.org/) (2.6.0 is used for the CI)
+* [Pylint](https://pylint.org/) (CI always runs the latest version from pip)
 * [pytest](https://pytest.org)
 
 The documentation is built with mkdocs:

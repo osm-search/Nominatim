@@ -173,6 +173,23 @@ def test_get_int_empty(make_config):
         config.get_int('DATABASE_MODULE_PATH')
 
 
+@pytest.mark.parametrize("value,outlist", [('sd', ['sd']),
+                                           ('dd,rr', ['dd', 'rr']),
+                                           (' a , b ', ['a', 'b'])])
+def test_get_str_list_success(make_config, monkeypatch, value, outlist):
+    config = make_config()
+
+    monkeypatch.setenv('NOMINATIM_MYLIST', value)
+
+    assert config.get_str_list('MYLIST') == outlist
+
+
+def test_get_str_list_empty(make_config):
+    config = make_config()
+
+    assert config.get_str_list('LANGUAGES') is None
+
+
 def test_get_path_empty(make_config):
     config = make_config()
 

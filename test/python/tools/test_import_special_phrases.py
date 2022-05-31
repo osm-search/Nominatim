@@ -18,16 +18,12 @@ from nominatim.errors import UsageError
 from cursor import CursorForTesting
 
 @pytest.fixture
-def testfile_dir(src_dir):
-    return src_dir / 'test' / 'testfiles'
-
-
-@pytest.fixture
-def sp_importer(temp_db_conn, def_config):
+def sp_importer(temp_db_conn, def_config, monkeypatch):
     """
         Return an instance of SPImporter.
     """
-    loader = SPWikiLoader(def_config, ['en'])
+    monkeypatch.setenv('NOMINATIM_LANGUAGES', 'en')
+    loader = SPWikiLoader(def_config)
     return SPImporter(def_config, temp_db_conn, loader)
 
 
@@ -186,8 +182,8 @@ def test_import_phrases(monkeypatch, temp_db_conn, def_config, sp_importer,
     table_factory('place_classtype_amenity_animal_shelter')
     table_factory('place_classtype_wrongclass_wrongtype')
 
-    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader.SPWikiLoader._get_wiki_content',
-                        lambda self, lang: xml_wiki_content)
+    monkeypatch.setattr('nominatim.tools.special_phrases.sp_wiki_loader._get_wiki_content',
+                        lambda lang: xml_wiki_content)
 
     tokenizer = tokenizer_mock()
     sp_importer.import_phrases(tokenizer, should_replace)

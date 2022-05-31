@@ -131,9 +131,6 @@ def create_country_names(conn, tokenizer, languages=None):
         empty then only name translations for the given languages are added
         to the index.
     """
-    if languages:
-        languages = languages.split(',')
-
     def _include_key(key):
         return ':' not in key or not languages or \
                key[key.index(':') + 1:] in languages

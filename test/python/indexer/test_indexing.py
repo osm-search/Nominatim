@@ -177,25 +177,16 @@ def test_index_all_by_rank(test_db, threads, test_tokenizer):
         SELECT count(*) FROM placex p WHERE rank_address > 0
           AND indexed_date >= (SELECT min(indexed_date) FROM placex o
                                WHERE p.rank_address < o.rank_address)""") == 0
-    # placex rank < 30 objects come before interpolations
+    # placex address ranked objects come before interpolations
     assert test_db.scalar(
-        """SELECT count(*) FROM placex WHERE rank_address < 30
+        """SELECT count(*) FROM placex WHERE rank_address > 0
              AND indexed_date >
                    (SELECT min(indexed_date) FROM location_property_osmline)""") == 0
-    # placex rank = 30 objects come after interpolations
+    # rank 0 comes after all other placex objects
     assert test_db.scalar(
-        """SELECT count(*) FROM placex WHERE rank_address = 30
-             AND indexed_date <
-                   (SELECT max(indexed_date) FROM location_property_osmline)""") == 0
-    # rank 0 comes after rank 29 and before rank 30
-    assert test_db.scalar(
-        """SELECT count(*) FROM placex WHERE rank_address < 30
+        """SELECT count(*) FROM placex WHERE rank_address > 0
              AND indexed_date >
                    (SELECT min(indexed_date) FROM placex WHERE rank_address = 0)""") == 0
-    assert test_db.scalar(
-        """SELECT count(*) FROM placex WHERE rank_address = 30
-             AND indexed_date <
-                   (SELECT max(indexed_date) FROM placex WHERE rank_address = 0)""") == 0
 
 
 @pytest.mark.parametrize("threads", [1, 15])

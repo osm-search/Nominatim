@@ -475,7 +475,8 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
                 token_info.add_street(self.conn, value)
             elif key == 'place':
                 token_info.add_place(self.conn, value)
-            elif not key.startswith('_') and key not in ('country', 'full'):
+            elif not key.startswith('_') \
+                 and key not in ('country', 'full', 'inclusion'):
                 addr_terms.append((key, value))
 
         if hnrs:

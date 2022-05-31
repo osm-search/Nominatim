@@ -482,7 +482,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                 if not item.suffix:
                     token_info.add_place(self._compute_partial_tokens(item.name))
             elif not item.kind.startswith('_') and not item.suffix and \
-                 item.kind not in ('country', 'full'):
+                 item.kind not in ('country', 'full', 'inclusion'):
                 token_info.add_address_term(item.kind, self._compute_partial_tokens(item.name))
 
 

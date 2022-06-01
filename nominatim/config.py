@@ -86,14 +86,14 @@ class Configuration:
             Values of '1', 'yes' and 'true' are accepted as truthy values,
             everything else is interpreted as false.
         """
-        return self.__getattr__(name).lower() in ('1', 'yes', 'true')
+        return getattr(self, name).lower() in ('1', 'yes', 'true')
 
 
     def get_int(self, name):
         """ Return the given configuration parameter as an int.
         """
         try:
-            return int(self.__getattr__(name))
+            return int(getattr(self, name))
         except ValueError as exp:
             LOG.fatal("Invalid setting NOMINATIM_%s. Needs to be a number.", name)
             raise UsageError("Configuration error.") from exp
@@ -105,7 +105,7 @@ class Configuration:
             will be stripped before returning them. On empty values None
             is returned.
         """
-        raw = self.__getattr__(name)
+        raw = getattr(self, name)
 
         return [v.strip() for v in raw.split(',')] if raw else None
 
@@ -116,7 +116,7 @@ class Configuration:
             into an absolute path with the project directory as root path.
             If the configuration is unset, a falsy value is returned.
         """
-        value = self.__getattr__(name)
+        value = getattr(self, name)
         if value:
             value = Path(value)
 
@@ -152,7 +152,7 @@ class Configuration:
             name of the standard styles automatically into a file in the
             config style.
         """
-        style = self.__getattr__('IMPORT_STYLE')
+        style = getattr(self, 'IMPORT_STYLE')
 
         if style in ('admin', 'street', 'address', 'full', 'extratags'):
             return self.config_dir / f'import-{style}.style'
@@ -214,7 +214,7 @@ class Configuration:
             a regular file.
         """
         if config is not None:
-            cfg_filename = self.__getattr__(config)
+            cfg_filename = getattr(self, config)
             if cfg_filename:
                 cfg_filename = Path(cfg_filename)
 

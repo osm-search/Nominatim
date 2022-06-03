@@ -160,15 +160,12 @@ class Indexer:
                     minrank, maxrank, self.num_threads)
 
         with self.tokenizer.name_analyzer() as analyzer:
-            for rank in range(max(1, minrank), maxrank):
-                self._index(runners.RankRunner(rank, analyzer))
+            for rank in range(max(1, minrank), maxrank + 1):
+                self._index(runners.RankRunner(rank, analyzer), 20 if rank == 30 else 1)
 
             if maxrank == 30:
                 self._index(runners.RankRunner(0, analyzer))
                 self._index(runners.InterpolationRunner(analyzer), 20)
-                self._index(runners.RankRunner(30, analyzer), 20)
-            else:
-                self._index(runners.RankRunner(maxrank, analyzer))
 
 
     def index_postcodes(self):

@@ -104,6 +104,13 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
+CREATE OR REPLACE FUNCTION token_get_postcode(info JSONB)
+  RETURNS TEXT
+AS $$
+  SELECT info->>'postcode';
+$$ LANGUAGE SQL IMMUTABLE STRICT;
+
+
 -- Return token info that should be saved permanently in the database.
 CREATE OR REPLACE FUNCTION token_strip_info(info JSONB)
   RETURNS JSONB

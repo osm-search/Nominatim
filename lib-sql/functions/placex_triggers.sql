@@ -992,7 +992,7 @@ BEGIN
       {% if debug %}RAISE WARNING 'Got parent details from search name';{% endif %}
 
       -- determine postcode
-      NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
+      NEW.postcode := coalesce(token_get_postcode(NEW.token_info),
                                location.postcode,
                                get_nearest_postcode(NEW.country_code, NEW.centroid));
 
@@ -1150,8 +1150,7 @@ BEGIN
 
   {% if debug %}RAISE WARNING 'RETURN insert_addresslines: %, %, %', NEW.parent_place_id, NEW.postcode, nameaddress_vector;{% endif %}
 
-  NEW.postcode := coalesce(token_normalized_postcode(NEW.address->'postcode'),
-                           NEW.postcode);
+  NEW.postcode := coalesce(token_get_postcode(NEW.token_info), NEW.postcode);
 
   -- if we have a name add this to the name search table
   IF NEW.name IS NOT NULL THEN

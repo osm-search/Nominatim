@@ -675,6 +675,9 @@ class _TokenInfo:
         if self.address_tokens:
             out['addr'] = self.address_tokens
 
+        if self.postcode:
+            out['postcode'] = self.postcode
+
         return out
 
 

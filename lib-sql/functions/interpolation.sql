@@ -156,7 +156,6 @@ DECLARE
   linegeo GEOMETRY;
   splitline GEOMETRY;
   sectiongeo GEOMETRY;
-  interpol_postcode TEXT;
   postcode TEXT;
   stepmod SMALLINT;
 BEGIN
@@ -173,8 +172,6 @@ BEGIN
   NEW.parent_place_id := get_interpolation_parent(NEW.token_info, NEW.partition,
                                                  ST_PointOnSurface(NEW.linegeo),
                                                  NEW.linegeo);
-
-  interpol_postcode := token_normalized_postcode(NEW.address->'postcode');
 
   NEW.token_info := token_strip_info(NEW.token_info);
   IF NEW.address ? '_inherited' THEN
@@ -207,6 +204,11 @@ BEGIN
     FOR nextnode IN
       SELECT DISTINCT ON (nodeidpos)
           osm_id, address, geometry,
+          -- Take the postcode from the node only if it has a housenumber itself.
+          -- Note that there is a corner-case where the node has a wrongly
+          -- formatted postcode and therefore 'postcode' contains a derived
+          -- variant.
+          CASE WHEN address ? 'postcode' THEN placex.postcode ELSE NULL::text END as postcode,
           substring(address->'housenumber','[0-9]+')::integer as hnr
         FROM placex, generate_series(1, array_upper(waynodes, 1)) nodeidpos
         WHERE osm_type = 'N' and osm_id = waynodes[nodeidpos]::BIGINT
@@ -260,13 +262,10 @@ BEGIN
         endnumber := newend;
 
         -- determine postcode
-        postcode := coalesce(interpol_postcode,
-                             token_normalized_postcode(prevnode.address->'postcode'),
-                             token_normalized_postcode(nextnode.address->'postcode'),
-                             postcode);
-        IF postcode is NULL THEN
-            SELECT token_normalized_postcode(placex.postcode)
-              FROM placex WHERE place_id = NEW.parent_place_id INTO postcode;
+        postcode := coalesce(prevnode.postcode, nextnode.postcode, postcode);
+        IF postcode is NULL and NEW.parent_place_id > 0 THEN
+            SELECT placex.postcode FROM placex
+              WHERE place_id = NEW.parent_place_id INTO postcode;
         END IF;
         IF postcode is NULL THEN
             postcode := get_nearest_postcode(NEW.country_code, nextnode.geometry);

@@ -773,12 +773,6 @@ BEGIN
           and (linked_place is null or linked_place_id != linked_place);
   -- update not necessary for osmline, cause linked_place_id does not exist
 
-  IF NEW.linked_place_id is not null THEN
-    NEW.token_info := null;
-    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
-    RETURN NEW;
-  END IF;
-
   -- Postcodes are just here to compute the centroids. They are not searchable
   -- unless they are a boundary=postal_code.
   -- There was an error in the style so that boundary=postal_code used to be
@@ -823,6 +817,16 @@ BEGIN
                             NEW.class, NEW.type, NEW.admin_level,
                             (NEW.extratags->'capital') = 'yes',
                             NEW.address->'postcode');
+
+  -- Short-cut out for linked places. Note that this must happen after the
+  -- address rank has been recomputed. The linking might nullify a shift in
+  -- address rank.
+  IF NEW.linked_place_id is not null THEN
+    NEW.token_info := null;
+    {% if debug %}RAISE WARNING 'place already linked to %', OLD.linked_place_id;{% endif %}
+    RETURN NEW;
+  END IF;
+
   -- We must always increase the address level relative to the admin boundary.
   IF NEW.class = 'boundary' and NEW.type = 'administrative'
      and NEW.osm_type = 'R' and NEW.rank_address > 0
@@ -1001,7 +1005,14 @@ BEGIN
   -- Full indexing
   {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
   IF linked_place is not null THEN
-    SELECT * INTO location FROM placex WHERE place_id = linked_place;
+    -- Recompute the ranks here as the ones from the linked place might
+    -- have been shifted to accomodate surrounding boundaries.
+    SELECT place_id, osm_id, class, type, extratags,
+           centroid, geometry,
+           (compute_place_rank(country_code, osm_type, class, type, admin_level,
+                              (extratags->'capital') = 'yes', null)).*
+      INTO location
+      FROM placex WHERE place_id = linked_place;
 
     {% if debug %}RAISE WARNING 'Linked %', location;{% endif %}
 
@@ -1012,11 +1023,11 @@ BEGIN
         NEW.centroid := geom;
     END IF;
 
-    {% if debug %}RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.rank_address;{% endif %}
-    IF location.rank_address > parent_address_level
-       and location.rank_address < 26
+    {% if debug %}RAISE WARNING 'parent address: % rank address: %', parent_address_level, location.address_rank;{% endif %}
+    IF location.address_rank > parent_address_level
+       and location.address_rank < 26
     THEN
-      NEW.rank_address := location.rank_address;
+      NEW.rank_address := location.address_rank;
     END IF;
 
     -- merge in extra tags

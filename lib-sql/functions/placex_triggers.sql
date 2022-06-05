@@ -1036,7 +1036,9 @@ BEGIN
                      || coalesce(NEW.extratags, ''::hstore);
 
     -- mark the linked place (excludes from search results)
-    UPDATE placex set linked_place_id = NEW.place_id
+    -- Force reindexing to remove any traces from the search indexes and
+    -- reset the address rank if necessary.
+    UPDATE placex set linked_place_id = NEW.place_id, indexed_status = 2
       WHERE place_id = location.place_id;
     -- ensure that those places are not found anymore
     {% if 'search_name' in db.tables %}

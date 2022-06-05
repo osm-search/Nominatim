@@ -238,3 +238,29 @@ Feature: Updates of linked places
         Then placex contains
             | object | extratags |
             | R1     | 'linked_place' : 'town' |
+
+
+    Scenario: Keep linking and ranks when place type changes
+        Given the grid
+            | 1 |   |   | 2 |
+            |   |   | 9 |   |
+            | 4 |   |   | 3 |
+        And the places
+            | osm | class    | type           | name | admin | geometry    |
+            | R1  | boundary | administrative | foo  | 8     | (1,2,3,4,1) |
+        And the places
+            | osm | class | type | name | geometry |
+            | N1  | place | city | foo  | 9        |
+        When importing
+        Then placex contains
+            | object | linked_place_id | rank_address |
+            | N1     | R1              | 16           |
+            | R1     | -               | 16           |
+
+        When updating places
+            | osm | class | type | name | geometry |
+            | N1  | place | town | foo  | 9        |
+        Then placex contains
+            | object | linked_place_id | rank_address |
+            | N1     | R1              | 16           |
+            | R1     | -               | 16           |

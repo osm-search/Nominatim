@@ -607,7 +607,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
     def _add_postcode(self, item):
         """ Make sure the normalized postcode is present in the word table.
         """
-        analyzer = self.token_analysis.get_analyzer('@postcode')
+        analyzer = self.token_analysis.analysis.get('@postcode')
 
         if analyzer is None:
             postcode_name = item.name.strip().upper()

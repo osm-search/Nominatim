@@ -437,13 +437,6 @@ class TestPlaceAddress:
         assert word_table.get_postcodes() == {pcode, }
 
 
-    @pytest.mark.parametrize('pcode', ['12:23', 'ab;cd;f', '123;836'])
-    def test_process_place_bad_postcode(self, word_table, pcode):
-        self.process_address(postcode=pcode)
-
-        assert not word_table.get_postcodes()
-
-
     @pytest.mark.parametrize('hnr', ['123a', '1', '101'])
     def test_process_place_housenumbers_simple(self, hnr, getorcreate_hnr_id):
         info = self.process_address(housenumber=hnr)

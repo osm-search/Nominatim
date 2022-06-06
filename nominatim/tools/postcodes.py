@@ -18,6 +18,7 @@ from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect
 from nominatim.utils.centroid import PointsCentroid
+from nominatim.data.postcode_format import PostcodeFormatter
 
 LOG = logging.getLogger()
 
@@ -162,6 +163,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
         potentially enhances it with external data and then updates the
         postcodes in the table 'location_postcode'.
     """
+    matcher = PostcodeFormatter()
     with tokenizer.name_analyzer() as analyzer:
         with connect(dsn) as conn:
             # First get the list of countries that currently have postcodes.
@@ -193,7 +195,9 @@ def update_postcodes(dsn, project_dir, tokenizer):
                             collector.commit(conn, analyzer, project_dir)
                         collector = _CountryPostcodesCollector(country)
                         todo_countries.discard(country)
-                    collector.add(postcode, x, y)
+                    match = matcher.match(country, postcode)
+                    if match:
+                        collector.add(matcher.normalize(country, match), x, y)
 
                 if collector is not None:
                     collector.commit(conn, analyzer, project_dir)

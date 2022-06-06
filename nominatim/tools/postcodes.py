@@ -8,6 +8,7 @@
 Functions for importing, updating and otherwise maintaining the table
 of artificial postcode centroids.
 """
+from collections import defaultdict
 import csv
 import gzip
 import logging
@@ -16,6 +17,7 @@ from math import isfinite
 from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect
+from nominatim.utils.centroid import PointsCentroid
 
 LOG = logging.getLogger()
 
@@ -36,14 +38,14 @@ class _CountryPostcodesCollector:
 
     def __init__(self, country):
         self.country = country
-        self.collected = {}
+        self.collected = defaultdict(PointsCentroid)
 
 
     def add(self, postcode, x, y):
         """ Add the given postcode to the collection cache. If the postcode
             already existed, it is overwritten with the new centroid.
         """
-        self.collected[postcode] = (x, y)
+        self.collected[postcode] += (x, y)
 
 
     def commit(self, conn, analyzer, project_dir):
@@ -93,16 +95,16 @@ class _CountryPostcodesCollector:
                            WHERE country_code = %s""",
                         (self.country, ))
             for postcode, x, y in cur:
-                newx, newy = self.collected.pop(postcode, (None, None))
-                if newx is not None:
-                    dist = (x - newx)**2 + (y - newy)**2
-                    if dist > 0.0000001:
+                pcobj = self.collected.pop(postcode, None)
+                if pcobj:
+                    newx, newy = pcobj.centroid()
+                    if (x - newx) > 0.0000001 or (y - newy) > 0.0000001:
                         to_update.append((postcode, newx, newy))
                 else:
                     to_delete.append(postcode)
 
-        to_add = [(k, v[0], v[1]) for k, v in self.collected.items()]
-        self.collected = []
+        to_add = [(k, *v.centroid()) for k, v in self.collected.items()]
+        self.collected = None
 
         return to_add, to_delete, to_update
 
@@ -125,8 +127,10 @@ class _CountryPostcodesCollector:
                 postcode = analyzer.normalize_postcode(row['postcode'])
                 if postcode not in self.collected:
                     try:
-                        self.collected[postcode] = (_to_float(row['lon'], 180),
-                                                    _to_float(row['lat'], 90))
+                        # Do float conversation separately, it might throw
+                        centroid = (_to_float(row['lon'], 180),
+                                    _to_float(row['lat'], 90))
+                        self.collected[postcode] += centroid
                     except ValueError:
                         LOG.warning("Bad coordinates %s, %s in %s country postcode file.",
                                     row['lat'], row['lon'], self.country)
@@ -174,12 +178,10 @@ def update_postcodes(dsn, project_dir, tokenizer):
                         COALESCE(plx.country_code,
                                  get_country_code(ST_Centroid(pl.geometry))) as cc,
                         token_normalized_postcode(pl.address->'postcode') as pc,
-                        ST_Centroid(ST_Collect(COALESCE(plx.centroid,
-                                                        ST_Centroid(pl.geometry)))) as centroid
+                        COALESCE(plx.centroid, ST_Centroid(pl.geometry)) as centroid
                       FROM place AS pl LEFT OUTER JOIN placex AS plx
                              ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
-                    WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
-                    GROUP BY cc, pc) xx
+                    WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null) xx
                 WHERE pc IS NOT null AND cc IS NOT null
                 ORDER BY country_code, pc""")
 

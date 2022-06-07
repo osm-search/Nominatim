@@ -37,16 +37,27 @@ class _CountryPostcodesCollector:
     """ Collector for postcodes of a single country.
     """
 
-    def __init__(self, country):
+    def __init__(self, country, matcher):
         self.country = country
+        self.matcher = matcher
         self.collected = defaultdict(PointsCentroid)
+        self.normalization_cache = None
 
 
     def add(self, postcode, x, y):
         """ Add the given postcode to the collection cache. If the postcode
             already existed, it is overwritten with the new centroid.
         """
-        self.collected[postcode] += (x, y)
+        if self.matcher is not None:
+            if self.normalization_cache and self.normalization_cache[0] == postcode:
+                normalized = self.normalization_cache[1]
+            else:
+                match = self.matcher.match(postcode)
+                normalized = self.matcher.normalize(match) if match else None
+                self.normalization_cache = (postcode, normalized)
+
+            if normalized:
+                self.collected[normalized] += (x, y)
 
 
     def commit(self, conn, analyzer, project_dir):
@@ -193,18 +204,16 @@ def update_postcodes(dsn, project_dir, tokenizer):
                     if collector is None or country != collector.country:
                         if collector is not None:
                             collector.commit(conn, analyzer, project_dir)
-                        collector = _CountryPostcodesCollector(country)
+                        collector = _CountryPostcodesCollector(country, matcher.get_matcher(country))
                         todo_countries.discard(country)
-                    match = matcher.match(country, postcode)
-                    if match:
-                        collector.add(matcher.normalize(country, match), x, y)
+                    collector.add(postcode, x, y)
 
                 if collector is not None:
                     collector.commit(conn, analyzer, project_dir)
 
             # Now handle any countries that are only in the postcode table.
             for country in todo_countries:
-                _CountryPostcodesCollector(country).commit(conn, analyzer, project_dir)
+                _CountryPostcodesCollector(country, matcher.get_matcher(country)).commit(conn, analyzer, project_dir)
 
             conn.commit()
 

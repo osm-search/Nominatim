@@ -467,8 +467,9 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
             if key == 'postcode':
                 # Make sure the normalized postcode is present in the word table.
                 if re.search(r'[:,;]', value) is None:
-                    self._cache.add_postcode(self.conn,
-                                             self.normalize_postcode(value))
+                    norm_pc = self.normalize_postcode(value)
+                    token_info.set_postcode(norm_pc)
+                    self._cache.add_postcode(self.conn, norm_pc)
             elif key in ('housenumber', 'streetnumber', 'conscriptionnumber'):
                 hnrs.append(value)
             elif key == 'street':
@@ -526,6 +527,11 @@ class _TokenInfo:
             cur.execute("SELECT * FROM create_housenumbers(%s)", (simple_list, ))
             self.data['hnr_tokens'], self.data['hnr'] = cur.fetchone()
 
+
+    def set_postcode(self, postcode):
+        """ Set or replace the postcode token with the given value.
+        """
+        self.data['postcode'] = postcode
 
     def add_street(self, conn, street):
         """ Add addr:street match terms.

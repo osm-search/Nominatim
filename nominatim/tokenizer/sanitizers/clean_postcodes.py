@@ -57,7 +57,8 @@ class _PostcodeSanitizer:
         if match is None:
             return None
 
-        return self.matcher.normalize(country, match), ' '.join(match.groups())
+        return self.matcher.normalize(country, match),\
+               ' '.join(filter(lambda p: p is not None, match.groups()))
 
 
 

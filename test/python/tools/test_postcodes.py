@@ -11,7 +11,7 @@ import subprocess
 
 import pytest
 
-from nominatim.tools import postcodes
+from nominatim.tools import postcodes, country_info
 import dummy_tokenizer
 
 class MockPostcodeTable:
@@ -64,9 +64,24 @@ class MockPostcodeTable:
 def tokenizer():
     return dummy_tokenizer.DummyTokenizer(None, None)
 
+
 @pytest.fixture
-def postcode_table(temp_db_conn, placex_table):
+def postcode_table(def_config, temp_db_conn, placex_table):
+    country_info.setup_country_config(def_config)
     return MockPostcodeTable(temp_db_conn)
+
+
+@pytest.fixture
+def insert_implicit_postcode(placex_table, place_row):
+    """
+        Inserts data into the placex and place table
+        which can then be used to compute one postcode.
+    """
+    def _insert_implicit_postcode(osm_id, country, geometry, address):
+        placex_table.add(osm_id=osm_id, country=country, geom=geometry)
+        place_row(osm_id=osm_id, geom='SRID=4326;'+geometry, address=address)
+
+    return _insert_implicit_postcode
 
 
 def test_postcodes_empty(dsn, postcode_table, place_table,
@@ -193,7 +208,22 @@ def test_can_compute(dsn, table_factory):
     table_factory('place')
     assert postcodes.can_compute(dsn)
 
+
 def test_no_placex_entry(dsn, tmp_path, temp_db_cursor, place_row, postcode_table, tokenizer):
+    #Rewrite the get_country_code function to verify its execution.
+    temp_db_cursor.execute("""
+        CREATE OR REPLACE FUNCTION get_country_code(place geometry)
+        RETURNS TEXT AS $$ BEGIN 
+        RETURN 'yy';
+        END; $$ LANGUAGE plpgsql;
+    """)
+    place_row(geom='SRID=4326;POINT(10 12)', address=dict(postcode='AB 4511'))
+    postcodes.update_postcodes(dsn, tmp_path, tokenizer)
+
+    assert postcode_table.row_set == {('yy', 'AB 4511', 10, 12)}
+
+
+def test_discard_badly_formatted_postcodes(dsn, tmp_path, temp_db_cursor, place_row, postcode_table, tokenizer):
     #Rewrite the get_country_code function to verify its execution.
     temp_db_cursor.execute("""
         CREATE OR REPLACE FUNCTION get_country_code(place geometry)
@@ -204,16 +234,4 @@ def test_no_placex_entry(dsn, tmp_path, temp_db_cursor, place_row, postcode_tabl
     place_row(geom='SRID=4326;POINT(10 12)', address=dict(postcode='AB 4511'))
     postcodes.update_postcodes(dsn, tmp_path, tokenizer)
 
-    assert postcode_table.row_set == {('fr', 'AB 4511', 10, 12)}
-
-@pytest.fixture
-def insert_implicit_postcode(placex_table, place_row):
-    """
-        Inserts data into the placex and place table
-        which can then be used to compute one postcode.
-    """
-    def _insert_implicit_postcode(osm_id, country, geometry, address):
-        placex_table.add(osm_id=osm_id, country=country, geom=geometry)
-        place_row(osm_id=osm_id, geom='SRID=4326;'+geometry, address=address)
-
-    return _insert_implicit_postcode
+    assert not postcode_table.row_set

@@ -33,7 +33,7 @@ def _to_float(num, max_value):
 
     return num
 
-class _CountryPostcodesCollector:
+class _PostcodeCollector:
     """ Collector for postcodes of a single country.
     """
 
@@ -204,7 +204,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
                     if collector is None or country != collector.country:
                         if collector is not None:
                             collector.commit(conn, analyzer, project_dir)
-                        collector = _CountryPostcodesCollector(country, matcher.get_matcher(country))
+                        collector = _PostcodeCollector(country, matcher.get_matcher(country))
                         todo_countries.discard(country)
                     collector.add(postcode, x, y)
 
@@ -213,7 +213,8 @@ def update_postcodes(dsn, project_dir, tokenizer):
 
             # Now handle any countries that are only in the postcode table.
             for country in todo_countries:
-                _CountryPostcodesCollector(country, matcher.get_matcher(country)).commit(conn, analyzer, project_dir)
+                fmt = matcher.get_matcher(country)
+                _PostcodeCollector(country, fmt).commit(conn, analyzer, project_dir)
 
             conn.commit()
 

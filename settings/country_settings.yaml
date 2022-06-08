@@ -1386,8 +1386,7 @@ mz:
     languages: pt
     names: !include country-names/mz.yaml
     postcode:
-      pattern: "(dddd)-?(dd)?"
-      output: \1-\2
+      pattern: "(dddd)(?:-dd)?"
 
 
 # Namibia (Namibia)

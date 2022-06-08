@@ -97,13 +97,6 @@ AS $$
 $$ LANGUAGE SQL IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION token_normalized_postcode(postcode TEXT)
-  RETURNS TEXT
-AS $$
-  SELECT CASE WHEN postcode SIMILAR TO '%(,|;)%' THEN NULL ELSE upper(trim(postcode))END;
-$$ LANGUAGE SQL IMMUTABLE STRICT;
-
-
 CREATE OR REPLACE FUNCTION token_get_postcode(info JSONB)
   RETURNS TEXT
 AS $$

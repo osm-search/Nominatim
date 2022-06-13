@@ -35,9 +35,11 @@ Feature: Country handling
             | osm | display_name |
             | N1  | Wenig, Germany |
     Scenario: Pre-defined country names are used
+        Given the grid with origin CH
+            | 1 |
         Given the places
             | osm  | class    | type          | name  | geometry   |
-            | N1   | place    | town          | Ingb  | country:ch |
+            | N1   | place    | town          | Ingb  | 1          |
         When importing
         And sending search query "Ingb"
             | accept-language |

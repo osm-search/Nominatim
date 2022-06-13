@@ -109,13 +109,13 @@ class GeometryFactory:
 
         return scene
 
-    def set_grid(self, lines, grid_step):
+    def set_grid(self, lines, grid_step, origin=(0.0, 0.0)):
         """ Replace the grid with one from the given lines.
         """
         self.grid = {}
-        y = 0
+        y = origin[1]
         for line in lines:
-            x = 0
+            x = origin[0]
             for pt_id in line:
                 if pt_id.isdigit():
                     self.grid[int(pt_id)] = (x, y)

@@ -11,6 +11,8 @@ from pathlib import Path
 
 from nominatim.tools.exec_utils import run_osm2pgsql
 
+from geometry_alias import ALIASES
+
 def get_osm2pgsql_options(nominatim_env, fname, append):
     return dict(import_file=fname,
                 osm2pgsql=str(nominatim_env.build_dir / 'osm2pgsql' / 'osm2pgsql'),
@@ -49,8 +51,8 @@ def write_opl_file(opl, grid):
 def set_default_scene(context, scene):
     context.scene = scene
 
-@given(u'the ([0-9.]+ )?grid')
-def define_node_grid(context, grid_step):
+@given(u'the ([0-9.]+ )?grid(?: with origin (?P<origin>.*))?')
+def define_node_grid(context, grid_step, origin):
     """
     Define a grid of node positions.
     Use a table to define the grid. The nodes must be integer ids. Optionally
@@ -61,8 +63,22 @@ def define_node_grid(context, grid_step):
     else:
         grid_step = 0.00001
 
+    if origin:
+        if ',' in origin:
+            # TODO coordinate
+            coords = origin.split(',')
+            if len(coords) != 2:
+                raise RuntimeError('Grid origin expects orgin with x,y coordinates.')
+            origin(float(coords[0]), float(coords[1]))
+        elif origin in ALIASES:
+            origin = ALIASES[origin]
+        else:
+            raise RuntimeError('Grid origin must be either coordinate or alias.')
+    else:
+        origin = (0.0, 0.0)
+
     context.osm.set_grid([context.table.headings] + [list(h) for h in context.table],
-                         grid_step)
+                         grid_step, origin)
 
 
 @when(u'loading osm data')

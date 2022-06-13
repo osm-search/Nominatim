@@ -99,6 +99,11 @@ def import_and_index_data_from_place_table(context):
 
     check_database_integrity(context)
 
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
+
 @when("updating places")
 def update_place_table(context):
     """ Update the place table with the given data. Also runs all triggers
@@ -111,6 +116,12 @@ def update_place_table(context):
 
     context.nominatim.reindex_placex(context.db)
     check_database_integrity(context)
+
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
+
 
 @when("updating postcodes")
 def update_postcodes(context):

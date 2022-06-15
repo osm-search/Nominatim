@@ -157,7 +157,11 @@ class DBRow:
                                         ST_SetSRID('{geomtxt}'::geometry, 4326))""".format(**self.db_row))
                 return cur.fetchone()[0]
 
-        x, y = expected.split(' ')
+        if ' ' in expected:
+            x, y = expected.split(' ')
+        else:
+            x, y = self.context.osm.grid_node(int(expected))
+
         return Almost(float(x)) == self.db_row['cx'] and Almost(float(y)) == self.db_row['cy']
 
     def _has_geometry(self, expected):

@@ -74,20 +74,22 @@ Feature: Address computation
 
     Scenario: boundary areas are preferred over place nodes in the address
         Given the grid
-            | 1 |   |   |   |   |   | 3 |
-            |   | 5 |   |   |   |   |   |
-            |   | 6 |   |   |   |   |   |
-            | 2 |   |   |   |   |   | 4 |
+            | 1 |   |   |   | 10 |   | 3 |
+            |   | 5 |   |   |    |   |   |
+            |   | 6 |   |   |    |   |   |
+            | 2 |   |   |   | 11 |   | 4 |
         And the named places
-            | osm | class    | type    | admin | geometry |
-            | N1  | place    | square  | 15    | 5 |
-            | N2  | place    | city    | 15    | 6 |
-            | R1  | place    | city    | 8     | (1,2,4,3,1) |
+            | osm | class    | type           | admin | geometry |
+            | N1  | place    | square         | 15    | 5 |
+            | N2  | place    | city           | 15    | 6 |
+            | R1  | place    | city           | 8     | (1,2,4,3,1) |
+            | R2  | boundary | administrative | 9     | (1,10,11,2,1) |
         When importing
         Then place_addressline contains
             | object | address | isaddress | cached_rank_address |
             | N1     | R1      | True      | 16                  |
-            | N1     | N2      | False     | 16                  |
+            | N1     | R2      | True      | 18                  |
+            | N1     | N2      | False     | 18                  |
 
     Scenario: place nodes outside a smaller ranked area are ignored
         Given the grid

@@ -197,3 +197,61 @@ Feature: Rank assignment
             | N20    | R22     | 16                  |
             | N20    | R21     | 18                  |
 
+    Scenario: Mixes of admin boundaries and place areas I
+        Given the grid
+          | 1 |   | 10 |  |  | 2 |
+          |   | 9 |    |  |  |   |
+          | 20|   | 21 |  |  |   |
+          | 4 |   | 11 |  |  | 3 |
+        And the places
+          | osm | class    | type           | admin | name           | geometry      |
+          | R1  | boundary | administrative | 5     | Greater London | (1,2,3,4,1)   |
+          | R2  | boundary | administrative | 8     | Kensington     | (1,10,11,4,1) |
+        And the places
+          | osm | class    | type           | name           | geometry    |
+          | R10 | place    | city           | London         | (1,2,3,4,1) |
+          | N9  | place    | town           | Fulham         | 9           |
+          | W1  | highway  | residential    | Lots Grove     | 20,21       |
+        When importing
+        Then placex contains
+         | object | rank_search | rank_address |
+         | R1     | 10          | 10           |
+         | R10    | 16          | 16           |
+         | R2     | 16          | 18           |
+         | N9     | 18          | 18           |
+        And place_addressline contains
+         | object | address | isaddress | cached_rank_address |
+         | W1     | R1      | True      | 10                  |
+         | W1     | R10     | True      | 16                  |
+         | W1     | R2      | True      | 18                  |
+         | W1     | N9      | False     | 18                  |
+
+
+    Scenario: Mixes of admin boundaries and place areas II
+        Given the grid
+          | 1 |   | 10 |  | 5 | 2 |
+          |   | 9 |    |  |   |   |
+          | 20|   | 21 |  |   |   |
+          | 4 |   | 11 |  | 6 | 3 |
+        And the places
+          | osm | class    | type           | admin | name           | geometry    |
+          | R1  | boundary | administrative | 5     | Greater London | (1,2,3,4,1) |
+          | R2  | boundary | administrative | 8     | London         | (1,5,6,4,1) |
+        And the places
+          | osm | class    | type           | name           | geometry      |
+          | R10 | place    | city           | Westminster    | (1,10,11,4,1) |
+          | N9  | place    | town           | Fulham         | 9             |
+          | W1  | highway  | residential    | Lots Grove     | 20,21         |
+        When importing
+        Then placex contains
+         | object | rank_search | rank_address |
+         | R1     | 10          | 10           |
+         | R2     | 16          | 16           |
+         | R10    | 16          | 18           |
+         | N9     | 18          | 18           |
+        And place_addressline contains
+         | object | address | isaddress | cached_rank_address |
+         | W1     | R1      | True      | 10                  |
+         | W1     | R10     | True      | 18                  |
+         | W1     | R2      | True      | 16                  |
+         | W1     | N9      | False     | 18                  |

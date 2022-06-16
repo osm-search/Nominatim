@@ -866,13 +866,16 @@ BEGIN
         -- Second check that the boundary is not completely contained in a
         -- place area with a equal or higher address rank.
         FOR location IN
-          SELECT rank_address FROM placex
+          SELECT rank_address
+          FROM placex,
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False, null) prank
           WHERE class = 'place' and rank_address < 24
-                and rank_address >= NEW.rank_address
+                and prank.address_rank >= NEW.rank_address
                 and geometry && NEW.geometry
                 and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
                 and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
-          ORDER BY rank_address desc LIMIT 1
+          ORDER BY prank.address_rank desc LIMIT 1
         LOOP
           NEW.rank_address := location.rank_address + 2;
         END LOOP;
@@ -884,13 +887,16 @@ BEGIN
     -- For place areas make sure they are not completely contained in an area
     -- with a equal or higher address rank.
     FOR location IN
-          SELECT rank_address FROM placex
-          WHERE rank_address < 24
-                and rank_address >= NEW.rank_address
+          SELECT rank_address
+          FROM placex,
+               LATERAL compute_place_rank(country_code, 'A', class, type,
+                                          admin_level, False, null) prank
+          WHERE prank.address_rank < 24
+                and prank.address_rank >= NEW.rank_address
                 and geometry && NEW.geometry
                 and geometry ~ NEW.geometry -- needed because ST_Relate does not do bbox cover test
                 and ST_Relate(geometry, NEW.geometry, 'T*T***FF*') -- contains but not equal
-          ORDER BY rank_address desc LIMIT 1
+          ORDER BY prank.address_rank desc LIMIT 1
         LOOP
           NEW.rank_address := location.rank_address + 2;
         END LOOP;
@@ -901,9 +907,12 @@ BEGIN
     -- address level and has not been linked, then make the node a subpart
     -- by increasing the address rank (city level and above).
     FOR location IN
-        SELECT rank_address FROM placex
+        SELECT rank_address
+        FROM placex,
+             LATERAL compute_place_rank(country_code, 'A', class, type,
+                                        admin_level, False, null) prank
         WHERE osm_type = 'R'
-              and rank_address = NEW.rank_address
+              and prank.address_rank = NEW.rank_address
               and geometry && NEW.centroid and _ST_Covers(geometry, NEW.centroid)
         LIMIT 1
     LOOP

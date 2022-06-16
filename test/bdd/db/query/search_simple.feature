@@ -13,9 +13,12 @@ Feature: Searching of simple objects
          | 0  | N1  | place    | village | 10 -10   |
 
      Scenario: Updating postcode in postcode boundaries without ref
+        Given the grid
+          | 1 | 2 |
+          | 4 | 3 |
         Given the places
           | osm | class    | type        | postcode | geometry |
-          | R1  | boundary | postal_code | 12345    | poly-area:1.0 |
+          | R1  | boundary | postal_code | 12345    | (1,2,3,4,1) |
         When importing
         And sending search query "12345"
         Then results contain
@@ -23,7 +26,7 @@ Feature: Searching of simple objects
          | 0  | R1 |
         When updating places
           | osm | class    | type        | postcode | geometry |
-          | R1  | boundary | postal_code | 54321    | poly-area:1.0 |
+          | R1  | boundary | postal_code | 54321    | (1,2,3,4,1) |
         And sending search query "12345"
         Then exactly 0 results are returned
         When sending search query "54321"

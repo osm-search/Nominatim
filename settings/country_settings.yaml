@@ -1247,7 +1247,7 @@ ph:
 # Pakistan (پاکستان)
 pk:
     partition: 14
-    languages: en, ur
+    languages: en, ur, pnb, sd, ps, bal
     names: !include country-names/pk.yaml
 
 

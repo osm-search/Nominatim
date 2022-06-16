@@ -483,3 +483,50 @@
     -  Province -> Prov
     -  Senior High School -> SHS
     -  Subdivision -> Subd
+- lang: en
+  country: pk
+  words:
+    - Block -> B
+    - Block -> Blk
+    - Boulevard -> Blvd
+    - Cantonment -> Cantt
+    - Category -> Catogry
+    - Chak -> Chk
+    - Dera Ghazi -> DG
+    - District -> Distt
+    - District Council -> DC
+    - Federal Government Public School -> FGPS
+    - General Bus Stand -> GBS
+    - General Post Office -> GPO
+    - Government -> Govt
+    - Government Elementary School -> GES
+    - Government Primary School -> GPS
+    - Government Girls Primary School -> GGPS
+    - Government Girls High School -> GGHS
+    - Government High School -> GHS
+    - Gwadar Port Authority -> GPA
+    - House -> H
+    - House -> Ho
+    - House number -> HNO
+    - International -> Int
+    - Kilometer -> KM
+    - Kilometre -> KM
+    - Markaz -> Mkz
+    - Metropolitan Corporation - MC
+    - Mohammad -> Moh
+    - Muhammad -> Moh
+    - Mohammad -> Mohd
+    - Muhammad -> Mohd
+    - Municipal Corporation -> MC
+    - Number -> No
+    - Opposite -> Opp
+    - Plaza -> Plza
+    - Post Office -> PO
+    - Ring Road -> RR
+    - Road -> Rd
+    - Sector -> Sect
+    - Sector -> Sectr
+    - Shop -> Sh
+    - Street -> St
+    - Tehsil Municipal Administration -> TMA
+    - Union Council -> UC

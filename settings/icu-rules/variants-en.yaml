@@ -486,17 +486,50 @@
 - lang: en
   country: pk
   words:
+    - Avenue -> Ave
+    - Bazaar -> Bazar
+    - Bazaar -> Bzr
+    - Between -> BET
+    - Between -> BT
+    - Between -> B/W
     - Block -> B
     - Block -> Blk
     - Boulevard -> Blvd
+    - Bros -> Brothers
+    - Cantonment -> Cant
     - Cantonment -> Cantt
     - Category -> Catogry
+    - Cantonment Board -> CB
+    - Chak -> Ch
+    - Chak -> Ck
     - Chak -> Chk
+    - Co-operative Housing Society -> CHS
+    - Commercial -> Com
+    - Commercial -> Comm
+    - Cooperative Housing Society -> CHS
+    - Company -> Co
+    - Corporation -> Corpn
+    - Defense Housing Authority -> DHA
     - Dera Ghazi -> DG
+    - District -> Dist
     - District -> Distt
     - District Council -> DC
+    - Extension -> Ext
     - Federal Government Public School -> FGPS
+    - Feet -> Ft
+    - Fill Service -> F/S
+    - Fill Station -> F/S
+    - Fill Station -> F/Stn
+    - First Floor -> FF
+    - Floor -> F
+    - Floor -> Fl
+    - Floor -> Flr
+    - Foot -> Ft
+    - Fuel Service -> F/S
+    - Fuel Station -> F/S
+    - Fuel Station -> F/Stn
     - General Bus Stand -> GBS
+    - General Headquarters -> GHQ
     - General Post Office -> GPO
     - Government -> Govt
     - Government Elementary School -> GES
@@ -504,29 +537,78 @@
     - Government Girls Primary School -> GGPS
     - Government Girls High School -> GGHS
     - Government High School -> GHS
+    - Ground Floor -> GF
     - Gwadar Port Authority -> GPA
+    - Heights -> Hights
+    - Highway -> H.way
+    - Highway -> Hi
+    - Highway -> Hwy
     - House -> H
     - House -> Ho
     - House number -> HNO
+    - Industrial Trading Estate -> ITE
     - International -> Int
+    - Karachi Development Authority -> KDA
+    - Khasra -> Kh
+    - Khasra -> Kha
     - Kilometer -> KM
     - Kilometre -> KM
+    - Local Government -> LG
+    - Local Government Unit -> LGU
+    - Main Road -> MR
     - Markaz -> Mkz
-    - Metropolitan Corporation - MC
+    - Mauza -> Mz
+    - Mauza -> Mza
+    - Metropolitan Corporation -> MC
+    - Mile -> M
+    - Mile -> Mi
     - Mohammad -> Moh
     - Muhammad -> Moh
     - Mohammad -> Mohd
+    - Mohammad Ali -> MA
+    - Muhammad Ali -> MA
+    - Mouza -> Mz
+    - Mouza -> Mza
     - Muhammad -> Mohd
     - Municipal Corporation -> MC
+    - National Highway -> N-H
+    - National Highway -> NH
+    - National Highway Authority -> NHA
+    - Number -> N
+    - Number -> N0
     - Number -> No
+    - Office -> Off
     - Opposite -> Opp
+    - Pakistan -> Pak
+    - Petroleum -> Pet
+    - Petroleum Service -> P/S
+    - Petroleum Station -> P/S
     - Plaza -> Plza
+    - Plot -> P
+    - Plot -> Pl
     - Post Office -> PO
+    - Property -> Prop
     - Ring Road -> RR
     - Road -> Rd
+    - Scheme -> Sch
+    - Sector -> Sec
     - Sector -> Sect
     - Sector -> Sectr
+    - Service -> Ser
+    - Service -> Serv
     - Shop -> Sh
+    - Showroom -> SR
+    - Station -> Stn
     - Street -> St
+    - Suite -> Suit
+    - Survey Number -> SN
+    - Taluka -> Tehsil
+    - Taluka Municipal Administration -> TMA
+    - Tehsil -> Taluka
     - Tehsil Municipal Administration -> TMA
+    - Toba Tek -> TT
+    - Truck Station -> T/S
+    - Truck Station -> T/Stn
+    - Trucking Station -> T/S
+    - Trucking Station -> T/Stn
     - Union Council -> UC

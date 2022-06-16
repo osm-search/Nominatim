@@ -142,6 +142,11 @@ def delete_places(context, oids):
 
     context.nominatim.reindex_placex(context.db)
 
+    # Remove the output of the input, when all was right. Otherwise it will be
+    # output when there are errors that had nothing to do with the import
+    # itself.
+    context.log_capture.buffer.clear()
+
 ################################ THEN ##################################
 
 @then("(?P<table>placex|place) contains(?P<exact> exactly)?")

@@ -635,6 +635,8 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                             (postcode, list(variants)))
             self._cache.postcodes.add(postcode)
 
+        return postcode_name
+
 
 class _TokenInfo:
     """ Collect token information to be sent back to the database.

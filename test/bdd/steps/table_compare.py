@@ -165,7 +165,7 @@ class DBRow:
         return Almost(float(x)) == self.db_row['cx'] and Almost(float(y)) == self.db_row['cy']
 
     def _has_geometry(self, expected):
-        geom = self.context.osm.parse_geometry(expected, self.context.scene)
+        geom = self.context.osm.parse_geometry(expected)
         with self.context.db.cursor() as cur:
             cur.execute("""SELECT ST_Equals(ST_SnapToGrid({}, 0.00001, 0.00001),
                                    ST_SnapToGrid(ST_SetSRID('{}'::geometry, 4326), 0.00001, 0.00001))""".format(

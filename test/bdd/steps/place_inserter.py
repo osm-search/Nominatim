@@ -83,7 +83,7 @@ class PlaceColumn:
             self._add_hstore('address', 'country', value)
 
     def _set_key_geometry(self, value):
-        self.geometry = self.context.osm.parse_geometry(value, self.context.scene)
+        self.geometry = self.context.osm.parse_geometry(value)
         assert self.geometry is not None, "Bad geometry: {}".format(value)
 
     def _add_hstore(self, column, key, value):

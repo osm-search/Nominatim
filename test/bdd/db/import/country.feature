@@ -21,9 +21,12 @@ Feature: Country handling
             | osm | display_name |
             | N1  | Wenig, Loudou |
     Scenario: OSM country relations outside expected boundaries are ignored
+        Given the grid
+            | 1 |  | 2 |
+            | 4 |  | 3 |
         Given the places
             | osm  | class    | type           | admin | name+name:xy | country | geometry |
-            | R1   | boundary | administrative | 2     | Loudou       | de      | poly-area:0.1 |
+            | R1   | boundary | administrative | 2     | Loudou       | de      | (1,2,3,4,1) |
         Given the places
             | osm  | class    | type          | name  | geometry   |
             | N1   | place    | town          | Wenig | country:de |
@@ -35,9 +38,11 @@ Feature: Country handling
             | osm | display_name |
             | N1  | Wenig, Germany |
     Scenario: Pre-defined country names are used
+        Given the grid with origin CH
+            | 1 |
         Given the places
             | osm  | class    | type          | name  | geometry   |
-            | N1   | place    | town          | Ingb  | country:ch |
+            | N1   | place    | town          | Ingb  | 1          |
         When importing
         And sending search query "Ingb"
             | accept-language |

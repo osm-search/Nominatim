@@ -22,8 +22,8 @@ This test directory is sturctured as follows:
   |
   +-   php         PHP unit tests
   +-   python      Python unit tests
-  +-   scenes      Geometry test data
   +-   testdb      Base data for generating API test database
+  +-   testdata    Additional test data used by unit tests
 ```
 
 ## PHP Unit Tests (`test/php`)

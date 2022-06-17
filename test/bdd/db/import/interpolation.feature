@@ -3,229 +3,261 @@ Feature: Import of address interpolations
     Tests that interpolated addresses are added correctly
 
     Scenario: Simple even interpolation line with two points
+        Given the grid with origin 1,1
+          | 1 |  | 9 |  | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 2       | 1 1 |
-          | N2  | place | house  | 6       | 1 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 6       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001 |
+          | W1  | place | houses | even               | 1,2      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 4   | 1 1.0005 |
+          | 4     | 4   | 9 |
 
     Scenario: Backwards even two point interpolation line
+        Given the grid with origin 1,1
+          | 1 | 8 | 9 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 2       | 1 1 |
-          | N2  | place | house  | 8       | 1 1.003 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 8       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1.003, 1 1 |
+          | W1  | place | houses | even    | 1,2 |
         And the ways
           | id | nodes |
           | 1  | 2,1 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 6   | 1 1.001, 1 1.002 |
+          | 4     | 6   | 8,9 |
 
     Scenario: Simple odd two point interpolation
+        Given the grid with origin 1,1
+          | 1 | 8 |  |  | 9 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 1       | 1 1 |
-          | N2  | place | house  | 11      | 1 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 1       |
+          | N2  | place | house  | 11      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | odd     | 1 1, 1 1.001 |
+          | W1  | place | houses | odd                | 1,2      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 3     | 9  | 1 1.0002, 1 1.0008 |
+          | 3     | 9   | 8,9      |
 
     Scenario: Simple all two point interpolation
+        Given the grid with origin 1,1
+          | 1 | 8 | 9 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 1       | 1 1 |
-          | N2  | place | house  | 4       | 1 1.003 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 1       |
+          | N2  | place | house  | 4       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | all     | 1 1, 1 1.003 |
+          | W1  | place | houses | all                | 1,2      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 2     | 3   | 1 1.001, 1 1.002 |
+          | 2     | 3   | 8,9 |
 
     Scenario: Even two point interpolation line with intermediate empty node
+        Given the grid
+          | 1 | 8 |  | 3 | 9 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 2       | 1 1 |
-          | N2  | place | house  | 10      | 1.001 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 12      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
+          | W1  | place | houses | even               | 1,3,2    |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 8   | 1 1.0005, 1 1.001, 1.0005 1.001 |
+          | 4     | 10  | 8,3,9 |
 
     Scenario: Even two point interpolation line with intermediate duplicated empty node
+        Given the grid
+          | 1 | 8 | 3 | 9 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 2       | 1 1 |
-          | N2  | place | house  | 10      | 1.001 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 10      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
+          | W1  | place | houses | even               | 1,3,2 |
         And the ways
           | id | nodes |
           | 1  | 1,3,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 8   | 1 1.0005, 1 1.001, 1.0005 1.001 |
+          | 4     | 8   | 8,3,9 |
 
     Scenario: Simple even three point interpolation line
+        Given the grid
+          | 1 | 8 |  | 9 | 3 | 7 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 2       | 1 1 |
-          | N2  | place | house  | 14      | 1.001 1.001 |
-          | N3  | place | house  | 10      | 1 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 2       |
+          | N2  | place | house  | 14      |
+          | N3  | place | house  | 10      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
+          | W1  | place | houses | even               | 1,3,2    |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     |  8  | 1 1.00025, 1 1.00075 |
-          | 12    | 12  | 1.0005 1.001 |
+          | 4     |  8  | 8,9 |
+          | 12    | 12  | 7 |
 
     Scenario: Simple even four point interpolation line
+        Given the grid
+          | 1 | 10 |   | 11 | 3 |
+          |   |    |   |    | 12|
+          |   |    | 4 | 13 | 2 |
         Given the places
-          | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | 1 1 |
-          | N2  | place | house | 14      | 1.001 1.001 |
-          | N3  | place | house | 10      | 1 1.001 |
-          | N4  | place | house | 18      | 1.001 1.002 |
+          | osm | class | type  | housenr |
+          | N1  | place | house | 2       |
+          | N2  | place | house | 14      |
+          | N3  | place | house | 10      |
+          | N4  | place | house | 18      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001, 1.001 1.002 |
+          | W1  | place | houses | even               | 1,3,2,4  |
         And the ways
           | id | nodes |
           | 1  | 1,3,2,4 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 8   | 1 1.00025, 1 1.00075 |
-          | 12    | 12  | 1.0005 1.001 |
-          | 16    | 16  | 1.001 1.0015 |
+          | 4     | 8   | 10,11    |
+          | 12    | 12  | 12       |
+          | 16    | 16  | 13       |
 
     Scenario: Reverse simple even three point interpolation line
+        Given the grid
+          | 1 | 8  |  | 9 | 3 | 7 | 2 |
         Given the places
-          | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | 1 1 |
-          | N2  | place | house | 14      | 1.001 1.001 |
-          | N3  | place | house | 10      | 1 1.001 |
+          | osm | class | type  | housenr |
+          | N1  | place | house | 2       |
+          | N2  | place | house | 14      |
+          | N3  | place | house | 10      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1.001 1.001, 1 1.001, 1 1 |
+          | W1  | place | houses | even               | 2,3,1    |
         And the ways
           | id | nodes |
           | 1  | 2,3,1 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     |  8  | 1 1.00025, 1 1.00075 |
-          | 12    | 12  | 1.0005 1.001 |
+          | 4     |  8  | 8,9      |
+          | 12    | 12  | 7        |
 
     Scenario: Even three point interpolation line with odd center point
+        Given the grid
+          | 1 |  | 10 |  |  | 11 | 3 | 2 |
         Given the places
-          | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | 1 1 |
-          | N2  | place | house | 8       | 1.001 1.001 |
-          | N3  | place | house | 7       | 1 1.001 |
+          | osm | class | type  | housenr |
+          | N1  | place | house | 2       |
+          | N2  | place | house | 8       |
+          | N3  | place | house | 7       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 1 1, 1 1.001, 1.001 1.001 |
+          | W1  | place | houses | even               | 1,3,2    |
         And the ways
           | id | nodes |
           | 1  | 1,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 6   | 1 1.0004, 1 1.0008 |
+          | 4     | 6   | 10,11 |
 
     Scenario: Interpolation line with self-intersecting way
+        Given the grid
+          | 1  | 9 | 2 |
+          |    |   | 8 |
+          |    |   | 3 |
         Given the places
-          | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | 0 0 |
-          | N2  | place | house | 6       | 0 0.001 |
-          | N3  | place | house | 10      | 0 0.002 |
+          | osm | class | type  | housenr |
+          | N1  | place | house | 2       |
+          | N2  | place | house | 6       |
+          | N3  | place | house | 10      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 0 0, 0 0.001, 0 0.002, 0 0.001 |
+          | W1  | place | houses | even               | 1,2,3,2  |
         And the ways
           | id | nodes |
           | 1  | 1,2,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 4   | 0 0.0005 |
-          | 8     | 8   | 0 0.0015 |
-          | 8     | 8   | 0 0.0015 |
+          | 4     | 4   | 9        |
+          | 8     | 8   | 8        |
+          | 8     | 8   | 8        |
 
     Scenario: Interpolation line with self-intersecting way II
+        Given the grid
+          | 1  | 9 | 2 |
+          |    |   | 3 |
         Given the places
-          | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | 0 0 |
-          | N2  | place | house | 6       | 0 0.001 |
+          | osm | class | type  | housenr |
+          | N1  | place | house | 2       |
+          | N2  | place | house | 6       |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even    | 0 0, 0 0.001, 0 0.002, 0 0.001 |
+          | W1  | place | houses | even               | 1,2,3,2  |
         And the ways
           | id | nodes |
           | 1  | 1,2,3,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 4     | 4   | 0 0.0005 |
+          | 4     | 4   | 9        |
 
     Scenario: addr:street on interpolation way
-        Given the scene parallel-road
+        Given the grid
+          |    | 1 |  | 2 |    |
+          | 10 |   |  |   | 11 |
+          | 20 |   |  |   | 21 |
         And the places
           | osm | class | type  | housenr | geometry |
-          | N1  | place | house | 2       | :n-middle-w |
-          | N2  | place | house | 6       | :n-middle-e |
-          | N3  | place | house | 12      | :n-middle-w |
-          | N4  | place | house | 16      | :n-middle-e |
+          | N1  | place | house | 2       | 1        |
+          | N2  | place | house | 6       | 2        |
+          | N3  | place | house | 12      | 1        |
+          | N4  | place | house | 16      | 2        |
         And the places
           | osm | class   | type    | addr+interpolation | street       | geometry |
-          | W10 | place   | houses  | even    |              | :w-middle |
-          | W11 | place   | houses  | even    | Cloud Street | :w-middle |
+          | W10 | place   | houses  | even               |              | 1,2      |
+          | W11 | place   | houses  | even               | Cloud Street | 1,2      |
         And the places
           | osm | class   | type     | name         | geometry |
-          | W2  | highway | tertiary | Sun Way      | :w-north |
-          | W3  | highway | tertiary | Cloud Street | :w-south |
+          | W2  | highway | tertiary | Sun Way      | 10,11    |
+          | W3  | highway | tertiary | Cloud Street | 20,21    |
         And the ways
           | id | nodes |
-          | 10  | 1,100,101,102,2 |
-          | 11  | 3,200,201,202,4 |
+          | 10 | 1,2   |
+          | 11 | 3,4   |
         When importing
         Then placex contains
           | object | parent_place_id |
@@ -249,25 +281,28 @@ Feature: Import of address interpolations
          | 0  | W        | 11 |
 
     Scenario: addr:street on housenumber way
-        Given the scene parallel-road
+        Given the grid
+          |    | 1 |  | 2 |    |
+          | 10 |   |  |   | 11 |
+          | 20 |   |  |   | 21 |
         And the places
           | osm | class | type  | housenr | street       | geometry |
-          | N1  | place | house | 2       |              | :n-middle-w |
-          | N2  | place | house | 6       |              | :n-middle-e |
-          | N3  | place | house | 12      | Cloud Street | :n-middle-w |
-          | N4  | place | house | 16      | Cloud Street | :n-middle-e |
+          | N1  | place | house | 2       |              | 1        |
+          | N2  | place | house | 6       |              | 2        |
+          | N3  | place | house | 12      | Cloud Street | 1        |
+          | N4  | place | house | 16      | Cloud Street | 2        |
         And the places
           | osm | class   | type    | addr+interpolation | geometry |
-          | W10 | place   | houses  | even               | :w-middle |
-          | W11 | place   | houses  | even               | :w-middle |
+          | W10 | place   | houses  | even               | 1,2      |
+          | W11 | place   | houses  | even               | 1,2      |
         And the places
           | osm | class   | type     | name         | geometry |
-          | W2  | highway | tertiary | Sun Way      | :w-north |
-          | W3  | highway | tertiary | Cloud Street | :w-south |
+          | W2  | highway | tertiary | Sun Way      | 10,11    |
+          | W3  | highway | tertiary | Cloud Street | 20,21    |
         And the ways
           | id  | nodes |
-          | 10  | 1,100,101,102,2 |
-          | 11  | 3,200,201,202,4 |
+          | 10  | 1,2 |
+          | 11  | 3,4 |
         When importing
         Then placex contains
           | object | parent_place_id |
@@ -334,30 +369,36 @@ Feature: Import of address interpolations
         When importing
         Then W1 expands to no interpolation
 
-    Scenario: Ways without nodes without housenumbers are ignored
+    Scenario: Ways with nodes without housenumbers are ignored
+        Given the grid
+          | 1  |  |  2 |
+        Given the places
+          | osm | class | type   |
+          | N1  | place | house  |
+          | N2  | place | house  |
         Given the places
           | osm | class | type   | housenr | geometry |
-          | N1  | place | house  |         | 1 1 |
-          | N2  | place | house  |         | 1 1.001 |
-          | W1  | place | houses | even    | 1 1, 1 1.001 |
+          | W1  | place | houses | even    | 1,2 |
         When importing
         Then W1 expands to no interpolation
 
     Scenario: Two point interpolation starting at 0
+        Given the grid with origin 1,1
+          | 1 | 10 |  |  | 11 | 2 |
         Given the places
-          | osm | class | type   | housenr | geometry |
-          | N1  | place | house  | 0       | 1 1 |
-          | N2  | place | house  | 10      | 1 1.001 |
+          | osm | class | type   | housenr |
+          | N1  | place | house  | 0       |
+          | N2  | place | house  | 10      |
         And the places
           | osm | class | type   | addr+interpolation | geometry |
-          | W1  | place | houses | even     | 1 1, 1 1.001 |
+          | W1  | place | houses | even               | 1,2      |
         And the ways
           | id | nodes |
           | 1  | 1,2 |
         When importing
         Then W1 expands to interpolation
           | start | end | geometry |
-          | 2     | 8   | 1 1.0002, 1 1.0008 |
+          | 2     | 8   | 10,11 |
         When sending jsonv2 reverse coordinates 1,1
         Then results contain
           | ID | osm_type | osm_id | type  | display_name |

@@ -3,33 +3,44 @@ Feature: Updates of linked places
     Tests that linked places are correctly added and deleted.
 
     Scenario: Linking is kept when boundary is updated
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
             | osm | class    | type           | name | admin | geometry |
-            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+            | R1  | boundary | administrative | foo  | 8     | (10,11,12,13,10) |
         When importing
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
         When updating places
          | osm | class    | type           | name | name+name:de | admin | geometry |
-         | R1  | boundary | administrative | foo  | Dingens      | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | foo  | Dingens      | 8     | (10,11,12,13,10) |
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
 
 
     Scenario: Add linked place when linking relation is renamed
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
             | osm | class    | type           | name | admin | geometry |
-            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+            | R1  | boundary | administrative | foo  | 8     | (10,11,12,13,10) |
         When importing
-        And sending search query "foo"
+        Then placex contains
+         | object | linked_place_id |
+         | N1     | R1 |
+        When sending search query "foo"
          | dups |
          | 1    |
         Then results contain
@@ -37,7 +48,7 @@ Feature: Updates of linked places
          | R |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
-         | R1  | boundary | administrative | foobar | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | foobar | 8     | (10,11,12,13,10) |
         Then placex contains
          | object | linked_place_id |
          | N1     | - |
@@ -49,12 +60,16 @@ Feature: Updates of linked places
          | N |
 
     Scenario: Add linked place when linking relation is removed
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
             | osm | class    | type           | name | admin | geometry |
-            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+            | R1  | boundary | administrative | foo  | 8     | (10,11,12,13,10) |
         When importing
         And sending search query "foo"
          | dups |
@@ -74,9 +89,13 @@ Feature: Updates of linked places
          | N |
 
     Scenario: Remove linked place when linking relation is added
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         When importing
         And sending search query "foo"
          | dups |
@@ -86,7 +105,7 @@ Feature: Updates of linked places
          | N |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
-         | R1  | boundary | administrative | foo    | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | foo    | 8     | (10,11,12,13,10) |
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
@@ -98,12 +117,16 @@ Feature: Updates of linked places
          | R |
 
     Scenario: Remove linked place when linking relation is renamed
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
          | osm | class    | type           | name   | admin | geometry |
-         | R1  | boundary | administrative | foobar | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | foobar | 8     | (10,11,12,13,10) |
         When importing
         And sending search query "foo"
          | dups |
@@ -113,7 +136,7 @@ Feature: Updates of linked places
          | N |
         When updating places
          | osm | class    | type           | name   | admin | geometry |
-         | R1  | boundary | administrative | foo    | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | foo    | 8     | (10,11,12,13,10) |
         Then placex contains
          | object | linked_place_id |
          | N1     | R1 |
@@ -125,12 +148,16 @@ Feature: Updates of linked places
          | R |
 
     Scenario: Update linking relation when linkee name is updated
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 3 |    |
+         | 13 |   | 12 |
         Given the places
          | osm | class    | type           | name | admin | geometry |
-         | R1  | boundary | administrative | rel  | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | rel  | 8     | (10,11,12,13,10) |
         And the places
-         | osm | class    | type        | name+name:de | admin | geometry |
-         | N3  | place    | city           | pnt  | 30    | 0.00001 0 |
+         | osm | class    | type        | name+name:de |
+         | N3  | place    | city        | pnt          |
         And the relations
          | id | members  |
          | 1  | N3:label |
@@ -142,8 +169,8 @@ Feature: Updates of linked places
          | object | linked_place_id | name+name:de |
          | N3     | R1              | pnt  |
         When updating places
-         | osm | class    | type        | name+name:de | admin | geometry |
-         | N3  | place    | city        | newname  | 30    | 0.00001 0 |
+         | osm | class    | type        | name+name:de |
+         | N3  | place    | city        | newname      |
         Then placex contains
          | object | linked_place_id | name+name:de |
          | N3     | R1              | newname  |
@@ -152,12 +179,16 @@ Feature: Updates of linked places
          | R1     | -               | newname  |
 
     Scenario: Update linking relation when linkee name is deleted
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 3 |    |
+         | 13 |   | 12 |
         Given the places
          | osm | class    | type           | name | admin | geometry |
-         | R1  | boundary | administrative | rel  | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | rel  | 8     | (10,11,12,13,10) |
         And the places
-         | osm | class    | type           | name | admin | geometry |
-         | N3  | place    | city           | pnt  | 30    | 0.00001 0 |
+         | osm | class    | type           | name |
+         | N3  | place    | city           | pnt  |
         And the relations
          | id | members  |
          | 1  | N3:label |
@@ -173,8 +204,8 @@ Feature: Updates of linked places
           | osm |
           | R1  |
         When updating places
-         | osm | class    | type        | name+name:de | admin | geometry |
-         | N3  | place    | city        | depnt        | 30    | 0.00001 0 |
+         | osm | class    | type        | name+name:de |
+         | N3  | place    | city        | depnt        |
         Then placex contains
          | object | linked_place_id | name+name:de |
          | N3     | R1              | depnt  |
@@ -185,12 +216,16 @@ Feature: Updates of linked places
         Then exactly 0 results are returned
 
     Scenario: Updating linkee extratags keeps linker's extratags
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 3 |    |
+         | 13 |   | 12 |
         Given the named places
          | osm | class    | type           | extra+wikidata | admin | geometry |
-         | R1  | boundary | administrative | 34             | 8     | poly-area:0.1 |
+         | R1  | boundary | administrative | 34             | 8     | (10,11,12,13,10) |
         And the named places
-         | osm | class    | type           | geometry |
-         | N3  | place    | city           | 0.00001 0 |
+         | osm | class    | type           |
+         | N3  | place    | city           |
         And the relations
          | id | members  |
          | 1  | N3:label |
@@ -199,19 +234,23 @@ Feature: Updates of linked places
          | object | extratags |
          | R1     | 'wikidata' : '34', 'linked_place' : 'city' |
         When updating places
-         | osm | class    | type        | name    | extra+oneway | admin | geometry |
-         | N3  | place    | city        | newname | yes          | 30    | 0.00001 0 |
+         | osm | class    | type        | name    | extra+oneway |
+         | N3  | place    | city        | newname | yes          |
         Then placex contains
          | object | extratags |
          | R1     | 'wikidata' : '34', 'oneway' : 'yes', 'linked_place' : 'city' |
 
     Scenario: Remove linked_place info when linkee is removed
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
             | osm | class    | type           | name | admin | geometry |
-            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+            | R1  | boundary | administrative | foo  | 8     | (10,11,12,13,10) |
         When importing
         Then placex contains
             | object | extratags |
@@ -222,19 +261,23 @@ Feature: Updates of linked places
             | R1     |  |
 
     Scenario: Update linked_place info when linkee type changes
+        Given the 0.1 grid
+         | 10 |   | 11 |
+         |    | 1 |    |
+         | 13 |   | 12 |
         Given the places
-            | osm | class | type | name | geometry |
-            | N1  | place | city | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | city | foo  |
         And the places
             | osm | class    | type           | name | admin | geometry |
-            | R1  | boundary | administrative | foo  | 8     | poly-area:0.1 |
+            | R1  | boundary | administrative | foo  | 8     | (10,11,12,13,10) |
         When importing
         Then placex contains
             | object | extratags |
             | R1     | 'linked_place' : 'city' |
         When updating places
-            | osm | class | type | name | geometry |
-            | N1  | place | town | foo  | 0 0 |
+            | osm | class | type | name |
+            | N1  | place | town | foo  |
         Then placex contains
             | object | extratags |
             | R1     | 'linked_place' : 'town' |

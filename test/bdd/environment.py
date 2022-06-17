@@ -50,7 +50,6 @@ def before_scenario(context, scenario):
         context.nominatim.setup_api_db()
     elif 'UNKNOWNDB' in context.tags:
         context.nominatim.setup_unknown_db()
-    context.scene = None
 
 def after_scenario(context, scenario):
     if 'DB' in context.tags:

@@ -27,11 +27,11 @@ The main format of the reverse API is
 https://nominatim.openstreetmap.org/reverse?lat=<value>&lon=<value>&<params>
 ```
 
-where `lat` and `lon` are latitude and longitutde of a coordinate in WGS84
+where `lat` and `lon` are latitude and longitude of a coordinate in WGS84
 projection. The API returns exactly one result or an error when the coordinate
 is in an area with no OSM data coverage.
 
-Additional paramters are accepted as listed below.
+Additional parameters are accepted as listed below.
 
 !!! warning "Deprecation warning"
     The reverse API used to allow address lookup for a single OSM object by
@@ -118,7 +118,7 @@ geometry. Topology is preserved in the result. (Default: 0.0)
 
 * `email=<valid email address>`
 
-If you are making large numbers of request please include an appropriate email
+If you are making a large number of requests, please include an appropriate email
 address to identify your requests. See Nominatim's [Usage Policy](https://operations.osmfoundation.org/policies/nominatim/) for more details.
 
 

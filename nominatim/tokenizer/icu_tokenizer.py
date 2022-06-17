@@ -624,7 +624,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         if postcode not in self._cache.postcodes:
             term = self._search_normalized(postcode_name)
             if not term:
-                return
+                return None
 
             variants = {term}
             if analyzer is not None and variant_base is not None:

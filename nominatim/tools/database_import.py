@@ -65,7 +65,7 @@ def setup_database_skeleton(dsn, rouser=None):
                 cnt = cur.scalar('SELECT count(*) FROM pg_user where usename = %s',
                                  (rouser, ))
                 if cnt == 0:
-                    LOG.fatal("Web user '%s' does not exists. Create it with:\n"
+                    LOG.fatal("Web user '%s' does not exist. Create it with:\n"
                               "\n      createuser %s", rouser, rouser)
                     raise UsageError('Missing read-only user.')
 

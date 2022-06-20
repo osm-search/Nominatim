@@ -189,7 +189,7 @@ will be used.
 | **Description:**   | Enable searching for Tiger house number data |
 | **Format:**        | boolean |
 | **Default:**       | no |
-| **After Changes:** | run `nominatim --refresh --functions` |
+| **After Changes:** | run `nominatim refresh --functions` |
 
 When this setting is enabled, search and reverse queries also take data
 from [Tiger house number data](Tiger.md) into account.
@@ -202,7 +202,7 @@ from [Tiger house number data](Tiger.md) into account.
 | **Description:**   | Enable searching in external house number tables |
 | **Format:**        | boolean |
 | **Default:**       | no |
-| **After Changes:** | run `nominatim --refresh --functions` |
+| **After Changes:** | run `nominatim refresh --functions` |
 | **Comment:**       | Do not use. |
 
 When this setting is enabled, search queries also take data from external

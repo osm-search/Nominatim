@@ -15,6 +15,10 @@ Arguments:
                         postcode centroids of a country but is still searchable.
                         When set to 'no', non-conforming postcodes are not
                         searchable either.
+    default-pattern:    Pattern to use, when there is none available for the
+                        country in question. Warning: will not be used for
+                        objects that have no country assigned. These are always
+                        assumed to have no postcode.
 """
 from nominatim.data.postcode_format import PostcodeFormatter
 

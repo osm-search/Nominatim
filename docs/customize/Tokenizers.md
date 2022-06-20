@@ -205,6 +205,14 @@ The following is a list of sanitizers that are shipped with Nominatim.
     rendering:
         heading_level: 6
 
+##### clean-postcodes
+
+::: nominatim.tokenizer.sanitizers.clean_postcodes
+    selection:
+        members: False
+    rendering:
+        heading_level: 6
+
 
 #### Token Analysis
 
@@ -222,8 +230,12 @@ by a sanitizer (see for example the
 The token-analysis section contains the list of configured analyzers. Each
 analyzer must have an `id` parameter that uniquely identifies the analyzer.
 The only exception is the default analyzer that is used when no special
-analyzer was selected. There is one special id '@housenumber'. If an analyzer
-with that name is present, it is used for normalization of house numbers.
+analyzer was selected. There are analysers with special ids:
+
+ * '@housenumber'. If an analyzer with that name is present, it is used
+   for normalization of house numbers.
+ * '@potcode'. If an analyzer with that name is present, it is used
+   for normalization of postcodes.
 
 Different analyzer implementations may exist. To select the implementation,
 the `analyzer` parameter must be set. The different implementations are
@@ -353,6 +365,14 @@ to the analyser configuration.
 The analyzer `housenumbers` is purpose-made to analyze house numbers. It
 creates variants with optional spaces between numbers and letters. Thus,
 house numbers of the form '3 a', '3A', '3-A' etc. are all considered equivalent.
+
+The analyzer cannot be customized.
+
+##### Postcode token analyzer
+
+The analyzer `postcodes` is pupose-made to analyze postcodes. It supports
+a 'lookup' varaint of the token, which produces variants with optional
+spaces. Use together with the clean-postcodes sanitizer.
 
 The analyzer cannot be customized.
 

@@ -25,8 +25,18 @@ def create(normalizer, transliterator, config): # pylint: disable=W0613
     """
     return PostcodeTokenAnalysis(normalizer, transliterator)
 
+
 class PostcodeTokenAnalysis:
-    """ Detects common housenumber patterns and normalizes them.
+    """ Special normalization and variant generation for postcodes.
+
+        This analyser must not be used with anything but postcodes as
+        it follows some special rules: `normalize` doesn't necessarily
+        need to return a standard form as per normalization rules. It
+        needs to return the canonical form of the postcode that is also
+        used for output. `get_variants_ascii` then needs to ensure that
+        the generated variants once more follow the standard normalization
+        and transliteration, so that postcodes are correctly recognised by
+        the search algorithm.
     """
     def __init__(self, norm, trans):
         self.norm = norm
@@ -44,11 +54,12 @@ class PostcodeTokenAnalysis:
     def get_variants_ascii(self, norm_name):
         """ Compute the spelling variants for the given normalized postcode.
 
-            The official form creates one variant. If a 'lookup version' is
-            given, then it will create variants with optional spaces.
+            Takes the canonical form of the postcode, normalizes it using the
+            standard rules and then creates variants of the result where
+            all spaces are optional.
         """
         # Postcodes follow their own transliteration rules.
         # Make sure at this point, that the terms are normalized in a way
         # that they are searchable with the standard transliteration rules.
         return [self.trans.transliterate(term) for term in
-                self.mutator.generate([self.norm.transliterate(norm_name)])]
+                self.mutator.generate([self.norm.transliterate(norm_name)]) if term]

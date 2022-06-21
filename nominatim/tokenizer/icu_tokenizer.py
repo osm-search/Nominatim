@@ -290,33 +290,72 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
         """ Update postcode tokens in the word table from the location_postcode
             table.
         """
-        to_delete = []
+        analyzer = self.token_analysis.analysis.get('@postcode')
+
         with self.conn.cursor() as cur:
-            # This finds us the rows in location_postcode and word that are
-            # missing in the other table.
-            cur.execute("""SELECT * FROM
-                            (SELECT pc, word FROM
-                              (SELECT distinct(postcode) as pc FROM location_postcode) p
-                              FULL JOIN
-                              (SELECT word FROM word WHERE type = 'P') w
-                              ON pc = word) x
-                           WHERE pc is null or word is null""")
+            # First get all postcode names currently in the word table.
+            cur.execute("SELECT DISTINCT word FROM word WHERE type = 'P'")
+            word_entries = set((entry[0] for entry in cur))
 
-            with CopyBuffer() as copystr:
-                for postcode, word in cur:
-                    if postcode is None:
-                        to_delete.append(word)
-                    else:
-                        copystr.add(self._search_normalized(postcode),
-                                    'P', postcode)
+            # Then compute the required postcode names from the postcode table.
+            needed_entries = set()
+            cur.execute("SELECT country_code, postcode FROM location_postcode")
+            for cc, postcode in cur:
+                info = PlaceInfo({'country_code': cc,
+                                  'class': 'place', 'type': 'postcode',
+                                  'address': {'postcode': postcode}})
+                address = self.sanitizer.process_names(info)[1]
+                for place in address:
+                    if place.kind == 'postcode':
+                        if analyzer is None:
+                            postcode_name = place.name.strip().upper()
+                            variant_base = None
+                        else:
+                            postcode_name = analyzer.normalize(place.name)
+                            variant_base = place.get_attr("variant")
 
-                if to_delete:
-                    cur.execute("""DELETE FROM WORD
-                                   WHERE type ='P' and word = any(%s)
-                                """, (to_delete, ))
+                        if variant_base:
+                            needed_entries.add(f'{postcode_name}@{variant_base}')
+                        else:
+                            needed_entries.add(postcode_name)
+                        break
 
-                copystr.copy_out(cur, 'word',
-                                 columns=['word_token', 'type', 'word'])
+        # Now update the word table.
+        self._delete_unused_postcode_words(word_entries - needed_entries)
+        self._add_missing_postcode_words(needed_entries - word_entries)
+
+    def _delete_unused_postcode_words(self, tokens):
+        if tokens:
+            with self.conn.cursor() as cur:
+                cur.execute("DELETE FROM word WHERE type = 'P' and word = any(%s)",
+                            (list(tokens), ))
+
+    def _add_missing_postcode_words(self, tokens):
+        if not tokens:
+            return
+
+        analyzer = self.token_analysis.analysis.get('@postcode')
+        terms = []
+
+        for postcode_name in tokens:
+            if '@' in postcode_name:
+                term, variant = postcode_name.split('@', 2)
+                term = self._search_normalized(term)
+                variants = {term}
+                if analyzer is not None:
+                    variants.update(analyzer.get_variants_ascii(variant))
+                    variants = list(variants)
+            else:
+                variants = [self._search_normalized(postcode_name)]
+            terms.append((postcode_name, variants))
+
+        if terms:
+            with self.conn.cursor() as cur:
+                cur.execute_values("""SELECT create_postcode_word(pc, var)
+                                      FROM (VALUES %s) AS v(pc, var)""",
+                                   terms)
+
+
 
 
     def update_special_phrases(self, phrases, should_replace):
@@ -616,7 +655,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
             postcode_name = analyzer.normalize(item.name)
             variant_base = item.get_attr("variant")
 
-        if variant_base is not None:
+        if variant_base:
             postcode = f'{postcode_name}@{variant_base}'
         else:
             postcode = postcode_name
@@ -627,7 +666,7 @@ class LegacyICUNameAnalyzer(AbstractAnalyzer):
                 return None
 
             variants = {term}
-            if analyzer is not None and variant_base is not None:
+            if analyzer is not None and variant_base:
                 variants.update(analyzer.get_variants_ascii(variant_base))
 
             with self.conn.cursor() as cur:

@@ -27,8 +27,9 @@ def check_database_integrity(context):
         assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
 
         # word table must not have empty word_tokens
-        cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
-        assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
+        if context.nominatim.tokenizer != 'legacy':
+            cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
+            assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
 
 
 

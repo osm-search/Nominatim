@@ -1,5 +1,4 @@
 @DB
-@fail-legacy
 Feature: Querying fo postcode variants
 
     Scenario: Postcodes in Singapore (6-digit postcode)
@@ -15,6 +14,7 @@ Feature: Querying fo postcode variants
             | 0  | postcode | 399174       |
 
 
+    @fail-legacy
     Scenario Outline: Postcodes in the Netherlands (mixed postcode with spaces)
         Given the grid with origin NL
             | 10 |   |   |   | 11 |
@@ -38,6 +38,7 @@ Feature: Querying fo postcode variants
             | 3993 dx  |
 
 
+    @fail-legacy
     Scenario: Postcodes in Singapore (6-digit postcode)
         Given the grid with origin SG
             | 10 |   |   |   | 11 |
@@ -51,6 +52,7 @@ Feature: Querying fo postcode variants
             | 0  | postcode | 399174       |
 
 
+    @fail-legacy
     Scenario Outline: Postcodes in Andorra (with country code)
         Given the grid with origin AD
             | 10 |   |   |   | 11 |

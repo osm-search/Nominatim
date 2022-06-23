@@ -807,6 +807,7 @@ class SearchDescription
                 $sSQL = 'SELECT geometry FROM placex';
                 $sSQL .= " WHERE place_id in ($sPlaceIDs)";
                 $sSQL .= "   AND rank_search < $iMaxRank + 5";
+                $sSQL .= '   AND ST_Area(Box2d(geometry)) < 20';
                 $sSQL .= "   AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')";
                 $sSQL .= ' ORDER BY rank_search ASC ';
                 $sSQL .= ' LIMIT 1';

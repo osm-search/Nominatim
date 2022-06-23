@@ -1998,7 +1998,7 @@ ua:
     languages: uk
     names: !include country-names/ua.yaml
     postcode:
-      pattern: "ddddd"
+      pattern: "d?ddddd"
 
 
 # Uganda (Uganda)
@@ -2024,7 +2024,7 @@ us:
     languages: en
     names: !include country-names/us.yaml
     postcode:
-      pattern: "(ddddd)(?:-dddd)?"
+      pattern: "ddddd"
 
 
 # Uruguay (Uruguay)

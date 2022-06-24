@@ -163,25 +163,8 @@ Feature: Import of postcodes
            | de      | 01982    | country:de |
         And there are word tokens for postcodes 01982
 
-    Scenario: Different postcodes with the same normalization can both be found
-        Given the places
-           | osm | class | type  | addr+postcode | addr+housenumber | geometry |
-           | N34 | place | house | EH4 7EA       | 111              | country:gb |
-           | N35 | place | house | E4 7EA        | 111              | country:gb |
-        When importing
-        Then location_postcode contains exactly
-           | country | postcode | geometry |
-           | gb      | EH4 7EA  | country:gb |
-           | gb      | E4 7EA   | country:gb |
-        When sending search query "EH4 7EA"
-        Then results contain
-           | type     | display_name |
-           | postcode | EH4 7EA      |
-        When sending search query "E4 7EA"
-        Then results contain
-           | type     | display_name |
-           | postcode | E4 7EA       |
 
+    @Fail
     Scenario: search and address ranks for GB post codes correctly assigned
         Given the places
          | osm  | class | type     | postcode | geometry |
@@ -195,55 +178,19 @@ Feature: Import of postcodes
          | E45 2    | gb      | 23          | 5 |
          | Y45      | gb      | 21          | 5 |
 
-    Scenario: wrongly formatted GB postcodes are down-ranked
+    @fail-legacy
+    Scenario: Postcodes outside all countries are not added to the postcode and word table
         Given the places
-         | osm  | class | type     | postcode | geometry |
-         | N1   | place | postcode | EA452CD  | country:gb |
-         | N2   | place | postcode | E45 23   | country:gb |
+            | osm | class | type  | addr+postcode | addr+housenumber | addr+place  | geometry  |
+            | N34 | place | house | 01982         | 111              | Null Island | 0 0.00001 |
+        And the places
+            | osm | class | type   | name        | geometry |
+            | N1  | place | hamlet | Null Island | 0 0      |
         When importing
         Then location_postcode contains exactly
-         | postcode | country | rank_search | rank_address |
-         | EA452CD  | gb      | 30          | 30 |
-         | E45 23   | gb      | 30          | 30 |
-
-    Scenario: search and address rank for DE postcodes correctly assigned
-        Given the places
-         | osm | class | type     | postcode | geometry |
-         | N1  | place | postcode | 56427    | country:de |
-         | N2  | place | postcode | 5642     | country:de |
-         | N3  | place | postcode | 5642A    | country:de |
-         | N4  | place | postcode | 564276   | country:de |
-        When importing
-        Then location_postcode contains exactly
-         | postcode | country | rank_search | rank_address |
-         | 56427    | de      | 21          | 11 |
-         | 5642     | de      | 30          | 30 |
-         | 5642A    | de      | 30          | 30 |
-         | 564276   | de      | 30          | 30 |
-
-    Scenario: search and address rank for other postcodes are correctly assigned
-        Given the places
-         | osm | class | type     | postcode | geometry |
-         | N1  | place | postcode | 1        | country:ca |
-         | N2  | place | postcode | X3       | country:ca |
-         | N3  | place | postcode | 543      | country:ca |
-         | N4  | place | postcode | 54dc     | country:ca |
-         | N5  | place | postcode | 12345    | country:ca |
-         | N6  | place | postcode | 55TT667  | country:ca |
-         | N7  | place | postcode | 123-65   | country:ca |
-         | N8  | place | postcode | 12 445 4 | country:ca |
-         | N9  | place | postcode | A1:bc10  | country:ca |
-        When importing
-        Then location_postcode contains exactly
-         | postcode | country | rank_search | rank_address |
-         | 1        | ca      | 21          | 11 |
-         | X3       | ca      | 21          | 11 |
-         | 543      | ca      | 21          | 11 |
-         | 54DC     | ca      | 21          | 11 |
-         | 12345    | ca      | 21          | 11 |
-         | 55TT667  | ca      | 21          | 11 |
-         | 123-65   | ca      | 25          | 11 |
-         | 12 445 4 | ca      | 25          | 11 |
-         | A1:BC10  | ca      | 25          | 11 |
-
-
+            | country | postcode | geometry |
+        And there are no word tokens for postcodes 01982
+        When sending search query "111, 01982 Null Island"
+        Then results contain
+            | osm | display_name |
+            | N34 | 111, Null Island, 01982 |

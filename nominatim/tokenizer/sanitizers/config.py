@@ -44,6 +44,20 @@ class SanitizerConfig(UserDict):
         return values
 
 
+    def get_bool(self, param, default=None):
+        """ Extract a configuration parameter as a boolean.
+            The parameter must be one of the yaml boolean values or an
+            user error will be raised. If `default` is given, then the parameter
+            may also be missing or empty.
+        """
+        value = self.data.get(param, default)
+
+        if not isinstance(value, bool):
+            raise UsageError(f"Parameter '{param}' must be a boolean value ('yes' or 'no'.")
+
+        return value
+
+
     def get_delimiter(self, default=',;'):
         """ Return the 'delimiter' parameter in the configuration as a
             compiled regular expression that can be used to split the names on the

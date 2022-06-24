@@ -18,13 +18,19 @@ from nominatim.tokenizer import factory as tokenizer_factory
 def check_database_integrity(context):
     """ Check some generic constraints on the tables.
     """
-    # place_addressline should not have duplicate (place_id, address_place_id)
-    cur = context.db.cursor()
-    cur.execute("""SELECT count(*) FROM
-                    (SELECT place_id, address_place_id, count(*) as c
-                     FROM place_addressline GROUP BY place_id, address_place_id) x
-                   WHERE c > 1""")
-    assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
+    with context.db.cursor() as cur:
+        # place_addressline should not have duplicate (place_id, address_place_id)
+        cur.execute("""SELECT count(*) FROM
+                        (SELECT place_id, address_place_id, count(*) as c
+                         FROM place_addressline GROUP BY place_id, address_place_id) x
+                       WHERE c > 1""")
+        assert cur.fetchone()[0] == 0, "Duplicates found in place_addressline"
+
+        # word table must not have empty word_tokens
+        if context.nominatim.tokenizer != 'legacy':
+            cur.execute("SELECT count(*) FROM word WHERE word_token = ''")
+            assert cur.fetchone()[0] == 0, "Empty word tokens found in word table"
+
 
 
 ################################ GIVEN ##################################

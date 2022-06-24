@@ -320,6 +320,11 @@ BEGIN
     location := ROW(null, null, null, hstore('ref', place.postcode), 'place',
                     'postcode', null, null, false, true, 5, 0)::addressline;
     RETURN NEXT location;
+  ELSEIF place.address is not null and place.address ? 'postcode'
+         and not place.address->'postcode' SIMILAR TO '%(,|;)%' THEN
+    location := ROW(null, null, null, hstore('ref', place.address->'postcode'), 'place',
+                    'postcode', null, null, false, true, 5, 0)::addressline;
+    RETURN NEXT location;
   END IF;
 
   RETURN;

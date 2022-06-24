@@ -8,6 +8,7 @@
 Functions for importing, updating and otherwise maintaining the table
 of artificial postcode centroids.
 """
+from collections import defaultdict
 import csv
 import gzip
 import logging
@@ -16,6 +17,8 @@ from math import isfinite
 from psycopg2 import sql as pysql
 
 from nominatim.db.connection import connect
+from nominatim.utils.centroid import PointsCentroid
+from nominatim.data.postcode_format import PostcodeFormatter
 
 LOG = logging.getLogger()
 
@@ -30,20 +33,31 @@ def _to_float(num, max_value):
 
     return num
 
-class _CountryPostcodesCollector:
+class _PostcodeCollector:
     """ Collector for postcodes of a single country.
     """
 
-    def __init__(self, country):
+    def __init__(self, country, matcher):
         self.country = country
-        self.collected = {}
+        self.matcher = matcher
+        self.collected = defaultdict(PointsCentroid)
+        self.normalization_cache = None
 
 
     def add(self, postcode, x, y):
         """ Add the given postcode to the collection cache. If the postcode
             already existed, it is overwritten with the new centroid.
         """
-        self.collected[postcode] = (x, y)
+        if self.matcher is not None:
+            if self.normalization_cache and self.normalization_cache[0] == postcode:
+                normalized = self.normalization_cache[1]
+            else:
+                match = self.matcher.match(postcode)
+                normalized = self.matcher.normalize(match) if match else None
+                self.normalization_cache = (postcode, normalized)
+
+            if normalized:
+                self.collected[normalized] += (x, y)
 
 
     def commit(self, conn, analyzer, project_dir):
@@ -93,16 +107,16 @@ class _CountryPostcodesCollector:
                            WHERE country_code = %s""",
                         (self.country, ))
             for postcode, x, y in cur:
-                newx, newy = self.collected.pop(postcode, (None, None))
-                if newx is not None:
-                    dist = (x - newx)**2 + (y - newy)**2
-                    if dist > 0.0000001:
+                pcobj = self.collected.pop(postcode, None)
+                if pcobj:
+                    newx, newy = pcobj.centroid()
+                    if (x - newx) > 0.0000001 or (y - newy) > 0.0000001:
                         to_update.append((postcode, newx, newy))
                 else:
                     to_delete.append(postcode)
 
-        to_add = [(k, v[0], v[1]) for k, v in self.collected.items()]
-        self.collected = []
+        to_add = [(k, *v.centroid()) for k, v in self.collected.items()]
+        self.collected = None
 
         return to_add, to_delete, to_update
 
@@ -125,8 +139,10 @@ class _CountryPostcodesCollector:
                 postcode = analyzer.normalize_postcode(row['postcode'])
                 if postcode not in self.collected:
                     try:
-                        self.collected[postcode] = (_to_float(row['lon'], 180),
-                                                    _to_float(row['lat'], 90))
+                        # Do float conversation separately, it might throw
+                        centroid = (_to_float(row['lon'], 180),
+                                    _to_float(row['lat'], 90))
+                        self.collected[postcode] += centroid
                     except ValueError:
                         LOG.warning("Bad coordinates %s, %s in %s country postcode file.",
                                     row['lat'], row['lon'], self.country)
@@ -158,6 +174,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
         potentially enhances it with external data and then updates the
         postcodes in the table 'location_postcode'.
     """
+    matcher = PostcodeFormatter()
     with tokenizer.name_analyzer() as analyzer:
         with connect(dsn) as conn:
             # First get the list of countries that currently have postcodes.
@@ -169,19 +186,17 @@ def update_postcodes(dsn, project_dir, tokenizer):
             # Recompute the list of valid postcodes from placex.
             with conn.cursor(name="placex_postcodes") as cur:
                 cur.execute("""
-                SELECT cc as country_code, pc, ST_X(centroid), ST_Y(centroid)
+                SELECT cc, pc, ST_X(centroid), ST_Y(centroid)
                 FROM (SELECT
                         COALESCE(plx.country_code,
                                  get_country_code(ST_Centroid(pl.geometry))) as cc,
-                        token_normalized_postcode(pl.address->'postcode') as pc,
-                        ST_Centroid(ST_Collect(COALESCE(plx.centroid,
-                                                        ST_Centroid(pl.geometry)))) as centroid
+                        pl.address->'postcode' as pc,
+                        COALESCE(plx.centroid, ST_Centroid(pl.geometry)) as centroid
                       FROM place AS pl LEFT OUTER JOIN placex AS plx
                              ON pl.osm_id = plx.osm_id AND pl.osm_type = plx.osm_type
-                    WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null
-                    GROUP BY cc, pc) xx
+                    WHERE pl.address ? 'postcode' AND pl.geometry IS NOT null) xx
                 WHERE pc IS NOT null AND cc IS NOT null
-                ORDER BY country_code, pc""")
+                ORDER BY cc, pc""")
 
                 collector = None
 
@@ -189,7 +204,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
                     if collector is None or country != collector.country:
                         if collector is not None:
                             collector.commit(conn, analyzer, project_dir)
-                        collector = _CountryPostcodesCollector(country)
+                        collector = _PostcodeCollector(country, matcher.get_matcher(country))
                         todo_countries.discard(country)
                     collector.add(postcode, x, y)
 
@@ -198,7 +213,8 @@ def update_postcodes(dsn, project_dir, tokenizer):
 
             # Now handle any countries that are only in the postcode table.
             for country in todo_countries:
-                _CountryPostcodesCollector(country).commit(conn, analyzer, project_dir)
+                fmt = matcher.get_matcher(country)
+                _PostcodeCollector(country, fmt).commit(conn, analyzer, project_dir)
 
             conn.commit()
 

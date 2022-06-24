@@ -25,7 +25,12 @@ class Postcode
     public function __construct($iId, $sPostcode, $sCountryCode = '')
     {
         $this->iId = $iId;
-        $this->sPostcode = $sPostcode;
+        $iSplitPos = strpos($sPostcode, '@');
+        if ($iSplitPos === false) {
+            $this->sPostcode = $sPostcode;
+        } else {
+            $this->sPostcode = substr($sPostcode, 0, $iSplitPos);
+        }
         $this->sCountryCode = empty($sCountryCode) ? '' : $sCountryCode;
     }
 

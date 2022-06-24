@@ -28,6 +28,7 @@ pages:
         - 'Overview': 'customize/Overview.md'
         - 'Import Styles': 'customize/Import-Styles.md'
         - 'Configuration Settings': 'customize/Settings.md'
+        - 'Per-Country Data': 'customize/Country-Settings.md'
         - 'Place Ranking' : 'customize/Ranking.md'
         - 'Tokenizers' : 'customize/Tokenizers.md'
         - 'Special Phrases': 'customize/Special-Phrases.md'

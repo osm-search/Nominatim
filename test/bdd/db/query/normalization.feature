@@ -168,14 +168,6 @@ Feature: Import and search of names
          | ID | osm |
          | 0  | R1 |
 
-    Scenario: Unprintable characters in postcodes are ignored
-        Given the named places
-            | osm  | class   | type   | address                    | geometry   |
-            | N234 | amenity | prison | 'postcode' : u'1234\u200e' | country:de |
-        When importing
-        And sending search query "1234"
-        Then result 0 has not attributes osm_type
-
     Scenario Outline: Housenumbers with special characters are found
         Given the grid
             | 1 |  |   |  | 2 |

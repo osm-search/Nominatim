@@ -190,13 +190,17 @@ class Tokenizer
                     if ($aWord['word'] !== null
                         && pg_escape_string($aWord['word']) == $aWord['word']
                     ) {
-                        $sNormPostcode = $this->normalizeString($aWord['word']);
-                        if (strpos($sNormQuery, $sNormPostcode) !== false) {
-                            $oValidTokens->addToken(
-                                $sTok,
-                                new Token\Postcode($iId, $aWord['word'], null)
-                            );
+                        $iSplitPos = strpos($aWord['word'], '@');
+                        if ($iSplitPos === false) {
+                            $sPostcode = $aWord['word'];
+                        } else {
+                            $sPostcode = substr($aWord['word'], 0, $iSplitPos);
                         }
+
+                        $oValidTokens->addToken(
+                            $sTok,
+                            new Token\Postcode($iId, $sPostcode, null)
+                        );
                     }
                     break;
                 case 'S':  // tokens for classification terms (special phrases)

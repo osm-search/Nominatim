@@ -245,11 +245,11 @@ Currently, tokenizers are encouraged to make sure that matching works against
 both the search token list and the match token list.
 
 ```sql
-FUNCTION token_normalized_postcode(postcode TEXT) RETURNS TEXT
+FUNCTION token_get_postcode(info JSONB) RETURNS TEXT
 ```
 
-Return the normalized version of the given postcode. This function must return
-the same value as the Python function `AbstractAnalyzer->normalize_postcode()`.
+Return the postcode for the object, if any exists. The postcode must be in
+the form that should also be presented to the end-user.
 
 ```sql
 FUNCTION token_strip_info(info JSONB) RETURNS JSONB

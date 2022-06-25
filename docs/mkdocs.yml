@@ -3,7 +3,7 @@ theme: readthedocs
 docs_dir: ${CMAKE_CURRENT_BINARY_DIR}
 site_url: https://nominatim.org
 repo_url: https://github.com/openstreetmap/Nominatim
-pages:
+nav:
     - 'Introduction' : 'index.md'
     - 'API Reference':
         - 'Overview': 'api/Overview.md'

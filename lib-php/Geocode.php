@@ -843,7 +843,9 @@ class Geocode
                 $aResult['importance'] = 0.001;
                 $aResult['foundorder'] = $aResult['addressimportance'];
             } else {
-                $aResult['importance'] = max(0.001, $aResult['importance']);
+                if ($aResult['importance'] == 0) {
+                    $aResult['importance'] = 0.0001;
+                }
                 $aResult['importance'] *= $this->viewboxImportanceFactor(
                     $aResult['lon'],
                     $aResult['lat']

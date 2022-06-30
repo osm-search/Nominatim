@@ -99,7 +99,7 @@ jobs:
               if: matrix.ubuntu == 22
 
             - name: Install latest pylint
-              run: pip3 install pylint
+              run: pip3 install pylint mypy types-PyYAML types-jinja2
 
             - name: PHP linting
               run: phpcs --report-width=120 .
@@ -108,6 +108,11 @@ jobs:
             - name: Python linting
               run: pylint nominatim
               working-directory: Nominatim
+
+            - name: Python static typechecking
+              run: mypy nominatim
+              working-directory: Nominatim
+
 
             - name: PHP unit tests
               run: phpunit ./

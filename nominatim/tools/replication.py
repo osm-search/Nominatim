@@ -21,8 +21,8 @@ try:
     from osmium.replication.server import ReplicationServer
     from osmium import WriteHandler
 except ImportError as exc:
-    logging.getLogger().fatal("pyosmium not installed. Replication functions not available.\n"
-                              "To install pyosmium via pip: pip3 install osmium")
+    logging.getLogger().critical("pyosmium not installed. Replication functions not available.\n"
+                                 "To install pyosmium via pip: pip3 install osmium")
     raise UsageError("replication tools not available") from exc
 
 LOG = logging.getLogger()

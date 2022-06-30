@@ -7,6 +7,7 @@
 """
 Nominatim configuration accessor.
 """
+from typing import Dict, Any
 import logging
 import os
 from pathlib import Path
@@ -18,7 +19,7 @@ from dotenv import dotenv_values
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
-CONFIG_CACHE = {}
+CONFIG_CACHE : Dict[str, Any] = {}
 
 def flatten_config_list(content, section=''):
     """ Flatten YAML configuration lists that contain include sections

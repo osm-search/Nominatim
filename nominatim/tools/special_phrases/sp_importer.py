@@ -33,7 +33,7 @@ class SPImporter():
 
         Take a sp loader which load the phrases from an external source.
     """
-    def __init__(self, config, db_connection, sp_loader) -> None:
+    def __init__(self, config, db_connection, sp_loader):
         self.config = config
         self.db_connection = db_connection
         self.sp_loader = sp_loader

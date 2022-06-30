@@ -7,6 +7,7 @@
 """
 Functions for database migration to newer software versions.
 """
+from typing import List, Tuple, Callable
 import logging
 
 from psycopg2 import sql as pysql
@@ -20,7 +21,7 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-_MIGRATION_FUNCTIONS = []
+_MIGRATION_FUNCTIONS : List[Tuple[str, Callable]] = []
 
 def migrate(config, paths):
     """ Check for the current database version and execute migrations,

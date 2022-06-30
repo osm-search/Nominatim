@@ -7,6 +7,7 @@
 """
 Version information for Nominatim.
 """
+from typing import Optional, Tuple
 
 # Version information: major, minor, patch level, database patch level
 #
@@ -33,11 +34,11 @@ POSTGIS_REQUIRED_VERSION = (2, 2)
 # on every execution of 'make'.
 # cmake/tool-installed.tmpl is used to build the binary 'nominatim'. Inside
 # there is a call to set the variable value below.
-GIT_COMMIT_HASH = None
+GIT_COMMIT_HASH : Optional[str] = None
 
 
 # pylint: disable=consider-using-f-string
-def version_str(version=NOMINATIM_VERSION):
+def version_str(version:Tuple[int, int, int, int] = NOMINATIM_VERSION) -> str:
     """
     Return a human-readable string of the version.
     """

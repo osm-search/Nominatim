@@ -63,12 +63,12 @@ CREATE INDEX IF NOT EXISTS idx_postcode_postcode
 
   {% if postgres.has_index_non_key_column %}
     CREATE INDEX IF NOT EXISTS idx_placex_housenumber
-      ON placex USING btree (parent_place_id) {{db.tablespace.search_index}}
-      INCLUDE (housenumber)
+      ON placex USING btree (parent_place_id)
+      INCLUDE (housenumber) {{db.tablespace.search_index}}
       WHERE housenumber is not null;
     CREATE INDEX IF NOT EXISTS idx_osmline_parent_osm_id_with_hnr
-      ON location_property_osmline USING btree(parent_place_id) {{db.tablespace.search_index}}
-      INCLUDE (startnumber, endnumber)
+      ON location_property_osmline USING btree(parent_place_id)
+      INCLUDE (startnumber, endnumber) {{db.tablespace.search_index}}
       WHERE startnumber is not null;
   {% endif %}
 {% endif %}

@@ -226,7 +226,7 @@ _PG_CONNECTION_STRINGS = {
 
 
 def get_pg_env(dsn: str,
-               base_env: Optional[Mapping[str, Optional[str]]] = None) -> Mapping[str, Optional[str]]:
+               base_env: Optional[Mapping[str, str]] = None) -> Mapping[str, str]:
     """ Return a copy of `base_env` with the environment variables for
         PostgresSQL set up from the given database connection string.
         If `base_env` is None, then the OS environment is used as a base

@@ -7,7 +7,7 @@
 """
 Specialised connection and cursor functions.
 """
-from typing import Union, List, Optional, Any, Callable, ContextManager, Mapping, cast, TypeVar, overload, Tuple, Sequence
+from typing import List, Optional, Any, Callable, ContextManager, Mapping, cast, overload, Tuple
 import contextlib
 import logging
 import os
@@ -17,10 +17,8 @@ import psycopg2.extensions
 import psycopg2.extras
 from psycopg2 import sql as pysql
 
+from nominatim.typing import Query, T_cursor
 from nominatim.errors import UsageError
-
-Query = Union[str, bytes, pysql.Composable]
-T = TypeVar('T', bound=psycopg2.extensions.cursor)
 
 LOG = logging.getLogger()
 
@@ -38,7 +36,8 @@ class _Cursor(psycopg2.extras.DictCursor):
         super().execute(query, args)
 
 
-    def execute_values(self, sql: Query, argslist: List[Any], template: Optional[str] = None) -> None:
+    def execute_values(self, sql: Query, argslist: List[Any],
+                       template: Optional[str] = None) -> None:
         """ Wrapper for the psycopg2 convenience function to execute
             SQL for a list of values.
         """
@@ -91,7 +90,7 @@ class _Connection(psycopg2.extensions.connection):
         ...
 
     @overload
-    def cursor(self, cursor_factory: Callable[..., T]) -> T:
+    def cursor(self, cursor_factory: Callable[..., T_cursor]) -> T_cursor:
         ...
 
     def cursor(self, cursor_factory  = _Cursor, **kwargs): # type: ignore

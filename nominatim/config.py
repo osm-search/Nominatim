@@ -7,7 +7,7 @@
 """
 Nominatim configuration accessor.
 """
-from typing import Dict, Any, List, Mapping, Optional, Union
+from typing import Dict, Any, List, Mapping, Optional
 import logging
 import os
 from pathlib import Path
@@ -16,9 +16,8 @@ import yaml
 
 from dotenv import dotenv_values
 
+from nominatim.typing import StrPath
 from nominatim.errors import UsageError
-
-PathOrStr = Union[str, os.PathLike[str]]
 
 LOG = logging.getLogger()
 CONFIG_CACHE : Dict[str, Any] = {}
@@ -72,7 +71,7 @@ class Configuration:
         self.lib_dir = _LibDirs()
 
 
-    def set_libdirs(self, **kwargs: PathOrStr) -> None:
+    def set_libdirs(self, **kwargs: StrPath) -> None:
         """ Set paths to library functions and data.
         """
         for key, value in kwargs.items():
@@ -178,7 +177,7 @@ class Configuration:
         return env
 
 
-    def load_sub_configuration(self, filename: PathOrStr,
+    def load_sub_configuration(self, filename: StrPath,
                                config: Optional[str] = None) -> Any:
         """ Load additional configuration from a file. `filename` is the name
             of the configuration file. The file is first searched in the
@@ -216,7 +215,7 @@ class Configuration:
         return result
 
 
-    def find_config_file(self, filename: PathOrStr,
+    def find_config_file(self, filename: StrPath,
                          config: Optional[str] = None) -> Path:
         """ Resolve the location of a configuration file given a filename and
             an optional configuration option with the file name.

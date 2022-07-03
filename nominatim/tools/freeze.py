@@ -42,10 +42,8 @@ def drop_update_tables(conn):
     conn.commit()
 
 
-def drop_flatnode_file(fname):
+def drop_flatnode_file(fpath):
     """ Remove the flatnode file if it exists.
     """
-    if fname:
-        fpath = Path(fname)
-        if fpath.exists():
-            fpath.unlink()
+    if fpath and fpath.exists():
+        fpath.unlink()

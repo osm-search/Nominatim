@@ -29,7 +29,7 @@ class NominatimArgs:
                     osm2pgsql_style=self.config.get_import_style_file(),
                     threads=self.threads or default_threads,
                     dsn=self.config.get_libpq_dsn(),
-                    flatnode_file=str(self.config.get_path('FLATNODE_FILE')),
+                    flatnode_file=str(self.config.get_path('FLATNODE_FILE') or ''),
                     tablespaces=dict(slim_data=self.config.TABLESPACE_OSM_DATA,
                                      slim_index=self.config.TABLESPACE_OSM_INDEX,
                                      main_data=self.config.TABLESPACE_PLACE_DATA,

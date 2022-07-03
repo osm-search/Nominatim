@@ -174,7 +174,7 @@ def _quote_php_variable(var_type, config, conf_name):
         return 'false'
 
     if var_type == Path:
-        value = str(config.get_path(conf_name))
+        value = str(config.get_path(conf_name) or '')
     else:
         value = getattr(config, conf_name)
 

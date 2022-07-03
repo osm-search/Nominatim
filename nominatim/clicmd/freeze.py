@@ -37,6 +37,6 @@ class SetupFreeze:
 
         with connect(args.config.get_libpq_dsn()) as conn:
             freeze.drop_update_tables(conn)
-        freeze.drop_flatnode_file(str(args.config.get_path('FLATNODE_FILE')))
+        freeze.drop_flatnode_file(args.config.get_path('FLATNODE_FILE'))
 
         return 0

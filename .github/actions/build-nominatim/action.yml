@@ -14,6 +14,11 @@ runs:
     using: "composite"
 
     steps:
+        - name: Clean out the disk
+          run: |
+            sudo rm -rf /opt/hostedtoolcache/go /opt/hostedtoolcache/CodeQL /usr/lib/jvm /usr/local/share/chromium /usr/local/lib/android
+            df -h
+          shell: bash
         - name: Install prerequisites
           run: |
             sudo apt-get install -y -qq libboost-system-dev libboost-filesystem-dev libexpat1-dev zlib1g-dev libbz2-dev libpq-dev libproj-dev libicu-dev

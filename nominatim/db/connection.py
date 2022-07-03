@@ -7,7 +7,7 @@
 """
 Specialised connection and cursor functions.
 """
-from typing import List, Optional, Any, Callable, ContextManager, Mapping, cast, overload, Tuple
+from typing import List, Optional, Any, Callable, ContextManager, Dict, Mapping, cast, overload, Tuple
 import contextlib
 import logging
 import os
@@ -225,7 +225,7 @@ _PG_CONNECTION_STRINGS = {
 
 
 def get_pg_env(dsn: str,
-               base_env: Optional[Mapping[str, str]] = None) -> Mapping[str, str]:
+               base_env: Optional[Mapping[str, str]] = None) -> Dict[str, str]:
     """ Return a copy of `base_env` with the environment variables for
         PostgresSQL set up from the given database connection string.
         If `base_env` is None, then the OS environment is used as a base

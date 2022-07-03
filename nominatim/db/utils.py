@@ -19,7 +19,7 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-def _pipe_to_proc(proc: subprocess.Popen[bytes],
+def _pipe_to_proc(proc: 'subprocess.Popen[bytes]',
                   fdesc: Union[IO[bytes], gzip.GzipFile]) -> int:
     assert proc.stdin is not None
     chunk = fdesc.read(2048)

@@ -9,7 +9,7 @@ Type definitions for typing annotations.
 
 Complex type definitions are moved here, to keep the source files readable.
 """
-from typing import Union, TypeVar, TYPE_CHECKING
+from typing import Union, Mapping, TypeVar, TYPE_CHECKING
 
 # Generics varaible names do not confirm to naming styles, ignore globally here.
 # pylint: disable=invalid-name
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     import os
 
 StrPath = Union[str, 'os.PathLike[str]']
+
+SysEnv = Mapping[str, str]
 
 # psycopg2-related types
 

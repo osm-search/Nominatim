@@ -7,7 +7,7 @@
 """
 Helper functions for executing external programs.
 """
-from typing import Any, Union, Optional, Mapping
+from typing import Any, Union, Optional, Mapping, IO
 from pathlib import Path
 import logging
 import subprocess
@@ -160,7 +160,8 @@ def get_url(url: str) -> str:
     headers = {"User-Agent": f"Nominatim/{version_str()}"}
 
     try:
-        with urlrequest.urlopen(urlrequest.Request(url, headers=headers)) as response:
+        request = urlrequest.Request(url, headers=headers)
+        with urlrequest.urlopen(request) as response: # type: IO[bytes]
             return response.read().decode('utf-8')
     except Exception:
         LOG.fatal('Failed to load URL: %s', url)

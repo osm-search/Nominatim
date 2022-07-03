@@ -77,7 +77,7 @@ class _Cursor(psycopg2.extras.DictCursor):
         self.execute(pysql.SQL(sql).format(pysql.Identifier(name))) # type: ignore
 
 
-class _Connection(psycopg2.extensions.connection):
+class Connection(psycopg2.extensions.connection):
     """ A connection that provides the specialised cursor by default and
         adds convenience functions for administrating the database.
     """
@@ -174,19 +174,22 @@ class _Connection(psycopg2.extensions.connection):
 
         return (int(version_parts[0]), int(version_parts[1]))
 
-class _ConnectionContext(ContextManager[_Connection]):
-    connection: _Connection
+class ConnectionContext(ContextManager[Connection]):
+    """ Context manager of the connection that also provides direct access
+        to the underlying connection.
+    """
+    connection: Connection
 
-def connect(dsn: str) -> _ConnectionContext:
+def connect(dsn: str) -> ConnectionContext:
     """ Open a connection to the database using the specialised connection
         factory. The returned object may be used in conjunction with 'with'.
         When used outside a context manager, use the `connection` attribute
         to get the connection.
     """
     try:
-        conn = psycopg2.connect(dsn, connection_factory=_Connection)
-        ctxmgr = cast(_ConnectionContext, contextlib.closing(conn))
-        ctxmgr.connection = cast(_Connection, conn)
+        conn = psycopg2.connect(dsn, connection_factory=Connection)
+        ctxmgr = cast(ConnectionContext, contextlib.closing(conn))
+        ctxmgr.connection = cast(Connection, conn)
         return ctxmgr
     except psycopg2.OperationalError as err:
         raise UsageError(f"Cannot connect to database: {err}") from err

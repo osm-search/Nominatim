@@ -7,9 +7,12 @@
 """
 Functions for removing unnecessary data from the database.
 """
+from typing import Optional
 from pathlib import Path
 
 from psycopg2 import sql as pysql
+
+from nominatim.db.connection import Connection
 
 UPDATE_TABLES = [
     'address_levels',
@@ -25,7 +28,7 @@ UPDATE_TABLES = [
     'wikipedia_%'
 ]
 
-def drop_update_tables(conn):
+def drop_update_tables(conn: Connection) -> None:
     """ Drop all tables only necessary for updating the database from
         OSM replication data.
     """
@@ -42,7 +45,7 @@ def drop_update_tables(conn):
     conn.commit()
 
 
-def drop_flatnode_file(fpath):
+def drop_flatnode_file(fpath: Optional[Path]) -> None:
     """ Remove the flatnode file if it exists.
     """
     if fpath and fpath.exists():

@@ -120,13 +120,18 @@ class SimpleWordList
         return array_slice($aWordSets, 0, SimpleWordList::MAX_WORDSETS);
     }
 
+    /**
+     * Custom search routine which takes two arrays. The array with the fewest
+     * items wins. If same number of items then the one with the longest first
+     * element wins.
+     */
     public static function cmpByArraylen($aA, $aB)
     {
         $iALen = count($aA);
         $iBLen = count($aB);
 
         if ($iALen == $iBLen) {
-            return 0;
+            return strlen($aB[0]) <=> strlen($aA[0]);
         }
 
         return ($iALen < $iBLen) ? -1 : 1;

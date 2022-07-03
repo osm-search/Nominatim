@@ -70,7 +70,7 @@ class ParameterParser
             return $sDefault;
         }
 
-        if (!in_array($this->aParams[$sName], $aValues)) {
+        if (!in_array($this->aParams[$sName], $aValues, true)) {
             userError("Parameter '$sName' must be one of: ".join(', ', $aValues));
         }
 

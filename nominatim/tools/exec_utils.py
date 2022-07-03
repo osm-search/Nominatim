@@ -7,17 +7,22 @@
 """
 Helper functions for executing external programs.
 """
+from typing import Any, Union, Optional, Mapping
+from pathlib import Path
 import logging
 import subprocess
 import urllib.request as urlrequest
 from urllib.parse import urlencode
 
+from nominatim.typing import StrPath
 from nominatim.version import version_str
 from nominatim.db.connection import get_pg_env
 
 LOG = logging.getLogger()
 
-def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
+def run_legacy_script(script: StrPath, *args: Union[int, str],
+                      nominatim_env: Any,
+                      throw_on_fail: bool = False) -> int:
     """ Run a Nominatim PHP script with the given arguments.
 
         Returns the exit code of the script. If `throw_on_fail` is True
@@ -40,8 +45,10 @@ def run_legacy_script(script, *args, nominatim_env=None, throw_on_fail=False):
 
     return proc.returncode
 
-def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
-                   params=None):
+def run_api_script(endpoint: str, project_dir: Path,
+                   extra_env: Optional[Mapping[str, str]] = None,
+                   phpcgi_bin: Optional[str] = None,
+                   params: Optional[Mapping[str, str]] = None) -> int:
     """ Execute a Nominatim API function.
 
         The function needs a project directory that contains the website
@@ -96,14 +103,14 @@ def run_api_script(endpoint, project_dir, extra_env=None, phpcgi_bin=None,
     return 0
 
 
-def run_php_server(server_address, base_dir):
+def run_php_server(server_address: str, base_dir: StrPath) -> None:
     """ Run the built-in server from the given directory.
     """
     subprocess.run(['/usr/bin/env', 'php', '-S', server_address],
                    cwd=str(base_dir), check=True)
 
 
-def run_osm2pgsql(options):
+def run_osm2pgsql(options: Mapping[str, Any]) -> None:
     """ Run osm2pgsql with the given options.
     """
     env = get_pg_env(options['dsn'])
@@ -147,7 +154,7 @@ def run_osm2pgsql(options):
                    env=env, check=True)
 
 
-def get_url(url):
+def get_url(url: str) -> str:
     """ Get the contents from the given URL and return it as a UTF-8 string.
     """
     headers = {"User-Agent": f"Nominatim/{version_str()}"}

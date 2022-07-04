@@ -70,6 +70,7 @@ jobs:
               with:
                   php-version: ${{ matrix.php }}
                   tools: phpunit, phpcs, composer
+                  ini-values: opcache.jit=disable
 
             - uses: actions/setup-python@v2
               with:

@@ -27,6 +27,7 @@ runs:
             else
                 sudo apt-get install -y -qq python3-icu python3-datrie python3-pyosmium python3-jinja2 python3-psutil python3-psycopg2 python3-dotenv python3-yaml
             fi
+            sudo pip3 install -U typing-extensions
           shell: bash
           env:
             UBUNTUVER: ${{ inputs.ubuntu }}

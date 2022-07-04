@@ -31,7 +31,7 @@ class _Cursor(psycopg2.extras.DictCursor):
         """ Query execution that logs the SQL query when debugging is enabled.
         """
         if LOG.isEnabledFor(logging.DEBUG):
-            LOG.debug(self.mogrify(query, args).decode('utf-8')) # type: ignore
+            LOG.debug(self.mogrify(query, args).decode('utf-8')) # type: ignore[no-untyped-call]
 
         super().execute(query, args)
 
@@ -55,7 +55,7 @@ class _Cursor(psycopg2.extras.DictCursor):
         if self.rowcount != 1:
             raise RuntimeError("Query did not return a single row.")
 
-        result = self.fetchone() # type: ignore
+        result = self.fetchone() # type: ignore[no-untyped-call]
         assert result is not None
 
         return result[0]
@@ -74,7 +74,7 @@ class _Cursor(psycopg2.extras.DictCursor):
         if cascade:
             sql += ' CASCADE'
 
-        self.execute(pysql.SQL(sql).format(pysql.Identifier(name))) # type: ignore
+        self.execute(pysql.SQL(sql).format(pysql.Identifier(name))) # type: ignore[no-untyped-call]
 
 
 class Connection(psycopg2.extensions.connection):
@@ -131,7 +131,7 @@ class Connection(psycopg2.extensions.connection):
                 return False
 
             if table is not None:
-                row = cur.fetchone() # type: ignore
+                row = cur.fetchone() # type: ignore[no-untyped-call]
                 if row is None or not isinstance(row[0], str):
                     return False
                 return row[0] == table

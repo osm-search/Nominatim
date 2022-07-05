@@ -66,7 +66,11 @@ class Configuration:
             self._config.update(dotenv_values(str((project_dir / '.env').resolve())))
 
         class _LibDirs:
-            pass
+            module: Path
+            osm2pgsql: Path
+            php: Path
+            sql: Path
+            data: Path
 
         self.lib_dir = _LibDirs()
 

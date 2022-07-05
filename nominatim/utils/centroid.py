@@ -7,6 +7,7 @@
 """
 Functions for computation of centroids.
 """
+from typing import Tuple, Any
 from collections.abc import Collection
 
 class PointsCentroid:
@@ -17,12 +18,12 @@ class PointsCentroid:
         (i.e. in OSM style).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sum_x = 0
         self.sum_y = 0
         self.count = 0
 
-    def centroid(self):
+    def centroid(self) -> Tuple[float, float]:
         """ Return the centroid of all points collected so far.
         """
         if self.count == 0:
@@ -32,11 +33,11 @@ class PointsCentroid:
                 float(self.sum_y/self.count)/10000000)
 
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.count
 
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: Any) -> 'PointsCentroid':
         if isinstance(other, Collection) and len(other) == 2:
             if all(isinstance(p, (float, int)) for p in other):
                 x, y = other

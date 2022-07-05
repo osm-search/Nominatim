@@ -22,7 +22,7 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-class _Cursor(psycopg2.extras.DictCursor):
+class Cursor(psycopg2.extras.DictCursor):
     """ A cursor returning dict-like objects and providing specialised
         execution functions.
     """
@@ -82,18 +82,18 @@ class Connection(psycopg2.extensions.connection):
         adds convenience functions for administrating the database.
     """
     @overload # type: ignore[override]
-    def cursor(self) -> _Cursor:
+    def cursor(self) -> Cursor:
         ...
 
     @overload
-    def cursor(self, name: str) -> _Cursor:
+    def cursor(self, name: str) -> Cursor:
         ...
 
     @overload
     def cursor(self, cursor_factory: Callable[..., T_cursor]) -> T_cursor:
         ...
 
-    def cursor(self, cursor_factory  = _Cursor, **kwargs): # type: ignore
+    def cursor(self, cursor_factory  = Cursor, **kwargs): # type: ignore
         """ Return a new cursor. By default the specialised cursor is returned.
         """
         return super().cursor(cursor_factory=cursor_factory, **kwargs)

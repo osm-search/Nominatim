@@ -7,14 +7,14 @@
 """
 Helper functions for handling DB accesses.
 """
-from typing import IO, Optional, Union
+from typing import IO, Optional, Union, Any, Iterable
 import subprocess
 import logging
 import gzip
 import io
 from pathlib import Path
 
-from nominatim.db.connection import get_pg_env
+from nominatim.db.connection import get_pg_env, Cursor
 from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
@@ -84,20 +84,20 @@ class CopyBuffer:
     """ Data collector for the copy_from command.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.buffer = io.StringIO()
 
 
-    def __enter__(self):
+    def __enter__(self) -> 'CopyBuffer':
         return self
 
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         if self.buffer is not None:
             self.buffer.close()
 
 
-    def add(self, *data):
+    def add(self, *data: Any) -> None:
         """ Add another row of data to the copy buffer.
         """
         first = True
@@ -113,9 +113,9 @@ class CopyBuffer:
         self.buffer.write('\n')
 
 
-    def copy_out(self, cur, table, columns=None):
+    def copy_out(self, cur: Cursor, table: str, columns: Optional[Iterable[str]] = None) -> None:
         """ Copy all collected data into the given table.
         """
         if self.buffer.tell() > 0:
             self.buffer.seek(0)
-            cur.copy_from(self.buffer, table, columns=columns)
+            cur.copy_from(self.buffer, table, columns=columns) # type: ignore[no-untyped-call]

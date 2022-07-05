@@ -65,7 +65,7 @@ class TestCopyBuffer:
 
     @pytest.fixture(autouse=True)
     def setup_test_table(self, table_factory):
-        table_factory(self.TABLE_NAME, 'colA INT, colB TEXT')
+        table_factory(self.TABLE_NAME, 'col_a INT, col_b TEXT')
 
 
     def table_rows(self, cursor):
@@ -92,7 +92,7 @@ class TestCopyBuffer:
             buf.add('foo')
 
             buf.copy_out(temp_db_cursor, self.TABLE_NAME,
-                         columns=['colB'])
+                         columns=['col_b'])
 
         assert self.table_rows(temp_db_cursor) == {(None, 'foo')}
 
@@ -103,7 +103,7 @@ class TestCopyBuffer:
             buf.add(' two ', 2)
 
             buf.copy_out(temp_db_cursor, self.TABLE_NAME,
-                         columns=['colB', 'colA'])
+                         columns=['col_b', 'col_a'])
 
         assert self.table_rows(temp_db_cursor) == {(1, 'one'), (2, ' two ')}
 
@@ -115,7 +115,7 @@ class TestCopyBuffer:
             buf.add('\\N')
 
             buf.copy_out(temp_db_cursor, self.TABLE_NAME,
-                         columns=['colB'])
+                         columns=['col_b'])
 
         assert self.table_rows(temp_db_cursor) == {(None, 'foo\tbar'),
                                                    (None, 'sun\nson'),
@@ -128,7 +128,7 @@ class TestCopyBufferJson:
 
     @pytest.fixture(autouse=True)
     def setup_test_table(self, table_factory):
-        table_factory(self.TABLE_NAME, 'colA INT, colB JSONB')
+        table_factory(self.TABLE_NAME, 'col_a INT, col_b JSONB')
 
 
     def table_rows(self, cursor):

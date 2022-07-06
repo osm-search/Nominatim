@@ -146,6 +146,25 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
 
     return 0
 
+def import_osm_views_geotiff(dsn, data_path, ignore_errors=False):
+    """ Replaces the OSM views table with new data.
+        
+        Returns 0 if all was well and 1 if the GeoTIFF file could not
+        be found. Throws an exception if there was an error reading the file.
+    """
+    datafile = data_path / 'osmviews.tiff'
+
+    if not datafile.exists():
+        return 1
+
+    pre_code = """BEGIN;
+                  DROP TABLE IF EXISTS "osmviews";
+               """
+    post_code = "COMMIT"
+    execute_file(dsn, datafile, ignore_errors=ignore_errors,
+                 pre_code=pre_code, post_code=post_code)
+
+    return 0
 
 def recompute_importance(conn: Connection) -> None:
     """ Recompute wikipedia links and importance for all entries in placex.

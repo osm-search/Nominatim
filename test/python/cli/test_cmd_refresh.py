@@ -24,6 +24,7 @@ class TestRefresh:
     @pytest.mark.parametrize("command,func", [
                              ('address-levels', 'load_address_levels_from_config'),
                              ('wiki-data', 'import_wikipedia_articles'),
+                             ('osm-views', 'import_osm_views_geotiff')
                              ('importance', 'recompute_importance'),
                              ('website', 'setup_website'),
                              ])
@@ -71,15 +72,21 @@ class TestRefresh:
 
         assert self.call_nominatim('refresh', '--wiki-data') == 1
 
+    def test_refresh_osm_views_geotiff_file_not_found(self, monkeypatch):
+        monkeypatch.setenv('NOMINATIM_OSM_VIEWS_DATA_PATH', 'gjoiergjeroi345Q')
 
-    def test_refresh_importance_computed_after_wiki_import(self, monkeypatch):
+        assert self.call_nominatim('refresh', '--osm-views') == 1
+
+    def test_refresh_importance_computed_after_wiki_and_osm_views_import(self, monkeypatch):
         calls = []
         monkeypatch.setattr(nominatim.tools.refresh, 'import_wikipedia_articles',
+                            lambda *args, **kwargs: calls.append('import') or 0)
+        monkeypatch.setattr(nominatim.tools.refresh, 'import_osm_views_geotiff',
                             lambda *args, **kwargs: calls.append('import') or 0)
         monkeypatch.setattr(nominatim.tools.refresh, 'recompute_importance',
                             lambda *args, **kwargs: calls.append('update'))
 
-        assert self.call_nominatim('refresh', '--importance', '--wiki-data') == 0
+        assert self.call_nominatim('refresh', '--importance', '--wiki-data', '--osm-views') == 0
 
         assert calls == ['import', 'update']
 

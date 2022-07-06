@@ -58,8 +58,10 @@ class SetupAll:
         group2.add_argument('--no-updates', action='store_true',
                            help="Do not keep tables that are only needed for "
                                 "updating the database later")
+        group2.add_argument('--osm-views', action='store_true',
+                            help='Import OSM views GeoTIFF')
         group2.add_argument('--offline', action='store_true',
-                           help="Do not attempt to load any additional data from the internet")
+                            help="Do not attempt to load any additional data from the internet")
         group3 = parser.add_argument_group('Expert options')
         group3.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
@@ -103,7 +105,15 @@ class SetupAll:
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.error('Wikipedia importance dump file not found. '
-                          'Will be using default importances.')
+                          'Calculating importance values of locations will not use Wikipedia importance data.')
+            
+            LOG.warning('Importing OSM views GeoTIFF data')
+            database_import.import_osm_views_geotiff()
+            data_path = Path(args.config.OSM_VIEWS_DATA_PATH or args.project_dir)
+            if refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(),
+                                                 data_path) > 0:
+                LOG.error('OSM views GeoTIFF file not found. '
+                          'Calculating importance values of locations will not use OSM views data.')
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Initialise tables')

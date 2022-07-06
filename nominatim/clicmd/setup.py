@@ -63,8 +63,9 @@ class SetupAll:
 
 
     @staticmethod
-    def run(args):
-        from ..tools import database_import, refresh, postcodes, freeze, country_info
+    def run(args): # pylint: disable=too-many-statements
+        from ..data import country_info
+        from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
 
         country_info.setup_country_config(args.config)

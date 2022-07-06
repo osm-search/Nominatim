@@ -10,7 +10,7 @@ Tests for function that handle country properties.
 from textwrap import dedent
 import pytest
 
-from nominatim.tools import country_info
+from nominatim.data import country_info
 
 @pytest.fixture
 def loaded_country(def_config):

@@ -10,7 +10,7 @@ Tests for import command of the command-line interface wrapper.
 import pytest
 
 import nominatim.tools.database_import
-import nominatim.tools.country_info
+import nominatim.data.country_info
 import nominatim.tools.refresh
 import nominatim.tools.postcodes
 import nominatim.indexer.indexer
@@ -37,7 +37,7 @@ class TestCliImportWithDb:
     def test_import_full(self, mock_func_factory, with_updates, place_table, property_table):
         mocks = [
             mock_func_factory(nominatim.tools.database_import, 'setup_database_skeleton'),
-            mock_func_factory(nominatim.tools.country_info, 'setup_country_tables'),
+            mock_func_factory(nominatim.data.country_info, 'setup_country_tables'),
             mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
             mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
             mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
@@ -46,7 +46,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim.tools.database_import, 'create_table_triggers'),
             mock_func_factory(nominatim.tools.database_import, 'create_partition_tables'),
             mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
-            mock_func_factory(nominatim.tools.country_info, 'create_country_names'),
+            mock_func_factory(nominatim.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim.tools.refresh, 'load_address_levels_from_config'),
             mock_func_factory(nominatim.tools.postcodes, 'update_postcodes'),
             mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
@@ -76,7 +76,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
             mock_func_factory(nominatim.tools.database_import, 'load_data'),
             mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
-            mock_func_factory(nominatim.tools.country_info, 'create_country_names'),
+            mock_func_factory(nominatim.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim.tools.postcodes, 'update_postcodes'),
             mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim.tools.refresh, 'setup_website'),
@@ -94,7 +94,7 @@ class TestCliImportWithDb:
                                       temp_db_conn):
         mocks = [
             mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
-            mock_func_factory(nominatim.tools.country_info, 'create_country_names'),
+            mock_func_factory(nominatim.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim.indexer.indexer.Indexer, 'index_full'),
             mock_func_factory(nominatim.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim.db.properties, 'set_property')
@@ -115,7 +115,7 @@ class TestCliImportWithDb:
     def test_import_continue_postprocess(self, mock_func_factory):
         mocks = [
             mock_func_factory(nominatim.tools.database_import, 'create_search_indices'),
-            mock_func_factory(nominatim.tools.country_info, 'create_country_names'),
+            mock_func_factory(nominatim.data.country_info, 'create_country_names'),
             mock_func_factory(nominatim.tools.refresh, 'setup_website'),
             mock_func_factory(nominatim.db.properties, 'set_property')
         ]

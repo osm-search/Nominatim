@@ -11,7 +11,7 @@ import pytest
 
 from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.tools.country_info import setup_country_config
+from nominatim.data.country_info import setup_country_config
 
 class TestWithDefaults:
 

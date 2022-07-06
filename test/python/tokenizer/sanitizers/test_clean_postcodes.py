@@ -11,7 +11,7 @@ import pytest
 
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.data.place_info import PlaceInfo
-from nominatim.tools import country_info
+from nominatim.data import country_info
 
 @pytest.fixture
 def sanitize(def_config, request):

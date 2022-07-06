@@ -11,7 +11,8 @@ import subprocess
 
 import pytest
 
-from nominatim.tools import postcodes, country_info
+from nominatim.tools import postcodes
+from nominatim.data import country_info
 import dummy_tokenizer
 
 class MockPostcodeTable:

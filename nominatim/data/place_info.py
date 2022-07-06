@@ -9,8 +9,6 @@ Wrapper around place information the indexer gets from the database and hands to
 the tokenizer.
 """
 
-import psycopg2.extras
-
 class PlaceInfo:
     """ Data class containing all information the tokenizer gets about a
         place it should process the names for.
@@ -18,13 +16,6 @@ class PlaceInfo:
 
     def __init__(self, info):
         self._info = info
-
-
-    def analyze(self, analyzer):
-        """ Process this place with the given tokenizer and return the
-            result in psycopg2-compatible Json.
-        """
-        return psycopg2.extras.Json(analyzer.process_place(self))
 
 
     @property

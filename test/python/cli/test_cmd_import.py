@@ -40,6 +40,7 @@ class TestCliImportWithDb:
             mock_func_factory(nominatim.tools.country_info, 'setup_country_tables'),
             mock_func_factory(nominatim.tools.database_import, 'import_osm_data'),
             mock_func_factory(nominatim.tools.refresh, 'import_wikipedia_articles'),
+            mock_func_factory(nominatim.tools.refresh, 'import_osm_views_geotiff'),
             mock_func_factory(nominatim.tools.database_import, 'truncate_data_tables'),
             mock_func_factory(nominatim.tools.database_import, 'load_data'),
             mock_func_factory(nominatim.tools.database_import, 'create_tables'),

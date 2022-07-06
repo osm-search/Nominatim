@@ -60,6 +60,8 @@ class UpdateRefresh:
                            help='Update the PL/pgSQL functions in the database')
         group.add_argument('--wiki-data', action='store_true',
                            help='Update Wikipedia/data importance numbers')
+        group.add_argument('--osm-views', action='store_true',
+                           help='Update OSM views/data importance numbers')
         group.add_argument('--importance', action='store_true',
                            help='Recompute place importances (expensive!)')
         group.add_argument('--website', action='store_true',
@@ -126,6 +128,15 @@ class UpdateRefresh:
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.fatal('FATAL: Wikipedia importance dump file not found')
+                return 1
+        
+        if args.osm_views:
+            data_path = Path(args.config.OSM_VIEWS_DATA_PATH
+                             or args.project_dir)
+            LOG.warning('Import OSM views GeoTIFF data from %s', data_path)
+            if refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(),
+                                                 data_path) > 0:
+                LOG.fatal('FATAL: OSM views GeoTIFF file not found')
                 return 1
 
         # Attention: importance MUST come after wiki data import.

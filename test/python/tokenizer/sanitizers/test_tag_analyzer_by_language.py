@@ -9,7 +9,7 @@ Tests for the sanitizer that enables language-dependent analyzers.
 """
 import pytest
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tools.country_info import setup_country_config
 

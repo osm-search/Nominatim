@@ -12,7 +12,7 @@ import functools
 
 from psycopg2 import sql as pysql
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 # pylint: disable=C0111
 

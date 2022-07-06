@@ -10,7 +10,7 @@ Tests for the sanitizer that handles braced suffixes.
 import pytest
 
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 def run_sanitizer_on(**kwargs):
     place = PlaceInfo({'name': kwargs})

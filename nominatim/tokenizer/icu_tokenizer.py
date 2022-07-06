@@ -16,7 +16,7 @@ from textwrap import dedent
 from nominatim.db.connection import connect
 from nominatim.db.utils import CopyBuffer
 from nominatim.db.sql_preprocessor import SQLPreprocessor
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 

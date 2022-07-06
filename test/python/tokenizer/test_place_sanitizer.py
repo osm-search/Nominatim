@@ -11,7 +11,7 @@ import pytest
 
 from nominatim.errors import UsageError
 import nominatim.tokenizer.place_sanitizer as sanitizer
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 
 def test_placeinfo_clone_new_name():

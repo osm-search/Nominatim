@@ -17,7 +17,7 @@ from nominatim.db.connection import connect
 from nominatim.db.async_connection import WorkerPool
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.errors import UsageError
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 LOG = logging.getLogger()
 

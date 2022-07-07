@@ -28,7 +28,7 @@ class AbstractAnalyzer(ABC):
         return self
 
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
 
@@ -95,7 +95,7 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def add_country_names(self, country_code: str, names: Dict[str, str]):
+    def add_country_names(self, country_code: str, names: Dict[str, str]) -> None:
         """ Add the given names to the tokenizer's list of country tokens.
 
             Arguments:

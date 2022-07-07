@@ -12,7 +12,7 @@ import re
 
 import pytest
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer import legacy_tokenizer
 from nominatim.db import properties
 from nominatim.errors import UsageError

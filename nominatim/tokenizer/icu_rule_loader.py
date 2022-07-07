@@ -17,7 +17,7 @@ from nominatim.db.properties import set_property, get_property
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
-import nominatim.tools.country_info
+import nominatim.data.country_info
 
 LOG = logging.getLogger()
 
@@ -46,7 +46,7 @@ class ICURuleLoader:
                                               config='TOKENIZER_CONFIG')
 
         # Make sure country information is available to analyzers and sanitizers.
-        nominatim.tools.country_info.setup_country_config(config)
+        nominatim.data.country_info.setup_country_config(config)
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')

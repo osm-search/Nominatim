@@ -11,7 +11,7 @@ format.
 import re
 
 from nominatim.errors import UsageError
-from nominatim.tools import country_info
+from nominatim.data import country_info
 
 class CountryPostcodeMatcher:
     """ Matches and formats a postcode according to a format definition

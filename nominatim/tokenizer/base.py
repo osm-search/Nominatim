@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 
 from nominatim.config import Configuration
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 # pylint: disable=unnecessary-pass
 

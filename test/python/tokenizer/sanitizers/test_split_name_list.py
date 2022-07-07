@@ -10,7 +10,7 @@ Tests for the sanitizer that splits multivalue lists.
 import pytest
 
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 from nominatim.errors import UsageError
 

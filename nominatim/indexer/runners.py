@@ -11,14 +11,17 @@ tasks.
 import functools
 
 from psycopg2 import sql as pysql
+import psycopg2.extras
 
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 
 # pylint: disable=C0111
 
 def _mk_valuelist(template, num):
     return pysql.SQL(',').join([pysql.SQL(template)] * num)
 
+def _analyze_place(place, analyzer):
+    return psycopg2.extras.Json(analyzer.process_place(PlaceInfo(place)))
 
 class AbstractPlacexRunner:
     """ Returns SQL commands for indexing of the placex table.
@@ -56,7 +59,7 @@ class AbstractPlacexRunner:
         for place in places:
             for field in ('place_id', 'name', 'address', 'linked_place_id'):
                 values.append(place[field])
-            values.append(PlaceInfo(place).analyze(self.analyzer))
+            values.append(_analyze_place(place, self.analyzer))
 
         worker.perform(self._index_sql(len(places)), values)
 
@@ -150,7 +153,7 @@ class InterpolationRunner:
         values = []
         for place in places:
             values.extend((place[x] for x in ('place_id', 'address')))
-            values.append(PlaceInfo(place).analyze(self.analyzer))
+            values.append(_analyze_place(place, self.analyzer))
 
         worker.perform(self._index_sql(len(places)), values)
 

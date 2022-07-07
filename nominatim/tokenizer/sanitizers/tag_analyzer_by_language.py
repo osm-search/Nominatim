@@ -30,7 +30,7 @@ Arguments:
           any analyzer tagged) is retained. (default: replace)
 
 """
-from nominatim.tools import country_info
+from nominatim.data import country_info
 
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.

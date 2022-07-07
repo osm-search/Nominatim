@@ -10,7 +10,6 @@ Implementation of the 'admin' subcommand.
 import logging
 
 from nominatim.tools.exec_utils import run_legacy_script
-from nominatim.db.connection import connect
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -63,8 +62,7 @@ class AdminFuncs:
         if args.analyse_indexing:
             LOG.warning('Analysing performance of indexing function')
             from ..tools import admin
-            with connect(args.config.get_libpq_dsn()) as conn:
-                admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
+            admin.analyse_indexing(args.config, osm_id=args.osm_id, place_id=args.place_id)
             return 0
 
         if args.migrate:

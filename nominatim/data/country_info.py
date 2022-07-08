@@ -7,7 +7,7 @@
 """
 Functions for importing and managing static country information.
 """
-from typing import Dict, Any, Iterable, Tuple, Optional, Container
+from typing import Dict, Any, Iterable, Tuple, Optional, Container, overload
 from pathlib import Path
 import psycopg2.extras
 
@@ -87,6 +87,13 @@ def setup_country_config(config: Configuration) -> None:
     """
     _COUNTRY_INFO.load(config)
 
+@overload
+def iterate() -> Iterable[Tuple[str, Dict[str, Any]]]:
+    ...
+
+@overload
+def iterate(prop: str) -> Iterable[Tuple[str, Any]]:
+    ...
 
 def iterate(prop: Optional[str] = None) -> Iterable[Tuple[str, Dict[str, Any]]]:
     """ Iterate over country code and properties.

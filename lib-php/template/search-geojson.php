@@ -54,7 +54,7 @@ foreach ($aSearchResults as $iResNum => $aPointDetails) {
     }
 
     if (isset($aPointDetails['asgeojson'])) {
-        $aPlace['geometry'] = json_decode($aPointDetails['asgeojson']);
+        $aPlace['geometry'] = json_decode($aPointDetails['asgeojson'], true);
     } else {
         $aPlace['geometry'] = array(
                                'type' => 'Point',

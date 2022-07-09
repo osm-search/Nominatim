@@ -48,7 +48,7 @@ $aPlaceDetails['centroid'] = array(
                               'coordinates' => array( (float) $aPointDetails['lon'], (float) $aPointDetails['lat'] )
                              );
 
-$aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson']);
+$aPlaceDetails['geometry'] = json_decode($aPointDetails['asgeojson'], true);
 
 $funcMapAddressLine = function ($aFull) {
     return array(

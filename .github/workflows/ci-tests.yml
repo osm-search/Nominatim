@@ -37,7 +37,7 @@ jobs:
         needs: create-archive
         strategy:
             matrix:
-                ubuntu: [18, 20]
+                ubuntu: [18, 20, 22]
                 include:
                     - ubuntu: 18
                       postgresql: 9.6
@@ -49,6 +49,11 @@ jobs:
                       postgis: 3
                       pytest: py.test-3
                       php: 7.4
+                    - ubuntu: 22
+                      postgresql: 14
+                      postgis: 3
+                      pytest: py.test-3
+                      php: 8.1
 
         runs-on: ubuntu-${{ matrix.ubuntu }}.04
 
@@ -65,6 +70,7 @@ jobs:
               with:
                   php-version: ${{ matrix.php }}
                   tools: phpunit, phpcs, composer
+                  ini-values: opcache.jit=disable
 
             - uses: actions/setup-python@v2
               with:
@@ -85,8 +91,12 @@ jobs:
               if: matrix.ubuntu == 20
 
             - name: Install test prerequsites
-              run: pip3 install pytest behave==1.2.6
-              if: matrix.ubuntu == 18
+              run: pip3 install pylint pytest behave==1.2.6
+              if: ${{ (matrix.ubuntu == 18) || (matrix.ubuntu == 22) }}
+
+            - name: Install test prerequsites
+              run: sudo apt-get install -y -qq python3-pytest
+              if: matrix.ubuntu == 22
 
             - name: Install latest pylint
               run: pip3 install pylint
@@ -102,7 +112,7 @@ jobs:
             - name: PHP unit tests
               run: phpunit ./
               working-directory: Nominatim/test/php
-              if: matrix.ubuntu == 20
+              if: ${{ (matrix.ubuntu == 20) || (matrix.ubuntu == 22) }}
 
             - name: Python unit tests
               run: $PYTEST test/python
@@ -161,7 +171,7 @@ jobs:
 
         strategy:
             matrix:
-                name: [Ubuntu-18, Ubuntu-20]
+                name: [Ubuntu-18, Ubuntu-20, Ubuntu-22]
                 include:
                     - name: Ubuntu-18
                       flavour: ubuntu
@@ -172,6 +182,11 @@ jobs:
                       flavour: ubuntu
                       image: "ubuntu:20.04"
                       ubuntu: 20
+                      install_mode: install-apache
+                    - name: Ubuntu-22
+                      flavour: ubuntu
+                      image: "ubuntu:22.04"
+                      ubuntu: 22
                       install_mode: install-apache
 
         container:

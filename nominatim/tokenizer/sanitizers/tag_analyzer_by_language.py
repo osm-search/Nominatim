@@ -30,13 +30,17 @@ Arguments:
           any analyzer tagged) is retained. (default: replace)
 
 """
+from typing import Callable, Dict, Optional, List
+
 from nominatim.data import country_info
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class _AnalyzerByLanguage:
     """ Processor for tagging the language of names in a place.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: SanitizerConfig) -> None:
         self.filter_kind = config.get_filter_kind()
         self.replace = config.get('mode', 'replace') != 'append'
         self.whitelist = config.get('whitelist')
@@ -44,8 +48,8 @@ class _AnalyzerByLanguage:
         self._compute_default_languages(config.get('use-defaults', 'no'))
 
 
-    def _compute_default_languages(self, use_defaults):
-        self.deflangs = {}
+    def _compute_default_languages(self, use_defaults: str) -> None:
+        self.deflangs: Dict[Optional[str], List[str]] = {}
 
         if use_defaults in ('mono', 'all'):
             for ccode, clangs in country_info.iterate('languages'):
@@ -56,21 +60,21 @@ class _AnalyzerByLanguage:
                         self.deflangs[ccode] = clangs
 
 
-    def _suffix_matches(self, suffix):
+    def _suffix_matches(self, suffix: str) -> bool:
         if self.whitelist is None:
             return len(suffix) in (2, 3) and suffix.islower()
 
         return suffix in self.whitelist
 
 
-    def __call__(self, obj):
+    def __call__(self, obj: ProcessInfo) -> None:
         if not obj.names:
             return
 
         more_names = []
 
         for name in (n for n in obj.names
-                     if not n.has_attr('analyzer') and self.filter_kind(n)):
+                     if not n.has_attr('analyzer') and self.filter_kind(n.kind)):
             if name.suffix:
                 langs = [name.suffix] if self._suffix_matches(name.suffix) else None
             else:
@@ -88,7 +92,7 @@ class _AnalyzerByLanguage:
         obj.names.extend(more_names)
 
 
-def create(config):
+def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a function that sets the analyzer property depending on the
         language of the tag.
     """

@@ -24,11 +24,15 @@ Arguments:
                      or a list of strings, where each string is a regular
                      expression that must match the full house number value.
 """
+from typing import Callable, Iterator, List
 import re
+
+from nominatim.tokenizer.sanitizers.base import ProcessInfo, PlaceName
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class _HousenumberSanitizer:
 
-    def __init__(self, config):
+    def __init__(self, config: SanitizerConfig) -> None:
         self.filter_kind = config.get_filter_kind('housenumber')
         self.split_regexp = config.get_delimiter()
 
@@ -37,13 +41,13 @@ class _HousenumberSanitizer:
 
 
 
-    def __call__(self, obj):
+    def __call__(self, obj: ProcessInfo) -> None:
         if not obj.address:
             return
 
-        new_address = []
+        new_address: List[PlaceName] = []
         for item in obj.address:
-            if self.filter_kind(item):
+            if self.filter_kind(item.kind):
                 if self._treat_as_name(item.name):
                     obj.names.append(item.clone(kind='housenumber'))
                 else:
@@ -56,7 +60,7 @@ class _HousenumberSanitizer:
         obj.address = new_address
 
 
-    def sanitize(self, value):
+    def sanitize(self, value: str) -> Iterator[str]:
         """ Extract housenumbers in a regularized format from an OSM value.
 
             The function works as a generator that yields all valid housenumbers
@@ -67,16 +71,15 @@ class _HousenumberSanitizer:
                 yield from self._regularize(hnr)
 
 
-    @staticmethod
-    def _regularize(hnr):
+    def _regularize(self, hnr: str) -> Iterator[str]:
         yield hnr
 
 
-    def _treat_as_name(self, housenumber):
+    def _treat_as_name(self, housenumber: str) -> bool:
         return any(r.fullmatch(housenumber) is not None for r in self.is_name_regexp)
 
 
-def create(config):
+def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a housenumber processing function.
     """
 

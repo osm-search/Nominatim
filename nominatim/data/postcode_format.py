@@ -79,7 +79,7 @@ class PostcodeFormatter:
         self.default_matcher = CountryPostcodeMatcher('', {'pattern': pattern})
 
 
-    def get_matcher(self, country_code: str) -> Optional[CountryPostcodeMatcher]:
+    def get_matcher(self, country_code: Optional[str]) -> Optional[CountryPostcodeMatcher]:
         """ Return the CountryPostcodeMatcher for the given country.
             Returns None if the country doesn't have a postcode and the
             default matcher if there is no specific matcher configured for
@@ -88,16 +88,20 @@ class PostcodeFormatter:
         if country_code in self.country_without_postcode:
             return None
 
+        assert country_code is not None
+
         return self.country_matcher.get(country_code, self.default_matcher)
 
 
-    def match(self, country_code: str, postcode: str) -> Optional[Match[str]]:
+    def match(self, country_code: Optional[str], postcode: str) -> Optional[Match[str]]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the country has a pattern
             and the match was successful or None if the match failed.
         """
         if country_code in self.country_without_postcode:
             return None
+
+        assert country_code is not None
 
         return self.country_matcher.get(country_code, self.default_matcher).match(postcode)
 

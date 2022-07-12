@@ -82,32 +82,32 @@ def test_create_split_regex_empty_delimiter():
 def test_create_kind_filter_no_params(inp):
     filt = SanitizerConfig().get_filter_kind()
 
-    assert filt(PlaceName('something', inp, ''))
+    assert filt(inp)
 
 
 @pytest.mark.parametrize('kind', ('de', 'name:de', 'ende'))
 def test_create_kind_filter_custom_regex_positive(kind):
     filt = SanitizerConfig({'filter-kind': '.*de'}).get_filter_kind()
 
-    assert filt(PlaceName('something', kind, ''))
+    assert filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('de ', '123', '', 'bedece'))
 def test_create_kind_filter_custom_regex_negative(kind):
     filt = SanitizerConfig({'filter-kind': '.*de'}).get_filter_kind()
 
-    assert not filt(PlaceName('something', kind, ''))
+    assert not filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('name', 'fr', 'name:fr', 'frfr', '34'))
 def test_create_kind_filter_many_positive(kind):
     filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}).get_filter_kind()
 
-    assert filt(PlaceName('something', kind, ''))
+    assert filt(kind)
 
 
 @pytest.mark.parametrize('kind', ('name:de', 'fridge', 'a34', '.*', '\\'))
 def test_create_kind_filter_many_negative(kind):
     filt = SanitizerConfig({'filter-kind': ['.*fr', 'name', r'\d+']}).get_filter_kind()
 
-    assert not filt(PlaceName('something', kind, ''))
+    assert not filt(kind)

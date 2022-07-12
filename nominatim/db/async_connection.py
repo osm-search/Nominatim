@@ -6,7 +6,7 @@
 # For a full list of authors see the git log.
 """ Non-blocking database connections.
 """
-from typing import Callable, Any, Optional, List, Iterator
+from typing import Callable, Any, Optional, Iterator, Sequence
 import logging
 import select
 import time
@@ -22,7 +22,7 @@ try:
 except ImportError:
     __has_psycopg2_errors__ = False
 
-from nominatim.typing import T_cursor
+from nominatim.typing import T_cursor, Query
 
 LOG = logging.getLogger()
 
@@ -65,8 +65,8 @@ class DBConnection:
                  ignore_sql_errors: bool = False) -> None:
         self.dsn = dsn
 
-        self.current_query: Optional[str] = None
-        self.current_params: Optional[List[Any]] = None
+        self.current_query: Optional[Query] = None
+        self.current_params: Optional[Sequence[Any]] = None
         self.ignore_sql_errors = ignore_sql_errors
 
         self.conn: Optional['psycopg2.connection'] = None
@@ -128,7 +128,7 @@ class DBConnection:
                 self.current_query = None
                 return
 
-    def perform(self, sql: str, args: Optional[List[Any]] = None) -> None:
+    def perform(self, sql: Query, args: Optional[Sequence[Any]] = None) -> None:
         """ Send SQL query to the server. Returns immediately without
             blocking.
         """

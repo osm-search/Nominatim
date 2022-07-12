@@ -74,7 +74,7 @@ class Cursor(psycopg2.extras.DictCursor):
         if cascade:
             sql += ' CASCADE'
 
-        self.execute(pysql.SQL(sql).format(pysql.Identifier(name))) # type: ignore[no-untyped-call]
+        self.execute(pysql.SQL(sql).format(pysql.Identifier(name)))
 
 
 class Connection(psycopg2.extensions.connection):

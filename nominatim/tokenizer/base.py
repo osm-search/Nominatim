@@ -10,11 +10,12 @@ mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
+from pathlib import Path
+
+from typing_extensions import Protocol
 
 from nominatim.config import Configuration
 from nominatim.data.place_info import PlaceInfo
-
-# pylint: disable=unnecessary-pass
 
 class AbstractAnalyzer(ABC):
     """ The analyzer provides the functions for analysing names and building
@@ -229,4 +230,14 @@ class AbstractTokenizer(ABC):
 
             When used outside the with construct, the caller must ensure to
             call the close() function before destructing the analyzer.
+        """
+
+
+class TokenizerModule(Protocol):
+    """ Interface that must be exported by modules that implement their
+        own tokenizer.
+    """
+
+    def create(self, dsn: str, data_dir: Path) -> AbstractTokenizer:
+        """ Factory for new tokenizers.
         """

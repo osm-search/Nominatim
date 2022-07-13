@@ -28,7 +28,7 @@ def set_property(conn: Connection, name: str, value: str) -> None:
 
 
 def get_property(conn: Connection, name: str) -> Optional[str]:
-    """ Return the current value of the given propery or None if the property
+    """ Return the current value of the given property or None if the property
         is not set.
     """
     if not conn.table_exists('nominatim_properties'):

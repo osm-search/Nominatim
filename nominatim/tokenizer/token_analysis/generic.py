@@ -7,6 +7,7 @@
 """
 Generic processor for names that creates abbreviation variants.
 """
+from typing import Mapping, Dict, Any, Iterable, Iterator, Optional, List, cast
 import itertools
 
 import datrie
@@ -17,10 +18,10 @@ from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantG
 
 ### Configuration section
 
-def configure(rules, normalization_rules):
+def configure(rules: Mapping[str, Any], normalization_rules: str) -> Dict[str, Any]:
     """ Extract and preprocess the configuration for this module.
     """
-    config = {}
+    config: Dict[str, Any] = {}
 
     config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
                                                                  normalization_rules)
@@ -47,7 +48,8 @@ def configure(rules, normalization_rules):
 
 ### Analysis section
 
-def create(normalizer, transliterator, config):
+def create(normalizer: Any, transliterator: Any,
+           config: Mapping[str, Any]) -> 'GenericTokenAnalysis':
     """ Create a new token analysis instance for this module.
     """
     return GenericTokenAnalysis(normalizer, transliterator, config)
@@ -58,7 +60,7 @@ class GenericTokenAnalysis:
         and provides the functions to apply the transformations.
     """
 
-    def __init__(self, norm, to_ascii, config):
+    def __init__(self, norm: Any, to_ascii: Any, config: Mapping[str, Any]) -> None:
         self.norm = norm
         self.to_ascii = to_ascii
         self.variant_only = config['variant_only']
@@ -75,14 +77,14 @@ class GenericTokenAnalysis:
         self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
 
 
-    def normalize(self, name):
+    def normalize(self, name: str) -> str:
         """ Return the normalized form of the name. This is the standard form
             from which possible variants for the name can be derived.
         """
-        return self.norm.transliterate(name).strip()
+        return cast(str, self.norm.transliterate(name)).strip()
 
 
-    def get_variants_ascii(self, norm_name):
+    def get_variants_ascii(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """
@@ -94,7 +96,8 @@ class GenericTokenAnalysis:
         return [name for name in self._transliterate_unique_list(norm_name, variants) if name]
 
 
-    def _transliterate_unique_list(self, norm_name, iterable):
+    def _transliterate_unique_list(self, norm_name: str,
+                                   iterable: Iterable[str]) -> Iterator[Optional[str]]:
         seen = set()
         if self.variant_only:
             seen.add(norm_name)
@@ -105,7 +108,7 @@ class GenericTokenAnalysis:
                 yield self.to_ascii.transliterate(variant).strip()
 
 
-    def _generate_word_variants(self, norm_name):
+    def _generate_word_variants(self, norm_name: str) -> Iterable[str]:
         baseform = '^ ' + norm_name + ' ^'
         baselen = len(baseform)
         partials = ['']

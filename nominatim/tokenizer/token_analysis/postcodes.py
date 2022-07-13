@@ -8,19 +8,20 @@
 Specialized processor for postcodes. Supports a 'lookup' variant of the
 token, which produces variants with optional spaces.
 """
+from typing import Mapping, Any, List
 
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
 
 ### Configuration section
 
-def configure(rules, normalization_rules): # pylint: disable=W0613
+def configure(rules: Mapping[str, Any], normalization_rules: str) -> None: # pylint: disable=W0613
     """ All behaviour is currently hard-coded.
     """
     return None
 
 ### Analysis section
 
-def create(normalizer, transliterator, config): # pylint: disable=W0613
+def create(normalizer: Any, transliterator: Any, config: None) -> 'PostcodeTokenAnalysis': # pylint: disable=W0613
     """ Create a new token analysis instance for this module.
     """
     return PostcodeTokenAnalysis(normalizer, transliterator)
@@ -38,20 +39,20 @@ class PostcodeTokenAnalysis:
         and transliteration, so that postcodes are correctly recognised by
         the search algorithm.
     """
-    def __init__(self, norm, trans):
+    def __init__(self, norm: Any, trans: Any) -> None:
         self.norm = norm
         self.trans = trans
 
         self.mutator = MutationVariantGenerator(' ', (' ', ''))
 
 
-    def normalize(self, name):
+    def normalize(self, name: str) -> str:
         """ Return the standard form of the postcode.
         """
         return name.strip().upper()
 
 
-    def get_variants_ascii(self, norm_name):
+    def get_variants_ascii(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized postcode.
 
             Takes the canonical form of the postcode, normalizes it using the

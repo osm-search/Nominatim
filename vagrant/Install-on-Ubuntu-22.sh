@@ -28,6 +28,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         postgresql-contrib-14 postgresql-14-postgis-3-scripts \
                         php php-pgsql php-intl libicu-dev python3-dotenv \
                         python3-psycopg2 python3-psutil python3-jinja2 \
+                        python3-typing-extensions \
                         python3-icu python3-datrie git
 
 #

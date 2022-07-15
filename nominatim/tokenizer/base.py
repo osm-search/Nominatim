@@ -9,7 +9,7 @@ Abstract class defintions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional
 from pathlib import Path
 
 from typing_extensions import Protocol
@@ -187,7 +187,7 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def check_database(self, config: Configuration) -> str:
+    def check_database(self, config: Configuration) -> Optional[str]:
         """ Check that the database is set up correctly and ready for being
             queried.
 

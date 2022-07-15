@@ -7,7 +7,7 @@
 """
 Specialised connection and cursor functions.
 """
-from typing import List, Optional, Any, Callable, ContextManager, Dict, cast, overload, Tuple
+from typing import Optional, Any, Callable, ContextManager, Dict, cast, overload, Tuple, Iterable
 import contextlib
 import logging
 import os
@@ -36,7 +36,7 @@ class Cursor(psycopg2.extras.DictCursor):
         super().execute(query, args)
 
 
-    def execute_values(self, sql: Query, argslist: List[Any],
+    def execute_values(self, sql: Query, argslist: Iterable[Tuple[Any, ...]],
                        template: Optional[str] = None) -> None:
         """ Wrapper for the psycopg2 convenience function to execute
             SQL for a list of values.

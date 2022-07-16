@@ -36,7 +36,7 @@ class ICUTokenAnalysis:
                          for name, arules in analysis_rules.items()}
 
 
-    def get_analyzer(self, name: str) -> Analyser:
+    def get_analyzer(self, name: Optional[str]) -> Analyser:
         """ Return the given named analyzer. If no analyzer with that
             name exists, return the default analyzer.
         """

@@ -37,7 +37,7 @@ class Cursor(psycopg2.extras.DictCursor):
 
 
     def execute_values(self, sql: Query, argslist: Iterable[Tuple[Any, ...]],
-                       template: Optional[str] = None) -> None:
+                       template: Optional[Query] = None) -> None:
         """ Wrapper for the psycopg2 convenience function to execute
             SQL for a list of values.
         """

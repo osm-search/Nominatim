@@ -8,7 +8,9 @@
 Functions for importing, updating and otherwise maintaining the table
 of artificial postcode centroids.
 """
+from typing import Optional, Tuple, Dict, List, TextIO
 from collections import defaultdict
+from pathlib import Path
 import csv
 import gzip
 import logging
@@ -16,18 +18,19 @@ from math import isfinite
 
 from psycopg2 import sql as pysql
 
-from nominatim.db.connection import connect
+from nominatim.db.connection import connect, Connection
 from nominatim.utils.centroid import PointsCentroid
-from nominatim.data.postcode_format import PostcodeFormatter
+from nominatim.data.postcode_format import PostcodeFormatter, CountryPostcodeMatcher
+from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
 LOG = logging.getLogger()
 
-def _to_float(num, max_value):
+def _to_float(numstr: str, max_value: float) -> float:
     """ Convert the number in string into a float. The number is expected
         to be in the range of [-max_value, max_value]. Otherwise rises a
         ValueError.
     """
-    num = float(num)
+    num = float(numstr)
     if not isfinite(num) or num <= -max_value or num >= max_value:
         raise ValueError()
 
@@ -37,18 +40,19 @@ class _PostcodeCollector:
     """ Collector for postcodes of a single country.
     """
 
-    def __init__(self, country, matcher):
+    def __init__(self, country: str, matcher: Optional[CountryPostcodeMatcher]):
         self.country = country
         self.matcher = matcher
-        self.collected = defaultdict(PointsCentroid)
-        self.normalization_cache = None
+        self.collected: Dict[str, PointsCentroid] = defaultdict(PointsCentroid)
+        self.normalization_cache: Optional[Tuple[str, Optional[str]]] = None
 
 
-    def add(self, postcode, x, y):
+    def add(self, postcode: str, x: float, y: float) -> None:
         """ Add the given postcode to the collection cache. If the postcode
             already existed, it is overwritten with the new centroid.
         """
         if self.matcher is not None:
+            normalized: Optional[str]
             if self.normalization_cache and self.normalization_cache[0] == postcode:
                 normalized = self.normalization_cache[1]
             else:
@@ -60,7 +64,7 @@ class _PostcodeCollector:
                 self.collected[normalized] += (x, y)
 
 
-    def commit(self, conn, analyzer, project_dir):
+    def commit(self, conn: Connection, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
         """ Update postcodes for the country from the postcodes selected so far
             as well as any externally supplied postcodes.
         """
@@ -94,7 +98,8 @@ class _PostcodeCollector:
                               """).format(pysql.Literal(self.country)), to_update)
 
 
-    def _compute_changes(self, conn):
+    def _compute_changes(self, conn: Connection) \
+          -> Tuple[List[Tuple[str, float, float]], List[str], List[Tuple[str, float, float]]]:
         """ Compute which postcodes from the collected postcodes have to be
             added or modified and which from the location_postcode table
             have to be deleted.
@@ -116,12 +121,12 @@ class _PostcodeCollector:
                     to_delete.append(postcode)
 
         to_add = [(k, *v.centroid()) for k, v in self.collected.items()]
-        self.collected = None
+        self.collected = defaultdict(PointsCentroid)
 
         return to_add, to_delete, to_update
 
 
-    def _update_from_external(self, analyzer, project_dir):
+    def _update_from_external(self, analyzer: AbstractAnalyzer, project_dir: Path) -> None:
         """ Look for an external postcode file for the active country in
             the project directory and add missing postcodes when found.
         """
@@ -151,7 +156,7 @@ class _PostcodeCollector:
             csvfile.close()
 
 
-    def _open_external(self, project_dir):
+    def _open_external(self, project_dir: Path) -> Optional[TextIO]:
         fname = project_dir / f'{self.country}_postcodes.csv'
 
         if fname.is_file():
@@ -167,7 +172,7 @@ class _PostcodeCollector:
         return None
 
 
-def update_postcodes(dsn, project_dir, tokenizer):
+def update_postcodes(dsn: str, project_dir: Path, tokenizer: AbstractTokenizer) -> None:
     """ Update the table of artificial postcodes.
 
         Computes artificial postcode centroids from the placex table,
@@ -220,7 +225,7 @@ def update_postcodes(dsn, project_dir, tokenizer):
 
         analyzer.update_postcodes_from_db()
 
-def can_compute(dsn):
+def can_compute(dsn: str) -> bool:
     """
         Check that the place table exists so that
         postcodes can be computed.

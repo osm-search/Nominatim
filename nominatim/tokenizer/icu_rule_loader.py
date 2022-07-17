@@ -7,7 +7,7 @@
 """
 Helper class to create ICU rules from a configuration file.
 """
-from typing import Mapping, Any, Generic, Dict, Optional
+from typing import Mapping, Any, Dict, Optional
 import importlib
 import io
 import json
@@ -19,7 +19,7 @@ from nominatim.db.connection import Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
-from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyser, T_config
+from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyser
 import nominatim.data.country_info
 
 LOG = logging.getLogger()
@@ -130,7 +130,7 @@ class ICURuleLoader:
     def _setup_analysis(self) -> None:
         """ Process the rules used for creating the various token analyzers.
         """
-        self.analysis: Dict[Optional[str], TokenAnalyzerRule[Any]]  = {}
+        self.analysis: Dict[Optional[str], TokenAnalyzerRule]  = {}
 
         if not isinstance(self.analysis_rules, list):
             raise UsageError("Configuration section 'token-analysis' must be a list.")
@@ -163,7 +163,7 @@ class ICURuleLoader:
         return ';'.join(flatten_config_list(content, section)) + ';'
 
 
-class TokenAnalyzerRule(Generic[T_config]):
+class TokenAnalyzerRule:
     """ Factory for a single analysis module. The class saves the configuration
         and creates a new token analyzer on request.
     """
@@ -172,7 +172,7 @@ class TokenAnalyzerRule(Generic[T_config]):
         # Find the analysis module
         module_name = 'nominatim.tokenizer.token_analysis.' \
                       + _get_section(rules, 'analyzer').replace('-', '_')
-        self._analysis_mod: AnalysisModule[T_config] = importlib.import_module(module_name)
+        self._analysis_mod: AnalysisModule = importlib.import_module(module_name)
 
         # Load the configuration.
         self.config = self._analysis_mod.configure(rules, normalization_rules)

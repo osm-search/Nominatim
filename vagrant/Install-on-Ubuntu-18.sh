@@ -33,7 +33,7 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
 # Some of the Python packages that come with Ubuntu 18.04 are too old, so
 # install the latest version from pip:
 
-    pip3 install --user python-dotenv datrie pyyaml psycopg2-binary typing-extensions
+    pip3 install --user python-dotenv datrie pyyaml psycopg2-binary
 
 #
 # System Configuration

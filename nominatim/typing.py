@@ -12,7 +12,8 @@ Complex type definitions are moved here, to keep the source files readable.
 from typing import Any, Union, Mapping, TypeVar, Sequence, TYPE_CHECKING
 
 # Generics varaible names do not confirm to naming styles, ignore globally here.
-# pylint: disable=invalid-name,abstract-method,multiple-statements,missing-class-docstring
+# pylint: disable=invalid-name,abstract-method,multiple-statements
+# pylint: disable=missing-class-docstring,useless-import-alias
 
 if TYPE_CHECKING:
     import psycopg2.sql
@@ -36,3 +37,16 @@ class DictCursorResult(Mapping[str, Any]):
 DictCursorResults = Sequence[DictCursorResult]
 
 T_cursor = TypeVar('T_cursor', bound='psycopg2.extensions.cursor')
+
+# The following typing features require typing_extensions to work
+# on all supported Python versions.
+# Only require this for type checking but not for normal operations.
+
+if TYPE_CHECKING:
+    from typing_extensions import (Protocol as Protocol,
+                                   Final as Final,
+                                   TypedDict as TypedDict)
+else:
+    Protocol = object
+    Final = 'Final'
+    TypedDict = dict

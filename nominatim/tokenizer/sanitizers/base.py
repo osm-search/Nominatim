@@ -9,9 +9,9 @@ Common data types and protocols for sanitizers.
 """
 from typing import Optional, Dict, List, Mapping, Callable
 
-from typing_extensions import Protocol, Final
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 from nominatim.data.place_info import PlaceInfo
+from nominatim.typing import Protocol, Final
 
 class PlaceName:
     """ A searchable name for a place together with properties.

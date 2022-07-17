@@ -11,14 +11,13 @@ tasks.
 from typing import Any, List
 import functools
 
-from typing_extensions import Protocol
 from psycopg2 import sql as pysql
 import psycopg2.extras
 
 from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.base import AbstractAnalyzer
 from nominatim.db.async_connection import DBConnection
-from nominatim.typing import Query, DictCursorResult, DictCursorResults
+from nominatim.typing import Query, DictCursorResult, DictCursorResults, Protocol
 
 # pylint: disable=C0111
 

@@ -12,11 +12,10 @@ import datetime as dt
 import logging
 import re
 
-from typing_extensions import TypedDict
-
 from nominatim.db.connection import Connection
 from nominatim.tools.exec_utils import get_url
 from nominatim.errors import UsageError
+from nominatim.typing import TypedDict
 
 LOG = logging.getLogger()
 ISODATE_FORMAT = '%Y-%m-%dT%H:%M:%S'

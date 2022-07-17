@@ -17,8 +17,6 @@ from typing import Iterable, Tuple, Mapping, Sequence, Optional, Set
 import logging
 import re
 
-from typing_extensions import Protocol
-
 from psycopg2.sql import Identifier, SQL
 
 from nominatim.config import Configuration
@@ -26,6 +24,7 @@ from nominatim.db.connection import Connection
 from nominatim.tools.special_phrases.importer_statistics import SpecialPhrasesImporterStatistics
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 from nominatim.tokenizer.base import AbstractTokenizer
+from nominatim.typing import Protocol
 
 LOG = logging.getLogger()
 

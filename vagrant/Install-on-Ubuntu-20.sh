@@ -30,11 +30,6 @@ export DEBIAN_FRONTEND=noninteractive #DOCS:
                         python3-psycopg2 python3-psutil python3-jinja2 \
                         python3-icu python3-datrie python3-yaml python3-pip git
 
-# Nominatim uses some typing features only available in later Python versions.
-# Install the latest version of the backport package:
-
-    pip3 install --user typing-extensions
-
 #
 # System Configuration
 # ====================

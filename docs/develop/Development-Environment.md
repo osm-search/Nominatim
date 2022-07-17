@@ -34,6 +34,7 @@ It has the following additional requirements:
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 * [Pylint](https://pylint.org/) (CI always runs the latest version from pip)
 * [mypy](http://mypy-lang.org/) (plus typing information for external libs)
+* [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
 
 The documentation is built with mkdocs:

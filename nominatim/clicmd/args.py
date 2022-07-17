@@ -12,10 +12,9 @@ import argparse
 import logging
 from pathlib import Path
 
-from typing_extensions import Protocol
-
 from nominatim.errors import UsageError
 from nominatim.config import Configuration
+from nominatim.typing import Protocol
 
 LOG = logging.getLogger()
 

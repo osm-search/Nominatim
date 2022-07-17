@@ -8,6 +8,7 @@
 Command-line interface to the Nominatim functions for import, update,
 database administration and querying.
 """
+from typing import Optional, Any, List, Union
 import logging
 import os
 import sys
@@ -19,16 +20,15 @@ from nominatim.tools.exec_utils import run_legacy_script, run_php_server
 from nominatim.errors import UsageError
 from nominatim import clicmd
 from nominatim import version
-from nominatim.clicmd.args import NominatimArgs
+from nominatim.clicmd.args import NominatimArgs, Subcommand
 
 LOG = logging.getLogger()
-
 
 class CommandlineParser:
     """ Wraps some of the common functions for parsing the command line
         and setting up subcommands.
     """
-    def __init__(self, prog, description):
+    def __init__(self, prog: str, description: Optional[str]):
         self.parser = argparse.ArgumentParser(
             prog=prog,
             description=description,
@@ -56,8 +56,8 @@ class CommandlineParser:
         group.add_argument('-j', '--threads', metavar='NUM', type=int,
                            help='Number of parallel threads to use')
 
-    @staticmethod
-    def nominatim_version_text():
+
+    def nominatim_version_text(self) -> str:
         """ Program name and version number as string
         """
         text = f'Nominatim version {version.version_str()}'
@@ -65,11 +65,14 @@ class CommandlineParser:
             text += f' ({version.GIT_COMMIT_HASH})'
         return text
 
-    def add_subcommand(self, name, cmd):
+
+    def add_subcommand(self, name: str, cmd: Subcommand) -> None:
         """ Add a subcommand to the parser. The subcommand must be a class
             with a function add_args() that adds the parameters for the
             subcommand and a run() function that executes the command.
         """
+        assert cmd.__doc__ is not None
+
         parser = self.subs.add_parser(name, parents=[self.default_args],
                                       help=cmd.__doc__.split('\n', 1)[0],
                                       description=cmd.__doc__,
@@ -78,7 +81,8 @@ class CommandlineParser:
         parser.set_defaults(command=cmd)
         cmd.add_args(parser)
 
-    def run(self, **kwargs):
+
+    def run(self, **kwargs: Any) -> int:
         """ Parse the command line arguments of the program and execute the
             appropriate subcommand.
         """
@@ -89,7 +93,7 @@ class CommandlineParser:
             return 1
 
         if args.version:
-            print(CommandlineParser.nominatim_version_text())
+            print(self.nominatim_version_text())
             return 0
 
         if args.subcommand is None:
@@ -145,8 +149,7 @@ class QueryExport:
     Export addresses as CSV file from the database.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Output arguments')
         group.add_argument('--output-type', default='street',
                            choices=('continent', 'country', 'state', 'county',
@@ -175,11 +178,10 @@ class QueryExport:
                            help='Export only children of this OSM relation')
 
 
-    @staticmethod
-    def run(args):
-        params = ['export.php',
-                  '--output-type', args.output_type,
-                  '--output-format', args.output_format]
+    def run(self, args: NominatimArgs) -> int:
+        params: List[Union[int, str]] = [
+                             '--output-type', args.output_type,
+                             '--output-format', args.output_format]
         if args.output_all_postcodes:
             params.append('--output-all-postcodes')
         if args.language:
@@ -193,7 +195,7 @@ class QueryExport:
         if args.restrict_to_osm_relation:
             params.extend(('--restrict-to-osm-relation', args.restrict_to_osm_relation))
 
-        return run_legacy_script(*params, nominatim_env=args)
+        return run_legacy_script('export.php', *params, nominatim_env=args)
 
 
 class AdminServe:
@@ -207,51 +209,52 @@ class AdminServe:
     By the default, the webserver can be accessed at: http://127.0.0.1:8088
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Server arguments')
         group.add_argument('--server', default='127.0.0.1:8088',
                            help='The address the server will listen to.')
 
-    @staticmethod
-    def run(args):
-        run_php_server(args.server, args.project_dir / 'website')
 
-def get_set_parser(**kwargs):
+    def run(self, args: NominatimArgs) -> int:
+        run_php_server(args.server, args.project_dir / 'website')
+        return 0
+
+
+def get_set_parser(**kwargs: Any) -> CommandlineParser:
     """\
     Initializes the parser and adds various subcommands for
     nominatim cli.
     """
     parser = CommandlineParser('nominatim', nominatim.__doc__)
 
-    parser.add_subcommand('import', clicmd.SetupAll)
-    parser.add_subcommand('freeze', clicmd.SetupFreeze)
-    parser.add_subcommand('replication', clicmd.UpdateReplication)
+    parser.add_subcommand('import', clicmd.SetupAll())
+    parser.add_subcommand('freeze', clicmd.SetupFreeze())
+    parser.add_subcommand('replication', clicmd.UpdateReplication())
 
-    parser.add_subcommand('special-phrases', clicmd.ImportSpecialPhrases)
+    parser.add_subcommand('special-phrases', clicmd.ImportSpecialPhrases())
 
-    parser.add_subcommand('add-data', clicmd.UpdateAddData)
-    parser.add_subcommand('index', clicmd.UpdateIndex)
+    parser.add_subcommand('add-data', clicmd.UpdateAddData())
+    parser.add_subcommand('index', clicmd.UpdateIndex())
     parser.add_subcommand('refresh', clicmd.UpdateRefresh())
 
-    parser.add_subcommand('admin', clicmd.AdminFuncs)
+    parser.add_subcommand('admin', clicmd.AdminFuncs())
 
-    parser.add_subcommand('export', QueryExport)
-    parser.add_subcommand('serve', AdminServe)
+    parser.add_subcommand('export', QueryExport())
+    parser.add_subcommand('serve', AdminServe())
 
     if kwargs.get('phpcgi_path'):
-        parser.add_subcommand('search', clicmd.APISearch)
-        parser.add_subcommand('reverse', clicmd.APIReverse)
-        parser.add_subcommand('lookup', clicmd.APILookup)
-        parser.add_subcommand('details', clicmd.APIDetails)
-        parser.add_subcommand('status', clicmd.APIStatus)
+        parser.add_subcommand('search', clicmd.APISearch())
+        parser.add_subcommand('reverse', clicmd.APIReverse())
+        parser.add_subcommand('lookup', clicmd.APILookup())
+        parser.add_subcommand('details', clicmd.APIDetails())
+        parser.add_subcommand('status', clicmd.APIStatus())
     else:
         parser.parser.epilog = 'php-cgi not found. Query commands not available.'
 
     return parser
 
 
-def nominatim(**kwargs):
+def nominatim(**kwargs: Any) -> int:
     """\
     Command-line tools for importing, updating, administrating and
     querying the Nominatim database.

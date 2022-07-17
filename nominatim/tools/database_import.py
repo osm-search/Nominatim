@@ -82,7 +82,7 @@ def setup_database_skeleton(dsn: str, rouser: Optional[str] = None) -> None:
                          POSTGIS_REQUIRED_VERSION)
 
 
-def import_osm_data(osm_files: Union[str, Sequence[str]],
+def import_osm_data(osm_files: Union[Path, Sequence[Path]],
                     options: MutableMapping[str, Any],
                     drop: bool = False, ignore_errors: bool = False) -> None:
     """ Import the given OSM files. 'options' contains the list of

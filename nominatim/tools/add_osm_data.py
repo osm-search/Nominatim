@@ -29,7 +29,7 @@ def add_data_from_file(fname: str, options: MutableMapping[str, Any]) -> int:
 
 
 def add_osm_object(osm_type: str, osm_id: int, use_main_api: bool,
-                   options: MutableMapping[str, Any]) -> None:
+                   options: MutableMapping[str, Any]) -> int:
     """ Add or update a single OSM object from the latest version of the
         API.
     """
@@ -52,3 +52,5 @@ def add_osm_object(osm_type: str, osm_id: int, use_main_api: bool,
     options['import_data'] = get_url(base_url).encode('utf-8')
 
     run_osm2pgsql(options)
+
+    return 0

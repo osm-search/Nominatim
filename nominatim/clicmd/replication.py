@@ -7,6 +7,8 @@
 """
 Implementation of the 'replication' sub-command.
 """
+from typing import Optional
+import argparse
 import datetime as dt
 import logging
 import socket
@@ -15,6 +17,7 @@ import time
 from nominatim.db import status
 from nominatim.db.connection import connect
 from nominatim.errors import UsageError
+from nominatim.clicmd.args import NominatimArgs
 
 LOG = logging.getLogger()
 
@@ -41,8 +44,7 @@ class UpdateReplication:
     downloads and imports the next batch of updates.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Arguments for initialisation')
         group.add_argument('--init', action='store_true',
                            help='Initialise the update process')
@@ -68,8 +70,8 @@ class UpdateReplication:
         group.add_argument('--socket-timeout', dest='socket_timeout', type=int, default=60,
                            help='Set timeout for file downloads')
 
-    @staticmethod
-    def _init_replication(args):
+
+    def _init_replication(self, args: NominatimArgs) -> int:
         from ..tools import replication, refresh
 
         LOG.warning("Initialising replication updates")
@@ -81,16 +83,17 @@ class UpdateReplication:
         return 0
 
 
-    @staticmethod
-    def _check_for_updates(args):
+    def _check_for_updates(self, args: NominatimArgs) -> int:
         from ..tools import replication
 
         with connect(args.config.get_libpq_dsn()) as conn:
             return replication.check_for_updates(conn, base_url=args.config.REPLICATION_URL)
 
-    @staticmethod
-    def _report_update(batchdate, start_import, start_index):
-        def round_time(delta):
+
+    def _report_update(self, batchdate: dt.datetime,
+                       start_import: dt.datetime,
+                       start_index: Optional[dt.datetime]) -> None:
+        def round_time(delta: dt.timedelta) -> dt.timedelta:
             return dt.timedelta(seconds=int(delta.total_seconds()))
 
         end = dt.datetime.now(dt.timezone.utc)
@@ -101,8 +104,7 @@ class UpdateReplication:
                     round_time(end - batchdate))
 
 
-    @staticmethod
-    def _compute_update_interval(args):
+    def _compute_update_interval(self, args: NominatimArgs) -> int:
         if args.catch_up:
             return 0
 
@@ -119,13 +121,13 @@ class UpdateReplication:
         return update_interval
 
 
-    @staticmethod
-    def _update(args):
+    def _update(self, args: NominatimArgs) -> None:
+        # pylint: disable=too-many-locals
         from ..tools import replication
         from ..indexer.indexer import Indexer
         from ..tokenizer import factory as tokenizer_factory
 
-        update_interval = UpdateReplication._compute_update_interval(args)
+        update_interval = self._compute_update_interval(args)
 
         params = args.osm2pgsql_options(default_cache=2000, default_threads=1)
         params.update(base_url=args.config.REPLICATION_URL,
@@ -169,7 +171,8 @@ class UpdateReplication:
                     indexer.index_full(analyse=False)
 
             if LOG.isEnabledFor(logging.WARNING):
-                UpdateReplication._report_update(batchdate, start, index_start)
+                assert batchdate is not None
+                self._report_update(batchdate, start, index_start)
 
             if args.once or (args.catch_up and state is replication.UpdateState.NO_CHANGES):
                 break
@@ -179,15 +182,14 @@ class UpdateReplication:
                 time.sleep(recheck_interval)
 
 
-    @staticmethod
-    def run(args):
+    def run(self, args: NominatimArgs) -> int:
         socket.setdefaulttimeout(args.socket_timeout)
 
         if args.init:
-            return UpdateReplication._init_replication(args)
+            return self._init_replication(args)
 
         if args.check_for_updates:
-            return UpdateReplication._check_for_updates(args)
+            return self._check_for_updates(args)
 
-        UpdateReplication._update(args)
+        self._update(args)
         return 0

@@ -47,8 +47,8 @@ def run_legacy_script(script: StrPath, *args: Union[int, str],
 
 def run_api_script(endpoint: str, project_dir: Path,
                    extra_env: Optional[Mapping[str, str]] = None,
-                   phpcgi_bin: Optional[str] = None,
-                   params: Optional[Mapping[str, str]] = None) -> int:
+                   phpcgi_bin: Optional[Path] = None,
+                   params: Optional[Mapping[str, Any]] = None) -> int:
     """ Execute a Nominatim API function.
 
         The function needs a project directory that contains the website

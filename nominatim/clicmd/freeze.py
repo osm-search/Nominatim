@@ -7,8 +7,10 @@
 """
 Implementation of the 'freeze' subcommand.
 """
+import argparse
 
 from nominatim.db.connection import connect
+from nominatim.clicmd.args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -27,12 +29,11 @@ class SetupFreeze:
     This command has the same effect as the `--no-updates` option for imports.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         pass # No options
 
-    @staticmethod
-    def run(args):
+
+    def run(self, args: NominatimArgs) -> int:
         from ..tools import freeze
 
         with connect(args.config.get_libpq_dsn()) as conn:

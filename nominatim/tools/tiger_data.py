@@ -108,14 +108,14 @@ def handle_threaded_sql_statements(pool: WorkerPool, fd: TextIO,
 
 
 def add_tiger_data(data_dir: str, config: Configuration, threads: int,
-                   tokenizer: AbstractTokenizer) -> None:
+                   tokenizer: AbstractTokenizer) -> int:
     """ Import tiger data from directory or tar file `data dir`.
     """
     dsn = config.get_libpq_dsn()
 
     with TigerInput(data_dir) as tar:
         if not tar:
-            return
+            return 1
 
         with connect(dsn) as conn:
             sql = SQLPreprocessor(conn, config)
@@ -137,3 +137,5 @@ def add_tiger_data(data_dir: str, config: Configuration, threads: int,
     with connect(dsn) as conn:
         sql = SQLPreprocessor(conn, config)
         sql.run_sql_file(conn, 'tiger_import_finish.sql')
+
+    return 0

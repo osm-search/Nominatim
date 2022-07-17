@@ -98,8 +98,8 @@ jobs:
               run: sudo apt-get install -y -qq python3-pytest
               if: matrix.ubuntu == 22
 
-            - name: Install latest pylint
-              run: pip3 install pylint mypy types-PyYAML types-jinja2 types-psycopg2
+            - name: Install latest pylint/mypy
+              run: pip3 install -U pylint mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil typing-extensions
 
             - name: PHP linting
               run: phpcs --report-width=120 .

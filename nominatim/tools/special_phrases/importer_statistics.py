@@ -12,15 +12,14 @@ import logging
 LOG = logging.getLogger()
 
 class SpecialPhrasesImporterStatistics():
-    # pylint: disable-msg=too-many-instance-attributes
     """
         Class handling statistics of the import
         process of special phrases.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self._intialize_values()
 
-    def _intialize_values(self):
+    def _intialize_values(self) -> None:
         """
             Set all counts for the global
             import to 0.
@@ -30,32 +29,32 @@ class SpecialPhrasesImporterStatistics():
         self.tables_ignored = 0
         self.invalids = 0
 
-    def notify_one_phrase_invalid(self):
+    def notify_one_phrase_invalid(self) -> None:
         """
             Add +1 to the count of invalid entries
             fetched from the wiki.
         """
         self.invalids += 1
 
-    def notify_one_table_created(self):
+    def notify_one_table_created(self) -> None:
         """
             Add +1 to the count of created tables.
         """
         self.tables_created += 1
 
-    def notify_one_table_deleted(self):
+    def notify_one_table_deleted(self) -> None:
         """
             Add +1 to the count of deleted tables.
         """
         self.tables_deleted += 1
 
-    def notify_one_table_ignored(self):
+    def notify_one_table_ignored(self) -> None:
         """
             Add +1 to the count of ignored tables.
         """
         self.tables_ignored += 1
 
-    def notify_import_done(self):
+    def notify_import_done(self) -> None:
         """
             Print stats for the whole import process
             and reset all values.

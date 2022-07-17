@@ -9,7 +9,7 @@ Abstract class defintions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any, Optional, Iterable
 from pathlib import Path
 
 from typing_extensions import Protocol
@@ -81,7 +81,8 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def update_special_phrases(self, phrases: List[Tuple[str, str, str, str]],
+    def update_special_phrases(self,
+                               phrases: Iterable[Tuple[str, str, str, str]],
                                should_replace: bool) -> None:
         """ Update the tokenizer's special phrase tokens from the given
             list of special phrases.

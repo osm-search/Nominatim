@@ -7,7 +7,8 @@
 """
 Tokenizer implementing normalisation as used before Nominatim 4.
 """
-from typing import Optional, Sequence, List, Tuple, Mapping, Any, Callable, cast, Dict, Set
+from typing import Optional, Sequence, List, Tuple, Mapping, Any, Callable, \
+                   cast, Dict, Set, Iterable
 from collections import OrderedDict
 import logging
 from pathlib import Path
@@ -392,7 +393,7 @@ class LegacyNameAnalyzer(AbstractAnalyzer):
 
 
 
-    def update_special_phrases(self, phrases: Sequence[Tuple[str, str, str, str]],
+    def update_special_phrases(self, phrases: Iterable[Tuple[str, str, str, str]],
                                should_replace: bool) -> None:
         """ Replace the search index for special phrases with the new phrases.
         """

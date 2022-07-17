@@ -110,7 +110,7 @@ jobs:
               working-directory: Nominatim
 
             - name: Python static typechecking
-              run: mypy nominatim
+              run: mypy --strict nominatim
               working-directory: Nominatim
 
 

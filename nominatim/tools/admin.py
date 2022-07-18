@@ -7,7 +7,7 @@
 """
 Functions for database analysis and maintenance.
 """
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, cast
 import logging
 
 from psycopg2.extras import Json, register_hstore
@@ -49,7 +49,7 @@ def _get_place_info(cursor: Cursor, osm_id: Optional[str],
         LOG.fatal("OSM object %s not found in database.", osm_id)
         raise UsageError("OSM object not found")
 
-    return cursor.fetchone() # type: ignore[no-untyped-call]
+    return cast(DictCursorResult, cursor.fetchone()) # type: ignore[no-untyped-call]
 
 
 def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,

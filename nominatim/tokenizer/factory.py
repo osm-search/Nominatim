@@ -19,17 +19,20 @@ database.
 A tokenizer usually also includes PHP code for querying. The appropriate PHP
 normalizer module is installed, when the tokenizer is created.
 """
+from typing import Optional
 import logging
 import importlib
 from pathlib import Path
 
-from ..errors import UsageError
-from ..db import properties
-from ..db.connection import connect
+from nominatim.errors import UsageError
+from nominatim.db import properties
+from nominatim.db.connection import connect
+from nominatim.config import Configuration
+from nominatim.tokenizer.base import AbstractTokenizer, TokenizerModule
 
 LOG = logging.getLogger()
 
-def _import_tokenizer(name):
+def _import_tokenizer(name: str) -> TokenizerModule:
     """ Load the tokenizer.py module from project directory.
     """
     src_file = Path(__file__).parent / (name + '_tokenizer.py')
@@ -41,7 +44,8 @@ def _import_tokenizer(name):
     return importlib.import_module('nominatim.tokenizer.' + name + '_tokenizer')
 
 
-def create_tokenizer(config, init_db=True, module_name=None):
+def create_tokenizer(config: Configuration, init_db: bool = True,
+                     module_name: Optional[str] = None) -> AbstractTokenizer:
     """ Create a new tokenizer as defined by the given configuration.
 
         The tokenizer data and code is copied into the 'tokenizer' directory
@@ -70,7 +74,7 @@ def create_tokenizer(config, init_db=True, module_name=None):
     return tokenizer
 
 
-def get_tokenizer_for_db(config):
+def get_tokenizer_for_db(config: Configuration) -> AbstractTokenizer:
     """ Instantiate a tokenizer for an existing database.
 
         The function looks up the appropriate tokenizer in the database

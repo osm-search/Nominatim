@@ -7,14 +7,20 @@
 """
 Implementation of the 'import' subcommand.
 """
+from typing import Optional
+import argparse
 import logging
 from pathlib import Path
 
 import psutil
 
-from nominatim.db.connection import connect
+from nominatim.config import Configuration
+from nominatim.db.connection import connect, Connection
 from nominatim.db import status, properties
+from nominatim.tokenizer.base import AbstractTokenizer
 from nominatim.version import version_str
+from nominatim.clicmd.args import NominatimArgs
+from nominatim.errors import UsageError
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -32,38 +38,36 @@ class SetupAll:
     needs superuser rights on the database.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group_name = parser.add_argument_group('Required arguments')
-        group = group_name.add_mutually_exclusive_group(required=True)
-        group.add_argument('--osm-file', metavar='FILE', action='append',
+        group1 = group_name.add_mutually_exclusive_group(required=True)
+        group1.add_argument('--osm-file', metavar='FILE', action='append',
                            help='OSM file to be imported'
                                 ' (repeat for importing multiple files)')
-        group.add_argument('--continue', dest='continue_at',
+        group1.add_argument('--continue', dest='continue_at',
                            choices=['load-data', 'indexing', 'db-postprocess'],
                            help='Continue an import that was interrupted')
-        group = parser.add_argument_group('Optional arguments')
-        group.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
+        group2 = parser.add_argument_group('Optional arguments')
+        group2.add_argument('--osm2pgsql-cache', metavar='SIZE', type=int,
                            help='Size of cache to be used by osm2pgsql (in MB)')
-        group.add_argument('--reverse-only', action='store_true',
+        group2.add_argument('--reverse-only', action='store_true',
                            help='Do not create tables and indexes for searching')
-        group.add_argument('--no-partitions', action='store_true',
+        group2.add_argument('--no-partitions', action='store_true',
                            help=("Do not partition search indices "
                                  "(speeds up import of single country extracts)"))
-        group.add_argument('--no-updates', action='store_true',
+        group2.add_argument('--no-updates', action='store_true',
                            help="Do not keep tables that are only needed for "
                                 "updating the database later")
-        group.add_argument('--offline', action='store_true',
+        group2.add_argument('--offline', action='store_true',
                            help="Do not attempt to load any additional data from the internet")
-        group = parser.add_argument_group('Expert options')
-        group.add_argument('--ignore-errors', action='store_true',
+        group3 = parser.add_argument_group('Expert options')
+        group3.add_argument('--ignore-errors', action='store_true',
                            help='Continue import even when errors in SQL are present')
-        group.add_argument('--index-noanalyse', action='store_true',
+        group3.add_argument('--index-noanalyse', action='store_true',
                            help='Do not perform analyse operations during index (expert only)')
 
 
-    @staticmethod
-    def run(args): # pylint: disable=too-many-statements
+    def run(self, args: NominatimArgs) -> int: # pylint: disable=too-many-statements
         from ..data import country_info
         from ..tools import database_import, refresh, postcodes, freeze
         from ..indexer.indexer import Indexer
@@ -72,6 +76,8 @@ class SetupAll:
 
         if args.continue_at is None:
             files = args.get_osm_file_list()
+            if not files:
+                raise UsageError("No input files (use --osm-file).")
 
             LOG.warning('Creating database')
             database_import.setup_database_skeleton(args.config.get_libpq_dsn(),
@@ -88,7 +94,7 @@ class SetupAll:
                                             drop=args.no_updates,
                                             ignore_errors=args.ignore_errors)
 
-            SetupAll._setup_tables(args.config, args.reverse_only)
+            self._setup_tables(args.config, args.reverse_only)
 
             LOG.warning('Importing wikipedia importance data')
             data_path = Path(args.config.WIKIPEDIA_DATA_PATH or args.project_dir)
@@ -107,7 +113,7 @@ class SetupAll:
                                       args.threads or psutil.cpu_count() or 1)
 
         LOG.warning("Setting up tokenizer")
-        tokenizer = SetupAll._get_tokenizer(args.continue_at, args.config)
+        tokenizer = self._get_tokenizer(args.continue_at, args.config)
 
         if args.continue_at is None or args.continue_at == 'load-data':
             LOG.warning('Calculate postcodes')
@@ -117,7 +123,7 @@ class SetupAll:
         if args.continue_at is None or args.continue_at in ('load-data', 'indexing'):
             if args.continue_at is not None and args.continue_at != 'load-data':
                 with connect(args.config.get_libpq_dsn()) as conn:
-                    SetupAll._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
+                    self._create_pending_index(conn, args.config.TABLESPACE_ADDRESS_INDEX)
             LOG.warning('Indexing places')
             indexer = Indexer(args.config.get_libpq_dsn(), tokenizer,
                               args.threads or psutil.cpu_count() or 1)
@@ -142,13 +148,12 @@ class SetupAll:
         with connect(args.config.get_libpq_dsn()) as conn:
             refresh.setup_website(webdir, args.config, conn)
 
-        SetupAll._finalize_database(args.config.get_libpq_dsn(), args.offline)
+        self._finalize_database(args.config.get_libpq_dsn(), args.offline)
 
         return 0
 
 
-    @staticmethod
-    def _setup_tables(config, reverse_only):
+    def _setup_tables(self, config: Configuration, reverse_only: bool) -> None:
         """ Set up the basic database layout: tables, indexes and functions.
         """
         from ..tools import database_import, refresh
@@ -169,8 +174,8 @@ class SetupAll:
             refresh.create_functions(conn, config, False, False)
 
 
-    @staticmethod
-    def _get_tokenizer(continue_at, config):
+    def _get_tokenizer(self, continue_at: Optional[str],
+                       config: Configuration) -> AbstractTokenizer:
         """ Set up a new tokenizer or load an already initialised one.
         """
         from ..tokenizer import factory as tokenizer_factory
@@ -182,8 +187,8 @@ class SetupAll:
         # just load the tokenizer
         return tokenizer_factory.get_tokenizer_for_db(config)
 
-    @staticmethod
-    def _create_pending_index(conn, tablespace):
+
+    def _create_pending_index(self, conn: Connection, tablespace: str) -> None:
         """ Add a supporting index for finding places still to be indexed.
 
             This index is normally created at the end of the import process
@@ -204,8 +209,7 @@ class SetupAll:
         conn.commit()
 
 
-    @staticmethod
-    def _finalize_database(dsn, offline):
+    def _finalize_database(self, dsn: str, offline: bool) -> None:
         """ Determine the database date and set the status accordingly.
         """
         with connect(dsn) as conn:

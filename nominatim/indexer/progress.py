@@ -22,7 +22,7 @@ class ProgressLogger:
         should be reported.
     """
 
-    def __init__(self, name, total, log_interval=1):
+    def __init__(self, name: str, total: int, log_interval: int = 1) -> None:
         self.name = name
         self.total_places = total
         self.done_places = 0
@@ -30,7 +30,7 @@ class ProgressLogger:
         self.log_interval = log_interval
         self.next_info = INITIAL_PROGRESS if LOG.isEnabledFor(logging.WARNING) else total + 1
 
-    def add(self, num=1):
+    def add(self, num: int = 1) -> None:
         """ Mark `num` places as processed. Print a log message if the
             logging is at least info and the log interval has passed.
         """
@@ -55,14 +55,14 @@ class ProgressLogger:
 
         self.next_info += int(places_per_sec) * self.log_interval
 
-    def done(self):
+    def done(self) -> None:
         """ Print final statistics about the progress.
         """
         rank_end_time = datetime.now()
 
         if rank_end_time == self.rank_start_time:
-            diff_seconds = 0
-            places_per_sec = self.done_places
+            diff_seconds = 0.0
+            places_per_sec = float(self.done_places)
         else:
             diff_seconds = (rank_end_time - self.rank_start_time).total_seconds()
             places_per_sec = self.done_places / diff_seconds

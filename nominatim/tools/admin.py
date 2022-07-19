@@ -7,22 +7,27 @@
 """
 Functions for database analysis and maintenance.
 """
+from typing import Optional, Tuple, Any, cast
 import logging
 
 from psycopg2.extras import Json, register_hstore
 
-from nominatim.db.connection import connect
+from nominatim.config import Configuration
+from nominatim.db.connection import connect, Cursor
 from nominatim.tokenizer import factory as tokenizer_factory
 from nominatim.errors import UsageError
 from nominatim.data.place_info import PlaceInfo
+from nominatim.typing import DictCursorResult
 
 LOG = logging.getLogger()
 
-def _get_place_info(cursor, osm_id, place_id):
+def _get_place_info(cursor: Cursor, osm_id: Optional[str],
+                    place_id: Optional[int]) -> DictCursorResult:
     sql = """SELECT place_id, extra.*
              FROM placex, LATERAL placex_indexing_prepare(placex) as extra
           """
 
+    values: Tuple[Any, ...]
     if osm_id:
         osm_type = osm_id[0].upper()
         if osm_type not in 'NWR' or not osm_id[1:].isdigit():
@@ -44,10 +49,11 @@ def _get_place_info(cursor, osm_id, place_id):
         LOG.fatal("OSM object %s not found in database.", osm_id)
         raise UsageError("OSM object not found")
 
-    return cursor.fetchone()
+    return cast(DictCursorResult, cursor.fetchone()) # type: ignore[no-untyped-call]
 
 
-def analyse_indexing(config, osm_id=None, place_id=None):
+def analyse_indexing(config: Configuration, osm_id: Optional[str] = None,
+                     place_id: Optional[int] = None) -> None:
     """ Analyse indexing of a single Nominatim object.
     """
     with connect(config.get_libpq_dsn()) as conn:

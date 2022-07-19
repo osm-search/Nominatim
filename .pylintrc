@@ -11,6 +11,8 @@ ignored-modules=icu,datrie
 # 'with' statements.
 ignored-classes=NominatimArgs,closing
 # 'too-many-ancestors' is triggered already by deriving from UserDict
-disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use
+# 'not-context-manager' disabled because it causes false positives once
+#   typed Python is enabled. See also https://github.com/PyCQA/pylint/issues/5273
+disable=too-few-public-methods,duplicate-code,too-many-ancestors,bad-option-value,no-self-use,not-context-manager
 
 good-names=i,x,y,fd,db,cc

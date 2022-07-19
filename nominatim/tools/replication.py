@@ -7,6 +7,7 @@
 """
 Functions for updating a database from a replication source.
 """
+from typing import ContextManager, MutableMapping, Any, Generator, cast
 from contextlib import contextmanager
 import datetime as dt
 from enum import Enum
@@ -14,6 +15,7 @@ import logging
 import time
 
 from nominatim.db import status
+from nominatim.db.connection import Connection
 from nominatim.tools.exec_utils import run_osm2pgsql
 from nominatim.errors import UsageError
 
@@ -21,13 +23,13 @@ try:
     from osmium.replication.server import ReplicationServer
     from osmium import WriteHandler
 except ImportError as exc:
-    logging.getLogger().fatal("pyosmium not installed. Replication functions not available.\n"
-                              "To install pyosmium via pip: pip3 install osmium")
+    logging.getLogger().critical("pyosmium not installed. Replication functions not available.\n"
+                                 "To install pyosmium via pip: pip3 install osmium")
     raise UsageError("replication tools not available") from exc
 
 LOG = logging.getLogger()
 
-def init_replication(conn, base_url):
+def init_replication(conn: Connection, base_url: str) -> None:
     """ Set up replication for the server at the given base URL.
     """
     LOG.info("Using replication source: %s", base_url)
@@ -51,7 +53,7 @@ def init_replication(conn, base_url):
     LOG.warning("Updates initialised at sequence %s (%s)", seq, date)
 
 
-def check_for_updates(conn, base_url):
+def check_for_updates(conn: Connection, base_url: str) -> int:
     """ Check if new data is available from the replication service at the
         given base URL.
     """
@@ -84,7 +86,7 @@ class UpdateState(Enum):
     NO_CHANGES = 3
 
 
-def update(conn, options):
+def update(conn: Connection, options: MutableMapping[str, Any]) -> UpdateState:
     """ Update database from the next batch of data. Returns the state of
         updates according to `UpdateState`.
     """
@@ -94,6 +96,8 @@ def update(conn, options):
         LOG.error("Replication not set up. "
                   "Please run 'nominatim replication --init' first.")
         raise UsageError("Replication not set up.")
+
+    assert startdate is not None
 
     if not indexed and options['indexed_only']:
         LOG.info("Skipping update. There is data that needs indexing.")
@@ -132,17 +136,17 @@ def update(conn, options):
     return UpdateState.UP_TO_DATE
 
 
-def _make_replication_server(url):
+def _make_replication_server(url: str) -> ContextManager[ReplicationServer]:
     """ Returns a ReplicationServer in form of a context manager.
 
         Creates a light wrapper around older versions of pyosmium that did
         not support the context manager interface.
     """
     if hasattr(ReplicationServer, '__enter__'):
-        return ReplicationServer(url)
+        return cast(ContextManager[ReplicationServer], ReplicationServer(url))
 
     @contextmanager
-    def get_cm():
+    def get_cm() -> Generator[ReplicationServer, None, None]:
         yield ReplicationServer(url)
 
     return get_cm()

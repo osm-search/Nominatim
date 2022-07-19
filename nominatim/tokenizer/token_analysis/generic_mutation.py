@@ -7,6 +7,7 @@
 """
 Creator for mutation variants for the generic token analysis.
 """
+from typing import Sequence, Iterable, Iterator, Tuple
 import itertools
 import logging
 import re
@@ -15,7 +16,7 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-def _zigzag(outer, inner):
+def _zigzag(outer: Iterable[str], inner: Iterable[str]) -> Iterator[str]:
     return itertools.chain.from_iterable(itertools.zip_longest(outer, inner, fillvalue=''))
 
 
@@ -26,7 +27,7 @@ class MutationVariantGenerator:
         patterns.
     """
 
-    def __init__(self, pattern, replacements):
+    def __init__(self, pattern: str, replacements: Sequence[str]):
         self.pattern = re.compile(pattern)
         self.replacements = replacements
 
@@ -36,7 +37,7 @@ class MutationVariantGenerator:
             raise UsageError("Bad mutation pattern in configuration.")
 
 
-    def generate(self, names):
+    def generate(self, names: Iterable[str]) -> Iterator[str]:
         """ Generator function for the name variants. 'names' is an iterable
             over a set of names for which the variants are to be generated.
         """
@@ -49,7 +50,7 @@ class MutationVariantGenerator:
                     yield ''.join(_zigzag(parts, seps))
 
 
-    def _fillers(self, num_parts):
+    def _fillers(self, num_parts: int) -> Iterator[Tuple[str, ...]]:
         """ Returns a generator for strings to join the given number of string
             parts in all possible combinations.
         """

@@ -10,7 +10,7 @@ option. There are a number of default styles, which are explained in detail
 in the [Import section](../admin/Import.md#filtering-imported-data). These
 standard styles may be referenced by their name.
 
-You can also create your own custom syle. Put the style file into your
+You can also create your own custom style. Put the style file into your
 project directory and then set `NOMINATIM_IMPORT_STYLE` to the name of the file.
 It is always recommended to start with one of the standard styles and customize
 those. You find the standard styles under the name `import-<stylename>.style`

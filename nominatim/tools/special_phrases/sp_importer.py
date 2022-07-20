@@ -59,7 +59,7 @@ class SPImporter():
         self.black_list, self.white_list = self._load_white_and_black_lists()
         self.sanity_check_pattern = re.compile(r'^\w+$')
         # This set will contain all existing phrases to be added.
-        # It contains tuples with the following format: (lable, class, type, operator)
+        # It contains tuples with the following format: (label, class, type, operator)
         self.word_phrases: Set[Tuple[str, str, str, str]] = set()
         # This set will contain all existing place_classtype tables which doesn't match any
         # special phrases class/type on the wiki.

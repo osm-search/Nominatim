@@ -215,7 +215,7 @@ replication catch-up at whatever interval you desire.
     a replication source with an update frequency that is an order of magnitude
     lower. For example, if you want to update once a day, use an hourly updated
     source. This makes sure that you don't miss an entire day of updates when
-    the source is unexpectely late to publish its update.
+    the source is unexpectedly late to publish its update.
 
     If you want to use the source with the same update frequency (e.g. a daily
     updated source with daily updates), use the

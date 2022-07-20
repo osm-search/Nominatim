@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Plugin to monitor the types of requsts made to the API
+# Plugin to monitor the types of requests made to the API
 #
 # Can be configured through libpq environment variables, for example
 # PGUSER, PGDATABASE, etc. See man page of psql for more information.

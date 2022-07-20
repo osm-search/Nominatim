@@ -62,7 +62,7 @@ class Word
     public function extendSearch($oSearch, $oPosition)
     {
         // Full words can only be a name if they appear at the beginning
-        // of the phrase. In structured search the name must forcably in
+        // of the phrase. In structured search the name must forcibly in
         // the first phrase. In unstructured search it may be in a later
         // phrase when the first phrase is a house number.
         if ($oSearch->hasName()

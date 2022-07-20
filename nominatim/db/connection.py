@@ -63,7 +63,7 @@ class Cursor(psycopg2.extras.DictCursor):
 
     def drop_table(self, name: str, if_exists: bool = True, cascade: bool = False) -> None:
         """ Drop the table with the given name.
-            Set `if_exists` to False if a non-existant table should raise
+            Set `if_exists` to False if a non-existent table should raise
             an exception instead of just being ignored. If 'cascade' is set
             to True then all dependent tables are deleted as well.
         """
@@ -141,7 +141,7 @@ class Connection(psycopg2.extensions.connection):
 
     def drop_table(self, name: str, if_exists: bool = True, cascade: bool = False) -> None:
         """ Drop the table with the given name.
-            Set `if_exists` to False if a non-existant table should raise
+            Set `if_exists` to False if a non-existent table should raise
             an exception instead of just being ignored.
         """
         with self.cursor() as cur:

@@ -119,7 +119,7 @@ to compute the address relations between places. These tables are partitioned.
 Each country is assigned a partition number in the country_name table (see
 below) and the data is then split between a set of tables, one for each
 partition. Note that Nominatim still manually manages partitioned tables.
-Native support for partitions in PostgreSQL only became useable with version 13.
+Native support for partitions in PostgreSQL only became usable with version 13.
 It will be a little while before Nominatim drops support for older versions.
 
 ![address tables](address-tables.svg)
@@ -155,9 +155,9 @@ Nominatim also creates a number of static tables at import:
    default languages and saves the assignment of countries to partitions.
  * `country_osm_grid` provides a fallback for country geometries
 
-## Auxilary data tables
+## Auxiliary data tables
 
-Finally there are some table for auxillary data:
+Finally there are some table for auxiliary data:
 
  * `location_property_tiger` - saves housenumber from the Tiger import. Its
    layout is similar to that of `location_propoerty_osmline`.

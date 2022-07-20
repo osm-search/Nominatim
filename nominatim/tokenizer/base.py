@@ -5,7 +5,7 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Abstract class defintions for tokenizers. These base classes are here
+Abstract class definitions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
@@ -113,7 +113,7 @@ class AbstractAnalyzer(ABC):
             the search index.
 
             Arguments:
-                place: Place information retrived from the database.
+                place: Place information retrieved from the database.
 
             Returns:
                 A JSON-serialisable structure that will be handed into
@@ -141,7 +141,7 @@ class AbstractTokenizer(ABC):
 
               init_db: When set to False, then initialisation of database
                 tables should be skipped. This option is only required for
-                migration purposes and can be savely ignored by custom
+                migration purposes and can be safely ignored by custom
                 tokenizers.
 
             TODO: can we move the init_db parameter somewhere else?

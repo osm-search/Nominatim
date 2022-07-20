@@ -30,7 +30,7 @@ NOMINATIM_VERSION = (4, 0, 99, 6)
 POSTGRESQL_REQUIRED_VERSION = (9, 5)
 POSTGIS_REQUIRED_VERSION = (2, 2)
 
-# Cmake sets a variabe @GIT_HASH@ by executing 'git --log'. It is not run
+# Cmake sets a variable @GIT_HASH@ by executing 'git --log'. It is not run
 # on every execution of 'make'.
 # cmake/tool-installed.tmpl is used to build the binary 'nominatim'. Inside
 # there is a call to set the variable value below.

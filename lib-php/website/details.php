@@ -206,7 +206,7 @@ if ($bIncludeLinkedPlaces) {
     $aLinkedLines = $oDB->getAll($sSQL);
 }
 
-// All places this is an imediate parent of
+// All places this is an immediate parent of
 $aHierarchyLines = false;
 if ($bIncludeHierarchy) {
     $sSQL = 'SELECT obj.place_id, osm_type, osm_id, class, type, housenumber,';

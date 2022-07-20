@@ -23,7 +23,7 @@ def _zigzag(outer: Iterable[str], inner: Iterable[str]) -> Iterator[str]:
 class MutationVariantGenerator:
     """ Generates name variants by applying a regular expression to the name
         and replacing it with one or more variants. When the regular expression
-        matches more than once, each occurence is replaced with all replacement
+        matches more than once, each occurrence is replaced with all replacement
         patterns.
     """
 

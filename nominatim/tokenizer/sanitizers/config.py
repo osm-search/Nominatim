@@ -90,7 +90,7 @@ class SanitizerConfig(_BaseUserDict):
             True when the item passes the filter.
 
             If the parameter is empty, the filter lets all items pass. If the
-            paramter is a string, it is interpreted as a single regular expression
+            parameter is a string, it is interpreted as a single regular expression
             that must match the full kind string. If the parameter is a list then
             any of the regular expressions in the list must match to pass.
         """

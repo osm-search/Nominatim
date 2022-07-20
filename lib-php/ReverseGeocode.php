@@ -265,7 +265,7 @@ class ReverseGeocode
             // starts if the search is on POI or street level,
             // searches for the nearest POI or street,
             // if a street is found and a POI is searched for,
-            // the nearest POI which the found street is a parent of is choosen.
+            // the nearest POI which the found street is a parent of is chosen.
             $sSQL = 'select place_id,parent_place_id,rank_address,country_code,';
             $sSQL .= ' ST_distance('.$sPointSQL.', geometry) as distance';
             $sSQL .= ' FROM ';
@@ -359,7 +359,7 @@ class ReverseGeocode
                     // We can't reliably go from the closest street to an
                     // interpolation line because the closest interpolation
                     // may have a different street segments as a parent.
-                    // Therefore allow an interpolation line to take precendence
+                    // Therefore allow an interpolation line to take precedence
                     // even when the street is closer.
                     $fDistance = $iRankAddress < 28 ? 0.001 : $aPlace['distance'];
                 }

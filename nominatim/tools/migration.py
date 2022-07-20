@@ -53,7 +53,7 @@ def migrate(config: Configuration, paths: Any) -> int:
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
                 title = func.__doc__ or ''
-                LOG.warning("Runnning: %s (%s)", title.split('\n', 1)[0],
+                LOG.warning("Running: %s (%s)", title.split('\n', 1)[0],
                             version_str(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
@@ -241,7 +241,7 @@ def create_interpolation_index_on_place(conn: Connection, **_: Any) -> None:
 def add_step_column_for_interpolation(conn: Connection, **_: Any) -> None:
     """ Add a new column 'step' to the interpolations table.
 
-        Also convers the data into the stricter format which requires that
+        Also converts the data into the stricter format which requires that
         startnumbers comply with the odd/even requirements.
     """
     if conn.table_has_column('location_property_osmline', 'step'):

@@ -1,6 +1,6 @@
 # Setting up Nominatim for Development
 
-This chapter gives an overview how to set up Nominatim for developement
+This chapter gives an overview how to set up Nominatim for development
 and how to run tests.
 
 !!! Important

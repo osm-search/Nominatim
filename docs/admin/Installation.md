@@ -67,10 +67,10 @@ the [Development section](../develop/Development-Environment.md).
 ### Hardware
 
 A minimum of 2GB of RAM is required or installation will fail. For a full
-planet import 64GB of RAM or more are strongly recommended. Do not report
+planet import 128GB of RAM or more are strongly recommended. Do not report
 out of memory problems if you have less than 64GB RAM.
 
-For a full planet install you will need at least 900GB of hard disk space.
+For a full planet install you will need at least 1TB of hard disk space.
 Take into account that the OSM database is growing fast.
 Fast disks are essential. Using NVME disks is recommended.
 

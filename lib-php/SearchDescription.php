@@ -236,7 +236,7 @@ class SearchDescription
      * Add the given full-word token to the list of terms to search for in the
      * name.
      *
-     * @param interger iId    ID of term to add.
+     * @param integer iId    ID of term to add.
      * @param bool bRareName  True if the term is infrequent enough to not
      *                        require other constraints for efficient search.
      */
@@ -387,7 +387,7 @@ class SearchDescription
      *
      * @return mixed[] An array with two fields: IDs contains the list of
      *                 matching place IDs and houseNumber the houseNumber
-     *                 if appicable or -1 if not.
+     *                 if applicable or -1 if not.
      */
     public function query(&$oDB, $iMinRank, $iMaxRank, $iLimit)
     {

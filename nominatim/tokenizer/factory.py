@@ -9,11 +9,11 @@ Functions for creating a tokenizer or initialising the right one for an
 existing database.
 
 A tokenizer is something that is bound to the lifetime of a database. It
-can be choosen and configured before the intial import but then needs to
+can be chosen and configured before the initial import but then needs to
 be used consistently when querying and updating the database.
 
 This module provides the functions to create and configure a new tokenizer
-as well as instanciating the appropriate tokenizer for updating an existing
+as well as instantiating the appropriate tokenizer for updating an existing
 database.
 
 A tokenizer usually also includes PHP code for querying. The appropriate PHP

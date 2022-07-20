@@ -47,7 +47,7 @@ BEGIN
                and rank_search = 30 AND ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon')
          LIMIT 1;
     ELSE
-      -- See if we can inherit addtional address tags from an interpolation.
+      -- See if we can inherit additional address tags from an interpolation.
       -- These will become permanent.
       FOR location IN
         SELECT (address - 'interpolation'::text - 'housenumber'::text) as address
@@ -1032,7 +1032,7 @@ BEGIN
   {% if debug %}RAISE WARNING 'Using full index mode for % %', NEW.osm_type, NEW.osm_id;{% endif %}
   IF linked_place is not null THEN
     -- Recompute the ranks here as the ones from the linked place might
-    -- have been shifted to accomodate surrounding boundaries.
+    -- have been shifted to accommodate surrounding boundaries.
     SELECT place_id, osm_id, class, type, extratags,
            centroid, geometry,
            (compute_place_rank(country_code, osm_type, class, type, admin_level,
@@ -1103,7 +1103,7 @@ BEGIN
   THEN
     -- Update the list of country names.
     -- Only take the name from the largest area for the given country code
-    -- in the hope that this is the authoritive one.
+    -- in the hope that this is the authoritative one.
     -- Also replace any old names so that all mapping mistakes can
     -- be fixed through regular OSM updates.
     FOR location IN
@@ -1191,7 +1191,7 @@ BEGIN
     NEW.postcode := get_nearest_postcode(NEW.country_code, NEW.geometry);
   END IF;
 
-  {% if debug %}RAISE WARNING 'place update % % finsihed.', NEW.osm_type, NEW.osm_id;{% endif %}
+  {% if debug %}RAISE WARNING 'place update % % finished.', NEW.osm_type, NEW.osm_id;{% endif %}
 
   NEW.token_info := token_strip_info(NEW.token_info);
   RETURN NEW;

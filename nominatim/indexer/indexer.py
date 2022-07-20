@@ -175,7 +175,7 @@ class Indexer:
 
 
     def index_postcodes(self) -> None:
-        """Index the entries ofthe location_postcode table.
+        """Index the entries of the location_postcode table.
         """
         LOG.warning("Starting indexing postcodes using %s threads", self.num_threads)
 
@@ -221,7 +221,7 @@ class Indexer:
                                 # asynchronously get the next batch
                                 has_more = fetcher.fetch_next_batch(cur, runner)
 
-                                # And insert the curent batch
+                                # And insert the current batch
                                 for idx in range(0, len(places), batch):
                                     part = places[idx:idx + batch]
                                     LOG.debug("Processing places: %s", str(part))

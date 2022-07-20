@@ -24,9 +24,9 @@ and can't offer support.
 ### Software
 
 !!! Warning
-    For larger installations you **must have** PostgreSQL 11+ and Postgis 3+
+    For larger installations you **must have** PostgreSQL 11+ and PostGIS 3+
     otherwise import and queries will be slow to the point of being unusable.
-    Query performance has marked improvements with PostgrSQL 13+ and Postgis 3.2+.
+    Query performance has marked improvements with PostgreSQL 13+ and PostGIS 3.2+.
 
 For compiling:
 
@@ -112,7 +112,7 @@ For the initial import, you should also set:
     fsync = off
     full_page_writes = off
 
-Don't forget to reenable them after the initial import or you risk database
+Don't forget to re-enable them after the initial import or you risk database
 corruption.
 
 

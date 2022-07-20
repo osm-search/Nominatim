@@ -111,7 +111,7 @@ library.
 
 !!! note
     The external module is only needed when using the legacy tokenizer.
-    If you have choosen the ICU tokenizer, then you can ignore this section
+    If you have chosen the ICU tokenizer, then you can ignore this section
     and follow the standard import documentation.
 
 ### Option 1: Compiling the library on the database server

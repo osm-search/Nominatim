@@ -12,7 +12,7 @@ from typing import Optional, cast
 from nominatim.db.connection import Connection
 
 def set_property(conn: Connection, name: str, value: str) -> None:
-    """ Add or replace the propery with the given name.
+    """ Add or replace the property with the given name.
     """
     with conn.cursor() as cur:
         cur.execute('SELECT value FROM nominatim_properties WHERE property = %s',

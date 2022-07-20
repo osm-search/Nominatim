@@ -18,7 +18,7 @@ class ProgressLogger:
     """ Tracks and prints progress for the indexing process.
         `name` is the name of the indexing step being tracked.
         `total` sets up the total number of items that need processing.
-        `log_interval` denotes the interval in seconds at which progres
+        `log_interval` denotes the interval in seconds at which progress
         should be reported.
     """
 

@@ -59,7 +59,7 @@ class _PostcodeSanitizer:
     def scan(self, postcode: str, country: Optional[str]) -> Optional[Tuple[str, str]]:
         """ Check the postcode for correct formatting and return the
             normalized version. Returns None if the postcode does not
-            correspond to the oficial format of the given country.
+            correspond to the official format of the given country.
         """
         match = self.matcher.match(country, postcode)
         if match is None:

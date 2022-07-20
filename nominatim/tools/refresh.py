@@ -126,7 +126,7 @@ PHP_CONST_DEFS = (
 def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
     """ Replaces the wikipedia importance tables with new data.
         The import is run in a single transaction so that the new data
-        is replace seemlessly.
+        is replace seamlessly.
 
         Returns 0 if all was well and 1 if the importance file could not
         be found. Throws an exception if there was an error reading the file.

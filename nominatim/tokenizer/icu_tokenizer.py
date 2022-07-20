@@ -38,7 +38,7 @@ def create(dsn: str, data_dir: Path) -> 'ICUTokenizer':
 
 
 class ICUTokenizer(AbstractTokenizer):
-    """ This tokenizer uses libICU to covert names and queries to ASCII.
+    """ This tokenizer uses libICU to convert names and queries to ASCII.
         Otherwise it uses the same algorithms and data structures as the
         normalization routines in Nominatim 3.
     """
@@ -431,7 +431,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
     def _remove_special_phrases(self, cursor: Cursor,
                              new_phrases: Set[Tuple[str, str, str, str]],
                              existing_phrases: Set[Tuple[str, str, str, str]]) -> int:
-        """ Remove all phrases from the databse that are no longer in the
+        """ Remove all phrases from the database that are no longer in the
             new phrase list.
         """
         to_delete = existing_phrases - new_phrases
@@ -620,7 +620,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
     def _retrieve_full_tokens(self, name: str) -> List[int]:
         """ Get the full name token for the given name, if it exists.
-            The name is only retrived for the standard analyser.
+            The name is only retrieved for the standard analyser.
         """
         assert self.conn is not None
         norm_name = self._search_normalized(name)

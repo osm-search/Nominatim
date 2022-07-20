@@ -58,7 +58,7 @@ def get_variant_config(in_rules: Any,
 
 
 class _VariantMaker:
-    """ Generater for all necessary ICUVariants from a single variant rule.
+    """ Generator for all necessary ICUVariants from a single variant rule.
 
         All text in rules is normalized to make sure the variants match later.
     """

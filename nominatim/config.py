@@ -185,7 +185,7 @@ class Configuration:
                                config: Optional[str] = None) -> Any:
         """ Load additional configuration from a file. `filename` is the name
             of the configuration file. The file is first searched in the
-            project directory and then in the global settings dirctory.
+            project directory and then in the global settings directory.
 
             If `config` is set, then the name of the configuration file can
             be additionally given through a .env configuration option. When
@@ -266,7 +266,7 @@ class Configuration:
         """ Handler for the '!include' operator in YAML files.
 
             When the filename is relative, then the file is first searched in the
-            project directory and then in the global settings dirctory.
+            project directory and then in the global settings directory.
         """
         fname = loader.construct_scalar(node)
 

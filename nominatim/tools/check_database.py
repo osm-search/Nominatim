@@ -163,7 +163,7 @@ def check_placex_table(conn: Connection, config: Configuration) -> CheckResult:
     return CheckState.FATAL, dict(config=config)
 
 
-@_check(hint="""placex table has no data. Did the import finish sucessfully?""")
+@_check(hint="""placex table has no data. Did the import finish successfully?""")
 def check_placex_size(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for placex content
     """
@@ -181,7 +181,7 @@ def check_tokenizer(_: Connection, config: Configuration) -> CheckResult:
         tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
     except UsageError:
         return CheckState.FAIL, dict(msg="""\
-            Cannot load tokenizer. Did the import finish sucessfully?""")
+            Cannot load tokenizer. Did the import finish successfully?""")
 
     result = tokenizer.check_database(config)
 

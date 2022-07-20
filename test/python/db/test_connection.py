@@ -5,7 +5,7 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Tests for specialised conenction and cursor classes.
+Tests for specialised connection and cursor classes.
 """
 import pytest
 import psycopg2

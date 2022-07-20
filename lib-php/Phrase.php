@@ -32,7 +32,7 @@ class Phrase
     }
 
     /**
-     * Get the orginal phrase of the string.
+     * Get the original phrase of the string.
      */
     public function getPhrase()
     {

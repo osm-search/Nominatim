@@ -190,7 +190,7 @@ class Geocode
 
         $this->bFallback = $oParams->getBool('fallback', $this->bFallback);
 
-        // List of excluded Place IDs - used for more acurate pageing
+        // List of excluded Place IDs - used for more accurate pageing
         $sExcluded = $oParams->getStringList('exclude_place_ids');
         if ($sExcluded) {
             foreach ($sExcluded as $iExcludedPlaceID) {

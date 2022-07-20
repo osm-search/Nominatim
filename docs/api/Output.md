@@ -236,7 +236,7 @@ on another server. It may even change its ID on the same server when it is
 removed and reimported while updating the database with fresh OSM data.
 It is thus not useful to treat it as permanent for later use.
 
-The combination `osm_type`+`osm_id` is slighly better but remember in
+The combination `osm_type`+`osm_id` is slightly better but remember in
 OpenStreetMap mappers can delete, split, recreate places (and those
 get a new `osm_id`), there is no link between those old and new ids.
 Places can also change their meaning without changing their `osm_id`,
@@ -290,7 +290,7 @@ with a designation label. Per default the following labels may appear:
  * city_district, district, borough, suburb, subdivision
  * hamlet, croft, isolated_dwelling
  * neighbourhood, allotments, quarter
- * city_block, residental, farm, farmyard, industrial, commercial, retail
+ * city_block, residential, farm, farmyard, industrial, commercial, retail
  * road
  * house_number, house_name
  * emergency, historic, military, natural, landuse, place, railway,

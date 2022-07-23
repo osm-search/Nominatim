@@ -22,7 +22,10 @@ class ParameterParser
 
     public function getBool($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $bDefault;
         }
 
@@ -31,7 +34,7 @@ class ParameterParser
 
     public function getInt($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName])) {
+        if (!isset($this->aParams[$sName]) || is_array($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -44,7 +47,7 @@ class ParameterParser
 
     public function getFloat($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName])) {
+        if (!isset($this->aParams[$sName]) || is_array($this->aParams[$sName])) {
             return $bDefault;
         }
 
@@ -57,7 +60,10 @@ class ParameterParser
 
     public function getString($sName, $bDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $bDefault;
         }
 
@@ -66,7 +72,10 @@ class ParameterParser
 
     public function getSet($sName, $aValues, $sDefault = false)
     {
-        if (!isset($this->aParams[$sName]) || strlen($this->aParams[$sName]) == 0) {
+        if (!isset($this->aParams[$sName])
+            || !is_string($this->aParams[$sName])
+            || strlen($this->aParams[$sName]) == 0
+        ) {
             return $sDefault;
         }
 

@@ -137,9 +137,6 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
 
     public function testGetSet()
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage("Parameter 'val3' must be one of: foo, bar");
-
         $oParams = new ParameterParser(array(
                                         'val1' => 'foo',
                                         'val2' => '',
@@ -151,7 +148,7 @@ class ParameterParserTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('foo', $oParams->getSet('val1', array('foo', 'bar')));
 
         $this->assertSame(false, $oParams->getSet('val2', array('foo', 'bar')));
-        $oParams->getSet('val3', array('foo', 'bar'));
+        $this->assertSame(false, $oParams->getSet('val3', array('foo', 'bar')));
     }
 
 

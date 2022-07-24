@@ -105,14 +105,17 @@ class SetupAll:
             if refresh.import_wikipedia_articles(args.config.get_libpq_dsn(),
                                                  data_path) > 0:
                 LOG.error('Wikipedia importance dump file not found. '
-                          'Calculating importance values of locations will not use Wikipedia importance data.')
-            
+                          'Calculating importance values of locations will not \
+                            use Wikipedia importance data.')
+
             LOG.warning('Importing OSM views GeoTIFF data')
-            database_import.import_osm_views_geotiff()
-            data_path = Path(args.config.OSM_VIEWS_DATA_PATH or args.project_dir)
-            if refresh.import_osm_views_geotiff(args.config.get_libpq_dsn(),
-                                                 data_path) > 0:
-                LOG.error('OSM views GeoTIFF file not found. '
+            data_path = Path(args.project_dir)
+            with connect(args.config.get_libpq_dsn()) as conn:
+                if refresh.import_osm_views_geotiff(conn, data_path) == 1:
+                    LOG.error('OSM views GeoTIFF file not found. '
+                          'Calculating importance values of locations will not use OSM views data.')
+                elif refresh.import_osm_views_geotiff(conn, data_path) == 2:
+                    LOG.error('PostGIS version number is less than 3. '
                           'Calculating importance values of locations will not use OSM views data.')
 
         if args.continue_at is None or args.continue_at == 'load-data':

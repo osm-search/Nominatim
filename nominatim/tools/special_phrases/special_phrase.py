@@ -10,20 +10,21 @@
     This class is a model used to transfer a special phrase through
     the process of load and importation.
 """
+from typing import Any
+
 class SpecialPhrase:
     """
         Model representing a special phrase.
     """
-    def __init__(self, p_label, p_class, p_type, p_operator):
+    def __init__(self, p_label: str, p_class: str, p_type: str, p_operator: str) -> None:
         self.p_label = p_label.strip()
         self.p_class = p_class.strip()
-        # Hack around a bug where building=yes was imported with quotes into the wiki
         self.p_type = p_type.strip()
         # Needed if some operator in the wiki are not written in english
         p_operator = p_operator.strip().lower()
         self.p_operator = '-' if p_operator not in ('near', 'in') else p_operator
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, SpecialPhrase):
             return False
 
@@ -32,5 +33,5 @@ class SpecialPhrase:
                and self.p_type == other.p_type \
                and self.p_operator == other.p_operator
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.p_label, self.p_class, self.p_type, self.p_operator))

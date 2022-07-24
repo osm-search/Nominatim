@@ -7,12 +7,15 @@
 """
 Functions for bringing auxiliary data in the database up-to-date.
 """
+from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, cast
 import logging
 from textwrap import dedent
 from pathlib import Path
 
 from psycopg2 import sql as pysql
 
+from nominatim.config import Configuration
+from nominatim.db.connection import Connection
 from nominatim.db.utils import execute_file
 from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.version import version_str
@@ -21,7 +24,8 @@ LOG = logging.getLogger()
 
 OSM_TYPE = {'N': 'node', 'W': 'way', 'R': 'relation'}
 
-def _add_address_level_rows_from_entry(rows, entry):
+def _add_address_level_rows_from_entry(rows: MutableSequence[Tuple[Any, ...]],
+                                       entry: Mapping[str, Any]) -> None:
     """ Converts a single entry from the JSON format for address rank
         descriptions into a flat format suitable for inserting into a
         PostgreSQL table and adds these lines to `rows`.
@@ -38,14 +42,15 @@ def _add_address_level_rows_from_entry(rows, entry):
             for country in countries:
                 rows.append((country, key, value, rank_search, rank_address))
 
-def load_address_levels(conn, table, levels):
+
+def load_address_levels(conn: Connection, table: str, levels: Sequence[Mapping[str, Any]]) -> None:
     """ Replace the `address_levels` table with the contents of `levels'.
 
         A new table is created any previously existing table is dropped.
         The table has the following columns:
             country, class, type, rank_search, rank_address
     """
-    rows = []
+    rows: List[Tuple[Any, ...]]  = []
     for entry in levels:
         _add_address_level_rows_from_entry(rows, entry)
 
@@ -69,7 +74,7 @@ def load_address_levels(conn, table, levels):
     conn.commit()
 
 
-def load_address_levels_from_config(conn, config):
+def load_address_levels_from_config(conn: Connection, config: Configuration) -> None:
     """ Replace the `address_levels` table with the content as
         defined in the given configuration. Uses the parameter
         NOMINATIM_ADDRESS_LEVEL_CONFIG to determine the location of the
@@ -79,7 +84,9 @@ def load_address_levels_from_config(conn, config):
     load_address_levels(conn, 'address_levels', cfg)
 
 
-def create_functions(conn, config, enable_diff_updates=True, enable_debug=False):
+def create_functions(conn: Connection, config: Configuration,
+                     enable_diff_updates: bool = True,
+                     enable_debug: bool = False) -> None:
     """ (Re)create the PL/pgSQL functions.
     """
     sql = SQLPreprocessor(conn, config)
@@ -116,10 +123,10 @@ PHP_CONST_DEFS = (
 )
 
 
-def import_wikipedia_articles(dsn, data_path, ignore_errors=False):
+def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = False) -> int:
     """ Replaces the wikipedia importance tables with new data.
         The import is run in a single transaction so that the new data
-        is replace seemlessly.
+        is replace seamlessly.
 
         Returns 0 if all was well and 1 if the importance file could not
         be found. Throws an exception if there was an error reading the file.
@@ -159,7 +166,7 @@ def import_osm_views_geotiff(dsn, data_path, ignore_errors=False):
 
     return 0
 
-def recompute_importance(conn):
+def recompute_importance(conn: Connection) -> None:
     """ Recompute wikipedia links and importance for all entries in placex.
         This is a long-running operations that must not be executed in
         parallel with updates.
@@ -182,18 +189,19 @@ def recompute_importance(conn):
     conn.commit()
 
 
-def _quote_php_variable(var_type, config, conf_name):
+def _quote_php_variable(var_type: Type[Any], config: Configuration,
+                        conf_name: str) -> str:
     if var_type == bool:
         return 'true' if config.get_bool(conf_name) else 'false'
 
     if var_type == int:
-        return getattr(config, conf_name)
+        return cast(str, getattr(config, conf_name))
 
     if not getattr(config, conf_name):
         return 'false'
 
     if var_type == Path:
-        value = str(config.get_path(conf_name))
+        value = str(config.get_path(conf_name) or '')
     else:
         value = getattr(config, conf_name)
 
@@ -201,7 +209,7 @@ def _quote_php_variable(var_type, config, conf_name):
     return f"'{quoted}'"
 
 
-def setup_website(basedir, config, conn):
+def setup_website(basedir: Path, config: Configuration, conn: Connection) -> None:
     """ Create the website script stubs.
     """
     if not basedir.exists():
@@ -234,7 +242,8 @@ def setup_website(basedir, config, conn):
             (basedir / script).write_text(template.format(script), 'utf-8')
 
 
-def invalidate_osm_object(osm_type, osm_id, conn, recursive=True):
+def invalidate_osm_object(osm_type: str, osm_id: int, conn: Connection,
+                          recursive: bool = True) -> None:
     """ Mark the given OSM object for reindexing. When 'recursive' is set
         to True (the default), then all dependent objects are marked for
         reindexing as well.

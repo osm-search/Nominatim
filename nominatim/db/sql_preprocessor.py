@@ -7,10 +7,13 @@
 """
 Preprocessing of SQL files.
 """
+from typing import Set, Dict, Any
 import jinja2
 
+from nominatim.db.connection import Connection
+from nominatim.config import Configuration
 
-def _get_partitions(conn):
+def _get_partitions(conn: Connection) -> Set[int]:
     """ Get the set of partitions currently in use.
     """
     with conn.cursor() as cur:
@@ -22,7 +25,7 @@ def _get_partitions(conn):
     return partitions
 
 
-def _get_tables(conn):
+def _get_tables(conn: Connection) -> Set[str]:
     """ Return the set of tables currently in use.
         Only includes non-partitioned
     """
@@ -32,7 +35,7 @@ def _get_tables(conn):
         return set((row[0] for row in list(cur)))
 
 
-def _setup_tablespace_sql(config):
+def _setup_tablespace_sql(config: Configuration) -> Dict[str, str]:
     """ Returns a dict with tablespace expressions for the different tablespace
         kinds depending on whether a tablespace is configured or not.
     """
@@ -47,7 +50,7 @@ def _setup_tablespace_sql(config):
     return out
 
 
-def _setup_postgresql_features(conn):
+def _setup_postgresql_features(conn: Connection) -> Dict[str, Any]:
     """ Set up a dictionary with various optional Postgresql/Postgis features that
         depend on the database version.
     """
@@ -69,11 +72,11 @@ class SQLPreprocessor:
         and follows its syntax.
     """
 
-    def __init__(self, conn, config):
+    def __init__(self, conn: Connection, config: Configuration) -> None:
         self.env = jinja2.Environment(autoescape=False,
                                       loader=jinja2.FileSystemLoader(str(config.lib_dir.sql)))
 
-        db_info = {}
+        db_info: Dict[str, Any] = {}
         db_info['partitions'] = _get_partitions(conn)
         db_info['tables'] = _get_tables(conn)
         db_info['reverse_only'] = 'search_name' not in db_info['tables']
@@ -84,7 +87,7 @@ class SQLPreprocessor:
         self.env.globals['postgres'] = _setup_postgresql_features(conn)
 
 
-    def run_sql_file(self, conn, name, **kwargs):
+    def run_sql_file(self, conn: Connection, name: str, **kwargs: Any) -> None:
         """ Execute the given SQL file on the connection. The keyword arguments
             may supply additional parameters for preprocessing.
         """

@@ -445,7 +445,7 @@ class PlaceLookup
 
             if ($this->bExtraTags) {
                 if ($aPlace['extra']) {
-                    $aPlace['sExtraTags'] = json_decode($aPlace['extra']);
+                    $aPlace['sExtraTags'] = json_decode($aPlace['extra'], true);
                 } else {
                     $aPlace['sExtraTags'] = (object) array();
                 }
@@ -482,7 +482,7 @@ class PlaceLookup
             return (object) array();
         }
 
-        $aFullNames = json_decode($sNames);
+        $aFullNames = json_decode($sNames, true);
         $aNames = array();
 
         foreach ($aFullNames as $sKey => $sValue) {

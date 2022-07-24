@@ -7,14 +7,17 @@
 """
     Module containing the SPWikiLoader class.
 """
+from typing import Iterable
 import re
 import logging
+
+from nominatim.config import Configuration
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
 from nominatim.tools.exec_utils import get_url
 
 LOG = logging.getLogger()
 
-def _get_wiki_content(lang):
+def _get_wiki_content(lang: str) -> str:
     """
         Request and return the wiki page's content
         corresponding to special phrases for a given lang.
@@ -30,8 +33,7 @@ class SPWikiLoader:
     """
         Handles loading of special phrases from the wiki.
     """
-    def __init__(self, config):
-        super().__init__()
+    def __init__(self, config: Configuration) -> None:
         self.config = config
         # Compile the regex here to increase performances.
         self.occurence_pattern = re.compile(
@@ -39,10 +41,15 @@ class SPWikiLoader:
         )
         # Hack around a bug where building=yes was imported with quotes into the wiki
         self.type_fix_pattern = re.compile(r'\"|&quot;')
-        self._load_languages()
+
+        self.languages = self.config.get_str_list('LANGUAGES') or \
+                         ['af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
+                          'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
+                          'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
+                          'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']
 
 
-    def generate_phrases(self):
+    def generate_phrases(self) -> Iterable[SpecialPhrase]:
         """ Download the wiki pages for the configured languages
             and extract the phrases from the page.
         """
@@ -58,19 +65,3 @@ class SPWikiLoader:
                                     match[1],
                                     self.type_fix_pattern.sub('', match[2]),
                                     match[3])
-
-
-    def _load_languages(self):
-        """
-            Get list of all languages from env config file
-            or default if there is no languages configured.
-            The system will extract special phrases only from all specified languages.
-        """
-        if self.config.LANGUAGES:
-            self.languages = self.config.get_str_list('LANGUAGES')
-        else:
-            self.languages = [
-            'af', 'ar', 'br', 'ca', 'cs', 'de', 'en', 'es',
-            'et', 'eu', 'fa', 'fi', 'fr', 'gl', 'hr', 'hu',
-            'ia', 'is', 'it', 'ja', 'mk', 'nl', 'no', 'pl',
-            'ps', 'pt', 'ru', 'sk', 'sl', 'sv', 'uk', 'vi']

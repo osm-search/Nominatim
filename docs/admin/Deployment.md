@@ -82,7 +82,7 @@ The website should now be available on `http://localhost/nominatim`.
 
 ### Installing the required packages
 
-Nginx has no built-in PHP interpreter. You need to use php-fpm as a deamon for
+Nginx has no built-in PHP interpreter. You need to use php-fpm as a daemon for
 serving PHP cgi.
 
 On Ubuntu/Debian install nginx and php-fpm with:

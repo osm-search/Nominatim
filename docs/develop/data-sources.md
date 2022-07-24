@@ -13,7 +13,7 @@ More details in [osm-search/country-grid-data](https://github.com/osm-search/cou
 
 ## US Census TIGER
 
-For the United States you can choose to import additonal street-level data.
+For the United States you can choose to import additional street-level data.
 The data isn't mixed into OSM data but queried as fallback when no OSM
 result can be found.
 

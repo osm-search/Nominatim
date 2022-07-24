@@ -8,6 +8,7 @@
 Specialized processor for housenumbers. Analyses common housenumber patterns
 and creates variants for them.
 """
+from typing import Mapping, Any, List, cast
 import re
 
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
@@ -19,14 +20,14 @@ RE_NAMED_PART = re.compile(r'[a-z]{4}')
 
 ### Configuration section
 
-def configure(rules, normalization_rules): # pylint: disable=W0613
+def configure(rules: Mapping[str, Any], normalization_rules: str) -> None: # pylint: disable=W0613
     """ All behaviour is currently hard-coded.
     """
     return None
 
 ### Analysis section
 
-def create(normalizer, transliterator, config): # pylint: disable=W0613
+def create(normalizer: Any, transliterator: Any, config: None) -> 'HousenumberTokenAnalysis': # pylint: disable=W0613
     """ Create a new token analysis instance for this module.
     """
     return HousenumberTokenAnalysis(normalizer, transliterator)
@@ -35,20 +36,20 @@ def create(normalizer, transliterator, config): # pylint: disable=W0613
 class HousenumberTokenAnalysis:
     """ Detects common housenumber patterns and normalizes them.
     """
-    def __init__(self, norm, trans):
+    def __init__(self, norm: Any, trans: Any) -> None:
         self.norm = norm
         self.trans = trans
 
         self.mutator = MutationVariantGenerator('␣', (' ', ''))
 
-    def normalize(self, name):
+    def normalize(self, name: str) -> str:
         """ Return the normalized form of the housenumber.
         """
         # shortcut for number-only numbers, which make up 90% of the data.
         if RE_NON_DIGIT.search(name) is None:
             return name
 
-        norm = self.trans.transliterate(self.norm.transliterate(name))
+        norm = cast(str, self.trans.transliterate(self.norm.transliterate(name)))
         # If there is a significant non-numeric part, use as is.
         if RE_NAMED_PART.search(norm) is None:
             # Otherwise add optional spaces between digits and letters.
@@ -60,7 +61,7 @@ class HousenumberTokenAnalysis:
 
         return norm
 
-    def get_variants_ascii(self, norm_name):
+    def get_variants_ascii(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized housenumber.
 
             Generates variants for optional spaces (marked with '␣').

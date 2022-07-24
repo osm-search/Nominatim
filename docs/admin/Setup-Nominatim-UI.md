@@ -161,7 +161,7 @@ directory like this:
   # If no endpoint is given, then use search.
   RewriteRule ^(/|$)   "search.php"
 
-  # If format-html is explicity requested, forward to the UI.
+  # If format-html is explicitly requested, forward to the UI.
   RewriteCond %{QUERY_STRING} "format=html"
   RewriteRule ^([^/]+)(.php)? ui/$1.html [R,END]
 

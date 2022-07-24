@@ -7,7 +7,7 @@
 """
 Tokenizer for testing.
 """
-from nominatim.indexer.place_info import PlaceInfo
+from nominatim.data.place_info import PlaceInfo
 from nominatim.config import Configuration
 
 def create(dsn, data_dir):

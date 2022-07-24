@@ -17,7 +17,7 @@ CREATE TYPE nearfeaturecentr AS (
   centroid GEOMETRY
 );
 
--- feature intersects geoemtry
+-- feature intersects geometry
 -- for areas and linestrings they must touch at least along a line
 CREATE OR REPLACE FUNCTION is_relevant_geometry(de9im TEXT, geom_type TEXT)
 RETURNS BOOLEAN

@@ -7,12 +7,14 @@
 """
 Functions for database migration to newer software versions.
 """
+from typing import List, Tuple, Callable, Any
 import logging
 
 from psycopg2 import sql as pysql
 
+from nominatim.config import Configuration
 from nominatim.db import properties
-from nominatim.db.connection import connect
+from nominatim.db.connection import connect, Connection
 from nominatim.version import NOMINATIM_VERSION, version_str
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
@@ -20,9 +22,11 @@ from nominatim.errors import UsageError
 
 LOG = logging.getLogger()
 
-_MIGRATION_FUNCTIONS = []
+VersionTuple = Tuple[int, int, int, int]
 
-def migrate(config, paths):
+_MIGRATION_FUNCTIONS : List[Tuple[VersionTuple, Callable[..., None]]] = []
+
+def migrate(config: Configuration, paths: Any) -> int:
     """ Check for the current database version and execute migrations,
         if necesssary.
     """
@@ -48,7 +52,8 @@ def migrate(config, paths):
         has_run_migration = False
         for version, func in _MIGRATION_FUNCTIONS:
             if db_version <= version:
-                LOG.warning("Runnning: %s (%s)", func.__doc__.split('\n', 1)[0],
+                title = func.__doc__ or ''
+                LOG.warning("Running: %s (%s)", title.split('\n', 1)[0],
                             version_str(version))
                 kwargs = dict(conn=conn, config=config, paths=paths)
                 func(**kwargs)
@@ -68,7 +73,7 @@ def migrate(config, paths):
     return 0
 
 
-def _guess_version(conn):
+def _guess_version(conn: Connection) -> VersionTuple:
     """ Guess a database version when there is no property table yet.
         Only migrations for 3.6 and later are supported, so bail out
         when the version seems older.
@@ -88,7 +93,8 @@ def _guess_version(conn):
 
 
 
-def _migration(major, minor, patch=0, dbpatch=0):
+def _migration(major: int, minor: int, patch: int = 0,
+               dbpatch: int = 0) -> Callable[[Callable[..., None]], Callable[..., None]]:
     """ Decorator for a single migration step. The parameters describe the
         version after which the migration is applicable, i.e before changing
         from the given version to the next, the migration is required.
@@ -101,7 +107,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
         process, so the migration functions may leave a temporary state behind
         there.
     """
-    def decorator(func):
+    def decorator(func: Callable[..., None]) -> Callable[..., None]:
         _MIGRATION_FUNCTIONS.append(((major, minor, patch, dbpatch), func))
         return func
 
@@ -109,7 +115,7 @@ def _migration(major, minor, patch=0, dbpatch=0):
 
 
 @_migration(3, 5, 0, 99)
-def import_status_timestamp_change(conn, **_):
+def import_status_timestamp_change(conn: Connection, **_: Any) -> None:
     """ Add timezone to timestamp in status table.
 
         The import_status table has been changed to include timezone information
@@ -121,7 +127,7 @@ def import_status_timestamp_change(conn, **_):
 
 
 @_migration(3, 5, 0, 99)
-def add_nominatim_property_table(conn, config, **_):
+def add_nominatim_property_table(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Add nominatim_property table.
     """
     if not conn.table_exists('nominatim_properties'):
@@ -133,7 +139,7 @@ def add_nominatim_property_table(conn, config, **_):
                                   """).format(pysql.Identifier(config.DATABASE_WEBUSER)))
 
 @_migration(3, 6, 0, 0)
-def change_housenumber_transliteration(conn, **_):
+def change_housenumber_transliteration(conn: Connection, **_: Any) -> None:
     """ Transliterate housenumbers.
 
         The database schema switched from saving raw housenumbers in
@@ -164,7 +170,7 @@ def change_housenumber_transliteration(conn, **_):
 
 
 @_migration(3, 7, 0, 0)
-def switch_placenode_geometry_index(conn, **_):
+def switch_placenode_geometry_index(conn: Connection, **_: Any) -> None:
     """ Replace idx_placex_geometry_reverse_placeNode index.
 
         Make the index slightly more permissive, so that it can also be used
@@ -181,7 +187,7 @@ def switch_placenode_geometry_index(conn, **_):
 
 
 @_migration(3, 7, 0, 1)
-def install_legacy_tokenizer(conn, config, **_):
+def install_legacy_tokenizer(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Setup legacy tokenizer.
 
         If no other tokenizer has been configured yet, then create the
@@ -200,11 +206,11 @@ def install_legacy_tokenizer(conn, config, **_):
         tokenizer = tokenizer_factory.create_tokenizer(config, init_db=False,
                                                        module_name='legacy')
 
-        tokenizer.migrate_database(config)
+        tokenizer.migrate_database(config) # type: ignore[attr-defined]
 
 
 @_migration(4, 0, 99, 0)
-def create_tiger_housenumber_index(conn, **_):
+def create_tiger_housenumber_index(conn: Connection, **_: Any) -> None:
     """ Create idx_location_property_tiger_parent_place_id with included
         house number.
 
@@ -221,7 +227,7 @@ def create_tiger_housenumber_index(conn, **_):
 
 
 @_migration(4, 0, 99, 1)
-def create_interpolation_index_on_place(conn, **_):
+def create_interpolation_index_on_place(conn: Connection, **_: Any) -> None:
     """ Create idx_place_interpolations for lookup of interpolation lines
         on updates.
     """
@@ -232,10 +238,10 @@ def create_interpolation_index_on_place(conn, **_):
 
 
 @_migration(4, 0, 99, 2)
-def add_step_column_for_interpolation(conn, **_):
+def add_step_column_for_interpolation(conn: Connection, **_: Any) -> None:
     """ Add a new column 'step' to the interpolations table.
 
-        Also convers the data into the stricter format which requires that
+        Also converts the data into the stricter format which requires that
         startnumbers comply with the odd/even requirements.
     """
     if conn.table_has_column('location_property_osmline', 'step'):
@@ -267,7 +273,7 @@ def add_step_column_for_interpolation(conn, **_):
 
 
 @_migration(4, 0, 99, 3)
-def add_step_column_for_tiger(conn, **_):
+def add_step_column_for_tiger(conn: Connection, **_: Any) -> None:
     """ Add a new column 'step' to the tiger data table.
     """
     if conn.table_has_column('location_property_tiger', 'step'):
@@ -282,7 +288,7 @@ def add_step_column_for_tiger(conn, **_):
 
 
 @_migration(4, 0, 99, 4)
-def add_derived_name_column_for_country_names(conn, **_):
+def add_derived_name_column_for_country_names(conn: Connection, **_: Any) -> None:
     """ Add a new column 'derived_name' which in the future takes the
         country names as imported from OSM data.
     """
@@ -292,7 +298,7 @@ def add_derived_name_column_for_country_names(conn, **_):
 
 
 @_migration(4, 0, 99, 5)
-def mark_internal_country_names(conn, config, **_):
+def mark_internal_country_names(conn: Connection, config: Configuration, **_: Any) -> None:
     """ Names from the country table should be marked as internal to prevent
         them from being deleted. Only necessary for ICU tokenizer.
     """

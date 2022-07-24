@@ -45,7 +45,7 @@ GRANT SELECT ON TABLE country_name TO "{{config.DATABASE_WEBUSER}}";
 
 DROP TABLE IF EXISTS nominatim_properties;
 CREATE TABLE nominatim_properties (
-    property TEXT,
+    property TEXT NOT NULL,
     value TEXT
 );
 GRANT SELECT ON TABLE nominatim_properties TO "{{config.DATABASE_WEBUSER}}";

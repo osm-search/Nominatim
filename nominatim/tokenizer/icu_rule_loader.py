@@ -7,17 +7,20 @@
 """
 Helper class to create ICU rules from a configuration file.
 """
+from typing import Mapping, Any, Dict, Optional
 import importlib
 import io
 import json
 import logging
 
-from nominatim.config import flatten_config_list
+from nominatim.config import flatten_config_list, Configuration
 from nominatim.db.properties import set_property, get_property
+from nominatim.db.connection import Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
-import nominatim.tools.country_info
+from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyser
+import nominatim.data.country_info
 
 LOG = logging.getLogger()
 
@@ -26,7 +29,7 @@ DBCFG_IMPORT_TRANS_RULES = "tokenizer_import_transliteration"
 DBCFG_IMPORT_ANALYSIS_RULES = "tokenizer_import_analysis_rules"
 
 
-def _get_section(rules, section):
+def _get_section(rules: Mapping[str, Any], section: str) -> Any:
     """ Get the section named 'section' from the rules. If the section does
         not exist, raise a usage error with a meaningful message.
     """
@@ -41,12 +44,12 @@ class ICURuleLoader:
     """ Compiler for ICU rules from a tokenizer configuration file.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Configuration) -> None:
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
         # Make sure country information is available to analyzers and sanitizers.
-        nominatim.tools.country_info.setup_country_config(config)
+        nominatim.data.country_info.setup_country_config(config)
 
         self.normalization_rules = self._cfg_to_icu_rules(rules, 'normalization')
         self.transliteration_rules = self._cfg_to_icu_rules(rules, 'transliteration')
@@ -57,17 +60,27 @@ class ICURuleLoader:
         self.sanitizer_rules = rules.get('sanitizers', [])
 
 
-    def load_config_from_db(self, conn):
+    def load_config_from_db(self, conn: Connection) -> None:
         """ Get previously saved parts of the configuration from the
             database.
         """
-        self.normalization_rules = get_property(conn, DBCFG_IMPORT_NORM_RULES)
-        self.transliteration_rules = get_property(conn, DBCFG_IMPORT_TRANS_RULES)
-        self.analysis_rules = json.loads(get_property(conn, DBCFG_IMPORT_ANALYSIS_RULES))
+        rules = get_property(conn, DBCFG_IMPORT_NORM_RULES)
+        if rules is not None:
+            self.normalization_rules = rules
+
+        rules = get_property(conn, DBCFG_IMPORT_TRANS_RULES)
+        if rules is not None:
+            self.transliteration_rules = rules
+
+        rules = get_property(conn, DBCFG_IMPORT_ANALYSIS_RULES)
+        if rules:
+            self.analysis_rules = json.loads(rules)
+        else:
+            self.analysis_rules = []
         self._setup_analysis()
 
 
-    def save_config_to_db(self, conn):
+    def save_config_to_db(self, conn: Connection) -> None:
         """ Save the part of the configuration that cannot be changed into
             the database.
         """
@@ -76,20 +89,20 @@ class ICURuleLoader:
         set_property(conn, DBCFG_IMPORT_ANALYSIS_RULES, json.dumps(self.analysis_rules))
 
 
-    def make_sanitizer(self):
+    def make_sanitizer(self) -> PlaceSanitizer:
         """ Create a place sanitizer from the configured rules.
         """
         return PlaceSanitizer(self.sanitizer_rules)
 
 
-    def make_token_analysis(self):
+    def make_token_analysis(self) -> ICUTokenAnalysis:
         """ Create a token analyser from the reviouly loaded rules.
         """
         return ICUTokenAnalysis(self.normalization_rules,
                                 self.transliteration_rules, self.analysis)
 
 
-    def get_search_rules(self):
+    def get_search_rules(self) -> str:
         """ Return the ICU rules to be used during search.
             The rules combine normalization and transliteration.
         """
@@ -102,22 +115,22 @@ class ICURuleLoader:
         return rules.getvalue()
 
 
-    def get_normalization_rules(self):
+    def get_normalization_rules(self) -> str:
         """ Return rules for normalisation of a term.
         """
         return self.normalization_rules
 
 
-    def get_transliteration_rules(self):
+    def get_transliteration_rules(self) -> str:
         """ Return the rules for converting a string into its asciii representation.
         """
         return self.transliteration_rules
 
 
-    def _setup_analysis(self):
+    def _setup_analysis(self) -> None:
         """ Process the rules used for creating the various token analyzers.
         """
-        self.analysis = {}
+        self.analysis: Dict[Optional[str], TokenAnalyzerRule]  = {}
 
         if not isinstance(self.analysis_rules, list):
             raise UsageError("Configuration section 'token-analysis' must be a list.")
@@ -135,7 +148,7 @@ class ICURuleLoader:
 
 
     @staticmethod
-    def _cfg_to_icu_rules(rules, section):
+    def _cfg_to_icu_rules(rules: Mapping[str, Any], section: str) -> str:
         """ Load an ICU ruleset from the given section. If the section is a
             simple string, it is interpreted as a file name and the rules are
             loaded verbatim from the given file. The filename is expected to be
@@ -155,12 +168,16 @@ class TokenAnalyzerRule:
         and creates a new token analyzer on request.
     """
 
-    def __init__(self, rules, normalization_rules):
+    def __init__(self, rules: Mapping[str, Any], normalization_rules: str) -> None:
         # Find the analysis module
         module_name = 'nominatim.tokenizer.token_analysis.' \
                       + _get_section(rules, 'analyzer').replace('-', '_')
-        analysis_mod = importlib.import_module(module_name)
-        self.create = analysis_mod.create
+        self._analysis_mod: AnalysisModule = importlib.import_module(module_name)
 
         # Load the configuration.
-        self.config = analysis_mod.configure(rules, normalization_rules)
+        self.config = self._analysis_mod.configure(rules, normalization_rules)
+
+    def create(self, normalizer: Any, transliterator: Any) -> Analyser:
+        """ Create a new analyser instance for the given rule.
+        """
+        return self._analysis_mod.create(normalizer, transliterator, self.config)

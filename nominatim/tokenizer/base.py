@@ -5,16 +5,16 @@
 # Copyright (C) 2022 by the Nominatim developer community.
 # For a full list of authors see the git log.
 """
-Abstract class defintions for tokenizers. These base classes are here
+Abstract class definitions for tokenizers. These base classes are here
 mainly for documentation purposes.
 """
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional, Iterable
+from pathlib import Path
 
 from nominatim.config import Configuration
-from nominatim.indexer.place_info import PlaceInfo
-
-# pylint: disable=unnecessary-pass
+from nominatim.data.place_info import PlaceInfo
+from nominatim.typing import Protocol
 
 class AbstractAnalyzer(ABC):
     """ The analyzer provides the functions for analysing names and building
@@ -28,7 +28,7 @@ class AbstractAnalyzer(ABC):
         return self
 
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
 
@@ -80,7 +80,8 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def update_special_phrases(self, phrases: List[Tuple[str, str, str, str]],
+    def update_special_phrases(self,
+                               phrases: Iterable[Tuple[str, str, str, str]],
                                should_replace: bool) -> None:
         """ Update the tokenizer's special phrase tokens from the given
             list of special phrases.
@@ -95,7 +96,7 @@ class AbstractAnalyzer(ABC):
 
 
     @abstractmethod
-    def add_country_names(self, country_code: str, names: Dict[str, str]):
+    def add_country_names(self, country_code: str, names: Dict[str, str]) -> None:
         """ Add the given names to the tokenizer's list of country tokens.
 
             Arguments:
@@ -112,7 +113,7 @@ class AbstractAnalyzer(ABC):
             the search index.
 
             Arguments:
-                place: Place information retrived from the database.
+                place: Place information retrieved from the database.
 
             Returns:
                 A JSON-serialisable structure that will be handed into
@@ -140,7 +141,7 @@ class AbstractTokenizer(ABC):
 
               init_db: When set to False, then initialisation of database
                 tables should be skipped. This option is only required for
-                migration purposes and can be savely ignored by custom
+                migration purposes and can be safely ignored by custom
                 tokenizers.
 
             TODO: can we move the init_db parameter somewhere else?
@@ -186,7 +187,7 @@ class AbstractTokenizer(ABC):
 
 
     @abstractmethod
-    def check_database(self, config: Configuration) -> str:
+    def check_database(self, config: Configuration) -> Optional[str]:
         """ Check that the database is set up correctly and ready for being
             queried.
 
@@ -229,4 +230,14 @@ class AbstractTokenizer(ABC):
 
             When used outside the with construct, the caller must ensure to
             call the close() function before destructing the analyzer.
+        """
+
+
+class TokenizerModule(Protocol):
+    """ Interface that must be exported by modules that implement their
+        own tokenizer.
+    """
+
+    def create(self, dsn: str, data_dir: Path) -> AbstractTokenizer:
+        """ Factory for new tokenizers.
         """

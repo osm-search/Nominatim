@@ -46,6 +46,7 @@ nav:
         - 'Installation on CentOS 8' : 'appendix/Install-on-Centos-8.md'
         - 'Installation on Ubuntu 18' : 'appendix/Install-on-Ubuntu-18.md'
         - 'Installation on Ubuntu 20' : 'appendix/Install-on-Ubuntu-20.md'
+        - 'Installation on Ubuntu 22' : 'appendix/Install-on-Ubuntu-22.md'
 markdown_extensions:
     - codehilite
     - admonition

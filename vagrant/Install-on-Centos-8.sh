@@ -18,7 +18,7 @@
     sudo dnf install -y epel-release redhat-rpm-config
 
 # EPEL contains Postgres 9.6 and 10, but not PostGIS. Postgres 9.4+/10/11/12
-# and PostGIS 2.4/2.5/3.0 are availble from postgresql.org. Enable these
+# and PostGIS 2.4/2.5/3.0 are available from postgresql.org. Enable these
 # repositories and make sure, the binaries can be found:
 
     sudo dnf -qy module disable postgresql

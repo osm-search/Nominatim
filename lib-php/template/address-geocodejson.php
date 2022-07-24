@@ -56,7 +56,7 @@ if (empty($aPlace)) {
     }
 
     if (isset($aPlace['asgeojson'])) {
-        $aFilteredPlaces['geometry'] = json_decode($aPlace['asgeojson']);
+        $aFilteredPlaces['geometry'] = json_decode($aPlace['asgeojson'], true);
     } else {
         $aFilteredPlaces['geometry'] = array(
                                         'type' => 'Point',

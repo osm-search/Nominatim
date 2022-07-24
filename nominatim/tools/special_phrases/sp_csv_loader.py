@@ -9,6 +9,7 @@
 
     The class allows to load phrases from a csv file.
 """
+from typing import Iterable
 import csv
 import os
 from nominatim.tools.special_phrases.special_phrase import SpecialPhrase
@@ -18,12 +19,11 @@ class SPCsvLoader:
     """
         Handles loading of special phrases from external csv file.
     """
-    def __init__(self, csv_path):
-        super().__init__()
+    def __init__(self, csv_path: str) -> None:
         self.csv_path = csv_path
 
 
-    def generate_phrases(self):
+    def generate_phrases(self) -> Iterable[SpecialPhrase]:
         """ Open and parse the given csv file.
             Create the corresponding SpecialPhrases.
         """
@@ -35,7 +35,7 @@ class SPCsvLoader:
                 yield SpecialPhrase(row['phrase'], row['class'], row['type'], row['operator'])
 
 
-    def _check_csv_validity(self):
+    def _check_csv_validity(self) -> None:
         """
             Check that the csv file has the right extension.
         """

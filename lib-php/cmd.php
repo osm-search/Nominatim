@@ -106,7 +106,7 @@ function getCmdOpt($aArg, $aSpec, &$aResult, $bExitOnError = false, $bExitOnUnkn
                 showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is missing');
             }
             if ($aCounts[$aLine[0]] > $aLine[3]) {
-                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is pressent too many times');
+                showUsage($aSpec, $bExitOnError, 'Option \''.$aLine[0].'\' is present too many times');
             }
             if ($aLine[6] == 'bool' && !array_key_exists($aLine[0], $aResult)) {
                 $aResult[$aLine[0]] = false;

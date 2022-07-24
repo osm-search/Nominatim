@@ -42,6 +42,7 @@ class MockPlacexTable:
                                admin_level smallint,
                                address hstore,
                                extratags hstore,
+                               token_info jsonb,
                                geometry Geometry(Geometry,4326),
                                wikipedia TEXT,
                                country_code varchar(2),

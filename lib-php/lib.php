@@ -11,7 +11,7 @@
 function loadSettings($sProjectDir)
 {
     @define('CONST_InstallDir', $sProjectDir);
-    // Temporary hack to set the direcory via environment instead of
+    // Temporary hack to set the directory via environment instead of
     // the installed scripts. Neither setting is part of the official
     // set of settings.
     defined('CONST_ConfigDir') or define('CONST_ConfigDir', $_SERVER['NOMINATIM_CONFIGDIR']);

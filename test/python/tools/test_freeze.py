@@ -40,17 +40,17 @@ def test_drop_tables(temp_db_conn, temp_db_cursor, table_factory):
         assert not temp_db_cursor.table_exists(table)
 
 def test_drop_flatnode_file_no_file():
-    freeze.drop_flatnode_file('')
+    freeze.drop_flatnode_file(None)
 
 
 def test_drop_flatnode_file_file_already_gone(tmp_path):
-    freeze.drop_flatnode_file(str(tmp_path / 'something.store'))
+    freeze.drop_flatnode_file(tmp_path / 'something.store')
 
 
 def test_drop_flatnode_file_delte(tmp_path):
     flatfile = tmp_path / 'flatnode.store'
     flatfile.write_text('Some content')
 
-    freeze.drop_flatnode_file(str(flatfile))
+    freeze.drop_flatnode_file(flatfile)
 
     assert not flatfile.exists()

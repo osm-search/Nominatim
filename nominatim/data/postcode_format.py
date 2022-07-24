@@ -8,16 +8,17 @@
 Functions for formatting postcodes according to their country-specific
 format.
 """
+from typing import Any, Mapping, Optional, Set, Match
 import re
 
 from nominatim.errors import UsageError
-from nominatim.tools import country_info
+from nominatim.data import country_info
 
 class CountryPostcodeMatcher:
     """ Matches and formats a postcode according to a format definition
         of the given country.
     """
-    def __init__(self, country_code, config):
+    def __init__(self, country_code: str, config: Mapping[str, Any]) -> None:
         if 'pattern' not in config:
             raise UsageError("Field 'pattern' required for 'postcode' "
                              f"for country '{country_code}'")
@@ -30,7 +31,7 @@ class CountryPostcodeMatcher:
         self.output = config.get('output', r'\g<0>')
 
 
-    def match(self, postcode):
+    def match(self, postcode: str) -> Optional[Match[str]]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the match was successful
             and None otherwise.
@@ -44,7 +45,7 @@ class CountryPostcodeMatcher:
         return None
 
 
-    def normalize(self, match):
+    def normalize(self, match: Match[str]) -> str:
         """ Return the default format of the postcode for the given match.
             `match` must be a `re.Match` object previously returned by
             `match()`
@@ -56,9 +57,9 @@ class PostcodeFormatter:
     """ Container for different postcode formats of the world and
         access functions.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         # Objects without a country code can't have a postcode per definition.
-        self.country_without_postcode = {None}
+        self.country_without_postcode: Set[Optional[str]] = {None}
         self.country_matcher = {}
         self.default_matcher = CountryPostcodeMatcher('', {'pattern': '.*'})
 
@@ -71,14 +72,14 @@ class PostcodeFormatter:
                 raise UsageError(f"Invalid entry 'postcode' for country '{ccode}'")
 
 
-    def set_default_pattern(self, pattern):
+    def set_default_pattern(self, pattern: str) -> None:
         """ Set the postcode match pattern to use, when a country does not
-            have a specific pattern or is marked as country without postcode.
+            have a specific pattern.
         """
         self.default_matcher = CountryPostcodeMatcher('', {'pattern': pattern})
 
 
-    def get_matcher(self, country_code):
+    def get_matcher(self, country_code: Optional[str]) -> Optional[CountryPostcodeMatcher]:
         """ Return the CountryPostcodeMatcher for the given country.
             Returns None if the country doesn't have a postcode and the
             default matcher if there is no specific matcher configured for
@@ -87,10 +88,12 @@ class PostcodeFormatter:
         if country_code in self.country_without_postcode:
             return None
 
+        assert country_code is not None
+
         return self.country_matcher.get(country_code, self.default_matcher)
 
 
-    def match(self, country_code, postcode):
+    def match(self, country_code: Optional[str], postcode: str) -> Optional[Match[str]]:
         """ Match the given postcode against the postcode pattern for this
             matcher. Returns a `re.Match` object if the country has a pattern
             and the match was successful or None if the match failed.
@@ -98,10 +101,12 @@ class PostcodeFormatter:
         if country_code in self.country_without_postcode:
             return None
 
+        assert country_code is not None
+
         return self.country_matcher.get(country_code, self.default_matcher).match(postcode)
 
 
-    def normalize(self, country_code, match):
+    def normalize(self, country_code: str, match: Match[str]) -> str:
         """ Return the default format of the postcode for the given match.
             `match` must be a `re.Match` object previously returned by
             `match()`

@@ -20,11 +20,15 @@ Arguments:
                         objects that have no country assigned. These are always
                         assumed to have no postcode.
 """
+from typing import Callable, Optional, Tuple
+
 from nominatim.data.postcode_format import PostcodeFormatter
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class _PostcodeSanitizer:
 
-    def __init__(self, config):
+    def __init__(self, config: SanitizerConfig) -> None:
         self.convert_to_address = config.get_bool('convert-to-address', True)
         self.matcher = PostcodeFormatter()
 
@@ -33,7 +37,7 @@ class _PostcodeSanitizer:
             self.matcher.set_default_pattern(default_pattern)
 
 
-    def __call__(self, obj):
+    def __call__(self, obj: ProcessInfo) -> None:
         if not obj.address:
             return
 
@@ -52,14 +56,16 @@ class _PostcodeSanitizer:
                 postcode.set_attr('variant', formatted[1])
 
 
-    def scan(self, postcode, country):
+    def scan(self, postcode: str, country: Optional[str]) -> Optional[Tuple[str, str]]:
         """ Check the postcode for correct formatting and return the
             normalized version. Returns None if the postcode does not
-            correspond to the oficial format of the given country.
+            correspond to the official format of the given country.
         """
         match = self.matcher.match(country, postcode)
         if match is None:
             return None
+
+        assert country is not None
 
         return self.matcher.normalize(country, match),\
                ' '.join(filter(lambda p: p is not None, match.groups()))
@@ -67,7 +73,7 @@ class _PostcodeSanitizer:
 
 
 
-def create(config):
+def create(config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a housenumber processing function.
     """
 

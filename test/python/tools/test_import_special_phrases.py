@@ -128,7 +128,7 @@ def test_create_place_classtype_table_and_indexes(
     """
     pairs = set([('class1', 'type1'), ('class2', 'type2')])
 
-    sp_importer._create_place_classtype_table_and_indexes(pairs)
+    sp_importer._create_classtype_table_and_indexes(pairs)
 
     for pair in pairs:
         assert check_table_exist(temp_db_conn, pair[0], pair[1])

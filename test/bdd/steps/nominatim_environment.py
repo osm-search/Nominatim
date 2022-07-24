@@ -15,7 +15,7 @@ sys.path.insert(1, str((Path(__file__) / '..' / '..' / '..' / '..').resolve()))
 
 from nominatim import cli
 from nominatim.config import Configuration
-from nominatim.db.connection import _Connection
+from nominatim.db.connection import Connection
 from nominatim.tools import refresh
 from nominatim.tokenizer import factory as tokenizer_factory
 from steps.utils import run_script
@@ -61,7 +61,7 @@ class NominatimEnvironment:
             dbargs['user'] = self.db_user
         if self.db_pass:
             dbargs['password'] = self.db_pass
-        conn = psycopg2.connect(connection_factory=_Connection, **dbargs)
+        conn = psycopg2.connect(connection_factory=Connection, **dbargs)
         return conn
 
     def next_code_coverage_file(self):

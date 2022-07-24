@@ -7,20 +7,28 @@
 """
 Configuration for Sanitizers.
 """
+from typing import Sequence, Optional, Pattern, Callable, Any, TYPE_CHECKING
 from collections import UserDict
 import re
 
 from nominatim.errors import UsageError
 
-class SanitizerConfig(UserDict):
+# working around missing generics in Python < 3.8
+# See https://github.com/python/typing/issues/60#issuecomment-869757075
+if TYPE_CHECKING:
+    _BaseUserDict = UserDict[str, Any]
+else:
+    _BaseUserDict = UserDict
+
+class SanitizerConfig(_BaseUserDict):
     """ Dictionary with configuration options for a sanitizer.
 
-        In addition to the usualy dictionary function, the class provides
+        In addition to the usual dictionary function, the class provides
         accessors to standard sanatizer options that are used by many of the
         sanitizers.
     """
 
-    def get_string_list(self, param, default=tuple()):
+    def get_string_list(self, param: str, default: Sequence[str] = tuple()) -> Sequence[str]:
         """ Extract a configuration parameter as a string list.
             If the parameter value is a simple string, it is returned as a
             one-item list. If the parameter value does not exist, the given
@@ -44,7 +52,7 @@ class SanitizerConfig(UserDict):
         return values
 
 
-    def get_bool(self, param, default=None):
+    def get_bool(self, param: str, default: Optional[bool] = None) -> bool:
         """ Extract a configuration parameter as a boolean.
             The parameter must be one of the yaml boolean values or an
             user error will be raised. If `default` is given, then the parameter
@@ -58,7 +66,7 @@ class SanitizerConfig(UserDict):
         return value
 
 
-    def get_delimiter(self, default=',;'):
+    def get_delimiter(self, default: str = ',;') -> Pattern[str]:
         """ Return the 'delimiter' parameter in the configuration as a
             compiled regular expression that can be used to split the names on the
             delimiters. The regular expression makes sure that the resulting names
@@ -76,13 +84,13 @@ class SanitizerConfig(UserDict):
         return re.compile('\\s*[{}]+\\s*'.format(''.join('\\' + d for d in delimiter_set)))
 
 
-    def get_filter_kind(self, *default):
+    def get_filter_kind(self, *default: str) -> Callable[[str], bool]:
         """ Return a filter function for the name kind from the 'filter-kind'
             config parameter. The filter functions takes a name item and returns
             True when the item passes the filter.
 
             If the parameter is empty, the filter lets all items pass. If the
-            paramter is a string, it is interpreted as a single regular expression
+            parameter is a string, it is interpreted as a single regular expression
             that must match the full kind string. If the parameter is a list then
             any of the regular expressions in the list must match to pass.
         """
@@ -93,4 +101,4 @@ class SanitizerConfig(UserDict):
 
         regexes = [re.compile(regex) for regex in filters]
 
-        return lambda name: any(regex.fullmatch(name.kind) for regex in regexes)
+        return lambda name: any(regex.fullmatch(name) for regex in regexes)

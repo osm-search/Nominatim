@@ -7,7 +7,8 @@
 """
 Parser for configuration for variants.
 """
-from collections import defaultdict, namedtuple
+from typing import Any, Iterator, Tuple, List, Optional, Set, NamedTuple
+from collections import defaultdict
 import itertools
 import re
 
@@ -16,9 +17,15 @@ from icu import Transliterator
 from nominatim.config import flatten_config_list
 from nominatim.errors import UsageError
 
-ICUVariant = namedtuple('ICUVariant', ['source', 'replacement'])
+class ICUVariant(NamedTuple):
+    """ A single replacement rule for variant creation.
+    """
+    source: str
+    replacement: str
 
-def get_variant_config(rules, normalization_rules):
+
+def get_variant_config(in_rules: Any,
+                       normalization_rules: str) -> Tuple[List[Tuple[str, List[str]]], str]:
     """ Convert the variant definition from the configuration into
         replacement sets.
 
@@ -26,11 +33,11 @@ def get_variant_config(rules, normalization_rules):
         used in the replacements.
     """
     immediate = defaultdict(list)
-    chars = set()
+    chars: Set[str] = set()
 
-    if rules:
-        vset = set()
-        rules = flatten_config_list(rules, 'variants')
+    if in_rules:
+        vset: Set[ICUVariant] = set()
+        rules = flatten_config_list(in_rules, 'variants')
 
         vmaker = _VariantMaker(normalization_rules)
 
@@ -51,17 +58,17 @@ def get_variant_config(rules, normalization_rules):
 
 
 class _VariantMaker:
-    """ Generater for all necessary ICUVariants from a single variant rule.
+    """ Generator for all necessary ICUVariants from a single variant rule.
 
         All text in rules is normalized to make sure the variants match later.
     """
 
-    def __init__(self, norm_rules):
+    def __init__(self, norm_rules: Any) -> None:
         self.norm = Transliterator.createFromRules("rule_loader_normalization",
                                                    norm_rules)
 
 
-    def compute(self, rule):
+    def compute(self, rule: Any) -> Iterator[ICUVariant]:
         """ Generator for all ICUVariant tuples from a single variant rule.
         """
         parts = re.split(r'(\|)?([=-])>', rule)
@@ -85,7 +92,7 @@ class _VariantMaker:
                     yield ICUVariant(froms, tos)
 
 
-    def _parse_variant_word(self, name):
+    def _parse_variant_word(self, name: str) -> Optional[Tuple[str, str, str]]:
         name = name.strip()
         match = re.fullmatch(r'([~^]?)([^~$^]*)([~$]?)', name)
         if match is None or (match.group(1) == '~' and match.group(3) == '~'):
@@ -102,7 +109,8 @@ _FLAG_MATCH = {'^': '^ ',
                '': ' '}
 
 
-def _create_variants(src, preflag, postflag, repl, decompose):
+def _create_variants(src: str, preflag: str, postflag: str,
+                     repl: str, decompose: bool) -> Iterator[Tuple[str, str]]:
     if preflag == '~':
         postfix = _FLAG_MATCH[postflag]
         # suffix decomposition

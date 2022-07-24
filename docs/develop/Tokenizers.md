@@ -105,7 +105,7 @@ functions. By convention, these should be placed in `lib-sql/tokenizer`.
 If the tokenizer has a default configuration file, this should be saved in
 the `settings/<NAME>_tokenizer.<SUFFIX>`.
 
-### Configuration and Persistance
+### Configuration and Persistence
 
 Tokenizers may define custom settings for their configuration. All settings
 must be prefixed with `NOMINATIM_TOKENIZER_`. Settings may be transient or

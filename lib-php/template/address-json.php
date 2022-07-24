@@ -63,7 +63,7 @@ if (empty($aPlace)) {
     }
 
     if (isset($aPlace['asgeojson'])) {
-        $aFilteredPlaces['geojson'] = json_decode($aPlace['asgeojson']);
+        $aFilteredPlaces['geojson'] = json_decode($aPlace['asgeojson'], true);
     }
 
     if (isset($aPlace['assvg'])) {

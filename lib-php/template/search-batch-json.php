@@ -60,7 +60,7 @@ foreach ($aBatchResults as $aSearchResults) {
         }
 
         if (isset($aPointDetails['asgeojson'])) {
-            $aPlace['geojson'] = json_decode($aPointDetails['asgeojson']);
+            $aPlace['geojson'] = json_decode($aPointDetails['asgeojson'], true);
         }
 
         if (isset($aPointDetails['assvg'])) {

@@ -9,12 +9,17 @@ This sanitizer creates additional name variants for names that have
 addendums in brackets (e.g. "Halle (Saale)"). The additional variant contains
 only the main name part with the bracket part removed.
 """
+from typing import Callable
 
-def create(_):
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.tokenizer.sanitizers.config import SanitizerConfig
+
+
+def create(_: SanitizerConfig) -> Callable[[ProcessInfo], None]:
     """ Create a name processing function that creates additional name variants
         for bracket addendums.
     """
-    def _process(obj):
+    def _process(obj: ProcessInfo) -> None:
         """ Add variants for names that have a bracket extension.
         """
         if obj.names:

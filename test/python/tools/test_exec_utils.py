@@ -122,7 +122,13 @@ class TestRunApiScript:
 
     @staticmethod
     def test_fail_on_error_output(tmp_path):
-        (tmp_path / 'website' / 'bad.php').write_text("<?php\nfwrite(STDERR, 'WARNING'.PHP_EOL);")
+        # Starting PHP 8 the PHP CLI no longer has STDERR defined as constant
+        php = """
+        <?php
+        if(!defined('STDERR')) define('STDERR', fopen('php://stderr', 'wb'));
+        fwrite(STDERR, 'WARNING'.PHP_EOL);
+        """
+        (tmp_path / 'website' / 'bad.php').write_text(php)
 
         assert exec_utils.run_api_script('bad', tmp_path) == 1
 

@@ -56,7 +56,7 @@ is.
 ## Development
 
 Vagrant maps the virtual machine's port 8089 to your host machine. Thus you can
-see Nominatim in action on [locahost:8089](http://localhost:8089/nominatim/).
+see Nominatim in action on [localhost:8089](http://localhost:8089/nominatim/).
 
 You edit code on your host machine in any editor you like. There is no need to
 restart any software: just refresh your browser window.

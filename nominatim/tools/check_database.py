@@ -7,10 +7,12 @@
 """
 Collection of functions that check if the database is complete and functional.
 """
+from typing import Callable, Optional, Any, Union, Tuple, Mapping, List
 from enum import Enum
 from textwrap import dedent
 
-from nominatim.db.connection import connect
+from nominatim.config import Configuration
+from nominatim.db.connection import connect, Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer import factory as tokenizer_factory
 
@@ -25,14 +27,17 @@ class CheckState(Enum):
     NOT_APPLICABLE = 3
     WARN = 4
 
-def _check(hint=None):
+CheckResult = Union[CheckState, Tuple[CheckState, Mapping[str, Any]]]
+CheckFunc = Callable[[Connection, Configuration], CheckResult]
+
+def _check(hint: Optional[str] = None) -> Callable[[CheckFunc], CheckFunc]:
     """ Decorator for checks. It adds the function to the list of
         checks to execute and adds the code for printing progress messages.
     """
-    def decorator(func):
-        title = func.__doc__.split('\n', 1)[0].strip()
+    def decorator(func: CheckFunc) -> CheckFunc:
+        title = (func.__doc__ or '').split('\n', 1)[0].strip()
 
-        def run_check(conn, config):
+        def run_check(conn: Connection, config: Configuration) -> CheckState:
             print(title, end=' ... ')
             ret = func(conn, config)
             if isinstance(ret, tuple):
@@ -61,20 +66,20 @@ def _check(hint=None):
 
 class _BadConnection:
 
-    def __init__(self, msg):
+    def __init__(self, msg: str) -> None:
         self.msg = msg
 
-    def close(self):
+    def close(self) -> None:
         """ Dummy function to provide the implementation.
         """
 
-def check_database(config):
+def check_database(config: Configuration) -> int:
     """ Run a number of checks on the database and return the status.
     """
     try:
         conn = connect(config.get_libpq_dsn()).connection
     except UsageError as err:
-        conn = _BadConnection(str(err))
+        conn = _BadConnection(str(err)) # type: ignore[assignment]
 
     overall_result = 0
     for check in CHECKLIST:
@@ -89,7 +94,7 @@ def check_database(config):
     return overall_result
 
 
-def _get_indexes(conn):
+def _get_indexes(conn: Connection) -> List[str]:
     indexes = ['idx_place_addressline_address_place_id',
                'idx_placex_rank_search',
                'idx_placex_rank_address',
@@ -131,7 +136,7 @@ def _get_indexes(conn):
              Project directory: {config.project_dir}
              Current setting of NOMINATIM_DATABASE_DSN: {config.DATABASE_DSN}
              """)
-def check_connection(conn, config):
+def check_connection(conn: Any, config: Configuration) -> CheckResult:
     """ Checking database connection
     """
     if isinstance(conn, _BadConnection):
@@ -149,7 +154,7 @@ def check_connection(conn, config):
              Project directory: {config.project_dir}
              Current setting of NOMINATIM_DATABASE_DSN: {config.DATABASE_DSN}
              """)
-def check_placex_table(conn, config):
+def check_placex_table(conn: Connection, config: Configuration) -> CheckResult:
     """ Checking for placex table
     """
     if conn.table_exists('placex'):
@@ -158,8 +163,8 @@ def check_placex_table(conn, config):
     return CheckState.FATAL, dict(config=config)
 
 
-@_check(hint="""placex table has no data. Did the import finish sucessfully?""")
-def check_placex_size(conn, _):
+@_check(hint="""placex table has no data. Did the import finish successfully?""")
+def check_placex_size(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for placex content
     """
     with conn.cursor() as cur:
@@ -169,14 +174,14 @@ def check_placex_size(conn, _):
 
 
 @_check(hint="""{msg}""")
-def check_tokenizer(_, config):
+def check_tokenizer(_: Connection, config: Configuration) -> CheckResult:
     """ Checking that tokenizer works
     """
     try:
         tokenizer = tokenizer_factory.get_tokenizer_for_db(config)
     except UsageError:
         return CheckState.FAIL, dict(msg="""\
-            Cannot load tokenizer. Did the import finish sucessfully?""")
+            Cannot load tokenizer. Did the import finish successfully?""")
 
     result = tokenizer.check_database(config)
 
@@ -191,7 +196,7 @@ def check_tokenizer(_, config):
              Quality of search results may be degraded. Reverse geocoding is unaffected.
              See https://nominatim.org/release-docs/latest/admin/Import/#wikipediawikidata-rankings
              """)
-def check_existance_wikipedia(conn, _):
+def check_existance_wikipedia(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking for wikipedia/wikidata data
     """
     if not conn.table_exists('search_name'):
@@ -208,7 +213,7 @@ def check_existance_wikipedia(conn, _):
 
              To index the remaining entries, run:   {index_cmd}
              """)
-def check_indexing(conn, _):
+def check_indexing(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking indexing status
     """
     with conn.cursor() as cur:
@@ -233,7 +238,7 @@ def check_indexing(conn, _):
 
              Rerun the index creation with:   nominatim import --continue db-postprocess
              """)
-def check_database_indexes(conn, _):
+def check_database_indexes(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking that database indexes are complete
     """
     missing = []
@@ -255,7 +260,7 @@ def check_database_indexes(conn, _):
              Invalid indexes:
                {indexes}
              """)
-def check_database_index_valid(conn, _):
+def check_database_index_valid(conn: Connection, _: Configuration) -> CheckResult:
     """ Checking that all database indexes are valid
     """
     with conn.cursor() as cur:
@@ -275,7 +280,7 @@ def check_database_index_valid(conn, _):
              {error}
              Run TIGER import again:   nominatim add-data --tiger-data <DIR>
              """)
-def check_tiger_table(conn, config):
+def check_tiger_table(conn: Connection, config: Configuration) -> CheckResult:
     """ Checking TIGER external data table.
     """
     if not config.get_bool('USE_US_TIGER_DATA'):

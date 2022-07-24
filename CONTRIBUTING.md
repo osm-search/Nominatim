@@ -36,7 +36,7 @@ Nominatim historically hasn't followed a particular coding style but we
 are in process of consolidating the style. The following rules apply:
 
  * Python code uses the official Python style
- * indention
+ * indentation
    * SQL use 2 spaces
    * all other file types use 4 spaces
    * [BSD style](https://en.wikipedia.org/wiki/Indent_style#Allman_style) for braces

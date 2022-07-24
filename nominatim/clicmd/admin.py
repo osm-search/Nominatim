@@ -8,9 +8,10 @@
 Implementation of the 'admin' subcommand.
 """
 import logging
+import argparse
 
 from nominatim.tools.exec_utils import run_legacy_script
-from nominatim.db.connection import connect
+from nominatim.clicmd.args import NominatimArgs
 
 # Do not repeat documentation of subcommand classes.
 # pylint: disable=C0111
@@ -24,8 +25,7 @@ class AdminFuncs:
     Analyse and maintain the database.
     """
 
-    @staticmethod
-    def add_args(parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_argument_group('Admin tasks')
         objs = group.add_mutually_exclusive_group(required=True)
         objs.add_argument('--warm', action='store_true',
@@ -50,10 +50,9 @@ class AdminFuncs:
         mgroup.add_argument('--place-id', type=int,
                             help='Analyse indexing of the given Nominatim object')
 
-    @staticmethod
-    def run(args):
+    def run(self, args: NominatimArgs) -> int:
         if args.warm:
-            return AdminFuncs._warm(args)
+            return self._warm(args)
 
         if args.check_database:
             LOG.warning('Checking database')
@@ -63,8 +62,7 @@ class AdminFuncs:
         if args.analyse_indexing:
             LOG.warning('Analysing performance of indexing function')
             from ..tools import admin
-            with connect(args.config.get_libpq_dsn()) as conn:
-                admin.analyse_indexing(conn, osm_id=args.osm_id, place_id=args.place_id)
+            admin.analyse_indexing(args.config, osm_id=args.osm_id, place_id=args.place_id)
             return 0
 
         if args.migrate:
@@ -75,8 +73,7 @@ class AdminFuncs:
         return 1
 
 
-    @staticmethod
-    def _warm(args):
+    def _warm(self, args: NominatimArgs) -> int:
         LOG.warning('Warming database caches')
         params = ['warm.php']
         if args.target == 'reverse':

@@ -8,27 +8,19 @@
 Wrapper around place information the indexer gets from the database and hands to
 the tokenizer.
 """
-
-import psycopg2.extras
+from typing import Optional, Mapping, Any
 
 class PlaceInfo:
     """ Data class containing all information the tokenizer gets about a
         place it should process the names for.
     """
 
-    def __init__(self, info):
+    def __init__(self, info: Mapping[str, Any]) -> None:
         self._info = info
 
 
-    def analyze(self, analyzer):
-        """ Process this place with the given tokenizer and return the
-            result in psycopg2-compatible Json.
-        """
-        return psycopg2.extras.Json(analyzer.process_place(self))
-
-
     @property
-    def name(self):
+    def name(self) -> Optional[Mapping[str, str]]:
         """ A dictionary with the names of the place or None if the place
             has no names.
         """
@@ -36,7 +28,7 @@ class PlaceInfo:
 
 
     @property
-    def address(self):
+    def address(self) -> Optional[Mapping[str, str]]:
         """ A dictionary with the address elements of the place
             or None if no address information is available.
         """
@@ -44,7 +36,7 @@ class PlaceInfo:
 
 
     @property
-    def country_code(self):
+    def country_code(self) -> Optional[str]:
         """ The country code of the country the place is in. Guaranteed
             to be a two-letter lower-case string or None, if no country
             could be found.
@@ -53,20 +45,20 @@ class PlaceInfo:
 
 
     @property
-    def rank_address(self):
+    def rank_address(self) -> int:
         """ The computed rank address before rank correction.
         """
-        return self._info.get('rank_address')
+        return self._info.get('rank_address', 0)
 
 
-    def is_a(self, key, value):
+    def is_a(self, key: str, value: str) -> bool:
         """ Check if the place's primary tag corresponds to the given
             key and value.
         """
         return self._info.get('class') == key and self._info.get('type') == value
 
 
-    def is_country(self):
+    def is_country(self) -> bool:
         """ Check if the place is a valid country boundary.
         """
         return self.rank_address == 4 \

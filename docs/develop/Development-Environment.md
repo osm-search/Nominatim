@@ -1,6 +1,6 @@
 # Setting up Nominatim for Development
 
-This chapter gives an overview how to set up Nominatim for developement
+This chapter gives an overview how to set up Nominatim for development
 and how to run tests.
 
 !!! Important
@@ -33,6 +33,8 @@ It has the following additional requirements:
 * [phpunit](https://phpunit.de) (9.5 is known to work)
 * [PHP CodeSniffer](https://github.com/squizlabs/PHP_CodeSniffer)
 * [Pylint](https://pylint.org/) (CI always runs the latest version from pip)
+* [mypy](http://mypy-lang.org/) (plus typing information for external libs)
+* [Python Typing Extensions](https://github.com/python/typing_extensions) (for Python < 3.9)
 * [pytest](https://pytest.org)
 
 The documentation is built with mkdocs:
@@ -50,9 +52,10 @@ To install all necessary packages run:
 
 ```sh
 sudo apt install php-cgi phpunit php-codesniffer \
-                 python3-pip python3-setuptools python3-dev pylint
+                 python3-pip python3-setuptools python3-dev
 
-pip3 install --user behave mkdocs mkdocstrings pytest
+pip3 install --user behave mkdocs mkdocstrings pytest \
+                    pylint mypy types-PyYAML types-jinja2 types-psycopg2
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

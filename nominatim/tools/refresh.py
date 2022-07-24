@@ -9,6 +9,7 @@ Functions for bringing auxiliary data in the database up-to-date.
 """
 from typing import MutableSequence, Tuple, Any, Type, Mapping, Sequence, List, cast
 import logging
+import subprocess
 from textwrap import dedent
 from pathlib import Path
 
@@ -146,10 +147,10 @@ def import_wikipedia_articles(dsn: str, data_path: Path, ignore_errors: bool = F
 
     return 0
 
-def import_osm_views_geotiff(dsn, data_path, ignore_errors=False):
+def import_osm_views_geotiff(conn: Connection, data_path: Path) -> int:
     """ Replaces the OSM views table with new data.
-        
-        Returns 0 if all was well and 1 if the GeoTIFF file could not
+
+        Returns 0 if all was well and 1 if the OSM views GeoTIFF file could not
         be found. Throws an exception if there was an error reading the file.
     """
     datafile = data_path / 'osmviews.tiff'
@@ -157,12 +158,17 @@ def import_osm_views_geotiff(dsn, data_path, ignore_errors=False):
     if not datafile.exists():
         return 1
 
-    pre_code = """BEGIN;
-                  DROP TABLE IF EXISTS "osmviews";
-               """
-    post_code = "COMMIT"
-    execute_file(dsn, datafile, ignore_errors=ignore_errors,
-                 pre_code=pre_code, post_code=post_code)
+    postgis_version = conn.postgis_version_tuple()
+    if postgis_version[0] < 3:
+        return 2
+
+    with conn.cursor() as cur:
+        cur.execute('DROP TABLE IF EXISTS "osm_views"')
+        conn.commit()
+
+        cmd = f"raster2pgsql -s 4326 -I -C -t 100x100 {datafile} \
+            public.osm_views | psql nominatim > /dev/null"
+        subprocess.run(["/bin/bash", "-c" , cmd], check=True)
 
     return 0
 

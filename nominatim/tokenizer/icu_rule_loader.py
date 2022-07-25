@@ -45,6 +45,7 @@ class ICURuleLoader:
     """
 
     def __init__(self, config: Configuration) -> None:
+        self.config = config
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
@@ -92,7 +93,7 @@ class ICURuleLoader:
     def make_sanitizer(self) -> PlaceSanitizer:
         """ Create a place sanitizer from the configured rules.
         """
-        return PlaceSanitizer(self.sanitizer_rules)
+        return PlaceSanitizer(self.sanitizer_rules, self.config)
 
 
     def make_token_analysis(self) -> ICUTokenAnalysis:

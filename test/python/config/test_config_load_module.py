@@ -31,6 +31,11 @@ def test_load_default_module(test_config):
 
     assert isinstance(module.NOMINATIM_VERSION, tuple)
 
+def test_load_default_module_with_hyphen(test_config):
+    module = test_config.load_plugin_module('place-info', 'nominatim.data')
+
+    assert isinstance(module.PlaceInfo, object)
+
 
 def test_load_plugin_module(test_config, tmp_path):
     (tmp_path / 'project' / 'testpath').mkdir()

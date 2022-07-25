@@ -222,7 +222,7 @@ class Configuration:
         return result
 
 
-    def load_plugin_module(self, module_name: str, internal_path: str) -> object:
+    def load_plugin_module(self, module_name: str, internal_path: str) -> Any:
         """ Load a Python module as a plugin.
 
             The module_name may have three variants:

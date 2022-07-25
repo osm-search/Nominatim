@@ -6,7 +6,6 @@ the following operating systems:
 
   * [Ubuntu 20.04](../appendix/Install-on-Ubuntu-20.md)
   * [Ubuntu 18.04](../appendix/Install-on-Ubuntu-18.md)
-  * [CentOS 8](../appendix/Install-on-Centos-8.md)
 
 These OS-specific instructions can also be found in executable form
 in the `vagrant/` directory.

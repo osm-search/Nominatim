@@ -9,9 +9,9 @@ Handler for cleaning name and address tags in place information before it
 is handed to the token analysis.
 """
 from typing import Optional, List, Mapping, Sequence, Callable, Any, Tuple
-import importlib
 
 from nominatim.errors import UsageError
+from nominatim.config import Configuration
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 from nominatim.tokenizer.sanitizers.base import SanitizerHandler, ProcessInfo, PlaceName
 from nominatim.data.place_info import PlaceInfo
@@ -22,16 +22,21 @@ class PlaceSanitizer:
         names and address before they are used by the token analysers.
     """
 
-    def __init__(self, rules: Optional[Sequence[Mapping[str, Any]]]) -> None:
+    def __init__(self, rules: Optional[Sequence[Mapping[str, Any]]],
+                 config: Configuration) -> None:
         self.handlers: List[Callable[[ProcessInfo], None]] = []
 
         if rules:
             for func in rules:
                 if 'step' not in func:
                     raise UsageError("Sanitizer rule is missing the 'step' attribute.")
-                module_name = 'nominatim.tokenizer.sanitizers.' + func['step'].replace('-', '_')
-                handler_module: SanitizerHandler = importlib.import_module(module_name)
-                self.handlers.append(handler_module.create(SanitizerConfig(func)))
+                if not isinstance(func['step'], str):
+                    raise UsageError("'step' attribute must be a simple string.")
+
+                module: SanitizerHandler = \
+                    config.load_plugin_module(func['step'], 'nominatim.tokenizer.sanitizers')
+
+                self.handlers.append(module.create(SanitizerConfig(func)))
 
 
     def process_names(self, place: PlaceInfo) -> Tuple[List[PlaceName], List[PlaceName]]:

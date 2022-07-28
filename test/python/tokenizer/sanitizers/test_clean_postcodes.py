@@ -25,7 +25,7 @@ def sanitize(def_config, request):
         if country is not None:
             pi['country_code'] = country
 
-        _, address = PlaceSanitizer([sanitizer_args]).process_names(PlaceInfo(pi))
+        _, address = PlaceSanitizer([sanitizer_args], def_config).process_names(PlaceInfo(pi))
 
         return sorted([(p.kind, p.name) for p in address])
 

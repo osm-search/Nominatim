@@ -8,7 +8,6 @@
 Helper class to create ICU rules from a configuration file.
 """
 from typing import Mapping, Any, Dict, Optional
-import importlib
 import io
 import json
 import logging
@@ -45,6 +44,7 @@ class ICURuleLoader:
     """
 
     def __init__(self, config: Configuration) -> None:
+        self.config = config
         rules = config.load_sub_configuration('icu_tokenizer.yaml',
                                               config='TOKENIZER_CONFIG')
 
@@ -92,7 +92,7 @@ class ICURuleLoader:
     def make_sanitizer(self) -> PlaceSanitizer:
         """ Create a place sanitizer from the configured rules.
         """
-        return PlaceSanitizer(self.sanitizer_rules)
+        return PlaceSanitizer(self.sanitizer_rules, self.config)
 
 
     def make_token_analysis(self) -> ICUTokenAnalysis:
@@ -144,7 +144,9 @@ class ICURuleLoader:
                     LOG.fatal("ICU tokenizer configuration has two token "
                               "analyzers with id '%s'.", name)
                 raise UsageError("Syntax error in ICU tokenizer config.")
-            self.analysis[name] = TokenAnalyzerRule(section, self.normalization_rules)
+            self.analysis[name] = TokenAnalyzerRule(section,
+                                                    self.normalization_rules,
+                                                    self.config)
 
 
     @staticmethod
@@ -168,14 +170,17 @@ class TokenAnalyzerRule:
         and creates a new token analyzer on request.
     """
 
-    def __init__(self, rules: Mapping[str, Any], normalization_rules: str) -> None:
-        # Find the analysis module
-        module_name = 'nominatim.tokenizer.token_analysis.' \
-                      + _get_section(rules, 'analyzer').replace('-', '_')
-        self._analysis_mod: AnalysisModule = importlib.import_module(module_name)
+    def __init__(self, rules: Mapping[str, Any], normalization_rules: str,
+                 config: Configuration) -> None:
+        analyzer_name = _get_section(rules, 'analyzer')
+        if not analyzer_name or not isinstance(analyzer_name, str):
+            raise UsageError("'analyzer' parameter needs to be simple string")
 
-        # Load the configuration.
+        self._analysis_mod: AnalysisModule = \
+            config.load_plugin_module(analyzer_name, 'nominatim.tokenizer.token_analysis')
+
         self.config = self._analysis_mod.configure(rules, normalization_rules)
+
 
     def create(self, normalizer: Any, transliterator: Any) -> Analyser:
         """ Create a new analyser instance for the given rule.

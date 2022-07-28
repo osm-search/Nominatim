@@ -40,7 +40,8 @@ It has the following additional requirements:
 The documentation is built with mkdocs:
 
 * [mkdocs](https://www.mkdocs.org/) >= 1.1.2
-* [mkdocstrings](https://mkdocstrings.github.io/)
+* [mkdocstrings](https://mkdocstrings.github.io/) >= 0.16
+* [mkdocstrings-python-legacy](https://mkdocstrings.github.io/python-legacy/)
 
 ### Installing prerequisites on Ubuntu/Debian
 

@@ -21,8 +21,8 @@ else:
     _BaseUserDict = UserDict
 
 class SanitizerConfig(_BaseUserDict):
-    """ Dictionary with configuration options for a sanitizer.
-
+    """ The `SanitizerConfig` class is a read-only dictionary
+        with configuration options for the sanitizer.
         In addition to the usual dictionary function, the class provides
         accessors to standard sanatizer options that are used by many of the
         sanitizers.
@@ -30,10 +30,16 @@ class SanitizerConfig(_BaseUserDict):
 
     def get_string_list(self, param: str, default: Sequence[str] = tuple()) -> Sequence[str]:
         """ Extract a configuration parameter as a string list.
-            If the parameter value is a simple string, it is returned as a
-            one-item list. If the parameter value does not exist, the given
-            default is returned. If the parameter value is a list, it is checked
-            to contain only strings before being returned.
+
+            Arguments:
+                param: Name of the configuration parameter.
+                default: Value to return, when the parameter is missing.
+
+            Returns:
+                If the parameter value is a simple string, it is returned as a
+                one-item list. If the parameter value does not exist, the given
+                default is returned. If the parameter value is a list, it is
+                checked to contain only strings before being returned.
         """
         values = self.data.get(param, None)
 
@@ -54,9 +60,16 @@ class SanitizerConfig(_BaseUserDict):
 
     def get_bool(self, param: str, default: Optional[bool] = None) -> bool:
         """ Extract a configuration parameter as a boolean.
-            The parameter must be one of the yaml boolean values or an
-            user error will be raised. If `default` is given, then the parameter
-            may also be missing or empty.
+
+            Arguments:
+                param: Name of the configuration parameter. The parameter must
+                       contain one of the yaml boolean values or an
+                       UsageError will be raised.
+                default: Value to return, when the parameter is missing.
+                         When set to `None`, the parameter must be defined.
+
+            Returns:
+                Boolean value of the given parameter.
         """
         value = self.data.get(param, default)
 
@@ -67,15 +80,20 @@ class SanitizerConfig(_BaseUserDict):
 
 
     def get_delimiter(self, default: str = ',;') -> Pattern[str]:
-        """ Return the 'delimiter' parameter in the configuration as a
-            compiled regular expression that can be used to split the names on the
-            delimiters. The regular expression makes sure that the resulting names
-            are stripped and that repeated delimiters
-            are ignored but it will still create empty fields on occasion. The
-            code needs to filter those.
+        """ Return the 'delimiters' parameter in the configuration as a
+            compiled regular expression that can be used to split names on these
+            delimiters.
 
-            The 'default' parameter defines the delimiter set to be used when
-            not explicitly configured.
+            Arguments:
+                default: Delimiters to be used, when 'delimiters' parameter
+                         is not explicitly configured.
+
+            Returns:
+                A regular expression pattern, which can be used to
+                split a string. The regular expression makes sure that the
+                resulting names are stripped and that repeated delimiters
+                are ignored. It may still create empty fields on occasion. The
+                code needs to filter those.
         """
         delimiter_set = set(self.data.get('delimiters', default))
         if not delimiter_set:
@@ -86,13 +104,22 @@ class SanitizerConfig(_BaseUserDict):
 
     def get_filter_kind(self, *default: str) -> Callable[[str], bool]:
         """ Return a filter function for the name kind from the 'filter-kind'
-            config parameter. The filter functions takes a name item and returns
-            True when the item passes the filter.
+            config parameter.
 
-            If the parameter is empty, the filter lets all items pass. If the
-            parameter is a string, it is interpreted as a single regular expression
-            that must match the full kind string. If the parameter is a list then
+            If the 'filter-kind' parameter is empty, the filter lets all items
+            pass. If the parameter is a string, it is interpreted as a single
+            regular expression that must match the full kind string.
+            If the parameter is a list then
             any of the regular expressions in the list must match to pass.
+
+            Arguments:
+                default: Filters to be used, when the 'filter-kind' parameter
+                         is not specified. If omitted then the default is to
+                         let all names pass.
+
+            Returns:
+                A filter function which takes a name string and returns
+                True when the item passes the filter.
         """
         filters = self.get_string_list('filter-kind', default)
 

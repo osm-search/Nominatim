@@ -39,6 +39,7 @@ nav:
         - 'Database Layout' : 'develop/Database-Layout.md'
         - 'Indexing' : 'develop/Indexing.md'
         - 'Tokenizers' : 'develop/Tokenizers.md'
+        - 'Custom modules for ICU tokenizer': 'develop/ICU-Tokenizer-Modules.md'
         - 'Setup for Development' : 'develop/Development-Environment.md'
         - 'Testing' : 'develop/Testing.md'
         - 'External Data Sources': 'develop/data-sources.md'
@@ -58,7 +59,7 @@ plugins:
     - search
     - mkdocstrings:
         handlers:
-          python:
+          python-legacy:
             rendering:
               show_source: false
               show_signature_annotations: false

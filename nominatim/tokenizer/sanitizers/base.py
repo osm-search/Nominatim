@@ -14,14 +14,20 @@ from nominatim.data.place_info import PlaceInfo
 from nominatim.typing import Protocol, Final
 
 class PlaceName:
-    """ A searchable name for a place together with properties.
-        Every name object saves the name proper and two basic properties:
-        * 'kind' describes the name of the OSM key used without any suffixes
+    """ Each name and address part of a place is encapsulated in an object of
+        this class. It saves not only the name proper but also describes the
+        kind of name with two properties:
+
+        * `kind` describes the name of the OSM key used without any suffixes
           (i.e. the part after the colon removed)
-        * 'suffix' contains the suffix of the OSM tag, if any. The suffix
+        * `suffix` contains the suffix of the OSM tag, if any. The suffix
           is the part of the key after the first colon.
-        In addition to that, the name may have arbitrary additional attributes.
-        Which attributes are used, depends on the token analyser.
+
+        In addition to that, a name may have arbitrary additional attributes.
+        How attributes are used, depends on the sanatizers and token analysers.
+        The exception is is the 'analyzer' attribute. This apptribute determines
+        which token analysis module will be used to finalize the treatment of
+        names.
     """
 
     def __init__(self, name: str, kind: str, suffix: Optional[str]):
@@ -113,7 +119,13 @@ class SanitizerHandler(Protocol):
 
     def create(self, config: SanitizerConfig) -> Callable[[ProcessInfo], None]:
         """
-        A sanitizer must define a single function `create`. It takes the
-        dictionary with the configuration information for the sanitizer and
-        returns a function that transforms name and address.
+        Create a function for sanitizing a place.
+
+        Arguments:
+            config: A dictionary with the additional configuration options
+                    specified in the tokenizer configuration
+
+        Return:
+            The result must be a callable that takes a place description
+            and transforms name and address as reuqired.
         """

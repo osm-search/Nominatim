@@ -77,7 +77,7 @@ adding extra attributes) or completely replace the list with a different one.
 
 #### PlaceName - extended naming information
 
-::: nominatim.tokenizer.sanitizers.base.PlaceName
+::: nominatim.data.place_name.PlaceName
     rendering:
         show_source: no
         heading_level: 6
@@ -94,7 +94,7 @@ functions:
         heading_level: 6
 
 
-::: nominatim.tokenizer.token_analysis.base.Analyser
+::: nominatim.tokenizer.token_analysis.base.Analyzer
     rendering:
         show_source: no
         heading_level: 6

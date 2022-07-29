@@ -27,7 +27,8 @@ Arguments:
 from typing import Callable, Iterator, List
 import re
 
-from nominatim.tokenizer.sanitizers.base import ProcessInfo, PlaceName
+from nominatim.tokenizer.sanitizers.base import ProcessInfo
+from nominatim.data.place_name import PlaceName
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
 
 class _HousenumberSanitizer:

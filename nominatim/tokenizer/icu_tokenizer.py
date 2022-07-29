@@ -23,7 +23,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.tokenizer.sanitizers.base import PlaceName
+from nominatim.data.place_name import PlaceName
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 

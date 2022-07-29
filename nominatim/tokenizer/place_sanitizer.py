@@ -13,7 +13,8 @@ from typing import Optional, List, Mapping, Sequence, Callable, Any, Tuple
 from nominatim.errors import UsageError
 from nominatim.config import Configuration
 from nominatim.tokenizer.sanitizers.config import SanitizerConfig
-from nominatim.tokenizer.sanitizers.base import SanitizerHandler, ProcessInfo, PlaceName
+from nominatim.tokenizer.sanitizers.base import SanitizerHandler, ProcessInfo
+from nominatim.data.place_name import PlaceName
 from nominatim.data.place_info import PlaceInfo
 
 

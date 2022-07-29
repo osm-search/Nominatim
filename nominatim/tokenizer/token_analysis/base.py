@@ -12,7 +12,8 @@ from typing import Mapping, List, Any
 from nominatim.typing import Protocol
 
 class Analyser(Protocol):
-    """ Instance of the token analyser.
+    """ The `create()` function of an analysis module needs to return an
+        object that implements the following functions.
     """
 
     def normalize(self, name: str) -> str:
@@ -33,10 +34,31 @@ class AnalysisModule(Protocol):
         """ Prepare the configuration of the analysis module.
             This function should prepare all data that can be shared
             between instances of this analyser.
+
+            Arguments:
+                rules: A dictionary with the additional configuration options
+                       as specified in the tokenizer configuration.
+                normalization_rules: ICU rules for normalization as a string
+                                     that can be used with createFromRules().
+
+            Returns:
+                A data object with the configuration that was set up. May be
+                used freely by the analysis module as needed.
         """
 
     def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyser:
         """ Create a new instance of the analyser.
             A separate instance of the analyser is created for each thread
             when used in multi-threading context.
+
+            Arguments:
+                normalizer: an ICU Transliterator with the compiled normalization
+                            rules.
+                transliterator: an ICU tranliterator with the compiled
+                                transliteration rules.
+                config: The object that was returned by the call to configure().
+
+            Returns:
+                A new analyzer instance. This must be a class that implements
+                the Analyser protocol.
         """

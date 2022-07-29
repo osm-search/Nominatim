@@ -52,7 +52,8 @@ the function.
 
 ### The sanitation function
 
-The sanitation function receives a single object with three members:
+The sanitation function receives a single object of type `ProcessInfo`
+which has with three members:
 
  * `place`: read-only information about the place being processed.
    See PlaceInfo below.
@@ -62,7 +63,7 @@ The sanitation function receives a single object with three members:
    is a PlaceName object.
 
 While the `place` member is provided for information only, the `names` and
-`address` lists are meant to be manipulated by the sanitizer. If may add and
+`address` lists are meant to be manipulated by the sanitizer. It may add and
 remove entries, change information within a single entry (for example by
 adding extra attributes) or completely replace the list with a different one.
 
@@ -77,6 +78,23 @@ adding extra attributes) or completely replace the list with a different one.
 #### PlaceName - extended naming information
 
 ::: nominatim.tokenizer.sanitizers.base.PlaceName
+    rendering:
+        show_source: no
+        heading_level: 6
+
+## Custom token analysis module
+
+Setup of a token analyser is split into two parts: configuration and
+analyser factory. A token analysis module must therefore implement two
+functions:
+
+::: nominatim.tokenizer.token_analysis.base.AnalysisModule
+    rendering:
+        show_source: no
+        heading_level: 6
+
+
+::: nominatim.tokenizer.token_analysis.base.Analyser
     rendering:
         show_source: no
         heading_level: 6

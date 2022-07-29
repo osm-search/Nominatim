@@ -11,7 +11,7 @@ from typing import Mapping, List, Any
 
 from nominatim.typing import Protocol
 
-class Analyser(Protocol):
+class Analyzer(Protocol):
     """ The `create()` function of an analysis module needs to return an
         object that implements the following functions.
     """
@@ -49,7 +49,7 @@ class AnalysisModule(Protocol):
                 used freely by the analysis module as needed.
         """
 
-    def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyser:
+    def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyzer:
         """ Create a new instance of the analyser.
             A separate instance of the analyser is created for each thread
             when used in multi-threading context.
@@ -62,6 +62,6 @@ class AnalysisModule(Protocol):
                 config: The object that was returned by the call to configure().
 
             Returns:
-                A new analyzer instance. This must be a class that implements
-                the Analyser protocol.
+                A new analyzer instance. This must be an object that implements
+                the Analyzer protocol.
         """

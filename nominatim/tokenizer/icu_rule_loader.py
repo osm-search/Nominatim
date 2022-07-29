@@ -20,7 +20,7 @@ from nominatim.db.connection import Connection
 from nominatim.errors import UsageError
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
-from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyser
+from nominatim.tokenizer.token_analysis.base import AnalysisModule, Analyzer
 import nominatim.data.country_info
 
 LOG = logging.getLogger()
@@ -190,7 +190,7 @@ class TokenAnalyzerRule:
                                                    transliterator)
 
 
-    def create(self, normalizer: Any, transliterator: Any) -> Analyser:
+    def create(self, normalizer: Any, transliterator: Any) -> Analyzer:
         """ Create a new analyser instance for the given rule.
         """
         return self._analysis_mod.create(normalizer, transliterator, self.config)

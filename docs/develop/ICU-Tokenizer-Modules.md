@@ -5,7 +5,8 @@ highly customizable method to pre-process and normalize the name information
 of the input data before it is added to the search index. It comes with a
 selection of sanitizers and token analyzers which you can use to adapt your
 installation to your needs. If the provided modules are not enough, you can
-also provide your own implementations. This section describes how to do that.
+also provide your own implementations. This section describes the API
+of sanitizers and token analysis.
 
 !!! warning
     This API is currently in early alpha status. While this API is meant to
@@ -73,6 +74,56 @@ While the `place` member is provided for information only, the `names` and
 remove entries, change information within a single entry (for example by
 adding extra attributes) or completely replace the list with a different one.
 
+### Example: Filter for US street prefixes
+
+The following sanitizer removes the directional prefixes from street names
+in the US:
+
+``` python
+import re
+
+def _filter_function(obj):
+    if obj.place.country_code == 'us' \
+       and obj.place.rank_address >= 26 and obj.place.rank_address <= 27:
+        for name in obj.names:
+            name.name = re.sub(r'^(north|south|west|east) ',
+                               '',
+                               name.name,
+                               flags=re.IGNORECASE)
+
+def create(config):
+    return _filter_function
+```
+
+This is the most simple form of a sanitizer module. If defines a single
+filter function and implements the required `create()` function by returning
+the filter.
+
+The filter function first checks if the object is interesting for the
+sanitizer. Namely it checks if the place is in the US (through `country_code`)
+and it the place is a street (a `rank_address` of 26 or 27). If the
+conditions are met, then it goes through all available names and replaces
+any removes any leading direction prefix using a simple regular expression.
+
+Save the source code in a file in your project directory, for example as
+`us_streets.py`. Then you can use the sanitizer in your `icu_tokenizer.yaml`:
+
+```
+...
+sanitizers:
+    - step: us_streets.py
+...
+```
+
+For more sanitizer examples, have a look at the sanitizers provided by Nominatim.
+They can be found in the directory `nominatim/tokenizer/sanitizers`.
+
+!!! warning
+    This example is just a simplified show case on how to create a sanitizer.
+    It is not really read for real-world use: while the sanitizer would
+    correcly transform `West 5th Street` into `5th Street`. it would also
+    shorten a simple `North Street` to `Street`.
+
 #### PlaceInfo - information about the place
 
 ::: nominatim.data.place_info.PlaceInfo
@@ -104,3 +155,74 @@ functions:
     rendering:
         show_source: no
         heading_level: 6
+
+### Example: Creating acronym variants for long names
+
+The following example of a token analysis module creates acronyms from
+very long names and adds them as a variant:
+
+``` python
+class AcronymMaker:
+    """ This class is the actual analyzer.
+    """
+    def __init__(self, norm, trans):
+        self.norm = norm
+        self.trans = trans
+
+
+    def get_canonical_id(self, name):
+        # In simple cases, the normalized name can be used as a canonical id.
+        return self.norm.transliterate(name.name).strip()
+
+
+    def compute_variants(self, name):
+        # The transliterated form of the name always makes up a variant.
+        variants = [self.trans.transliterate(name)]
+
+        # Only create acronyms from very long words.
+        if len(name) > 20:
+            # Take the first letter from each word to form the acronym.
+            acronym = ''.join(w[0] for w in name.split())
+            # If that leds to an acronym with at least three letters,
+            # add the resulting acronym as a variant.
+            if len(acronym) > 2:
+                # Never forget to transliterate the variants before returning them.
+                variants.append(self.trans.transliterate(acronym))
+
+        return variants
+
+# The following two functions are the module interface.
+
+def configure(rules, normalizer, transliterator):
+    # There is no configuration to parse and no data to set up.
+    # Just return an empty configuration.
+    return None
+
+
+def create(normalizer, transliterator, config):
+    # Return a new instance of our token analysis class above.
+    return AcronymMaker(normalizer, transliterator)
+```
+
+Given the name `Trans-Siberian Railway`, the code above would return the full
+name `Trans-Siberian Railway` and the acronym `TSR` as variant, so that
+searching would work for both.
+
+## Sanitizers vs. Token analysis - what to use for variants?
+
+It is not always clear when to implement variations in the sanitizer and
+when to write a token analysis module. Just take the acronym example
+above: it would also have been possible to write a sanitizer which adds the
+acronym as an additional name to the name list. The result would have been
+similar. So which should be used when?
+
+The most important thing to keep in mind is that variants created by the
+token analysis are only saved in the word lookup table. They do not need
+extra space in the search index. If there are many spelling variations, this
+can mean quite a significant amount of space is saved.
+
+When creating additional names with a sanitizer, these names are completely
+independent. In particular, they can be fed into different token analysis
+modules. This gives a much greater flexibility but at the price that the
+additional names increase the size of the search index.
+

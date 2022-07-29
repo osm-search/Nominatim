@@ -134,11 +134,6 @@ $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
 $sSQL .= "    ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea, ";
 $sSQL .= '    ST_y(centroid) AS lat, ';
 $sSQL .= '    ST_x(centroid) AS lon, ';
-$sSQL .= '    CASE ';
-$sSQL .= '       WHEN importance = 0 OR importance IS NULL ';
-$sSQL .= '       THEN 0.75-(rank_search::float/40) ';
-$sSQL .= '       ELSE importance ';
-$sSQL .= '       END as calculated_importance, ';
 if ($bIncludePolygonAsGeoJSON) {
     $sSQL .= '    ST_AsGeoJSON(CASE ';
     $sSQL .= '                WHEN ST_NPoints(geometry) > 5000 ';

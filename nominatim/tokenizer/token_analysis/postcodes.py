@@ -8,13 +8,13 @@
 Specialized processor for postcodes. Supports a 'lookup' variant of the
 token, which produces variants with optional spaces.
 """
-from typing import Mapping, Any, List
+from typing import Any, List
 
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
 
 ### Configuration section
 
-def configure(rules: Mapping[str, Any], normalization_rules: str) -> None: # pylint: disable=W0613
+def configure(*_: Any) -> None:
     """ All behaviour is currently hard-coded.
     """
     return None

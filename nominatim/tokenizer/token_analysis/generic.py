@@ -18,13 +18,13 @@ from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantG
 
 ### Configuration section
 
-def configure(rules: Mapping[str, Any], normalization_rules: str) -> Dict[str, Any]:
+def configure(rules: Mapping[str, Any], normalizer: Any, _: Any) -> Dict[str, Any]:
     """ Extract and preprocess the configuration for this module.
     """
     config: Dict[str, Any] = {}
 
     config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
-                                                                 normalization_rules)
+                                                                 normalizer)
     config['variant_only'] = rules.get('mode', '') == 'variant-only'
 
     # parse mutation rules

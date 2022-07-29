@@ -31,9 +31,9 @@ class TestMutationNoVariants:
                   'mutations': [ {'pattern': m[0], 'replacements': m[1]}
                                  for m in mutations]
                 }
-        config = module.configure(rules, DEFAULT_NORMALIZATION)
         trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
         norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+        config = module.configure(rules, norm, trans)
 
         self.analysis = module.create(norm, trans, config)
 

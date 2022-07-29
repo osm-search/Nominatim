@@ -12,6 +12,8 @@ import io
 import json
 import logging
 
+from icu import Transliterator
+
 from nominatim.config import flatten_config_list, Configuration
 from nominatim.db.properties import set_property, get_property
 from nominatim.db.connection import Connection
@@ -135,6 +137,11 @@ class ICURuleLoader:
         if not isinstance(self.analysis_rules, list):
             raise UsageError("Configuration section 'token-analysis' must be a list.")
 
+        norm = Transliterator.createFromRules("rule_loader_normalization",
+                                              self.normalization_rules)
+        trans = Transliterator.createFromRules("rule_loader_transliteration",
+                                              self.transliteration_rules)
+
         for section in self.analysis_rules:
             name = section.get('id', None)
             if name in self.analysis:
@@ -144,8 +151,7 @@ class ICURuleLoader:
                     LOG.fatal("ICU tokenizer configuration has two token "
                               "analyzers with id '%s'.", name)
                 raise UsageError("Syntax error in ICU tokenizer config.")
-            self.analysis[name] = TokenAnalyzerRule(section,
-                                                    self.normalization_rules,
+            self.analysis[name] = TokenAnalyzerRule(section, norm, trans,
                                                     self.config)
 
 
@@ -170,7 +176,8 @@ class TokenAnalyzerRule:
         and creates a new token analyzer on request.
     """
 
-    def __init__(self, rules: Mapping[str, Any], normalization_rules: str,
+    def __init__(self, rules: Mapping[str, Any],
+                 normalizer: Any, transliterator: Any,
                  config: Configuration) -> None:
         analyzer_name = _get_section(rules, 'analyzer')
         if not analyzer_name or not isinstance(analyzer_name, str):
@@ -179,7 +186,8 @@ class TokenAnalyzerRule:
         self._analysis_mod: AnalysisModule = \
             config.load_plugin_module(analyzer_name, 'nominatim.tokenizer.token_analysis')
 
-        self.config = self._analysis_mod.configure(rules, normalization_rules)
+        self.config = self._analysis_mod.configure(rules, normalizer,
+                                                   transliterator)
 
 
     def create(self, normalizer: Any, transliterator: Any) -> Analyser:

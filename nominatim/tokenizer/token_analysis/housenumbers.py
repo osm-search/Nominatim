@@ -8,7 +8,7 @@
 Specialized processor for housenumbers. Analyses common housenumber patterns
 and creates variants for them.
 """
-from typing import Mapping, Any, List, cast
+from typing import Any, List, cast
 import re
 
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
@@ -20,7 +20,7 @@ RE_NAMED_PART = re.compile(r'[a-z]{4}')
 
 ### Configuration section
 
-def configure(rules: Mapping[str, Any], normalization_rules: str) -> None: # pylint: disable=W0613
+def configure(*_: Any) -> None:
     """ All behaviour is currently hard-coded.
     """
     return None

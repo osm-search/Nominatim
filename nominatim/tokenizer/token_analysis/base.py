@@ -30,7 +30,8 @@ class AnalysisModule(Protocol):
     """ Protocol for analysis modules.
     """
 
-    def configure(self, rules: Mapping[str, Any], normalization_rules: str) -> Any:
+    def configure(self, rules: Mapping[str, Any],
+                  normalizer: Any, transliterator: Any) -> Any:
         """ Prepare the configuration of the analysis module.
             This function should prepare all data that can be shared
             between instances of this analyser.
@@ -38,8 +39,10 @@ class AnalysisModule(Protocol):
             Arguments:
                 rules: A dictionary with the additional configuration options
                        as specified in the tokenizer configuration.
-                normalization_rules: ICU rules for normalization as a string
-                                     that can be used with createFromRules().
+                normalizer: an ICU Transliterator with the compiled normalization
+                            rules.
+                transliterator: an ICU tranliterator with the compiled
+                                transliteration rules.
 
             Returns:
                 A data object with the configuration that was set up. May be

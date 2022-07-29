@@ -7,6 +7,12 @@ selection of sanitizers and token analyzers which you can use to adapt your
 installation to your needs. If the provided modules are not enough, you can
 also provide your own implementations. This section describes how to do that.
 
+!!! warning
+    This API is currently in early alpha status. While this API is meant to
+    be a public API on which other sanitizers and token analyzers may be
+    implemented, it is not guaranteed to be stable at the moment.
+
+
 ## Using non-standard sanitizers and token analyzers
 
 Sanitizer names (in the `step` property) and token analysis names (in the

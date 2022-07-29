@@ -39,7 +39,7 @@ def make_analyser(*variants, variant_only=False):
 
 def get_normalized_variants(proc, name):
     norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
-    return proc.get_variants_ascii(norm.transliterate(name).strip())
+    return proc.compute_variants(norm.transliterate(name).strip())
 
 
 def test_no_variants():

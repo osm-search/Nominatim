@@ -11,6 +11,7 @@ and creates variants for them.
 from typing import Any, List, cast
 import re
 
+from nominatim.data.place_name import PlaceName
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
 
 RE_NON_DIGIT = re.compile('[^0-9]')
@@ -42,14 +43,14 @@ class HousenumberTokenAnalysis:
 
         self.mutator = MutationVariantGenerator('␣', (' ', ''))
 
-    def normalize(self, name: str) -> str:
+    def get_canonical_id(self, name: PlaceName) -> str:
         """ Return the normalized form of the housenumber.
         """
         # shortcut for number-only numbers, which make up 90% of the data.
-        if RE_NON_DIGIT.search(name) is None:
-            return name
+        if RE_NON_DIGIT.search(name.name) is None:
+            return name.name
 
-        norm = cast(str, self.trans.transliterate(self.norm.transliterate(name)))
+        norm = cast(str, self.trans.transliterate(self.norm.transliterate(name.name)))
         # If there is a significant non-numeric part, use as is.
         if RE_NAMED_PART.search(norm) is None:
             # Otherwise add optional spaces between digits and letters.
@@ -61,7 +62,7 @@ class HousenumberTokenAnalysis:
 
         return norm
 
-    def get_variants_ascii(self, norm_name: str) -> List[str]:
+    def compute_variants(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized housenumber.
 
             Generates variants for optional spaces (marked with '␣').

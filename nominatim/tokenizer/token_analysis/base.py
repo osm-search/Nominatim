@@ -10,21 +10,46 @@ Common data types and protocols for analysers.
 from typing import Mapping, List, Any
 
 from nominatim.typing import Protocol
+from nominatim.data.place_name import PlaceName
 
 class Analyzer(Protocol):
     """ The `create()` function of an analysis module needs to return an
         object that implements the following functions.
     """
 
-    def normalize(self, name: str) -> str:
-        """ Return the normalized form of the name. This is the standard form
-            from which possible variants for the name can be derived.
+    def get_canonical_id(self, name: PlaceName) -> str:
+        """ Return the canonical form of the given name. The canonical ID must
+            be unique (the same ID must always yield the same variants) and
+            must be a form from which the variants can be derived.
+
+            Arguments:
+                name: Extended place name description as prepared by
+                      the sanitizers.
+
+            Returns:
+                ID string with a canonical form of the name. The string may
+                be empty, when the analyzer cannot analyze the name at all,
+                for example because the character set in use does not match.
         """
 
-    def get_variants_ascii(self, norm_name: str) -> List[str]:
-        """ Compute the spelling variants for the given normalized name
-            and transliterate the result.
+    def compute_variants(self, canonical_id: str) -> List[str]:
+        """ Compute the transliterated spelling variants for the given
+            canonical ID.
+
+            Arguments:
+                canonical_id: ID string previously computed with
+                              `get_canonical_id()`.
+
+            Returns:
+                A list of possible spelling variants. All strings must have
+                been transformed with the global normalizer and
+                transliterator ICU rules. Otherwise they cannot be matched
+                against the query later.
+                The list may be empty, when there are no useful
+                spelling variants. This may happen, when an analyzer only
+                produces extra variants to the canonical spelling.
         """
+
 
 class AnalysisModule(Protocol):
     """ Protocol for analysis modules.
@@ -41,7 +66,7 @@ class AnalysisModule(Protocol):
                        as specified in the tokenizer configuration.
                 normalizer: an ICU Transliterator with the compiled normalization
                             rules.
-                transliterator: an ICU tranliterator with the compiled
+                transliterator: an ICU transliterator with the compiled
                                 transliteration rules.
 
             Returns:

@@ -12,8 +12,6 @@ from collections import defaultdict
 import itertools
 import re
 
-from icu import Transliterator
-
 from nominatim.config import flatten_config_list
 from nominatim.errors import UsageError
 
@@ -25,7 +23,7 @@ class ICUVariant(NamedTuple):
 
 
 def get_variant_config(in_rules: Any,
-                       normalization_rules: str) -> Tuple[List[Tuple[str, List[str]]], str]:
+                       normalizer: Any) -> Tuple[List[Tuple[str, List[str]]], str]:
     """ Convert the variant definition from the configuration into
         replacement sets.
 
@@ -39,7 +37,7 @@ def get_variant_config(in_rules: Any,
         vset: Set[ICUVariant] = set()
         rules = flatten_config_list(in_rules, 'variants')
 
-        vmaker = _VariantMaker(normalization_rules)
+        vmaker = _VariantMaker(normalizer)
 
         for section in rules:
             for rule in (section.get('words') or []):
@@ -63,9 +61,8 @@ class _VariantMaker:
         All text in rules is normalized to make sure the variants match later.
     """
 
-    def __init__(self, norm_rules: Any) -> None:
-        self.norm = Transliterator.createFromRules("rule_loader_normalization",
-                                                   norm_rules)
+    def __init__(self, normalizer: Any) -> None:
+        self.norm = normalizer
 
 
     def compute(self, rule: Any) -> Iterator[ICUVariant]:

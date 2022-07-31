@@ -23,7 +23,7 @@ from nominatim.db.sql_preprocessor import SQLPreprocessor
 from nominatim.data.place_info import PlaceInfo
 from nominatim.tokenizer.icu_rule_loader import ICURuleLoader
 from nominatim.tokenizer.place_sanitizer import PlaceSanitizer
-from nominatim.tokenizer.sanitizers.base import PlaceName
+from nominatim.data.place_name import PlaceName
 from nominatim.tokenizer.icu_token_analysis import ICUTokenAnalysis
 from nominatim.tokenizer.base import AbstractAnalyzer, AbstractTokenizer
 
@@ -324,7 +324,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                             postcode_name = place.name.strip().upper()
                             variant_base = None
                         else:
-                            postcode_name = analyzer.normalize(place.name)
+                            postcode_name = analyzer.get_canonical_id(place)
                             variant_base = place.get_attr("variant")
 
                         if variant_base:
@@ -359,7 +359,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 if analyzer is None:
                     variants = [term]
                 else:
-                    variants = analyzer.get_variants_ascii(variant)
+                    variants = analyzer.compute_variants(variant)
                     if term not in variants:
                         variants.append(term)
             else:
@@ -573,17 +573,17 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             # Otherwise use the analyzer to determine the canonical name.
             # Per convention we use the first variant as the 'lookup name', the
             # name that gets saved in the housenumber field of the place.
-            norm_name = analyzer.normalize(hnr.name)
-            if norm_name:
-                result = self._cache.housenumbers.get(norm_name, result)
+            word_id = analyzer.get_canonical_id(hnr)
+            if word_id:
+                result = self._cache.housenumbers.get(word_id, result)
                 if result[0] is None:
-                    variants = analyzer.get_variants_ascii(norm_name)
+                    variants = analyzer.compute_variants(word_id)
                     if variants:
                         with self.conn.cursor() as cur:
                             cur.execute("SELECT create_analyzed_hnr_id(%s, %s)",
-                                        (norm_name, list(variants)))
+                                        (word_id, list(variants)))
                             result = cur.fetchone()[0], variants[0] # type: ignore[no-untyped-call]
-                            self._cache.housenumbers[norm_name] = result
+                            self._cache.housenumbers[word_id] = result
 
         return result
 
@@ -650,15 +650,15 @@ class ICUNameAnalyzer(AbstractAnalyzer):
         for name in names:
             analyzer_id = name.get_attr('analyzer')
             analyzer = self.token_analysis.get_analyzer(analyzer_id)
-            norm_name = analyzer.normalize(name.name)
+            word_id = analyzer.get_canonical_id(name)
             if analyzer_id is None:
-                token_id = norm_name
+                token_id = word_id
             else:
-                token_id = f'{norm_name}@{analyzer_id}'
+                token_id = f'{word_id}@{analyzer_id}'
 
             full, part = self._cache.names.get(token_id, (None, None))
             if full is None:
-                variants = analyzer.get_variants_ascii(norm_name)
+                variants = analyzer.compute_variants(word_id)
                 if not variants:
                     continue
 
@@ -688,7 +688,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
             postcode_name = item.name.strip().upper()
             variant_base = None
         else:
-            postcode_name = analyzer.normalize(item.name)
+            postcode_name = analyzer.get_canonical_id(item)
             variant_base = item.get_attr("variant")
 
         if variant_base:
@@ -703,7 +703,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
 
             variants = {term}
             if analyzer is not None and variant_base:
-                variants.update(analyzer.get_variants_ascii(variant_base))
+                variants.update(analyzer.compute_variants(variant_base))
 
             with self.conn.cursor() as cur:
                 cur.execute("SELECT create_postcode_word(%s, %s)",

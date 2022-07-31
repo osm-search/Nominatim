@@ -8,13 +8,14 @@
 Specialized processor for postcodes. Supports a 'lookup' variant of the
 token, which produces variants with optional spaces.
 """
-from typing import Mapping, Any, List
+from typing import Any, List
 
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
+from nominatim.data.place_name import PlaceName
 
 ### Configuration section
 
-def configure(rules: Mapping[str, Any], normalization_rules: str) -> None: # pylint: disable=W0613
+def configure(*_: Any) -> None:
     """ All behaviour is currently hard-coded.
     """
     return None
@@ -31,10 +32,8 @@ class PostcodeTokenAnalysis:
     """ Special normalization and variant generation for postcodes.
 
         This analyser must not be used with anything but postcodes as
-        it follows some special rules: `normalize` doesn't necessarily
-        need to return a standard form as per normalization rules. It
-        needs to return the canonical form of the postcode that is also
-        used for output. `get_variants_ascii` then needs to ensure that
+        it follows some special rules: the canonial ID is the form that
+        is used for the output. `compute_variants` then needs to ensure that
         the generated variants once more follow the standard normalization
         and transliteration, so that postcodes are correctly recognised by
         the search algorithm.
@@ -46,13 +45,13 @@ class PostcodeTokenAnalysis:
         self.mutator = MutationVariantGenerator(' ', (' ', ''))
 
 
-    def normalize(self, name: str) -> str:
+    def get_canonical_id(self, name: PlaceName) -> str:
         """ Return the standard form of the postcode.
         """
-        return name.strip().upper()
+        return name.name.strip().upper()
 
 
-    def get_variants_ascii(self, norm_name: str) -> List[str]:
+    def compute_variants(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized postcode.
 
             Takes the canonical form of the postcode, normalizes it using the

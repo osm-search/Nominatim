@@ -31,16 +31,16 @@ class TestMutationNoVariants:
                   'mutations': [ {'pattern': m[0], 'replacements': m[1]}
                                  for m in mutations]
                 }
-        config = module.configure(rules, DEFAULT_NORMALIZATION)
         trans = Transliterator.createFromRules("test_trans", DEFAULT_TRANSLITERATION)
         norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
+        config = module.configure(rules, norm, trans)
 
         self.analysis = module.create(norm, trans, config)
 
 
     def variants(self, name):
         norm = Transliterator.createFromRules("test_norm", DEFAULT_NORMALIZATION)
-        return set(self.analysis.get_variants_ascii(norm.transliterate(name).strip()))
+        return set(self.analysis.compute_variants(norm.transliterate(name).strip()))
 
 
     @pytest.mark.parametrize('pattern', ('(capture)', ['a list']))

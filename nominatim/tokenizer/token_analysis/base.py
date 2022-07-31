@@ -44,15 +44,18 @@ class Analyzer(Protocol):
                 A list of possible spelling variants. All strings must have
                 been transformed with the global normalizer and
                 transliterator ICU rules. Otherwise they cannot be matched
-                against the query later.
+                against the input by the query frontend.
                 The list may be empty, when there are no useful
-                spelling variants. This may happen, when an analyzer only
-                produces extra variants to the canonical spelling.
+                spelling variants. This may happen when an analyzer only
+                usually outputs additional variants to the canonical spelling
+                and there are no such variants.
         """
 
 
 class AnalysisModule(Protocol):
-    """ Protocol for analysis modules.
+    """ The setup of the token analysis is split into two parts:
+        configuration and analyser factory. A token analysis module must
+        therefore implement the two functions here described.
     """
 
     def configure(self, rules: Mapping[str, Any],
@@ -64,13 +67,14 @@ class AnalysisModule(Protocol):
             Arguments:
                 rules: A dictionary with the additional configuration options
                        as specified in the tokenizer configuration.
-                normalizer: an ICU Transliterator with the compiled normalization
-                            rules.
-                transliterator: an ICU transliterator with the compiled
-                                transliteration rules.
+                normalizer: an ICU Transliterator with the compiled
+                            global normalization rules.
+                transliterator: an ICU Transliterator with the compiled
+                                global transliteration rules.
 
             Returns:
-                A data object with the configuration that was set up. May be
+                A data object with configuration data. This will be handed
+                as is into the `create()` function and may be
                 used freely by the analysis module as needed.
         """
 
@@ -82,7 +86,7 @@ class AnalysisModule(Protocol):
             Arguments:
                 normalizer: an ICU Transliterator with the compiled normalization
                             rules.
-                transliterator: an ICU tranliterator with the compiled
+                transliterator: an ICU Transliterator with the compiled
                                 transliteration rules.
                 config: The object that was returned by the call to configure().
 

@@ -57,9 +57,9 @@ the function.
         show_source: no
         heading_level: 6
 
-### The sanitation function
+### The main filter function of the sanitizer
 
-The sanitation function receives a single object of type `ProcessInfo`
+The filter function receives a single object of type `ProcessInfo`
 which has with three members:
 
  * `place`: read-only information about the place being processed.
@@ -73,6 +73,22 @@ While the `place` member is provided for information only, the `names` and
 `address` lists are meant to be manipulated by the sanitizer. It may add and
 remove entries, change information within a single entry (for example by
 adding extra attributes) or completely replace the list with a different one.
+
+#### PlaceInfo - information about the place
+
+::: nominatim.data.place_info.PlaceInfo
+    rendering:
+        show_source: no
+        heading_level: 6
+
+
+#### PlaceName - extended naming information
+
+::: nominatim.data.place_name.PlaceName
+    rendering:
+        show_source: no
+        heading_level: 6
+
 
 ### Example: Filter for US street prefixes
 
@@ -102,21 +118,18 @@ the filter.
 The filter function first checks if the object is interesting for the
 sanitizer. Namely it checks if the place is in the US (through `country_code`)
 and it the place is a street (a `rank_address` of 26 or 27). If the
-conditions are met, then it goes through all available names and replaces
-any removes any leading direction prefix using a simple regular expression.
+conditions are met, then it goes through all available names and
+removes any leading directional prefix using a simple regular expression.
 
 Save the source code in a file in your project directory, for example as
 `us_streets.py`. Then you can use the sanitizer in your `icu_tokenizer.yaml`:
 
-```
+``` yaml
 ...
 sanitizers:
     - step: us_streets.py
 ...
 ```
-
-For more sanitizer examples, have a look at the sanitizers provided by Nominatim.
-They can be found in the directory `nominatim/tokenizer/sanitizers`.
 
 !!! warning
     This example is just a simplified show case on how to create a sanitizer.
@@ -124,26 +137,12 @@ They can be found in the directory `nominatim/tokenizer/sanitizers`.
     correcly transform `West 5th Street` into `5th Street`. it would also
     shorten a simple `North Street` to `Street`.
 
-#### PlaceInfo - information about the place
+For more sanitizer examples, have a look at the sanitizers provided by Nominatim.
+They can be found in the directory
+[`nominatim/tokenizer/sanitizers`](https://github.com/osm-search/Nominatim/tree/master/nominatim/tokenizer/sanitizers).
 
-::: nominatim.data.place_info.PlaceInfo
-    rendering:
-        show_source: no
-        heading_level: 6
-
-
-#### PlaceName - extended naming information
-
-::: nominatim.data.place_name.PlaceName
-    rendering:
-        show_source: no
-        heading_level: 6
 
 ## Custom token analysis module
-
-Setup of a token analyser is split into two parts: configuration and
-analyser factory. A token analysis module must therefore implement two
-functions:
 
 ::: nominatim.tokenizer.token_analysis.base.AnalysisModule
     rendering:

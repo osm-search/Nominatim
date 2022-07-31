@@ -23,8 +23,8 @@ else:
 class SanitizerConfig(_BaseUserDict):
     """ The `SanitizerConfig` class is a read-only dictionary
         with configuration options for the sanitizer.
-        In addition to the usual dictionary function, the class provides
-        accessors to standard sanatizer options that are used by many of the
+        In addition to the usual dictionary functions, the class provides
+        accessors to standard sanitizer options that are used by many of the
         sanitizers.
     """
 
@@ -81,15 +81,15 @@ class SanitizerConfig(_BaseUserDict):
 
     def get_delimiter(self, default: str = ',;') -> Pattern[str]:
         """ Return the 'delimiters' parameter in the configuration as a
-            compiled regular expression that can be used to split names on these
-            delimiters.
+            compiled regular expression that can be used to split strings on
+            these delimiters.
 
             Arguments:
-                default: Delimiters to be used, when 'delimiters' parameter
+                default: Delimiters to be used when 'delimiters' parameter
                          is not explicitly configured.
 
             Returns:
-                A regular expression pattern, which can be used to
+                A regular expression pattern which can be used to
                 split a string. The regular expression makes sure that the
                 resulting names are stripped and that repeated delimiters
                 are ignored. It may still create empty fields on occasion. The

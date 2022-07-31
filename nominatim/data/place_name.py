@@ -20,7 +20,7 @@ class PlaceName:
           is the part of the key after the first colon.
 
         In addition to that, a name may have arbitrary additional attributes.
-        How attributes are used, depends on the sanatizers and token analysers.
+        How attributes are used, depends on the sanitizers and token analysers.
         The exception is is the 'analyzer' attribute. This attribute determines
         which token analysis module will be used to finalize the treatment of
         names.

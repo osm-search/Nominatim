@@ -8,7 +8,7 @@
 Wrapper around place information the indexer gets from the database and hands to
 the tokenizer.
 """
-from typing import Optional, Mapping, Any
+from typing import Optional, Mapping, Any, Tuple
 
 class PlaceInfo:
     """ This data class contains all information the tokenizer can access
@@ -60,6 +60,15 @@ class PlaceInfo:
             [1]: ../customize/Ranking.md#address-rank
         """
         return self._info.get('rank_address', 0)
+
+
+    @property
+    def centroid(self) -> Optional[Tuple[float, float]]:
+        """ A center point of the place in WGS84. May be None when the
+            geometry of the place is unknown.
+        """
+        x, y = self._info.get('centroid_x'), self._info.get('centroid_y')
+        return None if x is None or y is None else (x, y)
 
 
     def is_a(self, key: str, value: str) -> bool:

@@ -125,7 +125,7 @@ BEGIN
     END LOOP;
   END IF;
 
-  result.importance := 0.75 - (rank_search / 40)
+  result.importance := 0.75 - (rank_search / 40);
   RETURN result;
 END;
 $$

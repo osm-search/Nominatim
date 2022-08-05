@@ -134,6 +134,7 @@ $sSQL .= "    get_name_by_language(name,$sLanguagePrefArraySQL) AS localname, ";
 $sSQL .= "    ST_GeometryType(geometry) in ('ST_Polygon','ST_MultiPolygon') AS isarea, ";
 $sSQL .= '    ST_y(centroid) AS lat, ';
 $sSQL .= '    ST_x(centroid) AS lon, ';
+$sSQL .= '    importance as calculated_importance, ';
 if ($bIncludePolygonAsGeoJSON) {
     $sSQL .= '    ST_AsGeoJSON(CASE ';
     $sSQL .= '                WHEN ST_NPoints(geometry) > 5000 ';

@@ -300,11 +300,10 @@ class PlaceLookup
                 $sSQL .= 'null::text AS names,';
             }
             $sSQL .= '  ST_x(geometry) AS lon, ST_y(geometry) AS lat,';
-            $sSQL .= '  importance, ';
+            $sSQL .= '  (0.75-(rank_search::float/40)) AS importance, ';
             $sSQL .= $this->addressImportanceSql('geometry', 'lp.parent_place_id');
             $sSQL .= '  null::text AS extra_place ';
-            $sSQL .= 'FROM location_postcode lp ';
-            $sSQL .= 'JOIN placex USING (place_id)';
+            $sSQL .= 'FROM location_postcode lp';
             $sSQL .= " WHERE place_id in ($sPlaceIDs) ";
             $sSQL .= "   AND lp.rank_address between $iMinRank and $iMaxRank";
 

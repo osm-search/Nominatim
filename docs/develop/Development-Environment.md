@@ -55,8 +55,8 @@ To install all necessary packages run:
 sudo apt install php-cgi phpunit php-codesniffer \
                  python3-pip python3-setuptools python3-dev
 
-pip3 install --user behave mkdocs mkdocstrings pytest \
-                    pylint mypy types-PyYAML types-jinja2 types-psycopg2
+pip3 install --user behave mkdocs mkdocstrings pytest pylint \
+                    mypy types-PyYAML types-jinja2 types-psycopg2 types-psutil
 ```
 
 The `mkdocs` executable will be located in `.local/bin`. You may have to add

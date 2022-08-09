@@ -566,8 +566,9 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 result = self._cache.housenumbers.get(norm_name, result)
                 if result[0] is None:
                     with self.conn.cursor() as cur:
-                        cur.execute("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
-                        result = cur.fetchone()[0], norm_name # type: ignore[no-untyped-call]
+                        hid = cur.scalar("SELECT getorcreate_hnr_id(%s)", (norm_name, ))
+
+                        result = hid, norm_name
                         self._cache.housenumbers[norm_name] = result
         else:
             # Otherwise use the analyzer to determine the canonical name.
@@ -580,9 +581,9 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                     variants = analyzer.compute_variants(word_id)
                     if variants:
                         with self.conn.cursor() as cur:
-                            cur.execute("SELECT create_analyzed_hnr_id(%s, %s)",
-                                        (word_id, list(variants)))
-                            result = cur.fetchone()[0], variants[0] # type: ignore[no-untyped-call]
+                            hid = cur.scalar("SELECT create_analyzed_hnr_id(%s, %s)",
+                                             (word_id, list(variants)))
+                            result = hid, variants[0]
                             self._cache.housenumbers[word_id] = result
 
         return result
@@ -665,8 +666,7 @@ class ICUNameAnalyzer(AbstractAnalyzer):
                 with self.conn.cursor() as cur:
                     cur.execute("SELECT * FROM getorcreate_full_word(%s, %s)",
                                 (token_id, variants))
-                    full, part = cast(Tuple[int, List[int]],
-                                      cur.fetchone()) # type: ignore[no-untyped-call]
+                    full, part = cast(Tuple[int, List[int]], cur.fetchone())
 
                 self._cache.names[token_id] = (full, part)
 

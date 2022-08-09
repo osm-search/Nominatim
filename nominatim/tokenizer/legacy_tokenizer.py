@@ -544,8 +544,9 @@ class _TokenInfo:
 
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM create_housenumbers(%s)", (simple_list, ))
-            self.data['hnr_tokens'], self.data['hnr'] = \
-                cur.fetchone() # type: ignore[no-untyped-call]
+            result = cur.fetchone()
+            assert result is not None
+            self.data['hnr_tokens'], self.data['hnr'] = result
 
 
     def set_postcode(self, postcode: str) -> None:
@@ -574,8 +575,7 @@ class _TokenInfo:
                 cur.execute("""SELECT make_keywords(hstore('name' , %s))::text,
                                       word_ids_from_name(%s)::text""",
                             (name, name))
-                return cast(Tuple[List[int], List[int]],
-                            cur.fetchone()) # type: ignore[no-untyped-call]
+                return cast(Tuple[List[int], List[int]], cur.fetchone())
 
         self.data['place_search'], self.data['place_match'] = \
             self.cache.places.get(place, _get_place)
@@ -589,8 +589,7 @@ class _TokenInfo:
                 cur.execute("""SELECT addr_ids_from_name(%s)::text,
                                       word_ids_from_name(%s)::text""",
                             (name, name))
-                return cast(Tuple[List[int], List[int]],
-                            cur.fetchone()) # type: ignore[no-untyped-call]
+                return cast(Tuple[List[int], List[int]], cur.fetchone())
 
         tokens = {}
         for key, value in terms:

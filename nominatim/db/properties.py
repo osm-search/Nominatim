@@ -41,4 +41,7 @@ def get_property(conn: Connection, name: str) -> Optional[str]:
         if cur.rowcount == 0:
             return None
 
-        return cast(Optional[str], cur.fetchone()[0]) # type: ignore[no-untyped-call]
+        result = cur.fetchone()
+        assert result is not None
+
+        return cast(Optional[str], result[0])

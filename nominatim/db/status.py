@@ -90,7 +90,7 @@ def get_status(conn: Connection) -> Tuple[Optional[dt.datetime], Optional[int], 
         if cur.rowcount < 1:
             return None, None, None
 
-        row = cast(StatusRow, cur.fetchone()) # type: ignore[no-untyped-call]
+        row = cast(StatusRow, cur.fetchone())
         return row['lastimportdate'], row['sequence_id'], row['indexed']
 
 

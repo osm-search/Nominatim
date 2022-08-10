@@ -100,7 +100,7 @@ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION compute_importance(extratags HSTORE,
                                               country_code varchar(2),
-                                              osm_type varchar(1), osm_id BIGINT, rank_search FLOAT)
+                                              osm_type varchar(1), osm_id BIGINT, rank_search SMALLINT)
   RETURNS place_importance
   AS $$
 DECLARE
@@ -125,7 +125,7 @@ BEGIN
     END LOOP;
   END IF;
 
-  result.importance := 0.75 - (rank_search / 40);
+  result.importance := 0.750001 - (rank_search::float / 40);
   RETURN result;
 END;
 $$

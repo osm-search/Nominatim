@@ -103,7 +103,7 @@ class Geocode
         }
 
         $this->iFinalLimit = $iLimit;
-        $this->iLimit = $iLimit + min($iLimit, 10);
+        $this->iLimit = $iLimit + max($iLimit, 10);
     }
 
     public function setFeatureType($sFeatureType)

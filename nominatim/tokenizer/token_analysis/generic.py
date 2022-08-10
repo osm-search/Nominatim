@@ -13,18 +13,19 @@ import itertools
 import datrie
 
 from nominatim.errors import UsageError
+from nominatim.data.place_name import PlaceName
 from nominatim.tokenizer.token_analysis.config_variants import get_variant_config
 from nominatim.tokenizer.token_analysis.generic_mutation import MutationVariantGenerator
 
 ### Configuration section
 
-def configure(rules: Mapping[str, Any], normalization_rules: str) -> Dict[str, Any]:
+def configure(rules: Mapping[str, Any], normalizer: Any, _: Any) -> Dict[str, Any]:
     """ Extract and preprocess the configuration for this module.
     """
     config: Dict[str, Any] = {}
 
     config['replacements'], config['chars'] = get_variant_config(rules.get('variants'),
-                                                                 normalization_rules)
+                                                                 normalizer)
     config['variant_only'] = rules.get('mode', '') == 'variant-only'
 
     # parse mutation rules
@@ -77,14 +78,14 @@ class GenericTokenAnalysis:
         self.mutations = [MutationVariantGenerator(*cfg) for cfg in config['mutations']]
 
 
-    def normalize(self, name: str) -> str:
+    def get_canonical_id(self, name: PlaceName) -> str:
         """ Return the normalized form of the name. This is the standard form
             from which possible variants for the name can be derived.
         """
-        return cast(str, self.norm.transliterate(name)).strip()
+        return cast(str, self.norm.transliterate(name.name)).strip()
 
 
-    def get_variants_ascii(self, norm_name: str) -> List[str]:
+    def compute_variants(self, norm_name: str) -> List[str]:
         """ Compute the spelling variants for the given normalized name
             and transliterate the result.
         """

@@ -10,33 +10,87 @@ Common data types and protocols for analysers.
 from typing import Mapping, List, Any
 
 from nominatim.typing import Protocol
+from nominatim.data.place_name import PlaceName
 
-class Analyser(Protocol):
-    """ Instance of the token analyser.
+class Analyzer(Protocol):
+    """ The `create()` function of an analysis module needs to return an
+        object that implements the following functions.
     """
 
-    def normalize(self, name: str) -> str:
-        """ Return the normalized form of the name. This is the standard form
-            from which possible variants for the name can be derived.
+    def get_canonical_id(self, name: PlaceName) -> str:
+        """ Return the canonical form of the given name. The canonical ID must
+            be unique (the same ID must always yield the same variants) and
+            must be a form from which the variants can be derived.
+
+            Arguments:
+                name: Extended place name description as prepared by
+                      the sanitizers.
+
+            Returns:
+                ID string with a canonical form of the name. The string may
+                be empty, when the analyzer cannot analyze the name at all,
+                for example because the character set in use does not match.
         """
 
-    def get_variants_ascii(self, norm_name: str) -> List[str]:
-        """ Compute the spelling variants for the given normalized name
-            and transliterate the result.
+    def compute_variants(self, canonical_id: str) -> List[str]:
+        """ Compute the transliterated spelling variants for the given
+            canonical ID.
+
+            Arguments:
+                canonical_id: ID string previously computed with
+                              `get_canonical_id()`.
+
+            Returns:
+                A list of possible spelling variants. All strings must have
+                been transformed with the global normalizer and
+                transliterator ICU rules. Otherwise they cannot be matched
+                against the input by the query frontend.
+                The list may be empty, when there are no useful
+                spelling variants. This may happen when an analyzer only
+                usually outputs additional variants to the canonical spelling
+                and there are no such variants.
         """
+
 
 class AnalysisModule(Protocol):
-    """ Protocol for analysis modules.
+    """ The setup of the token analysis is split into two parts:
+        configuration and analyser factory. A token analysis module must
+        therefore implement the two functions here described.
     """
 
-    def configure(self, rules: Mapping[str, Any], normalization_rules: str) -> Any:
+    def configure(self, rules: Mapping[str, Any],
+                  normalizer: Any, transliterator: Any) -> Any:
         """ Prepare the configuration of the analysis module.
             This function should prepare all data that can be shared
             between instances of this analyser.
+
+            Arguments:
+                rules: A dictionary with the additional configuration options
+                       as specified in the tokenizer configuration.
+                normalizer: an ICU Transliterator with the compiled
+                            global normalization rules.
+                transliterator: an ICU Transliterator with the compiled
+                                global transliteration rules.
+
+            Returns:
+                A data object with configuration data. This will be handed
+                as is into the `create()` function and may be
+                used freely by the analysis module as needed.
         """
 
-    def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyser:
+    def create(self, normalizer: Any, transliterator: Any, config: Any) -> Analyzer:
         """ Create a new instance of the analyser.
             A separate instance of the analyser is created for each thread
             when used in multi-threading context.
+
+            Arguments:
+                normalizer: an ICU Transliterator with the compiled normalization
+                            rules.
+                transliterator: an ICU Transliterator with the compiled
+                                transliteration rules.
+                config: The object that was returned by the call to configure().
+
+            Returns:
+                A new analyzer instance. This must be an object that implements
+                the Analyzer protocol.
         """

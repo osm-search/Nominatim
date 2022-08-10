@@ -11,7 +11,7 @@ into a Nominatim token.
 from typing import Mapping, Optional, TYPE_CHECKING
 from icu import Transliterator
 
-from nominatim.tokenizer.token_analysis.base import Analyser
+from nominatim.tokenizer.token_analysis.base import Analyzer
 
 if TYPE_CHECKING:
     from typing import Any
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 class ICUTokenAnalysis:
     """ Container class collecting the transliterators and token analysis
-        modules for a single NameAnalyser instance.
+        modules for a single Analyser instance.
     """
 
     def __init__(self, norm_rules: str, trans_rules: str,
@@ -36,7 +36,7 @@ class ICUTokenAnalysis:
                          for name, arules in analysis_rules.items()}
 
 
-    def get_analyzer(self, name: Optional[str]) -> Analyser:
+    def get_analyzer(self, name: Optional[str]) -> Analyzer:
         """ Return the given named analyzer. If no analyzer with that
             name exists, return the default analyzer.
         """

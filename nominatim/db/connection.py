@@ -55,7 +55,7 @@ class Cursor(psycopg2.extras.DictCursor):
         if self.rowcount != 1:
             raise RuntimeError("Query did not return a single row.")
 
-        result = self.fetchone() # type: ignore[no-untyped-call]
+        result = self.fetchone()
         assert result is not None
 
         return result[0]
@@ -131,7 +131,7 @@ class Connection(psycopg2.extensions.connection):
                 return False
 
             if table is not None:
-                row = cur.fetchone() # type: ignore[no-untyped-call]
+                row = cur.fetchone()
                 if row is None or not isinstance(row[0], str):
                     return False
                 return row[0] == table
@@ -236,7 +236,7 @@ def get_pg_env(dsn: str,
     """
     env = dict(base_env if base_env is not None else os.environ)
 
-    for param, value in psycopg2.extensions.parse_dsn(dsn).items(): # type: ignore
+    for param, value in psycopg2.extensions.parse_dsn(dsn).items():
         if param in _PG_CONNECTION_STRINGS:
             env[_PG_CONNECTION_STRINGS[param]] = value
         else:

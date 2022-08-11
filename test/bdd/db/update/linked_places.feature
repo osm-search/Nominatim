@@ -307,3 +307,35 @@ Feature: Updates of linked places
             | object | linked_place_id | rank_address |
             | N1     | R1              | 16           |
             | R1     | -               | 16           |
+
+
+    Scenario: Invalidate surrounding place nodes when place type changes
+        Given the grid
+            | 1 |   |   | 2 |
+            |   | 8 | 9 |   |
+            | 4 |   |   | 3 |
+        And the places
+            | osm | class    | type           | name | admin | geometry    |
+            | R1  | boundary | administrative | foo  | 8     | (1,2,3,4,1) |
+        And the places
+            | osm | class | type | name | geometry |
+            | N1  | place | town | foo  | 9        |
+            | N2  | place | city | bar  | 8        |
+        And the relations
+         | id | members  |
+         | 1  | N1:label |
+        When importing
+        Then placex contains
+            | object | linked_place_id | rank_address |
+            | N1     | R1              | 16           |
+            | R1     | -               | 16           |
+            | N2     | -               | 18           |
+
+        When updating places
+            | osm | class | type   | name | geometry |
+            | N1  | place | suburb | foo  | 9        |
+        Then placex contains
+            | object | linked_place_id | rank_address |
+            | N1     | R1              | 20           |
+            | R1     | -               | 20           |
+            | N2     | -               | 16           |
